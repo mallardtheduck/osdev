@@ -9,3 +9,4 @@ cross/*
 src/build-*
 src/gcc-*
 src/binutils-*
+serial.out

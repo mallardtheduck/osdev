@@ -24,6 +24,8 @@ CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
 
 all: myos.iso Makefile
 
+-include $(CDEPFILES) $(CPPDEPFILES)
+
 clean: dummy.delete
 
 dummy.delete:
