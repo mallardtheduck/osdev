@@ -1,0 +1,1 @@
+g++   -g -O2 -DIN_GCC -DCROSS_DIRECTORY_STRUCTURE  -fno-exceptions -fno-rtti -fasynchronous-unwind-tables -W -Wall -Wno-narrowing -Wwrite-strings -Wcast-qual -Wmissing-format-attribute -pedantic -Wno-long-long -Wno-variadic-macros -Wno-overlength-strings   -DHAVE_CONFIG_H -static-libstdc++ -static-libgcc 

@@ -1,0 +1,323 @@
+tc-i386.o: ../../binutils-2.23/gas/config/tc-i386.c \
+ /usr/include/stdc-predef.h /usr/include/x86_64-linux-gnu/bits/predefs.h \
+ ../../binutils-2.23/gas/as.h \
+ ../../binutils-2.23/gas/../include/alloca-conf.h config.h \
+ /usr/include/alloca.h /usr/include/features.h \
+ /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+ /usr/include/x86_64-linux-gnu/bits/wordsize.h \
+ /usr/include/x86_64-linux-gnu/gnu/stubs.h \
+ /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h /usr/include/stdio.h \
+ /usr/include/x86_64-linux-gnu/bits/types.h \
+ /usr/include/x86_64-linux-gnu/bits/typesizes.h /usr/include/libio.h \
+ /usr/include/_G_config.h /usr/include/wchar.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stdarg.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
+ /usr/include/x86_64-linux-gnu/bits/sys_errlist.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio2.h /usr/include/string.h \
+ /usr/include/xlocale.h /usr/include/x86_64-linux-gnu/bits/string.h \
+ /usr/include/x86_64-linux-gnu/bits/string2.h /usr/include/endian.h \
+ /usr/include/x86_64-linux-gnu/bits/endian.h \
+ /usr/include/x86_64-linux-gnu/bits/byteswap.h \
+ /usr/include/x86_64-linux-gnu/bits/byteswap-16.h /usr/include/stdlib.h \
+ /usr/include/x86_64-linux-gnu/bits/string3.h /usr/include/strings.h \
+ /usr/include/x86_64-linux-gnu/bits/waitflags.h \
+ /usr/include/x86_64-linux-gnu/bits/waitstatus.h \
+ /usr/include/x86_64-linux-gnu/sys/types.h /usr/include/time.h \
+ /usr/include/x86_64-linux-gnu/sys/select.h \
+ /usr/include/x86_64-linux-gnu/bits/select.h \
+ /usr/include/x86_64-linux-gnu/bits/sigset.h \
+ /usr/include/x86_64-linux-gnu/bits/time.h \
+ /usr/include/x86_64-linux-gnu/bits/select2.h \
+ /usr/include/x86_64-linux-gnu/sys/sysmacros.h \
+ /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
+ /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
+ /usr/include/x86_64-linux-gnu/bits/stdlib.h /usr/include/unistd.h \
+ /usr/include/x86_64-linux-gnu/bits/posix_opt.h \
+ /usr/include/x86_64-linux-gnu/bits/environments.h \
+ /usr/include/x86_64-linux-gnu/bits/confname.h \
+ ../../binutils-2.23/gas/../include/getopt.h \
+ /usr/include/x86_64-linux-gnu/bits/unistd.h /usr/include/errno.h \
+ /usr/include/x86_64-linux-gnu/bits/errno.h /usr/include/linux/errno.h \
+ /usr/include/x86_64-linux-gnu/asm/errno.h \
+ /usr/include/asm-generic/errno.h /usr/include/asm-generic/errno-base.h \
+ ../../binutils-2.23/gas/../include/ansidecl.h ../bfd/bfd.h \
+ ../../binutils-2.23/gas/../include/symcat.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
+ /usr/include/x86_64-linux-gnu/bits/stat.h \
+ ../../binutils-2.23/gas/../include/libiberty.h \
+ ../../binutils-2.23/gas/../include/ansidecl.h \
+ ../../binutils-2.23/gas/../include/progress.h \
+ ../../binutils-2.23/gas/../include/fopen-same.h \
+ ../../binutils-2.23/gas/asintl.h /usr/include/locale.h \
+ /usr/include/x86_64-linux-gnu/bits/locale.h \
+ ../../binutils-2.23/gas/flonum.h ../../binutils-2.23/gas/bignum.h \
+ ../../binutils-2.23/gas/expr.h targ-env.h \
+ ../../binutils-2.23/gas/config/te-generic.h obj-format.h \
+ ../../binutils-2.23/gas/config/obj-elf.h \
+ ../../binutils-2.23/gas/../bfd/elf-bfd.h \
+ ../../binutils-2.23/gas/../include/elf/common.h \
+ ../../binutils-2.23/gas/../include/elf/external.h \
+ ../../binutils-2.23/gas/../include/elf/internal.h \
+ ../../binutils-2.23/gas/../include/bfdlink.h targ-cpu.h \
+ ../../binutils-2.23/gas/config/tc-i386.h \
+ ../../binutils-2.23/gas/../opcodes/i386-opc.h \
+ ../../binutils-2.23/gas/../include/opcode/i386.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed/limits.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed/syslimits.h \
+ /usr/include/limits.h /usr/include/x86_64-linux-gnu/bits/posix1_lim.h \
+ /usr/include/x86_64-linux-gnu/bits/local_lim.h \
+ /usr/include/linux/limits.h \
+ /usr/include/x86_64-linux-gnu/bits/posix2_lim.h \
+ /usr/include/x86_64-linux-gnu/bits/xopen_lim.h \
+ ../../binutils-2.23/gas/dwarf2dbg.h ../../binutils-2.23/gas/as.h \
+ ../../binutils-2.23/gas/write.h ../../binutils-2.23/gas/bit_fix.h \
+ ../../binutils-2.23/gas/frags.h ../../binutils-2.23/gas/hash.h \
+ ../../binutils-2.23/gas/read.h ../../binutils-2.23/gas/symbols.h \
+ ../../binutils-2.23/gas/tc.h ../../binutils-2.23/gas/obj.h \
+ ../../binutils-2.23/gas/listing.h \
+ ../../binutils-2.23/gas/../include/safe-ctype.h /usr/include/ctype.h \
+ ../../binutils-2.23/gas/subsegs.h \
+ ../../binutils-2.23/gas/../include/obstack.h \
+ ../../binutils-2.23/gas/dw2gencfi.h \
+ ../../binutils-2.23/gas/../include/dwarf2.h \
+ ../../binutils-2.23/gas/../include/dwarf2.def \
+ ../../binutils-2.23/gas/../include/elf/x86-64.h \
+ ../../binutils-2.23/gas/../include/elf/reloc-macros.h \
+ ../../binutils-2.23/gas/../opcodes/i386-init.h \
+ ../../binutils-2.23/gas/config/tc-i386-intel.c
+
+/usr/include/stdc-predef.h:
+
+/usr/include/x86_64-linux-gnu/bits/predefs.h:
+
+../../binutils-2.23/gas/as.h:
+
+../../binutils-2.23/gas/../include/alloca-conf.h:
+
+config.h:
+
+/usr/include/alloca.h:
+
+/usr/include/features.h:
+
+/usr/include/x86_64-linux-gnu/sys/cdefs.h:
+
+/usr/include/x86_64-linux-gnu/bits/wordsize.h:
+
+/usr/include/x86_64-linux-gnu/gnu/stubs.h:
+
+/usr/include/x86_64-linux-gnu/gnu/stubs-64.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h:
+
+/usr/include/stdio.h:
+
+/usr/include/x86_64-linux-gnu/bits/types.h:
+
+/usr/include/x86_64-linux-gnu/bits/typesizes.h:
+
+/usr/include/libio.h:
+
+/usr/include/_G_config.h:
+
+/usr/include/wchar.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/4.8/include/stdarg.h:
+
+/usr/include/x86_64-linux-gnu/bits/stdio_lim.h:
+
+/usr/include/x86_64-linux-gnu/bits/sys_errlist.h:
+
+/usr/include/x86_64-linux-gnu/bits/stdio.h:
+
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:
+
+/usr/include/string.h:
+
+/usr/include/xlocale.h:
+
+/usr/include/x86_64-linux-gnu/bits/string.h:
+
+/usr/include/x86_64-linux-gnu/bits/string2.h:
+
+/usr/include/endian.h:
+
+/usr/include/x86_64-linux-gnu/bits/endian.h:
+
+/usr/include/x86_64-linux-gnu/bits/byteswap.h:
+
+/usr/include/x86_64-linux-gnu/bits/byteswap-16.h:
+
+/usr/include/stdlib.h:
+
+/usr/include/x86_64-linux-gnu/bits/string3.h:
+
+/usr/include/strings.h:
+
+/usr/include/x86_64-linux-gnu/bits/waitflags.h:
+
+/usr/include/x86_64-linux-gnu/bits/waitstatus.h:
+
+/usr/include/x86_64-linux-gnu/sys/types.h:
+
+/usr/include/time.h:
+
+/usr/include/x86_64-linux-gnu/sys/select.h:
+
+/usr/include/x86_64-linux-gnu/bits/select.h:
+
+/usr/include/x86_64-linux-gnu/bits/sigset.h:
+
+/usr/include/x86_64-linux-gnu/bits/time.h:
+
+/usr/include/x86_64-linux-gnu/bits/select2.h:
+
+/usr/include/x86_64-linux-gnu/sys/sysmacros.h:
+
+/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:
+
+/usr/include/x86_64-linux-gnu/bits/stdlib-float.h:
+
+/usr/include/x86_64-linux-gnu/bits/stdlib.h:
+
+/usr/include/unistd.h:
+
+/usr/include/x86_64-linux-gnu/bits/posix_opt.h:
+
+/usr/include/x86_64-linux-gnu/bits/environments.h:
+
+/usr/include/x86_64-linux-gnu/bits/confname.h:
+
+../../binutils-2.23/gas/../include/getopt.h:
+
+/usr/include/x86_64-linux-gnu/bits/unistd.h:
+
+/usr/include/errno.h:
+
+/usr/include/x86_64-linux-gnu/bits/errno.h:
+
+/usr/include/linux/errno.h:
+
+/usr/include/x86_64-linux-gnu/asm/errno.h:
+
+/usr/include/asm-generic/errno.h:
+
+/usr/include/asm-generic/errno-base.h:
+
+../../binutils-2.23/gas/../include/ansidecl.h:
+
+../bfd/bfd.h:
+
+../../binutils-2.23/gas/../include/symcat.h:
+
+/usr/include/x86_64-linux-gnu/sys/stat.h:
+
+/usr/include/x86_64-linux-gnu/bits/stat.h:
+
+../../binutils-2.23/gas/../include/libiberty.h:
+
+../../binutils-2.23/gas/../include/ansidecl.h:
+
+../../binutils-2.23/gas/../include/progress.h:
+
+../../binutils-2.23/gas/../include/fopen-same.h:
+
+../../binutils-2.23/gas/asintl.h:
+
+/usr/include/locale.h:
+
+/usr/include/x86_64-linux-gnu/bits/locale.h:
+
+../../binutils-2.23/gas/flonum.h:
+
+../../binutils-2.23/gas/bignum.h:
+
+../../binutils-2.23/gas/expr.h:
+
+targ-env.h:
+
+../../binutils-2.23/gas/config/te-generic.h:
+
+obj-format.h:
+
+../../binutils-2.23/gas/config/obj-elf.h:
+
+../../binutils-2.23/gas/../bfd/elf-bfd.h:
+
+../../binutils-2.23/gas/../include/elf/common.h:
+
+../../binutils-2.23/gas/../include/elf/external.h:
+
+../../binutils-2.23/gas/../include/elf/internal.h:
+
+../../binutils-2.23/gas/../include/bfdlink.h:
+
+targ-cpu.h:
+
+../../binutils-2.23/gas/config/tc-i386.h:
+
+../../binutils-2.23/gas/../opcodes/i386-opc.h:
+
+../../binutils-2.23/gas/../include/opcode/i386.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed/limits.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed/syslimits.h:
+
+/usr/include/limits.h:
+
+/usr/include/x86_64-linux-gnu/bits/posix1_lim.h:
+
+/usr/include/x86_64-linux-gnu/bits/local_lim.h:
+
+/usr/include/linux/limits.h:
+
+/usr/include/x86_64-linux-gnu/bits/posix2_lim.h:
+
+/usr/include/x86_64-linux-gnu/bits/xopen_lim.h:
+
+../../binutils-2.23/gas/dwarf2dbg.h:
+
+../../binutils-2.23/gas/as.h:
+
+../../binutils-2.23/gas/write.h:
+
+../../binutils-2.23/gas/bit_fix.h:
+
+../../binutils-2.23/gas/frags.h:
+
+../../binutils-2.23/gas/hash.h:
+
+../../binutils-2.23/gas/read.h:
+
+../../binutils-2.23/gas/symbols.h:
+
+../../binutils-2.23/gas/tc.h:
+
+../../binutils-2.23/gas/obj.h:
+
+../../binutils-2.23/gas/listing.h:
+
+../../binutils-2.23/gas/../include/safe-ctype.h:
+
+/usr/include/ctype.h:
+
+../../binutils-2.23/gas/subsegs.h:
+
+../../binutils-2.23/gas/../include/obstack.h:
+
+../../binutils-2.23/gas/dw2gencfi.h:
+
+../../binutils-2.23/gas/../include/dwarf2.h:
+
+../../binutils-2.23/gas/../include/dwarf2.def:
+
+../../binutils-2.23/gas/../include/elf/x86-64.h:
+
+../../binutils-2.23/gas/../include/elf/reloc-macros.h:
+
+../../binutils-2.23/gas/../opcodes/i386-init.h:
+
+../../binutils-2.23/gas/config/tc-i386-intel.c:

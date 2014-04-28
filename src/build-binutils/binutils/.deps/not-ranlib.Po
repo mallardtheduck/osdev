@@ -1,0 +1,6 @@
+not-ranlib.o: ../../binutils-2.23/binutils/not-ranlib.c \
+ /usr/include/stdc-predef.h /usr/include/x86_64-linux-gnu/bits/predefs.h
+
+/usr/include/stdc-predef.h:
+
+/usr/include/x86_64-linux-gnu/bits/predefs.h:

@@ -1,0 +1,3 @@
+GCC_CFLAGS = -g -O2 -DIN_GCC -DCROSS_DIRECTORY_STRUCTURE  -W -Wall -Wno-narrowing -Wwrite-strings -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition  -isystem ./include 
+INHIBIT_LIBC_CFLAGS = -Dinhibit_libc
+TARGET_SYSTEM_ROOT = 

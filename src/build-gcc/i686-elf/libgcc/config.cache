@@ -1,0 +1,56 @@
+# This file is a shell script that caches the results of configure
+# tests run on this system so they can be shared between configure
+# scripts and configure runs, see configure's option --config-cache.
+# It is not useful on other systems.  If it contains results you don't
+# want to keep, you may remove or edit it.
+#
+# config.status only pays attention to the cache file if you give it
+# the --recheck option to rerun configure.
+#
+# `ac_cv_env_foo' variables (set or unset) will be overridden when
+# loading this file, other *unset* `ac_cv_foo' will be assigned the
+# following values.
+
+ac_cv_build=${ac_cv_build=x86_64-unknown-linux-gnu}
+ac_cv_c_compiler_gnu=${ac_cv_c_compiler_gnu=yes}
+ac_cv_env_CC_set=set
+ac_cv_env_CC_value='/home/stuartb/Projects/os/src/build-gcc/./gcc/xgcc -B/home/stuartb/Projects/os/src/build-gcc/./gcc/ -B/home/stuartb/Projects/os/cross/i686-elf/bin/ -B/home/stuartb/Projects/os/cross/i686-elf/lib/ -isystem /home/stuartb/Projects/os/cross/i686-elf/include -isystem /home/stuartb/Projects/os/cross/i686-elf/sys-include   '
+ac_cv_env_CFLAGS_set=set
+ac_cv_env_CFLAGS_value='-g -O2'
+ac_cv_env_CPPFLAGS_set=set
+ac_cv_env_CPPFLAGS_value=
+ac_cv_env_CPP_set=
+ac_cv_env_CPP_value=
+ac_cv_env_LDFLAGS_set=set
+ac_cv_env_LDFLAGS_value=
+ac_cv_env_LIBS_set=
+ac_cv_env_LIBS_value=
+ac_cv_env_build_alias_set=set
+ac_cv_env_build_alias_value=x86_64-unknown-linux-gnu
+ac_cv_env_host_alias_set=set
+ac_cv_env_host_alias_value=i686-elf
+ac_cv_env_target_alias_set=set
+ac_cv_env_target_alias_value=i686-elf
+ac_cv_host=${ac_cv_host=i686-pc-elf}
+ac_cv_objext=${ac_cv_objext=o}
+ac_cv_prog_AR=${ac_cv_prog_AR=/home/stuartb/Projects/os/cross/i686-elf/bin/ar}
+ac_cv_prog_AWK=${ac_cv_prog_AWK=gawk}
+ac_cv_prog_CC=${ac_cv_prog_CC='/home/stuartb/Projects/os/src/build-gcc/./gcc/xgcc -B/home/stuartb/Projects/os/src/build-gcc/./gcc/ -B/home/stuartb/Projects/os/cross/i686-elf/bin/ -B/home/stuartb/Projects/os/cross/i686-elf/lib/ -isystem /home/stuartb/Projects/os/cross/i686-elf/include -isystem /home/stuartb/Projects/os/cross/i686-elf/sys-include   '}
+ac_cv_prog_CPP=${ac_cv_prog_CPP='/home/stuartb/Projects/os/src/build-gcc/./gcc/xgcc -B/home/stuartb/Projects/os/src/build-gcc/./gcc/ -B/home/stuartb/Projects/os/cross/i686-elf/bin/ -B/home/stuartb/Projects/os/cross/i686-elf/lib/ -isystem /home/stuartb/Projects/os/cross/i686-elf/include -isystem /home/stuartb/Projects/os/cross/i686-elf/sys-include    -E'}
+ac_cv_prog_LIPO=${ac_cv_prog_LIPO=i686-elf-lipo}
+ac_cv_prog_NM=${ac_cv_prog_NM=/home/stuartb/Projects/os/src/build-gcc/./gcc/nm}
+ac_cv_prog_RANLIB=${ac_cv_prog_RANLIB=/home/stuartb/Projects/os/cross/i686-elf/bin/ranlib}
+ac_cv_prog_STRIP=${ac_cv_prog_STRIP=/home/stuartb/Projects/os/cross/i686-elf/bin/strip}
+ac_cv_prog_cc_c89=${ac_cv_prog_cc_c89=no}
+ac_cv_prog_cc_g=${ac_cv_prog_cc_g=yes}
+ac_cv_sizeof_double=${ac_cv_sizeof_double=8}
+ac_cv_sizeof_long_double=${ac_cv_sizeof_long_double=12}
+acl_cv_prog_gnu_ld=${acl_cv_prog_gnu_ld=yes}
+gcc_cv_have_cc_tls=${gcc_cv_have_cc_tls=yes}
+gcc_cv_use_emutls=${gcc_cv_use_emutls=no}
+libgcc_cv_cfi=${libgcc_cv_cfi=yes}
+libgcc_cv_dfp=${libgcc_cv_dfp=no}
+libgcc_cv_fixed_point=${libgcc_cv_fixed_point=no}
+libgcc_cv_hidden_visibility_attribute=${libgcc_cv_hidden_visibility_attribute=yes}
+libgcc_cv_init_priority=${libgcc_cv_init_priority=yes}
+libgcc_cv_lib_sjlj_exceptions=${libgcc_cv_lib_sjlj_exceptions=no}

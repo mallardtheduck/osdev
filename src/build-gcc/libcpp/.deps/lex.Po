@@ -1,0 +1,48 @@
+lex.o: ../../gcc-4.8.1/libcpp/lex.c config.h \
+ ../../gcc-4.8.1/libcpp/system.h \
+ ../../gcc-4.8.1/libcpp/../include/filenames.h \
+ ../../gcc-4.8.1/libcpp/../include/hashtab.h \
+ ../../gcc-4.8.1/libcpp/../include/ansidecl.h \
+ ../../gcc-4.8.1/libcpp/../include/libiberty.h \
+ ../../gcc-4.8.1/libcpp/../include/safe-ctype.h \
+ ../../gcc-4.8.1/libcpp/include/cpplib.h \
+ ../../gcc-4.8.1/libcpp/include/symtab.h \
+ ../../gcc-4.8.1/libcpp/../include/obstack.h \
+ ../../gcc-4.8.1/libcpp/include/line-map.h \
+ ../../gcc-4.8.1/libcpp/internal.h \
+ ../../gcc-4.8.1/libcpp/include/symtab.h \
+ ../../gcc-4.8.1/libcpp/include/cpp-id-data.h \
+ ../../gcc-4.8.1/libcpp/include/cpplib.h \
+ ../../gcc-4.8.1/libcpp/../gcc/config/i386/cpuid.h
+
+config.h:
+
+../../gcc-4.8.1/libcpp/system.h:
+
+../../gcc-4.8.1/libcpp/../include/filenames.h:
+
+../../gcc-4.8.1/libcpp/../include/hashtab.h:
+
+../../gcc-4.8.1/libcpp/../include/ansidecl.h:
+
+../../gcc-4.8.1/libcpp/../include/libiberty.h:
+
+../../gcc-4.8.1/libcpp/../include/safe-ctype.h:
+
+../../gcc-4.8.1/libcpp/include/cpplib.h:
+
+../../gcc-4.8.1/libcpp/include/symtab.h:
+
+../../gcc-4.8.1/libcpp/../include/obstack.h:
+
+../../gcc-4.8.1/libcpp/include/line-map.h:
+
+../../gcc-4.8.1/libcpp/internal.h:
+
+../../gcc-4.8.1/libcpp/include/symtab.h:
+
+../../gcc-4.8.1/libcpp/include/cpp-id-data.h:
+
+../../gcc-4.8.1/libcpp/include/cpplib.h:
+
+../../gcc-4.8.1/libcpp/../gcc/config/i386/cpuid.h:

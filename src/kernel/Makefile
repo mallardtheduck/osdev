@@ -1,0 +1,55 @@
+BUILD-AS := i686-elf-as
+BUILD-AS-OPTIONS := 
+BUILD-CPP := i686-elf-g++
+BUILD-CPP-FLAGS :=  -c
+BUILD-CPP-OPTIONS := -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti
+BUILD-C := i686-elf-gcc
+BUILD-C-FLAGS := -c
+BUILD-C-OPTIONS := -ffreestanding -O2 -Wall -Wextra
+LINK := i686-elf-gcc
+LINK-FLAGS := -T linker.ld -o myos.bin -ffreestanding -O2 -nostdlib
+LINK-OPTIONS := -lgcc
+
+BOOTFILE := boot.o
+ASFILES := $(shell find . -type f -name "*.s" -not -name boot.s)
+CFILES := $(shell find . -type f -name "*.c")
+CPPFILES := $(shell find . -type f -name "*.cpp")
+
+ASOBJS := $(ASFILES:.s=.o)
+COBJS := $(CFILES:.c=.o)
+CPPOBJS := $(CPPFILES:.cpp=.o)
+
+CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
+CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
+
+all: myos.iso Makefile
+
+clean: dummy.delete
+
+dummy.delete:
+	-@$(RM) *.o
+	-@$(RM) myos.iso
+	-@$(RM) myos.bin
+
+myos.iso: myos.bin
+	@mkdir -p isodir
+	@mkdir -p isodir/boot
+	@cp myos.bin isodir/boot/myos.bin
+	@mkdir -p isodir/boot/grub
+	@cp grub.cfg isodir/boot/grub/grub.cfg
+	grub-mkrescue -o myos.iso isodir
+
+myos.bin: boot.o $(ASOBJS) $(COBJS) $(CPPOBJS) linker.ld
+	$(LINK) $(LINK-FLAGS) boot.o $(ASOBJS) $(CPPOBJS) $(COBJS) $(LINK-OPTIONS)
+
+boot.o: boot.s Makefile
+	$(BUILD-AS) $< -o $@ $(BUILD-AS-OPTIONS)
+
+.s.o: %.s Makefile
+	$(BUILD-AS) $< -o $@ $(BUILD-AS-OPTIONS)
+
+.c.o: %.c Makefile
+	$(BUILD-C) -MMD -MP $(BUILD-C-FLAGS) $< -o $@ $(BUILD-C-OPTIONS)
+
+.cpp.o: %.cpp Makefile
+	$(BUILD-CPP) -MMD -MP $(BUILD-CPP-FLAGS) $< -o $@ $(BUILD-CPP-OPTIONS)
