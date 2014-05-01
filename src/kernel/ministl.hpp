@@ -168,7 +168,7 @@ class vector
                 // Move Elements down;
                 data[dst] = data[src];
             }
-            unsigned int count = start - end;
+            unsigned int count = end - start;
             for(;count != 0; --count)
             {
                 // Remove old Elements
