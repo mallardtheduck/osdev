@@ -8,6 +8,7 @@ void *memset(void *s, int c, size_t n);
 void panic(char *msg);
 int strcmp(const char *s1, const char *s2);
 char *strncpy(char *dest, const char *src, size_t size);
+void* memcpy(void* dest, const void* src, size_t count);
  
 inline void *operator new(size_t size)
 {
@@ -27,6 +28,12 @@ inline void operator delete(void *p)
 inline void operator delete[](void *p)
 {
     free(p);
+}
+
+template<typename T> void *operator new (size_t, T* ptr)
+{
+	//*ptr = T();
+	return ptr;
 }
 
 #endif

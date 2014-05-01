@@ -119,3 +119,8 @@ uint16_t pic_get_isr(void)
 {
     return __pic_get_irq_reg(PIC_READ_ISR);
 }
+
+void PIC_init(){
+	dbgout("PIC: Init\n");
+	PIC_remap(0x20, 0xA0);
+}

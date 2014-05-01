@@ -43,7 +43,7 @@ static inline void farpokeb(uint16_t sel, void* off, uint8_t v)
 }
 
 
-static inline void io_wait(void)
+static inline void io_wait()
 {
     /* Port 0x80 is used for 'checkpoints' during POST. */
     /* The Linux kernel seems to think it is free for use :-/ */

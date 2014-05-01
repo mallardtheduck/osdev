@@ -80,6 +80,16 @@ char *strncpy(char *dest, const char *src, size_t size)
         return dest; 
 }
 
+void* memcpy(void* dest, const void* src, size_t count) {
+        char* dst8 = (char*)dest;
+        char* src8 = (char*)src;
+
+        while (count--) {
+            *dst8++ = *src8++;
+        }
+        return dest;
+}
+
 void panic(char *msg){
 	printf("PANIC: %s", msg);
 	dbgout("PANIC: ");dbgout(msg);

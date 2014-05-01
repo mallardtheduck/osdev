@@ -1,5 +1,5 @@
-#ifndef _IDH_H
-#define _IDT_H
+#ifndef _IDT_HPP
+#define _IDT_HPP
 
 /* CPU-generated interrupt handler stubs; declared in interrupt.s */
 extern "C" void isr0(); /* div by zero */
@@ -38,21 +38,17 @@ extern "C" void isr30();
 extern "C" void isr31();
 
 /* Vectors 32 to 256 are configurable by us */
+extern "C" void irq0();
 
 /* System call interrupt vector */
 #define SYSCALL 128 /* 0x80 */
 extern "C" void isr128();
 
-typedef struct
-{
-    uint32_t eax, ecx, edx, ebx, esp, ebp, esi, edi;
-    uint32_t interrupt_number;
-    uint32_t error_code;
-    uint32_t eip;
-    uint32_t cs;
-    uint32_t eflags;
-    uint32_t oresp;
-    uint32_t ss;
-} __attribute__((packed)) handler_context_t;
+struct regs {
+	uint32_t gs, fs, es, ds;
+	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
+	uint32_t int_no, err_code;
+	uint32_t eip, cs, eflags, useresp, ss;
+} __attribute__((packed));
 
 #endif

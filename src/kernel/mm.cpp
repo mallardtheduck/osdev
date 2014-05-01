@@ -74,6 +74,7 @@ void *mm_alloc(size_t bytes){
 		if((!node && sizeleft > bytes) //Cases where allocation is at beginning of region.
 			|| (node && (char*)node - (char*)mm_regions[i].base >= bytes)){
 			mm_allocation *alloc=(mm_allocation*)mm_regions[i].base;
+			memset(alloc, 0xAA, bytes);
 			alloc->next=node;
 			alloc->prev=NULL;
 			alloc->reg=&mm_regions[i];
@@ -86,6 +87,7 @@ void *mm_alloc(size_t bytes){
 			if(!node->next && sizeleft - node->size >= bytes 
 				|| node->next && (size_t)node->next - (size_t)((char*)node + node->size) >= bytes){
 				mm_allocation *alloc=(mm_allocation*)((char*)node + node->size);
+				memset(alloc, 0xAA, bytes);
 				alloc->next=node->next;
 				alloc->prev=node;
 				alloc->reg=&mm_regions[i];
@@ -112,7 +114,7 @@ void mm_free(void *ptr){
 	if(!(alloc->reg->base <= alloc && (void*)alloc->reg->base + alloc->reg->size >= (void*)alloc + alloc->size)){
 		dbgpf("MM: Pointer %x, Region: base: %x size: %i, Allocation: base: %x size: %i\n",
 			ptr, alloc->reg->base, alloc->reg->size, alloc, alloc->size);
-		panic("(MM) sPointer passed to mm_free fails sanity check!\n");
+		panic("(MM) Pointer passed to mm_free fails sanity check!\n");
 	}
 	memset(alloc->bytes, 0xFE, alloc->size);
 	if(alloc->prev){

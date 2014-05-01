@@ -34,6 +34,9 @@ extern "C"{
 
 #include "util.hpp"
 #include "mm.hpp"
+#include "idt.hpp"
+#include "pic.hpp"
+#include "scheduler.hpp"
 
 void GDT_init();
 void IDT_init();

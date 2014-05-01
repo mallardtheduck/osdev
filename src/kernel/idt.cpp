@@ -1,5 +1,5 @@
 #include "kernel.hpp"
-#include "idt.h"
+#include "idt.hpp"
 
 /* Defines an IDT entry */
 struct idt_entry
@@ -16,6 +16,19 @@ struct idt_ptr
     uint16_t limit;
     uint32_t base;
 } __attribute__((packed));
+
+struct handler_context_t
+{
+    uint32_t eax, ecx, edx, ebx, esp, ebp, esi, edi;
+    uint32_t interrupt_number;
+    uint32_t error_code;
+    uint32_t eip;
+    uint32_t cs;
+    uint32_t eflags;
+    uint32_t oresp;
+    uint32_t ss;
+} __attribute__((packed));
+
 
 /* Declare an IDT of 256 entries. Although we will only use the
 *  first 32 entries in this tutorial, the rest exists as a bit
@@ -93,18 +106,46 @@ void IDT_init()
 	idt_set_gate(31, (uint32_t)isr31, 0x08, 0x8E);
 	idt_set_gate(128, (uint32_t)isr128, 0x08, 0x8E);
 
+	idt_set_gate(32, (uint32_t)irq0, 0x08, 0x8E);
+
 	/* Points the processor's internal register to the new IDT */
 	idt_flush();
 }
 
+void out_int_info(const handler_context_t ctx){
+	dbgpf("INTERRUPT %x ERRCODE: %x\n", ctx.interrupt_number, ctx.error_code);
+	dbgpf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
+	dbgpf("EDI: %x ESI: %x EBP: %x ESP: %x\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
+	dbgpf("EIP: %x CS: %x SS: %x\n", ctx.eip, ctx.cs, ctx.ss);
+	dbgpf("EFLAGS: %x ORESP: %x\n", ctx.eflags, ctx.oresp);
+}
+
 extern "C" void isr_handler(handler_context_t ctx){
-	//panic("INTERRUPT!");
 	dbgpf("\nInterrupt %i at %x!\n", ctx.interrupt_number, ctx.eip);
 	
-	if(ctx.interrupt_number==0x0D) panic("General Protection Fault.\n");
+	if(ctx.interrupt_number==0x0D){
+		out_int_info(ctx);
+		panic("General Protection Fault.\n");
+	}
 	else if(ctx.interrupt_number==0x08){
-		dbgpf("Error code: 0x%x\n", ctx.error_code);
+		out_int_info(ctx);
 		panic("Double fault.\n"); 
 	}
 	else if(ctx.interrupt_number==SYSCALL) printf("Syscall recieved.\n");
+	out_int_info(ctx);
+}
+
+void irq_ack(size_t irq_no) {
+	if (irq_no >= 12) {
+		outb(0xA0, 0x20);
+	}
+	outb(0x20, 0x20);
+}
+
+extern "C" void irq_handler(regs *r) {
+	int irq=r->int_no-32;
+	dbgpf("IDT: IRQ %i\n", irq);
+	if(irq==0) sch_isr(r);
+	irq_ack(irq);
+	dbgpf("IDT: Responded to IRQ %i\n", irq);
 }
