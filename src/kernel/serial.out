@@ -1,21 +1,403 @@
+i686-elf-g++ -MMD -MP -c scheduler.cpp -o scheduler.o -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti -g
+i686-elf-gcc -T linker.ld -o myos.bin -ffreestanding -O2 -nostdlib -g boot.o ./gdtidt.o ./cpu.o ./gdt.o ./filesystems.o ./scheduler.o ./console.o ./util.o ./serdbg.o ./pic.o ./mm.o ./liballoc_hooks.o ./idt.o ./initfs/initfs.o ./initfs/initfs_data.o ./kernel.o ./io.o ./printf.o ./liballoc.o -lgcc
+grub-mkrescue -o myos.iso isodir
+Enabling BIOS support ...
 Serial debugging enabled.
 GDT init
 IDT init
 Terminal init
 MM: Init
-MM: Kernel start: 0x100000 end: 0x10c2b0
-MM: Usable region base: 0x0 size: 636KB
+MM: Kernel start: 0x100000 end: 0x10d2b0
+MM: Usable region base: 0x0 size: 639KB
 MM: Ignoring low 1MB RAM
-MM: Usable region base: 0x100000 size: 31680KB
+MM: Usable region base: 0x100000 size: 130040KB
 MM: Kernel is in this region.
 MM: clearmem
-MM: Using 31631KB at 0x10c2b0
-MM: Region 0 remaining: 31631KB
-MM: Region 0 remaining: 25KB
-MM: Region 0 remaining: 31630KB
+MM: Using 129987KB at 0x10d2b0
+MM: Region 0 remaining: 129987KB
+MM: Region 0 remaining: 61KB
+MM: Region 0 remaining: 129982KB
 MM: Allocation test completed.
-MM: Region 0 remaining: 31630KB
+MM: Region 0 remaining: 129982KB
+PIC: Init
+FS: Init
+INITFS: Files in InitFS: 2
+INITFS: 'NULL.FILE' 0 bytes
+INITFS: 'CONFIG.INI' 89 bytes
+INITFS: Mounted.
+FS: Mounted NULL on INIT (INITFS).
+INITFS: Stat ''.
+INITFS: Stat root.
+FS: Root size: 2, type: 0x1.
+FS: Opened directory INITFS:.
+FS: NULL.FILE 0 0x0
+FS: CONFIG.INI 89 0x0
+INITFS: No such directory entry.
+FS: Closed a directory.
+SCH: Init
+SCH: Init complete.
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+SCH: New thread: 1
+IDT: Responded to IRQ 0
+SCH: Starting new thread 1 at 100ee0 (param 0) [12e760].
+IDT: IRQ 0
+SCH: Schedule. Current thread: 1, total threads: 4
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: Starting new thread 2 at 100de0 (param 14) [14e780].
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: Starting new thread 3 at 100e20 (param 0) [16e7a0].
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+Thread 2 is runnable. (babe)
+SCH: New thread: 2
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 1 ENDING
+IDT: IRQ 0
+SCH: Schedule. Current thread: 2, total threads: 4
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 4
+Thread 0 is runnable. (f00d)
+SCH: New thread: 0
+IDT: Responded to IRQ 0
+IDT: IRQ 0
+SCH: Schedule. Current thread: 0, total threads: 4
+SCH: New thread: 1
+IDT: Responded to IRQ 0
+SCH: Reaped 0.
+IDT: IRQ 0
+SCH: Schedule. Current thread: 1, total threads: 5
+Thread 3 is runnable. (babe)
+SCH: New thread: 3
+IDT: Responded to IRQ 0
+SCH: TEST THREAD 2
+IDT: IRQ 0
+SCH: Schedule. Current thread: 3, total threads: 5
+SCH: New thread: 4
+IDT: Responded to IRQ 0
 
-Interrupt 8 at 8!
-Error code: 0x100bb0
-PANIC: Double fault.
+Interrupt 13 at 100176!
+INTERRUPT d ERRCODE: aaa8
+EAX: 0 EBX: 10d140 ECX: 0 EDX: 0
+EDI: 108580 ESI: 3fd EBP: 3fd ESP: 16e7a0
+EIP: 100176 CS: 8 SS: aaaaaaaa
+EFLAGS: 200046 ORESP: aaaaaaaa
+PANIC: General Protection Fault.

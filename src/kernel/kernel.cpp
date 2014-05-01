@@ -13,9 +13,11 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int magic)
 	init_cpu();
 	mm_init(mbd);
 	disable_pic();
+	PIC_init();
 	enable_interrupts();
 	fs_init();
+	sch_init();
 	printf("Ready.");
-	asm volatile("hlt");
+	while(true) asm volatile("hlt");
 	panic("Kernel endpoint reached!\n");
 }

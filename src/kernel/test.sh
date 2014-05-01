@@ -1,1 +1,2 @@
-qemu-system-i386 -cdrom myos.iso -m 128 -serial stdio
+make &&
+qemu-system-i386 -s -cdrom myos.iso -m 128 -serial stdio
