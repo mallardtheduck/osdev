@@ -1,1509 +1,0 @@
-###Driver
--CLASSPATHJava Separate Alias(fclasspath=)
--all-warningsAda AdaWhy AdaSCIL Alias(Wall)
--all-warningsC ObjC C++ ObjC++ Warning Alias(Wall)
--all-warningsFortran Alias(Wall)
--all-warningsJava Alias(Wall)
--ansiC ObjC C++ ObjC++ Alias(ansi)
--assembleDriver Alias(S)
--assertC ObjC C++ ObjC++ Separate Alias(A) MissingArgError(assertion missing after %qs)
--assertFortran Separate Alias(A)
--assert=C ObjC C++ ObjC++ Joined Alias(A) MissingArgError(assertion missing after %qs)
--assert=Fortran Joined Alias(A)
--bootclasspathJava Separate Alias(fbootclasspath=)
--classpathJava Separate Alias(fclasspath=)
--commentsC ObjC C++ ObjC++ Alias(C)
--commentsFortran Alias(C)
--comments-in-macrosC ObjC C++ ObjC++ Alias(CC)
--comments-in-macrosFortran Alias(CC)
--compileDriver Alias(c)
--coverageDriver Alias(coverage)
--debugCommon Alias(g)
--define-macroC ObjC C++ ObjC++ Separate Alias(D) MissingArgError(macro name missing after %qs)
--define-macroFortran Separate Alias(D)
--define-macro=C ObjC C++ ObjC++ Joined Alias(D) MissingArgError(macro name missing after %qs)
--define-macro=Fortran Joined Alias(D)
--dependenciesC ObjC C++ ObjC++ Alias(M)
--dependenciesFortran Alias(M)
--dependenciesJava Alias(M)
--dumpC ObjC C++ ObjC++ Separate Alias(d)
--dumpCommon Separate Alias(d)
--dumpFortran Separate Alias(d)
--dump=C ObjC C++ ObjC++ Joined Alias(d)
--dump=Common Joined Alias(d)
--dump=Fortran Joined Alias(d)
--dumpbaseCommon Separate Alias(dumpbase)
--dumpdirCommon Separate Alias(dumpdir)
--encodingJava Separate Alias(fencoding=)
--entryDriver Separate Alias(e)
--entry=Driver Joined Alias(e)
--extdirsJava Separate Alias(fextdirs=)
--extra-warningsCommon Warning Alias(Wextra)
--for-assemblerDriver Separate Alias(Xassembler)
--for-assembler=Driver JoinedOrMissing Alias(Xassembler)
--for-linkerDriver Separate Alias(Xlinker)
--for-linker=Driver JoinedOrMissing Alias(Xlinker)
--force-linkDriver Separate Alias(u)
--force-link=Driver Joined Alias(u)
--helpCommon Driver Var(help_flag)Display this information
--help=Common Driver Report Joined--help=<class>	Display descriptions of a specific class of options.  <class> is one or more of optimizers, target, warnings, undocumented, params
--imacrosC ObjC C++ ObjC++ Separate Alias(imacros) MissingArgError(missing filename after %qs)
--imacros=C ObjC C++ ObjC++ Joined Alias(imacros) MissingArgError(missing filename after %qs)
--includeC ObjC C++ ObjC++ Separate Alias(include) MissingArgError(missing filename after %qs)
--include-barrierAda AdaWhy AdaSCIL Alias(I, -)
--include-barrierC ObjC C++ ObjC++ Alias(I, -)
--include-barrierFortran Alias(I, -)
--include-directoryAda AdaWhy AdaSCIL Separate Alias(I)
--include-directoryC ObjC C++ ObjC++ Separate Alias(I) MissingArgError(missing path after %qs)
--include-directoryFortran Separate Alias(I)
--include-directoryJava Separate Alias(I)
--include-directory-afterC ObjC C++ ObjC++ Separate Alias(idirafter) MissingArgError(missing path after %qs)
--include-directory-afterFortran Separate Alias(idirafter)
--include-directory-after=C ObjC C++ ObjC++ Joined Alias(idirafter) MissingArgError(missing path after %qs)
--include-directory-after=Fortran Joined Alias(idirafter)
--include-directory=Ada AdaWhy AdaSCIL Joined Alias(I)
--include-directory=C ObjC C++ ObjC++ Joined Alias(I) MissingArgError(missing path after %qs)
--include-directory=Fortran Joined Alias(I)
--include-directory=Java Joined Alias(I)
--include-prefixC ObjC C++ ObjC++ Separate Alias(iprefix)
--include-prefixFortran Separate Alias(iprefix)
--include-prefix=C ObjC C++ ObjC++ JoinedOrMissing Alias(iprefix)
--include-prefix=Fortran JoinedOrMissing Alias(iprefix)
--include-with-prefixC ObjC C++ ObjC++ Separate Alias(iwithprefix)
--include-with-prefix-afterC ObjC C++ ObjC++ Separate Alias(iwithprefix)
--include-with-prefix-after=C ObjC C++ ObjC++ JoinedOrMissing Alias(iwithprefix)
--include-with-prefix-beforeC ObjC C++ ObjC++ Separate Alias(iwithprefixbefore)
--include-with-prefix-before=C ObjC C++ ObjC++ JoinedOrMissing Alias(iwithprefixbefore)
--include-with-prefix=C ObjC C++ ObjC++ JoinedOrMissing Alias(iwithprefix)
--include=C ObjC C++ ObjC++ Joined Alias(include) MissingArgError(missing filename after %qs)
--languageDriver Separate Alias(x)
--language=Driver Joined Alias(x)
--library-directoryDriver Separate Alias(L)
--library-directory=Driver Joined Alias(L)
--no-canonical-prefixesDriver Alias(no-canonical-prefixes)
--no-integrated-cppDriver Alias(no-integrated-cpp)
--no-line-commandsC ObjC C++ ObjC++ Alias(P)
--no-line-commandsFortran Alias(P)
--no-standard-includesAda AdaWhy AdaSCIL Alias(nostdinc)
--no-standard-includesC ObjC C++ ObjC++ Alias(nostdinc)
--no-standard-includesFortran Alias(nostdinc)
--no-standard-librariesAda AdaWhy AdaSCIL Alias(nostdlib)
--no-standard-librariesDriver Alias(nostdlib)
--no-sysroot-suffixDriver Var(no_sysroot_suffix)
--no-warningsC ObjC C++ ObjC++ Alias(w)
--no-warningsCommon Alias(w)
--optimizeCommon Alias(O)
--outputC ObjC C++ ObjC++ Separate Alias(o)
--outputCommon Driver Separate Alias(o) MissingArgError(missing filename after %qs)
--outputFortran Separate Alias(o)
--output-class-directoryJava Separate Alias(foutput-class-dir=)
--output-class-directory=Java Joined Alias(foutput-class-dir=)
--output-pch=C ObjC C++ ObjC++ Joined Separate
--output=C ObjC C++ ObjC++ Joined Alias(o)
--output=Common Driver Joined Alias(o) MissingArgError(missing filename after %qs)
--output=Fortran Joined Alias(o)
--paramCommon Separate--param <param>=<value>	Set parameter <param> to value.  See below for a complete list of parameters
--param=Common Joined Alias(-param)
--pass-exit-codesDriver Alias(pass-exit-codes)
--pedanticC ObjC C++ ObjC++ Alias(pedantic)
--pedanticCommon Alias(Wpedantic)
--pedantic-errorsCommon Alias(pedantic-errors)
--pieDriver Alias(pie)
--pipeDriver Alias(pipe)
--prefixDriver Separate Alias(B)
--prefix=Driver JoinedOrMissing Alias(B)
--preprocessC ObjC C++ ObjC++ Undocumented Alias(E)
--preprocessDriver Alias(E)
--preprocessFortran Undocumented Alias(E)
--print-file-nameDriver Separate Alias(print-file-name=)
--print-file-name=Driver JoinedOrMissing Alias(print-file-name=)
--print-libgcc-file-nameDriver Alias(print-libgcc-file-name)
--print-missing-file-dependenciesC ObjC C++ ObjC++ Alias(MG)
--print-missing-file-dependenciesFortran Alias(MG)
--print-multi-directoryDriver Alias(print-multi-directory)
--print-multi-libDriver Alias(print-multi-lib)
--print-multi-os-directoryDriver Alias(print-multi-os-directory)
--print-multiarchDriver Alias(print-multiarch)
--print-prog-nameDriver Separate Alias(print-prog-name=)
--print-prog-name=Driver JoinedOrMissing Alias(print-prog-name=)
--print-search-dirsDriver Alias(print-search-dirs)
--print-sysrootDriver Alias(print-sysroot)
--print-sysroot-headers-suffixDriver Alias(print-sysroot-headers-suffix)
--profileCommon Alias(p)
--resourceJava Separate Alias(fcompile-resource=)
--resource=Java Joined Alias(fcompile-resource=)
--save-tempsDriver Alias(save-temps)
--sharedDriver Alias(shared)
--specsDriver Separate Alias(specs=)
--specs=Driver Joined Alias(specs=)
--staticDriver Alias(static)
--symbolicDriver Alias(symbolic)
--sysrootDriver Separate Alias(-sysroot=)
--sysroot=Driver JoinedOrMissing
--target-helpCommon DriverAlias for --help=target
--timeDriver Alias(time)
--trace-includesC ObjC C++ ObjC++ Alias(H)
--trace-includesFortran Alias(H)
--traditionalDriver Alias(traditional)
--traditional-cppC ObjC C++ ObjC++ Alias(traditional-cpp)
--trigraphsC ObjC C++ ObjC++ Alias(trigraphs)
--undefine-macroC ObjC C++ ObjC++ Separate Alias(U) MissingArgError(macro name missing after %qs)
--undefine-macroFortran Separate Alias(U)
--undefine-macro=C ObjC C++ ObjC++ Joined Alias(U) MissingArgError(macro name missing after %qs)
--undefine-macro=Fortran Joined Alias(U)
--user-dependenciesC ObjC C++ ObjC++ Alias(MM)
--user-dependenciesFortran Alias(MM)
--user-dependenciesJava Alias(MM)
--verboseCommon C ObjC C++ ObjC++ Alias(v)
--verboseDriver Alias(v)
--verboseFortran Alias(v)
--versionCommon Driver
--write-dependenciesC ObjC C++ ObjC++ NoDriverArg Separate Alias(MD) MissingArgError(missing filename after %qs)
--write-dependenciesFortran NoDriverArg Separate Alias(MD)
--write-user-dependenciesC ObjC C++ ObjC++ NoDriverArg Separate Alias(MMD) MissingArgError(missing filename after %qs)
--write-user-dependenciesFortran NoDriverArg Separate Alias(MMD)
-AC ObjC C++ ObjC++ Joined Separate MissingArgError(assertion missing after %qs)-A<question>=<answer>	Assert the <answer> to <question>.  Putting '-' before <question> disables the <answer> to <question>
-AFortran Joined Separate
-BDriver Joined Separate
-CC ObjC C++ ObjC++Do not discard comments
-CDriver
-CFortran
-CCC ObjC C++ ObjC++Do not discard comments in macro expansions
-CCFortran
-CLASSPATHJava Separate Alias(fclasspath=)
-DC ObjC C++ ObjC++ Joined Separate MissingArgError(macro name missing after %qs)-D<macro>[=<val>]	Define a <macro> with <val> as its value.  If just <macro> is given, <val> is taken to be 1
-DDriver Joined Separate
-DFortran Joined Separate
-EC ObjC C++ ObjC++ Undocumented Var(flag_preprocess_only)
-EDriver
-EFortran Undocumented
-EnumName(asm_dialect) Type(enum asm_dialect)Known assembler dialects (for use with the -masm-dialect= option):
-EnumName(calling_abi) Type(enum calling_abi)Known ABIs (for use with the -mabi= option):
-EnumName(cmodel) Type(enum cmodel)Known code models (for use with the -mcmodel= option):
-EnumName(diagnostic_prefixing_rule) Type(int)
-EnumName(excess_precision) Type(enum excess_precision) UnknownError(unknown excess precision style %qs)
-EnumName(fp_contract_mode) Type(enum fp_contract_mode) UnknownError(unknown floating point contraction style %qs)
-EnumName(fpmath_unit) Type(enum fpmath_unit)Valid arguments to -mfpmath=:
-EnumName(ira_algorithm) Type(enum ira_algorithm) UnknownError(unknown IRA algorithm %qs)
-EnumName(ira_region) Type(enum ira_region) UnknownError(unknown IRA region %qs)
-EnumName(ix86_veclibabi) Type(enum ix86_veclibabi)Known vectorization library ABIs (for use with the -mveclibabi= option):
-EnumName(pmode) Type(enum pmode)Known address mode (for use with the -maddress-mode= option):
-EnumName(stack_reuse_level) Type(enum stack_reuse_level) UnknownError(unknown Stack Reuse Level %qs)
-EnumName(stringop_alg) Type(enum stringop_alg)Valid arguments to -mstringop-strategy=:
-EnumName(symbol_visibility) Type(enum symbol_visibility) UnknownError(unrecognized visibility value %qs)
-EnumName(tls_dialect) Type(enum tls_dialect)Known TLS dialects (for use with the -mtls-dialect= option):
-EnumName(tls_model) Type(enum tls_model) UnknownError(unknown TLS model %qs)
-EnumValueEnum(asm_dialect) String(att) Value(ASM_ATT)
-EnumValueEnum(asm_dialect) String(intel) Value(ASM_INTEL)
-EnumValueEnum(calling_abi) String(ms) Value(MS_ABI)
-EnumValueEnum(calling_abi) String(sysv) Value(SYSV_ABI)
-EnumValueEnum(cmodel) String(32) Value(CM_32)
-EnumValueEnum(cmodel) String(kernel) Value(CM_KERNEL)
-EnumValueEnum(cmodel) String(large) Value(CM_LARGE)
-EnumValueEnum(cmodel) String(medium) Value(CM_MEDIUM)
-EnumValueEnum(cmodel) String(small) Value(CM_SMALL)
-EnumValueEnum(diagnostic_prefixing_rule) String(every-line) Value(DIAGNOSTICS_SHOW_PREFIX_EVERY_LINE)
-EnumValueEnum(diagnostic_prefixing_rule) String(once) Value(DIAGNOSTICS_SHOW_PREFIX_ONCE)
-EnumValueEnum(excess_precision) String(fast) Value(EXCESS_PRECISION_FAST)
-EnumValueEnum(excess_precision) String(standard) Value(EXCESS_PRECISION_STANDARD)
-EnumValueEnum(fp_contract_mode) String(fast) Value(FP_CONTRACT_FAST)
-EnumValueEnum(fp_contract_mode) String(off) Value(FP_CONTRACT_OFF)
-EnumValueEnum(fp_contract_mode) String(on) Value(FP_CONTRACT_OFF)
-EnumValueEnum(fpmath_unit) String(387) Value(FPMATH_387)
-EnumValueEnum(fpmath_unit) String(387+sse) Value({(enum fpmath_unit) (FPMATH_SSE | FPMATH_387)})
-EnumValueEnum(fpmath_unit) String(387,sse) Value({(enum fpmath_unit) (FPMATH_SSE | FPMATH_387)})
-EnumValueEnum(fpmath_unit) String(both) Value({(enum fpmath_unit) (FPMATH_SSE | FPMATH_387)})
-EnumValueEnum(fpmath_unit) String(sse) Value(FPMATH_SSE)
-EnumValueEnum(fpmath_unit) String(sse+387) Value({(enum fpmath_unit) (FPMATH_SSE | FPMATH_387)})
-EnumValueEnum(fpmath_unit) String(sse,387) Value({(enum fpmath_unit) (FPMATH_SSE | FPMATH_387)})
-EnumValueEnum(ira_algorithm) String(CB) Value(IRA_ALGORITHM_CB)
-EnumValueEnum(ira_algorithm) String(priority) Value(IRA_ALGORITHM_PRIORITY)
-EnumValueEnum(ira_region) String(all) Value(IRA_REGION_ALL)
-EnumValueEnum(ira_region) String(mixed) Value(IRA_REGION_MIXED)
-EnumValueEnum(ira_region) String(one) Value(IRA_REGION_ONE)
-EnumValueEnum(ix86_veclibabi) String(acml) Value(ix86_veclibabi_type_acml)
-EnumValueEnum(ix86_veclibabi) String(svml) Value(ix86_veclibabi_type_svml)
-EnumValueEnum(pmode) String(long) Value(PMODE_DI)
-EnumValueEnum(pmode) String(short) Value(PMODE_SI)
-EnumValueEnum(stack_reuse_level) String(all) Value(SR_ALL)
-EnumValueEnum(stack_reuse_level) String(named_vars) Value(SR_NAMED_VARS)
-EnumValueEnum(stack_reuse_level) String(none) Value(SR_NONE)
-EnumValueEnum(stringop_alg) String(byte_loop) Value(loop_1_byte)
-EnumValueEnum(stringop_alg) String(libcall) Value(libcall)
-EnumValueEnum(stringop_alg) String(loop) Value(loop)
-EnumValueEnum(stringop_alg) String(rep_4byte) Value(rep_prefix_4_byte)
-EnumValueEnum(stringop_alg) String(rep_8byte) Value(rep_prefix_8_byte)
-EnumValueEnum(stringop_alg) String(rep_byte) Value(rep_prefix_1_byte)
-EnumValueEnum(stringop_alg) String(unrolled_loop) Value(unrolled_loop)
-EnumValueEnum(symbol_visibility) String(default) Value(VISIBILITY_DEFAULT)
-EnumValueEnum(symbol_visibility) String(hidden) Value(VISIBILITY_HIDDEN)
-EnumValueEnum(symbol_visibility) String(internal) Value(VISIBILITY_INTERNAL)
-EnumValueEnum(symbol_visibility) String(protected) Value(VISIBILITY_PROTECTED)
-EnumValueEnum(tls_dialect) String(gnu) Value(TLS_DIALECT_GNU)
-EnumValueEnum(tls_dialect) String(gnu2) Value(TLS_DIALECT_GNU2)
-EnumValueEnum(tls_model) String(global-dynamic) Value(TLS_MODEL_GLOBAL_DYNAMIC)
-EnumValueEnum(tls_model) String(initial-exec) Value(TLS_MODEL_INITIAL_EXEC)
-EnumValueEnum(tls_model) String(local-dynamic) Value(TLS_MODEL_LOCAL_DYNAMIC)
-EnumValueEnum(tls_model) String(local-exec) Value(TLS_MODEL_LOCAL_EXEC)
-FDriver C ObjC C++ ObjC++ Joined Separate MissingArgError(missing path after %qs)-F <dir>	Add <dir> to the end of the main framework include path
-HC ObjC C++ ObjC++Print the name of header files as they are used
-HFortran
-HeaderIncludeconfig/i386/i386-opts.h
-IAda AdaWhy AdaSCIL Joined Separate
-IC ObjC C++ ObjC++ Joined Separate MissingArgError(missing path after %qs)-I <dir>	Add <dir> to the end of the main include path
-IFortran Joined Separate
-IGo Joined Separate
-IJava Joined Separate
-JFortran Joined Separate-J<directory>	Put MODULE files in 'directory'
-LDriver Joined Separate
-LGo Joined Separate
-LanguageAda
-LanguageAdaSCIL
-LanguageAdaWhy
-LanguageC
-LanguageC++
-LanguageFortran
-LanguageGo
-LanguageJava
-LanguageLTO
-LanguageObjC
-LanguageObjC++
-MC ObjC C++ ObjC++Generate make dependencies
-MFortran
-MJava
-MDC ObjC C++ ObjC++ NoDriverArg Separate MissingArgError(missing filename after %qs)Generate make dependencies and compile
-MDFortran Separate NoDriverArg
-MD_Java Undocumented RejectDriver
-MFC ObjC C++ ObjC++ Joined Separate MissingArgError(missing filename after %qs)-MF <file>	Write dependency output to the given file
-MFFortran Joined Separate
-MFJava Separate
-MGC ObjC C++ ObjC++Treat missing header files as generated files
-MGFortran
-MMC ObjC C++ ObjC++Like -M but ignore system header files
-MMFortran
-MMJava
-MMDC ObjC C++ ObjC++ NoDriverArg Separate MissingArgError(missing filename after %qs)Like -MD but ignore system header files
-MMDFortran Separate NoDriverArg
-MMD_Java Undocumented RejectDriver
-MPC ObjC C++ ObjC++Generate phony targets for all headers
-MPFortran
-MPJava
-MQC ObjC C++ ObjC++ Joined Separate MissingArgError(missing makefile target after %qs)-MQ <target>	Add a MAKE-quoted target
-MQFortran Joined Separate
-MTC ObjC C++ ObjC++ Joined Separate MissingArgError(missing makefile target after %qs)-MT <target>	Add an unquoted target
-MTFortran Joined Separate
-MTJava Separate
-NDriver
-OCommon JoinedOrMissing Optimization-O<number>	Set optimization level to <number>
-OfastCommon OptimizationOptimize for speed disregarding exact standards compliance
-OgCommon OptimizationOptimize for debugging experience rather than speed or size
-OsCommon OptimizationOptimize for space rather than speed
-PC ObjC C++ ObjC++Do not generate #line directives
-PFortran
-QDriver
-QnDriver Negative(Qy)
-QyDriver Negative(Qn)
-RDriver Joined Separate
-SDriver
-SourceIncludepretty-print.h
-TDriver Joined Separate
-TargetSaveHOST_WIDE_INT x_ix86_isa_flags_explicit
-TargetSaveint ix86_target_flags_explicit
-TargetSaveint x_recip_mask_explicit
-TargetSaveunsigned char arch
-TargetSaveunsigned char arch_specified
-TargetSaveunsigned char branch_cost
-TargetSaveunsigned char schedule
-TargetSaveunsigned char tune
-TargetSaveunsigned char tune_defaulted
-TargetVariableint recip_mask = RECIP_MASK_DEFAULT
-TbssDriver Separate
-Tbss=Driver Joined
-TdataDriver Separate
-Tdata=Driver Joined
-TtextDriver Separate
-Ttext=Driver Joined
-UC ObjC C++ ObjC++ Joined Separate MissingArgError(macro name missing after %qs)-U<macro>	Undefine <macro>
-UFortran Joined Separate
-VariableHOST_WIDE_INT frame_larger_than_size
-VariableHOST_WIDE_INT ix86_isa_flags = TARGET_64BIT_DEFAULT | TARGET_SUBTARGET_ISA_DEFAULT
-VariableHOST_WIDE_INT ix86_isa_flags_explicit
-VariableHOST_WIDE_INT larger_than_size
-Variablebool exit_after_options
-Variablebool flag_dump_all_passed
-Variablebool flag_opts_finished
-Variablebool flag_stack_usage_info = false
-Variablebool flag_warn_unused_result = false
-Variablebool in_lto_p = false
-Variablebool use_gnu_debug_info_extensions
-Variablebool warn_frame_larger_than
-Variablebool warn_larger_than
-Variablechar *help_enum_printed
-Variablechar *help_printed
-Variableconst char *main_input_basename
-Variableconst char *main_input_filename
-Variableenum debug_info_levels debug_info_level = DINFO_LEVEL_NONE
-Variableenum debug_info_type write_symbols = NO_DEBUG
-Variableenum debug_struct_file debug_struct_generic[DINFO_USAGE_NUM_ENUMS] = { DINFO_STRUCT_FILE_ANY, DINFO_STRUCT_FILE_ANY, DINFO_STRUCT_FILE_ANY }
-Variableenum debug_struct_file debug_struct_ordinary[DINFO_USAGE_NUM_ENUMS] = { DINFO_STRUCT_FILE_ANY, DINFO_STRUCT_FILE_ANY, DINFO_STRUCT_FILE_ANY }
-Variableenum stack_check_type flag_stack_check = NO_STACK_CHECK
-Variableint *param_values
-Variableint flag_complex_method = 1
-Variableint flag_debug_asm
-Variableint flag_dump_rtl_in_asm
-Variableint flag_evaluation_order = 0
-Variableint flag_gen_aux_info = 0
-Variableint flag_generate_lto
-Variableint flag_print_asm_name
-Variableint flag_shlib
-Variableint main_input_baselength
-Variableint optimize
-Variableint optimize_debug
-Variableint optimize_fast
-Variableint optimize_size
-Variableint recip_mask_explicit
-Variableint rtl_dump_and_exit
-Variableint target_flags
-Variableunsigned int help_columns
-Variableunsigned int initial_max_fld_align = TARGET_DEFAULT_PACK_STRUCT
-Variablevoid *flag_instrument_functions_exclude_files
-Variablevoid *flag_instrument_functions_exclude_functions
-WCommon RejectNegative Warning Alias(Wextra)This switch is deprecated; use -Wextra instead
-Wa,Driver JoinedOrMissing
-WabiC ObjC C++ ObjC++ LTO Var(warn_abi) WarningWarn about things that will change when compiling with an ABI-compliant compiler
-Wabi-tagC++ ObjC++ Var(warn_abi_tag) WarningWarn if a subobject has an abi_tag attribute that the complete object type does not have
-WaddressC ObjC C++ ObjC++ Var(warn_address) Warning LangEnabledBy(C ObjC C++ ObjC++,Wall)Warn about suspicious uses of memory addresses
-Waggregate-returnCommon Var(warn_aggregate_return) WarningWarn about returning structures, unions or arrays
-Waggressive-loop-optimizationsCommon Var(warn_aggressive_loop_optimizations) Init(1) WarningWarn if a loop with constant number of iterations triggers undefined behavior
-WaliasingFortran WarningWarn about possible aliasing of dummy arguments
-Walign-commonsFortran WarningWarn about alignment of COMMON blocks
-WallAda AdaWhy AdaSCILEnable most warning messages
-WallC ObjC C++ ObjC++ WarningEnable most warning messages
-WallFortran
-WallGo
-WallJava
-Wall-deprecationJava
-Wall-javadocJava
-WampersandFortran WarningWarn about missing ampersand in continued character constants
-Warray-boundsCommon Var(warn_array_bounds) WarningWarn if an array is accessed out of bounds
-Warray-boundsLangEnabledBy(C ObjC C++ ObjC++,Wall)
-Warray-temporariesFortran WarningWarn about creation of array temporaries
-Wassert-identifierJava
-Wassign-interceptObjC ObjC++ Var(warn_assign_intercept) WarningWarn whenever an Objective-C assignment is being intercepted by the garbage collector
-WattributesCommon Var(warn_attributes) Init(1) WarningWarn about inappropriate attribute usage
-Wbad-function-castC ObjC Var(warn_bad_function_cast) WarningWarn about casting functions to incompatible types
-WboxingJava
-Wbuiltin-macro-redefinedC ObjC C++ ObjC++ WarningWarn when a built-in preprocessor macro is undefined or redefined
-Wc++-compatC ObjC Var(warn_cxx_compat) WarningWarn about C constructs that are not in the common subset of C and C++
-Wc++0x-compatC++ ObjC++ Var(warn_cxx0x_compat) Warning LangEnabledBy(C++ ObjC++,Wall)Deprecated in favor of -Wc++11-compat
-Wc++11-compatC++ ObjC++ Warning Alias(Wc++0x-compat)Warn about C++ constructs whose meaning differs between ISO C++ 1998 and ISO C++ 2011
-Wc-binding-typeFortran WarningWarn if the type of a variable might be not interoperable with C
-Wcast-alignCommon Var(warn_cast_align) WarningWarn about pointer casts which increase alignment
-Wcast-qualC ObjC C++ ObjC++ Var(warn_cast_qual) WarningWarn about casts which discard qualifiers
-Wchar-concatJava
-Wchar-subscriptsC ObjC C++ ObjC++ Var(warn_char_subscripts) Warning LangEnabledBy(C ObjC C++ ObjC++,Wall)Warn about subscripts whose type is \"char\"
-Wcharacter-truncationFortran WarningWarn about truncated character expressions
-WclobberedC ObjC C++ ObjC++ Var(warn_clobbered) Warning EnabledBy(Wextra)Warn about variables that might be changed by \"longjmp\" or \"vfork\"
-WcommentC ObjC C++ ObjC++ WarningWarn about possibly nested block comments, and C++ comments spanning more than one physical line
-WcommentsC ObjC C++ ObjC++ Warning Alias(Wcomment)Synonym for -Wcomment
-Wcompare-realsFortran WarningWarn about equality comparisons involving REAL or COMPLEX expressions
-Wcondition-assignJava
-Wconstructor-nameJava
-WconversionC ObjC C++ ObjC++ Var(warn_conversion) WarningWarn for implicit type conversions that may change a value
-WconversionFortran Warning
-Wconversion-extraFortran WarningWarn about most implicit conversions
-Wconversion-nullC++ ObjC++ Var(warn_conversion_null) Init(1) WarningWarn for converting NULL from/to a non-pointer type
-Wcoverage-mismatchCommon Var(warn_coverage_mismatch) Init(1) WarningWarn in case profiles in -fprofile-use do not match
-WcppCommon Var(warn_cpp) Init(1) WarningWarn when a #warning directive is encountered
-Wctor-dtor-privacyC++ ObjC++ Var(warn_ctor_dtor_privacy) WarningWarn when all constructors and destructors are private
-Wdeclaration-after-statementC ObjC Var(warn_declaration_after_statement) WarningWarn when a declaration is found after a statement
-Wdelete-non-virtual-dtorC++ ObjC++ Var(warn_delnonvdtor) Warning LangEnabledBy(C++ ObjC++,Wall)Warn about deleting polymorphic objects with non-virtual destructors
-Wdelete-non-virtual-dtorLangEnabledBy(C++ ObjC++,Weffc++)
-Wdep-annJava
-WdeprecatedC C++ ObjC ObjC++ Var(warn_deprecated) Init(1) WarningWarn if a deprecated compiler feature, class, method, or field is used
-WdeprecatedJava Var(warn_deprecated)
-Wdeprecated-declarationsCommon Var(warn_deprecated_decl) Init(1) WarningWarn about uses of __attribute__((deprecated)) declarations
-Wdisabled-optimizationCommon Var(warn_disabled_optimization) WarningWarn when an optimization pass is disabled
-WdiscouragedJava
-Wdiv-by-zeroC ObjC C++ ObjC++ Var(warn_div_by_zero) Init(1) WarningWarn about compile-time integer division by zero
-Wdouble-promotionC ObjC C++ ObjC++ Var(warn_double_promotion) WarningWarn about implicit conversions from \"float\" to \"double\"
-Weffc++C++ ObjC++ Var(warn_ecpp) WarningWarn about violations of Effective C++ style rules
-Wempty-blockJava
-Wempty-bodyC ObjC C++ ObjC++ Var(warn_empty_body) Warning EnabledBy(Wextra)Warn about an empty body in an if or else statement
-Wendif-labelsC ObjC C++ ObjC++ WarningWarn about stray tokens after #elif and #endif
-Wenum-compareC ObjC C++ ObjC++ Var(warn_enum_compare) Init(-1) Warning LangEnabledBy(C ObjC,Wall)Warn about comparison of different enum types
-Wenum-compareLangEnabledBy(C ObjC,Wc++-compat)
-Wenum-identifierJava
-Wenum-switchJava
-WerrorC ObjC C++ ObjC++
-WerrorCommon Var(warnings_are_errors)Treat all warnings as errors
-Werror-implicit-function-declarationC ObjC RejectNegative Warning Alias(Werror=, implicit-function-declaration)This switch is deprecated; use -Werror=implicit-function-declaration instead
-Werror=Common JoinedTreat specified warning as error
-WextraCommon Var(extra_warnings) WarningPrint extra (possibly unwanted) warnings
-WextraFortran WarningPrint extra (possibly unwanted) warnings
-Wextraneous-semicolonJava Var(flag_extraneous_semicolon)Warn if deprecated empty statements are found
-WfallthroughJava
-Wfatal-errorsCommon Var(flag_fatal_errors)Exit on the first error occurred
-Wfield-hidingJava
-Wfinal-boundJava
-WfinallyJava
-Wfloat-equalC ObjC C++ ObjC++ Var(warn_float_equal) WarningWarn if testing floating point numbers for equality
-WforbiddenJava
-WformatC ObjC C++ ObjC++ Warning Alias(Wformat=, 1, 0)Warn about printf/scanf/strftime/strfmon format string anomalies
-Wformat-contains-nulC ObjC C++ ObjC++ Var(warn_format_contains_nul) Warning LangEnabledBy(C ObjC C++ ObjC++,Wformat=, warn_format >= 1, 0)Warn about format strings that contain NUL bytes
-Wformat-extra-argsC ObjC C++ ObjC++ Var(warn_format_extra_args) Warning LangEnabledBy(C ObjC C++ ObjC++,Wformat=, warn_format >= 1, 0)Warn if passing too many arguments to a function for its format string
-Wformat-nonliteralC ObjC C++ ObjC++ Var(warn_format_nonliteral) Warning LangEnabledBy(C ObjC C++ ObjC++,Wformat=, warn_format >= 2, 0)Warn about format strings that are not literals
-Wformat-securityC ObjC C++ ObjC++ Var(warn_format_security) Warning LangEnabledBy(C ObjC C++ ObjC++,Wformat=, warn_format >= 2, 0)Warn about possible security problems with format functions
-Wformat-y2kC ObjC C++ ObjC++ Var(warn_format_y2k) Warning LangEnabledBy(C ObjC C++ ObjC++,Wformat=,warn_format >= 2, 0)Warn about strftime formats yielding 2-digit years
-Wformat-zero-lengthC ObjC C++ ObjC++ Var(warn_format_zero_length) Warning LangEnabledBy(C ObjC C++ ObjC++,Wformat=,warn_format >= 1, 0)Warn about zero-length formats
-Wformat=C ObjC C++ ObjC++ Joined RejectNegative UInteger Var(warn_format) Warning LangEnabledBy(C ObjC C++ ObjC++,Wall, 1, 0)Warn about printf/scanf/strftime/strfmon format string anomalies
-Wframe-larger-than=Common RejectNegative Joined UInteger-Wframe-larger-than=<number>	Warn if a function's stack frame requires more than <number> bytes
-Wfree-nonheap-objectCommon Var(warn_free_nonheap_object) Init(1) WarningWarn when attempting to free a non-heap object
-Wfunction-eliminationFortran WarningWarn about function call elimination
-WhidingJava
-Wignored-qualifiersC C++ Var(warn_ignored_qualifiers) Warning EnabledBy(Wextra)Warn whenever type qualifiers are ignored.
-WimplicitC ObjC Var(warn_implicit) Warning LangEnabledBy(C ObjC,Wall)Warn about implicit declarations
-Wimplicit-function-declarationC ObjC Var(warn_implicit_function_declaration) Init(-1) Warning LangEnabledBy(C ObjC,Wimplicit)Warn about implicit function declarations
-Wimplicit-intC ObjC Var(warn_implicit_int) Warning LangEnabledBy(C ObjC,Wimplicit)Warn when a declaration does not specify a type
-Wimplicit-interfaceFortran WarningWarn about calls with implicit interface
-Wimplicit-procedureFortran WarningWarn about called procedures not explicitly declared
-WimportC ObjC C++ ObjC++ Undocumented Ignore
-Windirect-staticJava
-Winherited-variadic-ctorC++ ObjC++ Var(warn_inh_var_ctor) Init(1) WarningWarn about C++11 inheriting constructors when the base has a variadic constructor
-Winit-selfC ObjC C++ ObjC++ Var(warn_init_self) Warning LangEnabledBy(C++ ObjC++,Wall)Warn about variables which are initialized to themselves
-WinlineCommon Var(warn_inline) WarningWarn when an inlined function cannot be inlined
-Wint-to-pointer-castC ObjC C++ ObjC++ Var(warn_int_to_pointer_cast) Init(1) WarningWarn when there is a cast to a pointer from an integer of a different size
-Wintf-annotationJava
-Wintf-non-inheritedJava
-Wintrinsic-shadowFortran WarningWarn if a user-procedure has the same name as an intrinsic
-Wintrinsics-stdFortran WarningWarn on intrinsics not part of the selected standard
-Winvalid-memory-modelCommon Var(warn_invalid_memory_model) Init(1) WarningWarn when an atomic memory model parameter is known to be outside the valid range.
-Winvalid-offsetofC++ ObjC++ Var(warn_invalid_offsetof) Init(1) WarningWarn about invalid uses of the \"offsetof\" macro
-Winvalid-pchC ObjC C++ ObjC++ WarningWarn about PCH files that are found but not used
-WjavadocJava
-Wjump-misses-initC ObjC Var(warn_jump_misses_init) Warning LangEnabledby(C ObjC,Wc++-compat)Warn when a jump misses a variable initialization
-Wl,Driver JoinedOrMissing
-Wlarger-than-Common RejectNegative Joined Warning Undocumented Alias(Wlarger-than=)
-Wlarger-than=Common RejectNegative Joined UInteger Warning-Wlarger-than=<number>	Warn if an object is larger than <number> bytes
-Wline-truncationFortran WarningWarn about truncated source lines
-Wliteral-suffixC++ ObjC++ WarningWarn when a string or character literal is followed by a ud-suffix which does not begin with an underscore.
-Wlocal-hidingJava
-Wlogical-opC ObjC C++ ObjC++ Var(warn_logical_op) Init(0) Warning Warn when a logical operator is suspiciously always evaluating to true or false
-Wlong-longC ObjC C++ ObjC++ Var(warn_long_long) Init(-1) WarningDo not warn about using \"long long\" when -pedantic
-WmainC ObjC C++ ObjC++ Var(warn_main) Init(-1) Warning LangEnabledBy(C ObjC,Wall, 2, 0)Warn about suspicious declarations of \"main\"
-WmainLangEnabledBy(C ObjC C++ ObjC++,Wpedantic, 2, 0)
-Wmasked-catch-blockJava
-Wmaybe-uninitializedC ObjC C++ ObjC++ LangEnabledBy(C ObjC C++ ObjC++,Wall)
-Wmaybe-uninitializedCommon Var(warn_maybe_uninitialized) Warning EnabledBy(Wuninitialized)Warn about maybe uninitialized automatic variables
-Wmissing-bracesC ObjC C++ ObjC++ Var(warn_missing_braces) Warning LangEnabledBy(C ObjC,Wall)Warn about possibly missing braces around initializers
-Wmissing-declarationsC ObjC C++ ObjC++ Var(warn_missing_declarations) WarningWarn about global functions without previous declarations
-Wmissing-field-initializersC ObjC C++ ObjC++ Var(warn_missing_field_initializers) Warning EnabledBy(Wextra)Warn about missing fields in struct initializers
-Wmissing-format-attributeC ObjC C++ ObjC++ Alias(Wsuggest-attribute=format)
-Wmissing-include-dirsC ObjC C++ ObjC++ WarningWarn about user-specified include directories that do not exist
-Wmissing-noreturnCommon Alias(Wsuggest-attribute=noreturn)
-Wmissing-parameter-typeC ObjC Var(warn_missing_parameter_type) Warning EnabledBy(Wextra)Warn about function parameters declared without a type specifier in K&R-style functions
-Wmissing-prototypesC ObjC Var(warn_missing_prototypes) WarningWarn about global functions without prototypes
-WmudflapC ObjC C++ ObjC++ Var(warn_mudflap) Init(1) WarningWarn about constructs not instrumented by -fmudflap
-WmulticharC ObjC C++ ObjC++ WarningWarn about use of multi-character character constants
-WnarrowingC ObjC C++ ObjC++ LangEnabledBy(C++ ObjC++,Wc++0x-compat)
-WnarrowingC ObjC C++ ObjC++ Warning Var(warn_narrowing) Init(-1) LangEnabledBy(C++ ObjC++,Wall)Warn about narrowing conversions within { } that are ill-formed in C++11
-Wnested-externsC ObjC Var(warn_nested_externs) WarningWarn about \"extern\" declarations not at file scope
-WnlsJava
-Wno-effect-assignJava
-WnoexceptC++ ObjC++ Var(warn_noexcept) WarningWarn when a noexcept expression evaluates to false even though the expression can't actually throw
-Wnon-template-friendC++ ObjC++ Var(warn_nontemplate_friend) Init(1) WarningWarn when non-templatized friend functions are declared within a template
-Wnon-virtual-dtorC++ ObjC++ Var(warn_nonvdtor) WarningWarn about non-virtual destructors
-WnonnullC ObjC C++ ObjC++ LangEnabledBy(C ObjC C++ ObjC++,Wall)
-WnonnullC ObjC C++ ObjC++ Var(warn_nonnull) Warning LangEnabledBy(C ObjC C++ ObjC++,Wformat=,warn_format >= 1,0)Warn about NULL being passed to argument slots marked as requiring non-NULL
-Wnormalized=C ObjC C++ ObjC++ Joined Warning-Wnormalized=<id|nfc|nfkc>	Warn about non-normalised Unicode strings
-WnullJava
-Wold-style-castC++ ObjC++ Var(warn_old_style_cast) WarningWarn if a C-style cast is used in a program
-Wold-style-declarationC ObjC Var(warn_old_style_declaration) Warning EnabledBy(Wextra)Warn for obsolescent usage in a declaration
-Wold-style-definitionC ObjC Var(warn_old_style_definition) WarningWarn if an old-style parameter definition is used
-Wout-of-dateJava Var(flag_newer) Init(1)Warn if .class files are out of date
-Wover-annJava
-WoverflowCommon Var(warn_overflow) Init(1) WarningWarn about overflow in arithmetic expressions
-Woverlength-stringsC ObjC C++ ObjC++ Var(warn_overlength_strings) Warning LangEnabledBy(C ObjC C++ ObjC++,Wpedantic)Warn if a string is longer than the maximum portable length specified by the standard
-Woverloaded-virtualC++ ObjC++ Var(warn_overloaded_virtual) WarningWarn about overloaded virtual function names
-Woverride-initC ObjC Var(warn_override_init) Warning EnabledBy(Wextra)Warn about overriding initializers without side effects
-Wp,Driver JoinedOrMissing
-WpackedCommon Var(warn_packed) WarningWarn when the packed attribute has no effect on struct layout
-Wpacked-bitfield-compatC ObjC C++ ObjC++ Var(warn_packed_bitfield_compat) Init(-1) WarningWarn about packed bit-fields whose offset changed in GCC 4.4
-WpaddedCommon Var(warn_padded) WarningWarn when padding is required to align structure members
-Wparam-assignJava
-WparenthesesC ObjC C++ ObjC++ Var(warn_parentheses) Warning LangEnabledBy(C ObjC C++ ObjC++,Wall)Warn about possibly missing parentheses
-WpedanticC ObjC C++ ObjC++ Warning
-WpedanticCommon Var(pedantic) WarningIssue warnings needed for strict compliance to the standard
-Wpkg-default-methodJava
-Wpmf-conversionsC++ ObjC++ Var(warn_pmf2ptr) Init(1) WarningWarn when converting the type of pointers to member functions
-Wpointer-arithC ObjC C++ ObjC++ Var(warn_pointer_arith) WarningWarn about function pointer arithmetic
-Wpointer-signC ObjC LangEnabledBy(C ObjC,Wpedantic)
-Wpointer-signC ObjC Var(warn_pointer_sign) Warning LangEnabledBy(C ObjC,Wall)Warn when a pointer differs in signedness in an assignment
-Wpointer-to-int-castC ObjC Var(warn_pointer_to_int_cast) Init(1) WarningWarn when a pointer is cast to an integer of a different size
-WpragmasC ObjC C++ ObjC++ Var(warn_pragmas) Init(1) WarningWarn about misuses of pragmas
-Wproperty-assign-defaultObjC ObjC++ Var(warn_property_assign_default) Init(1) WarningWarn if a property for an Objective-C object has no assign semantics specified
-WprotocolObjC ObjC++ Var(warn_protocol) Init(1) WarningWarn if inherited methods are unimplemented
-WpsabiC ObjC C++ ObjC++ LTO Var(warn_psabi) Init(1) Undocumented
-WrawJava
-Wreal-q-constantFortran WarningWarn about real-literal-constants with 'q' exponent-letter
-Wrealloc-lhsFortran WarningWarn when a left-hand-side array variable is reallocated
-Wrealloc-lhs-allFortran WarningWarn when a left-hand-side variable is reallocated
-Wredundant-declsC ObjC C++ ObjC++ Var(warn_redundant_decls) WarningWarn about multiple declarations of the same object
-Wredundant-modifiersJava Var(flag_redundant)Warn if modifiers are specified when not necessary
-WreorderC++ ObjC++ Var(warn_reorder) Warning LangEnabledBy(C++ ObjC++,Wall)Warn when the compiler reorders code
-Wreturn-local-addrC ObjC C++ ObjC++ Var(warn_return_local_addr) Init(1) WarningWarn about returning a pointer/reference to a local or temporary variable.
-Wreturn-typeC ObjC C++ ObjC++ Var(warn_return_type) Warning LangEnabledBy(C ObjC C++ ObjC++,Wall)Warn whenever a function's return type defaults to \"int\" (C), or about inconsistent return types (C++)
-Wreturn-typeFortran Warning
-WselectorObjC ObjC++ Var(warn_selector) WarningWarn if a selector has multiple methods
-Wsequence-pointC ObjC C++ ObjC++ Var(warn_sequence_point) Warning LangEnabledBy(C ObjC C++ ObjC++,Wall)Warn about possible violations of sequence point rules
-WserialJava
-WshadowCommon Var(warn_shadow) WarningWarn when one local variable shadows another
-Wsign-compareC ObjC C++ ObjC++ EnabledBy(Wextra)
-Wsign-compareC ObjC C++ ObjC++ Var(warn_sign_compare) Warning LangEnabledBy(C++ ObjC++,Wall)Warn about signed-unsigned comparisons
-Wsign-conversionC ObjC C++ ObjC++ Var(warn_sign_conversion) LangEnabledBy(C ObjC,Wconversion)Warn for implicit type conversions between signed and unsigned integers
-Wsign-promoC++ ObjC++ Var(warn_sign_promo) WarningWarn when overload promotes from unsigned to signed
-Wsizeof-pointer-memaccessC ObjC C++ ObjC++ Var(warn_sizeof_pointer_memaccess) Warning LangEnabledBy(C ObjC C++ ObjC++,Wall)
-Wspecial-param-hidingJava
-Wstack-protectorCommon Var(warn_stack_protect) WarningWarn when not issuing stack smashing protection for some reason
-Wstack-usage=Common Joined RejectNegative UInteger Var(warn_stack_usage) Init(-1) WarningWarn if stack usage might be larger than specified amount
-Wstatic-accessJava
-Wstatic-receiverJava
-Wstrict-aliasingCommon WarningWarn about code which might break strict aliasing rules
-Wstrict-aliasing=C ObjC C++ ObjC++ LangEnabledBy(C ObjC C++ ObjC++,Wall, 3, 0)
-Wstrict-aliasing=Common Joined RejectNegative UInteger Var(warn_strict_aliasing) WarningWarn about code which might break strict aliasing rules
-Wstrict-null-sentinelC++ ObjC++ Warning Var(warn_strict_null_sentinel)Warn about uncasted NULL used as sentinel
-Wstrict-overflowCommon WarningWarn about optimizations that assume that signed overflow is undefined
-Wstrict-overflow=C ObjC C++ ObjC++ LangEnabledBy(C ObjC C++ ObjC++,Wall, 1, 0)
-Wstrict-overflow=Common Joined RejectNegative UInteger Var(warn_strict_overflow) WarningWarn about optimizations that assume that signed overflow is undefined
-Wstrict-prototypesC ObjC Var(warn_strict_prototypes) WarningWarn about unprototyped function declarations
-Wstrict-selector-matchObjC ObjC++ Var(warn_strict_selector_match) WarningWarn if type signatures of candidate methods do not match exactly
-Wsuggest-attribute=constCommon Var(warn_suggest_attribute_const) WarningWarn about functions which might be candidates for __attribute__((const))
-Wsuggest-attribute=formatC ObjC C++ ObjC++ Var(warn_suggest_attribute_format) WarningWarn about functions which might be candidates for format attributes
-Wsuggest-attribute=noreturnCommon Var(warn_suggest_attribute_noreturn) WarningWarn about functions which might be candidates for __attribute__((noreturn))
-Wsuggest-attribute=pureCommon Var(warn_suggest_attribute_pure) WarningWarn about functions which might be candidates for __attribute__((pure))
-WsuppressJava
-WsurprisingFortran WarningWarn about \"suspicious\" constructs
-WswitchC ObjC C++ ObjC++ Var(warn_switch) Warning LangEnabledBy(C ObjC C++ ObjC++,Wall)Warn about enumerated switches, with no default, missing a case
-Wswitch-defaultC ObjC C++ ObjC++ Var(warn_switch_default) WarningWarn about enumerated switches missing a \"default:\" statement
-Wswitch-enumC ObjC C++ ObjC++ Var(warn_switch_enum) WarningWarn about all enumerated switches missing a specific case
-Wsync-nandC C++ Var(warn_sync_nand) Init(1) WarningWarn when __sync_fetch_and_nand and __sync_nand_and_fetch built-in functions are used
-WsynthC++ ObjC++ Var(warn_synth) WarningDeprecated.  This switch has no effect
-Wsynthetic-accessJava
-Wsystem-headersC ObjC C++ ObjC++ Warning
-Wsystem-headersCommon Var(warn_system_headers) WarningDo not suppress warnings from system headers
-WtabsFortran WarningPermit nonconforming uses of the tab character
-Wtarget-lifetimeFortran WarningWarn if the pointer in a pointer assignment might outlive its target
-WtasksJava
-WtraditionalC ObjC Var(warn_traditional) WarningWarn about features not present in traditional C
-Wtraditional-conversionC ObjC Var(warn_traditional_conversion) WarningWarn of prototypes causing type conversions different from what would happen in the absence of prototype
-WtrampolinesCommon Var(warn_trampolines) WarningWarn whenever a trampoline is generated
-WtrigraphsC ObjC C++ ObjC++ WarningWarn if trigraphs are encountered that might affect the meaning of the program
-Wtype-hidingJava
-Wtype-limitsCommon Var(warn_type_limits) Warning EnabledBy(Wextra)Warn if a comparison is always true or always false due to the limited range of the data type
-WuncheckJava
-Wundeclared-selectorObjC ObjC++ Var(warn_undeclared_selector) WarningWarn about @selector()s without previously declared methods
-WundefC ObjC C++ ObjC++ WarningWarn if an undefined macro is used in an #if directive
-WunderflowFortran WarningWarn about underflow of numerical constant expressions
-WuninitializedC ObjC C++ ObjC++ LangEnabledBy(C ObjC C++ ObjC++,Wall)
-WuninitializedCommon Var(warn_uninitialized) Warning EnabledBy(Wextra)Warn about uninitialized automatic variables
-Wunknown-pragmasC ObjC C++ ObjC++ Warning Var(warn_unknown_pragmas) LangEnabledBy(C ObjC C++ ObjC++,Wall, 1, 0)Warn about unrecognized pragmas
-Wunnecessary-elseJava
-Wunqualified-fieldJava
-Wunreachable-codeCommon IgnoreDoes nothing. Preserved for backward compatibility.
-Wunsafe-loop-optimizationsCommon Var(warn_unsafe_loop_optimizations) WarningWarn if the loop cannot be optimized due to nontrivial assumptions.
-Wunsuffixed-float-constantsC ObjC Var(warn_unsuffixed_float_constants) WarningWarn about unsuffixed float constants
-WunusedC ObjC C++ ObjC++ LangEnabledBy(C ObjC C++ ObjC++,Wall)
-WunusedCommon Var(warn_unused) Init(0) WarningEnable all -Wunused- warnings
-WunusedJava
-Wunused-argumentJava
-Wunused-but-set-parameterCommon Var(warn_unused_but_set_parameter) Warning EnabledBy(Wunused && Wextra)Warn when a function parameter is only set, otherwise unused
-Wunused-but-set-variableCommon Var(warn_unused_but_set_variable) Warning EnabledBy(Wunused)Warn when a variable is only set, otherwise unused
-Wunused-dummy-argumentFortran WarningWarn about unused dummy arguments.
-Wunused-functionCommon Var(warn_unused_function) Warning EnabledBy(Wunused)Warn when a function is unused
-Wunused-importJava
-Wunused-labelCommon Var(warn_unused_label) Warning EnabledBy(Wunused)Warn when a label is unused
-Wunused-labelJava
-Wunused-localJava
-Wunused-local-typedefsC ObjC C++ ObjC++ Var(warn_unused_local_typedefs) Warning EnabledBy(Wunused)Warn when typedefs locally defined in a function are not used
-Wunused-macrosC ObjC C++ ObjC++ Var(cpp_warn_unused_macros) WarningWarn about macros defined in the main file that are not used
-Wunused-parameterCommon Var(warn_unused_parameter) Warning EnabledBy(Wunused && Wextra)Warn when a function parameter is unused
-Wunused-privateJava
-Wunused-resultC ObjC C++ ObjC++ Var(warn_unused_result) Init(1) WarningWarn if a caller of a function, marked with attribute warn_unused_result, does not use its return value
-Wunused-thrownJava
-Wunused-valueCommon Var(warn_unused_value) Warning EnabledBy(Wunused)Warn when an expression value is unused
-Wunused-variableCommon Var(warn_unused_variable) Warning EnabledBy(Wunused)Warn when a variable is unused
-Wuseless-castC++ ObjC++ Var(warn_useless_cast) WarningWarn about useless casts
-Wuseless-type-checkJava
-WvarargsC ObjC C++ ObjC++ Warning Var(warn_varargs) Init(1)Warn about questionable usage of the macros used to retrieve variable arguments
-Wvarargs-castJava
-Wvariadic-macrosC ObjC C++ ObjC++ Var(cpp_warn_variadic_macros) Init(1) WarningWarn about using variadic macros
-Wvector-operation-performanceCommon Var(warn_vector_operation_performance) WarningWarn when a vector operation is compiled outside the SIMD
-Wvirtual-move-assignC++ ObjC++ Var(warn_virtual_move_assign) Warning Init(1)Warn if a virtual base has a non-trivial move assignment operator
-WvlaC ObjC C++ ObjC++ Var(warn_vla) Init(-1) WarningWarn if a variable length array is used
-Wvolatile-register-varC ObjC C++ ObjC++ Var(warn_volatile_register_var) Warning LangEnabledBy(C ObjC C++ ObjC++,Wall)Warn when a register variable is declared volatile
-Wwarning-tokenJava
-Wwrite-stringsC ObjC C++ ObjC++ Var(warn_write_strings) WarningIn C++, nonzero means warn about deprecated conversion from string literals to 'char *'.  In C, similar warning, except that the conversion is of course not deprecated by the ISO C standard.
-Wzero-as-null-pointer-constantC++ ObjC++ Var(warn_zero_as_null_pointer_constant) WarningWarn when a literal '0' is used as null pointer
-XassemblerDriver Separate
-XlinkerDriver Separate
-XpreprocessorDriver Separate
-ZDriver
-ansiC ObjC C++ ObjC++A synonym for -std=c89 (for C) or -std=c++98 (for C++)
-aux-infoCommon Separate Var(aux_info_file_name)-aux-info <file>	Emit declaration information into <file>
-aux-info=Common Joined Alias(aux-info)
-auxbaseCommon Separate RejectDriver Var(aux_base_name)
-auxbase-stripCommon Separate RejectDriver
-bootclasspathJava Separate Alias(fbootclasspath=)
-cDriver
-classpathJava Separate Alias(fclasspath=)
-coverageDriver
-cppFortran Negative(nocpp)Enable preprocessing
-cpp=Fortran Joined Negative(nocpp) Undocumented NoDWARFRecord
-dC ObjC C++ ObjC++ Joined
-dCommon Joined-d<letters>	Enable dumps from specific passes of the compiler
-dFortran Joined
-dJava Separate SeparateAlias Alias(foutput-class-dir=)
-dumpbaseCommon Separate Var(dump_base_name)-dumpbase <file>	Set the file basename to be used for dumps
-dumpdirCommon Separate Var(dump_dir_name)-dumpdir <dir>	Set the directory name to be used for dumps
-dumpmachineDriver
-dumpspecsDriver
-dumpversionDriver
-eDriver Joined Separate
-encodingJava Separate Alias(fencoding=)
-export-dynamicDriver Undocumented
-extdirsDriver Separate
-fCLASSPATH=Java JoinedOrMissing RejectNegative Alias(fclasspath=)--CLASSPATH	Deprecated; use --classpath instead
-fPICCommon Report Var(flag_pic,2) Negative(fPIE)Generate position-independent code if possible (large mode)
-fPIECommon Report Var(flag_pie,2) Negative(fpic)Generate position-independent code for executables if possible (large mode)
-fRTS=Ada AdaWhy AdaSCIL Joined RejectNegativeSelect the runtime
-fabi-version=Common Joined RejectNegative UInteger Var(flag_abi_version) Init(2)
-faccess-controlC++ ObjC++ Var(flag_access_control) Init(1)Enforce class member access control semantics
-fada-spec-parent=C ObjC C++ ObjC++ RejectNegative Joined Var(ada_specs_parent)-fada-spec-parent=unit  Dump Ada specs as child units of given parent
-faggressive-function-eliminationFortranEliminate multiple function invokations also for impure functions
-faggressive-loop-optimizationsCommon Report Var(flag_aggressive_loop_optimizations) Optimization Init(1) Aggressively optimize loops using language constraints
-falign-commonsFortranEnable alignment of COMMON blocks
-falign-functionsCommon Report Var(align_functions,0) Optimization UIntegerAlign the start of functions
-falign-functions=Common RejectNegative Joined UInteger Var(align_functions)
-falign-jumpsCommon Report Var(align_jumps,0) Optimization UIntegerAlign labels which are only reached by jumping
-falign-jumps=Common RejectNegative Joined UInteger Var(align_jumps)
-falign-labelsCommon Report Var(align_labels,0) Optimization UIntegerAlign all labels
-falign-labels=Common RejectNegative Joined UInteger Var(align_labels)
-falign-loopsCommon Report Var(align_loops,0) Optimization UIntegerAlign the start of loops
-falign-loops=Common RejectNegative Joined UInteger Var(align_loops)
-fall-intrinsicsFortran RejectNegativeAll intrinsics procedures are available regardless of selected standard
-fall-virtualC++ ObjC++ Ignore Warn(switch %qs is no longer supported)
-fallow-leading-underscoreFortran Undocumented
-fallow-parameterless-variadic-functionsC ObjC Var(flag_allow_parameterless_variadic_functions)Allow variadic functions without named parameter
-falt-external-templatesC++ ObjC++ Ignore Warn(switch %qs is no longer supported)No longer supported
-fargument-aliasCommon IgnoreDoes nothing. Preserved for backward compatibility.
-fargument-noaliasCommon IgnoreDoes nothing. Preserved for backward compatibility.
-fargument-noalias-anythingCommon IgnoreDoes nothing. Preserved for backward compatibility.
-fargument-noalias-globalCommon IgnoreDoes nothing. Preserved for backward compatibility.
-fasmC ObjC C++ ObjC++ Var(flag_no_asm, 0)Recognize the \"asm\" keyword
-fassertJava Var(flag_assert) Init(1)Permit the use of the assert keyword
-fassociative-mathCommon Report Var(flag_associative_math) SetByCombinedAllow optimization for floating-point arithmetic which may change theresult of the operation due to rounding.
-fassume-compiledJava
-fassume-compiled=Java JoinedOrMissing
-fasynchronous-unwind-tablesCommon Report Var(flag_asynchronous_unwind_tables) OptimizationGenerate unwind tables that are exact at each instruction boundary
-fauto-inc-decCommon Report Var(flag_auto_inc_dec) Init(1)Generate auto-inc/dec instructions
-fautomaticFortranDo not treat local variables and COMMON blocks as if they were named in SAVE statements
-faux-classpathJava Separate RejectNegative Undocumented
-fbackslashFortranSpecify that backslash in string introduces an escape character
-fbacktraceFortranProduce a backtrace when a runtime error is encountered
-fblas-matmul-limit=Fortran RejectNegative Joined UInteger-fblas-matmul-limit=<n>	Size of the smallest matrix for which matmul will use BLAS
-fbootclasspath=Java JoinedOrMissing RejectNegative--bootclasspath=<path>	Replace system path
-fbootstrap-classesJava Var(flag_bootstrap_classes)Generated should be loaded by bootstrap loader
-fbounds-checkCommon Report Var(flag_bounds_check)Generate code to check bounds before indexing arrays
-fbranch-count-regCommon Report Var(flag_branch_on_count_reg) Init(1) OptimizationReplace add, compare, branch with branch on count register
-fbranch-probabilitiesCommon Report Var(flag_branch_probabilities) OptimizationUse profiling information for branch probabilities
-fbranch-target-load-optimizeCommon Report Var(flag_branch_target_load_optimize) OptimizationPerform branch target load optimization before prologue / epilogue threading
-fbranch-target-load-optimize2Common Report Var(flag_branch_target_load_optimize2) OptimizationPerform branch target load optimization after prologue / epilogue threading
-fbtr-bb-exclusiveCommon Report Var(flag_btr_bb_exclusive) OptimizationRestrict target load migration not to re-use registers in any basic block
-fbuilding-libgccC ObjC C++ ObjC++ Undocumented Var(flag_building_libgcc)
-fbuiltinC ObjC C++ ObjC++ Var(flag_no_builtin, 0)Recognize built-in functions
-fbuiltin-C ObjC C++ ObjC++ Joined
-fcall-saved-Common Joined RejectNegative Var(common_deferred_options) Defer-fcall-saved-<register>	Mark <register> as being preserved across functions
-fcall-used-Common Joined RejectNegative Var(common_deferred_options) Defer-fcall-used-<register>	Mark <register> as being corrupted by function calls
-fcaller-savesCommon Report Var(flag_caller_saves) OptimizationSave registers around function calls
-fcanonical-system-headersC ObjC C++ ObjC++Where shorter, use canonicalized paths to systems headers.
-fcheck-array-temporariesFortranProduce a warning at runtime if a array temporary has been created for a procedure argument
-fcheck-data-depsCommon Report Var(flag_check_data_deps)Compare the results of several data dependence analyzers.
-fcheck-newC++ ObjC++ Var(flag_check_new)Check the return value of new
-fcheck-referencesJava Var(flag_check_references)Generate checks for references to NULL
-fcheck=Fortran RejectNegative JoinedOrMissing-fcheck=[...]	Specify which runtime checks are to be performed
-fclasspath=Java JoinedOrMissing RejectNegative--classpath=<path>	Set class path
-fcoarray=Fortran RejectNegative JoinedOrMissing-fcoarray=[...]	Specify which coarray parallelization should be used
-fcombine-stack-adjustmentsCommon Report Var(flag_combine_stack_adjustments) OptimizationLooks for opportunities to reduce stack adjustments and stack references.
-fcommonCommon Report Var(flag_no_common,0) OptimizationDo not put uninitialized globals in the common section
-fcompare-debugDriver
-fcompare-debug-secondCommon Driver RejectNegative Var(flag_compare_debug)Run only the second compilation of -fcompare-debug
-fcompare-debug=Common Driver JoinedOrMissing RejectNegative Var(flag_compare_debug_opt)-fcompare-debug[=<opts>]	Compile with and without e.g. -gtoggle, and compare the final-insns dump
-fcompare-elimCommon Report Var(flag_compare_elim_after_reload) OptimizationPerform comparison elimination after register allocation has finished
-fcompile-resource=Java Joined RejectNegative
-fcond-mismatchC ObjC C++ ObjC++Allow the arguments of the '?' operator to have different types
-fconserve-spaceC++ ObjC++ Var(flag_conserve_space)Does nothing.  Preserved for backward compatibility.
-fconserve-stackCommon Var(flag_conserve_stack) OptimizationDo not perform optimizations increasing noticeably stack usage
-fconstant-string-class=ObjC ObjC++ Joined MissingArgError(no class name specified with %qs)-fconst-string-class=<name>	Use class <name> for constant strings
-fconstexpr-depth=C++ ObjC++ Joined RejectNegative UInteger Var(max_constexpr_depth) Init(512)-fconstexpr-depth=<number>	Specify maximum constexpr recursion depth
-fconvert=big-endianFortran RejectNegativeUse big-endian format for unformatted files
-fconvert=little-endianFortran RejectNegativeUse little-endian format for unformatted files
-fconvert=nativeFortran RejectNegativeUse native format for unformatted files
-fconvert=swapFortran RejectNegativeSwap endianness for unformatted files
-fcprop-registersCommon Report Var(flag_cprop_registers) OptimizationPerform a register copy-propagation optimization pass
-fcray-pointerFortranUse the Cray Pointer extension
-fcrossjumpingCommon Report Var(flag_crossjumping) OptimizationPerform cross-jumping optimization
-fcse-follow-jumpsCommon Report Var(flag_cse_follow_jumps) OptimizationWhen running CSE, follow jumps to their targets
-fcse-skip-blocksCommon IgnoreDoes nothing.  Preserved for backward compatibility.
-fcx-fortran-rulesCommon Report Var(flag_cx_fortran_rules) OptimizationComplex multiplication and division follow Fortran rules
-fcx-limited-rangeCommon Report Var(flag_cx_limited_range) Optimization SetByCombinedOmit range reduction step when performing complex division
-fd-lines-as-codeFortran RejectNegativeIgnore 'D' in column one in fixed form
-fd-lines-as-commentsFortran RejectNegativeTreat lines with 'D' in column one as comments
-fdata-sectionsCommon Report Var(flag_data_sections) OptimizationPlace data items into their own section
-fdbg-cnt-listCommon Report Var(common_deferred_options) DeferList all available debugging counters with their limits and counts.
-fdbg-cnt=Common RejectNegative Joined Var(common_deferred_options) Defer-fdbg-cnt=<counter>:<limit>[,<counter>:<limit>,...]	Set the debug counter limit.   
-fdceCommon Var(flag_dce) Init(1) OptimizationUse the RTL dead code elimination pass
-fdebug-cppC ObjC C++ ObjC++Emit debug annotations during preprocessing
-fdebug-prefix-map=Common Joined RejectNegative Var(common_deferred_options) DeferMap one directory name to another in debug information
-fdebug-types-sectionCommon Report Var(flag_debug_types_section) Init(0)Output .debug_types section when using DWARF v4 debuginfo.
-fdeduce-init-listC++ ObjC++ Var(flag_deduce_init_list) Init(0)-fdeduce-init-list	enable deduction of std::initializer_list for a template type parameter from a brace-enclosed initializer-list
-fdefault-double-8FortranSet the default double precision kind to an 8 byte wide type
-fdefault-inlineC++ ObjC++ IgnoreDoes nothing.  Preserved for backward compatibility.
-fdefault-integer-8FortranSet the default integer kind to an 8 byte wide type
-fdefault-real-8FortranSet the default real kind to an 8 byte wide type
-fdefer-popCommon Report Var(flag_defer_pop) OptimizationDefer popping functions args from stack until later
-fdelayed-branchCommon Report Var(flag_delayed_branch) OptimizationAttempt to fill delay slots of branch instructions
-fdelete-dead-exceptionsCommon Report Var(flag_delete_dead_exceptions) Init(0)Delete dead instructions that may throw exceptions
-fdelete-null-pointer-checksCommon Report Var(flag_delete_null_pointer_checks) Init(1) OptimizationDelete useless null pointer checks
-fdevirtualizeCommon Report Var(flag_devirtualize) OptimizationTry to convert virtual calls to direct ones.
-fdiagnostics-show-caretCommon Var(flag_diagnostics_show_caret) Init(1)Show the source line with a caret indicating the column
-fdiagnostics-show-location=Common Joined RejectNegative Enum(diagnostic_prefixing_rule)-fdiagnostics-show-location=[once|every-line]	How often to emit source location at the beginning of line-wrapped diagnostics
-fdiagnostics-show-optionCommon Var(flag_diagnostics_show_option) Init(1)Amend appropriate diagnostic messages with the command line option that controls them
-fdirectives-onlyC ObjC C++ ObjC++Preprocess directives only.
-fdisable-Common Joined RejectNegative Var(common_deferred_options) Defer-fdisable-[tree|rtl|ipa]-<pass>=range1+range2 disables an optimization pass
-fdisable-assertionsJava
-fdisable-assertions=Java JoinedOrMissing
-fdollar-okFortranAllow dollar signs in entity names
-fdollars-in-identifiersC ObjC C++ ObjC++Permit '$' as an identifier character
-fdseCommon Var(flag_dse) Init(1) OptimizationUse the RTL dead store elimination pass
-fdump-Common Joined RejectNegative Var(common_deferred_options) Defer-fdump-<type>	Dump various compiler internals to a file
-fdump-ada-specC ObjC C++ ObjC++ RejectNegative Var(flag_dump_ada_spec)Write all declarations as Ada code transitively
-fdump-ada-spec-slimC ObjC C++ ObjC++ RejectNegative Var(flag_dump_ada_spec_slim)Write all declarations as Ada code for the given file only
-fdump-coreFortran IgnoreDoes nothing. Preserved for backward compatibility.
-fdump-final-insnsDriver RejectNegative
-fdump-final-insns=Common RejectNegative Joined Var(flag_dump_final_insns)-fdump-final-insns=filename	Dump to filename the insns at the end of translation
-fdump-fortran-optimizedFortranDisplay the code tree after front end optimization
-fdump-fortran-originalFortranDisplay the code tree after parsing
-fdump-go-spec=Common RejectNegative Joined Var(flag_dump_go_spec)-fdump-go-spec=filename	Write all declarations to file as Go code
-fdump-noaddrCommon Report Var(flag_dump_noaddr)Suppress output of addresses in debugging dumps
-fdump-parse-treeFortranDisplay the code tree after parsing; deprecated option
-fdump-passesCommon Var(flag_dump_passes) Init(0)Dump optimization passes
-fdump-unnumberedCommon Report Var(flag_dump_unnumbered)Suppress output of instruction numbers, line number notes and addresses in debugging dumps
-fdump-unnumbered-linksCommon Report Var(flag_dump_unnumbered_links)Suppress output of previous and next insn numbers in debugging dumps
-fdwarf2-cfi-asmCommon Report Var(flag_dwarf2_cfi_asm) Init(HAVE_GAS_CFI_DIRECTIVE)Enable CFI tables via GAS assembler directives.
-fearly-inliningCommon Report Var(flag_early_inlining) Init(1) OptimizationPerform early inlining
-felide-constructorsC++ ObjC++ Var(flag_elide_constructors) Init(1)
-feliminate-dwarf2-dupsCommon Report Var(flag_eliminate_dwarf2_dups)Perform DWARF2 duplicate elimination
-feliminate-unused-debug-symbolsCommon Report Var(flag_debug_only_used_symbols)Perform unused type elimination in debug info
-feliminate-unused-debug-typesCommon Report Var(flag_eliminate_unused_debug_types) Init(1)Perform unused type elimination in debug info
-femit-class-debug-alwaysCommon Report Var(flag_emit_class_debug_always) Init(0)Do not suppress C++ class debug information.
-femit-class-fileJava Var(flag_emit_class_files)Output a class file
-femit-class-filesJava Var(flag_emit_class_files)Alias for -femit-class-file
-femit-struct-debug-baseonlyC ObjC C++ ObjC++-femit-struct-debug-baseonly	Aggressive reduced debug info for structs
-femit-struct-debug-detailed=C ObjC C++ ObjC++ Joined-femit-struct-debug-detailed=<spec-list>	Detailed reduced debug info for structs
-femit-struct-debug-reducedC ObjC C++ ObjC++-femit-struct-debug-reduced	Conservative reduced debug info for structs
-fenable-Common Joined RejectNegative Var(common_deferred_options) Defer-fenable-[tree|rtl|ipa]-<pass>=range1+range2 enables an optimization pass
-fenable-assertionsJava
-fenable-assertions=Java JoinedOrMissing
-fencoding=Java Joined RejectNegative--encoding=<encoding>	Choose input encoding (defaults from your locale)
-fenforce-eh-specsC++ ObjC++ Var(flag_enforce_eh_specs) Init(1)Generate code to check exception specifications
-fenum-int-equivC++ ObjC++ Ignore Warn(switch %qs is no longer supported)
-fexceptionsCommon Report Var(flag_exceptions) OptimizationEnable exception handling
-fexcess-precision=Common Joined RejectNegative Enum(excess_precision) Var(flag_excess_precision_cmdline) Init(EXCESS_PRECISION_DEFAULT)-fexcess-precision=[fast|standard]	Specify handling of excess floating-point precision
-fexec-charset=C ObjC C++ ObjC++ Joined RejectNegative-fexec-charset=<cset>	Convert all strings and character constants to character set <cset>
-fexpensive-optimizationsCommon Report Var(flag_expensive_optimizations) OptimizationPerform a number of minor, expensive optimizations
-fext-numeric-literalsC++ ObjC++ Interpret imaginary, fixed-point, or other gnu number suffix as the correspondingnumber literal rather than a user-defined number literal.
-fextdirs=Java Joined RejectNegative--extdirs=<path>	Set the extension directory path
-fextended-identifiersC ObjC C++ ObjC++Permit universal character names (\\u and \\U) in identifiers
-fextern-tls-initC++ ObjC++ Var(flag_extern_tls_init) Init(-1)Support dynamic initialization of thread-local variables in a different translation unit
-fexternal-blasFortranSpecify that an external BLAS library should be used for matmul calls on large-size arrays
-fexternal-templatesC++ ObjC++ Ignore Warn(switch %qs is no longer supported)
-ff2cFortranUse f2c calling convention
-ffast-mathCommon
-ffat-lto-objectsCommon Var(flag_fat_lto_objects) Init(1)Output lto objects containing both the intermediate language and binary output.
-ffilelist-fileJava Var(flag_filelist_file)Input file is a file with a list of filenames to compile
-ffinite-math-onlyCommon Report Var(flag_finite_math_only) Optimization SetByCombinedAssume no NaNs or infinities are generated
-ffixed-Common Joined RejectNegative Var(common_deferred_options) Defer-ffixed-<register>	Mark <register> as being unavailable to the compiler
-ffixed-formFortran RejectNegativeAssume that the source file is fixed form
-ffixed-line-length-Fortran RejectNegative Joined UInteger-ffixed-line-length-<n>	Use n as character line width in fixed mode
-ffixed-line-length-noneFortran RejectNegativeAllow arbitrary character line width in fixed mode
-ffloat-storeCommon Report Var(flag_float_store) OptimizationDon't allocate floats and doubles in extended-precision registers
-ffor-scopeC++ ObjC++ Var(flag_new_for_scope) Init(1)Scope of for-init-statement variables is local to the loop
-fforce-addrCommon IgnoreDoes nothing.  Preserved for backward compatibility.
-fforce-classes-archive-checkJava Var(flag_force_classes_archive_check)Always check for non gcj generated classes archives
-fforward-propagateCommon Report Var(flag_forward_propagate) OptimizationPerform a forward propagation pass on RTL
-ffp-contract=Common Joined RejectNegative Enum(fp_contract_mode) Var(flag_fp_contract_mode) Init(FP_CONTRACT_FAST)-ffp-contract=[off|on|fast] Perform floating-point expression contraction.
-ffpe-trap=Fortran RejectNegative JoinedOrMissing-ffpe-trap=[...]	Stop on following floating point exceptions
-ffree-formFortran RejectNegativeAssume that the source file is free form
-ffree-line-length-Fortran RejectNegative Joined UInteger-ffree-line-length-<n>	Use n as character line width in free mode
-ffree-line-length-noneFortran RejectNegativeAllow arbitrary character line width in free mode
-ffreestandingC ObjC C++ ObjC++Do not assume that standard C libraries and \"main\" exist
-ffriend-injectionC++ ObjC++ Var(flag_friend_injection)Inject friend functions into enclosing namespace
-ffrontend-optimizeFortranEnable front end optimization
-ffunction-cseCommon Report Var(flag_no_function_cse,0)Allow function addresses to be held in registers
-ffunction-sectionsCommon Report Var(flag_function_sections)Place each function into its own section
-fgcseCommon Report Var(flag_gcse) OptimizationPerform global common subexpression elimination
-fgcse-after-reloadCommon Report Var(flag_gcse_after_reload) OptimizationPerform global common subexpression elimination after register allocationhas finished
-fgcse-lasCommon Report Var(flag_gcse_las) Init(0) OptimizationPerform redundant load after store elimination in global common subexpressionelimination
-fgcse-lmCommon Report Var(flag_gcse_lm) Init(1) OptimizationPerform enhanced load motion during global common subexpression elimination
-fgcse-smCommon Report Var(flag_gcse_sm) Init(0) OptimizationPerform store motion after global common subexpression elimination
-fgnu-keywordsC++ ObjC++ Var(flag_no_gnu_keywords, 0)Recognize GNU-defined keywords
-fgnu-runtimeObjC ObjC++ Report RejectNegative Var(flag_next_runtime,0) Init(NEXT_OBJC_RUNTIME)Generate code for GNU runtime environment
-fgnu-tmCommon Report Var(flag_tm)Enable support for GNU transactional memory
-fgnu89-inlineC ObjC Var(flag_gnu89_inline) Init(-1)Use traditional GNU semantics for inline functions
-fgo-check-divide-overflowGo Var(go_check_divide_overflow) Init(1)Add explicit checks for division overflow in INT_MIN / -1
-fgo-check-divide-zeroGo Var(go_check_divide_zero) Init(1)Add explicit checks for division by zero
-fgo-dump-Go Joined RejectNegative-fgo-dump-<type>	Dump Go frontend internal information
-fgo-optimize-Go Joined RejectNegative-fgo-optimize-<type>	Turn on optimization passes in the frontend
-fgo-pkgpath=Go Joined RejectNegative-fgo-pkgpath=<string>	Set Go package path
-fgo-prefix=Go Joined RejectNegative-fgo-prefix=<string>	Set package-specific prefix for exported Go names
-fgo-relative-import-path=Go Joined RejectNegative-fgo-relative-import-path=<path> Treat a relative import as relative to path
-fgraphiteCommon Report Var(flag_graphite)Enable in and out of Graphite representation
-fgraphite-identityCommon Report Var(flag_graphite_identity) OptimizationEnable Graphite Identity transformation
-fguess-branch-probabilityCommon Report Var(flag_guess_branch_prob) OptimizationEnable guessing of branch probabilities
-fguiding-declsC++ ObjC++ Ignore Warn(switch %qs is no longer supported)
-fhandle-exceptionsC++ ObjC++ Optimization Alias(fexceptions) Warn({-fhandle-exceptions has been renamed -fexceptions (and is now on by default)})
-fhash-synchronizationJava Var(flag_hash_synchronization)Assume the runtime uses a hash table to map an object to its synchronization structure
-fhelpCommon Driver Alias(-help)
-fhelp=Common Driver Joined Alias(-help=)
-fhoist-adjacent-loadsCommon Report Var(flag_hoist_adjacent_loads) OptimizationEnable hoisting adjacent loads to encourage generating conditional moveinstructions
-fhonor-stdC++ ObjC++ Ignore Warn(switch %qs is no longer supported)
-fhostedC ObjCAssume normal C execution environment
-fhuge-objectsC++ ObjC++ Ignore Warn(switch %qs is no longer supported)No longer supported
-fidentCommon Report Var(flag_no_ident,0)Process #ident directives
-fif-conversionCommon Report Var(flag_if_conversion) OptimizationPerform conversion of conditional jumps to branchless equivalents
-fif-conversion2Common Report Var(flag_if_conversion2) OptimizationPerform conversion of conditional jumps to conditional execution
-fimplement-inlinesC++ ObjC++ Var(flag_implement_inlines) Init(1)Export functions even if they can be inlined
-fimplicit-inline-templatesC++ ObjC++ Var(flag_implicit_inline_templates) Init(1)Emit implicit instantiations of inline templates
-fimplicit-noneFortranSpecify that no implicit typing is allowed, unless overridden by explicit IMPLICIT statements
-fimplicit-templatesC++ ObjC++ Var(flag_implicit_templates) Init(1)Emit implicit instantiations of templates
-findirect-classesJava Var(flag_indirect_classes) Init(1)Generate instances of Class at runtime
-findirect-dispatchJava Var(flag_indirect_dispatch)Use offset tables for virtual method calls
-findirect-inliningCommon Report Var(flag_indirect_inlining)Perform indirect inlining
-finhibit-size-directiveCommon Report Var(flag_inhibit_size_directive)Do not generate .size directives
-finit-character=Fortran RejectNegative Joined UInteger-finit-character=<n>	Initialize local character variables to ASCII value n
-finit-integer=Fortran RejectNegative Joined-finit-integer=<n>	Initialize local integer variables to n
-finit-local-zeroFortranInitialize local variables to zero (from g77)
-finit-logical=Fortran RejectNegative Joined-finit-logical=<true|false>	Initialize local logical variables
-finit-real=Fortran RejectNegative Joined-finit-real=<zero|nan|inf|-inf>	Initialize local real variables
-finlineCommon Report Var(flag_no_inline,0) Init(0) OptimizationEnable inlining of function declared \"inline\", disabling disables all inlining
-finline-atomicsCommon Report Var(flag_inline_atomics) Init(1) OptimizationInline __atomic operations when a lock free instruction sequence is available.
-finline-functionsCommon Report Var(flag_inline_functions) OptimizationIntegrate functions not declared \"inline\" into their callers when profitable
-finline-functionsJava
-finline-functions-called-onceCommon Report Var(flag_inline_functions_called_once) OptimizationIntegrate functions only required by their single caller
-finline-limit-Common RejectNegative Joined Alias(finline-limit=)
-finline-limit=Common RejectNegative Joined UInteger-finline-limit=<number>	Limit the size of inlined functions to <number>
-finline-small-functionsCommon Report Var(flag_inline_small_functions) OptimizationIntegrate functions into their callers when code size is known not to grow
-finput-charset=C ObjC C++ ObjC++ Joined RejectNegative-finput-charset=<cset>	Specify the default character set for source files
-finstrument-functionsCommon Report Var(flag_instrument_function_entry_exit)Instrument function entry and exit with profiling calls
-finstrument-functions-exclude-file-list=Common RejectNegative Joined-finstrument-functions-exclude-file-list=filename,...  Do not instrument functions listed in files
-finstrument-functions-exclude-function-list=Common RejectNegative Joined-finstrument-functions-exclude-function-list=name,...  Do not instrument listed functions
-finteger-4-integer-8Fortran RejectNegativeInterpret any INTEGER(4) as an INTEGER(8)
-fintrinsic-modules-pathFortran RejectNegative SeparateSpecify where to find the compiled intrinsic modules
-fintrinsic-modules-path=Fortran RejectNegative JoinedSpecify where to find the compiled intrinsic modules
-fipa-cpCommon Report Var(flag_ipa_cp) OptimizationPerform Interprocedural constant propagation
-fipa-cp-cloneCommon Report Var(flag_ipa_cp_clone) OptimizationPerform cloning to make Interprocedural constant propagation stronger
-fipa-matrix-reorgCommon IgnoreDoes nothing. Preserved for backward compatibility.
-fipa-profileCommon Report Var(flag_ipa_profile) Init(0) OptimizationPerform interprocedural profile propagation
-fipa-ptaCommon Report Var(flag_ipa_pta) Init(0) OptimizationPerform interprocedural points-to analysis
-fipa-pure-constCommon Report Var(flag_ipa_pure_const) Init(0) OptimizationDiscover pure and const functions
-fipa-referenceCommon Report Var(flag_ipa_reference) Init(0) OptimizationDiscover readonly and non addressable static variables
-fipa-sraCommon Report Var(flag_ipa_sra) Init(0) OptimizationPerform interprocedural reduction of aggregates
-fipa-struct-reorgCommon IgnoreDoes nothing. Preserved for backward compatibility.
-fira-algorithm=Common Joined RejectNegative Enum(ira_algorithm) Var(flag_ira_algorithm) Init(IRA_ALGORITHM_CB)-fira-algorithm=[CB|priority] Set the used IRA algorithm
-fira-hoist-pressureCommon Report Var(flag_ira_hoist_pressure) Init(1) OptimizationUse IRA based register pressure calculationin RTL hoist optimizations.
-fira-loop-pressureCommon Report Var(flag_ira_loop_pressure)Use IRA based register pressure calculationin RTL loop optimizations.
-fira-region=Common Joined RejectNegative Enum(ira_region) Var(flag_ira_region) Init(IRA_REGION_AUTODETECT)-fira-region=[one|all|mixed] Set regions for IRA
-fira-share-save-slotsCommon Report Var(flag_ira_share_save_slots) Init(1)Share slots for saving different hard registers.
-fira-share-spill-slotsCommon Report Var(flag_ira_share_spill_slots) Init(1)Share stack slots for spilled pseudo-registers.
-fira-verbose=Common RejectNegative Joined UInteger Var(flag_ira_verbose) Init(5)-fira-verbose=<number>	Control IRA's level of diagnostic messages.
-fivoptsCommon Report Var(flag_ivopts) Init(1) OptimizationOptimize induction variables on trees
-fjniJava Var(flag_jni)Assume native functions are implemented using JNI
-fjump-tablesCommon Var(flag_jump_tables) Init(1) OptimizationUse jump tables for sufficiently large switch statements
-fkeep-inline-dllexportC C++ ObjC ObjC++ Var(flag_keep_inline_dllexport) Init(1) Report Condition(TARGET_DLLIMPORT_DECL_ATTRIBUTES)Don't emit dllexported inline functions unless needed
-fkeep-inline-functionsCommon Report Var(flag_keep_inline_functions)Generate code for functions even if they are fully inlined
-fkeep-static-constsCommon Report Var(flag_keep_static_consts) Init(1)Emit static const variables even if they are not used
-flabels-okC++ ObjC++ Ignore Warn(switch %qs is no longer supported)
-flax-vector-conversionsC ObjC C++ ObjC++ Var(flag_lax_vector_conversions)Allow implicit conversions between vectors with differing numbers of subparts and/or differing element types.
-fleading-underscoreCommon Report Var(flag_leading_underscore) Init(-1)Give external symbols a leading underscore
-floop-blockCommon Report Var(flag_loop_block) OptimizationEnable Loop Blocking transformation
-floop-flattenCommon IgnoreDoes nothing. Preserved for backward compatibility.
-floop-interchangeCommon Report Var(flag_loop_interchange) OptimizationEnable Loop Interchange transformation
-floop-nest-optimizeCommon Report Var(flag_loop_optimize_isl) OptimizationEnable the ISL based loop nest optimizer
-floop-optimizeCommon IgnoreDoes nothing.  Preserved for backward compatibility.
-floop-parallelize-allCommon Report Var(flag_loop_parallelize_all) OptimizationMark all loops as parallel
-floop-strip-mineCommon Report Var(flag_loop_strip_mine) OptimizationEnable Loop Strip Mining transformation
-fltoCommonEnable link-time optimization.
-flto-compression-level=Common Joined RejectNegative UInteger Var(flag_lto_compression_level) Init(-1)-flto-compression-level=<number>	Use zlib compression level <number> for IL
-flto-partition=1to1Common Var(flag_lto_partition_1to1)Partition symbols and vars at linktime based on object files they originate from
-flto-partition=balancedCommon Var(flag_lto_partition_balanced)Partition functions and vars at linktime into approximately same sized buckets
-flto-partition=maxCommon Var(flag_lto_partition_max)Put every symbol into separate partition
-flto-partition=noneCommon Var(flag_lto_partition_none)Disable partioning and streaming
-flto-reportCommon Report Var(flag_lto_report) Init(0)Report various link-time optimization statistics
-flto=Common RejectNegative Joined Var(flag_lto)Link-time optimization with number of parallel jobs or jobserver.
-fltransLTO Report Var(flag_ltrans)Run the link-time optimizer in local transformation (LTRANS) mode.
-fltrans-output-list=LTO Joined Var(ltrans_output_list)Specify a file to which a list of files output by LTRANS is written.
-fmain=Driver JoinedOrMissing RejectNegative
-fmath-errnoCommon Report Var(flag_errno_math) Init(1) Optimization SetByCombinedSet errno after built-in math functions
-fmax-array-constructor=Fortran RejectNegative Joined UInteger-fmax-array-constructor=<n>	Maximum number of objects in an array constructor
-fmax-errors=Common Joined RejectNegative UInteger Var(flag_max_errors)-fmax-errors=<number>	Maximum number of errors to report
-fmax-identifier-length=Fortran RejectNegative Joined UInteger-fmax-identifier-length=<n>	Maximum identifier length
-fmax-stack-var-size=Fortran RejectNegative Joined UInteger-fmax-stack-var-size=<n>	Size in bytes of the largest array that will be put on the stack
-fmax-subrecord-length=Fortran RejectNegative Joined UInteger-fmax-subrecord-length=<n>	Maximum length for subrecords
-fmem-reportCommon Report Var(mem_report)Report on permanent memory allocation
-fmem-report-wpaCommon Report Var(mem_report_wpa)Report on permanent memory allocation in WPA only
-fmerge-all-constantsCommon Report Var(flag_merge_constants,2) Init(1) OptimizationAttempt to merge identical constants and constant variables
-fmerge-constantsCommon Report Var(flag_merge_constants,1) OptimizationAttempt to merge identical constants across compilation units
-fmerge-debug-stringsCommon Report Var(flag_merge_debug_strings) Init(1)Attempt to merge identical debug strings across compilation units
-fmessage-length=Common RejectNegative Joined UInteger-fmessage-length=<number>	Limit diagnostics to <number> characters per line.  0 suppresses line-wrapping
-fmodule-privateFortranSet default accessibility of module entities to PRIVATE.
-fmodulo-schedCommon Report Var(flag_modulo_sched) OptimizationPerform SMS based modulo scheduling before the first scheduling pass
-fmodulo-sched-allow-regmovesCommon Report Var(flag_modulo_sched_allow_regmoves)Perform SMS based modulo scheduling with register moves allowed
-fmove-loop-invariantsCommon Report Var(flag_move_loop_invariants) Init(1) OptimizationMove loop invariant computations out of loops
-fms-extensionsC ObjC C++ ObjC++ Var(flag_ms_extensions)Don't warn about uses of Microsoft extensions
-fmudflapC ObjC C++ ObjC++ RejectNegative Report Var(flag_mudflap)Add mudflap bounds-checking instrumentation for single-threaded program
-fmudflapirC ObjC C++ ObjC++ RejectNegative Report Var(flag_mudflap_ignore_reads)Ignore read operations when inserting mudflap instrumentation
-fmudflapthC ObjC C++ ObjC++ RejectNegative Report Var(flag_mudflap,2)Add mudflap bounds-checking instrumentation for multi-threaded program
-fname-mangling-version-C++ ObjC++ Joined Ignore Warn(switch %qs is no longer supported)
-fnew-abiC++ ObjC++ Ignore Warn(switch %qs is no longer supported)
-fnext-runtimeObjC ObjC++ Report RejectNegative Var(flag_next_runtime)Generate code for NeXT (Apple Mac OS X) runtime environment
-fnil-receiversObjC ObjC++ Var(flag_nil_receivers) Init(1)Assume that receivers of Objective-C messages may be nil
-fnon-call-exceptionsCommon Report Var(flag_non_call_exceptions) OptimizationSupport synchronous non-call exceptions
-fnonansi-builtinsC++ ObjC++ Var(flag_no_nonansi_builtin, 0)
-fnonnull-objectsC++ ObjC++ Ignore Warn(switch %qs is no longer supported)
-fnothrow-optC++ ObjC++ Optimization Var(flag_nothrow_opt)Treat a throw() exception specification as noexcept to improve code size
-fobjc-abi-version=ObjC ObjC++ Joined Report RejectNegative UInteger Var(flag_objc_abi)Specify which ABI to use for Objective-C family code and meta-data generation.
-fobjc-call-cxx-cdtorsObjC++ Var(flag_objc_call_cxx_cdtors)Generate special Objective-C methods to initialize/destroy non-POD C++ ivars, if needed
-fobjc-direct-dispatchObjC ObjC++ Var(flag_objc_direct_dispatch)Allow fast jumps to the message dispatcher
-fobjc-exceptionsObjC ObjC++ Var(flag_objc_exceptions)Enable Objective-C exception and synchronization syntax
-fobjc-gcObjC ObjC++ Var(flag_objc_gc)Enable garbage collection (GC) in Objective-C/Objective-C++ programs
-fobjc-nilcheckObjC ObjC++ Var(flag_objc_nilcheck,1)Enable inline checks for nil receivers with the NeXT runtime and ABI version 2.
-fobjc-sjlj-exceptionsObjC ObjC++ Var(flag_objc_sjlj_exceptions) Init(-1)Enable Objective-C setjmp exception handling runtime
-fobjc-std=objc1ObjC ObjC++ Var(flag_objc1_only)Conform to the Objective-C 1.0 language as implemented in GCC 4.0
-fomit-frame-pointerCommon Report Var(flag_omit_frame_pointer) OptimizationWhen possible do not generate stack frames
-fopenmpC ObjC C++ ObjC++ Var(flag_openmp)Enable OpenMP (implies -frecursive in Fortran)
-fopenmpFortran
-foperator-namesC++ ObjC++Recognize C++ keywords like \"compl\" and \"xor\"
-fopt-infoCommon Report Var(flag_opt_info) OptimizationEnable all optimization info dumps on stderr
-fopt-info-Common Joined RejectNegative Var(common_deferred_options) Defer-fopt-info[-<type>=filename]	Dump compiler optimization details
-foptimize-register-moveCommon Report Var(flag_regmove) OptimizationDo the full register move optimization pass
-foptimize-sibling-callsCommon Report Var(flag_optimize_sibling_calls) OptimizationOptimize sibling and tail recursive calls
-foptimize-static-class-initializationJava Var(flag_optimize_sci)Enable optimization of static class initialization code
-foptimize-strlenCommon Report Var(flag_optimize_strlen) OptimizationEnable string length optimizations on trees
-foptional-diagsC++ ObjC++ IgnoreDoes nothing.  Preserved for backward compatibility.
-foutput-class-dir=Java Joined RejectNegative
-fpack-derivedFortranTry to lay out derived types as compactly as possible
-fpack-structCommon Report Var(flag_pack_struct) OptimizationPack structure members together without holes
-fpack-struct=Common RejectNegative Joined UInteger Optimization-fpack-struct=<number>	Set initial maximum structure member alignment
-fpartial-inliningCommon Report Var(flag_partial_inlining)Perform partial inlining
-fpcc-struct-returnCommon Report Var(flag_pcc_struct_return,1) Init(DEFAULT_PCC_STRUCT_RETURN)Return small aggregates in memory, not registers
-fpch-depsC ObjC C++ ObjC++
-fpch-preprocessC ObjC C++ ObjC++Look for and use PCH files even when preprocessing
-fpeel-loopsCommon Report Var(flag_peel_loops) OptimizationPerform loop peeling
-fpeepholeCommon Report Var(flag_no_peephole,0) OptimizationEnable machine specific peephole optimizations
-fpeephole2Common Report Var(flag_peephole2) OptimizationEnable an RTL peephole pass before sched2
-fpermissiveC++ ObjC++ Var(flag_permissive)Downgrade conformance errors to warnings
-fpicCommon Report Var(flag_pic,1) Negative(fpie)Generate position-independent code if possible (small mode)
-fpieCommon Report Var(flag_pie,1) Negative(fPIC)Generate position-independent code for executables if possible (small mode)
-fplan9-extensionsC ObjC Var(flag_plan9_extensions)Enable Plan 9 language extensions
-fplugin-arg-Common Joined RejectNegative Var(common_deferred_options) Defer-fplugin-arg-<name>-<key>[=<value>]	Specify argument <key>=<value> for plugin <name>
-fplugin=Common Joined RejectNegative Var(common_deferred_options) DeferSpecify a plugin to load
-fpost-ipa-mem-reportCommon Report Var(post_ipa_mem_report)Report on memory allocation before interprocedural optimization
-fpre-ipa-mem-reportCommon Report Var(pre_ipa_mem_report)Report on memory allocation before interprocedural optimization
-fpredictive-commoningCommon Report Var(flag_predictive_commoning) OptimizationRun predictive commoning optimization.
-fprefetch-loop-arraysCommon Report Var(flag_prefetch_loop_arrays) Init(-1) OptimizationGenerate prefetch instructions, if available, for arrays in loops
-fpreprocessedC ObjC C++ ObjC++Treat the input file as already preprocessed
-fpreprocessedFortran
-fpretty-templatesC++ ObjC++ Var(flag_pretty_templates) Init(1)-fno-pretty-templates Do not pretty-print template specializations as the template signature followed by the arguments
-fprofileCommon Report Var(profile_flag)Enable basic program profiling code
-fprofile-arcsCommon Report Var(profile_arc_flag)Insert arc-based program profiling code
-fprofile-correctionCommon Report Var(flag_profile_correction)Enable correction of flow inconsistent profile data input
-fprofile-dir=Common Joined RejectNegative Var(profile_data_prefix)Set the top-level directory for storing the profile data.The default is 'pwd'.
-fprofile-generateCommonEnable common options for generating profile info for profile feedback directed optimizations
-fprofile-generate=Common Joined RejectNegativeEnable common options for generating profile info for profile feedback directed optimizations, and set -fprofile-dir=
-fprofile-reportCommon Report Var(profile_report)Report on consistency of profile
-fprofile-useCommon Var(flag_profile_use)Enable common options for performing profile feedback directed optimizations
-fprofile-use=Common Joined RejectNegativeEnable common options for performing profile feedback directed optimizations, and set -fprofile-dir=
-fprofile-valuesCommon Report Var(flag_profile_values)Insert code to profile values of expressions
-fprotect-parensFortranProtect parentheses in expressions
-frandom-seedCommon Var(common_deferred_options) Defer
-frandom-seed=Common Joined RejectNegative Var(common_deferred_options) Defer-frandom-seed=<string>	Make compile reproducible using <string>
-frange-checkFortranEnable range checking during compilation
-freal-4-real-10Fortran RejectNegativeInterpret any REAL(4) as a REAL(10)
-freal-4-real-16Fortran RejectNegativeInterpret any REAL(4) as a REAL(16)
-freal-4-real-8Fortran RejectNegativeInterpret any REAL(4) as a REAL(8)
-freal-8-real-10Fortran RejectNegativeInterpret any REAL(8) as a REAL(10)
-freal-8-real-16Fortran RejectNegativeInterpret any REAL(8) as a REAL(16)
-freal-8-real-4Fortran RejectNegativeInterpret any REAL(8) as a REAL(4)
-frealloc-lhsFortranReallocate the LHS in assignments
-freciprocal-mathCommon Report Var(flag_reciprocal_math) SetByCombinedSame as -fassociative-math for expressions which include division.
-frecord-gcc-switchesCommon Report Var(flag_record_gcc_switches)Record gcc command line switches in the object file.
-frecord-marker=4Fortran RejectNegativeUse a 4-byte record marker for unformatted files
-frecord-marker=8Fortran RejectNegativeUse an 8-byte record marker for unformatted files
-frecursiveFortranAllocate local variables on the stack to allow indirect recursion
-freduced-reflectionJava Var(flag_reduced_reflection)Reduce the amount of reflection meta-data generated
-freeCommon Report Var(flag_ree) Init(0)Turn on Redundant Extensions Elimination pass.
-freg-struct-returnCommon Report Var(flag_pcc_struct_return,0) OptimizationReturn small aggregates in registers
-fregmoveCommon Report Var(flag_regmove) OptimizationEnables a register move optimization
-frename-registersCommon Report Var(flag_rename_registers) Init(2) OptimizationPerform a register renaming optimization pass
-freorder-blocksCommon Report Var(flag_reorder_blocks) OptimizationReorder basic blocks to improve code placement
-freorder-blocks-and-partitionCommon Report Var(flag_reorder_blocks_and_partition) OptimizationReorder basic blocks and partition into hot and cold sections
-freorder-functionsCommon Report Var(flag_reorder_functions) OptimizationReorder functions to improve code placement
-frepack-arraysFortranCopy array sections into a contiguous block on procedure entry
-freplace-objc-classesObjC ObjC++ Var(flag_replace_objc_classes)Used in Fix-and-Continue mode to indicate that object files may be swapped in at runtime
-frepoC++ ObjC++Enable automatic template instantiation
-frequire-return-statementGo Var(go_require_return_statement) Init(1) WarningFunctions which return values must end with return statements
-frerun-cse-after-loopCommon Report Var(flag_rerun_cse_after_loop) OptimizationAdd a common subexpression elimination pass after loop optimizations
-frerun-loop-optCommon IgnoreDoes nothing.  Preserved for backward compatibility.
-freschedule-modulo-scheduled-loopsCommon Report Var(flag_resched_modulo_sched) OptimizationEnable/Disable the traditional scheduling in loops that already passed modulo scheduling
-fresolution=LTO JoinedThe resolution file
-frounding-mathCommon Report Var(flag_rounding_math) Optimization SetByCombinedDisable optimizations that assume default FP rounding behavior
-frttiC++ ObjC++ Optimization Var(flag_rtti) Init(1)Generate run time type descriptor information
-fsanitize=addressCommon Report Var(flag_asan)Enable AddressSanitizer, a memory error detector
-fsanitize=threadCommon Report Var(flag_tsan)Enable ThreadSanitizer, a data race detector
-fsaw-java-fileJava Undocumented RejectNegative
-fsched-critical-path-heuristicCommon Report Var(flag_sched_critical_path_heuristic) Init(1) OptimizationEnable the critical path heuristic in the scheduler
-fsched-dep-count-heuristicCommon Report Var(flag_sched_dep_count_heuristic) Init(1) OptimizationEnable the dependent count heuristic in the scheduler
-fsched-group-heuristicCommon Report Var(flag_sched_group_heuristic) Init(1) OptimizationEnable the group heuristic in the scheduler
-fsched-interblockCommon Report Var(flag_schedule_interblock) Init(1) OptimizationEnable scheduling across basic blocks
-fsched-last-insn-heuristicCommon Report Var(flag_sched_last_insn_heuristic) Init(1) OptimizationEnable the last instruction heuristic in the scheduler
-fsched-pressureCommon Report Var(flag_sched_pressure) Init(0) OptimizationEnable register pressure sensitive insn scheduling
-fsched-rank-heuristicCommon Report Var(flag_sched_rank_heuristic) Init(1) OptimizationEnable the rank heuristic in the scheduler
-fsched-specCommon Report Var(flag_schedule_speculative) Init(1) OptimizationAllow speculative motion of non-loads
-fsched-spec-insn-heuristicCommon Report Var(flag_sched_spec_insn_heuristic) Init(1) OptimizationEnable the speculative instruction heuristic in the scheduler
-fsched-spec-loadCommon Report Var(flag_schedule_speculative_load) OptimizationAllow speculative motion of some loads
-fsched-spec-load-dangerousCommon Report Var(flag_schedule_speculative_load_dangerous) OptimizationAllow speculative motion of more loads
-fsched-stalled-insnsCommon Report Var(flag_sched_stalled_insns) Optimization UIntegerAllow premature scheduling of queued insns
-fsched-stalled-insns-depCommon Report Var(flag_sched_stalled_insns_dep,1) Init(1) Optimization UIntegerSet dependence distance checking in premature scheduling of queued insns
-fsched-stalled-insns-dep=Common RejectNegative Joined UInteger-fsched-stalled-insns-dep=<number>	Set dependence distance checking in premature scheduling of queued insns
-fsched-stalled-insns=Common RejectNegative Joined UInteger-fsched-stalled-insns=<number>	Set number of queued insns that can be prematurely scheduled
-fsched-verbose=Common RejectNegative Joined UInteger Var(sched_verbose_param)-fsched-verbose=<number>	Set the verbosity level of the scheduler
-fsched2-use-superblocksCommon Report Var(flag_sched2_use_superblocks) OptimizationIf scheduling post reload, do superblock scheduling
-fsched2-use-tracesCommon IgnoreDoes nothing.  Preserved for backward compatibility.
-fschedule-insnsCommon Report Var(flag_schedule_insns) OptimizationReschedule instructions before register allocation
-fschedule-insns2Common Report Var(flag_schedule_insns_after_reload) OptimizationReschedule instructions after register allocation
-fsecond-underscoreFortranAppend a second underscore if the name already contains an underscore
-fsection-anchorsCommon Report Var(flag_section_anchors) OptimizationAccess data in the same section from shared anchor points
-fseeCommon IgnoreDoes nothing.  Preserved for backward compatibility.
-fsel-sched-pipeliningCommon Report Var(flag_sel_sched_pipelining) Init(0) OptimizationPerform software pipelining of inner loops during selective scheduling
-fsel-sched-pipelining-outer-loopsCommon Report Var(flag_sel_sched_pipelining_outer_loops) Init(0) OptimizationPerform software pipelining of outer loops during selective scheduling
-fsel-sched-reschedule-pipelinedCommon Report Var(flag_sel_sched_reschedule_pipelined) Init(0) OptimizationReschedule pipelined regions without pipelining
-fselective-schedulingCommon Report Var(flag_selective_scheduling) OptimizationSchedule instructions using selective scheduling algorithm
-fselective-scheduling2Common Report Var(flag_selective_scheduling2) Optimization Run selective scheduling after reload
-fshort-doubleC ObjC C++ ObjC++ Optimization Var(flag_short_double)Use the same size for double as for float
-fshort-enumsC ObjC C++ ObjC++ Optimization Var(flag_short_enums)Use the narrowest integer type possible for enumeration types
-fshort-enumsFortran Var(flag_short_enums)
-fshort-wcharC ObjC C++ ObjC++ Optimization Var(flag_short_wchar)Force the underlying type for \"wchar_t\" to be \"unsigned short\"
-fshow-columnCommon Report Var(flag_show_column) Init(1)Show column numbers in diagnostics, when available.  Default on
-fshrink-wrapCommon Report Var(flag_shrink_wrap) OptimizationEmit function prologues only before parts of the function that need it,rather than at the top of the function.
-fsign-zeroFortranApply negative sign to zero values
-fsignaling-nansCommon Report Var(flag_signaling_nans) Optimization SetByCombinedDisable optimizations observable by IEEE signaling NaNs
-fsigned-bitfieldsC ObjC C++ ObjC++ Var(flag_signed_bitfields) Init(1)When \"signed\" or \"unsigned\" is not given make the bitfield signed
-fsigned-charC ObjC C++ ObjC++ LTO Var(flag_signed_char)Make \"char\" signed by default
-fsigned-zerosCommon Report Var(flag_signed_zeros) Init(1) Optimization SetByCombinedDisable floating point optimizations that ignore the IEEE signedness of zero
-fsingle-precision-constantCommon Report Var(flag_single_precision_constant) OptimizationConvert floating point constants to single precision constants
-fsource-filename=Java Joined Undocumented 
-fsource=Java JoinedSet the source language version
-fsplit-ivs-in-unrollerCommon Report Var(flag_split_ivs_in_unroller) Init(1) OptimizationSplit lifetimes of induction variables when loops are unrolled
-fsplit-stackCommon Report Var(flag_split_stack) Init(-1)Generate discontiguous stack frames
-fsplit-wide-typesCommon Report Var(flag_split_wide_types) OptimizationSplit wide types into independent registers
-fsquangleC++ ObjC++ Ignore Warn(switch %qs is no longer supported)
-fstack-arraysFortranPut all local arrays on stack.
-fstack-checkCommon Alias(fstack-check=, specific, no)Insert stack checking code into the program.  Same as -fstack-check=specific
-fstack-check=Common Report RejectNegative Joined-fstack-check=[no|generic|specific]	Insert stack checking code into the program
-fstack-limitCommon Var(common_deferred_options) Defer
-fstack-limit-register=Common RejectNegative Joined Var(common_deferred_options) Defer-fstack-limit-register=<register>	Trap if the stack goes past <register>
-fstack-limit-symbol=Common RejectNegative Joined Var(common_deferred_options) Defer-fstack-limit-symbol=<name>	Trap if the stack goes past symbol <name>
-fstack-protectorCommon Report Var(flag_stack_protect, 1)Use propolice as a stack protection method
-fstack-protector-allCommon Report RejectNegative Var(flag_stack_protect, 2)Use a stack protection method for every function
-fstack-reuse=Common Joined RejectNegative Enum(stack_reuse_level) Var(flag_stack_reuse) Init(SR_ALL)-fstack-reuse=[all|named_vars|none] Set stack reuse level for local variables.
-fstack-usageCommon RejectNegative Var(flag_stack_usage)Output stack usage information on a per-function basis
-fstatsC++ ObjC++ Var(flag_detailed_statistics)Display statistics accumulated during compilation
-fstore-checkJava Var(flag_store_check) Init(1)Enable assignability checks for stores into object arrays
-fstrength-reduceCommon IgnoreDoes nothing.  Preserved for backward compatibility.
-fstrict-aliasingCommon Report Var(flag_strict_aliasing) OptimizationAssume strict aliasing rules apply
-fstrict-enumsC++ ObjC++ Optimization Var(flag_strict_enums)Assume that values of enumeration type are always within the minimum range of that type
-fstrict-overflowCommon Report Var(flag_strict_overflow)Treat signed overflow as undefined
-fstrict-prototypeC++ ObjC++ Ignore Warn(switch %qs is no longer supported)
-fstrict-volatile-bitfieldsCommon Report Var(flag_strict_volatile_bitfields) Init(-1)Force bitfield accesses to match their type width
-fsync-libcallsCommon Report Var(flag_sync_libcalls) Init(1)Implement __atomic operations via libcalls to legacy __sync functions
-fsyntax-onlyCommon Report Var(flag_syntax_only)Check for syntax errors, then stop
-ftabstop=C ObjC C++ ObjC++ Joined RejectNegative UInteger-ftabstop=<number>	Distance between tab stops for column reporting
-ftarget-helpCommon Driver Alias(-target-help)
-ftarget=Java JoinedSet the target VM version
-ftemplate-backtrace-limit=C++ ObjC++ Joined RejectNegative UInteger Var(template_backtrace_limit) Init(10)Set the maximum number of template instantiation notes for a single warning or error
-ftemplate-depth-C++ ObjC++ Joined RejectNegative Undocumented Alias(ftemplate-depth=)
-ftemplate-depth=C++ ObjC++ Joined RejectNegative UInteger-ftemplate-depth=<number>	Specify maximum template instantiation depth
-ftest-coverageCommon Report Var(flag_test_coverage)Create data files needed by \"gcov\"
-fthis-is-variableC++ ObjC++ Ignore Warn(switch %qs is no longer supported)
-fthread-jumpsCommon Report Var(flag_thread_jumps) OptimizationPerform jump threading optimizations
-fthreadsafe-staticsC++ ObjC++ Optimization Var(flag_threadsafe_statics) Init(1)-fno-threadsafe-statics	Do not generate thread-safe code for initializing local statics
-ftime-reportCommon Report Var(time_report)Report the time taken by each compiler pass
-ftls-model=Common Joined RejectNegative Enum(tls_model) Var(flag_tls_default) Init(TLS_MODEL_GLOBAL_DYNAMIC)-ftls-model=[global-dynamic|local-dynamic|initial-exec|local-exec]	Set the default thread-local storage code generation model
-ftoplevel-reorderCommon Report Var(flag_toplevel_reorder) Init(2) OptimizationReorder top level functions, variables, and asms
-ftracerCommon Report Var(flag_tracer)Perform superblock formation via tail duplication
-ftrack-macro-expansionC ObjC C++ ObjC++ JoinedOrMissing RejectNegative UInteger
-ftrack-macro-expansion=C ObjC C++ ObjC++ JoinedOrMissing RejectNegative UInteger-ftrack-macro-expansion=<0|1|2>  Track locations of tokens coming from macro expansion and display them in error messages
-ftrapping-mathCommon Report Var(flag_trapping_math) Init(1) Optimization SetByCombinedAssume floating-point operations can trap
-ftrapvCommon Report Var(flag_trapv) OptimizationTrap for signed overflow in addition, subtraction and multiplication
-ftree-bit-ccpCommon Report Var(flag_tree_bit_ccp) OptimizationEnable SSA-BIT-CCP optimization on trees
-ftree-builtin-call-dceCommon Report Var(flag_tree_builtin_call_dce) Init(0) OptimizationEnable conditional dead code elimination for builtin calls
-ftree-ccpCommon Report Var(flag_tree_ccp) OptimizationEnable SSA-CCP optimization on trees
-ftree-chCommon Report Var(flag_tree_ch) OptimizationEnable loop header copying on trees
-ftree-coalesce-inlined-varsCommon Report Var(flag_ssa_coalesce_vars,1) Init(2) RejectNegative OptimizationEnable coalescing of copy-related user variables that are inlined
-ftree-coalesce-varsCommon Report Var(flag_ssa_coalesce_vars,2) OptimizationEnable coalescing of all copy-related user variables
-ftree-copy-propCommon Report Var(flag_tree_copy_prop) OptimizationEnable copy propagation on trees
-ftree-copyrenameCommon Report Var(flag_tree_copyrename) OptimizationReplace SSA temporaries with better names in copies
-ftree-cselimCommon Report Var(flag_tree_cselim) Init(2) OptimizationTransform condition stores into unconditional ones
-ftree-dceCommon Report Var(flag_tree_dce) OptimizationEnable SSA dead code elimination optimization on trees
-ftree-dominator-optsCommon Report Var(flag_tree_dom) OptimizationEnable dominator optimizations
-ftree-dseCommon Report Var(flag_tree_dse) OptimizationEnable dead store elimination
-ftree-forwpropCommon Report Var(flag_tree_forwprop) Init(1) OptimizationEnable forward propagation on trees
-ftree-freCommon Report Var(flag_tree_fre) OptimizationEnable Full Redundancy Elimination (FRE) on trees
-ftree-loop-distribute-patternsCommon Report Var(flag_tree_loop_distribute_patterns) OptimizationEnable loop distribution for patterns transformed into a library call
-ftree-loop-distributionCommon Report Var(flag_tree_loop_distribution) OptimizationEnable loop distribution on trees
-ftree-loop-if-convertCommon Report Var(flag_tree_loop_if_convert) Init(-1) OptimizationConvert conditional jumps in innermost loops to branchless equivalents
-ftree-loop-if-convert-storesCommon Report Var(flag_tree_loop_if_convert_stores) OptimizationAlso if-convert conditional jumps containing memory writes
-ftree-loop-imCommon Report Var(flag_tree_loop_im) Init(1) OptimizationEnable loop invariant motion on trees
-ftree-loop-ivcanonCommon Report Var(flag_tree_loop_ivcanon) Init(1) OptimizationCreate canonical induction variables in loops
-ftree-loop-linearCommon Alias(floop-interchange)Enable loop interchange transforms.  Same as -floop-interchange
-ftree-loop-optimizeCommon Report Var(flag_tree_loop_optimize) Init(1) OptimizationEnable loop optimizations on tree level
-ftree-lrsCommon Report Var(flag_tree_live_range_split) OptimizationPerform live range splitting during the SSA->normal pass
-ftree-parallelize-loops=Common Report Joined RejectNegative UInteger Var(flag_tree_parallelize_loops) Init(1)Enable automatic parallelization of loops
-ftree-partial-preCommon Report Var(flag_tree_partial_pre) OptimizationIn SSA-PRE optimization on trees, enable partial-partial redundancy elimination
-ftree-phipropCommon Report Var(flag_tree_phiprop) Init(1) OptimizationEnable hoisting loads from conditional pointers.
-ftree-preCommon Report Var(flag_tree_pre) OptimizationEnable SSA-PRE optimization on trees
-ftree-ptaCommon Report Var(flag_tree_pta) Init(1) OptimizationPerform function-local points-to analysis on trees.
-ftree-reassocCommon Report Var(flag_tree_reassoc) Init(1) OptimizationEnable reassociation on tree level
-ftree-saliasCommon IgnoreDoes nothing.  Preserved for backward compatibility.
-ftree-scev-cpropCommon Report Var(flag_tree_scev_cprop) Init(1) OptimizationEnable copy propagation of scalar-evolution information.
-ftree-sinkCommon Report Var(flag_tree_sink) OptimizationEnable SSA code sinking on trees
-ftree-slp-vectorizeCommon Report Var(flag_tree_slp_vectorize) Init(2) OptimizationEnable basic block vectorization (SLP) on trees
-ftree-slsrCommon Report Var(flag_tree_slsr) OptimizationPerform straight-line strength reduction
-ftree-sraCommon Report Var(flag_tree_sra) OptimizationPerform scalar replacement of aggregates
-ftree-store-ccpCommon IgnoreDoes nothing.  Preserved for backward compatibility.
-ftree-store-copy-propCommon IgnoreDoes nothing.  Preserved for backward compatibility.
-ftree-switch-conversionCommon Report Var(flag_tree_switch_conversion) OptimizationPerform conversions of switch initializations.
-ftree-tail-mergeCommon Report Var(flag_tree_tail_merge) OptimizationEnable tail merging on trees
-ftree-terCommon Report Var(flag_tree_ter) OptimizationReplace temporary expressions in the SSA->normal pass
-ftree-vect-loop-versionCommon Report Var(flag_tree_vect_loop_version) Init(1) OptimizationEnable loop versioning when doing loop vectorization on trees
-ftree-vectorizeCommon Report Var(flag_tree_vectorize) OptimizationEnable loop vectorization on trees
-ftree-vectorizer-verbose=Common RejectNegative Joined UInteger Var(common_deferred_options) Defer-ftree-vectorizer-verbose=<number>	This switch is deprecated. Use -fopt-info instead.
-ftree-vrpCommon Report Var(flag_tree_vrp) Init(0) OptimizationPerform Value Range Propagation on trees
-funderscoringFortranAppend underscores to externally visible names
-funit-at-a-timeCommon Report Var(flag_unit_at_a_time) Init(1) OptimizationCompile whole compilation unit at a time
-funroll-all-loopsCommon Report Var(flag_unroll_all_loops) OptimizationPerform loop unrolling for all loops
-funroll-loopsCommon Report Var(flag_unroll_loops) OptimizationPerform loop unrolling when iteration count is known
-funsafe-loop-optimizationsCommon Report Var(flag_unsafe_loop_optimizations) OptimizationAllow loop optimizations to assume that the loops behave in normal way
-funsafe-math-optimizationsCommon Report Var(flag_unsafe_math_optimizations) Optimization SetByCombinedAllow math optimizations that may violate IEEE or ISO standards
-funsigned-bitfieldsC ObjC C++ ObjC++ Var(flag_signed_bitfields, 0)When \"signed\" or \"unsigned\" is not given make the bitfield unsigned
-funsigned-charC ObjC C++ ObjC++ LTO Var(flag_signed_char, 0)Make \"char\" unsigned by default
-funswitch-loopsCommon Report Var(flag_unswitch_loops) OptimizationPerform loop unswitching
-funwind-tablesCommon Report Var(flag_unwind_tables) OptimizationJust generate unwind tables for exception handling
-fuse-atomic-builtinsJava Var(flag_use_atomic_builtins) Init(0)Generate code for built-in atomic operations
-fuse-boehm-gcJava Var(flag_use_boehm_gc)Generate code for the Boehm GC
-fuse-cxa-atexitC++ ObjC++ Var(flag_use_cxa_atexit) Init(DEFAULT_USE_CXA_ATEXIT)Use __cxa_atexit to register destructors
-fuse-cxa-get-exception-ptrC++ ObjC++ Var(flag_use_cxa_get_exception_ptr) Init(2)Use __cxa_get_exception_ptr in exception handling
-fuse-divide-subroutineJava Var(flag_use_divide_subroutine) Init(1)Call a library routine to do integer divisions
-fuse-ld=bfdCommon Negative(fuse-ld=gold)Use the bfd linker instead of the default linker
-fuse-ld=goldCommon Negative(fuse-ld=bfd)Use the gold linker instead of the default linker
-fuse-linker-pluginCommon Undocumented
-fvar-trackingCommon Report Var(flag_var_tracking) Init(2) OptimizationPerform variable tracking
-fvar-tracking-assignmentsCommon Report Var(flag_var_tracking_assignments) Init(2) OptimizationPerform variable tracking by annotating assignments
-fvar-tracking-assignments-toggleCommon Report Var(flag_var_tracking_assignments_toggle) OptimizationToggle -fvar-tracking-assignments
-fvar-tracking-uninitCommon Report Var(flag_var_tracking_uninit) OptimizationPerform variable tracking and also tag variables that are uninitialized
-fvariable-expansion-in-unrollerCommon Report Var(flag_variable_expansion_in_unroller) OptimizationApply variable expansion when loops are unrolled
-fvect-cost-modelCommon Report Var(flag_vect_cost_model) OptimizationEnable use of cost model in vectorization
-fverbose-asmCommon Report Var(flag_verbose_asm)Add extra commentary to assembler output
-fversionCommon Driver Alias(-version)
-fvisibility-inlines-hiddenC++ ObjC++Marks all inlined functions and methods as having hidden visibility
-fvisibility-ms-compatC++ ObjC++ Var(flag_visibility_ms_compat)Changes visibility to match Microsoft Visual Studio by default
-fvisibility=Common Joined RejectNegative Enum(symbol_visibility) Var(default_visibility) Init(VISIBILITY_DEFAULT)-fvisibility=[default|internal|hidden|protected]	Set the default symbol visibility
-fvptCommon Report Var(flag_value_profile_transformations) OptimizationUse expression value profiles in optimizations
-fvtable-gcC++ ObjC++ Ignore Warn(switch %qs is no longer supported)No longer supported
-fvtable-thunksC++ ObjC++ Ignore Warn(switch %qs is no longer supported)No longer supported
-fweakC++ ObjC++ Var(flag_weak) Init(1)Emit common-like symbols as weak symbols
-fwebCommon Report Var(flag_web) Init(2) OptimizationConstruct webs and split unrelated uses of single variable
-fwhole-fileFortranCompile all program units at once and check all interfaces
-fwhole-programCommon Report Var(flag_whole_program) Init(0) OptimizationPerform whole program optimizations
-fwide-exec-charset=C ObjC C++ ObjC++ Joined RejectNegative-fwide-exec-charset=<cset>	Convert all wide strings and character constants to character set <cset>
-fworking-directoryC ObjC C++ ObjC++ Var(flag_working_directory) Init(-1)Generate a #line directive pointing at the current working directory
-fworking-directoryFortran
-fwpaLTO Driver Report Var(flag_wpa)Run the link-time optimizer in whole program analysis (WPA) mode.
-fwrapvCommon Report Var(flag_wrapv) OptimizationAssume signed arithmetic overflow wraps around
-fxrefC++ ObjC++ Ignore Warn(switch %qs is no longer supported)No longer supported
-fzeeCommon IgnoreDoes nothing.  Preserved for backward compatibility.
-fzero-initialized-in-bssCommon Report Var(flag_zero_initialized_in_bss) Init(1)Put zero initialized data in the bss section
-fzero-linkObjC ObjC++ Var(flag_zero_link)Generate lazy class lookup (via objc_getClass()) for use in Zero-Link mode
-gCommon JoinedOrMissingGenerate debug information in default format
-gantAda AdaWhy AdaSCIL Joined UndocumentedCatch typos
-gcoffCommon JoinedOrMissing Negative(gdwarf-)Generate debug information in COFF format
-gdwarf-Common Joined UInteger Var(dwarf_version) Init(4) Negative(gstabs)Generate debug information in DWARF v2 (or later) format
-gen-declsObjC ObjC++ Var(flag_gen_declaration)Dump declarations to a .decl file
-ggdbCommon JoinedOrMissingGenerate debug information in default extended format
-gnatAda AdaWhy AdaSCIL Joined-gnat<options>	Specify options to GNAT
-gnatOAda AdaWhy AdaSCIL SeparateSet name of output ALI file (internal switch)
-gno-pubnamesCommon RejectNegative Var(debug_generate_pub_sections, 0) Init(-1)Don't generate DWARF pubnames and pubtypes sections.
-gno-record-gcc-switchesCommon RejectNegative Var(dwarf_record_gcc_switches,0) Init(1)Don't record gcc command line switches in DWARF DW_AT_producer.
-gno-split-dwarfCommon Driver RejectNegative Var(dwarf_split_debug_info,0) Init(0)Don't generate debug information in separate .dwo files
-gno-strict-dwarfCommon RejectNegative Var(dwarf_strict,0) Init(0)Emit DWARF additions beyond selected version
-gpubnamesCommon RejectNegative Var(debug_generate_pub_sections, 1)Generate DWARF pubnames and pubtypes sections.
-grecord-gcc-switchesCommon RejectNegative Var(dwarf_record_gcc_switches,1)Record gcc command line switches in DWARF DW_AT_producer.
-gsplit-dwarfCommon Driver RejectNegative Var(dwarf_split_debug_info,1)Generate debug information in separate .dwo files
-gstabsCommon JoinedOrMissing Negative(gstabs+)Generate debug information in STABS format
-gstabs+Common JoinedOrMissing Negative(gvms)Generate debug information in extended STABS format
-gstrict-dwarfCommon Report RejectNegative Var(dwarf_strict,1)Don't emit DWARF additions beyond selected version
-gtoggleCommon Report Var(flag_gtoggle)Toggle debug information generation
-gvmsCommon JoinedOrMissing Negative(gxcoff)Generate debug information in VMS format
-gxcoffCommon JoinedOrMissing Negative(gxcoff+)Generate debug information in XCOFF format
-gxcoff+Common JoinedOrMissing Negative(gcoff)Generate debug information in extended XCOFF format
-hDriver Joined Separate
-idirafterC ObjC C++ ObjC++ Joined Separate MissingArgError(missing path after %qs)-idirafter <dir>	Add <dir> to the end of the system include path
-idirafterFortran Joined Separate
-imacrosC ObjC C++ ObjC++ Joined Separate MissingArgError(missing filename after %qs)-imacros <file>	Accept definition of macros in <file>
-imultiarchCommon Joined Separate RejectDriver Var(imultiarch) Init(0)-imultiarch <dir>	Set <dir> to be the multiarch include subdirectory
-imultilibC ObjC C++ ObjC++ Joined Separate-imultilib <dir>	Set <dir> to be the multilib include subdirectory
-imultilibFortran Joined Separate
-includeC ObjC C++ ObjC++ Joined Separate MissingArgError(missing filename after %qs)-include <file>	Include the contents of <file> before other files
-iplugindir=Common Joined Var(plugindir_string) Init(0)-iplugindir=<dir>	Set <dir> to be the default plugin directory
-iprefixC ObjC C++ ObjC++ Joined Separate-iprefix <path>	Specify <path> as a prefix for next two options
-iprefixFortran Joined Separate
-iquoteC ObjC C++ ObjC++ Joined Separate MissingArgError(missing path after %qs)-iquote <dir>	Add <dir> to the end of the quote include path
-iquoteFortran Joined Separate
-isysrootC ObjC C++ ObjC++ Joined Separate MissingArgError(missing path after %qs)-isysroot <dir>	Set <dir> to be the system root directory
-isysrootFortran Joined Separate
-isystemC ObjC C++ ObjC++ Joined Separate MissingArgError(missing path after %qs)-isystem <dir>	Add <dir> to the start of the system include path
-isystemFortran Joined Separate
-iwithprefixC ObjC C++ ObjC++ Joined Separate-iwithprefix <dir>	Add <dir> to the end of the system include path
-iwithprefixbeforeC ObjC C++ ObjC++ Joined Separate-iwithprefixbefore <dir>	Add <dir> to the end of the main include path
-k8DriverSynonym of -gnatk8
-lDriver Joined Separate
-lang-asmC Undocumented RejectDriver
-m128bit-long-doubleTarget RejectNegative Report Mask(128BIT_LONG_DOUBLE) Savesizeof(long double) is 16
-m32Target RejectNegative Negative(m64) Report InverseMask(ISA_64BIT) Var(ix86_isa_flags) SaveGenerate 32bit i386 code
-m3dnowTarget Report Mask(ISA_3DNOW) Var(ix86_isa_flags) SaveSupport 3DNow! built-in functions
-m3dnowaTarget Undocumented Mask(ISA_3DNOW_A) Var(ix86_isa_flags) SaveSupport Athlon 3Dnow! built-in functions
-m64Target RejectNegative Negative(mx32) Report Mask(ABI_64) Var(ix86_isa_flags) SaveGenerate 64bit x86-64 code
-m80387Target Report Mask(80387) SaveUse hardware fp
-m8bit-idivTarget Report Mask(USE_8BIT_IDIV) SaveExpand 32bit/64bit integer divide into 8bit unsigned integer divide with run-time check
-m96bit-long-doubleTarget RejectNegative Report InverseMask(128BIT_LONG_DOUBLE) Savesizeof(long double) is 12
-mabi=Target RejectNegative Joined Var(ix86_abi) Enum(calling_abi) Init(SYSV_ABI)Generate code that conforms to the given ABI
-mabmTarget Report Mask(ISA_ABM) Var(ix86_isa_flags) SaveSupport code generation of Advanced Bit Manipulation (ABM) instructions.
-maccumulate-outgoing-argsTarget Report Mask(ACCUMULATE_OUTGOING_ARGS) SaveReserve space for outgoing arguments in the function prologue
-maddress-mode=Target RejectNegative Joined Enum(pmode) Var(ix86_pmode) Init(PMODE_SI)Use given address mode
-madxTarget Report Mask(ISA_ADX) Var(ix86_isa_flags) SaveSupport flag-preserving add-carry instructions
-maesTarget Report Mask(ISA_AES) Var(ix86_isa_flags) SaveSupport AES built-in functions and code generation
-malign-doubleTarget Report Mask(ALIGN_DOUBLE) SaveAlign some doubles on dword boundary
-malign-functions=Target RejectNegative Joined UIntegerFunction starts are aligned to this power of 2
-malign-jumps=Target RejectNegative Joined UIntegerJump targets are aligned to this power of 2
-malign-loops=Target RejectNegative Joined UIntegerLoop code aligned to this power of 2
-malign-stringopsTarget RejectNegative Report InverseMask(NO_ALIGN_STRINGOPS, ALIGN_STRINGOPS) SaveAlign destination of the string operations
-march=Target RejectNegative Joined Var(ix86_arch_string)Generate code for given CPU
-masm=Target RejectNegative Joined Enum(asm_dialect) Var(ix86_asm_dialect) Init(ASM_ATT)Use given assembler dialect
-mavxTarget Report Mask(ISA_AVX) Var(ix86_isa_flags) SaveSupport MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2 and AVX built-in functions and code generation
-mavx2Target Report Mask(ISA_AVX2) Var(ix86_isa_flags) SaveSupport MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX and AVX2 built-in functions and code generation
-mavx256-split-unaligned-loadTarget Report Mask(AVX256_SPLIT_UNALIGNED_LOAD) SaveSplit 32-byte AVX unaligned load
-mavx256-split-unaligned-storeTarget Report Mask(AVX256_SPLIT_UNALIGNED_STORE) SaveSplit 32-byte AVX unaligned store
-mbmiTarget Report Mask(ISA_BMI) Var(ix86_isa_flags) SaveSupport BMI built-in functions and code generation
-mbmi2Target Report Mask(ISA_BMI2) Var(ix86_isa_flags) SaveSupport BMI2 built-in functions and code generation
-mbranch-cost=Target RejectNegative Joined UInteger Var(ix86_branch_cost)Branches are this expensive (1-5, arbitrary units)
-mcldTarget Report Mask(CLD) SaveGenerate cld instruction in the function prologue.
-mcmodel=Target RejectNegative Joined Enum(cmodel) Var(ix86_cmodel) Init(CM_32)Use given x86-64 code model
-mcpu=Target RejectNegative Joined Undocumented Alias(mtune=) Warn(%<-mcpu=%> is deprecated; use %<-mtune=%> or %<-march=%> instead)
-mcrc32Target Report Mask(ISA_CRC32) Var(ix86_isa_flags) SaveSupport code generation of crc32 instruction.
-mcx16Target Report Mask(ISA_CX16) Var(ix86_isa_flags) SaveSupport code generation of cmpxchg16b instruction.
-mdispatch-schedulerTarget RejectNegative Var(flag_dispatch_scheduler)Do dispatch scheduling if processor is bdver1 or bdver2 or bdver3 and Haifa schedulingis selected.
-mf16cTarget Report Mask(ISA_F16C) Var(ix86_isa_flags) SaveSupport F16C built-in functions and code generation
-mfancy-math-387Target RejectNegative Report InverseMask(NO_FANCY_MATH_387, USE_FANCY_MATH_387) SaveGenerate sin, cos, sqrt for FPU
-mfentryTarget Report Var(flag_fentry) Init(-1)Emit profiling counter call at function entry before prologue.
-mfmaTarget Report Mask(ISA_FMA) Var(ix86_isa_flags) SaveSupport MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX and FMA built-in functions and code generation
-mfma4Target Report Mask(ISA_FMA4) Var(ix86_isa_flags) SaveSupport FMA4 built-in functions and code generation 
-mforce-drapTarget Report Var(ix86_force_drap)Always use Dynamic Realigned Argument Pointer (DRAP) to realign stack
-mfp-ret-in-387Target Report Mask(FLOAT_RETURNS) SaveReturn values of functions in FPU registers
-mfpmath=Target RejectNegative Joined Var(ix86_fpmath) Enum(fpmath_unit) Init(FPMATH_387) SaveGenerate floating point mathematics using given instruction set
-mfsgsbaseTarget Report Mask(ISA_FSGSBASE) Var(ix86_isa_flags) SaveSupport FSGSBASE built-in functions and code generation
-mfused-maddTarget Undocumented Alias(ffp-contract=, fast, off) Warn(%<-mfused-madd%> is deprecated; use %<-ffp-contract=%> instead)
-mfxsrTarget Report Mask(ISA_FXSR) Var(ix86_isa_flags) SaveSupport FXSAVE and FXRSTOR instructions
-mhard-floatTarget RejectNegative Mask(80387) SaveUse hardware fp
-mhleTarget Report Mask(ISA_HLE) Var(ix86_isa_flags) SaveSupport Hardware Lock Elision prefixes
-mieee-fpTarget Report Mask(IEEE_FP) SaveUse IEEE math for fp comparisons
-mincoming-stack-boundary=Target RejectNegative Joined UInteger Var(ix86_incoming_stack_boundary_arg)Assume incoming stack aligned to this power of 2
-minline-all-stringopsTarget Report Mask(INLINE_ALL_STRINGOPS) SaveInline all known string operations
-minline-stringops-dynamicallyTarget Report Mask(INLINE_STRINGOPS_DYNAMICALLY) SaveInline memset/memcpy string operations, but perform inline version only for small blocks
-mintel-syntaxTarget Undocumented Alias(masm=, intel, att) Warn(%<-mintel-syntax%> and %<-mno-intel-syntax%> are deprecated; use %<-masm=intel%> and %<-masm=att%> instead)
-mlarge-data-threshold=Target RejectNegative Joined UInteger Var(ix86_section_threshold) Init(DEFAULT_LARGE_SECTION_THRESHOLD)Data greater than given threshold will go into .ldata section in x86-64 medium model
-mlong-double-64Target Report RejectNegative Mask(LONG_DOUBLE_64) SaveUse 64-bit long double
-mlong-double-80Target Report RejectNegative InverseMask(LONG_DOUBLE_64) SaveUse 80-bit long double
-mlwpTarget Report Mask(ISA_LWP) Var(ix86_isa_flags) SaveSupport LWP built-in functions and code generation 
-mlzcntTarget Report Mask(ISA_LZCNT) Var(ix86_isa_flags) SaveSupport LZCNT built-in function and code generation
-mmmxTarget Report Mask(ISA_MMX) Var(ix86_isa_flags) SaveSupport MMX built-in functions
-mmovbeTarget Report Mask(ISA_MOVBE) Var(ix86_isa_flags) SaveSupport code generation of movbe instruction.
-mms-bitfieldsTarget Report Mask(MS_BITFIELD_LAYOUT) SaveUse native (MS) bitfield layout
-mno-align-stringopsTarget RejectNegative Report Mask(NO_ALIGN_STRINGOPS) Undocumented Save
-mno-fancy-math-387Target RejectNegative Report Mask(NO_FANCY_MATH_387) Undocumented Save
-mno-push-argsTarget RejectNegative Report Mask(NO_PUSH_ARGS) Undocumented Save
-mno-red-zoneTarget RejectNegative Report Mask(NO_RED_ZONE) Undocumented Save
-mno-sse4Target RejectNegative Report InverseMask(ISA_SSE4_1) Var(ix86_isa_flags) SaveDo not support SSE4.1 and SSE4.2 built-in functions and code generation
-momit-leaf-frame-pointerTarget Report Mask(OMIT_LEAF_FRAME_POINTER) SaveOmit the frame pointer in leaf functions
-mpc32Target RejectNegative ReportSet 80387 floating-point precision to 32-bit
-mpc64Target RejectNegative ReportSet 80387 floating-point precision to 64-bit
-mpc80Target RejectNegative ReportSet 80387 floating-point precision to 80-bit
-mpclmulTarget Report Mask(ISA_PCLMUL) Var(ix86_isa_flags) SaveSupport PCLMUL built-in functions and code generation
-mpopcntTarget Report Mask(ISA_POPCNT) Var(ix86_isa_flags) SaveSupport code generation of popcnt instruction.
-mprefer-avx128Target Report Mask(PREFER_AVX128) SAVEUse 128-bit AVX instructions instead of 256-bit AVX instructions in the auto-vectorizer.
-mpreferred-stack-boundary=Target RejectNegative Joined UInteger Var(ix86_preferred_stack_boundary_arg)Attempt to keep stack aligned to this power of 2
-mprfchwTarget Report Mask(ISA_PRFCHW) Var(ix86_isa_flags) SaveSupport PREFETCHW instruction
-mpush-argsTarget Report InverseMask(NO_PUSH_ARGS, PUSH_ARGS) SaveUse push instructions to save outgoing arguments
-mrdrndTarget Report Mask(ISA_RDRND) Var(ix86_isa_flags) SaveSupport RDRND built-in functions and code generation
-mrdseedTarget Report Mask(ISA_RDSEED) Var(ix86_isa_flags) SaveSupport RDSEED instruction
-mrecipTarget Report Mask(RECIP) SaveGenerate reciprocals instead of divss and sqrtss.
-mrecip=Target Report RejectNegative Joined Var(ix86_recip_name)Control generation of reciprocal estimates.
-mred-zoneTarget RejectNegative Report InverseMask(NO_RED_ZONE, RED_ZONE) SaveUse red-zone in the x86-64 code
-mregparm=Target RejectNegative Joined UInteger Var(ix86_regparm)Number of registers used to pass integer arguments
-mrtdTarget Report Mask(RTD) SaveAlternate calling convention
-mrtmTarget Report Mask(ISA_RTM) Var(ix86_isa_flags) SaveSupport RTM built-in functions and code generation
-msahfTarget Report Mask(ISA_SAHF) Var(ix86_isa_flags) SaveSupport code generation of sahf instruction in 64bit x86-64 code.
-msoft-floatTarget InverseMask(80387) SaveDo not use hardware fp
-msseTarget Report Mask(ISA_SSE) Var(ix86_isa_flags) SaveSupport MMX and SSE built-in functions and code generation
-msse2Target Report Mask(ISA_SSE2) Var(ix86_isa_flags) SaveSupport MMX, SSE and SSE2 built-in functions and code generation
-msse2avxTarget Report Var(ix86_sse2avx)Encode SSE instructions with VEX prefix
-msse3Target Report Mask(ISA_SSE3) Var(ix86_isa_flags) SaveSupport MMX, SSE, SSE2 and SSE3 built-in functions and code generation
-msse4Target RejectNegative Report Mask(ISA_SSE4_2) Var(ix86_isa_flags) SaveSupport MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1 and SSE4.2 built-in functions and code generation
-msse4.1Target Report Mask(ISA_SSE4_1) Var(ix86_isa_flags) SaveSupport MMX, SSE, SSE2, SSE3, SSSE3 and SSE4.1 built-in functions and code generation
-msse4.2Target Report Mask(ISA_SSE4_2) Var(ix86_isa_flags) SaveSupport MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1 and SSE4.2 built-in functions and code generation
-msse4aTarget Report Mask(ISA_SSE4A) Var(ix86_isa_flags) SaveSupport MMX, SSE, SSE2, SSE3 and SSE4A built-in functions and code generation
-msse5Target Undocumented Alias(mavx) Warn(%<-msse5%> was removed)
-msseregparmTarget RejectNegative Mask(SSEREGPARM) SaveUse SSE register passing conventions for SF and DF mode
-mssse3Target Report Mask(ISA_SSSE3) Var(ix86_isa_flags) SaveSupport MMX, SSE, SSE2, SSE3 and SSSE3 built-in functions and code generation
-mstack-arg-probeTarget Report Mask(STACK_PROBE) SaveEnable stack probing
-mstackrealignTarget Report Var(ix86_force_align_arg_pointer) Init(-1)Realign stack in prologue
-mstringop-strategy=Target RejectNegative Joined Enum(stringop_alg) Var(ix86_stringop_alg) Init(no_stringop)Chose strategy to generate stringop using
-mtbmTarget Report Mask(ISA_TBM) Var(ix86_isa_flags) SaveSupport TBM built-in functions and code generation
-mtls-dialect=Target RejectNegative Joined Var(ix86_tls_dialect) Enum(tls_dialect) Init(TLS_DIALECT_GNU)Use given thread-local storage dialect
-mtls-direct-seg-refsTarget Report Mask(TLS_DIRECT_SEG_REFS)Use direct references against %gs when accessing tls data
-mtune=Target RejectNegative Joined Var(ix86_tune_string)Schedule code for given CPU
-mveclibabi=Target RejectNegative Joined Var(ix86_veclibabi_type) Enum(ix86_veclibabi) Init(ix86_veclibabi_type_none)Vector library ABI to use
-mvect8-ret-in-memTarget Report Mask(VECT8_RETURNS) SaveReturn 8-byte vectors in memory
-mvzeroupperTarget Report Mask(VZEROUPPER) SaveGenerate vzeroupper instruction before a transfer of control flow out ofthe function.
-mx32Target RejectNegative Negative(m32) Report Mask(ABI_X32) Var(ix86_isa_flags) SaveGenerate 32bit x86-64 code
-mxopTarget Report Mask(ISA_XOP) Var(ix86_isa_flags) SaveSupport XOP built-in functions and code generation 
-mxsaveTarget Report Mask(ISA_XSAVE) Var(ix86_isa_flags) SaveSupport XSAVE and XRSTOR instructions
-mxsaveoptTarget Report Mask(ISA_XSAVEOPT) Var(ix86_isa_flags) SaveSupport XSAVEOPT instruction
-nDriver
-no-canonical-prefixesDriver
-no-integrated-cppDriver
-nocppFortran Negative(cpp)Disable preprocessing
-nodefaultlibsDriver
-nostartfilesDriver
-nostdincAda AdaWhy AdaSCIL RejectNegative
-nostdincC ObjC C++ ObjC++Do not search standard system include directories (those specified with -isystem will still be used)
-nostdincFortran
-nostdinc++C++ ObjC++Do not search standard system include directories for C++
-nostdlibAda AdaWhy AdaSCILDo not look for object files in standard path
-nostdlibDriver
-oC ObjC C++ ObjC++ Joined Separate
-oCommon Driver Joined Separate Var(asm_file_name) MissingArgError(missing filename after %qs)-o <file>	Place output into <file>
-oFortran Joined Separate
-oGo Joined Separate
-pCommon Var(profile_flag)Enable function profiling
-pass-exit-codesDriver Var(pass_exit_codes)
-pedanticC ObjC C++ ObjC++ Alias(Wpedantic)
-pedanticCommon Alias(Wpedantic)
-pedantic-errorsCommon Var(flag_pedantic_errors)Like -pedantic but issue them as errors
-pgDriver
-pieDriver RejectNegative Negative(shared)Create a position independent executable
-pipeDriver Var(use_pipes)
-print-file-name=Driver JoinedOrMissing Var(print_file_name)
-print-libgcc-file-nameDriver
-print-multi-directoryDriver Var(print_multi_directory)
-print-multi-libDriver Var(print_multi_lib)
-print-multi-os-directoryDriver Var(print_multi_os_directory)
-print-multiarchDriver Var(print_multiarch)
-print-objc-runtime-infoObjC ObjC++Generate C header of platform-specific features
-print-prog-name=Driver JoinedOrMissing Var(print_prog_name)
-print-search-dirsDriver Var(print_search_dirs)
-print-sysrootDriver Var(print_sysroot)
-print-sysroot-headers-suffixDriver Var(print_sysroot_headers_suffix)
-quietCommon Var(quiet_flag) RejectDriverDo not display functions compiled or elapsed time
-rDriver
-remapC ObjC C++ ObjC++Remap file names when including files
-sDriver
-s-bc-abiDriver
-save-tempsDriver
-save-temps=Driver Joined
-sharedDriver RejectNegative Negative(pie)Create a shared library
-shared-libgccDriver
-specsDriver Separate Alias(specs=)
-specs=Driver Joined
-staticDriver
-static-libasanDriver
-static-libgccDriver
-static-libgcjDriver
-static-libgfortranDriver
-static-libgfortranFortranStatically link the GNU Fortran helper library (libgfortran)
-static-libgoDriver
-static-libstdc++Driver
-static-libtsanDriver
-std=c++03C++ ObjC++ Alias(std=c++98)Conform to the ISO 1998 C++ standard revised by the 2003 technical corrigendum
-std=c++0xC++ ObjC++ Alias(std=c++11)Deprecated in favor of -std=c++11
-std=c++11C++ ObjC++Conform to the ISO 2011 C++ standard (experimental and incomplete support)
-std=c++1yC++ ObjC++Conform to the ISO 201y(7?) C++ draft standard (experimental and incomplete support)
-std=c++98C++ ObjC++Conform to the ISO 1998 C++ standard revised by the 2003 technical corrigendum
-std=c11C ObjCConform to the ISO 2011 C standard (experimental and incomplete support)
-std=c1xC ObjC Alias(std=c11)Deprecated in favor of -std=c11
-std=c89C ObjC Alias(std=c90)Conform to the ISO 1990 C standard
-std=c90C ObjCConform to the ISO 1990 C standard
-std=c99C ObjCConform to the ISO 1999 C standard
-std=c9xC ObjC Alias(std=c99)Deprecated in favor of -std=c99
-std=f2003FortranConform to the ISO Fortran 2003 standard
-std=f2008FortranConform to the ISO Fortran 2008 standard
-std=f2008tsFortranConform to the ISO Fortran 2008 standard including TS 29113
-std=f95FortranConform to the ISO Fortran 95 standard
-std=gnuFortranConform to nothing in particular
-std=gnu++03C++ ObjC++ Alias(std=gnu++98)Conform to the ISO 1998 C++ standard revised by the 2003 technicalcorrigendum with GNU extensions
-std=gnu++0xC++ ObjC++ Alias(std=gnu++11)Deprecated in favor of -std=gnu++11
-std=gnu++11C++ ObjC++Conform to the ISO 2011 C++ standard with GNU extensions (experimental and incomplete support)
-std=gnu++1yC++ ObjC++Conform to the ISO 201y(7?) C++ draft standard with GNU extensions (experimental and incomplete support)
-std=gnu++98C++ ObjC++Conform to the ISO 1998 C++ standard revised by the 2003 technicalcorrigendum with GNU extensions
-std=gnu11C ObjCConform to the ISO 2011 C standard with GNU extensions (experimental and incomplete support)
-std=gnu1xC ObjC Alias(std=gnu11)Deprecated in favor of -std=gnu11
-std=gnu89C ObjC Alias(std=gnu90)Conform to the ISO 1990 C standard with GNU extensions
-std=gnu90C ObjCConform to the ISO 1990 C standard with GNU extensions
-std=gnu99C ObjCConform to the ISO 1999 C standard with GNU extensions
-std=gnu9xC ObjC Alias(std=gnu99)Deprecated in favor of -std=gnu99
-std=iso9899:1990C ObjC Alias(std=c90)Conform to the ISO 1990 C standard
-std=iso9899:199409C ObjCConform to the ISO 1990 C standard as amended in 1994
-std=iso9899:1999C ObjC Alias(std=c99)Conform to the ISO 1999 C standard
-std=iso9899:199xC ObjC Alias(std=c99)Deprecated in favor of -std=iso9899:1999
-std=iso9899:2011C ObjC Alias(std=c11)Conform to the ISO 2011 C standard (experimental and incomplete support)
-std=legacyFortranAccept extensions to support legacy code
-symbolicDriver
-tDriver
-timeDriver Var(report_times)
-time=Driver JoinedOrMissing
-traditionalDriver
-traditional-cppC ObjC C++ ObjC++Enable traditional preprocessing
-trigraphsC ObjC C++ ObjC++-trigraphs	Support ISO C trigraphs
-uDriver Joined Separate
-undefC ObjC C++ ObjC++ Var(flag_undef)Do not predefine system-specific and GCC-specific macros
-undefDriver
-undefFortran
-vC ObjC C++ ObjC++
-vCommon Driver Var(verbose_flag)Enable verbose output
-vFortran
-versionCommon Var(version_flag) RejectDriverDisplay the compiler's version
-versionJava RejectDriver
-wC ObjC C++ ObjC++
-wCommon Var(inhibit_warnings)Suppress warnings
-wrapperDriver Separate Var(wrapper_string)
-xDriver Joined Separate
-zDriver Joined Separate
