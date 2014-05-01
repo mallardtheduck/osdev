@@ -112,8 +112,9 @@ void mm_free(void *ptr){
 	if(!(alloc->reg->base <= alloc && (void*)alloc->reg->base + alloc->reg->size >= (void*)alloc + alloc->size)){
 		dbgpf("MM: Pointer %x, Region: base: %x size: %i, Allocation: base: %x size: %i\n",
 			ptr, alloc->reg->base, alloc->reg->size, alloc, alloc->size);
-		panic("Pointer passed to mm_free fails sanity check!\n");
+		panic("(MM) sPointer passed to mm_free fails sanity check!\n");
 	}
+	memset(alloc->bytes, 0xFE, alloc->size);
 	if(alloc->prev){
 		alloc->prev->next=alloc->next;
 	}else{
@@ -132,8 +133,11 @@ void mm_alloctest(){
 	void **tests=(void**)mm_alloc(sizeof(void*)*ntests);
 	for(int i=0; i < ntests; ++i){
 		tests[i]=(char*)mm_alloc(MM_TESTBLOCKSIZE);
-		if(!tests[i] && i!=ntests-1) panic("(MM) Unexpected NULL returned during allocation test.\n");
-		memset(tests[i], 'Q', 512);
+		if(!tests[i]){
+			dbgpf("MM: Alloctest: allocated %i blocks.\n", i-1);
+			break;
+		}
+		memset(tests[i], 'Q', MM_TESTBLOCKSIZE);
 	}
 	mm_getfreemem();
 	for(int i=ntests-1; i >= 0; --i){
