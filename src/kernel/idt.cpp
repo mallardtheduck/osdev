@@ -142,15 +142,8 @@ void irq_ack(size_t irq_no) {
 	outb(0x20, 0x20);
 }
 
-extern lock ser_lock;
-
 extern "C" void irq_handler(regs *r) {
 	int irq=r->int_no-32;
-	if(!try_take_lock(ser_lock)){
-		irq_ack(irq);
-		return;
-	}
-	release_lock(ser_lock);
 	if(irq == 0){
 		if(sch_isr(r)) irq_ack(irq);
 	}
