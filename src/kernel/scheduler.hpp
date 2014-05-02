@@ -10,5 +10,7 @@ void sch_init();
 int sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size=default_stack_size);
 void sch_end_thread();
 void sch_yield();
+int sch_get_id();
+void sch_block();
 
 #endif

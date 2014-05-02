@@ -155,29 +155,29 @@ class vector
         void erase(unsigned int erase_index)                { erase(erase_index,erase_index+1);}
         void erase(unsigned int start, unsigned int end)    /* end NOT inclusive so => [start, end) */
         {
-            if (end > dataSize)
-            {   end     = dataSize;
-            }
-            if (start > end)
-            {   start   = end;
-            }
-            unsigned int dst    = start;
-            unsigned int src    = end;
-            for(;(src < dataSize) && (dst < end);++dst, ++src)
-            {
-                // Move Elements down;
-                data[dst] = data[src];
-            }
-            unsigned int count = end - start;
-            for(;count != 0; --count)
-            {
-                // Remove old Elements
-                --dataSize;
-                // Remember we need to manually call the destructor
-                data[dataSize].~T();
-            }
-        }
-        unsigned int begin() const  {return 0;}
+		if (end > dataSize)
+		{   end     = dataSize;
+		}
+		if (start > end)
+		{   start   = end;
+		}
+		unsigned int dst    = start;
+		unsigned int src    = end;
+		for(;(src < dataSize) /*&& (dst < end)*/;++dst, ++src)
+		{
+			// Move Elements down;
+			data[dst] = data[src];
+		}
+		unsigned int count = end - start;
+		for(;count != 0; --count)
+		{
+			// Remove old Elements
+			--dataSize;
+			// Remember we need to manually call the destructor
+			data[dataSize].~T();
+		}
+	}
+	unsigned int begin() const  {return 0;}
 
 
 }; //class vector

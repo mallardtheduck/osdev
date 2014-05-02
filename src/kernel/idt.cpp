@@ -1,5 +1,6 @@
 #include "kernel.hpp"
 #include "idt.hpp"
+#include "locks.hpp"
 
 /* Defines an IDT entry */
 struct idt_entry
@@ -28,7 +29,6 @@ struct handler_context_t
     uint32_t oresp;
     uint32_t ss;
 } __attribute__((packed));
-
 
 /* Declare an IDT of 256 entries. Although we will only use the
 *  first 32 entries in this tutorial, the rest exists as a bit
@@ -142,8 +142,15 @@ void irq_ack(size_t irq_no) {
 	outb(0x20, 0x20);
 }
 
+extern lock ser_lock;
+
 extern "C" void irq_handler(regs *r) {
 	int irq=r->int_no-32;
+	if(!try_take_lock(ser_lock)){
+		irq_ack(irq);
+		return;
+	}
+	release_lock(ser_lock);
 	dbgpf("IDT: IRQ %i\n", irq);
 	if(irq == 0){
 		if(sch_isr(r)) irq_ack(irq);

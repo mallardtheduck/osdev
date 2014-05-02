@@ -1,5 +1,6 @@
 #include "kernel.hpp"
 #include "ministl.hpp"
+#include "locks.hpp"
 
 const uint32_t default_priority=10;
 
@@ -18,31 +19,39 @@ struct sch_thread{
 	uint32_t priority;
 	uint32_t dynpriority;
 	size_t sch_id;
+	uint64_t ext_id;
 	/* memory info */
 };
 
 vector<sch_thread> *threads;
 size_t current_thread;
 size_t reaper_thread;
+uint64_t cur_ext_id;
 
 void thread_reaper(void*);
 void sch_threadtest();
 
+lock sch_lock;
+bool sch_inited=false;
+
 void sch_init(){
 	dbgout("SCH: Init\n");
+	init_lock(sch_lock);
 	threads=new vector<sch_thread>();
 	sch_thread mainthread;
 	mainthread.runnable=true;
 	mainthread.to_be_deleted=false;
-	mainthread.priority=1;
+	mainthread.priority=100;
 	mainthread.dynpriority=0;
 	mainthread.magic=0xF00D;
+	mainthread.ext_id=++cur_ext_id;
 	threads->push_back(mainthread);
 	current_thread=threads->size()-1;
 	reaper_thread=sch_new_thread(&thread_reaper, NULL, 4096);
 	sch_threadtest();
 	IRQ_clear_mask(0);
 	dbgout("SCH: Init complete.\n");
+	sch_inited=true;
 }
 
 void test_thread1(void* limit){
@@ -51,7 +60,7 @@ void test_thread1(void* limit){
 	while(true){
 		i++;
 		dbgout("SCH: TEST THREAD 1\n");
-		asm("hlt");
+		sch_yield();//asm("hlt");
 		if(i>=lim){
 			dbgpf("SCH: TEST THREAD 1 (%i) ENDING\n", current_thread);
 			return;
@@ -62,7 +71,7 @@ void test_thread1(void* limit){
 void test_thread2(void*){
 	while(true){
 		dbgout("SCH: TEST THREAD 2\n");
-		asm("hlt");
+		sch_yield();//asm("hlt");
 	}
 }
 
@@ -101,8 +110,12 @@ int sch_add_thread(regs context){
 	newthread.magic=0xBABE;
 	newthread.priority=default_priority;
 	newthread.dynpriority=0;
+	take_lock(sch_lock);
+	newthread.ext_id=++cur_ext_id;
 	threads->push_back(newthread);
-	return threads->size()-1;
+	size_t ret=threads->size()-1;
+	release_lock(sch_lock);
+	return ret;
 }
 
 extern "C" void sch_wrapper(){
@@ -134,10 +147,13 @@ int sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 
 void thread_reaper(void*){
 	while(true){
+		take_lock(sch_lock);
 		(*threads)[current_thread].runnable=false;
+		release_lock(sch_lock);
 		sch_yield();
 		bool changed=true;
 		while(changed){
+			take_lock(sch_lock);
 			for(int i=0; i<threads->size(); ++i){
 				if((*threads)[i].to_be_deleted){
 					free((*threads)[i].original_esp);
@@ -147,6 +163,7 @@ void thread_reaper(void*){
 					break;			
 				}
 			}
+			release_lock(sch_lock);
 			changed=false;
 		}
 	}
@@ -157,56 +174,40 @@ void sch_yield(){
 }
 
 void sch_end_thread(){
+	take_lock(sch_lock);
 	(*threads)[current_thread].runnable=false;
 	(*threads)[current_thread].to_be_deleted=true;
 	(*threads)[reaper_thread].runnable=true;
+	release_lock(sch_lock);
 	sch_yield();
 }
 
-bool sch_schedule_old(regs *regs){
-	dbgpf("SCH: Schedule. Current thread: %i, total threads: %i\n", current_thread, threads->size());
-	(*threads)[current_thread].context=*regs;
-	int i=current_thread + 1;
-	int count = 0;
-	while((i>=threads->size() || !(*threads)[i].runnable) && count <= threads->size()){
-		++i; ++count;
-		if(i >= threads->size()) i = 0;
-		dbgpf("SCH: Thread %i is%s runnable. (%x)\n", i, (*threads)[i].runnable?"":" not", (*threads)[i].magic);
-	}
-	if(count > threads->size()){
-		dbgout("SCH: No runnable threads.\n");
-		irq_ack(0);
-		asm("hlt");
-		return false;
-	}
-	current_thread = i;
-	dbgpf("SCH: Now running thread: %i\n", current_thread);
-	*regs=(*threads)[i].context;
-	return true;
-}
-
 bool sch_schedule(regs *regs){
+	if(!sch_inited || !try_take_lock(sch_lock)) return true;
 	dbgpf("SCH: Schedule. Current thread: %i, total threads: %i\n", current_thread, threads->size());
 	(*threads)[current_thread].context=*regs;
 	vector<sch_thread*> runnables;
 	for(int i=0; i<threads->size(); ++i){
 		if((*threads)[i].runnable){
 			(*threads)[i].sch_id=i;
+			if(!(*threads)[i].priority) panic("(SCH) Thread priority 0 is not allowed.\n");
 			runnables.push_back(&(*threads)[i]);
 		}
 	}
 	if(runnables.size()==0){
 		dbgout("SCH: No runnable threads.\n");
 		irq_ack(0);
+		release_lock(sch_lock);
 		asm("hlt");
 		return false;
 	}
 	uint32_t min=0xFFFFFFFF;
 	for(int i=0; i<runnables.size(); ++i){
-		dbgpf("SCH: Thread %i, priority %i, dynpriority %i\n", 
-			runnables[i]->sch_id, runnables[i]->priority, runnables[i]->dynpriority);
+		dbgpf("SCH: Runnnable thread ID %i: priority %i, dynpriority %i\n", 
+			(uint32_t)runnables[i]->ext_id, runnables[i]->priority, runnables[i]->dynpriority);
 		if(runnables[i]->dynpriority < min) min=runnables[i]->dynpriority;
 	}
+	dbgpf("SCH: Min dynamic priority: %i\n", min);
 	for(int i=0; i<runnables.size(); ++i){
 		if(runnables[i]->dynpriority) runnables[i]->dynpriority-=min;
 	}
@@ -214,17 +215,32 @@ bool sch_schedule(regs *regs){
 		if(runnables[i]->dynpriority==0 && runnables[i]->sch_id != current_thread){
 			runnables[i]->dynpriority=runnables[i]->priority;
 			*regs=runnables[i]->context;
+			uint64_t lockthread=(*threads)[current_thread].ext_id;
 			current_thread=runnables[i]->sch_id;
 			dbgpf("SCH: Running thread %i.\n", current_thread);
+			release_lock(sch_lock, lockthread);
 			return true;
 		}
 	}
 	//Continue with current thread...
 	(*threads)[current_thread].dynpriority=(*threads)[current_thread].priority;
 	dbgpf("SCH: Running thread %i.\n", current_thread);
+	release_lock(sch_lock);
 	return true;
 }
 
 bool sch_isr(regs *context){
 	return sch_schedule(context);
+}
+
+int sch_get_id(){
+	if(!sch_inited) return 0;
+	return (*threads)[current_thread].ext_id;
+}
+
+void sch_block(){
+	take_lock(sch_lock);
+	(*threads)[current_thread].runnable=false;
+	release_lock(sch_lock);
+	sch_yield();
 }
