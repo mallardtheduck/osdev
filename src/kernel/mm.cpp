@@ -1,5 +1,8 @@
 #include "kernel.hpp"
+#include "locks.hpp"
+
 #define MAX_REGIONS 64
+
 
 extern char _start, _end;
 
@@ -9,7 +12,7 @@ struct mm_allocation{
 	mm_region *reg;
 	size_t size;
 	char bytes[];
-};
+} __attribute__((packed));
 
 struct mm_region{
 	void *base;
@@ -18,11 +21,14 @@ struct mm_region{
 	mm_allocation *head;
 };
 
+lock mm_lock;
+
 mm_region mm_regions[MAX_REGIONS]={0};
 
 void mm_alloctest();
 
 void mm_init(multiboot_info_t *mbt){
+	init_lock(mm_lock);
 	dbgout("MM: Init\n");
 	dbgpf("MM: Kernel start: 0x%x end: 0x%x\n", &_start, &_end);
 
@@ -66,6 +72,7 @@ void mm_init(multiboot_info_t *mbt){
 }
 
 void *mm_alloc(size_t bytes){
+	take_lock(mm_lock);
 	bytes += sizeof(mm_allocation);
 	for(int i=0; i< MAX_REGIONS; ++i){
 		if(!mm_regions[i].valid) break;
@@ -81,6 +88,7 @@ void *mm_alloc(size_t bytes){
 			alloc->size=bytes;
 			if(!node) mm_regions[i].head=alloc;
 			//dbgpf("Allocated %x at start of region\n", alloc->bytes);
+			release_lock(mm_lock);
 			return alloc->bytes;
 		}
 		while(node){
@@ -98,7 +106,8 @@ void *mm_alloc(size_t bytes){
 				if(alloc->next){
 					alloc->next->prev=alloc;
 				}
-				//dbgpf("Allocated %x within region\n", alloc->bytes);
+				//dbgpf("MM: Allocated %x within region. Allocation node at %x.\n", alloc->bytes, alloc);
+				release_lock(mm_lock);
 				return alloc->bytes;
 			}
 			if(node->next) sizeleft-=node->size;
@@ -106,17 +115,18 @@ void *mm_alloc(size_t bytes){
 		}
 		
 	}
+	release_lock(mm_lock);
 	return NULL;
 }
 
 void mm_free(void *ptr){
+	take_lock(mm_lock);
 	mm_allocation *alloc=(mm_allocation*)ptr-1;
 	if(!(alloc->reg->base <= alloc && (void*)alloc->reg->base + alloc->reg->size >= (void*)alloc + alloc->size)){
 		dbgpf("MM: Pointer %x, Region: base: %x size: %i, Allocation: base: %x size: %i\n",
 			ptr, alloc->reg->base, alloc->reg->size, alloc, alloc->size);
 		panic("(MM) Pointer passed to mm_free fails sanity check!\n");
 	}
-	memset(alloc->bytes, 0xFE, alloc->size);
 	if(alloc->prev){
 		alloc->prev->next=alloc->next;
 	}else{
@@ -125,7 +135,9 @@ void mm_free(void *ptr){
 	if(alloc->next){
 		alloc->next->prev=alloc->prev;
 	}
-	//dbgpf("Successfully freed %x\n", ptr);
+	memset(alloc, 0xFE, alloc->size);
+	//dbgpf("NN: Successfully freed %x\n", ptr);
+	release_lock(mm_lock);
 }
 
 void mm_alloctest(){
@@ -149,6 +161,7 @@ void mm_alloctest(){
 }
 
 size_t mm_getfreemem(){
+	take_lock(mm_lock);
 	size_t ret=0;
 	for(int i=0; i< MAX_REGIONS; ++i){
 		if(!mm_regions[i].valid) break;
@@ -176,5 +189,6 @@ size_t mm_getfreemem(){
 		dbgpf("MM: Region %i remaining: %iKB\n", i, sizeleft/1024);
 		ret+=sizeleft;
 	}
+	release_lock(mm_lock);
 	return ret;
 }
