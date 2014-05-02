@@ -48,7 +48,7 @@ void sch_init(){
 	threads->push_back(mainthread);
 	current_thread=threads->size()-1;
 	reaper_thread=sch_new_thread(&thread_reaper, NULL, 4096);
-	sch_threadtest();
+	//sch_threadtest();
 	IRQ_clear_mask(0);
 	dbgout("SCH: Init complete.\n");
 	sch_inited=true;
@@ -163,9 +163,14 @@ void sch_end_thread(){
 extern lock mm_lock, la_lock; //locks required by scheduler.
 
 bool sch_schedule(regs *regs){
+	//Confirm that required locks are available.
 	if(!sch_inited || !try_take_lock(sch_lock) || !try_take_lock(mm_lock) || !try_take_lock(la_lock)) return true;
 	release_lock(mm_lock); release_lock(la_lock);
+	
+	//Save current thread's state
 	(*threads)[current_thread].context=*regs;
+
+	//Find runnable threads
 	vector<sch_thread*> runnables;
 	for(int i=0; i<threads->size(); ++i){
 		if((*threads)[i].runnable){
@@ -174,6 +179,8 @@ bool sch_schedule(regs *regs){
 			runnables.push_back(&(*threads)[i]);
 		}
 	}
+
+	//If there are no runnable threads, halt. Hopefully an interrupt will awaken one soon...
 	if(runnables.size()==0){
 		dbgout("SCH: No runnable threads.\n");
 		irq_ack(0);
@@ -181,6 +188,8 @@ bool sch_schedule(regs *regs){
 		asm("hlt");
 		return false;
 	}
+
+	//Find lowest dynamic priority and subtract this from all runnable threads'
 	uint32_t min=0xFFFFFFFF;
 	for(int i=0; i<runnables.size(); ++i){
 		if(runnables[i]->dynpriority < min) min=runnables[i]->dynpriority;
@@ -188,6 +197,8 @@ bool sch_schedule(regs *regs){
 	for(int i=0; i<runnables.size(); ++i){
 		if(runnables[i]->dynpriority) runnables[i]->dynpriority-=min;
 	}
+	
+	//Find a thread with dynamic priority 0 that isn't the current thread and run it
 	for(int i=0; i<runnables.size(); ++i){
 		if(runnables[i]->dynpriority==0 && runnables[i]->sch_id != current_thread){
 			runnables[i]->dynpriority=runnables[i]->priority;
@@ -198,7 +209,8 @@ bool sch_schedule(regs *regs){
 			return true;
 		}
 	}
-	//Continue with current thread...
+
+	//If this thread is the only one with dynamic priority 0, continue with it...
 	(*threads)[current_thread].dynpriority=(*threads)[current_thread].priority;
 	release_lock(sch_lock);
 	return true;
