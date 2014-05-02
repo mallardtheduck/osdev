@@ -5,10 +5,10 @@
 
 const size_t default_stack_size=16*1024;
 
-void sch_isr(regs *context);
+bool sch_isr(regs *context);
 void sch_init();
 int sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size=default_stack_size);
 void sch_end_thread();
-void sch_yeild();
+void sch_yield();
 
 #endif

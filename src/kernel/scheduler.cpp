@@ -28,6 +28,7 @@ void sch_init(){
 	threads=new vector<sch_thread>();
 	sch_thread mainthread;
 	mainthread.runnable=true;
+	mainthread.to_be_deleted=false;
 	mainthread.magic=0xF00D;
 	threads->push_back(mainthread);
 	current_thread=threads->size()-1;
@@ -45,7 +46,7 @@ void test_thread1(void* limit){
 		dbgout("SCH: TEST THREAD 1\n");
 		asm("hlt");
 		if(i>=lim){
-			dbgout("SCH: TEST THREAD 1 ENDING\n");
+			dbgpf("SCH: TEST THREAD 1 (%i) ENDING\n", current_thread);
 			return;
 		}
 	}
@@ -105,7 +106,7 @@ int sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 void thread_reaper(void*){
 	while(true){
 		(*threads)[current_thread].runnable=false;
-		sch_yeild();
+		sch_yield();
 		bool changed=true;
 		while(changed){
 			for(int i=0; i<threads->size(); ++i){
@@ -122,7 +123,7 @@ void thread_reaper(void*){
 	}
 }
 
-void sch_yeild(){
+void sch_yield(){
 	asm("int $32");
 }
 
@@ -130,23 +131,31 @@ void sch_end_thread(){
 	(*threads)[current_thread].runnable=false;
 	(*threads)[current_thread].to_be_deleted=true;
 	(*threads)[reaper_thread].runnable=true;
-	sch_yeild();
+	sch_yield();
 }
 
-regs sch_schedule(regs *regs){
+bool sch_schedule(regs *regs){
 	dbgpf("SCH: Schedule. Current thread: %i, total threads: %i\n", current_thread, threads->size());
 	(*threads)[current_thread].context=*regs;
 	int i=current_thread + 1;
-	while(i>=threads->size() || !(*threads)[i].runnable){
-		++i;
+	int count = 0;
+	while((i>=threads->size() || !(*threads)[i].runnable) && count <= threads->size()){
+		++i; ++count;
 		if(i >= threads->size()) i = 0;
 		dbgpf("SCH: Thread %i is%s runnable. (%x)\n", i, (*threads)[i].runnable?"":" not", (*threads)[i].magic);
+	}
+	if(count > threads->size()){
+		dbgout("SCH: No runnable threads.\n");
+		asm("hlt");
+		irq_ack(0);
+		return false;
 	}
 	current_thread = i;
 	dbgpf("SCH: New thread: %i\n", current_thread);
 	*regs=(*threads)[i].context;
+	return true;
 }
 
-void sch_isr(regs *context){
-	sch_schedule(context);
+bool sch_isr(regs *context){
+	return sch_schedule(context);
 }
