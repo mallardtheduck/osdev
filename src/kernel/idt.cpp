@@ -151,9 +151,7 @@ extern "C" void irq_handler(regs *r) {
 		return;
 	}
 	release_lock(ser_lock);
-	dbgpf("IDT: IRQ %i\n", irq);
 	if(irq == 0){
 		if(sch_isr(r)) irq_ack(irq);
 	}
-	dbgpf("IDT: Responded to IRQ %i\n", irq);
 }
