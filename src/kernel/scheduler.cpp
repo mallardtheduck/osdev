@@ -54,27 +54,6 @@ void sch_init(){
 	sch_inited=true;
 }
 
-void test_thread1(void* limit){
-	int lim=(int)limit;
-	int i=0;
-	while(true){
-		i++;
-		dbgout("SCH: TEST THREAD 1\n");
-		sch_yield();//asm("hlt");
-		if(i>=lim){
-			dbgpf("SCH: TEST THREAD 1 (%i) ENDING\n", current_thread);
-			return;
-		}
-	}
-}
-
-void test_thread2(void*){
-	while(true){
-		dbgout("SCH: TEST THREAD 2\n");
-		sch_yield();//asm("hlt");
-	}
-}
-
 void test_priority(void *params){
 	uint32_t *p=(uint32_t*)params;
 	char c=(char)(p[0]);
@@ -83,13 +62,12 @@ void test_priority(void *params){
 	free(params);
 	while(true){
 		printf("%c", c);
+		asm("hlt");
 		sch_yield();
 	}
 }
 
 void sch_threadtest(){
-	sch_new_thread(&test_thread1, (void*)20);
-	sch_new_thread(&test_thread2, NULL);
 	uint32_t* p1=(uint32_t*)malloc(sizeof(uint32_t)*2);
 	p1[0]='A';
 	p1[1]=20;
@@ -182,8 +160,11 @@ void sch_end_thread(){
 	sch_yield();
 }
 
+extern lock mm_lock, la_lock; //locks required by scheduler.
+
 bool sch_schedule(regs *regs){
-	if(!sch_inited || !try_take_lock(sch_lock)) return true;
+	if(!sch_inited || !try_take_lock(sch_lock) || !try_take_lock(mm_lock) || !try_take_lock(la_lock)) return true;
+	release_lock(mm_lock); release_lock(la_lock);
 	(*threads)[current_thread].context=*regs;
 	vector<sch_thread*> runnables;
 	for(int i=0; i<threads->size(); ++i){
@@ -228,6 +209,7 @@ bool sch_isr(regs *context){
 }
 
 int sch_get_id(){
+	//This is unsafe, but we can't lock without knowing the thread id...
 	if(!sch_inited) return 0;
 	return (*threads)[current_thread].ext_id;
 }
