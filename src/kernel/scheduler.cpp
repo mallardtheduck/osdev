@@ -184,7 +184,6 @@ void sch_end_thread(){
 
 bool sch_schedule(regs *regs){
 	if(!sch_inited || !try_take_lock(sch_lock)) return true;
-	dbgpf("SCH: Schedule. Current thread: %i, total threads: %i\n", current_thread, threads->size());
 	(*threads)[current_thread].context=*regs;
 	vector<sch_thread*> runnables;
 	for(int i=0; i<threads->size(); ++i){
@@ -203,11 +202,8 @@ bool sch_schedule(regs *regs){
 	}
 	uint32_t min=0xFFFFFFFF;
 	for(int i=0; i<runnables.size(); ++i){
-		dbgpf("SCH: Runnnable thread ID %i: priority %i, dynpriority %i\n", 
-			(uint32_t)runnables[i]->ext_id, runnables[i]->priority, runnables[i]->dynpriority);
 		if(runnables[i]->dynpriority < min) min=runnables[i]->dynpriority;
 	}
-	dbgpf("SCH: Min dynamic priority: %i\n", min);
 	for(int i=0; i<runnables.size(); ++i){
 		if(runnables[i]->dynpriority) runnables[i]->dynpriority-=min;
 	}
@@ -217,14 +213,12 @@ bool sch_schedule(regs *regs){
 			*regs=runnables[i]->context;
 			uint64_t lockthread=(*threads)[current_thread].ext_id;
 			current_thread=runnables[i]->sch_id;
-			dbgpf("SCH: Running thread %i.\n", current_thread);
 			release_lock(sch_lock, lockthread);
 			return true;
 		}
 	}
 	//Continue with current thread...
 	(*threads)[current_thread].dynpriority=(*threads)[current_thread].priority;
-	dbgpf("SCH: Running thread %i.\n", current_thread);
 	release_lock(sch_lock);
 	return true;
 }
