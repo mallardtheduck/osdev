@@ -51,4 +51,6 @@ struct regs {
 	uint32_t eip, cs, eflags, useresp, ss;
 } __attribute__((packed));
 
+void irq_ack(size_t);
+
 #endif

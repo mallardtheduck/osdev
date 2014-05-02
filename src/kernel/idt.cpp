@@ -145,7 +145,8 @@ void irq_ack(size_t irq_no) {
 extern "C" void irq_handler(regs *r) {
 	int irq=r->int_no-32;
 	dbgpf("IDT: IRQ %i\n", irq);
-	if(irq==0) sch_isr(r);
-	irq_ack(irq);
+	if(irq == 0){
+		if(sch_isr(r)) irq_ack(irq);
+	}
 	dbgpf("IDT: Responded to IRQ %i\n", irq);
 }
