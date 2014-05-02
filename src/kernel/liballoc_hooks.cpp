@@ -2,6 +2,12 @@
 extern "C"{
 	#include "liballoc.h"
 }
+
+#include "locks.hpp"
+
+lock la_lock;
+bool la_inited=false;
+
 /** This function is supposed to lock the memory data structures. It
  * could be as simple as disabling interrupts or acquiring a spinlock.
  * It's up to you to decide. 
@@ -10,6 +16,11 @@ extern "C"{
  * failure.
  */
 extern "C" int liballoc_lock(){
+	if(!la_inited){
+		init_lock(la_lock);
+		la_inited=true;
+	}
+	take_lock(la_lock);
 	return 0;
 }
 
@@ -20,6 +31,7 @@ extern "C" int liballoc_lock(){
  * \return 0 if the lock was successfully released.
  */
 extern "C" int liballoc_unlock(){
+	release_lock(la_lock);
 	return 0;
 }
 
