@@ -21,7 +21,7 @@ inline void init_lock(lock &l){
 }
 
 inline void take_lock(lock &l, uint64_t thread=sch_get_id()){
-	while(!__sync_bool_compare_and_swap(&l, 0, thread));
+	while(!__sync_bool_compare_and_swap(&l, 0, thread)) sch_yield();
 }
 
 inline bool try_take_lock(lock &l, uint64_t thread=sch_get_id()){
