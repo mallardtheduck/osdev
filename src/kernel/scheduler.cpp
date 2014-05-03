@@ -18,7 +18,6 @@ struct sch_thread{
 	sch_start *start;
 	uint32_t priority;
 	uint32_t dynpriority;
-	size_t sch_id;
 	uint64_t ext_id;
 	/* memory info */
 };
@@ -138,7 +137,7 @@ void thread_reaper(void*){
 					threads->erase(i);
 					changed=true;
 					dbgpf("SCH: Reaped %i.\n", i);
-					break;			
+					break;
 				}
 			}
 			release_lock(sch_lock);
@@ -160,54 +159,55 @@ void sch_end_thread(){
 	sch_yield();
 }
 
-extern lock mm_lock, la_lock; //locks required by scheduler.
-
 bool sch_schedule(regs *regs){
 	//Confirm that required locks are available.
-	if(!sch_inited || !try_take_lock(sch_lock) || !try_take_lock(mm_lock) || !try_take_lock(la_lock)) return true;
-	release_lock(mm_lock); release_lock(la_lock);
+	if(!sch_inited || !try_take_lock(sch_lock)) return true;
 	
 	//Save current thread's state
 	(*threads)[current_thread].context=*regs;
 
-	//Find runnable threads
-	vector<sch_thread*> runnables;
+	//Find runnable threads and minimum dynamic priority
+	int nrunnables=0;
+	uint32_t min=0xFFFFFFFF;
 	for(int i=0; i<threads->size(); ++i){
 		if((*threads)[i].runnable){
-			(*threads)[i].sch_id=i;
 			if(!(*threads)[i].priority) panic("(SCH) Thread priority 0 is not allowed.\n");
-			runnables.push_back(&(*threads)[i]);
+			nrunnables++;
+			if((*threads)[i].dynpriority < min) min=(*threads)[i].dynpriority;
 		}
 	}
 
 	//If there are no runnable threads, halt. Hopefully an interrupt will awaken one soon...
-	if(runnables.size()==0){
+	if(nrunnables==0){
 		dbgout("SCH: No runnable threads.\n");
 		irq_ack(0);
 		release_lock(sch_lock);
 		asm("hlt");
 		return false;
 	}
-
-	//Find lowest dynamic priority and subtract this from all runnable threads'
-	uint32_t min=0xFFFFFFFF;
-	for(int i=0; i<runnables.size(); ++i){
-		if(runnables[i]->dynpriority < min) min=runnables[i]->dynpriority;
-	}
-	for(int i=0; i<runnables.size(); ++i){
-		if(runnables[i]->dynpriority) runnables[i]->dynpriority-=min;
-	}
 	
-	//Find a thread with dynamic priority 0 that isn't the current thread and run it
-	for(int i=0; i<runnables.size(); ++i){
-		if(runnables[i]->dynpriority==0 && runnables[i]->sch_id != current_thread){
-			runnables[i]->dynpriority=runnables[i]->priority;
-			*regs=runnables[i]->context;
-			uint64_t lockthread=(*threads)[current_thread].ext_id;
-			current_thread=runnables[i]->sch_id;
-			release_lock(sch_lock, lockthread);
-			return true;
+	//Subtract minimum dynamic priority from all threads. If there is now a thread with dynamic priority 0
+	//that isn't the current thread, record it
+	bool foundtorun=false;
+	size_t torun;
+	for(int i=0; i<(*threads).size(); ++i){
+		if((*threads)[i].runnable){
+			if((*threads)[i].dynpriority) (*threads)[i].dynpriority-=min;
+			if(i!=current_thread && (*threads)[i].dynpriority==0){
+				foundtorun=true;
+				torun=i;
+			}
 		}
+	}
+
+	//If we found a thread to run, run it
+	if(foundtorun){
+		(*threads)[torun].dynpriority=(*threads)[torun].priority;
+		*regs=(*threads)[torun].context;
+		uint64_t lockthread=(*threads)[current_thread].ext_id;
+		current_thread=torun;
+		release_lock(sch_lock, lockthread);
+		return true;
 	}
 
 	//If this thread is the only one with dynamic priority 0, continue with it...
