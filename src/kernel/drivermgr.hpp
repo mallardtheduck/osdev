@@ -28,9 +28,9 @@ namespace driver_types{
 	const int PRINTER	= 0x70;
 	const int PRN_TEXT	= 0x71;
 	const int GRAPHICINPUT	= 0x80;
-	const int GO_SCANNER	= 0x81;
-	const int GO_STILLCAM	= 0x82;
-	const int GO_VIDCAM	= 0x83;
+	const int GI_SCANNER	= 0x81;
+	const int GI_STILLCAM	= 0x82;
+	const int GI_VIDCAM	= 0x83;
 	const int LCDSCREEN	= 0x90;
 	const int BESPOKE	= 0xF0;
 	const int USER		= 0xFF;
