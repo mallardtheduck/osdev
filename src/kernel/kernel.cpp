@@ -17,6 +17,7 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int magic)
 	enable_interrupts();
 	fs_init();
 	sch_init();
+	drv_init();
 	printf("Ready.");
 	//while(true) asm volatile("hlt");
 	sch_block();

@@ -37,6 +37,7 @@ extern "C"{
 #include "idt.hpp"
 #include "pic.hpp"
 #include "scheduler.hpp"
+#include "drivermgr.hpp"
 
 void GDT_init();
 void IDT_init();
