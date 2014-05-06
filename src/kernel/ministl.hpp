@@ -260,7 +260,7 @@ public:
 		return (size_t)0xFFFFFFFF;
 	}
 	void construct ( pointer p, const_reference val ){
-		*p=val;
+		new ((void*)p) value_type (val);
 	}
 	void destroy (pointer p){
 		p->~T();
