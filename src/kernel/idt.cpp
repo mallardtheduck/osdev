@@ -123,7 +123,11 @@ void out_int_info(const handler_context_t ctx){
 extern "C" void isr_handler(handler_context_t ctx){
 	dbgpf("\nInterrupt %i at %x!\n", ctx.interrupt_number, ctx.eip);
 	
-	if(ctx.interrupt_number==0x0D){
+	if(ctx.interrupt_number==0x06){
+		out_int_info(ctx);
+		panic("Invalid opcode.\n");
+	}
+	else if(ctx.interrupt_number==0x0D){
 		out_int_info(ctx);
 		panic("General Protection Fault.\n");
 	}
