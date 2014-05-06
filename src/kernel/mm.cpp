@@ -72,7 +72,7 @@ void mm_init(multiboot_info_t *mbt){
 }
 
 void *mm_alloc(size_t bytes){
-	take_lock(mm_lock);
+	hold_lock lck(mm_lock);
 	bytes += sizeof(mm_allocation);
 	for(int i=0; i< MAX_REGIONS; ++i){
 		if(!mm_regions[i].valid) break;
@@ -87,8 +87,7 @@ void *mm_alloc(size_t bytes){
 			alloc->reg=&mm_regions[i];
 			alloc->size=bytes;
 			if(!node) mm_regions[i].head=alloc;
-			//dbgpf("Allocated %x at start of region\n", alloc->bytes);
-			release_lock(mm_lock);
+			//dbgpf("Allocated %x at start of region. Allocation node at %x.\n", alloc->bytes, alloc);
 			return alloc->bytes;
 		}
 		while(node){
@@ -107,7 +106,6 @@ void *mm_alloc(size_t bytes){
 					alloc->next->prev=alloc;
 				}
 				//dbgpf("MM: Allocated %x within region. Allocation node at %x.\n", alloc->bytes, alloc);
-				release_lock(mm_lock);
 				return alloc->bytes;
 			}
 			if(node->next) sizeleft-=node->size;
@@ -115,7 +113,6 @@ void *mm_alloc(size_t bytes){
 		}
 		
 	}
-	release_lock(mm_lock);
 	return NULL;
 }
 
