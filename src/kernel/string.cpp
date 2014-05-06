@@ -67,6 +67,11 @@ string::string(const char* s) : p(strdup_never_null(s))
 {
 }
 
+string::string(const char c) : p(strdup_never_null("*"))
+{
+	p[0]=c;
+}
+
 string& string::operator=(const char* s)
 {
 	if ( p != s ) {
@@ -101,6 +106,16 @@ bool string::operator==(const char* s) const
 bool string::operator==(const string& s) const
 {
 	return !strcmp(p, s.p);
+}
+
+bool string::operator!=(const char* s) const
+{
+	return !(*this==s);
+}
+
+bool string::operator!=(const string& s) const
+{
+	return !(*this==s);
 }
 
 void string::clear()

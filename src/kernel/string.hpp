@@ -46,12 +46,15 @@ public:
 	virtual ~string();
 	string(const string&);
 	string(const char*);
+	string(const char);
 	string& operator=(const char*);
 	string& operator=(const string&);
 	string& operator+=(const string&);
 	friend string operator+(const string& lhs, const string& rhs);
 	bool operator==(const char*) const;
 	bool operator==(const string&) const;
+	bool operator!=(const char*) const;
+	bool operator!=(const string&) const;
 	void clear();
 	size_type size() const;
 	bool empty() const;
