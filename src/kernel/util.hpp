@@ -9,7 +9,8 @@ void panic(char *msg);
 int strcmp(const char *s1, const char *s2);
 char *strncpy(char *dest, const char *src, size_t size);
 void* memcpy(void* dest, const void* src, size_t count);
- 
+void *memmove(void *v_dst, const void *v_src, size_t c);
+
 inline void *operator new(size_t size)
 {
     return malloc(size);

@@ -90,6 +90,29 @@ void* memcpy(void* dest, const void* src, size_t count) {
         return dest;
 }
 
+void *memmove(void *v_dst, const void *v_src, size_t c)
+{
+	const char *src = (const char*)v_src;
+	char *dst = (char*)v_dst;
+
+	if (!c)
+		return v_dst;
+
+	/* Use memcpy when source is higher than dest */
+	if (v_dst <= v_src)
+		return memcpy(v_dst, v_src, c);
+
+	/* copy backwards, from end to beginning */
+	src += c;
+	dst += c;
+
+	/* Simple, byte oriented memmove. */
+	while (c--)
+		*--dst = *--src;
+
+	return v_dst;
+}
+
 void panic(char *msg){
 	printf("PANIC: %s", msg);
 	dbgout("PANIC: ");dbgout(msg);
