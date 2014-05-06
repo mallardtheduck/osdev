@@ -33,7 +33,6 @@ inline void operator delete[](void *p)
 
 template<typename T> void *operator new (size_t, T* ptr)
 {
-	//*ptr = T();
 	return ptr;
 }
 
