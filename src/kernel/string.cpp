@@ -135,7 +135,7 @@ string string::substr(const size_type start, const size_type len_orig) const
 	size_type len = strlen(p);
 
 	if ( start > len )
-		panic("STRING: Out of range.");//throw std::out_of_range("my::string::substr");
+		panic("STRING: Out of range (substr).");//throw std::out_of_range("my::string::substr");
 
 	if ( len > len_orig )
 		len = len_orig;
@@ -158,7 +158,7 @@ char string::operator[](const size_type n) const
 char string::at(const size_type n) const
 {
 	if ( n > strlen(p) )
-		panic("STRING: Out of range.");//throw std::out_of_range("my::string::at()");
+		panic("STRING: Out of range (at).");//throw std::out_of_range("my::string::at()");
 
 	return p[n];
 }
@@ -168,7 +168,7 @@ string& string::erase(size_type pos, size_type len)
 	size_type s = size();
 
 	if ( pos > s )
-		panic("STRING: Out of range.");//throw std::out_of_range("my::string::erase");
+		panic("STRING: Out of range (erase).");//throw std::out_of_range("my::string::erase");
 
 	s -= pos;
 	if ( len > s )
