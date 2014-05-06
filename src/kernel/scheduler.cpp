@@ -68,11 +68,11 @@ void test_priority(void *params){
 
 void sch_threadtest(){
 	uint32_t* p1=(uint32_t*)malloc(sizeof(uint32_t)*2);
-	p1[0]='A';
+	p1[0]='.';
 	p1[1]=20;
 	sch_new_thread(&test_priority, (void*)p1);
 	uint32_t* p2=(uint32_t*)malloc(sizeof(uint32_t)*2);
-	p2[0]='B';
+	p2[0]='!';
 	p2[1]=40;
 	sch_new_thread(&test_priority, (void*)p2);
 }
@@ -124,13 +124,10 @@ int sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 
 void thread_reaper(void*){
 	while(true){
-		take_lock(sch_lock);
-		(*threads)[current_thread].runnable=false;
-		release_lock(sch_lock);
-		sch_yield();
+		sch_block();
 		bool changed=true;
 		while(changed){
-			take_lock(sch_lock);
+			hold_lock lck(sch_lock);
 			for(int i=0; i<threads->size(); ++i){
 				if((*threads)[i].to_be_deleted){
 					free((*threads)[i].original_esp);
@@ -140,7 +137,6 @@ void thread_reaper(void*){
 					break;
 				}
 			}
-			release_lock(sch_lock);
 			changed=false;
 		}
 	}
@@ -207,6 +203,10 @@ bool sch_schedule(regs *regs){
 		uint64_t lockthread=(*threads)[current_thread].ext_id;
 		current_thread=torun;
 		release_lock(sch_lock, lockthread);
+		if(regs->eip==0xaaaaaaaa){
+			dbgpf("SCH: Thread %i.\n", torun);
+			panic("(SCH) Invalid thread state!\n");
+		}
 		return true;
 	}
 
