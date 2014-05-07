@@ -18,7 +18,7 @@ struct idt_ptr
     uint32_t base;
 } __attribute__((packed));
 
-struct handler_context_t
+/*struct handler_context_t
 {
     uint32_t eax, ecx, edx, ebx, esp, ebp, esi, edi;
     uint32_t interrupt_number;
@@ -28,7 +28,15 @@ struct handler_context_t
     uint32_t eflags;
     uint32_t oresp;
     uint32_t ss;
+} __attribute__((packed));*/
+
+struct handler_context_t {
+	uint32_t gs, fs, es, ds;
+	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
+	uint32_t interrupt_number, error_code;
+	uint32_t eip, cs, eflags, oresp, ss;
 } __attribute__((packed));
+
 
 /* Declare an IDT of 256 entries. Although we will only use the
 *  first 32 entries in this tutorial, the rest exists as a bit

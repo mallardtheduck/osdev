@@ -16,10 +16,11 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int magic)
 	PIC_init();
 	enable_interrupts();
 	fs_init();
-	sch_init();
+	//sch_init();
 	drv_init();
 	printf("Ready.");
 	//while(true) asm volatile("hlt");
+	asm("int $128");
 	sch_block();
 	panic("Kernel endpoint reached!\n");
 }

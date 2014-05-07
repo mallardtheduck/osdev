@@ -74,13 +74,37 @@ ISR_NOERRCODE 30
 ISR_NOERRCODE 31
 ISR_NOERRCODE 128
 
-isr_common_stub: 
+/*isr_common_stub: 
 	pusha
 	call isr_handler
 	popa
 	//add $8, %esp
 	popl %eax
 	sti
+	iret*/
+
+isr_common_stub:
+	pusha
+	pushl %ds
+	pushl %es
+	pushl %fs
+	pushl %gs
+	mov $0x10, %ax
+	mov %ax, %ds
+	mov %ax, %es
+	mov %ax, %fs
+	mov %ax, %gs
+	mov %esp, %eax
+	push %eax
+	// Call the C kernel hardware interrupt handler
+	call isr_handler
+	popl %eax
+	popl %gs
+	popl %fs
+	popl %es
+	popl %ds
+	popa
+	add $8, %esp
 	iret
 
 /*.macro ISR_ERRCODE num
