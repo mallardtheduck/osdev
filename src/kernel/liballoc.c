@@ -15,7 +15,7 @@
 #define MODE	MODE_BEST
 
 #ifdef DEBUG
-#include <stdio.h>
+#include "printf.h"
 #endif
 
 
@@ -131,7 +131,7 @@ static void dump_array()
 		}
 
 	printf("'*' denotes a split to the left/right of a tag\n");
-	fflush( stdout );
+	//fflush( stdout );
 }
 #endif
 
