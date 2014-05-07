@@ -164,7 +164,7 @@ void out_regs(const regs ctx){
 
 
 extern "C" void irq_handler(regs *r) {
-	out_regs(*r);
+	//out_regs(*r);
 	int irq=r->int_no-32;
 	if(irq == 0){
 		if(sch_isr(r)) irq_ack(irq);
