@@ -33,7 +33,7 @@ struct idt_ptr
 struct handler_context_t {
 	uint32_t gs, fs, es, ds;
 	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
-	uint32_t interrupt_number, error_code;
+	uint32_t error_code, interrupt_number;
 	uint32_t eip, cs, eflags, oresp, ss;
 } __attribute__((packed));
 
@@ -128,23 +128,23 @@ void out_int_info(const handler_context_t ctx){
 	dbgpf("EFLAGS: %x ORESP: %x\n", ctx.eflags, ctx.oresp);
 }
 
-extern "C" void isr_handler(handler_context_t ctx){
-	dbgpf("\nInterrupt %i at %x!\n", ctx.interrupt_number, ctx.eip);
+extern "C" void isr_handler(handler_context_t *ctx){
+	dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
 	
-	if(ctx.interrupt_number==0x06){
-		out_int_info(ctx);
+	if(ctx->interrupt_number==0x06){
+		out_int_info(*ctx);
 		panic("Invalid opcode.\n");
 	}
-	else if(ctx.interrupt_number==0x0D){
-		out_int_info(ctx);
+	else if(ctx->interrupt_number==0x0D){
+		out_int_info(*ctx);
 		panic("General Protection Fault.\n");
 	}
-	else if(ctx.interrupt_number==0x08){
-		out_int_info(ctx);
+	else if(ctx->interrupt_number==0x08){
+		out_int_info(*ctx);
 		panic("Double fault.\n"); 
 	}
-	else if(ctx.interrupt_number==SYSCALL) printf("Syscall recieved.\n");
-	out_int_info(ctx);
+	else if(ctx->interrupt_number==SYSCALL) printf("Syscall recieved.\n");
+	out_int_info(*ctx);
 }
 
 void irq_ack(size_t irq_no) {
@@ -154,7 +154,17 @@ void irq_ack(size_t irq_no) {
 	outb(0x20, 0x20);
 }
 
+void out_regs(const regs ctx){
+	dbgpf("INTERRUPT %x\n", ctx.int_no);
+	dbgpf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
+	dbgpf("EDI: %x ESI: %x EBP: %x ESP: %x\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
+	dbgpf("EIP: %x CS: %x SS: %x\n", ctx.eip, ctx.cs, ctx.ss);
+	dbgpf("EFLAGS: %x ORESP: %x\n", ctx.eflags, ctx.useresp);
+}
+
+
 extern "C" void irq_handler(regs *r) {
+	out_regs(*r);
 	int irq=r->int_no-32;
 	if(irq == 0){
 		if(sch_isr(r)) irq_ack(irq);

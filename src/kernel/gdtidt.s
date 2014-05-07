@@ -74,15 +74,6 @@ ISR_NOERRCODE 30
 ISR_NOERRCODE 31
 ISR_NOERRCODE 128
 
-/*isr_common_stub: 
-	pusha
-	call isr_handler
-	popa
-	//add $8, %esp
-	popl %eax
-	sti
-	iret*/
-
 isr_common_stub:
 	pusha
 	pushl %ds
@@ -106,14 +97,6 @@ isr_common_stub:
 	popa
 	add $8, %esp
 	iret
-
-/*.macro ISR_ERRCODE num
-	.global isr\num
-	isr\num:
-		cli
-		pushl $\num
-		jmp isr_common_stub
-.endm*/
 
 .macro IRQ_ENTRY irq num
 	.global irq\irq
