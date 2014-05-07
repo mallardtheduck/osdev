@@ -1,5 +1,78 @@
 #include "kernel.hpp"
 
+struct terminal_instance{
+	size_t pos;
+};
+
+static const size_t VGA_WIDTH = 80;
+static const size_t VGA_HEIGHT = 24;
+ 
+size_t terminal_row;
+size_t terminal_column;
+uint8_t terminal_color;
+uint16_t* terminal_buffer;
+
+void *terminal_open(){
+	terminal_instance *inst = new terminal_instance();
+	inst->pos=0;
+	return (void*) inst;
+}
+
+bool terminal_close(void *inst){
+	free(inst);
+	return true;
+}
+
+int terminal_read(void *instance, size_t bytes, char *buf){
+	terminal_instance *inst=(terminal_instance*)instance;
+	//TODO: Bounds checking!
+	memcpy(buf, (char*)terminal_buffer+inst->pos, bytes);
+	inst->pos+=bytes;
+	return bytes;
+}
+
+bool terminal_write(void *instance, size_t bytes, char *buf){
+	terminal_instance *inst=(terminal_instance*)instance;
+	//TODO: Bounds checking!
+	memcpy((char*)terminal_buffer+inst->pos, buf, bytes);
+	inst->pos+=bytes;
+	return true;
+}
+
+void terminal_seek(void *instance, size_t pos, bool relative){
+	terminal_instance *inst=(terminal_instance*)instance;
+	//TODO: Bounds checking!
+	if(relative) inst->pos+=pos;
+	else inst->pos=pos;
+}
+
+int terminal_ioctl(void *instance, int fn, size_t bytes, char *buf){
+	//TODO: Stuff...
+	return 0;
+}
+
+int terminal_type(){
+	return driver_types::VID_TEXT;
+}
+
+char *terminal_desc(){
+	return "Basic text-mode terminal.";
+}
+
+/*struct drv_driver{
+	void *(*open)();
+	bool (*close)(void *instance);
+	int (*read)(void *instance, size_t bytes, char *buf);
+	bool (*write)(void *instance, size_t bytes, char *buf);
+	void (*seek)(void *instance, size_t pos, bool relative);
+	int (*ioctl)(void *instance, int fn, size_t bytes, char *buf);
+	int (*type)();
+	char *(*desc)();
+};*/
+
+drv_driver terminal_driver={terminal_open, terminal_close, terminal_read, terminal_write, terminal_seek,
+				terminal_ioctl, terminal_type, terminal_desc};
+
 uint8_t make_color(enum vga_color fg, enum vga_color bg)
 {
 	return fg | bg << 4;
@@ -20,14 +93,6 @@ size_t strlen(const char* str)
 	return ret;
 }
  
-static const size_t VGA_WIDTH = 80;
-static const size_t VGA_HEIGHT = 24;
- 
-size_t terminal_row;
-size_t terminal_column;
-uint8_t terminal_color;
-uint16_t* terminal_buffer;
- 
 void terminal_initialize()
 {
 	dbgout("Terminal init\n");
@@ -44,6 +109,11 @@ void terminal_initialize()
 		}
 	}
 	init_printf(NULL, putc);
+}
+
+void terminal_add_device(){
+	char name[12]={"TTY\0"};
+	drv_add_device(name, &terminal_driver);
 }
  
 void terminal_scroll(){
@@ -123,3 +193,4 @@ extern "C" void putc(void*, char c){
 	terminal_putchar(c);
 	terminal_poscursor(terminal_row, terminal_column);
 }
+
