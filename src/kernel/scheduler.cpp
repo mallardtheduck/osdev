@@ -2,6 +2,8 @@
 #include "ministl.hpp"
 #include "locks.hpp"
 
+extern char _end;
+
 const uint32_t default_priority=10;
 
 struct sch_start{
@@ -40,14 +42,14 @@ void sch_init(){
 	sch_thread mainthread;
 	mainthread.runnable=true;
 	mainthread.to_be_deleted=false;
-	mainthread.priority=100;
+	mainthread.priority=default_priority;
 	mainthread.dynpriority=0;
 	mainthread.magic=0xF00D;
 	mainthread.ext_id=++cur_ext_id;
 	threads->push_back(mainthread);
 	current_thread=threads->size()-1;
 	reaper_thread=sch_new_thread(&thread_reaper, NULL, 4096);
-	//sch_threadtest();
+	sch_threadtest();
 	IRQ_clear_mask(0);
 	dbgout("SCH: Init complete.\n");
 	sch_inited=true;
@@ -69,11 +71,11 @@ void test_priority(void *params){
 void sch_threadtest(){
 	uint32_t* p1=(uint32_t*)malloc(sizeof(uint32_t)*2);
 	p1[0]='.';
-	p1[1]=20;
+	p1[1]=200;
 	sch_new_thread(&test_priority, (void*)p1);
 	uint32_t* p2=(uint32_t*)malloc(sizeof(uint32_t)*2);
 	p2[0]='!';
-	p2[1]=40;
+	p2[1]=400;
 	sch_new_thread(&test_priority, (void*)p2);
 }
 
@@ -202,16 +204,25 @@ bool sch_schedule(regs *regs){
 		*regs=(*threads)[torun].context;
 		uint64_t lockthread=(*threads)[current_thread].ext_id;
 		current_thread=torun;
-		release_lock(sch_lock, lockthread);
-		if(regs->eip==0xaaaaaaaa){
+		release_lock(sch_lock);//, lockthread);
+		if(regs->eip>(uint32_t)&_end){
 			dbgpf("SCH: Thread %i.\n", torun);
 			panic("(SCH) Invalid thread state!\n");
+		}
+		if((*threads)[torun].magic!=0xF00D && (*threads)[torun].magic!=0xBABE){
+			dbgpf("SCH: Thread %i.\n", torun);
+			panic("(SCH) Invalid thread magic!\n");
 		}
 		return true;
 	}
 
 	//If this thread is the only one with dynamic priority 0, continue with it...
 	(*threads)[current_thread].dynpriority=(*threads)[current_thread].priority;
+	*regs=(*threads)[current_thread].context;
+	if(regs->eip>(uint32_t)&_end) panic("(SCH) Current thread has invalid state.\n");
+	if((*threads)[current_thread].magic!=0xF00D && (*threads)[current_thread].magic!=0xBABE){
+		panic("(SCH) Invalid current thread magic!\n");
+	}
 	release_lock(sch_lock);
 	return true;
 }
@@ -223,7 +234,8 @@ bool sch_isr(regs *context){
 int sch_get_id(){
 	//This is unsafe, but we can't lock without knowing the thread id...
 	if(!sch_inited) return 0;
-	return (*threads)[current_thread].ext_id;
+	return 0xCAFE;
+//	return (*threads)[current_thread].ext_id;
 }
 
 void sch_block(){
