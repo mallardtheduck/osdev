@@ -87,6 +87,7 @@ void *mm_alloc(size_t bytes){
 			alloc->reg=&mm_regions[i];
 			alloc->size=bytes;
 			if(!node) mm_regions[i].head=alloc;
+			else node->prev=alloc;
 			//dbgpf("Allocated %x at start of region. Allocation node at %x.\n", alloc->bytes, alloc);
 			return alloc->bytes;
 		}
