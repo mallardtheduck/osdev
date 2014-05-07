@@ -33,7 +33,7 @@ struct idt_ptr
 struct handler_context_t {
 	uint32_t gs, fs, es, ds;
 	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
-	uint32_t error_code, interrupt_number;
+	uint32_t interrupt_number, error_code;
 	uint32_t eip, cs, eflags, oresp, ss;
 } __attribute__((packed));
 
@@ -128,9 +128,12 @@ void out_int_info(const handler_context_t ctx){
 	dbgpf("EFLAGS: %x ORESP: %x\n", ctx.eflags, ctx.oresp);
 }
 
+extern size_t current_thread;
+
 extern "C" void isr_handler(handler_context_t *ctx){
 	dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
-	
+	dbgpf("Current thread: %i\n", current_thread);
+
 	if(ctx->interrupt_number==0x06){
 		out_int_info(*ctx);
 		panic("Invalid opcode.\n");
