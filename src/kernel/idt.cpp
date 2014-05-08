@@ -18,25 +18,6 @@ struct idt_ptr
     uint32_t base;
 } __attribute__((packed));
 
-/*struct handler_context_t
-{
-    uint32_t eax, ecx, edx, ebx, esp, ebp, esi, edi;
-    uint32_t interrupt_number;
-    uint32_t error_code;
-    uint32_t eip;
-    uint32_t cs;
-    uint32_t eflags;
-    uint32_t oresp;
-    uint32_t ss;
-} __attribute__((packed));*/
-
-struct handler_context_t {
-	uint32_t gs, fs, es, ds;
-	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
-	uint32_t interrupt_number, error_code;
-	uint32_t eip, cs, eflags, oresp, ss;
-} __attribute__((packed));
-
 
 /* Declare an IDT of 256 entries. Although we will only use the
 *  first 32 entries in this tutorial, the rest exists as a bit
@@ -48,6 +29,7 @@ struct idt_entry idt[256];
 struct idt_ptr idtp;
 
 extern "C" void idt_flush();
+extern "C" uint32_t get_ss();
 
 /* Use this function to set an entry in the IDT. Alot simpler
 *  than twiddling with the GDT ;) */
@@ -120,44 +102,55 @@ void IDT_init()
 	idt_flush();
 }
 
-void out_int_info(const handler_context_t ctx){
+void out_int_info(const isr_regs ctx){
 	dbgpf("INTERRUPT %x ERRCODE: %x\n", ctx.interrupt_number, ctx.error_code);
 	dbgpf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
 	dbgpf("EDI: %x ESI: %x EBP: %x ESP: %x\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
-	dbgpf("EIP: %x CS: %x SS: %x\n", ctx.eip, ctx.cs, ctx.ss);
-	dbgpf("EFLAGS: %x ORESP: %x\n", ctx.eflags, ctx.oresp);
+	dbgpf("EIP: %x CS: %x SS*: %x\n", ctx.eip, ctx.cs, get_ss());
+	dbgpf("EFLAGS: %x\n", ctx.eflags);
 }
 
 extern size_t current_thread;
 
-extern "C" void isr_handler(handler_context_t *ctx){
-	dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
-	dbgpf("Current thread: %i\n", current_thread);
-
+extern "C" void isr_handler(isr_regs *ctx){
 	if(ctx->interrupt_number==0x06){
+		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
+		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
 		out_int_info(*ctx);
 		panic("Invalid opcode.\n");
 	}
 	else if(ctx->interrupt_number==0x0D){
+		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
+		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
 		out_int_info(*ctx);
 		panic("General Protection Fault.\n");
 	}
 	else if(ctx->interrupt_number==0x08){
+		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
+		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
 		out_int_info(*ctx);
 		panic("Double fault.\n"); 
 	}
-	else if(ctx->interrupt_number==SYSCALL) printf("Syscall recieved.\n");
-	out_int_info(*ctx);
+	else if(ctx->interrupt_number==SYSCALL){
+		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
+		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
+		dbgout("Syscall recieved.\n");
+		if(ctx->eax==0) sch_isr(ctx);
+	}else{
+		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
+		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
+		out_int_info(*ctx);
+	}
 }
 
 void irq_ack(size_t irq_no) {
-	if (irq_no >= 12) {
+	if (irq_no >= 8) {
 		outb(0xA0, 0x20);
 	}
 	outb(0x20, 0x20);
 }
 
-void out_regs(const regs ctx){
+inline void out_regs(const irq_regs ctx){
 	dbgpf("INTERRUPT %x\n", ctx.int_no);
 	dbgpf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
 	dbgpf("EDI: %x ESI: %x EBP: %x ESP: %x\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
@@ -166,10 +159,20 @@ void out_regs(const regs ctx){
 }
 
 
-extern "C" void irq_handler(regs *r) {
-	//out_regs(*r);
+extern "C" void irq_handler(irq_regs *r) {
+	out_regs(*r);
 	int irq=r->int_no-32;
 	if(irq == 0){
-		if(sch_isr(r)) irq_ack(irq);
+		irq_ack(irq);
+		sch_irq(r);
 	}
+}
+
+irq_regs isr_regs2irq_regs(const isr_regs &r){
+	irq_regs ret;
+	ret.eax=r.eax; ret.ebx=r.ebx; ret.ecx=r.ecx; ret.edx=r.edx;
+	ret.edi=r.edi; ret.esi=r.esi; ret.ebp=r.ebp; ret.esp=r.esp;
+	ret.eip=r.eip; ret.cs=r.cs; ret.eflags=r.eflags;
+	ret.ss=get_ss();
+	return ret;
 }

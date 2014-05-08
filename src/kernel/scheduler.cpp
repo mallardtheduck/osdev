@@ -3,7 +3,6 @@
 #include "locks.hpp"
 
 extern char _start, _end;
-
 const uint32_t default_priority=10;
 
 struct sch_start{
@@ -12,7 +11,7 @@ struct sch_start{
 };
 
 struct sch_thread{
-	regs context;
+	irq_regs context;
 	bool runnable;
 	uint32_t magic;
 	void *original_esp;
@@ -26,11 +25,14 @@ struct sch_thread{
 
 vector<sch_thread> *threads;
 size_t current_thread;
+uint64_t current_thread_id;
 size_t reaper_thread;
 uint64_t cur_ext_id;
 
 void thread_reaper(void*);
 void sch_threadtest();
+extern "C" void sch_do_thread(irq_regs regs);
+extern "C" void sch_get_context(irq_regs *regs);
 
 lock sch_lock;
 bool sch_inited=false;
@@ -45,11 +47,11 @@ void sch_init(){
 	mainthread.priority=default_priority;
 	mainthread.dynpriority=0;
 	mainthread.magic=0xF00D;
-	mainthread.ext_id=++cur_ext_id;
+	current_thread_id=mainthread.ext_id=++cur_ext_id;
 	threads->push_back(mainthread);
 	current_thread=threads->size()-1;
 	reaper_thread=sch_new_thread(&thread_reaper, NULL, 4096);
-	sch_threadtest();
+	//sch_threadtest();
 	IRQ_clear_mask(0);
 	dbgout("SCH: Init complete.\n");
 	sch_inited=true;
@@ -79,7 +81,7 @@ void sch_threadtest(){
 	sch_new_thread(&test_priority, (void*)p2);
 }
 
-int sch_add_thread(regs context){
+int sch_add_thread(irq_regs context){
 	sch_thread newthread;
 	newthread.context=context;
 	newthread.runnable=true;
@@ -106,10 +108,10 @@ extern "C" void sch_wrapper(){
 }
 
 int sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
-	regs newcontext = {0};
+	irq_regs newcontext = {0};
 	newcontext.cs = 0x08;
    	newcontext.ds = 0x10;
-   	newcontext.ss = 0x10;
+	newcontext.ss = 0x10;
 	uint32_t eflags;
 	asm volatile("pushfl; pop %0;": "=r"(eflags)::);
 	newcontext.eflags=eflags;
@@ -132,20 +134,17 @@ void thread_reaper(void*){
 			hold_lock lck(sch_lock);
 			for(int i=0; i<threads->size(); ++i){
 				if((*threads)[i].to_be_deleted){
+					uint64_t id=(*threads)[i].ext_id;
 					free((*threads)[i].original_esp);
 					threads->erase(i);
 					changed=true;
-					dbgpf("SCH: Reaped %i.\n", i);
+					dbgpf("SCH: Reaped %i (%i).\n", i, (uint32_t)id);
 					break;
 				}
 			}
 			changed=false;
 		}
 	}
-}
-
-void sch_yield(){
-	asm("int $32");
 }
 
 void sch_end_thread(){
@@ -157,13 +156,15 @@ void sch_end_thread(){
 	sch_yield();
 }
 
-bool sch_schedule(regs *regs){
-	//Confirm that required locks are available.
-	if(!sch_inited || !try_take_lock(sch_lock)) return true;
-	
-	//Save current thread's state
-	(*threads)[current_thread].context=*regs;
+inline void out_regs(const irq_regs &ctx){
+	dbgpf("SCH: INTERRUPT %x\n", ctx.int_no);
+	dbgpf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
+	dbgpf("EDI: %x ESI: %x EBP: %x ESP: %x\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
+	dbgpf("EIP: %x CS: %x SS: %x\n", ctx.eip, ctx.cs, ctx.ss);
+	dbgpf("EFLAGS: %x ORESP: %x\n", ctx.eflags, ctx.useresp);
+}
 
+bool sch_find_thread(size_t &torun){
 	//Find runnable threads and minimum dynamic priority
 	int nrunnables=0;
 	uint32_t min=0xFFFFFFFF;
@@ -178,16 +179,12 @@ bool sch_schedule(regs *regs){
 	//If there are no runnable threads, halt. Hopefully an interrupt will awaken one soon...
 	if(nrunnables==0){
 		dbgout("SCH: No runnable threads.\n");
-		irq_ack(0);
-		release_lock(sch_lock);
-		asm("hlt");
 		return false;
 	}
 	
 	//Subtract minimum dynamic priority from all threads. If there is now a thread with dynamic priority 0
 	//that isn't the current thread, record it
 	bool foundtorun=false;
-	size_t torun;
 	for(int i=0; i<(*threads).size(); ++i){
 		if((*threads)[i].runnable){
 			if((*threads)[i].dynpriority) (*threads)[i].dynpriority-=min;
@@ -197,45 +194,90 @@ bool sch_schedule(regs *regs){
 			}
 		}
 	}
-
-	//If we found a thread to run, run it
 	if(foundtorun){
+		return true;
+	}else{
+		torun=current_thread;
+		return true;
+	}
+}
+
+void return_immediately(){
+	asm("popl %%eax" : : : "eax");
+	dbgout("SCH: Returning...\n");
+	return;
+}
+
+void sch_irq(irq_regs *regs){
+	//Confirm that required locks are available.
+	if(!sch_inited || !try_take_lock(sch_lock)) return;
+	
+	//Save current thread's state
+	irq_regs cregs;
+	sch_get_context(&cregs);
+	cregs.eip=(uint32_t)&return_immediately;
+	(*threads)[current_thread].context=cregs;
+
+	size_t torun;
+	//If we found a thread to run, run it
+	if(sch_find_thread(torun)){
 		(*threads)[torun].dynpriority=(*threads)[torun].priority;
 		*regs=(*threads)[torun].context;
 		uint64_t lockthread=(*threads)[current_thread].ext_id;
 		current_thread=torun;
-		release_lock(sch_lock);//, lockthread);
-		if(regs->eip>(uint32_t)&_end || regs->eip<(uint32_t)&_start){
-			dbgpf("SCH: Thread %i.\n", torun);
-			panic("(SCH) Invalid thread state!\n");
-		}
-		if((*threads)[torun].magic!=0xF00D && (*threads)[torun].magic!=0xBABE){
-			dbgpf("SCH: Thread %i.\n", torun);
-			panic("(SCH) Invalid thread magic!\n");
-		}
-		return true;
-	}
-
-	//If this thread is the only one with dynamic priority 0, continue with it...
-	(*threads)[current_thread].dynpriority=(*threads)[current_thread].priority;
-	*regs=(*threads)[current_thread].context;
-	if(regs->eip>(uint32_t)&_end || regs->eip<(uint32_t)&_start) panic("(SCH) Current thread has invalid state.\n");
-	if((*threads)[current_thread].magic!=0xF00D && (*threads)[current_thread].magic!=0xBABE){
-		panic("(SCH) Invalid current thread magic!\n");
+		current_thread_id=(*threads)[torun].ext_id;
+		release_lock(sch_lock, lockthread);
+		sch_do_thread((*threads)[torun].context);
+		return;		
+	}else{
+		//Nothing to run?
 	}
 	release_lock(sch_lock);
-	return true;
 }
 
-bool sch_isr(regs *context){
-	return sch_schedule(context);
+void sch_isr(isr_regs *context){
+	//Confirm that required locks are available.
+	if(!sch_inited || !try_take_lock(sch_lock)) return;
+
+	dbgout("1\n");	
+	//Save current thread's state
+	irq_regs cregs;
+	dbgout("2\n");
+	sch_get_context(&cregs);
+	dbgout("3\n");
+	cregs.eip=(uint32_t)&return_immediately;
+	dbgout("4\n");
+	(*threads)[current_thread].context=cregs;
+	dbgout("5\n");
+
+	size_t torun;
+	//If we found a thread to run, run it
+	if(sch_find_thread(torun)){
+		(*threads)[torun].dynpriority=(*threads)[torun].priority;
+		uint64_t lockthread=(*threads)[current_thread].ext_id;
+		current_thread=torun;
+		current_thread_id=(*threads)[torun].ext_id;
+		//Set thread running...
+		irq_regs context=(*threads)[torun].context;
+		dbgpf("SCH: Going to run thread %i.\n", current_thread_id);
+		out_regs(context);
+		release_lock(sch_lock, lockthread);
+		sch_do_thread(context);
+		return;	
+	}else{
+		//Nothing to run?
+	}
+	release_lock(sch_lock);
 }
 
-int sch_get_id(){
-	//This is unsafe, but we can't lock without knowing the thread id...
+uint64_t sch_get_id(){
 	if(!sch_inited) return 0;
-	return 0xCAFE;
-//	return (*threads)[current_thread].ext_id;
+	return current_thread_id;
+}
+
+void sch_yield(){
+	dbgpf("SCH: Yeild (%i)\n", current_thread_id);
+	sch_isr(NULL);
 }
 
 void sch_block(){

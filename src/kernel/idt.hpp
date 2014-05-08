@@ -1,6 +1,8 @@
 #ifndef _IDT_HPP
 #define _IDT_HPP
 
+extern "C" uint32_t syscall(uint32_t fn);
+
 /* CPU-generated interrupt handler stubs; declared in interrupt.s */
 extern "C" void isr0(); /* div by zero */
 extern "C" void isr1(); /* debug */
@@ -44,13 +46,22 @@ extern "C" void irq0();
 #define SYSCALL 128 /* 0x80 */
 extern "C" void isr128();
 
-struct regs {
+struct irq_regs {
 	uint32_t gs, fs, es, ds;
 	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
 	uint32_t int_no, err_code;
 	uint32_t eip, cs, eflags, useresp, ss;
 } __attribute__((packed));
 
+struct isr_regs {
+	uint32_t gs, fs, es, ds;
+	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
+	uint32_t interrupt_number, error_code;
+	uint32_t eip, cs, eflags;
+} __attribute__((packed));
+
 void irq_ack(size_t);
+
+irq_regs isr_regs2irq_regs(const isr_regs &r);
 
 #endif

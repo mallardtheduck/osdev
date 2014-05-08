@@ -120,7 +120,7 @@ irq_common_stub:
 	mov %ax, %gs
 	mov %esp, %eax
 	push %eax
-	// Call the C kernel hardware interrupt handler
+	// Call the kernel IRQ handler
 	call irq_handler
 	popl %eax
 	popl %gs
@@ -132,3 +132,82 @@ irq_common_stub:
 	iret
 
 IRQ_ENTRY 0, 32
+
+/*.global sch_yield
+sch_yield:
+	push $0
+	call syscall
+	ret*/
+
+.global syscall
+syscall:
+	pop %eax
+	int $128
+	ret
+
+.global get_ss
+get_ss:
+	mov %ss, %eax
+	ret
+
+.global sch_do_thread
+temp:
+	.byte 0x00, 0x00, 0x00, 0x00
+t_cs:
+	.byte 0x00, 0x00
+t_eip:
+	.byte 0x00, 0x00, 0x00, 0x00
+
+sch_do_thread:
+	popl %gs
+	popl %fs
+	popl %es
+	popl %ds
+	popl %edi
+	popl %esi
+	popl %ebp
+	popl %esp
+	popl %ebx
+	popl %edx
+	popl %ecx
+	popl %eax
+	popl temp
+	popl temp
+	popl t_eip
+	popl temp
+	pushl %eax
+	movw temp, %ax
+	movw %ax, t_cs
+	popl %eax
+	popf
+	popl temp
+	popl %ss
+	ljmp *t_cs
+	ret
+
+.global sch_get_context
+sch_get_context:
+	pop %eax
+	mov %gs, (%eax)
+	mov %fs, 4(%eax)
+	mov %es, 8(%eax)
+	mov %ds, 12(%eax)
+	mov %edi, 16(%eax)
+	mov %esi, 20(%eax)
+	mov %ebp, 24(%eax)
+	mov %esp, 28(%eax)
+	mov %ebx, 32(%eax)
+	mov %edx, 36(%eax)
+	mov %ecx, 40(%eax)
+	movl $0, 44(%eax)
+	movl $0, 48(%eax)
+	movl $0, 52(%eax)
+	movl $0, 56(%eax)
+	mov %cs, 60(%eax)
+	pushf
+	pop %ebx
+	mov %ebx, 64(%eax)
+	movl $0, 68(%eax)
+	mov %ss, 72(%eax)
+	push %eax
+	ret
