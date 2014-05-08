@@ -2,7 +2,7 @@
 #include "ministl.hpp"
 #include "locks.hpp"
 
-extern char _end;
+extern char _start, _end;
 
 const uint32_t default_priority=10;
 
@@ -205,7 +205,7 @@ bool sch_schedule(regs *regs){
 		uint64_t lockthread=(*threads)[current_thread].ext_id;
 		current_thread=torun;
 		release_lock(sch_lock);//, lockthread);
-		if(regs->eip>(uint32_t)&_end){
+		if(regs->eip>(uint32_t)&_end || regs->eip<(uint32_t)&_start){
 			dbgpf("SCH: Thread %i.\n", torun);
 			panic("(SCH) Invalid thread state!\n");
 		}
@@ -219,7 +219,7 @@ bool sch_schedule(regs *regs){
 	//If this thread is the only one with dynamic priority 0, continue with it...
 	(*threads)[current_thread].dynpriority=(*threads)[current_thread].priority;
 	*regs=(*threads)[current_thread].context;
-	if(regs->eip>(uint32_t)&_end) panic("(SCH) Current thread has invalid state.\n");
+	if(regs->eip>(uint32_t)&_end || regs->eip<(uint32_t)&_start) panic("(SCH) Current thread has invalid state.\n");
 	if((*threads)[current_thread].magic!=0xF00D && (*threads)[current_thread].magic!=0xBABE){
 		panic("(SCH) Invalid current thread magic!\n");
 	}
