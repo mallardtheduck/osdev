@@ -118,6 +118,7 @@ void *mm_alloc(size_t bytes){
 }
 
 void mm_free(void *ptr){
+	if(!ptr) return;
 	take_lock(mm_lock);
 	mm_allocation *alloc=(mm_allocation*)ptr-1;
 	if(!(alloc->reg->base <= alloc && (void*)alloc->reg->base + alloc->reg->size >= (void*)alloc + alloc->size)){
@@ -152,7 +153,7 @@ void mm_alloctest(){
 		memset(tests[i], 'Q', MM_TESTBLOCKSIZE);
 	}
 	mm_getfreemem();
-	for(int i=ntests-1; i >= 0; --i){
+	for(int i=0; i<ntests; ++i){
 		if(tests[i]) mm_free(tests[i]);
 	}
 	mm_getfreemem();
