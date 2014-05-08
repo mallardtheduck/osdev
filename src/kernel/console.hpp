@@ -33,6 +33,7 @@ void terminal_putchar(char c);
 void terminal_writestring(const char* data);
 void terminal_poscursor(size_t x, size_t y);
 void terminal_writeint(const int i, int base=10);
+void terminal_move(int x, int y);
 extern "C" void putc(void*, char c);
 
 #endif

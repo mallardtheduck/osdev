@@ -56,7 +56,7 @@ int terminal_type(){
 }
 
 char *terminal_desc(){
-	return "Basic text-mode terminal.";
+	return "Basic VGA text output.";
 }
 
 /*struct drv_driver{
@@ -112,7 +112,7 @@ void terminal_initialize()
 }
 
 void terminal_add_device(){
-	char name[12]={"TTY\0"};
+	char name[12]={"VGATEXT\0"};
 	drv_add_device(name, &terminal_driver);
 }
  
@@ -187,6 +187,12 @@ void terminal_writeint(const int i, int base)
 	char buf[128];
 	itoa(i, buf, base);
 	terminal_writestring(buf);
+}
+
+void terminal_move(int x, int y){
+	terminal_row=y;
+	terminal_column=x;
+	terminal_poscursor(terminal_row, terminal_column);
 }
 
 extern "C" void putc(void*, char c){
