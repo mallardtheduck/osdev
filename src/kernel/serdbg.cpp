@@ -38,7 +38,7 @@ int is_transmit_empty() {
 
 void write_serial(char a) {
 	while (is_transmit_empty() == 0);
-	if(!try_take_lock(ser_lock))return;
+	if(!try_take_lock(ser_lock)) return;
 	outb(PORT, a);
 	release_lock(ser_lock);
 	while (is_transmit_empty() == 0);
