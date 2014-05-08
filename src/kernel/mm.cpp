@@ -119,7 +119,7 @@ void *mm_alloc(size_t bytes){
 
 void mm_free(void *ptr){
 	if(!ptr) return;
-	take_lock(mm_lock);
+	hold_lock hl(mm_lock);
 	mm_allocation *alloc=(mm_allocation*)ptr-1;
 	if(!(alloc->reg->base <= alloc && (void*)alloc->reg->base + alloc->reg->size >= (void*)alloc + alloc->size)){
 		dbgpf("MM: Pointer %x, Region: base: %x size: %i, Allocation: base: %x size: %i\n",
@@ -135,8 +135,7 @@ void mm_free(void *ptr){
 		alloc->next->prev=alloc->prev;
 	}
 	memset(alloc, 0xFE, alloc->size);
-	//dbgpf("NN: Successfully freed %x\n", ptr);
-	release_lock(mm_lock);
+	//dbgpf("MM: Successfully freed %x\n", ptr);
 }
 
 void mm_alloctest(){
