@@ -21,6 +21,13 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int magic)
 	fs_init();
 	printf("Ready.");
 	//while(true) asm volatile("hlt");
+	int i=0;
+	while(true){
+		++i;
+		terminal_move(0, 7);
+		printf("%i ", i);
+		sch_yield();
+	}
 	sch_block();
 	panic("Kernel endpoint reached!\n");
 }
