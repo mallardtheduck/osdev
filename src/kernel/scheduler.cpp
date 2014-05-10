@@ -4,14 +4,23 @@
 
 extern char _start, _end;
 const uint32_t default_priority=10;
+void *sch_stack;
 
 struct sch_start{
 	void (*ptr)(void*);
 	void *param;
 };
 
+struct sch_stackinfo{
+	uint32_t ss;
+	uint32_t esp;
+	uint32_t halt;
+} __attribute__((packed));
+
+sch_stackinfo curstack;
+
 struct sch_thread{
-	irq_regs context;
+	sch_stackinfo stack;
 	bool runnable;
 	uint32_t magic;
 	void *original_esp;
@@ -31,8 +40,6 @@ uint64_t cur_ext_id;
 
 void thread_reaper(void*);
 void sch_threadtest();
-extern "C" void sch_do_thread(irq_regs regs);
-extern "C" void sch_get_context(irq_regs *regs);
 
 lock sch_lock;
 bool sch_inited=false;
@@ -41,6 +48,7 @@ void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
 	threads=new vector<sch_thread>();
+	sch_stack=malloc(4096);
 	sch_thread mainthread;
 	mainthread.runnable=true;
 	mainthread.to_be_deleted=false;
@@ -51,11 +59,13 @@ void sch_init(){
 	threads->push_back(mainthread);
 	current_thread=threads->size()-1;
 	reaper_thread=sch_new_thread(&thread_reaper, NULL, 4096);
-	//sch_threadtest();
+	sch_threadtest();
 	IRQ_clear_mask(0);
 	dbgout("SCH: Init complete.\n");
 	sch_inited=true;
 }
+
+void test_returnable();
 
 void test_priority(void *params){
 	uint32_t *p=(uint32_t*)params;
@@ -65,8 +75,7 @@ void test_priority(void *params){
 	free(params);
 	while(true){
 		printf("%c", c);
-		asm("hlt");
-		sch_yield();
+		test_returnable();
 	}
 }
 
@@ -81,24 +90,6 @@ void sch_threadtest(){
 	sch_new_thread(&test_priority, (void*)p2);
 }
 
-int sch_add_thread(irq_regs context){
-	sch_thread newthread;
-	newthread.context=context;
-	newthread.runnable=true;
-	newthread.to_be_deleted=false;
-	newthread.original_esp=(void*)(context.ebx);
-	newthread.start=(sch_start*)context.eax;
-	newthread.magic=0xBABE;
-	newthread.priority=default_priority;
-	newthread.dynpriority=0;
-	take_lock(sch_lock);
-	newthread.ext_id=++cur_ext_id;
-	threads->push_back(newthread);
-	size_t ret=threads->size()-1;
-	release_lock(sch_lock);
-	return ret;
-}
-
 extern "C" void sch_wrapper(){
 	sch_start *start=(*threads)[current_thread].start;
 	dbgpf("SCH: Starting new thread %i at %x (param %x) [%x].\n", current_thread, start->ptr, start->param, start);
@@ -108,22 +99,29 @@ extern "C" void sch_wrapper(){
 }
 
 int sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
-	irq_regs newcontext = {0};
-	newcontext.cs = 0x08;
-   	newcontext.ds = 0x10;
-	newcontext.ss = 0x10;
-	uint32_t eflags;
-	asm volatile("pushfl; pop %0;": "=r"(eflags)::);
-	newcontext.eflags=eflags;
+	sch_thread newthread;
 	sch_start *start=(sch_start*)malloc(sizeof(sch_start));
 	start->ptr=ptr;
 	start->param=param;
 	uint32_t stack=(uint32_t)malloc(stack_size);
-	newcontext.ebx=stack;
+	newthread.original_esp=(void*)stack;
 	stack+=stack_size;
-	newcontext.eax=(uint32_t)start;
-	newcontext.eip=(uint32_t)&sch_wrapper;
-	return sch_add_thread(newcontext);
+	stack-=4;
+	*(uint32_t*)stack=(uint32_t)&sch_wrapper;
+	newthread.stack.ss=0x10;
+	newthread.stack.esp=stack;
+	newthread.start=start;
+	newthread.runnable=true;
+	newthread.to_be_deleted=false;
+	newthread.magic=0xBABE;
+	newthread.priority=default_priority;
+	newthread.dynpriority=0;
+	take_lock(sch_lock);
+	newthread.ext_id=++cur_ext_id;
+	threads->push_back(newthread);
+	size_t ret=threads->size()-1;
+	release_lock(sch_lock);
+	return ret;
 }
 
 void thread_reaper(void*){
@@ -202,82 +200,49 @@ bool sch_find_thread(size_t &torun){
 	}
 }
 
-void return_immediately(){
-	asm("popl %%eax" : : : "eax");
-	dbgout("SCH: Returning...\n");
-	return;
-}
-
-void sch_irq(irq_regs *regs){
-	//Confirm that required locks are available.
-	if(!sch_inited || !try_take_lock(sch_lock)) return;
+extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
+	curstack.halt=false;
 	
 	//Save current thread's state
-	irq_regs cregs;
-	sch_get_context(&cregs);
-	cregs.eip=(uint32_t)&return_immediately;
-	(*threads)[current_thread].context=cregs;
+	(*threads)[current_thread].stack.ss=ss;
+	(*threads)[current_thread].stack.esp=esp;
 
 	size_t torun;
 	//If we found a thread to run, run it
 	if(sch_find_thread(torun)){
 		(*threads)[torun].dynpriority=(*threads)[torun].priority;
-		*regs=(*threads)[torun].context;
 		uint64_t lockthread=(*threads)[current_thread].ext_id;
 		current_thread=torun;
 		current_thread_id=(*threads)[torun].ext_id;
-		release_lock(sch_lock, lockthread);
-		sch_do_thread((*threads)[torun].context);
-		return;		
+		curstack=(*threads)[current_thread].stack;
+		//release_lock(sch_lock, lockthread);
+		sch_lock=current_thread_id;
+		//dbgpf("SCH: SS: %x, ESP: %x (@%x)\n", curstack.ss, curstack.esp, &curstack);
+		return &curstack;		
 	}else{
 		//Nothing to run?
+		curstack=(*threads)[current_thread].stack;
+		curstack.halt=true;
+		//dbgpf("SCH: SS: %x, ESP: %x (@%x)\n", curstack.ss, curstack.esp, &curstack);
+		return &curstack;
 	}
 	release_lock(sch_lock);
+	//dbgpf("SCH: SS: %x, ESP: %x (@%x)\n", curstack.ss, curstack.esp, &curstack);
+	return &curstack;
 }
 
-void sch_isr(isr_regs *context){
-	//Confirm that required locks are available.
-	if(!sch_inited || !try_take_lock(sch_lock)) return;
+extern "C" void sch_dolock(){
+	take_lock(sch_lock);
+}
 
-	dbgout("1\n");	
-	//Save current thread's state
-	irq_regs cregs;
-	dbgout("2\n");
-	sch_get_context(&cregs);
-	dbgout("3\n");
-	cregs.eip=(uint32_t)&return_immediately;
-	dbgout("4\n");
-	(*threads)[current_thread].context=cregs;
-	dbgout("5\n");
 
-	size_t torun;
-	//If we found a thread to run, run it
-	if(sch_find_thread(torun)){
-		(*threads)[torun].dynpriority=(*threads)[torun].priority;
-		uint64_t lockthread=(*threads)[current_thread].ext_id;
-		current_thread=torun;
-		current_thread_id=(*threads)[torun].ext_id;
-		//Set thread running...
-		irq_regs context=(*threads)[torun].context;
-		dbgpf("SCH: Going to run thread %i.\n", current_thread_id);
-		out_regs(context);
-		release_lock(sch_lock, lockthread);
-		sch_do_thread(context);
-		return;	
-	}else{
-		//Nothing to run?
-	}
+extern "C" void sch_unlock(){
 	release_lock(sch_lock);
 }
 
 uint64_t sch_get_id(){
 	if(!sch_inited) return 0;
 	return current_thread_id;
-}
-
-void sch_yield(){
-	dbgpf("SCH: Yeild (%i)\n", current_thread_id);
-	sch_isr(NULL);
 }
 
 void sch_block(){
