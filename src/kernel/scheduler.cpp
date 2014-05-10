@@ -48,7 +48,7 @@ void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
 	threads=new vector<sch_thread>();
-	sch_stack=malloc(4096);
+	sch_stack=malloc(4096)+4096;
 	sch_thread mainthread;
 	mainthread.runnable=true;
 	mainthread.to_be_deleted=false;
