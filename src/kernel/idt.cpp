@@ -135,7 +135,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
 		dbgout("Syscall recieved.\n");
-		if(ctx->eax==0) sch_isr(ctx);
+		//if(ctx->eax==0) sch_isr(ctx);
 	}else{
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
@@ -160,11 +160,11 @@ inline void out_regs(const irq_regs ctx){
 
 
 extern "C" void irq_handler(irq_regs *r) {
-	out_regs(*r);
+	//out_regs(*r);
 	int irq=r->int_no-32;
 	if(irq == 0){
 		irq_ack(irq);
-		sch_irq(r);
+		sch_yield();
 	}
 }
 
