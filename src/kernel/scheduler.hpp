@@ -6,8 +6,7 @@
 const size_t default_stack_size=16*1024;
 extern bool sch_inited;
 
-/*void sch_isr(isr_regs *context);
-void sch_irq(irq_regs *context);*/
+void sch_isr();
 void sch_init();
 int sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size=default_stack_size);
 void sch_end_thread();

@@ -232,12 +232,19 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 }
 
 extern "C" void sch_dolock(){
-	take_lock(sch_lock);
+	while(!try_take_lock(sch_lock))asm("hlt");
 }
 
 
 extern "C" void sch_unlock(){
 	release_lock(sch_lock);
+}
+
+void sch_isr(){
+	if(try_take_lock(sch_lock)){
+		release_lock(sch_lock);
+		sch_yield();
+	}
 }
 
 uint64_t sch_get_id(){
