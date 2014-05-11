@@ -47,6 +47,9 @@ bool sch_inited=false;
 void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
+	outb(0x43, 0x36);
+	outb(0x40, 39000 & 0xFF);
+	outb(0x40, (39000 >> 8) & 0xFF); 
 	threads=new vector<sch_thread>();
 	sch_stack=malloc(4096)+4096;
 	sch_thread mainthread;
@@ -65,8 +68,6 @@ void sch_init(){
 	sch_inited=true;
 }
 
-void test_returnable();
-
 void test_priority(void *params){
 	uint32_t *p=(uint32_t*)params;
 	char c=(char)(p[0]);
@@ -75,7 +76,7 @@ void test_priority(void *params){
 	free(params);
 	while(true){
 		printf("%c", c);
-		test_returnable();
+		sch_yield();
 	}
 }
 
@@ -250,6 +251,11 @@ void sch_isr(){
 uint64_t sch_get_id(){
 	if(!sch_inited) return 0;
 	return current_thread_id;
+}
+
+void sch_set_priority(uint32_t pri){
+	hold_lock hl(sch_lock);
+	(*threads)[current_thread].priority=pri;
 }
 
 void sch_block(){

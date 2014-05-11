@@ -13,5 +13,6 @@ void sch_end_thread();
 extern "C" void sch_yield();
 uint64_t sch_get_id();
 void sch_block();
+void sch_set_priority(uint32_t pri);
 
 #endif
