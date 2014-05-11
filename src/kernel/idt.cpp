@@ -164,6 +164,7 @@ extern "C" void irq_handler(irq_regs *r) {
 	int irq=r->int_no-32;
 	if(irq == 0){
 		irq_ack(irq);
+		enable_interrupts();
 		sch_isr();
 	}
 }
