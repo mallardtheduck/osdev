@@ -1,7 +1,11 @@
 #ifndef _MINISTL_HPP
 #define _MINISTL_HPP
 
-#include "scheduler.hpp"
+extern "C"{
+#include "liballoc.h"
+}
+#include "util.hpp"
+#include "string.hpp"
 
 typedef size_t size_type;
 
@@ -332,6 +336,21 @@ public:
 		}
 		_Alloc().construct(&data_[size_ - 1], _Value);
 		return *this;
+	}
+	
+	void erase(iterator i){
+		_Alloc().destroy(i);
+		memmove(i, i+1, sizeof(value_type)*(size_-(i-begin())));
+		size_--;
+	}
+
+	void erase(const key_type &Key){
+		if(has_key(Key)){
+			for(iterator i=begin(); i!=end(); ++i){
+				erase(i);
+				return;
+			}
+		}
 	}
 
 	bool has_key(const key_type &Key) const
