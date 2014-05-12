@@ -101,3 +101,17 @@ char *drv_get_desc(void *instance){
 	drv_instance *inst=(drv_instance*)instance;
 	return inst->driver.desc();
 }
+
+void *drv_firstdevice(char **p){
+	map<string, drv_driver>::iterator ret=drivers->begin();
+	*p=(char*)ret->first.c_str();
+	return (void*)ret;
+}
+
+void *drv_nextdevice(void *i, char **p){
+	map<string, drv_driver>::iterator ret=(map<string, drv_driver>::iterator)i;
+	++ret;
+	*p=(char*)ret->first.c_str();
+	if(ret>=drivers->end()) return NULL;
+	else return (void*)ret;
+}

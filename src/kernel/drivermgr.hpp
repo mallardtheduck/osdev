@@ -50,6 +50,8 @@ struct drv_driver{
 void drv_init();
 void drv_add_device(char *name, drv_driver *driver);
 drv_driver drv_get(char *name);
+void *drv_firstdevice(char**);
+void *drv_nextdevice(void*,char**);
 
 void *drv_open(char *driver);
 bool drv_close(void *instance);
