@@ -13,7 +13,7 @@ inline void init_lock(lock &l){
 
 
 inline void take_lock(lock &l, uint64_t thread=sch_get_id()){
-	if(l==thread) panic("(LOCK) Attempt to take lock that's already held!\n");
+	if(l==thread && thread!=0) panic("(LOCK) Attempt to take lock that's already held!\n");
 	while(!__sync_bool_compare_and_swap(&l, 0, thread)) sch_yield();
 }
 
