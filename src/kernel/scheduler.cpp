@@ -127,7 +127,6 @@ int sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 
 void thread_reaper(void*){
 	while(true){
-		sch_block();
 		bool changed=true;
 		while(changed){
 			hold_lock lck(sch_lock);
@@ -143,6 +142,7 @@ void thread_reaper(void*){
 			}
 			changed=false;
 		}
+		sch_block();
 	}
 }
 
