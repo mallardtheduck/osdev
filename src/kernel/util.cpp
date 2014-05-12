@@ -70,7 +70,7 @@ int strcmp(const char *s1, const char *s2)
 	return *(--s1) - *(--s2);
 }
 
-char *strncpy(char *dest, const char *src, size_t size) 
+extern "C" char *strncpy(char *dest, const char *src, size_t size) 
 { 
         char *d = dest; 
 

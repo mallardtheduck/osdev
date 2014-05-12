@@ -1,4 +1,8 @@
 #include "kernel.hpp"
+extern "C"{
+	#include "cpuid.h"
+}
+
 
 static inline int cpuid_string(int code, int where[4]) {
   __asm__ volatile ("cpuid":"=a"(*where),"=b"(*(where+0)),
@@ -9,7 +13,8 @@ static inline int cpuid_string(int code, int where[4]) {
 void init_cpu(){
 	char *idstring=cpu_idstring();
 	uint64_t speed=cpu_get_speed();	
-	printf("CPU: %s %iMHz\n", idstring, speed/1000000);
+	char *brandstring=get_brandstring();
+	printf("CPU: %s %s %iMHz\n", idstring, brandstring, speed/1000000);
 }
 
 char *cpu_idstring() {
