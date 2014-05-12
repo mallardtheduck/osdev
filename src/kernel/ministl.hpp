@@ -347,8 +347,10 @@ public:
 	void erase(const key_type &Key){
 		if(has_key(Key)){
 			for(iterator i=begin(); i!=end(); ++i){
-				erase(i);
-				return;
+				if(i->first == Key){
+					erase(i);
+					return;
+				}
 			}
 		}
 	}
