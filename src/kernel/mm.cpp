@@ -143,6 +143,7 @@ void mm_alloctest(){
 	#define MM_TESTBLOCKSIZE (100*1024)
 	int ntests=(freemem/MM_TESTBLOCKSIZE)+1;
 	void **tests=(void**)mm_alloc(sizeof(void*)*ntests);
+	memset(tests, 0, sizeof(void*)*ntests);
 	for(int i=0; i < ntests; ++i){
 		tests[i]=(char*)mm_alloc(MM_TESTBLOCKSIZE);
 		if(!tests[i]){
