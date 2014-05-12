@@ -62,7 +62,7 @@ void sch_init(){
 	threads->push_back(mainthread);
 	current_thread=threads->size()-1;
 	reaper_thread=sch_new_thread(&thread_reaper, NULL, 4096);
-	sch_threadtest();
+	//sch_threadtest();
 	IRQ_clear_mask(0);
 	dbgout("SCH: Init complete.\n");
 	sch_inited=true;
@@ -177,7 +177,6 @@ bool sch_find_thread(size_t &torun){
 
 	//If there are no runnable threads, halt. Hopefully an interrupt will awaken one soon...
 	if(nrunnables==0){
-		dbgout("SCH: No runnable threads.\n");
 		return false;
 	}
 	
@@ -202,6 +201,7 @@ bool sch_find_thread(size_t &torun){
 }
 
 extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
+	if(!are_interrupts_enabled()) panic("SCH: Interrupts disabled in scheduler!\n");
 	curstack.halt=false;
 	
 	//Save current thread's state
@@ -216,19 +216,15 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 		current_thread=torun;
 		current_thread_id=(*threads)[torun].ext_id;
 		curstack=(*threads)[current_thread].stack;
-		//release_lock(sch_lock, lockthread);
 		sch_lock=current_thread_id;
-		//dbgpf("SCH: SS: %x, ESP: %x (@%x)\n", curstack.ss, curstack.esp, &curstack);
 		return &curstack;		
 	}else{
 		//Nothing to run?
 		curstack=(*threads)[current_thread].stack;
 		curstack.halt=true;
-		//dbgpf("SCH: SS: %x, ESP: %x (@%x)\n", curstack.ss, curstack.esp, &curstack);
 		return &curstack;
 	}
 	release_lock(sch_lock);
-	//dbgpf("SCH: SS: %x, ESP: %x (@%x)\n", curstack.ss, curstack.esp, &curstack);
 	return &curstack;
 }
 

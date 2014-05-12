@@ -1,12 +1,6 @@
 #include "kernel.hpp"
 #include "locks.hpp"
 
-void t(void*){
-	dbgout("Non-yielding thread started.\n");
-	sch_set_priority(1000);
-	while(true) asm("hlt");
-}
-
 extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int magic)
 {
 	if(are_interrupts_enabled()){
@@ -27,15 +21,6 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int magic)
 	terminal_add_device();
 	fs_init();
 	printf("Ready.");
-	//while(true) asm volatile("hlt");
-	sch_new_thread(&t, NULL);
-	int i=0;
-	while(true){
-		++i;
-		terminal_move(0, 7);
-		printf("%i ", i);
-		sch_yield();
-	}
 	while(true)sch_block();
 	panic("Kernel endpoint reached!\n");
 }
