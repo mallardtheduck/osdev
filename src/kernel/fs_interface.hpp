@@ -40,7 +40,7 @@ struct fs_driver{
 struct fs_mountpoint{
 	bool valid;
 	char name[9];
-	fs_driver *driver;
+	fs_driver driver;
 	void *mountdata;
 };
 
