@@ -16,12 +16,15 @@ void fs_init(){
 	fs_drivers=new map<string, fs_driver>();
 	release_lock(fs_lock);
 	fs_registerfs(initfs_getdriver());
+	fs_registerfs(devfs_getdriver());
 	fs_mount("INIT", NULL, "INITFS");
 	printf("FS: Mounted INITFS on INIT:\n");
+	fs_mount("DEV", NULL, "DEVFS");
+	printf("FS: Mounted DEVFS on DEV:\n");
 	directory_entry root=fs_stat("INIT:");
 	if(!root.valid) panic("(FS) Cannot stat root of INIT:!\n");
 	dbgpf("FS: Root size: %i, type: 0x%x.\n", root.size, root.type);
-	dir_handle dir=fs_open_dir("INITFS:");
+	dir_handle dir=fs_open_dir("DEV:");
 	while(true){
 		directory_entry entry=fs_read_dir(dir);
 		if(!entry.valid) break;
