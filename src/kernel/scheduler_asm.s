@@ -48,11 +48,5 @@ sch_switchstack:
 	mov %ebx, %ss
 	mov 4(%eax), %ebx
 	mov %ebx, %esp
-	mov 8(%eax), %ebx
 	call sch_unlock
-	mov $0, %eax
-	cmp %eax, %ebx
-	je no_halt
-	hlt
-no_halt:
 	ret

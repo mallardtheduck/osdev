@@ -14,7 +14,6 @@ struct sch_start{
 struct sch_stackinfo{
 	uint32_t ss;
 	uint32_t esp;
-	uint32_t halt;
 } __attribute__((packed));
 
 sch_stackinfo curstack;
@@ -37,9 +36,11 @@ size_t current_thread;
 uint64_t current_thread_id;
 size_t reaper_thread;
 uint64_t cur_ext_id;
+size_t idle_thread;
 
 void thread_reaper(void*);
 void sch_threadtest();
+void sch_idlethread(void*);
 
 lock sch_lock;
 bool sch_inited=false;
@@ -61,6 +62,7 @@ void sch_init(){
 	current_thread_id=mainthread.ext_id=++cur_ext_id;
 	threads->push_back(mainthread);
 	current_thread=threads->size()-1;
+	sch_new_thread(&sch_idlethread, NULL, 1024);
 	reaper_thread=sch_new_thread(&thread_reaper, NULL, 4096);
 	//sch_threadtest();
 	IRQ_clear_mask(0);
@@ -89,6 +91,12 @@ void sch_threadtest(){
 	p2[0]='!';
 	p2[1]=400;
 	sch_new_thread(&test_priority, (void*)p2);
+}
+
+void sch_idlethread(void*){
+	idle_thread=current_thread_id;
+	sch_set_priority(0xFFFFFFFF);
+	while(true)asm("hlt");
 }
 
 extern "C" void sch_wrapper(){
@@ -164,6 +172,8 @@ inline void out_regs(const irq_regs &ctx){
 }
 
 bool sch_find_thread(size_t &torun){
+	//Reset dyanmic priority of idle thread (ensures it only runs when nothing else is available)
+	(*threads)[idle_thread].dynpriority=(*threads)[idle_thread].priority;
 	//Find runnable threads and minimum dynamic priority
 	int nrunnables=0;
 	uint32_t min=0xFFFFFFFF;
@@ -201,8 +211,8 @@ bool sch_find_thread(size_t &torun){
 }
 
 extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
-	if(!are_interrupts_enabled()) panic("SCH: Interrupts disabled in scheduler!\n");
-	curstack.halt=false;
+	if(!are_interrupts_enabled()) panic("(SCH) Interrupts disabled in scheduler!\n");
+	if(sch_lock!=current_thread_id) panic("(SCH) Bad scheduler locking detected!\n");
 	
 	//Save current thread's state
 	(*threads)[current_thread].stack.ss=ss;
@@ -220,9 +230,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 		return &curstack;		
 	}else{
 		//Nothing to run?
-		curstack=(*threads)[current_thread].stack;
-		curstack.halt=true;
-		return &curstack;
+		panic("(SCH) No runnable threads (idle thread not runnable?)!\n:");
 	}
 	release_lock(sch_lock);
 	return &curstack;
