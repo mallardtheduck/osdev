@@ -1,0 +1,45 @@
+BUILD-AS := i686-elf-as
+BUILD-AS-OPTIONS := -g -fPIC
+BUILD-CPP := i686-elf-g++
+BUILD-CPP-FLAGS :=  -c
+BUILD-CPP-OPTIONS := -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti -g -fPIC
+BUILD-C := i686-elf-gcc
+BUILD-C-FLAGS := -c
+BUILD-C-OPTIONS := -ffreestanding -O2 -Wall -Wextra -g -fPIC
+LINK := i686-elf-gcc
+LINK-FLAGS := -T linker.ld -o test.sys -ffreestanding -O2 -nostdlib -g -fPIC
+LINK-OPTIONS := -lgcc
+
+BOOTFILE := boot.o
+ASFILES := $(shell find . -type f -name "*.s")
+CFILES := $(shell find . -type f -name "*.c")
+CPPFILES := $(shell find . -type f -name "*.cpp")
+
+ASOBJS := $(ASFILES:.s=.o)
+COBJS := $(CFILES:.c=.o)
+CPPOBJS := $(CPPFILES:.cpp=.o)
+
+CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
+CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
+
+all: test.sys Makefile
+
+-include $(CDEPFILES) $(CPPDEPFILES)
+
+clean: dummy.delete
+
+dummy.delete:
+	-@$(RM) *.o
+	-@$(RM) test.sys
+
+test.sys: $(ASOBJS) $(COBJS) $(CPPOBJS) linker.ld
+	$(LINK) $(LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LINK-OPTIONS)
+
+.s.o: %.s Makefile
+	$(BUILD-AS) $< -o $@ $(BUILD-AS-OPTIONS)
+
+.c.o: %.c Makefile
+	$(BUILD-C) -MMD -MP $(BUILD-C-FLAGS) $< -o $@ $(BUILD-C-OPTIONS)
+
+.cpp.o: %.cpp Makefile
+	$(BUILD-CPP) -MMD -MP $(BUILD-CPP-FLAGS) $< -o $@ $(BUILD-CPP-OPTIONS)
