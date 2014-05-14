@@ -1,13 +1,13 @@
 BUILD-AS := i686-elf-as
-BUILD-AS-OPTIONS := -g -fPIC
+BUILD-AS-OPTIONS := -g -fPIC -c
 BUILD-CPP := i686-elf-g++
 BUILD-CPP-FLAGS :=  -c
-BUILD-CPP-OPTIONS := -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti -g -fPIC
+BUILD-CPP-OPTIONS := -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti -g -fPIC -c
 BUILD-C := i686-elf-gcc
 BUILD-C-FLAGS := -c
-BUILD-C-OPTIONS := -ffreestanding -O2 -Wall -Wextra -g -fPIC
+BUILD-C-OPTIONS := -ffreestanding -O2 -Wall -Wextra -g -fPIC -c
 LINK := i686-elf-gcc
-LINK-FLAGS := -T linker.ld -o test.sys -ffreestanding -O2 -nostdlib -g -fPIC
+LINK-FLAGS := -T linker.ld -o test.sys -ffreestanding -O2 -nostdlib -fPIC -Xlinker -q
 LINK-OPTIONS := -lgcc
 
 BOOTFILE := boot.o
