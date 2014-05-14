@@ -39,6 +39,7 @@ extern "C"{
 #include "scheduler.hpp"
 #include "drivermgr.hpp"
 #include "devfs.hpp"
+#include "load_elf.hpp"
 
 void GDT_init();
 void IDT_init();

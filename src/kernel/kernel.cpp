@@ -17,9 +17,11 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int magic)
 	PIC_init();
 	enable_interrupts();
 	sch_init();
+	sch_yield();
 	drv_init();
 	terminal_add_device();
 	fs_init();
+	elf_test();
 	printf("Ready.");
 	while(true)sch_block();
 	panic("Kernel endpoint reached!\n");
