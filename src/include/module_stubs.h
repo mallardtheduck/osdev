@@ -2,6 +2,11 @@
 #define _MODULE_STUBS_H
 
 #include "module_api.h"
+#include <stdint.h>
+
+#ifndef __cplusplus
+	#include <stdbool.h>
+#endif
 
 inline void panic(char *msg){
 	syscall(SYS_PANIC, (void*)msg);
@@ -18,12 +23,12 @@ inline void memset(void *ptr, char value, size_t num){
 	syscall(SYS_MEMSET, (void*)&p);
 }
 inline void memcpy(void *dst, void *src, size_t size){
-	struct params{void *dst; void *src, size_t size} p;
+	struct params{void *dst; void *src; size_t size;} p;
 	p.dst=dst; p.src=src; p.size=size;
 	syscall(SYS_MEMCPY, (void*)&p);
 }
 inline void memmove(void *dst, void *src, size_t size){
-	struct params{void *dst; void *src, size_t size} p;
+	struct params{void *dst; void *src; size_t size;} p;
 	p.dst=dst; p.src=src; p.size=size;
 	syscall(SYS_MEMMOVE, (void*)&p);
 }
