@@ -40,6 +40,7 @@ extern "C"{
 #include "drivermgr.hpp"
 #include "devfs.hpp"
 #include "load_elf.hpp"
+#include "syscalls.hpp"
 
 void GDT_init();
 void IDT_init();
