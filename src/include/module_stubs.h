@@ -12,7 +12,7 @@ inline void panic(char *msg){
 	syscall(SYS_PANIC, (void*)msg);
 }
 inline void *malloc(size_t bytes){
-	syscall(SYS_MALLOC, (void*)bytes);
+	return (void*)syscall(SYS_MALLOC, (void*)bytes);
 }
 inline void free(void *ptr){
 	syscall(SYS_FREE, ptr);
