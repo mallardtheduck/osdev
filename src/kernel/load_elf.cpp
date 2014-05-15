@@ -124,7 +124,7 @@ void elf_test(){
 	}
 	dbgpf("ELF: Image RAM size: %i\n", elf_getsize(file));
 	loaded_elf tstelf=elf_load(file);
-	dbgpf("ELF: test %i\n", tstelf.entry(&test));
+	dbgpf("ELF: test %i\n", tstelf.entry(&module_syscall));
 	fs_close(file);
 }
 
