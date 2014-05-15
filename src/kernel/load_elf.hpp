@@ -114,9 +114,12 @@ struct aligned_memory{
 	void *aligned;
 };
 
+typedef int (*syscall_vector)(int, void*);
+typedef int (*module_entry)(syscall_vector);
+
 struct loaded_elf{
 	aligned_memory mem;
-	int (*entry)();	
+	module_entry entry;
 };
 
 void elf_test();

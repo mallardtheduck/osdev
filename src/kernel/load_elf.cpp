@@ -19,6 +19,13 @@ void al_free(aligned_memory al){
 	free(al.alloc);
 }
 
+int test(int fn, void *p){
+	dbgpf("ELF: We got a syscall!\n");
+	if(fn==0x01){
+		printf("%s", p);
+	}
+}
+
 Elf32_Ehdr elf_read_header(file_handle &file){
 	Elf32_Ehdr ret;
 	fs_seek(file, 0, false);
@@ -117,7 +124,7 @@ void elf_test(){
 	}
 	dbgpf("ELF: Image RAM size: %i\n", elf_getsize(file));
 	loaded_elf tstelf=elf_load(file);
-	dbgpf("ELF: test %i\n", tstelf.entry());
+	dbgpf("ELF: test %i\n", tstelf.entry(&test));
 	fs_close(file);
 }
 
@@ -138,7 +145,7 @@ loaded_elf elf_load(file_handle &file){
 	Elf32_Ehdr header=elf_read_header(file);
 	size_t ramsize=elf_getsize(file);
 	ret.mem=al_alloc(ramsize, 4096);
-	ret.entry=(int(*)())(ret.mem.aligned+header.entry);
+	ret.entry=(module_entry)(ret.mem.aligned+header.entry);
 	memset(ret.mem.aligned, 0, ramsize);
 	for(int i=0; i<header.phnum; ++i){
 		Elf32_Phdr prog=elf_read_progheader(file, header, i);
