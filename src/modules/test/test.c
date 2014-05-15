@@ -11,5 +11,6 @@ int module_main(syscall_vector sys){
 	syscall=sys;
 	int thenumber=getthenumber();
 	dbgout("TEST: Hello world!\n");
+	panic("(TEST) Panic from module.\n");
 	return thenumber*2;
 }
