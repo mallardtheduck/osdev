@@ -1,5 +1,4 @@
-#include <stddef.h>
-#define SYS_OUTSTRING 0x01
+#include "module_api.h"
 
 typedef int (*syscall_vector)(int, void*);
 syscall_vector syscall;
