@@ -18,4 +18,10 @@ modules: dummy.file
 modules-clean: dummy.file
 	$(MAKE) -C modules clean
 
+test: dummy.file
+	cd kernel && ./test.sh
+
+testtxt: dummy.file
+	cd kernel && ./testtxt.sh
+
 dummy.file:
