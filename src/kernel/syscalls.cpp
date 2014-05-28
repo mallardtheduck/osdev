@@ -46,6 +46,9 @@ int module_syscall(int fn, void *p){
 	case module_api::SYS_TRYLOCK:{
 		return try_take_lock(*(lock*)p);
 		}break;
+	case module_api::SYS_UNLOCK:{
+		release_lock(*(lock*)p);
+		}break;
 	case module_api::SYS_DBGOUT:{
 		dbgout((char*)p);
 		}break;

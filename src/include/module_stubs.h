@@ -51,11 +51,16 @@ inline static void take_lock(uint64_t *lock){
 inline static bool try_take_lock(uint64_t *lock){
 	return !!syscall(SYS_TRYLOCK, (void*)lock);
 }
+
+inline static void release_lock(uint64_t *lock){
+	syscall(SYS_UNLOCK, (void*)lock);
+}
+
 inline static void dbgout(char *msg){
 	syscall(SYS_DBGOUT, (void*)msg);
 }
 
-inline static void newthread(void(*entry)(void*), void *param){
+inline static void new_thread(void(*entry)(void*), void *param){
 	struct params{void(*entry)(void*); void *param;} p;
 	p.entry=entry; p.param=param;
 	syscall(SYS_NEWTHREAD, (void*)&p);
