@@ -12,13 +12,10 @@ kernel: dummy.file
 kernel-clean: dummy.file
 	$(MAKE) -C kernel clean
 
-modules: modules-test
-modules-clean: modules-test-clean
+modules: dummy.file
+	$(MAKE) -C modules
 
-modules-test: dummy.file
-	$(MAKE) -C modules/test
-
-modules-test-clean: dummy.file
-	$(MAKE) -C modules/test clean
+modules-clean: dummy.file
+	$(MAKE) -C modules clean
 
 dummy.file:
