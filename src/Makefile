@@ -1,0 +1,24 @@
+export PREFIX:=$(HOME)/Projects/os/cross
+export TARGET:=i686-elf
+export PATH:=$(PREFIX)/bin:$(PATH)
+
+all: modules kernel
+clean: kernel-clean modules-clean
+rebuild: clean all
+
+kernel: dummy.file
+	$(MAKE) -C kernel
+
+kernel-clean: dummy.file
+	$(MAKE) -C kernel clean
+
+modules: modules-test
+modules-clean: modules-test-clean
+
+modules-test: dummy.file
+	$(MAKE) -C modules/test
+
+modules-test-clean: dummy.file
+	$(MAKE) -C modules/test clean
+
+dummy.file:

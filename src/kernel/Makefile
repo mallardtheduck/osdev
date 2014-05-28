@@ -28,10 +28,13 @@ all: myos.iso Makefile
 
 clean: dummy.delete
 
+rebuild: clean all
+
 dummy.delete:
 	-@$(RM) *.o
 	-@$(RM) myos.iso
 	-@$(RM) myos.bin
+	-@$(RM) initfs/xxd_data.inc
 
 myos.iso: myos.bin
 	@mkdir -p isodir
@@ -40,6 +43,11 @@ myos.iso: myos.bin
 	@mkdir -p isodir/boot/grub
 	@cp grub.cfg isodir/boot/grub/grub.cfg
 	grub-mkrescue -o myos.iso isodir
+
+initfs/initfs_data.cpp: initfs/initfs_data.inc
+
+initfs/initfs_data.inc:
+	$(MAKE) -C initfs
 
 myos.bin: boot.o $(ASOBJS) $(COBJS) $(CPPOBJS) linker.ld
 	$(LINK) $(LINK-FLAGS) boot.o $(ASOBJS) $(CPPOBJS) $(COBJS) $(LINK-OPTIONS)
