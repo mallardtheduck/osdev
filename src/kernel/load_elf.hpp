@@ -109,6 +109,21 @@ struct Elf32_Phdr{
 	Elf32_Word		align;
 } __attribute__((packed));
 
+struct Elf32_Rel {
+	Elf32_Addr	offset;
+	Elf32_Word	info;
+} __attribute__((packed));
+
+struct  Elf32_Rela {
+	Elf32_Addr	offset;
+	Elf32_Word	info;
+	Elf32_Sword	addend;
+} __attribute__((packed));
+
+#define ELF32_R_SYM(i)	((i)>>8)
+#define ELF32_R_TYPE(i)   ((unsigned char)(i))
+#define ELF32_R_INFO(s,t) (((s)<<8)+(unsigned char)(t))
+
 struct aligned_memory{
 	void *alloc;
 	void *aligned;

@@ -84,6 +84,13 @@ size_t elf_get_stringoffset(file_handle &file, const Elf32_Ehdr &header){
 	return elf_read_sectionheader(file, header, header.shstrndx).offset;
 }
 
+Elf32_Rel elf_read_rel(file_handle &file, const Elf32_Shdr &section, size_t index){
+	Elf32_Rel ret;
+	fs_seek(file, section.offset+(sizeof(Elf32_Rel)*index), false);
+	fs_read(file, sizeof(ret), (char*)&ret);
+	return ret;
+}
+
 bool elf_getstring(file_handle &file, const Elf32_Ehdr &header, size_t offset, char *buf, size_t bufsize){
 	size_t strpos=elf_get_stringoffset(file, header);
 	if(strpos){
@@ -140,11 +147,19 @@ size_t elf_getsize(file_handle &file){
 	return limit-base;
 }
 
+void elf_do_reloc(file_handle &file, Elf32_Shdr &section, void *base){
+	size_t n_relocs=section.size/sizeof(Elf32_Rel);
+	for(int i=0; i<n_relocs; ++i){
+		Elf32_Rel rel=elf_read_rel(file, section, i);
+		dbgpf("ELF: Reloc: offset: %x, symbol: %i, type: %i\n", rel.offset, ELF32_R_SYM(rel.info), ELF32_R_TYPE(rel.info));
+	}
+}
+
 loaded_elf elf_load(file_handle &file){
 	loaded_elf ret;
 	Elf32_Ehdr header=elf_read_header(file);
 	size_t ramsize=elf_getsize(file);
-	ret.mem=al_alloc(ramsize, 4096);
+	ret.mem=al_alloc(ramsize, 4096); //TODO: Proper alignment calculation
 	ret.entry=(module_entry)(ret.mem.aligned+header.entry);
 	memset(ret.mem.aligned, 0, ramsize);
 	for(int i=0; i<header.phnum; ++i){
@@ -152,6 +167,12 @@ loaded_elf elf_load(file_handle &file){
 		if(prog.type=PT_LOAD){
 			fs_seek(file, prog.offset, false);
 			fs_read(file, prog.filesz, (char*)ret.mem.aligned+prog.vaddr);
+		}
+	}
+	for(int i=0; i<header.shnum; ++i){
+		Elf32_Shdr section=elf_read_sectionheader(file, header, i);
+		if(section.type==SHT_REL){
+			elf_do_reloc(file, section, ret.mem.aligned);
 		}
 	}
 	return ret;
