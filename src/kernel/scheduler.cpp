@@ -252,7 +252,7 @@ void sch_isr(){
 	}
 }
 
-uint64_t sch_get_id(){
+const uint64_t &sch_get_id(){
 	if(!sch_inited) return 0;
 	return current_thread_id;
 }
@@ -267,4 +267,8 @@ void sch_block(){
 	(*threads)[current_thread].runnable=false;
 	release_lock(sch_lock);
 	sch_yield();
+}
+
+bool sch_active(){
+	return sch_inited;
 }

@@ -55,4 +55,34 @@ inline static void dbgout(char *msg){
 	syscall(SYS_DBGOUT, (void*)msg);
 }
 
+inline static void newthread(void(*entry)(void*), void *param){
+	struct params{void(*entry)(void*); void *param;} p;
+	p.entry=entry; p.param=param;
+	syscall(SYS_NEWTHREAD, (void*)&p);
+}
+
+inline static void block(){
+	syscall(SYS_BLOCK, NULL);
+}
+
+inline static void yield(){
+	syscall(SYS_YIELD, NULL);
+}
+
+inline static uint64_t thread_id(){
+	return *(uint64_t*)syscall(SYS_THREADID, NULL);
+}
+
+inline static void thread_priority(uint32_t p){
+	syscall(SYS_PRIORITY, (void*)p);
+}
+
+inline static void end_thread(){
+	syscall(SYS_ENDTHREAD, NULL);
+}
+
+inline static void unblock(uint32_t id){
+	syscall(SYS_UNBLOCK, (void*)id);
+}
+
 #endif
