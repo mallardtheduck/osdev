@@ -60,6 +60,14 @@ enum PhT_Types{
 	PT_HIPROC	=0x7fffffff
 };
 
+enum RtT_Types {
+	R_386_NONE		= 0, // No relocation
+	R_386_32		= 1, // Symbol + Offset
+	R_386_PC32		= 2,  // Symbol + Offset - Section Offset
+	R_386_GOT32		= 3,
+	R_386_GOTPC		= 10,
+};
+
 const Elf32_Half EM_386=3;  	// x86 Machine Type
 const Elf32_Word EV_CURRENT=1;  // ELF Current Version
 
@@ -120,9 +128,23 @@ struct  Elf32_Rela {
 	Elf32_Sword	addend;
 } __attribute__((packed));
 
+struct Elf32_Sym {
+	Elf32_Word	name;
+	Elf32_Addr	value;
+	Elf32_Word	size;
+	unsigned char	info;
+	unsigned char	other;
+	Elf32_Half	shndx;
+} __attribute__((packed));
+
+const int STN_UNDEF=0;
+
 #define ELF32_R_SYM(i)	((i)>>8)
 #define ELF32_R_TYPE(i)   ((unsigned char)(i))
 #define ELF32_R_INFO(s,t) (((s)<<8)+(unsigned char)(t))
+
+#define DO_386_32(S, A)	((S) + (A))
+#define DO_386_PC32(S, A, P)	((S) + (A) - (P))
 
 struct aligned_memory{
 	void *alloc;

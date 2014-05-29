@@ -11,7 +11,7 @@ int getthenumber(){
 void thread_a(void*q){
 	while(true){
 		take_lock(&lock);
-		dbgout("TEST: Thread A\n");
+		dbgout("TEST: Thread A.\n");
 		release_lock(&lock);
 		yield();
 	}
@@ -20,7 +20,7 @@ void thread_a(void*q){
 void thread_b(void*q){
 	while(true){
 		take_lock(&lock);
-		dbgout("TEST: Thread B\n");
+		dbgout("TEST: Thread B.\n");
 		release_lock(&lock);
 		yield();
 	}
@@ -33,6 +33,6 @@ int module_main(syscall_vector sys){
 	init_lock(&lock);
 	new_thread(&thread_a, NULL);
 	new_thread(&thread_b, NULL);
-	block();
+	//block();
 	return thenumber*2;
 }

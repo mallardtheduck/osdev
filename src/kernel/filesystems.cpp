@@ -24,7 +24,7 @@ void fs_init(){
 	directory_entry root=fs_stat("INIT:");
 	if(!root.valid) panic("(FS) Cannot stat root of INIT:!\n");
 	dbgpf("FS: Root size: %i, type: 0x%x.\n", root.size, root.type);
-	dir_handle dir=fs_open_dir("DEV:");
+	dir_handle dir=fs_open_dir("INIT:");
 	while(true){
 		directory_entry entry=fs_read_dir(dir);
 		if(!entry.valid) break;

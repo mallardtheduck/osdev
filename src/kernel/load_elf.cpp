@@ -147,11 +147,44 @@ size_t elf_getsize(file_handle &file){
 	return limit-base;
 }
 
-void elf_do_reloc(file_handle &file, Elf32_Shdr &section, void *base){
+Elf32_Addr elf_symbol_value(file_handle &file, const Elf32_Ehdr &header, size_t symbol){
+	for(size_t i=0; i<header.shnum; ++i){
+		Elf32_Shdr section=elf_read_sectionheader(file, header, i);
+		if(section.type==SHT_SYMTAB){
+			size_t offset=section.offset+(symbol * sizeof(Elf32_Sym));
+			Elf32_Sym symbolentry;
+			fs_seek(file, offset, false);
+			fs_read(file, sizeof(symbolentry), (char*)&symbolentry);
+			return symbolentry.value;
+		}
+	}
+	return 0;
+}
+
+void elf_do_reloc(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr &section, void *base){
 	size_t n_relocs=section.size/sizeof(Elf32_Rel);
 	for(int i=0; i<n_relocs; ++i){
 		Elf32_Rel rel=elf_read_rel(file, section, i);
-		dbgpf("ELF: Reloc: offset: %x, symbol: %i, type: %i\n", rel.offset, ELF32_R_SYM(rel.info), ELF32_R_TYPE(rel.info));
+		Elf32_Addr symval=elf_symbol_value(file, header, ELF32_R_SYM(rel.info));
+		if(symval) symval+=(uint32_t)base;
+		dbgpf("ELF: Reloc: offset: %x, info: %x, symbol: %i (%x), type: %i\n",
+			rel.offset, rel.info, ELF32_R_SYM(rel.info), symval, ELF32_R_TYPE(rel.info));
+		uint32_t *ref=(uint32_t*)(base+rel.offset);
+		uint32_t newval=-1;
+		Elf32_Phdr prog=elf_read_progheader(file, header, 0);
+		switch(ELF32_R_TYPE(rel.info)){
+			case R_386_NONE:
+				break;
+			case R_386_32:
+				newval=*ref+(size_t)base;
+				dbgpf("ELF: Value %x (originally %x) at %x\n", newval, *ref, ref);
+                *ref=newval;
+				break;
+			case R_386_PC32:
+				newval=symval-(uint32_t)ref;
+				dbgpf("ELF: Value %x (originally %x) at %x\n", newval, *ref, ref);
+				break;
+		}
 	}
 }
 
@@ -164,7 +197,7 @@ loaded_elf elf_load(file_handle &file){
 	memset(ret.mem.aligned, 0, ramsize);
 	for(int i=0; i<header.phnum; ++i){
 		Elf32_Phdr prog=elf_read_progheader(file, header, i);
-		if(prog.type=PT_LOAD){
+		if(prog.type==PT_LOAD){
 			fs_seek(file, prog.offset, false);
 			fs_read(file, prog.filesz, (char*)ret.mem.aligned+prog.vaddr);
 		}
@@ -172,7 +205,8 @@ loaded_elf elf_load(file_handle &file){
 	for(int i=0; i<header.shnum; ++i){
 		Elf32_Shdr section=elf_read_sectionheader(file, header, i);
 		if(section.type==SHT_REL){
-			elf_do_reloc(file, section, ret.mem.aligned);
+			elf_do_reloc(file, header, section, ret.mem.aligned);
+			break;
 		}
 	}
 	return ret;
