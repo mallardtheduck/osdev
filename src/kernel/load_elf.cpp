@@ -171,7 +171,6 @@ void elf_do_reloc(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr &secti
 			rel.offset, rel.info, ELF32_R_SYM(rel.info), symval, ELF32_R_TYPE(rel.info));
 		uint32_t *ref=(uint32_t*)(base+rel.offset);
 		uint32_t newval=-1;
-		Elf32_Phdr prog=elf_read_progheader(file, header, 0);
 		switch(ELF32_R_TYPE(rel.info)){
 			case R_386_NONE:
 				break;
@@ -181,8 +180,9 @@ void elf_do_reloc(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr &secti
                 *ref=newval;
 				break;
 			case R_386_PC32:
-				newval=symval-(uint32_t)ref;
+				newval=*ref;
 				dbgpf("ELF: Value %x (originally %x) at %x\n", newval, *ref, ref);
+				*ref=newval;
 				break;
 		}
 	}
