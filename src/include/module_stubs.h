@@ -86,8 +86,8 @@ inline static void end_thread(){
 	syscall(SYS_ENDTHREAD, NULL);
 }
 
-inline static void unblock(uint32_t id){
-	syscall(SYS_UNBLOCK, (void*)id);
+inline static void unblock(uint64_t id){
+	syscall(SYS_UNBLOCK, (void*)&id);
 }
 
 #endif

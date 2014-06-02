@@ -73,7 +73,7 @@ int module_syscall(int fn, void *p){
 		sch_end_thread();
 		}break;
 	case module_api::SYS_UNBLOCK:{
-		//TODO:Implement
+		sch_unblock(*(uint64_t*)p);
 		}break;
 	}
 	return 0;
