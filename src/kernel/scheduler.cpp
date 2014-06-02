@@ -236,10 +236,13 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	return &curstack;
 }
 
-extern "C" void sch_dolock(){
-	while(!try_take_lock(sch_lock))asm("hlt");
+extern "C" uint32_t sch_dolock(){
+	if(!try_take_lock(sch_lock)){
+		dbgout("SCH: Scheduler run while locked!\n");
+		return 0;
+	}
+	return 1;
 }
-
 
 extern "C" void sch_unlock(){
 	release_lock(sch_lock);
@@ -270,9 +273,10 @@ void sch_block(){
 }
 
 void sch_unblock(uint64_t ext_id){
-	take_lock(sch_lock);
+	hold_lock hl(sch_lock);
 	for(int i=0; i<threads->size(); ++i){
 		if((*threads)[i].ext_id==ext_id){
+			dbgpf("SCH: Unblocked %i.\n", (uint32_t)ext_id);
 			(*threads)[i].runnable=true;
 			break;
 		}

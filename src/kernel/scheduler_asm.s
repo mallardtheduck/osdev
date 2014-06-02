@@ -33,6 +33,10 @@ inited:
 
 sch_switchstack:
 	call sch_dolock
+	cmp $0x0, %eax
+	jne lock_ok
+	ret
+lock_ok:
 	mov %ss, %eax
 	mov %esp, %ebx
 	mov $0x10, %cx
