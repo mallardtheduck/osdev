@@ -13,6 +13,7 @@ void sch_end_thread();
 extern "C" void sch_yield();
 const uint64_t &sch_get_id();
 void sch_block();
+void sch_unblock(uint64_t ext_id);
 void sch_set_priority(uint32_t pri);
 bool sch_active();
 

@@ -269,6 +269,16 @@ void sch_block(){
 	sch_yield();
 }
 
+void sch_unblock(uint64_t ext_id){
+	take_lock(sch_lock);
+	for(int i=0; i<threads->size(); ++i){
+		if((*threads)[i].ext_id==ext_id){
+			(*threads)[i].runnable=true;
+			break;
+		}
+	}
+}
+
 bool sch_active(){
 	return sch_inited;
 }
