@@ -138,6 +138,7 @@ void thread_reaper(void*){
 		bool changed=true;
 		while(changed){
 			hold_lock lck(sch_lock);
+			changed=false;
 			for(int i=0; i<threads->size(); ++i){
 				if((*threads)[i].to_be_deleted){
 					uint64_t id=(*threads)[i].ext_id;
@@ -148,7 +149,6 @@ void thread_reaper(void*){
 					break;
 				}
 			}
-			changed=false;
 		}
 		sch_block();
 	}
