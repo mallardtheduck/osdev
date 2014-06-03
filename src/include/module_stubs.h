@@ -1,8 +1,9 @@
 #ifndef _MODULE_STUBS_H
 #define _MODULE_STUBS_H
 
-#include "module_api.h"
 #include <stdint.h>
+#include "module_api.h"
+#include "drivers.h"
 
 #ifndef __cplusplus
 	#include <stdbool.h>
@@ -88,6 +89,74 @@ inline static void end_thread(){
 
 inline static void unblock(uint64_t id){
 	syscall(SYS_UNBLOCK, (void*)&id);
+}
+
+inline static void add_device(drv_driver *driver){
+	syscall(SYS_ADDDEVICE, (void*)driver);
+}
+
+inline static drv_driver *get_device(char *name){
+	return (drv_driver*)syscall(SYS_GETDEVICE, (void*)name);
+}
+
+inline static drv_driver *get_first_device(){
+	return (drv_driver*)syscall(SYS_FIRSTDEVICE, NULL);
+}
+
+inline static drv_driver *get_next_device(drv_driver *drv){
+	return (drv_driver*)syscall(SYS_NEXTDEVICE, (void*)drv);
+}
+
+inline static void* devopen(char *name){
+	return (void*)syscall(SYS_DEVOPEN, (void*)name);
+}
+
+inline static void devclose(void *handle){
+	syscall(SYS_DEVCLOSE, handle);
+}
+
+inline static bool devread(void *handle, size_t bytes, char *buffer){
+	struct params{void* handle; size_t bytes; char *buffer} p;
+	p.handle=handle; p.bytes=bytes; p.buffer=buffer;
+	return (bool)syscall(SYS_DEVREAD, (void*)&p);
+}
+
+inline static bool devwrite(void *handle, size_t bytes, char *buffer){
+	struct params{void* handle; size_t bytes; char *buffer;} p;
+	p.handle=handle; p.bytes=bytes; p.buffer=buffer;
+	return (bool)syscall(SYS_DEVWRITE, (void*)&p);
+}
+
+inline static void devseek(void *handle, size_t pos, bool relative){
+	struct params{void *handle; size_t pos; bool relative;} p;
+	p.handle=handle; p.pos=pos; p.relative=relative;
+	syscall(SYS_DEVSEEK, (void*)&p);
+}
+
+inline static int devioctl(void *handle, int fn, size_t bytes, char *buf){
+	struct params{void *handle; int fn; size_t bytes; char *buf;} p;
+	p.handle=handle; p.fn=fn; p.bytes=bytes; p.buf=buf;
+	return syscall(SYS_DEVIOCTL, (void*)&p);
+}
+
+inline static int devtype(char *name){
+	return syscall(SYS_DEVTYPE, (void*)name);
+}
+
+inline static char *devdesc(char *name){
+	return (char*)syscall(SYS_DEVDESC, (void*)name);
+}
+
+inline static void handle_int(int intno, int_handler handler){
+	struct params{int intno; int_handler handler;} p;
+	p.intno=intno; p.handler=handler;
+	syscall(SYS_HANDLEINT, (void*)&p);
+}
+
+inline static void handle_irq(int irqno, int_handler handler){
+	struct params{int irqno; int_handler handler;} p;
+	p.irqno=irqno; p.handler=handler;
+	syscall(SYS_HANDLEIRQ, (void*)&p);
 }
 
 #endif

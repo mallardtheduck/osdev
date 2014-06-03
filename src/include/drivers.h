@@ -59,4 +59,6 @@ struct drv_driver{
 typedef struct drv_driver drv_driver;
 #endif
 
+typedef void(*int_handler)(int);
+
 #endif
