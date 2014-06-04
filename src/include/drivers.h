@@ -13,6 +13,9 @@ namespace driver_types{
 	const int INPUT		= 0x10;
 	const int IN_KEYBOARD 	= 0x11;
 	const int IN_MOUSE	= 0x12;
+	const int IN_GAME	= 0x13;
+	const int IN_TOUCH	= 0x14;
+	const int IN_TABLET = 0x15;
 	const int VIDEO		= 0x20;
 	const int VID_TEXT	= 0x21;
 	const int STORAGE	= 0x30;
@@ -21,6 +24,8 @@ namespace driver_types{
 	const int STR_SSD	= 0x33;
 	const int STR_FLASH	= 0x34;
 	const int STR_MEMCARD	= 0x35;
+	const int STR_FLOPPY = 0x35;
+	const int STR_TAPE	 = 0x36;
 	const int NIC		= 0x40;
 	const int NIC_ETHERNET	= 0x41;
 	const int NIC_WIRELESS	= 0x42;
