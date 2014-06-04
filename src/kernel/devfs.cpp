@@ -53,19 +53,19 @@ int devfs_ioctl(void *filedata, int fn, size_t bytes, char *buf){
 }
 
 void *devfs_open_dir(void *, char *){
-	devfs_dirmagic;
+	return devfs_dirmagic;
 }
 
 bool devfs_close_dir(void *dirdata){
 	return (dirdata==devfs_dirmagic);
 }
 
-directory_entry devfs_read_dir(void *dirdata, size_t pos){
+directory_entry devfs_read_dir(void *, size_t pos){
 	char *name;
 	void *drvi=drv_firstdevice(&name);
 	directory_entry ret;
 	ret.valid=false;
-	for(int i=0; i<pos; ++i){
+	for(size_t i=0; i<pos; ++i){
 		drvi=drv_nextdevice(drvi, &name);
 	}
 	if(drvi){
@@ -81,17 +81,17 @@ bool devfs_write_dir(void *, directory_entry, size_t){
 	return false;
 }
 
-directory_entry devfs_stat(void *mountdata, char *path){
+directory_entry devfs_stat(void *, char *path){
 	directory_entry ret;
 	ret.valid=false;
-	drv_driver drv=drv_get(path);
+	drv_driver drv=*drv_get(path);
 	if(drv.open!=NULL){
 		ret.valid=true;
 		strncpy(ret.filename, path, 255);
 		ret.size=0;
 		ret.type=direntry_types::Device;
-		return ret;
 	}
+	return ret;
 }
 
 fs_driver devfs_driver = {true, "DEVFS", false, devfs_mount, devfs_unmount, devfs_open, devfs_close, devfs_read, devfs_write, devfs_ioctl, devfs_open_dir, devfs_close_dir, devfs_read_dir, devfs_write_dir, devfs_stat};

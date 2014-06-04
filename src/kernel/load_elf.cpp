@@ -19,13 +19,6 @@ void al_free(aligned_memory al){
 	free(al.alloc);
 }
 
-int test(int fn, void *p){
-	dbgpf("ELF: We got a syscall!\n");
-	if(fn==0x01){
-		printf("%s", p);
-	}
-}
-
 Elf32_Ehdr elf_read_header(file_handle &file){
 	Elf32_Ehdr ret;
 	fs_seek(file, 0, false);
@@ -35,7 +28,7 @@ Elf32_Ehdr elf_read_header(file_handle &file){
 
 bool elf_verify_header(const Elf32_Ehdr &header){
 	char expected[]={0x7f, 'E', 'L', 'F'};
-	for(int i=0; i<sizeof(expected); ++i){
+	for(size_t i=0; i<sizeof(expected); ++i){
 		if(header.ident[i]!=expected[i]){
 			return false;
 		}
@@ -80,7 +73,7 @@ Elf32_Phdr elf_read_progheader(file_handle &file, const Elf32_Ehdr &header, size
 }
 
 size_t elf_get_stringoffset(file_handle &file, const Elf32_Ehdr &header){
-	if(header.shstrndx == SHN_UNDEF) return NULL;
+	if(header.shstrndx == SHN_UNDEF) return 0;
 	return elf_read_sectionheader(file, header, header.shstrndx).offset;
 }
 
@@ -163,13 +156,13 @@ Elf32_Addr elf_symbol_value(file_handle &file, const Elf32_Ehdr &header, size_t 
 
 void elf_do_reloc(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr &section, void *base){
 	size_t n_relocs=section.size/sizeof(Elf32_Rel);
-	for(int i=0; i<n_relocs; ++i){
+	for(size_t i=0; i<n_relocs; ++i){
 		Elf32_Rel rel=elf_read_rel(file, section, i);
 		Elf32_Addr symval=elf_symbol_value(file, header, ELF32_R_SYM(rel.info));
 		if(symval) symval+=(uint32_t)base;
 		dbgpf("ELF: Reloc: offset: %x, info: %x, symbol: %i (%x), type: %i\n",
 			rel.offset, rel.info, ELF32_R_SYM(rel.info), symval, ELF32_R_TYPE(rel.info));
-		uint32_t *ref=(uint32_t*)(base+rel.offset);
+		uint32_t *ref=(uint32_t*)((char*)base+rel.offset);
 		uint32_t newval=-1;
 		switch(ELF32_R_TYPE(rel.info)){
 			case R_386_NONE:
@@ -193,7 +186,7 @@ loaded_elf elf_load(file_handle &file){
 	Elf32_Ehdr header=elf_read_header(file);
 	size_t ramsize=elf_getsize(file);
 	ret.mem=al_alloc(ramsize, 4096); //TODO: Proper alignment calculation
-	ret.entry=(module_entry)(ret.mem.aligned+header.entry);
+	ret.entry=(module_entry)((char*)ret.mem.aligned+header.entry);
 	memset(ret.mem.aligned, 0, ramsize);
 	for(int i=0; i<header.phnum; ++i){
 		Elf32_Phdr prog=elf_read_progheader(file, header, i);

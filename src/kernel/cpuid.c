@@ -28,6 +28,8 @@
 /* You need to include a file with fairly(ish) compliant printf prototype, Decimal and String support like %s and %d and this is truely all you need! */
 //#include <stdio.h> /* for printf(); */
 
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+
 #include "printf.h"
 #include <stddef.h>
 

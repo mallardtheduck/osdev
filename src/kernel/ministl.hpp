@@ -7,6 +7,8 @@ extern "C"{
 #include "util.hpp"
 #include "string.hpp"
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 typedef size_t size_type;
 
 // Because you are avoiding std::
@@ -431,8 +433,8 @@ public:
 		return &data_[size_];
 	}
 private:
-	pointer data_;
 	size_type size_, capacity_;
+	pointer data_;
 };
 
 #endif

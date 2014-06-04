@@ -1,7 +1,7 @@
 #include "kernel.hpp"
 #include "locks.hpp"
 
-extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int magic)
+extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 {
 	if(are_interrupts_enabled()){
 		panic("Interrupts not disabled at kernel load!\n");

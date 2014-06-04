@@ -15,7 +15,7 @@ struct mm_allocation{
 } __attribute__((packed));
 
 struct mm_region{
-	void *base;
+	char *base;
 	size_t size;
 	bool valid;
 	mm_allocation *head;
@@ -23,7 +23,7 @@ struct mm_region{
 
 lock mm_lock;
 
-mm_region mm_regions[MAX_REGIONS]={0};
+mm_region mm_regions[MAX_REGIONS]={};
 
 void mm_alloctest();
 
@@ -42,7 +42,7 @@ void mm_init(multiboot_info_t *mbt){
 				dbgpf("MM: Ignoring low 1MB RAM\n");
 			}else{
 				mm_region r;
-				r.base=(void*)mmap->base_addr_low;
+				r.base=(char*)mmap->base_addr_low;
 				r.size=mmap->length_low;
 				r.head=NULL;
 				r.valid=true;
@@ -79,7 +79,7 @@ void *mm_alloc(size_t bytes){
 		size_t sizeleft=mm_regions[i].size;
 		mm_allocation *node=mm_regions[i].head;
 		if((!node && sizeleft > bytes) //Cases where allocation is at beginning of region.
-			|| (node && (char*)node - (char*)mm_regions[i].base >= bytes)){
+			|| (node && (size_t)((char*)node - (char*)mm_regions[i].base) >= bytes)){
 			mm_allocation *alloc=(mm_allocation*)mm_regions[i].base;
 			memset(alloc, 0xAA, bytes);
 			alloc->next=node;
@@ -92,8 +92,8 @@ void *mm_alloc(size_t bytes){
 			return alloc->bytes;
 		}
 		while(node){
-			if(!node->next && sizeleft - node->size >= bytes 
-				|| node->next && (size_t)node->next - (size_t)((char*)node + node->size) >= bytes){
+			if((!node->next && sizeleft - node->size >= bytes)
+				|| (node->next && (size_t)node->next - (size_t)((char*)node + node->size) >= bytes)){
 				mm_allocation *alloc=(mm_allocation*)((char*)node + node->size);
 				memset(alloc, 0xAA, bytes);
 				alloc->next=node->next;
@@ -121,7 +121,7 @@ void mm_free(void *ptr){
 	if(!ptr) return;
 	hold_lock hl(mm_lock);
 	mm_allocation *alloc=(mm_allocation*)ptr-1;
-	if(!(alloc->reg->base <= alloc && (void*)alloc->reg->base + alloc->reg->size >= (void*)alloc + alloc->size)){
+	if(!(alloc->reg->base <= (char*)alloc && (char*)alloc->reg->base + alloc->reg->size >= (char*)alloc + alloc->size)){
 		dbgpf("MM: Pointer %x, Region: base: %x size: %i, Allocation: base: %x size: %i\n",
 			ptr, alloc->reg->base, alloc->reg->size, alloc, alloc->size);
 		panic("(MM) Pointer passed to mm_free fails sanity check!\n");
@@ -169,13 +169,13 @@ size_t mm_getfreemem(){
 		mm_allocation *node=mm_regions[i].head;
 		while(node){
 			//dbgpf("Allocation in region %i: size: %i bytes\n", i, node->size);
-			if(node < mm_regions[i].base || 
-				(void*)node + node->size > mm_regions[i].base + mm_regions[i].size){
-				dbgpf("MM: Allocation in region %i: base: %x size: %i bytes (end: %x)\n", i, node, node->size, (void*)node + node->size);
+			if((char*)node < mm_regions[i].base ||
+				(char*)node + node->size > mm_regions[i].base + mm_regions[i].size){
+				dbgpf("MM: Allocation in region %i: base: %x size: %i bytes (end: %x)\n", i, node, node->size, (char*)node + node->size);
 				dbgpf("MM: Region %i: base: %x size: %i bytes (end: %x)\n", i, mm_regions[i].base, mm_regions[i].size, mm_regions[i].base + mm_regions[i].size);
-				if((void*)node + node->size > mm_regions[i].base + mm_regions[i].size){
+				if((char*)node + node->size > mm_regions[i].base + mm_regions[i].size){
 					dbgout("MM: Allocation end > region end.\n");
-				}else if(node < mm_regions[i].base){
+				}else if((char*)node < mm_regions[i].base){
 					dbgout("MM: Allocation base < region base.\n");
 				}else{
 					panic("(UNIVERSE) Boolean logic failure.\n");

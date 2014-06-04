@@ -52,7 +52,7 @@ void sch_init(){
 	outb(0x40, 39000 & 0xFF);
 	outb(0x40, (39000 >> 8) & 0xFF); 
 	threads=new vector<sch_thread>();
-	sch_stack=malloc(4096)+4096;
+	sch_stack=(char*)malloc(4096)+4096;
 	sch_thread mainthread;
 	mainthread.runnable=true;
 	mainthread.to_be_deleted=false;
@@ -139,7 +139,7 @@ void thread_reaper(void*){
 		while(changed){
 			hold_lock lck(sch_lock);
 			changed=false;
-			for(int i=0; i<threads->size(); ++i){
+			for(size_t i=0; i<threads->size(); ++i){
 				if((*threads)[i].to_be_deleted){
 					uint64_t id=(*threads)[i].ext_id;
 					free((*threads)[i].original_esp);
@@ -177,7 +177,7 @@ bool sch_find_thread(size_t &torun){
 	//Find runnable threads and minimum dynamic priority
 	int nrunnables=0;
 	uint32_t min=0xFFFFFFFF;
-	for(int i=0; i<threads->size(); ++i){
+	for(size_t i=0; i<threads->size(); ++i){
 		if((*threads)[i].runnable){
 			if(!(*threads)[i].priority) panic("(SCH) Thread priority 0 is not allowed.\n");
 			nrunnables++;
@@ -193,7 +193,7 @@ bool sch_find_thread(size_t &torun){
 	//Subtract minimum dynamic priority from all threads. If there is now a thread with dynamic priority 0
 	//that isn't the current thread, record it
 	bool foundtorun=false;
-	for(int i=0; i<(*threads).size(); ++i){
+	for(size_t i=0; i<(*threads).size(); ++i){
 		if((*threads)[i].runnable){
 			if((*threads)[i].dynpriority) (*threads)[i].dynpriority-=min;
 			if(i!=current_thread && (*threads)[i].dynpriority==0){
@@ -222,7 +222,6 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	//If we found a thread to run, run it
 	if(sch_find_thread(torun)){
 		(*threads)[torun].dynpriority=(*threads)[torun].priority;
-		uint64_t lockthread=(*threads)[current_thread].ext_id;
 		current_thread=torun;
 		current_thread_id=(*threads)[torun].ext_id;
 		curstack=(*threads)[current_thread].stack;
@@ -256,7 +255,7 @@ void sch_isr(){
 }
 
 const uint64_t &sch_get_id(){
-	if(!sch_inited) return 0;
+	if(!sch_inited) current_thread_id=0;
 	return current_thread_id;
 }
 
@@ -274,7 +273,7 @@ void sch_block(){
 
 void sch_unblock(uint64_t ext_id){
 	hold_lock hl(sch_lock);
-	for(int i=0; i<threads->size(); ++i){
+	for(size_t i=0; i<threads->size(); ++i){
 		if((*threads)[i].ext_id==ext_id){
 			dbgpf("SCH: Unblocked %i.\n", (uint32_t)ext_id);
 			(*threads)[i].runnable=true;

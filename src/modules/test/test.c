@@ -8,6 +8,8 @@ uint64_t test_thread_id=0;
 volatile bool thread_done=false;
 volatile bool unblock_end=false;
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 bool test(char *item, bool value){
 	dbgout("TEST: ");
 	dbgout(item);

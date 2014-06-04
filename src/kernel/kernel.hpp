@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 #include <stdint.h>
+
+#pragma GCC diagnostic ignored "-Wwrite-strings"
  
 /* Check if the compiler thinks if we are targeting the wrong operating system. */
 #if defined(__linux__)

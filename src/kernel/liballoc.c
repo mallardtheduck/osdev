@@ -4,6 +4,9 @@
 
 //#define DEBUG	
 
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Waddress"
+
 #define LIBALLOC_MAGIC	0xc001c0de
 #define MAXCOMPLETE		5
 #define MAXEXP	32

@@ -1,5 +1,7 @@
 #include "kernel.hpp"
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 struct terminal_instance{
 	size_t pos;
 };
