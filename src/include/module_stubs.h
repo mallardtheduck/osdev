@@ -91,32 +91,36 @@ inline static void unblock(uint64_t id){
 	syscall(SYS_UNBLOCK, (void*)&id);
 }
 
-inline static void add_device(drv_driver *driver){
-	syscall(SYS_ADDDEVICE, (void*)driver);
+inline static void add_device(char *name, drv_driver *driver){
+	struct params{char *name; drv_driver *driver;} p;
+	p.name=name; p.driver=driver;
+	syscall(SYS_ADDDEVICE, (void*)&p);
 }
 
 inline static drv_driver *get_device(char *name){
-	return (drv_driver*)syscall(SYS_GETDEVICE, (void*)name);
+	return (void*)syscall(SYS_GETDEVICE, (void*)name);
 }
 
-inline static drv_driver *get_first_device(){
-	return (drv_driver*)syscall(SYS_FIRSTDEVICE, NULL);
+inline static void *get_first_device(char **name){
+	return (drv_driver*)syscall(SYS_FIRSTDEVICE, (void*)name);
 }
 
-inline static drv_driver *get_next_device(drv_driver *drv){
-	return (drv_driver*)syscall(SYS_NEXTDEVICE, (void*)drv);
+inline static drv_driver *get_next_device(void *itr, char **name){
+	struct params{void *itr; char **name;} p;
+	p.itr=itr; p.name=name;
+	return (drv_driver*)syscall(SYS_NEXTDEVICE, (void*)&p);
 }
 
 inline static void* devopen(char *name){
 	return (void*)syscall(SYS_DEVOPEN, (void*)name);
 }
 
-inline static void devclose(void *handle){
-	syscall(SYS_DEVCLOSE, handle);
+inline static bool devclose(void *handle){
+	return (bool)syscall(SYS_DEVCLOSE, handle);
 }
 
 inline static bool devread(void *handle, size_t bytes, char *buffer){
-	struct params{void* handle; size_t bytes; char *buffer} p;
+	struct params{void* handle; size_t bytes; char *buffer;} p;
 	p.handle=handle; p.bytes=bytes; p.buffer=buffer;
 	return (bool)syscall(SYS_DEVREAD, (void*)&p);
 }

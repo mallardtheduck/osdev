@@ -38,10 +38,10 @@ void drv_add_device(char *name, drv_driver *driver){
 	dbgpf("DRV: Device %s registered.\n", sname.c_str());
 }
 
-drv_driver drv_get(char *name){
-	drv_driver ret;
+drv_driver *drv_get(char *name){
+	drv_driver *ret;
 	{ hold_lock hl(drv_lock);
-		ret=(*drivers)[name];
+		ret=&(*drivers)[name];
 	}
 	return ret;
 }
@@ -50,7 +50,7 @@ void *drv_open(char *driver){
 	hold_lock hl(drv_lock);
 	drv_instance *inst=new drv_instance();
 	//TODO: Attach to process somehow...
-	inst->driver=drv_get(driver);
+	inst->driver=*drv_get(driver);
 	inst->instance=inst->driver.open();
 	return (void*)inst;
 }
@@ -84,7 +84,7 @@ int drv_ioctl(void *instance, int fn, size_t bytes, char *buf){
 	
 int drv_get_type(char *driver){
 	hold_lock hl(drv_lock);
-	return drv_get(driver).type();
+	return drv_get(driver)->type();
 }
 
 int drv_get_type(void *instance){
@@ -94,7 +94,7 @@ int drv_get_type(void *instance){
 
 char *drv_get_desc(char *driver){
 	hold_lock hl(drv_lock);
-	return drv_get(driver).desc();
+	return drv_get(driver)->desc();
 }
 
 char *drv_get_desc(void *instance){
