@@ -65,6 +65,7 @@ void sch_init(){
 	sch_new_thread(&sch_idlethread, NULL, 1024);
 	reaper_thread=sch_new_thread(&thread_reaper, NULL, 4096);
 	//sch_threadtest();
+	irq_handle(0, &sch_isr);
 	IRQ_clear_mask(0);
 	dbgout("SCH: Init complete.\n");
 	sch_inited=true;
@@ -247,7 +248,8 @@ extern "C" void sch_unlock(){
 	release_lock(sch_lock);
 }
 
-void sch_isr(){
+void sch_isr(int){
+    enable_interrupts();
 	if(try_take_lock(sch_lock)){
 		release_lock(sch_lock);
 		sch_yield();

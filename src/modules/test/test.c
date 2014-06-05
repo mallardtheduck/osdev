@@ -87,7 +87,7 @@ int module_main(syscall_vector sys){
 	try_take_lock(&lock);
     test("try_take_lock()", !!lock);
     release_lock(&lock);
-    dbgout("No point testing \"dbgout()\"...\n");
+    test("dbgout()", true);
     new_thread(&test_thread, NULL);
     while(!thread_done) yield();
     test("end_thread()", true);
