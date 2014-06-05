@@ -1,23 +1,27 @@
-#ifndef _FS_INTERFACE_HPP
-#define _FS_INTERFACE_HPP
+#ifndef _FS_INTERFACE_H
+#define _FS_INTERFACE_H
 
-#include "kernel.hpp"
-
-namespace direntry_types{
-	enum Enum{
-		File=0x00,
-		Directory=0x01,
-		Symlink=0x02,
-		Device=0x10,
-	};	
+enum fs_item_types{
+	FS_File=0x00,
+	FS_Directory=0x01,
+	FS_Link=0x02,
+	FS_Device=0x10,
 };
+
+#ifndef __cplusplus
+typedef enum fs_item_types fs_item_types;
+#endif
 
 struct directory_entry{
 	bool valid;
 	char filename[255];
 	size_t size;
-	direntry_types::Enum type;	
+	fs_item_types type;
 };
+
+#ifndef __cplusplus
+typedef struct directory_entry directory_entry;
+#endif
 
 struct fs_driver{
 	bool valid;
@@ -37,12 +41,20 @@ struct fs_driver{
 	directory_entry (*stat)(void *mountdata, char *path);
 };
 
+#ifndef __cplusplus
+typedef struct fs_driver fs_driver;
+#endif
+
 struct fs_mountpoint{
 	bool valid;
 	char name[9];
 	fs_driver driver;
 	void *mountdata;
 };
+
+#ifndef __cplusplus
+typedef struct fs_mountpoint fs_mountpoint;
+#endif
 
 struct file_handle{
 	bool valid;
@@ -51,11 +63,19 @@ struct file_handle{
 	size_t pos;
 };
 
+#ifndef __cplusplus
+typedef struct file_handle file_handle;
+#endif
+
 struct dir_handle{
 	bool valid;
 	fs_mountpoint *mount;
 	void *dirdata;
 	size_t pos;
 };
+
+#ifndef __cplusplus
+typedef struct dir_handle dir_handle;
+#endif
 
 #endif

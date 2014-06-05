@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "module_api.h"
 #include "drivers.h"
+#include "fs_interface.h"
 
 #ifndef __cplusplus
 	#include <stdbool.h>
@@ -161,6 +162,10 @@ inline static void handle_irq(int irqno, int_handler handler){
 	struct params{int irqno; int_handler handler;} p;
 	p.irqno=irqno; p.handler=handler;
 	syscall(SYS_HANDLEIRQ, (void*)&p);
+}
+
+inline static void add_filesystem(){
+
 }
 
 #endif

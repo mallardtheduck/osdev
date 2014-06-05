@@ -1,5 +1,5 @@
 #include "kernel.hpp"
-#include "fs_interface.hpp"
+#include "filesystems.hpp"
 #include "ministl.hpp"
 #include "locks.hpp"
 

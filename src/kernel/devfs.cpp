@@ -72,7 +72,7 @@ directory_entry devfs_read_dir(void *, size_t pos){
 		ret.valid=true;
 		strncpy(ret.filename, name, 255);
 		ret.size=0;
-		ret.type=direntry_types::Device;
+		ret.type=FS_Device;
 	}
 	return ret;
 }
@@ -89,7 +89,7 @@ directory_entry devfs_stat(void *, char *path){
 		ret.valid=true;
 		strncpy(ret.filename, path, 255);
 		ret.size=0;
-		ret.type=direntry_types::Device;
+		ret.type=FS_Device;
 	}
 	return ret;
 }

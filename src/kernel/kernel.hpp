@@ -21,7 +21,6 @@
 #include "cpu.hpp"
 #include "serdbg.hpp"
 
-#include "fs_interface.hpp"
 #include "filesystems.hpp"
 #include "initfs/initfs.hpp"
 

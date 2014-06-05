@@ -1,7 +1,7 @@
 #ifndef _FILESYSTEMS_HPP
 #define _FILESYSTEMS_HPP
 
-#include "fs_interface.hpp"
+#include <fs_interface.h>
 
 void fs_init();
 bool fs_mount(char *name, char *device, char *fs);

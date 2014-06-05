@@ -76,7 +76,7 @@ directory_entry initfs_read_dir(void *dirdata, size_t pos){
 	initfs_file file=initfs_getfile(pos);
 	strncpy(ret.filename, file.name, 255);
 	ret.size=file.size;
-	ret.type=direntry_types::File;
+	ret.type=FS_File;
 	ret.valid=true;
 	return ret;
 }
@@ -92,7 +92,7 @@ directory_entry initfs_stat(void *, char *path){
 		directory_entry ret;
 		ret.filename[0]='\0';
 		ret.size=initfs_getfilecount();
-		ret.type=direntry_types::Directory;
+		ret.type=FS_Directory;
 		ret.valid=true;
 		return ret;
 	}else{
