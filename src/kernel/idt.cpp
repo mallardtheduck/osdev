@@ -2,6 +2,8 @@
 #include "idt.hpp"
 #include "locks.hpp"
 
+const int IRQ_BASE=32;
+
 /* Defines an IDT entry */
 struct idt_entry
 {
@@ -259,7 +261,7 @@ inline void out_regs(const irq_regs ctx){
 
 extern "C" void irq_handler(irq_regs *r) {
 	//out_regs(*r);
-	int irq=r->int_no-32;
+	int irq=r->int_no-IRQ_BASE;
 	irq_ack(irq);
 	if(handlers[r->int_no]) handlers[r->int_no](r->int_no);
 }
@@ -278,5 +280,5 @@ void int_handle(size_t intno, int_handler handler){
 }
 
 void irq_handle(size_t irqno, int_handler handler){
-	handlers[irqno+32]=handler;
+	handlers[irqno+IRQ_BASE]=handler;
 }
