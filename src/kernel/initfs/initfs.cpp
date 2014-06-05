@@ -1,7 +1,7 @@
 #include "initfs.hpp"
 
-int initfs_getfilecount(){
-	int ret=0;
+size_t initfs_getfilecount(){
+	size_t ret=0;
 	while(initfs_data[++ret].valid);
 	return ret;
 }
@@ -38,8 +38,8 @@ bool initfs_close(void *){
 int initfs_read(void *filedata, size_t pos, size_t bytes, char *buf){
 	initfs_file file=initfs_getfile((int)filedata);
 	if(pos > file.size) return 0;
-	int j=0;
-	for(int i=pos; i<file.size && j<bytes; ++i, ++j){
+	size_t j=0;
+	for(size_t i=pos; i<file.size && j<bytes; ++i, ++j){
 		buf[j]=file.data[i];
 	}
 	return j;
