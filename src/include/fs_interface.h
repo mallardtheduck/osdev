@@ -31,13 +31,15 @@ struct fs_driver{
 	bool (*unmount)(void *mountdata);
 	void *(*open)(void *mountdata, char *path);
 	bool (*close)(void *filedata);
-	int (*read)(void *filedata, size_t pos, size_t bytes, char *buf);
-	bool (*write)(void *filedata, size_t pos, size_t bytes, char *buf);
+	int (*read)(void *filedata, size_t bytes, char *buf);
+	bool (*write)(void *filedata, size_t bytes, char *buf);
+	bool (*seek)(void *filedata, int pos, bool relative);
 	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
 	void *(*open_dir)(void *mountdata, char *path);
 	bool (*close_dir)(void *dirdata);
-	directory_entry (*read_dir)(void *dirdata, size_t pos);
-	bool (*write_dir)(void *dirdata, directory_entry entry, size_t pos);
+	directory_entry (*read_dir)(void *dirdata);
+	bool (*write_dir)(void *dirdata, directory_entry entry);
+	bool (*dirseek)(void *dirdata, int pos, bool relative);
 	directory_entry (*stat)(void *mountdata, char *path);
 };
 
@@ -60,7 +62,6 @@ struct file_handle{
 	bool valid;
 	fs_mountpoint *mount;
 	void *filedata;
-	size_t pos;
 };
 
 #ifndef __cplusplus
@@ -71,7 +72,6 @@ struct dir_handle{
 	bool valid;
 	fs_mountpoint *mount;
 	void *dirdata;
-	size_t pos;
 };
 
 #ifndef __cplusplus

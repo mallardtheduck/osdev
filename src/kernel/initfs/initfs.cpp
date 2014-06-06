@@ -1,5 +1,20 @@
 #include "initfs.hpp"
 
+struct initfs_handle{
+	size_t fileindex;
+	size_t pos;
+	initfs_handle(size_t index, size_t p=0) : fileindex(index), pos(p) {}
+};
+
+#define fdata ((initfs_handle*)filedata)
+
+struct initfs_dirhandle{
+	size_t pos;
+	initfs_dirhandle(size_t p=0) : pos(p) {}
+};
+
+#define ddata ((initfs_dirhandle*)dirdata)
+
 size_t initfs_getfilecount(){
 	size_t ret=0;
 	while(initfs_data[++ret].valid);
@@ -25,27 +40,29 @@ void *initfs_open(void *, char *path){
 	for(int i=0; i<files; ++i){
 		initfs_file file=initfs_getfile(i);
 		if(strcmp(path, file.name)==0){
-			return (void*)i;
+			return (void*)new initfs_handle(i);
 		}
 	}
 	return NULL;
 }
 
-bool initfs_close(void *){
+bool initfs_close(void *filedata){
+	delete fdata;
 	return true;
 }
 
-int initfs_read(void *filedata, size_t pos, size_t bytes, char *buf){
-	initfs_file file=initfs_getfile((int)filedata);
-	if(pos > file.size) return 0;
+int initfs_read(void *filedata, size_t bytes, char *buf){
+	initfs_file file=initfs_getfile(fdata->fileindex);
+	if(fdata->pos > file.size) return 0;
 	size_t j=0;
-	for(size_t i=pos; i<file.size && j<bytes; ++i, ++j){
+	for(size_t i=fdata->pos; i<file.size && j<bytes; ++i, ++j){
 		buf[j]=file.data[i];
 	}
+	fdata->pos+=j;
 	return j;
 }
 
-bool initfs_write(void *, size_t, size_t, char *){
+bool initfs_write(void *, size_t, char *){
 	return false;
 }
 
@@ -55,33 +72,30 @@ int initfs_ioctl(void *, int, size_t, char *){
 
 void *initfs_open_dir(void *, char *path){
 	if(path[0] != '\0') return NULL;
-	return (void*)1;
+	return (void*)new initfs_dirhandle;
 }
 bool initfs_close_dir(void *dirdata){
-	if(dirdata!=(void*)1)return false;
+	delete ddata;
 	return true;
 }
 
-directory_entry initfs_read_dir(void *dirdata, size_t pos){
+directory_entry initfs_read_dir(void *dirdata){
 	directory_entry ret;
-	if(dirdata!=(void*)1){
-		ret.valid=false;
-		return ret;
-	}
-	if(pos>=initfs_getfilecount()){
+	if(ddata->pos>=initfs_getfilecount()){
 		ret.valid=false;
 		dbgout("INITFS: No such directory entry.\n");
 		return ret;
 	}
-	initfs_file file=initfs_getfile(pos);
+	initfs_file file=initfs_getfile(ddata->pos);
 	strncpy(ret.filename, file.name, 255);
 	ret.size=file.size;
 	ret.type=FS_File;
 	ret.valid=true;
+	ddata->pos++;
 	return ret;
 }
 
-bool initfs_write_dir(void *, directory_entry, size_t){
+bool initfs_write_dir(void *, directory_entry){
 	return false;
 }
 
@@ -100,7 +114,8 @@ directory_entry initfs_stat(void *, char *path){
 		for(int i=0; i<files; ++i){
 			initfs_file file=initfs_getfile(i);
 			if(strcmp(path, file.name)==0){
-				return initfs_read_dir((void*)1, i);
+				initfs_dirhandle dh(i);
+				return initfs_read_dir(&dh);
 			}
 		}
 		directory_entry ret;
@@ -109,25 +124,43 @@ directory_entry initfs_stat(void *, char *path){
 	}
 }
 
-/*struct fs_driver{
-	bool valid;
-	char name[9];
-	bool needs_device;
-	void *(*mount)(char *device);
-	bool (*unmount)(void *mountdata);
-	void *(*open)(void *mountdata, char *path);
-	bool (*close)(void *filedata);
-	int (*read)(void *filedata, size_t pos, size_t bytes, char *buf);
-	bool (*write)(void *filedata, size_t pos, size_t bytes, char *buf);
-	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
-	void *(*open_dir)(void *mountdata, char *path);
-	bool (*close_dir)(void *dirdata);
-	directory_entry (*read_dir)(void *dirdata, size_t pos);
-	bool (*write_dir)(void *dirdata, directory_entry entry, size_t pos);
-	directory_entry (*stat)(void *mountdata, char *path);
-};*/
+bool initfs_seek(void *filedata, int pos, bool relative){
+	if(relative) fdata->pos+=pos;
+	else fdata->pos=pos;
+	return true;
+}
 
-fs_driver initfs_driver = {true, "INITFS", false, initfs_mount, initfs_unmount, initfs_open, initfs_close, initfs_read, initfs_write, initfs_ioctl, initfs_open_dir, initfs_close_dir, initfs_read_dir, initfs_write_dir, initfs_stat}; 
+bool initfs_dirseek(void *dirdata, int pos, bool relative){
+	if(relative) ddata->pos+=pos;
+	else ddata->pos=pos;
+	return true;
+}
+
+/*struct fs_driver{
+  	bool valid;
+  	char name[9];
+  	bool needs_device;
+  	void *(*mount)(char *device);
+  	bool (*unmount)(void *mountdata);
+  	void *(*open)(void *mountdata, char *path);
+  	bool (*close)(void *filedata);
+  	int (*read)(void *filedata, size_t bytes, char *buf);
+  	bool (*write)(void *filedata, size_t bytes, char *buf);
+  	bool (*seek)(void *filedata, int pos, bool relatiive);
+  	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
+  	void *(*open_dir)(void *mountdata, char *path);
+  	bool (*close_dir)(void *dirdata);
+  	directory_entry (*read_dir)(void *dirdata);
+  	bool (*write_dir)(void *dirdata, directory_entry entry);
+  	bool (*dirseek)(void *dirdata, int pos, bool relative);
+  	directory_entry (*stat)(void *mountdata, char *path);
+  };*/
+
+fs_driver initfs_driver = {true, "INITFS", false,
+	initfs_mount, initfs_unmount,
+	initfs_open, initfs_close, initfs_read, initfs_write, initfs_seek, initfs_ioctl,
+	initfs_open_dir, initfs_close_dir, initfs_read_dir, initfs_write_dir, initfs_dirseek,
+	initfs_stat};
 
 fs_driver initfs_getdriver(){
 	int files=initfs_getfilecount();

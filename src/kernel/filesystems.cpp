@@ -120,7 +120,6 @@ file_handle fs_open(char *path){
 	}
 	ret.mount=&mount;
 	ret.filedata=filedata;
-	ret.pos=0; //TODO: Open modes?
 	ret.valid=true;
 	dbgpf("FS: Opened %s.\n", path);
 	return ret;
@@ -136,23 +135,16 @@ bool fs_close(file_handle &file){
 
 int fs_read(file_handle &file, size_t bytes, char *buf){
 	if(!file.valid) return -1;
-	int read=file.mount->driver.read(file.filedata, file.pos, bytes, buf);
-	file.pos+=read;
-	return read;
+	return file.mount->driver.read(file.filedata, bytes, buf);
 }
 
 bool fs_write(file_handle &file, size_t bytes, char *buf){
 	if(!file.valid) return false;
-	bool ok=file.mount->driver.read(file.filedata, file.pos, bytes, buf);
-	if(ok) file.pos+=bytes;
-	return ok;
+	return file.mount->driver.read(file.filedata, bytes, buf);
 }
 
 bool fs_seek(file_handle &file, int32_t pos, bool relative){
-	if(!file.valid) return false;
-	if(relative) file.pos+=pos;
-	else file.pos=pos;
-	return true;
+	return file.mount->driver.seek(file.filedata, pos, relative);
 }
 
 int fs_ioctl(file_handle &file, int fn, size_t bytes, char *buf){
@@ -180,7 +172,6 @@ dir_handle fs_open_dir(char *path){
 	}
 	ret.dirdata=dirdata;
 	ret.mount=&mount;
-	ret.pos=0;
 	ret.valid=true;
 	dbgpf("FS: Opened directory %s.\n", path);
 	return ret;
@@ -200,23 +191,16 @@ directory_entry fs_read_dir(dir_handle &dir){
 		ret.valid=false;
 		return ret;
 	}
-	ret=dir.mount->driver.read_dir(dir.dirdata, dir.pos);
-	if(ret.valid) dir.pos++;
-	return ret;
+	return dir.mount->driver.read_dir(dir.dirdata);
 }
 
 bool fs_write_dir(dir_handle &dir, directory_entry entry){
 	if(!dir.valid) return false;
-	bool ret=dir.mount->driver.write_dir(dir.dirdata, entry, dir.pos);
-	if(ret) dir.pos++;
-	return ret;
+	return dir.mount->driver.write_dir(dir.dirdata, entry);
 }
 
 bool fs_seek_dir(dir_handle &dir, size_t pos, bool relative){
-	if(!dir.valid) return false;
-	if(relative) dir.pos+=pos;
-	else dir.pos=pos;
-	return true;
+	return dir.mount->driver.dirseek(dir.dirdata, pos, relative);
 }
 
 directory_entry fs_stat(char *path){
