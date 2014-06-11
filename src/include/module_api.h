@@ -3,69 +3,85 @@
 
 #ifndef KERNEL
 #include <stddef.h>
-
-typedef int (*syscall_vector)(int, void*);
-extern syscall_vector syscall;
+#include <stdint.h>
+#include <stdarg.h>
 #endif
 
-enum syscalls{
-	SYS_PANIC 	=0x00,
-	SYS_MALLOC 	=0x01,
-	SYS_FREE 	=0x02,
-	SYS_MEMSET	=0x03,
-	SYS_MEMCPY	=0x04,
-	SYS_MEMMOVE	=0x05,
-	SYS_STRCMP	=0x06,
-	SYS_STRNCPY	=0x07,
-	SYS_INITLOCK	=0x08,
-	SYS_TAKELOCK	=0x09,
-	SYS_TRYLOCK	=0x0a,
-	SYS_UNLOCK	=0x0b,
-	SYS_DBGOUT	=0x0c,
+#include "drivers.h"
+#include "fs_interface.h"
 
-	SYS_NEWTHREAD	=0x10,
-	SYS_BLOCK	=0x11,
-	SYS_YIELD	=0x12,
-	SYS_THREADID	=0x13,
-	SYS_PRIORITY	=0x14,
-	SYS_ENDTHREAD	=0x15,
-	SYS_UNBLOCK	=0x16,
+typedef volatile uint64_t lock;
+typedef void(*thread_func)(void*);
+typedef uint64_t thread_id_t;
 
-	SYS_ADDDEVICE	=0x20,
-	SYS_GETDEVICE	=0x21,
-	SYS_FIRSTDEVICE	=0x22,
-	SYS_NEXTDEVICE	=0x23,
-	SYS_DEVOPEN	=0x24,
-	SYS_DEVCLOSE	=0x25,
-	SYS_DEVREAD	=0x26,
-	SYS_DEVWRITE	=0x27,
-	SYS_DEVSEEK	=0x28,
-	SYS_DEVIOCTL	=0x29,
-	SYS_DEVTYPE	=0x2a,
-	SYS_DEVDESC	=0x2b,
-	SYS_HANDLEINT	=0x2c,
-	SYS_HANDLEIRQ	=0x2d,
+struct syscall_table{
+	void (*panic)(char *msg);
+	void *(*malloc)(size_t bytes);
+	void (*free)(void *ptr);
+	void *(*memset)(void* ptr, int value, size_t num);
+	void (*memcpy)(void *dst, void *src, size_t size);
+	void (*memmove)(void *dst, void *src, size_t size);
+	int (*strcmp)(char *s1, char *s2);
+	void (*strncpy)(char *dst, char *src, size_t num);
 
-	SYS_ADDFS	=0x30,
-	SYS_FSMOUNT	=0x31,
-	SYS_FSUNMOUNT	=0x32,
-	SYS_FOPEN	=0x33,
-	SYS_FCLOSE	=0x34,
-	SYS_FREAD	=0x35,
-	SYS_FWRITE	=0x36,
-	SYS_FSEEK	=0x37,
-	SYS_FIOCTL	=0x38,
-	SYS_DIROPEN	=0x39,
-	SYS_DIRCLOSE	=0x3a,
-	SYS_DIRREAD	=0x3b,
-	SYS_DIRSEEK	=0x3c,
-	SYS_FSTAT	=0x3d,
-	SYS_FCREATE =0x3e,
-	SYS_DIRCREATE=0x3f,
+	void (*init_lock)(lock *l);
+	void (*take_lock)(lock *l);
+	bool (*try_take_lock)(lock *l);
+	void (*release_lock)(lock *l);
 
-	SYS_MODLOAD	=0x40,
-	SYS_MODUNLOAD	=0x41,
-	SYS_MODINFO	=0x42,
+	void (*dbgout)(char *msg);
+	void (*dbgpf)(char *fmt, ...);
+
+	void (*new_thread)(thread_func entry, void *param);
+	void (*block)();
+	void (*yield)();
+	thread_id_t (*thread_id)();
+	void (*thread_priority)(uint32_t p_);
+	void (*end_thread)();
+	void (*unblock)(thread_id_t id);
+
+	void (*add_device)(char *name, drv_driver *driver);
+	drv_driver *(*get_device)(char *name);
+	void *(*get_first_device)(char **name);
+	void *(*get_next_device)(void *itr, char **name);
+	void *(*devopen)(char *name);
+	bool (*devclose)(void *handle);
+	int (*devread)(void *handle, size_t bytes, char *buffer);
+	bool (*devwrite)(void *handle, size_t bytes, char *buffer);
+	void (*devseek)(void *handle, size_t pos, bool relative);
+	int (*devioctl)(void *handle, int fn, size_t bytes, char *buffer);
+	int (*devtype)(char *name);
+	char *(*devdesc)(char *name);
+	void (*handle_int)(size_t intno, int_handler handler);
+	void (*handle_irq)(size_t irqno, int_handler handler);
+
+	void (*add_filesystem)(fs_driver *fs);
+	bool (*mount)(char *name, char *device, char *fs);
+	bool (*unmount)(char *name);
+
+	file_handle *(*fopen)(char *path);
+	bool (*fclose)(file_handle *handle);
+	int (*fread)(file_handle *handle, size_t bytes, char *buf);
+	bool (*fwrite)(file_handle *handle, size_t bytes, char *buf);
+	bool (*fseek)(file_handle *handle, size_t pos, bool relative);
+	int (*fioctl)(file_handle *handle, int fn, size_t bytes, char *buf);
+	file_handle *(*fcreate)(char *path);
+
+	dir_handle *(*diropen)(char *path);
+	bool (*dirclose)(dir_handle *handle);
+	directory_entry (*dirread)(dir_handle *handle);
+	bool (*dirwrite)(dir_handle *handle, directory_entry entry);
+	bool (*dirseek)(dir_handle *handle, size_t pos, bool relative);
+	dir_handle *(*dircreate)(char *path);
+	directory_entry (*stat)(char *path);
 };
+
+#ifndef __cplusplus
+typedef struct syscall_table syscall_table;
+#endif
+
+#ifndef KERNEL
+extern syscall_table *SYSCALL_TABLE;
+#endif
 
 #endif

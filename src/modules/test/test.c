@@ -1,8 +1,7 @@
 #include "module_stubs.h"
 
-typedef int (*syscall_vector)(int, void*);
-syscall_vector syscall;
-uint64_t lock;
+syscall_table *SYSCALL_TABLE;
+lock lck;
 uint64_t test_thread_id=0;
 
 volatile bool thread_done=false;
@@ -55,8 +54,8 @@ void test_thread(void*q){
 	test("end_thread()", false);
 }
 
-int module_main(syscall_vector sys){
-	syscall=sys;
+int module_main(syscall_table *systbl){
+	SYSCALL_TABLE=systbl;
 	dbgout("TEST: Not testing \"panic()\"...\n");
 	void *malloctest=malloc(1024);
 	test("malloc()", !!malloctest);
@@ -77,16 +76,16 @@ int module_main(syscall_vector sys){
 	strncpy(str1, str2, 4);
 	a=!strcmp(str1, str2);
 	test("strncpy()", a);
-	lock=-1;
-	init_lock(&lock);
-	test("init_lock()", !lock);
-	take_lock(&lock);
-	test("take_lock()", !!lock);
-	release_lock(&lock);
-	test("release_lock()", !lock);
-	try_take_lock(&lock);
-    test("try_take_lock()", !!lock);
-    release_lock(&lock);
+	lck=-1;
+	init_lock(&lck);
+	test("init_lock()", !lck);
+	take_lock(&lck);
+	test("take_lock()", !!lck);
+	release_lock(&lck);
+	test("release_lock()", !lck);
+	try_take_lock(&lck);
+    test("try_take_lock()", !!lck);
+    release_lock(&lck);
     test("dbgout()", true);
     new_thread(&test_thread, NULL);
     while(!thread_done) yield();

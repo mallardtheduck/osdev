@@ -7,9 +7,6 @@ namespace module_api{
 	#include <module_api.h>
 }
 
-typedef int (*syscall_vector)(int, void*);
-
-int module_syscall(int, void*);
-int user_syscall(int, void*);
+extern module_api::syscall_table MODULE_SYSCALL_TABLE;
 
 #endif

@@ -2,6 +2,7 @@
 #define _LOAD_ELF_HPP
 
 #include "kernel.hpp"
+#include "syscalls.hpp"
 
 const size_t ELF_NIDENT=16;
 
@@ -151,8 +152,10 @@ struct aligned_memory{
 	void *aligned;
 };
 
-typedef int (*syscall_vector)(int, void*);
-typedef int (*module_entry)(syscall_vector);
+namespace module_api{
+	struct syscall_table;
+};
+typedef int (*module_entry)(module_api::syscall_table*);
 
 struct loaded_elf{
 	aligned_memory mem;
