@@ -72,6 +72,29 @@ int fioctl(file_handle *handle, int fn, size_t bytes, char *buf){
 	return fs_ioctl(*handle, fn, bytes, buf);
 }
 
+dir_handle *diropen(char *path){
+	return new dir_handle(fs_open_dir(path));
+}
+
+bool dirclose(dir_handle *handle){
+	if(fs_close_dir(*handle)){
+		delete handle;
+		return true;
+	}else return false;
+}
+
+directory_entry dirread(dir_handle *handle){
+	return fs_read_dir(*handle);
+}
+
+bool dirwrite(dir_handle *handle, directory_entry entry){
+	return fs_write_dir(*handle, entry);
+}
+
+bool dirseek(dir_handle *handle, size_t pos, bool relative){
+	return fs_seek_dir(*handle, pos, relative);
+}
+
 module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&panic,
 	&malloc,
@@ -125,11 +148,11 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&fioctl,
 	NULL,
 
-	NULL,//&fs_open_dir,
-	NULL,//&fs_close_dir,
-	NULL,//&fs_read_dir,
-	NULL,//&fs_write_dir,
-	NULL,//&fs_seek_dir,
+	diropen,
+	dirclose,
+	dirread,
+	dirwrite,
+	dirseek,
 	NULL,
-	NULL,//&fs_stat
+	&fs_stat,
 };
