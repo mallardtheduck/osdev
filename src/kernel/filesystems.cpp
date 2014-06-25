@@ -35,20 +35,50 @@ void fs_init(){
 }
 
 fs_path *new_fs_path(const string &path){
+	dbgpf("FS: path:'%s'\n", path.c_str());
 	string upath=to_upper(path);
 	string current_str;
-	fs_path *ret=new fs_path();
-	fs_path *current_node=ret;
+	fs_path *head=NULL;
+	fs_path *current_node=NULL;
 	for(size_t i=0; i<upath.length(); ++i){
-		if((upath[i]==FS_PATH_SEPERATOR || i==upath.length()-1) && current_str!=""){
+		if(upath[i]==FS_PATH_SEPERATOR && current_str!=""){
+			dbgpf("FS: segment:'%s'\n", current_str.c_str());
+			if(head==NULL){
+				head=new fs_path();
+				current_node=head;
+			}else{
+				fs_path *next=new fs_path();
+            	current_node->next=next;
+            	current_node=current_node->next;
+			}
+			current_node->next=NULL;
 			current_node->str=new char[current_str.length()];
 			strncpy(current_node->str, current_str.c_str(), current_str.length());
+		}else{
+			current_str+=upath[i];
+		}
+	}
+	if(current_str!=""){
+		dbgpf("FS: segment:'%s'\n", current_str.c_str());
+		if(head==NULL){
+			head=new fs_path();
+			current_node=head;
+		}else{
 			fs_path *next=new fs_path();
 			current_node->next=next;
 			current_node=current_node->next;
 		}
+		current_node->next=NULL;
+		current_node->str=new char[current_str.length()+1];
+		strncpy(current_node->str, current_str.c_str(), current_str.length()+1);
 	}
-	return ret;
+	if(head==NULL){
+		dbgout("FS: empty path\n");
+		head=new fs_path();
+		head->str=new char[1];
+		*(head->str)='\0';
+	}
+	return head;
 }
 
 void delete_fs_path(fs_path *p){
