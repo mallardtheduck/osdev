@@ -33,5 +33,6 @@ void load_module(char *path){
 	loaded_modules->push_back(mod);
 	fs_close(file);
 	release_lock(mod_lock);
-	sch_new_thread(&module_thread_start, (void*)mod.elf.entry);
+	//sch_new_thread(&module_thread_start, (void*)mod.elf.entry);
+	mod.elf.entry(&MODULE_SYSCALL_TABLE);
 }
