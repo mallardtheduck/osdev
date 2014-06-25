@@ -2,8 +2,16 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
+namespace instance_mode{
+	enum Enum{
+		Simple,
+		Raw,
+	};
+};
+
 struct terminal_instance{
 	size_t pos;
+	instance_mode::Enum mode;
 };
 
 static const size_t VGA_WIDTH = 80;
@@ -17,6 +25,7 @@ uint16_t* terminal_buffer;
 void *terminal_open(){
 	terminal_instance *inst = new terminal_instance();
 	inst->pos=0;
+	inst->mode=instance_mode::Simple;
 	return (void*) inst;
 }
 
@@ -35,17 +44,34 @@ int terminal_read(void *instance, size_t bytes, char *buf){
 
 bool terminal_write(void *instance, size_t bytes, char *buf){
 	terminal_instance *inst=(terminal_instance*)instance;
-	//TODO: Bounds checking!
-	memcpy((char*)terminal_buffer+inst->pos, buf, bytes);
-	inst->pos+=bytes;
-	return true;
+	if(inst->mode==instance_mode::Raw){
+		//TODO: Bounds checking!
+		memcpy((char*)terminal_buffer+inst->pos, buf, bytes);
+		inst->pos+=bytes;
+		return true;
+	}else{
+		terminal_writestring(buf);
+		return true;
+	}
 }
 
 void terminal_seek(void *instance, size_t pos, bool relative){
 	terminal_instance *inst=(terminal_instance*)instance;
-	//TODO: Bounds checking!
-	if(relative) inst->pos+=pos;
-	else inst->pos=pos;
+	if(inst->mode==instance_mode::Raw){
+		//TODO: Bounds checking!
+		if(relative) inst->pos+=pos;
+		else inst->pos=pos;
+	}else{
+		int cpos;
+		if(relative){
+			cpos=(terminal_row * VGA_WIDTH) + terminal_column;
+			cpos+=pos;
+		}else{
+			cpos=pos;
+		}
+		terminal_row=cpos/VGA_WIDTH;
+		terminal_column=cpos-(terminal_row * VGA_WIDTH);
+	}
 }
 
 int terminal_ioctl(void *instance, int fn, size_t bytes, char *buf){
