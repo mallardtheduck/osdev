@@ -155,4 +155,6 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	dirseek,
 	NULL,
 	&fs_stat,
+
+	&load_module,
 };

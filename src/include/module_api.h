@@ -74,6 +74,8 @@ struct syscall_table{
 	bool (*dirseek)(dir_handle *handle, size_t pos, bool relative);
 	dir_handle *(*dircreate)(char *path);
 	directory_entry (*stat)(char *path);
+
+	void (*module_load)(char *path);
 };
 
 #ifndef __cplusplus

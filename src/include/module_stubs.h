@@ -29,11 +29,11 @@ inline static void memcpy(void *dst, void *src, size_t size){
 inline static void memmove(void *dst, void *src, size_t size){
 	SYSCALL_TABLE->memmove(dst, src, size);
 }
-inline static int strcmp(char *s1, char *s2){
-	return SYSCALL_TABLE->strcmp(s1, s2);
+inline static int strcmp(const char *s1, const char *s2){
+	return SYSCALL_TABLE->strcmp((char*)s1, (char*)s2);
 }
-inline static void strncpy(char *dst, char *src, size_t num){
-	SYSCALL_TABLE->strncpy(dst, src, num);
+inline static void strncpy(char *dst, const char *src, size_t num){
+	SYSCALL_TABLE->strncpy(dst, (char*)src, num);
 }
 inline static void init_lock(lock *l){
 	SYSCALL_TABLE->init_lock(l);
@@ -205,6 +205,10 @@ inline static dir_handle *dircreate(char *path){
 
 inline static directory_entry stat(char *path){
 	return SYSCALL_TABLE->stat(path);
+}
+
+inline static void module_load(char *path){
+	SYSCALL_TABLE->module_load(path);
 }
 
 #endif
