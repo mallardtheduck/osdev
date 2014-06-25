@@ -34,12 +34,12 @@ bool initfs_unmount(void *){
 	return true;
 }
 
-void *initfs_open(void *, char *path){
-	dbgpf("INITFS: Open %s.\n", path);
+void *initfs_open(void *, fs_path *path){
+	dbgpf("INITFS: Open %s.\n", path->str);
 	int files=initfs_getfilecount();
 	for(int i=0; i<files; ++i){
 		initfs_file file=initfs_getfile(i);
-		if(strcmp(path, file.name)==0){
+		if(strcmp(path->str, file.name)==0){
 			return (void*)new initfs_handle(i);
 		}
 	}
@@ -70,8 +70,8 @@ int initfs_ioctl(void *, int, size_t, char *){
 	return 0;
 }
 
-void *initfs_open_dir(void *, char *path){
-	if(path[0] != '\0') return NULL;
+void *initfs_open_dir(void *, fs_path *path){
+	if(path->str != '\0') return NULL;
 	return (void*)new initfs_dirhandle;
 }
 bool initfs_close_dir(void *dirdata){
@@ -99,9 +99,9 @@ bool initfs_write_dir(void *, directory_entry){
 	return false;
 }
 
-directory_entry initfs_stat(void *, char *path){
+directory_entry initfs_stat(void *, fs_path *path){
 	dbgpf("INITFS: Stat '%s'.\n", path);
-	if(path[0]=='\0'){
+	if(path->str=='\0'){
 		dbgout("INITFS: Stat root.\n");
 		directory_entry ret;
 		ret.filename[0]='\0';
@@ -113,7 +113,7 @@ directory_entry initfs_stat(void *, char *path){
 		int files=initfs_getfilecount();
 		for(int i=0; i<files; ++i){
 			initfs_file file=initfs_getfile(i);
-			if(strcmp(path, file.name)==0){
+			if(strcmp(path->str, file.name)==0){
 				initfs_dirhandle dh(i);
 				return initfs_read_dir(&dh);
 			}
@@ -142,18 +142,18 @@ bool initfs_dirseek(void *dirdata, int pos, bool relative){
   	bool needs_device;
   	void *(*mount)(char *device);
   	bool (*unmount)(void *mountdata);
-  	void *(*open)(void *mountdata, char *path);
+  	void *(*open)(void *mountdata, fs_path *path);
   	bool (*close)(void *filedata);
   	int (*read)(void *filedata, size_t bytes, char *buf);
   	bool (*write)(void *filedata, size_t bytes, char *buf);
   	bool (*seek)(void *filedata, int pos, bool relatiive);
   	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
-  	void *(*open_dir)(void *mountdata, char *path);
+  	void *(*open_dir)(void *mountdata, fs_path *path);
   	bool (*close_dir)(void *dirdata);
   	directory_entry (*read_dir)(void *dirdata);
   	bool (*write_dir)(void *dirdata, directory_entry entry);
   	bool (*dirseek)(void *dirdata, int pos, bool relative);
-  	directory_entry (*stat)(void *mountdata, char *path);
+  	directory_entry (*stat)(void *mountdata, fs_path *path);
   };*/
 
 fs_driver initfs_driver = {true, "INITFS", false,
