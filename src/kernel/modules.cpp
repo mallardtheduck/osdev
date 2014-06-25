@@ -23,10 +23,15 @@ void module_thread_start(void *p){
 void load_module(char *path){
 	take_lock(mod_lock);
 	file_handle file=fs_open(path);
+	if(!file.valid){
+		dbgpf("MOD: Could not open '%s'!\n", path);
+		return;
+	}
 	kernel_module mod;
 	mod.filename=path;
 	mod.elf=elf_load_module(file);
 	loaded_modules->push_back(mod);
+	fs_close(file);
 	release_lock(mod_lock);
 	sch_new_thread(&module_thread_start, (void*)mod.elf.entry);
 }
