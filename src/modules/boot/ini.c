@@ -29,8 +29,13 @@ int strlen(char *s){
 char *fgets(char *str, int num, FILE *stream){
 	char *ret=str; int i;
 	for(i=0; i<num; ++i){
-		fread(stream, 1, str);
-		if(*str=='\n') break;
+		if(fread(stream, 1, str)!=1){
+			return NULL;
+		}
+		if(*str=='\n'){
+			*str='\0';
+			break;
+		}
 		++str;
 	}
 	return ret;
