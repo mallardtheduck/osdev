@@ -17,18 +17,18 @@ struct devfs_dirhandle{
   	bool needs_device;
   	void *(*mount)(char *device);
   	bool (*unmount)(void *mountdata);
-  	void *(*open)(void *mountdata, char *path);
+  	void *(*open)(void *mountdata, fs_path *path);
   	bool (*close)(void *filedata);
   	int (*read)(void *filedata, size_t bytes, char *buf);
   	bool (*write)(void *filedata, size_t bytes, char *buf);
-  	bool (*seek)(void *filedata, int pos, bool relatiive);
+  	bool (*seek)(void *filedata, int pos, bool relative);
   	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
-  	void *(*open_dir)(void *mountdata, char *path);
+  	void *(*open_dir)(void *mountdata, fs_path *path);
   	bool (*close_dir)(void *dirdata);
   	directory_entry (*read_dir)(void *dirdata);
   	bool (*write_dir)(void *dirdata, directory_entry entry);
   	bool (*dirseek)(void *dirdata, int pos, bool relative);
-  	directory_entry (*stat)(void *mountdata, char *path);
+  	directory_entry (*stat)(void *mountdata, fs_path *path);
   };*/
 
 void *devfs_mount(char *){
@@ -39,8 +39,8 @@ bool devfs_unmount(void *mountdata){
 	return (mountdata==devfs_magic);
 }
 
-void *devfs_open(void *, char *path){
-	return drv_open(path);
+void *devfs_open(void *, fs_path *path){
+	return drv_open(path->str);
 }
 
 bool devfs_close(void *filedata){
@@ -64,7 +64,7 @@ int devfs_ioctl(void *filedata, int fn, size_t bytes, char *buf){
 	return drv_ioctl(filedata, fn, bytes, buf);
 }
 
-void *devfs_open_dir(void *, char *){
+void *devfs_open_dir(void *, fs_path *){
 	return (void*)new devfs_dirhandle();
 }
 
@@ -101,13 +101,13 @@ bool devfs_dirseek(void *dirdata, int pos, bool relative){
 	return true;
 }
 
-directory_entry devfs_stat(void *, char *path){
+directory_entry devfs_stat(void *, fs_path *path){
 	directory_entry ret;
 	ret.valid=false;
-	drv_driver drv=*drv_get(path);
+	drv_driver drv=*drv_get(path->str);
 	if(drv.open!=NULL){
 		ret.valid=true;
-		strncpy(ret.filename, path, 255);
+		strncpy(ret.filename, path->str, 255);
 		ret.size=0;
 		ret.type=FS_Device;
 	}
