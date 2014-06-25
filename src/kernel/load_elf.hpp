@@ -157,13 +157,13 @@ namespace module_api{
 };
 typedef int (*module_entry)(module_api::syscall_table*);
 
-struct loaded_elf{
+struct loaded_elf_module{
 	aligned_memory mem;
 	module_entry entry;
 };
 
 void elf_test();
 size_t elf_getsize(file_handle &file);
-loaded_elf elf_load(file_handle &file);
+loaded_elf_module elf_load_module(file_handle &file);
 
 #endif

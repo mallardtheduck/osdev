@@ -42,6 +42,7 @@ extern "C"{
 #include "devfs.hpp"
 #include "load_elf.hpp"
 #include "syscalls.hpp"
+#include "modules.hpp"
 
 void GDT_init();
 void IDT_init();

@@ -123,7 +123,7 @@ void elf_test(){
 		dbgpf("ELF: Prog: %i type: %i, offset: %i, vaddr: %x, paddr: %x, filesz: %i, memsz: %i, flags: %i, align: %i\n", i, prog.type, prog.offset, prog.vaddr, prog.paddr, prog.filesz, prog.memsz, prog.flags, prog.align);
 	}
 	dbgpf("ELF: Image RAM size: %i\n", elf_getsize(file));
-	loaded_elf tstelf=elf_load(file);
+	loaded_elf_module tstelf=elf_load_module(file);
 	dbgpf("ELF: test %i\n", tstelf.entry(&MODULE_SYSCALL_TABLE));
 	fs_close(file);
 }
@@ -154,7 +154,7 @@ Elf32_Addr elf_symbol_value(file_handle &file, const Elf32_Ehdr &header, size_t 
 	return 0;
 }
 
-void elf_do_reloc(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr &section, void *base){
+void elf_do_reloc_module(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr &section, void *base){
 	size_t n_relocs=section.size/sizeof(Elf32_Rel);
 	for(size_t i=0; i<n_relocs; ++i){
 		Elf32_Rel rel=elf_read_rel(file, section, i);
@@ -181,8 +181,8 @@ void elf_do_reloc(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr &secti
 	}
 }
 
-loaded_elf elf_load(file_handle &file){
-	loaded_elf ret;
+loaded_elf_module elf_load_module(file_handle &file){
+	loaded_elf_module ret;
 	Elf32_Ehdr header=elf_read_header(file);
 	size_t ramsize=elf_getsize(file);
 	ret.mem=al_alloc(ramsize, 4096); //TODO: Proper alignment calculation
@@ -198,7 +198,7 @@ loaded_elf elf_load(file_handle &file){
 	for(int i=0; i<header.shnum; ++i){
 		Elf32_Shdr section=elf_read_sectionheader(file, header, i);
 		if(section.type==SHT_REL){
-			elf_do_reloc(file, header, section, ret.mem.aligned);
+			elf_do_reloc_module(file, header, section, ret.mem.aligned);
 			break;
 		}
 	}
