@@ -47,7 +47,7 @@ drv_driver *drv_get(char *name){
 }
 
 void *drv_open(char *driver){
-	hold_lock hl(drv_lock);
+	//hold_lock hl(drv_lock);
 	drv_instance *inst=new drv_instance();
 	//TODO: Attach to process somehow...
 	inst->driver=*drv_get(driver);
