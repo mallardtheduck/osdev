@@ -48,12 +48,11 @@ void boot_thread(void*){
 	dbgout("BOOT: Boot manager loaded.\n");
 	if (ini_parse("INIT:/config.ini", handler, NULL) < 0) {
             panic("(BOOT) Can't load 'config.ini'!\n");
-            return 1;
     }
-	return 0;
 }
 
 extern "C" int module_main(syscall_table *systbl){
 	SYSCALL_TABLE=systbl;
 	new_thread(&boot_thread, NULL);
+	return 0;
 }
