@@ -100,8 +100,8 @@ bool initfs_write_dir(void *, directory_entry){
 }
 
 directory_entry initfs_stat(void *, fs_path *path){
-	dbgpf("INITFS: Stat '%s'.\n", path);
-	if(path->str=='\0'){
+	dbgpf("INITFS: Stat '%s'.\n",path->str);
+	if(*(path->str)=='\0'){
 		dbgout("INITFS: Stat root.\n");
 		directory_entry ret;
 		ret.filename[0]='\0';
