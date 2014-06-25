@@ -7,6 +7,8 @@
 
 #ifndef __cplusplus
 	#include <stdbool.h>
+#else
+	#pragma GCC diagnostic ignored "-Wwrite-strings"
 #endif
 
 inline static void panic(char *msg){
