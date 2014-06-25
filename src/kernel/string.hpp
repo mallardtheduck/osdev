@@ -57,6 +57,7 @@ public:
 	bool operator!=(const string&) const;
 	void clear();
 	size_type size() const;
+	size_type length() const;
 	bool empty() const;
 	const char* c_str() const;
 	string substr(const size_type start, const size_type length) const;

@@ -134,6 +134,11 @@ string::size_type string::size() const
 	return strlen(p);
 }
 
+string::size_type string::length() const
+{
+	return strlen(p);
+}
+
 bool string::empty() const
 {
 	return *p == '\0';
