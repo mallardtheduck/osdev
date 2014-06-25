@@ -22,6 +22,7 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	terminal_add_device();
 	fs_init();
 	load_module("INITFS:/TEST.SYS");
+	load_module("INITFS:/BOOT.SYS");
 	printf("Ready.");
 	while(true)sch_block();
 	panic("Kernel endpoint reached!\n");
