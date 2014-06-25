@@ -2,6 +2,7 @@
 #include "filesystems.hpp"
 #include "ministl.hpp"
 #include "locks.hpp"
+#include "strutil.hpp"
 
 map<string, fs_mountpoint> *fs_mounts;
 map<string, fs_driver> *fs_drivers;
@@ -33,6 +34,29 @@ void fs_init(){
 	fs_close_dir(dir);
 }
 
+fs_path *new_fs_path(const string &path){
+	string upath=to_upper(path);
+	string current_str;
+	fs_path *ret=new fs_path();
+	fs_path *current_node=ret;
+	for(size_t i=0; i<upath.length(); ++i){
+		if((upath[i]==FS_PATH_SEPERATOR || i==upath.length()-1) && current_str!=""){
+			current_node->str=new char[current_str.length()];
+			strncpy(current_node->str, current_str.c_str(), current_str.length());
+			fs_path *next=new fs_path();
+			current_node->next=next;
+			current_node=current_node->next;
+		}
+	}
+	return ret;
+}
+
+void delete_fs_path(fs_path *p){
+	if(p->next) delete_fs_path(p->next);
+	delete[] p->str;
+	delete p;
+}
+
 fs_driver &getfs(char *name){
 	hold_lock hl(fs_lock);
 	return (*fs_drivers)[name];
@@ -60,7 +84,7 @@ fs_mountpoint &getpathmount(char *path){
 char *getfspath(char *path){
 	char *ret=path;
 	while(*ret++!='\0'){
-		if(*ret==':') return ++ret;
+		if(*ret==FS_DRIVE_SEPERATOR) return ++ret;
 	}
 	return NULL;
 }
@@ -112,7 +136,9 @@ file_handle fs_open(char *path){
 		ret.valid=false;
 		return ret;
 	}
-	void *filedata=mount.driver.open(mount.mountdata, fspath);
+	fs_path *ppath=new_fs_path(fspath);
+	void *filedata=mount.driver.open(mount.mountdata, ppath);
+	delete_fs_path(ppath);
 	if(!filedata){
 		dbgout("FS: Open failed in FS driver.\n");
 		ret.valid=false;
@@ -164,7 +190,9 @@ dir_handle fs_open_dir(char *path){
 		ret.valid=false;
 		return ret;
 	}
-	void *dirdata=mount.driver.open_dir(mount.mountdata, fspath);
+	fs_path *ppath=new_fs_path(fspath);
+	void *dirdata=mount.driver.open_dir(mount.mountdata, ppath);
+	delete_fs_path(ppath);
 	if(!dirdata){
 		dbgout("FS: Directory open failed in FS driver.\n");
 		ret.valid=false;
@@ -215,5 +243,8 @@ directory_entry fs_stat(char *path){
 		ret.valid=false;
 		return ret;
 	}
-	return mount.driver.stat(mount.mountdata, fspath);
+	fs_path *ppath=new_fs_path(fspath);
+	ret=mount.driver.stat(mount.mountdata, ppath);
+	delete_fs_path(ppath);
+	return ret;
 }

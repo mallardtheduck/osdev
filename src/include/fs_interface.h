@@ -1,6 +1,9 @@
 #ifndef _FS_INTERFACE_H
 #define _FS_INTERFACE_H
 
+const char FS_PATH_SEPERATOR='/';
+const char FS_DRIVE_SEPERATOR=':';
+
 enum fs_item_types{
 	FS_File=0x00,
 	FS_Directory=0x01,
@@ -23,24 +26,33 @@ struct directory_entry{
 typedef struct directory_entry directory_entry;
 #endif
 
+struct fs_path{
+	char *str;
+	struct fs_path *next;
+};
+
+#ifndef __cplusplus
+typedef struct fs_path fs_path;
+#endif
+
 struct fs_driver{
 	bool valid;
 	char name[9];
 	bool needs_device;
 	void *(*mount)(char *device);
 	bool (*unmount)(void *mountdata);
-	void *(*open)(void *mountdata, char *path);
+	void *(*open)(void *mountdata, fs_path *path);
 	bool (*close)(void *filedata);
 	int (*read)(void *filedata, size_t bytes, char *buf);
 	bool (*write)(void *filedata, size_t bytes, char *buf);
 	bool (*seek)(void *filedata, int pos, bool relative);
 	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
-	void *(*open_dir)(void *mountdata, char *path);
+	void *(*open_dir)(void *mountdata, fs_path *path);
 	bool (*close_dir)(void *dirdata);
 	directory_entry (*read_dir)(void *dirdata);
 	bool (*write_dir)(void *dirdata, directory_entry entry);
 	bool (*dirseek)(void *dirdata, int pos, bool relative);
-	directory_entry (*stat)(void *mountdata, char *path);
+	directory_entry (*stat)(void *mountdata, fs_path *path);
 };
 
 #ifndef __cplusplus
