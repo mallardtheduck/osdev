@@ -236,6 +236,11 @@ extern "C" void isr_handler(isr_regs *ctx){
 		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
 		dbgout("Syscall recieved.\n");
 		//if(ctx->eax==0) sch_isr(ctx);
+	}else if(ctx->interrupt_number==0x0E){
+		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
+		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
+		out_int_info(*ctx);
+		panic("Page fault!");
 	}else{
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
