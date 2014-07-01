@@ -12,7 +12,8 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	GDT_init();
 	IDT_init();
 	init_cpu();
-	mm_init(mbd);
+	vmm_init(mbd);
+	//mm_init(mbd);
 	disable_pic();
 	PIC_init();
 	enable_interrupts();
@@ -21,6 +22,7 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	drv_init();
 	terminal_add_device();
 	fs_init();
+	init_modules();
 	load_module("INIT:/BOOT.SYS");
 	//printf("Ready.");
 	while(true)sch_block();

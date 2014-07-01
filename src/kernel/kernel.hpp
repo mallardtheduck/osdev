@@ -35,6 +35,7 @@ extern "C"{
 
 #include "util.hpp"
 #include "mm.hpp"
+#include "vmm.hpp"
 #include "idt.hpp"
 #include "pic.hpp"
 #include "scheduler.hpp"

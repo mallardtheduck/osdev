@@ -8,6 +8,9 @@ extern "C"{
 lock la_lock;
 bool la_inited=false;
 
+void *vmm_ministack_alloc(size_t pages=1);
+void vmm_ministack_free(void *ptr, size_t pages=1);
+
 /** This function is supposed to lock the memory data structures. It
  * could be as simple as disabling interrupts or acquiring a spinlock.
  * It's up to you to decide. 
@@ -43,7 +46,8 @@ extern "C" int liballoc_unlock(){
  * \return A pointer to the allocated memory.
  */
 extern "C" void* liballoc_alloc(int pages){
-	return mm_alloc(pages * 4096);
+	//return mm_alloc(pages * 4096);
+	return vmm_ministack_alloc(pages);
 }
 
 /** This frees previously allocated memory. The void* parameter passed
@@ -54,7 +58,8 @@ extern "C" void* liballoc_alloc(int pages){
  *
  * \return 0 if the memory was successfully freed.
  */
-extern "C" int liballoc_free(void *ptr,int){
-	mm_free(ptr);
+extern "C" int liballoc_free(void *ptr, int pages){
+	//mm_free(ptr);
+	vmm_ministack_free(ptr, pages);
 	return 0;
 }
