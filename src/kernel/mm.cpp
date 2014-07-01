@@ -72,6 +72,7 @@ void mm_init(multiboot_info_t *mbt){
 }
 
 void *mm_alloc(size_t bytes){
+	panic("(MM) mm_alloc called!\n");
 	hold_lock lck(mm_lock);
 	bytes += sizeof(mm_allocation);
 	for(int i=0; i< MAX_REGIONS; ++i){
@@ -118,6 +119,7 @@ void *mm_alloc(size_t bytes){
 }
 
 void mm_free(void *ptr){
+	panic("(MM) mm_free called!\n");
 	if(!ptr) return;
 	hold_lock hl(mm_lock);
 	mm_allocation *alloc=(mm_allocation*)ptr-1;
