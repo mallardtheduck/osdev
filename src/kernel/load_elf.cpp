@@ -160,8 +160,8 @@ void elf_do_reloc_module(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr
 		Elf32_Rel rel=elf_read_rel(file, section, i);
 		Elf32_Addr symval=elf_symbol_value(file, header, ELF32_R_SYM(rel.info));
 		if(symval) symval+=(uint32_t)base;
-		dbgpf("ELF: Reloc: offset: %x, info: %x, symbol: %i (%x), type: %i\n",
-			rel.offset, rel.info, ELF32_R_SYM(rel.info), symval, ELF32_R_TYPE(rel.info));
+		/*dbgpf("ELF: Reloc: offset: %x, info: %x, symbol: %i (%x), type: %i\n",
+			rel.offset, rel.info, ELF32_R_SYM(rel.info), symval, ELF32_R_TYPE(rel.info));*/
 		uint32_t *ref=(uint32_t*)((char*)base+rel.offset);
 		uint32_t newval=-1;
 		switch(ELF32_R_TYPE(rel.info)){
@@ -169,12 +169,12 @@ void elf_do_reloc_module(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr
 				break;
 			case R_386_32:
 				newval=*ref+(size_t)base;
-				dbgpf("ELF: Value %x (originally %x) at %x\n", newval, *ref, ref);
+				//dbgpf("ELF: Value %x (originally %x) at %x\n", newval, *ref, ref);
                 *ref=newval;
 				break;
 			case R_386_PC32:
 				newval=*ref;
-				dbgpf("ELF: Value %x (originally %x) at %x\n", newval, *ref, ref);
+				//dbgpf("ELF: Value %x (originally %x) at %x\n", newval, *ref, ref);
 				*ref=newval;
 				break;
 		}
