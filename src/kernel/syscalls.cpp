@@ -111,7 +111,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&mod_release_lock,
 
 	&dbgout,
-	NULL,
+	&sprintf,
 
 	&new_thread,
 	&sch_block,

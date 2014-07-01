@@ -11,6 +11,9 @@
 	#pragma GCC diagnostic ignored "-Wwrite-strings"
 #endif
 
+extern char dbgbuf[256];
+#define dbgpf(...) do{SYSCALL_TABLE->sprintf(dbgbuf, __VA_ARGS__); dbgout(dbgbuf);}while(false)
+
 inline static void panic(char *msg){
 	SYSCALL_TABLE->panic(msg);
 }
@@ -52,8 +55,6 @@ inline static void release_lock(lock *l){
 inline static void dbgout(char *msg){
 	SYSCALL_TABLE->dbgout(msg);
 }
-
-#define dbgpf(...) SYSCALL_TABLE->dbgpf(...);
 
 inline static void new_thread(thread_func entry, void *param){
 	SYSCALL_TABLE->new_thread(entry, param);

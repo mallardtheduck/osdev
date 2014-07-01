@@ -30,7 +30,7 @@ struct syscall_table{
 	void (*release_lock)(lock *l);
 
 	void (*dbgout)(char *msg);
-	void (*dbgpf)(char *fmt, ...);
+	void (*sprintf)(char *buf, char *fmt, ...);
 
 	void (*new_thread)(thread_func entry, void *param);
 	void (*block)();
