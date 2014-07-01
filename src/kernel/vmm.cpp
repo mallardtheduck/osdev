@@ -1,9 +1,11 @@
 #include "vmm.hpp"
+#include "locks.hpp"
 
 const size_t VMM_PAGE_SIZE=4096;
 const size_t VMM_ENTRIES_PER_TABLE=1024;
 const size_t VMM_MINISTACK_PAGES=VMM_PAGE_SIZE/sizeof(uint16_t);
 extern char _start, _end;
+lock vmm_lock;
 
 struct vmm_region{
 	void *base;
@@ -21,6 +23,7 @@ void vmm_ministack_free(void *ptr, size_t pages=1);
 void vmm_identity_map(uint32_t *pagedir, size_t page);
 
 void vmm_init(multiboot_info_t *mbt){
+	init_lock(vmm_lock);
 	dbgout("VMM: Init\n");
 	memory_map_t *mmap = (memory_map_t*)mbt->mmap_addr;
 	size_t k_first_page=((size_t)&_start/VMM_PAGE_SIZE);
@@ -54,7 +57,7 @@ void vmm_init(multiboot_info_t *mbt){
     				dbgpf("VMM: Region %i, page %i (%x) - KERNEL\n", i, j, phys_page_num);
     			}else{
     				if(!vmm_ministack) vmm_ministack=(uint16_t*)phys_page_addr;
-    				if(minipage < VMM_MINISTACK_PAGES){
+    				else if(minipage < VMM_MINISTACK_PAGES){
     					vmm_ministack[minipage++]=phys_page_num;
     				}
     				memset(phys_page_addr, 0, VMM_PAGE_SIZE);
@@ -102,10 +105,8 @@ void vmm_identity_map(uint32_t *pagedir, size_t page){
 	dbgpf("VMM: Idenitiy mapping page %x\n", page);
 	uint32_t pageaddr=page*VMM_PAGE_SIZE;
 	size_t table=page/VMM_ENTRIES_PER_TABLE;
-	dbgpf("VMM: Table: %i\n", table);
 	size_t offset=page-(table*VMM_ENTRIES_PER_TABLE);
 	uint32_t *tableaddr=(uint32_t*)(pagedir[table] & 0xFFFFF000);
-	dbgpf("VMM: Table address: %x\n", tableaddr);
 	if(!tableaddr){
 		panic("(VMM) No table for allocation!\n");
 		tableaddr=(uint32_t*)vmm_ministack_alloc();
@@ -117,6 +118,10 @@ void vmm_identity_map(uint32_t *pagedir, size_t page){
 }
 
 void vmm_unmap(uint32_t *pagedir, size_t page){
+	dbgpf("VMM: Unmapping page %x.\n", page);
+	if(page <= ((size_t)&_end/VMM_PAGE_SIZE)){
+		panic("Attempt to unmap low page!");
+	}
 	uint32_t pageaddr=page*VMM_PAGE_SIZE;
     size_t table=page/VMM_ENTRIES_PER_TABLE;
     size_t offset=page-(table*VMM_ENTRIES_PER_TABLE);
@@ -139,6 +144,7 @@ void vmm_ministack_take(size_t page){
 }
 
 void *vmm_ministack_alloc(size_t pages){
+	hold_lock hl(vmm_lock);
 	void *ret;
 	for(size_t i=0; i<VMM_MINISTACK_PAGES; ++i){
 		size_t base=vmm_ministack[i];
@@ -153,8 +159,8 @@ void *vmm_ministack_alloc(size_t pages){
 				vmm_ministack_take(j);
         		if(vmm_kpagedir)vmm_identity_map(vmm_kpagedir, j);
         	}
+			memset((void*)base, 0xaa, pages*VMM_PAGE_SIZE);
 			ret=(void*)(base*VMM_PAGE_SIZE);
-			memset((void*)base, 0, pages*VMM_PAGE_SIZE);
 			return ret;
 		}
 	}
@@ -163,6 +169,8 @@ void *vmm_ministack_alloc(size_t pages){
 }
 
 void vmm_ministack_free(void *ptr, size_t pages){
+	hold_lock hl(vmm_lock);
+	memset(ptr, 0xfe, pages * VMM_PAGE_SIZE);
 	for(size_t j=0; j<pages; ++j){
 		uint16_t page_num=j+(size_t)ptr/VMM_PAGE_SIZE;
 		for(size_t i=0; i<VMM_MINISTACK_PAGES; ++i){
