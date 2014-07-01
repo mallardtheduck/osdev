@@ -1,15 +1,18 @@
 #include "module_stubs.h"
 
 syscall_table *SYSCALL_TABLE;
+char dbgbuf[256];
 
 #include "ini.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-int strlen(const char *s){
-	int i;
-	while(*s++) ++i;
-	return i;
+size_t strlen(const char* str)
+{
+	size_t ret = 0;
+	while ( str[ret] != 0 )
+		ret++;
+	return ret;
 }
 
 char *strdup(const char *s){
