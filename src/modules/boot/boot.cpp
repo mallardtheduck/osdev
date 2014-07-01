@@ -35,11 +35,12 @@ void displaywrite(const char *s){
     devclose(handle);
 }
 
-static int handler(void*, const char* section, const char* name, const char* value){
+extern "C" int handler(void *c, const char* section, const char* name, const char* value){
 	#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
+	dbgpf("BOOT: [%s] %s=%s\n", section, name, value);
 
 	if(MATCH("default", "display")){
-		c.display=strdup(value);
+		((config*)c)->display=strdup(value);
 		displaywrite("Starting BT/OS...");
 	}else if(MATCH("default", "load")){
 		module_load((char*)value);
@@ -49,7 +50,7 @@ static int handler(void*, const char* section, const char* name, const char* val
 
 void boot_thread(void*){
 	dbgout("BOOT: Boot manager loaded.\n");
-	if (ini_parse("INIT:/config.ini", handler, NULL) < 0) {
+	if (ini_parse("INIT:/config.ini", &handler, &c) < 0) {
             panic("(BOOT) Can't load 'config.ini'!\n");
     }
 }
