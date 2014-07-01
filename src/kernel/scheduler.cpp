@@ -50,7 +50,7 @@ void sch_init(){
 	init_lock(sch_lock);
 	outb(0x43, 0x36);
 	outb(0x40, 39000 & 0xFF);
-	outb(0x40, (39000 >> 8) & 0xFF); 
+	outb(0x40, (39000 >> 8) & 0xFF);
 	threads=new vector<sch_thread>();
 	sch_stack=(char*)malloc(4096)+4096;
 	sch_thread mainthread;
@@ -66,9 +66,9 @@ void sch_init(){
 	reaper_thread=sch_new_thread(&thread_reaper, NULL, 4096);
 	//sch_threadtest();
 	irq_handle(0, &sch_isr);
+	sch_inited=true;
 	IRQ_clear_mask(0);
 	dbgout("SCH: Init complete.\n");
-	sch_inited=true;
 }
 
 void test_priority(void *params){
