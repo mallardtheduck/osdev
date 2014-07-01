@@ -20,10 +20,12 @@ http://code.google.com/p/inih/
 #define MAX_SECTION 50
 #define MAX_NAME 50
 
-int strlen(char *s){
-	int i;
-	while(*s++) ++i;
-	return i;
+size_t strlen(const char* str)
+{
+	size_t ret = 0;
+	while ( str[ret] != 0 )
+		ret++;
+	return ret;
 }
 
 char *fgets(char *str, int num, FILE *stream){
