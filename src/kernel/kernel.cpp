@@ -13,7 +13,6 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	IDT_init();
 	init_cpu();
 	vmm_init(mbd);
-	//mm_init(mbd);
 	disable_pic();
 	PIC_init();
 	enable_interrupts();
