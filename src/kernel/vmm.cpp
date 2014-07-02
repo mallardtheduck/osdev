@@ -101,19 +101,6 @@ void vmm_page_fault_handler(int){
 	else panic("(VMM) Page fault!");
 }
 
-void vmm_unmap(uint32_t *pagedir, size_t page){
-	dbgpf("VMM: Unmapping page %x.\n", page);
-	if(page <= ((size_t)&_end/VMM_PAGE_SIZE)){
-		panic("Attempt to unmap low page!");
-	}
-	uint32_t pageaddr=page*VMM_PAGE_SIZE;
-    size_t table=page/VMM_ENTRIES_PER_TABLE;
-    size_t offset=page-(table*VMM_ENTRIES_PER_TABLE);
-    uint32_t *tableaddr=(uint32_t*)(pagedir[table] & 0xFFFFF000);
-    tableaddr[offset] = 0;
-    asm volatile("invlpg (%0)" ::"r" (pageaddr) : "memory");
-}
-
 bool vmm_ministack_find(size_t page){
 	for(size_t i=0; i<VMM_MINISTACK_PAGES; ++i){
 			if(vmm_ministack[i]==page) return true;
@@ -154,7 +141,6 @@ void vmm_refresh_addr(uint32_t pageaddr){
 }
 
 void vmm_map_page(uint32_t *pagedir, size_t virtpage, size_t physpage){
-	dbgpf("VMM: Mapping page %x at %x\n", physpage, virtpage);
 	size_t tableindex=virtpage/VMM_ENTRIES_PER_TABLE;
 	size_t tableoffset=virtpage-(tableindex * VMM_ENTRIES_PER_TABLE);
 	uint32_t *table=(uint32_t*)(pagedir[tableindex] & 0xFFFFF000);
