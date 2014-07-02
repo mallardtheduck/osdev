@@ -21,6 +21,7 @@ uint16_t *vmm_ministack;
 void *vmm_ministack_alloc(size_t pages=1);
 void vmm_ministack_free(void *ptr, size_t pages=1);
 void vmm_identity_map(uint32_t *pagedir, size_t page);
+void vmm_page_fault_handler(int);
 
 void vmm_init(multiboot_info_t *mbt){
 	init_lock(vmm_lock);
@@ -94,11 +95,20 @@ void vmm_init(multiboot_info_t *mbt){
     //for(size_t i=0; i<VMM_MINISTACK_PAGES; ++i){
     //	if(vmm_ministack[i]) vmm_identity_map(vmm_kpagedir, vmm_ministack[i]);
     //}
+    int_handle(0x0e, &vmm_page_fault_handler);
     asm volatile("mov %0, %%cr3":: "b"(vmm_kpagedir));
     unsigned int cr0;
     asm volatile("mov %%cr0, %0": "=b"(cr0));
     cr0 |= 0x80000000;
     asm volatile("mov %0, %%cr0":: "b"(cr0));
+}
+
+void vmm_page_fault_handler(int){
+	uint32_t addr;
+	asm("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
+	dbgpf("VMM: Page fault at %x!\n", addr);
+	if(addr < VMM_PAGE_SIZE) panic("(VMM) Probable NULL pointer deference!");
+	else panic("(VMM) Page fault!");
 }
 
 void vmm_identity_map(uint32_t *pagedir, size_t page){
