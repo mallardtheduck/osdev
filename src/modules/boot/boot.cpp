@@ -16,8 +16,8 @@ size_t strlen(const char* str)
 }
 
 char *strdup(const char *s){
-	char *ret=(char*)malloc(strlen(s));
-	strncpy(ret, s, strlen(s));
+	char *ret=(char*)malloc(strlen(s)+1);
+	strncpy(ret, s, strlen(s)+1);
 	return ret;
 }
 
@@ -31,6 +31,10 @@ struct config{
 
 void displaywrite(const char *s){
 	void *handle=devopen(c.display);
+	if(!handle){
+		dbgpf("BOOT: Specified display device: %s\n", c.display);
+		panic("(BOOT) Display device not valid!");
+	}
     dputs(handle, (char*)s);
     devclose(handle);
 }
