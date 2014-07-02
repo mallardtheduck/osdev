@@ -41,6 +41,7 @@ void drv_add_device(char *name, drv_driver *driver){
 drv_driver *drv_get(char *name){
 	drv_driver *ret;
 	{ hold_lock hl(drv_lock);
+		if(!drivers->has_key(name)) return NULL;
 		ret=&(*drivers)[name];
 	}
 	return ret;
@@ -48,9 +49,11 @@ drv_driver *drv_get(char *name){
 
 void *drv_open(char *driver){
 	//hold_lock hl(drv_lock);
+	drv_driver *drv=drv_get(driver);
+	if(!drv) return NULL;
 	drv_instance *inst=new drv_instance();
 	//TODO: Attach to process somehow...
-	inst->driver=*drv_get(driver);
+	inst->driver=*drv;
 	inst->instance=inst->driver.open();
 	return (void*)inst;
 }
