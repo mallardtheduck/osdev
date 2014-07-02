@@ -88,7 +88,7 @@ void vmm_init(multiboot_info_t *mbt){
     	uint32_t temp_table=vmm_kpagedir[i] & 0xFFFFF000;
     	vmm_identity_map(vmm_kpagedir, temp_table/VMM_PAGE_SIZE);
     }
-    for(size_t i=0; i<=k_last_page; ++i){
+    for(size_t i=1; i<=k_last_page; ++i){
     	vmm_identity_map(vmm_kpagedir, i);
     }
     //for(size_t i=0; i<VMM_MINISTACK_PAGES; ++i){
@@ -159,8 +159,8 @@ void *vmm_ministack_alloc(size_t pages){
 				vmm_ministack_take(j);
         		if(vmm_kpagedir)vmm_identity_map(vmm_kpagedir, j);
         	}
-			memset((void*)base, 0xaa, pages*VMM_PAGE_SIZE);
 			ret=(void*)(base*VMM_PAGE_SIZE);
+			memset(ret, 0xaa, pages*VMM_PAGE_SIZE);
 			return ret;
 		}
 	}
@@ -169,6 +169,7 @@ void *vmm_ministack_alloc(size_t pages){
 }
 
 void vmm_ministack_free(void *ptr, size_t pages){
+	dbgpf("VMM: Freeing %x, %i pages.\n", ptr, pages);
 	hold_lock hl(vmm_lock);
 	memset(ptr, 0xfe, pages * VMM_PAGE_SIZE);
 	for(size_t j=0; j<pages; ++j){
