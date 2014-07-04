@@ -248,7 +248,7 @@ extern "C" void sch_unlock(){
 	release_lock(sch_lock);
 }
 
-void sch_isr(int){
+void sch_isr(int, isr_regs*){
     enable_interrupts();
 	if(try_take_lock(sch_lock)){
 		release_lock(sch_lock);

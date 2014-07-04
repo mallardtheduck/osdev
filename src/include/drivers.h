@@ -64,6 +64,17 @@ struct drv_driver{
 typedef struct drv_driver drv_driver;
 #endif
 
-typedef void(*int_handler)(int);
+struct isr_regs {
+	uint32_t gs, fs, es, ds;
+	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
+	uint32_t interrupt_number, error_code;
+	uint32_t eip, cs, eflags;
+} __attribute__((packed));
+
+#ifndef __cplusplus
+typedef struct isr_regs isr_regs;
+#endif
+
+typedef void(*int_handler)(int, isr_regs*);
 
 #endif
