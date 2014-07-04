@@ -4,6 +4,9 @@
 const size_t VMM_PAGE_SIZE=4096;
 const size_t VMM_ENTRIES_PER_TABLE=1024;
 const size_t VMM_MINISTACK_PAGES=VMM_PAGE_SIZE/sizeof(uint16_t);
+const size_t VMM_KERNELSPACE_END=1024*1024*1024;
+const size_t VMM_USERSPACE_START=VMM_KERNELSPACE_END;
+
 extern char _start, _end;
 lock vmm_lock;
 
@@ -12,17 +15,20 @@ struct vmm_region{
 	size_t pages;
 };
 
-const size_t MAX_REGIONS=32;
-vmm_region vmm_regions[MAX_REGIONS]={0, 0};
+const size_t VMM_MAX_REGIONS=32;
+vmm_region vmm_regions[VMM_MAX_REGIONS]={0, 0};
 uint32_t vmm_kpagedir[VMM_ENTRIES_PER_TABLE] __attribute__((aligned(0x1000)));
 uint32_t vmm_kinitable[VMM_ENTRIES_PER_TABLE] __attribute__((aligned(0x1000)));
+uint32_t *vmm_cur_pagedir;
 uint16_t *vmm_free_pages;
 uint16_t *vmm_ministack;
+uint32_t *vmm_fullstack_bottom;
+uint32_t *vmm_fullstack_top;
 
 void *vmm_ministack_alloc(size_t pages=1);
 void vmm_ministack_free(void *ptr, size_t pages=1);
-void vmm_identity_map(uint32_t *pagedir, size_t page);
-void vmm_page_fault_handler(int);
+void vmm_identity_map(uint32_t *pagedir, size_t page, bool alloc=true);
+void vmm_page_fault_handler(int,isr_regs*);
 
 void vmm_init(multiboot_info_t *mbt){
 	init_lock(vmm_lock);
@@ -42,14 +48,14 @@ void vmm_init(multiboot_info_t *mbt){
 				vmm_regions[cregion].base=(void*)mmap->base_addr_low;
 				vmm_regions[cregion].pages=mmap->length_low/VMM_PAGE_SIZE;
 				++cregion;
-				if(cregion>=MAX_REGIONS) break;
+				if(cregion>=VMM_MAX_REGIONS) break;
 			}
 		}
 		mmap = (memory_map_t*) ( (unsigned int)mmap + mmap->size + sizeof(unsigned int) );
     }
     size_t totalpages=0;
     size_t minipage=0;
-    for(size_t i=0; i<MAX_REGIONS; ++i){
+    for(size_t i=0; i<VMM_MAX_REGIONS; ++i){
     	if(vmm_regions[i].base){
     		for(size_t j=0; j<vmm_regions[i].pages; ++j){
     			size_t phys_page_num=((size_t)vmm_regions[i].base/VMM_PAGE_SIZE)+j;
@@ -66,7 +72,7 @@ void vmm_init(multiboot_info_t *mbt){
     				++totalpages;
     			}
     		}
-    	}
+    	}else break;
     }
     dbgpf("VMM: Total pages: %i\n", totalpages);
     printf("VMM: Available RAM: %iKB\n", totalpages*4);
@@ -74,14 +80,14 @@ void vmm_init(multiboot_info_t *mbt){
 	for(size_t i=0; i<VMM_ENTRIES_PER_TABLE; ++i){
 		vmm_kpagedir[i]=0|2;
 	}
-	dbgpf("VMM: Initializing initial page table.\n");
+	dbgpf("VMM: Initializing initial page table at %x.\n", vmm_kinitable);
 	memset((void*)vmm_kinitable, 0, VMM_PAGE_SIZE);
 	vmm_kpagedir[0]=(uint32_t)vmm_kinitable | 3;
    	dbgpf("VMM: Setting up identity mappings.\n");
    	vmm_identity_map(vmm_kpagedir, (size_t)vmm_ministack/VMM_PAGE_SIZE);
     vmm_identity_map(vmm_kpagedir, (size_t)vmm_kpagedir/VMM_PAGE_SIZE);
     for(size_t i=1; i<=k_last_page; ++i){
-    	vmm_identity_map(vmm_kpagedir, i);
+    	vmm_identity_map(vmm_kpagedir, i, false);
     }
     int_handle(0x0e, &vmm_page_fault_handler);
     dbgout("VMM: Enabing paging...");
@@ -90,10 +96,41 @@ void vmm_init(multiboot_info_t *mbt){
     asm volatile("mov %%cr0, %0": "=b"(cr0));
     cr0 |= 0x80000000;
     asm volatile("mov %0, %%cr0":: "b"(cr0));
-    dbgout("Done.");
+    dbgout("Done.\n");
+    vmm_cur_pagedir=vmm_kpagedir;
+    size_t stacksize=totalpages * sizeof(uint32_t);
+    size_t stackpages=(stacksize/VMM_PAGE_SIZE)+1;
+    dbgpf("VMM: Pages needed for full page stack: %i\n", stackpages);
+    vmm_fullstack_bottom=(uint32_t*)vmm_ministack_alloc(stackpages);
+    vmm_fullstack_top=vmm_fullstack_bottom;
+    size_t page=0;
+    for(size_t i=0; i<VMM_MAX_REGIONS; ++i){
+    	if(vmm_regions[i].base){
+    		size_t base=(size_t)vmm_regions[i].base;
+    		for(size_t j=0; j<vmm_regions[i].pages; ++j){
+    			size_t pageaddr=base+(VMM_PAGE_SIZE*j);
+    			if(pageaddr > (size_t)&_end && page++ > VMM_MINISTACK_PAGES){
+    				*(vmm_fullstack_top++)=pageaddr;
+    			}
+    		}
+    	}else{
+    		break;
+    	}
+    }
+    for(size_t i=0; i<VMM_MINISTACK_PAGES; ++i){
+    	if(vmm_ministack[i]){
+    		*(vmm_fullstack_top++)=vmm_ministack[i]*VMM_PAGE_SIZE;
+    		vmm_ministack[i]=0;
+    	}
+    }
+    vmm_kpagedir[VMM_ENTRIES_PER_TABLE-1]=*(--vmm_fullstack_top) | 3;
+    dbgout("VMM: Page stack initialized.\n");
+    void *q=malloc(10*1024*1024);
+    memset(q, 0xcc, 10*1024*1024);
+    free(q);
 }
 
-void vmm_page_fault_handler(int){
+void vmm_page_fault_handler(int,isr_regs*){
 	uint32_t addr;
 	asm("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
 	dbgpf("VMM: Page fault at %x!\n", addr);
@@ -114,13 +151,25 @@ void vmm_ministack_take(size_t page){
 	}
 }
 
-size_t vmm_find_free_virtpages(uint32_t *pagedir, size_t pages){
+size_t vmm_find_free_virtpages(uint32_t *pagedir, size_t pages, bool kernelspace=true){
 	size_t freecount=0;
 	size_t startpage=0;
-	for(size_t i=0; i<VMM_ENTRIES_PER_TABLE; ++i){
+	size_t starttable=0;
+	if(!kernelspace){
+		starttable=(VMM_KERNELSPACE_END/VMM_PAGE_SIZE)/VMM_ENTRIES_PER_TABLE;
+	}
+	for(size_t i=starttable; i<VMM_ENTRIES_PER_TABLE; ++i){
 		uint32_t *table=(uint32_t*)(pagedir[i] & 0xFFFFF000);
 		for(size_t j=0; j<VMM_ENTRIES_PER_TABLE; ++j){
 			if(!i && !j) continue; //never allocate page 0
+			if(!table){
+				if(pages<VMM_ENTRIES_PER_TABLE + freecount){
+					return startpage;
+				}else{
+					freecount+=VMM_ENTRIES_PER_TABLE;
+					break;
+				}
+			}
 			if(!table[j]){
 				if(!startpage) startpage=(i*VMM_ENTRIES_PER_TABLE)+j;
 				++freecount;
@@ -140,22 +189,52 @@ void vmm_refresh_addr(uint32_t pageaddr){
 	asm volatile("invlpg (%0)" ::"r" (pageaddr) : "memory");
 }
 
-void vmm_map_page(uint32_t *pagedir, size_t virtpage, size_t physpage){
+bool vmm_vpage_inuse(uint32_t *pagedir, size_t virtpage){
+	if(!pagedir) panic("(VMM) Invalid page directory!");
+	size_t tableindex=virtpage/VMM_ENTRIES_PER_TABLE;
+    size_t tableoffset=virtpage-(tableindex * VMM_ENTRIES_PER_TABLE);
+    uint32_t *table=(uint32_t*)(pagedir[tableindex] & 0xFFFFF000);
+    if(!table){
+    	panic("(VMM) No table for allocation!");
+    }
+    uint32_t ret=table[tableoffset] & 0xFFFFF000;
+    return ret!=0;
+}
+
+void vmm_map_page(uint32_t *pagedir, size_t virtpage, size_t physpage, bool alloc=true){
+	dbgpf("VMM: Mapping %x (v) to %x (p).\n", virtpage*VMM_PAGE_SIZE, physpage*VMM_PAGE_SIZE);
+	if(!virtpage || !physpage) panic("(VMM) Attempt to map page/address 0!");
+	if(!pagedir) panic("(VMM) Invalid page directory!");
 	size_t tableindex=virtpage/VMM_ENTRIES_PER_TABLE;
 	size_t tableoffset=virtpage-(tableindex * VMM_ENTRIES_PER_TABLE);
 	uint32_t *table=(uint32_t*)(pagedir[tableindex] & 0xFFFFF000);
 	if(!table){
-		panic("(VMM) No table for allocation!");
+		if(alloc){
+			uint32_t *i;
+			for(i=vmm_fullstack_top; i<vmm_fullstack_bottom && vmm_vpage_inuse(pagedir, *i/VMM_PAGE_SIZE); --i);
+			if(i==vmm_fullstack_bottom) panic("(VMM) No identity mappable pages!");
+			size_t movedata=(size_t)(vmm_fullstack_top-(i));
+			dbgpf("VMM: Moving %i bytes from %x to %x\n", movedata, i+1, i);
+			memmove(i, i+1, movedata);
+			vmm_fullstack_top--;
+			vmm_identity_map(vmm_cur_pagedir, *i);
+			uint32_t phys_addr=(*i)*VMM_PAGE_SIZE;
+			pagedir[tableindex]=phys_addr | 3;
+			table=(uint32_t*)(pagedir[tableindex] & 0xFFFFF000);
+		}else{
+			panic("(VMM) Cannot allocate page table for mapping!");
+		}
 	}
 	table[tableoffset]=(physpage*VMM_PAGE_SIZE) | 3;
 	vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
 }
 
-void vmm_identity_map(uint32_t *pagedir, size_t page){
-	vmm_map_page(pagedir, page, page);
+void vmm_identity_map(uint32_t *pagedir, size_t page, bool alloc){
+	vmm_map_page(pagedir, page, page, alloc);
 }
 
 size_t vmm_unmap_page(uint32_t *pagedir, size_t virtpage){
+	if(!pagedir) panic("(VMM) Invalid page directory!");
 	size_t tableindex=virtpage/VMM_ENTRIES_PER_TABLE;
     size_t tableoffset=virtpage-(tableindex * VMM_ENTRIES_PER_TABLE);
     uint32_t *table=(uint32_t*)(pagedir[tableindex] & 0xFFFFF000);
@@ -175,7 +254,7 @@ void *vmm_ministack_alloc(size_t pages){
 	for(size_t i=0; i<pages; ++i){
 		for(size_t j=0; j<VMM_MINISTACK_PAGES; ++j){
 			if(vmm_ministack[j]){
-				vmm_map_page(vmm_kpagedir, virtpage+i, vmm_ministack[j]);
+				vmm_map_page(vmm_kpagedir, virtpage+i, vmm_ministack[j], false);
 				vmm_ministack[j]=0;
 				break;
 			}
@@ -186,17 +265,27 @@ void *vmm_ministack_alloc(size_t pages){
 	return ret;
 }
 
-void vmm_ministack_free(void *ptr, size_t pages){
+void *vmm_alloc(size_t pages, bool kernelspace){
+	hold_lock hl(vmm_lock);
+	size_t virtpage=vmm_find_free_virtpages(vmm_kpagedir, pages, kernelspace);
+	if(!virtpage) return NULL;
+	for(size_t i=0; i<pages; ++i){
+		if(vmm_fullstack_top==vmm_fullstack_bottom) return NULL;
+		uint32_t phys_page=*(--vmm_fullstack_top)/VMM_PAGE_SIZE;
+		if(!phys_page) panic("VMM: NULL page in stack!");
+		vmm_map_page(vmm_cur_pagedir, virtpage+i, phys_page);
+	}
+	void *ret=(void*)(virtpage*VMM_PAGE_SIZE);
+	memset(ret, 0xaa, pages*VMM_PAGE_SIZE);
+	return ret;
+}
+
+void vmm_free(void *ptr, size_t pages){
 	hold_lock hl(vmm_lock);
 	memset(ptr, 0xfe, pages * VMM_PAGE_SIZE);
 	size_t virtpage=(uint32_t)ptr/VMM_PAGE_SIZE;
 	for(size_t i=0; i<pages; ++i){
-		size_t physpage=vmm_unmap_page(vmm_kpagedir, virtpage+i);
-		for(size_t j=0; j<VMM_MINISTACK_PAGES; ++j){
-			if(!vmm_ministack[j]){
-				vmm_ministack[j]=physpage;
-				break;
-			}
-        }
+		size_t physpage=vmm_unmap_page(vmm_cur_pagedir, virtpage+i);
+		*(vmm_fullstack_top++)=physpage*VMM_PAGE_SIZE;
 	}
 }

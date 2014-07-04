@@ -47,7 +47,7 @@ extern "C" int liballoc_unlock(){
  */
 extern "C" void* liballoc_alloc(int pages){
 	//return mm_alloc(pages * 4096);
-	return vmm_ministack_alloc(pages);
+	return vmm_alloc(pages);
 }
 
 /** This frees previously allocated memory. The void* parameter passed
@@ -60,6 +60,6 @@ extern "C" void* liballoc_alloc(int pages){
  */
 extern "C" int liballoc_free(void *ptr, int pages){
 	//mm_free(ptr);
-	vmm_ministack_free(ptr, pages);
+	vmm_free(ptr, pages);
 	return 0;
 }
