@@ -237,10 +237,10 @@ void vmm_init(multiboot_info_t *mbt){
     free(q);*/
 }
 
-void vmm_page_fault_handler(int,isr_regs*){
+void vmm_page_fault_handler(int, isr_regs *regs){
 	uint32_t addr;
 	asm("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
-	dbgpf("VMM: Page fault at %x!\n", addr);
+	dbgpf("VMM: Page fault on %x at %x!\n", addr, regs->eip);
 	if(addr < VMM_PAGE_SIZE) panic("(VMM) Probable NULL pointer deference!");
 	else panic("(VMM) Page fault!");
 }
