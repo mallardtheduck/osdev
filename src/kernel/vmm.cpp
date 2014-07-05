@@ -99,17 +99,6 @@ public:
     	uint32_t *table=(uint32_t*)(pagedir[tableindex] & 0xFFFFF000);
     	if(!table){
     		if(alloc){
-    			/*uint32_t *i;
-    			for(i=vmm_fullstack_top; i<vmm_fullstack_bottom && vmm_vpage_inuse(pagedir, *i/VMM_PAGE_SIZE); --i);
-    			if(i==vmm_fullstack_bottom) panic("(VMM) No identity mappable pages!");
-    			size_t movedata=(size_t)(vmm_fullstack_top-(i));
-    			dbgpf("VMM: Moving %i bytes from %x to %x\n", movedata, i+1, i);
-    			memmove(i, i+1, movedata);
-    			vmm_fullstack_top--;
-    			vmm_identity_map(vmm_cur_pagedir, *i);
-    			uint32_t phys_addr=(*i)*VMM_PAGE_SIZE;
-    			pagedir[tableindex]=phys_addr | 3;
-    			table=(uint32_t*)(pagedir[tableindex] & 0xFFFFF000);*/
     			panic("(VMM) Creating page tables not yet implemented!");
     		}else{
     			panic("(VMM) Cannot allocate page table for mapping!");
@@ -125,6 +114,7 @@ public:
 
     size_t unmap_page(size_t virtpage){
     	if(!pagedir) panic("(VMM) Invalid page directory!");
+    	dbgpf("VMM: Unammping %x.\n", virtpage*VMM_PAGE_SIZE);
     	size_t tableindex=virtpage/VMM_ENTRIES_PER_TABLE;
         size_t tableoffset=virtpage-(tableindex * VMM_ENTRIES_PER_TABLE);
         uint32_t *table=(uint32_t*)(pagedir[tableindex] & 0xFFFFF000);
@@ -266,8 +256,11 @@ void *vmm_alloc(size_t pages, bool kernelspace){
 	size_t virtpage=vmm_cur_pagedir->find_free_virtpages(pages, kernelspace);
 	if(!virtpage) return NULL;
 	for(size_t i=0; i<pages; ++i){
-		uint32_t phys_page=vmm_pages.pop();
-		if(!phys_page) return NULL;
+		uint32_t phys_page=vmm_pages.pop()/VMM_PAGE_SIZE;
+		if(!phys_page){
+		    dbgpf("VMM: Allocation of %i pages failed.\n", pages);
+		    return NULL;
+		}
 		vmm_cur_pagedir->map_page(virtpage+i, phys_page);
 	}
 	void *ret=(void*)(virtpage*VMM_PAGE_SIZE);
