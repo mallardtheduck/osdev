@@ -76,6 +76,7 @@ private:
 public:
     void init(uint32_t *dir){
         pagedir=dir;
+        vmm_pages.push((uint32_t)&curtable);
     }
     uint32_t *get(){
         return pagedir;
