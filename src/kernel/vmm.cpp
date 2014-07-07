@@ -141,7 +141,14 @@ public:
     	if(!table){
     		if(alloc){
     			table=vmm_pages.pop();
+    			dbgpf("VMM: Creating new page table %i at %x (p)\n", tableindex, table);
     			add_table(tableindex, (uint32_t*)table);
+    			if(is_paging_enabled()){
+    				maptable(table);
+    				memset(&curtable, 0, VMM_PAGE_SIZE);
+    			}else{
+    				memset((void*)table, 0, VMM_PAGE_SIZE);
+    			}
     		}else{
     			panic("(VMM) Cannot allocate page table for mapping!");
     		}
@@ -171,6 +178,18 @@ public:
         maptable(table);
         uint32_t ret=curtable[tableoffset] & 0xFFFFF000;
         curtable[tableoffset]=0;
+        bool freetable=true;
+        for(size_t i=0; i<VMM_ENTRIES_PER_TABLE; ++i){
+        	if(curtable[i]){
+        		freetable=false;
+        		break;
+        	}
+        }
+        if(freetable){
+        	dbgpf("VMM: Page table %i no longer needed.\n", tableindex);
+        	pagedir[tableindex] = 0 | 2;
+        	vmm_pages.push(table);
+        }
         vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
         return ret/VMM_PAGE_SIZE;
     }
