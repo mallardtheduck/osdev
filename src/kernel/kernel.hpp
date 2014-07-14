@@ -43,6 +43,7 @@ extern "C"{
 #include "load_elf.hpp"
 #include "syscalls.hpp"
 #include "modules.hpp"
+#include "process.hpp"
 
 void GDT_init();
 void IDT_init();

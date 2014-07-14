@@ -16,6 +16,7 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	disable_pic();
 	PIC_init();
 	enable_interrupts();
+	proc_init();
 	sch_init();
 	sch_yield();
 	drv_init();
