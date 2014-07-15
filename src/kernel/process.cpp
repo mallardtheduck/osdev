@@ -17,6 +17,7 @@ struct proc_env_var{
 };
 
 typedef map<string, proc_env_var> env_t;
+env_t proc_copyenv(const env_t &env);
 
 struct proc_process{
 	pid_t pid;
@@ -25,7 +26,7 @@ struct proc_process{
 	string name;
 	proc_process() : pid(++curpid) {}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
-		environment(parent_proc->environment), name(n) {}
+		environment(proc_copyenv(parent_proc->environment)), name(n) {}
 };
 
 proc_process *proc_get(pid_t pid);
@@ -109,4 +110,12 @@ string proc_getenv(const pid_t pid, const string &name, bool userspace){
 
 string proc_getenv(const string &name, bool userspace){
 	return proc_getenv(proc_current_pid, name, userspace);
+}
+
+env_t proc_copyenv(const env_t &env){
+	env_t ret;
+	for(env_t::const_iterator i=env.cbegin(); i!=env.cend(); ++i){
+		if((i->second.flags & proc_env_flags::NoInherit)==0) ret.insert(*i);
+	}
+	return ret;
 }
