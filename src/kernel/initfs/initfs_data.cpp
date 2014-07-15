@@ -8,5 +8,6 @@ initfs_file initfs_data[] = {
 	{true, "CONFIG.INI", __data_config_ini, sizeof(__data_config_ini)},
 	{true, "TEST.SYS", __data_test_sys, sizeof(__data_test_sys)},
 	{true, "BOOT.SYS", __data_boot_sys, sizeof(__data_boot_sys)},
+	{true, "RTC.SYS", __data_rtc_sys, sizeof(__data_rtc_sys)},
 	{false, "", NULL, 0}
 };
