@@ -115,7 +115,7 @@ string proc_getenv(const string &name, bool userspace){
 env_t proc_copyenv(const env_t &env){
 	env_t ret;
 	for(env_t::const_iterator i=env.cbegin(); i!=env.cend(); ++i){
-		if((i->second.flags & proc_env_flags::NoInherit)==0) ret.insert(*i);
+		if((i->second.flags & proc_env_flags::NoInherit)==0 && (i->second.flags & proc_env_flags::Global)==0) ret.insert(*i);
 	}
 	return ret;
 }
