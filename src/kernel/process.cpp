@@ -16,10 +16,12 @@ struct proc_env_var{
 	proc_env_var() {}
 };
 
+typedef map<string, proc_env_var> env_t;
+
 struct proc_process{
 	pid_t pid;
 	pid_t parent;
-	map<string, proc_env_var> environment;
+	env_t environment;
 	string name;
 	proc_process() : pid(++curpid) {}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
@@ -82,7 +84,7 @@ void proc_end(pid_t pid){
 }
 
 void proc_setenv(const pid_t pid, const string &name, const string &value, const uint8_t flags, bool userspace){
-	map<string, proc_env_var> &env=(flags & proc_env_flags::Global) ? proc_get(0)->environment : proc_get(pid)->environment;
+	env_t &env=(flags & proc_env_flags::Global) ? proc_get(0)->environment : proc_get(pid)->environment;
 	if(userspace && env.has_key(name) && (env[name].flags & proc_env_flags::Private || env[name].flags & proc_env_flags::ReadOnly)){
 		return;
 	}else{
@@ -95,7 +97,7 @@ void proc_setenv(const string &name, const string &value, const uint8_t flags, b
 }
 
 string proc_getenv(const pid_t pid, const string &name, bool userspace){
-	map<string, proc_env_var> &kenv=proc_get(0)->environment;
+	env_t &kenv=proc_get(0)->environment;
 	if(kenv.has_key(name) && kenv[name].flags & proc_env_flags::Global){
 		if(!userspace || (kenv[name].flags & proc_env_flags::Private)==0) return kenv[name].value;
 		else return "";
