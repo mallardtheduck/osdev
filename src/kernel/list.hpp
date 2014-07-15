@@ -79,7 +79,7 @@ public:
 		return ret;
 	}
 	operator bool(){
-		return node==NULL;
+		return node!=NULL;
 	}
 	this_type operator--(){
 		node=node->prev;
