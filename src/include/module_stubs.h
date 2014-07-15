@@ -212,4 +212,12 @@ inline static void module_load(char *path){
 	SYSCALL_TABLE->module_load(path);
 }
 
+inline static void setenv(char *name, char *value, uint8_t flags, pid_t pid){
+	SYSCALL_TABLE->setenv(name, value, flags, pid);
+}
+
+inline static char *getenv(char *name, pid_t pid){
+	return SYSCALL_TABLE->getenv(name, pid);
+}
+
 #endif

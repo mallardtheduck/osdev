@@ -95,6 +95,20 @@ bool dirseek(dir_handle *handle, size_t pos, bool relative){
 	return fs_seek_dir(*handle, pos, relative);
 }
 
+void setenv(char *name, char *value, uint8_t flags, pid_t pid){
+	proc_setenv(name, value, flags, pid);
+}
+
+char *getenv(char *name, pid_t pid){
+	string ret=proc_getenv(name, pid);
+	if(ret=="") return NULL;
+	else return (char*)ret.c_str();
+}
+
+pid_t getpid(){
+	return proc_current_pid;
+}
+
 module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&panic,
 	&malloc,
@@ -157,4 +171,9 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&fs_stat,
 
 	&load_module,
+
+	&setenv,
+	&getenv,
+
+	&getpid,
 };

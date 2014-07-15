@@ -13,6 +13,7 @@
 typedef volatile uint64_t lock;
 typedef void(*thread_func)(void*);
 typedef uint64_t thread_id_t;
+typedef uint64_t pid_t;
 
 struct syscall_table{
 	void (*panic)(char *msg);
@@ -76,6 +77,11 @@ struct syscall_table{
 	directory_entry (*stat)(char *path);
 
 	void (*module_load)(char *path);
+
+	void (*setenv)(char *name, char *value, uint8_t flags, pid_t pid);
+	char *(*getenv)(char *name, pid_t pid);
+
+	pid_t (*getpid)();
 };
 
 #ifndef __cplusplus
