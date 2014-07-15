@@ -9,8 +9,8 @@ template<typename T> class list{
 private:
 	friend class list_iterator<T>;
 	struct list_node{
-		list_node *next, *prev;
 		T value;
+		list_node *next, *prev;
 		list_node(const T val, list_node *n=NULL, list_node *p=NULL) : value(val), next(n), prev(p){
 			if(next){
 				next->prev=this;
@@ -49,6 +49,12 @@ public:
 
 	list_iterator<T> end(){
 		return list_iterator<T>(tail);
+	}
+
+	void remove(list_iterator<T> itr){
+		if(itr.node->prev)itr.node->prev->next=itr.node->next;
+		if(itr.node->next)itr.node->next->prev=itr.node->prev;
+		delete itr.node;
 	}
 };
 
