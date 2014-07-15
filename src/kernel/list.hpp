@@ -54,6 +54,8 @@ public:
 	void remove(list_iterator<T> itr){
 		if(itr.node->prev)itr.node->prev->next=itr.node->next;
 		if(itr.node->next)itr.node->next->prev=itr.node->prev;
+		if(itr.node==head) head=itr.node->next;
+		if(itr.node==tail) tail=itr.node->prev;
 		delete itr.node;
 	}
 };
