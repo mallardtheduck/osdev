@@ -22,12 +22,13 @@ extern proc_process *proc_current_process;
 extern pid_t proc_current_pid;
 
 void proc_init();
-void proc_switch(proc_process *newproc);
-proc_process *proc_get(pid_t pid);
+void proc_switch(pid_t pid);
+pid_t proc_new(const string &name, pid_t parent=proc_current_pid);
+void proc_end(pid_t pid=proc_current_pid);
 
-void proc_setenv(const pid_t pid, const string &name, const string &value, const uint8_t flags=0);
-void proc_setenv(const string &name, const string &value, const uint8_t flags=0);
-string proc_getenv(const pid_t pid, const string &name);
-string proc_getenv(const string &name);
+void proc_setenv(const pid_t pid, const string &name, const string &value, const uint8_t flags=0, bool userspace=false);
+void proc_setenv(const string &name, const string &value, const uint8_t flags=0, bool userspace=true);
+string proc_getenv(const pid_t pid, const string &name, bool userspace=false);
+string proc_getenv(const string &name, bool userspace=true);
 
 #endif
