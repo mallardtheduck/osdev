@@ -16,6 +16,9 @@ bool test(char *item, bool value){
 		dbgout(" - PASS\n");
 	}else{
 		dbgout(" - FAIL\n");
+		char buf[128];
+		sprintf(buf, "(TEST) Failure! (%s)\n", item);
+		panic(buf);
 	}
 	return value;
 }
@@ -37,6 +40,59 @@ void hacky_timeout(void*q){
 		test("block(), unblock(), yield()", false);
 	}
 }
+
+void *test_driver_open(){
+	dbgout("TEST: Driver open.\n");
+	return (void*)0x42;
+}
+
+bool test_driver_close(void *instance){
+	dbgout("TEST: Driver close.\n");
+	if(instance==(void*)0x42) return true;
+	else return false;
+}
+
+int test_driver_read(void *instance, size_t bytes, char *buf){
+	if(instance==(void*)0x42){
+		memset(buf, 0xee, bytes);
+		return bytes;
+	}
+	return 0;
+}
+
+bool test_driver_write(void *instance, size_t bytes, char *buf){
+	if(instance==(void*)0x42){
+		return true;
+	}
+	return false;
+}
+
+void test_driver_seek(void *instance, size_t pos, bool relative){
+	//Do nothing...
+}
+
+int test_driver_ioctl(void *instance, int fn, size_t bytes, char *buf){
+	return 0;
+}
+
+int test_driver_type(){
+	return USER;
+}
+
+char *test_driver_desc(){
+	return (char*)"Test device.";
+}
+
+drv_driver test_driver={
+	&test_driver_open,	//void *(*open)();
+	&test_driver_close,	//bool (*close)(void *instance);
+	&test_driver_read,	//int (*read)(void *instance, size_t bytes, char *buf);
+    &test_driver_write,	//bool (*write)(void *instance, size_t bytes, char *buf);
+    &test_driver_seek,	//void (*seek)(void *instance, size_t pos, bool relative);
+    &test_driver_ioctl,	//int (*ioctl)(void *instance, int fn, size_t bytes, char *buf);
+    &test_driver_type,	//int (*type)();
+    &test_driver_desc,	//char *(*desc)();
+};
 
 void test_thread(void*q){
 	test("new_thread()", true);
@@ -73,8 +129,8 @@ int module_main(syscall_table *systbl){
 	char *str1="STR1", *str2="STR2";
 	bool a=strcmp(str1, str2) && !strcmp(str1, str1);
 	test("strcmp()", a);
-	strncpy(str1, str2, 4);
-	a=!strcmp(str1, str2);
+	strncpy(str1, str2, 5);
+	a=(strcmp(str1, str2)==0);
 	test("strncpy()", a);
 	lck=-1;
 	init_lock(&lck);
@@ -90,5 +146,11 @@ int module_main(syscall_table *systbl){
     new_thread(&test_thread, NULL);
     while(!thread_done) yield();
     test("end_thread()", true);
+    char devname[]={'T','E','S','T','\0','\0','\0','\0','\0'};
+	add_device(devname, &test_driver);
+	void *d=devopen(devname);
+	test("add_device(), devopen()", (d!=NULL));
+
+	test("devclose()", devclose(d));
 	return 0;
 }
