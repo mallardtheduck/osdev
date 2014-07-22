@@ -150,7 +150,14 @@ int module_main(syscall_table *systbl){
 	add_device(devname, &test_driver);
 	void *d=devopen(devname);
 	test("add_device(), devopen()", (d!=NULL));
-
+	unsigned char r=0x00;
+	devread(d, 1, (char*)&r);
+	test("devread()", r==0xee);
+	test("devwrite()", devwrite(d, 1, (char*)&d));
+	//test("devseek()", devseek(d, 1, true));
+	test("devioctl()", devioctl(d, 0, 0, NULL)==0);
+	test("devtype()", devtype(devname)==USER);
+	test("devdesc()", devdesc(devname)==test_driver_desc());
 	test("devclose()", devclose(d));
 	return 0;
 }
