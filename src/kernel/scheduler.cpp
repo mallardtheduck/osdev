@@ -28,7 +28,7 @@ struct sch_thread{
 	uint32_t priority;
 	uint32_t dynpriority;
 	uint64_t ext_id;
-	/* memory info */
+	pid_t pid;
 };
 
 vector<sch_thread> *threads;
@@ -59,6 +59,7 @@ void sch_init(){
 	mainthread.priority=default_priority;
 	mainthread.dynpriority=0;
 	mainthread.magic=0xF00D;
+	mainthread.pid=proc_current_pid;
 	current_thread_id=mainthread.ext_id=++cur_ext_id;
 	threads->push_back(mainthread);
 	current_thread=threads->size()-1;
@@ -227,6 +228,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 		current_thread_id=(*threads)[torun].ext_id;
 		curstack=(*threads)[current_thread].stack;
 		sch_lock=current_thread_id;
+		proc_switch((*threads)[current_thread].pid);
 		return &curstack;		
 	}else{
 		//Nothing to run?

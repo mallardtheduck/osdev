@@ -24,6 +24,7 @@ struct proc_process{
 	pid_t parent;
 	env_t environment;
 	string name;
+	vmm_pagedir *pagedir;
 	proc_process() : pid(++curpid) {}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
 		environment(proc_copyenv(parent_proc->environment)), name(n) {}
@@ -40,6 +41,7 @@ void proc_init(){
 	kproc.name="KERNEL";
 	kproc.pid=0;
 	kproc.parent=0;
+	kproc.pagedir=vmm_cur_pagedir;
 	processes->add(kproc);
 	proc_current_process=proc_get(0);
 	proc_current_pid=0;
@@ -56,10 +58,14 @@ proc_process *proc_get(pid_t pid){
 	return NULL;
 }
 
+//Note: Called from scheduler. No locking, memory allocation, etc. available!
 void proc_switch(pid_t pid){
-	proc_process *newproc=proc_get(pid);
-	proc_current_process=newproc;
-	proc_current_pid=newproc->pid;
+	if(pid!=proc_current_pid){
+		proc_process *newproc=proc_get(pid);
+		proc_current_process=newproc;
+		proc_current_pid=newproc->pid;
+		vmm_switch(proc_current_process->pagedir);
+	}
 }
 
 pid_t proc_new(const string &name, pid_t parent){

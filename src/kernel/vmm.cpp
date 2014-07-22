@@ -5,6 +5,8 @@ const size_t VMM_PAGE_SIZE=4096;
 const size_t VMM_ENTRIES_PER_TABLE=1024;
 const size_t VMM_KERNELSPACE_END=1024*1024*1024;
 const size_t VMM_USERSPACE_START=VMM_KERNELSPACE_END;
+const size_t VMM_KERNEL_PAGES=VMM_KERNELSPACE_END/VMM_PAGE_SIZE;
+const size_t VMM_KERNEL_TABLES=VMM_KERNEL_PAGES/VMM_ENTRIES_PER_TABLE;
 
 extern char _start, _end;
 lock vmm_lock;
@@ -193,6 +195,10 @@ public:
         vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
         return ret/VMM_PAGE_SIZE;
     }
+
+    void copy_kernelspace(vmm_pagedir *other){
+    	memcpy(pagedir, other->pagedir, VMM_KERNEL_TABLES * sizeof(uint32_t));
+    }
 };
 
 const size_t VMM_MAX_REGIONS=32;
@@ -333,5 +339,13 @@ void vmm_free(void *ptr, size_t pages){
 	for(size_t i=0; i<pages; ++i){
 		size_t physpage=vmm_cur_pagedir->unmap_page(virtpage+i);
 		vmm_pages.push(physpage*VMM_PAGE_SIZE);
+	}
+}
+
+void vmm_switch(vmm_pagedir *dir){
+	if(dir!=vmm_cur_pagedir){
+		vmm_kernel_pagedir.copy_kernelspace(dir);
+		dir->copy_kernelspace(&vmm_kernel_pagedir);
+		vmm_cur_pagedir=dir;
 	}
 }
