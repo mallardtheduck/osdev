@@ -198,8 +198,12 @@ loaded_elf_module elf_load_module(file_handle &file){
 	for(int i=0; i<header.shnum; ++i){
 		Elf32_Shdr section=elf_read_sectionheader(file, header, i);
 		if(section.type==SHT_REL){
-			elf_do_reloc_module(file, header, section, ret.mem.aligned);
-			break;
+			char buf[128];
+			elf_getstring(file, header, section.name, buf, 128);
+			string name(buf);
+			if(name==".rel.text" || name==".rel.data" || name==".rel.rodata"){
+				elf_do_reloc_module(file, header, section, ret.mem.aligned);
+			}
 		}
 	}
 	return ret;
