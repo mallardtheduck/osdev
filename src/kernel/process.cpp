@@ -27,7 +27,7 @@ struct proc_process{
 	vmm_pagedir *pagedir;
 	proc_process() : pid(++curpid) {}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
-		environment(proc_copyenv(parent_proc->environment)), name(n) {}
+		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(vmm_newpagedir()) {}
 };
 
 proc_process *proc_get(pid_t pid);
@@ -79,6 +79,7 @@ void proc_end(pid_t pid){
 	pid_t parent=proc_get(pid)->parent;
 	for(list<proc_process>::iterator i=processes->begin(); i; ++i){
 		if(i->pid==pid){
+			vmm_deletepagedir(i->pagedir);
 			processes->remove(i);
 			break;
 		}

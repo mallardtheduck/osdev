@@ -349,3 +349,13 @@ void vmm_switch(vmm_pagedir *dir){
 		vmm_cur_pagedir=dir;
 	}
 }
+
+vmm_pagedir *vmm_newpagedir(){
+	vmm_pagedir *ret=new vmm_pagedir();
+	ret->copy_kernelspace(vmm_cur_pagedir);
+	return ret;
+}
+
+void vmm_deletepagedir(vmm_pagedir *dir){
+	delete dir;
+}
