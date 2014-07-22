@@ -86,7 +86,6 @@ int drv_ioctl(void *instance, int fn, size_t bytes, char *buf){
 }
 	
 int drv_get_type(char *driver){
-	hold_lock hl(drv_lock);
 	return drv_get(driver)->type();
 }
 
@@ -96,7 +95,6 @@ int drv_get_type(void *instance){
 }
 
 char *drv_get_desc(char *driver){
-	hold_lock hl(drv_lock);
 	return drv_get(driver)->desc();
 }
 
