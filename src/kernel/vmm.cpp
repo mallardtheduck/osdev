@@ -342,11 +342,23 @@ void vmm_free(void *ptr, size_t pages){
 	}
 }
 
+void vmm_activate_pagedir(vmm_pagedir *pagedir){
+	asm volatile("mov %0, %%cr3":: "b"(pagedir->get()));
+    unsigned int cr0;
+    asm volatile("mov %%cr0, %0": "=b"(cr0));
+    cr0 &= 0x7FFFFFFF;
+    asm volatile("mov %0, %%cr0":: "b"(cr0));
+    asm volatile("mov %%cr0, %0": "=b"(cr0));
+    cr0 |= 0x80000000;
+    asm volatile("mov %0, %%cr0":: "b"(cr0));
+}
+
 void vmm_switch(vmm_pagedir *dir){
 	if(dir!=vmm_cur_pagedir){
 		vmm_kernel_pagedir.copy_kernelspace(dir);
 		dir->copy_kernelspace(&vmm_kernel_pagedir);
 		vmm_cur_pagedir=dir;
+		vmm_activate_pagedir(vmm_cur_pagedir);
 	}
 }
 
