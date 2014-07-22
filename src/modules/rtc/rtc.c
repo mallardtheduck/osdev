@@ -1,5 +1,6 @@
 #include "module_stubs.h"
 
+#define FORMAT "%02i:%02i:%02i %02i/%02i/%02i"
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
 
@@ -80,9 +81,9 @@ datetime read_rtc(){
 int module_main(syscall_table *systbl){
 	SYSCALL_TABLE=systbl;
 	datetime dt=read_rtc();
-	dbgpf("RTC: %i:%i:%i %i/%i/%i\n", dt.hour, dt.minute, dt.second, dt.day, dt.month, dt.year);
+	dbgpf("RTC: " FORMAT "\n", dt.hour, dt.minute, dt.second, dt.day, dt.month, dt.year);
 	char buf[128];
-	sprintf(buf, "%i:%i:%i %i/%i/%i\n", dt.hour, dt.minute, dt.second, dt.day, dt.month, dt.year);
+	sprintf(buf, FORMAT "\n", dt.hour, dt.minute, dt.second, dt.day, dt.month, dt.year);
 	setenv("BOOT_TIME", buf, ENV_Global, 0);
 	return 0;
 }
