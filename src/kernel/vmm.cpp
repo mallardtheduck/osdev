@@ -112,7 +112,9 @@ public:
     }
 
     void add_table(size_t tableno, uint32_t *table){
-        pagedir[tableno]=(uint32_t)table | (TableFlags::Present | TableFlags::Writable);
+    	uint32_t tableflags=(TableFlags::Present | TableFlags::Writable);
+    	if(tableno > VMM_KERNEL_TABLES) tableflags |= TableFlags::Usermode;
+        pagedir[tableno]=(uint32_t)table | tableflags;
     }
 
     bool is_mapped(void *ptr){
@@ -160,8 +162,10 @@ public:
     	return 0;
     }
 
-    void map_page(size_t virtpage, size_t physpage, bool alloc=true){
+    void map_page(size_t virtpage, size_t physpage, bool alloc=true, bool kernelspace=true){
     	//dbgpf("VMM: Mapping %x (v) to %x (p).\n", virtpage*VMM_PAGE_SIZE, physpage*VMM_PAGE_SIZE);
+    	uint32_t pageflags = (PageFlags::Present | PageFlags::Writable);
+    	if(!kernelspace) pageflags |= PageFlags::Usermode;
     	if(!virtpage || !physpage) panic("(VMM) Attempt to map page/address 0!");
     	if(!pagedir) panic("(VMM) Invalid page directory!");
     	size_t tableindex=virtpage/VMM_ENTRIES_PER_TABLE;
@@ -184,9 +188,9 @@ public:
     	}
     	if(is_paging_enabled()){
     	    maptable(table);
-    	    curtable[tableoffset]=(physpage*VMM_PAGE_SIZE) | (PageFlags::Present | PageFlags::Writable);
+    	    curtable[tableoffset]=(physpage*VMM_PAGE_SIZE) | pageflags;
     	}else{
-    	    ((uint32_t*)table)[tableoffset]=(physpage*VMM_PAGE_SIZE) | (PageFlags::Present | PageFlags::Writable);
+    	    ((uint32_t*)table)[tableoffset]=(physpage*VMM_PAGE_SIZE) | pageflags;
     	}
     	vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
     }
@@ -352,7 +356,7 @@ void *vmm_alloc(size_t pages, bool kernelspace){
 		    dbgpf("VMM: Allocation of %i pages failed.\n", pages);
 		    return NULL;
 		}
-		vmm_cur_pagedir->map_page(virtpage+i, phys_page);
+		vmm_cur_pagedir->map_page(virtpage+i, phys_page, true, kernelspace);
 	}
 	void *ret=(void*)(virtpage*VMM_PAGE_SIZE);
 	memset(ret, 0xaa, pages*VMM_PAGE_SIZE);
