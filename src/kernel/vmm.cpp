@@ -8,6 +8,33 @@ const size_t VMM_USERSPACE_START=VMM_KERNELSPACE_END;
 const size_t VMM_KERNEL_PAGES=VMM_KERNELSPACE_END/VMM_PAGE_SIZE;
 const size_t VMM_KERNEL_TABLES=VMM_KERNEL_PAGES/VMM_ENTRIES_PER_TABLE;
 
+#define PAGING_ENABLED_FLAG 0x80000000
+
+namespace PageFlags{
+	enum{
+		Present 		= 1 << 0,
+		Writable 		= 1 << 1,
+		Usermode 		= 1 << 2,
+		WriteThrough 	= 1 << 3,
+		NoCache			= 1 << 4,
+		Accessed		= 1 << 5,
+		Dirty			= 1 << 6,
+		Global			= 1 << 7,
+	};
+}
+
+namespace TableFlags{
+	enum{
+		Present 		= 1 << 0,
+		Writable 		= 1 << 1,
+		Usermode 		= 1 << 2,
+		WriteThrough 	= 1 << 3,
+		NoCache			= 1 << 4,
+		Accessed		= 1 << 5,
+		LargePages		= 1 << 6,
+    };
+}
+
 extern char _start, _end;
 lock vmm_lock;
 
@@ -72,7 +99,7 @@ private:
         size_t tableindex=virtpage/VMM_ENTRIES_PER_TABLE;
         size_t tableoffset=virtpage-(tableindex * VMM_ENTRIES_PER_TABLE);
         uint32_t table=pagedir[tableindex] & 0xFFFFF000;
-        ((uint32_t*)table)[tableoffset]=(physpage*VMM_PAGE_SIZE) | 3;
+        ((uint32_t*)table)[tableoffset]=(physpage*VMM_PAGE_SIZE) | (PageFlags::Present | PageFlags::Writable);
         vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
     }
 public:
@@ -85,7 +112,7 @@ public:
     }
 
     void add_table(size_t tableno, uint32_t *table){
-        pagedir[tableno]=(uint32_t)table | 3;
+        pagedir[tableno]=(uint32_t)table | (TableFlags::Present | TableFlags::Writable);
     }
 
     bool is_mapped(void *ptr){
@@ -157,9 +184,9 @@ public:
     	}
     	if(is_paging_enabled()){
     	    maptable(table);
-    	    curtable[tableoffset]=(physpage*VMM_PAGE_SIZE) | 3;
+    	    curtable[tableoffset]=(physpage*VMM_PAGE_SIZE) | (PageFlags::Present | PageFlags::Writable);
     	}else{
-    	    ((uint32_t*)table)[tableoffset]=(physpage*VMM_PAGE_SIZE) | 3;
+    	    ((uint32_t*)table)[tableoffset]=(physpage*VMM_PAGE_SIZE) | (PageFlags::Present | PageFlags::Writable);
     	}
     	vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
     }
@@ -189,7 +216,7 @@ public:
         }
         if(freetable){
         	dbgpf("VMM: Page table %i no longer needed.\n", tableindex);
-        	pagedir[tableindex] = 0 | 2;
+        	pagedir[tableindex] = 0 | TableFlags::Writable;
         	vmm_pages.push(table);
         }
         vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
@@ -255,7 +282,7 @@ void vmm_init(multiboot_info_t *mbt){
     printf("VMM: Available RAM: %iKB\n", totalpages*4);
    	dbgpf("VMM: Initializing kernel page directory at %x.\n", vmm_kpagedir);
 	for(size_t i=0; i<VMM_ENTRIES_PER_TABLE; ++i){
-		vmm_kpagedir[i]=0|2;
+		vmm_kpagedir[i]=0 | TableFlags::Writable;
 	}
 	dbgpf("VMM: Initializing initial page table at %x.\n", vmm_kinitable);
 	memset((void*)vmm_kinitable, 0, VMM_PAGE_SIZE);
@@ -275,7 +302,7 @@ void vmm_init(multiboot_info_t *mbt){
     asm volatile("mov %0, %%cr3":: "b"(vmm_kernel_pagedir.get()));
     unsigned int cr0;
     asm volatile("mov %%cr0, %0": "=b"(cr0));
-    cr0 |= 0x80000000;
+    cr0 |= PAGING_ENABLED_FLAG;
     asm volatile("mov %0, %%cr0":: "b"(cr0));
     dbgout("Done.\n");
     vmm_cur_pagedir=&vmm_kernel_pagedir;
@@ -300,7 +327,7 @@ void vmm_init(multiboot_info_t *mbt){
 bool is_paging_enabled(){
     unsigned int cr0;
     asm volatile("mov %%cr0, %0": "=b"(cr0));
-    return cr0 & 0x80000000;
+    return cr0 & PAGING_ENABLED_FLAG;
 }
 
 void vmm_page_fault_handler(int, isr_regs *regs){
@@ -346,10 +373,10 @@ void vmm_activate_pagedir(vmm_pagedir *pagedir){
 	asm volatile("mov %0, %%cr3":: "b"(pagedir->get()));
     unsigned int cr0;
     asm volatile("mov %%cr0, %0": "=b"(cr0));
-    cr0 &= 0x7FFFFFFF;
+    cr0 &= ~PAGING_ENABLED_FLAG;
     asm volatile("mov %0, %%cr0":: "b"(cr0));
     asm volatile("mov %%cr0, %0": "=b"(cr0));
-    cr0 |= 0x80000000;
+    cr0 |= PAGING_ENABLED_FLAG;
     asm volatile("mov %0, %%cr0":: "b"(cr0));
 }
 
