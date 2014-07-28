@@ -104,6 +104,13 @@ public:
         pagedir=dir;
         vmm_pages.push((uint32_t)&curtable);
     }
+
+    void init(){
+    	uint32_t page=vmm_pages.pop();
+    	vmm_identity_map(page)
+    	init((uint32_t*)page);
+    }
+
     uint32_t *get(){
         return pagedir;
     }
@@ -225,6 +232,7 @@ public:
     }
 
     void copy_kernelspace(vmm_pagedir *other){
+    	dbgpf("VMM: %x %x %x\n", pagedir, other, other->pagedir);
     	memcpy(pagedir, other->pagedir, VMM_KERNEL_TABLES * sizeof(uint32_t));
     }
 };
@@ -406,6 +414,7 @@ void vmm_switch(vmm_pagedir *dir){
 
 vmm_pagedir *vmm_newpagedir(){
 	vmm_pagedir *ret=new vmm_pagedir();
+	ret->init();
 	ret->copy_kernelspace(vmm_cur_pagedir);
 	return ret;
 }
