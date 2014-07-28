@@ -2,8 +2,8 @@ export PREFIX:=$(HOME)/Projects/os/cross
 export TARGET:=i686-elf
 export PATH:=$(PREFIX)/bin:$(PATH)
 
-all: modules kernel
-clean: kernel-clean modules-clean
+all: modules kernel user
+clean: kernel-clean modules-clean user-clean
 rebuild: clean all
 
 kernel: dummy.file
@@ -17,6 +17,12 @@ modules: dummy.file
 
 modules-clean: dummy.file
 	$(MAKE) -C modules clean
+
+user: dummy.file
+	$(MAKE) -C user
+
+user-clean:
+	$(MAKE) -C user clean
 
 test: dummy.file
 	cd kernel && ./test.sh
