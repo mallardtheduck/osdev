@@ -236,7 +236,7 @@ loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
 			fs_read(file, prog.filesz, (char*)prog.vaddr);
 		}
 	}
-	ret.entry=(module_entry)(header.entry);
+	ret.entry=(proc_entry)(header.entry);
 	proc_switch(oldpid);
 	return ret;
 }
