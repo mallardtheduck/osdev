@@ -140,6 +140,16 @@ size_t elf_getsize(file_handle &file){
 	return limit-base;
 }
 
+size_t elf_getbase(file_handle &file){
+	size_t base=0xFFFFFF;
+	Elf32_Ehdr header=elf_read_header(file);
+	for(int i=0; i<header.phnum; ++i){
+		Elf32_Phdr prog=elf_read_progheader(file, header, i);
+		if(prog.vaddr<base) base=prog.vaddr;
+	}
+	return base;
+}
+
 Elf32_Addr elf_symbol_value(file_handle &file, const Elf32_Ehdr &header, size_t symbol){
 	for(size_t i=0; i<header.shnum; ++i){
 		Elf32_Shdr section=elf_read_sectionheader(file, header, i);
@@ -206,5 +216,27 @@ loaded_elf_module elf_load_module(file_handle &file){
 			}
 		}
 	}
+	return ret;
+}
+
+loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
+	loaded_elf_proc ret;
+	pid_t oldpid=proc_current_pid;
+	proc_switch(pid);
+	Elf32_Ehdr header=elf_read_header(file);
+	size_t ramsize=elf_getsize(file);
+	size_t pages=ramsize/VMM_PAGE_SIZE;
+	size_t baseaddr=elf_getbase(file);
+	ret.mem=vmm_alloc_at(pages, baseaddr);
+	for(int i=0; i<header.phnum; ++i){
+		Elf32_Phdr prog=elf_read_progheader(file, header, i);
+		if(prog.type==PT_LOAD){
+			fs_seek(file, prog.offset, false);
+			if(prog.vaddr < VMM_KERNELSPACE_END) panic("ELF: Attempt to load process into kernel space!");
+			fs_read(file, prog.filesz, (char*)prog.vaddr);
+		}
+	}
+	ret.entry=(module_entry)(header.entry);
+	proc_switch(oldpid);
 	return ret;
 }

@@ -155,6 +155,7 @@ struct aligned_memory{
 namespace module_api{
 	struct syscall_table;
 };
+
 typedef int (*module_entry)(module_api::syscall_table*);
 
 struct loaded_elf_module{
@@ -162,8 +163,17 @@ struct loaded_elf_module{
 	module_entry entry;
 };
 
+typedef int (*proc_entry)(char **argv, int argc);
+
+struct loaded_elf_proc{
+	void *mem;
+	proc_entry entry;
+};
+
+
 void elf_test();
 size_t elf_getsize(file_handle &file);
 loaded_elf_module elf_load_module(file_handle &file);
+loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file);
 
 #endif
