@@ -40,10 +40,10 @@ extern "C"{
 #include "scheduler.hpp"
 #include "drivermgr.hpp"
 #include "devfs.hpp"
+#include "process.hpp"
 #include "load_elf.hpp"
 #include "syscalls.hpp"
 #include "modules.hpp"
-#include "process.hpp"
 
 void GDT_init();
 void IDT_init();
