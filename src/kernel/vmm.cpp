@@ -1,7 +1,6 @@
 #include "vmm.hpp"
 #include "locks.hpp"
 
-const size_t VMM_PAGE_SIZE=4096;
 const size_t VMM_ENTRIES_PER_TABLE=1024;
 const size_t VMM_KERNELSPACE_END=1024*1024*1024;
 const size_t VMM_USERSPACE_START=VMM_KERNELSPACE_END;
@@ -361,6 +360,20 @@ void *vmm_alloc(size_t pages, bool kernelspace){
 	void *ret=(void*)(virtpage*VMM_PAGE_SIZE);
 	memset(ret, 0xaa, pages*VMM_PAGE_SIZE);
 	return ret;
+}
+
+void *vmm_alloc_at(size_t pages, size_t baseaddr){
+	hold_lock hl(vmm_lock);
+	size_t virtpage=baseaddr/VMM_PAGE_SIZE;
+	for(size_t i=0; i<pages; ++i){
+		uint32_t phys_page=vmm_pages.pop()/VMM_PAGE_SIZE;
+		if(!phys_page){
+			dbgpf("VMM: Allocation of %i pages failed.\n", pages);
+			return NULL;
+		}
+		vmm_cur_pagedir->map_page(virtpage+i, phys_page, true, (virtpage+i)*VMM_PAGE_SIZE < VMM_KERNELSPACE_END);
+	}
+	return (void*)baseaddr;
 }
 
 void vmm_free(void *ptr, size_t pages){

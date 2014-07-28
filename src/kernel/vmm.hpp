@@ -3,12 +3,15 @@
 
 #include "kernel.hpp"
 
+const size_t VMM_PAGE_SIZE=4096;
+
 class vmm_pagedir;
 
 extern vmm_pagedir *vmm_cur_pagedir;
 
 void vmm_init(multiboot_info_t *mbt);
 void *vmm_alloc(size_t pages, bool kernelspace=true);
+void *vmm_alloc_at(size_t pages, size_t baseaddr);
 void vmm_free(void *ptr, size_t pages);
 void vmm_switch(vmm_pagedir *dir);
 vmm_pagedir *vmm_newpagedir();
