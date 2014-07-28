@@ -110,6 +110,7 @@ pid_t getpid(){
 }
 
 pid_t mod_spawn(char *exec, char *params){
+	if(!params) params="";
 	return proc_spawn(exec, params);
 }
 
