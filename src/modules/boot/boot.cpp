@@ -48,6 +48,8 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 		displaywrite("Starting BT/OS...");
 	}else if(MATCH("default", "load")){
 		module_load((char*)value);
+	}else if(MATCH("default", "run")){
+		spawn((char*)value, NULL);
 	}
 	return 1;
 }
