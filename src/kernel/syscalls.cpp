@@ -109,6 +109,10 @@ pid_t getpid(){
 	return proc_current_pid;
 }
 
+pid_t mod_spawn(char *exec, char *params){
+	return proc_spawn(exec, params);
+}
+
 module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&panic,
 	&malloc,
@@ -176,4 +180,5 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&getenv,
 
 	&getpid,
+	&mod_spawn,
 };

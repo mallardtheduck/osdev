@@ -87,6 +87,7 @@ struct syscall_table{
 	char *(*getenv)(char *name, pid_t pid);
 
 	pid_t (*getpid)();
+	pid_t (*spawn)(char *exec, char *params);
 };
 
 #ifndef __cplusplus

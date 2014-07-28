@@ -221,4 +221,8 @@ inline static char *getenv(char *name, pid_t pid){
 	return SYSCALL_TABLE->getenv(name, pid);
 }
 
+inline static pid_t spawn(char *exec, char *params){
+	return SYSCALL_TABLE->spawn(exec, params);
+}
+
 #endif
