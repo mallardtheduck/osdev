@@ -1,4 +1,4 @@
-#include "process.hpp"
+#include "kernel.hpp"
 #include "list.hpp"
 #include "ministl.hpp"
 #include "string.hpp"
@@ -124,5 +124,14 @@ env_t proc_copyenv(const env_t &env){
 	for(env_t::const_iterator i=env.cbegin(); i!=env.cend(); ++i){
 		if((i->second.flags & proc_env_flags::NoInherit)==0 && (i->second.flags & proc_env_flags::Global)==0) ret.insert(*i);
 	}
+	return ret;
+}
+
+pid_t proc_spawn(const string &path, const string &params, pid_t parent){
+	pid_t ret=proc_new(path, parent);
+	file_handle file=fs_open((char*)path.c_str());
+	elf_load_proc(ret, file);
+	fs_close(file);
+	//start process thread...
 	return ret;
 }
