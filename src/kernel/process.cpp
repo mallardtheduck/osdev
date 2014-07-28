@@ -127,11 +127,27 @@ env_t proc_copyenv(const env_t &env){
 	return ret;
 }
 
+struct proc_info{
+	pid_t pid;
+	proc_entry entry;
+	/*params*/
+};
+
+void proc_start(void *ptr){
+	pid_t pid = ((proc_info*)ptr)->pid;
+	proc_entry entry = ((proc_info*)ptr)->entry;
+	delete (proc_info*)ptr;
+	proc_switch(pid);
+	//TODO: Switch to userspace...
+	entry(NULL, 0);
+}
+
 pid_t proc_spawn(const string &path, const string &params, pid_t parent){
 	pid_t ret=proc_new(path, parent);
 	file_handle file=fs_open((char*)path.c_str());
 	elf_load_proc(ret, file);
 	fs_close(file);
-	//start process thread...
+	proc_info *info=new proc_info();
+	sch_new_thread(&proc_start, (void*)info);
 	return ret;
 }
