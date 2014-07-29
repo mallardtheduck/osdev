@@ -1,6 +1,7 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
 int main(char **argv, int argc){
-
-    	return 0;
+	asm("int $0x80");
+	asm("cli; hlt");
+    return 0;
 }
