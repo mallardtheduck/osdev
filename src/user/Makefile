@@ -3,7 +3,7 @@ all: test
 test: dummy.file
 	$(MAKE) -C test
 
-clean: test-clean boot-clean rtc-clean
+clean: test-clean
 
 test-clean: dummy.file
 	$(MAKE) -C test clean
