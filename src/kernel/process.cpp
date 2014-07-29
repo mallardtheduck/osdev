@@ -139,7 +139,7 @@ void proc_start(void *ptr){
 	delete (proc_info*)ptr;
 	proc_switch(pid);
 	//TODO: Switch to userspace...
-	entry(NULL, 0);
+	entry(0, NULL);
 }
 
 pid_t proc_spawn(const string &path, const string &params, pid_t parent){
