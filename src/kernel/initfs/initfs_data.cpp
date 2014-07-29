@@ -9,5 +9,6 @@ initfs_file initfs_data[] = {
 	{true, "TEST.SYS", __data_test_sys, sizeof(__data_test_sys)},
 	{true, "BOOT.SYS", __data_boot_sys, sizeof(__data_boot_sys)},
 	{true, "RTC.SYS", __data_rtc_sys, sizeof(__data_rtc_sys)},
+	{true, "TEST.ELX", __data_test_elx, sizeof(__data_test_elx)},
 	{false, "", NULL, 0}
 };
