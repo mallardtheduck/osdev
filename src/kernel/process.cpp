@@ -145,9 +145,11 @@ void proc_start(void *ptr){
 pid_t proc_spawn(const string &path, const string &params, pid_t parent){
 	pid_t ret=proc_new(path, parent);
 	file_handle file=fs_open((char*)path.c_str());
-	elf_load_proc(ret, file);
+	loaded_elf_proc proc=elf_load_proc(ret, file);
 	fs_close(file);
 	proc_info *info=new proc_info();
+	info->pid=ret;
+	info->entry=proc.entry;
 	sch_new_thread(&proc_start, (void*)info);
 	return ret;
 }
