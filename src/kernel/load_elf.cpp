@@ -224,19 +224,20 @@ loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
 	pid_t oldpid=proc_current_pid;
 	proc_switch(pid);
 	Elf32_Ehdr header=elf_read_header(file);
-	size_t ramsize=elf_getsize(file);
-	size_t pages=ramsize/VMM_PAGE_SIZE;
-	size_t baseaddr=elf_getbase(file);
-	ret.mem=vmm_alloc_at(pages, baseaddr);
+	//TODO: Better RAM allocation...
 	for(int i=0; i<header.phnum; ++i){
 		Elf32_Phdr prog=elf_read_progheader(file, header, i);
 		if(prog.type==PT_LOAD){
 			fs_seek(file, prog.offset, false);
+			uint32_t base=prog.vaddr;
+			uint32_t pages=(prog.memsz/VMM_PAGE_SIZE)+1;
+			vmm_alloc_at(pages, base);
 			if(prog.vaddr < VMM_KERNELSPACE_END) panic("ELF: Attempt to load process into kernel space!");
 			fs_read(file, prog.filesz, (char*)prog.vaddr);
 		}
 	}
 	ret.entry=(proc_entry)(header.entry);
+	dbgpf("ELF: Entry point: %x\n", header.entry);
 	proc_switch(oldpid);
 	return ret;
 }
