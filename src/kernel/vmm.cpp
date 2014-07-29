@@ -85,6 +85,7 @@ public:
 
 vmm_pagestack vmm_pages;
 uint32_t vmm_tableframe[VMM_ENTRIES_PER_TABLE] __attribute__((aligned(0x1000)));
+lock vmm_framelock;
 
 class vmm_pagedir{
 private:
@@ -123,6 +124,7 @@ public:
     }
 
     uint32_t virt2phys(void *ptr){
+    	hold_lock hl(vmm_framelock);
     	uint32_t pageno=(size_t)ptr/VMM_PAGE_SIZE;
 		size_t tableindex=pageno/VMM_ENTRIES_PER_TABLE;
 		size_t tableoffset=pageno-(tableindex * VMM_ENTRIES_PER_TABLE);
@@ -150,6 +152,7 @@ public:
     		starttable=(VMM_KERNELSPACE_END/VMM_PAGE_SIZE)/VMM_ENTRIES_PER_TABLE;
     	}
     	for(size_t i=starttable; i<VMM_ENTRIES_PER_TABLE; ++i){
+    	    hold_lock hl(vmm_framelock);
     		uint32_t table=pagedir[i] & 0xFFFFF000;
     		if(!table){
                 if(pages<VMM_ENTRIES_PER_TABLE + freecount){
@@ -202,6 +205,7 @@ public:
     		}
     	}
     	if(is_paging_enabled()){
+    		hold_lock hl(vmm_framelock);
     	    maptable(table);
     	    curtable[tableoffset]=(physpage*VMM_PAGE_SIZE) | pageflags;
     	}else{
@@ -215,6 +219,7 @@ public:
     }
 
     size_t unmap_page(size_t virtpage){
+    	hold_lock hl(vmm_framelock);
     	if(!pagedir) panic("(VMM) Invalid page directory!");
     	//dbgpf("VMM: Unammping %x.\n", virtpage*VMM_PAGE_SIZE);
     	size_t tableindex=virtpage/VMM_ENTRIES_PER_TABLE;
@@ -261,6 +266,7 @@ void vmm_page_fault_handler(int,isr_regs*);
 
 void vmm_init(multiboot_info_t *mbt){
 	init_lock(vmm_lock);
+	init_lock(vmm_framelock);
 	dbgout("VMM: Init\n");
 	memory_map_t *mmap = (memory_map_t*)mbt->mmap_addr;
 	size_t k_first_page=((size_t)&_start/VMM_PAGE_SIZE);
