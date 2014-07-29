@@ -2,7 +2,7 @@ export PREFIX:=$(HOME)/Projects/os/cross
 export TARGET:=i686-elf
 export PATH:=$(PREFIX)/bin:$(PATH)
 
-all: modules kernel user
+all: modules user kernel
 clean: kernel-clean modules-clean user-clean
 rebuild: clean all
 
