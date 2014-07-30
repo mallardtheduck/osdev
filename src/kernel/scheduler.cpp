@@ -201,6 +201,7 @@ bool sch_find_thread(size_t &torun){
 			if(i!=current_thread && (*threads)[i].dynpriority==0){
 				foundtorun=true;
 				torun=i;
+				gdt_set_kernel_stack((*threads)[i].original_esp);
 			}
 		}
 	}

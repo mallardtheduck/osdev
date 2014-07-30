@@ -47,6 +47,7 @@ extern "C"{
 
 void GDT_init();
 void IDT_init();
+void gdt_set_kernel_stack(void* ptr);
 
 #define KERNEL_VERSION_MAJOR 0
 #define KERNEL_VERSION_MINOR 0

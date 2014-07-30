@@ -22,19 +22,53 @@ struct gdt_entry_struct
 } __attribute__((packed));
 typedef struct gdt_entry_struct gdt_entry_t;
 
+struct tss_entry{
+   uint32_t prev_tss;   // The previous TSS - if we used hardware task switching this would form a linked list.
+   uint32_t esp0;       // The stack pointer to load when we change to kernel mode.
+   uint32_t ss0;        // The stack segment to load when we change to kernel mode.
+   uint32_t esp1;       // everything below here is unusued now..
+   uint32_t ss1;
+   uint32_t esp2;
+   uint32_t ss2;
+   uint32_t cr3;
+   uint32_t eip;
+   uint32_t eflags;
+   uint32_t eax;
+   uint32_t ecx;
+   uint32_t edx;
+   uint32_t ebx;
+   uint32_t esp;
+   uint32_t ebp;
+   uint32_t esi;
+   uint32_t edi;
+   uint32_t es;
+   uint32_t cs;
+   uint32_t ss;
+   uint32_t ds;
+   uint32_t fs;
+   uint32_t gs;
+   uint32_t ldt;
+   uint16_t trap;
+   uint16_t iomap_base;
+} __attribute__((packed));
+
 // Lets us access our ASM functions from our C code.
 extern "C" void gdt_flush();
 
 // Internal function prototypes.
 static void gdt_set_gate(int32_t,uint32_t,uint32_t,uint8_t,uint8_t);
+static void gdt_set_tss(int32_t num);
 
-gdt_entry_t gdt_entries[5];
+static const size_t gdt_num_entries = 6;
+
+gdt_entry_t gdt_entries[gdt_num_entries];
 gdt_ptr_t   gdt_ptr;
+tss_entry tss;
 
 void GDT_init()
 {
 	dbgout("GDT init\n");
-	gdt_ptr.limit = (sizeof(gdt_entry_t) * 5) - 1;
+	gdt_ptr.limit = (sizeof(gdt_entry_t) * gdt_num_entries) - 1;
 	gdt_ptr.base  = (uint32_t)&gdt_entries;
 
 	gdt_set_gate(0, 0, 0, 0, 0);                // Null segment
@@ -42,6 +76,7 @@ void GDT_init()
 	gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF); // Data segment
 	gdt_set_gate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // User mode code segment
 	gdt_set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // User mode data segment
+	gdt_set_tss(5);
 
 	gdt_flush();
 }
@@ -58,4 +93,16 @@ static void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t acc
 
    gdt_entries[num].granularity |= gran & 0xF0;
    gdt_entries[num].access      = access;
+}
+
+static void gdt_set_tss(int32_t num){
+	uint32_t base = (uint32_t) &tss;
+   	uint32_t limit = base + sizeof(tss_entry);
+	gdt_set_gate(num, base, limit, 0xE9, 0x0F);
+	memset(&tss, 0, sizeof(tss_entry));
+}
+
+void gdt_set_kernel_stack(void* ptr){
+	tss.ss0 = 0x10;
+	tss.esp0 = (uint32_t)ptr;
 }
