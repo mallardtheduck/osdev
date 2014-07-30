@@ -54,6 +54,7 @@ struct tss_entry{
 
 // Lets us access our ASM functions from our C code.
 extern "C" void gdt_flush();
+extern "C" void tss_flush(/*uint8_t tss_segment*/);
 
 // Internal function prototypes.
 static void gdt_set_gate(int32_t,uint32_t,uint32_t,uint8_t,uint8_t);
@@ -79,6 +80,7 @@ void GDT_init()
 	gdt_set_tss(5);
 
 	gdt_flush();
+	tss_flush(/*0x2B*/);
 }
 
 // Set the value of one GDT entry.
@@ -103,6 +105,8 @@ static void gdt_set_tss(int32_t num){
 }
 
 void gdt_set_kernel_stack(void* ptr){
+	dbgpf("GDT: Kernel stack set to %x\n", ptr);
 	tss.ss0 = 0x10;
 	tss.esp0 = (uint32_t)ptr;
+	dbgpf("GDT: TSS flushed.\n");
 }

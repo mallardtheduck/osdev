@@ -240,3 +240,12 @@ syscall:
 get_ss:
 	mov %ss, %eax
 	ret
+
+.global tss_flush
+tss_flush:
+	mov $0, %bx
+	ltr %bx
+	mov $0x2B, %bx
+	ltr %bx
+	ret
+
