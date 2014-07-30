@@ -290,3 +290,8 @@ void sch_unblock(uint64_t ext_id){
 bool sch_active(){
 	return sch_inited;
 }
+
+void sch_setpid(pid_t pid){
+	hold_lock hl(sch_lock);
+	(*threads)[current_thread].pid=pid;
+}

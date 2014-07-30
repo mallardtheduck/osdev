@@ -16,5 +16,6 @@ void sch_block();
 void sch_unblock(uint64_t ext_id);
 void sch_set_priority(uint32_t pri);
 bool sch_active();
+void sch_setpid(pid_t pid);
 
 #endif
