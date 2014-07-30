@@ -136,7 +136,7 @@ public:
 
     void add_table(size_t tableno, uint32_t *table){
     	uint32_t tableflags=(TableFlags::Present | TableFlags::Writable);
-    	if(tableno > VMM_KERNEL_TABLES) tableflags |= TableFlags::Usermode;
+    	if(tableno >= VMM_KERNEL_TABLES) tableflags |= TableFlags::Usermode;
         pagedir[tableno]=(uint32_t)table | tableflags;
     }
 
@@ -149,7 +149,7 @@ public:
     	size_t startpage=0;
     	size_t starttable=0;
     	if(!kernelspace){
-    		starttable=(VMM_KERNELSPACE_END/VMM_PAGE_SIZE)/VMM_ENTRIES_PER_TABLE;
+    		starttable=VMM_KERNEL_TABLES;
     	}
     	for(size_t i=starttable; i<VMM_ENTRIES_PER_TABLE; ++i){
     	    hold_lock hl(vmm_framelock);
