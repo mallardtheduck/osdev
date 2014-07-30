@@ -178,7 +178,7 @@ void IDT_init()
     idt_set_gate(125, (uint32_t)isr125, 0x08, 0x8E);
     idt_set_gate(126, (uint32_t)isr126, 0x08, 0x8E);
     idt_set_gate(127, (uint32_t)isr127, 0x08, 0x8E);
-	idt_set_gate(128, (uint32_t)isr128, 0x08, 0x8E);
+	idt_set_gate(128, (uint32_t)isr128, 0x08, 0xEE);
 
 	idt_set_gate(32, (uint32_t)irq0 , 0x08, 0x8E);
     idt_set_gate(33, (uint32_t)irq1 , 0x08, 0x8E);
