@@ -413,6 +413,7 @@ void vmm_activate_pagedir(vmm_pagedir *pagedir){
 	uint32_t dir=pagedir->getphys();
 	if(!dir) panic("VMM: Invalid page directory!");
 	dbgpf("VMM: Activating page directory at %x\n", dir);
+	disable_interrupts();
 	asm volatile("mov %0, %%cr3":: "b"(dir));
     unsigned int cr0;
     asm volatile("mov %%cr0, %0": "=b"(cr0));
@@ -421,6 +422,7 @@ void vmm_activate_pagedir(vmm_pagedir *pagedir){
     asm volatile("mov %%cr0, %0": "=b"(cr0));
     cr0 |= PAGING_ENABLED_FLAG;
     asm volatile("mov %0, %%cr0":: "b"(cr0));
+    enable_interrupts();
 }
 
 void vmm_switch(vmm_pagedir *dir){
