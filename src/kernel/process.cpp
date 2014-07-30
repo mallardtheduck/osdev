@@ -63,6 +63,7 @@ proc_process *proc_get(pid_t pid){
 //Note: Called from scheduler. No locking, memory allocation, etc. available!
 void proc_switch(pid_t pid){
 	if(pid!=proc_current_pid){
+		dbgpf("PROC: Switching process. Old PID: %i, new PID: %i\n", (int)proc_current_pid, (int)pid);
 		proc_process *newproc=proc_get(pid);
 		proc_current_process=newproc;
 		proc_current_pid=newproc->pid;
@@ -139,6 +140,7 @@ void proc_start(void *ptr){
 	pid_t pid = ((proc_info*)ptr)->pid;
 	proc_entry entry = ((proc_info*)ptr)->entry;
 	delete (proc_info*)ptr;
+	sch_setpid(pid);
 	proc_switch(pid);
 	void *stack=vmm_alloc(4, false);
 	stack=(void*)((size_t)stack+4*VMM_PAGE_SIZE);
