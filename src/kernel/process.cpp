@@ -3,6 +3,8 @@
 #include "ministl.hpp"
 #include "string.hpp"
 
+extern "C" void proc_run_usermode(void *stack, proc_entry entry, int argc, char **argv);
+
 proc_process *proc_current_process;
 pid_t proc_current_pid;
 list<proc_process> proc_processes;
@@ -35,7 +37,7 @@ proc_process *proc_get(pid_t pid);
 list<proc_process> *processes;
 
 void proc_init(){
-	dbgout("PROC: Init.\n");
+	dbgout("PROC: Init\n");
 	processes=new list<proc_process>();
 	proc_process kproc;
 	kproc.name="KERNEL";
@@ -138,8 +140,10 @@ void proc_start(void *ptr){
 	proc_entry entry = ((proc_info*)ptr)->entry;
 	delete (proc_info*)ptr;
 	proc_switch(pid);
-	//TODO: Switch to userspace...
-	entry(0, NULL);
+	void *stack=vmm_alloc(4, false);
+	stack=(void*)((size_t)stack+4*VMM_PAGE_SIZE);
+	dbgpf("PROC: Usermode stack: %x\n", stack);
+	proc_run_usermode(stack, entry, 0, NULL);
 }
 
 pid_t proc_spawn(const string &path, const string &params, pid_t parent){
