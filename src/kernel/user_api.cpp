@@ -43,7 +43,7 @@ USERAPI_HANDLER(BT_ALLOC_PAGES){
 }
 
 USERAPI_HANDLER(BT_FREE_PAGES){
-	if(is_safe_ptr(regs->eax)){
+	if(is_safe_ptr(regs->ebx)){
 		vmm_free((void*)regs->ebx, regs->ecx);
 	}
 }
@@ -70,6 +70,18 @@ USERAPI_HANDLER(BT_DESTROY_LOCK){
 	delete l;
 }
 
+USERAPI_HANDLER(BT_MOUNT){
+	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->ecx) && is_safe_ptr(regs->edx)){
+		regs->eax=fs_mount((char*)regs->ebx, (char*)regs->ecx, (char*)regs->edx);
+	}
+}
+
+USERAPI_HANDLER(BT_UNMOUNT){
+	if(is_safe_ptr(regs->ebx)){
+		regs->eax=fs_unmount((char*)regs->ebx);
+	}
+}
+
 USERAPI_HANDLER(BT_EXIT){
 	pid_t pid=proc_current_pid;
 	sch_setpid(0);
@@ -93,6 +105,9 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_TRY_LOCK);
 		USERAPI_HANDLE_CALL(BT_UNLOCK);
 		USERAPI_HANDLE_CALL(BT_DESTROY_LOCK);
+
+		USERAPI_HANDLE_CALL(BT_MOUNT);
+		USERAPI_HANDLE_CALL(BT_UNMOUNT);
 
 		USERAPI_HANDLE_CALL(BT_EXIT);
 		default:
