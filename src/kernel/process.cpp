@@ -2,12 +2,16 @@
 #include "list.hpp"
 #include "ministl.hpp"
 #include "string.hpp"
+#include "locks.hpp"
 
 extern "C" void proc_run_usermode(void *stack, proc_entry entry, int argc, char **argv);
 
 proc_process *proc_current_process;
 pid_t proc_current_pid;
 list<proc_process> proc_processes;
+
+lock proc_lock;
+lock env_lock;
 
 pid_t curpid=0;
 
@@ -27,9 +31,16 @@ struct proc_process{
 	env_t environment;
 	string name;
 	vmm_pagedir *pagedir;
+	handle_t handlecounter;
+	map<handle_t, lock*> locks;
+	map<handle_t, file_handle*> files;
+	map<handle_t, dir_handle*> dirs;
+	map<handle_t, uint64_t> threads;
+
 	proc_process() : pid(++curpid) {}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
-		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(vmm_newpagedir()) {}
+		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(vmm_newpagedir()),
+		 handlecounter(0) {}
 };
 
 proc_process *proc_get(pid_t pid);
@@ -38,6 +49,7 @@ list<proc_process> *processes;
 
 void proc_init(){
 	dbgout("PROC: Init\n");
+	init_lock(proc_lock);
 	processes=new list<proc_process>();
 	proc_process kproc;
 	kproc.name="KERNEL";
@@ -54,6 +66,7 @@ void proc_init(){
 }
 
 proc_process *proc_get(pid_t pid){
+	hold_lock hl(proc_lock);
 	for(list<proc_process>::iterator i=processes->begin(); i; ++i){
 		if(i->pid==pid) return i;
 	}
@@ -74,27 +87,33 @@ void proc_switch(pid_t pid){
 pid_t proc_new(const string &name, pid_t parent){
 	proc_process *parent_proc=proc_get(parent);
 	proc_process newproc(parent_proc, name);
-	processes->add(newproc);
+	{	hold_lock hl(proc_lock);
+		processes->add(newproc);
+	}
 	return newproc.pid;
 }
 
 void proc_end(pid_t pid){
+	dbgpf("PROC: Ending process %i.\n", (int)pid);
 	pid_t parent=proc_get(pid)->parent;
-	for(list<proc_process>::iterator i=processes->begin(); i; ++i){
-		if(i->pid==pid){
-			vmm_deletepagedir(i->pagedir);
-			processes->remove(i);
-			break;
+	{hold_lock hl(proc_lock);
+		for(list<proc_process>::iterator i=processes->begin(); i; ++i){
+			if(i->pid==pid){
+				vmm_deletepagedir(i->pagedir);
+				processes->remove(i);
+				break;
+			}
 		}
-	}
-	for(list<proc_process>::iterator i=processes->begin(); i; ++i){
-		if(i->parent==pid){
-			i->parent=parent;
+		for(list<proc_process>::iterator i=processes->begin(); i; ++i){
+			if(i->parent==pid){
+				i->parent=parent;
+			}
 		}
 	}
 }
 
 void proc_setenv(const pid_t pid, const string &name, const string &value, const uint8_t flags, bool userspace){
+	hold_lock hl(env_lock);
 	env_t &env=(flags & proc_env_flags::Global) ? proc_get(0)->environment : proc_get(pid)->environment;
 	if(userspace && env.has_key(name) && (env[name].flags & proc_env_flags::Private || env[name].flags & proc_env_flags::ReadOnly)){
 		return;
@@ -108,6 +127,7 @@ void proc_setenv(const string &name, const string &value, const uint8_t flags, b
 }
 
 string proc_getenv(const pid_t pid, const string &name, bool userspace){
+	hold_lock hl(env_lock);
 	env_t &kenv=proc_get(0)->environment;
 	if(kenv.has_key(name) && kenv[name].flags & proc_env_flags::Global){
 		if(!userspace || (kenv[name].flags & proc_env_flags::Private)==0) return kenv[name].value;
@@ -124,6 +144,7 @@ string proc_getenv(const string &name, bool userspace){
 
 env_t proc_copyenv(const env_t &env){
 	env_t ret;
+	hold_lock hl(env_lock);
 	for(env_t::const_iterator i=env.cbegin(); i!=env.cend(); ++i){
 		if((i->second.flags & proc_env_flags::NoInherit)==0 && (i->second.flags & proc_env_flags::Global)==0) ret.insert(*i);
 	}
@@ -158,4 +179,21 @@ pid_t proc_spawn(const string &path, const string &params, pid_t parent){
 	info->entry=proc.entry;
 	sch_new_thread(&proc_start, (void*)info);
 	return ret;
+}
+
+handle_t proc_add_lock(lock *l, pid_t pid){
+	proc_process *proc=proc_get(pid);
+	handle_t ret=++proc->handlecounter;
+	proc->locks[ret] = l;
+	return ret;
+}
+
+lock *proc_get_lock(handle_t h, pid_t pid){
+	proc_process *proc=proc_get(pid);
+	return proc->locks[h];
+}
+
+void proc_remove_lock(handle_t h, pid_t pid){
+	proc_process *proc=proc_get(pid);
+	proc->locks.erase(h);
 }

@@ -5,6 +5,7 @@
 #include "string.hpp"
 
 typedef uint64_t pid_t;
+typedef uint32_t handle_t;
 
 namespace proc_env_flags{
 	enum {
@@ -31,5 +32,10 @@ void proc_setenv(const string &name, const string &value, const uint8_t flags=0,
 string proc_getenv(const pid_t pid, const string &name, bool userspace=false);
 string proc_getenv(const string &name, bool userspace=true);
 pid_t proc_spawn(const string &path, const string &params, pid_t parent=proc_current_pid);
+
+typedef volatile uint64_t lock;
+handle_t proc_add_lock(lock *l, pid_t pid=proc_current_pid);
+lock *proc_get_lock(handle_t h, pid_t pid=proc_current_pid);
+void proc_remove_lock(handle_t h, pid_t pid=proc_current_pid);
 
 #endif
