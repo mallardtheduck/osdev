@@ -105,8 +105,6 @@ static void gdt_set_tss(int32_t num){
 }
 
 void gdt_set_kernel_stack(void* ptr){
-	dbgpf("GDT: Kernel stack set to %x\n", ptr);
 	tss.ss0 = 0x10;
 	tss.esp0 = (uint32_t)ptr;
-	dbgpf("GDT: TSS flushed.\n");
 }
