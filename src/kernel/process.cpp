@@ -95,7 +95,11 @@ pid_t proc_new(const string &name, pid_t parent){
 
 void proc_end(pid_t pid){
 	dbgpf("PROC: Ending process %i.\n", (int)pid);
-	pid_t parent=proc_get(pid)->parent;
+	proc_process *proc=proc_get(pid);
+	pid_t parent=proc->parent;
+	for(map<handle_t, lock*>::iterator i=proc->locks.begin(); i!=proc->locks.end(); ++i){
+		delete i->second;
+	}
 	{hold_lock hl(proc_lock);
 		for(list<proc_process>::iterator i=processes->begin(); i; ++i){
 			if(i->pid==pid){
