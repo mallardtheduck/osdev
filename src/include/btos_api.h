@@ -10,6 +10,9 @@
 namespace btos_api{
 #endif
 
+typedef uint32_t bt_handle;
+typedef bt_handle bt_lockhandle;
+
 enum{
 	BT_ALLOC_PAGES		= 0x0101,
 	BT_FREE_PAGES		= 0x0102,
