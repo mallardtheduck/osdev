@@ -47,4 +47,12 @@ inline static void bt_destroy_lock(bt_lockhandle lock){
 	btos_call(BT_DESTROY_LOCK, lock, 0, 0);
 }
 
+inline static bool bt_mount(const char *name, const char *device, const char *filesystem){
+	return btos_call(BT_MOUNT, (uint32_t)name, (uint32_t)device, (uint32_t)filesystem);
+}
+
+inline static bool bt_unmount(const char *name){
+	return btos_call(BT_UNMOUNT, (uint32_t)name, 0, 0);
+}
+
 #endif
