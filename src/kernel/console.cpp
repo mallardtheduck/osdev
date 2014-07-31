@@ -50,7 +50,10 @@ bool terminal_write(void *instance, size_t bytes, char *buf){
 		inst->pos+=bytes;
 		return true;
 	}else{
-		terminal_writestring(buf);
+	    char *obuf=(char*)malloc(bytes+1);
+	    memset(obuf, 0, bytes+1);
+	    memcpy(obuf, buf, bytes);
+		terminal_writestring(obuf);
 		return true;
 	}
 }
