@@ -251,6 +251,24 @@ public:
     	dbgpf("VMM: %x %x %x\n", pagedir, other, other->pagedir);
     	memcpy(pagedir, other->pagedir, VMM_KERNEL_TABLES * sizeof(uint32_t));
     }
+
+    void destroy(){
+    	if(this==vmm_cur_pagedir){
+    		panic("VMM: Attempt to delete current page directory!");
+    	}
+    	for(size_t i=VMM_KERNEL_TABLES; i<VMM_ENTRIES_PER_TABLE; ++i){
+    		if(pagedir[i] & TableFlags::Present){
+    			hold_lock hl(vmm_framelock);
+    			uint32_t table=pagedir[i] & 0xFFFFF000;
+    			maptable(table);
+    			for(size_t j=0; j<VMM_ENTRIES_PER_TABLE; ++i){
+    				if(curtable[j] & PageFlags::Present){
+    					vmm_pages.push(curtable[j] & 0xFFFFF000);
+    				}
+    			}
+    		}
+    	}
+    }
 };
 
 const size_t VMM_MAX_REGIONS=32;
@@ -442,5 +460,6 @@ vmm_pagedir *vmm_newpagedir(){
 }
 
 void vmm_deletepagedir(vmm_pagedir *dir){
+	dir->destroy();
 	delete dir;
 }
