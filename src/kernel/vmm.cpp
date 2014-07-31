@@ -240,7 +240,7 @@ void vmm_pagedir::destroy(){
 			hold_lock hl(vmm_framelock);
 			uint32_t table=pagedir[i] & 0xFFFFF000;
 			maptable(table);
-			for(size_t j=0; j<VMM_ENTRIES_PER_TABLE; ++i){
+			for(size_t j=0; j<VMM_ENTRIES_PER_TABLE; ++j){
 				if(curtable[j] & PageFlags::Present){
 					vmm_pages.push(curtable[j] & 0xFFFFF000);
 				}
