@@ -54,19 +54,20 @@ USERAPI_HANDLER(BT_CREATE_LOCK){
 }
 
 USERAPI_HANDLER(BT_LOCK){
-	take_lock(*proc_get_lock(regs->eax));
+	take_lock(*proc_get_lock(regs->ebx));
 }
 
 USERAPI_HANDLER(BT_TRY_LOCK){
-	regs->eax=try_take_lock(*proc_get_lock(regs->eax));
+	regs->eax=try_take_lock(*proc_get_lock(regs->ebx));
 }
 
 USERAPI_HANDLER(BT_UNLOCK){
-	release_lock(*proc_get_lock(regs->eax));
+	release_lock(*proc_get_lock(regs->ebx));
 }
 
 USERAPI_HANDLER(BT_DESTROY_LOCK){
-	lock *l=proc_get_lock(regs->eax);
+	lock *l=proc_get_lock(regs->ebx);
+	proc_remove_lock(regs->ebx);
 	delete l;
 }
 
@@ -90,6 +91,42 @@ USERAPI_HANDLER(BT_EXIT){
 	sch_end_thread();
 }
 
+USERAPI_HANDLER(BT_FOPEN){
+    //TODO: Flags...
+    if(is_safe_ptr(regs->ebx)){
+        file_handle *file=new file_handle(fs_open((char*)regs->ebx));
+        regs->eax=proc_add_file(file);
+    }
+}
+
+USERAPI_HANDLER(BT_FCLOSE){
+    file_handle *file=proc_get_file(regs->ebx);
+    if(file){
+        regs->eax=fs_close(*file);
+        proc_remove_file(regs->ebx);
+    }
+}
+
+USERAPI_HANDLER(BT_FWRITE){
+    file_handle *file=proc_get_file(regs->ebx);
+    if(file && is_safe_ptr(regs->edx)){
+        regs->eax=fs_write(*file, regs->ecx, (char*)regs->edx);
+    }
+}
+
+USERAPI_HANDLER(BT_FREAD){
+    file_handle *file=proc_get_file(regs->ebx);
+    if(file && is_safe_ptr(regs->edx)){
+        regs->eax=fs_read(*file, regs->ecx, (char*)regs->edx);
+    }
+}
+
+USERAPI_HANDLER(BT_FSEEK){
+    file_handle *file=proc_get_file(regs->ebx);
+    if(file){
+        regs->eax=fs_seek(*file, regs->ecx, regs->edx);
+    }
+}
 
 void userapi_syscall(uint16_t fn, isr_regs *regs){
 	switch(fn){
@@ -97,17 +134,27 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
          	zero_call(regs);
          	break;
 
+        //Memory managment
 		USERAPI_HANDLE_CALL(BT_ALLOC_PAGES);
 		USERAPI_HANDLE_CALL(BT_FREE_PAGES);
 
+        //Locking
 		USERAPI_HANDLE_CALL(BT_CREATE_LOCK);
 		USERAPI_HANDLE_CALL(BT_LOCK);
 		USERAPI_HANDLE_CALL(BT_TRY_LOCK);
 		USERAPI_HANDLE_CALL(BT_UNLOCK);
 		USERAPI_HANDLE_CALL(BT_DESTROY_LOCK);
 
+        //VFS
 		USERAPI_HANDLE_CALL(BT_MOUNT);
 		USERAPI_HANDLE_CALL(BT_UNMOUNT);
+
+        //Filesystem
+		USERAPI_HANDLE_CALL(BT_FOPEN);
+		USERAPI_HANDLE_CALL(BT_FCLOSE);
+		USERAPI_HANDLE_CALL(BT_FWRITE);
+		USERAPI_HANDLE_CALL(BT_FREAD);
+		USERAPI_HANDLE_CALL(BT_FSEEK);
 
 		USERAPI_HANDLE_CALL(BT_EXIT);
 		default:
