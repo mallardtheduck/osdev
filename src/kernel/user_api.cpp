@@ -122,6 +122,16 @@ USERAPI_HANDLER(BT_FREAD){
     }
 }
 
+USERAPI_HANDLER(BT_FIOCTL){
+	file_handle *file=proc_get_file(regs->ebx);
+    if(file && is_safe_ptr(regs->edx)){
+    	btos_api::bt_fioctl_buffer *buf=(btos_api::bt_fioctl_buffer*)regs->edx;
+    	if(is_safe_ptr((uint32_t)buf->buffer)){
+    		regs->eax=fs_ioctl(*file, regs->ecx, buf->size, buf->buffer);
+    	}
+    }
+}
+
 USERAPI_HANDLER(BT_FSEEK){
     file_handle *file=proc_get_file(regs->ebx);
     if(file){
@@ -155,6 +165,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_FCLOSE);
 		USERAPI_HANDLE_CALL(BT_FWRITE);
 		USERAPI_HANDLE_CALL(BT_FREAD);
+		USERAPI_HANDLE_CALL(BT_FIOCTL);
 		USERAPI_HANDLE_CALL(BT_FSEEK);
 
 		USERAPI_HANDLE_CALL(BT_EXIT);
