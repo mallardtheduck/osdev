@@ -418,6 +418,7 @@ void *vmm_alloc_at(size_t pages, size_t baseaddr){
 	hold_lock hl(vmm_lock);
 	size_t virtpage=baseaddr/VMM_PAGE_SIZE;
 	for(size_t i=0; i<pages; ++i){
+		if(vmm_cur_pagedir->is_mapped((void*)((virtpage+i)*VMM_PAGE_SIZE))) continue;
 		uint32_t phys_page=vmm_pages.pop()/VMM_PAGE_SIZE;
 		if(!phys_page){
 			dbgpf("VMM: Allocation of %i pages failed.\n", pages);
