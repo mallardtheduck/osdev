@@ -55,4 +55,29 @@ inline static bool bt_unmount(const char *name){
 	return btos_call(BT_UNMOUNT, (uint32_t)name, 0, 0);
 }
 
+inline static bt_filehandle bt_fopen(const char *path, uint32_t flags){
+	return btos_call(BT_FOPEN, (uint32_t)path, flags, 0);
+}
+
+inline static bool bt_fclose(bt_filehandle file){
+	return btos_call(BT_FCLOSE, file, 0, 0);
+}
+
+inline static size_t bt_fwrite(bt_filehandle file, size_t bytes, const char *buffer){
+	return btos_call(BT_FWRITE, file, bytes, (uint32_t)buffer);
+}
+
+inline static size_t bt_fread(bt_filehandle file, size_t bytes, char *buffer){
+	return btos_call(BT_FREAD, file, bytes, (uint32_t)buffer);
+}
+
+inline static size_t bt_fioctl(bt_filehandle file, int function, size_t bytes, char *buffer){
+	bt_fioctl_buffer buf = {.size=bytes, .buffer=buffer};
+	return btos_call(BT_FIOCTL, file, function, (uint32_t)&buf);
+}
+
+inline static size_t bt_fseek(bt_filehandle file, size_t bytes, uint32_t flags){
+	return btos_call(BT_FSEEK, file, bytes, flags);
+}
+
 #endif
