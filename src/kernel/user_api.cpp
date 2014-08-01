@@ -104,6 +104,7 @@ USERAPI_HANDLER(BT_FCLOSE){
     if(file){
         regs->eax=fs_close(*file);
         proc_remove_file(regs->ebx);
+        delete file;
     }
 }
 
