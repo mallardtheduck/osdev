@@ -1,11 +1,12 @@
+GIT-COMMIT := $(shell git --no-pager log -1 --pretty=format:%h)
 BUILD-AS := i686-elf-as
 BUILD-AS-OPTIONS := -g
 BUILD-CPP := i686-elf-g++
 BUILD-CPP-FLAGS :=  -c
-BUILD-CPP-OPTIONS := -ffreestanding -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -I../include -DKERNEL
+BUILD-CPP-OPTIONS := -ffreestanding -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -I../include -DKERNEL -DCOMMIT=\"$(GIT-COMMIT)\"
 BUILD-C := i686-elf-gcc
 BUILD-C-FLAGS := -c
-BUILD-C-OPTIONS := -ffreestanding -O2 -Wall -Wextra -Werror -g -I../include -DKERNEL
+BUILD-C-OPTIONS := -ffreestanding -O2 -Wall -Wextra -Werror -g -I../include -DKERNEL -DCOMMIT=\"$(GIT-COMMIT)\"
 LINK := i686-elf-gcc
 LINK-FLAGS := -T linker.ld -o myos.bin -ffreestanding -O2 -nostdlib -g
 LINK-OPTIONS := -lgcc
