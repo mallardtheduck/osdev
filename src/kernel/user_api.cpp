@@ -139,6 +139,53 @@ USERAPI_HANDLER(BT_FSEEK){
     }
 }
 
+USERAPI_HANDLER(BT_DOPEN){
+   //TODO: Flags...
+    if(is_safe_ptr(regs->ebx)){
+        dir_handle *dir=new dir_handle(fs_open_dir((char*)regs->ebx));
+        regs->eax=proc_add_dir(dir);
+    }
+}
+
+USERAPI_HANDLER(BT_DCLOSE){
+	dir_handle *dir=proc_get_dir(regs->ebx);
+	if(dir){
+		regs->eax=fs_close_dir(*dir);
+		proc_remove_dir(regs->ebx);
+		delete dir;
+	}
+}
+
+USERAPI_HANDLER(BT_DWRITE){
+	dir_handle *dir=proc_get_dir(regs->ebx);
+	if(dir && is_safe_ptr(regs->ecx)){
+		directory_entry *entry=(directory_entry*)regs->ecx;
+		fs_write_dir(*dir, *entry);
+	}
+}
+
+USERAPI_HANDLER(BT_DREAD){
+	dir_handle *dir=proc_get_dir(regs->ebx);
+	if(dir && is_safe_ptr(regs->ecx)){
+		directory_entry *entry=(directory_entry*)regs->ecx;
+		*entry=fs_read_dir(*dir);
+	}
+}
+
+USERAPI_HANDLER(BT_DSEEK){
+	dir_handle *dir=proc_get_dir(regs->ebx);
+	if(dir){
+		regs->eax=fs_seek_dir(*dir, regs->ecx, regs->edx);
+	}
+}
+
+USERAPI_HANDLER(BT_STAT){
+	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->ecx)){
+		directory_entry *entry=(directory_entry*)regs->ecx;
+		*entry=fs_stat((char*)regs->ebx);
+	}
+}
+
 void userapi_syscall(uint16_t fn, isr_regs *regs){
 	switch(fn){
 		case 0:
@@ -167,6 +214,12 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_FREAD);
 		USERAPI_HANDLE_CALL(BT_FIOCTL);
 		USERAPI_HANDLE_CALL(BT_FSEEK);
+		USERAPI_HANDLE_CALL(BT_DOPEN);
+		USERAPI_HANDLE_CALL(BT_DCLOSE);
+		USERAPI_HANDLE_CALL(BT_DWRITE);
+		USERAPI_HANDLE_CALL(BT_DREAD);
+		USERAPI_HANDLE_CALL(BT_DSEEK);
+		USERAPI_HANDLE_CALL(BT_STAT);
 
 		USERAPI_HANDLE_CALL(BT_EXIT);
 		default:
