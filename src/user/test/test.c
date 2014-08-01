@@ -2,6 +2,8 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
+bt_filehandle stdout=0;
+
 size_t strlen(const char *s){
     int ret=0;
     while(s && s[ret]) ++ret;
@@ -9,9 +11,10 @@ size_t strlen(const char *s){
 }
 
 void print_string(const char *s){
-    bt_filehandle f=btos_call(BT_FOPEN, (uint32_t)"DEV:/VGATEXT0", 0, 0);
-    btos_call(BT_FWRITE, f, strlen(s), (uint32_t)s);
-    btos_call(BT_FCLOSE, f, 0, 0);
+	if(!stdout){
+    	stdout=bt_fopen("DEV:/VGATEXT0", 0);
+    }
+    bt_fwrite(stdout, strlen(s), s);
 }
 
 int main(int argc, char **argv){
@@ -21,7 +24,15 @@ int main(int argc, char **argv){
 	bt_free_pages(q, 1);
 	bt_mount("TEST", "NULL", "INITFS");
 	bt_unmount("TEST");
-	bt_zero("All done.\n");
+	bt_zero("~~~Userspace test program done!~~~\n");
+	bt_dirhandle dir=bt_dopen("INIT:/", 0);
+	directory_entry entry=bt_dread(dir);
+	while(entry.valid){
+		print_string(entry.filename);
+		print_string("\n");
+		entry=bt_dread(dir);
+	}
+	bt_dclose(dir);
 	btos_call(BT_EXIT, 0, 0, 0);
     return 0;
 }
