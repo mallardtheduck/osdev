@@ -35,6 +35,8 @@ struct fs_path{
 typedef struct fs_path fs_path;
 #endif
 
+#if defined(KERNEL) || defined(KERNEL_MODULE)
+
 struct fs_driver{
 	bool valid;
 	char name[9];
@@ -88,6 +90,8 @@ struct dir_handle{
 
 #ifndef __cplusplus
 typedef struct dir_handle dir_handle;
+#endif
+
 #endif
 
 #endif
