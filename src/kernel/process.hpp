@@ -42,4 +42,8 @@ handle_t proc_add_file(file_handle *file, pid_t pid=proc_current_pid);
 file_handle *proc_get_file(handle_t h, pid_t pid=proc_current_pid);
 void proc_remove_file(handle_t h, pid_t pid=proc_current_pid);
 
+handle_t proc_add_dir(dir_handle *dir, pid_t pid=proc_current_pid);
+dir_handle *proc_get_dir(handle_t h, pid_t pid=proc_current_pid);
+void proc_remove_dir(handle_t h, pid_t pid=proc_current_pid);
+
 #endif

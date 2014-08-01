@@ -169,6 +169,7 @@ void proc_start(void *ptr){
 	proc_switch(pid);
 	void *stack=vmm_alloc(4, false);
 	stack=(void*)((size_t)stack+4*VMM_PAGE_SIZE);
+	stack=(void*)((size_t)stack-sizeof(uint32_t));
 	dbgpf("PROC: Usermode stack: %x\n", stack);
 	proc_run_usermode(stack, entry, 0, NULL);
 }
@@ -217,4 +218,21 @@ file_handle *proc_get_file(handle_t h, pid_t pid){
 void proc_remove_file(handle_t h, pid_t pid){
 	proc_process *proc=proc_get(pid);
 	proc->files.erase(h);
+}
+
+handle_t proc_add_dir(dir_handle *dir, pid_t pid){
+	proc_process *proc=proc_get(pid);
+    handle_t ret=++proc->handlecounter;
+    proc->dirs[ret] = dir;
+    return ret;
+}
+
+dir_handle *proc_get_dir(handle_t h, pid_t pid){
+    proc_process *proc=proc_get(pid);
+    return proc->dirs[h];
+}
+
+void proc_remove_dir(handle_t h, pid_t pid){
+	proc_process *proc=proc_get(pid);
+	proc->dirs.erase(h);
 }
