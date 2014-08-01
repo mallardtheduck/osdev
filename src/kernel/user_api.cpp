@@ -83,14 +83,6 @@ USERAPI_HANDLER(BT_UNMOUNT){
 	}
 }
 
-USERAPI_HANDLER(BT_EXIT){
-	pid_t pid=proc_current_pid;
-	sch_setpid(0);
-	proc_switch(0);
-	proc_end(pid);
-	sch_end_thread();
-}
-
 USERAPI_HANDLER(BT_FOPEN){
     //TODO: Flags...
     if(is_safe_ptr(regs->ebx)){
@@ -186,6 +178,56 @@ USERAPI_HANDLER(BT_STAT){
 	}
 }
 
+USERAPI_HANDLER(BT_LOAD_MODULE){
+	if(is_safe_ptr(regs->ebx)){
+		load_module((char*)regs->ebx);
+	}
+}
+
+USERAPI_HANDLER(BT_GETENV){
+	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->ecx)){
+		string value=proc_getenv((char*)regs->ebx, true);
+		if(value.length() > regs->edx){
+			strncpy((char*)regs->ecx, value.c_str(), regs->edx);
+			regs->eax=true;
+		}else regs->eax=false;
+	}
+}
+
+USERAPI_HANDLER(BT_SETENV){
+	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->ecx)){
+		proc_setenv((char*)regs->ebx, (char*)regs->ecx, regs->edx, true);
+		regs->eax=true;
+	}
+}
+
+USERAPI_HANDLER(BT_SPAWN){
+	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->edx)){
+		//TODO: Parameters...
+		regs->eax=proc_spawn((char*)regs->ebx, "");
+	}
+}
+
+USERAPI_HANDLER(BT_WAIT){
+	//TODO: Implement...
+}
+
+USERAPI_HANDLER(BT_KILL){
+	proc_end(regs->ebx);
+}
+
+USERAPI_HANDLER(BT_PRIORITIZE){
+	//TODO: Implement...
+}
+
+USERAPI_HANDLER(BT_EXIT){
+	pid_t pid=proc_current_pid;
+	sch_setpid(0);
+	proc_switch(0);
+	proc_end(pid);
+	sch_end_thread();
+}
+
 void userapi_syscall(uint16_t fn, isr_regs *regs){
 	switch(fn){
 		case 0:
@@ -221,7 +263,20 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_DSEEK);
 		USERAPI_HANDLE_CALL(BT_STAT);
 
+		//Modules
+		USERAPI_HANDLE_CALL(BT_LOAD_MODULE);
+
+		//Environment
+		USERAPI_HANDLE_CALL(BT_GETENV);
+		USERAPI_HANDLE_CALL(BT_SETENV);
+
+		//Process
+		USERAPI_HANDLE_CALL(BT_SPAWN);
+		USERAPI_HANDLE_CALL(BT_WAIT);
+		USERAPI_HANDLE_CALL(BT_KILL);
+		USERAPI_HANDLE_CALL(BT_PRIORITIZE);
 		USERAPI_HANDLE_CALL(BT_EXIT);
+
 		default:
 			regs->eax=-1;
 			break;
