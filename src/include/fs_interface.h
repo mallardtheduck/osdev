@@ -4,6 +4,10 @@
 const char FS_PATH_SEPERATOR='/';
 const char FS_DRIVE_SEPERATOR=':';
 
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+
 enum fs_item_types{
 	FS_File=0x00,
 	FS_Directory=0x01,

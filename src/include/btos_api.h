@@ -6,6 +6,8 @@
 #include <stdint.h>
 #endif
 
+#include "fs_interface.h"
+
 #ifdef __cplusplus
 namespace btos_api{
 #endif

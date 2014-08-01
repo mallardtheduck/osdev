@@ -5,9 +5,9 @@
 
 #ifdef __cplusplus
 using namespace btos_api;
+#else
+#include <stdbool.h>
 #endif
-
-typedef _Bool bool;
 
 inline static uint32_t btos_call(uint32_t fn, uint32_t p1, uint32_t p2, uint32_t p3){
 	uint32_t ret=0;
