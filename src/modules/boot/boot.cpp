@@ -45,6 +45,7 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 
 	if(MATCH("default", "display")){
 		((config*)c)->display=strdup(value);
+		setenv("DISPLAY_DEVICE", ((config*)c)->display, 0, 0);
 		displaywrite("Starting BT/OS...");
 	}else if(MATCH("default", "load")){
 		module_load((char*)value);
