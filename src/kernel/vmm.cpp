@@ -129,7 +129,6 @@ public:
     size_t unmap_page(size_t virtpage);
 
     void copy_kernelspace(vmm_pagedir *other){
-    	dbgpf("VMM: %x %x %x\n", pagedir, other, other->pagedir);
     	memcpy(pagedir, other->pagedir, VMM_KERNEL_TABLES * sizeof(uint32_t));
     }
 
