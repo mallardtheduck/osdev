@@ -197,7 +197,7 @@ int fs_read(file_handle &file, size_t bytes, char *buf){
 
 bool fs_write(file_handle &file, size_t bytes, char *buf){
 	if(!file.valid) return false;
-	return file.mount->driver.read(file.filedata, bytes, buf);
+	return file.mount->driver.write(file.filedata, bytes, buf);
 }
 
 bool fs_seek(file_handle &file, int32_t pos, bool relative){

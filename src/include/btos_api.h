@@ -12,6 +12,7 @@ namespace btos_api{
 
 typedef uint32_t bt_handle;
 typedef bt_handle bt_lockhandle;
+typedef bt_handle bt_filehandle;
 
 enum{
 	BT_ALLOC_PAGES		= 0x0101,

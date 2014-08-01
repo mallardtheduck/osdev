@@ -201,3 +201,20 @@ void proc_remove_lock(handle_t h, pid_t pid){
 	proc_process *proc=proc_get(pid);
 	proc->locks.erase(h);
 }
+
+handle_t proc_add_file(file_handle *file, pid_t pid){
+	proc_process *proc=proc_get(pid);
+    handle_t ret=++proc->handlecounter;
+    proc->files[ret] = file;
+    return ret;
+}
+
+file_handle *proc_get_file(handle_t h, pid_t pid){
+    proc_process *proc=proc_get(pid);
+    return proc->files[h];
+}
+
+void proc_remove_file(handle_t h, pid_t pid){
+	proc_process *proc=proc_get(pid);
+	proc->files.erase(h);
+}
