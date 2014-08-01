@@ -8,7 +8,7 @@ extern "C" void proc_run_usermode(void *stack, proc_entry entry, int argc, char 
 
 proc_process *proc_current_process;
 pid_t proc_current_pid;
-list<proc_process> proc_processes;
+list<proc_process> *proc_processes;
 
 lock proc_lock;
 lock env_lock;
@@ -45,21 +45,19 @@ struct proc_process{
 
 proc_process *proc_get(pid_t pid);
 
-list<proc_process> *processes;
-
 void proc_init(){
 	dbgout("PROC: Init\n");
 	init_lock(proc_lock);
-	processes=new list<proc_process>();
+	proc_processes=new list<proc_process>();
 	proc_process kproc;
 	kproc.name="KERNEL";
 	kproc.pid=0;
 	kproc.parent=0;
 	kproc.pagedir=vmm_cur_pagedir;
-	processes->add(kproc);
+	proc_processes->add(kproc);
 	proc_current_process=proc_get(0);
 	proc_current_pid=0;
-	for(list<proc_process>::iterator i=processes->begin(); i; ++i){
+	for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
 		dbgpf("PROC: Proccess %i, '%s'\n", (int)i->pid, i->name.c_str());
 	}
 	dbgpf("PROC: Current pid: %i\n", (int)proc_current_pid);
@@ -67,7 +65,7 @@ void proc_init(){
 
 proc_process *proc_get(pid_t pid){
 	hold_lock hl(proc_lock);
-	for(list<proc_process>::iterator i=processes->begin(); i; ++i){
+	for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
 		if(i->pid==pid) return i;
 	}
 	return NULL;
@@ -88,7 +86,7 @@ pid_t proc_new(const string &name, pid_t parent){
 	proc_process *parent_proc=proc_get(parent);
 	proc_process newproc(parent_proc, name);
 	{	hold_lock hl(proc_lock);
-		processes->add(newproc);
+		proc_processes->add(newproc);
 	}
 	return newproc.pid;
 }
@@ -101,14 +99,14 @@ void proc_end(pid_t pid){
 		delete i->second;
 	}
 	{hold_lock hl(proc_lock);
-		for(list<proc_process>::iterator i=processes->begin(); i; ++i){
+		for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
 			if(i->pid==pid){
 				vmm_deletepagedir(i->pagedir);
-				processes->remove(i);
+				proc_processes->remove(i);
 				break;
 			}
 		}
-		for(list<proc_process>::iterator i=processes->begin(); i; ++i){
+		for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
 			if(i->parent==pid){
 				i->parent=parent;
 			}
