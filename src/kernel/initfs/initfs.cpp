@@ -71,7 +71,7 @@ int initfs_ioctl(void *, int, size_t, char *){
 }
 
 void *initfs_open_dir(void *, fs_path *path){
-	if(path->str != '\0') return NULL;
+	if(path->next != NULL) return NULL;
 	return (void*)new initfs_dirhandle;
 }
 bool initfs_close_dir(void *dirdata){
