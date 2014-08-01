@@ -54,6 +54,7 @@ bool terminal_write(void *instance, size_t bytes, char *buf){
 	    memset(obuf, 0, bytes+1);
 	    memcpy(obuf, buf, bytes);
 		terminal_writestring(obuf);
+		free(obuf);
 		return true;
 	}
 }
