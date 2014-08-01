@@ -35,7 +35,7 @@ static bool is_safe_ptr(uint32_t ptr){
 }
 
 USERAPI_HANDLER(zero){
-	printf("%s", regs->ebx);
+	dbgout((char*)regs->ebx);
 }
 
 USERAPI_HANDLER(BT_ALLOC_PAGES){
