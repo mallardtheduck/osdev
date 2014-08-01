@@ -67,6 +67,15 @@ enum{
 	BT_QUERY_EXT		= 0x0F01,
 };
 
+struct bt_fioctl_buffer{
+	size_t size;
+	char *buffer;
+};
+
+#ifndef __cplusplus
+typedef struct bt_fioctl_buffer bt_fioctl_buffer;
+#endif
+
 #ifdef __cplusplus
 }
 #endif
