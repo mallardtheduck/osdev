@@ -386,6 +386,22 @@ public:
 		return data_[op].second;
 	}
 
+	value_type &get(const key_type &Key){
+		if (has_key(Key))
+			{
+				for (iterator i = begin(); i != end(); ++i)
+				{
+				if (i->first == Key)
+				{
+					return *i;
+				}
+				}
+			}
+			size_type op = size_;
+			insert(value_type(Key, mapped_type()));
+			return data_[op];
+	}
+
 	_Myt &reserve(size_type _Capacity)
 	{
 		int count = 0;
