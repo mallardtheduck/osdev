@@ -256,10 +256,10 @@ public:
 	template <typename U> struct rebind { typedef allocator<U> other; };
 	
 	pointer allocate (size_t n, void* hint=0){
-		return new T[n];
+		return (pointer)malloc(n);
 	}
 	void deallocate (pointer p, size_type n){
-		delete[] p;
+		free(p);
 	}
 
 	size_t max_size() const throw(){
@@ -309,7 +309,7 @@ public:
 	}
 
 	map(const _Myt &_Rhs)
-	: size_(_Rhs.size_), capacity_(_Rhs.size_ + 20), data_(_Alloc().allocate(_Rhs.size_))
+	: size_(_Rhs.size_), capacity_(_Rhs.capacity_ /*+ 20*/), data_(_Alloc().allocate(_Rhs.capacity_))
 	{
 		int count = 0;
 		for (iterator i = &_Rhs.data_[0]; i != &_Rhs.data_[_Rhs.size_]; ++i, ++count)
