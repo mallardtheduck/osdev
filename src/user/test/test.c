@@ -13,8 +13,8 @@ size_t strlen(const char *s){
 
 void print_string(const char *s){
 	if(!stdout){
-		bt_getenv("DISPLAY_DEVICE", &stdout_device[5], 250);
-    	stdout=bt_fopen("DEV:/VGATEXT0", 0);
+		if(!bt_getenv("DISPLAY_DEVICE", &stdout_device[5], 250)) return;
+    	stdout=bt_fopen(stdout_device, 0);
     }
     bt_fwrite(stdout, strlen(s), s);
 }
