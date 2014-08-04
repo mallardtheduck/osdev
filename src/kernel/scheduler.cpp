@@ -22,7 +22,8 @@ struct sch_thread{
 	sch_stackinfo stack;
 	bool runnable;
 	uint32_t magic;
-	void *original_esp;
+	void *stackptr;
+	void *stackbase;
 	bool to_be_deleted;
 	sch_start *start;
 	uint32_t priority;
@@ -62,11 +63,19 @@ void sch_init(){
 	mainthread.dynpriority=0;
 	mainthread.magic=0xF00D;
 	mainthread.pid=proc_current_pid;
+	mainthread.blockcheck=NULL;
+	mainthread.bc_param=NULL;
 	current_thread_id=mainthread.ext_id=++cur_ext_id;
 	threads->push_back(mainthread);
 	current_thread=threads->size()-1;
 	sch_new_thread(&sch_idlethread, NULL, 1024);
 	reaper_thread=sch_new_thread(&thread_reaper, NULL, 4096);
+	for(size_t i=0; i<(*threads).size(); ++i){
+		if((*threads)[i].ext_id==reaper_thread){
+			reaper_thread=i;
+			break;
+		}
+	}
 	//sch_threadtest();
 	irq_handle(0, &sch_isr);
 	sch_inited=true;
@@ -105,22 +114,23 @@ void sch_idlethread(void*){
 
 extern "C" void sch_wrapper(){
 	sch_start *start=(*threads)[current_thread].start;
-	dbgpf("SCH: Starting new thread %i at %x (param %x) [%x].\n", current_thread, start->ptr, start->param, start);
+	dbgpf("SCH: Starting new thread %i (%i) at %x (param %x) [%x].\n", current_thread, (int)(*threads)[current_thread].ext_id, start->ptr, start->param, start);
 	start->ptr(start->param);
 	free(start);
 	sch_end_thread();
 }
 
-int sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
+uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	sch_thread newthread;
 	sch_start *start=(sch_start*)malloc(sizeof(sch_start));
 	start->ptr=ptr;
 	start->param=param;
 	uint32_t stack=(uint32_t)malloc(stack_size);
-	newthread.original_esp=(void*)stack;
+	newthread.stackptr=(void*)stack;
 	stack+=stack_size;
 	stack-=4;
 	*(uint32_t*)stack=(uint32_t)&sch_wrapper;
+	newthread.stackbase=(void*)stack;
 	newthread.stack.ss=0x10;
 	newthread.stack.esp=stack;
 	newthread.start=start;
@@ -129,12 +139,13 @@ int sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread.magic=0xBABE;
 	newthread.priority=default_priority;
 	newthread.dynpriority=0;
+	newthread.blockcheck=NULL;
+	newthread.bc_param=NULL;
 	take_lock(sch_lock);
 	newthread.ext_id=++cur_ext_id;
 	threads->push_back(newthread);
-	size_t ret=threads->size()-1;
 	release_lock(sch_lock);
-	return ret;
+	return newthread.ext_id;
 }
 
 void thread_reaper(void*){
@@ -146,7 +157,7 @@ void thread_reaper(void*){
 			for(size_t i=0; i<threads->size(); ++i){
 				if((*threads)[i].to_be_deleted){
 					uint64_t id=(*threads)[i].ext_id;
-					free((*threads)[i].original_esp);
+					free((*threads)[i].stackptr);
 					threads->erase(i);
 					changed=true;
 					dbgpf("SCH: Reaped %i (%i).\n", i, (uint32_t)id);
@@ -165,6 +176,7 @@ void sch_end_thread(){
 	(*threads)[reaper_thread].runnable=true;
 	release_lock(sch_lock);
 	sch_yield();
+	panic("SCH: Attempt to run to_be_deleted thread!");
 }
 
 inline void out_regs(const irq_regs &ctx){
@@ -182,8 +194,9 @@ bool sch_find_thread(size_t &torun){
 	int nrunnables=0;
 	uint32_t min=0xFFFFFFFF;
 	for(size_t i=0; i<threads->size(); ++i){
-	    if(!(*threads)[i].runnable && (*threads)[i].blockcheck){
-	        (*threads)[i].runnable=!(*threads)[i].blockcheck((*threads)[i].bc_param);
+	    if(!(*threads)[i].runnable && (*threads)[i].blockcheck!=NULL){
+	        (*threads)[i].runnable=(*threads)[i].blockcheck((*threads)[i].bc_param);
+	        if((*threads)[i].runnable) dbgpf("SCH: Thread %i is now runnable.\n", i);
 	    }
 		if((*threads)[i].runnable){
 			if(!(*threads)[i].priority) panic("(SCH) Thread priority 0 is not allowed.\n");
@@ -206,7 +219,7 @@ bool sch_find_thread(size_t &torun){
 			if(i!=current_thread && (*threads)[i].dynpriority==0){
 				foundtorun=true;
 				torun=i;
-				gdt_set_kernel_stack((*threads)[i].original_esp);
+				gdt_set_kernel_stack((*threads)[i].stackbase);
 			}
 		}
 	}
@@ -284,7 +297,7 @@ void sch_block(){
 void sch_unblock(uint64_t ext_id){
 	hold_lock hl(sch_lock);
 	for(size_t i=0; i<threads->size(); ++i){
-		if((*threads)[i].ext_id==ext_id){
+		if((*threads)[i].ext_id==ext_id && !(*threads)[i].to_be_deleted){
 			dbgpf("SCH: Unblocked %i.\n", (uint32_t)ext_id);
 			(*threads)[i].runnable=true;
 			break;

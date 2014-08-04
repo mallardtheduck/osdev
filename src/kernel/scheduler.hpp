@@ -9,7 +9,7 @@ typedef bool (*sch_blockcheck)(void*);
 
 void sch_isr(int,isr_regs*);
 void sch_init();
-int sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size=default_stack_size);
+uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size=default_stack_size);
 void sch_end_thread();
 extern "C" void sch_yield();
 const uint64_t &sch_get_id();
