@@ -19,5 +19,6 @@ void sch_set_priority(uint32_t pri);
 bool sch_active();
 void sch_setpid(pid_t pid);
 void sch_setblock(sch_blockcheck check, void *param);
+void sch_clearblock();
 
 #endif

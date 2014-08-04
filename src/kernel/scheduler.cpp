@@ -307,4 +307,12 @@ void sch_setblock(sch_blockcheck check, void *param){
         (*threads)[current_thread].bc_param=param;
     }
     sch_block();
+    sch_clearblock();
 }
+
+void sch_clearblock(){
+	hold_lock hl(sch_lock);
+	(*threads)[current_thread].blockcheck=NULL;
+	(*threads)[current_thread].bc_param=NULL;
+}
+
