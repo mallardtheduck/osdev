@@ -140,4 +140,8 @@ inline static void bt_exit(int retval){
 	btos_call(BT_EXIT, (uint32_t)retval, 0, 0);
 }
 
+inline static bt_pid bt_getpid(){
+	return btos_call(BT_GETPID, 0, 0, 0);
+}
+
 #endif

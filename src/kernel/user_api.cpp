@@ -227,6 +227,10 @@ USERAPI_HANDLER(BT_EXIT){
 	sch_end_thread();
 }
 
+USERAPI_HANDLER(BT_GETPID){
+	regs->eax=(uint32_t)proc_current_pid;
+}
+
 void userapi_syscall(uint16_t fn, isr_regs *regs){
 	switch(fn){
 		case 0:
@@ -275,6 +279,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_KILL);
 		USERAPI_HANDLE_CALL(BT_PRIORITIZE);
 		USERAPI_HANDLE_CALL(BT_EXIT);
+		USERAPI_HANDLE_CALL(BT_GETPID);
 
 		default:
 			regs->eax=-1;

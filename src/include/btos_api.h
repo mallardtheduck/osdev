@@ -66,6 +66,7 @@ enum{
 	BT_KILL				= 0x0803,
 	BT_PRIORITIZE		= 0x0804,
 	BT_EXIT				= 0x0805,
+	BT_GETPID			= 0x0806,
 
 	BT_SEND				= 0x0901,
 	BT_RECV				= 0x0902,
