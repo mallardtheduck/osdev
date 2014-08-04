@@ -8,7 +8,7 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	}
 	init_serial();
 	terminal_initialize();
-	printf("%s %s (Build ID:%s)\n%s\n", KERNEL_OS_NAME, KERNEL_VERSION_STRING, COMMIT, KERNEL_COPYRIGHT);
+	printf("%s %s (Build ID:%s)\n%s\n", KERNEL_OS_NAME, KERNEL_VERSION_STRING, kernel_buildid, KERNEL_COPYRIGHT);
 	GDT_init();
 	IDT_init();
 	init_cpu();

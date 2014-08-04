@@ -55,5 +55,6 @@ void gdt_set_kernel_stack(void* ptr);
 #define KERNEL_VERSION_STRING "v0.0"
 #define KERNEL_OS_NAME "BT/OS"
 #define KERNEL_COPYRIGHT "(c) 2014 Stuart Brockman"
+extern char *kernel_buildid;
 
 #endif

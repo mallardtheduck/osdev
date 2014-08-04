@@ -13,3 +13,4 @@ serial.out
 *.sys
 *.elx
 *.ell
+buildid.c

@@ -1,19 +1,18 @@
-GIT-COMMIT := $(shell git --no-pager log -1 --pretty=format:%h)
 BUILD-AS := i686-elf-as
 BUILD-AS-OPTIONS := -g
 BUILD-CPP := i686-elf-g++
 BUILD-CPP-FLAGS :=  -c
-BUILD-CPP-OPTIONS := -ffreestanding -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -I../include -DKERNEL -DCOMMIT=\"$(GIT-COMMIT)\"
+BUILD-CPP-OPTIONS := -ffreestanding -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -I../include -DKERNEL
 BUILD-C := i686-elf-gcc
 BUILD-C-FLAGS := -c
-BUILD-C-OPTIONS := -ffreestanding -O2 -Wall -Wextra -Werror -g -I../include -DKERNEL -DCOMMIT=\"$(GIT-COMMIT)\"
+BUILD-C-OPTIONS := -ffreestanding -O2 -Wall -Wextra -Werror -g -I../include -DKERNEL
 LINK := i686-elf-gcc
 LINK-FLAGS := -T linker.ld -o myos.bin -ffreestanding -O2 -nostdlib -g
 LINK-OPTIONS := -lgcc
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s" -not -name boot.s)
-CFILES := $(shell find . -type f -name "*.c")
+CFILES := $(shell find . -type f -name "*.c" -not -name buildid.c) buildid.c
 CPPFILES := $(shell find . -type f -name "*.cpp")
 
 ASOBJS := $(ASFILES:.s=.o)
@@ -65,6 +64,7 @@ boot.o: boot.s Makefile
 .cpp.o: %.cpp Makefile
 	$(BUILD-CPP) -MMD -MP $(BUILD-CPP-FLAGS) $< -o $@ $(BUILD-CPP-OPTIONS)
 
-kernel.o: dummy.file
+buildid.c: dummy.file
+	./buildid.sh
 
 dummy.file:
