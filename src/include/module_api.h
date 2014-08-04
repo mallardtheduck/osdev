@@ -38,13 +38,14 @@ struct syscall_table{
 	void (*dbgout)(char *msg);
 	void (*sprintf)(char *buf, char *fmt, ...);
 
-	void (*new_thread)(thread_func entry, void *param);
+	thread_id_t (*new_thread)(thread_func entry, void *param);
 	void (*block)();
 	void (*yield)();
 	thread_id_t (*thread_id)();
 	void (*thread_priority)(uint32_t p_);
 	void (*end_thread)();
 	void (*unblock)(thread_id_t id);
+	void (*thread_wait)(thread_id_t id);
 
 	void (*add_device)(char *name, drv_driver *driver);
 	drv_driver *(*get_device)(char *name);

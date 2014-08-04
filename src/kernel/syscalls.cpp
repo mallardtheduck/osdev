@@ -37,8 +37,8 @@ void mod_release_lock(lock *l){
 	return release_lock(*l);
 }
 
-void new_thread(module_api::thread_func e, void *p){
-	sch_new_thread(e, p);
+uint64_t new_thread(module_api::thread_func e, void *p){
+	return sch_new_thread(e, p);
 }
 
 void add_filesystem(fs_driver *fs){
@@ -139,6 +139,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&sch_set_priority,
 	&sch_end_thread,
 	&sch_unblock,
+	&sch_wait,
 
 	&drv_add_device,
 	&drv_get,
