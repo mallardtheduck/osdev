@@ -222,7 +222,6 @@ loaded_elf_module elf_load_module(file_handle &file){
 loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
 	loaded_elf_proc ret;
 	pid_t oldpid=proc_current_pid;
-	sch_setpid(pid);
 	proc_switch(pid);
 	Elf32_Ehdr header=elf_read_header(file);
 	//TODO: Better RAM allocation...
@@ -240,7 +239,6 @@ loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
 	}
 	ret.entry=(proc_entry)(header.entry);
 	dbgpf("ELF: Entry point: %x\n", header.entry);
-	sch_setpid(oldpid);
 	proc_switch(oldpid);
 	return ret;
 }

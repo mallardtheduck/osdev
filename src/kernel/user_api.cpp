@@ -221,8 +221,7 @@ USERAPI_HANDLER(BT_PRIORITIZE){
 }
 
 USERAPI_HANDLER(BT_EXIT){
-	pid_t pid=proc_current_pid;
-	sch_setpid(0);
+	pid_t pid=proc_current_pid;;
 	proc_switch(0);
 	proc_end(pid);
 	sch_end_thread();

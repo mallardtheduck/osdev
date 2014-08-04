@@ -229,7 +229,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 		current_thread_id=(*threads)[torun].ext_id;
 		curstack=(*threads)[current_thread].stack;
 		sch_lock=current_thread_id;
-		proc_switch((*threads)[current_thread].pid);
+		proc_switch((*threads)[current_thread].pid, false);
 		return &curstack;		
 	}else{
 		//Nothing to run?
