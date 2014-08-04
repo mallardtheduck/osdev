@@ -316,3 +316,22 @@ void sch_clearblock(){
 	(*threads)[current_thread].bc_param=NULL;
 }
 
+bool sch_wait_blockcheck(void *p){
+	uint64_t &ext_id=*(uint64_t*)p;
+	for(size_t i=0; i<threads->size(); ++i){
+		if((*threads)[i].ext_id==ext_id){
+			return false;
+		}
+	}
+	return true;
+}
+
+void sch_wait(uint64_t ext_id){
+	for(size_t i=0; i<threads->size(); ++i){
+		if((*threads)[i].ext_id==ext_id){
+			sch_setblock(sch_wait_blockcheck, (void*)&ext_id);
+			break;
+		}
+	}
+}
+
