@@ -99,6 +99,14 @@ void proc_end(pid_t pid){
 	for(map<handle_t, lock*>::iterator i=proc->locks.begin(); i!=proc->locks.end(); ++i){
 		delete i->second;
 	}
+	for(map<handle_t, file_handle*>::iterator i=proc->files.begin(); i!=proc->files.end(); ++i){
+		fs_close(*i->second);
+		delete i->second;
+	}
+	for(map<handle_t, dir_handle*>::iterator i=proc->dirs.begin(); i!=proc->dirs.end(); ++i){
+		fs_close_dir(*i->second);
+		delete i->second;
+	}
 	{hold_lock hl(proc_lock);
 		for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
 			if(i->pid==pid){
