@@ -29,6 +29,8 @@ struct sch_thread{
 	uint32_t dynpriority;
 	uint64_t ext_id;
 	pid_t pid;
+	sch_blockcheck blockcheck;
+	void *bc_param;
 };
 
 vector<sch_thread> *threads;
@@ -180,6 +182,9 @@ bool sch_find_thread(size_t &torun){
 	int nrunnables=0;
 	uint32_t min=0xFFFFFFFF;
 	for(size_t i=0; i<threads->size(); ++i){
+	    if(!(*threads)[i].runnable && (*threads)[i].blockcheck){
+	        (*threads)[i].runnable=!(*threads)[i].blockcheck((*threads)[i].bc_param);
+	    }
 		if((*threads)[i].runnable){
 			if(!(*threads)[i].priority) panic("(SCH) Thread priority 0 is not allowed.\n");
 			nrunnables++;
@@ -294,4 +299,12 @@ bool sch_active(){
 void sch_setpid(pid_t pid){
 	hold_lock hl(sch_lock);
 	(*threads)[current_thread].pid=pid;
+}
+
+void sch_setblock(sch_blockcheck check, void *param){
+    { hold_lock hl(sch_lock);
+        (*threads)[current_thread].blockcheck=check;
+        (*threads)[current_thread].bc_param=param;
+    }
+    sch_block();
 }
