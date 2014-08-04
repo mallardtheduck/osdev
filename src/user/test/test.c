@@ -47,6 +47,6 @@ int main(int argc, char **argv){
 	bt_fclose(file);
 
 	bt_zero("~~~Userspace test program done!~~~\n");
-	btos_call(BT_EXIT, 0, 0, 0);
+	bt_exit(0);
     return 0;
 }
