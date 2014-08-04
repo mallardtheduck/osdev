@@ -17,6 +17,9 @@ typedef bt_handle bt_lockhandle;
 typedef bt_handle bt_filehandle;
 typedef bt_handle bt_dirhandle;
 
+typedef uint32_t bt_pid;
+typedef uint32_t bt_priority;
+
 enum{
 	BT_ALLOC_PAGES		= 0x0101,
 	BT_FREE_PAGES		= 0x0102,

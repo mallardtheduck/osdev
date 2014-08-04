@@ -120,4 +120,24 @@ inline static bool bt_setenv(const char *name, char *value, uint32_t flags){
 	return btos_call(BT_SETENV, (uint32_t)name, (uint32_t)value, flags);
 }
 
+inline static bt_pid bt_spawn(const char *path, size_t argc, char **argv){
+	return btos_call(BT_SPAWN, (uint32_t)path, argc, (uint32_t)argv);
+}
+
+inline static void bt_wait(bt_pid pid){
+	btos_call(BT_WAIT, pid, 0, 0);
+}
+
+inline static bool bt_kill(bt_pid pid){
+	return btos_call(BT_KILL, pid, 0, 0);
+}
+
+inline static bt_priority bt_prioritize(bt_pid pid, bt_priority priority){
+	return btos_call(BT_PRIORITIZE, pid, priority, 0);
+}
+
+inline static void bt_exit(int retval){
+	btos_call(BT_EXIT, (uint32_t)retval, 0, 0);
+}
+
 #endif
