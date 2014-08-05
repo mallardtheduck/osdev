@@ -4,7 +4,6 @@ syscall_table *SYSCALL_TABLE;
 lock lck;
 uint64_t test_thread_id=0;
 
-volatile bool thread_done=false;
 volatile bool unblock_end=false;
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -105,7 +104,6 @@ void test_thread(void*q){
 	unblock_end=true;
 	thread_priority(100);
 	test("thread_priority()", true);
-	thread_done=true;
 	end_thread();
 	test("end_thread()", false);
 }
@@ -143,9 +141,9 @@ int module_main(syscall_table *systbl){
     test("try_take_lock()", !!lck);
     release_lock(&lck);
     test("dbgout()", true);
-    new_thread(&test_thread, NULL);
-    while(!thread_done) yield();
-    test("end_thread()", true);
+    uint64_t id=new_thread(&test_thread, NULL);
+    thread_wait(id);
+    test("end_thread(), thread_wait()", true);
     char devname[]={'T','E','S','T','\0','\0','\0','\0','\0'};
 	add_device(devname, &test_driver);
 	void *d=devopen(devname);

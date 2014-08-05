@@ -57,8 +57,8 @@ inline static void dbgout(char *msg){
 	SYSCALL_TABLE->dbgout(msg);
 }
 
-inline static void new_thread(thread_func entry, void *param){
-	SYSCALL_TABLE->new_thread(entry, param);
+inline static thread_id_t new_thread(thread_func entry, void *param){
+	return SYSCALL_TABLE->new_thread(entry, param);
 }
 
 inline static void block(){
@@ -83,6 +83,10 @@ inline static void end_thread(){
 
 inline static void unblock(uint64_t id){
 	SYSCALL_TABLE->unblock(id);
+}
+
+inline static void thread_wait(uint64_t id){
+	SYSCALL_TABLE->thread_wait(id);
 }
 
 inline static void add_device(char *name, drv_driver *driver){
