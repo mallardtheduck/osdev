@@ -46,6 +46,7 @@ struct syscall_table{
 	void (*end_thread)();
 	void (*unblock)(thread_id_t id);
 	void (*thread_wait)(thread_id_t id);
+	void (*thread_setblock)(bool(*blockcheck)(void*), void *param);
 
 	void (*add_device)(char *name, drv_driver *driver);
 	drv_driver *(*get_device)(char *name);

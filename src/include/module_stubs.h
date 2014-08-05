@@ -89,6 +89,10 @@ inline static void thread_wait(uint64_t id){
 	SYSCALL_TABLE->thread_wait(id);
 }
 
+inline static void thread_setblock(bool(*blockcheck)(void*), void *param){
+	SYSCALL_TABLE->thread_setblock(blockcheck, param);
+}
+
 inline static void add_device(char *name, drv_driver *driver){
 	SYSCALL_TABLE->add_device(name, driver);
 }
