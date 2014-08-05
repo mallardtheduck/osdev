@@ -145,6 +145,14 @@ inline static void handle_irq(int irqno, int_handler handler){
 	SYSCALL_TABLE->handle_irq(irqno, handler);
 }
 
+inline static void mask_irq(size_t irqno){
+	SYSCALL_TABLE->mask_irq(irqno);
+}
+
+inline static void unmask_irq(size_t irqno){
+	SYSCALL_TABLE->unmask_irq(irqno);
+}
+
 inline static void add_filesystem(fs_driver *fs){
 	SYSCALL_TABLE->add_filesystem(fs);
 }

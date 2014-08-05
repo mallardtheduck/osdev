@@ -114,6 +114,14 @@ pid_t mod_spawn(char *exec, char *params){
 	return proc_spawn(exec, params);
 }
 
+void mask_irq(size_t irqno){
+	IRQ_set_mask(irqno);
+}
+
+void unmask_irq(size_t irqno){
+	IRQ_clear_mask(irqno);
+}
+
 module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&panic,
 	&malloc,
@@ -155,6 +163,8 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&drv_get_desc,
 	&int_handle,
 	&irq_handle,
+	&mask_irq,
+	&unmask_irq,
 
 	&add_filesystem,
 	&fs_mount,
