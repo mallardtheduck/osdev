@@ -1,4 +1,4 @@
-xxd_data.inc: data/config.ini data/test.sys data/boot.sys data/rtc.sys data/test.elx
+xxd_data.inc: data/config.ini data/test.sys data/boot.sys data/rtc.sys data/test.elx data/keyboard.sys
 	./make_inc.sh
 
 data/test.sys: ../../modules/test/test.sys
@@ -12,3 +12,6 @@ data/rtc.sys: ../../modules/rtc/rtc.sys
 
 data/test.elx: ../../user/test/test.elx
 	cp ../../user/test/test.elx data/test.elx
+
+data/keyboard.sys: ../../modules/keyboard/keyboard.sys
+	cp ../../modules/keyboard/keyboard.sys data/keyboard.sys
