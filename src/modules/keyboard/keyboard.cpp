@@ -30,19 +30,20 @@ void keyboard_thread(void*){
 	thread_priority(1);
 	while(true){
 		thread_setblock(input_blockcheck, NULL);
-		char key;
+		take_lock(&buf_lock);
+		disable_interrupts();
 		while(inb(0x64) & 1){
-			key=inb(0x60);
-			take_lock(&buf_lock);
+			char key=inb(0x60);
 			if(bufferptr<buffer_size){
 				if(key > 0) {
 					key=kbdus[(size_t)key];
 					buffer[bufferptr++]=key;
 				}
 			}
-			release_lock(&buf_lock);
 		}
 		input_available=false;
+		enable_interrupts();
+		release_lock(&buf_lock);
 	}
 }
 
