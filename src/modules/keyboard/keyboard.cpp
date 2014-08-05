@@ -16,7 +16,6 @@ bool input_available;
 extern unsigned char kbdus[128];
 
 void keyboard_handler(int irq, isr_regs *regs){
-	dbgpf("KEYPRESS!!\n",0);
 	input_available=true;
 	irq_ack(irq);
 	enable_interrupts();
