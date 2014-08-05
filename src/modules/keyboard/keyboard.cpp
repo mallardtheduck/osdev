@@ -13,8 +13,12 @@ volatile size_t bufferptr=0;
 lock buf_lock;
 bool input_available;
 
-void keyboard_handler(int, isr_regs *regs){
+extern unsigned char kbdus[128];
+
+void keyboard_handler(int irq, isr_regs *regs){
+	dbgpf("KEYPRESS!!\n",0);
 	input_available=true;
+	irq_ack(irq);
 	enable_interrupts();
 	yield();
 }
@@ -27,19 +31,25 @@ void keyboard_thread(void*){
 	thread_priority(1);
 	while(true){
 		thread_setblock(input_blockcheck, NULL);
-		char key=inb(0x60);
-		take_lock(&buf_lock);
-		if(bufferptr<buffer_size){
-			buffer[bufferptr++]=key;
+		char key;
+		while(inb(0x64) & 1){
+			key=inb(0x60);
+			take_lock(&buf_lock);
+			if(bufferptr<buffer_size){
+				if(key > 0) {
+					key=kbdus[(size_t)key];
+					buffer[bufferptr++]=key;
+				}
+			}
+			release_lock(&buf_lock);
 		}
-		release_lock(&buf_lock);
 		dbgpf("KEYBOARD: Key %x pressed. (bptr:%i)\n", (uint32_t)key, bufferptr);
 		input_available=false;
 	}
 }
 
 struct keyboard_instance{
-
+	bool rawmode;
 };
 
 /*struct drv_driver{
@@ -54,7 +64,9 @@ struct keyboard_instance{
 };*/
 
 void *keyboard_open(void *id){
-	return (void*) new keyboard_instance();
+	keyboard_instance *ret=new keyboard_instance();
+	ret->rawmode=false;
+	return (void*)ret;
 }
 
 bool keyboard_close(void *instance){
