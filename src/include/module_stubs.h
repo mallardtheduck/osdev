@@ -157,6 +157,10 @@ inline static void unmask_irq(size_t irqno){
 	SYSCALL_TABLE->unmask_irq(irqno);
 }
 
+inline static void irq_ack(size_t irq){
+	SYSCALL_TABLE->irq_ack(irq);
+}
+
 inline static void add_filesystem(fs_driver *fs){
 	SYSCALL_TABLE->add_filesystem(fs);
 }
