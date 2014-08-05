@@ -47,14 +47,12 @@ int main(int argc, char **argv){
 	bt_fclose(file);
 
 	bt_zero("~~~Userspace test program done!~~~\n");
+	print_string("Keyboard test:\n");
 	bt_filehandle keyb=bt_fopen("DEV:/KEYBOARD0", 0);
 	char x[2]={'a', '\0'};
 	while(true){
-		bt_fread(keyb, 1, &c);
-		print_string("Key pressed!");
-		print_string((char*)&x);
-		print_string("\n");
-		x[0]++;
+		bt_fread(keyb, 1, &x[0]);
+		print_string(x);
 	}
 	bt_exit(0);
     return 0;
