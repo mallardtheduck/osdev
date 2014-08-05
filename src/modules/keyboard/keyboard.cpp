@@ -16,7 +16,6 @@ bool input_available;
 extern unsigned char kbdus[128];
 
 void keyboard_handler(int irq, isr_regs *regs){
-	dbgpf("KEYPRESS!!\n",0);
 	input_available=true;
 	irq_ack(irq);
 	enable_interrupts();
@@ -43,7 +42,6 @@ void keyboard_thread(void*){
 			}
 			release_lock(&buf_lock);
 		}
-		dbgpf("KEYBOARD: Key %x pressed. (bptr:%i)\n", (uint32_t)key, bufferptr);
 		input_available=false;
 	}
 }
