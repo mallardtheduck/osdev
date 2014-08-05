@@ -1,4 +1,4 @@
-all: test boot rtc
+all: test boot rtc keyboard
 
 test: dummy.file
 	$(MAKE) -C test
@@ -9,7 +9,10 @@ boot: dummy.file
 rtc: dummy.file
 	$(MAKE) -C rtc
 
-clean: test-clean boot-clean rtc-clean
+keyboard: dummy.file
+	$(MAKE) -C keyboard
+
+clean: test-clean boot-clean rtc-clean keyboard-clean
 
 test-clean: dummy.file
 	$(MAKE) -C test clean
@@ -19,5 +22,8 @@ boot-clean: dummy.file
 
 rtc-clean: dummy.file
 	$(MAKE) -C rtc clean
+
+keyboard-clean: dummy.file
+	$(MAKE) -C keyboard clean
 
 dummy.file:
