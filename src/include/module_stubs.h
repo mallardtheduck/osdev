@@ -93,11 +93,11 @@ inline static void thread_setblock(bool(*blockcheck)(void*), void *param){
 	SYSCALL_TABLE->thread_setblock(blockcheck, param);
 }
 
-inline static void add_device(char *name, drv_driver *driver){
-	SYSCALL_TABLE->add_device(name, driver);
+inline static void add_device(char *name, drv_driver *driver, void *id){
+	SYSCALL_TABLE->add_device(name, driver, id);
 }
 
-inline static drv_driver *get_device(char *name){
+inline static drv_device *get_device(char *name){
 	return SYSCALL_TABLE->get_device(name);
 }
 

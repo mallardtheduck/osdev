@@ -145,7 +145,7 @@ int module_main(syscall_table *systbl){
     thread_wait(id);
     test("end_thread(), thread_wait()", true);
     char devname[]={'T','E','S','T','\0','\0','\0','\0','\0'};
-	add_device(devname, &test_driver);
+	add_device(devname, &test_driver, NULL);
 	void *d=devopen(devname);
 	test("add_device(), devopen()", (d!=NULL));
 	unsigned char r=0x00;

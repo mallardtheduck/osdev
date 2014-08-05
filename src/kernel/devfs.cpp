@@ -104,7 +104,7 @@ bool devfs_dirseek(void *dirdata, int pos, bool relative){
 directory_entry devfs_stat(void *, fs_path *path){
 	directory_entry ret;
 	ret.valid=false;
-	drv_driver drv=*drv_get(path->str);
+	drv_driver drv=drv_get(path->str)->driver;
 	if(drv.open!=NULL){
 		ret.valid=true;
 		strncpy(ret.filename, path->str, 255);

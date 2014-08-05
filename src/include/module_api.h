@@ -48,8 +48,8 @@ struct syscall_table{
 	void (*thread_wait)(thread_id_t id);
 	void (*thread_setblock)(bool(*blockcheck)(void*), void *param);
 
-	void (*add_device)(char *name, drv_driver *driver);
-	drv_driver *(*get_device)(char *name);
+	void (*add_device)(char *name, drv_driver *driver, void *id);
+	drv_device *(*get_device)(char *name);
 	void *(*get_first_device)(char **name);
 	void *(*get_next_device)(void *itr, char **name);
 	void *(*devopen)(char *name);

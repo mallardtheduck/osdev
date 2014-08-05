@@ -22,7 +22,7 @@ size_t terminal_column;
 uint8_t terminal_color;
 uint16_t* terminal_buffer;
 
-void *terminal_open(){
+void *terminal_open(void*){
 	terminal_instance *inst = new terminal_instance();
 	inst->pos=0;
 	inst->mode=instance_mode::Simple;
@@ -145,7 +145,7 @@ void terminal_initialize()
 
 void terminal_add_device(){
 	char name[12]={"VGATEXT\0"};
-	drv_add_device(name, &terminal_driver);
+	drv_add_device(name, &terminal_driver, NULL);
 }
  
 void terminal_scroll(){

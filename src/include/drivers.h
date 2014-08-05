@@ -50,7 +50,7 @@ namespace driver_types{
 #endif
 
 struct drv_driver{
-	void *(*open)();
+	void *(*open)(void *id);
 	bool (*close)(void *instance);
 	int (*read)(void *instance, size_t bytes, char *buf);
 	bool (*write)(void *instance, size_t bytes, char *buf);
@@ -62,6 +62,15 @@ struct drv_driver{
 
 #ifndef __cplusplus
 typedef struct drv_driver drv_driver;
+#endif
+
+struct drv_device{
+	drv_driver driver;
+	void *id;
+};
+
+#ifndef __cplusplus
+typedef struct drv_device drv_device;
 #endif
 
 struct isr_regs {

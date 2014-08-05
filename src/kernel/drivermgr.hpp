@@ -4,8 +4,8 @@
 #include <drivers.h>
 
 void drv_init();
-void drv_add_device(char *name, drv_driver *driver);
-drv_driver *drv_get(char *name);
+void drv_add_device(char *name, drv_driver *driver, void *id);
+drv_device *drv_get(char *name);
 void *drv_firstdevice(char**);
 void *drv_nextdevice(void*,char**);
 
