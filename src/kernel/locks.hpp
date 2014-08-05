@@ -17,7 +17,7 @@ inline void take_lock(lock &l, uint64_t thread=sch_get_id()){
 	if(!sch_active()) return;
 	if(l==thread && thread!=0) panic("(LOCK) Attempt to take lock that's already held!\n");
 	while(!__sync_bool_compare_and_swap(&l, 0, thread)){
-		if(&l!=&sch_lock) sch_setblock(&lock_blockcheck, (void*)&l);
+		if(&l!=&sch_lock && sch_lock!=thread) sch_setblock(&lock_blockcheck, (void*)&l);
 	}
 }
 
