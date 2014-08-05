@@ -19,6 +19,7 @@ void userapi_init(){
 }
 
 void userapi_handler(int, isr_regs *regs){
+	enable_interrupts();
 	uint16_t *id=(uint16_t*)(&regs->eax);
 	uint16_t ext=id[1], fn=id[0];
 	dbgpf("UAPI: Extension: %x, Function: %x\n", (int)ext, (int)fn);
