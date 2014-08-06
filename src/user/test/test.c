@@ -4,6 +4,7 @@
 
 char stdout_device[255]={'D', 'E', 'V', ':', '/'};
 bt_filehandle stdout=0;
+bt_filehandle keyb=0;
 
 size_t strlen(const char *s){
     int ret=0;
@@ -19,14 +20,21 @@ void print_string(const char *s){
     bt_fwrite(stdout, strlen(s), s);
 }
 
-int main(int argc, char **argv){
-	bt_zero("~~~Userspace test program start!~~~\n");
-	print_string("Hello world!\n");
-	void *q=bt_alloc_pages(1);
-	bt_free_pages(q, 1);
-	bt_mount("TEST", "NULL", "INITFS");
-	bt_unmount("TEST");
+void get_string(char *buffer, size_t bytes){
+	if(!keyb) keyb=bt_fopen("DEV:/KEYBOARD0", 0);
+	size_t i=0;
+	char x[2]={'a', '\0'};
+	char c;
+	while(true){
+		bt_fread(keyb, 1, &c);
+		x[0]=bt_fioctl(keyb, 2, 1, &c);
+		print_string(x);
+		if(x[0]) buffer[i++]=x[0];
+		if(x[0]=='\n' || i==bytes) return;
+	}
+}
 
+void dir_listing(){
 	print_string("Directory listing of \"INIT:/\":\n");
 	bt_dirhandle dir=bt_dopen("INIT:/", 0);
 	directory_entry entry=bt_dread(dir);
@@ -36,7 +44,9 @@ int main(int argc, char **argv){
 		entry=bt_dread(dir);
 	}
 	bt_dclose(dir);
+}
 
+void file_contents(){
 	print_string("Contents of \"INIT:/config.ini\":\n");
 	bt_filehandle file=bt_fopen("INIT:/config.ini", 0);
 	char c;
@@ -45,15 +55,32 @@ int main(int argc, char **argv){
 		print_string(d);
 	}
 	bt_fclose(file);
+}
 
-	bt_zero("~~~Userspace test program done!~~~\n");
-	print_string("Keyboard test:\n");
-	bt_filehandle keyb=bt_fopen("DEV:/KEYBOARD0", 0);
-	char x[2]={'a', '\0'};
+void mount_test(){
+	void *q=bt_alloc_pages(1);
+	bt_free_pages(q, 1);
+	bt_mount("TEST", "NULL", "INITFS");
+	bt_unmount("TEST");
+}
+
+int main(int argc, char **argv){
+	bt_zero("~~~Userspace test program start!~~~\n");
+	print_string("TEST Command Prompt!\n");
 	while(true){
-		bt_fread(keyb, 1, &x[0]);
-		print_string(x);
+		char input[128]={0};
+		print_string("[TEST]>");
+		get_string(input, 128);
+		if(input[0]=='d') dir_listing();
+		else if(input[0]=='f') file_contents();
+		else if(input[0]=='m') mount_test();
+		else if(input[0]=='q') break;
+		else {
+			print_string("Unrecognised command.");
+		}
+
 	}
+	bt_zero("~~~Userspace test program done!~~~\n");
 	bt_exit(0);
     return 0;
 }
