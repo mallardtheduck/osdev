@@ -157,7 +157,9 @@ void thread_reaper(void*){
 			for(size_t i=0; i<threads->size(); ++i){
 				if((*threads)[i].to_be_deleted){
 					uint64_t id=(*threads)[i].ext_id;
+					release_lock(sch_lock);
 					free((*threads)[i].stackptr);
+					take_lock(sch_lock);
 					threads->erase(i);
 					changed=true;
 					dbgpf("SCH: Reaped %i (%i).\n", i, (uint32_t)id);

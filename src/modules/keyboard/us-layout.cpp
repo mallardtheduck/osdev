@@ -1,39 +1,95 @@
-unsigned char kbdus[128] =
-{
-    0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
-  '9', '0', '-', '=', '\b',	/* Backspace */
-  '\t',			/* Tab */
-  'q', 'w', 'e', 'r',	/* 19 */
-  't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',	/* Enter key */
-    0,			/* 29   - Control */
-  'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',	/* 39 */
- '\'', '`',   0,		/* Left shift */
- '\\', 'z', 'x', 'c', 'v', 'b', 'n',			/* 49 */
-  'm', ',', '.', '/',   0,				/* Right shift */
-  '*',
-    0,	/* Alt */
-  ' ',	/* Space bar */
-    0,	/* Caps lock */
-    0,	/* 59 - F1 key ... > */
-    0,   0,   0,   0,   0,   0,   0,   0,
-    0,	/* < ... F10 */
-    0,	/* 69 - Num lock*/
-    0,	/* Scroll Lock */
-    0,	/* Home key */
-    0,	/* Up Arrow */
-    0,	/* Page Up */
-  '-',
-    0,	/* Left Arrow */
-    0,
-    0,	/* Right Arrow */
-  '+',
-    0,	/* 79 - End key*/
-    0,	/* Down Arrow */
-    0,	/* Page Down */
-    0,	/* Insert Key */
-    0,	/* Delete Key */
-    0,   0,   0,
-    0,	/* F11 Key */
-    0,	/* F12 Key */
-    0,	/* All other keys are undefined */
+#include "keycodes.hpp"
+
+key_info us_keyboard_layout[128]={
+	{0},
+	{KeyFlags::NonASCII | KeyCodes::Escape},
+	{'1', '!'},
+	{'2', '@'},
+	{'3', '#'},
+	{'4', '$'},
+	{'5', '%'},
+	{'6', '^'},
+	{'7', '|'},
+	{'8', '*'},
+	{'9', '('},
+	{'0', ')'},
+	{'-', '_'},
+	{'=', '+'},
+	{0x08},
+	{0x09},
+	{'q', 'Q'},
+	{'w', 'W'},
+	{'e', 'E'},
+	{'r', 'R'},
+	{'t', 'T'},
+	{'y', 'Y'},
+	{'u', 'U'},
+	{'i', 'I'},
+	{'o', 'O'},
+	{'p', 'P'},
+	{'[', '{'},
+	{']', '}'},
+	{'\n'},
+	{KeyFlags::NonASCII | KeyCodes::Control},
+	{'a', 'A'},
+	{'s', 'S'},
+	{'d', 'D'},
+	{'f', 'F'},
+	{'g', 'G'},
+	{'h', 'H'},
+	{'j', 'J'},
+	{'k', 'K'},
+	{'l', 'L'},
+	{';', ':'},
+	{'\'', '"'},
+	{'`', '~'},
+	{KeyFlags::NonASCII | KeyCodes::Shift},
+	{'\\', '|'},
+	{'z', 'Z'},
+	{'x', 'X'},
+	{'c', 'C'},
+	{'v', 'V'},
+	{'b', 'B'},
+	{'n', 'N'},
+	{'m', 'M'},
+	{',', '<'},
+	{'.', '>'},
+	{'/', '?'},
+	{KeyFlags::NonASCII | KeyCodes::Shift},
+	{'*', KeyFlags::NonASCII | KeyCodes::PrintScreen},
+	{KeyFlags::NonASCII | KeyCodes::Alt},
+	{' '},
+	{KeyFlags::NonASCII | KeyCodes::CapsLock},
+	{KeyFlags::NonASCII | KeyCodes::F1},
+	{KeyFlags::NonASCII | KeyCodes::F2},
+	{KeyFlags::NonASCII | KeyCodes::F3},
+	{KeyFlags::NonASCII | KeyCodes::F4},
+	{KeyFlags::NonASCII | KeyCodes::F5},
+	{KeyFlags::NonASCII | KeyCodes::F6},
+	{KeyFlags::NonASCII | KeyCodes::F7},
+	{KeyFlags::NonASCII | KeyCodes::F8},
+	{KeyFlags::NonASCII | KeyCodes::F9},
+	{KeyFlags::NonASCII | KeyCodes::F10},
+	{KeyFlags::NonASCII | KeyCodes::NumLock},
+	{KeyFlags::NonASCII | KeyCodes::ScrollLock},
+	{KeyFlags::NonASCII | KeyCodes::Home, '7'},
+	{KeyFlags::NonASCII | KeyCodes::UpArrow, '8'},
+	{KeyFlags::NonASCII | KeyCodes::PageUp, '9'},
+	{0, '-'},
+	{KeyFlags::NonASCII | KeyCodes::LeftArrow, '4'},
+	{0, '5'},
+	{KeyFlags::NonASCII | KeyCodes::RightArrow, '6'},
+	{0, '+'},
+	{KeyFlags::NonASCII | KeyCodes::End, '1'},
+	{KeyFlags::NonASCII | KeyCodes::DownArrow, '2'},
+	{KeyFlags::NonASCII | KeyCodes::PageDown, '3'},
+	{KeyFlags::NonASCII | KeyCodes::Insert, '0'},
+	{KeyFlags::NonASCII | KeyCodes::Delete, '.'},
 };
+
+uint8_t us_keyboard_capskeys[]=
+	{0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26,
+	0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x31, 0};
+
+uint8_t us_keyboard_numkeys[]=
+	{0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0x53, 0};
