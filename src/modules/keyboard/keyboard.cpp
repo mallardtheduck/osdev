@@ -10,7 +10,8 @@ char dbgbuf[256];
 
 const size_t buffer_size=128;
 char buffer[buffer_size];
-volatile size_t bufferptr=0;
+volatile size_t buffer_count=0;
+size_t buffer_top=0;
 lock buf_lock;
 bool input_available;
 uint16_t currentflags=0;
@@ -25,6 +26,28 @@ extern uint8_t us_keyboard_numkeys[];
 
 void updateflags(uint16_t keycode);
 uint16_t scancode2keycode(uint8_t c);
+
+void add_to_buffer(char c){
+	if(buffer_count < buffer_size){
+		buffer_count++;
+		buffer[buffer_top] = c;
+		buffer_top++;
+        if(buffer_top == buffer_size) buffer_top=0;
+        dbgpf("KEYBOARD: %i in buffer, top at %i.\n", buffer_count, buffer_top);
+	}
+}
+
+char read_from_buffer(){
+	if(buffer_count){
+		int start=buffer_top-buffer_count;
+		if(start < 0) {
+			start+=buffer_size;
+		}
+		buffer_count--;
+		dbgpf("KEYBOARD: %i in buffer, top at %i.\n", buffer_count, buffer_top);
+		return buffer[start];
+	}else return 0;
+}
 
 void keyboard_handler(int irq, isr_regs *regs){
 	input_available=true;
@@ -45,13 +68,10 @@ void keyboard_thread(void*){
 		disable_interrupts();
 		while(inb(0x64) & 1){
 			uint8_t key=inb(0x60);
-			if(bufferptr<buffer_size){
+			if(buffer_count<buffer_size){
 				uint16_t keycode=scancode2keycode(key);
 				if(keycode){
-					buffer[bufferptr++]=key;
-					updateflags(keycode);
-					dbgpf("KEYBOARD: Keycode %x proccessed.\n", (int)keycode);
-					if(!(keycode & KeyFlags::NonASCII) && !(keycode & KeyFlags::KeyUp)) dbgpf("KEYBOARD: Decoded character: %c\n", (char)keycode);
+					add_to_buffer(key);
 				}else{
 					dbgpf("KEYBOARD: Ignored unmapped scancode %x (%x).\n", (int)key, (int)keycode);
 				}
@@ -99,7 +119,6 @@ uint16_t scancode2keycode(uint8_t c){
 		else index=KI_Shift;
     }
 	uint16_t code=layout[(size_t)c][index];
-	dbgpf("KEYBOARD: %x, %i, %x\n", (int)c, index, (int)code);
 	if(code==0) code=layout[(size_t)c][KI_Normal];
 	if(code==0) return 0;
 	ret |= code | currentflags;
@@ -109,19 +128,18 @@ uint16_t scancode2keycode(uint8_t c){
 void updateflags(uint16_t keycode){
 	if(!(keycode & KeyFlags::NonASCII)) return;
 	if(keycode & KeyFlags::KeyUp){
-		if(keycode & KeyCodes::Shift) currentflags &= ~KeyFlags::Shift;
-		if(keycode & KeyCodes::Alt) currentflags &= ~KeyFlags::Alt;
-		if(keycode & KeyCodes::Control) currentflags &= ~KeyFlags::Control;
-		if(keycode & KeyCodes::Meta) currentflags &= ~KeyFlags::Meta;
+		if((keycode & KC_Mask) == KeyCodes::Shift) currentflags &= ~KeyFlags::Shift;
+		if((keycode & KC_Mask) == KeyCodes::Alt) currentflags &= ~KeyFlags::Alt;
+		if((keycode & KC_Mask) == KeyCodes::Control) currentflags &= ~KeyFlags::Control;
+		if((keycode & KC_Mask) == KeyCodes::Meta) currentflags &= ~KeyFlags::Meta;
 	} else {
-		if(keycode & KeyCodes::Shift) currentflags |= KeyFlags::Shift;
-		if(keycode & KeyCodes::Alt) currentflags |= KeyFlags::Alt;
-		if(keycode & KeyCodes::Control) currentflags |= KeyFlags::Control;
-		if(keycode & KeyCodes::Meta) currentflags |= KeyFlags::Meta;
-		if(keycode & KeyCodes::CapsLock) currentflags ^= KeyFlags::CapsLock;
-		if(keycode & KeyCodes::NumLock) currentflags ^= KeyFlags::NumLock;
+		if((keycode & KC_Mask) == KeyCodes::Shift) currentflags |= KeyFlags::Shift;
+		if((keycode & KC_Mask) == KeyCodes::Alt) currentflags |= KeyFlags::Alt;
+		if((keycode & KC_Mask) == KeyCodes::Control) currentflags |= KeyFlags::Control;
+		if((keycode & KC_Mask) == KeyCodes::Meta) currentflags |= KeyFlags::Meta;
+		if((keycode & KC_Mask) == KeyCodes::CapsLock) currentflags ^= KeyFlags::CapsLock;
+		if((keycode & KC_Mask) == KeyCodes::NumLock) currentflags ^= KeyFlags::NumLock;
 	}
-	dbgpf("KEYBOARD: Flags: %x\n", (int)currentflags);
 	//Update LEDs...
 	return;
 }
@@ -153,26 +171,25 @@ bool keyboard_close(void *instance){
 }
 
 bool keyread_lockcheck(void *p){
-	return bufferptr >= *(size_t*)p;
+	return buffer_count >= *(size_t*)p;
 }
 
 int keyboard_read(void *instance, size_t bytes, char *buf){
-	dbgpf("KEYBOARD: Reading %i bytes.\n", bytes);
 	if(bytes > buffer_size) bytes=buffer_size;
 	while(true){
-		if(bufferptr < bytes){
+		if(buffer_count < bytes){
 			thread_setblock(&keyread_lockcheck, (void*)&bytes);
 		}
 		take_lock(&buf_lock);
-		if(bufferptr>=bytes) break;
+		if(buffer_count>=bytes) break;
 		release_lock(&buf_lock);
 	}
-	size_t start=bufferptr-bytes;
-	for(size_t i=start; i<bytes; ++i){
-		buf[i-start]=buffer[i];
+	for(size_t i=0; i<bytes; ++i){
+		char scancode=read_from_buffer();
+		uint16_t keycode=scancode2keycode(scancode);
+		updateflags(keycode);
+		buf[i]=scancode;
 	}
-	bufferptr-=bytes;
-	dbgpf("KEYBOARD: Bytes left: %i\n", bufferptr);
 	release_lock(&buf_lock);
 	return bytes;
 }

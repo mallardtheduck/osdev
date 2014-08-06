@@ -18,6 +18,8 @@ namespace KeyFlags{
 	};
 }
 
+const uint16_t KC_Mask=0x7F;
+
 namespace KeyCodes{
 	enum Enum{
 		Escape		= 0x01,
@@ -42,6 +44,8 @@ namespace KeyCodes{
 		LeftArrow	= 0x13,
 		RightArrow	= 0x14,
 		Shift		= 0x15,
+
+		Unicode		= 0x60,
 
 		F1			= 0x70,
 		F2			= 0x71,
