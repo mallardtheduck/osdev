@@ -176,7 +176,6 @@ void proc_start(void *ptr){
 	void *stack=vmm_alloc(4, false);
 	stack=(void*)((size_t)stack+4*VMM_PAGE_SIZE);
 	stack=(void*)((size_t)stack-sizeof(uint32_t));
-	dbgpf("PROC: Usermode stack: %x\n", stack);
 	proc_run_usermode(stack, entry, 0, NULL);
 }
 
