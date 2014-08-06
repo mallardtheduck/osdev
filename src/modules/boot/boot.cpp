@@ -27,6 +27,7 @@ void dputs(void *handle, char *c){
 
 struct config{
 	char *display;
+	char *input;
 } c;
 
 void displaywrite(const char *s){
@@ -47,6 +48,9 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 		((config*)c)->display=strdup(value);
 		setenv("DISPLAY_DEVICE", ((config*)c)->display, 0, 0);
 		displaywrite("Starting BT/OS...");
+	}else if(MATCH("default", "input")){
+		((config*)c)->input=strdup(value);
+		setenv("INPUT_DEVICE", ((config*)c)->input, 0, 0);
 	}else if(MATCH("default", "load")){
 		module_load((char*)value);
 	}else if(MATCH("default", "run")){

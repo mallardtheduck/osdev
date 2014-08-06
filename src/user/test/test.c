@@ -4,7 +4,8 @@
 
 char stdout_device[255]={'D', 'E', 'V', ':', '/'};
 bt_filehandle stdout=0;
-bt_filehandle keyb=0;
+char stdin_device[255]={'D', 'E', 'V', ':', '/'};
+bt_filehandle stdin=0;
 
 size_t strlen(const char *s){
     int ret=0;
@@ -21,13 +22,16 @@ void print_string(const char *s){
 }
 
 void get_string(char *buffer, size_t bytes){
-	if(!keyb) keyb=bt_fopen("DEV:/KEYBOARD0", 0);
+	if(!stdin){
+		if(!bt_getenv("INPUT_DEVICE", &stdin_device[5], 250)) return;
+		stdin=bt_fopen(stdin_device, 0);
+	}
 	size_t i=0;
 	char x[2]={'a', '\0'};
 	char c;
 	while(true){
-		bt_fread(keyb, 1, &c);
-		x[0]=bt_fioctl(keyb, 2, 1, &c);
+		bt_fread(stdin, 1, &c);
+		x[0]=bt_fioctl(stdin, 2, 1, &c);
 		print_string(x);
 		if(x[0]) buffer[i++]=x[0];
 		if(x[0]=='\n' || i==bytes) return;
