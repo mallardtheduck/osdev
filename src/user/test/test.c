@@ -80,7 +80,7 @@ int main(int argc, char **argv){
 		else if(input[0]=='m') mount_test();
 		else if(input[0]=='q') break;
 		else {
-			print_string("Unrecognised command.");
+			print_string("Unrecognised command.\n");
 		}
 
 	}
