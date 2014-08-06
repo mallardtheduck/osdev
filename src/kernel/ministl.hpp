@@ -256,7 +256,7 @@ public:
 	template <typename U> struct rebind { typedef allocator<U> other; };
 	
 	pointer allocate (size_t n, void* hint=0){
-		return (pointer)malloc(n);
+		return (pointer)malloc(n*sizeof(value_type));
 	}
 	void deallocate (pointer p, size_type n){
 		free(p);
