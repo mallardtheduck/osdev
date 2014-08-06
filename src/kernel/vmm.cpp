@@ -91,6 +91,7 @@ class vmm_pagedir{
 private:
     uint32_t* pagedir;
     uint32_t* curtable;
+    uint32_t phys_addr;
 
     void maptable(uint32_t phys_addr){
         uint32_t virtpage=(uint32_t)curtable/VMM_PAGE_SIZE;
@@ -109,7 +110,7 @@ public:
         return pagedir;
     }
     uint32_t getphys(){
-    	return virt2phys((void*)pagedir);
+    	return phys_addr;
     }
 
     uint32_t virt2phys(void *ptr);
@@ -137,6 +138,7 @@ public:
 
 void vmm_pagedir::init(uint32_t *dir){
 	pagedir=dir;
+	phys_addr=(uint32_t)dir;
 	curtable=(uint32_t*)&vmm_tableframe;
 	vmm_pages.push((uint32_t)curtable);
 }
@@ -144,6 +146,7 @@ void vmm_pagedir::init(uint32_t *dir){
 void vmm_pagedir::init(){
 	curtable=(uint32_t*)&vmm_tableframe;
 	pagedir=(uint32_t*)vmm_alloc(1, true);
+	phys_addr=vmm_cur_pagedir->virt2phys(pagedir);
 	memset(pagedir, 0, VMM_ENTRIES_PER_TABLE * sizeof(uint32_t));
 	if((uint32_t)curtable != ((uint32_t)curtable & 0xFFFFF000)) panic("VMM: Misaligned table frame!");
 }
