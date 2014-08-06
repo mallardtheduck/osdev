@@ -205,6 +205,11 @@ int keyboard_ioctl(void *instance, int fn, size_t bytes, char *buf){
 	if(fn==1 && bytes>=1){
 		return scancode2keycode(*buf);
 	}
+	if(fn==2 && bytes>=1){
+		uint16_t keycode=scancode2keycode(*buf);
+		if(!(keycode & KeyFlags::KeyUp) && !(keycode & KeyFlags::NonASCII)) return (char)keycode;
+		else return 0;
+	}
 	return 0;
 }
 
