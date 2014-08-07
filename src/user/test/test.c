@@ -14,6 +14,12 @@ size_t strlen(const char *s){
     return ret;
 }
 
+void memset(void *ptr, int value, size_t n){
+	for(size_t i=0; i<n; ++i){
+		*((char*)ptr+i)=value;
+	}
+}
+
 void print_string(const char *s){
 	if(!stdout){
 		if(!bt_getenv("DISPLAY_DEVICE", &stdout_device[5], 250)) return;
@@ -63,9 +69,40 @@ void dir_listing(){
 	bt_dclose(dir);
 }
 
+void dir_listing2(char *input){
+	input[strlen(input)-1]=0;
+	print_string("Directory listing of \"");
+	print_string(&input[2]);
+	print_string("\":\n");
+	bt_dirhandle dir=bt_dopen(&input[2], 0);
+	if(!dir) return;
+	directory_entry entry=bt_dread(dir);
+	while(entry.valid){
+		print_string(entry.filename);
+		print_string("\n");
+		entry=bt_dread(dir);
+	}
+	bt_dclose(dir);
+}
+
 void file_contents(){
 	print_string("Contents of \"INIT:/config.ini\":\n");
 	bt_filehandle file=bt_fopen("INIT:/config.ini", 0);
+	char c;
+	while(bt_fread(file, 1, &c)){
+		char d[2]={c, 0};
+		print_string(d);
+	}
+	bt_fclose(file);
+}
+
+void file_contents2(char *input){
+	input[strlen(input)-1]=0;
+	print_string("Contents of \"");
+	print_string(&input[2]);
+	print_string("\":\n");
+	bt_filehandle file=bt_fopen(&input[2], 0);
+	if(!file) return;
 	char c;
 	while(bt_fread(file, 1, &c)){
 		char d[2]={c, 0};
@@ -94,12 +131,14 @@ int main(int argc, char **argv){
 		print_string("[TEST]>");
 		get_string(input, 128);
 		if(input[0]=='d') dir_listing();
+		else if(input[0]=='l') dir_listing2(input);
 		else if(input[0]=='f') file_contents();
+		else if(input[0]=='c') file_contents2(input);
 		else if(input[0]=='m') mount_test();
 		else if(input[0]=='v') version();
 		else if(input[0]=='q') break;
 		else {
-			print_string("Unrecognised command.\n");
+			if(strlen(input) && input[0]!='\n') print_string("Unrecognised command.\n");
 		}
 	}
 	bt_zero("~~~Userspace test program done!~~~\n");
