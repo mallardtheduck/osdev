@@ -88,7 +88,8 @@ USERAPI_HANDLER(BT_FOPEN){
     //TODO: Flags...
     if(is_safe_ptr(regs->ebx)){
         file_handle *file=new file_handle(fs_open((char*)regs->ebx));
-        regs->eax=proc_add_file(file);
+        if(file->valid) regs->eax=proc_add_file(file);
+        else regs->eax=0;
     }
 }
 
@@ -136,7 +137,8 @@ USERAPI_HANDLER(BT_DOPEN){
    //TODO: Flags...
     if(is_safe_ptr(regs->ebx)){
         dir_handle *dir=new dir_handle(fs_open_dir((char*)regs->ebx));
-        regs->eax=proc_add_dir(dir);
+        if(dir->valid) regs->eax=proc_add_dir(dir);
+        else regs->eax=0;
     }
 }
 
