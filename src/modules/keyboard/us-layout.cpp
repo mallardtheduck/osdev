@@ -1,4 +1,4 @@
-#include "keycodes.hpp"
+#include "keyboard.h"
 
 key_info us_keyboard_layout[128]={
 	{0},

@@ -1,4 +1,5 @@
-#include "../../include/btos_stubs.h"
+#include "btos_stubs.h"
+#include "keyboard.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -28,10 +29,10 @@ void get_string(char *buffer, size_t bytes){
 	}
 	size_t i=0;
 	char x[2]={'a', '\0'};
-	char c;
+	uint32_t c;
 	while(true){
-		bt_fread(stdin, 1, &c);
-		x[0]=bt_fioctl(stdin, 2, 1, &c);
+		bt_fread(stdin, sizeof(c), (char*)&c);
+		x[0]=KB_char(c);
 		print_string(x);
 		if(x[0]) buffer[i++]=x[0];
 		if(x[0]=='\n' || i==bytes) return;
@@ -82,7 +83,6 @@ int main(int argc, char **argv){
 		else {
 			print_string("Unrecognised command.\n");
 		}
-
 	}
 	bt_zero("~~~Userspace test program done!~~~\n");
 	bt_exit(0);

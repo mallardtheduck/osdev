@@ -1,7 +1,7 @@
 #include "module_stubs.h"
 #include "io.h"
 #include "module_cpp.hpp"
-#include "keycodes.hpp"
+#include "keyboard.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -9,7 +9,7 @@ syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
 
 const size_t buffer_size=128;
-char buffer[buffer_size];
+uint32_t buffer[buffer_size];
 volatile size_t buffer_count=0;
 size_t buffer_top=0;
 lock buf_lock;
@@ -26,8 +26,9 @@ extern uint8_t us_keyboard_numkeys[];
 
 void updateflags(uint16_t keycode);
 uint16_t scancode2keycode(uint8_t c);
+uint32_t scancode2buffervalue(uint8_t c);
 
-void add_to_buffer(char c){
+void add_to_buffer(uint32_t c){
 	if(buffer_count < buffer_size){
 		buffer_count++;
 		buffer[buffer_top] = c;
@@ -37,7 +38,7 @@ void add_to_buffer(char c){
 	}
 }
 
-char read_from_buffer(){
+uint32_t read_from_buffer(){
 	if(buffer_count){
 		int start=buffer_top-buffer_count;
 		if(start < 0) {
@@ -71,7 +72,8 @@ void keyboard_thread(void*){
 			if(buffer_count<buffer_size){
 				uint16_t keycode=scancode2keycode(key);
 				if(keycode){
-					add_to_buffer(key);
+					add_to_buffer(scancode2buffervalue(key));
+					updateflags(keycode);
 				}else{
 					dbgpf("KEYBOARD: Ignored unmapped scancode %x (%x).\n", (int)key, (int)keycode);
 				}
@@ -125,6 +127,13 @@ uint16_t scancode2keycode(uint8_t c){
 	return ret;
 }
 
+uint32_t scancode2buffervalue(uint8_t c){
+	uint8_t flag=Keyboard_Flag;
+	uint8_t scancode=c;
+	uint16_t keycode=scancode2keycode(c);
+	return (flag << 24) | (scancode << 16) | keycode;
+}
+
 void updateflags(uint16_t keycode){
 	if(!(keycode & KeyFlags::NonASCII)) return;
 	if(keycode & KeyFlags::KeyUp){
@@ -174,21 +183,22 @@ bool keyread_lockcheck(void *p){
 	return buffer_count >= *(size_t*)p;
 }
 
-int keyboard_read(void *instance, size_t bytes, char *buf){
-	if(bytes > buffer_size) bytes=buffer_size;
+int keyboard_read(void *instance, size_t bytes, char *cbuf){
+	if((bytes % sizeof(uint32_t))) return 0;
+	size_t values = bytes / sizeof(uint32_t);
+	uint32_t *buf=(uint32_t*)cbuf;
+	if(values > buffer_size) values=buffer_size;
 	while(true){
-		if(buffer_count < bytes){
-			thread_setblock(&keyread_lockcheck, (void*)&bytes);
+		if(buffer_count < values){
+			thread_setblock(&keyread_lockcheck, (void*)&values);
 		}
 		take_lock(&buf_lock);
-		if(buffer_count>=bytes) break;
+		if(buffer_count >= values) break;
 		release_lock(&buf_lock);
 	}
-	for(size_t i=0; i<bytes; ++i){
-		char scancode=read_from_buffer();
-		uint16_t keycode=scancode2keycode(scancode);
-		updateflags(keycode);
-		buf[i]=scancode;
+	for(size_t i=0; i<values; ++i){
+		uint32_t buffervalue=read_from_buffer();
+		buf[i]=buffervalue;
 	}
 	release_lock(&buf_lock);
 	return bytes;
@@ -202,14 +212,6 @@ void keyboard_seek(void *instance, size_t pos, bool relative){
 }
 
 int keyboard_ioctl(void *instance, int fn, size_t bytes, char *buf){
-	if(fn==1 && bytes>=1){
-		return scancode2keycode(*buf);
-	}
-	if(fn==2 && bytes>=1){
-		uint16_t keycode=scancode2keycode(*buf);
-		if(!(keycode & KeyFlags::KeyUp) && !(keycode & KeyFlags::NonASCII)) return (char)keycode;
-		else return 0;
-	}
 	return 0;
 }
 
