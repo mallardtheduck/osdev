@@ -55,9 +55,8 @@ bool devfs_write(void *filedata, size_t bytes, char *buf){
 	return drv_write(filedata, bytes, buf);
 }
 
-bool devfs_seek(void *filedata, int pos, bool relative){
-	drv_seek(filedata, pos, relative);
-	return true;
+size_t devfs_seek(void *filedata, int pos, bool relative){
+	return drv_seek(filedata, pos, relative);
 }
 
 int devfs_ioctl(void *filedata, int fn, size_t bytes, char *buf){
@@ -95,10 +94,10 @@ bool devfs_write_dir(void *, directory_entry){
 	return false;
 }
 
-bool devfs_dirseek(void *dirdata, int pos, bool relative){
+size_t devfs_dirseek(void *dirdata, int pos, bool relative){
 	if(relative) ddata->pos+=pos;
 	else ddata->pos=pos;
-	return true;
+	return ddata->pos;
 }
 
 directory_entry devfs_stat(void *, fs_path *path){

@@ -124,16 +124,16 @@ directory_entry initfs_stat(void *, fs_path *path){
 	}
 }
 
-bool initfs_seek(void *filedata, int pos, bool relative){
+size_t initfs_seek(void *filedata, int pos, bool relative){
 	if(relative) fdata->pos+=pos;
 	else fdata->pos=pos;
-	return true;
+	return fdata->pos;
 }
 
-bool initfs_dirseek(void *dirdata, int pos, bool relative){
+size_t initfs_dirseek(void *dirdata, int pos, bool relative){
 	if(relative) ddata->pos+=pos;
 	else ddata->pos=pos;
-	return true;
+	return ddata->pos;
 }
 
 /*struct fs_driver{

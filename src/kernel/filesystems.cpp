@@ -200,7 +200,7 @@ bool fs_write(file_handle &file, size_t bytes, char *buf){
 	return file.mount->driver.write(file.filedata, bytes, buf);
 }
 
-bool fs_seek(file_handle &file, int32_t pos, bool relative){
+size_t fs_seek(file_handle &file, int32_t pos, bool relative){
 	return file.mount->driver.seek(file.filedata, pos, relative);
 }
 
@@ -258,7 +258,7 @@ bool fs_write_dir(dir_handle &dir, directory_entry entry){
 	return dir.mount->driver.write_dir(dir.dirdata, entry);
 }
 
-bool fs_seek_dir(dir_handle &dir, size_t pos, bool relative){
+size_t fs_seek_dir(dir_handle &dir, size_t pos, bool relative){
 	return dir.mount->driver.dirseek(dir.dirdata, pos, relative);
 }
 

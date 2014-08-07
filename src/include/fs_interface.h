@@ -51,13 +51,13 @@ struct fs_driver{
 	bool (*close)(void *filedata);
 	int (*read)(void *filedata, size_t bytes, char *buf);
 	bool (*write)(void *filedata, size_t bytes, char *buf);
-	bool (*seek)(void *filedata, int pos, bool relative);
+	size_t (*seek)(void *filedata, int pos, bool relative);
 	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
 	void *(*open_dir)(void *mountdata, fs_path *path);
 	bool (*close_dir)(void *dirdata);
 	directory_entry (*read_dir)(void *dirdata);
 	bool (*write_dir)(void *dirdata, directory_entry entry);
-	bool (*dirseek)(void *dirdata, int pos, bool relative);
+	size_t (*dirseek)(void *dirdata, int pos, bool relative);
 	directory_entry (*stat)(void *mountdata, fs_path *path);
 };
 
