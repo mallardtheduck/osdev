@@ -59,12 +59,14 @@ bool terminal_write(void *instance, size_t bytes, char *buf){
 	}
 }
 
-void terminal_seek(void *instance, size_t pos, bool relative){
+size_t terminal_seek(void *instance, size_t pos, bool relative){
 	terminal_instance *inst=(terminal_instance*)instance;
+	size_t ret=0;
 	if(inst->mode==instance_mode::Raw){
 		//TODO: Bounds checking!
 		if(relative) inst->pos+=pos;
 		else inst->pos=pos;
+		ret=inst->pos;
 	}else{
 		int cpos;
 		if(relative){
@@ -75,7 +77,9 @@ void terminal_seek(void *instance, size_t pos, bool relative){
 		}
 		terminal_row=cpos/VGA_WIDTH;
 		terminal_column=cpos-(terminal_row * VGA_WIDTH);
+		ret=cpos;
 	}
+	return ret;
 }
 
 int terminal_ioctl(void *instance, int fn, size_t bytes, char *buf){

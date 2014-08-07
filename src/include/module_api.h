@@ -56,7 +56,7 @@ struct syscall_table{
 	bool (*devclose)(void *handle);
 	int (*devread)(void *handle, size_t bytes, char *buffer);
 	bool (*devwrite)(void *handle, size_t bytes, char *buffer);
-	void (*devseek)(void *handle, size_t pos, bool relative);
+	size_t (*devseek)(void *handle, size_t pos, bool relative);
 	int (*devioctl)(void *handle, int fn, size_t bytes, char *buffer);
 	int (*devtype)(char *name);
 	char *(*devdesc)(char *name);

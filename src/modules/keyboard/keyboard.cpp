@@ -162,7 +162,7 @@ struct keyboard_instance{
 	bool (*close)(void *instance);
 	int (*read)(void *instance, size_t bytes, char *buf);
 	bool (*write)(void *instance, size_t bytes, char *buf);
-	void (*seek)(void *instance, size_t pos, bool relative);
+	size_t (*seek)(void *instance, size_t pos, bool relative);
 	int (*ioctl)(void *instance, int fn, size_t bytes, char *buf);
 	int (*type)();
 	char *(*desc)();
@@ -208,7 +208,8 @@ bool keyboard_write(void *instance, size_t bytes, char *buf){
 	return false;
 }
 
-void keyboard_seek(void *instance, size_t pos, bool relative){
+size_t keyboard_seek(void *instance, size_t pos, bool relative){
+	return 0;
 }
 
 int keyboard_ioctl(void *instance, int fn, size_t bytes, char *buf){

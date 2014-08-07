@@ -66,8 +66,8 @@ bool test_driver_write(void *instance, size_t bytes, char *buf){
 	return false;
 }
 
-void test_driver_seek(void *instance, size_t pos, bool relative){
-	//Do nothing...
+size_t test_driver_seek(void *instance, size_t pos, bool relative){
+	return 0;
 }
 
 int test_driver_ioctl(void *instance, int fn, size_t bytes, char *buf){
