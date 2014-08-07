@@ -16,7 +16,8 @@ struct terminal_instance{
 
 static const size_t VGA_WIDTH = 80;
 static const size_t VGA_HEIGHT = 24;
- 
+static const size_t max=VGA_WIDTH * VGA_HEIGHT * 2;
+
 size_t terminal_row;
 size_t terminal_column;
 uint8_t terminal_color;
@@ -36,7 +37,6 @@ bool terminal_close(void *inst){
 
 int terminal_read(void *instance, size_t bytes, char *buf){
 	terminal_instance *inst=(terminal_instance*)instance;
-	size_t max=VGA_WIDTH * VGA_HEIGHT * 2;
 	if(inst->pos > max) return 0;
 	if(inst->pos+bytes > max) bytes=max-inst->pos;
 	memcpy(buf, (char*)terminal_buffer+inst->pos, bytes);
@@ -47,7 +47,8 @@ int terminal_read(void *instance, size_t bytes, char *buf){
 bool terminal_write(void *instance, size_t bytes, char *buf){
 	terminal_instance *inst=(terminal_instance*)instance;
 	if(inst->mode==instance_mode::Raw){
-		//TODO: Bounds checking!
+		if(inst->pos > max) return 0;
+        if(inst->pos+bytes > max) bytes=max-inst->pos;
 		memcpy((char*)terminal_buffer+inst->pos, buf, bytes);
 		inst->pos+=bytes;
 		return true;
