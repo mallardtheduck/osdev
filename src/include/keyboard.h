@@ -28,10 +28,12 @@ ENUM_SET(KeyFlags, CapsLock,1 << 10),
 ENUM_SET(KeyFlags, NumLock, 1 << 9),
 ENUM_SET(KeyFlags, ScrollLock, 1 << 8),
 ENUM_SET(KeyFlags, NonASCII, 1 << 7),
+ENUM_SET(KeyFlags, Right, 1 << 6),
 ENUM_END
 ENUM_TYPE(KeyFlags);
 
-const uint16_t KC_Mask=0x7F;
+const uint16_t KC_Mask=0x3F;
+const uint16_t KC_ASCIIMask=0x7F;
 
 ENUM_START(KeyCodes)
 ENUM_SET(KeyCodes, Escape, 0x01),
@@ -57,24 +59,24 @@ ENUM_SET(KeyCodes, LeftArrow, 0x13),
 ENUM_SET(KeyCodes, RightArrow, 0x14),
 ENUM_SET(KeyCodes, Shift, 0x15),
 
-ENUM_SET(KeyCodes, Unicode, 0x60),
+ENUM_SET(KeyCodes, Unicode, 0x20),
 
-ENUM_SET(KeyCodes, F1, 0x70),
-ENUM_SET(KeyCodes, F2, 0x71),
-ENUM_SET(KeyCodes, F3, 0x72),
-ENUM_SET(KeyCodes, F4, 0x73),
-ENUM_SET(KeyCodes, F5, 0x74),
-ENUM_SET(KeyCodes, F6, 0x75),
-ENUM_SET(KeyCodes, F7, 0x76),
-ENUM_SET(KeyCodes, F8, 0x77),
-ENUM_SET(KeyCodes, F9, 0x78),
-ENUM_SET(KeyCodes, F10, 0x79),
-ENUM_SET(KeyCodes, F11, 0x7A),
-ENUM_SET(KeyCodes, F12, 0x7B),
-ENUM_SET(KeyCodes, F13, 0x7C),
-ENUM_SET(KeyCodes, F14, 0x7D),
-ENUM_SET(KeyCodes, F15, 0x7E),
-ENUM_SET(KeyCodes, F16, 0x7F),
+ENUM_SET(KeyCodes, F1, 0x30),
+ENUM_SET(KeyCodes, F2, 0x31),
+ENUM_SET(KeyCodes, F3, 0x32),
+ENUM_SET(KeyCodes, F4, 0x33),
+ENUM_SET(KeyCodes, F5, 0x34),
+ENUM_SET(KeyCodes, F6, 0x35),
+ENUM_SET(KeyCodes, F7, 0x36),
+ENUM_SET(KeyCodes, F8, 0x37),
+ENUM_SET(KeyCodes, F9, 0x38),
+ENUM_SET(KeyCodes, F10, 0x39),
+ENUM_SET(KeyCodes, F11, 0x3A),
+ENUM_SET(KeyCodes, F12, 0x3B),
+ENUM_SET(KeyCodes, F13, 0x3C),
+ENUM_SET(KeyCodes, F14, 0x3D),
+ENUM_SET(KeyCodes, F15, 0x3E),
+ENUM_SET(KeyCodes, F16, 0x3F),
 ENUM_END
 ENUM_TYPE(KeyCodes);
 

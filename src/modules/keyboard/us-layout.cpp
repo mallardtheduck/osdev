@@ -55,7 +55,7 @@ key_info us_keyboard_layout[128]={
 	{',', '<'},
 	{'.', '>'},
 	{'/', '?'},
-	{KeyFlags::NonASCII | KeyCodes::Shift},
+	{KeyFlags::NonASCII | KeyFlags::Right | KeyCodes::Shift},
 	{'*', KeyFlags::NonASCII | KeyCodes::PrintScreen},
 	{KeyFlags::NonASCII | KeyCodes::Alt},
 	{' '},
