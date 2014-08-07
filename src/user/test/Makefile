@@ -5,7 +5,7 @@ BUILD-CPP-FLAGS :=  -c
 BUILD-CPP-OPTIONS := -ffreestanding -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -c -I../../include
 BUILD-C := i686-elf-gcc
 BUILD-C-FLAGS := -c
-BUILD-C-OPTIONS := -ffreestanding -Wall -Wextra -Werror -g -c -I../../include
+BUILD-C-OPTIONS := -ffreestanding -Wall -Wextra -Werror -g -c -I../../include -std=gnu99
 LINK := i686-elf-gcc
 LINK-FLAGS := -T linker.ld -o test.elx -ffreestanding -O2 -nostdlib -fPIC -Xlinker -q
 LINK-OPTIONS := -lgcc
