@@ -27,15 +27,24 @@ void get_string(char *buffer, size_t bytes){
 		if(!bt_getenv("INPUT_DEVICE", &stdin_device[5], 250)) return;
 		stdin=bt_fopen(stdin_device, 0);
 	}
+	size_t pos=bt_fseek(stdout, 0, true);
 	size_t i=0;
 	char x[2]={'a', '\0'};
 	uint32_t c;
 	while(true){
 		bt_fread(stdin, sizeof(c), (char*)&c);
 		x[0]=KB_char(c);
-		print_string(x);
-		if(x[0]) buffer[i++]=x[0];
+		if(x[0]==0x08){
+		 	if(i>0) buffer[--i]=0;
+		}else if(x[0]) buffer[i++]=x[0];
+
 		if(x[0]=='\n' || i==bytes) return;
+
+		bt_fseek(stdout, pos, false);
+		print_string(buffer);
+		size_t newpos=bt_fseek(stdout, 0, true);
+		print_string(" ");
+		bt_fseek(stdout, newpos, false);
 	}
 }
 
