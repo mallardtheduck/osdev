@@ -81,6 +81,11 @@ void mount_test(){
 	bt_unmount("TEST");
 }
 
+void version(){
+	print_string("BT/OS TEST Command prompt.\n");
+	print_string("For testing only.\n");
+}
+
 int main(int argc, char **argv){
 	bt_zero("~~~Userspace test program start!~~~\n");
 	print_string("TEST Command Prompt!\n");
@@ -91,6 +96,7 @@ int main(int argc, char **argv){
 		if(input[0]=='d') dir_listing();
 		else if(input[0]=='f') file_contents();
 		else if(input[0]=='m') mount_test();
+		else if(input[0]=='v') version();
 		else if(input[0]=='q') break;
 		else {
 			print_string("Unrecognised command.\n");
