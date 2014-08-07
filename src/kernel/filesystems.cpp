@@ -106,6 +106,8 @@ void fs_registerfs(const fs_driver &driver){
 
 fs_mountpoint &getpathmount(char *path){
 	char mountname[9]={0};
+	string strpath=to_upper(path);
+	path=(char*)strpath.c_str();
 	for(int i=0; i<8 && path[i]!='\0' && path[i]!=':'; ++i){
 		mountname[i]=path[i];
 	}
@@ -121,6 +123,8 @@ char *getfspath(char *path){
 }
 
 bool fs_mount(char *name, char *device, char *fs){
+	string strname=to_upper(name);
+	name=(char*)strname.c_str();
 	fs_driver driver=getfs(fs);
 	if(driver.valid){
 		hold_lock hl(fs_lock);
