@@ -38,7 +38,10 @@ void get_string(char *buffer, size_t bytes){
 		 	if(i>0) buffer[--i]=0;
 		}else if(x[0]) buffer[i++]=x[0];
 
-		if(x[0]=='\n' || i==bytes) return;
+		if(x[0]=='\n' || i==bytes){
+			print_string("\n");
+			return;
+		}
 
 		bt_fseek(stdout, pos, false);
 		print_string(buffer);
