@@ -77,6 +77,7 @@ size_t terminal_seek(void *instance, size_t pos, bool relative){
 		}
 		terminal_row=cpos/VGA_WIDTH;
 		terminal_column=cpos-(terminal_row * VGA_WIDTH);
+		terminal_poscursor(terminal_row, terminal_column);
 		ret=cpos;
 	}
 	return ret;
