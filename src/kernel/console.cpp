@@ -36,7 +36,9 @@ bool terminal_close(void *inst){
 
 int terminal_read(void *instance, size_t bytes, char *buf){
 	terminal_instance *inst=(terminal_instance*)instance;
-	//TODO: Bounds checking!
+	size_t max=VGA_WIDTH * VGA_HEIGHT * 2;
+	if(inst->pos > max) return 0;
+	if(inst->pos+bytes > max) bytes=max-inst->pos;
 	memcpy(buf, (char*)terminal_buffer+inst->pos, bytes);
 	inst->pos+=bytes;
 	return bytes;
