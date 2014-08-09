@@ -130,6 +130,7 @@ fs_driver infofs_driver={true, "INFOFS", false, infofs_mount, infofs_unmount, in
 	infofs_dirseek, infofs_stat};
 
 void infofs_register(char *name, info_function fn){
+	if(!info_items) info_items=new map<string, info_function>();
 	(*info_items)[name]=fn;
 }
 
@@ -140,7 +141,7 @@ char *info_kernel(){
 }
 
 void infofs_init(){
-	info_items=new map<string, info_function>();
+	if(!info_items) info_items=new map<string, info_function>();
 	fs_registerfs(infofs_driver);
 	fs_mount("INFO", NULL, "INFOFS");
 	printf("FS: Mounted INFOFS on INFO:\n");
