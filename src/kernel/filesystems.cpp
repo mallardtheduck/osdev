@@ -9,6 +9,15 @@ map<string, fs_driver> *fs_drivers;
 
 lock fs_lock;
 
+char *fs_mounts_infofs(){
+	char *buffer=(char*)malloc(4096);
+	memset(buffer, 0, 4096);
+	for(map<string, fs_mountpoint>::iterator i=fs_mounts->begin(); i!=fs_mounts->end(); ++i){
+		sprintf(&buffer[strlen(buffer)], "%s, %s\n", i->first.c_str(), i->second.driver.name);
+	}
+	return buffer;
+}
+
 void fs_init(){
 	dbgout("FS: Init\n");
 	init_lock(fs_lock);
@@ -32,6 +41,7 @@ void fs_init(){
 		dbgpf("FS: %s %i 0x%x\n", entry.filename, entry.size, entry.type);
 	}
 	fs_close_dir(dir);
+	infofs_register("MOUNTS", &fs_mounts_infofs);
 }
 
 fs_path *new_fs_path(const string &path){
