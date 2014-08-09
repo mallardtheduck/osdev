@@ -13,6 +13,8 @@ enum fs_item_types{
 	FS_Directory=0x01,
 	FS_Link=0x02,
 	FS_Device=0x10,
+
+	FS_Invalid=0xFF,
 };
 
 #ifndef __cplusplus
@@ -29,6 +31,8 @@ struct directory_entry{
 #ifndef __cplusplus
 typedef struct directory_entry directory_entry;
 #endif
+
+static const directory_entry invalid_directory_entry={false, "", 0, FS_Invalid};
 
 struct fs_path{
 	char *str;
