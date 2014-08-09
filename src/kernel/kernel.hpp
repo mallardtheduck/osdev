@@ -45,6 +45,7 @@ extern "C"{
 #include "syscalls.hpp"
 #include "modules.hpp"
 #include "user_api.hpp"
+#include "infofs.hpp"
 
 void GDT_init();
 void IDT_init();

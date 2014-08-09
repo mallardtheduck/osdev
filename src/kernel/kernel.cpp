@@ -22,6 +22,7 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	drv_init();
 	terminal_add_device();
 	fs_init();
+	infofs_init();
 	init_modules();
 	userapi_init();
 	load_module("INIT:/BOOT.SYS");
