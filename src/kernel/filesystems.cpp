@@ -9,6 +9,10 @@ map<string, fs_driver> *fs_drivers;
 
 lock fs_lock;
 
+static const fs_driver invalid_fs_driver={false, "", false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL};
+static const fs_mountpoint invalid_mountpoint={false, "", invalid_fs_driver, NULL};
+
 char *fs_mounts_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
@@ -105,7 +109,8 @@ fs_driver &getfs(char *name){
 
 fs_mountpoint &getmount(char *name){
 	hold_lock hl(fs_lock);
-	return (*fs_mounts)[name];
+	if(fs_mounts->has_key(name)) return (*fs_mounts)[name];
+	else return (fs_mountpoint&)invalid_mountpoint;
 }
 
 void fs_registerfs(const fs_driver &driver){
