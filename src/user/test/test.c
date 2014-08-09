@@ -88,10 +88,10 @@ void dir_listing2(char *input){
 void file_contents(){
 	print_string("Contents of \"INIT:/config.ini\":\n");
 	bt_filehandle file=bt_fopen("INIT:/config.ini", 0);
-	char c;
-	while(bt_fread(file, 1, &c)){
-		char d[2]={c, 0};
-		print_string(d);
+	char c[32]={0};
+	while(bt_fread(file, 31, c)){
+		print_string(c);
+		memset(c, 0, 32);
 	}
 	bt_fclose(file);
 }
@@ -103,10 +103,10 @@ void file_contents2(char *input){
 	print_string("\":\n");
 	bt_filehandle file=bt_fopen(&input[2], 0);
 	if(!file) return;
-	char c;
-	while(bt_fread(file, 1, &c)){
-		char d[2]={c, 0};
-		print_string(d);
+	char c[32]={0};
+	while(bt_fread(file, 31, c)){
+		print_string(c);
+		memset(c, 0, 32);
 	}
 	bt_fclose(file);
 }
