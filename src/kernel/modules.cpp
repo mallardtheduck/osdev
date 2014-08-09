@@ -11,9 +11,19 @@ struct kernel_module{
 
 vector<kernel_module> *loaded_modules;
 
+char *modules_infofs(){
+	char *buffer=(char*)malloc(4096);
+	memset(buffer, 0, 4096);
+	for(size_t i=0; i<loaded_modules->size(); ++i){
+		sprintf(&buffer[strlen(buffer)], "%x, \"%s\"\n", (*loaded_modules)[i].elf.mem.aligned, (*loaded_modules)[i].filename.c_str());
+	}
+	return buffer;
+}
+
 void init_modules(){
 	init_lock(mod_lock);
 	loaded_modules=new vector<kernel_module>();
+	infofs_register("MODULES", &modules_infofs);
 }
 
 void module_thread_start(void *p){
