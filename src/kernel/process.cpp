@@ -45,6 +45,16 @@ struct proc_process{
 
 proc_process *proc_get(pid_t pid);
 
+char *proc_infofs(){
+	char *buffer=(char*)malloc(4096);
+	memset(buffer, 0, 4096);
+	hold_lock hl(proc_lock);
+	for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
+    	sprintf(&buffer[strlen(buffer)],"%i, \"%s\"\n", (int)i->pid, i->name.c_str());
+    }
+    return buffer;
+}
+
 void proc_init(){
 	dbgout("PROC: Init\n");
 	init_lock(proc_lock);
@@ -61,6 +71,7 @@ void proc_init(){
 		dbgpf("PROC: Proccess %i, '%s'\n", (int)i->pid, i->name.c_str());
 	}
 	dbgpf("PROC: Current pid: %i\n", (int)proc_current_pid);
+	infofs_register("PROCS", &proc_infofs);
 }
 
 proc_process *proc_get(pid_t pid){
