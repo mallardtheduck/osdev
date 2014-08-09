@@ -15,7 +15,7 @@ struct terminal_instance{
 };
 
 static const size_t VGA_WIDTH = 80;
-static const size_t VGA_HEIGHT = 24;
+static const size_t VGA_HEIGHT = 25;
 static const size_t max=VGA_WIDTH * VGA_HEIGHT * 2;
 
 size_t terminal_row;
