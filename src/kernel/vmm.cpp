@@ -92,6 +92,7 @@ private:
     uint32_t* pagedir;
     uint32_t* curtable;
     uint32_t phys_addr;
+    size_t userpagecount;
 
     void maptable(uint32_t phys_addr){
         uint32_t virtpage=(uint32_t)curtable/VMM_PAGE_SIZE;
@@ -131,6 +132,10 @@ public:
 
     void copy_kernelspace(vmm_pagedir *other){
     	memcpy(pagedir, other->pagedir, VMM_KERNEL_TABLES * sizeof(uint32_t));
+    }
+
+    size_t getuserpagecount(){
+    	return userpagecount;
     }
 
     void destroy();
@@ -230,6 +235,7 @@ size_t vmm_pagedir::unmap_page(size_t virtpage){
 		vmm_pages.push(table);
 	}
 	vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
+	if(virtpage >= VMM_KERNEL_PAGES) userpagecount--;
 	return ret/VMM_PAGE_SIZE;
 }
 
@@ -283,6 +289,7 @@ void vmm_pagedir::map_page(size_t virtpage, size_t physpage, bool alloc, bool ke
 		((uint32_t*)table)[tableoffset]=(physpage*VMM_PAGE_SIZE) | pageflags;
 	}
 	vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
+	if(!kernelspace) userpagecount++;
 }
 
 const size_t VMM_MAX_REGIONS=32;
@@ -290,11 +297,27 @@ vmm_region vmm_regions[VMM_MAX_REGIONS]={0, 0};
 uint32_t vmm_kpagedir[VMM_ENTRIES_PER_TABLE] __attribute__((aligned(0x1000)));
 uint32_t vmm_kinitable[VMM_ENTRIES_PER_TABLE] __attribute__((aligned(0x1000)));
 vmm_pagedir *vmm_cur_pagedir, vmm_kernel_pagedir;
+size_t vmm_totalmem=0;
 
 void *vmm_ministack_alloc(size_t pages=1);
 void vmm_ministack_free(void *ptr, size_t pages=1);
 void vmm_identity_map(uint32_t *pagedir, size_t page, bool alloc=true);
 void vmm_page_fault_handler(int,isr_regs*);
+
+char *freemem_infofs(){
+	char *buffer=(char*)malloc(512);
+    memset(buffer, 0, 512);
+    size_t freemem=vmm_pages.size() * VMM_PAGE_SIZE;
+    sprintf(buffer, "%i\n", freemem);
+    return buffer;
+}
+
+char *totalmem_infofs(){
+	char *buffer=(char*)malloc(512);
+    memset(buffer, 0, 512);
+    sprintf(buffer, "%i\n", vmm_totalmem);
+    return buffer;
+}
 
 void vmm_init(multiboot_info_t *mbt){
 	init_lock(vmm_lock);
@@ -338,6 +361,7 @@ void vmm_init(multiboot_info_t *mbt){
     }
     dbgpf("VMM: Total pages: %i\n", totalpages);
     printf("VMM: Available RAM: %iKB\n", totalpages*4);
+    vmm_totalmem=totalpages*VMM_PAGE_SIZE;
    	dbgpf("VMM: Initializing kernel page directory at %x.\n", vmm_kpagedir);
 	for(size_t i=0; i<VMM_ENTRIES_PER_TABLE; ++i){
 		vmm_kpagedir[i]=0 | TableFlags::Writable;
@@ -380,6 +404,8 @@ void vmm_init(multiboot_info_t *mbt){
     }
     dbgout("VMM: Page stack initialized.\n");
     dbgout("VMM: Init complete.\n");
+    infofs_register("FREEMEM", &freemem_infofs);
+    infofs_register("TOTALMEM", &totalmem_infofs);
 }
 
 bool is_paging_enabled(){
@@ -477,4 +503,8 @@ vmm_pagedir *vmm_newpagedir(){
 void vmm_deletepagedir(vmm_pagedir *dir){
 	dir->destroy();
 	delete dir;
+}
+
+size_t vmm_getusermemory(vmm_pagedir *dir){
+	return dir->getuserpagecount() * VMM_PAGE_SIZE;
 }

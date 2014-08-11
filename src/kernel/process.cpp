@@ -50,7 +50,7 @@ char *proc_infofs(){
 	memset(buffer, 0, 4096);
 	hold_lock hl(proc_lock);
 	for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
-    	sprintf(&buffer[strlen(buffer)],"%i, \"%s\"\n", (int)i->pid, i->name.c_str());
+    	sprintf(&buffer[strlen(buffer)],"%i, \"%s\", %i\n", (int)i->pid, i->name.c_str(), vmm_getusermemory(i->pagedir));
     }
     return buffer;
 }

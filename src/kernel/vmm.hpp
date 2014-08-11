@@ -18,5 +18,6 @@ void vmm_free(void *ptr, size_t pages);
 void vmm_switch(vmm_pagedir *dir);
 vmm_pagedir *vmm_newpagedir();
 void vmm_deletepagedir(vmm_pagedir *dir);
+size_t vmm_getusermemory(vmm_pagedir *dir);
 
 #endif
