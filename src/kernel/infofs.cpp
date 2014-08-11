@@ -6,11 +6,12 @@ void* const infofs_magic=(void*)0x14F0F5;
 map<string, info_function> *info_items;
 
 struct infofs_filehandle{
-	size_t pos;
-	string data;
+	size_t pos, size;
+	char *data;
 
-	infofs_filehandle(string d) : pos(0), data(d) {}
-	infofs_filehandle() : pos(0) {}
+	infofs_filehandle(char *d) : pos(0), size(strlen(d)), data(d) {}
+	infofs_filehandle() : pos(0), size(0), data(NULL) {}
+	~infofs_filehandle() {free(data);}
 };
 
 struct infofs_dirhandle{
@@ -40,7 +41,6 @@ void *infofs_open(void *mountdata, fs_path *path){
 	if(!info_items->has_key(path->str)) return NULL;
 	char *data=(*info_items)[path->str]();
 	infofs_filehandle *ret=new infofs_filehandle(data);
-	free(data);
 	return (void*)ret;
 }
 
@@ -54,9 +54,9 @@ bool infofs_close(void *filedata){
 int infofs_read(void *filedata, size_t bytes, char *buf){
 	if(!filedata) return 0;
 	infofs_filehandle *fdata=(infofs_filehandle*)filedata;
-	if(fdata->pos >= fdata->data.length()) return 0;
-	if(fdata->pos + bytes >= fdata->data.length()) bytes=fdata->data.length() - fdata->pos;
-	memcpy(buf, fdata->data.c_str()+fdata->pos, bytes);
+	if(fdata->pos >= fdata->size) return 0;
+	if(fdata->pos + bytes >= fdata->size) bytes=fdata->size - fdata->pos;
+	memcpy(buf, &fdata->data[fdata->pos], bytes);
 	fdata->pos+=bytes;
 	return bytes;
 }
