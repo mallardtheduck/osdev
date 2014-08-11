@@ -23,6 +23,10 @@ char *cpu_idstring() {
 	return s;
 }
 
+char *cpu_brandstring(){
+	return get_brandstring();
+}
+
 uint64_t cpu_get_speed(){	
 	outb(0x43,0x34);
 	outb(0x40,0);

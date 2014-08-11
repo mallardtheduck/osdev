@@ -140,11 +140,18 @@ char *info_kernel(){
 	return buffer;
 }
 
+char *info_cpu(){
+	char* buffer=(char*)malloc(256);
+	sprintf(buffer, "%s %s\n", cpu_idstring(), cpu_brandstring());
+	return buffer;
+}
+
 void infofs_init(){
 	if(!info_items) info_items=new map<string, info_function>();
 	fs_registerfs(infofs_driver);
 	fs_mount("INFO", NULL, "INFOFS");
 	printf("FS: Mounted INFOFS on INFO:\n");
 	infofs_register("VERSION", &info_kernel);
+	infofs_register("CPUID", &info_cpu);
 }
 
