@@ -20,7 +20,7 @@ struct idt_ptr
     uint32_t base;
 } __attribute__((packed));
 
-int_handler handlers[128]={NULL};
+int_handler handlers[256]={NULL};
 
 /* Declare an IDT of 256 entries. Although we will only use the
 *  first 32 entries in this tutorial, the rest exists as a bit
