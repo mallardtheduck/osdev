@@ -11,5 +11,6 @@ initfs_file initfs_data[] = {
 	{true, "RTC.SYS", __data_rtc_sys, sizeof(__data_rtc_sys)},
 	{true, "TEST.ELX", __data_test_elx, sizeof(__data_test_elx)},
 	{true, "KEYBOARD.SYS", __data_keyboard_sys, sizeof(__data_keyboard_sys)},
+	{true, "ATA.SYS", __data_ata_sys, sizeof(__data_ata_sys)},
 	{false, "", NULL, 0}
 };
