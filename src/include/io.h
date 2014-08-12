@@ -21,6 +21,20 @@ static inline uint8_t inb(uint16_t port)
     return ret;
 }
 
+inline static unsigned short ins(unsigned short _port) {
+	unsigned short rv;
+	asm volatile ("inw %1, %0" : "=a" (rv) : "dN" (_port));
+	return rv;
+}
+
+inline static void outsm(unsigned short port, unsigned char * data, unsigned long size) {
+	asm volatile ("rep outsw" : "+S" (data), "+c" (size) : "d" (port));
+}
+
+inline static void insm(unsigned short port, unsigned char * data, unsigned long size) {
+	asm volatile ("rep insw" : "+D" (data), "+c" (size) : "d" (port) : "memory");
+}
+
 inline void disable_interrupts(){
 	asm volatile("cli");
 }
