@@ -14,3 +14,4 @@ serial.out
 *.elx
 *.ell
 buildid.c
+test.img
