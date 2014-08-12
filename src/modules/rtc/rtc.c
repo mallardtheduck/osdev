@@ -78,6 +78,13 @@ datetime read_rtc(){
 	return ret;
 }
 
+char *rtc_infofs(){
+	char *buf=(char*)malloc(128);
+	datetime dt=read_rtc();
+	sprintf(buf, FORMAT "\n", dt.hour, dt.minute, dt.second, dt.day, dt.month, dt.year);
+	return buf;
+}
+
 int module_main(syscall_table *systbl){
 	SYSCALL_TABLE=systbl;
 	datetime dt=read_rtc();
@@ -85,5 +92,7 @@ int module_main(syscall_table *systbl){
 	char buf[128];
 	sprintf(buf, FORMAT "\n", dt.hour, dt.minute, dt.second, dt.day, dt.month, dt.year);
 	setenv("BOOT_TIME", buf, ENV_Global, 0);
+
+	infofs_register("RTC", &rtc_infofs);
 	return 0;
 }
