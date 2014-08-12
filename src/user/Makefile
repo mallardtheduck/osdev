@@ -1,11 +1,13 @@
-all: test
+PROGS := test
 
-test: dummy.file
-	$(MAKE) -C test
+all: dummy.file
+	for dir in $(PROGS); do \
+		make -C $$dir; \
+	done
 
-clean: test-clean
-
-test-clean: dummy.file
-	$(MAKE) -C test clean
+clean: dummy.file
+	for dir in $(PROGS); do \
+		make -C $$dir clean; \
+	done
 
 dummy.file:

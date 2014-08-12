@@ -1,29 +1,13 @@
-all: test boot rtc keyboard
+MODULES := boot test rtc keyboard
 
-test: dummy.file
-	$(MAKE) -C test
+all: dummy.file
+	for dir in $(MODULES); do \
+		make -C $$dir; \
+	done
 
-boot: dummy.file
-	$(MAKE) -C boot
-
-rtc: dummy.file
-	$(MAKE) -C rtc
-
-keyboard: dummy.file
-	$(MAKE) -C keyboard
-
-clean: test-clean boot-clean rtc-clean keyboard-clean
-
-test-clean: dummy.file
-	$(MAKE) -C test clean
-
-boot-clean: dummy.file
-	$(MAKE) -C boot clean
-
-rtc-clean: dummy.file
-	$(MAKE) -C rtc clean
-
-keyboard-clean: dummy.file
-	$(MAKE) -C keyboard clean
+clean: dummy.file
+	for dir in $(MODULES); do \
+		make -C $$dir clean; \
+	done
 
 dummy.file:
