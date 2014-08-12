@@ -1,6 +1,7 @@
 #include "module_stubs.h"
 #include "io.h"
 #include "ata.hpp"
+#include "module_cpp.hpp"
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
@@ -8,6 +9,8 @@ char dbgbuf[256];
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #pragma GCC diagnostic ignored "-Wunused-function"
+
+drv_driver ata_driver;
 
 struct ata_device {
 	int io_base;
@@ -106,7 +109,7 @@ static int ata_device_detect(struct ata_device * dev) {
 	if (cl == 0x00 && ch == 0x00) {
 		/* Parallel ATA device */
 		ata_device_init(dev);
-		//Add device...
+		add_device("ATA", &ata_driver, (void*)dev);
 
 		return 1;
 	}
@@ -223,9 +226,70 @@ static int ata_finalize(void) {
 	return 0;
 }
 
+struct ata_instance{
+	ata_device *dev;
+	size_t pos;
+};
+
+void *ata_open(void *id){
+	ata_instance *instance=new ata_instance();
+	instance->dev=(ata_device*)id;
+	instance->pos=0;
+	return instance;
+}
+
+bool ata_close(void *instance){
+	if(instance){
+		delete (ata_device*) instance;
+		return true;
+	}else return false;
+}
+
+int ata_read(void *instance, size_t bytes, char *buf){
+	if(bytes % 512) return 0;
+	ata_instance *inst=(ata_instance*)instance;
+	for(size_t i=0; i<bytes; i+=512){
+		ata_device_read_sector(inst->dev, inst->pos/512, (uint8_t*)&buf[512*i]);
+		inst->pos+=512;
+	}
+	return bytes;
+}
+
+bool ata_write(void *instance, size_t bytes, char *buf){
+	if(bytes % 512) return false;
+	ata_instance *inst=(ata_instance*)instance;
+	for(size_t i=0; i<bytes; i+=512){
+		ata_device_write_sector_retry(inst->dev, inst->pos/512, (uint8_t*)&buf[512*i]);
+		inst->pos+=512;
+	}
+	return true;
+}
+
+size_t ata_seek(void *instance, size_t pos, bool relative){
+	ata_instance *inst=(ata_instance*)instance;
+	if(pos % 512) return inst->pos;
+	if(relative) inst->pos+=pos;
+	else inst->pos=pos;
+	return inst->pos;
+}
+
+int ata_ioctl(void *instance, int fn, size_t bytes, char *buf){
+	return 0;
+}
+
+int ata_type(){
+	return driver_types::STR_HDD;
+}
+
+char *ata_desc(){
+	return (char*)"ATA HDD";
+}
+
 extern "C" int module_main(syscall_table *systbl){
-		SYSCALL_TABLE=systbl;
-		init_lock(&ata_lock);
-		ata_initialize();
-    	return 0;
+	drv_driver driver={ata_open, ata_close, ata_read, ata_write, ata_seek, ata_ioctl, ata_type, ata_desc};
+	ata_driver=driver;
+	SYSCALL_TABLE=systbl;
+	init_lock(&ata_lock);
+	ata_initialize();
+    return 0;
 }
