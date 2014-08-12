@@ -15,6 +15,8 @@ typedef void(*thread_func)(void*);
 typedef uint64_t thread_id_t;
 typedef uint64_t pid_t;
 
+typedef char* (*info_function)();
+
 #define	ENV_Global 		(1<<0) //Use PID 0 (kernel) value instead
 #define ENV_ReadOnly	(1<<1) //Not changeable by user-mode code
 #define	ENV_Private 	(1<<2) //Not visible to user-mode code
@@ -93,6 +95,8 @@ struct syscall_table{
 
 	pid_t (*getpid)();
 	pid_t (*spawn)(char *exec, char *params);
+
+	void (*infofs_register)(char *name, info_function fn);
 };
 
 #ifndef __cplusplus

@@ -195,4 +195,6 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 
 	&getpid,
 	&mod_spawn,
+
+	&infofs_register,
 };
