@@ -123,6 +123,16 @@ void version(){
 	print_string("For testing only.\n");
 }
 
+void ata_test(){
+	char buf[513]={0};
+	bt_filehandle ata=bt_fopen("DEV:/ATA0", 0);
+	bt_fread(ata, 512, buf);
+	bt_fclose(ata);
+	print_string("The contents of the first sector of the ATA0 device is:\n");
+	print_string(buf);
+	print_string("\n");
+}
+
 int main(int argc, char **argv){
 	bt_zero("~~~Userspace test program start!~~~\n");
 	print_string("TEST Command Prompt!\n");
@@ -131,6 +141,7 @@ int main(int argc, char **argv){
 		print_string("[TEST]>");
 		get_string(input, 128);
 		if(input[0]=='d') dir_listing();
+		else if(input[0]=='b') ata_test();
 		else if(input[0]=='l') dir_listing2(input);
 		else if(input[0]=='f') file_contents();
 		else if(input[0]=='c') file_contents2(input);
