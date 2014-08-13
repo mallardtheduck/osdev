@@ -96,38 +96,6 @@ bool elf_getstring(file_handle &file, const Elf32_Ehdr &header, size_t offset, c
 	}
 }
 
-void elf_test(){
-	file_handle file=fs_open("INITFS:TEST.SYS");
-	Elf32_Ehdr header=elf_read_header(file);
-	if(elf_verify_header(header)){
-		dbgpf("ELF: Valid header.\n");
-	}else{
-		panic("(ELF) Invalid header!\n");
-	}
-	dbgpf("ELF: Signature:%x, %c%c%c\n", 
-		(int)header.ident[0], header.ident[1], header.ident[2], header.ident[3]);
-	dbgpf("ELF: Type:%i, Machine:%i\n", (int)header.type, (int)header.machine);
-	dbgpf("ELF: Number of sections: %i\n", header.shnum);
-	dbgpf("ELF: Numer of program headers: %i\n", header.phnum);
-	for(int i=0; i<header.shnum; ++i){
-		char buf[64]={0};
-		Elf32_Shdr section=elf_read_sectionheader(file, header, i);
-		elf_getstring(file, header, section.name, buf, 63);
-		dbgpf("ELF: Section: %s type:%x, flags:%x, offset:%x, size:%i\n", buf,
-			section.type, section.flags, section.offset, section.size);
-		dbgpf("ELF: Writable: %i, Load: %i\n", 
-			(int)hasflag(section.flags, SHF_WRITE), (int)hasflag(section.flags, SHF_ALLOC));
-	}
-	for(int i=0; i<header.phnum; ++i){
-		Elf32_Phdr prog=elf_read_progheader(file, header, i);
-		dbgpf("ELF: Prog: %i type: %i, offset: %i, vaddr: %x, paddr: %x, filesz: %i, memsz: %i, flags: %i, align: %i\n", i, prog.type, prog.offset, prog.vaddr, prog.paddr, prog.filesz, prog.memsz, prog.flags, prog.align);
-	}
-	dbgpf("ELF: Image RAM size: %i\n", elf_getsize(file));
-	loaded_elf_module tstelf=elf_load_module(file);
-	dbgpf("ELF: test %i\n", tstelf.entry(&MODULE_SYSCALL_TABLE));
-	fs_close(file);
-}
-
 size_t elf_getsize(file_handle &file){
 	size_t limit=0;
 	size_t base=0xFFFFFF;

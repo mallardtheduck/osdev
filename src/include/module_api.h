@@ -88,7 +88,7 @@ struct syscall_table{
 	dir_handle *(*dircreate)(char *path);
 	directory_entry (*stat)(char *path);
 
-	void (*module_load)(char *path);
+	void (*module_load)(char *path, char *params);
 
 	void (*setenv)(char *name, char *value, uint8_t flags, pid_t pid);
 	char *(*getenv)(char *name, pid_t pid);

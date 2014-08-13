@@ -4,7 +4,7 @@ syscall_table *SYSCALL_TABLE;
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-int module_main(syscall_table *systbl){
+int module_main(syscall_table *systbl, char *params){
 		SYSCALL_TABLE=systbl;
     	return 0;
 }

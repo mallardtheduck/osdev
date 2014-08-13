@@ -6,6 +6,7 @@ lock mod_lock;
 
 struct kernel_module{
 	string filename;
+	string params;
 	loaded_elf_module elf;
 };
 
@@ -26,11 +27,11 @@ void init_modules(){
 	infofs_register("MODULES", &modules_infofs);
 }
 
-void module_thread_start(void *p){
+/*void module_thread_start(void *p){
 	((module_entry)p)(&MODULE_SYSCALL_TABLE);
-}
+}*/
 
-void load_module(char *path){
+void load_module(char *path, char *params){
 	take_lock(mod_lock);
 	file_handle file=fs_open(path);
 	if(!file.valid){
@@ -39,10 +40,11 @@ void load_module(char *path){
 	}
 	kernel_module mod;
 	mod.filename=path;
+	mod.params=(params)?params:"";
 	mod.elf=elf_load_module(file);
 	loaded_modules->push_back(mod);
 	fs_close(file);
 	release_lock(mod_lock);
 	//sch_new_thread(&module_thread_start, (void*)mod.elf.entry);
-	mod.elf.entry(&MODULE_SYSCALL_TABLE);
+	mod.elf.entry(&MODULE_SYSCALL_TABLE, params);
 }

@@ -156,7 +156,7 @@ namespace module_api{
 	struct syscall_table;
 };
 
-typedef int (*module_entry)(module_api::syscall_table*);
+typedef int (*module_entry)(module_api::syscall_table*, char*);
 
 struct loaded_elf_module{
 	aligned_memory mem;

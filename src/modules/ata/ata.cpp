@@ -285,7 +285,7 @@ char *ata_desc(){
 	return (char*)"ATA HDD";
 }
 
-extern "C" int module_main(syscall_table *systbl){
+extern "C" int module_main(syscall_table *systbl, char *params){
 	drv_driver driver={ata_open, ata_close, ata_read, ata_write, ata_seek, ata_ioctl, ata_type, ata_desc};
 	ata_driver=driver;
 	SYSCALL_TABLE=systbl;

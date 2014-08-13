@@ -52,7 +52,7 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 		((config*)c)->input=strdup(value);
 		setenv("INPUT_DEVICE", ((config*)c)->input, 0, 0);
 	}else if(MATCH("default", "load")){
-		module_load((char*)value);
+		module_load((char*)value, NULL);
 	}else if(MATCH("default", "run")){
 		spawn((char*)value, NULL);
 	}
@@ -66,7 +66,7 @@ void boot_thread(void*){
     }
 }
 
-extern "C" int module_main(syscall_table *systbl){
+extern "C" int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
 	new_thread(&boot_thread, NULL);
 	return 0;

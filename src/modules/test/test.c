@@ -108,7 +108,7 @@ void test_thread(void*q){
 	test("end_thread()", false);
 }
 
-int module_main(syscall_table *systbl){
+int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
 	dbgout("TEST: Not testing \"panic()\"...\n");
 	void *malloctest=malloc(1024);

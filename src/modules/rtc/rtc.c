@@ -85,7 +85,7 @@ char *rtc_infofs(){
 	return buf;
 }
 
-int module_main(syscall_table *systbl){
+int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
 	datetime dt=read_rtc();
 	dbgpf("RTC: " FORMAT "\n", dt.hour, dt.minute, dt.second, dt.day, dt.month, dt.year);

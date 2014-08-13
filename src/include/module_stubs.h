@@ -229,8 +229,8 @@ inline static directory_entry stat(char *path){
 	return SYSCALL_TABLE->stat(path);
 }
 
-inline static void module_load(char *path){
-	SYSCALL_TABLE->module_load(path);
+inline static void module_load(char *path, char *params){
+	SYSCALL_TABLE->module_load(path, params);
 }
 
 inline static void setenv(char *name, char *value, uint8_t flags, pid_t pid){
