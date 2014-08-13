@@ -21,6 +21,19 @@ char *strdup(const char *s){
 	return ret;
 }
 
+bool split(const char *string, char c, char **before, char **after){
+	for(size_t i=0; string && string[i]; ++i){
+		if(string[i]==c){
+			*before=(char*)malloc(i+1);
+			memset((void*)*before, 0, i+1);
+			memcpy((void*)*before, (void*)string, i);
+			*after=strdup(&string[i+1]);
+			return true;
+		}
+	}
+	return false;
+}
+
 void dputs(void *handle, char *c){
 	devwrite(handle, strlen(c), c);
 }
@@ -52,7 +65,13 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 		((config*)c)->input=strdup(value);
 		setenv("INPUT_DEVICE", ((config*)c)->input, 0, 0);
 	}else if(MATCH("default", "load")){
-		module_load((char*)value, NULL);
+		char *name, *params;
+		if(split(value, ',', &name, &params)){
+			dbgpf("BOOT: %s,%s\n", name, params);
+			module_load(name, params);
+			free(name);
+			free(params);
+		}else module_load((char*)value, NULL);
 	}else if(MATCH("default", "run")){
 		spawn((char*)value, NULL);
 	}
