@@ -56,6 +56,18 @@ char *proc_infofs(){
     return buffer;
 }
 
+char *env_infofs(){
+	char *buffer=(char*)malloc(4096);
+	memset(buffer, 0, 4096);
+	sprintf(buffer, "# name, value, flags\n");
+	for(env_t::iterator i=proc_current_process->environment.begin(); i!=proc_current_process->environment.end(); ++i){
+		if(!(i->second.flags & proc_env_flags::Private)){
+			sprintf(&buffer[strlen(buffer)],"\"%s\", \"%s\", %x\n", i->first.c_str(), i->second.value.c_str(), (int)i->second.flags);
+		}
+	}
+	return buffer;
+}
+
 void proc_init(){
 	dbgout("PROC: Init\n");
 	init_lock(proc_lock);
@@ -73,6 +85,7 @@ void proc_init(){
 	}
 	dbgpf("PROC: Current pid: %i\n", (int)proc_current_pid);
 	infofs_register("PROCS", &proc_infofs);
+	infofs_register("ENV", &env_infofs);
 }
 
 proc_process *proc_get(pid_t pid){
