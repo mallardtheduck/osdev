@@ -1,6 +1,7 @@
 #include "module_stubs.h"
 
 syscall_table *SYSCALL_TABLE;
+char dbgbuf[256];
 lock lck;
 uint64_t test_thread_id=0;
 
@@ -110,6 +111,7 @@ void test_thread(void*q){
 
 int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
+	if(params) dbgpf("TEST: Parameters: %s\n", params);
 	dbgout("TEST: Not testing \"panic()\"...\n");
 	void *malloctest=malloc(1024);
 	test("malloc()", !!malloctest);
