@@ -30,7 +30,8 @@ clean: dummy.delete
 
 dummy.delete:
 	-@$(RM) *.o
-	-@$(RM) test.sys
+	-@$(RM) boot.sys
+	-@$(RM) boot.sys
 
 boot.sys: $(ASOBJS) $(COBJS) $(CPPOBJS) linker.ld Makefile
 	$(LINK) $(LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LINK-OPTIONS)

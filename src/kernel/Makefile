@@ -35,6 +35,7 @@ dummy.delete:
 	-@$(RM) myos.iso
 	-@$(RM) myos.bin
 	-@$(RM) initfs/xxd_data.inc
+	make -C initfs clean
 
 myos.iso: myos.bin
 	@mkdir -p isodir

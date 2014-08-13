@@ -18,3 +18,8 @@ data/keyboard.sys: ../../modules/keyboard/keyboard.sys
 
 data/ata.sys: ../../modules/ata/ata.sys
 	cp ../../modules/ata/ata.sys data/ata.sys
+
+clean: dummy.file
+	find data/ -not -name config.ini -type f -exec rm {} \;
+
+dummy.file:
