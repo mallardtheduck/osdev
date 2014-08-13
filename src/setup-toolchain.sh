@@ -9,10 +9,24 @@ tar xvfz binutils-2.23.tar.gz
 
 rm gcc-4.8.1.tar.bz2
 rm -rf gcc-4.8.1
-wget ftp://ftp.gnu.org/gnu/gcc/gcc-4.8.1/gcc-4.8.1.tar.bz2
+wget http://ftp.gnu.org/gnu/gcc/gcc-4.8.1/gcc-4.8.1.tar.bz2
 tar xvfj gcc-4.8.1.tar.bz2
 
+rm newlib-2.1.0.tar.gz
+rm -rf newlib-2.1.0 
+ftp://sourceware.org/pub/newlib/newlib-2.1.0.tar.gz
+tar xvfz newlib-2.1.0.tar.gz
+
 cp -Rv toolchain/* .
+
+pushd gcc-4.8.1/libstdc++/autoconf2.64
+popd
+
+pushd newlib-2.1.0/newlib/libc/sys
+autoconf2.64
+cd btos
+autoreconf2.64
+popd
 
 cd $HOME/Projects/os/src
 rm -rf build-binutils
@@ -31,4 +45,12 @@ make all-gcc
 make all-target-libgcc
 make install-gcc
 make install-target-libgcc
+
+cd $HOME/Projects/os/src
+rm -rf build-newlib
+mkdir build-newlib
+cd build-newlib
+../newlib-2.1.0/configure --target=$TARGET --prefix=$PREFIX
+make
+make install
 
