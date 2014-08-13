@@ -13,5 +13,6 @@ serial.out
 *.sys
 *.elx
 *.ell
+xxd_data.inc
 buildid.c
 test.img
