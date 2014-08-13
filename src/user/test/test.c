@@ -127,9 +127,13 @@ void ata_test(){
 	char buf[513]={0};
 	bt_filehandle ata=bt_fopen("DEV:/ATA0", 0);
 	bt_fread(ata, 512, buf);
-	bt_fclose(ata);
 	print_string("The contents of the first sector of the ATA0 device is:\n");
 	print_string(buf);
+	print_string("\n");
+	bt_fread(ata, 512, buf);
+	print_string("The contents of the second sector of the ATA0 device is:\n");
+	print_string(buf);
+	bt_fclose(ata);
 	print_string("\n");
 }
 
