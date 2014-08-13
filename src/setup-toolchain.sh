@@ -19,7 +19,8 @@ tar xvfz newlib-2.1.0.tar.gz
 
 cp -Rv toolchain/* .
 
-pushd gcc-4.8.1/libstdc++/autoconf2.64
+pushd gcc-4.8.1/libstdc++
+autoconf2.64
 popd
 
 pushd newlib-2.1.0/newlib/libc/sys
