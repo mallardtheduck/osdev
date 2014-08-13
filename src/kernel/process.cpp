@@ -48,6 +48,7 @@ proc_process *proc_get(pid_t pid);
 char *proc_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
+	sprintf(buffer, "# PID, path, memory\n");
 	hold_lock hl(proc_lock);
 	for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
     	sprintf(&buffer[strlen(buffer)],"%i, \"%s\", %i\n", (int)i->pid, i->name.c_str(), vmm_getusermemory(i->pagedir));
