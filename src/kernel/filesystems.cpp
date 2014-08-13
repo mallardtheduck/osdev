@@ -16,6 +16,7 @@ static const fs_mountpoint invalid_mountpoint={false, "", invalid_fs_driver, NUL
 char *fs_mounts_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
+	sprintf(buffer, "# name, filesystem\n");
 	for(map<string, fs_mountpoint>::iterator i=fs_mounts->begin(); i!=fs_mounts->end(); ++i){
 		sprintf(&buffer[strlen(buffer)], "%s, %s\n", i->first.c_str(), i->second.driver.name);
 	}
