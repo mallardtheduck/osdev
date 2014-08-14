@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <btos_stubs.h>
 
 int main(){
-	static char buffer[128];
+	char *buffer=(char*)malloc(128);
 	sprintf(buffer, "Hello world!\n");
 	bt_zero(buffer);
 	return 42;
