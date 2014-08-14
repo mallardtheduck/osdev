@@ -22,7 +22,7 @@ void userapi_handler(int, isr_regs *regs){
 	enable_interrupts();
 	uint16_t *id=(uint16_t*)(&regs->eax);
 	uint16_t ext=id[1], fn=id[0];
-	dbgpf("UAPI: Extension: %x, Function: %x\n", (int)ext, (int)fn);
+	//dbgpf("UAPI: Extension: %x, Function: %x\n", (int)ext, (int)fn);
 	if(ext==0){
 		userapi_syscall(fn, regs);
 	}else{
@@ -205,8 +205,9 @@ USERAPI_HANDLER(BT_SETENV){
 }
 
 USERAPI_HANDLER(BT_SPAWN){
-	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->edx)){
+	if(is_safe_ptr(regs->ebx) &&  (!regs->ecx || is_safe_ptr(regs->edx))){
 		//TODO: Parameters...
+		dbgpf("UAPI:Spawning %s\n", (char*)regs->ebx);
 		regs->eax=proc_spawn((char*)regs->ebx, "");
 	}
 }
