@@ -198,7 +198,9 @@ void *proc_alloc_stack(size_t size){
 	uint32_t baseaddr=0-(pages*VMM_PAGE_SIZE);
 	dbgpf("PROC: %i pages of stack at %x.\n", pages, baseaddr);
 	vmm_alloc_at(pages, baseaddr);
-	return (void*)baseaddr;
+	memset((void*)baseaddr, 0, size);
+	//Stack pointer starts 4 bytes below top, just in case something tries to read the top-level return address.
+	return (void*)(0-sizeof(uint32_t));
 }
 
 void proc_start(void *ptr){
@@ -206,13 +208,14 @@ void proc_start(void *ptr){
 	proc_entry entry = ((proc_info*)ptr)->entry;
 	delete (proc_info*)ptr;
 	proc_switch(pid);
-	proc_alloc_stack(4*VMM_PAGE_SIZE);
-	proc_run_usermode((void*)0xFFFFFFFB, entry, 0, NULL);
+	void *stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
+	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 
 pid_t proc_spawn(const string &path, const string &params, pid_t parent){
 	pid_t ret=proc_new(path, parent);
 	file_handle file=fs_open((char*)path.c_str());
+	if(!file.valid) return 0;
 	loaded_elf_proc proc=elf_load_proc(ret, file);
 	fs_close(file);
 	proc_info *info=new proc_info();
