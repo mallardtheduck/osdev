@@ -64,7 +64,25 @@ int read(int file, char *ptr, int len){
 }
 
 caddr_t sbrk(int incr){
-	return 0;
+	static void *base=0;
+	static size_t limit=0, alloc=0;
+
+	if(!base){
+		base=bt_alloc_pages(1);
+		memset(base, 0, 4096);
+		alloc=4096;
+	}
+
+	size_t old_limit=limit;
+	limit+=incr;
+
+	while(limit >= alloc){
+		void *page=bt_alloc_pages(1);
+		memset(page, 0, 4096);
+		alloc+=4096;
+	}
+
+	return base+old_limit;
 }
 
 int stat(const char *file, struct stat *st){
