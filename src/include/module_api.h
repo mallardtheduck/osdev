@@ -56,8 +56,8 @@ struct syscall_table{
 	void *(*get_next_device)(void *itr, char **name);
 	void *(*devopen)(char *name);
 	bool (*devclose)(void *handle);
-	int (*devread)(void *handle, size_t bytes, char *buffer);
-	bool (*devwrite)(void *handle, size_t bytes, char *buffer);
+	size_t (*devread)(void *handle, size_t bytes, char *buffer);
+	size_t (*devwrite)(void *handle, size_t bytes, char *buffer);
 	size_t (*devseek)(void *handle, size_t pos, bool relative);
 	int (*devioctl)(void *handle, int fn, size_t bytes, char *buffer);
 	int (*devtype)(char *name);
@@ -74,8 +74,8 @@ struct syscall_table{
 
 	file_handle *(*fopen)(char *path);
 	bool (*fclose)(file_handle *handle);
-	int (*fread)(file_handle *handle, size_t bytes, char *buf);
-	bool (*fwrite)(file_handle *handle, size_t bytes, char *buf);
+	size_t (*fread)(file_handle *handle, size_t bytes, char *buf);
+	size_t (*fwrite)(file_handle *handle, size_t bytes, char *buf);
 	bool (*fseek)(file_handle *handle, size_t pos, bool relative);
 	int (*fioctl)(file_handle *handle, int fn, size_t bytes, char *buf);
 	file_handle *(*fcreate)(char *path);

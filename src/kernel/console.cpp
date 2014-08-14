@@ -35,7 +35,7 @@ bool terminal_close(void *inst){
 	return true;
 }
 
-int terminal_read(void *instance, size_t bytes, char *buf){
+size_t terminal_read(void *instance, size_t bytes, char *buf){
 	terminal_instance *inst=(terminal_instance*)instance;
 	if(inst->pos > max) return 0;
 	if(inst->pos+bytes > max) bytes=max-inst->pos;
@@ -44,21 +44,21 @@ int terminal_read(void *instance, size_t bytes, char *buf){
 	return bytes;
 }
 
-bool terminal_write(void *instance, size_t bytes, char *buf){
+size_t terminal_write(void *instance, size_t bytes, char *buf){
 	terminal_instance *inst=(terminal_instance*)instance;
 	if(inst->mode==instance_mode::Raw){
 		if(inst->pos > max) return 0;
         if(inst->pos+bytes > max) bytes=max-inst->pos;
 		memcpy((char*)terminal_buffer+inst->pos, buf, bytes);
 		inst->pos+=bytes;
-		return true;
+		return bytes;
 	}else{
 	    char *obuf=(char*)malloc(bytes+1);
 	    memset(obuf, 0, bytes+1);
 	    memcpy(obuf, buf, bytes);
 		terminal_writestring(obuf);
 		free(obuf);
-		return true;
+		return bytes;
 	}
 }
 

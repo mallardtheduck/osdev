@@ -117,11 +117,11 @@ inline static bool devclose(void *handle){
 	return SYSCALL_TABLE->devclose(handle);
 }
 
-inline static bool devread(void *handle, size_t bytes, char *buffer){
+inline static size_t devread(void *handle, size_t bytes, char *buffer){
 	return SYSCALL_TABLE->devread(handle, bytes, buffer);
 }
 
-inline static bool devwrite(void *handle, size_t bytes, char *buffer){
+inline static size_t devwrite(void *handle, size_t bytes, char *buffer){
 	return SYSCALL_TABLE->devwrite(handle, bytes, buffer);
 }
 
@@ -181,11 +181,11 @@ inline static bool fclose(file_handle *handle){
 	return SYSCALL_TABLE->fclose(handle);
 }
 
-inline static int fread(file_handle *handle, size_t bytes, char *buf){
+inline static size_t fread(file_handle *handle, size_t bytes, char *buf){
 	return SYSCALL_TABLE->fread(handle, bytes, buf);
 }
 
-inline static bool fwrite(file_handle *handle, size_t bytes, char *buf){
+inline static size_t fwrite(file_handle *handle, size_t bytes, char *buf){
 	return SYSCALL_TABLE->fwrite(handle, bytes, buf);
 }
 

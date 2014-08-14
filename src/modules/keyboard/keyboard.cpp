@@ -157,17 +157,6 @@ struct keyboard_instance{
 	bool rawmode;
 };
 
-/*struct drv_driver{
-	void *(*open)(void *id);
-	bool (*close)(void *instance);
-	int (*read)(void *instance, size_t bytes, char *buf);
-	bool (*write)(void *instance, size_t bytes, char *buf);
-	size_t (*seek)(void *instance, size_t pos, bool relative);
-	int (*ioctl)(void *instance, int fn, size_t bytes, char *buf);
-	int (*type)();
-	char *(*desc)();
-};*/
-
 void *keyboard_open(void *id){
 	keyboard_instance *ret=new keyboard_instance();
 	ret->rawmode=false;
@@ -183,7 +172,7 @@ bool keyread_lockcheck(void *p){
 	return buffer_count >= *(size_t*)p;
 }
 
-int keyboard_read(void *instance, size_t bytes, char *cbuf){
+size_t keyboard_read(void *instance, size_t bytes, char *cbuf){
 	if((bytes % sizeof(uint32_t))) return 0;
 	size_t values = bytes / sizeof(uint32_t);
 	uint32_t *buf=(uint32_t*)cbuf;
@@ -204,8 +193,8 @@ int keyboard_read(void *instance, size_t bytes, char *cbuf){
 	return bytes;
 }
 
-bool keyboard_write(void *instance, size_t bytes, char *buf){
-	return false;
+size_t keyboard_write(void *instance, size_t bytes, char *buf){
+	return 0;
 }
 
 size_t keyboard_seek(void *instance, size_t pos, bool relative){

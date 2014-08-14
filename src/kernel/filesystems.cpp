@@ -210,13 +210,13 @@ bool fs_close(file_handle &file){
 	return ret;
 }
 
-int fs_read(file_handle &file, size_t bytes, char *buf){
+size_t fs_read(file_handle &file, size_t bytes, char *buf){
 	if(!file.valid) return -1;
 	return file.mount->driver.read(file.filedata, bytes, buf);
 }
 
-bool fs_write(file_handle &file, size_t bytes, char *buf){
-	if(!file.valid) return false;
+size_t fs_write(file_handle &file, size_t bytes, char *buf){
+	if(!file.valid) return 0;
 	return file.mount->driver.write(file.filedata, bytes, buf);
 }
 

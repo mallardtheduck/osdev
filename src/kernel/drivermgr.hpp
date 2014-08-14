@@ -11,8 +11,8 @@ void *drv_nextdevice(void*,char**);
 
 void *drv_open(char *driver);
 bool drv_close(void *instance);
-int drv_read(void *instance, size_t bytes, char *buf);
-bool drv_write(void *instance, size_t bytes, char *buf);
+size_t drv_read(void *instance, size_t bytes, char *buf);
+size_t drv_write(void *instance, size_t bytes, char *buf);
 size_t drv_seek(void *instance, size_t pos, bool relative);
 int drv_ioctl(void *instance, int fn, size_t bytes, char *buf);	
 int drv_get_type(char *driver);

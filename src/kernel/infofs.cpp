@@ -51,7 +51,7 @@ bool infofs_close(void *filedata){
 	return true;
 }
 
-int infofs_read(void *filedata, size_t bytes, char *buf){
+size_t infofs_read(void *filedata, size_t bytes, char *buf){
 	if(!filedata) return 0;
 	infofs_filehandle *fdata=(infofs_filehandle*)filedata;
 	if(fdata->pos >= fdata->size) return 0;
@@ -61,8 +61,8 @@ int infofs_read(void *filedata, size_t bytes, char *buf){
 	return bytes;
 }
 
-bool infofs_write(void *filedata, size_t bytes, char *buf){
-	return false;
+size_t infofs_write(void *filedata, size_t bytes, char *buf){
+	return 0;
 }
 
 size_t infofs_seek(void *filedata, int pos, bool relative){

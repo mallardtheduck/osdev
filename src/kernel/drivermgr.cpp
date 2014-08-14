@@ -65,12 +65,12 @@ bool drv_close(void *instance){
 	return ret;
 }
 
-int drv_read(void *instance, size_t bytes, char *buf){
+size_t drv_read(void *instance, size_t bytes, char *buf){
 	drv_instance *inst=(drv_instance*)instance;
 	return inst->driver.read(inst->instance, bytes, buf);
 }
 
-bool drv_write(void *instance, size_t bytes, char *buf){
+size_t drv_write(void *instance, size_t bytes, char *buf){
 	drv_instance *inst=(drv_instance*)instance;
 	return inst->driver.write(inst->instance, bytes, buf);
 }

@@ -51,7 +51,7 @@ bool initfs_close(void *filedata){
 	return true;
 }
 
-int initfs_read(void *filedata, size_t bytes, char *buf){
+size_t initfs_read(void *filedata, size_t bytes, char *buf){
 	initfs_file file=initfs_getfile(fdata->fileindex);
 	if(fdata->pos > file.size) return 0;
 	size_t j=0;
@@ -62,8 +62,8 @@ int initfs_read(void *filedata, size_t bytes, char *buf){
 	return j;
 }
 
-bool initfs_write(void *, size_t, char *){
-	return false;
+size_t initfs_write(void *, size_t, char *){
+	return 0;
 }
 
 int initfs_ioctl(void *, int, size_t, char *){
@@ -135,26 +135,6 @@ size_t initfs_dirseek(void *dirdata, int pos, bool relative){
 	else ddata->pos=pos;
 	return ddata->pos;
 }
-
-/*struct fs_driver{
-  	bool valid;
-  	char name[9];
-  	bool needs_device;
-  	void *(*mount)(char *device);
-  	bool (*unmount)(void *mountdata);
-  	void *(*open)(void *mountdata, fs_path *path);
-  	bool (*close)(void *filedata);
-  	int (*read)(void *filedata, size_t bytes, char *buf);
-  	bool (*write)(void *filedata, size_t bytes, char *buf);
-  	bool (*seek)(void *filedata, int pos, bool relatiive);
-  	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
-  	void *(*open_dir)(void *mountdata, fs_path *path);
-  	bool (*close_dir)(void *dirdata);
-  	directory_entry (*read_dir)(void *dirdata);
-  	bool (*write_dir)(void *dirdata, directory_entry entry);
-  	bool (*dirseek)(void *dirdata, int pos, bool relative);
-  	directory_entry (*stat)(void *mountdata, fs_path *path);
-  };*/
 
 fs_driver initfs_driver = {true, "INITFS", false,
 	initfs_mount, initfs_unmount,

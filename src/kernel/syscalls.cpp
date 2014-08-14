@@ -56,11 +56,11 @@ bool fclose(file_handle *h){
 	}else return false;
 }
 
-int fread(file_handle *h, size_t bytes, char *buf){
+size_t fread(file_handle *h, size_t bytes, char *buf){
 	return fs_read(*h, bytes, buf);
 }
 
-bool fwrite(file_handle *h, size_t bytes, char *buf){
+size_t fwrite(file_handle *h, size_t bytes, char *buf){
 	return fs_write(*h, bytes, buf);
 }
 
