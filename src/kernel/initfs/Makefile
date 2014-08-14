@@ -1,4 +1,4 @@
-xxd_data.inc: data/config.ini data/test.sys data/boot.sys data/rtc.sys data/test.elx data/keyboard.sys data/ata.sys
+xxd_data.inc: data/config.ini data/test.sys data/boot.sys data/rtc.sys data/test.elx data/keyboard.sys data/ata.sys data/ctest.elx
 	./make_inc.sh
 
 data/test.sys: ../../modules/test/test.sys
@@ -18,6 +18,9 @@ data/keyboard.sys: ../../modules/keyboard/keyboard.sys
 
 data/ata.sys: ../../modules/ata/ata.sys
 	cp ../../modules/ata/ata.sys data/ata.sys
+
+data/ctest.elx: ../../user/ctest/ctest.elx
+	cp ../../user/ctest/ctest.elx data/ctest.elx
 
 clean: dummy.file
 	find data/ -not -name config.ini -type f -exec rm {} \;

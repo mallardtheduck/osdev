@@ -12,5 +12,6 @@ initfs_file initfs_data[] = {
 	{true, "TEST.ELX", __data_test_elx, sizeof(__data_test_elx)},
 	{true, "KEYBOARD.SYS", __data_keyboard_sys, sizeof(__data_keyboard_sys)},
 	{true, "ATA.SYS", __data_ata_sys, sizeof(__data_ata_sys)},
+	{true, "CTEST.ELX", __data_ctest_elx, sizeof(__data_ctest_elx)},
 	{false, "", NULL, 0}
 };
