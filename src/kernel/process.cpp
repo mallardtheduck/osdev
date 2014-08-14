@@ -193,15 +193,21 @@ struct proc_info{
 	/*params*/
 };
 
+void *proc_alloc_stack(size_t size){
+	size_t pages=(size/VMM_PAGE_SIZE);
+	uint32_t baseaddr=0-(pages*VMM_PAGE_SIZE);
+	dbgpf("PROC: %i pages of stack at %x.\n", pages, baseaddr);
+	vmm_alloc_at(pages, baseaddr);
+	return (void*)baseaddr;
+}
+
 void proc_start(void *ptr){
 	pid_t pid = ((proc_info*)ptr)->pid;
 	proc_entry entry = ((proc_info*)ptr)->entry;
 	delete (proc_info*)ptr;
 	proc_switch(pid);
-	void *stack=vmm_alloc(4, false);
-	stack=(void*)((size_t)stack+4*VMM_PAGE_SIZE);
-	stack=(void*)((size_t)stack-sizeof(uint32_t));
-	proc_run_usermode(stack, entry, 0, NULL);
+	proc_alloc_stack(4*VMM_PAGE_SIZE);
+	proc_run_usermode((void*)0xFFFFFFFB, entry, 0, NULL);
 }
 
 pid_t proc_spawn(const string &path, const string &params, pid_t parent){
