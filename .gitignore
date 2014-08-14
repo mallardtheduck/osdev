@@ -9,6 +9,7 @@ cross/*
 src/build-*
 src/gcc-*
 src/binutils-*
+src/newlib-*
 serial.out
 *.sys
 *.elx
