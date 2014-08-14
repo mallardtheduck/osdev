@@ -169,7 +169,10 @@ string proc_getenv(const pid_t pid, const string &name, bool userspace){
 		if(!userspace || (kenv[name].flags & proc_env_flags::Private)==0) return kenv[name].value;
 		else return "";
 	}
-	proc_env_var var=proc_get(pid)->environment[name];
+	env_t &env=proc_get(pid)->environment;
+	proc_env_var var;
+	if(env.has_key(name)) var=env[name];
+	else return "";
 	if(!userspace || (var.flags & proc_env_flags::Private)==0) return var.value;
 	else return "";
 }
