@@ -5,5 +5,7 @@ _start:
 call _init_signal
 call main
 call exit
-.wait: hlt
+mov $0x0805, %eax
+int $0x80
+.wait:
 jmp .wait
