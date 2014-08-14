@@ -137,6 +137,14 @@ void ata_test(){
 	print_string("\n");
 }
 
+void run_program(char *input){
+	input[strlen(input)-1]=0;
+	print_string("Running ");
+	print_string(&input[2]);
+	print_string("\n");
+	bt_spawn(&input[2], 0, NULL);
+}
+
 int main(int argc, char **argv){
 	bt_zero("~~~Userspace test program start!~~~\n");
 	print_string("TEST Command Prompt!\n");
@@ -151,6 +159,7 @@ int main(int argc, char **argv){
 		else if(input[0]=='c') file_contents2(input);
 		else if(input[0]=='m') mount_test();
 		else if(input[0]=='v') version();
+		else if(input[0]=='r') run_program(input);
 		else if(input[0]=='q') break;
 		else {
 			if(strlen(input) && input[0]!='\n') print_string("Unrecognised command.\n");
