@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 int main(){
-	printf("Hello world!\n");
-	return 0;
+	static char buffer[128];
+	sprintf(buffer, "Hello world!\n");
+	return 42;
 }
