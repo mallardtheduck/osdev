@@ -88,8 +88,12 @@ USERAPI_HANDLER(BT_FOPEN){
     //TODO: Flags...
     if(is_safe_ptr(regs->ebx)){
         file_handle *file=new file_handle(fs_open((char*)regs->ebx));
-        if(file->valid) regs->eax=proc_add_file(file);
-        else regs->eax=0;
+        if(file->valid){
+        	regs->eax=proc_add_file(file);
+        } else {
+        	regs->eax=0;
+        	delete file;
+        }
     }
 }
 
@@ -137,8 +141,12 @@ USERAPI_HANDLER(BT_DOPEN){
    //TODO: Flags...
     if(is_safe_ptr(regs->ebx)){
         dir_handle *dir=new dir_handle(fs_open_dir((char*)regs->ebx));
-        if(dir->valid) regs->eax=proc_add_dir(dir);
-        else regs->eax=0;
+        if(dir->valid) {
+        	regs->eax=proc_add_dir(dir);
+        }else{
+        	regs->eax=0;
+        	delete dir;
+        }
     }
 }
 
@@ -225,7 +233,7 @@ USERAPI_HANDLER(BT_PRIORITIZE){
 }
 
 USERAPI_HANDLER(BT_EXIT){
-	pid_t pid=proc_current_pid;;
+	pid_t pid=proc_current_pid;
 	proc_switch(0);
 	proc_end(pid);
 	sch_end_thread();
