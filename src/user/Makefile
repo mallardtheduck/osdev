@@ -1,4 +1,4 @@
-PROGS := test
+PROGS := test ctest
 
 all: dummy.file
 	for dir in $(PROGS); do \
