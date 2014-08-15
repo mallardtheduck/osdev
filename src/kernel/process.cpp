@@ -130,11 +130,13 @@ void proc_switch(pid_t pid, bool setthread){
 
 pid_t proc_new(const string &name, pid_t parent){
 	proc_process *parent_proc=proc_get(parent);
-	proc_process newproc(parent_proc, name);
-	{	hold_lock hl(proc_lock);
+	pid_t ret=0;
+	{hold_lock hl(proc_lock);
+		proc_process newproc(parent_proc, name);
 		proc_processes->add(newproc);
+		ret=newproc.pid;
 	}
-	return newproc.pid;
+	return ret;
 }
 
 void proc_end(pid_t pid){
