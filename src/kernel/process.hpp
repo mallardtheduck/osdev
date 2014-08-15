@@ -46,4 +46,7 @@ handle_t proc_add_dir(dir_handle *dir, pid_t pid=proc_current_pid);
 dir_handle *proc_get_dir(handle_t h, pid_t pid=proc_current_pid);
 void proc_remove_dir(handle_t h, pid_t pid=proc_current_pid);
 
+void proc_setreturn(int ret, pid_t pid=proc_current_pid);
+int proc_wait(pid_t pid);
+
 #endif

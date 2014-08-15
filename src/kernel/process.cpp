@@ -30,12 +30,14 @@ struct proc_process{
 	pid_t parent;
 	env_t environment;
 	string name;
+	int retval;
 	vmm_pagedir *pagedir;
 	handle_t handlecounter;
 	map<handle_t, lock*> locks;
 	map<handle_t, file_handle*> files;
 	map<handle_t, dir_handle*> dirs;
 	map<handle_t, uint64_t> threads;
+	map<pid_t, int> child_returns;
 
 	proc_process() : pid(++curpid) {}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
@@ -121,6 +123,9 @@ void proc_end(pid_t pid){
 	dbgpf("PROC: Ending process %i.\n", (int)pid);
 	proc_process *proc=proc_get(pid);
 	pid_t parent=proc->parent;
+	if(parent){
+		proc_get(parent)->child_returns[pid]=proc->retval;
+	}
 	for(map<handle_t, lock*>::iterator i=proc->locks.begin(); i!=proc->locks.end(); ++i){
 		delete i->second;
 	}
@@ -280,4 +285,22 @@ dir_handle *proc_get_dir(handle_t h, pid_t pid){
 void proc_remove_dir(handle_t h, pid_t pid){
 	proc_process *proc=proc_get(pid);
 	proc->dirs.erase(h);
+}
+
+void proc_setreturn(int ret, pid_t pid){
+	proc_process *proc=proc_get(pid);
+	proc->retval=ret;
+}
+
+bool proc_wait_blockcheck(void *p){
+	pid_t &pid=*(pid_t*)p;
+	return !proc_get(pid);
+}
+
+int proc_wait(pid_t pid){
+	if(proc_get(pid)){
+		sch_setblock(&proc_wait_blockcheck, (void*)&pid);
+	}
+	if(proc_current_process->child_returns.has_key(pid)) return proc_current_process->child_returns[pid];
+	else return 0;
 }

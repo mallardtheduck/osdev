@@ -221,7 +221,7 @@ USERAPI_HANDLER(BT_SPAWN){
 }
 
 USERAPI_HANDLER(BT_WAIT){
-	//TODO: Implement...
+	regs->eax=proc_wait(regs->ebx);
 }
 
 USERAPI_HANDLER(BT_KILL){
@@ -234,6 +234,7 @@ USERAPI_HANDLER(BT_PRIORITIZE){
 
 USERAPI_HANDLER(BT_EXIT){
 	pid_t pid=proc_current_pid;
+	proc_setreturn(regs->ebx);
 	proc_switch(0);
 	proc_end(pid);
 	sch_end_thread();
