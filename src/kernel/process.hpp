@@ -24,6 +24,7 @@ extern pid_t proc_current_pid;
 
 void proc_init();
 void proc_switch(pid_t pid, bool setthread=true);
+void proc_switch_sch(pid_t pid, bool setthread=true);
 pid_t proc_new(const string &name, pid_t parent=proc_current_pid);
 void proc_end(pid_t pid=proc_current_pid);
 

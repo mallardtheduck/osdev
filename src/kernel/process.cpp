@@ -10,7 +10,7 @@ proc_process *proc_current_process;
 pid_t proc_current_pid;
 list<proc_process> *proc_processes;
 
-lock proc_lock;
+lock &proc_lock=sch_lock;
 lock env_lock;
 
 pid_t curpid=0;
@@ -51,9 +51,12 @@ char *proc_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
 	sprintf(buffer, "# PID, path, memory\n");
-	hold_lock hl(proc_lock);
-	for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
-    	sprintf(&buffer[strlen(buffer)],"%i, \"%s\", %i\n", (int)i->pid, i->name.c_str(), vmm_getusermemory(i->pagedir));
+	size_t kmem=vmm_getkernelmemory();
+	{hold_lock hl(proc_lock);
+		for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
+			sprintf(&buffer[strlen(buffer)],"%i, \"%s\", %i\n", (int)i->pid, i->name.c_str(),
+				(i->pid)?vmm_getusermemory(i->pagedir):kmem);
+		}
     }
     return buffer;
 }
@@ -99,6 +102,21 @@ proc_process *proc_get(pid_t pid){
 }
 
 //Note: Called from scheduler. No locking, memory allocation, etc. available!
+void proc_switch_sch(pid_t pid, bool setthread){
+	if(setthread) sch_setpid(pid);
+	if(pid!=proc_current_pid){
+		dbgpf("PROC: Switching process. Old PID: %i, new PID: %i\n", (int)proc_current_pid, (int)pid);
+		proc_process *newproc=0;
+		for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
+			if(i->pid==pid) newproc=i;
+		}
+		if(!newproc) return;
+		proc_current_process=newproc;
+		proc_current_pid=newproc->pid;
+		vmm_switch(proc_current_process->pagedir);
+	}
+}
+
 void proc_switch(pid_t pid, bool setthread){
 	if(setthread) sch_setpid(pid);
 	if(pid!=proc_current_pid){
@@ -294,7 +312,10 @@ void proc_setreturn(int ret, pid_t pid){
 
 bool proc_wait_blockcheck(void *p){
 	pid_t &pid=*(pid_t*)p;
-	return !proc_get(pid);
+	for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
+		if(i->pid==pid) return false;
+	}
+	return true;
 }
 
 int proc_wait(pid_t pid){
