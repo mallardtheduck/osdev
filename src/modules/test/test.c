@@ -52,7 +52,7 @@ bool test_driver_close(void *instance){
 	else return false;
 }
 
-int test_driver_read(void *instance, size_t bytes, char *buf){
+size_t test_driver_read(void *instance, size_t bytes, char *buf){
 	if(instance==(void*)0x42){
 		memset(buf, 0xee, bytes);
 		return bytes;
@@ -60,11 +60,11 @@ int test_driver_read(void *instance, size_t bytes, char *buf){
 	return 0;
 }
 
-bool test_driver_write(void *instance, size_t bytes, char *buf){
+size_t test_driver_write(void *instance, size_t bytes, char *buf){
 	if(instance==(void*)0x42){
-		return true;
+		return bytes;
 	}
-	return false;
+	return 0;
 }
 
 size_t test_driver_seek(void *instance, size_t pos, bool relative){

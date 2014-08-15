@@ -11,25 +11,6 @@ struct devfs_dirhandle{
 
 #define ddata ((devfs_dirhandle*)dirdata)
 
-/*struct fs_driver{
-  	bool valid;
-  	char name[9];
-  	bool needs_device;
-  	void *(*mount)(char *device);
-  	bool (*unmount)(void *mountdata);
-  	void *(*open)(void *mountdata, fs_path *path);
-  	bool (*close)(void *filedata);
-  	int (*read)(void *filedata, size_t bytes, char *buf);
-  	bool (*write)(void *filedata, size_t bytes, char *buf);
-  	bool (*seek)(void *filedata, int pos, bool relative);
-  	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
-  	void *(*open_dir)(void *mountdata, fs_path *path);
-  	bool (*close_dir)(void *dirdata);
-  	directory_entry (*read_dir)(void *dirdata);
-  	bool (*write_dir)(void *dirdata, directory_entry entry);
-  	bool (*dirseek)(void *dirdata, int pos, bool relative);
-  	directory_entry (*stat)(void *mountdata, fs_path *path);
-  };*/
 
 void *devfs_mount(char *){
 	return devfs_magic;
@@ -47,11 +28,11 @@ bool devfs_close(void *filedata){
 	return drv_close(filedata);
 }
 
-int devfs_read(void *filedata, size_t bytes, char *buf){
+size_t devfs_read(void *filedata, size_t bytes, char *buf){
 	return drv_read(filedata, bytes, buf);
 }
 
-bool devfs_write(void *filedata, size_t bytes, char *buf){
+size_t devfs_write(void *filedata, size_t bytes, char *buf){
 	return drv_write(filedata, bytes, buf);
 }
 

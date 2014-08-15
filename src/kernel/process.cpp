@@ -169,7 +169,10 @@ string proc_getenv(const pid_t pid, const string &name, bool userspace){
 		if(!userspace || (kenv[name].flags & proc_env_flags::Private)==0) return kenv[name].value;
 		else return "";
 	}
-	proc_env_var var=proc_get(pid)->environment[name];
+	env_t &env=proc_get(pid)->environment;
+	proc_env_var var;
+	if(env.has_key(name)) var=env[name];
+	else return "";
 	if(!userspace || (var.flags & proc_env_flags::Private)==0) return var.value;
 	else return "";
 }
@@ -234,7 +237,8 @@ handle_t proc_add_lock(lock *l, pid_t pid){
 
 lock *proc_get_lock(handle_t h, pid_t pid){
 	proc_process *proc=proc_get(pid);
-	return proc->locks[h];
+	if(proc->locks.has_key(h)) return proc->locks[h];
+	else return NULL;
 }
 
 void proc_remove_lock(handle_t h, pid_t pid){
@@ -251,7 +255,8 @@ handle_t proc_add_file(file_handle *file, pid_t pid){
 
 file_handle *proc_get_file(handle_t h, pid_t pid){
     proc_process *proc=proc_get(pid);
-    return proc->files[h];
+    if(proc->files.has_key(h)) return proc->files[h];
+    else return NULL;
 }
 
 void proc_remove_file(handle_t h, pid_t pid){
@@ -268,7 +273,8 @@ handle_t proc_add_dir(dir_handle *dir, pid_t pid){
 
 dir_handle *proc_get_dir(handle_t h, pid_t pid){
     proc_process *proc=proc_get(pid);
-    return proc->dirs[h];
+    if(proc->dirs.has_key(h)) return proc->dirs[h];
+    else return NULL;
 }
 
 void proc_remove_dir(handle_t h, pid_t pid){

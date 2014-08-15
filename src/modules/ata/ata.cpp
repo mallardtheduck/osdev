@@ -245,7 +245,7 @@ bool ata_close(void *instance){
 	}else return false;
 }
 
-int ata_read(void *instance, size_t bytes, char *buf){
+size_t ata_read(void *instance, size_t bytes, char *buf){
 	if(bytes % 512) return 0;
 	ata_instance *inst=(ata_instance*)instance;
 	for(size_t i=0; i<bytes; i+=512){
@@ -255,14 +255,14 @@ int ata_read(void *instance, size_t bytes, char *buf){
 	return bytes;
 }
 
-bool ata_write(void *instance, size_t bytes, char *buf){
-	if(bytes % 512) return false;
+size_t ata_write(void *instance, size_t bytes, char *buf){
+	if(bytes % 512) return 0;
 	ata_instance *inst=(ata_instance*)instance;
 	for(size_t i=0; i<bytes; i+=512){
 		ata_device_write_sector_retry(inst->dev, inst->pos/512, (uint8_t*)&buf[512*i]);
 		inst->pos+=512;
 	}
-	return true;
+	return bytes;
 }
 
 size_t ata_seek(void *instance, size_t pos, bool relative){

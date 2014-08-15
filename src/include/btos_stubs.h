@@ -11,7 +11,7 @@ using namespace btos_api;
 
 inline static uint32_t btos_call(uint32_t fn, uint32_t p1, uint32_t p2, uint32_t p3){
 	uint32_t ret=0;
-	asm("int $0x80" : "=a"(ret) : "a"(fn), "b"(p1), "c"(p2), "d"(p3) : );
+	asm volatile("int $0x80" : "=a"(ret) : "a"(fn), "b"(p1), "c"(p2), "d"(p3) : );
 	return ret;
 }
 
@@ -112,7 +112,7 @@ inline static bool bt_load_module(const char *path, const char *params){
 	return btos_call(BT_LOAD_MODULE, (uint32_t)path, (uint32_t)params, 0);
 }
 
-inline static bool bt_getenv(const char *name, char *buffer, size_t size){
+inline static size_t bt_getenv(const char *name, char *buffer, size_t size){
 	return btos_call(BT_GETENV, (uint32_t)name, (uint32_t)buffer, size);
 }
 

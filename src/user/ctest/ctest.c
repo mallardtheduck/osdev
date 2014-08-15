@@ -5,6 +5,6 @@
 int main(){
 	char *buffer=(char*)malloc(128);
 	sprintf(buffer, "Hello world!\n");
-	bt_zero(buffer);
+	printf("%s\n", buffer);
 	return 42;
 }

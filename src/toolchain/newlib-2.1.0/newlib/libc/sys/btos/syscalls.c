@@ -14,6 +14,7 @@ char **environ = __env;
 void _exit(){
 	bt_exit(0);
 }
+
 int close(int file){
     return -1;
 }
@@ -105,6 +106,22 @@ int wait(int *status){
 }
 
 int write(int file, char *ptr, int len){
+	static bt_filehandle stdout_handle=0;
+	if(file==1){
+		if(!stdout_handle){
+			char stdout_path[255];
+			if(!bt_getenv("STDOUT", stdout_path, 200)){
+				char temp[255];
+				if(!bt_getenv("DISPLAY_DEVICE", &temp, 200)){
+					return 0;
+				}else{
+					snprintf(stdout_path, 255, "DEV:/%s", temp);
+				}
+			}
+			stdout_handle=bt_fopen(stdout_path, 0);
+		}
+		return bt_fwrite(stdout_handle, len, ptr);
+	}
 	return 0;
 }
 

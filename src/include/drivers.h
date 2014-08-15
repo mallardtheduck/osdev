@@ -52,8 +52,8 @@ namespace driver_types{
 struct drv_driver{
 	void *(*open)(void *id);
 	bool (*close)(void *instance);
-	int (*read)(void *instance, size_t bytes, char *buf);
-	bool (*write)(void *instance, size_t bytes, char *buf);
+	size_t (*read)(void *instance, size_t bytes, char *buf);
+	size_t (*write)(void *instance, size_t bytes, char *buf);
 	size_t (*seek)(void *instance, size_t pos, bool relative);
 	int (*ioctl)(void *instance, int fn, size_t bytes, char *buf);
 	int (*type)();

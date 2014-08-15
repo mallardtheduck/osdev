@@ -53,8 +53,8 @@ struct fs_driver{
 	bool (*unmount)(void *mountdata);
 	void *(*open)(void *mountdata, fs_path *path);
 	bool (*close)(void *filedata);
-	int (*read)(void *filedata, size_t bytes, char *buf);
-	bool (*write)(void *filedata, size_t bytes, char *buf);
+	size_t (*read)(void *filedata, size_t bytes, char *buf);
+	size_t (*write)(void *filedata, size_t bytes, char *buf);
 	size_t (*seek)(void *filedata, int pos, bool relative);
 	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
 	void *(*open_dir)(void *mountdata, fs_path *path);
