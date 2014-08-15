@@ -416,7 +416,7 @@ bool is_paging_enabled(){
 
 void vmm_page_fault_handler(int, isr_regs *regs){
 	uint32_t addr;
-	asm("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
+	asm volatile("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
 	dbgpf("VMM: Page fault on %x at %x!\n", addr, regs->eip);
 	if(addr < VMM_PAGE_SIZE) panic("(VMM) Probable NULL pointer dereference!");
 	else panic("(VMM) Page fault!");
