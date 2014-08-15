@@ -114,6 +114,10 @@ pid_t mod_spawn(char *exec, char *params){
 	return proc_spawn(exec, params);
 }
 
+void mod_wait(pid_t pid){
+	proc_wait(pid);
+}
+
 void mask_irq(size_t irqno){
 	IRQ_set_mask(irqno);
 }
@@ -195,6 +199,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 
 	&getpid,
 	&mod_spawn,
+	&mod_wait,
 
 	&infofs_register,
 };

@@ -245,6 +245,10 @@ inline static pid_t spawn(char *exec, char *params){
 	return SYSCALL_TABLE->spawn(exec, params);
 }
 
+inline static void wait(pid_t pid){
+	SYSCALL_TABLE->wait(pid);
+}
+
 inline static void infofs_register(char *name, info_function fn){
 	SYSCALL_TABLE->infofs_register(name, fn);
 }

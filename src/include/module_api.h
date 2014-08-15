@@ -95,6 +95,7 @@ struct syscall_table{
 
 	pid_t (*getpid)();
 	pid_t (*spawn)(char *exec, char *params);
+	void (*wait)(pid_t pid);
 
 	void (*infofs_register)(char *name, info_function fn);
 };
