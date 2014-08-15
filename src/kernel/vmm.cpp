@@ -4,6 +4,8 @@
 const size_t VMM_ENTRIES_PER_TABLE=1024;
 const size_t VMM_KERNEL_PAGES=VMM_KERNELSPACE_END/VMM_PAGE_SIZE;
 const size_t VMM_KERNEL_TABLES=VMM_KERNEL_PAGES/VMM_ENTRIES_PER_TABLE;
+const size_t VMM_MAX_PAGES=VMM_ENTRIES_PER_TABLE * VMM_ENTRIES_PER_TABLE;
+const size_t VMM_MAX_RAM=VMM_MAX_PAGES*VMM_PAGE_SIZE;
 
 #define PAGING_ENABLED_FLAG 0x80000000
 
@@ -53,17 +55,22 @@ public:
     void init(uint32_t *ptr, size_t size){
         bottom=top=ptr;
         limit=(uint32_t*)((size_t)ptr+size);
+        memset(ptr, 0, size);
     }
 
     void push(uint32_t page){
-        if(top+1<limit){
-            *(++top)=page;
+        if(top+1 < limit){
+            *(top)=page;
+            top++;
         }
     }
 
     uint32_t pop(){
-        if(top-1>=bottom){
-            return *(top--);
+        if(top-1 >= bottom){
+        	uint32_t ret=*(top-1);
+        	*(top-1)=0;
+        	top--;
+            return ret;
         } else return 0;
     }
 
@@ -303,11 +310,13 @@ void *vmm_ministack_alloc(size_t pages=1);
 void vmm_ministack_free(void *ptr, size_t pages=1);
 void vmm_identity_map(uint32_t *pagedir, size_t page, bool alloc=true);
 void vmm_page_fault_handler(int,isr_regs*);
+void vmm_checkstack();
 
 char *freemem_infofs(){
 	char *buffer=(char*)malloc(512);
     memset(buffer, 0, 512);
     size_t freemem=vmm_pages.size() * VMM_PAGE_SIZE;
+    dbgpf("VMM: Stack size: %i\n", vmm_pages.size());
     sprintf(buffer, "%i\n", freemem);
     return buffer;
 }
@@ -316,6 +325,17 @@ char *totalmem_infofs(){
 	char *buffer=(char*)malloc(512);
     memset(buffer, 0, 512);
     sprintf(buffer, "%i\n", vmm_totalmem);
+    return buffer;
+}
+
+char *totalused_infofs(){
+	char *buffer=(char*)malloc(512);
+    memset(buffer, 0, 512);
+    size_t used=0;
+    for(size_t i=0; i<VMM_MAX_PAGES; ++i){
+       	if(vmm_cur_pagedir->is_mapped((void*)(i*VMM_PAGE_SIZE))) used+=VMM_PAGE_SIZE;
+    }
+    sprintf(buffer, "%i\n", used);
     return buffer;
 }
 
@@ -329,12 +349,14 @@ void vmm_init(multiboot_info_t *mbt){
 	dbgpf("VMM: Kernel start: %x (page %x) end: %x (page %x).\n", &_start,
 		k_first_page, &_end, k_last_page);
 	size_t cregion=0;
+	vmm_totalmem=0;
     while(mmap < (memory_map_t*)mbt->mmap_addr + mbt->mmap_length) {
 		if(mmap->type == 1 && mmap->length_low > 0){
 			dbgpf("VMM: Usable region base: 0x%x pages: %u\n", mmap->base_addr_low, mmap->length_low/VMM_PAGE_SIZE);
 			if(mmap->base_addr_low < 1024*1024 && mmap->length_low < 1024*1024){
 				dbgpf("VMM: Ignoring low 1MB RAM\n");
 			}else{
+				vmm_totalmem+=mmap->length_low;
 				vmm_regions[cregion].base=(void*)mmap->base_addr_low;
 				vmm_regions[cregion].pages=mmap->length_low/VMM_PAGE_SIZE;
 				++cregion;
@@ -360,8 +382,7 @@ void vmm_init(multiboot_info_t *mbt){
     	}else break;
     }
     dbgpf("VMM: Total pages: %i\n", totalpages);
-    printf("VMM: Available RAM: %iKB\n", totalpages*4);
-    vmm_totalmem=totalpages*VMM_PAGE_SIZE;
+    printf("VMM: Total RAM: %iKB\n", vmm_totalmem/1024);
    	dbgpf("VMM: Initializing kernel page directory at %x.\n", vmm_kpagedir);
 	for(size_t i=0; i<VMM_ENTRIES_PER_TABLE; ++i){
 		vmm_kpagedir[i]=0 | TableFlags::Writable;
@@ -388,7 +409,7 @@ void vmm_init(multiboot_info_t *mbt){
     asm volatile("mov %0, %%cr0":: "b"(cr0));
     dbgout("Done.\n");
     vmm_cur_pagedir=&vmm_kernel_pagedir;
-    vmm_pages.init((uint32_t*)((k_last_page+1)*VMM_PAGE_SIZE), stacksize*VMM_PAGE_SIZE);
+    vmm_pages.init((uint32_t*)((k_last_page+1)*VMM_PAGE_SIZE), stacksize);
     for(size_t i=0; i<VMM_MAX_REGIONS; ++i){
     	if(vmm_regions[i].base){
     		size_t base=(size_t)vmm_regions[i].base;
@@ -406,6 +427,35 @@ void vmm_init(multiboot_info_t *mbt){
     dbgout("VMM: Init complete.\n");
     infofs_register("FREEMEM", &freemem_infofs);
     infofs_register("TOTALMEM", &totalmem_infofs);
+    infofs_register("ACTIVEMEM", &totalused_infofs);
+}
+
+void vmm_checkstack(){
+    size_t mappedpages=0;
+    for(size_t i=0; i<VMM_MAX_PAGES; ++i){
+    	if(vmm_cur_pagedir->is_mapped((void*)(i*VMM_PAGE_SIZE))){
+    		mappedpages++;
+    		uint32_t physpage=vmm_cur_pagedir->virt2phys((void*)(i*VMM_PAGE_SIZE));
+    		for(size_t j=0; j<vmm_pages.size(); ++j){
+    			if(vmm_pages.at(j)==physpage){
+    				dbgpf("VMM: Page %x in use and in stack at %i!\n", physpage, j);
+    				panic("(VMM) In-use pages in stack!");
+    			}
+    		}
+    	}
+    }
+    dbgpf("VMM: TOTAL MAPPED PAGES: %i\n", mappedpages);
+    for(size_t i=0; i<vmm_pages.size(); ++i){
+    	if(vmm_pages.at(i) < 256*VMM_PAGE_SIZE){
+    		panic("(VMM) Low pages in stack!");
+    	}
+    	for(size_t j=0; j<vmm_pages.size(); ++j){
+    		if(i!=j && vmm_pages.at(i)==vmm_pages.at(j)){
+    			dbgpf("VMM: Duplicate page in stack! %x: %i, %i\n", vmm_pages.at(i), i, j);
+    			panic("(VMM) Duplicate pages in stack!");
+    		}
+    	}
+    }
 }
 
 bool is_paging_enabled(){
@@ -507,4 +557,12 @@ void vmm_deletepagedir(vmm_pagedir *dir){
 
 size_t vmm_getusermemory(vmm_pagedir *dir){
 	return dir->getuserpagecount() * VMM_PAGE_SIZE;
+}
+
+size_t vmm_getkernelmemory(){
+	size_t ret=0;
+	for(size_t i=256; i<VMM_KERNEL_PAGES; ++i){
+		if(vmm_cur_pagedir->is_mapped((void*)(i*VMM_PAGE_SIZE))) ret+=VMM_PAGE_SIZE;
+	}
+	return ret;
 }
