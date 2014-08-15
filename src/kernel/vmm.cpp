@@ -192,7 +192,7 @@ size_t vmm_pagedir::find_free_virtpages(size_t pages, bool kernelspace){
 		uint32_t table=pagedir[i] & 0xFFFFF000;
 		if(!table){
 			if(pages<VMM_ENTRIES_PER_TABLE + freecount){
-				return startpage;
+				if(startpage) return startpage;
 			}else{
 				freecount+=VMM_ENTRIES_PER_TABLE;
 				continue;
@@ -209,7 +209,7 @@ size_t vmm_pagedir::find_free_virtpages(size_t pages, bool kernelspace){
 				freecount=0;
 			}
 			if(freecount==pages){
-				return startpage;
+				if(startpage) return startpage;
 			}
 		}
 	}
