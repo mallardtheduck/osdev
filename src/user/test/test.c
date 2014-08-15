@@ -142,7 +142,7 @@ void run_program(char *input){
 	print_string("Running ");
 	print_string(&input[2]);
 	print_string("\n");
-	bt_spawn(&input[2], 0, NULL);
+	bt_wait(bt_spawn(&input[2], 0, NULL));
 }
 
 int main(int argc, char **argv){
