@@ -11,17 +11,45 @@
 char *__env[1] = { 0 };
 char **environ = __env;
 
+#define num_specialhandles 10
+static bt_filehandle specialhandles[num_specialhandles]={0};
+static bt_pid lastchild=0;
+
+static int bt_filehandle_to_fileint(bt_filehandle h){
+	return h + num_specialhandles;
+}
+
+static bt_filehandle fileint_to_bt_filehandle(int i){
+	if(i<num_specialhandles){
+		if(i == 1 && !specialhandles[1]){ //STDOUT
+			char stdout_path[255];
+			if(!bt_getenv("STDOUT", stdout_path, 200)){
+				char temp[255];
+				if(!bt_getenv("DISPLAY_DEVICE", temp, 200)){
+					return 0;
+				}else{
+					snprintf(stdout_path, 255, "DEV:/%s", temp);
+				}
+			}
+			specialhandles[1]=bt_fopen(stdout_path, FS_Write);
+    	}
+
+		return specialhandles[i];
+	}
+	else return i - num_specialhandles;
+}
+
 void _exit(){
 	bt_exit(0);
 }
 
 int close(int file){
-    return -1;
+    return bt_fclose(fileint_to_bt_filehandle(file));
 }
 
 int execve(char *name, char **argv, char **env){
-    errno=ENOMEM;
-    return -1;
+    lastchild=bt_spawn(name, 0, NULL);
+    return lastchild;
 }
 
 int fork() {
@@ -35,7 +63,7 @@ int fstat(int file, struct stat *st) {
 }
 
 int getpid(){
-    return 1;
+    return bt_getpid();
 }
 
 int isatty(int file){
@@ -43,8 +71,14 @@ int isatty(int file){
 }
 
 int kill(int pid, int sig){
-    errno=EINVAL;
-    return(-1);
+    if(sig == 9){
+    	bt_kill(pid);
+    	return 0;
+    }
+    else{
+    	errno = EINVAL;
+    	return -1;
+    }
 }
 
 int link(char *old, char *new){
@@ -53,15 +87,24 @@ int link(char *old, char *new){
 }
 
 int lseek(int file, int ptr, int dir){
-    return 0;
+    bool relative=false;
+    if(dir=SEEK_CUR) relative=true;
+    return bt_fseek(fileint_to_bt_filehandle(file), ptr, relative);
 }
 
 int open(const char *name, int flags, ...){
-    return -1;
+    fs_mode_flags mode=0;
+    if(flags & O_RDONLY || flags & O_RDWR) mode |= FS_Read;
+    if(flags & O_WRONLY || flags & O_RDWR) mode |= FS_Write;
+    if(flags & O_APPEND) mode |= FS_AtEnd;
+    if(flags & O_CREAT) mode |= FS_Create;
+    if(flags & O_EXCL) mode |= FS_Exclude;
+	if(flags & O_TRUNC) mode |= FS_Truncate;
+	return bt_filehandle_to_fileint(bt_fopen(name, flags));
 }
 
 int read(int file, char *ptr, int len){
-    return 0;
+    return bt_fread(fileint_to_bt_filehandle(file), len, ptr);
 }
 
 caddr_t sbrk(int incr){
@@ -101,27 +144,15 @@ int unlink(char *name){
 }
 
 int wait(int *status){
-	errno=ECHILD;
-	return -1;
+	if(lastchild){
+		return bt_wait(lastchild);
+	}else{
+		errno=ECHILD;
+		return -1;
+	}
 }
 
 int write(int file, char *ptr, int len){
-	static bt_filehandle stdout_handle=0;
-	if(file==1){
-		if(!stdout_handle){
-			char stdout_path[255];
-			if(!bt_getenv("STDOUT", stdout_path, 200)){
-				char temp[255];
-				if(!bt_getenv("DISPLAY_DEVICE", &temp, 200)){
-					return 0;
-				}else{
-					snprintf(stdout_path, 255, "DEV:/%s", temp);
-				}
-			}
-			stdout_handle=bt_fopen(stdout_path, FS_Write);
-		}
-		return bt_fwrite(stdout_handle, len, ptr);
-	}
-	return 0;
+	return bt_fwrite(fileint_to_bt_filehandle(file), len, ptr);
 }
 
