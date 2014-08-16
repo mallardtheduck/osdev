@@ -1,5 +1,6 @@
 #include "btos_stubs.h"
 #include "keyboard.h"
+#include <string.h>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -7,18 +8,6 @@ char stdout_device[255]={'D', 'E', 'V', ':', '/'};
 bt_filehandle stdout=0;
 char stdin_device[255]={'D', 'E', 'V', ':', '/'};
 bt_filehandle stdin=0;
-
-size_t strlen(const char *s){
-    int ret=0;
-    while(s && s[ret]) ++ret;
-    return ret;
-}
-
-void memset(void *ptr, int value, size_t n){
-	for(size_t i=0; i<n; ++i){
-		*((char*)ptr+i)=value;
-	}
-}
 
 void print_string(const char *s){
 	if(!stdout){
@@ -125,13 +114,13 @@ void version(){
 
 void ata_test(){
 	char buf[513]={0};
-	bt_filehandle ata=bt_fopen("DEV:/ATA0", FS_Read);
+	bt_filehandle ata=bt_fopen("DEV:/ATA0P0", FS_Read);
 	bt_fread(ata, 512, buf);
-	print_string("The contents of the first sector of the ATA0 device is:\n");
+	print_string("The contents of the first sector of the ATA0P0 device is:\n");
 	print_string(buf);
 	print_string("\n");
 	bt_fread(ata, 512, buf);
-	print_string("The contents of the second sector of the ATA0 device is:\n");
+	print_string("The contents of the second sector of the ATA0P0 device is:\n");
 	print_string(buf);
 	bt_fclose(ata);
 	print_string("\n");
