@@ -2,12 +2,12 @@ BUILD-AS := i686-pc-btos-as
 BUILD-AS-OPTIONS := -g -fPIC -c
 BUILD-CPP := i686-pc-btos-g++
 BUILD-CPP-FLAGS :=  -c
-BUILD-CPP-OPTIONS := -ffreestanding -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -c -I../../include
+BUILD-CPP-OPTIONS := -Wall -Wextra -Werror -g -c -I../../include
 BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
-BUILD-C-OPTIONS := -ffreestanding -Wall -Wextra -Werror -g -c -I../../include -std=gnu99
+BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../include -std=gnu99
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -T linker.ld -o test.elx -ffreestanding -O2 -nostdlib -fPIC -Xlinker -q
+LINK-FLAGS := -T linker.ld -o test.elx -O2
 LINK-OPTIONS := -lgcc
 
 BOOTFILE := boot.o
