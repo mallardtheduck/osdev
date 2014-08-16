@@ -109,8 +109,9 @@ static int ata_device_detect(struct ata_device * dev) {
 	if (cl == 0x00 && ch == 0x00) {
 		/* Parallel ATA device */
 		ata_device_init(dev);
-		add_device("ATA", &ata_driver, (void*)dev);
-
+		char devicename[9]="ATA";
+		add_device(devicename, &ata_driver, (void*)dev);
+		mbr_parse(devicename);
 		return 1;
 	}
 
