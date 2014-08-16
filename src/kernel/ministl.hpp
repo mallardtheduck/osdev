@@ -304,12 +304,12 @@ public:
 	typedef ptrdiff_t difference_type;
 
 	map()
-	: size_(0), capacity_(20), data_(_Alloc().allocate(20))
+	: size_(0), capacity_(1), data_(_Alloc().allocate(1))
 	{
 	}
 
 	map(const _Myt &_Rhs)
-	: size_(_Rhs.size_), capacity_(_Rhs.capacity_ /*+ 20*/), data_(_Alloc().allocate(_Rhs.capacity_))
+	: size_(_Rhs.size_), capacity_(_Rhs.capacity_), data_(_Alloc().allocate(_Rhs.capacity_))
 	{
 		int count = 0;
 		for (iterator i = &_Rhs.data_[0]; i != &_Rhs.data_[_Rhs.size_]; ++i, ++count)
@@ -324,7 +324,7 @@ public:
 		{
 		    for (iterator i = begin(); i != end(); ++i)
 		    {
-			_Alloc().destroy(i);
+				_Alloc().destroy(i);
 		    }
 		    _Alloc().deallocate(data_, capacity_);
 		}
@@ -332,17 +332,18 @@ public:
 
 	_Myt &insert(const value_type &_Value)
 	{
-		if (++size_ >= capacity_)
+		if (size_ + 1 >= capacity_)
 		{
-		    reserve(capacity_ * 2);
+		    reserve(capacity_ + 1);
 		}
+		size_++;
 		_Alloc().construct(&data_[size_ - 1], _Value);
 		return *this;
 	}
 	
 	void erase(iterator i){
 		_Alloc().destroy(i);
-		memmove(i, i+1, sizeof(value_type)*(size_-(i-begin())));
+		memmove(i, i + 1, sizeof(value_type) * ( size_ - ( i - begin())));
 		size_--;
 	}
 
@@ -374,11 +375,11 @@ public:
 		if (has_key(Key))
 		{
 		    for (iterator i = begin(); i != end(); ++i)
-		    {
-			if (i->first == Key)
 			{
-			    return i->second;
-			}
+				if (i->first == Key)
+				{
+					return i->second;
+				}
 		    }
 		}
 		size_type op = size_;
@@ -391,10 +392,10 @@ public:
 			{
 				for (iterator i = begin(); i != end(); ++i)
 				{
-				if (i->first == Key)
-				{
-					return *i;
-				}
+					if (i->first == Key)
+					{
+						return *i;
+					}
 				}
 			}
 			size_type op = size_;
