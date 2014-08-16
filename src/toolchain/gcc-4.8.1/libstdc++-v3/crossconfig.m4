@@ -269,7 +269,7 @@ case "${host}" in
     AC_DEFINE(HAVE_TANF)
     AC_DEFINE(HAVE_TANHF)
     ;;
-  *-myos*)
+  *-btos*)
     AC_CHECK_HEADERS([sys/types.h locale.h float.h])
     GLIBCXX_CHECK_BUILTIN_MATH_SUPPORT
     GLIBCXX_CHECK_COMPLEX_MATH_SUPPORT
