@@ -175,7 +175,7 @@ bool fs_unmount(char *name){
 }
 
 file_handle fs_open(char *path, fs_mode_flags mode){
-	dbgpf("FS: OPEN %s.\n", path);
+	dbgpf("FS: OPEN %s mode: %i.\n", path, mode);
 	file_handle ret;
 	char *fspath=getfspath(path);
 	if(!fspath){
