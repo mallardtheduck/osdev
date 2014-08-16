@@ -1,11 +1,15 @@
 #include "strutil.hpp"
 
 string to_upper(const string &str){
-	string ret;
-	for(size_t i=0; i<str.size(); ++i){
-		if(str[i] >= 'a' && str[i] <= 'z') ret+=str[i]-'a'+'A';
-		else ret+=str[i];
+	size_t buflen=str.length()+1;
+	char *buf=(char*)malloc(buflen);
+	memset(buf, 0, buflen);
+	strncpy(buf, str.c_str(), buflen);
+	for(size_t i=0; i<buflen; ++i){
+		if(buf[i] >= 'a' && buf[i] <= 'z') buf[i]=buf[i]-'a'+'A';
 	}
+	string ret(buf);
+	free(buf);
 	return ret;
 }
 
