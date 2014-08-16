@@ -174,20 +174,26 @@ uint32_t vmm_pagedir::virt2phys(void *ptr){
 	uint32_t pageno=(size_t)ptr/VMM_PAGE_SIZE;
 	size_t tableindex=pageno/VMM_ENTRIES_PER_TABLE;
 	size_t tableoffset=pageno-(tableindex * VMM_ENTRIES_PER_TABLE);
-	uint32_t table=pagedir[tableindex] & 0xFFFFF000;
-	if(!table) return 0;
+	uint32_t table=pagedir[tableindex];
+	if(!(table & TableFlags::Present)) return 0;
+	table &= 0xFFFFF000;
 	maptable(table);
-	return curtable[tableoffset] & 0xFFFFF000;
+	uint32_t ret=curtable[tableoffset];
+	if(!(ret & PageFlags::Present)) return 0;
+	ret &= 0xFFFFF000;
+	return ret;
 }
 
 size_t vmm_pagedir::find_free_virtpages(size_t pages, bool kernelspace){
 	size_t freecount=0;
 	size_t startpage=0;
 	size_t starttable=0;
+	size_t endtable=VMM_KERNEL_TABLES;
 	if(!kernelspace){
 		starttable=VMM_KERNEL_TABLES;
+		endtable=VMM_ENTRIES_PER_TABLE;
 	}
-	for(size_t i=starttable; i<VMM_ENTRIES_PER_TABLE; ++i){
+	for(size_t i=starttable; i<endtable; ++i){
 		hold_lock hl(vmm_framelock);
 		uint32_t table=pagedir[i] & 0xFFFFF000;
 		if(!table){
@@ -260,8 +266,10 @@ void vmm_pagedir::destroy(){
 					vmm_pages.push(curtable[j] & 0xFFFFF000);
 				}
 			}
+			vmm_pages.push(table);
 		}
 	}
+	vmm_free((void*)pagedir, 1);
 }
 
 void vmm_pagedir::map_page(size_t virtpage, size_t physpage, bool alloc, bool kernelspace){
