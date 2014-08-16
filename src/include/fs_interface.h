@@ -29,6 +29,7 @@ enum fs_mode_flags{
 	FS_Create	= 1 << 3,
 	FS_Delete	= 1 << 4,
 	FS_Exclude	= 1 << 5,
+	FS_Truncate = 1 << 6,
 };
 
 #ifndef __cplusplus
