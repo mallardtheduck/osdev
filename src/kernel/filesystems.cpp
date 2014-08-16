@@ -39,7 +39,7 @@ void fs_init(){
 	directory_entry root=fs_stat("INIT:");
 	if(!root.valid) panic("(FS) Cannot stat root of INIT:!\n");
 	dbgpf("FS: Root size: %i, type: 0x%x.\n", root.size, root.type);
-	dir_handle dir=fs_open_dir("INIT:");
+	dir_handle dir=fs_open_dir("INIT:", FS_Read);
 	while(true){
 		directory_entry entry=fs_read_dir(dir);
 		if(!entry.valid) break;
@@ -174,7 +174,7 @@ bool fs_unmount(char *name){
 	}
 }
 
-file_handle fs_open(char *path){
+file_handle fs_open(char *path, fs_mode_flags mode){
 	dbgpf("FS: OPEN %s.\n", path);
 	file_handle ret;
 	char *fspath=getfspath(path);
@@ -188,7 +188,7 @@ file_handle fs_open(char *path){
 		return ret;
 	}
 	fs_path *ppath=new_fs_path(fspath);
-	void *filedata=mount.driver.open(mount.mountdata, ppath);
+	void *filedata=mount.driver.open(mount.mountdata, ppath, mode);
 	delete_fs_path(ppath);
 	if(!filedata){
 		dbgout("FS: Open failed in FS driver.\n");
@@ -198,6 +198,7 @@ file_handle fs_open(char *path){
 	ret.mount=&mount;
 	ret.filedata=filedata;
 	ret.valid=true;
+	ret.mode=mode;
 	dbgpf("FS: Opened %s.\n", path);
 	return ret;
 }
@@ -211,12 +212,12 @@ bool fs_close(file_handle &file){
 }
 
 size_t fs_read(file_handle &file, size_t bytes, char *buf){
-	if(!file.valid) return -1;
+	if(!file.valid || !(file.mode & FS_Read)) return -1;
 	return file.mount->driver.read(file.filedata, bytes, buf);
 }
 
 size_t fs_write(file_handle &file, size_t bytes, char *buf){
-	if(!file.valid) return 0;
+	if(!file.valid || !(file.mode & FS_Write)) return 0;
 	return file.mount->driver.write(file.filedata, bytes, buf);
 }
 
@@ -229,7 +230,7 @@ int fs_ioctl(file_handle &file, int fn, size_t bytes, char *buf){
 	return file.mount->driver.ioctl(file.filedata, fn, bytes, buf);
 }
 
-dir_handle fs_open_dir(char *path){
+dir_handle fs_open_dir(char *path, fs_mode_flags mode){
 	dir_handle ret;
 	char *fspath=getfspath(path);
 	if(!fspath){
@@ -242,7 +243,7 @@ dir_handle fs_open_dir(char *path){
 		return ret;
 	}
 	fs_path *ppath=new_fs_path(fspath);
-	void *dirdata=mount.driver.open_dir(mount.mountdata, ppath);
+	void *dirdata=mount.driver.open_dir(mount.mountdata, ppath, mode);
 	delete_fs_path(ppath);
 	if(!dirdata){
 		dbgout("FS: Directory open failed in FS driver.\n");
@@ -252,6 +253,7 @@ dir_handle fs_open_dir(char *path){
 	ret.dirdata=dirdata;
 	ret.mount=&mount;
 	ret.valid=true;
+	ret.mode=mode;
 	dbgpf("FS: Opened directory %s.\n", path);
 	return ret;
 }
@@ -266,7 +268,7 @@ bool fs_close_dir(dir_handle &dir){
 
 directory_entry fs_read_dir(dir_handle &dir){
 	directory_entry ret;
-	if(!dir.valid){
+	if(!dir.valid || !(dir.mode & FS_Read)){
 		ret.valid=false;
 		return ret;
 	}
@@ -274,7 +276,7 @@ directory_entry fs_read_dir(dir_handle &dir){
 }
 
 bool fs_write_dir(dir_handle &dir, directory_entry entry){
-	if(!dir.valid) return false;
+	if(!dir.valid || !(dir.mode & FS_Write)) return false;
 	return dir.mount->driver.write_dir(dir.dirdata, entry);
 }
 

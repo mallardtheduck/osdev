@@ -173,8 +173,8 @@ inline static bool unmount(char *name){
 	return SYSCALL_TABLE->unmount(name);
 }
 
-inline static file_handle *fopen(char *path){
-	return SYSCALL_TABLE->fopen(path);
+inline static file_handle *fopen(char *path, fs_mode_flags mode){
+	return SYSCALL_TABLE->fopen(path, mode);
 }
 
 inline static bool fclose(file_handle *handle){
@@ -201,8 +201,8 @@ inline static file_handle *fcreate(char *path){
 	return SYSCALL_TABLE->fcreate(path);
 }
 
-inline static dir_handle *diropen(char *path){
-	return SYSCALL_TABLE->diropen(path);
+inline static dir_handle *diropen(char *path, fs_mode_flags mode){
+	return SYSCALL_TABLE->diropen(path, mode);
 }
 
 inline static bool dirclose(dir_handle *handle){

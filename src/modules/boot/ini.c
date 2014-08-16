@@ -197,7 +197,7 @@ int ini_parse(const char* filename,
     FILE* file;
     int error;
 
-    file = fopen((char*)filename);
+    file = fopen((char*)filename, FS_Read);
     if (!file)
         return -1;
     error = ini_parse_file(file, handler, user);

@@ -21,6 +21,20 @@ enum fs_item_types{
 typedef enum fs_item_types fs_item_types;
 #endif
 
+
+enum fs_mode_flags{
+	FS_Read 	= 1,
+	FS_Write	= 1 << 1,
+	FS_AtEnd	= 1 << 2,
+	FS_Create	= 1 << 3,
+	FS_Delete	= 1 << 4,
+	FS_Exclude	= 1 << 5,
+};
+
+#ifndef __cplusplus
+typedef enum fs_mode_flags fs_mode_flags;
+#endif
+
 struct directory_entry{
 	bool valid;
 	char filename[255];
@@ -51,13 +65,13 @@ struct fs_driver{
 	bool needs_device;
 	void *(*mount)(char *device);
 	bool (*unmount)(void *mountdata);
-	void *(*open)(void *mountdata, fs_path *path);
+	void *(*open)(void *mountdata, fs_path *path, fs_mode_flags mode);
 	bool (*close)(void *filedata);
 	size_t (*read)(void *filedata, size_t bytes, char *buf);
 	size_t (*write)(void *filedata, size_t bytes, char *buf);
 	size_t (*seek)(void *filedata, int pos, bool relative);
 	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
-	void *(*open_dir)(void *mountdata, fs_path *path);
+	void *(*open_dir)(void *mountdata, fs_path *path, fs_mode_flags mode);
 	bool (*close_dir)(void *dirdata);
 	directory_entry (*read_dir)(void *dirdata);
 	bool (*write_dir)(void *dirdata, directory_entry entry);
@@ -84,6 +98,7 @@ struct file_handle{
 	bool valid;
 	fs_mountpoint *mount;
 	void *filedata;
+	fs_mode_flags mode;
 };
 
 #ifndef __cplusplus
@@ -94,6 +109,7 @@ struct dir_handle{
 	bool valid;
 	fs_mountpoint *mount;
 	void *dirdata;
+	fs_mode_flags mode;
 };
 
 #ifndef __cplusplus

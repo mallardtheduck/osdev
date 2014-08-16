@@ -34,7 +34,7 @@ bool initfs_unmount(void *){
 	return true;
 }
 
-void *initfs_open(void *, fs_path *path){
+void *initfs_open(void *, fs_path *path, fs_mode_flags){
 	dbgpf("INITFS: Open %s.\n", path->str);
 	int files=initfs_getfilecount();
 	for(int i=0; i<files; ++i){
@@ -70,7 +70,7 @@ int initfs_ioctl(void *, int, size_t, char *){
 	return 0;
 }
 
-void *initfs_open_dir(void *, fs_path *path){
+void *initfs_open_dir(void *, fs_path *path, fs_mode_flags){
 	if(path->next != NULL) return NULL;
 	return (void*)new initfs_dirhandle;
 }

@@ -240,7 +240,7 @@ void proc_start(void *ptr){
 
 pid_t proc_spawn(const string &path, const string &params, pid_t parent){
 	pid_t ret=proc_new(path, parent);
-	file_handle file=fs_open((char*)path.c_str());
+	file_handle file=fs_open((char*)path.c_str(), FS_Read);
 	if(!file.valid) return 0;
 	loaded_elf_proc proc=elf_load_proc(ret, file);
 	fs_close(file);

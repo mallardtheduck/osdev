@@ -23,7 +23,7 @@ void memset(void *ptr, int value, size_t n){
 void print_string(const char *s){
 	if(!stdout){
 		if(!bt_getenv("DISPLAY_DEVICE", &stdout_device[5], 250)) return;
-    	stdout=bt_fopen(stdout_device, 0);
+    	stdout=bt_fopen(stdout_device, FS_Write);
     }
     bt_fwrite(stdout, strlen(s), s);
 }
@@ -31,7 +31,7 @@ void print_string(const char *s){
 void get_string(char *buffer, size_t bytes){
 	if(!stdin){
 		if(!bt_getenv("INPUT_DEVICE", &stdin_device[5], 250)) return;
-		stdin=bt_fopen(stdin_device, 0);
+		stdin=bt_fopen(stdin_device, FS_Read);
 	}
 	size_t pos=bt_fseek(stdout, 0, true);
 	size_t i=0;
@@ -59,7 +59,7 @@ void get_string(char *buffer, size_t bytes){
 
 void dir_listing(){
 	print_string("Directory listing of \"INIT:/\":\n");
-	bt_dirhandle dir=bt_dopen("INIT:/", 0);
+	bt_dirhandle dir=bt_dopen("INIT:/", FS_Read);
 	directory_entry entry=bt_dread(dir);
 	while(entry.valid){
 		print_string(entry.filename);
@@ -74,7 +74,7 @@ void dir_listing2(char *input){
 	print_string("Directory listing of \"");
 	print_string(&input[2]);
 	print_string("\":\n");
-	bt_dirhandle dir=bt_dopen(&input[2], 0);
+	bt_dirhandle dir=bt_dopen(&input[2], FS_Read);
 	if(!dir) return;
 	directory_entry entry=bt_dread(dir);
 	while(entry.valid){
@@ -87,7 +87,7 @@ void dir_listing2(char *input){
 
 void file_contents(){
 	print_string("Contents of \"INIT:/config.ini\":\n");
-	bt_filehandle file=bt_fopen("INIT:/config.ini", 0);
+	bt_filehandle file=bt_fopen("INIT:/config.ini", FS_Read);
 	char c[32]={0};
 	while(bt_fread(file, 31, c)){
 		print_string(c);
@@ -101,7 +101,7 @@ void file_contents2(char *input){
 	print_string("Contents of \"");
 	print_string(&input[2]);
 	print_string("\":\n");
-	bt_filehandle file=bt_fopen(&input[2], 0);
+	bt_filehandle file=bt_fopen(&input[2], FS_Read);
 	if(!file) return;
 	char c[32]={0};
 	while(bt_fread(file, 31, c)){
@@ -125,7 +125,7 @@ void version(){
 
 void ata_test(){
 	char buf[513]={0};
-	bt_filehandle ata=bt_fopen("DEV:/ATA0", 0);
+	bt_filehandle ata=bt_fopen("DEV:/ATA0", FS_Read);
 	bt_fread(ata, 512, buf);
 	print_string("The contents of the first sector of the ATA0 device is:\n");
 	print_string(buf);

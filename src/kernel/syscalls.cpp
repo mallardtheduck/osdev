@@ -45,8 +45,8 @@ void add_filesystem(fs_driver *fs){
 	fs_registerfs(*fs);
 }
 
-file_handle *fopen(char *path){
-	return new file_handle(fs_open(path));
+file_handle *fopen(char *path, fs_mode_flags mode){
+	return new file_handle(fs_open(path, mode));
 }
 
 bool fclose(file_handle *h){
@@ -72,8 +72,8 @@ int fioctl(file_handle *handle, int fn, size_t bytes, char *buf){
 	return fs_ioctl(*handle, fn, bytes, buf);
 }
 
-dir_handle *diropen(char *path){
-	return new dir_handle(fs_open_dir(path));
+dir_handle *diropen(char *path, fs_mode_flags mode){
+	return new dir_handle(fs_open_dir(path, mode));
 }
 
 bool dirclose(dir_handle *handle){

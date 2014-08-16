@@ -118,7 +118,7 @@ int write(int file, char *ptr, int len){
 					snprintf(stdout_path, 255, "DEV:/%s", temp);
 				}
 			}
-			stdout_handle=bt_fopen(stdout_path, 0);
+			stdout_handle=bt_fopen(stdout_path, FS_Write);
 		}
 		return bt_fwrite(stdout_handle, len, ptr);
 	}
