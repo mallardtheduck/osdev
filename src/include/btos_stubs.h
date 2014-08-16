@@ -124,8 +124,8 @@ inline static bt_pid bt_spawn(const char *path, size_t argc, char **argv){
 	return btos_call(BT_SPAWN, (uint32_t)path, argc, (uint32_t)argv);
 }
 
-inline static void bt_wait(bt_pid pid){
-	btos_call(BT_WAIT, pid, 0, 0);
+inline static int bt_wait(bt_pid pid){
+	return btos_call(BT_WAIT, pid, 0, 0);
 }
 
 inline static bool bt_kill(bt_pid pid){
