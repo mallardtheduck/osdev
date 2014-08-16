@@ -93,14 +93,14 @@ int lseek(int file, int ptr, int dir){
 }
 
 int open(const char *name, int flags, ...){
-    fs_mode_flags mode=0;
-    if(flags & O_RDONLY || flags & O_RDWR) mode |= FS_Read;
+    fs_mode_flags mode=FS_Read;
+    if(flags & O_WRONLY) mode &= ~FS_Read;
     if(flags & O_WRONLY || flags & O_RDWR) mode |= FS_Write;
     if(flags & O_APPEND) mode |= FS_AtEnd;
     if(flags & O_CREAT) mode |= FS_Create;
     if(flags & O_EXCL) mode |= FS_Exclude;
 	if(flags & O_TRUNC) mode |= FS_Truncate;
-	return bt_filehandle_to_fileint(bt_fopen(name, flags));
+	return bt_filehandle_to_fileint(bt_fopen(name, mode));
 }
 
 int read(int file, char *ptr, int len){
