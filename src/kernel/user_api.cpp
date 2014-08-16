@@ -40,7 +40,7 @@ USERAPI_HANDLER(zero){
 }
 
 USERAPI_HANDLER(BT_ALLOC_PAGES){
-	regs->eax = (uint32_t)vmm_alloc(regs->ebx, false);
+	regs->eax = (uint32_t)vmm_alloc(regs->ebx, vmm_allocmode::Userlow);
 }
 
 USERAPI_HANDLER(BT_FREE_PAGES){
