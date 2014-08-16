@@ -196,12 +196,12 @@ loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
 	for(int i=0; i<header.phnum; ++i){
 		Elf32_Phdr prog=elf_read_progheader(file, header, i);
 		if(prog.type==PT_LOAD){
+			if(prog.vaddr < VMM_KERNELSPACE_END) panic("ELF: Attempt to load process into kernel space!");
 			fs_seek(file, prog.offset, false);
 			uint32_t base=prog.vaddr;
 			uint32_t pages=(prog.memsz/VMM_PAGE_SIZE)+1;
 			vmm_alloc_at(pages, base);
 			memset((void*)prog.vaddr, 0, prog.memsz);
-			if(prog.vaddr < VMM_KERNELSPACE_END) panic("ELF: Attempt to load process into kernel space!");
 			fs_read(file, prog.filesz, (char*)prog.vaddr);
 		}
 	}
