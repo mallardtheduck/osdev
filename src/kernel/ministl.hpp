@@ -326,8 +326,8 @@ public:
 		    {
 				_Alloc().destroy(i);
 		    }
-		    _Alloc().deallocate(data_, capacity_);
 		}
+		_Alloc().deallocate(data_, capacity_);
 	}
 
 	_Myt &insert(const value_type &_Value)
