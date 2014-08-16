@@ -47,7 +47,7 @@ void *initfs_open(void *, fs_path *path){
 }
 
 bool initfs_close(void *filedata){
-	delete fdata;
+	delete (initfs_handle*)fdata;
 	return true;
 }
 
@@ -75,7 +75,7 @@ void *initfs_open_dir(void *, fs_path *path){
 	return (void*)new initfs_dirhandle;
 }
 bool initfs_close_dir(void *dirdata){
-	delete ddata;
+	delete (initfs_dirhandle*)ddata;
 	return true;
 }
 
