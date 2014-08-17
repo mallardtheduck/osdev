@@ -29,7 +29,7 @@ size_t strlen(const char *s) {
 
 void fs_path_to_string(fs_path *path, char *buf){
 	while(path){
-		sprintf(buf, "%s/%s", buf, path->str);
+		sprintf(&buf[strlen(buf)], "/%s", path->str);
 		path=path->next;
 	}
 }
