@@ -55,7 +55,7 @@ class vector
         {
             reserve(reserved);
             dataSize = reserved;
-            for(unsigned int loop;loop < dataSize;++loop)
+            for(unsigned int loop=0;loop < dataSize;++loop)
             {
                 // Because we are using malloc/free
                 // We need to use placement new to add items to the data
