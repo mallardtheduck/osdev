@@ -74,6 +74,18 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 		}else module_load((char*)value, NULL);
 	}else if(MATCH("default", "run")){
 		spawn((char*)value, NULL);
+	}else if(MATCH("default", "mount")){
+		char *path, *rest;
+		if(split(value, ',', &path, &rest)){
+			char *name, *fs;
+			if(split(rest, ',', &name, &fs)){
+				mount(name, path, fs);
+				free(name);
+				free(fs);
+			}
+			free(path);
+			free(rest);
+		}
 	}
 	return 1;
 }
