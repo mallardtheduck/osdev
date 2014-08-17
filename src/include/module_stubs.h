@@ -13,7 +13,7 @@
 
 extern char dbgbuf[256];
 #define dbgpf(...) do{sprintf(dbgbuf, __VA_ARGS__); dbgout(dbgbuf);}while(false)
-#define sprintf(buf, string, ...) SYSCALL_TABLE->sprintf(buf, string, __VA_ARGS__)
+#define sprintf(...) SYSCALL_TABLE->sprintf(__VA_ARGS__)
 
 inline static void panic(char *msg){
 	SYSCALL_TABLE->panic(msg);
