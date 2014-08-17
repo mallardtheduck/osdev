@@ -133,12 +133,13 @@ directory_entry fat_read_dir(void *dirdata){
 	if(dirdata){
 		directory_entry ret;
 		fl_dirent ent;
-		fl_readdir((FL_DIR*)dirdata, &ent);
-		ret.valid=true;
-		strncpy(ret.filename, ent.filename, 255);
-		ret.type=(ent.is_dir)?FS_Directory:FS_File;
-		ret.size=ent.size;
-		return ret;
+		if(!fl_readdir((FL_DIR*)dirdata, &ent)){
+			ret.valid=true;
+			strncpy(ret.filename, ent.filename, 255);
+			ret.type=(ent.is_dir)?FS_Directory:FS_File;
+			ret.size=ent.size;
+			return ret;
+		} else return invalid_directory_entry;
 	} else return invalid_directory_entry;
 }
 
