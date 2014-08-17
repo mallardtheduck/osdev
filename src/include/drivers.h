@@ -26,6 +26,7 @@ namespace driver_types{
 	static const int STR_MEMCARD	= 0x35;
 	static const int STR_FLOPPY = 0x35;
 	static const int STR_TAPE	 = 0x36;
+	static const int STR_PART	= 0x37;
 	static const int NIC		= 0x40;
 	static const int NIC_ETHERNET	= 0x41;
 	static const int NIC_WIRELESS	= 0x42;
