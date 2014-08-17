@@ -87,6 +87,7 @@ typedef struct fs_driver fs_driver;
 struct fs_mountpoint{
 	bool valid;
 	char name[9];
+	char device[255];
 	fs_driver driver;
 	void *mountdata;
 };

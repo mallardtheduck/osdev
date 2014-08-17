@@ -11,14 +11,14 @@ lock fs_lock;
 
 static const fs_driver invalid_fs_driver={false, "", false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL};
-static const fs_mountpoint invalid_mountpoint={false, "", invalid_fs_driver, NULL};
+static const fs_mountpoint invalid_mountpoint={false, "", "", invalid_fs_driver, NULL};
 
 char *fs_mounts_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
-	sprintf(buffer, "# name, filesystem\n");
+	sprintf(buffer, "# name, device, filesystem\n");
 	for(map<string, fs_mountpoint>::iterator i=fs_mounts->begin(); i!=fs_mounts->end(); ++i){
-		sprintf(&buffer[strlen(buffer)], "%s, %s\n", i->first.c_str(), i->second.driver.name);
+		sprintf(&buffer[strlen(buffer)], "%s, %s, %s\n", i->first.c_str(), i->second.device, i->second.driver.name);
 	}
 	return buffer;
 }
@@ -154,6 +154,7 @@ bool fs_mount(char *name, char *device, char *fs){
 			strncpy(mount.name, name, 9);
 			mount.driver=driver;
 			mount.mountdata=mountdata;
+			strncpy(mount.device, device?device:"NULL", 255);
 		}
 		dbgpf("FS: Mounted %s on %s (%s).\n", device?device:"NULL", name, fs);
 	}else{
