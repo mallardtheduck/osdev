@@ -139,22 +139,25 @@ char *getfspath(char *path){
 }
 
 bool fs_mount(char *name, char *device, char *fs){
+	dbgpf("FS: Mount %s on %s (%s).\n", device?device:"NULL", name, fs);
 	string strname=to_upper(name);
 	name=(char*)strname.c_str();
 	fs_driver driver=getfs(fs);
 	if(driver.valid){
-		hold_lock hl(fs_lock);
 		if(driver.needs_device){
-			//TODO: Device drivers...
-			return false;
-		}else{
+			if(!device || device[0]=='\0') return false;
+		}
+		void *mountdata=driver.mount(device);
+		{	hold_lock hl(fs_lock);
 			fs_mountpoint &mount=(*fs_mounts)[name];
 			mount.valid=true;
 			strncpy(mount.name, name, 9);
 			mount.driver=driver;
-			mount.mountdata=driver.mount(device);
-			dbgpf("FS: Mounted %s on %s (%s).\n", device?device:"NULL", name, fs);
+			mount.mountdata=mountdata;
 		}
+		dbgpf("FS: Mounted %s on %s (%s).\n", device?device:"NULL", name, fs);
+	}else{
+		dbgpf("FS: FS driver not found.\n");
 	}
 	return false;
 }
@@ -195,7 +198,7 @@ file_handle fs_open(char *path, fs_mode_flags mode){
 		ret.valid=false;
 		return ret;
 	}
-	ret.mount=&mount;
+	ret.mount=new fs_mountpoint(mount);
 	ret.filedata=filedata;
 	ret.valid=true;
 	ret.mode=mode;
@@ -210,6 +213,7 @@ bool fs_close(file_handle &file){
 	if(!file.valid) return false;
 	file.valid=false;
 	bool ret=file.mount->driver.close(file.filedata);
+	delete file.mount;
 	if(ret) dbgout("FS: Closed a file.\n");
 	return ret;
 }
