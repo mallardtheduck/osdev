@@ -95,11 +95,13 @@ bool fat_close(void *filedata){
 }
 
 size_t fat_read(void *filedata, size_t bytes, char *buf){
-	return fl_fread(buf, bytes, 1, filedata);
+	int ret=fl_fread(buf, bytes, 1, filedata);
+	return (ret>=0)?ret:0;
 }
 
 size_t fat_write(void *filedata, size_t bytes, char *buf){
-	return fl_fwrite(buf, bytes, 1, filedata);
+	int ret=fl_fwrite(buf, bytes, 1, filedata);
+	return (ret>=0)?ret:0;
 }
 
 size_t fat_seek(void *filedata, int pos, bool relative){
