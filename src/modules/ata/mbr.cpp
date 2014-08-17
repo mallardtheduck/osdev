@@ -79,7 +79,7 @@ int mbr_ioctl(void *, int, size_t, char *){
 }
 
 int mbr_type(){
-	return driver_types::STR_HDD;
+	return driver_types::STR_PART;
 };
 
 char *mbr_desc(){
