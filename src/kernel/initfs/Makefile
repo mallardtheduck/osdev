@@ -1,4 +1,6 @@
 xxd_data.inc: data/config.ini data/test.sys data/boot.sys data/rtc.sys data/test.elx data/keyboard.sys data/ata.sys data/ctest.elx data/fat.sys
+	strip data/*.elx
+	strip -g data/*.sys
 	./make_inc.sh
 
 data/test.sys: ../../modules/test/test.sys
