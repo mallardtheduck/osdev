@@ -109,9 +109,8 @@ pid_t getpid(){
 	return proc_current_pid;
 }
 
-pid_t mod_spawn(char *exec, char *params){
-	if(!params) params="";
-	return proc_spawn(exec, params);
+pid_t mod_spawn(char *exec, size_t argc, char **argv){
+	return proc_spawn(exec, argc, argv);
 }
 
 void mask_irq(size_t irqno){

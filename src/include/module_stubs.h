@@ -241,8 +241,8 @@ inline static char *getenv(char *name, pid_t pid){
 	return SYSCALL_TABLE->getenv(name, pid);
 }
 
-inline static pid_t spawn(char *exec, char *params){
-	return SYSCALL_TABLE->spawn(exec, params);
+inline static pid_t spawn(char *exec, size_t argc, char **argv){
+	return SYSCALL_TABLE->spawn(exec, argc, argv);
 }
 
 inline static void infofs_register(char *name, info_function fn){

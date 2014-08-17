@@ -27,6 +27,14 @@ inline static void bt_free_pages(void *address, size_t pages){
 	btos_call(BT_FREE_PAGES, (uint32_t)address, pages, 0);
 }
 
+inline static size_t bt_get_argc(){
+	return btos_call(BT_GET_ARGC, 0, 0, 0);
+}
+
+inline static size_t bt_get_arg(size_t index, char *buf, size_t size){
+	return btos_call(BT_GET_ARG, index, (uint32_t)buf, size);
+}
+
 inline static bt_lockhandle bt_create_lock(){
 	return (bt_lockhandle)btos_call(BT_CREATE_LOCK, 0, 0, 0);
 }
