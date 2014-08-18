@@ -158,6 +158,7 @@ bool fs_mount(char *name, char *device, char *fs){
 			strncpy(mount.device, device?device:"NULL", 255);
 		}
 		dbgpf("FS: Mounted %s on %s (%s).\n", device?device:"NULL", name, fs);
+		return true;
 	}else{
 		dbgpf("FS: FS driver not found.\n");
 	}

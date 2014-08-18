@@ -2,7 +2,7 @@ export PREFIX:=$(HOME)/Projects/os/cross
 export TARGET:=i686-elf
 export PATH:=$(PREFIX)/bin:$(PATH)
 
-all: modules user kernel
+all: modules user disk kernel
 clean: kernel-clean modules-clean user-clean
 rebuild: clean all
 
@@ -32,7 +32,9 @@ testtxt: dummy.file testreqs
 
 testreqs: kernel/test.img
 
-kernel/test.img:
-	qemu-img create kernel/test.img 100M
+disk: disk/btos.img
+
+disk/btos.img: dummy.file
+	make -C disk
 
 dummy.file:

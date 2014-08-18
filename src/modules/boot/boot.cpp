@@ -61,9 +61,11 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 		((config*)c)->display=strdup(value);
 		setenv("DISPLAY_DEVICE", ((config*)c)->display, 0, 0);
 		displaywrite("Starting BT/OS...");
+
 	}else if(MATCH("default", "input")){
 		((config*)c)->input=strdup(value);
 		setenv("INPUT_DEVICE", ((config*)c)->input, 0, 0);
+
 	}else if(MATCH("default", "load")){
 		char *name, *params;
 		if(split(value, ',', &name, &params)){
@@ -72,8 +74,10 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 			free(name);
 			free(params);
 		}else module_load((char*)value, NULL);
+
 	}else if(MATCH("default", "run")){
 		wait(spawn((char*)value, 0, NULL));
+
 	}else if(MATCH("default", "mount")){
 		char *path, *rest;
 		if(split(value, ',', &path, &rest)){

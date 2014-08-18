@@ -16,4 +16,4 @@ serial.out
 *.ell
 xxd_data.inc
 buildid.c
-test.img
+btos.img
