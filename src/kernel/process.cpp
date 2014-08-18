@@ -243,9 +243,9 @@ void proc_start(void *ptr){
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 
-pid_t proc_spawn(const string &path, const string &params, pid_t parent){
-	pid_t ret=proc_new(path, parent);
-	file_handle file=fs_open((char*)path.c_str());
+pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
+	pid_t ret=proc_new(path, argc, argv, parent);
+	file_handle file=fs_open((char*)path.c_str(), FS_Read);
 	if(!file.valid) return 0;
 	loaded_elf_proc proc=elf_load_proc(ret, file);
 	fs_close(file);
@@ -329,4 +329,14 @@ int proc_wait(pid_t pid){
 	}
 	if(proc_current_process->child_returns.has_key(pid)) return proc_current_process->child_returns[pid];
 	else return 0;
+}
+
+size_t proc_get_argc(pid_t pid){
+	return proc_get(pid)->args.size();
+}
+
+size_t proc_get_arg(size_t i, char *buf, size_t size, pid_t pid){
+	proc_process *proc=proc_get(pid);
+	strncpy(buf, proc->args[i].c_str(), size);
+	return proc->args[i].length();
 }
