@@ -131,7 +131,8 @@ void run_program(char *input){
 	print_string("Running ");
 	print_string(&input[2]);
 	print_string("\n");
-	bt_wait(bt_spawn(&input[2], 0, NULL));
+	bt_pid pid=bt_spawn(&input[2], 0, NULL);
+	if(pid) bt_wait(pid);
 }
 
 int main(int argc, char **argv){
