@@ -11,14 +11,14 @@ lock fs_lock;
 
 static const fs_driver invalid_fs_driver={false, "", false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL};
-static const fs_mountpoint invalid_mountpoint={false, "", invalid_fs_driver, NULL};
+static const fs_mountpoint invalid_mountpoint={false, "", "", invalid_fs_driver, NULL};
 
 char *fs_mounts_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
-	sprintf(buffer, "# name, filesystem\n");
+	sprintf(buffer, "# name, device, filesystem\n");
 	for(map<string, fs_mountpoint>::iterator i=fs_mounts->begin(); i!=fs_mounts->end(); ++i){
-		sprintf(&buffer[strlen(buffer)], "%s, %s\n", i->first.c_str(), i->second.driver.name);
+		sprintf(&buffer[strlen(buffer)], "%s, %s, %s\n", i->first.c_str(), i->second.device, i->second.driver.name);
 	}
 	return buffer;
 }
@@ -39,7 +39,7 @@ void fs_init(){
 	directory_entry root=fs_stat("INIT:");
 	if(!root.valid) panic("(FS) Cannot stat root of INIT:!\n");
 	dbgpf("FS: Root size: %i, type: 0x%x.\n", root.size, root.type);
-	dir_handle dir=fs_open_dir("INIT:");
+	dir_handle dir=fs_open_dir("INIT:", FS_Read);
 	while(true){
 		directory_entry entry=fs_read_dir(dir);
 		if(!entry.valid) break;
@@ -139,22 +139,26 @@ char *getfspath(char *path){
 }
 
 bool fs_mount(char *name, char *device, char *fs){
+	dbgpf("FS: Mount %s on %s (%s).\n", device?device:"NULL", name, fs);
 	string strname=to_upper(name);
 	name=(char*)strname.c_str();
 	fs_driver driver=getfs(fs);
 	if(driver.valid){
-		hold_lock hl(fs_lock);
 		if(driver.needs_device){
-			//TODO: Device drivers...
-			return false;
-		}else{
+			if(!device || device[0]=='\0') return false;
+		}
+		void *mountdata=driver.mount(device);
+		{	hold_lock hl(fs_lock);
 			fs_mountpoint &mount=(*fs_mounts)[name];
 			mount.valid=true;
 			strncpy(mount.name, name, 9);
 			mount.driver=driver;
-			mount.mountdata=driver.mount(device);
-			dbgpf("FS: Mounted %s on %s (%s).\n", device?device:"NULL", name, fs);
+			mount.mountdata=mountdata;
+			strncpy(mount.device, device?device:"NULL", 255);
 		}
+		dbgpf("FS: Mounted %s on %s (%s).\n", device?device:"NULL", name, fs);
+	}else{
+		dbgpf("FS: FS driver not found.\n");
 	}
 	return false;
 }
@@ -174,8 +178,8 @@ bool fs_unmount(char *name){
 	}
 }
 
-file_handle fs_open(char *path){
-	dbgpf("FS: OPEN %s.\n", path);
+file_handle fs_open(char *path, fs_mode_flags mode){
+	dbgpf("FS: OPEN %s mode: %i.\n", path, mode);
 	file_handle ret;
 	char *fspath=getfspath(path);
 	if(!fspath){
@@ -188,16 +192,20 @@ file_handle fs_open(char *path){
 		return ret;
 	}
 	fs_path *ppath=new_fs_path(fspath);
-	void *filedata=mount.driver.open(mount.mountdata, ppath);
+	void *filedata=mount.driver.open(mount.mountdata, ppath, mode);
 	delete_fs_path(ppath);
 	if(!filedata){
 		dbgout("FS: Open failed in FS driver.\n");
 		ret.valid=false;
 		return ret;
 	}
-	ret.mount=&mount;
+	ret.mount=new fs_mountpoint(mount);
 	ret.filedata=filedata;
 	ret.valid=true;
+	ret.mode=mode;
+	if(mode & FS_AtEnd){
+		mount.driver.seek(filedata, 0xFFFFFFFF, false);
+	}
 	dbgpf("FS: Opened %s.\n", path);
 	return ret;
 }
@@ -206,17 +214,18 @@ bool fs_close(file_handle &file){
 	if(!file.valid) return false;
 	file.valid=false;
 	bool ret=file.mount->driver.close(file.filedata);
+	delete file.mount;
 	if(ret) dbgout("FS: Closed a file.\n");
 	return ret;
 }
 
 size_t fs_read(file_handle &file, size_t bytes, char *buf){
-	if(!file.valid) return -1;
+	if(!file.valid || !(file.mode & FS_Read)) return -1;
 	return file.mount->driver.read(file.filedata, bytes, buf);
 }
 
 size_t fs_write(file_handle &file, size_t bytes, char *buf){
-	if(!file.valid) return 0;
+	if(!file.valid || !(file.mode & FS_Write)) return 0;
 	return file.mount->driver.write(file.filedata, bytes, buf);
 }
 
@@ -229,7 +238,7 @@ int fs_ioctl(file_handle &file, int fn, size_t bytes, char *buf){
 	return file.mount->driver.ioctl(file.filedata, fn, bytes, buf);
 }
 
-dir_handle fs_open_dir(char *path){
+dir_handle fs_open_dir(char *path, fs_mode_flags mode){
 	dir_handle ret;
 	char *fspath=getfspath(path);
 	if(!fspath){
@@ -242,7 +251,7 @@ dir_handle fs_open_dir(char *path){
 		return ret;
 	}
 	fs_path *ppath=new_fs_path(fspath);
-	void *dirdata=mount.driver.open_dir(mount.mountdata, ppath);
+	void *dirdata=mount.driver.open_dir(mount.mountdata, ppath, mode);
 	delete_fs_path(ppath);
 	if(!dirdata){
 		dbgout("FS: Directory open failed in FS driver.\n");
@@ -252,6 +261,7 @@ dir_handle fs_open_dir(char *path){
 	ret.dirdata=dirdata;
 	ret.mount=&mount;
 	ret.valid=true;
+	ret.mode=mode;
 	dbgpf("FS: Opened directory %s.\n", path);
 	return ret;
 }
@@ -266,7 +276,7 @@ bool fs_close_dir(dir_handle &dir){
 
 directory_entry fs_read_dir(dir_handle &dir){
 	directory_entry ret;
-	if(!dir.valid){
+	if(!dir.valid || !(dir.mode & FS_Read)){
 		ret.valid=false;
 		return ret;
 	}
@@ -274,7 +284,7 @@ directory_entry fs_read_dir(dir_handle &dir){
 }
 
 bool fs_write_dir(dir_handle &dir, directory_entry entry){
-	if(!dir.valid) return false;
+	if(!dir.valid || !(dir.mode & FS_Write)) return false;
 	return dir.mount->driver.write_dir(dir.dirdata, entry);
 }
 

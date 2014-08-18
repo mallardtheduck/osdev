@@ -38,6 +38,7 @@ struct proc_process{
 	map<handle_t, dir_handle*> dirs;
 	map<handle_t, uint64_t> threads;
 	map<pid_t, int> child_returns;
+	vector<string> args;
 
 	proc_process() : pid(++curpid) {}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
@@ -128,15 +129,17 @@ void proc_switch(pid_t pid, bool setthread){
 	}
 }
 
-pid_t proc_new(const string &name, pid_t parent){
+pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent){
 	proc_process *parent_proc=proc_get(parent);
-	pid_t ret=0;
-	{hold_lock hl(proc_lock);
-		proc_process newproc(parent_proc, name);
-		proc_processes->add(newproc);
-		ret=newproc.pid;
+	proc_process newproc(parent_proc, name);
+	newproc.args.push_back(name);
+	for(size_t i=0; i<argc; ++i){
+		newproc.args.push_back(argv[i]);
 	}
-	return ret;
+	{	hold_lock hl(proc_lock);
+		proc_processes->add(newproc);
+	}
+	return newproc.pid;
 }
 
 void proc_end(pid_t pid){

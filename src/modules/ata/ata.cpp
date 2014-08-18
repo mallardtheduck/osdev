@@ -109,8 +109,9 @@ static int ata_device_detect(struct ata_device * dev) {
 	if (cl == 0x00 && ch == 0x00) {
 		/* Parallel ATA device */
 		ata_device_init(dev);
-		add_device("ATA", &ata_driver, (void*)dev);
-
+		char devicename[9]="ATA";
+		add_device(devicename, &ata_driver, (void*)dev);
+		mbr_parse(devicename);
 		return 1;
 	}
 
@@ -249,7 +250,7 @@ size_t ata_read(void *instance, size_t bytes, char *buf){
 	if(bytes % 512) return 0;
 	ata_instance *inst=(ata_instance*)instance;
 	for(size_t i=0; i<bytes; i+=512){
-		ata_device_read_sector(inst->dev, inst->pos/512, (uint8_t*)&buf[512*i]);
+		ata_device_read_sector(inst->dev, inst->pos/512, (uint8_t*)&buf[i]);
 		inst->pos+=512;
 	}
 	return bytes;
@@ -259,7 +260,7 @@ size_t ata_write(void *instance, size_t bytes, char *buf){
 	if(bytes % 512) return 0;
 	ata_instance *inst=(ata_instance*)instance;
 	for(size_t i=0; i<bytes; i+=512){
-		ata_device_write_sector_retry(inst->dev, inst->pos/512, (uint8_t*)&buf[512*i]);
+		ata_device_write_sector_retry(inst->dev, inst->pos/512, (uint8_t*)&buf[i]);
 		inst->pos+=512;
 	}
 	return bytes;

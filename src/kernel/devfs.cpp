@@ -20,7 +20,7 @@ bool devfs_unmount(void *mountdata){
 	return (mountdata==devfs_magic);
 }
 
-void *devfs_open(void *, fs_path *path){
+void *devfs_open(void *, fs_path *path, fs_mode_flags){
 	return drv_open(path->str);
 }
 
@@ -44,7 +44,7 @@ int devfs_ioctl(void *filedata, int fn, size_t bytes, char *buf){
 	return drv_ioctl(filedata, fn, bytes, buf);
 }
 
-void *devfs_open_dir(void *, fs_path *){
+void *devfs_open_dir(void *, fs_path *, fs_mode_flags){
 	return (void*)new devfs_dirhandle();
 }
 

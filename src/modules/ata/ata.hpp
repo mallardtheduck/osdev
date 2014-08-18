@@ -134,5 +134,6 @@ typedef struct {
 	uint8_t     signature[2];
 } __attribute__((packed)) mbr_t;
 
+void mbr_parse(char* device);
 
 #endif

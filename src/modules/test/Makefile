@@ -1,12 +1,12 @@
-BUILD-AS := i686-elf-as
+BUILD-AS := i686-pc-btos-as
 BUILD-AS-OPTIONS := -g -fPIC -c
-BUILD-CPP := i686-elf-g++
+BUILD-CPP := i686-pc-btos-g++
 BUILD-CPP-FLAGS :=  -c
 BUILD-CPP-OPTIONS := -ffreestanding -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -c -I../../include -DKERNEL_MODULE
-BUILD-C := i686-elf-gcc
+BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -ffreestanding -Wall -Wextra -Werror -g -c -I../../include -DKERNEL_MODULE
-LINK := i686-elf-gcc
+LINK := i686-pc-btos-gcc
 LINK-FLAGS := -T linker.ld -o test.sys -ffreestanding -O2 -nostdlib -fPIC -Xlinker -q
 LINK-OPTIONS := -lgcc
 

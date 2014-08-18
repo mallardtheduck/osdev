@@ -27,6 +27,14 @@ inline static void bt_free_pages(void *address, size_t pages){
 	btos_call(BT_FREE_PAGES, (uint32_t)address, pages, 0);
 }
 
+inline static size_t bt_get_argc(){
+	return btos_call(BT_GET_ARGC, 0, 0, 0);
+}
+
+inline static size_t bt_get_arg(size_t index, char *buf, size_t size){
+	return btos_call(BT_GET_ARG, index, (uint32_t)buf, size);
+}
+
 inline static bt_lockhandle bt_create_lock(){
 	return (bt_lockhandle)btos_call(BT_CREATE_LOCK, 0, 0, 0);
 }
@@ -124,8 +132,8 @@ inline static bt_pid bt_spawn(const char *path, size_t argc, char **argv){
 	return btos_call(BT_SPAWN, (uint32_t)path, argc, (uint32_t)argv);
 }
 
-inline static void bt_wait(bt_pid pid){
-	btos_call(BT_WAIT, pid, 0, 0);
+inline static int bt_wait(bt_pid pid){
+	return btos_call(BT_WAIT, pid, 0, 0);
 }
 
 inline static bool bt_kill(bt_pid pid){

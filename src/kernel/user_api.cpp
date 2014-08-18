@@ -40,12 +40,22 @@ USERAPI_HANDLER(zero){
 }
 
 USERAPI_HANDLER(BT_ALLOC_PAGES){
-	regs->eax = (uint32_t)vmm_alloc(regs->ebx, false);
+	regs->eax = (uint32_t)vmm_alloc(regs->ebx, vmm_allocmode::Userlow);
 }
 
 USERAPI_HANDLER(BT_FREE_PAGES){
 	if(is_safe_ptr(regs->ebx)){
 		vmm_free((void*)regs->ebx, regs->ecx);
+	}
+}
+
+USERAPI_HANDLER(BT_GET_ARGC){
+	regs->eax=proc_get_argc();
+}
+
+USERAPI_HANDLER(BT_GET_ARG){
+	if(is_safe_ptr(regs->ecx)){
+		regs->eax=proc_get_arg(regs->ebx, (char*)regs->ecx, regs->edx);
 	}
 }
 
@@ -85,9 +95,8 @@ USERAPI_HANDLER(BT_UNMOUNT){
 }
 
 USERAPI_HANDLER(BT_FOPEN){
-    //TODO: Flags...
     if(is_safe_ptr(regs->ebx)){
-        file_handle *file=new file_handle(fs_open((char*)regs->ebx));
+        file_handle *file=new file_handle(fs_open((char*)regs->ebx, (fs_mode_flags)regs->ecx));
         if(file->valid){
         	regs->eax=proc_add_file(file);
         } else {
@@ -140,7 +149,7 @@ USERAPI_HANDLER(BT_FSEEK){
 USERAPI_HANDLER(BT_DOPEN){
    //TODO: Flags...
     if(is_safe_ptr(regs->ebx)){
-        dir_handle *dir=new dir_handle(fs_open_dir((char*)regs->ebx));
+        dir_handle *dir=new dir_handle(fs_open_dir((char*)regs->ebx, (fs_mode_flags)regs->ecx));
         if(dir->valid) {
         	regs->eax=proc_add_dir(dir);
         }else{
@@ -214,9 +223,15 @@ USERAPI_HANDLER(BT_SETENV){
 
 USERAPI_HANDLER(BT_SPAWN){
 	if(is_safe_ptr(regs->ebx) &&  (!regs->ecx || is_safe_ptr(regs->edx))){
-		//TODO: Parameters...
+		if(regs->ecx){
+			size_t argc=regs->ecx;
+			char **argv=(char**)regs->edx;
+			for(size_t i=0; i<argc; ++i){
+				if(!is_safe_ptr((uint32_t)argv[i])) return;
+			}
+		}
 		dbgpf("UAPI:Spawning %s\n", (char*)regs->ebx);
-		regs->eax=proc_spawn((char*)regs->ebx, "");
+		regs->eax=proc_spawn((char*)regs->ebx, regs->ecx, (char**)regs->edx);
 	}
 }
 
@@ -253,6 +268,8 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
         //Memory managment
 		USERAPI_HANDLE_CALL(BT_ALLOC_PAGES);
 		USERAPI_HANDLE_CALL(BT_FREE_PAGES);
+		USERAPI_HANDLE_CALL(BT_GET_ARGC);
+		USERAPI_HANDLE_CALL(BT_GET_ARG);
 
         //Locking
 		USERAPI_HANDLE_CALL(BT_CREATE_LOCK);

@@ -36,7 +36,7 @@ bool infofs_unmount(void *mountdata){
 	return (mountdata == infofs_magic);
 }
 
-void *infofs_open(void *mountdata, fs_path *path){
+void *infofs_open(void *mountdata, fs_path *path, fs_mode_flags){
 	if(mountdata != infofs_magic) return NULL;
 	if(!info_items->has_key(path->str)) return NULL;
 	char *data=(*info_items)[path->str]();
@@ -77,7 +77,7 @@ int infofs_ioctl(void *filedata, int fn, size_t bytes, char *buf){
 	return 0;
 }
 
-void *infofs_open_dir(void *mountdata, fs_path *path){
+void *infofs_open_dir(void *mountdata, fs_path *path, fs_mode_flags){
 	if(mountdata != infofs_magic) return NULL;
 	return (void*)new infofs_dirhandle();
 }

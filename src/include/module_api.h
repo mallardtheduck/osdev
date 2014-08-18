@@ -72,7 +72,7 @@ struct syscall_table{
 	bool (*mount)(char *name, char *device, char *fs);
 	bool (*unmount)(char *name);
 
-	file_handle *(*fopen)(char *path);
+	file_handle *(*fopen)(char *path, fs_mode_flags mode);
 	bool (*fclose)(file_handle *handle);
 	size_t (*fread)(file_handle *handle, size_t bytes, char *buf);
 	size_t (*fwrite)(file_handle *handle, size_t bytes, char *buf);
@@ -80,7 +80,7 @@ struct syscall_table{
 	int (*fioctl)(file_handle *handle, int fn, size_t bytes, char *buf);
 	file_handle *(*fcreate)(char *path);
 
-	dir_handle *(*diropen)(char *path);
+	dir_handle *(*diropen)(char *path, fs_mode_flags mode);
 	bool (*dirclose)(dir_handle *handle);
 	directory_entry (*dirread)(dir_handle *handle);
 	bool (*dirwrite)(dir_handle *handle, directory_entry entry);
@@ -94,8 +94,8 @@ struct syscall_table{
 	char *(*getenv)(char *name, pid_t pid);
 
 	pid_t (*getpid)();
-	pid_t (*spawn)(char *exec, char *params);
-	void (*wait)(pid_t pid);
+	pid_t (*spawn)(char *exec, size_t argc, char **argv);
+	void (*wait)(pid_t pid);	
 
 	void (*infofs_register)(char *name, info_function fn);
 };

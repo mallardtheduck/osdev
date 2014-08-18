@@ -35,7 +35,7 @@ void init_modules(){
 
 void load_module(char *path, char *params){
 	take_lock(mod_lock);
-	file_handle file=fs_open(path);
+	file_handle file=fs_open(path, FS_Read);
 	if(!file.valid){
 		dbgpf("MOD: Could not open '%s'!\n", path);
 		return;

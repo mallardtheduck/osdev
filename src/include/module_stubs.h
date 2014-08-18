@@ -13,7 +13,7 @@
 
 extern char dbgbuf[256];
 #define dbgpf(...) do{sprintf(dbgbuf, __VA_ARGS__); dbgout(dbgbuf);}while(false)
-#define sprintf(buf, string, ...) SYSCALL_TABLE->sprintf(buf, string, __VA_ARGS__)
+#define sprintf(...) SYSCALL_TABLE->sprintf(__VA_ARGS__)
 
 inline static void panic(char *msg){
 	SYSCALL_TABLE->panic(msg);
@@ -125,8 +125,8 @@ inline static size_t devwrite(void *handle, size_t bytes, char *buffer){
 	return SYSCALL_TABLE->devwrite(handle, bytes, buffer);
 }
 
-inline static void devseek(void *handle, size_t pos, bool relative){
-	SYSCALL_TABLE->devseek(handle, pos, relative);
+inline static size_t devseek(void *handle, size_t pos, bool relative){
+	return SYSCALL_TABLE->devseek(handle, pos, relative);
 }
 
 inline static int devioctl(void *handle, int fn, size_t bytes, char *buf){
@@ -173,8 +173,8 @@ inline static bool unmount(char *name){
 	return SYSCALL_TABLE->unmount(name);
 }
 
-inline static file_handle *fopen(char *path){
-	return SYSCALL_TABLE->fopen(path);
+inline static file_handle *fopen(char *path, fs_mode_flags mode){
+	return SYSCALL_TABLE->fopen(path, mode);
 }
 
 inline static bool fclose(file_handle *handle){
@@ -201,8 +201,8 @@ inline static file_handle *fcreate(char *path){
 	return SYSCALL_TABLE->fcreate(path);
 }
 
-inline static dir_handle *diropen(char *path){
-	return SYSCALL_TABLE->diropen(path);
+inline static dir_handle *diropen(char *path, fs_mode_flags mode){
+	return SYSCALL_TABLE->diropen(path, mode);
 }
 
 inline static bool dirclose(dir_handle *handle){
@@ -241,8 +241,8 @@ inline static char *getenv(char *name, pid_t pid){
 	return SYSCALL_TABLE->getenv(name, pid);
 }
 
-inline static pid_t spawn(char *exec, char *params){
-	return SYSCALL_TABLE->spawn(exec, params);
+inline static pid_t spawn(char *exec, size_t argc, char **argv){
+	return SYSCALL_TABLE->spawn(exec, argc, argv);
 }
 
 inline static void wait(pid_t pid){

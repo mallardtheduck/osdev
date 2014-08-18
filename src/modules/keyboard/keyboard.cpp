@@ -225,7 +225,7 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 		input_available=false;
 		handle_irq(1, &keyboard_handler);
 		new_thread(&keyboard_thread, NULL);
-		add_device("KEYBOARD", &keyboard_driver, NULL);
+		add_device("KEYBD", &keyboard_driver, NULL);
 		unmask_irq(1);
     	return 0;
 }

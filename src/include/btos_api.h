@@ -23,6 +23,8 @@ typedef uint32_t bt_priority;
 enum{
 	BT_ALLOC_PAGES		= 0x0101,
 	BT_FREE_PAGES		= 0x0102,
+	BT_GET_ARGC			= 0x0103,
+	BT_GET_ARG			= 0x0104,
 
 	BT_CREATE_LOCK		= 0x0201,
 	BT_LOCK				= 0x0202,

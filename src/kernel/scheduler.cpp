@@ -221,7 +221,6 @@ bool sch_find_thread(size_t &torun){
 			if(i!=current_thread && (*threads)[i].dynpriority==0){
 				foundtorun=true;
 				torun=i;
-				gdt_set_kernel_stack((*threads)[i].stackbase);
 			}
 		}
 	}
@@ -250,6 +249,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 		curstack=(*threads)[current_thread].stack;
 		sch_lock=current_thread_id;
 		proc_switch_sch((*threads)[current_thread].pid, false);
+		gdt_set_kernel_stack((*threads)[current_thread].stackbase);
 		return &curstack;		
 	}else{
 		//Nothing to run?

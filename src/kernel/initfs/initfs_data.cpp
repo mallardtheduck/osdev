@@ -13,5 +13,6 @@ initfs_file initfs_data[] = {
 	{true, "KEYBOARD.SYS", __data_keyboard_sys, sizeof(__data_keyboard_sys)},
 	{true, "ATA.SYS", __data_ata_sys, sizeof(__data_ata_sys)},
 	{true, "CTEST.ELX", __data_ctest_elx, sizeof(__data_ctest_elx)},
+	{true, "FAT.SYS", __data_fat_sys, sizeof(__data_fat_sys)},
 	{false, "", NULL, 0}
 };

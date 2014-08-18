@@ -53,5 +53,8 @@ mkdir build-newlib && \
 cd build-newlib && \
 ../newlib-2.1.0/configure --target=$TARGET --prefix=$PREFIX && \
 make && \
+make install && \ 
+\
+cd $HOME/Projects/os/src/build-gcc && \
+make && \
 make install
-
