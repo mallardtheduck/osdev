@@ -11,8 +11,8 @@ btos.img: data $(shell find data -type f) $(import-files)
 	fi;
 	mcopy -i btos.img@@1M data/* ::/ -s -o
 
-data/ctest.elx:
+data/ctest.elx: ../user/ctest/ctest.elx
 	cp ../user/ctest/ctest.elx data/ctest.elx
 
-data/cpptest.elx:
+data/cpptest.elx: ../user/cpptest/cpptest.elx
 	cp ../user/cpptest/cpptest.elx data/cpptest.elx
