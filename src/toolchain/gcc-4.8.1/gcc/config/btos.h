@@ -16,3 +16,10 @@
     builtin_assert ("system=unix");   \
     builtin_assert ("system=posix");   \
   } while(0);
+
+#undef STARTFILE_SPEC
+#define STARTFILE_SPEC "%{!shared: %{!pg:crt0.o%s}} crti.o%s %{!shared:crtbegin.o%s}"
+
+#undef ENDFILE_SPEC
+#define ENDFILE_SPEC "%{!shared:crtend.o%s} crtn.o%s"
+

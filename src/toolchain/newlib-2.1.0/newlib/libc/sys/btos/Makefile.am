@@ -12,7 +12,7 @@ endif
 
 lib_a_SOURCES =
 lib_a_LIBADD = $(extra_objs)
-EXTRA_lib_a_SOURCES = syscalls.c args.c crt0.S
+EXTRA_lib_a_SOURCES = syscalls.c args.c crt0.S crtn.S crti.S
 lib_a_DEPENDENCIES = $(extra_objs)
 lib_a_CCASFLAGS = $(AM_CCASFLAGS)
 lib_a_CFLAGS = $(AM_CFLAGS)

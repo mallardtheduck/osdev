@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+__attribute__ ((constructor)) void foo(void)
+{
+	printf("Global constructor...\n");
+}
+
 int main(int argc, char **argv){
 	printf("CTEST: %i, %p\n", argc, argv);
 	for(int i=0; i<argc; ++i){
