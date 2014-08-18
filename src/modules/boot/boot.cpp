@@ -79,7 +79,11 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 		if(split(value, ',', &path, &rest)){
 			char *name, *fs;
 			if(split(rest, ',', &name, &fs)){
-				mount(name, path, fs);
+				if(!mount(name, path, fs)){
+					char errormsg[128];
+					sprintf(errormsg, "BOOT: Could not mount %s.\n", path);
+					displaywrite(errormsg);
+				}
 				free(name);
 				free(fs);
 			}
