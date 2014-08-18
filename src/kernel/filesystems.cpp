@@ -146,6 +146,7 @@ bool fs_mount(char *name, char *device, char *fs){
 	if(driver.valid){
 		if(driver.needs_device){
 			if(!device || device[0]=='\0') return false;
+			if(!fs_stat(device).valid) return false;
 		}
 		void *mountdata=driver.mount(device);
 		{	hold_lock hl(fs_lock);
