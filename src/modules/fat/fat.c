@@ -154,7 +154,25 @@ size_t fat_dirseek(void *dirdata, int pos, bool relative){
 }
 
 directory_entry fat_stat(void *mountdata, fs_path *path){
-	return invalid_directory_entry;
+	if(mounted && mountdata==fatmagic){
+		char spath[255];
+		fs_path_to_string(path, spath);
+		fs_item_types type=FS_Invalid;
+		void *flh=fl_fopen(spath, "r");
+		if(flh){
+			type=FS_File;
+			fl_fclose(flh);
+		}else if(fl_is_dir(spath)){
+			type=FS_Directory;
+		}else return invalid_directory_entry;
+
+		directory_entry ret;
+        ret.valid=true;
+        strncpy(ret.filename, spath, 255);
+        ret.type=type;
+        ret.size=0;
+        return ret;
+	}else return invalid_directory_entry;
 }
 
 fs_driver fat_driver={true, "FAT", true,

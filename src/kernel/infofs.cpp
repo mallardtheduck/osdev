@@ -116,6 +116,14 @@ size_t infofs_dirseek(void *dirdata, int pos, bool relative){
 }
 
 directory_entry infofs_stat(void *mountdata, fs_path *path){
+	if(!path->next && strcmp(path->str, "")==0){
+		directory_entry ret;
+		ret.valid=true;
+		strncpy(ret.filename, "/", 255);
+		ret.size=0;
+		ret.type=FS_Directory;
+		return ret;
+	}
 	if(!info_items->has_key(path->str)) return invalid_directory_entry;
 	directory_entry ret;
     ret.valid=true;

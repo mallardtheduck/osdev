@@ -82,6 +82,14 @@ size_t devfs_dirseek(void *dirdata, int pos, bool relative){
 }
 
 directory_entry devfs_stat(void *, fs_path *path){
+	if(!path->next && strcmp(path->str, "")==0){
+		directory_entry ret;
+		ret.valid=true;
+		strncpy(ret.filename, "/", 255);
+		ret.size=0;
+		ret.type=FS_Directory;
+		return ret;
+	}
 	directory_entry ret;
 	ret.valid=false;
 	drv_device *dev=drv_get(path->str);
