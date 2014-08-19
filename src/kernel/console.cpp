@@ -71,12 +71,16 @@ size_t terminal_seek(void *instance, size_t pos, bool relative){
 		else inst->pos=pos;
 		ret=inst->pos;
 	}else{
-		int cpos;
+		size_t cpos;
 		if(relative){
 			cpos=(terminal_row * VGA_WIDTH) + terminal_column;
 			cpos+=pos;
 		}else{
 			cpos=pos;
+		}
+		if(cpos > VGA_HEIGHT * VGA_WIDTH){
+			dbgpf("Bad terminal seek: %i\n", cpos);
+			cpos=VGA_HEIGHT * VGA_WIDTH;
 		}
 		terminal_row=cpos/VGA_WIDTH;
 		terminal_column=cpos-(terminal_row * VGA_WIDTH);
