@@ -94,7 +94,7 @@ int link(char *old, char *new){
 
 int lseek(int file, int ptr, int dir){
     bool relative=false;
-    if(dir=SEEK_CUR) relative=true;
+    if(dir==SEEK_CUR) relative=true;
     return bt_fseek(fileint_to_bt_filehandle(file), ptr, relative);
 }
 
