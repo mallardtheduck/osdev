@@ -2,9 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-__attribute__ ((constructor)) void foo(void)
+__attribute__ ((constructor)) void cons_test(void)
 {
 	printf("Global constructor...\n");
+}
+
+__attribute__ ((destructor)) void dest_test(void)
+{
+	printf("Global destructor...\n");
 }
 
 int main(int argc, char **argv){
