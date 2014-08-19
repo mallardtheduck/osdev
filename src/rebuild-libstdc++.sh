@@ -1,4 +1,4 @@
 cd build-gcc
-find . -name libstdc++.la -exec rm {} \;
-make
-make install
+make clean-target-libstdc++-v3
+make all-target-libstdc++-v3
+make install-target-libstdc++-v3
