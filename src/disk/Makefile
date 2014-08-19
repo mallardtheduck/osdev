@@ -1,18 +1,22 @@
 import-files:=data/ctest.elx data/cpptest.elx
 
-all: btos.img
+all: ~/.mtoolsrc btos.img copy.always
 
-btos.img: data $(shell find data -type f) $(import-files)
+btos.img: 
 	if [ ! -e btos.img ] ; \
 	then \
-		qemu-img create btos.img 100M ; \
-		parted btos.img mklabel msdos ; \
-		parted btos.img mkpartfs primary fat16 1 100 ; \
+		gunzip -k btos.img.gz ; \
 	fi;
-	mcopy -i btos.img@@1M data/* ::/ -s -o
 
 data/ctest.elx: ../user/ctest/ctest.elx
 	cp ../user/ctest/ctest.elx data/ctest.elx
 
 data/cpptest.elx: ../user/cpptest/cpptest.elx
 	cp ../user/cpptest/cpptest.elx data/cpptest.elx
+
+~/.mtoolsrc:
+	echo "mtools_skip_check=1" > ~/.mtoolsrc
+
+copy.always: data $(shell find data -type f) $(import-files)
+	mcopy -i btos.img@@1M data/* ::/ -s -o
+
