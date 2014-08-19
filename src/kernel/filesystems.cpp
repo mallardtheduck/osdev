@@ -33,9 +33,7 @@ void fs_init(){
 	fs_registerfs(initfs_getdriver());
 	fs_registerfs(devfs_getdriver());
 	fs_mount("INIT", NULL, "INITFS");
-	printf("FS: Mounted INITFS on INIT:\n");
 	fs_mount("DEV", NULL, "DEVFS");
-	printf("FS: Mounted DEVFS on DEV:\n");
 	directory_entry root=fs_stat("INIT:");
 	if(!root.valid) panic("(FS) Cannot stat root of INIT:!\n");
 	dbgpf("FS: Root size: %i, type: 0x%x.\n", root.size, root.type);

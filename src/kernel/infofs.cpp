@@ -158,7 +158,6 @@ void infofs_init(){
 	if(!info_items) info_items=new map<string, info_function>();
 	fs_registerfs(infofs_driver);
 	fs_mount("INFO", NULL, "INFOFS");
-	printf("FS: Mounted INFOFS on INFO:\n");
 	infofs_register("VERSION", &info_kernel);
 	infofs_register("CPUID", &info_cpu);
 }
