@@ -49,7 +49,10 @@ void cd_command(vector<string> commandline){
 		cout << get_cwd() << endl;
 	}else{
 		string newpath=parse_path(commandline[1]);
-		if(newpath.length()) set_cwd(newpath);
+		directory_entry ent=bt_stat(newpath.c_str());
+		if(!ent.valid || ent.type != FS_Directory){
+			cout << "No such directory." << endl;
+		}else if(newpath.length()) set_cwd(newpath);
 	}
 }
 
