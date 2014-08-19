@@ -33,14 +33,14 @@ void display_command(vector<string> commandline){
 		cout << commandline[0] << " filename" << endl;
 
 	}
-	display_file(commandline[1]);
+	display_file(parse_path(commandline[1]));
 }
 
 void ls_command(vector<string> commandline){
 	if(commandline.size() < 2){
 		list_files(get_cwd());
 	}else{
-		list_files(commandline[1]);
+		list_files(parse_path(commandline[1]));
 	}
 }
 
@@ -48,7 +48,7 @@ void cd_command(vector<string> commandline){
 	if(commandline.size() < 2){
 		cout << get_cwd() << endl;
 	}else{
-		set_cwd(commandline[1]);
+		set_cwd(parse_path(commandline[1]));
 	}
 }
 
