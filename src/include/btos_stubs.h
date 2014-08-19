@@ -124,7 +124,7 @@ inline static size_t bt_getenv(const char *name, char *buffer, size_t size){
 	return btos_call(BT_GETENV, (uint32_t)name, (uint32_t)buffer, size);
 }
 
-inline static bool bt_setenv(const char *name, char *value, uint32_t flags){
+inline static bool bt_setenv(const char *name, const char *value, uint32_t flags){
 	return btos_call(BT_SETENV, (uint32_t)name, (uint32_t)value, flags);
 }
 
