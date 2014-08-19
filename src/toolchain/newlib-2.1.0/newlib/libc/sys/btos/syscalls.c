@@ -21,9 +21,6 @@ static int bt_filehandle_to_fileint(bt_filehandle h){
 
 static bt_filehandle fileint_to_bt_filehandle(int i){
 	if(i<num_specialhandles){
-		char buf[128];
-		sprintf(buf, "NEWLIB: Getting handle %i\n", i);
-		bt_zero(buf);
 		if(!specialhandles[1]){ //STDOUT
 			char stdout_path[255];
 			if(!bt_getenv("STDOUT", stdout_path, 200)){
@@ -108,7 +105,7 @@ int open(const char *name, int flags, ...){
 	if(flags & O_TRUNC) mode |= FS_Truncate;
 	bt_filehandle fh=bt_fopen(name, mode);
 	if(fh) return bt_filehandle_to_fileint(fh);
-	else return 0;
+	else return -1;
 }
 
 int read(int file, char *ptr, int len){
