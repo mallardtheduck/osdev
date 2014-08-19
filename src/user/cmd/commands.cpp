@@ -48,7 +48,8 @@ void cd_command(vector<string> commandline){
 	if(commandline.size() < 2){
 		cout << get_cwd() << endl;
 	}else{
-		set_cwd(parse_path(commandline[1]));
+		string newpath=parse_path(commandline[1]);
+		if(newpath.length()) set_cwd(newpath);
 	}
 }
 
