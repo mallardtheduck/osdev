@@ -1,4 +1,4 @@
-import-files:=data/ctest.elx data/cpptest.elx
+import-files:=data/ctest.elx data/cpptest.elx data/cmd.elx
 
 all: ~/.mtoolsrc btos.img copy.always
 
@@ -13,6 +13,9 @@ data/ctest.elx: ../user/ctest/ctest.elx
 
 data/cpptest.elx: ../user/cpptest/cpptest.elx
 	cp ../user/cpptest/cpptest.elx data/cpptest.elx
+
+data/cmd.elx: ../user/cmd/cmd.elx
+	cp ../user/cmd/cmd.elx data/cmd.elx
 
 ~/.mtoolsrc:
 	echo "mtools_skip_check=1" > ~/.mtoolsrc
