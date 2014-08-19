@@ -52,6 +52,14 @@ void cd_command(vector<string> commandline){
 	}
 }
 
+void path_command(vector<string> commandline){
+	if(commandline.size() < 2){
+		cout << get_cwd() << endl;
+	}else{
+		cout << parse_path(commandline[1]) << endl;
+	}
+}
+
 bool run_command(vector<string> commandline){
 	if(!commandline.size()) return true;
 	const string command=commandline[0];
@@ -63,6 +71,9 @@ bool run_command(vector<string> commandline){
       	return true;
     }else if(command=="cd"){
     	cd_command(commandline);
+    	return true;
+    }else if(command=="path"){
+    	path_command(commandline);
     	return true;
     }else if(command=="exit"){
 		return false;
