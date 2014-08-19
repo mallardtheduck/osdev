@@ -8,6 +8,11 @@ pushd newlib-2.1.0/newlib/libc/sys && \
 autoconf && \
 cd btos && \
 autoreconf && \
+i686-pc-btos-as crti.S -o crti.o && \
+i686-pc-btos-as crtn.S -o crtn.o && \
+cp crti.o $PREFIX/$TARGET/lib/ && \
+cp crtn.o $PREFIX/$TARGET/lib/ && \
+
 popd && \
 \
 cd $HOME/Projects/os/src && \

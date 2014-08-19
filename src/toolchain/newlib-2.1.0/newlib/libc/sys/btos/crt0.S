@@ -3,9 +3,9 @@
 .extern exit
 .extern get_argc
 .extern get_argv
-#.extern _init
+.extern _init
 _start:
-#call _init
+call _init
 call get_argv
 push %eax
 call get_argc

@@ -2,19 +2,25 @@ export PREFIX="$HOME/Projects/os/cross"
 export TARGET=i686-pc-btos
 export PATH="$PREFIX/bin:$PATH"
 
-rm binutils-2.23.tar.gz
 rm -rf binutils-2.23
-wget http://ftp.gnu.org/gnu/binutils/binutils-2.23.tar.gz && \
+if [ ! -f binutils-2.23.tar.gz ];
+then
+	wget http://ftp.gnu.org/gnu/binutils/binutils-2.23.tar.gz
+fi
 tar xvfz binutils-2.23.tar.gz
 
-rm gcc-4.8.1.tar.bz2
 rm -rf gcc-4.8.1
-wget http://ftp.gnu.org/gnu/gcc/gcc-4.8.1/gcc-4.8.1.tar.bz2 && \
+if [ ! -f gcc-4.8.1.tar.bz2 ];
+then
+	wget http://ftp.gnu.org/gnu/gcc/gcc-4.8.1/gcc-4.8.1.tar.bz2
+fi
 tar xvfj gcc-4.8.1.tar.bz2
 
-rm newlib-2.1.0.tar.gz
 rm -rf newlib-2.1.0
-wget ftp://sourceware.org/pub/newlib/newlib-2.1.0.tar.gz && \
+if [ ! -f newlib-2.1.0.tar.gz ];
+then
+	wget ftp://sourceware.org/pub/newlib/newlib-2.1.0.tar.gz
+fi
 tar xvfz newlib-2.1.0.tar.gz
 
 cp -Rv toolchain/* .  && \
@@ -48,6 +54,12 @@ make install-gcc && \
 make install-target-libgcc && \
 \
 cd $HOME/Projects/os/src
+pushd newlib-2.1.0/newlib/libc/sys/btos && \
+i686-pc-btos-as crti.S -o crti.o && \
+i686-pc-btos-as crtn.S -o crtn.o && \
+cp crti.o $PREFIX/$TARGET/lib/ && \
+cp crtn.o $PREFIX/$TARGET/lib/ && \
+popd
 rm -rf build-newlib
 mkdir build-newlib && \
 cd build-newlib && \
