@@ -8,6 +8,11 @@ using namespace std;
 int main(int argc, char **argv){
 	cout << "BT/OS Command prompt" << endl;
 	print_os_version();
-	get_input();
-	display_file("INFO:/ENV");
+	bool cont;
+	do{
+		string input=get_input();
+		vector<string> p=parse_input(input);
+		cont=run_command(p);
+	}while(cont);
+	return 0;
 }

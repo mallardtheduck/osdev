@@ -41,3 +41,7 @@ string get_prompt(){
 string get_cwd(){
 	return get_env(cwd_var, default_cwd);
 }
+
+void set_cwd(const string &value){
+	set_env(cwd_var, value);
+}
