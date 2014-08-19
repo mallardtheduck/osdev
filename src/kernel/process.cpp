@@ -81,6 +81,7 @@ void proc_init(){
 	proc_process kproc;
 	kproc.name="KERNEL";
 	kproc.pid=0;
+	curpid--;
 	kproc.parent=0;
 	kproc.pagedir=vmm_cur_pagedir;
 	proc_processes->add(kproc);
