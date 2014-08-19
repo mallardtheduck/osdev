@@ -1,23 +1,25 @@
-#include <stdlib.h>
 #include "../../../../../include/btos_stubs.h"
+
+#define ARGS_MAX 4096
+#define ARGC_MAX 512
+
+static char argsbuffer[ARGS_MAX]={0};
+static char *argsptr[ARGC_MAX]={0};
 
 size_t get_argc(){
 	return bt_get_argc();
 }
 
 char **get_argv(){
+	size_t bufferused=0;
 	size_t argc=get_argc();
-	char **ret=(char**)malloc((argc + 1) * sizeof(char*));
-	ret[argc]=NULL;
+	if(argc >  ARGC_MAX) argc=ARGC_MAX;
 	size_t i;
-	for(i=0; i<argc; ++i){
-		ret[i]=(char*)malloc(128);
-		size_t psize=bt_get_arg(i, ret[i], 128);
-		if(psize > 128){
-			free(ret[i]);
-			ret[i]=(char*)malloc(psize);
-			bt_get_arg(i, ret[i], psize);
-		}
+	for(i=0; i < argc; ++i){
+		if(bufferused >= ARGS_MAX) break;
+		size_t psize=bt_get_arg(i, &argsbuffer[bufferused], ARGS_MAX-bufferused);
+		argsptr[i]=&argsbuffer[bufferused];
+		bufferused+=psize+1;
 	}
-	return ret;
+	return argsptr;
 }
