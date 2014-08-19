@@ -64,8 +64,7 @@ void path_command(vector<string> commandline){
 	}
 }
 
-bool run_command(vector<string> commandline){
-	if(!commandline.size()) return true;
+bool run_builtin(vector<string> commandline){
 	const string command=commandline[0];
 	if(command=="cat"){
 		display_command(commandline);
@@ -79,9 +78,36 @@ bool run_command(vector<string> commandline){
     }else if(command=="path"){
     	path_command(commandline);
     	return true;
-    }else if(command=="exit"){
-		return false;
+    }
+    return false;
+}
+
+bool run_program(vector<string> commandline){
+	const string command=commandline[0];
+	string path=parse_path(command);
+	if(!command.length()) return false;
+	path+=".elx";
+	directory_entry ent=bt_stat(path.c_str());
+	if(ent.valid && ent.type == FS_File){
+		char **argv=new char*[commandline.size()];
+		size_t i=0;
+		for(string &s : commandline){
+			argv[i]=(char*)s.c_str();
+			++i;
+		}
+		bt_pid pid=bt_spawn(path.c_str(), commandline.size(), argv);
+		delete[] argv;
+		if(pid) bt_wait(pid);
+		return true;
 	}
+	return false;
+}
+
+bool run_command(vector<string> commandline){
+	if(!commandline.size()) return true;
+	if(run_builtin(commandline)) return true;
+	else if(run_program(commandline)) return true;
+	else if(commandline[0]=="exit") return false;
 	cout << "Unknown command." << endl;
 	return true;
 }
