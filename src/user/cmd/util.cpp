@@ -3,7 +3,7 @@
 using namespace std;
 
 const string default_prompt="[$p]";
-const string prompt_var="SHELL_PROMPT";
+const string prompt_var="PROMPT";
 const string cwd_var="CWD";
 const string default_cwd="INIT:/";
 
