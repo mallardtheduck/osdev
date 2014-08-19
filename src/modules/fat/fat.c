@@ -79,7 +79,7 @@ bool fat_unmount(void *mountdata){
 
 void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 	if(mounted && mountdata==fatmagic){
-		char spath[255];
+		char spath[255]={0};
 		char *modifiers;
 		fs_path_to_string(path, spath);
 		if(mode==FS_Read) modifiers="r";
@@ -116,7 +116,7 @@ int fat_ioctl(void *filedata, int fn, size_t bytes, char *buf){
 
 void *fat_open_dir(void *mountdata, fs_path *path, fs_mode_flags mode){
 	if(mounted && mountdata==fatmagic){
-		char spath[255];
+		char spath[255]={0};
 		fs_path_to_string(path, spath);
 		FL_DIR *dir=(FL_DIR*)malloc(sizeof(FL_DIR));
 		return (void*)fl_opendir(spath, dir);
@@ -155,7 +155,7 @@ size_t fat_dirseek(void *dirdata, int pos, bool relative){
 
 directory_entry fat_stat(void *mountdata, fs_path *path){
 	if(mounted && mountdata==fatmagic){
-		char spath[255];
+		char spath[255]={0};
 		fs_path_to_string(path, spath);
 		fs_item_types type=FS_Invalid;
 		void *flh=fl_fopen(spath, "r");
