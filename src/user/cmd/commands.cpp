@@ -99,6 +99,18 @@ void echo_command(vector<string> commandline){
 	}
 }
 
+void mkdir_command(vector<string> commandline){
+	if(commandline.size() < 2){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " filename" << endl;
+	}else{
+		string path=parse_path(commandline[1]);
+		bt_dirhandle dh=bt_dopen(path.c_str(), FS_Read | FS_Create);
+		if(dh) bt_dclose(dh);
+		else cout << "Could not create directory." << endl;
+	}
+}
+
 bool run_builtin(vector<string> commandline){
 	const string command=commandline[0];
 	if(command=="cat"){
@@ -115,11 +127,14 @@ bool run_builtin(vector<string> commandline){
     	return true;
     }else if(command=="touch"){
     	touch_command(commandline);
-    	return true;
+        return true;
     }else if(command=="echo"){
         echo_command(commandline);
 		return true;
-    }
+    }else if(command=="mkdir"){
+		mkdir_command(commandline);
+		return true;
+	}
     return false;
 }
 
