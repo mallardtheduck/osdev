@@ -1473,7 +1473,7 @@ int fl_remove( const char * filename )
 		_free_file(file);
 		return 0;
     }
-
+	fatfs_fat_purge(&_fs);
     FL_UNLOCK(&_fs);
 
     return res;
