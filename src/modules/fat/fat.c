@@ -84,7 +84,10 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		fs_path_to_string(path, spath);
 		if(mode==FS_Read) modifiers="r";
 		if(mode==FS_Write) modifiers="w";
+		if(mode==(FS_Write | FS_AtEnd | FS_Create)) modifiers="a";
 		if(mode==(FS_Read | FS_Write)) modifiers="r+";
+		if(mode==(FS_Write | FS_Truncate | FS_Create)) modifiers="w+";
+		if(mode==(FS_Write | FS_Read | FS_AtEnd | FS_Create)) modifiers="a+";
 		return fl_fopen(spath, modifiers);
 	} else return NULL;
 }
