@@ -55,7 +55,7 @@ int fat_device_write(uint32_t sector, uint8_t *buffer, uint32_t sector_count){
 	size_t writeaddr=sector*512;
     size_t writesize=sector_count*512;
     fseek(fh, writeaddr, false);
-    return fread(fh, writesize, (char*)buffer);
+    return fwrite(fh, writesize, (char*)buffer);
 }
 
 void *fat_mount(char *device){
@@ -84,8 +84,13 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		fs_path_to_string(path, spath);
 		if(mode==FS_Read) modifiers="r";
 		if(mode==FS_Write) modifiers="w";
+		if(mode==(FS_Write | FS_AtEnd | FS_Create)) modifiers="a";
 		if(mode==(FS_Read | FS_Write)) modifiers="r+";
-		return fl_fopen(spath, modifiers);
+		if(mode==(FS_Write | FS_Truncate | FS_Create)) modifiers="w+";
+		if(mode==(FS_Write | FS_Read | FS_AtEnd | FS_Create)) modifiers="a+";
+		void *flh=fl_fopen(spath, modifiers);
+		dbgpf("FAT: Opened %s.\n", ((FL_FILE*)flh)->filename);
+		return flh;
 	} else return NULL;
 }
 
@@ -119,7 +124,14 @@ void *fat_open_dir(void *mountdata, fs_path *path, fs_mode_flags mode){
 		char spath[255]={0};
 		fs_path_to_string(path, spath);
 		FL_DIR *dir=(FL_DIR*)malloc(sizeof(FL_DIR));
-		return (void*)fl_opendir(spath, dir);
+		void *ret=(void*)fl_opendir(spath, dir);
+		if(!ret && (mode & FS_Create)){
+			if(fl_createdirectory(spath)){
+				ret=(void*)fl_opendir(spath, dir);
+			}
+		}
+		if(!ret) free(dir);
+		return ret;
 	}else return NULL;
 }
 

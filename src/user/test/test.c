@@ -9,6 +9,8 @@ bt_filehandle stdout=0;
 char stdin_device[255]={'D', 'E', 'V', ':', '/'};
 bt_filehandle stdin=0;
 
+bool btos_path_parse(char *opath, char *bufffer, size_t size);
+
 void print_string(const char *s){
 	if(!stdout){
 		if(!bt_getenv("DISPLAY_DEVICE", &stdout_device[5], 250)) return;
@@ -135,6 +137,14 @@ void run_program(char *input){
 	if(pid) bt_wait(pid);
 }
 
+void path(char *input){
+	char buffer[BT_MAX_PATH]={0};
+	if(btos_path_parse(&input[2], buffer, BT_MAX_PATH)){
+		print_string(buffer);
+		print_string("\n");
+	}else print_string("Failed.\n");
+}
+
 int main(int argc, char **argv){
 	bt_zero("~~~Userspace test program start!~~~\n");
 	print_string("TEST Command Prompt!\n");
@@ -150,6 +160,7 @@ int main(int argc, char **argv){
 		else if(input[0]=='m') mount_test();
 		else if(input[0]=='v') version();
 		else if(input[0]=='r') run_program(input);
+		else if(input[0]=='p') path(input);
 		else if(input[0]=='q') break;
 		else {
 			if(strlen(input) && input[0]!='\n') print_string("Unrecognised command.\n");

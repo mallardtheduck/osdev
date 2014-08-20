@@ -8,6 +8,14 @@ static const char FS_DRIVE_SEPERATOR=':';
 #include <stdbool.h>
 #endif
 
+#ifdef __cplusplus
+static const size_t BT_MAX_PATH=1024;
+static const size_t BT_MAX_SEGLEN=256;
+#else
+#define BT_MAX_PATH 1024
+#define BT_MAX_SEGLEN 256
+#endif
+
 enum fs_item_types{
 	FS_File=0x00,
 	FS_Directory=0x01,

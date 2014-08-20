@@ -64,6 +64,53 @@ void path_command(vector<string> commandline){
 	}
 }
 
+void touch_command(vector<string> commandline){
+	if(commandline.size() < 2){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " filename" << endl;
+	}else{
+		string path=parse_path(commandline[1]);
+		if(path.length()){
+			FILE *fh=fopen(path.c_str(), "a");
+			if(fh) fclose(fh);
+			else cout << "Error opening file." << endl;
+		}else cout << "Invalid path." << endl;
+	}
+}
+
+void echo_command(vector<string> commandline){
+	if(commandline.size() < 2 || (commandline[1]=="-f" && commandline.size() < 3)){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " [-f filename] text" << endl;
+	}else{
+		ostream *out=&cout;
+		ofstream file;
+		size_t skip=1;
+		if(commandline[1]=="-f"){
+			file.open(commandline[2]);
+			out=&file;
+			skip+=2;
+		}
+		for(const string &s : commandline){
+			if(skip) skip--;
+			else *out << s << ' ';
+		}
+		*out << endl;
+	}
+}
+
+void mkdir_command(vector<string> commandline){
+	if(commandline.size() < 2){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " filename" << endl;
+	}else{
+		string path=parse_path(commandline[1]);
+		bt_dirhandle dh=bt_dopen(path.c_str(), FS_Read | FS_Create);
+		if(dh) bt_dclose(dh);
+		else cout << "Could not create directory." << endl;
+	}
+}
+
 bool run_builtin(vector<string> commandline){
 	const string command=commandline[0];
 	if(command=="cat"){
@@ -78,7 +125,16 @@ bool run_builtin(vector<string> commandline){
     }else if(command=="path"){
     	path_command(commandline);
     	return true;
-    }
+    }else if(command=="touch"){
+    	touch_command(commandline);
+        return true;
+    }else if(command=="echo"){
+        echo_command(commandline);
+		return true;
+    }else if(command=="mkdir"){
+		mkdir_command(commandline);
+		return true;
+	}
     return false;
 }
 
