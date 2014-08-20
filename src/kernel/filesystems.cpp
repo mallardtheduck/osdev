@@ -185,11 +185,13 @@ file_handle fs_open(char *path, fs_mode_flags mode){
 	file_handle ret;
 	char *fspath=getfspath(path);
 	if(!fspath){
+		dbgout("FS: Invalid path.\n");
 		ret.valid=false;
 		return ret;
 	}
 	fs_mountpoint &mount=getpathmount(path);
 	if(!mount.valid){
+		dbgout("FS: Invalid mount.\n");
 		ret.valid=false;
 		return ret;
 	}
