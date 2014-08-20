@@ -47,9 +47,11 @@ void fs_init(){
 	infofs_register("MOUNTS", &fs_mounts_infofs);
 }
 
-fs_path *new_fs_path(const string &path){
+fs_path *new_fs_path(const string &path, bool toupper=true){
 	//dbgpf("FS: path:'%s'\n", path.c_str());
-	string upath=to_upper(path);
+	string upath;
+	if(toupper) upath=to_upper(path);
+	else upath=path;
 	string current_str="";
 	fs_path *head=NULL;
 	fs_path *current_node=NULL;
