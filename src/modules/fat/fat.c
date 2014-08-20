@@ -13,6 +13,14 @@ file_handle *fh;
 void *fatmagic=(void*)0xFA7F5;
 bool mounted=false;
 
+struct fat_file_handle{
+	void *flh;
+	fs_mode_flags mode;
+	char path[BT_MAX_PATH];
+};
+
+typedef struct fat_file_handle fat_file_handle;
+
 int strncmp(const char* s1, const char* s2, size_t n)
 {
     while(n--)
@@ -79,9 +87,13 @@ bool fat_unmount(void *mountdata){
 
 void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 	if(mounted && mountdata==fatmagic){
-		char spath[255]={0};
+		fat_file_handle *ret=malloc(sizeof(fat_file_handle));
+		ret->mode=mode;
+		mode=mode & ~(FS_Delete | FS_Exclude);
+		char spath[BT_MAX_PATH]={0};
 		char *modifiers;
 		fs_path_to_string(path, spath);
+		strncpy(ret->path, spath, BT_MAX_PATH);
 		if(mode==FS_Read) modifiers="r";
 		if(mode==FS_Write) modifiers="w";
 		if(mode==(FS_Write | FS_AtEnd | FS_Create)) modifiers="a";
@@ -89,30 +101,48 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		if(mode==(FS_Write | FS_Truncate | FS_Create)) modifiers="w+";
 		if(mode==(FS_Write | FS_Read | FS_AtEnd | FS_Create)) modifiers="a+";
 		void *flh=fl_fopen(spath, modifiers);
+		if(flh)	ret->flh=flh;
+		else{
+			free(ret);
+			return NULL;
+		}
 		dbgpf("FAT: Opened %s.\n", ((FL_FILE*)flh)->filename);
-		return flh;
+		return ret;
 	} else return NULL;
 }
 
 bool fat_close(void *filedata){
-	fl_fclose(filedata);
+	fat_file_handle *fd=(fat_file_handle*)filedata;
+	if(!fd) return false;
+	fl_fclose(fd->flh);
+	if(fd->mode & FS_Delete){
+		fl_remove(fd->path);
+	}
+	free(fd);
 	return true;
 }
 
 size_t fat_read(void *filedata, size_t bytes, char *buf){
-	int ret=fl_fread(buf, bytes, 1, filedata);
+	fat_file_handle *fd=(fat_file_handle*)filedata;
+	if(!fd) return 0;
+	int ret=fl_fread(buf, bytes, 1, fd->flh);
 	return (ret>=0)?ret:0;
 }
 
 size_t fat_write(void *filedata, size_t bytes, char *buf){
-	int ret=fl_fwrite(buf, bytes, 1, filedata);
+	fat_file_handle *fd=(fat_file_handle*)filedata;
+	if(!fd) return 0;
+	int ret=fl_fwrite(buf, bytes, 1, fd->flh);
 	return (ret>=0)?ret:0;
 }
 
 size_t fat_seek(void *filedata, int pos, bool relative){
+	fat_file_handle *fd=(fat_file_handle*)filedata;
+	if(!fd) return 0;
 	int origin=SEEK_SET;
 	if(relative) origin=SEEK_CUR;
-	return fl_fseek(filedata, pos, origin);
+	fl_fseek(fd->flh, pos, origin);
+	return fl_ftell(fd->flh);
 }
 
 int fat_ioctl(void *filedata, int fn, size_t bytes, char *buf){
