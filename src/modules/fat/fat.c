@@ -124,7 +124,14 @@ void *fat_open_dir(void *mountdata, fs_path *path, fs_mode_flags mode){
 		char spath[255]={0};
 		fs_path_to_string(path, spath);
 		FL_DIR *dir=(FL_DIR*)malloc(sizeof(FL_DIR));
-		return (void*)fl_opendir(spath, dir);
+		void *ret=(void*)fl_opendir(spath, dir);
+		if(!ret && (mode & FS_Create)){
+			if(fl_createdirectory(spath)){
+				ret=(void*)fl_opendir(spath, dir);
+			}
+		}
+		if(!ret) free(dir);
+		return ret;
 	}else return NULL;
 }
 
