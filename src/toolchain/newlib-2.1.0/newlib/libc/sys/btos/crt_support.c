@@ -43,6 +43,7 @@ bool btos_path_parse(char *opath, char *buffer, size_t size){
 		strncpy(path, opath, BT_MAX_PATH);
 	}else{
 		bt_getenv("CWD", path, BT_MAX_PATH);
+		strncpy(&path[strlen(path)], "/", BT_MAX_PATH-strlen(path));
 		strncpy(&path[strlen(path)], opath, BT_MAX_PATH-strlen(path));
 	}
 	char *c;
