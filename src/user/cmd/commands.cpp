@@ -64,6 +64,20 @@ void path_command(vector<string> commandline){
 	}
 }
 
+void touch_command(vector<string> commandline){
+	if(commandline.size() < 2){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " filename" << endl;
+
+	}
+	string path=parse_path(commandline[1]);
+	if(path.length()){
+		FILE *fh=fopen(path.c_str(), "a");
+		if(fh) fclose(fh);
+		else cout << "Error opening file." << endl;
+	}else cout << "Invalid path." << endl;
+}
+
 bool run_builtin(vector<string> commandline){
 	const string command=commandline[0];
 	if(command=="cat"){
@@ -77,6 +91,9 @@ bool run_builtin(vector<string> commandline){
     	return true;
     }else if(command=="path"){
     	path_command(commandline);
+    	return true;
+    }else if(command=="touch"){
+    	touch_command(commandline);
     	return true;
     }
     return false;
