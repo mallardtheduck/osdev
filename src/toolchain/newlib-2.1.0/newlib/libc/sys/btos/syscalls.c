@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include "../../../../../include/btos_stubs.h"
 
+bool btos_path_parse(char *opath, char *buffer, size_t size);
+
 char *__env[1] = { 0 };
 char **environ = __env;
 
@@ -103,9 +105,12 @@ int open(const char *name, int flags, ...){
     if(flags & O_CREAT) mode |= FS_Create;
     if(flags & O_EXCL) mode |= FS_Exclude;
 	if(flags & O_TRUNC) mode |= FS_Truncate;
-	bt_filehandle fh=bt_fopen(name, mode);
-	if(fh) return bt_filehandle_to_fileint(fh);
-	else return -1;
+	char path[BT_MAX_PATH]={0};
+	if(btos_path_parse(name, path, BT_MAX_PATH)){
+		bt_filehandle fh=bt_fopen(path, mode);
+		if(fh) return bt_filehandle_to_fileint(fh);
+		else return -1;
+	}else return -1;
 }
 
 int read(int file, char *ptr, int len){
