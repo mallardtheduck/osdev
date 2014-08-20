@@ -21,7 +21,13 @@ void list_files(const string &path){
 	if(!dir) return;
 	directory_entry entry=bt_dread(dir);
 	while(entry.valid){
-		cout << entry.filename << '\t' << entry.size << endl;
+		if(entry.type==FS_Directory){
+			cout << '[' << entry.filename << ']' << '\t' << entry.size << endl;
+		}else if(entry.type==FS_Device){
+			cout << '{' << entry.filename << '}' << '\t' << entry.size << endl;
+		}else{
+			cout << entry.filename << '\t' << entry.size << endl;
+		}
 		entry=bt_dread(dir);
 	}
 	bt_dclose(dir);
@@ -123,6 +129,18 @@ void del_command(vector<string> commandline){
 	}
 }
 
+void rmdir_command(vector<string> commandline){
+	if(commandline.size() < 2){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " dirname" << endl;
+	}else{
+		string path=parse_path(commandline[1]);
+		bt_filehandle dh=bt_dopen(path.c_str(), FS_Read | FS_Delete);
+		if(dh) bt_dclose(dh);
+		else cout << "Could not remove directory." << endl;
+	}
+}
+
 bool run_builtin(vector<string> commandline){
 	const string command=commandline[0];
 	if(command=="cat"){
@@ -148,6 +166,9 @@ bool run_builtin(vector<string> commandline){
 		return true;
 	}else if(command=="del"){
 		del_command(commandline);
+		return true;
+	}else if(command=="rmdir"){
+		rmdir_command(commandline);
 		return true;
 	}
     return false;
