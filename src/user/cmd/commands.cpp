@@ -68,14 +68,35 @@ void touch_command(vector<string> commandline){
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
-
+	}else{
+		string path=parse_path(commandline[1]);
+		if(path.length()){
+			FILE *fh=fopen(path.c_str(), "a");
+			if(fh) fclose(fh);
+			else cout << "Error opening file." << endl;
+		}else cout << "Invalid path." << endl;
 	}
-	string path=parse_path(commandline[1]);
-	if(path.length()){
-		FILE *fh=fopen(path.c_str(), "a");
-		if(fh) fclose(fh);
-		else cout << "Error opening file." << endl;
-	}else cout << "Invalid path." << endl;
+}
+
+void echo_command(vector<string> commandline){
+	if(commandline.size() < 2 || (commandline[1]=="-f" && commandline.size() < 3)){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " [-f filename] text" << endl;
+	}else{
+		ostream *out=&cout;
+		ofstream file;
+		size_t skip=1;
+		if(commandline[1]=="-f"){
+			file.open(commandline[2]);
+			out=&file;
+			skip+=2;
+		}
+		for(const string &s : commandline){
+			if(skip) skip--;
+			else *out << s << ' ';
+		}
+		*out << endl;
+	}
 }
 
 bool run_builtin(vector<string> commandline){
@@ -95,6 +116,9 @@ bool run_builtin(vector<string> commandline){
     }else if(command=="touch"){
     	touch_command(commandline);
     	return true;
+    }else if(command=="echo"){
+        echo_command(commandline);
+		return true;
     }
     return false;
 }
