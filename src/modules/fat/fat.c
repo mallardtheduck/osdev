@@ -55,7 +55,7 @@ int fat_device_write(uint32_t sector, uint8_t *buffer, uint32_t sector_count){
 	size_t writeaddr=sector*512;
     size_t writesize=sector_count*512;
     fseek(fh, writeaddr, false);
-    return fread(fh, writesize, (char*)buffer);
+    return fwrite(fh, writesize, (char*)buffer);
 }
 
 void *fat_mount(char *device){
@@ -88,7 +88,9 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		if(mode==(FS_Read | FS_Write)) modifiers="r+";
 		if(mode==(FS_Write | FS_Truncate | FS_Create)) modifiers="w+";
 		if(mode==(FS_Write | FS_Read | FS_AtEnd | FS_Create)) modifiers="a+";
-		return fl_fopen(spath, modifiers);
+		void *flh=fl_fopen(spath, modifiers);
+		dbgpf("FAT: Opened %s.\n", ((FL_FILE*)flh)->filename);
+		return flh;
 	} else return NULL;
 }
 
