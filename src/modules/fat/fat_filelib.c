@@ -1418,23 +1418,60 @@ int fl_remove( const char * filename )
 
     FL_LOCK(&_fs);
 
-    // Use read_file as this will check if the file is already open!
-    file = fl_fopen((char*)filename, "r");
-    if (file)
-    {
-        // Delete allocated space
-        if (fatfs_free_cluster_chain(&_fs, file->startcluster))
-        {
-            // Remove directory entries
-            if (fatfs_mark_file_deleted(&_fs, file->parentcluster, (char*)file->shortfilename))
-            {
-                // Close the file handle (this should not write anything to the file
-                // as we have not changed the file since opening it!)
-                fl_fclose(file);
+	if(!fl_is_dir(filename)){
+		// Use read_file as this will check if the file is already open!
+		file = fl_fopen((char*)filename, "r");
+		if (file)
+		{
+			// Delete allocated space
+			if (fatfs_free_cluster_chain(&_fs, file->startcluster))
+			{
+				// Remove directory entries
+				if (fatfs_mark_file_deleted(&_fs, file->parentcluster, (char*)file->shortfilename))
+				{
+					// Close the file handle (this should not write anything to the file
+					// as we have not changed the file since opening it!)
+					fl_fclose(file);
 
-                res = 0;
-            }
-        }
+					res = 0;
+				}
+			}
+		}
+    }else{
+		//TODO: Check directory is empty!
+		// Allocate a new file handle
+		file = _allocate_file();
+		if (!file)
+			return 0;
+
+		// Split full path into filename and directory path
+		if (fatfs_split_path((char*)filename, file->path, sizeof(file->path), file->filename, sizeof(file->filename)) == -1)
+		{
+			_free_file(file);
+			return 0;
+		}
+
+		char shortFilename[FAT_SFN_SIZE_FULL] = {0};
+
+		// Find parent directory start cluster
+		if (file->path[0] == 0) file->parentcluster = fatfs_get_root_cluster(&_fs);
+		else if (!_open_directory((char*)file->path, &file->parentcluster))
+		{
+			_free_file(file);
+			return 0;
+		}
+
+		fatfs_lfn_create_sfn(shortFilename, (char*)file->filename);
+		dbgpf("FAT: SFN: %s\n", shortFilename);
+
+		if (fatfs_free_cluster_chain(&_fs, file->startcluster)){
+			if (fatfs_mark_file_deleted(&_fs, file->parentcluster, shortFilename)){
+				_free_file(file);
+				return 1;
+			}
+		}
+		_free_file(file);
+		return 0;
     }
 
     FL_UNLOCK(&_fs);

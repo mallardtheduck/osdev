@@ -21,6 +21,14 @@ struct fat_file_handle{
 
 typedef struct fat_file_handle fat_file_handle;
 
+struct fat_dir_handle{
+	FL_DIR *fld;
+	fs_mode_flags mode;
+	char path[BT_MAX_PATH];
+};
+
+typedef struct fat_dir_handle fat_dir_handle;
+
 int strncmp(const char* s1, const char* s2, size_t n)
 {
     while(n--)
@@ -151,33 +159,48 @@ int fat_ioctl(void *filedata, int fn, size_t bytes, char *buf){
 
 void *fat_open_dir(void *mountdata, fs_path *path, fs_mode_flags mode){
 	if(mounted && mountdata==fatmagic){
-		char spath[255]={0};
+		char spath[BT_MAX_PATH]={0};
 		fs_path_to_string(path, spath);
-		FL_DIR *dir=(FL_DIR*)malloc(sizeof(FL_DIR));
-		void *ret=(void*)fl_opendir(spath, dir);
-		if(!ret && (mode & FS_Create)){
+		fat_dir_handle *ret=malloc(sizeof(fat_dir_handle));
+		ret->mode=mode;
+		strncpy(ret->path, spath, BT_MAX_PATH);
+		ret->fld=(FL_DIR*)malloc(sizeof(FL_DIR));
+		void *res=(void*)fl_opendir(spath, ret->fld);
+		if(!res && (mode & FS_Create)){
 			if(fl_createdirectory(spath)){
-				ret=(void*)fl_opendir(spath, dir);
+				res=(void*)fl_opendir(spath, ret->fld);
 			}
 		}
-		if(!ret) free(dir);
+		if(!res){
+			free(ret->fld);
+			free(ret);
+			return NULL;
+		}
 		return ret;
 	}else return NULL;
 }
 
 bool fat_close_dir(void *dirdata){
-	if(dirdata){
-		fl_closedir((FL_DIR*)dirdata);
-		free(dirdata);
+	fat_dir_handle *dir=(fat_dir_handle*)dirdata;
+	if(dir){
+		fl_closedir(dir->fld);
+		if(dir->mode & FS_Delete){
+			void *fd=fl_fopen(dir->path, "a");
+			fl_fclose(fd);
+			fl_remove(dir->path);
+		}
+		free(dir->fld);
+		free(dir);
 		return true;
 	} else return false;
 }
 
 directory_entry fat_read_dir(void *dirdata){
-	if(dirdata){
+	fat_dir_handle *dir=(fat_dir_handle*)dirdata;
+	if(dir){
 		directory_entry ret;
 		fl_dirent ent;
-		if(!fl_readdir((FL_DIR*)dirdata, &ent)){
+		if(!fl_readdir(dir->fld, &ent)){
 			ret.valid=true;
 			strncpy(ret.filename, ent.filename, 255);
 			ret.type=(ent.is_dir)?FS_Directory:FS_File;
