@@ -187,7 +187,8 @@ bool fat_close_dir(void *dirdata){
 		if(dir->mode & FS_Delete){
 			void *fd=fl_fopen(dir->path, "a");
 			fl_fclose(fd);
-			fl_remove(dir->path);
+			int r=fl_remove(dir->path);
+			dbgpf("FAT: Directory delete: %i\n", r);
 		}
 		free(dir->fld);
 		free(dir);
