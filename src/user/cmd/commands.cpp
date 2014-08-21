@@ -1,8 +1,11 @@
 #include "cmd.hpp"
 #include <fstream>
 #include <iostream>
+#include <unordered_map>
 
 using namespace std;
+
+typedef void (*command_fn)(vector<string>);
 
 void print_os_version(){
 	display_file("INFO:/VERSION");
@@ -173,41 +176,38 @@ void move_command(vector<string> commandline){
 	}
 }
 
+unordered_map<string, command_fn> builtin_commands={
+	{"ls", &ls_command},
+	{"dir", &ls_command},
+	{"cat", &display_command},
+	{"type", &display_command},
+	{"cd", &cd_command},
+	{"chdir", &cd_command},
+	{"path", &path_command},
+	{"realpath", &path_command},
+	{"touch", &touch_command},
+	{"create", &touch_command},
+	{"echo", &echo_command},
+	{"print", &echo_command},
+	{"mkdir", &mkdir_command},
+	{"md", &mkdir_command},
+	{"del", &del_command},
+	{"delete", &del_command},
+	{"erase", &del_command},
+	{"rm", &del_command},
+	{"rmdir", &rmdir_command},
+	{"rd", &rmdir_command},
+	{"copy", &copy_command},
+	{"cp", &copy_command},
+	{"move", &move_command},
+	{"mv", &move_command},
+};
+
 bool run_builtin(vector<string> commandline){
 	const string command=commandline[0];
-	if(command=="cat"){
-		display_command(commandline);
+	if(builtin_commands.find(command)!=builtin_commands.end()){
+		builtin_commands[command](commandline);
 		return true;
-	}else if(command=="ls"){
-      	ls_command(commandline);
-      	return true;
-    }else if(command=="cd"){
-    	cd_command(commandline);
-    	return true;
-    }else if(command=="path"){
-    	path_command(commandline);
-    	return true;
-    }else if(command=="touch"){
-    	touch_command(commandline);
-        return true;
-    }else if(command=="echo"){
-        echo_command(commandline);
-		return true;
-    }else if(command=="mkdir"){
-		mkdir_command(commandline);
-		return true;
-	}else if(command=="del"){
-		del_command(commandline);
-		return true;
-	}else if(command=="rmdir"){
-		rmdir_command(commandline);
-		return true;
-	}else if(command=="copy"){
-        copy_command(commandline);
-        return true;
-    }else if(command=="move"){
-         move_command(commandline);
-         return true;
      }
     return false;
 }
