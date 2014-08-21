@@ -6,7 +6,7 @@ char dbgbuf[256];
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-lock fat_lock;
+lock fat_lock, super_lock;
 int fat_lockcount=0;
 char devicepath[256];
 file_handle *fh;
@@ -51,13 +51,28 @@ void fs_path_to_string(fs_path *path, char *buf){
 }
 
 void take_fat_lock(){
-	if(!fat_lockcount) take_lock(&fat_lock);
-	fat_lockcount++;
+	take_lock(&super_lock);
+	if(fat_lock==thread_id() || !fat_lockcount){
+		if(!fat_lockcount) take_lock(&fat_lock);
+		fat_lockcount++;
+	}else{
+		release_lock(&super_lock);
+		take_lock(&fat_lock);
+		take_lock(&super_lock);
+        fat_lockcount++;
+	}
+	release_lock(&super_lock);
 }
 
 void release_fat_lock(){
-	fat_lockcount--;
-	if(!fat_lockcount) release_lock(&fat_lock);
+	take_lock(&super_lock);
+	if(fat_lock==thread_id()){
+		fat_lockcount--;
+		if(!fat_lockcount) release_lock(&fat_lock);
+	}else{
+		panic("(FAT) Lock being released by wrong thread!");
+	}
+	release_lock(&super_lock);
 }
 
 int fat_device_read(uint32_t sector, uint8_t *buffer, uint32_t sector_count){
@@ -248,6 +263,7 @@ fs_driver fat_driver={true, "FAT", true,
 int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
 	init_lock(&fat_lock);
+	init_lock(&super_lock);
 	add_filesystem(&fat_driver);
     return 0;
 }
