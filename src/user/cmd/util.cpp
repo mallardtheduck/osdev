@@ -1,4 +1,5 @@
 #include "cmd.hpp"
+#include <algorithm>
 
 using namespace std;
 
@@ -44,4 +45,10 @@ string get_cwd(){
 
 void set_cwd(const string &value){
 	set_env(cwd_var, value);
+}
+
+string to_lower(const string &str){
+	string ret(str);
+	std::transform(str.begin(), str.end(), ret.begin(), ::tolower);
+	return ret;
 }

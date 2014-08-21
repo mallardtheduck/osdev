@@ -204,7 +204,7 @@ unordered_map<string, command_fn> builtin_commands={
 };
 
 bool run_builtin(vector<string> commandline){
-	const string command=commandline[0];
+	const string command=to_lower(commandline[0]);
 	if(builtin_commands.find(command)!=builtin_commands.end()){
 		builtin_commands[command](commandline);
 		return true;
@@ -213,7 +213,7 @@ bool run_builtin(vector<string> commandline){
 }
 
 bool run_program(vector<string> commandline){
-	const string command=commandline[0];
+	const string command=to_lower(commandline[0]);
 	string path=parse_path(command);
 	if(!command.length()) return false;
 	path+=".elx";
