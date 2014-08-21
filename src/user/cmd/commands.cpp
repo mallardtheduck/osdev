@@ -163,6 +163,16 @@ void copy_command(vector<string> commandline){
 	}
 }
 
+void move_command(vector<string> commandline){
+	if(commandline.size() < 3){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " from to" << endl;
+	}else{
+		copy_command(commandline);
+		del_command(commandline);
+	}
+}
+
 bool run_builtin(vector<string> commandline){
 	const string command=commandline[0];
 	if(command=="cat"){
@@ -195,7 +205,10 @@ bool run_builtin(vector<string> commandline){
 	}else if(command=="copy"){
         copy_command(commandline);
         return true;
-    }
+    }else if(command=="move"){
+         move_command(commandline);
+         return true;
+     }
     return false;
 }
 
