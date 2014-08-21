@@ -15,7 +15,7 @@ std::string prompt_string();
 std::string get_input();
 void display_file(const std::string &path);
 std::vector<std::string> parse_input(const std::string &input);
-bool run_command(std::vector<std::string> commandline);
+bool run_command(const std::vector<std::string> &commandline);
 std::string parse_path(std::string path);
 std::string to_lower(const std::string &str);
 bool is_directory(const std::string &path);

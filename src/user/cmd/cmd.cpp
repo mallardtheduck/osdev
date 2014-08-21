@@ -6,7 +6,7 @@
 using namespace std;
 
 int main(int argc, char **argv){
-	cout << "BT/OS Command prompt" << endl;
+	cout << "BT/OS CMD" << endl;
 	print_os_version();
 	bool cont;
 	do{

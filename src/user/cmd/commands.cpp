@@ -5,7 +5,7 @@
 
 using namespace std;
 
-typedef void (*command_fn)(vector<string>);
+typedef void (*command_fn)(const vector<string>&);
 
 void print_os_version(){
 	display_file("INFO:/VERSION");
@@ -36,7 +36,7 @@ void list_files(const string &path){
 	bt_dclose(dir);
 }
 
-void display_command(vector<string> commandline){
+void display_command(const vector<string> &commandline){
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
@@ -45,7 +45,7 @@ void display_command(vector<string> commandline){
 	display_file(parse_path(commandline[1]));
 }
 
-void ls_command(vector<string> commandline){
+void ls_command(const vector<string> &commandline){
 	if(commandline.size() < 2){
 		list_files(get_cwd());
 	}else{
@@ -53,7 +53,7 @@ void ls_command(vector<string> commandline){
 	}
 }
 
-void cd_command(vector<string> commandline){
+void cd_command(const vector<string> &commandline){
 	if(commandline.size() < 2){
 		cout << get_cwd() << endl;
 	}else{
@@ -65,7 +65,7 @@ void cd_command(vector<string> commandline){
 	}
 }
 
-void path_command(vector<string> commandline){
+void path_command(const vector<string> &commandline){
 	if(commandline.size() < 2){
 		cout << get_cwd() << endl;
 	}else{
@@ -73,7 +73,7 @@ void path_command(vector<string> commandline){
 	}
 }
 
-void touch_command(vector<string> commandline){
+void touch_command(const vector<string> &commandline){
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
@@ -87,7 +87,7 @@ void touch_command(vector<string> commandline){
 	}
 }
 
-void echo_command(vector<string> commandline){
+void echo_command(const vector<string> &commandline){
 	if(commandline.size() < 2 || (commandline[1]=="-f" && commandline.size() < 3)){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " [-f filename] text" << endl;
@@ -108,7 +108,7 @@ void echo_command(vector<string> commandline){
 	}
 }
 
-void mkdir_command(vector<string> commandline){
+void mkdir_command(const vector<string> &commandline){
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " dirname" << endl;
@@ -120,7 +120,7 @@ void mkdir_command(vector<string> commandline){
 	}
 }
 
-void del_command(vector<string> commandline){
+void del_command(const vector<string> &commandline){
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
@@ -132,7 +132,7 @@ void del_command(vector<string> commandline){
 	}
 }
 
-void rmdir_command(vector<string> commandline){
+void rmdir_command(const vector<string> &commandline){
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " dirname" << endl;
@@ -149,7 +149,7 @@ void rmdir_command(vector<string> commandline){
 	}
 }
 
-void copy_command(vector<string> commandline){
+void copy_command(const vector<string> &commandline){
 	if(commandline.size() < 3){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " from to" << endl;
@@ -178,7 +178,7 @@ void copy_command(vector<string> commandline){
 	}
 }
 
-void move_command(vector<string> commandline){
+void move_command(const vector<string> &commandline){
 	if(commandline.size() < 3){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " from to" << endl;
@@ -186,6 +186,11 @@ void move_command(vector<string> commandline){
 		copy_command(commandline);
 		del_command(commandline);
 	}
+}
+
+void ver_command(const vector<string>&){
+	cout << "BT/OS CMD" << endl;
+	print_os_version();
 }
 
 unordered_map<string, command_fn> builtin_commands={
@@ -213,9 +218,10 @@ unordered_map<string, command_fn> builtin_commands={
 	{"cp", &copy_command},
 	{"move", &move_command},
 	{"mv", &move_command},
+	{"ver", &ver_command},
 };
 
-bool run_builtin(vector<string> commandline){
+bool run_builtin(const vector<string> &commandline){
 	const string command=to_lower(commandline[0]);
 	if(builtin_commands.find(command)!=builtin_commands.end()){
 		builtin_commands[command](commandline);
@@ -224,7 +230,7 @@ bool run_builtin(vector<string> commandline){
     return false;
 }
 
-bool run_program(vector<string> commandline){
+bool run_program(const vector<string> &commandline){
 	const string command=to_lower(commandline[0]);
 	string path=parse_path(command);
 	if(!command.length()) return false;
@@ -233,7 +239,7 @@ bool run_program(vector<string> commandline){
 	if(ent.valid && ent.type == FS_File){
 		char **argv=new char*[commandline.size()];
 		size_t i=0;
-		for(string &s : commandline){
+		for(const string &s : commandline){
 			argv[i]=(char*)s.c_str();
 			++i;
 		}
@@ -245,7 +251,7 @@ bool run_program(vector<string> commandline){
 	return false;
 }
 
-bool run_command(vector<string> commandline){
+bool run_command(const vector<string> &commandline){
 	if(!commandline.size()) return true;
 	if(run_builtin(commandline)) return true;
 	else if(run_program(commandline)) return true;
