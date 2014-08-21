@@ -1461,8 +1461,6 @@ int fl_remove( const char * filename )
 			return -3;
 		}
 
-		char shortFilename[FAT_SFN_SIZE_FULL] = {0};
-
 		// Find parent directory start cluster
 		if (file->path[0] == 0) file->parentcluster = fatfs_get_root_cluster(&_fs);
 		else if (!_open_directory((char*)file->path, &file->parentcluster))
@@ -1471,17 +1469,21 @@ int fl_remove( const char * filename )
 			return -4;
 		}
 
-		fatfs_lfn_create_sfn(shortFilename, (char*)file->filename);
+		struct fat_dir_entry sfEntry;
+		if(fatfs_get_file_entry(&_fs, file->parentcluster, file->filename, &sfEntry))
+		memcpy((char*)file->shortfilename, (char*)sfEntry.Name, 11);
 
 		if (fatfs_free_cluster_chain(&_fs, file->startcluster)){
-			if (fatfs_mark_file_deleted(&_fs, file->parentcluster, shortFilename)){
+			if (fatfs_mark_file_deleted(&_fs, file->parentcluster, (char*)file->shortfilename)){
 				_free_file(file);
 				fatfs_fat_purge(&_fs);
 				return 0;
 			}
+			_free_file(file);
+            return -5;
 		}
 		_free_file(file);
-		return -5;
+		return -6;
     }
 
     FL_UNLOCK(&_fs);
