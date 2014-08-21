@@ -140,7 +140,12 @@ void rmdir_command(vector<string> commandline){
 		string path=parse_path(commandline[1]);
 		bt_filehandle dh=bt_dopen(path.c_str(), FS_Read | FS_Delete);
 		if(dh) bt_dclose(dh);
-		else cout << "Could not remove directory." << endl;
+		else cout << "Could not open directory." << endl;
+		dh=bt_dopen(path.c_str(), FS_Read);
+        if(dh){
+            cout << "Could not remove directory." << endl;
+            bt_dclose(dh);
+        }
 	}
 }
 
