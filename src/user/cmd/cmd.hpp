@@ -17,5 +17,6 @@ void display_file(const std::string &path);
 std::vector<std::string> parse_input(const std::string &input);
 bool run_command(std::vector<std::string> commandline);
 std::string parse_path(std::string path);
+std::string to_lower(const std::string &str);
 
 #endif

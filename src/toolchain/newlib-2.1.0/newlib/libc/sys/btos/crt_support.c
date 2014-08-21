@@ -37,14 +37,31 @@ bool btos_path_is_absolute(char *path){
 	return false;
 }
 
+size_t btos_get_drive_end(char *path){
+	size_t i;
+	for(i=0; i<strlen(path); ++i){
+		if(path[i]==':') return i;
+	}
+	return 0;
+}
+
 bool btos_path_parse(char *opath, char *buffer, size_t size){
 	char path[BT_MAX_PATH]={0};
 	if(btos_path_is_absolute(opath)){
 		strncpy(path, opath, BT_MAX_PATH);
 	}else{
-		bt_getenv("CWD", path, BT_MAX_PATH);
-		strncpy(&path[strlen(path)], "/", BT_MAX_PATH-strlen(path));
-		strncpy(&path[strlen(path)], opath, BT_MAX_PATH-strlen(path));
+		if(opath[0]=='/'){
+			char cwd[BT_MAX_PATH];
+			bt_getenv("CWD", cwd, BT_MAX_PATH);
+			size_t drive_end=btos_get_drive_end(cwd);
+			strncpy(path, cwd, drive_end);
+			strncpy(&path[strlen(path)], ":", BT_MAX_PATH-strlen(path));
+			strncpy(&path[strlen(path)], opath, BT_MAX_PATH-strlen(path));
+		}else{
+			bt_getenv("CWD", path, BT_MAX_PATH);
+			strncpy(&path[strlen(path)], "/", BT_MAX_PATH-strlen(path));
+			strncpy(&path[strlen(path)], opath, BT_MAX_PATH-strlen(path));
+		}
 	}
 	char *c;
 	bool has_drive=false;

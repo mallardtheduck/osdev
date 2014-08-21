@@ -1438,40 +1438,53 @@ int fl_remove( const char * filename )
 			}
 		}
     }else{
-		//TODO: Check directory is empty!
+		FL_DIR dir;
 		// Allocate a new file handle
 		file = _allocate_file();
 		if (!file)
-			return 0;
+			return -1;
+
+		//check directory is empty
+		fl_opendir(filename, &dir);
+		file->startcluster=dir.cluster;
+		fl_dirent ent;
+		if(!fl_readdir(&dir, &ent)){
+			fl_closedir(&dir);
+			_free_file(file);
+			return -2;
+		}
+		fl_closedir(&dir);
 
 		// Split full path into filename and directory path
 		if (fatfs_split_path((char*)filename, file->path, sizeof(file->path), file->filename, sizeof(file->filename)) == -1)
 		{
 			_free_file(file);
-			return 0;
+			return -3;
 		}
-
-		char shortFilename[FAT_SFN_SIZE_FULL] = {0};
 
 		// Find parent directory start cluster
 		if (file->path[0] == 0) file->parentcluster = fatfs_get_root_cluster(&_fs);
 		else if (!_open_directory((char*)file->path, &file->parentcluster))
 		{
 			_free_file(file);
-			return 0;
+			return -4;
 		}
 
-		fatfs_lfn_create_sfn(shortFilename, (char*)file->filename);
-		dbgpf("FAT: SFN: %s\n", shortFilename);
+		struct fat_dir_entry sfEntry;
+		if(fatfs_get_file_entry(&_fs, file->parentcluster, file->filename, &sfEntry))
+		memcpy((char*)file->shortfilename, (char*)sfEntry.Name, 11);
 
 		if (fatfs_free_cluster_chain(&_fs, file->startcluster)){
-			if (fatfs_mark_file_deleted(&_fs, file->parentcluster, shortFilename)){
+			if (fatfs_mark_file_deleted(&_fs, file->parentcluster, (char*)file->shortfilename)){
 				_free_file(file);
-				return 1;
+				fatfs_fat_purge(&_fs);
+				return 0;
 			}
+			_free_file(file);
+            return -5;
 		}
 		_free_file(file);
-		return 0;
+		return -6;
     }
 	fatfs_fat_purge(&_fs);
     FL_UNLOCK(&_fs);
