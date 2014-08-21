@@ -141,6 +141,28 @@ void rmdir_command(vector<string> commandline){
 	}
 }
 
+void copy_command(vector<string> commandline){
+	if(commandline.size() < 3){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " from to" << endl;
+	}else{
+		string from=parse_path(commandline[1]);
+		string to=parse_path(commandline[2]);
+		ifstream fromfile(from);
+		ofstream tofile(to);
+		if(!fromfile.is_open() || !tofile.is_open()){
+			cout << "Could not open files." << endl;
+		}
+		while(true){
+			char buffer[512];
+			streamsize bytes_read=fromfile.read(buffer, 512).gcount();
+			if(bytes_read){
+				tofile.write(buffer, bytes_read);
+			}else break;
+		}
+	}
+}
+
 bool run_builtin(vector<string> commandline){
 	const string command=commandline[0];
 	if(command=="cat"){
@@ -170,7 +192,10 @@ bool run_builtin(vector<string> commandline){
 	}else if(command=="rmdir"){
 		rmdir_command(commandline);
 		return true;
-	}
+	}else if(command=="copy"){
+        copy_command(commandline);
+        return true;
+    }
     return false;
 }
 
