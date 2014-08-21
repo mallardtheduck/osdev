@@ -1438,7 +1438,16 @@ int fl_remove( const char * filename )
 			}
 		}
     }else{
-		//TODO: Check directory is empty!
+		FL_DIR dir;
+
+		fl_opendir(filename, &dir);
+		fl_dirent ent;
+		if(!fl_readdir(&dir, &ent)){
+			fl_closedir(&dir);
+			return 0;
+		}
+		fl_closedir(&dir);
+
 		// Allocate a new file handle
 		file = _allocate_file();
 		if (!file)
