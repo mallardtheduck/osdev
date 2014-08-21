@@ -156,6 +156,13 @@ void copy_command(vector<string> commandline){
 	}else{
 		string from=parse_path(commandline[1]);
 		string to=parse_path(commandline[2]);
+		if(is_directory(from)){
+			cout << "Cannot copy directory." << endl;
+		}
+		if(is_directory(to)){
+			string filename=path_file(from);
+			to=parse_path(to + '/' + filename);
+		}
 		ifstream fromfile(from);
 		ofstream tofile(to);
 		if(!fromfile.is_open() || !tofile.is_open()){

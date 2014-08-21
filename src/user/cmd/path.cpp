@@ -81,3 +81,14 @@ string parse_path(string path){
 	}
 	return result;
 }
+
+bool is_directory(const string &path){
+	directory_entry de=bt_stat(path.c_str());
+	if(de.type==FS_Directory) return true;
+	else return false;
+}
+
+string path_file(const string &path){
+	vector<string> parts=split(path, '/');
+	return parts.back();
+}
