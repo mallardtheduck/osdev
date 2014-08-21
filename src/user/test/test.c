@@ -51,7 +51,7 @@ void get_string(char *buffer, size_t bytes){
 void dir_listing(){
 	print_string("Directory listing of \"INIT:/\":\n");
 	bt_dirhandle dir=bt_dopen("INIT:/", FS_Read);
-	directory_entry entry=bt_dread(dir);
+	bt_directory_entry entry=bt_dread(dir);
 	while(entry.valid){
 		print_string(entry.filename);
 		print_string("\n");
@@ -67,7 +67,7 @@ void dir_listing2(char *input){
 	print_string("\":\n");
 	bt_dirhandle dir=bt_dopen(&input[2], FS_Read);
 	if(!dir) return;
-	directory_entry entry=bt_dread(dir);
+	bt_directory_entry entry=bt_dread(dir);
 	while(entry.valid){
 		print_string(entry.filename);
 		print_string("\n");

@@ -44,18 +44,26 @@ enum fs_mode_flags{
 typedef enum fs_mode_flags fs_mode_flags;
 #endif
 
-struct directory_entry{
+#if defined(KERNEL) || defined(KERNEL_MODULE)
+#define BT_DE_NAME directory_entry
+#else
+#define BT_DE_NAME bt_directory_entry
+#endif
+
+struct BT_DE_NAME{
 	bool valid;
-	char filename[255];
+	char filename[BT_MAX_SEGLEN];
 	size_t size;
 	fs_item_types type;
 };
 
 #ifndef __cplusplus
-typedef struct directory_entry directory_entry;
+typedef struct BT_DE_NAME BT_DE_NAME;
 #endif
 
-static const directory_entry invalid_directory_entry={false, "", 0, FS_Invalid};
+static const BT_DE_NAME invalid_directory_entry={false, "", 0, FS_Invalid};
+
+#undef BT_DE_NAME
 
 struct fs_path{
 	char *str;

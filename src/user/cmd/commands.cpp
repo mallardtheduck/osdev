@@ -22,7 +22,7 @@ void display_file(const string &path){
 void list_files(const string &path){
 	bt_dirhandle dir=bt_dopen(path.c_str(), FS_Read);
 	if(!dir) return;
-	directory_entry entry=bt_dread(dir);
+	bt_directory_entry entry=bt_dread(dir);
 	while(entry.valid){
 		if(entry.type==FS_Directory){
 			cout << '[' << entry.filename << ']' << '\t' << entry.size << endl;
@@ -58,7 +58,7 @@ void cd_command(vector<string> commandline){
 		cout << get_cwd() << endl;
 	}else{
 		string newpath=parse_path(commandline[1]);
-		directory_entry ent=bt_stat(newpath.c_str());
+		bt_directory_entry ent=bt_stat(newpath.c_str());
 		if(!ent.valid || ent.type != FS_Directory){
 			cout << "No such directory." << endl;
 		}else if(newpath.length()) set_cwd(newpath);
@@ -229,7 +229,7 @@ bool run_program(vector<string> commandline){
 	string path=parse_path(command);
 	if(!command.length()) return false;
 	path+=".elx";
-	directory_entry ent=bt_stat(path.c_str());
+	bt_directory_entry ent=bt_stat(path.c_str());
 	if(ent.valid && ent.type == FS_File){
 		char **argv=new char*[commandline.size()];
 		size_t i=0;

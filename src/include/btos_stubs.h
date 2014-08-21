@@ -96,12 +96,12 @@ inline static bool bt_dclose(bt_dirhandle dir){
 	return btos_call(BT_DCLOSE, dir, 0, 0);
 }
 
-inline static bool bt_dwrite(bt_dirhandle dir, directory_entry entry){
+inline static bool bt_dwrite(bt_dirhandle dir, bt_directory_entry entry){
 	return btos_call(BT_DWRITE, dir, (uint32_t)&entry, 0);
 }
 
-inline static directory_entry bt_dread(bt_dirhandle dir){
-	directory_entry ret;
+inline static bt_directory_entry bt_dread(bt_dirhandle dir){
+	bt_directory_entry ret;
 	btos_call(BT_DREAD, dir, (uint32_t)&ret, 0);
 	return ret;
 }
@@ -110,8 +110,8 @@ inline static size_t bt_dseek(bt_dirhandle dir, size_t bytes, uint32_t flags){
 	return btos_call(BT_DSEEK, dir, bytes, flags);
 }
 
-inline static directory_entry bt_stat(const char *path){
-	directory_entry ret;
+inline static bt_directory_entry bt_stat(const char *path){
+	bt_directory_entry ret;
 	btos_call(BT_STAT, (uint32_t)path, (uint32_t)&ret, 0);
 	return ret;
 }
