@@ -114,15 +114,16 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		ret->mode=mode;
 		mode=mode & ~(FS_Delete | FS_Exclude);
 		char spath[BT_MAX_PATH]={0};
-		char *modifiers;
+		char *modifiers="";
 		fs_path_to_string(path, spath);
 		strncpy(ret->path, spath, BT_MAX_PATH);
 		if(mode==FS_Read) modifiers="r";
-		if(mode==FS_Write) modifiers="w";
+		if((mode & ~(FS_Create | FS_Truncate))==FS_Write ) modifiers="w";
 		if(mode==(FS_Write | FS_AtEnd | FS_Create)) modifiers="a";
 		if(mode==(FS_Read | FS_Write)) modifiers="r+";
-		if(mode==(FS_Write | FS_Truncate | FS_Create)) modifiers="w+";
+		if(mode==(FS_Write | FS_Read | FS_Truncate | FS_Create)) modifiers="w+";
 		if(mode==(FS_Write | FS_Read | FS_AtEnd | FS_Create)) modifiers="a+";
+		dbgpf("FAT: Encoded flags: %s\n", modifiers);
 		void *flh=fl_fopen(spath, modifiers);
 		if(flh)	ret->flh=flh;
 		else{

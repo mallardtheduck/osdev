@@ -769,12 +769,12 @@ void* fl_fopen(const char *path, const char *mode)
 
 #if FATFS_INC_WRITE_SUPPORT == 0
     // No write support!
-    flags &= ~(FILE_CREATE | FILE_WRITE | FILE_APPEND);
+    flags &= ~(FILE_ERASE | FILE_CREATE | FILE_WRITE | FILE_APPEND);
 #endif
 
     // No write access - remove write/modify flags
     if (!_fs.disk_io.write_media)
-        flags &= ~(FILE_CREATE | FILE_WRITE | FILE_APPEND);
+        flags &= ~(FILE_ERASE | FILE_CREATE | FILE_WRITE | FILE_APPEND);
 
     FL_LOCK(&_fs);
 
@@ -784,6 +784,11 @@ void* fl_fopen(const char *path, const char *mode)
 
     // Create New
 #if FATFS_INC_WRITE_SUPPORT
+	if (!file && (flags & FILE_ERASE)){
+		fl_remove(path);
+		file=_create_file(path);
+	}
+
     if (!file && (flags & FILE_CREATE))
         file = _create_file(path);
 #endif
