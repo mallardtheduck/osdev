@@ -12,9 +12,22 @@ bool is_absolute(const string &path){
 	return false;
 }
 
+string get_drive(const string &path){
+	stringstream ret;
+	for(const char &c : path){
+		ret <<  c;
+		if(c==':') break;
+	}
+	return ret.str();
+}
+
 string parse_path(string path){
 	if(!is_absolute(path)){
-		path=get_cwd() + "/" + path;
+		if(path[0]=='/'){
+			path=get_drive(get_cwd()) + path;
+		}else{
+			path=get_cwd() + "/" + path;
+		}
 	}
 	vector<string> sections;
 	stringstream current;
