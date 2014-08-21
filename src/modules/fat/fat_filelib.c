@@ -1441,8 +1441,10 @@ int fl_remove( const char * filename )
 		FL_DIR dir;
 		// Allocate a new file handle
 		file = _allocate_file();
-		if (!file)
+		if (!file){
+			FL_UNLOCK(&_fs);
 			return -1;
+		}
 
 		//check directory is empty
 		fl_opendir(filename, &dir);
@@ -1451,6 +1453,7 @@ int fl_remove( const char * filename )
 		if(!fl_readdir(&dir, &ent)){
 			fl_closedir(&dir);
 			_free_file(file);
+			FL_UNLOCK(&_fs);
 			return -2;
 		}
 		fl_closedir(&dir);
@@ -1459,6 +1462,7 @@ int fl_remove( const char * filename )
 		if (fatfs_split_path((char*)filename, file->path, sizeof(file->path), file->filename, sizeof(file->filename)) == -1)
 		{
 			_free_file(file);
+			FL_UNLOCK(&_fs);
 			return -3;
 		}
 
@@ -1467,6 +1471,7 @@ int fl_remove( const char * filename )
 		else if (!_open_directory((char*)file->path, &file->parentcluster))
 		{
 			_free_file(file);
+			FL_UNLOCK(&_fs);
 			return -4;
 		}
 
@@ -1478,12 +1483,15 @@ int fl_remove( const char * filename )
 			if (fatfs_mark_file_deleted(&_fs, file->parentcluster, (char*)file->shortfilename)){
 				_free_file(file);
 				fatfs_fat_purge(&_fs);
+				FL_UNLOCK(&_fs);
 				return 0;
 			}
 			_free_file(file);
+			FL_UNLOCK(&_fs);
             return -5;
 		}
 		_free_file(file);
+		FL_UNLOCK(&_fs);
 		return -6;
     }
 	fatfs_fat_purge(&_fs);
