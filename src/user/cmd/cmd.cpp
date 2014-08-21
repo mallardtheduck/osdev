@@ -6,8 +6,7 @@
 using namespace std;
 
 int main(int argc, char **argv){
-	cout << "BT/OS CMD" << endl;
-	print_os_version();
+	run_command({"ver"});
 	bool cont;
 	do{
 		string input=get_input();
