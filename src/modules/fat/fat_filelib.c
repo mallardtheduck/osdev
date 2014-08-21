@@ -1450,6 +1450,7 @@ int fl_remove( const char * filename )
 		fl_dirent ent;
 		if(!fl_readdir(&dir, &ent)){
 			fl_closedir(&dir);
+			_free_file(file);
 			return -2;
 		}
 		fl_closedir(&dir);
