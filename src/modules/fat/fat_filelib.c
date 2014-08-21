@@ -1444,20 +1444,20 @@ int fl_remove( const char * filename )
 		fl_dirent ent;
 		if(!fl_readdir(&dir, &ent)){
 			fl_closedir(&dir);
-			return 0;
+			return -1;
 		}
 		fl_closedir(&dir);
 
 		// Allocate a new file handle
 		file = _allocate_file();
 		if (!file)
-			return 0;
+			return -1;
 
 		// Split full path into filename and directory path
 		if (fatfs_split_path((char*)filename, file->path, sizeof(file->path), file->filename, sizeof(file->filename)) == -1)
 		{
 			_free_file(file);
-			return 0;
+			return -1;
 		}
 
 		char shortFilename[FAT_SFN_SIZE_FULL] = {0};
@@ -1467,20 +1467,19 @@ int fl_remove( const char * filename )
 		else if (!_open_directory((char*)file->path, &file->parentcluster))
 		{
 			_free_file(file);
-			return 0;
+			return -1;
 		}
 
 		fatfs_lfn_create_sfn(shortFilename, (char*)file->filename);
-		dbgpf("FAT: SFN: %s\n", shortFilename);
 
 		if (fatfs_free_cluster_chain(&_fs, file->startcluster)){
 			if (fatfs_mark_file_deleted(&_fs, file->parentcluster, shortFilename)){
 				_free_file(file);
-				return 1;
+				return 0;
 			}
 		}
 		_free_file(file);
-		return 0;
+		return -1;
     }
 
     FL_UNLOCK(&_fs);
