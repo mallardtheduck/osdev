@@ -43,7 +43,7 @@ public:
 	static const size_type npos;
 
 	string();
-	virtual ~string();
+	~string();
 	string(const string&);
 	string(const char*);
 	string(const char);
