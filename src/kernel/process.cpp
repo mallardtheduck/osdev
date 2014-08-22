@@ -253,7 +253,7 @@ pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
 	proc_info *info=new proc_info();
 	info->pid=ret;
 	info->entry=proc.entry;
-	sch_new_thread(&proc_start, (void*)info);
+	sch_new_thread(&proc_start, (void*)info, 4096);
 	return ret;
 }
 
