@@ -4,7 +4,7 @@
 #include "kernel.hpp"
 
 void init_serial();
-void serial_writestring(char *str);
+extern "C" void serial_writestring(char *str);
 
 extern char dbgbuf[256];
 
