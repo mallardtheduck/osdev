@@ -304,7 +304,7 @@ public:
 	typedef ptrdiff_t difference_type;
 
 	map()
-	: size_(0), capacity_(1), data_(_Alloc().allocate(1))
+	: size_(0), capacity_(1), data_(_Alloc().allocate(capacity_))
 	{
 	}
 
