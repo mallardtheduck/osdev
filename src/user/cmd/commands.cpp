@@ -219,6 +219,8 @@ unordered_map<string, command_fn> builtin_commands={
 	{"move", &move_command},
 	{"mv", &move_command},
 	{"ver", &ver_command},
+	{"table", &table_command},
+	{"tbl", &table_command},
 };
 
 bool run_builtin(const vector<string> &commandline){
