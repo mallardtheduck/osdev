@@ -45,7 +45,7 @@ extern "C" int liballoc_unlock(){
  * \return NULL if the pages were not allocated.
  * \return A pointer to the allocated memory.
  */
-extern "C" void* liballoc_alloc(int pages){
+extern "C" void* liballoc_alloc(size_t pages){
 	//return mm_alloc(pages * 4096);
 	return vmm_alloc(pages);
 }
@@ -58,7 +58,7 @@ extern "C" void* liballoc_alloc(int pages){
  *
  * \return 0 if the memory was successfully freed.
  */
-extern "C" int liballoc_free(void *ptr, int pages){
+extern "C" int liballoc_free(void *ptr, size_t pages){
 	//mm_free(ptr);
 	vmm_free(ptr, pages);
 	return 0;

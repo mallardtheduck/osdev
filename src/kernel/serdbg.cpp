@@ -44,7 +44,7 @@ void write_serial(char a) {
 	while (is_transmit_empty() == 0);
 }
 
-void serial_writestring(char *str){
+extern "C" void serial_writestring(char *str){
 	for(int i=0; str[i]!='\0'; ++i) write_serial(str[i]);
 }
 
