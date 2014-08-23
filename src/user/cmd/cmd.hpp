@@ -21,6 +21,7 @@ std::string to_lower(const std::string &str);
 bool is_directory(const std::string &path);
 std::string path_file(const std::string &path);
 std::vector<std::string> split(const std::string &str, char delim);
+void trim(std::string& str);
 
 void table_command(const std::vector<std::string> &commandline);
 
