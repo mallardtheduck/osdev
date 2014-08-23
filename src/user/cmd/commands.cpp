@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
+#include <sstream>
 
 using namespace std;
 
@@ -19,17 +20,17 @@ void display_file(const string &path){
     }
 }
 
-void list_files(const string &path){
+void list_files(const string &path, ostream &out=cout, char sep='\t'){
 	bt_dirhandle dir=bt_dopen(path.c_str(), FS_Read);
 	if(!dir) return;
 	bt_directory_entry entry=bt_dread(dir);
 	while(entry.valid){
 		if(entry.type==FS_Directory){
-			cout << '[' << entry.filename << ']' << '\t' << entry.size << endl;
+			out << '[' << entry.filename << ']' << sep << "---" << endl;
 		}else if(entry.type==FS_Device){
-			cout << '{' << entry.filename << '}' << '\t' << entry.size << endl;
+			out << '{' << entry.filename << '}' << sep << "---" << endl;
 		}else{
-			cout << entry.filename << '\t' << entry.size << endl;
+			out << entry.filename << sep << entry.size << endl;
 		}
 		entry=bt_dread(dir);
 	}
@@ -46,11 +47,16 @@ void display_command(const vector<string> &commandline){
 }
 
 void ls_command(const vector<string> &commandline){
+	string path;
 	if(commandline.size() < 2){
-		list_files(get_cwd());
+		path=get_cwd();
 	}else{
-		list_files(parse_path(commandline[1]));
+		path=parse_path(commandline[1]);
 	}
+	stringstream ls;
+	ls << "# name, size" << endl;
+	list_files(path, ls, ',');
+	display_table(ls.str());
 }
 
 void cd_command(const vector<string> &commandline){

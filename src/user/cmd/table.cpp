@@ -44,10 +44,8 @@ vector<string> splitcsv(const string &line){
 	return ret;
 }
 
-table parsecsv(const string &path){
+table parsecsv(istream &file){
 	table ret;
-	ifstream file(path);
-	if(!file.is_open()) return ret;
 	string header;
 	getline(file, header);
 	if(!header[0]=='#') return ret;
@@ -138,9 +136,20 @@ void table_command(const vector<string> &commandline){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
 	}else{
-		table tbl=parsecsv(commandline[1]);
-		if(tbl.rows.size()){
-			display_table(tbl, 80);
+		ifstream in(commandline[1]);
+		if(in.is_open()){
+			table tbl=parsecsv(in);
+			if(tbl.rows.size()){
+				display_table(tbl, 80);
+			}
 		}
+	}
+}
+
+void display_table(const string &input){
+	stringstream in(input);
+	table tbl=parsecsv(in);
+	if(tbl.rows.size()){
+		display_table(tbl, 80);
 	}
 }
