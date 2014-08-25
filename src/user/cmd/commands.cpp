@@ -199,6 +199,18 @@ void ver_command(const vector<string>&){
 	print_os_version();
 }
 
+void list_command(const vector<string> &commandline){
+	if(commandline.size() < 2){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " pattern" << endl;
+	}else{
+		vector<string> matches=resolve_wildcards(commandline[1]);
+		for(const string &s : matches){
+			cout << s << endl;
+		}
+	}
+}
+
 unordered_map<string, command_fn> builtin_commands={
 	{"ls", &ls_command},
 	{"dir", &ls_command},
@@ -227,6 +239,7 @@ unordered_map<string, command_fn> builtin_commands={
 	{"ver", &ver_command},
 	{"table", &table_command},
 	{"tbl", &table_command},
+	{"list", &list_command},
 };
 
 bool run_builtin(const vector<string> &commandline){
