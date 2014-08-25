@@ -92,3 +92,13 @@ string path_file(const string &path){
 	vector<string> parts=split(path, '/');
 	return parts.back();
 }
+
+string path_path(const string &fullpath){
+	string path=parse_path(fullpath);
+	vector<string> parts=split(path, '/');
+	stringstream ret;
+	for(size_t i=0; i<parts.size()-1; ++i){
+		ret << parts[i] << '/';
+	}
+	return ret.str();
+}

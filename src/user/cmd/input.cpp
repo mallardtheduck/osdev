@@ -62,14 +62,20 @@ string input_line(){
 vector<string> parse_input(const string &input){
 	vector<string> ret;
 	stringstream current;
-	bool quoted=false, escape=false;
+	bool quoted=false, escape=false, list=false;
 	for(const char &c : input){
-		if(!escape && !quoted && isspace(c)){
+		if(!escape && !quoted && !list && isspace(c)){
 			string cstr=current.str();
 			if(cstr.length()) ret.push_back(cstr);
 			current.str("");
-		}else if(!escape && c=='"'){
+		}else if(!escape && !list && c=='"'){
 			quoted=!quoted;
+		}else if(!quoted && !list && c=='['){
+			current << '[';
+			list=true;
+		}else if(!quoted && list && c==']'){
+			current << ']';
+			list=false;
 		}else if(!escape && c=='\\'){
 			escape=true;
 		}else if(escape){
