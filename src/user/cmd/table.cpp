@@ -66,7 +66,7 @@ table parsecsv(istream &file){
 
 bool is_number(const std::string& s)
 {
-    return !s.empty() && find_if(s.begin(), s.end(), [](char c) { return !isdigit(c) && c!='.'; }) == s.end();
+    return !s.empty() && find_if(s.begin(), s.end(), [](char c) { return !isdigit(c) && c!='.' && c!='-'; }) == s.end();
 }
 
 void print_padded(const string &value, size_t width, bool center){
