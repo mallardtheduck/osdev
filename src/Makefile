@@ -24,13 +24,11 @@ user: dummy.file
 user-clean:
 	$(MAKE) -C user clean
 
-test: dummy.file testreqs
+test: dummy.file disk
 	cd kernel && ./test.sh
 
-testtxt: dummy.file testreqs
+testtxt: dummy.file disk
 	cd kernel && ./testtxt.sh
-
-testreqs: kernel/test.img
 
 disk: disk/btos.img
 
