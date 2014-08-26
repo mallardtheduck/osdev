@@ -87,12 +87,15 @@ void touch_command(const vector<string> &commandline){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
 	}else{
-		string path=parse_path(commandline[1]);
-		if(path.length()){
-			FILE *fh=fopen(path.c_str(), "a");
-			if(fh) fclose(fh);
-			else cout << "Error opening file." << endl;
-		}else cout << "Invalid path." << endl;
+		vector<string> files=resolve_wildcards(commandline[1]);
+		for(const string &file : files){
+			string path=parse_path(file);
+			if(path.length()){
+				FILE *fh=fopen(path.c_str(), "a");
+				if(fh) fclose(fh);
+				else cout << "Error opening file." << endl;
+			}else cout << "Invalid path." << endl;
+		}
 	}
 }
 
