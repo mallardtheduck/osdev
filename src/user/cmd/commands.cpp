@@ -43,7 +43,10 @@ void display_command(const vector<string> &commandline){
 		cout << commandline[0] << " filename" << endl;
 
 	}
-	display_file(parse_path(commandline[1]));
+	vector<string> files=resolve_wildcards(commandline[1]);
+	for(const string &file : files){
+		display_file(parse_path(file));
+	}
 }
 
 void ls_command(const vector<string> &commandline){

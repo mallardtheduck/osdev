@@ -136,11 +136,14 @@ void table_command(const vector<string> &commandline){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
 	}else{
-		ifstream in(commandline[1]);
-		if(in.is_open()){
-			table tbl=parsecsv(in);
-			if(tbl.rows.size()){
-				display_table(tbl, 80);
+		vector<string> files=resolve_wildcards(commandline[1]);
+		for(const string &file : files){
+			ifstream in(file);
+			if(in.is_open()){
+				table tbl=parsecsv(in);
+				if(tbl.rows.size()){
+					display_table(tbl, 80);
+				}
 			}
 		}
 	}
