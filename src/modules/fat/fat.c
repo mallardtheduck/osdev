@@ -50,6 +50,13 @@ void fs_path_to_string(fs_path *path, char *buf){
 	}
 }
 
+fs_path *fs_path_last_part(fs_path *path){
+	while(true){
+		if(path->next) path=path->next;
+		else return path;
+	}
+}
+
 void take_fat_lock(){
 	take_lock(&super_lock);
 	if(fat_lock==thread_id() || !fat_lockcount){
@@ -237,12 +244,15 @@ size_t fat_dirseek(void *dirdata, int pos, bool relative){
 
 directory_entry fat_stat(void *mountdata, fs_path *path){
 	if(mounted && mountdata==fatmagic){
-		char spath[255]={0};
+		char spath[BT_MAX_SEGLEN]={0};
 		fs_path_to_string(path, spath);
 		fs_item_types type=FS_Invalid;
+		size_t filesize=0;
 		void *flh=fl_fopen(spath, "r");
 		if(flh){
 			type=FS_File;
+			fl_fseek(flh, 0xFFFFFFFF, SEEK_SET);
+			filesize=fl_ftell(flh);
 			fl_fclose(flh);
 		}else if(fl_is_dir(spath)){
 			type=FS_Directory;
@@ -250,9 +260,10 @@ directory_entry fat_stat(void *mountdata, fs_path *path){
 
 		directory_entry ret;
         ret.valid=true;
-        strncpy(ret.filename, spath, 255);
+        fs_path *lastpart=fs_path_last_part(path);
+        strncpy(ret.filename, lastpart->str, BT_MAX_SEGLEN);
         ret.type=type;
-        ret.size=0;
+        ret.size=filesize;
         return ret;
 	}else return invalid_directory_entry;
 }
