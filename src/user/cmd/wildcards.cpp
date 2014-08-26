@@ -46,7 +46,7 @@ vector<string> find_matches(const string &s){
 	if(!dir) return ret;
 	bt_directory_entry entry=bt_dread(dir);
 	while(entry.valid){
-		if(entry.type == FS_File && is_match(filepart, entry.filename)) ret.push_back(pathpart + entry.filename);
+		if(is_match(filepart, entry.filename)) ret.push_back(pathpart + entry.filename);
 		entry=bt_dread(dir);
 	}
 	bt_dclose(dir);

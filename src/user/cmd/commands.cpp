@@ -20,21 +20,21 @@ void display_file(const string &path){
     }
 }
 
-void list_files(const string &path, ostream &out=cout, char sep='\t'){
-	bt_dirhandle dir=bt_dopen(path.c_str(), FS_Read);
-	if(!dir) return;
-	bt_directory_entry entry=bt_dread(dir);
-	while(entry.valid){
-		if(entry.type==FS_Directory){
-			out << '[' << entry.filename << ']' << sep << "---" << endl;
-		}else if(entry.type==FS_Device){
-			out << '{' << entry.filename << '}' << sep << "---" << endl;
-		}else{
-			out << entry.filename << sep << entry.size << endl;
+void list_files(string path, ostream &out=cout, char sep='\t'){
+	if(is_dir(path)) path+="/*";
+	vector<string> files=resolve_wildcards(path);
+	for(const string &file : files){
+		bt_directory_entry entry=bt_stat(file.c_str());
+		if(entry.valid){
+			if(entry.type==FS_Directory){
+				out << '[' << entry.filename << ']' << sep << "---" << endl;
+			}else if(entry.type==FS_Device){
+				out << '{' << entry.filename << '}' << sep << "---" << endl;
+			}else{
+				out << entry.filename << sep << entry.size << endl;
+			}
 		}
-		entry=bt_dread(dir);
 	}
-	bt_dclose(dir);
 }
 
 void display_command(const vector<string> &commandline){
@@ -54,7 +54,7 @@ void ls_command(const vector<string> &commandline){
 	if(commandline.size() < 2){
 		path=get_cwd();
 	}else{
-		path=parse_path(commandline[1]);
+		path=commandline[1];
 	}
 	stringstream ls;
 	ls << "# name, size" << endl;

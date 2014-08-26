@@ -102,3 +102,8 @@ string path_path(const string &fullpath){
 	}
 	return ret.str();
 }
+
+bool is_dir(const string &path){
+	bt_directory_entry entry=bt_stat(parse_path(path).c_str());
+	return entry.type==FS_Directory;
+}
