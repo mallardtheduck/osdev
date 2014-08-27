@@ -294,9 +294,9 @@ bool run_program(const vector<string> &commandline){
 
 bool run_command(const vector<string> &commandline){
 	if(!commandline.size()) return true;
-	if(run_builtin(commandline)) return true;
-	else if(run_program(commandline)) return true;
 	else if(commandline[0]=="exit") return false;
+	else if(run_builtin(commandline)) return true;
+	else if(run_program(commandline)) return true;
 	cout << "Unknown command." << endl;
 	return true;
 }
