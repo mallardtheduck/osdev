@@ -168,26 +168,38 @@ void copy_command(const vector<string> &commandline){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " from to" << endl;
 	}else{
-		string from=parse_path(commandline[1]);
+		vector<string> from=glob(commandline[1]);
 		string to=parse_path(commandline[2]);
-		if(is_directory(from)){
-			cout << "Cannot copy directory." << endl;
+		if(from.size()==1 && is_directory(parse_path(from[0]))){
+			cout << "Cannot copy directory " << from[0] << endl;
+			return;
 		}
-		if(is_directory(to)){
-			string filename=path_file(from);
-			to=parse_path(to + '/' + filename);
+		if(!is_directory(to) && from.size() > 1){
+			cout << "Cannot copy multiple files to non-directory target." << endl;
+			return;
 		}
-		ifstream fromfile(from);
-		ofstream tofile(to);
-		if(!fromfile.is_open() || !tofile.is_open()){
-			cout << "Could not open files." << endl;
-		}
-		while(true){
-			char buffer[512];
-			streamsize bytes_read=fromfile.read(buffer, 512).gcount();
-			if(bytes_read){
-				tofile.write(buffer, bytes_read);
-			}else break;
+		for(const string &file : from){
+			string target=parse_path(to);
+			if(is_directory(to)){
+				string filename=path_file(file);
+				target=parse_path(to + '/' + filename);
+			}
+			ifstream fromfile(file);
+			ofstream tofile(target);
+			if(!fromfile.is_open()){
+				cout << "Could not open source file " << file << endl;
+				return;
+			}else if(!tofile.is_open()){
+				cout << "Could not create target " << target << endl;
+				return;
+			}
+			while(true){
+				char buffer[512];
+				streamsize bytes_read=fromfile.read(buffer, 512).gcount();
+				if(bytes_read){
+					tofile.write(buffer, bytes_read);
+				}else break;
+			}
 		}
 	}
 }
