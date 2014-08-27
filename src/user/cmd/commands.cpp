@@ -179,6 +179,10 @@ void copy_command(const vector<string> &commandline){
 			return;
 		}
 		for(const string &file : from){
+			if(is_directory(file)){
+				cout << "Ignoring directory " << file << endl;
+				continue;
+			}
 			string target=parse_path(to);
 			if(is_directory(to)){
 				string filename=path_file(file);
