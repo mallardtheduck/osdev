@@ -22,7 +22,7 @@ void display_file(const string &path){
 
 void list_files(string path, ostream &out=cout, char sep='\t'){
 	if(is_dir(path)) path+="/*";
-	vector<string> files=resolve_wildcards(path);
+	vector<string> files=glob(path);
 	for(const string &file : files){
 		bt_directory_entry entry=bt_stat(file.c_str());
 		if(entry.valid){
@@ -43,7 +43,7 @@ void display_command(const vector<string> &commandline){
 		cout << commandline[0] << " filename" << endl;
 
 	}
-	vector<string> files=resolve_wildcards(commandline[1]);
+	vector<string> files=glob(commandline[1]);
 	for(const string &file : files){
 		display_file(parse_path(file));
 	}
@@ -87,7 +87,7 @@ void touch_command(const vector<string> &commandline){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
 	}else{
-		vector<string> files=resolve_wildcards(commandline[1]);
+		vector<string> files=glob(commandline[1]);
 		for(const string &file : files){
 			string path=parse_path(file);
 			if(path.length()){
@@ -210,7 +210,7 @@ void list_command(const vector<string> &commandline){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " pattern" << endl;
 	}else{
-		vector<string> matches=resolve_wildcards(commandline[1]);
+		vector<string> matches=glob(commandline[1]);
 		for(const string &s : matches){
 			cout << s << endl;
 		}

@@ -136,7 +136,7 @@ void table_command(const vector<string> &commandline){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
 	}else{
-		vector<string> files=resolve_wildcards(commandline[1]);
+		vector<string> files=glob(commandline[1]);
 		for(const string &file : files){
 			ifstream in(file);
 			if(in.is_open()){

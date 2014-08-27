@@ -53,7 +53,7 @@ vector<string> find_matches(const string &s){
 	return ret;
 }
 
-vector<string> resolve_wildcards(const string &str){
+vector<string> glob(const string &str){
 	vector<string> ret;
 	if(str.front()=='[' && str.back()==']'){
 		string cut=str.substr(1, str.length()-2);

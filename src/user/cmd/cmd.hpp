@@ -24,7 +24,7 @@ std::vector<std::string> split(const std::string &str, char delim);
 void trim(std::string& str);
 void display_table(const std::string &input);
 std::string path_path(const std::string &fullpath);
-std::vector<std::string> resolve_wildcards(const std::string &str);
+std::vector<std::string> glob(const std::string &str);
 bool is_dir(const std::string &path);
 
 void table_command(const std::vector<std::string> &commandline);
