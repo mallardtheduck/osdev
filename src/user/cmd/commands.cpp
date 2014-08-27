@@ -137,10 +137,12 @@ void del_command(const vector<string> &commandline){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
 	}else{
-		string path=parse_path(commandline[1]);
-		bt_filehandle fh=bt_fopen(path.c_str(), FS_Read | FS_Delete);
-		if(fh) bt_fclose(fh);
-		else cout << "Could not delete file." << endl;
+		vector<string> files=glob(commandline[1]);
+		for(const string &file : files){
+			bt_filehandle fh=bt_fopen(parse_path(file).c_str(), FS_Read | FS_Delete);
+			if(fh) bt_fclose(fh);
+			else cout << "Could not delete " << file << endl;
+		}
 	}
 }
 
