@@ -46,6 +46,7 @@ extern "C"{
 #include "modules.hpp"
 #include "user_api.hpp"
 #include "infofs.hpp"
+#include "amm.hpp"
 
 void GDT_init();
 void IDT_init();
