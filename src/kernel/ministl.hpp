@@ -430,6 +430,11 @@ public:
 		return size_ == 0;
 	}
 
+	size_type size() const
+	{
+		return size_;
+	}
+
 	iterator begin()
 	{
 		return &data_[0];
