@@ -434,6 +434,10 @@ public:
 	{
 		return size_;
 	}
+	size_type capacity() const
+	{
+		return capacity_;
+	}
 
 	iterator begin()
 	{

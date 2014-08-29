@@ -13,10 +13,14 @@ amm_alloc_map *amm_allocated_pages;
 
 static bool amm_inited=false;
 static lock amm_lock;
+extern lock la_lock, vmm_lock, sch_lock;
+extern char _start, _end;
+static bool in_reserve=false;
 
 void amm_init(){
 	amm_allocated_pages=new amm_alloc_map();
-	amm_allocated_pages->reserve(4096);
+	size_t reservation=(&_end-&_start)/VMM_PAGE_SIZE + 4096;
+	amm_allocated_pages->reserve(reservation);
 	if(!amm_allocated_pages) panic("(AMM) Init failed!");
 	dbgpf("AMM: Map allocated at %x\n", amm_allocated_pages);
 	amm_inited=true;
@@ -25,10 +29,27 @@ void amm_init(){
 
 void amm_mark_alloc(uint32_t pageaddr, amm_flags::Enum flags, pid_t owner, void *ptr){
 	if(!amm_inited) return;
-	hold_lock hl(amm_lock);
 	amm_pagedetails p={flags, owner, ptr};
-	amm_allocated_pages->insert(amm_alloc_map::value_type(pageaddr, p));
-	amm_allocated_pages->reserve(amm_allocated_pages->size() + 1);
+	if(!in_reserve && amm_allocated_pages->capacity() < amm_allocated_pages->size() + 128){
+		//TODO: Make this "good" - need custom allocator for amm_allocated_pages that uses VMM directly.
+		take_lock(sch_lock);
+		release_lock(vmm_lock);
+		bool la=false;
+		if(la_lock==sch_get_id()){
+			release_lock(la_lock);
+			la=true;
+		}
+		in_reserve=true;
+		amm_allocated_pages->reserve(amm_allocated_pages->capacity() + 1024);
+		in_reserve=false;
+		if(la)take_lock(la_lock);
+		take_lock(vmm_lock);
+		release_lock(sch_lock);
+	}
+	{	hold_lock hl(amm_lock);
+		amm_allocated_pages->insert(amm_alloc_map::value_type(pageaddr, p));
+	}
+	//amm_allocated_pages->reserve(amm_allocated_pages->size() + 1);
 }
 
 void amm_mark_free(uint32_t pageaddr){
