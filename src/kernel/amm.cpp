@@ -31,7 +31,9 @@ typedef T* pointer;
 			take_lock(sch_lock);
 			release_lock(vmm_lock);
 		}
+		in_reserve=true;
 		pointer ret=(pointer)vmm_alloc(pages);
+		in_reserve=false;
 		if(lock_vmm) take_lock(vmm_lock);
 		release_lock(sch_lock);
 		return ret;
@@ -93,9 +95,7 @@ void amm_mark_alloc(uint32_t pageaddr, amm_flags::Enum flags, pid_t owner, void 
 	if(!amm_inited) return;
 	amm_pagedetails p={flags, owner, ptr};
 	if(!in_reserve && amm_allocated_pages->capacity() < amm_allocated_pages->size() + 128){
-		in_reserve=true;
 		amm_allocated_pages->reserve(amm_allocated_pages->capacity() + 1024);
-		in_reserve=false;
 	}
 	{	hold_lock hl(amm_lock);
 		amm_allocated_pages->insert(amm_alloc_map::value_type(pageaddr, p));
