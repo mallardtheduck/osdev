@@ -9,6 +9,7 @@ struct amm_pagedetails{
 };
 
 extern lock vmm_lock, sch_lock;
+static bool in_reserve=false;
 
 template<typename T> class amm_allocator {
 public:
@@ -79,7 +80,6 @@ amm_alloc_map *amm_allocated_pages;
 static bool amm_inited=false;
 static lock amm_lock;
 extern char _start, _end;
-static bool in_reserve=false;
 
 void amm_init(){
 	amm_allocated_pages=new amm_alloc_map();
