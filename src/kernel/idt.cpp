@@ -212,6 +212,7 @@ void out_int_info(const isr_regs ctx){
 extern size_t current_thread;
 
 extern "C" void isr_handler(isr_regs *ctx){
+	sch_abortable(false);
 	if(handlers[ctx->interrupt_number]) handlers[ctx->interrupt_number](ctx->interrupt_number, ctx);
 	else if(ctx->interrupt_number==0x06){
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
@@ -246,6 +247,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
 		out_int_info(*ctx);
 	}
+	sch_abortable(true);
 }
 
 void irq_ack(size_t irq_no) {
@@ -264,10 +266,12 @@ inline void out_regs(const irq_regs ctx){
 }
 
 extern "C" void irq_handler(irq_regs *r) {
+	sch_abortable(false);
 	//out_regs(*r);
 	int irq=r->int_no-IRQ_BASE;
 	irq_ack(irq);
 	if(handlers[r->int_no]) handlers[r->int_no](r->int_no, (isr_regs*)r);
+	sch_abortable(true);
 }
 
 irq_regs isr_regs2irq_regs(const isr_regs &r){

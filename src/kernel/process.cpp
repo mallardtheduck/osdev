@@ -241,6 +241,7 @@ void proc_start(void *ptr){
 	delete (proc_info*)ptr;
 	proc_switch(pid);
 	void *stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
+	sch_abortable(true);
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 

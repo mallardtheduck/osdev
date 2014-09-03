@@ -33,6 +33,8 @@ struct sch_thread{
 	sch_blockcheck blockcheck;
 	void *bc_param;
 	uint32_t eip;
+	bool abortable;
+	int abortlevel;
 };
 
 vector<sch_thread> *threads;
@@ -52,11 +54,12 @@ bool sch_inited=false;
 char *sch_threads_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
-	sprintf(buffer, "# ID, PID, priority, addr\n");
+	sprintf(buffer, "# ID, PID, priority, addr, run, alevel\n");
 	{hold_lock hl(sch_lock);
 		for(size_t i=0; i<threads->size(); ++i){
 			sch_thread *t=&(*threads)[i];
-			sprintf(&buffer[strlen(buffer)],"%i, %i, %i, %x\n", (int)t->ext_id, (int)t->pid, t->priority, t->eip);
+			sprintf(&buffer[strlen(buffer)],"%i, %i, %i, %x, %i, %i\n", (int)t->ext_id, (int)t->pid, t->priority, t->eip,
+				(bool)t->runnable, t->abortlevel);
 		}
     }
     return buffer;
@@ -79,6 +82,9 @@ void sch_init(){
 	mainthread.pid=proc_current_pid;
 	mainthread.blockcheck=NULL;
 	mainthread.bc_param=NULL;
+	mainthread.abortlevel=1;
+	mainthread.abortable=false;
+	mainthread.pid=0;
 	current_thread_id=mainthread.ext_id=++cur_ext_id;
 	threads->push_back(mainthread);
 	current_thread=threads->size()-1;
@@ -156,6 +162,9 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread.dynpriority=0;
 	newthread.blockcheck=NULL;
 	newthread.bc_param=NULL;
+	newthread.abortlevel=1;
+	newthread.abortable=false;
+	newthread.pid=0;
 	take_lock(sch_lock);
 	newthread.ext_id=++cur_ext_id;
 	threads->push_back(newthread);
@@ -287,12 +296,14 @@ extern "C" void sch_unlock(){
 }
 
 void sch_isr(int, isr_regs *regs){
+	sch_abortable(true);
 	(*threads)[current_thread].eip=regs->eip;
     enable_interrupts();
 	if(try_take_lock(sch_lock)){
 		release_lock(sch_lock);
 		sch_yield();
 	}
+	sch_abortable(false);
 }
 
 const uint64_t &sch_get_id(){
@@ -369,4 +380,16 @@ void sch_wait(uint64_t ext_id){
 extern "C" void sch_update_eip(uint32_t eip){
 	hold_lock hl(sch_lock);
 	(*threads)[current_thread].eip=eip;
+}
+
+void sch_abortable(bool abortable){
+	//hold_lock hl(sch_lock);
+	(*threads)[current_thread].abortlevel+=abortable? -1 : 1;
+	if((*threads)[current_thread].abortlevel<=0){
+		(*threads)[current_thread].abortlevel=0;
+		(*threads)[current_thread].abortable=true;
+		dbgpf("SCH: Thread %i now abortable.\n", (int)current_thread_id);
+	}else{
+		(*threads)[current_thread].abortable=false;
+	}
 }
