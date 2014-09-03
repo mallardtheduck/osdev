@@ -29,7 +29,7 @@ vector<string> splitcsv(const string &line){
 		}else if(!escape && !quote && c==','){
 			string curstr=current.str();
 			trim(curstr);
-			ret.push_back(curstr);
+			ret.push_back(curstr+" ");
 			current.str("");
 		}else{
 			if(escape) escape=false;
@@ -39,7 +39,7 @@ vector<string> splitcsv(const string &line){
 	string curstr=current.str();
 	if(curstr.length()){
 		trim(curstr);
-		ret.push_back(curstr);
+		ret.push_back(curstr+" ");
 	}
 	return ret;
 }
@@ -66,7 +66,9 @@ table parsecsv(istream &file){
 
 bool is_number(const std::string& s)
 {
-    return !s.empty() && find_if(s.begin(), s.end(), [](char c) { return !isdigit(c) && c!='.' && c!='-'; }) == s.end();
+    return !s.empty() && find_if(s.begin(), s.end(),
+    	[](char c) { return !isdigit(c) && c!='.' && c!='-' && c!=' '; }
+    ) == s.end();
 }
 
 void print_padded(const string &value, size_t width, bool center){
