@@ -393,3 +393,37 @@ void sch_abortable(bool abortable){
 		(*threads)[current_thread].abortable=false;
 	}
 }
+
+bool sch_abort_blockcheck(void *p){
+	uint64_t &ext_id=*(uint64_t*)p;
+	for(size_t i=0; i<threads->size(); ++i){
+		if((*threads)[i].ext_id==ext_id){
+			return (*threads)[i].abortable;
+		}
+	}
+	return true;
+}
+
+void sch_abort(uint64_t ext_id){
+	bool tryagain=true;
+	while(tryagain){
+		take_lock(sch_lock);
+		bool found=false;
+		for(size_t i=0; i<threads->size(); ++i){
+			if((*threads)[i].ext_id==ext_id){
+				found=true;
+				if((*threads)[i].abortable){
+					(*threads)[i].runnable=false;
+					(*threads)[i].to_be_deleted=true;
+					(*threads)[reaper_thread].runnable=true;
+					tryagain=false;
+				}
+			}
+		}
+		release_lock(sch_lock);
+		if(!found) tryagain=false;
+		if(tryagain){
+			sch_setblock(&sch_abort_blockcheck, (void*)&ext_id);
+		}
+	}
+}
