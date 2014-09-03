@@ -1,10 +1,15 @@
 .extern sch_inited
 .extern sch_stack
 .extern sch_new_stack
+.extern sch_update_eip
 
 .global sch_yield
 sch_yield:
 	pusha
+	mov 32(%esp), %eax
+	push %eax
+	call sch_update_eip
+	pop %eax
 	mov $0x0, %eax
 	mov sch_inited, %ebx
 	cmp %eax, %ebx

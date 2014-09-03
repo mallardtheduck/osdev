@@ -32,6 +32,7 @@ struct sch_thread{
 	pid_t pid;
 	sch_blockcheck blockcheck;
 	void *bc_param;
+	uint32_t eip;
 };
 
 vector<sch_thread> *threads;
@@ -47,6 +48,19 @@ void sch_idlethread(void*);
 
 lock sch_lock;
 bool sch_inited=false;
+
+char *sch_threads_infofs(){
+	char *buffer=(char*)malloc(4096);
+	memset(buffer, 0, 4096);
+	sprintf(buffer, "# ID, PID, priority, addr\n");
+	{hold_lock hl(sch_lock);
+		for(size_t i=0; i<threads->size(); ++i){
+			sch_thread *t=&(*threads)[i];
+			sprintf(&buffer[strlen(buffer)],"%i, %i, %i, %x\n", (int)t->ext_id, (int)t->pid, t->priority, t->eip);
+		}
+    }
+    return buffer;
+}
 
 void sch_init(){
 	dbgout("SCH: Init\n");
@@ -81,6 +95,7 @@ void sch_init(){
 	sch_inited=true;
 	IRQ_clear_mask(0);
 	dbgout("SCH: Init complete.\n");
+	infofs_register("THREADS", &sch_threads_infofs);
 }
 
 void test_priority(void *params){
@@ -271,7 +286,8 @@ extern "C" void sch_unlock(){
 	release_lock(sch_lock);
 }
 
-void sch_isr(int, isr_regs*){
+void sch_isr(int, isr_regs *regs){
+	(*threads)[current_thread].eip=regs->eip;
     enable_interrupts();
 	if(try_take_lock(sch_lock)){
 		release_lock(sch_lock);
@@ -350,3 +366,7 @@ void sch_wait(uint64_t ext_id){
 	}
 }
 
+extern "C" void sch_update_eip(uint32_t eip){
+	hold_lock hl(sch_lock);
+	(*threads)[current_thread].eip=eip;
+}
