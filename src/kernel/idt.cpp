@@ -263,12 +263,11 @@ inline void out_regs(const irq_regs ctx){
 	dbgpf("EFLAGS: %x ORESP: %x\n", ctx.eflags, ctx.useresp);
 }
 
-
 extern "C" void irq_handler(irq_regs *r) {
 	//out_regs(*r);
 	int irq=r->int_no-IRQ_BASE;
 	irq_ack(irq);
-	if(handlers[r->int_no]) handlers[r->int_no](r->int_no, NULL);
+	if(handlers[r->int_no]) handlers[r->int_no](r->int_no, (isr_regs*)r);
 }
 
 irq_regs isr_regs2irq_regs(const isr_regs &r){
