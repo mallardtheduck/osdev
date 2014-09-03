@@ -81,6 +81,8 @@ static bool amm_inited=false;
 static lock amm_lock;
 extern char _start, _end;
 
+void amm_page_fault_handler(int, isr_regs *regs);
+
 void amm_init(){
 	amm_allocated_pages=new amm_alloc_map();
 	size_t reservation=(&_end-&_start)/VMM_PAGE_SIZE + 4096;
@@ -88,6 +90,7 @@ void amm_init(){
 	if(!amm_allocated_pages) panic("(AMM) Init failed!");
 	dbgpf("AMM: Map allocated at %x\n", amm_allocated_pages);
 	amm_inited=true;
+	int_handle(0x0e, &amm_page_fault_handler);
 	init_lock(amm_lock);
 }
 
@@ -114,4 +117,12 @@ amm_flags::Enum amm_get_flags(uint32_t pageaddr){
 	if(amm_allocated_pages->has_key(pageaddr)){
 		return (*amm_allocated_pages)[pageaddr].flags;
 	}else return amm_flags::Normal;
+}
+
+void amm_page_fault_handler(int, isr_regs *regs){
+	uint32_t addr;
+	asm volatile("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
+	dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
+	if(addr < VMM_PAGE_SIZE) panic("(AMM) Probable NULL pointer dereference!");
+	else panic("(AMM) Page fault!");
 }
