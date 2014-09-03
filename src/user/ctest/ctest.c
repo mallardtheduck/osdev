@@ -27,5 +27,7 @@ int main(int argc, char **argv){
 		memset(buffer, 0, 128);
 	}
 	fclose(fd);
+	char *ptr=(char*)0xDEADBEEF;
+	*ptr='q';
 	return 42;
 }
