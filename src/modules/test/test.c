@@ -41,6 +41,11 @@ void hacky_timeout(void*q){
 	}
 }
 
+void abortable_thread(void*q){
+	thread_abortable(true);
+	while(true)asm("hlt");
+}
+
 void *test_driver_open(){
 	dbgout("TEST: Driver open.\n");
 	return (void*)0x42;
@@ -150,6 +155,9 @@ int module_main(syscall_table *systbl, char *params){
 	add_device(devname, &test_driver, NULL);
 	void *d=devopen(devname);
 	test("add_device(), devopen()", (d!=NULL));
+	uint64_t abort_id=new_thread(&abortable_thread, NULL);
+	thread_abort(abort_id);
+	test("thread_abortable(), thread_abort()", true);
 	unsigned char r=0x00;
 	devread(d, 1, (char*)&r);
 	test("devread()", r==0xee);
