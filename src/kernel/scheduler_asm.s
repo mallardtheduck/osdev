@@ -6,6 +6,11 @@
 .global sch_yield
 sch_yield:
 	pusha
+	call sch_dolock
+	cmp $0x0, %eax
+	jne lock_ok
+	ret
+lock_ok:
 	mov 32(%esp), %eax
 	push %eax
 	call sch_update_eip
@@ -37,11 +42,6 @@ inited:
 	ret
 
 sch_switchstack:
-	call sch_dolock
-	cmp $0x0, %eax
-	jne lock_ok
-	ret
-lock_ok:
 	mov %ss, %eax
 	mov %esp, %ebx
 	mov $0x10, %cx

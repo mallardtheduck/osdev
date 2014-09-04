@@ -378,7 +378,6 @@ void sch_wait(uint64_t ext_id){
 }
 
 extern "C" void sch_update_eip(uint32_t eip){
-	hold_lock hl(sch_lock);
 	(*threads)[current_thread].eip=eip;
 }
 

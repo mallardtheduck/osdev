@@ -21,7 +21,6 @@ void sch_setpid(pid_t pid);
 void sch_setblock(sch_blockcheck check, void *param);
 void sch_clearblock();
 void sch_wait(uint64_t ext_id);
-extern "C" void sch_update_eip(uint32_t eip);
 void sch_abortable(bool abortable);
 void sch_abort(uint64_t ext_id);
 
