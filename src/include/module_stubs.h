@@ -93,6 +93,14 @@ inline static void thread_setblock(bool(*blockcheck)(void*), void *param){
 	SYSCALL_TABLE->thread_setblock(blockcheck, param);
 }
 
+inline static void thread_abortable(bool abortable){
+	SYSCALL_TABLE->thread_abortable(abortable);
+}
+
+inline static void thread_abort(thread_id_t id){
+	SYSCALL_TABLE->thread_abort(id);
+}
+
 inline static void add_device(char *name, drv_driver *driver, void *id){
 	SYSCALL_TABLE->add_device(name, driver, id);
 }

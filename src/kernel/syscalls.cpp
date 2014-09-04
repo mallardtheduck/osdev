@@ -152,6 +152,8 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&sch_unblock,
 	&sch_wait,
 	&sch_setblock,
+	&sch_abortable,
+	&sch_abort,
 
 	&drv_add_device,
 	&drv_get,
