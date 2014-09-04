@@ -24,6 +24,7 @@ inline void take_lock(lock &l, uint64_t thread=sch_get_id()){
 
 inline bool try_take_lock(lock &l, uint64_t thread=sch_get_id()){
 	if(!sch_active()) return true;
+	if(l==thread && thread!=0) return false;
 	return __sync_bool_compare_and_swap(&l, 0, thread);
 }
 
