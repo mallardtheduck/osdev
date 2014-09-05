@@ -6,6 +6,13 @@
 .global sch_yield
 sch_yield:
 	pusha
+	mov $0x0, %eax
+	mov sch_inited, %ebx
+	cmp %eax, %ebx
+	jne inited
+	popa
+	ret
+inited:
 	call sch_dolock
 	cmp $0x0, %eax
 	jne lock_ok
@@ -16,13 +23,6 @@ lock_ok:
 	push %eax
 	call sch_update_eip
 	pop %eax
-	mov $0x0, %eax
-	mov sch_inited, %ebx
-	cmp %eax, %ebx
-	jne inited
-	popa
-	ret
-inited:
 	pushl %ds
 	pushl %es
 	pushl %fs
