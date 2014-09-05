@@ -235,6 +235,17 @@ void list_command(const vector<string> &commandline){
 	}
 }
 
+void setenv_command(const vector<string> &commandline){
+	if(commandline.size() < 2){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " name [value]" << endl;
+	}else{
+		string value="";
+		if(commandline.size() == 3) value=commandline[2];
+		bt_setenv(commandline[1].c_str(), value.c_str(), 0);
+	}
+}
+
 unordered_map<string, command_fn> builtin_commands={
 	{"ls", &ls_command},
 	{"dir", &ls_command},
@@ -264,6 +275,8 @@ unordered_map<string, command_fn> builtin_commands={
 	{"table", &table_command},
 	{"tbl", &table_command},
 	{"glob", &list_command},
+	{"setenv", &setenv_command},
+	{"set", &setenv_command},
 };
 
 bool run_builtin(const vector<string> &commandline){
