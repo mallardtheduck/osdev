@@ -185,7 +185,11 @@ void proc_setenv(const pid_t pid, const string &oname, const string &value, cons
 	if(userspace && env.has_key(name) && (env[name].flags & proc_env_flags::Private || env[name].flags & proc_env_flags::ReadOnly)){
 		return;
 	}else{
-		env[name]=proc_env_var(value, flags);
+		if(value.length()){
+			env[name]=proc_env_var(value, flags);
+		}else{
+			env.erase(name);
+		}
 	}
 }
 
