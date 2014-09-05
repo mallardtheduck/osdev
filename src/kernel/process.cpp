@@ -3,6 +3,7 @@
 #include "ministl.hpp"
 #include "string.hpp"
 #include "locks.hpp"
+#include "strutil.hpp"
 
 extern "C" void proc_run_usermode(void *stack, proc_entry entry, int argc, char **argv);
 
@@ -177,8 +178,9 @@ void proc_end(pid_t pid){
 	}
 }
 
-void proc_setenv(const pid_t pid, const string &name, const string &value, const uint8_t flags, bool userspace){
+void proc_setenv(const pid_t pid, const string &oname, const string &value, const uint8_t flags, bool userspace){
 	hold_lock hl(env_lock);
+	string name=to_upper(oname);
 	env_t &env=(flags & proc_env_flags::Global) ? proc_get(0)->environment : proc_get(pid)->environment;
 	if(userspace && env.has_key(name) && (env[name].flags & proc_env_flags::Private || env[name].flags & proc_env_flags::ReadOnly)){
 		return;
@@ -191,8 +193,9 @@ void proc_setenv(const string &name, const string &value, const uint8_t flags, b
 	proc_setenv(proc_current_pid, name, value, flags, userspace);
 }
 
-string proc_getenv(const pid_t pid, const string &name, bool userspace){
+string proc_getenv(const pid_t pid, const string &oname, bool userspace){
 	hold_lock hl(env_lock);
+	string name=to_upper(oname);
 	env_t &kenv=proc_get(0)->environment;
 	if(kenv.has_key(name) && kenv[name].flags & proc_env_flags::Global){
 		if(!userspace || (kenv[name].flags & proc_env_flags::Private)==0) return kenv[name].value;
