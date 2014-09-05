@@ -9,6 +9,7 @@ sch_yield:
 	call sch_dolock
 	cmp $0x0, %eax
 	jne lock_ok
+	popa
 	ret
 lock_ok:
 	mov 32(%esp), %eax
