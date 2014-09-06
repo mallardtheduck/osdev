@@ -53,4 +53,7 @@ int proc_wait(pid_t pid);
 size_t proc_get_argc(pid_t pid=proc_current_pid);
 size_t proc_get_arg(size_t i, char *buf, size_t size, pid_t pid=proc_current_pid);
 
+void proc_remove_thread(uint64_t thread_id, pid_t pid);
+handle_t proc_add_thread(uint64_t thread_id, pid_t pid);
+
 #endif

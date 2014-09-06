@@ -125,6 +125,10 @@ void proc_switch(pid_t pid, bool setthread){
 	if(pid!=proc_current_pid){
 		dbgpf("PROC: Switching process. Old PID: %i, new PID: %i\n", (int)proc_current_pid, (int)pid);
 		proc_process *newproc=proc_get(pid);
+		if(setthread){
+			proc_remove_thread(sch_get_id(), proc_current_pid);
+			proc_add_thread(sch_get_id(), pid);
+		}
 		proc_current_process=newproc;
 		proc_current_pid=newproc->pid;
 		vmm_switch(proc_current_process->pagedir);
@@ -348,4 +352,23 @@ size_t proc_get_arg(size_t i, char *buf, size_t size, pid_t pid){
 	proc_process *proc=proc_get(pid);
 	strncpy(buf, proc->args[i].c_str(), size);
 	return proc->args[i].length();
+}
+
+void proc_remove_thread(uint64_t thread_id, pid_t pid){
+	proc_process *proc=proc_get(pid);
+	handle_t h=0;
+	for(map<handle_t, uint64_t>::iterator i=proc->threads.begin(); i!=proc->threads.end(); ++i){
+		if(i->second==thread_id) h=i->first;
+	}
+	if(h) proc->threads.erase(h);
+}
+
+handle_t proc_add_thread(uint64_t thread_id, pid_t pid){
+	proc_process *proc=proc_get(pid);
+	for(map<handle_t, uint64_t>::iterator i=proc->threads.begin(); i!=proc->threads.end(); ++i){
+		if(i->second==thread_id) return i->first;
+	}
+	handle_t ret=++proc->handlecounter;
+	proc->threads[ret]=thread_id;
+	return ret;
 }
