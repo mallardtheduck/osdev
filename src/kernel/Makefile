@@ -7,7 +7,7 @@ BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -ffreestanding -O2 -Wall -Wextra -Werror -g -I../include -DKERNEL
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -T linker.ld -o myos.bin -ffreestanding -O2 -nostdlib -g
+LINK-FLAGS := -T linker.ld -o btos.bin -ffreestanding -O2 -nostdlib -g
 LINK-OPTIONS := -lgcc
 
 BOOTFILE := boot.o
@@ -22,7 +22,7 @@ CPPOBJS := $(CPPFILES:.cpp=.o)
 CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
 
-all: myos.iso Makefile
+all: btos.iso Makefile
 
 -include $(CDEPFILES) $(CPPDEPFILES)
 
@@ -32,25 +32,25 @@ rebuild: clean all
 
 dummy.delete:
 	-@$(RM) *.o
-	-@$(RM) myos.iso
-	-@$(RM) myos.bin
+	-@$(RM) btos.iso
+	-@$(RM) btos.bin
 	-@$(RM) initfs/xxd_data.inc
 	make -C initfs clean
 
-myos.iso: myos.bin
+btos.iso: btos.bin
 	@mkdir -p isodir
 	@mkdir -p isodir/boot
-	@cp myos.bin isodir/boot/myos.bin
+	@cp btos.bin isodir/boot/btos.bin
 	@mkdir -p isodir/boot/grub
 	@cp grub.cfg isodir/boot/grub/grub.cfg
-	grub-mkrescue -o myos.iso isodir
+	grub-mkrescue -o btos.iso isodir
 
 initfs/initfs_data.cpp: initfs/initfs_data.inc
 
 initfs/initfs_data.inc:
 	$(MAKE) -C initfs
 
-myos.bin: boot.o $(ASOBJS) $(COBJS) $(CPPOBJS) linker.ld
+btos.bin: boot.o $(ASOBJS) $(COBJS) $(CPPOBJS) linker.ld
 	$(LINK) $(LINK-FLAGS) boot.o $(ASOBJS) $(CPPOBJS) $(COBJS) $(LINK-OPTIONS)
 
 boot.o: boot.s Makefile
