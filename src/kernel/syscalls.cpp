@@ -100,7 +100,7 @@ void setenv(char *name, char *value, uint8_t flags, pid_t pid){
 }
 
 char *getenv(char *name, pid_t pid){
-	string ret=proc_getenv(name, pid);
+	const string &ret=proc_getenv(name, pid);
 	if(ret=="") return NULL;
 	else return (char*)ret.c_str();
 }

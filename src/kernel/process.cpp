@@ -16,6 +16,8 @@ lock env_lock;
 
 pid_t curpid=0;
 
+static const string *blank_string;
+
 struct proc_env_var{
 	string value;
 	uint8_t flags;
@@ -94,6 +96,7 @@ void proc_init(){
 	dbgpf("PROC: Current pid: %i\n", (int)proc_current_pid);
 	infofs_register("PROCS", &proc_infofs);
 	infofs_register("ENV", &env_infofs);
+	blank_string=new string("");
 }
 
 proc_process *proc_get(pid_t pid){
@@ -201,23 +204,23 @@ void proc_setenv(const string &name, const string &value, const uint8_t flags, b
 	proc_setenv(proc_current_pid, name, value, flags, userspace);
 }
 
-string proc_getenv(const pid_t pid, const string &oname, bool userspace){
+const string &proc_getenv(const pid_t pid, const string &oname, bool userspace){
 	hold_lock hl(env_lock);
 	string name=to_upper(oname);
 	env_t &kenv=proc_get(0)->environment;
 	if(kenv.has_key(name) && kenv[name].flags & proc_env_flags::Global){
 		if(!userspace || (kenv[name].flags & proc_env_flags::Private)==0) return kenv[name].value;
-		else return "";
+		else return *blank_string;
 	}
 	env_t &env=proc_get(pid)->environment;
-	proc_env_var var;
-	if(env.has_key(name)) var=env[name];
-	else return "";
-	if(!userspace || (var.flags & proc_env_flags::Private)==0) return var.value;
-	else return "";
+	proc_env_var *var;
+	if(env.has_key(name)) var=&env[name];
+	else return *blank_string;
+	if(!userspace || (var->flags & proc_env_flags::Private)==0) return var->value;
+	else return *blank_string;
 }
 
-string proc_getenv(const string &name, bool userspace){
+const string &proc_getenv(const string &name, bool userspace){
 	return proc_getenv(proc_current_pid, name, userspace);
 }
 

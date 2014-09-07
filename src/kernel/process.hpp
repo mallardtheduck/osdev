@@ -30,8 +30,8 @@ void proc_end(pid_t pid=proc_current_pid);
 
 void proc_setenv(const pid_t pid, const string &name, const string &value, const uint8_t flags=0, bool userspace=false);
 void proc_setenv(const string &name, const string &value, const uint8_t flags=0, bool userspace=true);
-string proc_getenv(const pid_t pid, const string &name, bool userspace=false);
-string proc_getenv(const string &name, bool userspace=true);
+const string &proc_getenv(const pid_t pid, const string &name, bool userspace=false);
+const string &proc_getenv(const string &name, bool userspace=true);
 pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent=proc_current_pid);
 
 typedef volatile uint64_t lock;
