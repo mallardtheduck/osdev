@@ -235,7 +235,7 @@ void terminal_writestring(const char* data)
 
 void terminal_writeint(const int i, int base)
 {
-	char buf[128];
+	char buf[128]={0};
 	itoa(i, buf, base);
 	terminal_writestring(buf);
 }
