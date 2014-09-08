@@ -10,6 +10,9 @@ file(GLOB_RECURSE SFILES src/kernel/*.s src/modules/*.s src/user/*.s)
 file(GLOB_RECURSE IFILES src/include/*)
 
 set(SRCFILES ${CPPFILES} ${CFILES} ${SFILES} ${IFILES})
+include_directories(src/include)
+add_definitions(-DKERNEL -DKERNEL_MODULE)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 
 add_executable(
     dummy
