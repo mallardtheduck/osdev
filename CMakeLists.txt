@@ -10,7 +10,7 @@ file(GLOB_RECURSE SFILES src/kernel/*.s src/modules/*.s src/user/*.s)
 file(GLOB_RECURSE IFILES src/include/*)
 
 set(SRCFILES ${CPPFILES} ${CFILES} ${SFILES} ${IFILES})
-include_directories(src/include)
+include_directories(src/include ../cross/i686-pc-btos/include)
 add_definitions(-DKERNEL -DKERNEL_MODULE)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 
@@ -24,6 +24,7 @@ add_custom_target(
     WORKING_DIRECTORY ${PROJECT_DIR}
     COMMAND make
     VERBATIM
+    SOURCES ${SRCFILES}
 )
 
 add_custom_target(
@@ -39,3 +40,5 @@ add_custom_target(
     COMMAND make test
     VERBATIM
 )
+
+add_dependencies(run build)
