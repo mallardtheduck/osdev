@@ -166,7 +166,7 @@ bool fs_mount(char *name, char *device, char *fs){
 }
 
 bool fs_unmount(char *name){
-	fs_mountpoint mount=getmount(name);
+	fs_mountpoint &mount=getmount(name);
 	if(mount.valid){
 		hold_lock hl(fs_lock);
 		//TODO: Check for open files...
