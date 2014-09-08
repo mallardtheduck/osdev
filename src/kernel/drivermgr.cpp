@@ -31,8 +31,7 @@ void drv_init(){
 
 string get_unique_name(string name){
 	char buf[12];
-	int i=0;
-	while(i<999){
+	for(int i=0; i < 1000; ++i){
 		sprintf(buf, "%s%i", name.c_str(), i);
 		if(!devices->has_key(buf)) return buf;
 	}
