@@ -163,7 +163,7 @@ struct loaded_elf_module{
 	module_entry entry;
 };
 
-typedef int (*proc_entry)(int argc, char **argv);
+typedef void (*proc_entry)();
 
 struct loaded_elf_proc{
 	void *mem;

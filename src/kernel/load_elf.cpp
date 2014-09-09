@@ -1,4 +1,4 @@
-#include "load_elf.hpp"
+#include "kernel.hpp"
 
 #define hasflag(x, y) (((x) & (y)) == (y))
 
