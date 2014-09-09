@@ -3,7 +3,6 @@
 
 #include "kernel.hpp"
 #include "string.hpp"
-#include "load_elf.hpp"
 
 typedef uint64_t pid_t;
 typedef uint32_t handle_t;
@@ -22,6 +21,8 @@ class string;
 
 extern proc_process *proc_current_process;
 extern pid_t proc_current_pid;
+
+#include "load_elf.hpp"
 
 void proc_init();
 void proc_switch(pid_t pid, bool setthread=true);
