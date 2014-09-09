@@ -3,6 +3,7 @@
 
 #include "kernel.hpp"
 #include "string.hpp"
+#include "load_elf.hpp"
 
 typedef uint64_t pid_t;
 typedef uint32_t handle_t;
@@ -33,6 +34,7 @@ void proc_setenv(const string &name, const string &value, const uint8_t flags=0,
 const string &proc_getenv(const pid_t pid, const string &name, bool userspace=false);
 const string &proc_getenv(const string &name, bool userspace=true);
 pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent=proc_current_pid);
+uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t pid=proc_current_pid);
 
 typedef volatile uint64_t lock;
 handle_t proc_add_lock(lock *l, pid_t pid=proc_current_pid);
@@ -55,5 +57,7 @@ size_t proc_get_arg(size_t i, char *buf, size_t size, pid_t pid=proc_current_pid
 
 void proc_remove_thread(uint64_t thread_id, pid_t pid=proc_current_pid);
 handle_t proc_add_thread(uint64_t thread_id, pid_t pid=proc_current_pid);
+uint64_t proc_get_thread(handle_t h, pid_t pid=proc_current_pid);
+uint64_t proc_get_thread_handle(uint64_t id, pid_t pid=proc_current_pid);
 
 #endif

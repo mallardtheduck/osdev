@@ -259,6 +259,28 @@ USERAPI_HANDLER(BT_GETPID){
 	regs->eax=(uint32_t)proc_current_pid;
 }
 
+USERAPI_HANDLER(BT_NEW_THREAD){
+    if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->edx)&& (!regs->ecx || is_safe_ptr(regs->ecx))){
+        uint64_t id=proc_new_user_thread((void*)regs->ebx, (void*)regs->ecx, (void*)regs->edx);
+        regs->eax=proc_get_thread_handle(id);
+    }
+}
+
+USERAPI_HANDLER(BT_WAIT_THREAD){
+    uint64_t id=proc_get_thread(regs->ebx);
+    if(id){
+        sch_wait(id);
+    }
+}
+
+USERAPI_HANDLER(BT_END_THREAD){
+    sch_end_thread();
+}
+
+USERAPI_HANDLER(BT_YIELD){
+    sch_yield();
+}
+
 void userapi_syscall(uint16_t fn, isr_regs *regs){
 	switch(fn){
 		case 0:
@@ -277,6 +299,18 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_TRY_LOCK);
 		USERAPI_HANDLE_CALL(BT_UNLOCK);
 		USERAPI_HANDLE_CALL(BT_DESTROY_LOCK);
+
+        //Threading
+        USERAPI_HANDLE_CALL(BT_NEW_THREAD);
+        USERAPI_HANDLE_CALL(BT_WAIT_THREAD);
+        //USERAPI_HANDLE_CALL(BT_THREAD_STATUS);
+        //USERAPI_HANDLE_CALL(BT_BLOCK_THREAD);
+        //USERAPI_HANDLE_CALL(BT_UNBLOCK_THREAD);
+        //USERAPI_HANDLE_CALL(BT_GET_THREAD);
+        USERAPI_HANDLE_CALL(BT_END_THREAD);
+        USERAPI_HANDLE_CALL(BT_YIELD);
+        //USERAPI_HANDLE_CALL(BT_THREAD_PRIORITIZE);
+        //USERAPI_HANDLE_CALL(BT_THREAD_ABORT);
 
         //VFS
 		USERAPI_HANDLE_CALL(BT_MOUNT);

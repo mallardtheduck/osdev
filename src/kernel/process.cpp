@@ -236,7 +236,7 @@ env_t proc_copyenv(const env_t &env){
 struct proc_info{
 	pid_t pid;
 	proc_entry entry;
-	/*params*/
+    void *stackptr;
 };
 
 void *proc_alloc_stack(size_t size){
@@ -252,9 +252,10 @@ void *proc_alloc_stack(size_t size){
 void proc_start(void *ptr){
 	pid_t pid = ((proc_info*)ptr)->pid;
 	proc_entry entry = ((proc_info*)ptr)->entry;
+    void *stackptr = ((proc_info*)ptr)->stackptr;
 	delete (proc_info*)ptr;
 	proc_switch(pid);
-	void *stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
+	if(!stackptr) stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
 	sch_abortable(true);
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
@@ -268,9 +269,20 @@ pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
 	proc_info *info=new proc_info();
 	info->pid=ret;
 	info->entry=proc.entry;
+    info->stackptr=NULL;
 	sch_new_thread(&proc_start, (void*)info, 4096);
 	return ret;
 }
+
+uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t pid){
+    proc_info *info=new proc_info();
+    info->pid=pid;
+    info->entry=entry;
+    info->stackptr=stack;
+    //TODO: parameter...
+    return sch_new_thread(&proc_start, (void*)info, 4096);
+}
+
 
 handle_t proc_add_lock(lock *l, pid_t pid){
 	proc_process *proc=proc_get(pid);
@@ -374,4 +386,18 @@ handle_t proc_add_thread(uint64_t thread_id, pid_t pid){
 	handle_t ret=++proc->handlecounter;
 	proc->threads[ret]=thread_id;
 	return ret;
+}
+
+uint64_t proc_get_thread(handle_t h, pid_t pid){
+    proc_process *proc=proc_get(pid);
+    if(proc->threads.has_key(h)) return proc->threads[h];
+    else return 0;
+}
+
+uint64_t proc_get_thread_handle(uint64_t id, pid_t pid){
+    proc_process *proc=proc_get(pid);
+    for(map<handle_t, uint64_t>::iterator i=proc->threads.begin(); i!=proc->threads.end(); ++i){
+        if(i->second==id) return i->first;
+    }
+    return 0;
 }
