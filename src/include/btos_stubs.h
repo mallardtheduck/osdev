@@ -63,12 +63,28 @@ inline static void bt_wait_thread(bt_threadhandle thread){
     btos_call(BT_WAIT_THREAD, thread, 0, 0);
 }
 
+inline static void bt_block_thread(){
+    btos_call(BT_BLOCK_THREAD, 0, 0, 0);
+}
+
+inline static void bt_unblock_thread(bt_threadhandle thread){
+    btos_call(BT_UNBLOCK_THREAD, thread, 0, 0);
+}
+
+inline static bt_threadhandle bt_get_thread(){
+    return btos_call(BT_GET_THREAD, 0, 0, 0);
+}
+
 inline static void bt_end_thread(){
     btos_call(BT_END_THREAD, 0, 0, 0);
 }
 
 inline static void bt_yield(){
     btos_call(BT_YIELD, 0, 0, 0);
+}
+
+inline static void bt_thread_abort(bt_threadhandle thread){
+    btos_call(BT_THREAD_ABORT, thread, 0, 0);
 }
 
 inline static bool bt_mount(const char *name, const char *device, const char *filesystem){

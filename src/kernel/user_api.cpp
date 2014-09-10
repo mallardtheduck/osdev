@@ -266,6 +266,21 @@ USERAPI_HANDLER(BT_NEW_THREAD){
     }
 }
 
+USERAPI_HANDLER(BT_BLOCK_THREAD){
+    sch_abortable(true);
+    sch_block();
+    sch_abortable(false);
+}
+
+USERAPI_HANDLER(BT_UNBLOCK_THREAD){
+    uint64_t id=proc_get_thread(regs->ebx);
+    sch_unblock(id);
+}
+
+USERAPI_HANDLER(BT_GET_THREAD){
+    regs->eax=proc_get_thread_handle(sch_get_id());
+}
+
 USERAPI_HANDLER(BT_WAIT_THREAD){
     uint64_t id=proc_get_thread(regs->ebx);
     if(id){
@@ -279,6 +294,13 @@ USERAPI_HANDLER(BT_END_THREAD){
 
 USERAPI_HANDLER(BT_YIELD){
     sch_yield();
+}
+
+USERAPI_HANDLER(BT_THREAD_ABORT){
+    uint64_t id=proc_get_thread(regs->ebx);
+    if(id){
+        sch_abort(id);
+    }
 }
 
 void userapi_syscall(uint16_t fn, isr_regs *regs){
@@ -304,13 +326,13 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
         USERAPI_HANDLE_CALL(BT_NEW_THREAD);
         USERAPI_HANDLE_CALL(BT_WAIT_THREAD);
         //USERAPI_HANDLE_CALL(BT_THREAD_STATUS);
-        //USERAPI_HANDLE_CALL(BT_BLOCK_THREAD);
-        //USERAPI_HANDLE_CALL(BT_UNBLOCK_THREAD);
-        //USERAPI_HANDLE_CALL(BT_GET_THREAD);
+        USERAPI_HANDLE_CALL(BT_BLOCK_THREAD);
+        USERAPI_HANDLE_CALL(BT_UNBLOCK_THREAD);
+        USERAPI_HANDLE_CALL(BT_GET_THREAD);
         USERAPI_HANDLE_CALL(BT_END_THREAD);
         USERAPI_HANDLE_CALL(BT_YIELD);
         //USERAPI_HANDLE_CALL(BT_THREAD_PRIORITIZE);
-        //USERAPI_HANDLE_CALL(BT_THREAD_ABORT);
+        USERAPI_HANDLE_CALL(BT_THREAD_ABORT);
 
         //VFS
 		USERAPI_HANDLE_CALL(BT_MOUNT);
