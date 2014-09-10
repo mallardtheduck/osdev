@@ -280,7 +280,9 @@ uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t 
     info->entry=entry;
     info->stackptr=stack;
     //TODO: parameter...
-    return sch_new_thread(&proc_start, (void*)info, 4096);
+    uint64_t thread_id=sch_new_thread(&proc_start, (void*)info, 4096);
+    proc_add_thread(thread_id);
+    return thread_id;
 }
 
 
