@@ -260,7 +260,7 @@ USERAPI_HANDLER(BT_GETPID){
 }
 
 USERAPI_HANDLER(BT_NEW_THREAD){
-    if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->edx)&& (!regs->ecx || is_safe_ptr(regs->ecx))){
+    if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->edx) && (!regs->ecx || is_safe_ptr(regs->ecx))){
         uint64_t id=proc_new_user_thread((proc_entry)regs->ebx, (void*)regs->ecx, (void*)regs->edx);
         regs->eax=proc_get_thread_handle(id);
     }
