@@ -149,8 +149,9 @@ void path(char *input){
 
 void the_thread(void *p){
     (void)p;
-    printf("New thread started!");
+    printf("New thread started!\n");
     bt_yield();
+    bt_end_thread();
 }
 
 void thread_test(){
@@ -158,6 +159,7 @@ void thread_test(){
     void *stackptr=(void*)((char*)threadstack+4096);
     char *testparam="TEST PARAMETER";
     bt_threadhandle thread=bt_new_thread(&the_thread, (void*)testparam, stackptr);
+    printf("New thread handle: %i\n", thread);
     bt_wait_thread(thread);
     free(threadstack);
 }
