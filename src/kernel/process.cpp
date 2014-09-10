@@ -394,7 +394,7 @@ uint64_t proc_get_thread(handle_t h, pid_t pid){
     else return 0;
 }
 
-uint64_t proc_get_thread_handle(uint64_t id, pid_t pid){
+handle_t proc_get_thread_handle(uint64_t id, pid_t pid){
     proc_process *proc=proc_get(pid);
     for(map<handle_t, uint64_t>::iterator i=proc->threads.begin(); i!=proc->threads.end(); ++i){
         if(i->second==id) return i->first;
