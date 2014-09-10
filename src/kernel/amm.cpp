@@ -124,13 +124,7 @@ void amm_page_fault_handler(int, isr_regs *regs){
 	asm volatile("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
 	dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
     if(regs->eip >= VMM_USERSPACE_START){
-        pid_t pid=proc_current_pid;
-        dbgpf("AMM: Terminating PID: %i\n", pid);
-        proc_setreturn(-1);
-        proc_switch(0);
-        proc_remove_thread(sch_get_id(), pid);
-        proc_end(pid);
-        sch_end_thread();
+        proc_terminate();
     }else {
         if (addr < VMM_PAGE_SIZE) panic("(AMM) Probable NULL pointer dereference!");
         else panic("(AMM) Page fault!");

@@ -408,3 +408,16 @@ handle_t proc_get_thread_handle(uint64_t id, pid_t pid){
     }
     return 0;
 }
+
+void proc_terminate(pid_t pid){
+    dbgpf("PROC: Terminating PID: %i\n", pid);
+    proc_setreturn(-1);
+    bool current=false;
+    if(pid==proc_current_pid) {
+        proc_switch(0);
+        proc_remove_thread(sch_get_id(), pid);
+        current=true;
+    }
+    proc_end(pid);
+    if(current) sch_end_thread();
+}
