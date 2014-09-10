@@ -128,6 +128,7 @@ void amm_page_fault_handler(int, isr_regs *regs){
         dbgpf("AMM: Terminating PID: %i\n", pid);
         proc_setreturn(-1);
         proc_switch(0);
+        proc_remove_thread(sch_get_id(), pid);
         proc_end(pid);
         sch_end_thread();
     }else {
