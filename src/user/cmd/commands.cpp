@@ -303,7 +303,9 @@ bool run_program(const vector<string> &commandline){
 		}
 		bt_pid pid=bt_spawn(path.c_str(), commandline.size(), argv);
 		delete[] argv;
-		if(pid) bt_wait(pid);
+        int ret=0;
+		if(pid) ret=bt_wait(pid);
+        if(ret==-1) cout << path << " crashed." << endl;
 		return true;
 	}
 	return false;
