@@ -169,6 +169,11 @@ void proc_end(pid_t pid){
 		fs_close_dir(*i->second);
 		delete i->second;
 	}
+    for(map<handle_t, uint64_t>::iterator i=proc->threads.begin(); i!=proc->threads.end(); ++i){
+        if(i->second!=sch_get_id()){
+            sch_abort(i->second);
+        }
+    }
 	{hold_lock hl(proc_lock);
 		for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
 			if(i->pid==pid){
