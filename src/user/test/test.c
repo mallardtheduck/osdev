@@ -1,35 +1,37 @@
 #include "btos_stubs.h"
 #include "keyboard.h"
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-char stdout_device[255]={'D', 'E', 'V', ':', '/'};
-bt_filehandle stdout=0;
-char stdin_device[255]={'D', 'E', 'V', ':', '/'};
-bt_filehandle stdin=0;
+char bt_stdout_device[255]={'D', 'E', 'V', ':', '/'};
+bt_filehandle bt_stdout=0;
+char bt_stdin_device[255]={'D', 'E', 'V', ':', '/'};
+bt_filehandle bt_stdin=0;
 
 bool btos_path_parse(char *opath, char *bufffer, size_t size);
 
 void print_string(const char *s){
-	if(!stdout){
-		if(!bt_getenv("DISPLAY_DEVICE", &stdout_device[5], 250)) return;
-    	stdout=bt_fopen(stdout_device, FS_Write);
+	if(!bt_stdout){
+		if(!bt_getenv("DISPLAY_DEVICE", &bt_stdout_device[5], 250)) return;
+    	bt_stdout=bt_fopen(bt_stdout_device, FS_Write);
     }
-    bt_fwrite(stdout, strlen(s), s);
+    bt_fwrite(bt_stdout, strlen(s), s);
 }
 
 void get_string(char *buffer, size_t bytes){
-	if(!stdin){
-		if(!bt_getenv("INPUT_DEVICE", &stdin_device[5], 250)) return;
-		stdin=bt_fopen(stdin_device, FS_Read);
+	if(!bt_stdin){
+		if(!bt_getenv("INPUT_DEVICE", &bt_stdin_device[5], 250)) return;
+		bt_stdin=bt_fopen(bt_stdin_device, FS_Read);
 	}
-	size_t pos=bt_fseek(stdout, 0, true);
+	size_t pos=bt_fseek(bt_stdout, 0, true);
 	size_t i=0;
 	char x[2]={'a', '\0'};
 	uint32_t c;
 	while(true){
-		bt_fread(stdin, sizeof(c), (char*)&c);
+		bt_fread(bt_stdin, sizeof(c), (char*)&c);
 		x[0]=KB_char(c);
 		if(x[0]==0x08){
 		 	if(i>0) buffer[--i]=0;
@@ -40,11 +42,11 @@ void get_string(char *buffer, size_t bytes){
 			return;
 		}
 
-		bt_fseek(stdout, pos, false);
+		bt_fseek(bt_stdout, pos, false);
 		print_string(buffer);
-		size_t newpos=bt_fseek(stdout, 0, true);
+		size_t newpos=bt_fseek(bt_stdout, 0, true);
 		print_string(" ");
-		bt_fseek(stdout, newpos, false);
+		bt_fseek(bt_stdout, newpos, false);
 	}
 }
 
@@ -145,6 +147,26 @@ void path(char *input){
 	}else print_string("Failed.\n");
 }
 
+void the_thread(void *p){
+    (void)p;
+    printf("New thread started!");
+    bt_yield();
+}
+
+void thread_test(){
+    void *threadstack=malloc(4096);
+    void *stackptr=(void*)((char*)threadstack+4096);
+    char *testparam="TEST PARAMETER";
+    bt_threadhandle thread=bt_new_thread(&the_thread, (void*)testparam, stackptr);
+    bt_wait_thread(thread);
+    free(threadstack);
+}
+
+void crash_test(){
+    char *q=(char*)0xDEADBEEF;
+    *q='q';
+}
+
 int main(int argc, char **argv){
 	bt_zero("~~~Userspace test program start!~~~\n");
 	print_string("TEST Command Prompt!\n");
@@ -161,6 +183,8 @@ int main(int argc, char **argv){
 		else if(input[0]=='v') version();
 		else if(input[0]=='r') run_program(input);
 		else if(input[0]=='p') path(input);
+		else if(input[0]=='t') thread_test();
+        else if(input[0]=='x') crash_test();
 		else if(input[0]=='q') break;
 		else {
 			if(strlen(input) && input[0]!='\n') print_string("Unrecognised command.\n");
