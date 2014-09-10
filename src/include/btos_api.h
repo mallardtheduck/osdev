@@ -16,6 +16,7 @@ typedef uint32_t bt_handle;
 typedef bt_handle bt_lockhandle;
 typedef bt_handle bt_filehandle;
 typedef bt_handle bt_dirhandle;
+typedef bt_handle bt_threadhandle;
 
 typedef uint32_t bt_pid;
 typedef uint32_t bt_priority;

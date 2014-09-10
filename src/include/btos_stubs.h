@@ -55,6 +55,22 @@ inline static void bt_destroy_lock(bt_lockhandle lock){
 	btos_call(BT_DESTROY_LOCK, lock, 0, 0);
 }
 
+inline static bt_threadhandle bt_new_thread(void (*entry)(void*), void *param, void *stack){
+    return btos_call(BT_NEW_THREAD, (uint32_t)entry, (uint32_t)param, (uint32_t)stack);
+}
+
+inline static void bt_wait_thread(bt_threadhandle thread){
+    btos_call(BT_WAIT_THREAD, thread, 0, 0);
+}
+
+inline static void bt_end_thread(){
+    btos_call(BT_END_THREAD, 0, 0, 0);
+}
+
+inline static void bt_yield(){
+    btos_call(BT_YIELD, 0, 0, 0);
+}
+
 inline static bool bt_mount(const char *name, const char *device, const char *filesystem){
 	return btos_call(BT_MOUNT, (uint32_t)name, (uint32_t)device, (uint32_t)filesystem);
 }
