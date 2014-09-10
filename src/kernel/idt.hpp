@@ -156,5 +156,6 @@ irq_regs isr_regs2irq_regs(const isr_regs &r);
 
 void int_handle(size_t intno, int_handler handler);
 void irq_handle(size_t irqno, int_handler handler);
+bool is_imode();
 
 #endif

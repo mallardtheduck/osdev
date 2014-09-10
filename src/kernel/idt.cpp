@@ -3,6 +3,7 @@
 #include "locks.hpp"
 
 const int IRQ_BASE=32;
+volatile unsigned int imode=0;
 
 /* Defines an IDT entry */
 struct idt_entry
@@ -212,6 +213,7 @@ void out_int_info(const isr_regs ctx){
 extern size_t current_thread;
 
 extern "C" void isr_handler(isr_regs *ctx){
+    imode++;
 	sch_abortable(false);
 	if(handlers[ctx->interrupt_number]) handlers[ctx->interrupt_number](ctx->interrupt_number, ctx);
 	else if(ctx->interrupt_number==0x06){
@@ -248,6 +250,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		out_int_info(*ctx);
 	}
 	sch_abortable(true);
+    imode--;
 }
 
 void irq_ack(size_t irq_no) {
@@ -266,12 +269,14 @@ inline void out_regs(const irq_regs ctx){
 }
 
 extern "C" void irq_handler(irq_regs *r) {
+    imode++;
 	sch_abortable(false);
 	//out_regs(*r);
 	int irq=r->int_no-IRQ_BASE;
 	irq_ack(irq);
 	if(handlers[r->int_no]) handlers[r->int_no](r->int_no, (isr_regs*)r);
 	sch_abortable(true);
+    imode--;
 }
 
 irq_regs isr_regs2irq_regs(const isr_regs &r){
@@ -289,4 +294,8 @@ void int_handle(size_t intno, int_handler handler){
 
 void irq_handle(size_t irqno, int_handler handler){
 	handlers[irqno+IRQ_BASE]=handler;
+}
+
+bool is_imode(){
+    return imode;
 }
