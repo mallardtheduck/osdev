@@ -165,8 +165,10 @@ void thread_test(){
 }
 
 void crash_test(){
-    char *q=(char*)0xDEADBEEF;
-    *q='q';
+    //char *q=(char*)0xDEADBEEF;
+    //*q='q';
+    void (*q)()=(void(*)())0;
+    q();
 }
 
 int main(int argc, char **argv){
