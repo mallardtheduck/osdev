@@ -220,31 +220,29 @@ extern "C" void isr_handler(isr_regs *ctx){
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
 		out_int_info(*ctx);
-		panic("Invalid opcode.\n");
+		if(ctx->eip < VMM_USERSPACE_START) panic("Invalid opcode.");
+        else proc_terminate();
 	}
 	else if(ctx->interrupt_number==0x0D){
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
 		out_int_info(*ctx);
-		panic("General Protection Fault.\n");
+        if(ctx->eip < VMM_USERSPACE_START) panic("General Protection Fault.");
+        else proc_terminate();
 	}
 	else if(ctx->interrupt_number==0x08){
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
 		out_int_info(*ctx);
-		panic("Double fault.\n"); 
-	}
-	else if(ctx->interrupt_number==SYSCALL){
-		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
-		dbgout("Syscall recieved.\n");
-		//if(ctx->eax==0) sch_isr(ctx);
-	}else if(ctx->interrupt_number==0x0E){
-		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
-		out_int_info(*ctx);
-		panic("Page fault!");
-	}else{
+        if(ctx->eip < VMM_USERSPACE_START) panic("Double fault.");
+        else proc_terminate();
+	}else if(ctx->interrupt_number==0x00){
+        dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
+        dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
+        out_int_info(*ctx);
+        if(ctx->eip < VMM_USERSPACE_START) panic("Devide by zero!");
+        else proc_terminate();
+    }else{
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
 		out_int_info(*ctx);
