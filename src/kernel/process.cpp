@@ -379,32 +379,44 @@ size_t proc_get_arg(size_t i, char *buf, size_t size, pid_t pid){
 void proc_remove_thread(uint64_t thread_id, pid_t pid){
 	proc_process *proc=proc_get(pid);
 	handle_t h=0;
-	for(map<handle_t, uint64_t>::iterator i=proc->threads.begin(); i!=proc->threads.end(); ++i){
-		if(i->second==thread_id) h=i->first;
-	}
+    {
+        hold_lock hl(proc_lock);
+        for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
+            if (i->second == thread_id) h = i->first;
+        }
+    }
 	if(h) proc->threads.erase(h);
 }
 
 handle_t proc_add_thread(uint64_t thread_id, pid_t pid){
 	proc_process *proc=proc_get(pid);
-	for(map<handle_t, uint64_t>::iterator i=proc->threads.begin(); i!=proc->threads.end(); ++i){
-		if(i->second==thread_id) return i->first;
-	}
-	handle_t ret=++proc->handlecounter;
-	proc->threads[ret]=thread_id;
-	return ret;
+    {
+        hold_lock hl(proc_lock);
+        for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
+            if (i->second == thread_id) return i->first;
+        }
+        handle_t ret = ++proc->handlecounter;
+        proc->threads[ret] = thread_id;
+        return ret;
+    }
 }
 
 uint64_t proc_get_thread(handle_t h, pid_t pid){
     proc_process *proc=proc_get(pid);
-    if(proc->threads.has_key(h)) return proc->threads[h];
-    else return 0;
+    {
+        hold_lock hl(proc_lock);
+        if (proc->threads.has_key(h)) return proc->threads[h];
+        else return 0;
+    }
 }
 
 handle_t proc_get_thread_handle(uint64_t id, pid_t pid){
     proc_process *proc=proc_get(pid);
-    for(map<handle_t, uint64_t>::iterator i=proc->threads.begin(); i!=proc->threads.end(); ++i){
-        if(i->second==id) return i->first;
+    {
+        hold_lock hl(proc_lock);
+        for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
+            if (i->second == id) return i->first;
+        }
     }
     return 0;
 }
