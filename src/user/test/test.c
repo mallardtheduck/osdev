@@ -155,13 +155,16 @@ void the_thread(void *p){
 }
 
 void thread_test(){
-    void *threadstack=malloc(4096);
-    void *stackptr=(void*)((char*)threadstack+4096);
-    char *testparam="TEST PARAMETER";
-    bt_threadhandle thread=bt_new_thread(&the_thread, (void*)testparam, stackptr);
-    printf("New thread handle: %i\n", thread);
-    bt_wait_thread(thread);
-    free(threadstack);
+    bt_threadhandle thread=0;
+    while(thread < 100000) {
+        void *threadstack = malloc(4096);
+        void *stackptr = (void *) ((char *) threadstack + 4096);
+        char *testparam = "TEST PARAMETER";
+        thread = bt_new_thread(&the_thread, (void *) testparam, stackptr);
+        printf("New thread handle: %i\n", thread);
+        bt_wait_thread(thread);
+        free(threadstack);
+    }
 }
 
 void crash_test(){
