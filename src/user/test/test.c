@@ -149,21 +149,26 @@ void path(char *input){
 
 void the_thread(void *p){
     (void)p;
-    printf("New thread started!\n");
+    //printf("New thread started!\n");
     bt_yield();
     bt_end_thread();
 }
 
 void thread_test(){
-    bt_threadhandle thread=0;
-    while(thread < 100000) {
-        void *threadstack = malloc(4096);
-        void *stackptr = (void *) ((char *) threadstack + 4096);
-        char *testparam = "TEST PARAMETER";
-        thread = bt_new_thread(&the_thread, (void *) testparam, stackptr);
-        printf("New thread handle: %i\n", thread);
-        bt_wait_thread(thread);
-        free(threadstack);
+    for(size_t k=0; k<1000; ++k) {
+        bt_threadhandle threads[10]={0};
+        void *threadstacks[10]={0};
+        for(size_t i=0; i<10; ++i) {
+            threadstacks[i] = malloc(4096);
+            void *stackptr = (void *) ((char *) threadstacks[i] + 4096);
+            char *testparam = "TEST PARAMETER";
+            threads[i] = bt_new_thread(&the_thread, (void *) testparam, stackptr);
+            printf("New thread handle: %i\n", threads[i]);
+        }
+        for(size_t i=0; i<10; ++i) {
+            bt_wait_thread(threads[i]);
+            free(threadstacks[i]);
+        }
     }
 }
 
