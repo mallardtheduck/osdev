@@ -181,6 +181,7 @@ void proc_end(pid_t pid) {
         cont=false;
         for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
             if (i->second != sch_get_id()) {
+                proc_remove_thread(i->second, pid);
                 sch_abort(i->second);
                 cont=true;
                 break;

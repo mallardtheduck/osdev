@@ -418,15 +418,10 @@ void sch_abort(uint64_t ext_id){
 			if((*threads)[i].ext_id==ext_id){
 				found=true;
 				if((*threads)[i].abortable){
-                    uint64_t id=(*threads)[i].ext_id;
-                    pid_t pid=(*threads)[i].pid;
 					(*threads)[i].runnable=false;
 					(*threads)[i].to_be_deleted=true;
 					(*threads)[reaper_thread].runnable=true;
 					tryagain=false;
-                    release_lock(sch_lock);
-                    proc_remove_thread(id, pid);
-                    take_lock(sch_lock);
 				}
 			}
 		}

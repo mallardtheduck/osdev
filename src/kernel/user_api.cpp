@@ -303,6 +303,7 @@ USERAPI_HANDLER(BT_YIELD){
 USERAPI_HANDLER(BT_THREAD_ABORT){
     uint64_t id=proc_get_thread(regs->ebx);
     if(id){
+        proc_remove_thread(id);
         sch_abort(id);
     }
 }
