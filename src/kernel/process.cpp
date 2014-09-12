@@ -384,8 +384,17 @@ void proc_remove_thread(uint64_t thread_id, pid_t pid){
         for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
             if (i->second == thread_id) h = i->first;
         }
+        if (h) proc->threads.erase(h);
     }
-	if(h) proc->threads.erase(h);
+}
+
+void proc_remove_thread_handle(handle_t h, pid_t pid){
+    proc_process *proc=proc_get(pid);
+    handle_t h=0;
+    {
+        hold_lock hl(proc_lock);
+        if (proc->threads.has_key(h)) proc->threads.erase(h);
+    }
 }
 
 handle_t proc_add_thread(uint64_t thread_id, pid_t pid){

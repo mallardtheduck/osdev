@@ -196,7 +196,8 @@ void thread_reaper(void*){
 }
 
 void sch_end_thread(){
-	take_lock(sch_lock);
+    proc_remove_thread(sch_get_id());
+    take_lock(sch_lock);
 	(*threads)[current_thread].runnable=false;
 	(*threads)[current_thread].to_be_deleted=true;
 	(*threads)[reaper_thread].runnable=true;
