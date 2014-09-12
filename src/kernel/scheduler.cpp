@@ -381,6 +381,10 @@ extern "C" void sch_update_eip(uint32_t eip){
 	(*threads)[current_thread].eip=eip;
 }
 
+uint32_t sch_get_eip(){
+    return (*threads)[current_thread].eip;
+}
+
 void sch_abortable(bool abortable){
 	//hold_lock hl(sch_lock);
 	(*threads)[current_thread].abortlevel+=abortable? -1 : 1;
