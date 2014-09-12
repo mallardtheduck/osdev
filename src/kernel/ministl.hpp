@@ -287,6 +287,8 @@ public:
   template <class U> struct rebind { typedef allocator<U> other; };
 };
 
+static const size_t map_growth_factor=64;
+
 template < typename _Key, typename _Ty, typename _Cmp = less<_Key>, typename _Alloc = allocator< pair<const _Key, _Ty> > > class map
 {
 public:
@@ -304,7 +306,7 @@ public:
 	typedef ptrdiff_t difference_type;
 
 	map()
-	: size_(0), capacity_(1), data_(_Alloc().allocate(capacity_))
+	: size_(0), capacity_(map_growth_factor), data_(_Alloc().allocate(capacity_))
 	{
 	}
 
@@ -334,7 +336,7 @@ public:
 	{
 		if (size_ + 1 >= capacity_)
 		{
-		    reserve(capacity_ + 1);
+		    reserve(capacity_ + map_growth_factor);
 		}
 		size_++;
 		_Alloc().construct(&data_[size_ - 1], _Value);
