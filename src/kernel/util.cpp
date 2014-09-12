@@ -114,10 +114,3 @@ void *memmove(void *v_dst, const void *v_src, size_t c)
 
 	return v_dst;
 }
-
-void panic(char *msg){
-	printf("PANIC: %s", msg);
-	dbgout("PANIC: ");dbgout(msg);
-	disable_interrupts();
-	asm volatile("hlt");
-}
