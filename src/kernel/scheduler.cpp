@@ -394,7 +394,6 @@ void sch_abortable(bool abortable){
 	if((*threads)[current_thread].abortlevel<=0){
 		(*threads)[current_thread].abortlevel=0;
 		(*threads)[current_thread].abortable=true;
-		dbgpf("SCH: Thread %i now abortable.\n", (int)current_thread_id);
 	}else{
 		(*threads)[current_thread].abortable=false;
 	}
