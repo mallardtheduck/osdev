@@ -390,7 +390,6 @@ void proc_remove_thread(uint64_t thread_id, pid_t pid){
 
 void proc_remove_thread_handle(handle_t h, pid_t pid){
     proc_process *proc=proc_get(pid);
-    handle_t h=0;
     {
         hold_lock hl(proc_lock);
         if (proc->threads.has_key(h)) proc->threads.erase(h);
