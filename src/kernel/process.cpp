@@ -115,11 +115,11 @@ void proc_switch_sch(pid_t pid, bool setthread){
 	if(setthread) sch_setpid(pid);
 	if(pid!=proc_current_pid){
 		dbgpf("PROC: Switching process. Old PID: %i, new PID: %i\n", (int)proc_current_pid, (int)pid);
-		proc_process *newproc=0;
+		proc_process *newproc=NULL;
 		for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
 			if(i->pid==pid) newproc=i;
 		}
-		if(!newproc) return;
+        if(!newproc) panic("(PROC) Attempt to switch to unknown process.");
 		proc_current_process=newproc;
 		proc_current_pid=newproc->pid;
 		vmm_switch(proc_current_process->pagedir);
@@ -131,13 +131,16 @@ void proc_switch(pid_t pid, bool setthread){
 	if(pid!=proc_current_pid){
 		dbgpf("PROC: Switching process. Old PID: %i, new PID: %i\n", (int)proc_current_pid, (int)pid);
 		proc_process *newproc=proc_get(pid);
+        if(!newproc) panic("(PROC) Attempt to switch to unknown process.");
 		if(setthread){
 			proc_remove_thread(sch_get_id(), proc_current_pid);
 			proc_add_thread(sch_get_id(), pid);
 		}
+        take_lock(proc_lock);
 		proc_current_process=newproc;
 		proc_current_pid=newproc->pid;
 		vmm_switch(proc_current_process->pagedir);
+        release_lock(proc_lock);
 	}
 }
 
