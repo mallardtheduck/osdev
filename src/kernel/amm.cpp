@@ -2,6 +2,8 @@
 #include "ministl.hpp"
 #include "locks.hpp"
 
+static const uint32_t ec_user = (1 << 2);
+
 struct amm_pagedetails{
 	amm_flags::Enum flags;
 	pid_t owner;
@@ -123,7 +125,7 @@ void amm_page_fault_handler(int, isr_regs *regs){
 	uint32_t addr;
 	asm volatile("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
 	dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
-    if(regs->eip >= VMM_USERSPACE_START){
+    if(regs->error_code & ec_user){
         proc_terminate();
     }else {
         if (addr < VMM_PAGE_SIZE) panic("(AMM) Probable NULL pointer dereference!");
