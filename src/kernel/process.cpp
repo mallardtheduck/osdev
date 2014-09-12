@@ -34,8 +34,11 @@ struct proc_process{
 	env_t environment;
 	string name;
 	int retval;
+
 	vmm_pagedir *pagedir;
 	handle_t handlecounter;
+    proc_status::Enum status;
+
 	map<handle_t, lock*> locks;
 	map<handle_t, file_handle*> files;
 	map<handle_t, dir_handle*> dirs;
@@ -46,7 +49,7 @@ struct proc_process{
 	proc_process() : pid(++curpid) {}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
 		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(vmm_newpagedir()),
-		 handlecounter(0) {}
+		 handlecounter(0), status(proc_status::Running) {}
 };
 
 proc_process *proc_get(pid_t pid);
@@ -151,43 +154,54 @@ pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent){
 	return newproc.pid;
 }
 
-void proc_end(pid_t pid){
-	dbgpf("PROC: Ending process %i.\n", (int)pid);
-	proc_process *proc=proc_get(pid);
-	pid_t parent=proc->parent;
-	if(parent){
-		proc_get(parent)->child_returns[pid]=proc->retval;
-	}
-	for(map<handle_t, lock*>::iterator i=proc->locks.begin(); i!=proc->locks.end(); ++i){
-		delete i->second;
-	}
-	for(map<handle_t, file_handle*>::iterator i=proc->files.begin(); i!=proc->files.end(); ++i){
-		fs_close(*i->second);
-		delete i->second;
-	}
-	for(map<handle_t, dir_handle*>::iterator i=proc->dirs.begin(); i!=proc->dirs.end(); ++i){
-		fs_close_dir(*i->second);
-		delete i->second;
-	}
-    for(map<handle_t, uint64_t>::iterator i=proc->threads.begin(); i!=proc->threads.end(); ++i){
-        if(i->second!=sch_get_id()){
-            sch_abort(i->second);
+void proc_end(pid_t pid) {
+    dbgpf("PROC: Ending process %i.\n", (int) pid);
+    proc_set_status(proc_status::Ending);
+    proc_process *proc = proc_get(pid);
+    pid_t parent = proc->parent;
+    if (parent) {
+        proc_get(parent)->child_returns[pid] = proc->retval;
+    }
+    {
+        hold_lock hl(proc_lock);
+        for (map<handle_t, lock *>::iterator i = proc->locks.begin(); i != proc->locks.end(); ++i) {
+            delete i->second;
+        }
+        for (map<handle_t, file_handle *>::iterator i = proc->files.begin(); i != proc->files.end(); ++i) {
+            fs_close(*i->second);
+            delete i->second;
+        }
+        for (map<handle_t, dir_handle *>::iterator i = proc->dirs.begin(); i != proc->dirs.end(); ++i) {
+            fs_close_dir(*i->second);
+            delete i->second;
         }
     }
-	{hold_lock hl(proc_lock);
-		for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
-			if(i->pid==pid){
-				vmm_deletepagedir(i->pagedir);
-				proc_processes->remove(i);
-				break;
-			}
-		}
-		for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
-			if(i->parent==pid){
-				i->parent=parent;
-			}
-		}
-	}
+    bool cont = true;
+    while (cont) {
+        cont=false;
+        for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
+            if (i->second != sch_get_id()) {
+                sch_abort(i->second);
+                cont=true;
+                break;
+            }
+        }
+    }
+    {
+        hold_lock hl(proc_lock);
+        for (list<proc_process>::iterator i = proc_processes->begin(); i; ++i) {
+            if (i->pid == pid) {
+                vmm_deletepagedir(i->pagedir);
+                proc_processes->remove(i);
+                break;
+            }
+        }
+        for (list<proc_process>::iterator i = proc_processes->begin(); i; ++i) {
+            if (i->parent == pid) {
+                i->parent = parent;
+            }
+        }
+    }
 }
 
 void proc_setenv(const pid_t pid, const string &oname, const string &value, const uint8_t flags, bool userspace){
@@ -431,6 +445,7 @@ handle_t proc_get_thread_handle(uint64_t id, pid_t pid){
 
 void proc_terminate(pid_t pid){
     dbgpf("PROC: Terminating PID: %i\n", pid);
+    if(pid==0) panic("(PROC) Request to terminate kernel!");
     proc_setreturn(-1);
     bool current=false;
     if(pid==proc_current_pid) {
@@ -440,4 +455,11 @@ void proc_terminate(pid_t pid){
     }
     proc_end(pid);
     if(current) sch_end_thread();
+}
+
+void proc_set_status(proc_status::Enum status, pid_t pid){
+    proc_get(pid)->status=status;
+}
+proc_status::Enum proc_get_status(pid_t pid){
+    return proc_get(pid)->status;
 }
