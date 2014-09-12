@@ -170,8 +170,11 @@ void thread_test(){
 void crash_test(){
     //char *q=(char*)0xDEADBEEF;
     //*q='q';
-    void (*q)()=(void(*)())0;
-    q();
+    //void (*q)()=(void(*)())0;
+    //q();
+    int i=0;
+    int z=100/i;
+    (void)z;
 }
 
 int main(int argc, char **argv){
