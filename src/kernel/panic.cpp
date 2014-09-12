@@ -114,6 +114,7 @@ void write_string_at(size_t row, size_t col, char *string, uint8_t attr=0){
     for(size_t r=row; r<25; ++r){
         for(size_t c=col; c<80; ++c){
             if(!string[i]) return;
+            if(string[i]=='\n') string[i]=' ';
             ((char*)0xB8000)[((r*80)+c)*2] = string[i];
             if(attr) ((uint8_t*)0xB8000)[(((r*80)+c)*2)+1] = attr;
             ++i;
