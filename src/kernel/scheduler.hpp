@@ -12,6 +12,7 @@ void sch_init();
 uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size=default_stack_size);
 void sch_end_thread();
 extern "C" void sch_yield();
+extern "C" void sch_update_eip(uint32_t eip);
 const uint64_t &sch_get_id();
 void sch_block();
 void sch_unblock(uint64_t ext_id);

@@ -214,6 +214,7 @@ extern size_t current_thread;
 
 extern "C" void isr_handler(isr_regs *ctx){
     imode++;
+    sch_update_eip(ctx->eip);
 	sch_abortable(false);
 	if(handlers[ctx->interrupt_number]) handlers[ctx->interrupt_number](ctx->interrupt_number, ctx);
 	else if(ctx->interrupt_number==0x06){
@@ -268,6 +269,7 @@ inline void out_regs(const irq_regs ctx){
 
 extern "C" void irq_handler(irq_regs *r) {
     imode++;
+    sch_update_eip(r->eip);
 	sch_abortable(false);
 	//out_regs(*r);
 	int irq=r->int_no-IRQ_BASE;
