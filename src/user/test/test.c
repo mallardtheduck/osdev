@@ -181,13 +181,18 @@ void thread_test(){
 }
 
 void crash_test(){
+    // - CRASH METHOD 1: Access unmapped memory (segfault-ish)
     //char *q=(char*)0xDEADBEEF;
     //*q='q';
+    // - CRASH METHOD 2: Try to jump to null pointer
     //void (*q)()=(void(*)())0;
     //q();
-    int i=0;
-    int z=100/i;
-    (void)z;
+    // - CRASH METHOD 3: Divide by zero
+    //int i=0;
+    //int z=100/i;
+    //(void)z;
+    // - CRASH METHOD 4: Incorrect use of locking functions
+    bt_lock(0xDEADBEEF);
 }
 
 int main(int argc, char **argv){
