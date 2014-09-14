@@ -147,14 +147,19 @@ void path(char *input){
 	}else print_string("Failed.\n");
 }
 
+bt_lockhandle screenlock;
+
 void the_thread(void *p){
     (void)p;
-    //printf("New thread started!\n");
+    bt_lock(screenlock);
+    printf("New thread started!\n");
+    bt_unlock(screenlock);
     bt_yield();
     bt_end_thread();
 }
 
 void thread_test(){
+    screenlock=bt_create_lock();
     for(size_t k=0; k<1000; ++k) {
         bt_threadhandle threads[10]={0};
         void *threadstacks[10]={0};
@@ -163,13 +168,16 @@ void thread_test(){
             void *stackptr = (void *) ((char *) threadstacks[i] + 4096);
             char *testparam = "TEST PARAMETER";
             threads[i] = bt_new_thread(&the_thread, (void *) testparam, stackptr);
+            bt_lock(screenlock);
             printf("New thread handle: %i\n", threads[i]);
+            bt_unlock(screenlock);
         }
         for(size_t i=0; i<10; ++i) {
             bt_wait_thread(threads[i]);
             free(threadstacks[i]);
         }
     }
+    bt_destroy_lock(screenlock);
 }
 
 void crash_test(){
