@@ -11,6 +11,7 @@ proc_process *proc_current_process;
 pid_t proc_current_pid;
 list<proc_process> *proc_processes;
 
+extern lock sch_lock;
 lock &proc_lock=sch_lock;
 lock env_lock;
 

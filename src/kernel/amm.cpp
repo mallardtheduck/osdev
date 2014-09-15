@@ -25,7 +25,7 @@ typedef T* pointer;
 		size_t pages=((n*sizeof(value_type))/VMM_PAGE_SIZE)+1;
 		take_lock(sch_lock);
 		bool lock_vmm=true;
-		if(vmm_lock==sch_get_id()){
+		if(vmm_lock.lock==sch_get_id()){
 			release_lock(vmm_lock);
 		}else{
 			lock_vmm=false;
@@ -45,7 +45,7 @@ typedef T* pointer;
 		size_t pages=((n*sizeof(value_type))/VMM_PAGE_SIZE)+1;
 		take_lock(sch_lock);
 		bool lock_vmm=true;
-		if(vmm_lock==sch_get_id()){
+		if(vmm_lock.lock==sch_get_id()){
 			release_lock(vmm_lock);
 		}else{
 			lock_vmm=false;

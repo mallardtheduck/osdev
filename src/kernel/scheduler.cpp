@@ -259,7 +259,7 @@ bool sch_find_thread(size_t &torun){
 
 extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	if(!are_interrupts_enabled()) panic("(SCH) Interrupts disabled in scheduler!\n");
-	if(sch_lock!=current_thread_id) panic("(SCH) Bad scheduler locking detected!\n");
+	if(sch_lock.lock!=current_thread_id) panic("(SCH) Bad scheduler locking detected!\n");
 	
 	//Save current thread's state
 	(*threads)[current_thread].stack.ss=ss;
@@ -272,7 +272,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 		current_thread=torun;
 		current_thread_id=(*threads)[torun].ext_id;
 		curstack=(*threads)[current_thread].stack;
-		sch_lock=current_thread_id;
+		sch_lock.lock=current_thread_id;
 		proc_switch_sch((*threads)[current_thread].pid, false);
 		gdt_set_kernel_stack((*threads)[current_thread].stackbase);
 		return &curstack;		

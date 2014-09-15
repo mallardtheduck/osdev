@@ -3,6 +3,7 @@
 
 #include "kernel.hpp"
 #include "string.hpp"
+#include "../include/locktype.h"
 
 typedef uint64_t pid_t;
 typedef uint32_t handle_t;
@@ -44,7 +45,6 @@ const string &proc_getenv(const string &name, bool userspace=true);
 pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent=proc_current_pid);
 uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t pid=proc_current_pid);
 
-typedef volatile uint64_t lock;
 handle_t proc_add_lock(lock *l, pid_t pid=proc_current_pid);
 lock *proc_get_lock(handle_t h, pid_t pid=proc_current_pid);
 void proc_remove_lock(handle_t h, pid_t pid=proc_current_pid);

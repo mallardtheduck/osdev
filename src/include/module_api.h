@@ -9,8 +9,8 @@
 
 #include "drivers.h"
 #include "fs_interface.h"
+#include "locktype.h"
 
-typedef volatile uint64_t lock;
 typedef void(*thread_func)(void*);
 typedef uint64_t thread_id_t;
 typedef uint64_t pid_t;
