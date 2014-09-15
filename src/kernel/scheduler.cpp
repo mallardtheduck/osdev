@@ -412,7 +412,7 @@ bool sch_abort_blockcheck(void *p){
 void sch_abort(uint64_t ext_id){
 	bool tryagain=true;
 	while(tryagain){
-        take_lock_exclusive(sch_lock);
+        take_lock_recursive(sch_lock);
 		bool found=false;
 		for(size_t i=0; i<threads->size(); ++i){
 			if((*threads)[i].ext_id==ext_id){
