@@ -418,12 +418,14 @@ public:
 		    _Alloc().construct(&buf[count], *i);
 		}
 		swap(data_, buf);
-		for (iterator i = &buf[0]; i != &buf[size_]; ++i)
+        size_t oldcapacity = capacity_;
+        capacity_ = _Capacity;
+        size_t oldsize=size_;
+		for (iterator i = &buf[0]; i != &buf[oldsize]; ++i)
 		{
 		    _Alloc().destroy(i);
 		}
-		_Alloc().deallocate(buf, capacity_);
-		capacity_ = _Capacity;
+		_Alloc().deallocate(buf, oldcapacity);
 		return *this;
 	}
 
