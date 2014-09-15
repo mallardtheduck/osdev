@@ -82,7 +82,7 @@ void amm_mark_alloc(uint32_t pageaddr, amm_flags::Enum flags, pid_t owner, void 
 	if(!amm_inited) return;
 	amm_pagedetails p={flags, owner, ptr};
     hold_lock hl(amm_lock, false);
-	if(!in_reserve && amm_allocated_pages->capacity() < amm_allocated_pages->size() + 128){
+	if(!in_reserve && amm_allocated_pages->capacity() < amm_allocated_pages->size() * 2){
         dbgout("AMM: Growing accounting structure...\n");
 		amm_allocated_pages->reserve(amm_allocated_pages->capacity() + 1024);
 	}
