@@ -73,11 +73,14 @@ char *env_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
 	sprintf(buffer, "# name, value, flags\n");
-	for(env_t::iterator i=proc_current_process->environment.begin(); i!=proc_current_process->environment.end(); ++i){
-		if(!(i->second.flags & proc_env_flags::Private)){
-			sprintf(&buffer[strlen(buffer)],"\"%s\", \"%s\", %x\n", i->first.c_str(), i->second.value.c_str(), (int)i->second.flags);
-		}
-	}
+    {
+        hold_lock hl(env_lock);
+        for (env_t::iterator i = proc_current_process->environment.begin(); i != proc_current_process->environment.end(); ++i) {
+            if (!(i->second.flags & proc_env_flags::Private)) {
+                sprintf(&buffer[strlen(buffer)], "\"%s\", \"%s\", %x\n", i->first.c_str(), i->second.value.c_str(), (int) i->second.flags);
+            }
+        }
+    }
 	return buffer;
 }
 
@@ -104,7 +107,7 @@ void proc_init(){
 }
 
 proc_process *proc_get(pid_t pid){
-	hold_lock hl(proc_lock);
+	hold_lock hl(proc_lock, false);
 	for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
 		if(i->pid==pid) return i;
 	}
@@ -130,6 +133,7 @@ void proc_switch_sch(pid_t pid, bool setthread){
 bool proc_switch(pid_t pid, bool setthread){
 	if(setthread) sch_setpid(pid);
 	if(pid!=proc_current_pid){
+        hold_lock hl(proc_lock);
 		dbgpf("PROC: Switching process. Old PID: %i, new PID: %i\n", (int)proc_current_pid, (int)pid);
 		proc_process *newproc=proc_get(pid);
         if(!newproc) return false;
@@ -137,11 +141,9 @@ bool proc_switch(pid_t pid, bool setthread){
 			proc_remove_thread(sch_get_id(), proc_current_pid);
 			proc_add_thread(sch_get_id(), pid);
 		}
-        take_lock_exclusive(proc_lock);
 		proc_current_process=newproc;
 		proc_current_pid=newproc->pid;
 		vmm_switch(proc_current_process->pagedir);
-        release_lock(proc_lock);
 	}
     return true;
 }
@@ -160,6 +162,7 @@ pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent){
 }
 
 void proc_end(pid_t pid) {
+    hold_lock hl(proc_lock);
     dbgpf("PROC: Ending process %i.\n", (int) pid);
     proc_set_status(proc_status::Ending);
     proc_process *proc = proc_get(pid);
@@ -167,19 +170,16 @@ void proc_end(pid_t pid) {
     if (parent) {
         proc_get(parent)->child_returns[pid] = proc->retval;
     }
-    {
-        hold_lock hl(proc_lock);
-        for (map<handle_t, lock *>::iterator i = proc->locks.begin(); i != proc->locks.end(); ++i) {
-            delete i->second;
-        }
-        for (map<handle_t, file_handle *>::iterator i = proc->files.begin(); i != proc->files.end(); ++i) {
-            fs_close(*i->second);
-            delete i->second;
-        }
-        for (map<handle_t, dir_handle *>::iterator i = proc->dirs.begin(); i != proc->dirs.end(); ++i) {
-            fs_close_dir(*i->second);
-            delete i->second;
-        }
+    for (map<handle_t, lock *>::iterator i = proc->locks.begin(); i != proc->locks.end(); ++i) {
+        delete i->second;
+    }
+    for (map<handle_t, file_handle *>::iterator i = proc->files.begin(); i != proc->files.end(); ++i) {
+        fs_close(*i->second);
+        delete i->second;
+    }
+    for (map<handle_t, dir_handle *>::iterator i = proc->dirs.begin(); i != proc->dirs.end(); ++i) {
+        fs_close_dir(*i->second);
+        delete i->second;
     }
     bool cont = true;
     while (cont) {
@@ -193,19 +193,16 @@ void proc_end(pid_t pid) {
             }
         }
     }
-    {
-        hold_lock hl(proc_lock);
-        for (list<proc_process>::iterator i = proc_processes->begin(); i; ++i) {
-            if (i->pid == pid) {
-                vmm_deletepagedir(i->pagedir);
-                proc_processes->remove(i);
-                break;
-            }
+    for (list<proc_process>::iterator i = proc_processes->begin(); i; ++i) {
+        if (i->pid == pid) {
+            vmm_deletepagedir(i->pagedir);
+            proc_processes->remove(i);
+            break;
         }
-        for (list<proc_process>::iterator i = proc_processes->begin(); i; ++i) {
-            if (i->parent == pid) {
-                i->parent = parent;
-            }
+    }
+    for (list<proc_process>::iterator i = proc_processes->begin(); i; ++i) {
+        if (i->parent == pid) {
+            i->parent = parent;
         }
     }
 }
@@ -312,6 +309,7 @@ uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t 
 
 
 handle_t proc_add_lock(lock *l, pid_t pid){
+    hold_lock hl(proc_lock);
 	proc_process *proc=proc_get(pid);
 	handle_t ret=++proc->handlecounter;
 	proc->locks[ret] = l;
@@ -319,17 +317,20 @@ handle_t proc_add_lock(lock *l, pid_t pid){
 }
 
 lock *proc_get_lock(handle_t h, pid_t pid){
+    hold_lock hl(proc_lock);
 	proc_process *proc=proc_get(pid);
 	if(proc->locks.has_key(h)) return proc->locks[h];
 	else return NULL;
 }
 
 void proc_remove_lock(handle_t h, pid_t pid){
+    hold_lock hl(proc_lock);
 	proc_process *proc=proc_get(pid);
 	proc->locks.erase(h);
 }
 
 handle_t proc_add_file(file_handle *file, pid_t pid){
+    hold_lock hl(proc_lock);
 	proc_process *proc=proc_get(pid);
     handle_t ret=++proc->handlecounter;
     proc->files[ret] = file;
@@ -337,17 +338,20 @@ handle_t proc_add_file(file_handle *file, pid_t pid){
 }
 
 file_handle *proc_get_file(handle_t h, pid_t pid){
+    hold_lock hl(proc_lock);
     proc_process *proc=proc_get(pid);
     if(proc->files.has_key(h)) return proc->files[h];
     else return NULL;
 }
 
 void proc_remove_file(handle_t h, pid_t pid){
+    hold_lock hl(proc_lock);
 	proc_process *proc=proc_get(pid);
 	proc->files.erase(h);
 }
 
 handle_t proc_add_dir(dir_handle *dir, pid_t pid){
+    hold_lock hl(proc_lock);
 	proc_process *proc=proc_get(pid);
     handle_t ret=++proc->handlecounter;
     proc->dirs[ret] = dir;
@@ -355,17 +359,20 @@ handle_t proc_add_dir(dir_handle *dir, pid_t pid){
 }
 
 dir_handle *proc_get_dir(handle_t h, pid_t pid){
+    hold_lock hl(proc_lock);
     proc_process *proc=proc_get(pid);
     if(proc->dirs.has_key(h)) return proc->dirs[h];
     else return NULL;
 }
 
 void proc_remove_dir(handle_t h, pid_t pid){
+    hold_lock hl(proc_lock);
 	proc_process *proc=proc_get(pid);
 	proc->dirs.erase(h);
 }
 
 void proc_setreturn(int ret, pid_t pid){
+    hold_lock hl(proc_lock);
 	proc_process *proc=proc_get(pid);
 	proc->retval=ret;
 }
@@ -382,69 +389,64 @@ int proc_wait(pid_t pid){
 	if(proc_get(pid)){
 		sch_setblock(&proc_wait_blockcheck, (void*)&pid);
 	}
-	if(proc_current_process->child_returns.has_key(pid)) return proc_current_process->child_returns[pid];
-	else return 0;
+    {
+        hold_lock hl(proc_lock);
+        if(proc_current_process->child_returns.has_key(pid)) return proc_current_process->child_returns[pid];
+        else return 0;
+    }
 }
 
 size_t proc_get_argc(pid_t pid){
+    hold_lock hl(proc_lock);
 	return proc_get(pid)->args.size();
 }
 
 size_t proc_get_arg(size_t i, char *buf, size_t size, pid_t pid){
+    hold_lock hl(proc_lock);
 	proc_process *proc=proc_get(pid);
 	strncpy(buf, proc->args[i].c_str(), size);
 	return proc->args[i].length();
 }
 
 void proc_remove_thread(uint64_t thread_id, pid_t pid){
+    hold_lock hl(proc_lock, false);
 	proc_process *proc=proc_get(pid);
 	handle_t h=0;
-    {
-        hold_lock hl(proc_lock);
-        for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
-            if (i->second == thread_id) h = i->first;
-        }
-        if (h) proc->threads.erase(h);
+    for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
+        if (i->second == thread_id) h = i->first;
     }
+    if (h) proc->threads.erase(h);
 }
 
 void proc_remove_thread_handle(handle_t h, pid_t pid){
+    hold_lock hl(proc_lock);
     proc_process *proc=proc_get(pid);
-    {
-        hold_lock hl(proc_lock);
-        if (proc->threads.has_key(h)) proc->threads.erase(h);
-    }
+    if (proc->threads.has_key(h)) proc->threads.erase(h);
 }
 
 handle_t proc_add_thread(uint64_t thread_id, pid_t pid){
+    hold_lock hl(proc_lock, false);
 	proc_process *proc=proc_get(pid);
-    {
-        hold_lock hl(proc_lock);
-        for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
-            if (i->second == thread_id) return i->first;
-        }
-        handle_t ret = ++proc->handlecounter;
-        proc->threads[ret] = thread_id;
-        return ret;
+    for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
+        if (i->second == thread_id) return i->first;
     }
+    handle_t ret = ++proc->handlecounter;
+    proc->threads[ret] = thread_id;
+    return ret;
 }
 
 uint64_t proc_get_thread(handle_t h, pid_t pid){
+    hold_lock hl(proc_lock);
     proc_process *proc=proc_get(pid);
-    {
-        hold_lock hl(proc_lock);
-        if (proc->threads.has_key(h)) return proc->threads[h];
-        else return 0;
-    }
+    if (proc->threads.has_key(h)) return proc->threads[h];
+    else return 0;
 }
 
 handle_t proc_get_thread_handle(uint64_t id, pid_t pid){
+    hold_lock hl(proc_lock);
     proc_process *proc=proc_get(pid);
-    {
-        hold_lock hl(proc_lock);
-        for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
-            if (i->second == id) return i->first;
-        }
+    for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
+        if (i->second == id) return i->first;
     }
     return 0;
 }
@@ -464,8 +466,10 @@ void proc_terminate(pid_t pid){
 }
 
 void proc_set_status(proc_status::Enum status, pid_t pid){
+    hold_lock hl(proc_lock, false);
     proc_get(pid)->status=status;
 }
 proc_status::Enum proc_get_status(pid_t pid){
+    hold_lock hl(proc_lock, false);
     return proc_get(pid)->status;
 }
