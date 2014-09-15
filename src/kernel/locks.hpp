@@ -18,8 +18,10 @@ private:
 	lock *l;
 
 public:
-	hold_lock(lock &lck): l(&lck) {
-        take_lock_exclusive(*l);}
+	hold_lock(lock &lck, bool exclusive=true): l(&lck) {
+        if(exclusive) take_lock_exclusive(*l);
+        else take_lock_recursive(*l);
+    }
 	~hold_lock() { release_lock(*l);}
 };
 
