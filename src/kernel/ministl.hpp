@@ -419,8 +419,8 @@ public:
 		}
 		swap(data_, buf);
         size_t oldcapacity = capacity_;
-        capacity_ = _Capacity;
         size_t oldsize=size_;
+        capacity_ = _Capacity;
 		for (iterator i = &buf[0]; i != &buf[oldsize]; ++i)
 		{
 		    _Alloc().destroy(i);
