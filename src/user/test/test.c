@@ -188,11 +188,9 @@ void crash_test(){
     //void (*q)()=(void(*)())0;
     //q();
     // - CRASH METHOD 3: Divide by zero
-    //int i=0;
-    //int z=100/i;
-    //(void)z;
-    // - CRASH METHOD 4: Incorrect use of locking functions
-    bt_lock(0xDEADBEEF);
+    int i=0;
+    int z=100/i;
+    (void)z;
 }
 
 int main(int argc, char **argv){
