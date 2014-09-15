@@ -539,7 +539,7 @@ void vmm_refresh_addr(uint32_t pageaddr){
 }
 
 void *vmm_alloc(size_t pages, vmm_allocmode::Enum mode){
-	hold_lock hl(vmm_lock);
+	hold_lock hl(vmm_lock, false);
 	size_t virtpage=vmm_cur_pagedir->find_free_virtpages(pages, mode);
 	if(!virtpage) return NULL;
 	for(size_t i=0; i<pages; ++i){
@@ -584,7 +584,7 @@ void *vmm_alloc_at(size_t pages, size_t baseaddr){
 }
 
 void vmm_free(void *ptr, size_t pages){
-	hold_lock hl(vmm_lock);
+	hold_lock hl(vmm_lock, false);
 	memset(ptr, 0xfe, pages * VMM_PAGE_SIZE);
 	size_t virtpage=(uint32_t)ptr/VMM_PAGE_SIZE;
 	for(size_t i=0; i<pages; ++i){

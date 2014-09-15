@@ -24,38 +24,20 @@ typedef T* pointer;
 	pointer allocate (size_t n, void* hint=0){
 		size_t pages=((n*sizeof(value_type))/VMM_PAGE_SIZE)+1;
         take_lock_exclusive(sch_lock);
-		bool lock_vmm=true;
-		if(vmm_lock.lock==sch_get_id()){
-			release_lock(vmm_lock);
-		}else{
-			lock_vmm=false;
-			release_lock(sch_lock);
-            take_lock_exclusive(vmm_lock);
-            take_lock_exclusive(sch_lock);
-			release_lock(vmm_lock);
-		}
+        take_lock_recursive(vmm_lock);
 		in_reserve=true;
 		pointer ret=(pointer)vmm_alloc(pages);
 		in_reserve=false;
-		if(lock_vmm) take_lock_exclusive(vmm_lock);
+		release_lock(vmm_lock);
 		release_lock(sch_lock);
 		return ret;
 	}
 	void deallocate (pointer p, size_type n){
 		size_t pages=((n*sizeof(value_type))/VMM_PAGE_SIZE)+1;
         take_lock_exclusive(sch_lock);
-		bool lock_vmm=true;
-		if(vmm_lock.lock==sch_get_id()){
-			release_lock(vmm_lock);
-		}else{
-			lock_vmm=false;
-			release_lock(sch_lock);
-            take_lock_exclusive(vmm_lock);
-            take_lock_exclusive(sch_lock);
-			release_lock(vmm_lock);
-		}
+        take_lock_recursive(vmm_lock);
 		vmm_free(p, pages);
-		if(lock_vmm) take_lock_exclusive(vmm_lock);
+        release_lock(vmm_lock);
         release_lock(sch_lock);
 	}
 
@@ -101,6 +83,7 @@ void amm_mark_alloc(uint32_t pageaddr, amm_flags::Enum flags, pid_t owner, void 
 	amm_pagedetails p={flags, owner, ptr};
     hold_lock hl(amm_lock, false);
 	if(!in_reserve && amm_allocated_pages->capacity() < amm_allocated_pages->size() + 128){
+        dbgout("AMM: Growing accounting structure...\n");
 		amm_allocated_pages->reserve(amm_allocated_pages->capacity() + 1024);
 	}
 	amm_allocated_pages->insert(amm_alloc_map::value_type(pageaddr, p));
