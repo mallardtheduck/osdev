@@ -173,6 +173,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 }
 
 void thread_reaper(void*){
+    sch_set_priority(1);
 	while(true){
 		bool changed=true;
 		while(changed){
