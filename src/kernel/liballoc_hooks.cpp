@@ -23,7 +23,7 @@ extern "C" int liballoc_lock(){
 		init_lock(la_lock);
 		la_inited=true;
 	}
-	take_lock(la_lock);
+    take_lock_exclusive(la_lock);
 	return 0;
 }
 

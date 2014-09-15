@@ -137,7 +137,7 @@ bool proc_switch(pid_t pid, bool setthread){
 			proc_remove_thread(sch_get_id(), proc_current_pid);
 			proc_add_thread(sch_get_id(), pid);
 		}
-        take_lock(proc_lock);
+        take_lock_exclusive(proc_lock);
 		proc_current_process=newproc;
 		proc_current_pid=newproc->pid;
 		vmm_switch(proc_current_process->pagedir);

@@ -65,7 +65,7 @@ USERAPI_HANDLER(BT_CREATE_LOCK){
 }
 
 USERAPI_HANDLER(BT_LOCK){
-	take_lock(*proc_get_lock(regs->ebx));
+    take_lock_exclusive(*proc_get_lock(regs->ebx));
 }
 
 USERAPI_HANDLER(BT_TRY_LOCK){

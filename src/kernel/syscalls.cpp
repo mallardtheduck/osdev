@@ -26,7 +26,7 @@ void mod_init_lock(lock *l){
 }
 
 void mod_take_lock(lock *l){
-	take_lock(*l);
+    take_lock_exclusive(*l);
 }
 
 bool mod_try_take_lock(lock *l){

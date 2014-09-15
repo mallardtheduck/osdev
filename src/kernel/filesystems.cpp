@@ -26,7 +26,7 @@ char *fs_mounts_infofs(){
 void fs_init(){
 	dbgout("FS: Init\n");
 	init_lock(fs_lock);
-	take_lock(fs_lock);
+    take_lock_exclusive(fs_lock);
 	fs_mounts=new map<string, fs_mountpoint>();
 	fs_drivers=new map<string, fs_driver>();
 	release_lock(fs_lock);

@@ -165,7 +165,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread.abortlevel=1;
 	newthread.abortable=false;
 	newthread.pid=0;
-	take_lock(sch_lock);
+    take_lock_exclusive(sch_lock);
 	newthread.ext_id=++cur_ext_id;
 	threads->push_back(newthread);
 	release_lock(sch_lock);
@@ -183,7 +183,7 @@ void thread_reaper(void*){
 					uint64_t id=(*threads)[i].ext_id;
 					release_lock(sch_lock);
 					free((*threads)[i].stackptr);
-					take_lock(sch_lock);
+                    take_lock_exclusive(sch_lock);
 					threads->erase(i);
 					changed=true;
 					dbgpf("SCH: Reaped %i (%i).\n", i, (uint32_t)id);
@@ -197,7 +197,7 @@ void thread_reaper(void*){
 
 void sch_end_thread(){
     proc_remove_thread(sch_get_id());
-    take_lock(sch_lock);
+    take_lock_exclusive(sch_lock);
 	(*threads)[current_thread].runnable=false;
 	(*threads)[current_thread].to_be_deleted=true;
 	(*threads)[reaper_thread].runnable=true;
@@ -318,7 +318,7 @@ void sch_set_priority(uint32_t pri){
 }
 
 void sch_block(){
-	take_lock(sch_lock);
+    take_lock_exclusive(sch_lock);
 	(*threads)[current_thread].runnable=false;
 	release_lock(sch_lock);
 	sch_yield();
@@ -412,7 +412,7 @@ bool sch_abort_blockcheck(void *p){
 void sch_abort(uint64_t ext_id){
 	bool tryagain=true;
 	while(tryagain){
-		take_lock(sch_lock);
+        take_lock_exclusive(sch_lock);
 		bool found=false;
 		for(size_t i=0; i<threads->size(); ++i){
 			if((*threads)[i].ext_id==ext_id){

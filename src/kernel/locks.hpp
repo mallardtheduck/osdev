@@ -7,7 +7,8 @@
 bool lock_blockcheck(void *p);
 
 void init_lock(lock &l);
-void take_lock(lock &l, uint64_t thread=sch_get_id());
+void take_lock_exclusive(lock &l, uint64_t thread = sch_get_id());
+void take_lock_recursive(lock &l, uint64_t thread = sch_get_id());
 bool try_take_lock(lock &l, uint64_t thread=sch_get_id());
 void release_lock(lock &l, uint64_t thread=sch_get_id());
 
@@ -17,7 +18,8 @@ private:
 	lock *l;
 
 public:
-	hold_lock(lock &lck): l(&lck) {take_lock(*l);}
+	hold_lock(lock &lck): l(&lck) {
+        take_lock_exclusive(*l);}
 	~hold_lock() { release_lock(*l);}
 };
 

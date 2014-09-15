@@ -141,7 +141,7 @@ int module_main(syscall_table *systbl, char *params){
 	init_lock(&lck);
 	test("init_lock()", !lck);
 	take_lock(&lck);
-	test("take_lock()", !!lck);
+	test("take_lock_exclusive()", !!lck);
 	release_lock(&lck);
 	test("release_lock()", !lck);
 	try_take_lock(&lck);
