@@ -190,7 +190,9 @@ loaded_elf_module elf_load_module(file_handle &file){
 loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
 	loaded_elf_proc ret;
 	pid_t oldpid=proc_current_pid;
-	proc_switch(pid);
+	if(!proc_switch(pid)){
+        panic("(ELF) Proccess not found during executable load!");
+    }
 	Elf32_Ehdr header=elf_read_header(file);
 	//TODO: Better RAM allocation...
 	for(int i=0; i<header.phnum; ++i){

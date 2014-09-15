@@ -126,12 +126,12 @@ void proc_switch_sch(pid_t pid, bool setthread){
 	}
 }
 
-void proc_switch(pid_t pid, bool setthread){
+bool proc_switch(pid_t pid, bool setthread){
 	if(setthread) sch_setpid(pid);
 	if(pid!=proc_current_pid){
 		dbgpf("PROC: Switching process. Old PID: %i, new PID: %i\n", (int)proc_current_pid, (int)pid);
 		proc_process *newproc=proc_get(pid);
-        if(!newproc) panic("(PROC) Attempt to switch to unknown process.");
+        if(!newproc) return false;
 		if(setthread){
 			proc_remove_thread(sch_get_id(), proc_current_pid);
 			proc_add_thread(sch_get_id(), pid);
@@ -142,6 +142,7 @@ void proc_switch(pid_t pid, bool setthread){
 		vmm_switch(proc_current_process->pagedir);
         release_lock(proc_lock);
 	}
+    return true;
 }
 
 pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent){
@@ -277,7 +278,7 @@ void proc_start(void *ptr){
 	proc_entry entry = ((proc_info*)ptr)->entry;
     void *stackptr = ((proc_info*)ptr)->stackptr;
 	delete (proc_info*)ptr;
-	proc_switch(pid);
+	if(!proc_switch(pid)) return;
 	if(!stackptr) stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
 	sch_abortable(true);
 	proc_run_usermode(stackptr, entry, 0, NULL);
