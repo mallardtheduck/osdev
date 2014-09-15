@@ -224,7 +224,6 @@ bool sch_find_thread(size_t &torun){
 	for(size_t i=0; i<threads->size(); ++i){
 	    if(!(*threads)[i].runnable && (*threads)[i].blockcheck!=NULL){
 	        (*threads)[i].runnable=(*threads)[i].blockcheck((*threads)[i].bc_param);
-	        if((*threads)[i].runnable) dbgpf("SCH: Thread %i is now runnable.\n", i);
 	    }
 		if((*threads)[i].runnable){
 			if(!(*threads)[i].priority) panic("(SCH) Thread priority 0 is not allowed.\n");

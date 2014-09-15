@@ -202,17 +202,16 @@ size_t vmm_pagedir::find_free_virtpages(size_t pages, vmm_allocmode::Enum mode){
 		loopstart=VMM_MAX_PAGES;
 		loopend=VMM_KERNEL_PAGES;
 	}
-
 	if(loopstart < loopend){
 		for(size_t i=loopstart; i<loopend; ++i){
 			void *pageptr=(void*)(i*VMM_PAGE_SIZE);
 			if(!is_mapped(pageptr) && !(get_flags((uint32_t)pageptr) & amm_flags::Do_Not_Use)){
 				if(!startpage) startpage=i;
 				freecount++;
-			}else{
-				startpage=0;
-				freecount=0;
-			}
+			}else {
+                startpage = 0;
+                freecount = 0;
+            }
 			if(freecount==pages) return startpage;
 		}
 	}else{
@@ -560,7 +559,6 @@ void *vmm_alloc(size_t pages, vmm_allocmode::Enum mode){
     }
 	void *ret=(void*)(virtpage*VMM_PAGE_SIZE);
 	memset(ret, 0xaa, pages*VMM_PAGE_SIZE);
-	dbgpf("VMM: Allocated %i pages at %x\n", pages, ret);
 	return ret;
 }
 
@@ -600,7 +598,6 @@ void vmm_free(void *ptr, size_t pages){
 void vmm_activate_pagedir(vmm_pagedir *pagedir){
 	uint32_t dir=pagedir->getphys();
 	if(!dir) panic("VMM: Invalid page directory!");
-	dbgpf("VMM: Activating page directory at %x\n", dir);
 	disable_interrupts();
 	asm volatile("mov %0, %%cr3":: "b"(dir));
     unsigned int cr0;
