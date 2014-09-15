@@ -65,21 +65,26 @@ USERAPI_HANDLER(BT_CREATE_LOCK){
 }
 
 USERAPI_HANDLER(BT_LOCK){
-    take_lock_exclusive(*proc_get_lock(regs->ebx));
+    lock *l=proc_get_lock(regs->ebx);
+    if(l) take_lock_exclusive(*l);
 }
 
 USERAPI_HANDLER(BT_TRY_LOCK){
-	regs->eax= try_take_lock_exclusive(*proc_get_lock(regs->ebx));
+    lock *l=proc_get_lock(regs->ebx);
+    if(l) regs->eax=try_take_lock_exclusive(*l);
 }
 
 USERAPI_HANDLER(BT_UNLOCK){
-	release_lock(*proc_get_lock(regs->ebx));
+    lock *l=proc_get_lock(regs->ebx);
+	if(l) release_lock(*l);
 }
 
 USERAPI_HANDLER(BT_DESTROY_LOCK){
 	lock *l=proc_get_lock(regs->ebx);
-	proc_remove_lock(regs->ebx);
-	delete l;
+	if(l) {
+        proc_remove_lock(regs->ebx);
+        delete l;
+    }
 }
 
 USERAPI_HANDLER(BT_MOUNT){
