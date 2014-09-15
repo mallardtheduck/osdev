@@ -30,7 +30,7 @@ void mod_take_lock(lock *l){
 }
 
 bool mod_try_take_lock(lock *l){
-	return try_take_lock(*l);
+	return try_take_lock_exclusive(*l);
 }
 
 void mod_release_lock(lock *l){

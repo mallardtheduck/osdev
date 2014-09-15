@@ -285,7 +285,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 }
 
 extern "C" uint32_t sch_dolock(){
-	if(!try_take_lock(sch_lock)){
+	if(!try_take_lock_exclusive(sch_lock)){
 		dbgout("SCH: Scheduler run while locked!\n");
 		return 0;
 	}
@@ -300,7 +300,7 @@ void sch_isr(int, isr_regs *regs){
 	sch_abortable(true);
 	(*threads)[current_thread].eip=regs->eip;
     enable_interrupts();
-	if(try_take_lock(sch_lock)){
+	if(try_take_lock_exclusive(sch_lock)){
 		release_lock(sch_lock);
 		sch_yield();
 	}

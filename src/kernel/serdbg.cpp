@@ -30,14 +30,14 @@ void reinit_serial() {
 }
 
 int is_transmit_empty() {
-	if(!try_take_lock(ser_lock))return -1;
+	if(!try_take_lock_exclusive(ser_lock))return -1;
 	int ret=inb(PORT + 5) & 0x20;
 	release_lock(ser_lock);
 	return ret;
 }
 
 void write_serial(char a) {
-	if(!try_take_lock(ser_lock)) return;
+	if(!try_take_lock_exclusive(ser_lock)) return;
     while (is_transmit_empty() == 0);
 	outb(PORT, a);
 	release_lock(ser_lock);
@@ -49,7 +49,7 @@ extern "C" void serial_writestring(char *str){
 }
 
 int serial_received() {
-	if(!try_take_lock(ser_lock))return -1;
+	if(!try_take_lock_exclusive(ser_lock))return -1;
 	int ret=inb(PORT + 5) & 1;
 	release_lock(ser_lock);
 	return ret;
@@ -57,7 +57,7 @@ int serial_received() {
  
 char read_serial() {
 	while (serial_received() == 0);
-	if(!try_take_lock(ser_lock))return '\0';
+	if(!try_take_lock_exclusive(ser_lock))return '\0';
 	char ret=inb(PORT);
 	release_lock(ser_lock);
 	return ret;

@@ -33,7 +33,7 @@ void take_lock_recursive(lock &l, uint64_t thread){
     l.count++;
 }
 
-bool try_take_lock(lock &l, uint64_t thread){
+bool try_take_lock_exclusive(lock &l, uint64_t thread){
     if(!sch_active()) return true;
     if(l.lock==thread && thread!=0) return false;
     bool ret=__sync_bool_compare_and_swap(&l.lock, 0, thread);
