@@ -99,17 +99,16 @@ void amm_init(){
 void amm_mark_alloc(uint32_t pageaddr, amm_flags::Enum flags, pid_t owner, void *ptr){
 	if(!amm_inited) return;
 	amm_pagedetails p={flags, owner, ptr};
+    hold_lock hl(amm_lock, false);
 	if(!in_reserve && amm_allocated_pages->capacity() < amm_allocated_pages->size() + 128){
 		amm_allocated_pages->reserve(amm_allocated_pages->capacity() + 1024);
 	}
-	{	hold_lock hl(amm_lock);
-		amm_allocated_pages->insert(amm_alloc_map::value_type(pageaddr, p));
-	}
+	amm_allocated_pages->insert(amm_alloc_map::value_type(pageaddr, p));
 }
 
 void amm_mark_free(uint32_t pageaddr){
 	if(!amm_inited) return;
-	hold_lock hl(amm_lock);
+	hold_lock hl(amm_lock, false);
 	amm_allocated_pages->erase(pageaddr);
 }
 
