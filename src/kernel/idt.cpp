@@ -248,6 +248,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
 		out_int_info(*ctx);
 	}
+    disable_interrupts();
 	sch_abortable(true);
     imode--;
 }
