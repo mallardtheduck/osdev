@@ -43,6 +43,7 @@ uint64_t current_thread_id;
 size_t reaper_thread;
 uint64_t cur_ext_id;
 size_t idle_thread;
+uint64_t sch_zero=0;
 
 void thread_reaper(void*);
 void sch_threadtest();
@@ -134,12 +135,14 @@ void sch_idlethread(void*){
 }
 
 extern "C" void sch_wrapper(){
+    uint64_t ext_id;
     sch_start *start;
     {
         hold_lock hl(sch_lock);
         start = (*threads)[current_thread].start;
+        ext_id=(int)(*threads)[current_thread].ext_id;
     }
-	dbgpf("SCH: Starting new thread %i (%i) at %x (param %x) [%x].\n", current_thread, (int)(*threads)[current_thread].ext_id, start->ptr, start->param, start);
+	dbgpf("SCH: Starting new thread %i (%i) at %x (param %x) [%x].\n", current_thread, ext_id, start->ptr, start->param, start);
     void (*entry)(void*) = start->ptr;
     void *param = start->param;
     free(start);
@@ -188,8 +191,9 @@ void thread_reaper(void*){
 			for(size_t i=0; i<threads->size(); ++i){
 				if((*threads)[i].to_be_deleted){
 					uint64_t id=(*threads)[i].ext_id;
+                    void *stackptr=(*threads)[i].stackptr;
 					release_lock(sch_lock);
-					free((*threads)[i].stackptr);
+					free(stackptr);
                     take_lock_exclusive(sch_lock);
 					threads->erase(i);
 					changed=true;
@@ -314,7 +318,7 @@ void sch_isr(int, isr_regs *regs){
 }
 
 const uint64_t &sch_get_id(){
-	if(!sch_inited) current_thread_id=0;
+	if(!sch_inited) return sch_zero;
 	return current_thread_id;
 }
 
@@ -378,29 +382,43 @@ bool sch_wait_blockcheck(void *p){
 }
 
 void sch_wait(uint64_t ext_id){
+    take_lock_exclusive(sch_lock);
 	for(size_t i=0; i<threads->size(); ++i){
 		if((*threads)[i].ext_id==ext_id){
+            release_lock(sch_lock);
 			sch_setblock(sch_wait_blockcheck, (void*)&ext_id);
+            take_lock_exclusive(sch_lock);
 			break;
 		}
 	}
+    release_lock(sch_lock);
 }
 
 extern "C" void sch_update_eip(uint32_t eip){
+    hold_lock hl(sch_lock, false);
 	(*threads)[current_thread].eip=eip;
 }
 
-uint32_t sch_get_eip(){
-    return (*threads)[current_thread].eip;
+uint32_t sch_get_eip(bool lock){
+    if(lock) take_lock_recursive(sch_lock);
+    uint32_t ret=(*threads)[current_thread].eip;
+    if(lock) release_lock(sch_lock);
+    return ret;
 }
 
 void sch_abortable(bool abortable){
-	//hold_lock hl(sch_lock);
-	(*threads)[current_thread].abortlevel+=abortable? -1 : 1;
-	if((*threads)[current_thread].abortlevel<=0){
+    int alevel;
+    {
+        hold_lock hl(sch_lock, false);
+        (*threads)[current_thread].abortlevel += abortable ? -1 : 1;
+        alevel = (*threads)[current_thread].abortlevel;
+    }
+	if(alevel<=0){
+        hold_lock hl(sch_lock, false);
 		(*threads)[current_thread].abortlevel=0;
 		(*threads)[current_thread].abortable=true;
 	}else{
+        hold_lock hl(sch_lock, false);
 		(*threads)[current_thread].abortable=false;
 	}
 }
