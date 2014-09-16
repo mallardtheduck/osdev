@@ -308,14 +308,15 @@ extern "C" void sch_unlock(){
 }
 
 void sch_isr(int, isr_regs *regs){
-	sch_abortable(true);
-	(*threads)[current_thread].eip=regs->eip;
-    enable_interrupts();
 	if(try_take_lock_exclusive(sch_lock)){
-		release_lock(sch_lock);
+        sch_abortable(true);
+        (*threads)[current_thread].eip=regs->eip;
+        release_lock(sch_lock);
+        enable_interrupts();
 		sch_yield();
+        disable_interrupts();
+        sch_abortable(false);
 	}
-	sch_abortable(false);
 }
 
 const uint64_t &sch_get_id(){
@@ -456,4 +457,10 @@ void sch_abort(uint64_t ext_id){
 			sch_setblock(&sch_abort_blockcheck, (void*)&ext_id);
 		}
 	}
+}
+
+bool sch_can_lock(){
+    if(!try_take_lock_exclusive(sch_lock)) return false;
+    release_lock(sch_lock);
+    return true;
 }
