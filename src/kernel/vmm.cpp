@@ -6,7 +6,6 @@ const size_t VMM_KERNEL_PAGES=VMM_KERNELSPACE_END/VMM_PAGE_SIZE;
 const size_t VMM_KERNEL_TABLES=VMM_KERNEL_PAGES/VMM_ENTRIES_PER_TABLE;
 const size_t VMM_MAX_PAGES=VMM_ENTRIES_PER_TABLE * VMM_ENTRIES_PER_TABLE;
 const size_t VMM_MAX_RAM=VMM_MAX_PAGES*VMM_PAGE_SIZE;
-const uint32_t VMM_ADDRESS_MASK=0xFFFFF000;
 const uint32_t VMM_FLAGS_MASK=0x00000E00;
 
 #define PAGING_ENABLED_FLAG 0x80000000
@@ -242,7 +241,7 @@ size_t vmm_pagedir::unmap_page(size_t virtpage){
 	}
 	maptable(table);
 	uint32_t ret=curtable[tableoffset] & VMM_ADDRESS_MASK;
-	curtable[tableoffset]=0;
+	curtable[tableoffset]&=VMM_FLAGS_MASK;
 	bool freetable=true;
 	for(size_t i=0; i<VMM_ENTRIES_PER_TABLE; ++i){
 		if(curtable[i]){
@@ -644,4 +643,14 @@ size_t vmm_getkernelmemory(){
 
 size_t vmm_gettotalmem(){
     return vmm_totalmem;
+}
+
+void vmm_set_flags(uint32_t pageaddr, amm_flags::Enum flags){
+    hold_lock hl(vmm_lock);
+    vmm_cur_pagedir->set_flags(pageaddr, flags);
+}
+
+amm_flags::Enum vmm_get_flags(uint32_t pageaddr){
+    hold_lock hl(vmm_lock);
+    return vmm_cur_pagedir->get_flags(pageaddr);
 }

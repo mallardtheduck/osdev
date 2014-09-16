@@ -13,6 +13,8 @@ struct amm_pagedetails{
 extern lock vmm_lock, sch_lock;
 static bool in_reserve=false;
 
+void *amm_guard_page=(void*)0x01;
+
 template<typename T> class amm_allocator {
 public:
 typedef T* pointer;
@@ -111,8 +113,19 @@ void amm_page_fault_handler(int, isr_regs *regs){
 	dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
     if(regs->error_code & ec_user){
         proc_terminate();
-    }else {
-        if (addr < VMM_PAGE_SIZE) panic("(AMM) Probable NULL pointer dereference!");
+    }else{
+        if (addr < VMM_PAGE_SIZE) {
+            panic("(AMM) Probable NULL pointer dereference!");
+        }
+        else if(vmm_get_flags(addr & VMM_ADDRESS_MASK) == amm_flags::Guard_Page){
+            panic("(AMM) Use of guard page!");
+        }
         else panic("(AMM) Page fault!");
     }
+}
+
+void amm_set_guard(void *ptr){
+    void *page=(void*)((uint32_t)ptr & VMM_ADDRESS_MASK);
+    vmm_set_flags((uint32_t)page, amm_flags::Guard_Page);
+    vmm_free(page, 1);
 }
