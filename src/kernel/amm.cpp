@@ -69,7 +69,8 @@ void amm_page_fault_handler(int, isr_regs *regs);
 
 void amm_init(){
 	amm_allocated_pages=new amm_alloc_map();
-	size_t reservation=(&_end-&_start)/VMM_PAGE_SIZE + 4096;
+	//size_t reservation=(&_end-&_start)/VMM_PAGE_SIZE + 4096;
+    size_t reservation= (vmm_gettotalmem()/4096)+1;
 	amm_allocated_pages->reserve(reservation);
 	if(!amm_allocated_pages) panic("(AMM) Init failed!");
 	dbgpf("AMM: Map allocated at %x\n", amm_allocated_pages);
@@ -82,10 +83,10 @@ void amm_mark_alloc(uint32_t pageaddr, amm_flags::Enum flags, pid_t owner, void 
 	if(!amm_inited) return;
 	amm_pagedetails p={flags, owner, ptr};
     hold_lock hl(amm_lock, false);
-	if(!in_reserve && amm_allocated_pages->capacity() < amm_allocated_pages->size() * 2){
+	/*if(!in_reserve && amm_allocated_pages->capacity() < amm_allocated_pages->size() * 2){
         dbgout("AMM: Growing accounting structure...\n");
 		amm_allocated_pages->reserve(amm_allocated_pages->capacity() + 1024);
-	}
+	}*/
 	amm_allocated_pages->insert(amm_alloc_map::value_type(pageaddr, p));
 }
 
