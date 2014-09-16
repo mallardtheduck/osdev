@@ -28,5 +28,6 @@ vmm_pagedir *vmm_newpagedir();
 void vmm_deletepagedir(vmm_pagedir *dir);
 size_t vmm_getusermemory(vmm_pagedir *dir);
 size_t vmm_getkernelmemory();
+size_t vmm_gettotalmem();
 
 #endif

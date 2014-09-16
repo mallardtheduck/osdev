@@ -642,3 +642,7 @@ size_t vmm_getkernelmemory(){
 	}
 	return ret;
 }
+
+size_t vmm_gettotalmem(){
+    return vmm_totalmem;
+}
