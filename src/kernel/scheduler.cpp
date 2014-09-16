@@ -134,10 +134,16 @@ void sch_idlethread(void*){
 }
 
 extern "C" void sch_wrapper(){
-	sch_start *start=(*threads)[current_thread].start;
+    sch_start *start;
+    {
+        hold_lock hl(sch_lock);
+        start = (*threads)[current_thread].start;
+    }
 	dbgpf("SCH: Starting new thread %i (%i) at %x (param %x) [%x].\n", current_thread, (int)(*threads)[current_thread].ext_id, start->ptr, start->param, start);
-	start->ptr(start->param);
-	free(start);
+    void (*entry)(void*) = start->ptr;
+    void *param = start->param;
+    free(start);
+	entry(param);
 	sch_end_thread();
 }
 
