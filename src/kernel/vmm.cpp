@@ -285,6 +285,7 @@ void vmm_pagedir::destroy(){
 
 void vmm_pagedir::map_page(size_t virtpage, size_t physpage, bool alloc, vmm_allocmode::Enum mode){
 	//dbgpf("VMM: Mapping %x (v) to %x (p).\n", virtpage*VMM_PAGE_SIZE, physpage*VMM_PAGE_SIZE);
+    if(is_mapped((void*)(virtpage*VMM_PAGE_SIZE))) panic("(VMM) Remapping already mapped page!");
 	uint32_t pageflags = (PageFlags::Present | PageFlags::Writable);
 	if(mode != vmm_allocmode::Kernel) pageflags |= PageFlags::Usermode;
 	if(!virtpage || !physpage) panic("(VMM) Attempt to map page/address 0!");
