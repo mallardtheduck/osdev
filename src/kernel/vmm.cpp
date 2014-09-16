@@ -545,6 +545,7 @@ void *vmm_alloc(size_t pages, vmm_allocmode::Enum mode){
 		uint32_t phys_page=vmm_pages.pop()/VMM_PAGE_SIZE;
 		if(!phys_page){
 		    dbgpf("VMM: Allocation of %i pages failed.\n", pages);
+            panic("(VMM) Out of memory!");
 		    return NULL;
 		}
 		vmm_cur_pagedir->map_page(virtpage+i, phys_page, true, mode);
