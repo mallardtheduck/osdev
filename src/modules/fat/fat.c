@@ -59,7 +59,7 @@ fs_path *fs_path_last_part(fs_path *path){
 
 void take_fat_lock(){
 	take_lock(&super_lock);
-	if(fat_lock.lock==thread_id() || !fat_lockcount){
+	if(fat_lock.lockval==thread_id() || !fat_lockcount){
 		if(!fat_lockcount) take_lock(&fat_lock);
 		fat_lockcount++;
 	}else{
@@ -73,7 +73,7 @@ void take_fat_lock(){
 
 void release_fat_lock(){
 	take_lock(&super_lock);
-	if(fat_lock.lock==thread_id()){
+	if(fat_lock.lockval==thread_id()){
 		fat_lockcount--;
 		if(!fat_lockcount) release_lock(&fat_lock);
 	}else{
