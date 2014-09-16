@@ -142,7 +142,7 @@ void panic(char *msg){
     itoa(sch_get_id(), buf, 10);
     write_string_at(12, 31, buf, 0x1C);
     write_string_at(12, 38, "Stored EIP:", 0x1F);
-    itoa(sch_get_eip(), buf, 16);
+    itoa(sch_get_eip(false), buf, 16);
     write_string_at(12, 50, buf, 0x1C);
     write_string_at(14, 2, "Additional information may be available in the error log (if enabled).", 0x1F);
     write_string_at(17, 24, " Please restart your computer. ", 0xF0);
