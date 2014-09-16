@@ -87,6 +87,7 @@ void amm_mark_alloc(uint32_t pageaddr, amm_flags::Enum flags, pid_t owner, void 
         dbgout("AMM: Growing accounting structure...\n");
 		amm_allocated_pages->reserve(amm_allocated_pages->capacity() + 1024);
 	}*/
+    if(amm_allocated_pages->size() == amm_allocated_pages->capacity()) panic("(AMM) Too many pages allocated!");
 	amm_allocated_pages->insert(amm_alloc_map::value_type(pageaddr, p));
 }
 
