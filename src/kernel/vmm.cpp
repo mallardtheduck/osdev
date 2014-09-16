@@ -550,9 +550,6 @@ void *vmm_alloc(size_t pages, vmm_allocmode::Enum mode){
 		    return NULL;
 		}
 		vmm_cur_pagedir->map_page(virtpage+i, phys_page, true, mode);
-	}
-    for(size_t i=0; i<pages; ++i){
-        uint32_t phys_page=vmm_pages.pop()/VMM_PAGE_SIZE;
         if(mode == vmm_allocmode::Kernel){
             amm_mark_alloc(phys_page*VMM_PAGE_SIZE, amm_flags::Kernel, 0);
         }else{
