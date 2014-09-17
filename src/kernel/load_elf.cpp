@@ -169,8 +169,9 @@ loaded_elf_module elf_load_module(file_handle &file){
 	for(int i=0; i<header.phnum; ++i){
 		Elf32_Phdr prog=elf_read_progheader(file, header, i);
 		if(prog.type==PT_LOAD){
-			fs_seek(file, prog.offset, false);
-			fs_read(file, prog.filesz, (char*)ret.mem.aligned+prog.vaddr);
+            amm_mmap((char*)ret.mem.aligned+prog.vaddr, file, prog.offset, prog.filesz);
+			/*fs_seek(file, prog.offset, false);
+			fs_read(file, prog.filesz, (char*)ret.mem.aligned+prog.vaddr);*/
 		}
 	}
 	for(int i=0; i<header.shnum; ++i){

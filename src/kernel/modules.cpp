@@ -8,6 +8,7 @@ struct kernel_module{
 	string filename;
 	string params;
 	loaded_elf_module elf;
+    file_handle file;
 };
 
 vector<kernel_module> *loaded_modules;
@@ -44,8 +45,8 @@ void load_module(char *path, char *params){
 	mod.filename=path;
 	mod.params=(params)?params:"";
 	mod.elf=elf_load_module(file);
+    mod.file=file;
 	loaded_modules->push_back(mod);
-	fs_close(file);
 	release_lock(mod_lock);
 	//sch_new_thread(&module_thread_start, (void*)mod.elf.entry);
 	mod.elf.entry(&MODULE_SYSCALL_TABLE, params);
