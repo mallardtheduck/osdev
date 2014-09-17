@@ -1,4 +1,5 @@
 #include "kernel.hpp"
+#include "../include/video_dev.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -16,12 +17,23 @@ struct terminal_instance{
 
 static const size_t VGA_WIDTH = 80;
 static const size_t VGA_HEIGHT = 25;
-static const size_t max=VGA_WIDTH * VGA_HEIGHT * 2;
+static const size_t maxchar=VGA_WIDTH * VGA_HEIGHT * 2;
+
+static bt_vidmode mode={
+        .id = 0,
+        .width = 80,
+        .height = 25,
+        .bpp = 4,
+        .textmode = true,
+        .palette = false,
+};
 
 size_t terminal_row;
 size_t terminal_column;
 uint8_t terminal_color;
 uint16_t* terminal_buffer;
+
+template<typename T> static T max(T a, T b){ return (a>b)?a:b; }
 
 void *terminal_open(void*){
 	terminal_instance *inst = new terminal_instance();
@@ -37,8 +49,8 @@ bool terminal_close(void *inst){
 
 size_t terminal_read(void *instance, size_t bytes, char *buf){
 	terminal_instance *inst=(terminal_instance*)instance;
-	if(inst->pos > max) return 0;
-	if(inst->pos+bytes > max) bytes=max-inst->pos;
+	if(inst->pos > maxchar) return 0;
+	if(inst->pos+bytes > maxchar) bytes=maxchar-inst->pos;
 	memcpy(buf, (char*)terminal_buffer+inst->pos, bytes);
 	inst->pos+=bytes;
 	return bytes;
@@ -47,8 +59,8 @@ size_t terminal_read(void *instance, size_t bytes, char *buf){
 size_t terminal_write(void *instance, size_t bytes, char *buf){
 	terminal_instance *inst=(terminal_instance*)instance;
 	if(inst->mode==instance_mode::Raw){
-		if(inst->pos > max) return 0;
-        if(inst->pos+bytes > max) bytes=max-inst->pos;
+		if(inst->pos > maxchar) return 0;
+        if(inst->pos+bytes > maxchar) bytes=maxchar-inst->pos;
 		memcpy((char*)terminal_buffer+inst->pos, buf, bytes);
 		inst->pos+=bytes;
 		return bytes;
@@ -91,7 +103,13 @@ size_t terminal_seek(void *instance, size_t pos, bool relative){
 }
 
 int terminal_ioctl(void *instance, int fn, size_t bytes, char *buf){
-	//TODO: Stuff...
+    if(fn == bt_vid_ioctl::GetModeCount) return 1;
+    else if(fn==bt_vid_ioctl::GetMode || fn==bt_vid_ioctl::QueryMode){
+        memcpy(buf, &mode, max(bytes, sizeof(mode)));
+    }else if(fn==bt_vid_ioctl::SetMode){
+        if(bytes>=sizeof(mode) && ((bt_vidmode*)buf)->id==mode.id) return 1;
+        else return 0;
+    }
 	return 0;
 }
 

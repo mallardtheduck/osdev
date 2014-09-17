@@ -4,6 +4,7 @@
 #include <btos_api.h>
 #include <btos_stubs.h>
 #include <ioctl.h>
+#include <video_dev.h>
 
 __attribute__ ((constructor)) void cons_test(void)
 {
@@ -35,6 +36,9 @@ int main(int argc, char **argv){
     char desc[128];
     bt_fioctl(file, bt_ioctl_DevDesc, 128, desc);
     printf("%x - %s\n", type, desc);
+    bt_vidmode mode;
+    bt_fioctl(file, bt_vid_ioctl_QueryMode, sizeof(mode), (char*)&mode);
+    printf("Video mode: %ix%i %ibpp text:%i, pal:%i\n", mode.width, mode.height, mode.bpp, mode.textmode, mode.palette);
     bt_fclose(file);
 	return 42;
 }
