@@ -136,11 +136,7 @@ void amm_page_fault_handler(int, isr_regs *regs){
     uint32_t physaddr=vmm_cur_pagedir->virt2phys((void*)addr, false);
     dbgpf("AMM: Physical address: %x\n", physaddr);
     amm_flags::Enum flags=amm_flags::Normal;
-    if(physaddr){
-        flags = amm_get_flags(physaddr);
-        dbgpf("AMM: Flags: %x\n", flags);
-        dbgpf("AMM: ptr: %x\n", (*amm_allocated_pages)[physaddr].ptr);
-    }
+    if(physaddr) flags = amm_get_flags(physaddr);
     if(flags == amm_flags::File_Mapped){
         amm_resolve_mmap((void*)addr);
     } else if(regs->error_code & ec_user){
@@ -161,6 +157,7 @@ void amm_set_guard(void *ptr){
 }
 
 void amm_resolve_mmap(void *addr){
+    dbgpf("AMM: Resolving memory-mapped file load at %x.\n", addr);
     uint32_t markerphys=vmm_cur_pagedir->virt2phys(addr, false);
     void *page=(void*)((uint32_t)addr & VMM_ADDRESS_MASK);
     amm_pagedetails details=(*amm_allocated_pages)[markerphys];
