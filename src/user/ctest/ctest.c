@@ -30,7 +30,7 @@ int main(int argc, char **argv){
 		memset(buffer, 0, 128);
 	}
 	fclose(fd);
-    bt_filehandle file=bt_fopen("DEV:/VGATEXT0", FS_Read);
+    bt_filehandle file=bt_fopen("DEV:/KTEXT0", FS_Read);
     int type=bt_fioctl(file, bt_ioctl_DevType, 0, NULL);
     char desc[128];
     bt_fioctl(file, bt_ioctl_DevDesc, 128, desc);

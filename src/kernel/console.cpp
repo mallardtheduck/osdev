@@ -100,7 +100,7 @@ int terminal_type(){
 }
 
 char *terminal_desc(){
-	return "Basic VGA text output.";
+	return "Kernel built-in VGA text output.";
 }
 
 /*struct drv_driver{
@@ -156,7 +156,7 @@ void terminal_initialize()
 }
 
 void terminal_add_device(){
-	char name[12]={"VGATEXT\0"};
+	char name[12]={"KTEXT\0"};
 	drv_add_device(name, &terminal_driver, NULL);
 }
  
