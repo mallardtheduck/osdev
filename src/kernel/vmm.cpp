@@ -188,7 +188,8 @@ size_t vmm_pagedir::unmap_page(size_t virtpage){
 		panic("(VMM) No table for allocation!");
 	}
 	maptable(table);
-	uint32_t ret=curtable[tableoffset] & VMM_ADDRESS_MASK;
+	uint32_t entry=curtable[tableoffset];
+    uint32_t ret=entry & VMM_ADDRESS_MASK;
 	curtable[tableoffset]&=VMM_FLAGS_MASK;
 	bool freetable=true;
 	for(size_t i=0; i<VMM_ENTRIES_PER_TABLE; ++i){
@@ -204,7 +205,7 @@ size_t vmm_pagedir::unmap_page(size_t virtpage){
 		amm_mark_free(table);
 	}
 	vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
-	if(virtpage >= VMM_KERNEL_PAGES) userpagecount--;
+	if(virtpage >= VMM_KERNEL_PAGES && (entry & PageFlags::Present)) userpagecount--;
 	return ret/VMM_PAGE_SIZE;
 }
 
@@ -273,7 +274,7 @@ void vmm_pagedir::map_page(size_t virtpage, size_t physpage, bool alloc, vmm_all
 		((uint32_t*)table)[tableoffset]=(physpage*VMM_PAGE_SIZE) | pageflags;
 	}
 	vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
-	if(mode != vmm_allocmode::Kernel) userpagecount++;
+	if(mode != vmm_allocmode::Kernel && !(mode & vmm_allocmode::NotPresent)) userpagecount++;
 }
 
 void vmm_pagedir::set_flags(uint32_t pageaddr, amm_flags::Enum flags){
