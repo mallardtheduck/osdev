@@ -1,13 +1,6 @@
 #include "vmm.hpp"
 #include "locks.hpp"
 
-const size_t VMM_ENTRIES_PER_TABLE=1024;
-const size_t VMM_KERNEL_PAGES=VMM_KERNELSPACE_END/VMM_PAGE_SIZE;
-const size_t VMM_KERNEL_TABLES=VMM_KERNEL_PAGES/VMM_ENTRIES_PER_TABLE;
-const size_t VMM_MAX_PAGES=VMM_ENTRIES_PER_TABLE * VMM_ENTRIES_PER_TABLE;
-const size_t VMM_MAX_RAM=VMM_MAX_PAGES*VMM_PAGE_SIZE;
-const uint32_t VMM_FLAGS_MASK=0x00000E00;
-
 #define PAGING_ENABLED_FLAG 0x80000000
 
 namespace PageFlags{
@@ -95,62 +88,7 @@ vmm_pagestack vmm_pages;
 uint32_t vmm_tableframe[VMM_ENTRIES_PER_TABLE] __attribute__((aligned(0x1000)));
 lock vmm_framelock;
 
-class vmm_pagedir{
-private:
-    uint32_t* pagedir;
-    uint32_t* curtable;
-    uint32_t phys_addr;
-    size_t userpagecount;
-
-    void maptable(uint32_t phys_addr){
-        uint32_t virtpage=(uint32_t)curtable/VMM_PAGE_SIZE;
-        uint32_t physpage=phys_addr/VMM_PAGE_SIZE;
-        size_t tableindex=virtpage/VMM_ENTRIES_PER_TABLE;
-        size_t tableoffset=virtpage-(tableindex * VMM_ENTRIES_PER_TABLE);
-        uint32_t table=pagedir[tableindex] & VMM_ADDRESS_MASK;
-        ((uint32_t*)table)[tableoffset]=(physpage*VMM_PAGE_SIZE) | (PageFlags::Present | PageFlags::Writable);
-        vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
-    }
-public:
-    void init(uint32_t *dir);
-    void init();
-
-    uint32_t *getvirt(){
-        return pagedir;
-    }
-    uint32_t getphys(){
-    	return phys_addr;
-    }
-
-    uint32_t virt2phys(void *ptr);
-    void add_table(size_t tableno, uint32_t *table);
-
-    bool is_mapped(void *ptr){
-        return !!virt2phys(ptr);
-    }
-
-    size_t find_free_virtpages(size_t pages, vmm_allocmode::Enum mode);
-    void map_page(size_t virtpage, size_t physpage, bool alloc=true, vmm_allocmode::Enum mode=vmm_allocmode::Kernel);
-
-    void identity_map(size_t page, bool alloc=true){
-    	map_page(page, page, alloc);
-    }
-
-    size_t unmap_page(size_t virtpage);
-
-    void copy_kernelspace(vmm_pagedir *other){
-    	memcpy(pagedir, other->pagedir, VMM_KERNEL_TABLES * sizeof(uint32_t));
-    }
-
-    size_t getuserpagecount(){
-    	return userpagecount;
-    }
-
-    void destroy();
-
-    void set_flags(uint32_t pageaddr, amm_flags::Enum flags);
-    amm_flags::Enum get_flags(uint32_t pageaddr);
-};
+#include "vmm_pagedir.hpp"
 
 void vmm_pagedir::init(uint32_t *dir){
 	pagedir=dir;
@@ -165,6 +103,16 @@ void vmm_pagedir::init(){
 	phys_addr=vmm_cur_pagedir->virt2phys(pagedir);
 	memset(pagedir, 0, VMM_ENTRIES_PER_TABLE * sizeof(uint32_t));
 	if((uint32_t)curtable != ((uint32_t)curtable & VMM_ADDRESS_MASK)) panic("VMM: Misaligned table frame!");
+}
+
+void vmm_pagedir::maptable(uint32_t phys_addr){
+    uint32_t virtpage=(uint32_t)curtable/VMM_PAGE_SIZE;
+    uint32_t physpage=phys_addr/VMM_PAGE_SIZE;
+    size_t tableindex=virtpage/VMM_ENTRIES_PER_TABLE;
+    size_t tableoffset=virtpage-(tableindex * VMM_ENTRIES_PER_TABLE);
+    uint32_t table=pagedir[tableindex] & VMM_ADDRESS_MASK;
+    ((uint32_t*)table)[tableoffset]=(physpage*VMM_PAGE_SIZE) | (PageFlags::Present | PageFlags::Writable);
+    vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
 }
 
 void vmm_pagedir::add_table(size_t tableno, uint32_t *table){
@@ -194,10 +142,10 @@ size_t vmm_pagedir::find_free_virtpages(size_t pages, vmm_allocmode::Enum mode){
 	size_t loopstart=1;
 	size_t loopend=VMM_KERNEL_PAGES;
 
-	if(mode == vmm_allocmode::Userlow){
+	if(mode & vmm_allocmode::Userlow){
 		loopstart=VMM_KERNEL_PAGES;
 		loopend=VMM_MAX_PAGES;
-	}else if(mode == vmm_allocmode::Userhigh){
+	}else if(mode & vmm_allocmode::Userhigh){
 		loopstart=VMM_MAX_PAGES;
 		loopend=VMM_KERNEL_PAGES;
 	}
@@ -285,8 +233,13 @@ void vmm_pagedir::destroy(){
 void vmm_pagedir::map_page(size_t virtpage, size_t physpage, bool alloc, vmm_allocmode::Enum mode){
 	//dbgpf("VMM: Mapping %x (v) to %x (p).\n", virtpage*VMM_PAGE_SIZE, physpage*VMM_PAGE_SIZE);
     if(is_mapped((void*)(virtpage*VMM_PAGE_SIZE))) panic("(VMM) Remapping already mapped page!");
-	uint32_t pageflags = (PageFlags::Present | PageFlags::Writable);
-	if(mode != vmm_allocmode::Kernel) pageflags |= PageFlags::Usermode;
+    uint32_t pageflags;
+    if(mode & vmm_allocmode::NotPresent){
+        pageflags = 0;
+    }else {
+        pageflags = (PageFlags::Present | PageFlags::Writable);
+    }
+	if(!(mode & vmm_allocmode::Kernel)) pageflags |= PageFlags::Usermode;
 	if(!virtpage || !physpage) panic("(VMM) Attempt to map page/address 0!");
 	if(!pagedir) panic("(VMM) Invalid page directory!");
 	size_t tableindex=virtpage/VMM_ENTRIES_PER_TABLE;
@@ -300,7 +253,7 @@ void vmm_pagedir::map_page(size_t virtpage, size_t physpage, bool alloc, vmm_all
 			if(is_paging_enabled()){
 				maptable(table);
 				memset(curtable, 0, VMM_PAGE_SIZE);
-				if(mode == vmm_allocmode::Kernel){
+				if(mode & vmm_allocmode::Kernel){
                     amm_mark_alloc(table, (amm_flags::Enum)(amm_flags::Kernel | amm_flags::PageTable), 0);
                 }else{
                     amm_mark_alloc(table, (amm_flags::Enum)(amm_flags::User | amm_flags::PageTable));

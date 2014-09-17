@@ -8,12 +8,19 @@ const size_t VMM_PAGE_SIZE=4096;
 const size_t VMM_KERNELSPACE_END=1024*1024*1024;
 const size_t VMM_USERSPACE_START=VMM_KERNELSPACE_END;
 const uint32_t VMM_ADDRESS_MASK=0xFFFFF000;
+const size_t VMM_ENTRIES_PER_TABLE=1024;
+const size_t VMM_KERNEL_PAGES=VMM_KERNELSPACE_END/VMM_PAGE_SIZE;
+const size_t VMM_KERNEL_TABLES=VMM_KERNEL_PAGES/VMM_ENTRIES_PER_TABLE;
+const size_t VMM_MAX_PAGES=VMM_ENTRIES_PER_TABLE * VMM_ENTRIES_PER_TABLE;
+const size_t VMM_MAX_RAM=VMM_MAX_PAGES*VMM_PAGE_SIZE;
+const uint32_t VMM_FLAGS_MASK=0x00000E00;
 
 namespace vmm_allocmode{
 	enum Enum{
-		Kernel,
-		Userlow,
-		Userhigh,
+		Kernel      = (1<<0),
+		Userlow     = (1<<1),
+		Userhigh    = (1<<2),
+        NotPresent  = (1<<3),
 	};
 }
 
