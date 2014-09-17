@@ -176,6 +176,11 @@ void amm_resolve_mmap(void *addr){
 }
 
 void amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
+    if(size<VMM_PAGE_SIZE){
+        fs_seek(file, offset, false);
+        fs_read(file, size, ptr);
+        return;
+    }
     dbgpf("AMM: Memory-mapping %i bytes (offset %i) at %x.\n", size, offset, ptr);
     size_t pages=size/VMM_PAGE_SIZE;
     bool exact=false;
