@@ -37,8 +37,14 @@ int main(int argc, char **argv){
     bt_fioctl(file, bt_ioctl_DevDesc, 128, desc);
     printf("%x - %s\n", type, desc);
     bt_vidmode mode;
+    char bg=1, fg=15;
+    bt_fioctl(file, bt_vid_ioctl_SetTextBGColour, 1, &bg);
+    bt_fioctl(file, bt_vid_ioctl_SetTextFGColour, 1, &fg);
     bt_fioctl(file, bt_vid_ioctl_QueryMode, sizeof(mode), (char*)&mode);
     printf("Video mode: %ix%i %ibpp text:%i, pal:%i\n", mode.width, mode.height, mode.bpp, mode.textmode, mode.palette);
+    bg=0; fg=7;
+    bt_fioctl(file, bt_vid_ioctl_SetTextBGColour, 1, &bg);
+    bt_fioctl(file, bt_vid_ioctl_SetTextFGColour, 1, &fg);
     bt_fclose(file);
 	return 42;
 }
