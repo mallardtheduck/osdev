@@ -20,11 +20,11 @@ public:
     	return phys_addr;
     }
 
-    uint32_t virt2phys(void *ptr);
+    uint32_t virt2phys(void *ptr, bool present=true);
     void add_table(size_t tableno, uint32_t *table);
 
-    bool is_mapped(void *ptr){
-        return !!virt2phys(ptr);
+    bool is_mapped(void *ptr, bool present=true){
+        return !!virt2phys(ptr, present);
     }
 
     size_t find_free_virtpages(size_t pages, vmm_allocmode::Enum mode);

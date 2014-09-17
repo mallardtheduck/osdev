@@ -35,6 +35,7 @@ struct proc_process{
 	env_t environment;
 	string name;
 	int retval;
+    file_handle file;
 
 	vmm_pagedir *pagedir;
 	handle_t handlecounter;
@@ -146,9 +147,11 @@ bool proc_switch(pid_t pid, bool setthread){
     return true;
 }
 
-pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent){
+pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent, file_handle *file){
 	proc_process *parent_proc=proc_get(parent);
 	proc_process newproc(parent_proc, name);
+    if(file) newproc.file=*file;
+    else newproc.file.valid=false;
 	newproc.args.push_back(name);
 	for(size_t i=0; i<argc; ++i){
 		newproc.args.push_back(argv[i]);
@@ -203,6 +206,7 @@ void proc_end(pid_t pid) {
             i->parent = parent;
         }
     }
+    if(proc->file.valid) fs_close(proc->file);
 }
 
 void proc_setenv(const pid_t pid, const string &oname, const string &value, const uint8_t flags, bool userspace){
@@ -281,11 +285,11 @@ void proc_start(void *ptr){
 }
 
 pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
-	pid_t ret=proc_new(path, argc, argv, parent);
 	file_handle file=fs_open((char*)path.c_str(), FS_Read);
+    pid_t ret=proc_new(path, argc, argv, parent, &file);
 	if(!file.valid) return 0;
 	loaded_elf_proc proc=elf_load_proc(ret, file);
-	fs_close(file);
+	//fs_close(file);
 	proc_info *info=new proc_info();
 	info->pid=ret;
 	info->entry=proc.entry;
