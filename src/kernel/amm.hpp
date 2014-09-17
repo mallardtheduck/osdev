@@ -8,5 +8,6 @@ void amm_mark_alloc(uint32_t pageaddr, amm_flags::Enum flags, pid_t owner = proc
 void amm_mark_free(uint32_t pageaddr);
 amm_flags::Enum amm_get_flags(uint32_t pageaddr);
 void amm_set_guard(void *ptr);
+void amm_set_info(uint32_t pageaddr, amm_flags::Enum flags, void *ptr);
 
 #endif
