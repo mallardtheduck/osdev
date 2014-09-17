@@ -3,20 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-
-#ifdef __cplusplus
-#define ENUM_START(x) namespace x { enum Enum {
-#define ENUM_END }; }
-#define ENUM_GET(x, y) x::y
-#define ENUM_SET(x, y, z) y = z
-#define ENUM_TYPE(x)
-#else
-#define ENUM_START(x) enum x {
-#define ENUM_END };
-#define ENUM_GET(x, y) x ## _ ## y
-#define ENUM_SET(x, y, z) x ## _ ## y = z
-#define ENUM_TYPE(x) typedef enum x x
-#endif
+#include "bt_enum.h"
 
 ENUM_START(KeyFlags)
 ENUM_SET(KeyFlags, KeyUp, 1 << 15),

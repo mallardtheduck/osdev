@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <btos_api.h>
+#include <btos_stubs.h>
+#include <ioctl.h>
 
 __attribute__ ((constructor)) void cons_test(void)
 {
@@ -27,7 +30,11 @@ int main(int argc, char **argv){
 		memset(buffer, 0, 128);
 	}
 	fclose(fd);
-	char *ptr=(char*)0xDEADBEEF;
-	*ptr='q';
+    bt_filehandle file=bt_fopen("DEV:/VGATEXT0", FS_Read);
+    int type=bt_fioctl(file, bt_ioctl_DevType, 0, NULL);
+    char desc[128];
+    bt_fioctl(file, bt_ioctl_DevDesc, 128, desc);
+    printf("%x - %s\n", type, desc);
+    bt_fclose(file);
 	return 42;
 }

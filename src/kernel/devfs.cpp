@@ -1,5 +1,6 @@
 #include "devfs.hpp"
 #include "kernel.hpp"
+#include "../include/ioctl.h"
 
 void* const devfs_magic=(void*)0xDE7F5;
 void* const devfs_dirmagic=(void*)0xDE7D19;
@@ -41,7 +42,14 @@ size_t devfs_seek(void *filedata, int pos, bool relative){
 }
 
 int devfs_ioctl(void *filedata, int fn, size_t bytes, char *buf){
-	return drv_ioctl(filedata, fn, bytes, buf);
+    if(fn < 256){
+        if(fn==bt_ioctl::DevType) return drv_get_type(filedata);
+        else if(fn==bt_ioctl::DevDesc){
+            memcpy(buf, drv_get_desc(filedata), bytes-1);
+            buf[bytes-1]='\0';
+            return strlen(drv_get_desc(filedata));
+        }else return 0;
+    }else return drv_ioctl(filedata, fn, bytes, buf);
 }
 
 void *devfs_open_dir(void *, fs_path *, fs_mode_flags){
