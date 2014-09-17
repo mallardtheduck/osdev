@@ -344,11 +344,11 @@ static FL_FILE* _open_file(const char *path)
     }
 
     // Check if file already open
-    if (_check_file_open(file))
+    /*if (_check_file_open(file))
     {
         _free_file(file);
         return NULL;
-    }
+    }*/
 
     // If file is in the root dir
     if (file->path[0]==0)
