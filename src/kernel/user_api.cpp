@@ -138,7 +138,7 @@ USERAPI_HANDLER(BT_FIOCTL){
 	file_handle *file=proc_get_file(regs->ebx);
     if(file && is_safe_ptr(regs->edx)){
     	btos_api::bt_fioctl_buffer *buf=(btos_api::bt_fioctl_buffer*)regs->edx;
-    	if(is_safe_ptr((uint32_t)buf->buffer)){
+    	if(buf->size==0 || is_safe_ptr((uint32_t)buf->buffer)){
     		regs->eax=fs_ioctl(*file, regs->ecx, buf->size, buf->buffer);
     	}
     }
