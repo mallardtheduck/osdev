@@ -32,19 +32,19 @@ int main(int argc, char **argv){
 	}
 	fclose(fd);
     bt_filehandle file=bt_fopen("DEV:/KTEXT0", FS_Read);
-    int type=bt_fioctl(file, bt_ioctl_DevType, 0, NULL);
+    size_t type=bt_fioctl(file, bt_ioctl_DevType, 0, NULL);
     char desc[128];
     bt_fioctl(file, bt_ioctl_DevDesc, 128, desc);
-    printf("%x - %s\n", type, desc);
+    printf("%x - %s\n", (int)type, desc);
     bt_vidmode mode;
     char bg=1, fg=15;
+    size_t colour=bt_fioctl(file, bt_vid_ioctl_GetTextColours, 0, NULL);
     bt_fioctl(file, bt_vid_ioctl_SetTextBGColour, 1, &bg);
     bt_fioctl(file, bt_vid_ioctl_SetTextFGColour, 1, &fg);
     bt_fioctl(file, bt_vid_ioctl_QueryMode, sizeof(mode), (char*)&mode);
-    printf("Video mode: %ix%i %ibpp text:%i, pal:%i\n", mode.width, mode.height, mode.bpp, mode.textmode, mode.palette);
+    printf("Video mode: %ix%i %ibpp text:%i, pal:%i, colours:%02x\n", mode.width, mode.height, mode.bpp, mode.textmode, mode.palette, (int)colour);
     bg=0; fg=7;
-    bt_fioctl(file, bt_vid_ioctl_SetTextBGColour, 1, &bg);
-    bt_fioctl(file, bt_vid_ioctl_SetTextFGColour, 1, &fg);
+    bt_fioctl(file, bt_vid_ioctl_SetTextColours, sizeof(colour), (char*)&colour);
     bt_fclose(file);
 	return 42;
 }

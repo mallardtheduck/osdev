@@ -112,11 +112,25 @@ int terminal_ioctl(void *instance, int fn, size_t bytes, char *buf){
     }else if(fn==bt_vid_ioctl::SetTextFGColour){
         if(bytes>=1){
             terminal_color=make_color((vga_color)*buf, (vga_color)((terminal_color & 0xF0) >> 4));
-        }
+            return 1;
+        }else return 0;
     }else if(fn==bt_vid_ioctl::SetTextBGColour){
         if(bytes>=1){
             terminal_color=make_color((vga_color)(terminal_color & 0x0F), (vga_color)*buf);
-        }
+            return 1;
+        }else return 0;
+    }else if(fn==bt_vid_ioctl::SetTextColours){
+        if(bytes>=1){
+            terminal_color=(uint8_t)*buf;
+            return 1;
+        }else return 0;
+    }else if(fn==bt_vid_ioctl::GetTextBGColour){
+        return ((terminal_color & 0xF0) >> 4);
+    }else if(fn==bt_vid_ioctl::GetTextFGColour){
+        return (terminal_color & 0x0F);
+    }else if(fn==bt_vid_ioctl::GetTextColours){
+        dbgpf("CONS:%x\n", terminal_color);
+        return terminal_color;
     }
 	return 0;
 }

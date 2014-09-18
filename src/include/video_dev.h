@@ -28,6 +28,10 @@ ENUM_START(bt_vid_ioctl)
 
     ENUM_SET(bt_vid_ioctl, SetTextFGColour, 401),
     ENUM_SET(bt_vid_ioctl, SetTextBGColour, 402),
+    ENUM_SET(bt_vid_ioctl, SetTextColours, 403),
+    ENUM_SET(bt_vid_ioctl, GetTextFGColour, 404),
+    ENUM_SET(bt_vid_ioctl, GetTextBGColour, 405),
+    ENUM_SET(bt_vid_ioctl, GetTextColours, 406),
 ENUM_END
 ENUM_TYPE(bt_vid_ioctl);
 
