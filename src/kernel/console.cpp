@@ -129,8 +129,13 @@ int terminal_ioctl(void *instance, int fn, size_t bytes, char *buf){
     }else if(fn==bt_vid_ioctl::GetTextFGColour){
         return (terminal_color & 0x0F);
     }else if(fn==bt_vid_ioctl::GetTextColours){
-        dbgpf("CONS:%x\n", terminal_color);
         return terminal_color;
+    }else if(fn==bt_vid_ioctl::ClearScreen){
+        terminal_move(0, 0);
+        for(size_t i=0; i<maxchar; ++i){
+            terminal_putchar(' ');
+        }
+        terminal_move(0, 0);
     }
 	return 0;
 }

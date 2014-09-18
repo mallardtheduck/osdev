@@ -42,6 +42,7 @@ int main(int argc, char **argv){
     bt_fioctl(file, bt_vid_ioctl_SetTextBGColour, 1, &bg);
     bt_fioctl(file, bt_vid_ioctl_SetTextFGColour, 1, &fg);
     bt_fioctl(file, bt_vid_ioctl_QueryMode, sizeof(mode), (char*)&mode);
+    bt_fioctl(file, bt_vid_ioctl_ClearScreen, 0, NULL);
     printf("Video mode: %ix%i %ibpp text:%i, pal:%i, colours:%02x\n", mode.width, mode.height, mode.bpp, mode.textmode, mode.palette, (int)colour);
     bg=0; fg=7;
     bt_fioctl(file, bt_vid_ioctl_SetTextColours, sizeof(colour), (char*)&colour);
