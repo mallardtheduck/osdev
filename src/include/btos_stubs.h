@@ -120,6 +120,10 @@ inline static size_t bt_fseek(bt_filehandle file, size_t bytes, uint32_t flags){
 	return btos_call(BT_FSEEK, file, bytes, flags);
 }
 
+inline static void bt_fflush(bt_filehandle file){
+    btos_call(BT_FFLUSH, file, 0, 0);
+}
+
 inline static bt_dirhandle bt_dopen(const char *path, uint32_t flags){
 	return btos_call(BT_DOPEN, (uint32_t)path, flags, 0);
 }

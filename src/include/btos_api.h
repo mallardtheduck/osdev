@@ -57,6 +57,7 @@ enum{
 	BT_FREAD			= 0x0504,
 	BT_FIOCTL			= 0x0505,
 	BT_FSEEK			= 0x0506,
+    BT_FFLUSH           = 0x0507,
 	BT_DOPEN			= 0x0510,
 	BT_DCLOSE			= 0x0511,
 	BT_DWRITE			= 0x0512,

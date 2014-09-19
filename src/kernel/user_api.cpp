@@ -151,6 +151,13 @@ USERAPI_HANDLER(BT_FSEEK){
     }
 }
 
+USERAPI_HANDLER(BT_FFLUSH){
+    file_handle *file=proc_get_file(regs->ebx);
+    if(file){
+        fs_flush(*file);
+    }
+}
+
 USERAPI_HANDLER(BT_DOPEN){
    //TODO: Flags...
     if(is_safe_ptr(regs->ebx)){
@@ -359,6 +366,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_FREAD);
 		USERAPI_HANDLE_CALL(BT_FIOCTL);
 		USERAPI_HANDLE_CALL(BT_FSEEK);
+        USERAPI_HANDLE_CALL(BT_FFLUSH);
 		USERAPI_HANDLE_CALL(BT_DOPEN);
 		USERAPI_HANDLE_CALL(BT_DCLOSE);
 		USERAPI_HANDLE_CALL(BT_DWRITE);

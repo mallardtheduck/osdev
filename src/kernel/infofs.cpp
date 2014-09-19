@@ -77,6 +77,9 @@ int infofs_ioctl(void *filedata, int fn, size_t bytes, char *buf){
 	return 0;
 }
 
+void infofs_flush(void *){
+}
+
 void *infofs_open_dir(void *mountdata, fs_path *path, fs_mode_flags){
 	if(mountdata != infofs_magic) return NULL;
 	return (void*)new infofs_dirhandle();
@@ -134,7 +137,7 @@ directory_entry infofs_stat(void *mountdata, fs_path *path){
 }
 
 fs_driver infofs_driver={true, "INFOFS", false, infofs_mount, infofs_unmount, infofs_open, infofs_close, infofs_read,
-	infofs_write, infofs_seek, infofs_ioctl, infofs_open_dir, infofs_close_dir, infofs_read_dir, infofs_write_dir,
+	infofs_write, infofs_seek, infofs_ioctl, infofs_flush, infofs_open_dir, infofs_close_dir, infofs_read_dir, infofs_write_dir,
 	infofs_dirseek, infofs_stat};
 
 void infofs_register(char *name, info_function fn){

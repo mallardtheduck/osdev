@@ -91,6 +91,7 @@ struct fs_driver{
 	size_t (*write)(void *filedata, size_t bytes, char *buf);
 	size_t (*seek)(void *filedata, int pos, bool relative);
 	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
+    void (*flush)(void *filedata);
 	void *(*open_dir)(void *mountdata, fs_path *path, fs_mode_flags mode);
 	bool (*close_dir)(void *dirdata);
 	directory_entry (*read_dir)(void *dirdata);

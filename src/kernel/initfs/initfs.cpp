@@ -70,6 +70,9 @@ int initfs_ioctl(void *, int, size_t, char *){
 	return 0;
 }
 
+void initfs_flush(void *){
+}
+
 void *initfs_open_dir(void *, fs_path *path, fs_mode_flags){
 	if(path->next != NULL) return NULL;
 	return (void*)new initfs_dirhandle;
@@ -138,7 +141,7 @@ size_t initfs_dirseek(void *dirdata, int pos, bool relative){
 
 fs_driver initfs_driver = {true, "INITFS", false,
 	initfs_mount, initfs_unmount,
-	initfs_open, initfs_close, initfs_read, initfs_write, initfs_seek, initfs_ioctl,
+	initfs_open, initfs_close, initfs_read, initfs_write, initfs_seek, initfs_ioctl, initfs_flush,
 	initfs_open_dir, initfs_close_dir, initfs_read_dir, initfs_write_dir, initfs_dirseek,
 	initfs_stat};
 

@@ -10,7 +10,7 @@ map<string, fs_driver> *fs_drivers;
 lock fs_lock;
 
 static const fs_driver invalid_fs_driver={false, "", false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL};
+	NULL, NULL, NULL, NULL, NULL};
 static const fs_mountpoint invalid_mountpoint={false, "", "", invalid_fs_driver, NULL};
 
 char *fs_mounts_infofs(){
@@ -312,4 +312,9 @@ directory_entry fs_stat(char *path){
 	ret=mount.driver.stat(mount.mountdata, ppath);
 	delete_fs_path(ppath);
 	return ret;
+}
+
+void fs_flush(file_handle &file){
+    if(!file.valid) return;
+    file.mount->driver.flush(file.filedata);
 }

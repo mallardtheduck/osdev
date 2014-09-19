@@ -19,5 +19,6 @@ bool fs_write_dir(dir_handle &dir, directory_entry entry);
 size_t fs_seek_dir(dir_handle &dir, size_t pos, bool relative);
 directory_entry fs_stat(char *path);
 void fs_registerfs(const fs_driver &driver);
+void fs_flush(file_handle &file);
 
 #endif

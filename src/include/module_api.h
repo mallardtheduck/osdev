@@ -80,6 +80,7 @@ struct syscall_table{
 	size_t (*fwrite)(file_handle *handle, size_t bytes, char *buf);
 	bool (*fseek)(file_handle *handle, size_t pos, bool relative);
 	int (*fioctl)(file_handle *handle, int fn, size_t bytes, char *buf);
+    void (*fflush)(file_handle *handle);
 	file_handle *(*fcreate)(char *path);
 
 	dir_handle *(*diropen)(char *path, fs_mode_flags mode);

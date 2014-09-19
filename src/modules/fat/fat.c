@@ -180,6 +180,10 @@ int fat_ioctl(void *filedata, int fn, size_t bytes, char *buf){
 	return 0;
 }
 
+void fat_flush(void *filedata){
+    fl_shutdown();
+}
+
 void *fat_open_dir(void *mountdata, fs_path *path, fs_mode_flags mode){
 	if(mounted && mountdata==fatmagic){
 		char spath[BT_MAX_PATH]={0};
@@ -269,7 +273,7 @@ directory_entry fat_stat(void *mountdata, fs_path *path){
 }
 
 fs_driver fat_driver={true, "FAT", true,
-	fat_mount, fat_unmount, fat_open, fat_close, fat_read, fat_write, fat_seek, fat_ioctl,
+	fat_mount, fat_unmount, fat_open, fat_close, fat_read, fat_write, fat_seek, fat_ioctl, fat_flush,
 	fat_open_dir, fat_close_dir, fat_read_dir, fat_write_dir, fat_dirseek, fat_stat};
 
 int module_main(syscall_table *systbl, char *params){

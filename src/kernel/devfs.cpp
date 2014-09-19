@@ -52,6 +52,9 @@ int devfs_ioctl(void *filedata, int fn, size_t bytes, char *buf){
     }else return drv_ioctl(filedata, fn, bytes, buf);
 }
 
+void devfs_flush(void *){
+}
+
 void *devfs_open_dir(void *, fs_path *, fs_mode_flags){
 	return (void*)new devfs_dirhandle();
 }
@@ -111,7 +114,7 @@ directory_entry devfs_stat(void *, fs_path *path){
 }
 
 fs_driver devfs_driver = {true, "DEVFS", false, devfs_mount, devfs_unmount,
-							devfs_open, devfs_close, devfs_read, devfs_write, devfs_seek, devfs_ioctl,
+							devfs_open, devfs_close, devfs_read, devfs_write, devfs_seek, devfs_ioctl, devfs_flush,
 							devfs_open_dir, devfs_close_dir, devfs_read_dir, devfs_write_dir, devfs_dirseek,
 							devfs_stat};
 

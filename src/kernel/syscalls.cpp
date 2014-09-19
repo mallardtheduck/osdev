@@ -72,6 +72,10 @@ int fioctl(file_handle *handle, int fn, size_t bytes, char *buf){
 	return fs_ioctl(*handle, fn, bytes, buf);
 }
 
+void fflush(file_handle *handle){
+    fs_flush(*handle);
+}
+
 dir_handle *diropen(char *path, fs_mode_flags mode){
 	return new dir_handle(fs_open_dir(path, mode));
 }
@@ -183,6 +187,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&fwrite,
 	&fseek,
 	&fioctl,
+    &fflush,
 	NULL,
 
 	diropen,
