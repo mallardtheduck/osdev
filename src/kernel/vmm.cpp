@@ -302,6 +302,20 @@ amm_flags::Enum vmm_pagedir::get_flags(uint32_t pageaddr){
     }
 }
 
+bool vmm_pagedir::is_dirty(uint32_t pageaddr){
+    hold_lock hl(vmm_framelock);
+    uint32_t pageno=pageaddr/VMM_PAGE_SIZE;
+    size_t tableindex=pageno/VMM_ENTRIES_PER_TABLE;
+    size_t tableoffset=pageno-(tableindex * VMM_ENTRIES_PER_TABLE);
+    uint32_t table=pagedir[tableindex];
+    if(!(table & TableFlags::Present)) return false;
+    table &= VMM_ADDRESS_MASK;
+    maptable(table);
+    uint32_t ret=curtable[tableoffset];
+    if(!(ret & PageFlags::Present)) return false;
+    return ret & PageFlags::Dirty;
+}
+
 const size_t VMM_MAX_REGIONS=32;
 vmm_region vmm_regions[VMM_MAX_REGIONS]={0, 0};
 uint32_t vmm_kpagedir[VMM_ENTRIES_PER_TABLE] __attribute__((aligned(0x1000)));

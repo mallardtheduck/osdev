@@ -48,6 +48,7 @@ public:
 
     void set_flags(uint32_t pageaddr, amm_flags::Enum flags);
     amm_flags::Enum get_flags(uint32_t pageaddr);
+    bool is_dirty(uint32_t pageaddr);
 };
 
 #endif

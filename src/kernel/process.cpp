@@ -133,7 +133,7 @@ void proc_switch_sch(pid_t pid, bool setthread){
 bool proc_switch(pid_t pid, bool setthread){
 	if(setthread) sch_setpid(pid);
 	if(pid!=proc_current_pid){
-        hold_lock hl(proc_lock);
+        hold_lock hl(proc_lock, false);
 		proc_process *newproc=proc_get(pid);
         if(!newproc) return false;
 		if(setthread){
@@ -164,6 +164,8 @@ pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent, file_
 
 void proc_end(pid_t pid) {
     hold_lock hl(proc_lock);
+    pid_t curpid=proc_current_pid;
+    if(curpid == pid) curpid=0;
     dbgpf("PROC: Ending process %i.\n", (int) pid);
     proc_set_status(proc_status::Ending);
     proc_process *proc = proc_get(pid);
@@ -194,6 +196,8 @@ void proc_end(pid_t pid) {
             }
         }
     }
+    if(proc->file.valid) fs_close(proc->file);
+    proc_switch(curpid);
     for (list<proc_process>::iterator i = proc_processes->begin(); i; ++i) {
         if (i->pid == pid) {
             vmm_deletepagedir(i->pagedir);
@@ -206,7 +210,6 @@ void proc_end(pid_t pid) {
             i->parent = parent;
         }
     }
-    if(proc->file.valid) fs_close(proc->file);
 }
 
 void proc_setenv(const pid_t pid, const string &oname, const string &value, const uint8_t flags, bool userspace){

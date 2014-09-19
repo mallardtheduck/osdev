@@ -216,10 +216,13 @@ file_handle fs_open(char *path, fs_mode_flags mode){
 
 bool fs_close(file_handle &file){
 	if(!file.valid) return false;
-	file.valid=false;
 	bool ret=file.mount->driver.close(file.filedata);
-	delete file.mount;
-	if(ret) dbgout("FS: Closed a file.\n");
+	if(ret) {
+        amm_close(file);
+        file.valid=false;
+        delete file.mount;
+        dbgout("FS: Closed a file.\n");
+    }
 	return ret;
 }
 
@@ -317,4 +320,5 @@ directory_entry fs_stat(char *path){
 void fs_flush(file_handle &file){
     if(!file.valid) return;
     file.mount->driver.flush(file.filedata);
+    amm_flush(file);
 }

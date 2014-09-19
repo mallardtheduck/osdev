@@ -352,7 +352,7 @@ bool sch_active(){
 }
 
 void sch_setpid(pid_t pid){
-	hold_lock hl(sch_lock);
+	hold_lock hl(sch_lock, false);
 	(*threads)[current_thread].pid=pid;
 }
 
