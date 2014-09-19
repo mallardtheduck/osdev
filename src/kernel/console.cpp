@@ -59,7 +59,7 @@ size_t terminal_read(void *instance, size_t bytes, char *buf){
         if(inst->pos > chars) return 0;
         if(inst->pos+bytes > chars) bytes=chars-inst->pos;
         for(size_t i=0; i<bytes; ++i){
-            buf[i]=terminal_buffer[i] & 0xFF;
+            buf[i]=terminal_buffer[inst->pos+i] & 0xFF;
         }
         inst->pos+=bytes;
     }
