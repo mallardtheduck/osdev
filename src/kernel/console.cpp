@@ -49,11 +49,21 @@ bool terminal_close(void *inst){
 
 size_t terminal_read(void *instance, size_t bytes, char *buf){
 	terminal_instance *inst=(terminal_instance*)instance;
-	if(inst->pos > maxchar) return 0;
-	if(inst->pos+bytes > maxchar) bytes=maxchar-inst->pos;
-	memcpy(buf, (char*)terminal_buffer+inst->pos, bytes);
-	inst->pos+=bytes;
-	return bytes;
+    if(inst->mode==instance_mode::Raw){
+	    if(inst->pos > maxchar) return 0;
+	    if(inst->pos+bytes > maxchar) bytes=maxchar-inst->pos;
+	    memcpy(buf, (char*)terminal_buffer+inst->pos, bytes);
+        inst->pos+=bytes;
+    }else{
+        size_t chars=maxchar/2;
+        if(inst->pos > chars) return 0;
+        if(inst->pos+bytes > chars) bytes=chars-inst->pos;
+        for(size_t i=0; i<bytes; ++i){
+            buf[i]=terminal_buffer[i] & 0xFF;
+        }
+        inst->pos+=bytes;
+    }
+    return bytes;
 }
 
 size_t terminal_write(void *instance, size_t bytes, char *buf){
