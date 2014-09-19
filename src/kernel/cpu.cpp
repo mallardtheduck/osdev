@@ -32,7 +32,7 @@ uint64_t cpu_get_speed(){
 	outb(0x40,0);
 	outb(0x40,0);
 	uint64_t start = rdtsc();
-	for (int i=0x10000;i>0;i--);
+	for (volatile int i=0x10000;i>0;i--) (void)i;
 	outb(0x43,0x04);
 	uint64_t end=rdtsc();
 	uint8_t lo=inb(0x40);
