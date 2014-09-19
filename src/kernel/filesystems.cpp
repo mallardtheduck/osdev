@@ -319,6 +319,6 @@ directory_entry fs_stat(char *path){
 
 void fs_flush(file_handle &file){
     if(!file.valid) return;
-    file.mount->driver.flush(file.filedata);
     amm_flush(file);
+    file.mount->driver.flush(file.filedata);
 }
