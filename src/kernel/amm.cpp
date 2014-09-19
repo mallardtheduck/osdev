@@ -256,6 +256,7 @@ void amm_flush(file_handle &file){
         dbgpf("AMM: Flushing memory mapping %x\n", mappings[i].marker);
         if(mappings[i].size < VMM_PAGE_SIZE){
             dbgout("AMM: Mapping is less than one page, performing fs_write.\n");
+            fs_seek(file, mappings[i].offset, false);
             fs_write(file, mappings[i].size, (char*)mappings[i].start);
             continue;
         }
