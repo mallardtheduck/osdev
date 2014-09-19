@@ -189,6 +189,7 @@ void amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
         map.marker=0;
         map.markervirt=NULL;
         map.pid=proc_current_pid;
+        dbgpf("AMM: Mapped %x\n", map.file.filedata);
         (*amm_filemappings).push_back(map);
         return;
     }
@@ -249,10 +250,12 @@ void amm_flush(file_handle &file){
     vector<amm_filemap> &mappings=*amm_filemappings;
     for(size_t i=0; i<mappings.size(); ++i){
         if(mappings[i].file.filedata != file.filedata) continue;
+        dbgpf("AMM: Flusing mapping %x (%i)\n", mappings[i].marker, i);
         pid_t curpid=proc_current_pid;
         proc_switch(mappings[i].pid);
         dbgpf("AMM: Flushing memory mapping %x\n", mappings[i].marker);
         if(mappings[i].size < VMM_PAGE_SIZE){
+            dbgout("AMM: Mapping is less than one page, performing fs_write.\n");
             fs_write(file, mappings[i].size, (char*)mappings[i].start);
             continue;
         }
