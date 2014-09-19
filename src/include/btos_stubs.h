@@ -124,6 +124,11 @@ inline static void bt_fflush(bt_filehandle file){
     btos_call(BT_FFLUSH, file, 0, 0);
 }
 
+inline static bool bt_mmap(bt_filehandle file, size_t offset, char *ptr, size_t size){
+    bt_mmap_buffer buffer={size, ptr};
+    return btos_call(BT_MMAP, file, offset, (uint32_t)&buffer);
+}
+
 inline static bt_dirhandle bt_dopen(const char *path, uint32_t flags){
 	return btos_call(BT_DOPEN, (uint32_t)path, flags, 0);
 }

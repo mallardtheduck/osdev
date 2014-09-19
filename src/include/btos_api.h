@@ -58,6 +58,7 @@ enum{
 	BT_FIOCTL			= 0x0505,
 	BT_FSEEK			= 0x0506,
     BT_FFLUSH           = 0x0507,
+    BT_MMAP             = 0x0508,
 	BT_DOPEN			= 0x0510,
 	BT_DCLOSE			= 0x0511,
 	BT_DWRITE			= 0x0512,
@@ -83,13 +84,17 @@ enum{
 	BT_QUERY_EXT		= 0x0F01,
 };
 
-struct bt_fioctl_buffer{
+struct bt_buffer{
 	size_t size;
 	char *buffer;
 };
 
 #ifndef __cplusplus
-typedef struct bt_fioctl_buffer bt_fioctl_buffer;
+typedef struct bt_buffer bt_fioctl_buffer;
+typedef struct bt_buffer bt_mmap_buffer;
+#else
+typedef bt_buffer bt_fioctl_buffer;
+typedef bt_buffer bt_mmap_buffer;
 #endif
 
 #ifdef __cplusplus

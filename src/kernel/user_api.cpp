@@ -158,6 +158,17 @@ USERAPI_HANDLER(BT_FFLUSH){
     }
 }
 
+USERAPI_HANDLER(BT_MMAP){
+    file_handle *file=proc_get_file(regs->ebx);
+    if(file && is_safe_ptr(regs->edx)){
+        btos_api::bt_mmap_buffer *buffer=(btos_api::bt_mmap_buffer*)regs->edx;
+        if(!is_safe_ptr((uint32_t)buffer->buffer)) return;
+        amm_mmap(buffer->buffer, *file, regs->ecx, buffer->size);
+        regs->eax=1;
+    }
+    regs->eax=0;
+}
+
 USERAPI_HANDLER(BT_DOPEN){
    //TODO: Flags...
     if(is_safe_ptr(regs->ebx)){
@@ -367,6 +378,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_FIOCTL);
 		USERAPI_HANDLE_CALL(BT_FSEEK);
         USERAPI_HANDLE_CALL(BT_FFLUSH);
+        USERAPI_HANDLE_CALL(BT_MMAP);
 		USERAPI_HANDLE_CALL(BT_DOPEN);
 		USERAPI_HANDLE_CALL(BT_DCLOSE);
 		USERAPI_HANDLE_CALL(BT_DWRITE);
