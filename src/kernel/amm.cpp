@@ -179,15 +179,19 @@ void amm_resolve_mmap(void *addr){
     amm_flags::Enum flags=((uint32_t)addr < VMM_KERNELSPACE_END)?amm_flags::Kernel : amm_flags::User;
     vmm_cur_pagedir->set_flags((uint32_t)page, flags);
     vmm_alloc_at(1, (uint32_t)page);
+    size_t pos= fs_seek(map->file, 0, true);
     fs_seek(map->file, offset, false);
     size_t bytes=fs_read(map->file, VMM_PAGE_SIZE, (char*)page);
+    fs_seek(map->file, pos, false);
     if(bytes != VMM_PAGE_SIZE) panic("(AMM) Memory-mapped read failed.");
 }
 
 void amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
     if(size<VMM_PAGE_SIZE){
+        size_t pos=fs_seek(file, 0, true);
         fs_seek(file, offset, false);
         fs_read(file, size, ptr);
+        fs_seek(file, pos, false);
         amm_filemap map;
         map.file=file;
         map.offset=offset;
@@ -219,8 +223,10 @@ void amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
             start=1;
             size_t rdsize=(((uint32_t)ptr & VMM_ADDRESS_MASK) + VMM_PAGE_SIZE)-(uint32_t)ptr;
             dbgpf("AMM: Reading %i bytes from offset %i to %x.\n", rdsize, offset, ptr);
+            size_t pos=fs_seek(file, 0, true);
             fs_seek(file, offset, false);
             fs_read(file, rdsize, ptr);
+            fs_seek(file, pos, false);
         }
         if((uint32_t)ptr+size % VMM_PAGE_SIZE){
             dbgout("AMM: Loading last page.\n");
@@ -229,8 +235,10 @@ void amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
             size_t rdsize=((uint32_t)ptr+size)-(uint32_t)lastpageaddr;
             size_t rdoffset=((uint32_t)lastpageaddr-(uint32_t)ptr)+offset;
             dbgpf("AMM: Reading %i bytes from offset %i to %x.\n", rdsize, offset, lastpageaddr);
+            size_t pos=fs_seek(file, 0, true);
             fs_seek(file, rdoffset, false);
             fs_read(file, rdsize, lastpageaddr);
+            fs_seek(file, pos, false);
         }
     }
     vmm_allocmode::Enum mode=((uint32_t)ptr<VMM_KERNELSPACE_END)?vmm_allocmode::Kernel:vmm_allocmode::Userlow;
@@ -255,8 +263,10 @@ void amm_flush(file_handle &file){
         proc_switch(mappings[i].pid);
         if(mappings[i].size < VMM_PAGE_SIZE){
             dbgout("AMM: Mapping is less than one page, performing fs_write.\n");
+            size_t pos=fs_seek(file, 0, true);
             fs_seek(file, mappings[i].offset, false);
             fs_write(file, mappings[i].size, (char*)mappings[i].start);
+            fs_seek(file, pos, false);
             continue;
         }
         size_t pages=mappings[i].size/VMM_PAGE_SIZE;
@@ -273,8 +283,10 @@ void amm_flush(file_handle &file){
                 start=1;
                 size_t wrsize=(((uint32_t)mappings[i].start & VMM_ADDRESS_MASK) + VMM_PAGE_SIZE)-(uint32_t)mappings[i].start;
                 dbgpf("AMM: Writing %i bytes from offset %i to %x.\n", wrsize, mappings[i].offset, mappings[i].start);
+                size_t pos=fs_seek(file, 0, true);
                 fs_seek(file, mappings[i].offset, false);
                 fs_write(file, wrsize, (char*)mappings[i].start);
+                fs_seek(file, pos, false);
             }
             if((uint32_t)mappings[i].start+mappings[i].size % VMM_PAGE_SIZE){
                 dbgout("AMM: Writing last page.\n");
@@ -283,8 +295,10 @@ void amm_flush(file_handle &file){
                 size_t wrsize=((uint32_t)mappings[i].start+mappings[i].size)-(uint32_t)lastpageaddr;
                 size_t wroffset=((uint32_t)lastpageaddr-(uint32_t)mappings[i].start)+mappings[i].offset;
                 dbgpf("AMM: Writing %i bytes from offset %i to %x.\n", wrsize, mappings[i].offset, lastpageaddr);
+                size_t pos=fs_seek(file, 0, true);
                 fs_seek(file, wroffset, false);
                 fs_write(file, wrsize, lastpageaddr);
+                fs_seek(file, pos, false);
             }
         }
         for(size_t j=start; j<end; ++j) {
@@ -293,8 +307,10 @@ void amm_flush(file_handle &file){
                 vmm_allocmode::Enum mode=((uint32_t)mappings[i].start<VMM_KERNELSPACE_END)?vmm_allocmode::Kernel:vmm_allocmode::Userlow;
                 if (vmm_cur_pagedir->is_dirty(virtaddr)) {
                     size_t offset = ((uint32_t) virtaddr - (uint32_t) mappings[i].start) + mappings[i].offset;
+                    size_t pos=fs_seek(file, 0, true);
                     fs_seek(file, offset, false);
                     fs_write(file, VMM_PAGE_SIZE, (char *) virtaddr);
+                    fs_seek(file, pos, false);
                 }
                 vmm_free((void*)virtaddr, 1);
                 vmm_cur_pagedir->map_page(virtaddr/VMM_PAGE_SIZE, amm_mmap_marker/VMM_PAGE_SIZE, true, (vmm_allocmode::Enum)(mode | vmm_allocmode::NotPresent));
