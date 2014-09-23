@@ -1,4 +1,4 @@
-import-files:=data/ctest.elx data/cpptest.elx data/cmd.elx
+import-files:=data/ctest.elx data/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys
 
 all: ~/.mtoolsrc btos.img copy.always
 
@@ -14,8 +14,14 @@ data/ctest.elx: ../user/ctest/ctest.elx
 data/cpptest.elx: ../user/cpptest/cpptest.elx
 	cp ../user/cpptest/cpptest.elx data/cpptest.elx
 
-data/cmd.elx: ../user/cmd/cmd.elx
-	cp ../user/cmd/cmd.elx data/cmd.elx
+data/btos/cmd.elx: ../user/cmd/cmd.elx data/btos
+	cp ../user/cmd/cmd.elx $@
+
+data/btos/terminal.sys: ../modules/terminal/terminal.sys data/btos
+	cp ../modules/terminal/terminal.sys $@
+
+data/btos:
+	mkdir data/btos
 
 ~/.mtoolsrc:
 	echo "mtools_skip_check=1" > ~/.mtoolsrc

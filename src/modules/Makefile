@@ -1,4 +1,4 @@
-MODULES := boot test rtc keyboard ata fat
+MODULES := boot test rtc keyboard ata fat terminal
 
 all: dummy.file
 	for dir in $(MODULES); do \
