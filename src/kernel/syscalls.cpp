@@ -64,7 +64,7 @@ size_t fwrite(file_handle *h, size_t bytes, char *buf){
 	return fs_write(*h, bytes, buf);
 }
 
-bool fseek(file_handle *handle, size_t pos, bool relative){
+size_t fseek(file_handle *handle, size_t pos, bool relative){
 	return fs_seek(*handle, pos, relative);
 }
 

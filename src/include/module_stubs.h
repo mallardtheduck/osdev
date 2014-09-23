@@ -197,7 +197,7 @@ inline static size_t fwrite(file_handle *handle, size_t bytes, char *buf){
 	return SYSCALL_TABLE->fwrite(handle, bytes, buf);
 }
 
-inline static bool fseek(file_handle *handle, size_t pos, bool relative){
+inline static size_t fseek(file_handle *handle, size_t pos, bool relative){
 	return SYSCALL_TABLE->fseek(handle, pos, relative);
 }
 
