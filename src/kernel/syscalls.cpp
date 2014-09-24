@@ -121,6 +121,10 @@ void mod_wait(pid_t pid){
 	proc_wait(pid);
 }
 
+void mod_kill(pid_t pid){
+    proc_terminate(pid);
+}
+
 void mask_irq(size_t irqno){
 	IRQ_set_mask(irqno);
 }
@@ -206,6 +210,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&getpid,
 	&mod_spawn,
 	&mod_wait,
+    &mod_kill,
 
 	&infofs_register,
 };
