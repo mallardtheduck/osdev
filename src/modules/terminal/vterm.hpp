@@ -19,6 +19,8 @@ private:
     bt_terminal_mode::Enum mode;
 
     void wait_until_active();
+    void putchar(char c);
+    void scroll();
 
 public:
     vterm(uint64_t id);

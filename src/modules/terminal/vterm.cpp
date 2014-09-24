@@ -8,16 +8,13 @@ vterm_list *terminals=NULL;
 vterm::vterm(uint64_t nid){
     id=nid;
     buffer=NULL;
+    bufsize=0;
     bufpos=0;
     scrolling=true;
 }
 
 vterm::~vterm(){
     if(buffer) free(buffer);
-}
-
-uint64_t vterm::get_id() {
-    return id;
 }
 
 bool active_blockcheck(void *p) {
@@ -28,6 +25,36 @@ void vterm::wait_until_active() {
     if(!active) {
         thread_setblock(&active_blockcheck, (void*)&active);
     }
+}
+
+void vterm::putchar(char c){
+    if(c != '\n'){
+        buffer[bufpos++]=(uint8_t)c;
+    }else{
+        bufpos=((bufpos/vidmode.width)+1) * vidmode.width;
+    }
+    if(bufpos>=bufsize){
+        scroll();
+    }
+}
+
+void vterm::scroll(){
+    for(size_t y=0; y<vidmode.height; ++y){
+        for(size_t x=0; x<vidmode.width; ++x){
+            const size_t source = y * vidmode.width + x;
+            if(y){
+                const size_t dest = (y-1) * vidmode.width + x;
+                buffer[dest]=buffer[source];
+            }
+            buffer[source]=' ';
+        }
+    }
+    bufpos=(vidmode.height-1)*vidmode.width;
+    dbgpf("TERM: S %i %i\n", bufpos, bufsize);
+}
+
+uint64_t vterm::get_id() {
+    return id;
 }
 
 void vterm::activate() {
@@ -46,8 +73,12 @@ void vterm::deactivate() {
 
 size_t vterm::write(size_t size, char *buf) {
     if(bufpos+size > bufsize) size=bufsize-bufpos;
-    memcpy(buffer+bufpos, buf, size);
-    bufpos+=size;
+    if(vidmode.textmode){
+        for(size_t i=0; i<size; ++i) putchar(buf[i]);
+    }else{
+        memcpy(buffer+bufpos, buf, size);
+        bufpos+=size;
+    }
     if(active){
         fwrite(video_device_handle, size, buf);
     }
@@ -88,12 +119,11 @@ int vterm::ioctl(int /*fn*/, size_t /*size*/, char */*buf*/) {
 }
 
 void vterm::sync() {
-    bt_vidmode mode;
-    fioctl(video_device_handle, bt_vid_ioctl::GetMode, sizeof(mode), (char*)&mode);
-    if(mode.textmode){
-        bufsize=(mode.width * mode.height) * ((mode.bpp * 2) / 8);
+    fioctl(video_device_handle, bt_vid_ioctl::GetMode, sizeof(vidmode), (char*)&vidmode);
+    if(vidmode.textmode){
+        bufsize=(vidmode.width * vidmode.height) * (((vidmode.bpp /** 2*/) / 8) + 1);
     }else{
-        bufsize=(mode.width * mode.height) * (mode.bpp / 8);
+        bufsize=(vidmode.width * vidmode.height) * (vidmode.bpp / 8);
     }
     if(buffer) {
         free(buffer);
