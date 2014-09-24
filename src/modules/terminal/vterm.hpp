@@ -11,6 +11,7 @@ private:
     uint8_t *buffer;
     size_t bufsize;
     size_t bufpos;
+    bool scrolling;
     bt_vidmode vidmode;
     bool active;
 
@@ -31,6 +32,7 @@ public:
     size_t write(size_t size, char *buf);
     size_t read(size_t size, char *buf);
     size_t seek(size_t pos, bool relative);
+    int ioctl(int fn, size_t size, char *buf);
 
     void sync();
 };

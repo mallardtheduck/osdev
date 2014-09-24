@@ -2,6 +2,7 @@
 #include "fs_interface.h"
 #include "terminal.hpp"
 #include "vterm.hpp"
+#include "device.hpp"
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
@@ -33,6 +34,10 @@ void init(){
     video_device_handle=fopen(video_device_path, (fs_mode_flags)(FS_Read | FS_Write));
     input_device_handle=fopen(input_device_path, (fs_mode_flags)(FS_Read | FS_Write));
 
-    current_vterm=new vterm(0);
-    current_vterm->sync();
+    terminals=new vterm_list();
+    uint64_t id=terminals->create_terminal();
+    terminals->get(id)->sync();
+    terminals->switch_terminal(id);
+
+    init_device();
 }

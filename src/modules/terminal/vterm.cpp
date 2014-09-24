@@ -3,10 +3,13 @@
 #include "terminal.hpp"
 
 vterm *current_vterm=NULL;
+vterm_list *terminals=NULL;
 
 vterm::vterm(uint64_t nid){
     id=nid;
     buffer=NULL;
+    bufpos=0;
+    scrolling=true;
 }
 
 vterm::~vterm(){
@@ -28,9 +31,12 @@ void vterm::wait_until_active() {
 }
 
 void vterm::activate() {
+    bool scroll=false;
+    fioctl(video_device_handle, bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scroll);
     fseek(video_device_handle, 0, false);
     fwrite(video_device_handle, bufsize, (char*)buffer);
     fseek(video_device_handle, bufpos, false);
+    fioctl(video_device_handle, bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scrolling);
     active=true;
 }
 
@@ -76,6 +82,11 @@ size_t vterm::seek(size_t pos, bool relative) {
     return bufpos;
 }
 
+int vterm::ioctl(int /*fn*/, size_t /*size*/, char */*buf*/) {
+    //TODO: implement
+    return 0;
+}
+
 void vterm::sync() {
     bt_vidmode mode;
     fioctl(video_device_handle, bt_vid_ioctl::GetMode, sizeof(mode), (char*)&mode);
@@ -89,8 +100,12 @@ void vterm::sync() {
         buffer=NULL;
     }
     buffer=(uint8_t*)malloc(bufsize);
+    size_t vpos=fseek(video_device_handle, 0, true);
+    fseek(video_device_handle, 0, false);
     fread(video_device_handle, bufsize, (char*)buffer);
+    fseek(video_device_handle, vpos, false);
     bufpos=fseek(video_device_handle, 0, true);
+    scrolling=(bool)fioctl(video_device_handle, bt_vid_ioctl::GetScrolling, 0, NULL);
 }
 
 vterm_list::vterm_list() {
@@ -127,7 +142,7 @@ void vterm_list::delete_terminal(uint64_t id) {
 void vterm_list::switch_terminal(uint64_t id) {
     for(size_t i=0; i<count; ++i){
         if(terminals[i]->get_id() == id){
-            current_vterm->deactivate();
+            if(current_vterm) current_vterm->deactivate();
             current_vterm=terminals[i];
             current_vterm->activate();
             return;
