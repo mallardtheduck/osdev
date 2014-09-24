@@ -109,6 +109,7 @@ void vterm::deactivate() {
 }
 
 size_t vterm::write(size_t size, char *buf) {
+    curpid=getpid();
     if(bufpos+size > bufsize) size=bufsize-bufpos;
     if(vidmode.textmode){
         for(size_t i=0; i<size; ++i) putchar(buf[i]);
@@ -124,6 +125,7 @@ size_t vterm::write(size_t size, char *buf) {
 }
 
 size_t vterm::read(size_t size, char *buf) {
+    curpid=getpid();
     if (mode == bt_terminal_mode::Terminal || mode == bt_terminal_mode::Keyboard) {
         for(size_t i=0; i<size; ++i) {
             wait_until_active();
@@ -152,6 +154,7 @@ size_t vterm::read(size_t size, char *buf) {
 }
 
 size_t vterm::seek(size_t pos, bool relative) {
+    curpid=getpid();
     if(relative) bufpos+=pos;
     else bufpos=pos;
     if(bufpos>bufsize) bufpos=bufsize;
@@ -162,6 +165,7 @@ size_t vterm::seek(size_t pos, bool relative) {
 }
 
 int vterm::ioctl(int /*fn*/, size_t /*size*/, char */*buf*/) {
+    curpid=getpid();
     //TODO: implement
     return 0;
 }
