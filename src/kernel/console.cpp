@@ -32,6 +32,7 @@ size_t terminal_row;
 size_t terminal_column;
 uint8_t terminal_color;
 uint16_t* terminal_buffer;
+static bool scrolling_enabled=true;
 
 template<typename T> static T max(T a, T b){ return (a>b)?a:b; }
 
@@ -146,6 +147,10 @@ int terminal_ioctl(void *instance, int fn, size_t bytes, char *buf){
             terminal_putchar(' ');
         }
         terminal_move(0, 0);
+    }else if(fn==bt_vid_ioctl::GetScrolling){
+        return scrolling_enabled;
+    }else if(fn==bt_vid_ioctl::SetScrolling){
+        scrolling_enabled=*(bool*)buf;
     }
 	return 0;
 }
@@ -245,14 +250,14 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y)
 void terminal_putchar(char c)
 {
 	if(c == '\n'){
-		if(++terminal_row >= VGA_HEIGHT){
+		if(++terminal_row >= VGA_HEIGHT && scrolling_enabled){
 			terminal_scroll();
 		}
 		terminal_column = 0;
 		return;
 	}else if(c == '\t'){
 		terminal_column = (terminal_column + 8) & ~7;
-		if(terminal_column>=VGA_WIDTH){
+		if(terminal_column>=VGA_WIDTH && scrolling_enabled){
 			terminal_scroll();
 			terminal_column = 0;
 		}
@@ -262,7 +267,7 @@ void terminal_putchar(char c)
 	if ( ++terminal_column >= VGA_WIDTH )
 	{
 		terminal_column = 0;
-		if ( ++terminal_row >= VGA_HEIGHT )
+		if ( ++terminal_row >= VGA_HEIGHT && scrolling_enabled)
 		{
 			terminal_scroll();
 			//terminal_row = 0;

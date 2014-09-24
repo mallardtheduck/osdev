@@ -32,6 +32,10 @@ ENUM_START(bt_vid_ioctl)
     ENUM_SET(bt_vid_ioctl, GetTextFGColour, 404),
     ENUM_SET(bt_vid_ioctl, GetTextBGColour, 405),
     ENUM_SET(bt_vid_ioctl, GetTextColours, 406),
+    ENUM_SET(bt_vid_ioctl, GetScrolling, 407),
+    ENUM_SET(bt_vid_ioctl, SetScrolling, 408),
+    ENUM_SET(bt_vid_ioctl, GetCursorVisibility, 409),
+    ENUM_SET(bt_vid_ioctl, SetCursorVisibility, 410),
 
     ENUM_SET(bt_vid_ioctl, ClearScreen, 501),
 ENUM_END
