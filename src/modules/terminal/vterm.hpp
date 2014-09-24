@@ -12,6 +12,7 @@ private:
     size_t bufsize;
     size_t bufpos;
     bool scrolling;
+    bool infoline;
     bt_vidmode vidmode;
     bool active;
 
@@ -20,7 +21,9 @@ private:
 
     void wait_until_active();
     void putchar(char c);
+    void putstring(char *s);
     void scroll();
+    void do_infoline();
 
 public:
     vterm(uint64_t id);

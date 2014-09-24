@@ -5,12 +5,21 @@
 vterm *current_vterm=NULL;
 vterm_list *terminals=NULL;
 
+size_t strlen(const char* str)
+{
+    size_t ret = 0;
+    while ( str[ret] != 0 )
+        ret++;
+    return ret;
+}
+
 vterm::vterm(uint64_t nid){
     id=nid;
     buffer=NULL;
     bufsize=0;
     bufpos=0;
     scrolling=true;
+    infoline=true;
 }
 
 vterm::~vterm(){
@@ -36,6 +45,13 @@ void vterm::putchar(char c){
     if(bufpos>=bufsize){
         scroll();
     }
+    if(active) fwrite(video_device_handle, 1, &c);
+}
+
+void vterm::putstring(char *s){
+    for(size_t i=0; i<strlen(s); ++i){
+        putchar(s[i]);
+    }
 }
 
 void vterm::scroll(){
@@ -50,7 +66,25 @@ void vterm::scroll(){
         }
     }
     bufpos=(vidmode.height-1)*vidmode.width;
-    dbgpf("TERM: S %i %i\n", bufpos, bufsize);
+}
+
+void vterm::do_infoline(){
+    if(active && infoline && vidmode.textmode){
+        size_t pos=seek(0, true);
+        seek(0, false);
+        uint16_t linecol=0x1F;
+        uint16_t colour=(uint16_t)fioctl(video_device_handle, bt_vid_ioctl::GetTextColours, 0, NULL);
+        fioctl(video_device_handle, bt_vid_ioctl::SetTextColours, sizeof(linecol), (char*)&linecol);
+        for(size_t i=0; i<vidmode.width; ++i){
+            putchar(' ');
+        }
+        seek(0, false);
+        char sbuf[128];
+        sprintf(sbuf, "BT/OS Terminal %i", (int)id);
+        putstring(sbuf);
+        fioctl(video_device_handle, bt_vid_ioctl::SetTextColours, sizeof(colour), (char*)&colour);
+        seek(pos, false);
+    }
 }
 
 uint64_t vterm::get_id() {
@@ -75,13 +109,14 @@ size_t vterm::write(size_t size, char *buf) {
     if(bufpos+size > bufsize) size=bufsize-bufpos;
     if(vidmode.textmode){
         for(size_t i=0; i<size; ++i) putchar(buf[i]);
-    }else{
-        memcpy(buffer+bufpos, buf, size);
-        bufpos+=size;
+    }else {
+        memcpy(buffer + bufpos, buf, size);
+        bufpos += size;
+        if (active) {
+            fwrite(video_device_handle, size, buf);
+        }
     }
-    if(active){
-        fwrite(video_device_handle, size, buf);
-    }
+    do_infoline();
     return size;
 }
 
@@ -141,6 +176,7 @@ void vterm::sync() {
 vterm_list::vterm_list() {
     terminals=(vterm**)malloc(0);
     count=0;
+    id=0;
 }
 
 uint64_t vterm_list::create_terminal() {
