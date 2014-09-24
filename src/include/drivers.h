@@ -44,6 +44,7 @@ namespace driver_types{
 	static const int GI_STILLCAM	= 0x82;
 	static const int GI_VIDCAM	= 0x83;
 	static const int LCDSCREEN	= 0x90;
+    static const int TERMINAL   = 0xA0;
 	static const int BESPOKE	= 0xF0;
 	static const int USER		= 0xFF;
 #ifdef __cplusplus
