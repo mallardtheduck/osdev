@@ -77,7 +77,8 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 
 	}else if(MATCH("default", "run")){
 		wait(spawn((char*)value, 0, NULL));
-
+    }else if(MATCH("default", "spawn")){
+        while(true) wait(spawn((char*)value, 0, NULL));
 	}else if(MATCH("default", "mount")){
 		char *path, *rest;
 		if(split(value, ',', &path, &rest)){
