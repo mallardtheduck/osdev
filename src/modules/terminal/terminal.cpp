@@ -29,10 +29,10 @@ void init(){
     dbgpf("TERM: %s %s\n", video_device_name, (char*)getenv((char*)video_device_name, 0));
     dbgpf("TERM: %s %s\n", input_device_name, (char*)getenv((char*)input_device_name, 0));
     strncpy(video_device_path+5, (char*)getenv((char*)video_device_name, 0), BT_MAX_PATH-5);
-    strncpy(video_device_path+5, (char*)getenv((char*)video_device_name, 0), BT_MAX_PATH-5);
+    strncpy(input_device_path+5, (char*)getenv((char*)input_device_name, 0), BT_MAX_PATH-5);
 
     video_device_handle=fopen(video_device_path, (fs_mode_flags)(FS_Read | FS_Write));
-    input_device_handle=fopen(input_device_path, (fs_mode_flags)(FS_Read | FS_Write));
+    input_device_handle=fopen(input_device_path, (fs_mode_flags)(FS_Read));
 
     terminals=new vterm_list();
     uint64_t id=terminals->create_terminal();

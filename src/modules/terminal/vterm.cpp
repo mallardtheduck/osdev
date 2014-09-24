@@ -1,6 +1,7 @@
 #include "vterm.hpp"
 #include "module_stubs.h"
 #include "terminal.hpp"
+#include "keyboard.h"
 
 vterm *current_vterm=NULL;
 vterm_list *terminals=NULL;
@@ -20,6 +21,7 @@ vterm::vterm(uint64_t nid){
     bufpos=0;
     scrolling=true;
     infoline=true;
+    mode=bt_terminal_mode::Terminal;
 }
 
 vterm::~vterm(){
@@ -99,6 +101,7 @@ void vterm::activate() {
     fseek(video_device_handle, bufpos, false);
     fioctl(video_device_handle, bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scrolling);
     active=true;
+    do_infoline();
 }
 
 void vterm::deactivate() {
@@ -122,10 +125,20 @@ size_t vterm::write(size_t size, char *buf) {
 
 size_t vterm::read(size_t size, char *buf) {
     if (mode == bt_terminal_mode::Terminal || mode == bt_terminal_mode::Keyboard) {
-        if(!active) {
+        for(size_t i=0; i<size; ++i) {
             wait_until_active();
-            return fread(input_device_handle, size, buf);
+            uint32_t input=0;
+            char c=0;
+            while(!input || !c) {
+                fread(input_device_handle, sizeof(input), (char *) &input);
+                if ((input & KeyFlags::Control) && ((char) input == 'c' || (char) input == 'C')) {
+                    kill(getpid());
+                }
+                c = KB_char(input);
+            }
+            buf[i] = c;
         }
+        return size;
     } else if (mode == bt_terminal_mode::Video) {
         if (bufpos + size > bufsize) size = bufsize - bufpos;
         memcpy(buf, buffer + bufpos, size);

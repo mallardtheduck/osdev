@@ -66,4 +66,5 @@ void init_device(){
     char devname[BT_MAX_PATH]="DEV:/TERMINAL";
     add_device(&devname[5], &term_driver, NULL);
     setenv("STDOUT", devname, 0, 0);
+    setenv("STDIN", devname, 0, 0);
 }
