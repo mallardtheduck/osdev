@@ -6,6 +6,8 @@
 vterm *current_vterm=NULL;
 vterm_list *terminals=NULL;
 
+extern lock term_lock;
+
 size_t strlen(const char* str)
 {
     size_t ret = 0;
@@ -133,6 +135,7 @@ size_t vterm::read(size_t size, char *buf) {
             while(!input || !c) {
                 fread(input_device_handle, sizeof(input), (char *) &input);
                 if ((input & KeyFlags::Control) && ((char) input == 'c' || (char) input == 'C')) {
+                    release_lock(&term_lock);
                     kill(getpid());
                 }
                 c = KB_char(input);
