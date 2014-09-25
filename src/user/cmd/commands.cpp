@@ -288,26 +288,42 @@ bool run_builtin(const vector<string> &commandline){
     return false;
 }
 
-bool run_program(const vector<string> &commandline){
-	const string command=to_lower(commandline[0]);
-	string path=parse_path(command);
-	if(!command.length()) return false;
-	path+=".elx";
-	bt_directory_entry ent=bt_stat(path.c_str());
-	if(ent.valid && ent.type == FS_File){
-		char **argv=new char*[commandline.size()];
-		size_t i=0;
-		for(const string &s : commandline){
-			argv[i]=(char*)s.c_str();
-			++i;
-		}
-		bt_pid pid=bt_spawn(path.c_str(), commandline.size(), argv);
-		delete[] argv;
-        int ret=0;
-		if(pid) ret=bt_wait(pid);
-        if(ret==-1) cout << path << " crashed." << endl;
-		return true;
-	}
+bool run_program(const vector<string> &commandline) {
+    const string command = to_lower(commandline[0]);
+    string path = parse_path(command);
+    if (!ends_with(to_lower(path), ".elx")) path += ".elx";
+    vector<string> possibles;
+    if (command.find('/') == string::npos) {
+        vector<string> paths = get_paths();
+        for (const string &p : paths) {
+            string possible = parse_path(p + "/" + command);
+            if (possible.length()) {
+                if (!ends_with(to_lower(possible), ".elx")) possible += ".elx";
+                possibles.push_back(possible);
+            }
+        }
+    } else {
+        if (path.length()) possibles.push_back(path);
+    }
+    if (!possibles.size()) return false;
+    for (const string &p : possibles) {
+        bt_directory_entry ent = bt_stat(p.c_str());
+        if (ent.valid && ent.type == FS_File) {
+            char **argv = new char *[commandline.size()];
+            size_t i = 0;
+            for (const string &s : commandline) {
+                argv[i] = (char *) s.c_str();
+                ++i;
+            }
+            bt_pid pid = bt_spawn(p.c_str(), commandline.size(), argv);
+            delete[] argv;
+            int ret = 0;
+            if (pid) ret = bt_wait(pid);
+            if (ret == -1) cout << p << " crashed." << endl;
+            return true;
+
+        }
+    }
 	return false;
 }
 

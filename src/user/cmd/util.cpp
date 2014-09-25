@@ -78,3 +78,18 @@ vector<string> split(const string &str, char delim) {
 	}
 	return elems;
 }
+
+vector<string> get_paths(){
+    string path=get_env("PATH");
+    vector<string> ret=split(path, ',');
+    if(find(ret.begin(), ret.end(), ".") == ret.end()) ret.push_back(".");
+    return ret;
+}
+
+bool ends_with(const string &str, const string &end){
+    if (str.length() >= str.length()) {
+        return (0 == str.compare(str.length() - end.length(), end.length(), end));
+    } else {
+        return false;
+    }
+}

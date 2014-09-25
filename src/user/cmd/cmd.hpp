@@ -26,6 +26,8 @@ void display_table(const std::string &input);
 std::string path_path(const std::string &fullpath);
 std::vector<std::string> glob(const std::string &str);
 bool is_dir(const std::string &path);
+std::vector<std::string> get_paths();
+bool ends_with(const std::string &str, const std::string &end);
 
 void table_command(const std::vector<std::string> &commandline);
 
