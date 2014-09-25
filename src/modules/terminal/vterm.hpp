@@ -25,6 +25,8 @@ private:
     void scroll();
     void do_infoline();
 
+    char title[256];
+
 public:
     vterm(uint64_t id);
     ~vterm();

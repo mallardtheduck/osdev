@@ -22,6 +22,7 @@ vterm::vterm(uint64_t nid){
     scrolling=true;
     infoline=true;
     mode=bt_terminal_mode::Terminal;
+    sprintf(title, "BT/OS Terminal %i", (int)id);
 }
 
 vterm::~vterm(){
@@ -81,9 +82,7 @@ void vterm::do_infoline(){
             putchar(' ');
         }
         seek(0, false);
-        char sbuf[128];
-        sprintf(sbuf, "BT/OS Terminal %i", (int)id);
-        putstring(sbuf);
+        putstring(title);
         fioctl(video_device_handle, bt_vid_ioctl::SetTextColours, sizeof(colour), (char*)&colour);
         seek(pos, false);
     }
