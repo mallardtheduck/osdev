@@ -134,7 +134,7 @@ size_t vterm::read(size_t size, char *buf) {
             char c=0;
             while(!input || !c) {
                 fread(input_device_handle, sizeof(input), (char *) &input);
-                if ((input & KeyFlags::Control) && ((char) input == 'c' || (char) input == 'C')) {
+                if ((input & KeyFlags::Control) && !(input & KeyFlags::KeyUp) && ((char) input == 'c' || (char) input == 'C')) {
                     release_lock(&term_lock);
                     kill(getpid());
                 }
