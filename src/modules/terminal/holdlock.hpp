@@ -8,8 +8,9 @@ private:
     lock *l;
 
 public:
-    hold_lock(lock *lck): l(lck) {
-        take_lock(l);
+    hold_lock(lock *lck, bool exclusive=true): l(lck) {
+        if(exclusive) take_lock(l);
+        else take_lock_recursive(l);
     }
 
     ~hold_lock() {
