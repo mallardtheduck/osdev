@@ -95,7 +95,9 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 			free(path);
 			free(rest);
 		}
-	}
+	}else if(MATCH("default", "path")){
+        setenv("PATH", (char*)value, 0, 0);
+    }
 	return 1;
 }
 
