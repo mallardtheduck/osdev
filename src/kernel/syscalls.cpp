@@ -29,6 +29,10 @@ void mod_take_lock(lock *l){
     take_lock_exclusive(*l);
 }
 
+void mod_take_lock_recursive(lock *l){
+    take_lock_recursive(*l);
+}
+
 bool mod_try_take_lock(lock *l){
 	return try_take_lock_exclusive(*l);
 }
@@ -145,6 +149,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 
 	&mod_init_lock,
 	&mod_take_lock,
+    &mod_take_lock_recursive,
 	&mod_try_take_lock,
 	&mod_release_lock,
 

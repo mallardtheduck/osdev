@@ -34,6 +34,7 @@ struct syscall_table{
 
 	void (*init_lock)(lock *l);
 	void (*take_lock)(lock *l);
+    void (*take_lock_recursive)(lock *l);
 	bool (*try_take_lock)(lock *l);
 	void (*release_lock)(lock *l);
 

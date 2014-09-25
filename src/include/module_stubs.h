@@ -45,6 +45,11 @@ inline static void init_lock(lock *l){
 inline static void take_lock(lock *l){
 	SYSCALL_TABLE->take_lock(l);
 }
+
+inline static void take_lock_recursive(lock *l){
+    SYSCALL_TABLE->take_lock_recursive(l);
+}
+
 inline static bool try_take_lock(lock *l){
 	return SYSCALL_TABLE->try_take_lock(l);
 }
