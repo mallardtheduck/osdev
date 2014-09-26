@@ -173,11 +173,12 @@ int vterm::ioctl(int fn, size_t size, char *buf) {
     if(fn==bt_vid_ioctl::ClearScreen){
         memset(buffer, 0, bufsize);
         seek(0, false);
+        if(backend->is_active(id)){
+            backend->display_ioctl(fn, size, buf);
+        }
+        if(infoline) putchar('\n');
     }
-    if(backend->is_active(id)){
-        backend->display_ioctl(fn, size, buf);
-    }
-    //TODO: implement
+    //TODO: implement more
     return 0;
 }
 
