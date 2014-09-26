@@ -25,6 +25,7 @@ void init(){
     terminals->get(id)->sync();
     terminals->switch_terminal(id);
     init_device();
+    infofs_register("TERMS", &terms_infofs);
 }
 
 extern "C" void __cxa_pure_virtual()

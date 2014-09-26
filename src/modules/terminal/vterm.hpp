@@ -27,13 +27,15 @@ private:
     void scroll();
     void do_infoline();
 
-    char title[256];
+    static const size_t titlemax=256;
+    char title[titlemax];
 
 public:
     vterm(uint64_t id, i_backend *back);
     ~vterm();
 
     uint64_t get_id();
+    const char *get_title();
 
     void activate();
     void deactivate();
@@ -61,8 +63,11 @@ public:
     void delete_terminal(uint64_t id = current_vterm->get_id());
     void switch_terminal(uint64_t id);
     vterm *get(uint64_t id);
+
+    friend char *terms_infofs();
 };
 
+char *terms_infofs();
 extern vterm_list *terminals;
 
 #endif

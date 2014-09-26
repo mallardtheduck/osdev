@@ -96,6 +96,10 @@ uint64_t vterm::get_id() {
     return id;
 }
 
+const char *vterm::get_title(){
+    return title;
+}
+
 void vterm::activate() {
     bool scroll=false;
     backend->set_active(id);
@@ -170,7 +174,11 @@ size_t vterm::seek(size_t pos, bool relative) {
 
 int vterm::ioctl(int fn, size_t size, char *buf) {
     curpid=getpid();
-    if(fn==bt_vid_ioctl::ClearScreen){
+    if(fn==bt_terminal_ioctl::SetTitle){
+        memset(title, 0, titlemax);
+        memcpy(title, buf, size);
+        do_infoline();
+    }else if(fn==bt_vid_ioctl::ClearScreen){
         memset(buffer, 0, bufsize);
         seek(0, false);
         if(backend->is_active(id)){
@@ -252,4 +260,15 @@ vterm *vterm_list::get(uint64_t id) {
         }
     }
     return NULL;
+}
+
+char *terms_infofs(){
+    char *buffer=(char*)malloc(4096);
+    vterm_list *t=terminals;
+    memset(buffer, 0, 4096);
+    sprintf(buffer, "# ID, title\n");
+    for(size_t i=0; i<t->count; ++i){
+        sprintf(&buffer[strlen(buffer)], "%i, \"%s\"\n", (int)t->terminals[i]->get_id(), t->terminals[i]->get_title());
+    }
+    return buffer;
 }
