@@ -1,4 +1,5 @@
 #include "kernel.hpp"
+#include "strutil.hpp"
 
 #define hasflag(x, y) (((x) & (y)) == (y))
 
@@ -180,7 +181,8 @@ loaded_elf_module elf_load_module(file_handle &file){
 			char buf[128];
 			elf_getstring(file, header, section.name, buf, 128);
 			string name(buf);
-			if(name==".rel.text" || name==".rel.data" || name==".rel.rodata"){
+            dbgpf("ELF: Section: %s\n",name.c_str());
+			if(starts_with(name, ".rel.text") || starts_with(name, ".rel.data") || starts_with(name, ".rel.rodata")){
 				elf_do_reloc_module(file, header, section, ret.mem.aligned);
 			}
 		}
