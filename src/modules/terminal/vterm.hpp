@@ -4,9 +4,12 @@
 #include "module_api.h"
 #include "video_dev.h"
 #include "terminal.h"
+#include "backend.hpp"
 
 class vterm{
 private:
+    i_backend *backend;
+
     uint64_t id;
     uint8_t *buffer;
     size_t bufsize;
@@ -14,7 +17,6 @@ private:
     bool scrolling;
     bool infoline;
     bt_vidmode vidmode;
-    bool active;
 
     pid_t curpid;
     bt_terminal_mode::Enum mode;
@@ -28,7 +30,7 @@ private:
     char title[256];
 
 public:
-    vterm(uint64_t id);
+    vterm(uint64_t id, i_backend *back);
     ~vterm();
 
     uint64_t get_id();
@@ -55,7 +57,7 @@ private:
 public:
     vterm_list();
 
-    uint64_t create_terminal();
+    uint64_t create_terminal(i_backend *back);
     void delete_terminal(uint64_t id = current_vterm->get_id());
     void switch_terminal(uint64_t id);
     vterm *get(uint64_t id);

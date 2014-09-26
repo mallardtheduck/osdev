@@ -3,17 +3,10 @@
 #include "terminal.hpp"
 #include "vterm.hpp"
 #include "device.hpp"
+#include "console_backend.hpp"
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
-
-char video_device_path[BT_MAX_PATH]="DEV:/";
-char input_device_path[BT_MAX_PATH]="DEV:/";
-file_handle *video_device_handle;
-file_handle *input_device_handle;
-
-const char* video_device_name="DISPLAY_DEVICE";
-const char* input_device_name="INPUT_DEVICE";
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -26,18 +19,15 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 }
 
 void init(){
-    dbgpf("TERM: %s %s\n", video_device_name, (char*)getenv((char*)video_device_name, 0));
-    dbgpf("TERM: %s %s\n", input_device_name, (char*)getenv((char*)input_device_name, 0));
-    strncpy(video_device_path+5, (char*)getenv((char*)video_device_name, 0), BT_MAX_PATH-5);
-    strncpy(input_device_path+5, (char*)getenv((char*)input_device_name, 0), BT_MAX_PATH-5);
-
-    video_device_handle=fopen(video_device_path, (fs_mode_flags)(FS_Read | FS_Write));
-    input_device_handle=fopen(input_device_path, (fs_mode_flags)(FS_Read));
-
+    cons_backend=new console_backend();
     terminals=new vterm_list();
-    uint64_t id=terminals->create_terminal();
+    uint64_t id=terminals->create_terminal(cons_backend);
     terminals->get(id)->sync();
     terminals->switch_terminal(id);
-
     init_device();
+}
+
+extern "C" void __cxa_pure_virtual()
+{
+    panic("Pure virtual function call!");
 }

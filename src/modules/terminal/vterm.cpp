@@ -16,7 +16,8 @@ size_t strlen(const char* str)
     return ret;
 }
 
-vterm::vterm(uint64_t nid){
+vterm::vterm(uint64_t nid, i_backend *back){
+    backend=back;
     id=nid;
     buffer=NULL;
     bufsize=0;
@@ -31,13 +32,14 @@ vterm::~vterm(){
     if(buffer) free(buffer);
 }
 
-bool active_blockcheck(void *p) {
-    return *(bool*)p;
+bool active_blockcheck(void */*p*/) {
+    //FIXME: Return correct answer
+    return true;
 }
 
 void vterm::wait_until_active() {
-    if(!active) {
-        thread_setblock(&active_blockcheck, (void*)&active);
+    if(!backend->is_active(id)) {
+        thread_setblock(&active_blockcheck, (void*)&backend);
     }
 }
 
@@ -50,7 +52,7 @@ void vterm::putchar(char c){
     if(bufpos>=bufsize){
         scroll();
     }
-    if(active) fwrite(video_device_handle, 1, &c);
+    if(backend->is_active(id)) backend->display_write(1, &c);
 }
 
 void vterm::putstring(char *s){
@@ -74,18 +76,18 @@ void vterm::scroll(){
 }
 
 void vterm::do_infoline(){
-    if(active && infoline && vidmode.textmode){
+    if(backend->is_active(id) && infoline && vidmode.textmode){
         size_t pos=seek(0, true);
         seek(0, false);
         uint16_t linecol=0x1F;
-        uint16_t colour=(uint16_t)fioctl(video_device_handle, bt_vid_ioctl::GetTextColours, 0, NULL);
-        fioctl(video_device_handle, bt_vid_ioctl::SetTextColours, sizeof(linecol), (char*)&linecol);
+        uint16_t colour=(uint16_t) backend->display_ioctl(bt_vid_ioctl::GetTextColours, 0, NULL);
+        backend->display_ioctl(bt_vid_ioctl::SetTextColours, sizeof(linecol), (char*)&linecol);
         for(size_t i=0; i<vidmode.width; ++i){
             putchar(' ');
         }
         seek(0, false);
         putstring(title);
-        fioctl(video_device_handle, bt_vid_ioctl::SetTextColours, sizeof(colour), (char*)&colour);
+        backend->display_ioctl(bt_vid_ioctl::SetTextColours, sizeof(colour), (char*)&colour);
         seek(pos, false);
     }
 }
@@ -96,17 +98,17 @@ uint64_t vterm::get_id() {
 
 void vterm::activate() {
     bool scroll=false;
-    fioctl(video_device_handle, bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scroll);
-    fseek(video_device_handle, 0, false);
-    fwrite(video_device_handle, bufsize, (char*)buffer);
-    fseek(video_device_handle, bufpos, false);
-    fioctl(video_device_handle, bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scrolling);
-    active=true;
+    backend->set_active(id);
+    backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scroll);
+    backend->display_seek(0, false);
+    backend->display_write(bufsize, (char*)buffer);
+    backend->display_seek(bufpos, false);
+    backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scrolling);
     do_infoline();
 }
 
 void vterm::deactivate() {
-    active=false;
+    //active=false;
 }
 
 size_t vterm::write(size_t size, char *buf) {
@@ -117,8 +119,8 @@ size_t vterm::write(size_t size, char *buf) {
     }else {
         memcpy(buffer + bufpos, buf, size);
         bufpos += size;
-        if (active) {
-            fwrite(video_device_handle, size, buf);
+        if (backend->is_active(id)) {
+            backend->display_write(size, buf);
         }
     }
     do_infoline();
@@ -133,7 +135,7 @@ size_t vterm::read(size_t size, char *buf) {
             uint32_t input=0;
             char c=0;
             while(!input || !c) {
-                fread(input_device_handle, sizeof(input), (char *) &input);
+                backend->input_read(sizeof(input), (char *) &input);
                 if ((input & KeyFlags::Control) && !(input & KeyFlags::KeyUp) && ((char) input == 'c' || (char) input == 'C')) {
                     release_lock(&term_lock);
                     kill(getpid());
@@ -147,8 +149,8 @@ size_t vterm::read(size_t size, char *buf) {
         if (bufpos + size > bufsize) size = bufsize - bufpos;
         memcpy(buf, buffer + bufpos, size);
         bufpos += size;
-        if (active) {
-            fread(video_device_handle, size, buf);
+        if (backend->is_active(id)) {
+            backend->display_read(size, buf);
         }
         return size;
     }
@@ -160,20 +162,27 @@ size_t vterm::seek(size_t pos, bool relative) {
     if(relative) bufpos+=pos;
     else bufpos=pos;
     if(bufpos>bufsize) bufpos=bufsize;
-    if(active){
-        fseek(video_device_handle, pos, relative);
+    if(backend->is_active(id)){
+        backend->display_seek(pos, relative);
     }
     return bufpos;
 }
 
-int vterm::ioctl(int /*fn*/, size_t /*size*/, char */*buf*/) {
+int vterm::ioctl(int fn, size_t size, char *buf) {
     curpid=getpid();
+    if(fn==bt_vid_ioctl::ClearScreen){
+        memset(buffer, 0, bufsize);
+        seek(0, false);
+    }
+    if(backend->is_active(id)){
+        backend->display_ioctl(fn, size, buf);
+    }
     //TODO: implement
     return 0;
 }
 
 void vterm::sync() {
-    fioctl(video_device_handle, bt_vid_ioctl::GetMode, sizeof(vidmode), (char*)&vidmode);
+    backend->display_ioctl(bt_vid_ioctl::GetMode, sizeof(vidmode), (char*)&vidmode);
     if(vidmode.textmode){
         bufsize=(vidmode.width * vidmode.height) * (((vidmode.bpp /** 2*/) / 8) + 1);
     }else{
@@ -184,12 +193,12 @@ void vterm::sync() {
         buffer=NULL;
     }
     buffer=(uint8_t*)malloc(bufsize);
-    size_t vpos=fseek(video_device_handle, 0, true);
-    fseek(video_device_handle, 0, false);
-    fread(video_device_handle, bufsize, (char*)buffer);
-    fseek(video_device_handle, vpos, false);
-    bufpos=fseek(video_device_handle, 0, true);
-    scrolling=(bool)fioctl(video_device_handle, bt_vid_ioctl::GetScrolling, 0, NULL);
+    size_t vpos=backend->display_seek(0, true);
+    backend->display_seek(0, false);
+    backend->display_read(bufsize, (char*)buffer);
+    backend->display_seek(vpos, false);
+    bufpos=backend->display_seek(0, true);
+    scrolling=(bool)backend->display_ioctl(bt_vid_ioctl::GetScrolling, 0, NULL);
 }
 
 vterm_list::vterm_list() {
@@ -198,8 +207,8 @@ vterm_list::vterm_list() {
     id=0;
 }
 
-uint64_t vterm_list::create_terminal() {
-    vterm *newterm=new vterm(++id);
+uint64_t vterm_list::create_terminal(i_backend *back) {
+    vterm *newterm=new vterm(++id, back);
     vterm **terms=new vterm*[count+1];
     memcpy(terms, terminals, count*sizeof(vterm*));
     free(terminals);
