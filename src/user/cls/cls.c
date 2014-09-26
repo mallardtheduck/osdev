@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include "../../include/btos_stubs.h"
-#include "../../include/video_dev.h"
+#include <btos_stubs.h>
+#include <video_dev.h>
 
 int main(){
     char outdev[BT_MAX_PATH]="";
