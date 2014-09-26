@@ -109,7 +109,7 @@ void display_table(table tbl, size_t width){
 	for(const pair<string, size_t> &l : maxlength){
 		total+=l.second;
 	}
-	while(total > width){
+	while(total > width - 1){
 		size_t max=0;
 		for(const pair<string, size_t> &l : maxlength){
 			if(l.second >  max) max=l.second;
@@ -122,12 +122,12 @@ void display_table(table tbl, size_t width){
 		}
 	}
 	for(const string &h : tbl.headers){
-		print_padded(h, maxlength[h] - 1, true);
+		print_padded(h, maxlength[h], true);
 	}
 	cout << endl;
 	for(const table_row &row : tbl.rows){
 		for(const string &h : tbl.headers){
-			print_padded(row.at(h), maxlength[h] - 1, false);
+			print_padded(row.at(h), maxlength[h], false);
 		}
 		cout << endl;
 	}
