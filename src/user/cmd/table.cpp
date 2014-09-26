@@ -74,7 +74,7 @@ bool is_number(const std::string& s)
 void print_padded(const string &value, size_t width, bool center){
 	size_t length=value.length();
 	if(length>width){
-		cout << value.substr(0, width-1);
+		cout << value.substr(0, width-1) << ' ';
 	}else{
 		size_t padding=width-length;
 		if(center){
@@ -122,12 +122,12 @@ void display_table(table tbl, size_t width){
 		}
 	}
 	for(const string &h : tbl.headers){
-		print_padded(h, maxlength[h], true);
+		print_padded(h, maxlength[h] - 1, true);
 	}
 	cout << endl;
 	for(const table_row &row : tbl.rows){
 		for(const string &h : tbl.headers){
-			print_padded(row.at(h), maxlength[h], false);
+			print_padded(row.at(h), maxlength[h] - 1, false);
 		}
 		cout << endl;
 	}
