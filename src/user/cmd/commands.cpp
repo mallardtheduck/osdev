@@ -309,13 +309,15 @@ bool run_program(const vector<string> &commandline) {
     for (const string &p : possibles) {
         bt_directory_entry ent = bt_stat(p.c_str());
         if (ent.valid && ent.type == FS_File) {
-            char **argv = new char *[commandline.size()];
+            vector<string> args=commandline;
+            args.erase(args.begin());
+            char **argv = new char *[args.size()];
             size_t i = 0;
-            for (const string &s : commandline) {
+            for (const string &s : args) {
                 argv[i] = (char *) s.c_str();
                 ++i;
             }
-            bt_pid pid = bt_spawn(p.c_str(), commandline.size(), argv);
+            bt_pid pid = bt_spawn(p.c_str(), args.size(), argv);
             delete[] argv;
             int ret = 0;
             if (pid) ret = bt_wait(pid);
