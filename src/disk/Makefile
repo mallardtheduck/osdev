@@ -1,4 +1,4 @@
-import-files:=data/ctest.elx data/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys
+import-files:=data/ctest.elx data/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys data/btos/cls.elx
 
 all: ~/.mtoolsrc btos.img copy.always
 
@@ -19,6 +19,9 @@ data/btos/cmd.elx: ../user/cmd/cmd.elx data/btos
 
 data/btos/terminal.sys: ../modules/terminal/terminal.sys data/btos
 	cp ../modules/terminal/terminal.sys $@
+
+data/btos/cls.elx: ../user/cls/cls.elx data/btos
+	cp ../user/cls/cls.elx $@
 
 data/btos:
 	mkdir data/btos

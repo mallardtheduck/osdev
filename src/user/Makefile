@@ -1,4 +1,4 @@
-PROGS := test ctest cpptest cmd
+PROGS := test ctest cpptest cmd cls
 
 all: dummy.file
 	for dir in $(PROGS); do \
