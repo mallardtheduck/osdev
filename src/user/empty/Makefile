@@ -9,7 +9,7 @@ BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../include -std=gnu99
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -T linker.ld -o $(OUTPUT-NAME) -O2
+LINK-FLAGS := -o $(OUTPUT-NAME) -O2
 LINK-OPTIONS := -lgcc
 
 BOOTFILE := boot.o
@@ -34,7 +34,7 @@ dummy.delete:
 	-@$(RM) *.o
 	-@$(RM) $(OUTPUT-NAME)
 
-$(OUTPUT-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) linker.ld Makefile
+$(OUTPUT-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile
 	$(LINK) $(LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LINK-OPTIONS)
 
 .s.o: %.s Makefile
