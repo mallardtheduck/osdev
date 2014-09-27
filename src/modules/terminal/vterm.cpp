@@ -86,6 +86,9 @@ void vterm::do_infoline(){
             putchar(' ');
         }
         seek(0, false);
+        char buf[8];
+        sprintf(buf, "[%i:%i] ", terminals->get_count(), (int)id);
+        putstring(buf);
         putstring(title);
         backend->display_ioctl(bt_vid_ioctl::SetTextColours, sizeof(colour), (char*)&colour);
         seek(pos, false);
@@ -260,6 +263,10 @@ vterm *vterm_list::get(uint64_t id) {
         }
     }
     return NULL;
+}
+
+size_t vterm_list::get_count(){
+    return count;
 }
 
 char *terms_infofs(){

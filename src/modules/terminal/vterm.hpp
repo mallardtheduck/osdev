@@ -63,6 +63,7 @@ public:
     void delete_terminal(uint64_t id = current_vterm->get_id());
     void switch_terminal(uint64_t id);
     vterm *get(uint64_t id);
+    size_t get_count();
 
     friend char *terms_infofs();
 };
