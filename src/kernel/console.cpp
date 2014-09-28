@@ -3,16 +3,9 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-namespace instance_mode{
-	enum Enum{
-		Simple,
-		Raw,
-	};
-};
-
 struct terminal_instance{
 	size_t pos;
-	instance_mode::Enum mode;
+	bt_vid_text_access_mode::Enum mode;
 };
 
 static const size_t VGA_WIDTH = 80;
@@ -39,7 +32,7 @@ template<typename T> static T max(T a, T b){ return (a>b)?a:b; }
 void *terminal_open(void*){
 	terminal_instance *inst = new terminal_instance();
 	inst->pos=0;
-	inst->mode=instance_mode::Simple;
+	inst->mode=bt_vid_text_access_mode::Simple;
 	return (void*) inst;
 }
 
@@ -50,7 +43,7 @@ bool terminal_close(void *inst){
 
 size_t terminal_read(void *instance, size_t bytes, char *buf){
 	terminal_instance *inst=(terminal_instance*)instance;
-    if(inst->mode==instance_mode::Raw){
+    if(inst->mode==bt_vid_text_access_mode::Raw){
 	    if(inst->pos > maxchar) return 0;
 	    if(inst->pos+bytes > maxchar) bytes=maxchar-inst->pos;
 	    memcpy(buf, (char*)terminal_buffer+inst->pos, bytes);
@@ -69,7 +62,7 @@ size_t terminal_read(void *instance, size_t bytes, char *buf){
 
 size_t terminal_write(void *instance, size_t bytes, char *buf){
 	terminal_instance *inst=(terminal_instance*)instance;
-	if(inst->mode==instance_mode::Raw){
+	if(inst->mode==bt_vid_text_access_mode::Raw){
 		if(inst->pos > maxchar) return 0;
         if(inst->pos+bytes > maxchar) bytes=maxchar-inst->pos;
 		memcpy((char*)terminal_buffer+inst->pos, buf, bytes);
@@ -88,7 +81,7 @@ size_t terminal_write(void *instance, size_t bytes, char *buf){
 size_t terminal_seek(void *instance, size_t pos, bool relative){
 	terminal_instance *inst=(terminal_instance*)instance;
 	size_t ret=0;
-	if(inst->mode==instance_mode::Raw){
+	if(inst->mode==bt_vid_text_access_mode::Raw){
 		//TODO: Bounds checking!
 		if(relative) inst->pos+=pos;
 		else inst->pos=pos;
@@ -151,6 +144,13 @@ int terminal_ioctl(void *instance, int fn, size_t bytes, char *buf){
         return scrolling_enabled;
     }else if(fn==bt_vid_ioctl::SetScrolling){
         scrolling_enabled=*(bool*)buf;
+    }else if(fn==bt_vid_ioctl::GetTextAccessMode){
+        return ((terminal_instance*)instance)->mode;
+    }else if(fn==bt_vid_ioctl::SetTextAccessMode){
+        if(bytes==sizeof(bt_vid_text_access_mode::Enum)) {
+            ((terminal_instance *) instance)->mode = *(bt_vid_text_access_mode::Enum *) buf;
+            return sizeof(bt_vid_text_access_mode::Enum);
+        }
     }
 	return 0;
 }
