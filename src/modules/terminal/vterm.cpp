@@ -25,6 +25,7 @@ vterm::vterm(uint64_t nid, i_backend *back){
     scrolling=true;
     infoline=true;
     mode=bt_terminal_mode::Terminal;
+    textcolour=0x07;
     sprintf(title, "BT/OS Terminal %i", (int)id);
 }
 
@@ -45,9 +46,10 @@ void vterm::wait_until_active() {
 
 void vterm::putchar(char c){
     if(c != '\n'){
+        buffer[bufpos++]=textcolour;
         buffer[bufpos++]=(uint8_t)c;
     }else{
-        bufpos=((bufpos/vidmode.width)+1) * vidmode.width;
+        bufpos=(((bufpos/(vidmode.width*2))+1) * (vidmode.width*2));
     }
     if(bufpos>=bufsize){
         scroll();
@@ -69,10 +71,10 @@ void vterm::scroll(){
                 const size_t dest = (y-1) * vidmode.width + x;
                 buffer[dest]=buffer[source];
             }
-            buffer[source]=' ';
+            buffer[source]=0;
         }
     }
-    bufpos=(vidmode.height-1)*vidmode.width;
+    bufpos=((vidmode.height-1)*vidmode.width)*2;
 }
 
 void vterm::do_infoline(){
@@ -108,7 +110,16 @@ void vterm::activate() {
     backend->set_active(id);
     backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scroll);
     backend->display_seek(0, false);
+    if(vidmode.textmode) {
+        bt_vid_text_access_mode::Enum textmode=bt_vid_text_access_mode::Raw;
+        backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char*)&textmode);
+        backend->display_ioctl(bt_vid_ioctl::SetTextColours, sizeof(textcolour), (char*)&textcolour);
+    }
     backend->display_write(bufsize, (char*)buffer);
+    if(vidmode.textmode) {
+        bt_vid_text_access_mode::Enum textmode=bt_vid_text_access_mode::Simple;
+        backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char*)&textmode);
+    }
     backend->display_seek(bufpos, false);
     backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scrolling);
     do_infoline();
@@ -166,13 +177,15 @@ size_t vterm::read(size_t size, char *buf) {
 
 size_t vterm::seek(size_t pos, bool relative) {
     curpid=getpid();
-    if(relative) bufpos+=pos;
-    else bufpos=pos;
+    int factor=1;
+    if(vidmode.textmode) factor=2;
+    if(relative) bufpos+=pos*factor;
+    else bufpos=pos*factor;
     if(bufpos>bufsize) bufpos=bufsize;
     if(backend->is_active(id)){
         backend->display_seek(pos, relative);
     }
-    return bufpos;
+    return bufpos/factor;
 }
 
 int vterm::ioctl(int fn, size_t size, char *buf) {
@@ -196,7 +209,7 @@ int vterm::ioctl(int fn, size_t size, char *buf) {
 void vterm::sync() {
     backend->display_ioctl(bt_vid_ioctl::GetMode, sizeof(vidmode), (char*)&vidmode);
     if(vidmode.textmode){
-        bufsize=(vidmode.width * vidmode.height) * (((vidmode.bpp /** 2*/) / 8) + 1);
+        bufsize=(vidmode.width * vidmode.height) * (((vidmode.bpp * 2) / 8) + 1);
     }else{
         bufsize=(vidmode.width * vidmode.height) * (vidmode.bpp / 8);
     }
@@ -207,9 +220,21 @@ void vterm::sync() {
     buffer=(uint8_t*)malloc(bufsize);
     size_t vpos=backend->display_seek(0, true);
     backend->display_seek(0, false);
+    if(vidmode.textmode) {
+        bt_vid_text_access_mode::Enum textmode=bt_vid_text_access_mode::Raw;
+        backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char*)&textmode);
+        backend->display_ioctl(bt_vid_ioctl::GetTextColours, sizeof(textcolour), (char*)&textcolour);
+    }
     backend->display_read(bufsize, (char*)buffer);
+    if(vidmode.textmode) {
+        bt_vid_text_access_mode::Enum textmode=bt_vid_text_access_mode::Simple;
+        backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char*)&textmode);
+    }
     backend->display_seek(vpos, false);
     bufpos=backend->display_seek(0, true);
+    if(vidmode.textmode){
+        bufpos*=2;
+    }
     scrolling=(bool)backend->display_ioctl(bt_vid_ioctl::GetScrolling, 0, NULL);
 }
 

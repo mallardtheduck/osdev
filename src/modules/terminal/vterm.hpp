@@ -1,6 +1,7 @@
 #ifndef _VTERM_HPP
 #define _VTERM_CPP
 
+#include <stdint.h>
 #include "module_api.h"
 #include "video_dev.h"
 #include "terminal.h"
@@ -17,6 +18,7 @@ private:
     bool scrolling;
     bool infoline;
     bt_vidmode vidmode;
+    uint8_t textcolour;
 
     pid_t curpid;
     bt_terminal_mode::Enum mode;
