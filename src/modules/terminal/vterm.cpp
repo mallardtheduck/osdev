@@ -45,6 +45,7 @@ void vterm::wait_until_active() {
 }
 
 void vterm::putchar(char c){
+    if(!vidmode.textmode) return;
     if(c != '\n'){
         buffer[bufpos++]=textcolour;
         buffer[bufpos++]=(uint8_t)c;
