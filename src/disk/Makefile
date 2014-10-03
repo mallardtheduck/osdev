@@ -14,23 +14,20 @@ data/ctest.elx: ../user/ctest/ctest.elx
 data/cpptest.elx: ../user/cpptest/cpptest.elx
 	cp ../user/cpptest/cpptest.elx data/cpptest.elx
 
-data/btos/cmd.elx: ../user/cmd/cmd.elx data/btos
+data/btos/cmd.elx: ../user/cmd/cmd.elx directories.always
 	cp ../user/cmd/cmd.elx $@
 
-data/btos/terminal.sys: ../modules/terminal/terminal.sys data/btos
+data/btos/terminal.sys: ../modules/terminal/terminal.sys directories.always
 	cp ../modules/terminal/terminal.sys $@
 
-data/btos/cmd/cls.elx: ../user/cls/cls.elx data/btos data/btos/cmd
+data/btos/cmd/cls.elx: ../user/cls/cls.elx directories.always
 	cp ../user/cls/cls.elx $@
 
-data/btos/cmd/title.elx: ../user/title/title.elx data/btos data/btos/cmd
+data/btos/cmd/title.elx: ../user/title/title.elx directories.always
 	cp ../user/title/title.elx $@
 
-data/btos:
-	mkdir data/btos
-
-data/btos/cmd: data/btos
-	mkdir data/btos/cmd
+directories.always:
+	mkdir -p data/btos/cmd
 
 ~/.mtoolsrc:
 	echo "mtools_skip_check=1" > ~/.mtoolsrc
