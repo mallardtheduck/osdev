@@ -7,6 +7,8 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include "../../../../../include/btos_stubs.h"
+#include "../../../../../include/drivers.h"
+#include "../../../../../include/ioctl.h"
 
 bool btos_path_parse(char *opath, char *buffer, size_t size);
 
@@ -72,7 +74,12 @@ int getpid(){
 }
 
 int isatty(int file){
-    return 1;
+    bt_filehandle fh=fileint_to_bt_filehandle(file);
+    if(fh){
+        size_t type=bt_fioctl(fh, bt_ioctl_DevType, 0, NULL);
+        if(type==TERMINAL) return 1;
+    }
+    return 0;
 }
 
 int kill(int pid, int sig){
