@@ -5,6 +5,7 @@
 #include <cctype>
 #include <ioctl.h>
 #include <drivers.h>
+#include <cstdlib>
 #include "../../include/keyboard.h"
 
 using namespace std;
@@ -22,6 +23,10 @@ void open_input(){
 	input_fh=bt_fopen(device.c_str(), FS_Read);
     size_t type=bt_fioctl(input_fh, bt_ioctl::DevType, 0, NULL);
     if(type!=driver_types::TERMINAL && (type & driver_types::VIDEO)!=driver_types::VIDEO) input_tty=false;
+    if(!input_fh) {
+        cerr << "Error: Could not open input!" << endl;
+        exit(-1);
+    }
 }
 
 char get_char(){
@@ -36,7 +41,8 @@ char get_char(){
 		return '\0';
 	}else{
 		char ret='\0';
-		bt_fread(input_fh, sizeof(ret), &ret);
+		size_t bytes=bt_fread(input_fh, sizeof(ret), &ret);
+        if(!input_tty && bytes==0) exit(0);
 		return ret;
 	}
 }
@@ -95,6 +101,7 @@ vector<string> parse_input(const string &input){
 }
 
 string get_input(){
+    if(!input_fh) open_input();
 	if(input_tty) cout << prompt_string();
 	return input_line();
 }
