@@ -71,10 +71,10 @@ bool is_number(const std::string& s)
     ) == s.end();
 }
 
-void print_padded(const string &value, size_t width, bool center){
+void print_padded(const string &value, size_t width, bool center, ostream &output=cout){
 	size_t length=value.length();
 	if(length>width){
-		cout << value.substr(0, width-1) << ' ';
+        output << value.substr(0, width-1) << ' ';
 	}else{
 		size_t padding=width-length;
 		if(center){
@@ -82,20 +82,20 @@ void print_padded(const string &value, size_t width, bool center){
 			size_t rightpad=padding-leftpad;
 			string lpad(leftpad, ' ');
 			string rpad(rightpad, ' ');
-			cout << lpad << value << rpad;
+            output << lpad << value << rpad;
 		}else{
 			if(is_number(value)){
 				string pad(padding-1, ' ');
-				cout << pad << value << ' ';
+                output << pad << value << ' ';
 			}else{
 				string pad(padding, ' ');
-				cout << value << pad;
+                output << value << pad;
 			}
 		}
 	}
 }
 
-void display_table(table tbl, size_t width){
+void display_table(table tbl, size_t width, ostream &output=cout){
 	map<string, size_t> maxlength;
 	for(const string &s : tbl.headers){
 		maxlength[s]=s.length();
@@ -122,18 +122,20 @@ void display_table(table tbl, size_t width){
 		}
 	}
 	for(const string &h : tbl.headers){
-		print_padded(h, maxlength[h], true);
+		print_padded(h, maxlength[h], true, output);
 	}
-	cout << endl;
+    output << endl;
 	for(const table_row &row : tbl.rows){
 		for(const string &h : tbl.headers){
-			print_padded(row.at(h), maxlength[h], false);
+			print_padded(row.at(h), maxlength[h], false, output);
 		}
-		cout << endl;
+        output << endl;
 	}
 }
 
-void table_command(const vector<string> &commandline){
+void table_command(const command &cmd){
+    const vector<string> &commandline=cmd.args;
+    ofstream output(cmd.output);
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
@@ -144,17 +146,17 @@ void table_command(const vector<string> &commandline){
 			if(in.is_open()){
 				table tbl=parsecsv(in);
 				if(tbl.rows.size()){
-					display_table(tbl, 80);
+					display_table(tbl, 80, output);
 				}
 			}
 		}
 	}
 }
 
-void display_table(const string &input){
+void display_table(const string &input, ostream &output){
 	stringstream in(input);
 	table tbl=parsecsv(in);
 	if(tbl.rows.size()){
-		display_table(tbl, 80);
+		display_table(tbl, 80, output);
 	}
 }

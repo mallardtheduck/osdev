@@ -9,6 +9,8 @@ const string prompt_var="PROMPT";
 const string cwd_var="CWD";
 const string default_cwd="INIT:/";
 
+uint64_t tempcounter=0;
+
 string get_env(const string &name){
 	char value[128];
 	string ret;
@@ -92,4 +94,16 @@ bool ends_with(const string &str, const string &end){
     } else {
         return false;
     }
+}
+
+string tempfile(){
+    stringstream ret;
+    ret << "temp_" << tempcounter << ".tmp";
+    tempcounter++;
+    string path=parse_path(ret.str());
+    if(path.length()){
+        FILE *fh=fopen(path.c_str(), "a");
+        fclose(fh);
+    }
+    return path;
 }

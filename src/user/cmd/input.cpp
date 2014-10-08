@@ -24,7 +24,7 @@ void open_input(){
     size_t type=bt_fioctl(input_fh, bt_ioctl::DevType, 0, NULL);
     if(type!=driver_types::TERMINAL && (type & driver_types::VIDEO)!=driver_types::VIDEO) input_tty=false;
     if(!input_fh) {
-        cerr << "Error: Could not open input!" << endl;
+        cerr << "Error: Could not open input file/device: " << device.c_str() << endl;
         exit(-1);
     }
 }
@@ -98,6 +98,43 @@ vector<string> parse_input(const string &input){
 	}
 	if(current.str().length()) ret.push_back(current.str());
 	return ret;
+}
+
+enum class cmd_token{
+    arg,
+    input,
+    output,
+};
+
+vector<command> getcommands(vector<string> parsed){
+    vector<command> ret;
+    command current;
+    cmd_token next=cmd_token::arg;
+    for(const string &p : parsed){
+        if(next==cmd_token::arg) {
+            if (p == "|") {
+                string file = tempfile();
+                current.output = file;
+                ret.push_back(current);
+                current = command();
+                current.input = file;
+            } else if (p == ">") {
+                next = cmd_token::output;
+            } else if (p == "<") {
+                next = cmd_token::input;
+            }else{
+                current.args.push_back(p);
+            }
+        }else if(next==cmd_token::input){
+            current.input=parse_path(p);
+            next=cmd_token::arg;
+        }else if(next==cmd_token::output){
+            current.output=parse_path(p);
+            next=cmd_token::arg;
+        }
+    }
+    ret.push_back(current);
+    return ret;
 }
 
 string get_input(){

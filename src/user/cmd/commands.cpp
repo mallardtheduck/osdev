@@ -6,17 +6,17 @@
 
 using namespace std;
 
-typedef void (*command_fn)(const vector<string>&);
+typedef void (*command_fn)(const command &);
 
-void print_os_version(){
-	display_file("INFO:/VERSION");
+void print_os_version(ostream &output=cout){
+	display_file("INFO:/VERSION", output);
 }
 
-void display_file(const string &path){
+void display_file(const string &path, ostream &output){
 	ifstream file(path);
 	if(file.is_open()){
     	string line;
-    	while(getline(file, line)) cout << line << endl;
+    	while(getline(file, line)) output << line << endl;
     }
 }
 
@@ -37,7 +37,9 @@ void list_files(string path, ostream &out=cout, char sep='\t'){
 	}
 }
 
-void display_command(const vector<string> &commandline){
+void display_command(const command &cmd){
+    const vector<string> &commandline=cmd.args;
+    ofstream output(cmd.output);
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
@@ -45,11 +47,13 @@ void display_command(const vector<string> &commandline){
 	}
 	vector<string> files=glob(commandline[1]);
 	for(const string &file : files){
-		display_file(parse_path(file));
+		display_file(parse_path(file), output);
 	}
 }
 
-void ls_command(const vector<string> &commandline){
+void ls_command(const command &cmd){
+    const vector<string> &commandline=cmd.args;
+    ofstream output(cmd.output);
 	string path;
 	if(commandline.size() < 2){
 		path=get_cwd();
@@ -59,10 +63,11 @@ void ls_command(const vector<string> &commandline){
 	stringstream ls;
 	ls << "# name, size" << endl;
 	list_files(path, ls, ',');
-	display_table(ls.str());
+	display_table(ls.str(), output);
 }
 
-void cd_command(const vector<string> &commandline){
+void cd_command(const command &cmd){
+    const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 2){
 		cout << get_cwd() << endl;
 	}else{
@@ -74,7 +79,8 @@ void cd_command(const vector<string> &commandline){
 	}
 }
 
-void path_command(const vector<string> &commandline){
+void path_command(const command &cmd){
+    const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 2){
 		cout << get_cwd() << endl;
 	}else{
@@ -82,7 +88,8 @@ void path_command(const vector<string> &commandline){
 	}
 }
 
-void touch_command(const vector<string> &commandline){
+void touch_command(const command &cmd){
+    const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
@@ -99,12 +106,14 @@ void touch_command(const vector<string> &commandline){
 	}
 }
 
-void echo_command(const vector<string> &commandline){
+void echo_command(const command &cmd){
+    const vector<string> &commandline=cmd.args;
+    ofstream output(cmd.output);
 	if(commandline.size() < 2 || (commandline[1]=="-f" && commandline.size() < 3)){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " [-f filename] text" << endl;
 	}else{
-		ostream *out=&cout;
+		ostream *out=&output;
 		ofstream file;
 		size_t skip=1;
 		if(commandline[1]=="-f"){
@@ -120,7 +129,8 @@ void echo_command(const vector<string> &commandline){
 	}
 }
 
-void mkdir_command(const vector<string> &commandline){
+void mkdir_command(const command &cmd){
+    const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " dirname" << endl;
@@ -132,7 +142,8 @@ void mkdir_command(const vector<string> &commandline){
 	}
 }
 
-void del_command(const vector<string> &commandline){
+void del_command(const command &cmd){
+    const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
@@ -146,7 +157,8 @@ void del_command(const vector<string> &commandline){
 	}
 }
 
-void rmdir_command(const vector<string> &commandline){
+void rmdir_command(const command &cmd){
+    const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " dirname" << endl;
@@ -163,7 +175,8 @@ void rmdir_command(const vector<string> &commandline){
 	}
 }
 
-void copy_command(const vector<string> &commandline){
+void copy_command(const command &cmd){
+    const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 3){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " from to" << endl;
@@ -208,34 +221,39 @@ void copy_command(const vector<string> &commandline){
 	}
 }
 
-void move_command(const vector<string> &commandline){
+void move_command(const command &cmd){
+    const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 3){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " from to" << endl;
 	}else{
-		copy_command(commandline);
-		del_command(commandline);
+		copy_command(cmd);
+		del_command(cmd);
 	}
 }
 
-void ver_command(const vector<string>&){
-	cout << "BT/OS CMD" << endl;
-	print_os_version();
+void ver_command(const command &cmd){
+    ofstream output(cmd.output);
+	output << "BT/OS CMD" << endl;
+	print_os_version(output);
 }
 
-void list_command(const vector<string> &commandline){
+void list_command(const command &cmd){
+    const vector<string> &commandline=cmd.args;
+    ofstream output(cmd.output);
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " pattern" << endl;
 	}else{
 		vector<string> matches=glob(commandline[1]);
 		for(const string &s : matches){
-			cout << s << endl;
+			output << s << endl;
 		}
 	}
 }
 
-void setenv_command(const vector<string> &commandline){
+void setenv_command(const command &cmd){
+    const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " name [value]" << endl;
@@ -279,16 +297,18 @@ unordered_map<string, command_fn> builtin_commands={
 	{"set", &setenv_command},
 };
 
-bool run_builtin(const vector<string> &commandline){
+bool run_builtin(const command &cmd){
+    vector<string> commandline=cmd.args;
 	const string command=to_lower(commandline[0]);
 	if(builtin_commands.find(command)!=builtin_commands.end()){
-		builtin_commands[command](commandline);
+		builtin_commands[command](cmd);
 		return true;
      }
     return false;
 }
 
-bool run_program(const vector<string> &commandline) {
+bool run_program(const command &cmd) {
+    vector<string> commandline=cmd.args;
     const string command = to_lower(commandline[0]);
     string path = parse_path(command);
     if (!ends_with(to_lower(path), ".elx")) path += ".elx";
@@ -317,7 +337,13 @@ bool run_program(const vector<string> &commandline) {
                 argv[i] = (char *) s.c_str();
                 ++i;
             }
+            string std_in=get_env("STDIN");
+            string std_out=get_env("STDOUT");
+            set_env("STDIN", cmd.input);
+            set_env("STDOUT", cmd.output);
             bt_pid pid = bt_spawn(p.c_str(), args.size(), argv);
+            set_env("STDIN", std_in);
+            set_env("STDOUT", std_out);
             delete[] argv;
             int ret = 0;
             if (pid) ret = bt_wait(pid);
@@ -329,11 +355,16 @@ bool run_program(const vector<string> &commandline) {
 	return false;
 }
 
-bool run_command(const vector<string> &commandline){
-	if(!commandline.size()) return true;
-	else if(commandline[0]=="exit") return false;
-	else if(run_builtin(commandline)) return true;
-	else if(run_program(commandline)) return true;
+bool run_command(const command &cmd){
+	if(!cmd.args.size()) return true;
+	else if(cmd.args[0]=="exit") return false;
+	else if(run_builtin(cmd)) return true;
+	else if(run_program(cmd)) return true;
 	cout << "Unknown command." << endl;
 	return true;
+}
+
+command::command(){
+    this->input=get_env("STDIN");
+    this->output=get_env("STDOUT");
 }
