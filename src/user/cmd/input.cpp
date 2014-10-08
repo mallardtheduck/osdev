@@ -3,12 +3,15 @@
 #include <cstdint>
 #include <sstream>
 #include <cctype>
+#include <ioctl.h>
+#include <drivers.h>
 #include "../../include/keyboard.h"
 
 using namespace std;
 
 bt_filehandle input_fh=0;
 bool convert_input=false;
+bool input_tty=true;
 
 void open_input(){
 	string device=get_env("STDIN");
@@ -17,6 +20,8 @@ void open_input(){
 		convert_input=true;
 	}
 	input_fh=bt_fopen(device.c_str(), FS_Read);
+    size_t type=bt_fioctl(input_fh, bt_ioctl::DevType, 0, NULL);
+    if(type!=driver_types::TERMINAL && (type & driver_types::VIDEO)!=driver_types::VIDEO) input_tty=false;
 }
 
 char get_char(){
@@ -40,22 +45,23 @@ string input_line(){
 	stringstream ret;
 	if(!input_fh) open_input();
 	streampos pos=cout.tellp();
-	while(char c=get_char()){
-		if(c=='\n') break;
-		else if(c==0x08){
-			string data=ret.str();
-			if(data.length())data.erase(data.length()-1);
-			ret.str(data);
-			ret.seekp(0, ios::end);
-		}else ret << c;
-		cout.seekp(pos);
-		cout << ret.str();
-		streampos newpos=cout.tellp();
-		cout << ' ';
-		cout.seekp(newpos);
-
-	}
-	cout << endl;
+	while(char c=get_char()) {
+        if (c == '\n') break;
+        else if (c == 0x08) {
+            string data = ret.str();
+            if (data.length())data.erase(data.length() - 1);
+            ret.str(data);
+            ret.seekp(0, ios::end);
+        } else ret << c;
+        if (input_tty) {
+            cout.seekp(pos);
+            cout << ret.str();
+            streampos newpos = cout.tellp();
+            cout << ' ';
+            cout.seekp(newpos);
+        }
+    }
+	if(input_tty) cout << endl;
 	return ret.str();
 }
 
@@ -89,6 +95,6 @@ vector<string> parse_input(const string &input){
 }
 
 string get_input(){
-	cout << prompt_string();
+	if(input_tty) cout << prompt_string();
 	return input_line();
 }
