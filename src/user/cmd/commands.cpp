@@ -43,12 +43,16 @@ void display_command(const command &cmd){
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
-
 	}
-	vector<string> files=glob(commandline[1]);
-	for(const string &file : files){
-		display_file(parse_path(file), output);
-	}
+    if(commandline[1] != "-") {
+        vector<string> files = glob(commandline[1]);
+        for (const string &file : files) {
+            display_file(parse_path(file), output);
+        }
+    }else{
+        string line;
+        while(getline(*cmd.input, line)) output << line << endl;
+    }
 }
 
 void ls_command(const command &cmd){
