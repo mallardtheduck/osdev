@@ -126,7 +126,7 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		strncpy(ret->path, spath, BT_MAX_PATH);
 		if(mode==FS_Read) modifiers="r";
 		if((mode & ~(FS_Create | FS_Truncate))==FS_Write ) modifiers="w";
-		if(mode==(FS_Write | FS_AtEnd | FS_Create)) modifiers="a";
+		if(mode==(FS_Write | FS_AtEnd | FS_Create) || mode==(FS_Write | FS_AtEnd)) modifiers="a";
 		if(mode==(FS_Read | FS_Write)) modifiers="r+";
 		if(mode==(FS_Write | FS_Read | FS_Truncate | FS_Create)) modifiers="w+";
 		if(mode==(FS_Write | FS_Read | FS_AtEnd | FS_Create)) modifiers="a+";
