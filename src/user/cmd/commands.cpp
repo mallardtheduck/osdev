@@ -385,3 +385,9 @@ void command::set_output(ostream *o, string path) {
     output_ptr.reset(o);
     output=o;
 }
+
+void command::close(){
+    output->flush();
+    input_ptr.reset();
+    output_ptr.reset();
+}

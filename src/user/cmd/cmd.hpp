@@ -44,6 +44,7 @@ public:
 
     void set_input(std::istream *i, std::string path);
     void set_output(std::ostream *o, std::string path);
+    void close();
 
     command();
     ~command();

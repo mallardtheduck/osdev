@@ -14,11 +14,12 @@ int main(int argc, char **argv){
 		string input=get_input();
 		vector<string> p=parse_input(input);
         vector<command> cmds=getcommands(p);
-        for(const command &c : cmds) {
+        for(command &c : cmds) {
             if(!run_command(c)) {
                 cont=false;
                 break;
             }
+            c.close();
         }
         if(!cont) break;
 	};
