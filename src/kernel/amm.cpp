@@ -137,14 +137,14 @@ void amm_set_info(uint32_t pageaddr, amm_flags::Enum flags, void *ptr){
 void amm_page_fault_handler(int, isr_regs *regs){
 	uint32_t addr;
 	asm volatile("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
-	dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
     uint32_t physaddr=vmm_cur_pagedir->virt2phys((void*)addr, false);
-    dbgpf("AMM: Physical address: %x\n", physaddr);
     if(physaddr == amm_mmap_marker){
         amm_resolve_mmap((void*)addr);
     } else if(regs->error_code & ec_user){
         proc_terminate();
     }else{
+        dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
+        dbgpf("AMM: Physical address: %x\n", physaddr);
         if (addr < VMM_PAGE_SIZE) {
             panic("(AMM) Probable NULL pointer dereference!");
         } else if(vmm_get_flags(addr & VMM_ADDRESS_MASK) == amm_flags::Guard_Page){
