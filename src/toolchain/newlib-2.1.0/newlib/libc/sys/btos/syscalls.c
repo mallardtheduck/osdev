@@ -9,6 +9,7 @@
 #include "../../../../../include/btos_stubs.h"
 #include "../../../../../include/drivers.h"
 #include "../../../../../include/ioctl.h"
+#include "../../../../../../include/fs_interface.h"
 
 bool btos_path_parse(char *opath, char *buffer, size_t size);
 
@@ -35,7 +36,7 @@ static bt_filehandle fileint_to_bt_filehandle(int i){
 					snprintf(stdout_path, 255, "DEV:/%s", temp);
 				}
 			}
-			specialhandles[1]=bt_fopen(stdout_path, FS_Write);
+			specialhandles[1]=bt_fopen(stdout_path, FS_Write | FS_AtEnd);
     	}
     	if(!specialhandles[2]){ //STDERR
     		specialhandles[2]=specialhandles[1];
