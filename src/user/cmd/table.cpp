@@ -135,7 +135,7 @@ void display_table(table tbl, size_t width, ostream &output=cout){
 
 void table_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
-    ofstream output(cmd.output);
+    ostream &output=*cmd.output;
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;

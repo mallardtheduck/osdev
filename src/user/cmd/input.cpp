@@ -6,6 +6,7 @@
 #include <ioctl.h>
 #include <drivers.h>
 #include <cstdlib>
+#include <fstream>
 #include "../../include/keyboard.h"
 
 using namespace std;
@@ -42,7 +43,10 @@ char get_char(){
 	}else{
 		char ret='\0';
 		size_t bytes=bt_fread(input_fh, sizeof(ret), &ret);
-        if(!input_tty && bytes==0) exit(0);
+        if(!input_tty && bytes==0){
+            cerr << "Warning: End of input file/device reached." << endl;
+            exit(0);
+        }
 		return ret;
 	}
 }
@@ -114,10 +118,10 @@ vector<command> getcommands(vector<string> parsed){
         if(next==cmd_token::arg) {
             if (p == "|") {
                 string file = tempfile();
-                current.output = file;
+                current.set_output(new ofstream(file.c_str()), file);
                 ret.push_back(current);
                 current = command();
-                current.input = file;
+                current.set_input(new ifstream(file.c_str()), file);
             } else if (p == ">") {
                 next = cmd_token::output;
             } else if (p == "<") {
@@ -126,10 +130,12 @@ vector<command> getcommands(vector<string> parsed){
                 current.args.push_back(p);
             }
         }else if(next==cmd_token::input){
-            current.input=parse_path(p);
+            string file=parse_path(p);
+            current.set_input(new ifstream(file.c_str()), file);
             next=cmd_token::arg;
         }else if(next==cmd_token::output){
-            current.output=parse_path(p);
+            string file=parse_path(p);
+            current.set_output(new ofstream(file.c_str()), file);
             next=cmd_token::arg;
         }
     }

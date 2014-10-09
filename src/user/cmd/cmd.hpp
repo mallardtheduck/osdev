@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <memory>
 
 void print_os_version();
 std::string get_env(const std::string &name);
@@ -30,12 +31,22 @@ std::vector<std::string> get_paths();
 bool ends_with(const std::string &str, const std::string &end);
 std::string tempfile();
 
-struct command{
+class command{
+private:
+    std::shared_ptr<std::istream> input_ptr;
+    std::shared_ptr<std::ostream> output_ptr;
+public:
     std::vector<std::string> args;
-    std::string input;
-    std::string output;
+    std::istream *input;
+    std::ostream *output;
+    std::string input_path;
+    std::string output_path;
+
+    void set_input(std::istream *i, std::string path);
+    void set_output(std::ostream *o, std::string path);
 
     command();
+    ~command();
 };
 std::vector<command> getcommands(std::vector<std::string> parsed);
 bool run_command(const command &cmd);

@@ -39,7 +39,7 @@ void list_files(string path, ostream &out=cout, char sep='\t'){
 
 void display_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
-    ofstream output(cmd.output);
+    ostream &output=*cmd.output;
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
@@ -53,7 +53,7 @@ void display_command(const command &cmd){
 
 void ls_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
-    ofstream output(cmd.output);
+    ostream &output=*cmd.output;
 	string path;
 	if(commandline.size() < 2){
 		path=get_cwd();
@@ -108,7 +108,7 @@ void touch_command(const command &cmd){
 
 void echo_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
-    ofstream output(cmd.output);
+    ostream &output=*cmd.output;
 	if(commandline.size() < 2 || (commandline[1]=="-f" && commandline.size() < 3)){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " [-f filename] text" << endl;
@@ -233,14 +233,14 @@ void move_command(const command &cmd){
 }
 
 void ver_command(const command &cmd){
-    ofstream output(cmd.output);
+    ostream &output=*cmd.output;
 	output << "BT/OS CMD" << endl;
 	print_os_version(output);
 }
 
 void list_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
-    ofstream output(cmd.output);
+    ostream &output=*cmd.output;
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " pattern" << endl;
@@ -339,8 +339,8 @@ bool run_program(const command &cmd) {
             }
             string std_in=get_env("STDIN");
             string std_out=get_env("STDOUT");
-            set_env("STDIN", cmd.input);
-            set_env("STDOUT", cmd.output);
+            set_env("STDIN", cmd.input_path);
+            set_env("STDOUT", cmd.output_path);
             bt_pid pid = bt_spawn(p.c_str(), args.size(), argv);
             set_env("STDIN", std_in);
             set_env("STDOUT", std_out);
@@ -365,6 +365,23 @@ bool run_command(const command &cmd){
 }
 
 command::command(){
-    this->input=get_env("STDIN");
-    this->output=get_env("STDOUT");
+    this->input=&cin;
+    this->output=&cout;
+    input_path=get_env("STDIN");
+    output_path=get_env("STDOUT");
+}
+
+command::~command(){
+}
+
+void command::set_input(istream *i, string path) {
+    input_path=path;
+    input_ptr.reset(i);
+    input=i;
+}
+
+void command::set_output(ostream *o, string path) {
+    output_path=path;
+    output_ptr.reset(o);
+    output=o;
 }
