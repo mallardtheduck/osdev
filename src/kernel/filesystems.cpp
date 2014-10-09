@@ -207,9 +207,6 @@ file_handle fs_open(char *path, fs_mode_flags mode){
 	ret.filedata=filedata;
 	ret.valid=true;
 	ret.mode=mode;
-	if(mode & FS_AtEnd){
-		mount.driver.seek(filedata, 0xFFFFFFFF, false);
-	}
 	dbgpf("FS: Opened %s.\n", path);
 	return ret;
 }
