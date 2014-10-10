@@ -118,10 +118,10 @@ vector<command> getcommands(vector<string> parsed){
         if(next==cmd_token::arg) {
             if (p == "|") {
                 string file = tempfile();
-                current.set_output(new ofstream(file.c_str()), file);
+                current.set_output(file);
                 ret.push_back(current);
                 current = command();
-                current.set_input(new ifstream(file.c_str()), file);
+                current.set_input(file);
             } else if (p == ">") {
                 next = cmd_token::output;
             } else if (p == "<") {
@@ -131,11 +131,11 @@ vector<command> getcommands(vector<string> parsed){
             }
         }else if(next==cmd_token::input){
             string file=parse_path(p);
-            current.set_input(new ifstream(file.c_str()), file);
+            current.set_input(file);
             next=cmd_token::arg;
         }else if(next==cmd_token::output){
             string file=parse_path(p);
-            current.set_output(new ofstream(file.c_str()), file);
+            current.set_output(file);
             next=cmd_token::arg;
         }
     }

@@ -373,24 +373,35 @@ command::command(){
     this->output=&cout;
     input_path=get_env("STDIN");
     output_path=get_env("STDOUT");
+    redir_input=false;
+    redir_output=false;
 }
 
 command::~command(){
 }
 
-void command::set_input(istream *i, string path) {
+void command::set_input(string path) {
     input_path=path;
-    input_ptr.reset(i);
-    input=i;
+    redir_input=true;
 }
 
-void command::set_output(ostream *o, string path) {
+void command::set_output(string path) {
     output_path=path;
-    output_ptr.reset(o);
-    output=o;
+    redir_output=true;
 }
 
-void command::close(){
+void command::openio(){
+    if(redir_input){
+        input=new ifstream(input_path);
+        input_ptr.reset(input);
+    }
+    if(redir_output){
+        output=new ofstream(output_path, ios_base::app);
+        output_ptr.reset(output);
+    }
+}
+
+void command::closeio(){
     output->flush();
     input_ptr.reset();
     output_ptr.reset();

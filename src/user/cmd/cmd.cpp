@@ -15,11 +15,12 @@ int main(int argc, char **argv){
 		vector<string> p=parse_input(input);
         vector<command> cmds=getcommands(p);
         for(command &c : cmds) {
+            c.openio();
             if(!run_command(c)) {
                 cont=false;
                 break;
             }
-            c.close();
+            c.closeio();
         }
         if(!cont) break;
 	};

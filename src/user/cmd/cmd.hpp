@@ -35,6 +35,7 @@ class command{
 private:
     std::shared_ptr<std::istream> input_ptr;
     std::shared_ptr<std::ostream> output_ptr;
+    bool redir_input, redir_output;
 public:
     std::vector<std::string> args;
     std::istream *input;
@@ -42,9 +43,10 @@ public:
     std::string input_path;
     std::string output_path;
 
-    void set_input(std::istream *i, std::string path);
-    void set_output(std::ostream *o, std::string path);
-    void close();
+    void set_input(std::string path);
+    void set_output(std::string path);
+    void openio();
+    void closeio();
 
     command();
     ~command();
