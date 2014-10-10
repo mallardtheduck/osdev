@@ -104,7 +104,7 @@ string tempfile(){
     tempcounter++;
     string path=parse_path(ret.str());
     if(path.length()){
-        FILE *fh=fopen(path.c_str(), "a");
+        FILE *fh=fopen(path.c_str(), "w");
         fclose(fh);
     }
     return path;
