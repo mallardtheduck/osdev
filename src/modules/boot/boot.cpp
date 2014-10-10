@@ -34,6 +34,14 @@ bool split(const char *string, char c, char **before, char **after){
 	return false;
 }
 
+bool starts_with(const char *s, const char *str){
+    if(strlen(str)<strlen(s)) return false;
+    for(size_t i=0; i<strlen(s); ++i){
+        if(s[i]!=str[i]) return false;
+    }
+    return true;
+}
+
 void dputs(void *handle, char *c){
 	devwrite(handle, strlen(c), c);
 }
@@ -95,8 +103,13 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 			free(path);
 			free(rest);
 		}
-	}else if(MATCH("default", "path")){
-        setenv("PATH", (char*)value, 0, 0);
+    }else if(strcmp(section, "default") == 0 && starts_with("set ", name)){
+        char *set, *varname;
+        if(split(name, ' ', &set, &varname)){
+            setenv(varname, (char*)value, 0, 0);
+            free(set);
+            free(varname);
+        }
     }
 	return 1;
 }
