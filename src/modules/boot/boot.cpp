@@ -2,6 +2,7 @@
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
+char *current_section="default";
 
 #include "ini.h"
 
@@ -65,16 +66,16 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 	#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
 	dbgpf("BOOT: [%s] %s=%s\n", section, name, value);
 
-	if(MATCH("default", "display")){
+	if(MATCH(current_section, "display")){
 		((config*)c)->display=strdup(value);
 		setenv("DISPLAY_DEVICE", ((config*)c)->display, 0, 0);
 		displaywrite("Starting BT/OS...");
 
-	}else if(MATCH("default", "input")){
+	}else if(MATCH(current_section, "input")){
 		((config*)c)->input=strdup(value);
 		setenv("INPUT_DEVICE", ((config*)c)->input, 0, 0);
 
-	}else if(MATCH("default", "load")){
+	}else if(MATCH(current_section, "load")){
 		char *name, *params;
 		if(split(value, ',', &name, &params)){
 			dbgpf("BOOT: %s,%s\n", name, params);
@@ -83,11 +84,11 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 			free(params);
 		}else module_load((char*)value, NULL);
 
-	}else if(MATCH("default", "run")){
+	}else if(MATCH(current_section, "run")){
 		wait(spawn((char*)value, 0, NULL));
-    }else if(MATCH("default", "spawn")){
+    }else if(MATCH(current_section, "spawn")){
         while(true) wait(spawn((char*)value, 0, NULL));
-	}else if(MATCH("default", "mount")){
+	}else if(MATCH(current_section, "mount")){
 		char *path, *rest;
 		if(split(value, ',', &path, &rest)){
 			char *name, *fs;
@@ -103,7 +104,7 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 			free(path);
 			free(rest);
 		}
-    }else if(strcmp(section, "default") == 0 && starts_with("set ", name)){
+    }else if(strcmp(section, current_section) == 0 && starts_with("set ", name)){
         char *set, *varname;
         if(split(name, ' ', &set, &varname)){
             setenv(varname, (char*)value, 0, 0);
