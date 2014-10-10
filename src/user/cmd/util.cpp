@@ -98,7 +98,9 @@ bool ends_with(const string &str, const string &end){
 
 string tempfile(){
     stringstream ret;
-    ret << "temp_" << tempcounter << ".tmp";
+    string temppath=get_env("TEMP");
+    if(!temppath.length()) temppath=".";
+    ret << temppath << "/" << "temp_cmd_" << bt_getpid() << "_" << tempcounter << ".tmp";
     tempcounter++;
     string path=parse_path(ret.str());
     if(path.length()){
