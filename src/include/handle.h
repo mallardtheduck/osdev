@@ -3,7 +3,7 @@
 
 typedef void (*handle_close_fn)(void*);
 
-struct bt_handle{
+struct bt_handle_info {
     uint32_t type;
     bool open;
     void *value;
@@ -11,7 +11,7 @@ struct bt_handle{
 };
 
 #ifndef __cplusplus
-typedef struct bt_handle bt_handle;
+typedef struct bt_handle_info bt_handle_info;
 #endif
 
 #endif

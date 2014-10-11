@@ -28,6 +28,7 @@ enum{
     BT_GUARD_PAGE       = 0x0104,
     BT_PF_HANDLE        = 0x0105,
     BT_SET_PAGEFLAGS    = 0x0106,
+    BT_CLOSEHANDLE      = 0x0107,
 
 	BT_GET_ARGC			= 0x0111,
 	BT_GET_ARG			= 0x0112,

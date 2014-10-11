@@ -27,6 +27,10 @@ inline static void bt_free_pages(void *address, size_t pages){
 	btos_call(BT_FREE_PAGES, (uint32_t)address, pages, 0);
 }
 
+inline static void bt_closehandle(bt_handle h){
+    btos_call(BT_CLOSEHANDLE, (uint32_t)h, 0, 0);
+}
+
 inline static size_t bt_get_argc(){
 	return btos_call(BT_GET_ARGC, 0, 0, 0);
 }
@@ -124,7 +128,7 @@ inline static void bt_fflush(bt_filehandle file){
     btos_call(BT_FFLUSH, file, 0, 0);
 }
 
-inline static bool bt_mmap(bt_filehandle file, size_t offset, char *ptr, size_t size){
+inline static bt_handle bt_mmap(bt_filehandle file, size_t offset, char *ptr, size_t size){
     bt_mmap_buffer buffer={size, ptr};
     return btos_call(BT_MMAP, file, offset, (uint32_t)&buffer);
 }

@@ -12,6 +12,7 @@ struct amm_pagedetails{
 };
 
 struct amm_filemap{
+    uint64_t id;
     file_handle file;
     size_t offset;
     size_t size;
@@ -21,6 +22,7 @@ struct amm_filemap{
 
 extern lock vmm_lock, sch_lock;
 static bool in_reserve=false;
+static uint64_t filemap_idcount=0;
 
 void amm_resolve_mmap(void * addr);
 
@@ -186,13 +188,14 @@ void amm_resolve_mmap(void *addr){
     if(bytes != VMM_PAGE_SIZE) panic("(AMM) Memory-mapped read failed.");
 }
 
-void amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
+uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
     if(size<VMM_PAGE_SIZE){
         size_t pos=fs_seek(file, 0, true);
         fs_seek(file, offset, false);
         fs_read(file, size, ptr);
         fs_seek(file, pos, false);
         amm_filemap map;
+        map.id=++filemap_idcount;
         map.file=file;
         map.offset=offset;
         map.size=size;
@@ -200,7 +203,7 @@ void amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
         map.pid=proc_current_pid;
         dbgpf("AMM: Mapped %x\n", map.file.filedata);
         (*amm_filemappings).push_back(map);
-        return;
+        return map.id;
     }
     dbgpf("AMM: Memory-mapping %i bytes (offset %i) at %x.\n", size, offset, ptr);
     size_t pages=size/VMM_PAGE_SIZE;
@@ -209,6 +212,7 @@ void amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
     else pages++;
     dbgpf("AMM: Pages to map: %i\n", pages);
     amm_filemap *map=new amm_filemap();
+    map->id=++filemap_idcount;
     map->pid=proc_current_pid;
     map->file=file;
     map->offset=offset;
@@ -250,6 +254,7 @@ void amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
     }
     dbgout("AMM: Mapping completed.\n");
     (*amm_filemappings).push_back(*map);
+    return map->id;
 }
 
 void amm_flush(file_handle &file){
@@ -360,6 +365,54 @@ void amm_close(file_handle &file) {
         changed=false;
         for(size_t i=0; i<mappings.size(); ++i){
             if(mappings[i].file.filedata == file.filedata){
+                mappings.erase(i);
+                changed=true;
+                break;
+            }
+        }
+    }
+}
+
+void amm_closemap(uint64_t id) {
+    hold_lock hl(amm_lock);
+    vector<amm_filemap> &mappings=*amm_filemappings;
+    for(size_t i=0; i<mappings.size(); ++i){
+        if(mappings[i].id != id) continue;
+        amm_flush(mappings[i].file);
+        pid_t curpid=proc_current_pid;
+        proc_switch(mappings[i].pid);
+        dbgpf("AMM: Closing memory mapping %i\n", i);
+        if(mappings[i].size < VMM_PAGE_SIZE) continue;
+        size_t pages=mappings[i].size/VMM_PAGE_SIZE;
+        size_t start=0;
+        size_t end=pages;
+        bool exact=false;
+        if(pages*VMM_PAGE_SIZE==mappings[i].size &&
+                (uint32_t)mappings[i].start==((uint32_t)mappings[i].start & VMM_ADDRESS_MASK)) exact=true;
+        else pages++;
+        if(!exact){
+            if((uint32_t)mappings[i].start != ((uint32_t)mappings[i].start & VMM_ADDRESS_MASK)){
+                start=1;
+            }
+            if((uint32_t)mappings[i].start+mappings[i].size % VMM_PAGE_SIZE){
+                end=pages-1;
+            }
+        }
+        for(size_t j=start; j<end; ++j) {
+            uint32_t virtaddr = ((uint32_t) mappings[i].start + (j * VMM_PAGE_SIZE)) & VMM_ADDRESS_MASK;
+            if (!vmm_cur_pagedir->is_mapped((void *) virtaddr)){
+                dbgpf("AMM: Re-mapping page at %x\n", virtaddr);
+                vmm_cur_pagedir->unmap_page(virtaddr/VMM_PAGE_SIZE);
+                vmm_alloc_at(1, virtaddr);
+            }
+        }
+        proc_switch(curpid);
+    }
+    bool changed=true;
+    while(changed){
+        changed=false;
+        for(size_t i=0; i<mappings.size(); ++i){
+            if(mappings[i].id == id){
                 mappings.erase(i);
                 changed=true;
                 break;

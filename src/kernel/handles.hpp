@@ -12,9 +12,9 @@ namespace kernel_handle_types{
     static const uint32_t memory_mapping=5;
 };
 
-bt_handle create_handle(uint32_t type, void *value, handle_close_fn close);
-void close_handle(bt_handle &handle);
+bt_handle_info create_handle(uint32_t type, void *value, handle_close_fn close);
+void close_handle(bt_handle_info &handle);
 
-extern bt_handle invalid_handle;
+extern bt_handle_info invalid_handle;
 
 #endif

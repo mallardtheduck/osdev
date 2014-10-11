@@ -49,8 +49,8 @@ handle_t proc_add_lock(lock *l, pid_t pid=proc_current_pid);
 lock *proc_get_lock(handle_t h, pid_t pid=proc_current_pid);
 void proc_remove_lock(handle_t h, pid_t pid=proc_current_pid);
 
-handle_t proc_add_handle(bt_handle handle, pid_t pid=proc_current_pid);
-bt_handle proc_get_handle(handle_t h, pid_t pid=proc_current_pid);
+handle_t proc_add_handle(bt_handle_info handle, pid_t pid=proc_current_pid);
+bt_handle_info proc_get_handle(handle_t h, pid_t pid=proc_current_pid);
 void proc_remove_handle(handle_t h, pid_t pid=proc_current_pid);
 
 handle_t proc_add_file(file_handle *file, pid_t pid=proc_current_pid);

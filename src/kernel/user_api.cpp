@@ -49,6 +49,14 @@ USERAPI_HANDLER(BT_FREE_PAGES){
 	}
 }
 
+USERAPI_HANDLER(BT_CLOSEHANDLE){
+    bt_handle_info h=proc_get_handle((handle_t)regs->eax);
+    if(h.open && h.type!=kernel_handle_types::invalid){
+        close_handle(h);
+        proc_remove_handle((handle_t)regs->eax);
+    }
+}
+
 USERAPI_HANDLER(BT_GET_ARGC){
 	regs->eax=proc_get_argc();
 }
@@ -158,13 +166,19 @@ USERAPI_HANDLER(BT_FFLUSH){
     }
 }
 
+static void close_filemap_handle(void *f){
+    amm_closemap(*(uint64_t*)f);
+    delete (uint64_t*)f;
+}
+
 USERAPI_HANDLER(BT_MMAP){
     file_handle *file=proc_get_file(regs->ebx);
     if(file && is_safe_ptr(regs->edx)){
         btos_api::bt_mmap_buffer *buffer=(btos_api::bt_mmap_buffer*)regs->edx;
         if(!is_safe_ptr((uint32_t)buffer->buffer)) return;
-        amm_mmap(buffer->buffer, *file, regs->ecx, buffer->size);
-        regs->eax=1;
+        uint64_t *id=new uint64_t(amm_mmap(buffer->buffer, *file, regs->ecx, buffer->size));
+        bt_handle_info handle=create_handle(kernel_handle_types::memory_mapping, id, &close_filemap_handle);
+        regs->eax= proc_add_handle(handle);
     }
     regs->eax=0;
 }
@@ -343,6 +357,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
         //USERAPI_HANDLE_CALL(BT_ALLOC_AT);
         //USERAPI_HANDLE_CALL(BT_GUARD_PAGE);
         //USERAPI_HANDLE_CALL(BT_PF_HANDLE);
+        USERAPI_HANDLE_CALL(BT_CLOSEHANDLE);
 
 		USERAPI_HANDLE_CALL(BT_GET_ARGC);
 		USERAPI_HANDLE_CALL(BT_GET_ARG);

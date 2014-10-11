@@ -41,7 +41,7 @@ struct proc_process{
 	handle_t handlecounter;
     proc_status::Enum status;
 
-    map<handle_t, bt_handle> handles;
+    map<handle_t, bt_handle_info> handles;
 	map<pid_t, int> child_returns;
 	vector<string> args;
 
@@ -173,7 +173,7 @@ void proc_end(pid_t pid) {
     bool cont = true;
     while (cont) {
         cont=false;
-        for (map<handle_t, bt_handle>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
+        for (map<handle_t, bt_handle_info>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
             if(i->second.type==kernel_handle_types::thread) {
                 uint64_t thread_id = *(uint64_t *) i->second.value;
                 if (thread_id != sch_get_id()) {
@@ -185,7 +185,7 @@ void proc_end(pid_t pid) {
             }
         }
     }
-    for (map<handle_t, bt_handle>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
+    for (map<handle_t, bt_handle_info>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
         close_handle(i->second);
     }
 
@@ -305,7 +305,7 @@ uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t 
     return thread_id;
 }
 
-handle_t proc_add_handle(bt_handle handle, pid_t pid){
+handle_t proc_add_handle(bt_handle_info handle, pid_t pid){
     hold_lock hl(proc_lock, false);
     proc_process *proc=proc_get(pid);
     handle_t ret=++proc->handlecounter;
@@ -314,7 +314,7 @@ handle_t proc_add_handle(bt_handle handle, pid_t pid){
     return ret;
 }
 
-bt_handle proc_get_handle(handle_t h, pid_t pid){
+bt_handle_info proc_get_handle(handle_t h, pid_t pid){
     hold_lock hl(proc_lock, false);
     proc_process *proc=proc_get(pid);
     if(proc->handles.has_key(h)) return proc->handles[h];
@@ -332,12 +332,12 @@ static void close_lock_handle(void *l){
 }
 
 handle_t proc_add_lock(lock *l, pid_t pid){
-    bt_handle handle=create_handle(kernel_handle_types::lock, (void*)l, &close_lock_handle);
+    bt_handle_info handle=create_handle(kernel_handle_types::lock, (void*)l, &close_lock_handle);
     return proc_add_handle(handle, pid);
 }
 
 lock *proc_get_lock(handle_t h, pid_t pid){
-    bt_handle handle=proc_get_handle(h, pid);
+    bt_handle_info handle=proc_get_handle(h, pid);
     if(handle.type==kernel_handle_types::lock) return (lock*)handle.value;
     else return NULL;
 }
@@ -353,12 +353,12 @@ static void close_file_handle(void *f){
 }
 
 handle_t proc_add_file(file_handle *file, pid_t pid){
-    bt_handle handle=create_handle(kernel_handle_types::file, (void*)file, &close_file_handle);
+    bt_handle_info handle=create_handle(kernel_handle_types::file, (void*)file, &close_file_handle);
     return proc_add_handle(handle, pid);
 }
 
 file_handle *proc_get_file(handle_t h, pid_t pid){
-    bt_handle handle=proc_get_handle(h, pid);
+    bt_handle_info handle=proc_get_handle(h, pid);
     if(handle.type==kernel_handle_types::file) return (file_handle*)handle.value;
     else return NULL;
 }
@@ -374,12 +374,12 @@ static void close_dir_handle(void *d){
 }
 
 handle_t proc_add_dir(dir_handle *dir, pid_t pid){
-    bt_handle handle=create_handle(kernel_handle_types::directory, (void*)dir, &close_dir_handle);
+    bt_handle_info handle=create_handle(kernel_handle_types::directory, (void*)dir, &close_dir_handle);
     return proc_add_handle(handle, pid);
 }
 
 dir_handle *proc_get_dir(handle_t h, pid_t pid){
-    bt_handle handle=proc_get_handle(h, pid);
+    bt_handle_info handle=proc_get_handle(h, pid);
     if(handle.type==kernel_handle_types::directory) return (dir_handle*)handle.value;
     else return NULL;
 }
@@ -443,12 +443,12 @@ void proc_remove_thread_handle(handle_t h, pid_t pid){
 handle_t proc_add_thread(uint64_t thread_id, pid_t pid){
     handle_t ret=proc_get_thread_handle(thread_id, pid);
     if(ret) return ret;
-    bt_handle handle=create_handle(kernel_handle_types::thread, new uint64_t(thread_id), &close_thread_handle);
+    bt_handle_info handle=create_handle(kernel_handle_types::thread, new uint64_t(thread_id), &close_thread_handle);
     return proc_add_handle(handle, pid);
 }
 
 uint64_t proc_get_thread(handle_t h, pid_t pid){
-    bt_handle handle=proc_get_handle(h, pid);
+    bt_handle_info handle=proc_get_handle(h, pid);
     if(handle.type==kernel_handle_types::thread) return *(uint64_t*)handle.value;
     else return 0;
 }
@@ -456,7 +456,7 @@ uint64_t proc_get_thread(handle_t h, pid_t pid){
 handle_t proc_get_thread_handle(uint64_t thread_id, pid_t pid){
     hold_lock hl(proc_lock, false);
     proc_process *proc=proc_get(pid);
-    for(map<handle_t, bt_handle>::iterator i=proc->handles.begin(); i!=proc->handles.end(); ++i){
+    for(map<handle_t, bt_handle_info>::iterator i=proc->handles.begin(); i!=proc->handles.end(); ++i){
         if(i->second.type==kernel_handle_types::thread){
             if(*(uint64_t*)i->second.value==thread_id) return i->first;
         }
