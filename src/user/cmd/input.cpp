@@ -136,6 +136,8 @@ vector<command> getcommands(vector<string> parsed){
         }else if(next==cmd_token::output){
             string file=parse_path(p);
             current.set_output(file);
+            ofstream f(file);
+            f.close();
             next=cmd_token::arg;
         }
     }
