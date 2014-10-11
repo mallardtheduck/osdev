@@ -54,7 +54,8 @@ char get_char(){
 string input_line(){
 	stringstream ret;
 	if(!input_fh) open_input();
-	streampos pos=cout.tellp();
+    streampos pos;
+    if(input_tty) pos=cout.tellp();
 	while(char c=get_char()) {
         if (c == '\n') break;
         else if (c == 0x08) {
