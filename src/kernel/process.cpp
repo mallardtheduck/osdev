@@ -41,10 +41,7 @@ struct proc_process{
 	handle_t handlecounter;
     proc_status::Enum status;
 
-	map<handle_t, lock*> locks;
-	map<handle_t, file_handle*> files;
-	map<handle_t, dir_handle*> dirs;
-	map<handle_t, uint64_t> threads;
+    map<handle_t, bt_handle> handles;
 	map<pid_t, int> child_returns;
 	vector<string> args;
 
@@ -173,29 +170,25 @@ void proc_end(pid_t pid) {
     if (parent) {
         proc_get(parent)->child_returns[pid] = proc->retval;
     }
-    for (map<handle_t, lock *>::iterator i = proc->locks.begin(); i != proc->locks.end(); ++i) {
-        delete i->second;
-    }
-    for (map<handle_t, file_handle *>::iterator i = proc->files.begin(); i != proc->files.end(); ++i) {
-        fs_close(*i->second);
-        delete i->second;
-    }
-    for (map<handle_t, dir_handle *>::iterator i = proc->dirs.begin(); i != proc->dirs.end(); ++i) {
-        fs_close_dir(*i->second);
-        delete i->second;
-    }
     bool cont = true;
     while (cont) {
         cont=false;
-        for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
-            if (i->second != sch_get_id()) {
-                proc_remove_thread(i->second, pid);
-                sch_abort(i->second);
-                cont=true;
-                break;
+        for (map<handle_t, bt_handle>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
+            if(i->second.type==kernel_handle_types::thread) {
+                uint64_t thread_id = *(uint64_t *) i->second.value;
+                if (thread_id != sch_get_id()) {
+                    proc_remove_thread(thread_id, pid);
+                    sch_abort(thread_id);
+                    cont = true;
+                    break;
+                }
             }
         }
     }
+    for (map<handle_t, bt_handle>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
+        close_handle(i->second);
+    }
+
     if(proc->file.valid) fs_close(proc->file);
     proc_switch(curpid);
     for (list<proc_process>::iterator i = proc_processes->begin(); i; ++i) {
@@ -312,68 +305,87 @@ uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t 
     return thread_id;
 }
 
-
-handle_t proc_add_lock(lock *l, pid_t pid){
-    hold_lock hl(proc_lock);
-	proc_process *proc=proc_get(pid);
-	handle_t ret=++proc->handlecounter;
-	proc->locks[ret] = l;
-	return ret;
-}
-
-lock *proc_get_lock(handle_t h, pid_t pid){
-    hold_lock hl(proc_lock);
-	proc_process *proc=proc_get(pid);
-	if(proc->locks.has_key(h)) return proc->locks[h];
-	else return NULL;
-}
-
-void proc_remove_lock(handle_t h, pid_t pid){
-    hold_lock hl(proc_lock);
-	proc_process *proc=proc_get(pid);
-	proc->locks.erase(h);
-}
-
-handle_t proc_add_file(file_handle *file, pid_t pid){
-    hold_lock hl(proc_lock);
-	proc_process *proc=proc_get(pid);
+handle_t proc_add_handle(bt_handle handle, pid_t pid){
+    hold_lock hl(proc_lock, false);
+    proc_process *proc=proc_get(pid);
     handle_t ret=++proc->handlecounter;
-    proc->files[ret] = file;
+    while(!ret || proc->handles.has_key(ret)) ret=++proc->handlecounter;
+    proc->handles[ret] = handle;
     return ret;
 }
 
-file_handle *proc_get_file(handle_t h, pid_t pid){
-    hold_lock hl(proc_lock);
+bt_handle proc_get_handle(handle_t h, pid_t pid){
+    hold_lock hl(proc_lock, false);
     proc_process *proc=proc_get(pid);
-    if(proc->files.has_key(h)) return proc->files[h];
+    if(proc->handles.has_key(h)) return proc->handles[h];
+    else return invalid_handle;
+}
+
+void proc_remove_handle(handle_t h, pid_t pid){
+    hold_lock hl(proc_lock, false);
+    proc_process *proc=proc_get(pid);
+    proc->handles.erase(h);
+}
+
+static void close_lock_handle(void *l){
+    delete (lock*)l;
+}
+
+handle_t proc_add_lock(lock *l, pid_t pid){
+    bt_handle handle=create_handle(kernel_handle_types::lock, (void*)l, &close_lock_handle);
+    return proc_add_handle(handle, pid);
+}
+
+lock *proc_get_lock(handle_t h, pid_t pid){
+    bt_handle handle=proc_get_handle(h, pid);
+    if(handle.type==kernel_handle_types::lock) return (lock*)handle.value;
+    else return NULL;
+}
+
+void proc_remove_lock(handle_t h, pid_t pid){
+    proc_remove_handle(h, pid);
+}
+
+static void close_file_handle(void *f){
+    file_handle *file=(file_handle*)f;
+    fs_close(*file);
+    delete file;
+}
+
+handle_t proc_add_file(file_handle *file, pid_t pid){
+    bt_handle handle=create_handle(kernel_handle_types::file, (void*)file, &close_file_handle);
+    return proc_add_handle(handle, pid);
+}
+
+file_handle *proc_get_file(handle_t h, pid_t pid){
+    bt_handle handle=proc_get_handle(h, pid);
+    if(handle.type==kernel_handle_types::file) return (file_handle*)handle.value;
     else return NULL;
 }
 
 void proc_remove_file(handle_t h, pid_t pid){
-    hold_lock hl(proc_lock);
-	proc_process *proc=proc_get(pid);
-	proc->files.erase(h);
+    proc_remove_handle(h, pid);
+}
+
+static void close_dir_handle(void *d){
+    dir_handle *dir=(dir_handle*)d;
+    fs_close_dir(*dir);
+    delete dir;
 }
 
 handle_t proc_add_dir(dir_handle *dir, pid_t pid){
-    hold_lock hl(proc_lock);
-	proc_process *proc=proc_get(pid);
-    handle_t ret=++proc->handlecounter;
-    proc->dirs[ret] = dir;
-    return ret;
+    bt_handle handle=create_handle(kernel_handle_types::directory, (void*)dir, &close_dir_handle);
+    return proc_add_handle(handle, pid);
 }
 
 dir_handle *proc_get_dir(handle_t h, pid_t pid){
-    hold_lock hl(proc_lock);
-    proc_process *proc=proc_get(pid);
-    if(proc->dirs.has_key(h)) return proc->dirs[h];
+    bt_handle handle=proc_get_handle(h, pid);
+    if(handle.type==kernel_handle_types::directory) return (dir_handle*)handle.value;
     else return NULL;
 }
 
 void proc_remove_dir(handle_t h, pid_t pid){
-    hold_lock hl(proc_lock);
-	proc_process *proc=proc_get(pid);
-	proc->dirs.erase(h);
+    proc_remove_handle(h, pid);
 }
 
 void proc_setreturn(int ret, pid_t pid){
@@ -413,45 +425,41 @@ size_t proc_get_arg(size_t i, char *buf, size_t size, pid_t pid){
 	return proc->args[i].length();
 }
 
+static void close_thread_handle(void *t){
+    uint64_t thread_id=*(uint64_t*)t;
+    sch_abort(thread_id);
+    delete (uint64_t*)t;
+}
+
 void proc_remove_thread(uint64_t thread_id, pid_t pid){
-    hold_lock hl(proc_lock, false);
-	proc_process *proc=proc_get(pid);
-	handle_t h=0;
-    for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
-        if (i->second == thread_id) h = i->first;
-    }
-    if (h) proc->threads.erase(h);
+    handle_t h=proc_get_thread_handle(thread_id, pid);
+    if(h) proc_remove_handle(h, pid);
 }
 
 void proc_remove_thread_handle(handle_t h, pid_t pid){
-    hold_lock hl(proc_lock);
-    proc_process *proc=proc_get(pid);
-    if (proc->threads.has_key(h)) proc->threads.erase(h);
+    proc_remove_handle(h, pid);
 }
 
 handle_t proc_add_thread(uint64_t thread_id, pid_t pid){
-    hold_lock hl(proc_lock, false);
-	proc_process *proc=proc_get(pid);
-    for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
-        if (i->second == thread_id) return i->first;
-    }
-    handle_t ret = ++proc->handlecounter;
-    proc->threads[ret] = thread_id;
-    return ret;
+    handle_t ret=proc_get_thread_handle(thread_id, pid);
+    if(ret) return ret;
+    bt_handle handle=create_handle(kernel_handle_types::thread, new uint64_t(thread_id), &close_thread_handle);
+    return proc_add_handle(handle, pid);
 }
 
 uint64_t proc_get_thread(handle_t h, pid_t pid){
-    hold_lock hl(proc_lock);
-    proc_process *proc=proc_get(pid);
-    if (proc->threads.has_key(h)) return proc->threads[h];
+    bt_handle handle=proc_get_handle(h, pid);
+    if(handle.type==kernel_handle_types::thread) return *(uint64_t*)handle.value;
     else return 0;
 }
 
-handle_t proc_get_thread_handle(uint64_t id, pid_t pid){
-    hold_lock hl(proc_lock);
+handle_t proc_get_thread_handle(uint64_t thread_id, pid_t pid){
+    hold_lock hl(proc_lock, false);
     proc_process *proc=proc_get(pid);
-    for (map<handle_t, uint64_t>::iterator i = proc->threads.begin(); i != proc->threads.end(); ++i) {
-        if (i->second == id) return i->first;
+    for(map<handle_t, bt_handle>::iterator i=proc->handles.begin(); i!=proc->handles.end(); ++i){
+        if(i->second.type==kernel_handle_types::thread){
+            if(*(uint64_t*)i->second.value==thread_id) return i->first;
+        }
     }
     return 0;
 }

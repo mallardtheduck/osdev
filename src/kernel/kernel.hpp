@@ -38,6 +38,7 @@ extern "C"{
 #include "vmm.hpp"
 #include "idt.hpp"
 #include "pic.hpp"
+#include "handles.hpp"
 #include "process.hpp"
 #include "scheduler.hpp"
 #include "drivermgr.hpp"
