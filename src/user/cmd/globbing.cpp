@@ -4,6 +4,7 @@
 using namespace std;
 
 bool is_match(const string &opattern, const string &ofilename){
+    if(ofilename=="." || ofilename=="..") return false;
 	string pattern=to_lower(opattern);
 	string filename=to_lower(ofilename);
 	size_t fnpos=0;
