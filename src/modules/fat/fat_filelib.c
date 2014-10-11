@@ -1454,13 +1454,17 @@ int fl_remove( const char * filename )
 		//check directory is empty
 		fl_opendir(filename, &dir);
 		file->startcluster=dir.cluster;
+        bool empty=true;
 		fl_dirent ent;
-		if(!fl_readdir(&dir, &ent)){
-			fl_closedir(&dir);
-			_free_file(file);
-			FL_UNLOCK(&_fs);
-			return -2;
+		while(!fl_readdir(&dir, &ent)){
+			if(strcmp(ent.filename, ".")!=0 && strcmp(ent.filename, "..")!=0) empty=false;
 		}
+        if(!empty){
+            fl_closedir(&dir);
+            _free_file(file);
+            FL_UNLOCK(&_fs);
+            return -2;
+        }
 		fl_closedir(&dir);
 
 		// Split full path into filename and directory path
