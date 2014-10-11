@@ -28,6 +28,7 @@ data/btos/cmd/title.elx: ../user/title/title.elx directories.always
 
 directories.always:
 	mkdir -p data/btos/cmd
+	mkdir -p data/btos/temp
 
 ~/.mtoolsrc:
 	echo "mtools_skip_check=1" > ~/.mtoolsrc
