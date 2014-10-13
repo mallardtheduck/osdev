@@ -162,6 +162,9 @@ size_t vterm::read(size_t size, char *buf) {
                 c = KB_char(input);
             }
             buf[i] = c;
+            if(c == '\n' && mode == bt_terminal_mode::Terminal){
+                return i + 1;
+            }
         }
         return size;
     } else if (mode == bt_terminal_mode::Video) {
