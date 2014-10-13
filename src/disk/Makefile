@@ -1,4 +1,4 @@
-import-files:=data/ctest.elx data/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/title.elx
+import-files:=data/ctest.elx data/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx
 
 all: ~/.mtoolsrc btos.img copy.always
 
@@ -23,8 +23,8 @@ data/btos/terminal.sys: ../modules/terminal/terminal.sys directories.always
 data/btos/cmd/cls.elx: ../user/cls/cls.elx directories.always
 	cp ../user/cls/cls.elx $@
 
-data/btos/cmd/title.elx: ../user/title/title.elx directories.always
-	cp ../user/title/title.elx $@
+data/btos/cmd/termctl.elx: ../user/termctl/termctl.elx directories.always
+	cp ../user/termctl/termctl.elx $@
 
 directories.always:
 	mkdir -p data/btos/cmd

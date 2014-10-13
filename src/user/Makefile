@@ -1,4 +1,4 @@
-PROGS := test ctest cpptest cmd cls title
+PROGS := test ctest cpptest cmd cls termctl
 
 all: dummy.file
 	for dir in $(PROGS); do \

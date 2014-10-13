@@ -1,4 +1,4 @@
-OUTPUT-NAME := title.elx
+OUTPUT-NAME := termctl.elx
 
 BUILD-AS := i686-pc-btos-as
 BUILD-AS-OPTIONS := -g -fPIC -c
