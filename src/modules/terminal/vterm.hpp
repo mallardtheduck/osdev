@@ -19,6 +19,7 @@ private:
     bool infoline;
     bt_vidmode vidmode;
     uint8_t textcolour;
+    bool echo;
 
     pid_t curpid;
     bt_terminal_mode::Enum mode;

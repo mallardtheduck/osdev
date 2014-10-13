@@ -26,6 +26,7 @@ vterm::vterm(uint64_t nid, i_backend *back){
     infoline=true;
     mode=bt_terminal_mode::Terminal;
     textcolour=0x07;
+    echo=false;
     sprintf(title, "BT/OS Terminal %i", (int)id);
 }
 
@@ -162,6 +163,7 @@ size_t vterm::read(size_t size, char *buf) {
                 c = KB_char(input);
             }
             buf[i] = c;
+            if(echo) backend->display_write(1, &c);
             if(c == '\n' && mode == bt_terminal_mode::Terminal){
                 return i + 1;
             }
