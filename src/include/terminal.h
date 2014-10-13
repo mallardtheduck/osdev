@@ -18,6 +18,8 @@ ENUM_START(bt_terminal_ioctl)
     ENUM_SET(bt_terminal_ioctl, GetInfoLine, 264),
     ENUM_SET(bt_terminal_ioctl, SetTitle, 265),
     ENUM_SET(bt_terminal_ioctl, GetTitle, 266),
+    ENUM_SET(bt_terminal_ioctl, SetEcho, 267),
+    ENUM_SET(bt_terminal_ioctl, GetEcho, 268),
 ENUM_END
 ENUM_TYPE(bt_terminal_ioctl);
 
