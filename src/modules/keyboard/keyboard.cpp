@@ -34,7 +34,7 @@ void add_to_buffer(uint32_t c){
 		buffer[buffer_top] = c;
 		buffer_top++;
         if(buffer_top == buffer_size) buffer_top=0;
-        dbgpf("KEYBOARD: %i in buffer, top at %i.\n", buffer_count, buffer_top);
+        //dbgpf("KEYBOARD: %i in buffer, top at %i.\n", buffer_count, buffer_top);
 	}
 }
 
@@ -45,7 +45,7 @@ uint32_t read_from_buffer(){
 			start+=buffer_size;
 		}
 		buffer_count--;
-		dbgpf("KEYBOARD: %i in buffer, top at %i.\n", buffer_count, buffer_top);
+		//dbgpf("KEYBOARD: %i in buffer, top at %i.\n", buffer_count, buffer_top);
 		return buffer[start];
 	}else return 0;
 }
