@@ -163,7 +163,7 @@ size_t vterm::read(size_t size, char *buf) {
                 c = KB_char(input);
             }
             buf[i] = c;
-            if(echo) backend->display_write(1, &c);
+            if(echo) putchar(c);
             if(c == '\n' && mode == bt_terminal_mode::Terminal){
                 return i + 1;
             }
@@ -207,6 +207,8 @@ int vterm::ioctl(int fn, size_t size, char *buf) {
             backend->display_ioctl(fn, size, buf);
         }
         if(infoline) putchar('\n');
+    }else if(fn == bt_terminal_ioctl::SetEcho){
+        if(size) echo=*(bool*)buf;
     }
     //TODO: implement more
     return 0;
