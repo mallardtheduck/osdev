@@ -23,5 +23,10 @@ int main(int argc, char **argv){
 		getline(file, line);
 		std::cout << line << std::endl;
 	}
+    std::cout << "std::cout" << std::endl;
+    std::cerr << "std::cerr" << std::endl;
+    std::string input;
+    getline(std::cin, input, 128);
+    std::cout << input << std::endl;
 	return 0;
 }
