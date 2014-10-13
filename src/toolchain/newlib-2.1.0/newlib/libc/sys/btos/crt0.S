@@ -5,7 +5,9 @@
 .extern get_argv
 .extern _init
 .extern _fini
+.extern btos_open_std_streams
 _start:
+call btos_open_std_streams
 call _init
 call get_argv
 push %eax
