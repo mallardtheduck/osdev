@@ -29,14 +29,9 @@ int main(int argc, char **argv){
 	}
     std::cout << "std::cout works" << std::endl;
     std::cerr << "std::cerr works" << std::endl;
-    bt_handle h=btos_get_handle(fileno(stdin));
-    bool val=true;
-    bt_fioctl(h, bt_terminal_ioctl::SetEcho, 1, (char*)&val);
     std::string input;
     std::cout << "Enter some text: ";
     getline(std::cin, input);
-    val=false;
-    bt_fioctl(h, bt_terminal_ioctl::SetEcho, 1, (char*)&val);
     std::cout << "You entered: " << input << std::endl;
 	return 0;
 }
