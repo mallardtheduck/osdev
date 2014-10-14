@@ -24,7 +24,6 @@ vterm::vterm(uint64_t nid, i_backend *back){
     bufpos=0;
     scrolling=true;
     infoline=true;
-    mode=bt_terminal_mode::Terminal;
     textcolour=0x07;
     echo=false;
     sprintf(title, "BT/OS Terminal %i", (int)id);
@@ -80,22 +79,23 @@ void vterm::scroll(){
 }
 
 void vterm::do_infoline(){
+    vterm_options opts;
     if(backend->is_active(id) && infoline && vidmode.textmode){
-        size_t pos=seek(0, true);
-        seek(0, false);
+        size_t pos=seek(opts, 0, true);
+        seek(opts, 0, false);
         uint16_t linecol=0x1F;
         uint16_t colour=(uint16_t) backend->display_ioctl(bt_vid_ioctl::GetTextColours, 0, NULL);
         backend->display_ioctl(bt_vid_ioctl::SetTextColours, sizeof(linecol), (char*)&linecol);
         for(size_t i=0; i<vidmode.width; ++i){
             putchar(' ');
         }
-        seek(0, false);
+        seek(opts, 0, false);
         char buf[8];
         sprintf(buf, "[%i:%i] ", terminals->get_count(), (int)id);
         putstring(buf);
         putstring(title);
         backend->display_ioctl(bt_vid_ioctl::SetTextColours, sizeof(colour), (char*)&colour);
-        seek(pos, false);
+        seek(opts, pos, false);
     }
 }
 
@@ -131,7 +131,7 @@ void vterm::deactivate() {
     //active=false;
 }
 
-size_t vterm::write(size_t size, char *buf) {
+size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
     curpid=getpid();
     if(bufpos+size > bufsize) size=bufsize-bufpos;
     if(vidmode.textmode){
@@ -147,14 +147,14 @@ size_t vterm::write(size_t size, char *buf) {
     return size;
 }
 
-size_t vterm::read(size_t size, char *buf) {
+size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
     curpid=getpid();
-    if (mode == bt_terminal_mode::Terminal || mode == bt_terminal_mode::Keyboard) {
+    if (opts.mode == bt_terminal_mode::Terminal || opts.mode == bt_terminal_mode::Keyboard) {
         for(size_t i=0; i<size; ++i) {
             wait_until_active();
-            uint32_t input=0;
-            char c=0;
-            while(!input || !c) {
+            uint32_t input = 0;
+            char c = 0;
+            while (!input || !c) {
                 backend->input_read(sizeof(input), (char *) &input);
                 if ((input & KeyFlags::Control) && !(input & KeyFlags::KeyUp) && ((char) input == 'c' || (char) input == 'C')) {
                     release_lock(&term_lock);
@@ -163,13 +163,19 @@ size_t vterm::read(size_t size, char *buf) {
                 c = KB_char(input);
             }
             buf[i] = c;
-            if(echo) putchar(c);
-            if(c == '\n' && mode == bt_terminal_mode::Terminal){
-                return i + 1;
+            if (opts.mode == bt_terminal_mode::Terminal) {
+                if (c == 0x08){
+                    dbgpf("TERM: Backspace\n");
+                    buf[i]='\0';
+                    i--;
+                }else if (echo) putchar(c);
+                if (c == '\n') {
+                    return i + 1;
+                }
             }
         }
         return size;
-    } else if (mode == bt_terminal_mode::Video) {
+    } else if (opts.mode == bt_terminal_mode::Video) {
         if (bufpos + size > bufsize) size = bufsize - bufpos;
         memcpy(buf, buffer + bufpos, size);
         bufpos += size;
@@ -181,7 +187,7 @@ size_t vterm::read(size_t size, char *buf) {
     return 0;
 }
 
-size_t vterm::seek(size_t pos, bool relative) {
+size_t vterm::seek(vterm_options &/*opts*/, size_t pos, bool relative) {
     curpid=getpid();
     int factor=1;
     if(vidmode.textmode) factor=2;
@@ -194,7 +200,7 @@ size_t vterm::seek(size_t pos, bool relative) {
     return bufpos/factor;
 }
 
-int vterm::ioctl(int fn, size_t size, char *buf) {
+int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
     curpid=getpid();
     if(fn==bt_terminal_ioctl::SetTitle){
         memset(title, 0, titlemax);
@@ -202,13 +208,15 @@ int vterm::ioctl(int fn, size_t size, char *buf) {
         do_infoline();
     }else if(fn==bt_vid_ioctl::ClearScreen){
         memset(buffer, 0, bufsize);
-        seek(0, false);
+        seek(opts, 0, false);
         if(backend->is_active(id)){
             backend->display_ioctl(fn, size, buf);
         }
         if(infoline) putchar('\n');
     }else if(fn == bt_terminal_ioctl::SetEcho){
         if(size) echo=*(bool*)buf;
+    }else if(fn == bt_terminal_ioctl::SetMode){
+        opts.mode=*(bt_terminal_mode::Enum*)buf;
     }
     //TODO: implement more
     return 0;

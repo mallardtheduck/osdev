@@ -7,6 +7,12 @@
 #include "terminal.h"
 #include "backend.hpp"
 
+struct vterm_options{
+    bt_terminal_mode::Enum mode;
+
+    vterm_options() : mode(bt_terminal_mode::Terminal) {}
+};
+
 class vterm{
 private:
     i_backend *backend;
@@ -22,7 +28,6 @@ private:
     bool echo;
 
     pid_t curpid;
-    bt_terminal_mode::Enum mode;
 
     void wait_until_active();
     void putchar(char c);
@@ -43,10 +48,10 @@ public:
     void activate();
     void deactivate();
 
-    size_t write(size_t size, char *buf);
-    size_t read(size_t size, char *buf);
-    size_t seek(size_t pos, bool relative);
-    int ioctl(int fn, size_t size, char *buf);
+    size_t write(vterm_options &opts, size_t size, char *buf);
+    size_t read(vterm_options &opts, size_t size, char *buf);
+    size_t seek(vterm_options &opts, size_t pos, bool relative);
+    int ioctl(vterm_options &opts, int fn, size_t size, char *buf);
 
     void sync();
 };

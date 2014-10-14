@@ -7,6 +7,7 @@ lock term_lock;
 
 struct term_instance{
     vterm *terminal;
+    vterm_options opts;
 };
 
 void *term_open(void */*id*/){
@@ -29,7 +30,7 @@ size_t term_read(void *instance, size_t bytes, char *buf){
     if(instance) {
         hold_lock hl(&term_lock);
         term_instance *inst=(term_instance*)instance;
-        return inst->terminal->read(bytes, buf);
+        return inst->terminal->read(inst->opts, bytes, buf);
     }
     return 0;
 }
@@ -38,7 +39,7 @@ size_t term_write(void *instance, size_t bytes, char *buf){
     if(instance) {
         hold_lock hl(&term_lock);
         term_instance *inst=(term_instance*)instance;
-        return inst->terminal->write(bytes, buf);
+        return inst->terminal->write(inst->opts, bytes, buf);
     }
     return 0;
 }
@@ -47,7 +48,7 @@ size_t term_seek(void *instance, size_t pos, bool relative){
     if(instance) {
         hold_lock hl(&term_lock);
         term_instance *inst=(term_instance*)instance;
-        return inst->terminal->seek(pos, relative);
+        return inst->terminal->seek(inst->opts, pos, relative);
     }
     return 0;
 }
@@ -56,7 +57,7 @@ int term_ioctl(void *instance, int fn, size_t bytes, char *buf){
     if(instance) {
         hold_lock hl(&term_lock);
         term_instance *inst=(term_instance*)instance;
-        return inst->terminal->ioctl(fn, bytes, buf);
+        return inst->terminal->ioctl(inst->opts, fn, bytes, buf);
     }
     return 0;
 }
