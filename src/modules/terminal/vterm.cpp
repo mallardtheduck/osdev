@@ -46,16 +46,30 @@ void vterm::wait_until_active() {
 
 void vterm::putchar(char c){
     if(!vidmode.textmode) return;
-    if(c != '\n'){
+    if(c != '\n' && c != 0x08){
         buffer[bufpos++]=textcolour;
         buffer[bufpos++]=(uint8_t)c;
-    }else{
+        if(backend->is_active(id)) backend->display_write(1, &c);
+    }else if(c == '\n') {
         bufpos=(((bufpos/(vidmode.width*2))+1) * (vidmode.width*2));
+        if(backend->is_active(id)) backend->display_write(1, &c);
+    }else if(c == 0x08){
+        if(bufpos >= 2) {
+            bufpos -= 2;
+            buffer[bufpos++]=textcolour;
+            buffer[bufpos++] = ' ';
+        }
+        size_t cpos=backend->display_seek(0, true);
+        cpos--;
+        backend->display_seek(cpos, false);
+        char s=' ';
+        backend->display_write(1, &s);
+        backend->display_seek(cpos, false);
+
     }
     if(bufpos>=bufsize){
         scroll();
     }
-    if(backend->is_active(id)) backend->display_write(1, &c);
 }
 
 void vterm::putstring(char *s){
@@ -150,7 +164,9 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
 size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
     curpid=getpid();
     if (opts.mode == bt_terminal_mode::Terminal || opts.mode == bt_terminal_mode::Keyboard) {
-        for(size_t i=0; i<size; ++i) {
+        int incr;
+        for(size_t i=0; i<size; i+=incr) {
+            incr=1;
             wait_until_active();
             uint32_t input = 0;
             char c = 0;
@@ -164,14 +180,18 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
             }
             buf[i] = c;
             if (opts.mode == bt_terminal_mode::Terminal) {
+                bool put=true;
                 if (c == 0x08){
-                    dbgpf("TERM: Backspace\n");
-                    buf[i]='\0';
-                    i--;
-                }else if (echo) putchar(c);
+                    if(i) {
+                        --i;
+                        buf[i] = '\0';
+                    }else put=false;
+                    incr=0;
+                }
                 if (c == '\n') {
                     return i + 1;
                 }
+                if (echo && put) putchar(c);
             }
         }
         return size;
