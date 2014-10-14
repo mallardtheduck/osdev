@@ -25,7 +25,7 @@ vterm::vterm(uint64_t nid, i_backend *back){
     scrolling=true;
     infoline=true;
     textcolour=0x07;
-    echo=false;
+    echo=true;
     sprintf(title, "BT/OS Terminal %i", (int)id);
 }
 
