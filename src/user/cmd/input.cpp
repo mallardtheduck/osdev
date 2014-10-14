@@ -7,6 +7,7 @@
 #include <drivers.h>
 #include <cstdlib>
 #include <fstream>
+#include <terminal.h>
 #include "../../include/keyboard.h"
 
 using namespace std;
@@ -15,19 +16,25 @@ bt_filehandle input_fh=0;
 bool convert_input=false;
 bool input_tty=true;
 
+extern "C" bt_handle btos_get_handle(int fd);
+
 void open_input(){
-	string device=get_env("STDIN");
-	if(device==""){
-		device="DEV:/" + get_env("INPUT_DEVICE");
+    bt_filehandle fh=btos_get_handle(fileno(stdin));
+	if(fh) {
+        bt_terminal_mode::Enum mode=bt_terminal_mode::Keyboard;
+        bt_fioctl(fh, bt_terminal_ioctl::SetMode, sizeof(mode), (char*)&mode);
+    }else{
+        string device="DEV:/" + get_env("INPUT_DEVICE");
 		convert_input=true;
+        fh=bt_fopen(device.c_str(), FS_Read);
+        if(!fh){
+            cerr << "Error: Could not open input file/device: " << device.c_str() << endl;
+            exit(-1);
+        }
 	}
-	input_fh=bt_fopen(device.c_str(), FS_Read);
+	input_fh=fh;
     size_t type=bt_fioctl(input_fh, bt_ioctl::DevType, 0, NULL);
     if(type!=driver_types::TERMINAL && (type & driver_types::VIDEO)!=driver_types::VIDEO) input_tty=false;
-    if(!input_fh) {
-        cerr << "Error: Could not open input file/device: " << device.c_str() << endl;
-        exit(-1);
-    }
 }
 
 char get_char(){
