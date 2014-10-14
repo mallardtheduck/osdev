@@ -24,7 +24,7 @@ void _exit(){
 int close(int file){
     bt_handle h=btos_get_handle(file);
     int ret=bt_fclose(h);
-    if(ret==0) btos_remove_filenum(file);
+    if(ret) btos_remove_filenum(file);
     return ret;
 }
 
