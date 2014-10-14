@@ -256,12 +256,7 @@ void terminal_putchar(char c)
 		terminal_column = 0;
 		return;
 	}else if(c == '\t'){
-		terminal_column = (terminal_column + 8) & ~7;
-		if(terminal_column>=VGA_WIDTH && scrolling_enabled){
-			terminal_scroll();
-			terminal_column = 0;
-		}
-		return;
+		c=' ';
 	}
 	terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
 	if ( ++terminal_column >= VGA_WIDTH )
