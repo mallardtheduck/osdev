@@ -20,10 +20,7 @@ extern "C" bt_handle btos_get_handle(int fd);
 
 void open_input(){
     bt_filehandle fh=btos_get_handle(fileno(stdin));
-	if(fh) {
-        bt_terminal_mode::Enum mode=bt_terminal_mode::Keyboard;
-        bt_fioctl(fh, bt_terminal_ioctl::SetMode, sizeof(mode), (char*)&mode);
-    }else{
+	if(!fh) {
         string device="DEV:/" + get_env("INPUT_DEVICE");
 		convert_input=true;
         fh=bt_fopen(device.c_str(), FS_Read);
@@ -59,28 +56,34 @@ char get_char(){
 }
 
 string input_line(){
-	stringstream ret;
-	if(!input_fh) open_input();
-    streampos pos;
-    if(input_tty) pos=cout.tellp();
-	while(char c=get_char()) {
-        if (c == '\n') break;
-        else if (c == 0x08) {
-            string data = ret.str();
-            if (data.length())data.erase(data.length() - 1);
-            ret.str(data);
-            ret.seekp(0, ios::end);
-        } else ret << c;
-        if (input_tty) {
-            cout.seekp(pos);
-            cout << ret.str();
-            streampos newpos = cout.tellp();
-            cout << ' ';
-            cout.seekp(newpos);
+    if(convert_input) {
+        stringstream ret;
+        if (!input_fh) open_input();
+        streampos pos;
+        if (input_tty) pos = cout.tellp();
+        while (char c = get_char()) {
+            if (c == '\n') break;
+            else if (c == 0x08) {
+                string data = ret.str();
+                if (data.length())data.erase(data.length() - 1);
+                ret.str(data);
+                ret.seekp(0, ios::end);
+            } else ret << c;
+            if (input_tty) {
+                cout.seekp(pos);
+                cout << ret.str();
+                streampos newpos = cout.tellp();
+                cout << ' ';
+                cout.seekp(newpos);
+            }
         }
+        if (input_tty) cout << endl;
+        return ret.str();
+    }else {
+        string ret;
+        getline(cin, ret);
+        return ret;
     }
-	if(input_tty) cout << endl;
-	return ret.str();
 }
 
 vector<string> parse_input(const string &input){
