@@ -189,6 +189,7 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
                     incr=0;
                 }
                 if (c == '\n') {
+                    if(echo) putchar(c);
                     return i + 1;
                 }
                 if (echo && put) putchar(c);
