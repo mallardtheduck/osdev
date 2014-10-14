@@ -33,9 +33,10 @@ int main(int argc, char **argv){
     bool val=true;
     bt_fioctl(h, bt_terminal_ioctl::SetEcho, 1, (char*)&val);
     std::string input;
+    std::cout << "Enter some text: ";
     getline(std::cin, input);
     val=false;
     bt_fioctl(h, bt_terminal_ioctl::SetEcho, 1, (char*)&val);
-    std::cout << input << std::endl;
+    std::cout << "You entered: " << input << std::endl;
 	return 0;
 }
