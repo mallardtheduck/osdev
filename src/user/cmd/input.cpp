@@ -34,7 +34,7 @@ void open_input(){
 	}
 	input_fh=fh;
     size_t type=bt_fioctl(input_fh, bt_ioctl::DevType, 0, NULL);
-    if(type!=driver_types::TERMINAL && (type & driver_types::VIDEO)!=driver_types::VIDEO) input_tty=false;
+    if(type!=driver_types::TERMINAL && (type & driver_types::INPUT)!=driver_types::INPUT) input_tty=false;
 }
 
 char get_char(){
