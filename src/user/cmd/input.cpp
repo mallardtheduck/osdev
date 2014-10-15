@@ -1,44 +1,11 @@
 #include "cmd.hpp"
-#include <iostream>
-#include <cstdint>
 #include <sstream>
-#include <cctype>
-#include <ioctl.h>
-#include <drivers.h>
-#include <cstdlib>
 #include <fstream>
-#include <terminal.h>
-#include "../../include/keyboard.h"
+#include <unistd.h>
 
 using namespace std;
 
-bt_filehandle input_fh=0;
-bool input_tty=true;
-
 extern "C" bt_handle btos_get_handle(int fd);
-
-void open_input(){
-    bt_filehandle fh=btos_get_handle(fileno(stdin));
-	if(!fh) {
-        cerr << "Error: Could not open input file/device: " << get_env("STDIN") << endl;
-        exit(-1);
-	}
-	input_fh=fh;
-    size_t type=bt_fioctl(input_fh, bt_ioctl::DevType, 0, NULL);
-    if(type!=driver_types::TERMINAL && (type & driver_types::INPUT)!=driver_types::INPUT) input_tty=false;
-}
-
-char get_char() {
-    if (!input_fh) open_input();
-    char ret = '\0';
-    size_t bytes = bt_fread(input_fh, sizeof(ret), &ret);
-    if (!input_tty && bytes == 0) {
-        cerr << "Warning: End of input file/device reached." << endl;
-        exit(0);
-    }
-    return ret;
-
-}
 
 string input_line(){
     string ret;
@@ -117,7 +84,7 @@ vector<command> getcommands(vector<string> parsed){
 }
 
 string get_input(){
-    if(!input_fh) open_input();
-	if(input_tty) cout << prompt_string();
+    bool input_tty=(bool)isatty(fileno(stdin));
+   	if(input_tty) cout << prompt_string();
 	return input_line();
 }
