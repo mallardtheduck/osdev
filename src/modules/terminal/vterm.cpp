@@ -50,11 +50,7 @@ void vterm::wait_until_active() {
 
 void vterm::putchar(char c){
     if(!vidmode.textmode) return;
-    if(c != '\n' && c != 0x08){
-        buffer[bufpos++]=textcolour;
-        buffer[bufpos++]=(uint8_t)c;
-        if(backend->is_active(id)) backend->display_write(1, &c);
-    }else if(c == '\n') {
+    if(c == '\n') {
         bufpos=(((bufpos/(vidmode.width*2))+1) * (vidmode.width*2));
         if(backend->is_active(id)) backend->display_write(1, &c);
     }else if(c == 0x08){
@@ -70,6 +66,10 @@ void vterm::putchar(char c){
         backend->display_write(1, &s);
         backend->display_seek(cpos, false);
 
+    } else {
+        buffer[bufpos++]=textcolour;
+        buffer[bufpos++]=(uint8_t)c;
+        if(backend->is_active(id)) backend->display_write(1, &c);
     }
     if(bufpos>=bufsize){
         scroll();
@@ -109,7 +109,7 @@ void vterm::do_infoline(){
         }
         seek(opts, 0, false);
         char buf[8];
-        sprintf(buf, "[%i:%i] ", terminals->get_count(), (int)id);
+        sprintf(buf, "[%i:%i] ", (int)terminals->get_count(), (int)id);
         putstring(buf);
         putstring(title);
         backend->display_ioctl(bt_vid_ioctl::SetTextColours, sizeof(colour), (char*)&colour);
