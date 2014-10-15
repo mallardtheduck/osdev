@@ -166,6 +166,7 @@ void proc_end(pid_t pid) {
     dbgpf("PROC: Ending process %i.\n", (int) pid);
     proc_set_status(proc_status::Ending);
     proc_process *proc = proc_get(pid);
+    if(!proc) return;
     pid_t parent = proc->parent;
     if (parent) {
         proc_get(parent)->child_returns[pid] = proc->retval;
@@ -178,7 +179,9 @@ void proc_end(pid_t pid) {
                 uint64_t thread_id = *(uint64_t *) i->second.value;
                 if (thread_id != sch_get_id()) {
                     proc_remove_thread(thread_id, pid);
+                    release_lock(proc_lock);
                     sch_abort(thread_id);
+                    take_lock_exclusive(proc_lock);
                     cont = true;
                     break;
                 }
