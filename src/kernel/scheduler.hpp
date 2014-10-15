@@ -26,5 +26,6 @@ void sch_abortable(bool abortable);
 void sch_abort(uint64_t ext_id);
 uint32_t sch_get_eip(bool lock=true);
 bool sch_can_lock();
+bool sch_user_abort();
 
 #endif

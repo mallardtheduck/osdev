@@ -35,6 +35,7 @@ struct sch_thread{
 	uint32_t eip;
 	bool abortable;
 	int abortlevel;
+    bool user_abort;
 };
 
 vector<sch_thread> *threads;
@@ -174,6 +175,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread.abortlevel=1;
 	newthread.abortable=false;
 	newthread.pid=0;
+    newthread.user_abort=false;
     take_lock_exclusive(sch_lock);
 	newthread.ext_id=++cur_ext_id;
 	threads->push_back(newthread);
@@ -330,7 +332,7 @@ void sch_set_priority(uint32_t pri){
 }
 
 void sch_block(){
-    take_lock_exclusive(sch_lock);
+    take_lock_recursive(sch_lock);
 	(*threads)[current_thread].runnable=false;
 	release_lock(sch_lock);
 	sch_yield();
@@ -368,7 +370,7 @@ void sch_setblock(sch_blockcheck check, void *param){
 }
 
 void sch_clearblock(){
-	hold_lock hl(sch_lock);
+	hold_lock hl(sch_lock, false);
 	(*threads)[current_thread].blockcheck=NULL;
 	(*threads)[current_thread].bc_param=NULL;
 }
@@ -448,7 +450,9 @@ void sch_abort(uint64_t ext_id){
 					(*threads)[i].to_be_deleted=true;
 					(*threads)[reaper_thread].runnable=true;
 					tryagain=false;
-				}
+				}else{
+                    (*threads)[i].user_abort=true;
+                }
 			}
 		}
 		release_lock(sch_lock);
@@ -463,4 +467,11 @@ bool sch_can_lock(){
     if(!try_take_lock_exclusive(sch_lock)) return false;
     release_lock(sch_lock);
     return true;
+}
+
+bool sch_user_abort(){
+    take_lock_recursive(sch_lock);
+    bool ret=(*threads)[current_thread].user_abort;
+    release_lock(sch_lock);
+    return ret;
 }

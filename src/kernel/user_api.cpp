@@ -420,5 +420,6 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 			regs->eax=-1;
 			break;
 	}
+    if(sch_user_abort()) sch_end_thread();
 }
 
