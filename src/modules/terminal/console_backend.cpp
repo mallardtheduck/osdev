@@ -14,11 +14,7 @@ void console_backend_input_thread(void *p){
         size_t read=fread(backend->input, sizeof(key), (char*)&key);
         if(read){
             hold_lock hl(&backend->backend_lock);
-            if(backend->input_top!=backend->input_bottom){
-                backend->inputbuffer[backend->input_top]=key;
-                backend->input_top++;
-                if(backend->input_top == console_backend::inputbuffersize) backend->input_top=0;
-            }
+            if(backend->active) terminals->get(backend->active)->queue_input(key);
         }
     }
 }
@@ -37,7 +33,7 @@ console_backend::console_backend() {
     display=fopen(video_device_path, (fs_mode_flags)(FS_Read | FS_Write));
     input=fopen(input_device_path, (fs_mode_flags)(FS_Read | FS_Read));
 
-    //input_thread_id=new_thread(&console_backend_input_thread, (void*)this);
+    input_thread_id=new_thread(&console_backend_input_thread, (void*)this);
 }
 
 size_t console_backend::display_read(size_t bytes, char *buf) {

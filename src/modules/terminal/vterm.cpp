@@ -2,6 +2,7 @@
 #include "module_stubs.h"
 #include "terminal.hpp"
 #include "keyboard.h"
+#include "device.hpp"
 
 vterm *current_vterm=NULL;
 vterm_list *terminals=NULL;
@@ -26,6 +27,9 @@ vterm::vterm(uint64_t nid, i_backend *back){
     infoline=true;
     textcolour=0x07;
     echo=true;
+    init_lock(&input_lock);
+    input_top=0;
+    input_count=0;
     sprintf(title, "BT/OS Terminal %i", (int)id);
 }
 
@@ -171,7 +175,9 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
             uint32_t input = 0;
             char c = 0;
             while (!input || !c) {
-                backend->input_read(sizeof(input), (char *) &input);
+                release_lock(&term_lock);
+                input=get_input();
+                take_lock(&term_lock);
                 if ((input & KeyFlags::Control) && !(input & KeyFlags::KeyUp) && ((char) input == 'c' || (char) input == 'C')) {
                     release_lock(&term_lock);
                     kill(getpid());
@@ -273,6 +279,50 @@ void vterm::sync() {
         bufpos*=2;
     }
     scrolling=(bool)backend->display_ioctl(bt_vid_ioctl::GetScrolling, 0, NULL);
+}
+
+void vterm::queue_input(uint32_t code) {
+    take_lock(&input_lock);
+    if ((code & KeyFlags::Control) && !(code & KeyFlags::KeyUp) && ((char) code == 'c' || (char) code == 'C')) {
+        release_lock(&input_lock);
+        kill(curpid);
+        return;
+    }
+    if(input_count < input_size){
+        input_count++;
+        input_top++;
+        if(input_top==input_size) input_top=0;
+        input_buffer[input_top]=code;
+    }
+    release_lock(&input_lock);
+}
+
+bool input_blockcheck(void *p){
+    vterm *v=(vterm*)p;
+    return (bool)v->input_count;
+}
+
+uint32_t vterm::get_input() {
+    bool lockok=false;
+    while(!lockok) {
+        while (!input_count) thread_setblock(&input_blockcheck, (void *) this);
+        take_lock(&input_lock);
+        if(!input_count) release_lock(&input_lock);
+        else lockok=true;
+    }
+    uint32_t ret=0;
+    if(input_count){
+        ret=input_buffer[input_top];
+        input_count--;
+        if(input_top==0) input_top=input_count;
+        input_top--;
+    }
+    release_lock(&input_lock);
+    return ret;
+}
+
+char vterm::get_char(){
+    return KB_char(get_input());
 }
 
 vterm_list::vterm_list() {

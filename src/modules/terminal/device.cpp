@@ -19,7 +19,7 @@ void *term_open(void */*id*/){
 
 bool term_close(void *instance){
     if(instance){
-        hold_lock hl(&term_lock);
+        //hold_lock hl(&term_lock);
         delete (term_instance*)instance;
         return true;
     }

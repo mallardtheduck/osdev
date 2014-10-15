@@ -27,6 +27,11 @@ private:
     uint8_t textcolour;
     bool echo;
 
+    static const size_t input_size=128;
+    uint32_t input_buffer[input_size];
+    size_t input_count, input_top;
+    lock input_lock;
+
     pid_t curpid;
 
     void wait_until_active();
@@ -34,6 +39,10 @@ private:
     void putstring(char *s);
     void scroll();
     void do_infoline();
+    char get_char();
+    uint32_t get_input();
+
+    friend bool input_blockcheck(void *p);
 
     static const size_t titlemax=256;
     char title[titlemax];
@@ -52,6 +61,8 @@ public:
     size_t read(vterm_options &opts, size_t size, char *buf);
     size_t seek(vterm_options &opts, size_t pos, bool relative);
     int ioctl(vterm_options &opts, int fn, size_t size, char *buf);
+
+    void queue_input(uint32_t code);
 
     void sync();
 };
