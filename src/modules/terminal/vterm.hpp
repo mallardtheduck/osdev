@@ -34,7 +34,6 @@ private:
 
     pid_t curpid;
 
-    void wait_until_active();
     void putchar(char c);
     void putstring(char *s);
     void scroll();

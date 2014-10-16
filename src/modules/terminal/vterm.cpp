@@ -37,17 +37,6 @@ vterm::~vterm(){
     if(buffer) free(buffer);
 }
 
-bool active_blockcheck(void */*p*/) {
-    //FIXME: Return correct answer
-    return true;
-}
-
-void vterm::wait_until_active() {
-    if(!backend->is_active(id)) {
-        thread_setblock(&active_blockcheck, (void*)&backend);
-    }
-}
-
 void vterm::putchar(char c){
     if(!vidmode.textmode) return;
     if(c == '\n') {
@@ -171,7 +160,6 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
         int incr;
         for(size_t i=0; i<size; i+=incr) {
             incr=1;
-            wait_until_active();
             uint32_t input = 0;
             char c = 0;
             while (!input || !c) {
