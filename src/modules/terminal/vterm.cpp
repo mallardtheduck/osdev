@@ -130,13 +130,12 @@ void vterm::activate() {
         bt_vid_text_access_mode::Enum textmode=bt_vid_text_access_mode::Simple;
         backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char*)&textmode);
     }
-    backend->display_seek(bufpos, false);
+    backend->display_seek(bufpos/2, false);
     backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scrolling);
     do_infoline();
 }
 
 void vterm::deactivate() {
-    //active=false;
 }
 
 size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
@@ -279,6 +278,12 @@ void vterm::sync(bool content) {
         }
     }else{
         memset(buffer, 0, bufsize);
+        if(vidmode.textmode) {
+            for (size_t i = 1; i < bufsize; i += 2) {
+                buffer[i] = textcolour;
+            }
+        }
+        bufpos = 0;
     }
     scrolling=(bool)backend->display_ioctl(bt_vid_ioctl::GetScrolling, 0, NULL);
 }
