@@ -45,8 +45,9 @@ void vterm::putchar(char c){
     }else if(c == 0x08){
         if(bufpos >= 2) {
             bufpos -= 2;
-            buffer[bufpos++]=textcolour;
             buffer[bufpos++] = ' ';
+            buffer[bufpos++] = textcolour;
+            bufpos -= 2;
         }
         size_t cpos=backend->display_seek(0, true);
         cpos--;
@@ -56,8 +57,8 @@ void vterm::putchar(char c){
         backend->display_seek(cpos, false);
 
     } else {
-        buffer[bufpos++]=textcolour;
         buffer[bufpos++]=(uint8_t)c;
+        buffer[bufpos++]=textcolour;
         if(backend->is_active(id)) backend->display_write(1, &c);
     }
     if(bufpos>=bufsize){
@@ -237,8 +238,6 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         dbgpf("TERM: Created new terminal %i.\n", (int) new_id);
         terminals->get(new_id)->sync(false);
         terminals->switch_terminal(new_id);
-        vterm_options opts;
-        terminals->get(new_id)->ioctl(opts, bt_vid_ioctl::ClearScreen, 0, NULL);
         spawn("hdd:/btos/cmd.elx", 0, NULL);
     }else if(fn == bt_terminal_ioctl::SwtichTerminal){
         uint64_t sw_id=*(uint64_t*)buf;
