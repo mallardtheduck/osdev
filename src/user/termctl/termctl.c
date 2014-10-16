@@ -27,6 +27,12 @@ int main(int argc, char **argv){
         }else return 1;
     }else if(strcmp(argv[1], "clear")==0) {
         bt_fioctl(fh, bt_vid_ioctl_ClearScreen, 0, NULL);
+    }else if(strcmp(argv[1], "new")==0){
+        bt_fioctl(fh, bt_terminal_ioctl_NewTerminal, 0, NULL);
+    }else if(strcmp(argv[1], "switch")==0  && argc == 3){
+        uint64_t id=0;
+        sscanf(argv[2], "%i", (int*)&id);
+        bt_fioctl(fh, bt_terminal_ioctl_SwtichTerminal, sizeof(id), (char*)&id);
     }
     return 0;
 }

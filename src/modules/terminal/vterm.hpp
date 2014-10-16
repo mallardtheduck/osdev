@@ -63,7 +63,7 @@ public:
 
     void queue_input(uint32_t code);
 
-    void sync();
+    void sync(bool content=true);
 };
 
 extern vterm *current_vterm;

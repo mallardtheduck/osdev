@@ -61,8 +61,10 @@ size_t terminal_read(void *instance, size_t bytes, char *buf){
 }
 
 size_t terminal_write(void *instance, size_t bytes, char *buf){
+    dbgpf("KTEXT: write: %x, %i, %x\n", instance, bytes, buf);
 	terminal_instance *inst=(terminal_instance*)instance;
 	if(inst->mode==bt_vid_text_access_mode::Raw){
+        dbgpf("VTERM: %i %i\n", inst->pos, maxchar);
 		if(inst->pos > maxchar) return 0;
         if(inst->pos+bytes > maxchar) bytes=maxchar-inst->pos;
 		memcpy((char*)terminal_buffer+inst->pos, buf, bytes);

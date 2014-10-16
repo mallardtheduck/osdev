@@ -20,6 +20,10 @@ ENUM_START(bt_terminal_ioctl)
     ENUM_SET(bt_terminal_ioctl, GetTitle, 266),
     ENUM_SET(bt_terminal_ioctl, SetEcho, 267),
     ENUM_SET(bt_terminal_ioctl, GetEcho, 268),
+
+    ENUM_SET(bt_terminal_ioctl, NewTerminal, 291),
+    ENUM_SET(bt_terminal_ioctl, DestroyTerminal, 292),
+    ENUM_SET(bt_terminal_ioctl, SwtichTerminal, 293),
 ENUM_END
 ENUM_TYPE(bt_terminal_ioctl);
 
