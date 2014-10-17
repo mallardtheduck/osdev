@@ -45,8 +45,9 @@ void vterm::putchar(char c){
     }else if(c == 0x08){
         if(bufpos >= 2) {
             bufpos -= 2;
-            buffer[bufpos++]=textcolour;
             buffer[bufpos++] = ' ';
+            buffer[bufpos++] = textcolour;
+            bufpos -= 2;
         }
         size_t cpos=backend->display_seek(0, true);
         cpos--;
@@ -56,8 +57,8 @@ void vterm::putchar(char c){
         backend->display_seek(cpos, false);
 
     } else {
-        buffer[bufpos++]=textcolour;
         buffer[bufpos++]=(uint8_t)c;
+        buffer[bufpos++]=textcolour;
         if(backend->is_active(id)) backend->display_write(1, &c);
     }
     if(bufpos>=bufsize){
@@ -129,13 +130,12 @@ void vterm::activate() {
         bt_vid_text_access_mode::Enum textmode=bt_vid_text_access_mode::Simple;
         backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char*)&textmode);
     }
-    backend->display_seek(bufpos, false);
+    backend->display_seek(bufpos/2, false);
     backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scrolling);
     do_infoline();
 }
 
 void vterm::deactivate() {
-    //active=false;
 }
 
 size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
@@ -237,8 +237,6 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         dbgpf("TERM: Created new terminal %i.\n", (int) new_id);
         terminals->get(new_id)->sync(false);
         terminals->switch_terminal(new_id);
-        vterm_options opts;
-        terminals->get(new_id)->ioctl(opts, bt_vid_ioctl::ClearScreen, 0, NULL);
         spawn("hdd:/btos/cmd.elx", 0, NULL);
     }else if(fn == bt_terminal_ioctl::SwtichTerminal){
         uint64_t sw_id=*(uint64_t*)buf;
@@ -280,6 +278,12 @@ void vterm::sync(bool content) {
         }
     }else{
         memset(buffer, 0, bufsize);
+        if(vidmode.textmode) {
+            for (size_t i = 1; i < bufsize; i += 2) {
+                buffer[i] = textcolour;
+            }
+        }
+        bufpos = 0;
     }
     scrolling=(bool)backend->display_ioctl(bt_vid_ioctl::GetScrolling, 0, NULL);
 }
