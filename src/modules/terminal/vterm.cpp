@@ -241,7 +241,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         dbgpf("TERM: Created new terminal %i.\n", (int) new_id);
         terminals->get(new_id)->sync(false);
         terminals->switch_terminal(new_id);
-        spawn(getenv("SHELL", getpid()), 0, NULL);
+        if(buf) spawn(buf, 0, NULL);
     }else if(fn == bt_terminal_ioctl::SwtichTerminal){
         uint64_t sw_id=*(uint64_t*)buf;
         terminals->switch_terminal(sw_id);

@@ -28,7 +28,13 @@ int main(int argc, char **argv){
     }else if(strcmp(argv[1], "clear")==0) {
         bt_fioctl(fh, bt_vid_ioctl_ClearScreen, 0, NULL);
     }else if(strcmp(argv[1], "new")==0){
-        bt_fioctl(fh, bt_terminal_ioctl_NewTerminal, 0, NULL);
+        char runpath[BT_MAX_PATH]="";
+        if(argc < 3){
+            bt_getenv("SHELL", runpath, BT_MAX_PATH);
+        }else{
+            strncpy(runpath, argv[2], BT_MAX_PATH);
+        }
+        bt_fioctl(fh, bt_terminal_ioctl_NewTerminal, BT_MAX_PATH, runpath);
     }else if(strcmp(argv[1], "switch")==0  && argc == 3){
         uint64_t id=0;
         sscanf(argv[2], "%i", (int*)&id);
