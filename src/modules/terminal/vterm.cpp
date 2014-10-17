@@ -376,8 +376,12 @@ void vterm_list::delete_terminal(uint64_t id) {
         if(terminals[i]->get_id() == id){
             delete terminals[i];
             vterm **terms=new vterm*[count-1];
-            memcpy(terms, terminals, i*sizeof(vterm*));
-            memcpy(terms[i], terminals[i+1], count-(i+1));
+            for(size_t j=0; j<i; ++j){
+                terms[j]=terminals[j];
+            }
+            for(size_t j=i+1; j<count; ++j){
+                terms[j-1]=terminals[j];
+            }
             free(terminals);
             terminals=terms;
             count--;
