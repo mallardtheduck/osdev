@@ -241,7 +241,10 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         dbgpf("TERM: Created new terminal %i.\n", (int) new_id);
         terminals->get(new_id)->sync(false);
         terminals->switch_terminal(new_id);
-        if(buf) spawn(buf, 0, NULL);
+        if(buf) {
+            pid_t pid=spawn(buf, 0, NULL);
+            if(!pid) terminals->get(new_id)->close();
+        }
     }else if(fn == bt_terminal_ioctl::SwtichTerminal){
         uint64_t sw_id=*(uint64_t*)buf;
         terminals->switch_terminal(sw_id);
@@ -255,7 +258,7 @@ void vterm::open(){
 }
 
 void vterm::close(){
-    refcount--;
+    if(refcount) refcount--;
     if(!refcount){
         if(terminals->get_count() > 1){
             terminals->delete_terminal(id);
