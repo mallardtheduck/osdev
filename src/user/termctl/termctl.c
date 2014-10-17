@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 bt_handle btos_get_handle(int fd);
+bool btos_path_parse(const char *opath, char *buffer, size_t size);
 
 int main(int argc, char **argv){
     if(argc < 2 && argv[1]){
@@ -32,7 +33,7 @@ int main(int argc, char **argv){
         if(argc < 3){
             bt_getenv("SHELL", runpath, BT_MAX_PATH);
         }else{
-            strncpy(runpath, argv[2], BT_MAX_PATH);
+            btos_path_parse(argv[2], runpath, BT_MAX_PATH);
         }
         bt_fioctl(fh, bt_terminal_ioctl_NewTerminal, BT_MAX_PATH, runpath);
     }else if(strcmp(argv[1], "switch")==0  && argc == 3){
