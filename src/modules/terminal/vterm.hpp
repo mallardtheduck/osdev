@@ -26,6 +26,7 @@ private:
     bt_vidmode vidmode;
     uint8_t textcolour;
     bool echo;
+    uint32_t refcount;
 
     static const size_t input_size=128;
     uint32_t input_buffer[input_size];
@@ -60,6 +61,8 @@ public:
     size_t read(vterm_options &opts, size_t size, char *buf);
     size_t seek(vterm_options &opts, size_t pos, bool relative);
     int ioctl(vterm_options &opts, int fn, size_t size, char *buf);
+    void open();
+    void close();
 
     void queue_input(uint32_t code);
 

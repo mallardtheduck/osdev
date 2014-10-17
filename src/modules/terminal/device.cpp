@@ -14,13 +14,16 @@ void *term_open(void */*id*/){
     hold_lock hl(&term_lock);
     term_instance *ret=new term_instance();
     ret->terminal=current_vterm;
+    ret->terminal->open();
     return ret;
 }
 
 bool term_close(void *instance){
     if(instance){
         //hold_lock hl(&term_lock);
-        delete (term_instance*)instance;
+        term_instance *inst=(term_instance*)instance;
+        inst->terminal->close();
+        delete inst;
         return true;
     }
     return false;

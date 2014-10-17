@@ -30,6 +30,7 @@ vterm::vterm(uint64_t nid, i_backend *back){
     init_lock(&input_lock);
     input_top=0;
     input_count=0;
+    refcount=0;
     sprintf(title, "BT/OS Terminal %i", (int)id);
 }
 
@@ -240,13 +241,26 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         dbgpf("TERM: Created new terminal %i.\n", (int) new_id);
         terminals->get(new_id)->sync(false);
         terminals->switch_terminal(new_id);
-        spawn("hdd:/btos/cmd.elx", 0, NULL);
+        spawn(getenv("SHELL", getpid()), 0, NULL);
     }else if(fn == bt_terminal_ioctl::SwtichTerminal){
         uint64_t sw_id=*(uint64_t*)buf;
         terminals->switch_terminal(sw_id);
     }
     //TODO: implement more
     return 0;
+}
+
+void vterm::open(){
+    refcount++;
+}
+
+void vterm::close(){
+    refcount--;
+    if(!refcount){
+        if(terminals->get_count() > 1){
+            terminals->delete_terminal(id);
+        }
+    }
 }
 
 void vterm::sync(bool content) {
@@ -353,6 +367,11 @@ uint64_t vterm_list::create_terminal(i_backend *back) {
 }
 
 void vterm_list::delete_terminal(uint64_t id) {
+    bool switchterm=false;
+    if(current_vterm->get_id() == id){
+        switchterm=true;
+        current_vterm->deactivate();
+    }
     for(size_t i=0; i<count; ++i){
         if(terminals[i]->get_id() == id){
             delete terminals[i];
@@ -362,7 +381,10 @@ void vterm_list::delete_terminal(uint64_t id) {
             free(terminals);
             terminals=terms;
             count--;
-            return;
+        }else if(switchterm){
+            current_vterm=terminals[i];
+            current_vterm->activate();
+            switchterm=false;
         }
     }
 }

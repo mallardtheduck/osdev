@@ -14,7 +14,10 @@ void console_backend_input_thread(void *p){
         size_t read=fread(backend->input, sizeof(key), (char*)&key);
         if(read){
             hold_lock hl(&backend->backend_lock);
-            if(backend->active) terminals->get(backend->active)->queue_input(key);
+            if(backend->active) {
+                vterm *term=terminals->get(backend->active);
+                if(term) term->queue_input(key);
+            }
         }
     }
 }
