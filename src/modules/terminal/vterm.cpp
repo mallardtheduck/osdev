@@ -73,17 +73,20 @@ void vterm::putstring(char *s){
 }
 
 void vterm::scroll(){
+    int factor=1;
+    if(vidmode.textmode) factor=2;
     for(size_t y=0; y<vidmode.height; ++y){
-        for(size_t x=0; x<vidmode.width; ++x){
-            const size_t source = y * vidmode.width + x;
+        for(size_t x=0; x<(vidmode.width*factor); ++x){
+            const size_t source = y * (vidmode.width*factor) + x;
             if(y){
-                const size_t dest = (y-1) * vidmode.width + x;
+                const size_t dest = (y-1) * (vidmode.width*factor) + x;
                 buffer[dest]=buffer[source];
             }
             buffer[source]=0;
+            if(vidmode.textmode && source % 2) buffer[source]=textcolour;
         }
     }
-    bufpos=((vidmode.height-1)*vidmode.width)*2;
+    bufpos=((vidmode.height-1)*vidmode.width)*factor;
 }
 
 void vterm::do_infoline(){
