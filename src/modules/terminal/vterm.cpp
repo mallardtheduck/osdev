@@ -339,10 +339,10 @@ uint32_t vterm::get_input() {
     }
     uint32_t ret=0;
     if(input_count){
-        ret=input_buffer[input_top];
+		int start=input_top-input_count;
+		if(start<0) start+=input_size;
+        ret=input_buffer[start];
         input_count--;
-        if(input_top==0) input_top=input_count;
-        input_top--;
     }
     release_lock(&input_lock);
     return ret;
