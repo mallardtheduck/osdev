@@ -33,6 +33,6 @@ directories.always:
 ~/.mtoolsrc:
 	echo "mtools_skip_check=1" > ~/.mtoolsrc
 
-copy.always: data $(shell find data -type f) $(import-files)
+copy.always: directories.always $(shell find data -type f) $(import-files)
 	mcopy -i btos.img@@1M data/* ::/ -s -o
 
