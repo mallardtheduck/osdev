@@ -298,6 +298,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 }
 
 extern "C" uint32_t sch_dolock(){
+    if(!are_interrupts_enabled()) panic("(SCH) Attempt to yield while interrupts are disabled!");
 	if(!try_take_lock_exclusive(sch_lock)){
 		dbgout("SCH: Scheduler run while locked!\n");
 		return 0;
