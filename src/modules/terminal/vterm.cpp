@@ -3,6 +3,7 @@
 #include "terminal.hpp"
 #include "keyboard.h"
 #include "device.hpp"
+#include "holdlock.hpp"
 
 vterm *current_vterm=NULL;
 vterm_list *terminals=NULL;
@@ -27,6 +28,7 @@ vterm::vterm(uint64_t nid, i_backend *back){
     infoline=true;
     textcolour=0x07;
     echo=true;
+    init_lock(&term_lock);
     init_lock(&input_lock);
     input_top=0;
     input_count=0;
@@ -112,14 +114,17 @@ void vterm::do_infoline(){
 }
 
 uint64_t vterm::get_id() {
+    hold_lock hl(&term_lock);
     return id;
 }
 
 const char *vterm::get_title(){
+    hold_lock hl(&term_lock);
     return title;
 }
 
 void vterm::activate() {
+    hold_lock hl(&term_lock);
     bool scroll=false;
     backend->set_active(id);
     backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scroll);
@@ -144,6 +149,7 @@ void vterm::deactivate() {
 }
 
 size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
+    hold_lock hl(&term_lock);
     curpid=getpid();
     if(bufpos+size > bufsize) size=bufsize-bufpos;
     if(vidmode.textmode){
@@ -160,6 +166,7 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
 }
 
 size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
+    hold_lock hl(&term_lock);
     curpid=getpid();
     if (opts.mode == bt_terminal_mode::Terminal || opts.mode == bt_terminal_mode::Keyboard) {
         int incr;
@@ -208,6 +215,7 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
 }
 
 size_t vterm::seek(vterm_options &/*opts*/, size_t pos, bool relative) {
+    hold_lock hl(&term_lock, false);
     curpid=getpid();
     int factor=1;
     if(vidmode.textmode) factor=2;
@@ -221,6 +229,7 @@ size_t vterm::seek(vterm_options &/*opts*/, size_t pos, bool relative) {
 }
 
 int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
+    hold_lock hl(&term_lock);
     curpid=getpid();
     if(fn==bt_terminal_ioctl::SetTitle){
         memset(title, 0, titlemax);
@@ -265,10 +274,12 @@ void vterm::create_terminal(char *command) {
 }
 
 void vterm::open(){
+    hold_lock hl(&term_lock);
     refcount++;
 }
 
 void vterm::close(){
+    hold_lock hl(&term_lock);
     if(refcount) refcount--;
     if(!refcount){
         if(terminals->get_count() > 1){
@@ -278,6 +289,7 @@ void vterm::close(){
 }
 
 void vterm::sync(bool content) {
+    hold_lock hl(&term_lock);
     backend->display_ioctl(bt_vid_ioctl::GetMode, sizeof(vidmode), (char*)&vidmode);
     if(vidmode.textmode){
         bufsize=(vidmode.width * vidmode.height) * (((vidmode.bpp * 2) / 8) + 1);

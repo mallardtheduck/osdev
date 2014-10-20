@@ -27,6 +27,7 @@ private:
     uint8_t textcolour;
     bool echo;
     uint32_t refcount;
+    lock term_lock;
 
     static const size_t input_size=128;
     uint32_t input_buffer[input_size];
