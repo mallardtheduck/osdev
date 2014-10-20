@@ -114,7 +114,7 @@ void vterm::do_infoline(){
 }
 
 uint64_t vterm::get_id() {
-    hold_lock hl(&term_lock);
+    hold_lock hl(&term_lock, false);
     return id;
 }
 

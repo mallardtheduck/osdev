@@ -68,7 +68,6 @@ void *term_open(void */*id*/){
 
 bool term_close(void *instance){
     if(instance){
-        //hold_lock hl(&term_lock);
         term_instance *inst=(term_instance*)instance;
         inst->terminal->close();
         delete inst;
@@ -79,7 +78,6 @@ bool term_close(void *instance){
 
 size_t term_read(void *instance, size_t bytes, char *buf){
     if(instance) {
-        hold_lock hl(&term_lock);
         term_instance *inst=(term_instance*)instance;
         return inst->terminal->read(inst->opts, bytes, buf);
     }
@@ -88,7 +86,6 @@ size_t term_read(void *instance, size_t bytes, char *buf){
 
 size_t term_write(void *instance, size_t bytes, char *buf){
     if(instance) {
-        hold_lock hl(&term_lock);
         term_instance *inst=(term_instance*)instance;
         return inst->terminal->write(inst->opts, bytes, buf);
     }
@@ -106,7 +103,6 @@ size_t term_seek(void *instance, size_t pos, bool relative){
 
 int term_ioctl(void *instance, int fn, size_t bytes, char *buf){
     if(instance) {
-        hold_lock hl(&term_lock);
         term_instance *inst=(term_instance*)instance;
         return inst->terminal->ioctl(inst->opts, fn, bytes, buf);
     }
