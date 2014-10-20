@@ -17,6 +17,9 @@ public:
     virtual bool is_active(uint64_t id)=0;
     virtual void set_active(uint64_t id)=0;
 
+    virtual void open(uint64_t id)=0;
+    virtual void close(uint64_t id)=0;
+
     virtual ~i_backend(){};
 };
 

@@ -32,6 +32,9 @@ public:
     bool is_active(uint64_t id);
     void set_active(uint64_t id);
 
+    void open(uint64_t id);
+    void close(uint64_t id);
+
 };
 
 extern console_backend *cons_backend;
