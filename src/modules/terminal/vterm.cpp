@@ -137,6 +137,7 @@ void vterm::activate() {
     backend->display_seek(bufpos/2, false);
     backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scrolling);
     do_infoline();
+    if(infoline && bufpos==0) putchar('\n');
 }
 
 void vterm::deactivate() {
@@ -237,26 +238,30 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
     }else if(fn == bt_terminal_ioctl::SetMode){
         opts.mode=*(bt_terminal_mode::Enum*)buf;
     }else if(fn == bt_terminal_ioctl::NewTerminal){
-        uint64_t new_id=terminals->create_terminal(backend);
-        dbgpf("TERM: Created new terminal %i.\n", (int) new_id);
-        terminals->get(new_id)->sync(false);
-        terminals->switch_terminal(new_id);
-        if(buf) {
-            char old_terminal_id[128]={0};
-            strncpy(old_terminal_id, getenv(terminal_var, getpid()), 128);
-            char new_terminal_id[128]={0};
-            i64toa(new_id, new_terminal_id, 10);
-            setenv(terminal_var, new_terminal_id, 0, 0);
-            pid_t pid=spawn(buf, 0, NULL);
-            setenv(terminal_var, old_terminal_id, 0, 0);
-            if(!pid) terminals->get(new_id)->close();
-        }
+        create_terminal(buf);
     }else if(fn == bt_terminal_ioctl::SwtichTerminal){
         uint64_t sw_id=*(uint64_t*)buf;
         terminals->switch_terminal(sw_id);
     }
     //TODO: implement more
     return 0;
+}
+
+void vterm::create_terminal(char *command) {
+    uint64_t new_id=terminals->create_terminal(backend);
+    dbgpf("TERM: Created new terminal %i.\n", (int) new_id);
+    terminals->get(new_id)->sync(false);
+    terminals->switch_terminal(new_id);
+    if(command){
+        char old_terminal_id[128]={0};
+        strncpy(old_terminal_id, getenv(terminal_var, getpid()), 128);
+        char new_terminal_id[128]={0};
+        i64toa(new_id, new_terminal_id, 10);
+        setenv(terminal_var, new_terminal_id, 0, 0);
+        pid_t pid=spawn(command, 0, NULL);
+        setenv(terminal_var, old_terminal_id, 0, 0);
+        if(!pid) terminals->get(new_id)->close();
+    }
 }
 
 void vterm::open(){
@@ -320,6 +325,8 @@ void vterm::queue_input(uint32_t code) {
         release_lock(&input_lock);
         kill(curpid);
         return;
+    } else if ((code & KeyFlags::Control) && (code & KeyCodes::Escape)==KeyCodes::Escape && !(code & KeyFlags::KeyUp)) {
+        create_terminal("HDD:/BTOS/SWITCHER.ELX");
     }
     if(input_count < input_size){
         input_count++;

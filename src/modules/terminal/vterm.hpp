@@ -41,6 +41,7 @@ private:
     void do_infoline();
     char get_char();
     uint32_t get_input();
+    void create_terminal(char *command);
 
     friend bool input_blockcheck(void *p);
 
@@ -65,7 +66,6 @@ public:
     void close();
 
     void queue_input(uint32_t code);
-
     void sync(bool content=true);
 };
 
