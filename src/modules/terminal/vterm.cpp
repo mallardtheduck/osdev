@@ -52,13 +52,14 @@ void vterm::putchar(char c){
             buffer[bufpos++] = textcolour;
             bufpos -= 2;
         }
-        size_t cpos=backend->display_seek(0, true);
-        cpos--;
-        backend->display_seek(cpos, false);
-        char s=' ';
-        backend->display_write(1, &s);
-        backend->display_seek(cpos, false);
-
+        if(backend->is_active(id)) {
+            size_t cpos = backend->display_seek(0, true);
+            cpos--;
+            backend->display_seek(cpos, false);
+            char s = ' ';
+            backend->display_write(1, &s);
+            backend->display_seek(cpos, false);
+        }
     } else {
         buffer[bufpos++]=(uint8_t)c;
         buffer[bufpos++]=textcolour;
