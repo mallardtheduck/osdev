@@ -286,7 +286,10 @@ void proc_start(void *ptr){
 pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
 	file_handle file=fs_open((char*)path.c_str(), FS_Read);
     pid_t ret=proc_new(path, argc, argv, parent, &file);
-	if(!file.valid) return 0;
+	if(!file.valid){
+        proc_end(ret);
+        return 0;
+    }
 	loaded_elf_proc proc=elf_load_proc(ret, file);
 	//fs_close(file);
 	proc_info *info=new proc_info();

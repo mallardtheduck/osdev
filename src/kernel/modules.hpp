@@ -4,6 +4,6 @@
 #include "kernel.hpp"
 
 void init_modules();
-void load_module(char *path, char *params=NULL);
+void load_module(const char *path, char *params=NULL);
 
 #endif

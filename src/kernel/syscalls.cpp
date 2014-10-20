@@ -49,8 +49,8 @@ void add_filesystem(fs_driver *fs){
 	fs_registerfs(*fs);
 }
 
-file_handle *fopen(char *path, fs_mode_flags mode){
-	return new file_handle(fs_open(path, mode));
+file_handle *fopen(const char *path, fs_mode_flags mode){
+	return new file_handle(fs_open((char*)path, mode));
 }
 
 bool fclose(file_handle *h){
@@ -80,8 +80,8 @@ void fflush(file_handle *handle){
     fs_flush(*handle);
 }
 
-dir_handle *diropen(char *path, fs_mode_flags mode){
-	return new dir_handle(fs_open_dir(path, mode));
+dir_handle *diropen(const char *path, fs_mode_flags mode){
+	return new dir_handle(fs_open_dir((char*)path, mode));
 }
 
 bool dirclose(dir_handle *handle){
@@ -103,11 +103,11 @@ bool dirseek(dir_handle *handle, size_t pos, bool relative){
 	return fs_seek_dir(*handle, pos, relative);
 }
 
-void setenv(char *name, char *value, uint8_t flags, pid_t pid){
+void setenv(const char *name, char *value, uint8_t flags, pid_t pid){
 	proc_setenv(name, value, flags, pid);
 }
 
-char *getenv(char *name, pid_t pid){
+char *getenv(const char *name, pid_t pid){
 	const string &ret=proc_getenv(name, pid);
 	if(ret=="") return NULL;
 	else return (char*)ret.c_str();
@@ -117,7 +117,7 @@ pid_t getpid(){
 	return proc_current_pid;
 }
 
-pid_t mod_spawn(char *exec, size_t argc, char **argv){
+pid_t mod_spawn(const char *exec, size_t argc, char **argv){
 	return proc_spawn(exec, argc, argv);
 }
 

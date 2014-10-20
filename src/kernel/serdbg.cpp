@@ -36,7 +36,7 @@ int is_transmit_empty() {
 	return ret;
 }
 
-void write_serial(char a) {
+void write_serial(const char a) {
 	if(!try_take_lock_exclusive(ser_lock)) return;
     while (is_transmit_empty() == 0);
 	outb(PORT, a);
@@ -44,7 +44,7 @@ void write_serial(char a) {
 	while (is_transmit_empty() == 0);
 }
 
-extern "C" void serial_writestring(char *str){
+extern "C" void serial_writestring(const char *str){
 	for(int i=0; str[i]!='\0'; ++i) write_serial(str[i]);
 }
 

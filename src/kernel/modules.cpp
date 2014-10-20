@@ -34,7 +34,7 @@ void init_modules(){
 	((module_entry)p)(&MODULE_SYSCALL_TABLE);
 }*/
 
-void load_module(char *path, char *params){
+void load_module(const char *path, char *params){
     take_lock_exclusive(mod_lock);
 	file_handle file=fs_open(path, FS_Read);
 	if(!file.valid){

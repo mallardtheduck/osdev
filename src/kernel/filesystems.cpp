@@ -103,12 +103,12 @@ void delete_fs_path(fs_path *p){
 	delete p;
 }
 
-fs_driver &getfs(char *name){
+fs_driver &getfs(const char *name){
 	hold_lock hl(fs_lock);
 	return (*fs_drivers)[name];
 }
 
-fs_mountpoint &getmount(char *name){
+fs_mountpoint &getmount(const char *name){
 	hold_lock hl(fs_lock);
 	if(fs_mounts->has_key(name)) return (*fs_mounts)[name];
 	else return (fs_mountpoint&)invalid_mountpoint;
@@ -120,7 +120,7 @@ void fs_registerfs(const fs_driver &driver){
 	(*fs_drivers)[name]=driver;
 }
 
-fs_mountpoint &getpathmount(char *path){
+fs_mountpoint &getpathmount(const char *path){
 	char mountname[9]={0};
 	string strpath=to_upper(path);
 	path=(char*)strpath.c_str();
@@ -130,15 +130,15 @@ fs_mountpoint &getpathmount(char *path){
 	return getmount(mountname);
 }
 
-char *getfspath(char *path){
-	char *ret=path;
+char *getfspath(const char *path){
+	char *ret=(char*)path;
 	while(*ret++!='\0'){
 		if(*ret==FS_DRIVE_SEPERATOR) return ++ret;
 	}
 	return NULL;
 }
 
-bool fs_mount(char *name, char *device, char *fs){
+bool fs_mount(const char *name, const char *device, const char *fs){
 	dbgpf("FS: Mount %s on %s (%s).\n", device?device:"NULL", name, fs);
 	string strname=to_upper(name);
 	name=(char*)strname.c_str();
@@ -148,7 +148,7 @@ bool fs_mount(char *name, char *device, char *fs){
 			if(!device || device[0]=='\0') return false;
 			if(!fs_stat(device).valid) return false;
 		}
-		void *mountdata=driver.mount(device);
+		void *mountdata=driver.mount((char*)device);
 		{	hold_lock hl(fs_lock);
 			fs_mountpoint &mount=(*fs_mounts)[name];
 			mount.valid=true;
@@ -165,7 +165,7 @@ bool fs_mount(char *name, char *device, char *fs){
 	return false;
 }
 
-bool fs_unmount(char *name){
+bool fs_unmount(const char *name){
 	fs_mountpoint &mount=getmount(name);
 	if(mount.valid){
 		hold_lock hl(fs_lock);
@@ -180,7 +180,7 @@ bool fs_unmount(char *name){
 	}
 }
 
-file_handle fs_open(char *path, fs_mode_flags mode){
+file_handle fs_open(const char *path, fs_mode_flags mode){
 	dbgpf("FS: OPEN %s mode: %i.\n", path, mode);
 	file_handle ret;
 	char *fspath=getfspath(path);
@@ -242,7 +242,7 @@ int fs_ioctl(file_handle &file, int fn, size_t bytes, char *buf){
 	return file.mount->driver.ioctl(file.filedata, fn, bytes, buf);
 }
 
-dir_handle fs_open_dir(char *path, fs_mode_flags mode){
+dir_handle fs_open_dir(const char *path, fs_mode_flags mode){
 	dir_handle ret;
 	char *fspath=getfspath(path);
 	if(!fspath){
@@ -296,7 +296,7 @@ size_t fs_seek_dir(dir_handle &dir, size_t pos, bool relative){
 	return dir.mount->driver.dirseek(dir.dirdata, pos, relative);
 }
 
-directory_entry fs_stat(char *path){
+directory_entry fs_stat(const char *path){
 	directory_entry ret;
 	char *fspath=getfspath(path);
 	if(!fspath){

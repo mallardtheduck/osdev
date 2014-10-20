@@ -110,7 +110,7 @@ inline static void add_device(char *name, drv_driver *driver, void *id){
 	SYSCALL_TABLE->add_device(name, driver, id);
 }
 
-inline static drv_device *get_device(char *name){
+inline static drv_device *get_device(const char *name){
 	return SYSCALL_TABLE->get_device(name);
 }
 
@@ -122,7 +122,7 @@ inline static void *get_next_device(void *itr, char **name){
 	return SYSCALL_TABLE->get_next_device(itr, name);
 }
 
-inline static void* devopen(char *name){
+inline static void* devopen(const char *name){
 	return SYSCALL_TABLE->devopen(name);
 }
 
@@ -178,15 +178,15 @@ inline static void add_filesystem(fs_driver *fs){
 	SYSCALL_TABLE->add_filesystem(fs);
 }
 
-inline static bool mount(char *name, char *device, char *fs){
+inline static bool mount(const char *name, const char *device, const char *fs){
 	return SYSCALL_TABLE->mount(name, device, fs);
 }
 
-inline static bool unmount(char *name){
+inline static bool unmount(const char *name){
 	return SYSCALL_TABLE->unmount(name);
 }
 
-inline static file_handle *fopen(char *path, fs_mode_flags mode){
+inline static file_handle *fopen(const char *path, fs_mode_flags mode){
 	return SYSCALL_TABLE->fopen(path, mode);
 }
 
@@ -210,11 +210,11 @@ inline static int fioctl(file_handle *handle, int fn, size_t bytes, char *buf){
 	return SYSCALL_TABLE->fioctl(handle, fn, bytes, buf);
 }
 
-inline static file_handle *fcreate(char *path){
+inline static file_handle *fcreate(const char *path){
 	return SYSCALL_TABLE->fcreate(path);
 }
 
-inline static dir_handle *diropen(char *path, fs_mode_flags mode){
+inline static dir_handle *diropen(const char *path, fs_mode_flags mode){
 	return SYSCALL_TABLE->diropen(path, mode);
 }
 
@@ -234,23 +234,23 @@ inline static bool dirseek(dir_handle *handle, size_t pos, bool relative){
 	return SYSCALL_TABLE->dirseek(handle, pos, relative);
 }
 
-inline static dir_handle *dircreate(char *path){
+inline static dir_handle *dircreate(const char *path){
 	return SYSCALL_TABLE->dircreate(path);
 }
 
-inline static directory_entry stat(char *path){
+inline static directory_entry stat(const char *path){
 	return SYSCALL_TABLE->stat(path);
 }
 
-inline static void module_load(char *path, char *params){
+inline static void module_load(const char *path, char *params){
 	SYSCALL_TABLE->module_load(path, params);
 }
 
-inline static void setenv(char *name, char *value, uint8_t flags, pid_t pid){
+inline static void setenv(const char *name, char *value, uint8_t flags, pid_t pid){
 	SYSCALL_TABLE->setenv(name, value, flags, pid);
 }
 
-inline static char *getenv(char *name, pid_t pid){
+inline static char *getenv(const char *name, pid_t pid){
 	return SYSCALL_TABLE->getenv(name, pid);
 }
 
@@ -258,7 +258,7 @@ inline static pid_t getpid(){
     return SYSCALL_TABLE->getpid();
 }
 
-inline static pid_t spawn(char *exec, size_t argc, char **argv){
+inline static pid_t spawn(const char *exec, size_t argc, char **argv){
 	return SYSCALL_TABLE->spawn(exec, argc, argv);
 }
 
@@ -270,7 +270,7 @@ inline static void kill(pid_t pid){
     SYSCALL_TABLE->kill(pid);
 }
 
-inline static void infofs_register(char *name, info_function fn){
+inline static void infofs_register(const char *name, info_function fn){
 	SYSCALL_TABLE->infofs_register(name, fn);
 }
 

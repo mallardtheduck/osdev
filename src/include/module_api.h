@@ -38,8 +38,8 @@ struct syscall_table{
 	bool (*try_take_lock)(lock *l);
 	void (*release_lock)(lock *l);
 
-	void (*dbgout)(char *msg);
-	void (*sprintf)(char *buf, char *fmt, ...);
+	void (*dbgout)(const char *msg);
+	void (*sprintf)(char *buf, const char *fmt, ...);
 
 	thread_id_t (*new_thread)(thread_func entry, void *param);
 	void (*block)();
@@ -54,17 +54,17 @@ struct syscall_table{
 	void (*thread_abort)(thread_id_t id);
 
 	void (*add_device)(char *name, drv_driver *driver, void *id);
-	drv_device *(*get_device)(char *name);
+	drv_device *(*get_device)(const char *name);
 	void *(*get_first_device)(char **name);
 	void *(*get_next_device)(void *itr, char **name);
-	void *(*devopen)(char *name);
+	void *(*devopen)(const char *name);
 	bool (*devclose)(void *handle);
 	size_t (*devread)(void *handle, size_t bytes, char *buffer);
 	size_t (*devwrite)(void *handle, size_t bytes, char *buffer);
 	size_t (*devseek)(void *handle, size_t pos, bool relative);
 	int (*devioctl)(void *handle, int fn, size_t bytes, char *buffer);
-	int (*devtype)(char *name);
-	char *(*devdesc)(char *name);
+	int (*devtype)(const char *name);
+	char *(*devdesc)(const char *name);
 	void (*handle_int)(size_t intno, int_handler handler);
 	void (*handle_irq)(size_t irqno, int_handler handler);
 	void (*mask_irq)(size_t irqno);
@@ -72,37 +72,37 @@ struct syscall_table{
 	void (*irq_ack)(size_t irq_no);
 
 	void (*add_filesystem)(fs_driver *fs);
-	bool (*mount)(char *name, char *device, char *fs);
-	bool (*unmount)(char *name);
+	bool (*mount)(const char *name, const char *device, const char *fs);
+	bool (*unmount)(const char *name);
 
-	file_handle *(*fopen)(char *path, fs_mode_flags mode);
+	file_handle *(*fopen)(const char *path, fs_mode_flags mode);
 	bool (*fclose)(file_handle *handle);
 	size_t (*fread)(file_handle *handle, size_t bytes, char *buf);
 	size_t (*fwrite)(file_handle *handle, size_t bytes, char *buf);
 	size_t (*fseek)(file_handle *handle, size_t pos, bool relative);
 	int (*fioctl)(file_handle *handle, int fn, size_t bytes, char *buf);
     void (*fflush)(file_handle *handle);
-	file_handle *(*fcreate)(char *path);
+	file_handle *(*fcreate)(const char *path);
 
-	dir_handle *(*diropen)(char *path, fs_mode_flags mode);
+	dir_handle *(*diropen)(const char *path, fs_mode_flags mode);
 	bool (*dirclose)(dir_handle *handle);
 	directory_entry (*dirread)(dir_handle *handle);
 	bool (*dirwrite)(dir_handle *handle, directory_entry entry);
 	bool (*dirseek)(dir_handle *handle, size_t pos, bool relative);
-	dir_handle *(*dircreate)(char *path);
-	directory_entry (*stat)(char *path);
+	dir_handle *(*dircreate)(const char *path);
+	directory_entry (*stat)(const char *path);
 
-	void (*module_load)(char *path, char *params);
+	void (*module_load)(const char *path, char *params);
 
-	void (*setenv)(char *name, char *value, uint8_t flags, pid_t pid);
-	char *(*getenv)(char *name, pid_t pid);
+	void (*setenv)(const char *name, char *value, uint8_t flags, pid_t pid);
+	char *(*getenv)(const char *name, pid_t pid);
 
 	pid_t (*getpid)();
-	pid_t (*spawn)(char *exec, size_t argc, char **argv);
+	pid_t (*spawn)(const char *exec, size_t argc, char **argv);
 	void (*wait)(pid_t pid);
     void (*kill)(pid_t pid);
 
-	void (*infofs_register)(char *name, info_function fn);
+	void (*infofs_register)(const char *name, info_function fn);
 };
 
 #ifndef __cplusplus

@@ -140,7 +140,7 @@ fs_driver infofs_driver={true, "INFOFS", false, infofs_mount, infofs_unmount, in
 	infofs_write, infofs_seek, infofs_ioctl, infofs_flush, infofs_open_dir, infofs_close_dir, infofs_read_dir, infofs_write_dir,
 	infofs_dirseek, infofs_stat};
 
-void infofs_register(char *name, info_function fn){
+void infofs_register(const char *name, info_function fn){
 	if(!info_items) info_items=new map<string, info_function>();
 	(*info_items)[name]=fn;
 }
