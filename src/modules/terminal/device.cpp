@@ -5,7 +5,7 @@
 
 lock term_lock;
 
-const char *terminal_var="CURRENT_TERMINAL";
+const char *terminal_var="TERMID";
 
 struct term_instance{
     vterm *terminal;
