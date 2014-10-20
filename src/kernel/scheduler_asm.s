@@ -9,16 +9,16 @@ sch_yield:
 	mov $0x0, %eax
 	mov sch_inited, %ebx
 	cmp %eax, %ebx
-	jne inited
+	jne 1f
 	popa
 	ret
-inited:
+1:
 	call sch_dolock
 	cmp $0x0, %eax
-	jne lock_ok
+	jne 2f
 	popa
 	ret
-lock_ok:
+2:
 	mov 32(%esp), %eax
 	push %eax
 	call sch_update_eip
