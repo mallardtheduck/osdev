@@ -1,4 +1,4 @@
-PROGS := test ctest cpptest cmd cls termctl
+PROGS := test ctest cpptest cmd cls termctl switcher
 
 all: dummy.file
 	for dir in $(PROGS); do \

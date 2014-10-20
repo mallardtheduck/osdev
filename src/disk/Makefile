@@ -1,4 +1,4 @@
-import-files:=data/ctest.elx data/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx
+import-files:=data/ctest.elx data/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/switcher.elx
 
 all: ~/.mtoolsrc btos.img copy.always
 
@@ -25,6 +25,9 @@ data/btos/cmd/cls.elx: ../user/cls/cls.elx directories.always
 
 data/btos/cmd/termctl.elx: ../user/termctl/termctl.elx directories.always
 	cp ../user/termctl/termctl.elx $@
+
+data/btos/switcher.elx: ../user/switcher/switcher.elx directories.always
+	cp ../user/switcher/switcher.elx $@
 
 directories.always:
 	mkdir -p data/btos/cmd
