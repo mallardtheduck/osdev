@@ -242,7 +242,13 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         terminals->get(new_id)->sync(false);
         terminals->switch_terminal(new_id);
         if(buf) {
+            char old_terminal_id[128]={0};
+            strncpy(old_terminal_id, getenv(terminal_var, getpid()), 128);
+            char new_terminal_id[128]={0};
+            i64toa(new_id, new_terminal_id, 10);
+            setenv(terminal_var, new_terminal_id, 0, 0);
             pid_t pid=spawn(buf, 0, NULL);
+            setenv(terminal_var, old_terminal_id, 0, 0);
             if(!pid) terminals->get(new_id)->close();
         }
     }else if(fn == bt_terminal_ioctl::SwtichTerminal){
@@ -409,7 +415,7 @@ void vterm_list::switch_terminal(uint64_t id) {
 
 vterm *vterm_list::get(uint64_t id) {
     for(size_t i=0; i<count; ++i) {
-        if (terminals[i]->get_id() == id) {
+        if (!id || terminals[i]->get_id() == id) {
             return terminals[i];
         }
     }

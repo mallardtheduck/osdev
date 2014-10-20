@@ -69,7 +69,7 @@ public:
     void sync(bool content=true);
 };
 
-extern vterm *current_vterm;
+//extern vterm *current_vterm;
 
 class vterm_list{
 private:
@@ -81,7 +81,7 @@ public:
     vterm_list();
 
     uint64_t create_terminal(i_backend *back);
-    void delete_terminal(uint64_t id = current_vterm->get_id());
+    void delete_terminal(uint64_t id);
     void switch_terminal(uint64_t id);
     vterm *get(uint64_t id);
     size_t get_count();
