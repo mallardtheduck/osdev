@@ -212,7 +212,7 @@ file_handle fs_open(const char *path, fs_mode_flags mode){
 }
 
 bool fs_close(file_handle &file){
-	if(!file.valid) return false;
+	if(!file.valid) return true;
 	bool ret=file.mount->driver.close(file.filedata);
 	if(ret) {
         amm_close(file);
