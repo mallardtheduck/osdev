@@ -84,12 +84,14 @@ void console_backend::open(uint64_t /*id*/){
 
 void console_backend::close(uint64_t id){
     if(is_active(id)){
+        dbgpf("TERM: Active terminal closed, activating new terminal..\n");
         //TODO: Make this work with multiple backends!
         vterm *term=terminals->get(0);
         if(!term){
             uint64_t new_id=terminals->create_terminal(this);
             term=terminals->get(new_id);
         }
+        dbgpf("TERM: Activating terminal %i\n", (int)term->get_id());
         term->activate();
     }
 }

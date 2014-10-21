@@ -285,6 +285,7 @@ void vterm::close(){
     if(!refcount){
         if(terminals->get_count() > 1){
             terminals->delete_terminal(id);
+            backend->close(id);
         }
     }
 }
