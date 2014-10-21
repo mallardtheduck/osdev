@@ -41,10 +41,17 @@ int main(){
     string termid=get_env("TERMID");
     uint64_t cterm=atoi(termid.c_str());
     for(const term &t : terms){
-        if(t.id != cterm) cout << t.id << ":" << t.title << endl;
+        if(t.id != cterm) cout << t.id << " : " << t.title << endl;
     }
-    uint64_t new_id;
+    cout << "n : " << "New terminal." << endl;
     cout << '?';
-    cin >> new_id;
-    bt_fioctl(fh, bt_terminal_ioctl::SwtichTerminal, sizeof(new_id), (char*)&new_id);
+    string input;
+    getline(cin, input);
+    if(input=="n") {
+        string shell=get_env("SHELL");
+        bt_fioctl(fh, bt_terminal_ioctl::NewTerminal, shell.length(), (char*)shell.c_str());
+    }else{
+        uint64_t new_id = atoi(input.c_str());
+        bt_fioctl(fh, bt_terminal_ioctl::SwtichTerminal, sizeof(new_id), (char *) &new_id);
+    }
 }
