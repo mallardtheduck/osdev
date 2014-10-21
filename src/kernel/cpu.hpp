@@ -65,6 +65,7 @@ enum {
 void init_cpu();
 char *cpu_idstring();
 uint64_t cpu_get_speed();
+uint32_t cpu_get_umips();
 char *cpu_brandstring();
 
 #endif

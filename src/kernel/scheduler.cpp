@@ -70,9 +70,16 @@ char *sch_threads_infofs(){
 void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
+    uint32_t basefreq=11931820;
+    uint32_t wantfreq=(uint32_t)cpu_get_umips();
+    dbgpf("SCH: Wf: %i\n", (int)wantfreq);
+    if(!wantfreq) wantfreq=basefreq;
+    uint16_t value=(uint16_t)(basefreq/wantfreq);
+    if(!value) value=1;
+    dbgpf("SCH: Value: %i\n", (int)value);
 	outb(0x43, 0x36);
-	outb(0x40, 39000 & 0xFF);
-	outb(0x40, (39000 >> 8) & 0xFF);
+	outb(0x40, value & 0xFF);
+	outb(0x40, (value >> 8) & 0xFF);
 	threads=new vector<sch_thread>();
 	sch_stack=(char*)malloc(4096)+4096;
 	sch_thread mainthread;
@@ -298,7 +305,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 }
 
 extern "C" uint32_t sch_dolock(){
-    if(!are_interrupts_enabled()) panic("(SCH) Attempt to yield while interrupts are disabled!");
+    if(!are_interrupts_enabled()) enable_interrupts();//panic("(SCH) Attempt to yield while interrupts are disabled!");
 	if(!try_take_lock_exclusive(sch_lock)){
 		dbgout("SCH: Scheduler run while locked!\n");
 		return 0;

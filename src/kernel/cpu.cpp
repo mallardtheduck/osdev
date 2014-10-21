@@ -40,3 +40,7 @@ uint64_t cpu_get_speed(){
 	uint32_t ticks=(0x10000 - (hi*256+lo));
 	return (end-start)*1193180 / ticks;
 }
+
+uint32_t cpu_get_umips(){
+    return cpu_get_speed() / 1000000;
+}
