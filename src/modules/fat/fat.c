@@ -65,33 +65,46 @@ void release_fat_lock(){
 }
 
 int fat_device_read(uint32_t sector, uint8_t *buffer, uint32_t sector_count){
+    take_fat_lock();
 	size_t readaddr=sector*512;
 	size_t readsize=sector_count*512;
 	fseek(fh, readaddr, false);
-	return fread(fh, readsize, (char*)buffer);
+	int ret=fread(fh, readsize, (char*)buffer);
+    release_fat_lock();
+    return ret;
 }
 
 int fat_device_write(uint32_t sector, uint8_t *buffer, uint32_t sector_count){
+    take_fat_lock();
 	size_t writeaddr=sector*512;
     size_t writesize=sector_count*512;
     fseek(fh, writeaddr, false);
-    return fwrite(fh, writesize, (char*)buffer);
+    int ret=fwrite(fh, writesize, (char*)buffer);
+    release_fat_lock();
+    return ret;
 }
 
 void *fat_mount(char *device){
-	if(mounted) return NULL;
+    take_fat_lock();
+	if(mounted) {
+        release_fat_lock();
+        return NULL;
+    }
 	sprintf(devicepath, "%s", device);
 	fh=fopen(devicepath, FS_Read | FS_Write);
 	fl_init();
 	fl_attach_locks(&take_fat_lock, &release_fat_lock);
 	fl_attach_media(&fat_device_read, &fat_device_write);
 	mounted=true;
+    release_fat_lock();
 	return fatmagic;
 }
 
 bool fat_unmount(void *mountdata){
 	if(mounted && mountdata==fatmagic){
+        take_fat_lock();
 		fl_shutdown();
+        release_fat_lock();
 		mounted=false;
 		return true;
 	} else return false;
@@ -99,6 +112,7 @@ bool fat_unmount(void *mountdata){
 
 void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 	if(mounted && mountdata==fatmagic){
+        take_fat_lock();
 		fat_file_handle *ret=malloc(sizeof(fat_file_handle));
 		ret->mode=mode;
 		mode=mode & ~(FS_Delete | FS_Exclude);
@@ -117,9 +131,11 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		if(flh)	ret->flh=flh;
 		else{
 			free(ret);
+            release_fat_lock();
 			return NULL;
 		}
 		dbgpf("FAT: Opened %s.\n", ((FL_FILE*)flh)->filename);
+        release_fat_lock();
 		return ret;
 	} else return NULL;
 }
@@ -127,35 +143,44 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 bool fat_close(void *filedata){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return false;
+    take_fat_lock();
 	fl_fclose(fd->flh);
 	if(fd->mode & FS_Delete){
 		fl_remove(fd->path);
 	}
 	free(fd);
+    release_fat_lock();
 	return true;
 }
 
 size_t fat_read(void *filedata, size_t bytes, char *buf){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return 0;
+    take_fat_lock();
 	int ret=fl_fread(buf, bytes, 1, fd->flh);
+    release_fat_lock();
 	return (ret>=0)?ret:0;
 }
 
 size_t fat_write(void *filedata, size_t bytes, char *buf){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return 0;
+    take_fat_lock();
 	int ret=fl_fwrite(buf, bytes, 1, fd->flh);
+    release_fat_lock();
 	return (ret>=0)?ret:0;
 }
 
 size_t fat_seek(void *filedata, int pos, bool relative){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return 0;
+    take_fat_lock();
 	int origin=SEEK_SET;
 	if(relative) origin=SEEK_CUR;
 	fl_fseek(fd->flh, pos, origin);
-	return fl_ftell(fd->flh);
+	size_t ret=fl_ftell(fd->flh);
+    release_fat_lock();
+    return ret;
 }
 
 int fat_ioctl(void *filedata, int fn, size_t bytes, char *buf){
@@ -163,11 +188,14 @@ int fat_ioctl(void *filedata, int fn, size_t bytes, char *buf){
 }
 
 void fat_flush(void *filedata){
+    take_fat_lock();
     fl_shutdown();
+    release_fat_lock();
 }
 
 void *fat_open_dir(void *mountdata, fs_path *path, fs_mode_flags mode){
 	if(mounted && mountdata==fatmagic){
+        take_fat_lock();
 		char spath[BT_MAX_PATH]={0};
 		fs_path_to_string(path, spath);
 		fat_dir_handle *ret=malloc(sizeof(fat_dir_handle));
@@ -183,8 +211,10 @@ void *fat_open_dir(void *mountdata, fs_path *path, fs_mode_flags mode){
 		if(!res){
 			free(ret->fld);
 			free(ret);
+            release_fat_lock();
 			return NULL;
 		}
+        release_fat_lock();
 		return ret;
 	}else return NULL;
 }
@@ -192,6 +222,7 @@ void *fat_open_dir(void *mountdata, fs_path *path, fs_mode_flags mode){
 bool fat_close_dir(void *dirdata){
 	fat_dir_handle *dir=(fat_dir_handle*)dirdata;
 	if(dir){
+        take_fat_lock();
 		fl_closedir(dir->fld);
 		if(dir->mode & FS_Delete){
 			void *fd=fl_fopen(dir->path, "a");
@@ -201,6 +232,7 @@ bool fat_close_dir(void *dirdata){
 		}
 		free(dir->fld);
 		free(dir);
+        release_fat_lock();
 		return true;
 	} else return false;
 }
@@ -208,6 +240,7 @@ bool fat_close_dir(void *dirdata){
 directory_entry fat_read_dir(void *dirdata){
 	fat_dir_handle *dir=(fat_dir_handle*)dirdata;
 	if(dir){
+        take_fat_lock();
 		directory_entry ret;
 		fl_dirent ent;
 		if(!fl_readdir(dir->fld, &ent)){
@@ -215,8 +248,12 @@ directory_entry fat_read_dir(void *dirdata){
 			strncpy(ret.filename, ent.filename, 255);
 			ret.type=(ent.is_dir)?FS_Directory:FS_File;
 			ret.size=ent.size;
+            release_fat_lock();
 			return ret;
-		} else return invalid_directory_entry;
+		} else {
+            release_fat_lock();
+            return invalid_directory_entry;
+        }
 	} else return invalid_directory_entry;
 }
 
@@ -230,6 +267,7 @@ size_t fat_dirseek(void *dirdata, int pos, bool relative){
 
 directory_entry fat_stat(void *mountdata, fs_path *path){
 	if(mounted && mountdata==fatmagic){
+        take_fat_lock();
 		char spath[BT_MAX_SEGLEN]={0};
 		fs_path_to_string(path, spath);
 		fs_item_types type=FS_Invalid;
@@ -242,7 +280,10 @@ directory_entry fat_stat(void *mountdata, fs_path *path){
 			fl_fclose(flh);
 		}else if(fl_is_dir(spath)){
 			type=FS_Directory;
-		}else return invalid_directory_entry;
+		}else {
+            release_fat_lock();
+            return invalid_directory_entry;
+        }
 
 		directory_entry ret;
         ret.valid=true;
@@ -250,6 +291,7 @@ directory_entry fat_stat(void *mountdata, fs_path *path){
         strncpy(ret.filename, lastpart->str, BT_MAX_SEGLEN);
         ret.type=type;
         ret.size=filesize;
+        release_fat_lock();
         return ret;
 	}else return invalid_directory_entry;
 }
@@ -261,7 +303,6 @@ fs_driver fat_driver={true, "FAT", true,
 int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
 	init_lock(&fat_lock);
-	init_lock(&super_lock);
 	add_filesystem(&fat_driver);
     return 0;
 }

@@ -2,6 +2,7 @@
 #include "io.h"
 #include "ata.hpp"
 #include "module_cpp.hpp"
+#include "holdlock.hpp"
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
@@ -19,7 +20,7 @@ struct ata_device {
 	ata_identify_t identity;
 };
 
-lock ata_lock;
+lock ata_lock, ata_drv_lock;
 
 /* TODO support other sector sizes */
 #define ATA_SECTOR_SIZE 512
@@ -233,6 +234,7 @@ struct ata_instance{
 };
 
 void *ata_open(void *id){
+    hold_lock hl(&ata_drv_lock);
 	ata_instance *instance=new ata_instance();
 	instance->dev=(ata_device*)id;
 	instance->pos=0;
@@ -240,6 +242,7 @@ void *ata_open(void *id){
 }
 
 bool ata_close(void *instance){
+    hold_lock hl(&ata_drv_lock);
 	if(instance){
 		delete (ata_device*) instance;
 		return true;
@@ -247,6 +250,7 @@ bool ata_close(void *instance){
 }
 
 size_t ata_read(void *instance, size_t bytes, char *buf){
+    hold_lock hl(&ata_drv_lock);
 	if(bytes % 512) return 0;
 	ata_instance *inst=(ata_instance*)instance;
 	for(size_t i=0; i<bytes; i+=512){
@@ -257,6 +261,7 @@ size_t ata_read(void *instance, size_t bytes, char *buf){
 }
 
 size_t ata_write(void *instance, size_t bytes, char *buf){
+    hold_lock hl(&ata_drv_lock);
 	if(bytes % 512) return 0;
 	ata_instance *inst=(ata_instance*)instance;
 	for(size_t i=0; i<bytes; i+=512){
@@ -267,6 +272,7 @@ size_t ata_write(void *instance, size_t bytes, char *buf){
 }
 
 size_t ata_seek(void *instance, size_t pos, bool relative){
+    hold_lock hl(&ata_drv_lock);
 	ata_instance *inst=(ata_instance*)instance;
 	if(pos % 512) return inst->pos;
 	if(relative) inst->pos+=pos;
@@ -291,6 +297,7 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 	ata_driver=driver;
 	SYSCALL_TABLE=systbl;
 	init_lock(&ata_lock);
+    init_lock(&ata_drv_lock);
 	ata_initialize();
     return 0;
 }
