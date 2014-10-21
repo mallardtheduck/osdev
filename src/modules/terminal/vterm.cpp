@@ -284,8 +284,9 @@ void vterm::close(){
     if(refcount) refcount--;
     if(!refcount){
         if(terminals->get_count() > 1){
+            i_backend *back=backend;
             terminals->delete_terminal(id);
-            backend->close(id);
+            back->close(id);
         }
     }
 }
