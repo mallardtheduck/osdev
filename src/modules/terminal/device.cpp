@@ -59,6 +59,11 @@ void *term_open(void */*id*/){
         termid=atoi64(getenv(terminal_var, getpid()));
     }
     ret->terminal=terminals->get(termid);
+    if(!ret->terminal) {
+        dbgpf("TERM: Could not locate terminal %i!\n", (int)termid);
+        ret->terminal = terminals->get(0);
+    }
+    if(!ret->terminal) return NULL;
     ret->terminal->open();
     char termidvalue[128]={0};
     i64toa(ret->terminal->get_id(), termidvalue, 10);
