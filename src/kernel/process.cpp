@@ -160,11 +160,18 @@ pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent, file_
 }
 
 void proc_end(pid_t pid) {
+    if(pid==0) return;
     hold_lock hl(proc_lock);
     pid_t curpid=proc_current_pid;
     if(curpid == pid) curpid=0;
+    if(proc_get_status(pid) == proc_status::Ending){
+        dbgpf("PROC: Process %i is already ending.\n", (int) pid);
+        release_lock(proc_lock);
+        proc_wait(pid);
+        return;
+    }
     dbgpf("PROC: Ending process %i.\n", (int) pid);
-    proc_set_status(proc_status::Ending);
+    proc_set_status(proc_status::Ending, pid);
     proc_process *proc = proc_get(pid);
     if(!proc) return;
     pid_t parent = proc->parent;
@@ -178,20 +185,29 @@ void proc_end(pid_t pid) {
             if(i->second.type==kernel_handle_types::thread) {
                 uint64_t thread_id = *(uint64_t *) i->second.value;
                 if (thread_id != sch_get_id()) {
-                    proc_remove_thread(thread_id, pid);
                     release_lock(proc_lock);
                     sch_abort(thread_id);
                     take_lock_exclusive(proc_lock);
+                    proc_remove_thread(thread_id, pid);
                     cont = true;
                     break;
                 }
             }
         }
     }
-    for (map<handle_t, bt_handle_info>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
-        close_handle(i->second);
+    cont=true;
+    while(cont) {
+        cont=false;
+        for (map<handle_t, bt_handle_info>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
+            release_lock(proc_lock);
+            sch_yield();
+            close_handle(i->second);
+            take_lock_exclusive(proc_lock);
+            proc_remove_handle(i->first, pid);
+            cont = true;
+            break;
+        }
     }
-
     if(proc->file.valid) fs_close(proc->file);
     proc_switch(curpid);
     for (list<proc_process>::iterator i = proc_processes->begin(); i; ++i) {
@@ -449,6 +465,7 @@ void proc_remove_thread_handle(handle_t h, pid_t pid){
 handle_t proc_add_thread(uint64_t thread_id, pid_t pid){
     handle_t ret=proc_get_thread_handle(thread_id, pid);
     if(ret) return ret;
+    if(proc_get_status(pid) == proc_status::Ending) return 0;
     bt_handle_info handle=create_handle(kernel_handle_types::thread, new uint64_t(thread_id), &close_thread_handle);
     return proc_add_handle(handle, pid);
 }
@@ -472,7 +489,7 @@ handle_t proc_get_thread_handle(uint64_t thread_id, pid_t pid){
 
 void proc_terminate(pid_t pid){
     dbgpf("PROC: Terminating PID: %i\n", pid);
-    if(pid==0) panic("(PROC) Request to terminate kernel!");
+    if(pid==0) return; // panic("(PROC) Request to terminate kernel!");
     proc_setreturn(-1);
     bool current=false;
     if(pid==proc_current_pid) {
