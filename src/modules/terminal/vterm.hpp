@@ -77,6 +77,7 @@ private:
     vterm **terminals;
     size_t count;
     uint64_t id;
+    lock vtl_lock;
 
 public:
     vterm_list();

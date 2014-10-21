@@ -382,9 +382,11 @@ vterm_list::vterm_list() {
     terminals=(vterm**)malloc(0);
     count=0;
     id=0;
+    init_lock(&vtl_lock);
 }
 
 uint64_t vterm_list::create_terminal(i_backend *back) {
+    hold_lock hl(&vtl_lock);
     vterm *newterm=new vterm(++id, back);
     vterm **terms=new vterm*[count+1];
     memcpy(terms, terminals, count*sizeof(vterm*));
@@ -396,6 +398,7 @@ uint64_t vterm_list::create_terminal(i_backend *back) {
 }
 
 void vterm_list::delete_terminal(uint64_t id) {
+    hold_lock hl(&vtl_lock);
     bool switchterm=false;
     if(current_vterm->get_id() == id){
         switchterm=true;
@@ -423,6 +426,7 @@ void vterm_list::delete_terminal(uint64_t id) {
 }
 
 void vterm_list::switch_terminal(uint64_t id) {
+    hold_lock hl(&vtl_lock);
     for(size_t i=0; i<count; ++i){
         if(terminals[i]->get_id() == id){
             if(current_vterm) current_vterm->deactivate();
@@ -434,6 +438,7 @@ void vterm_list::switch_terminal(uint64_t id) {
 }
 
 vterm *vterm_list::get(uint64_t id) {
+    hold_lock hl(&vtl_lock);
     for(size_t i=0; i<count; ++i) {
         if (!id || terminals[i]->get_id() == id) {
             return terminals[i];
