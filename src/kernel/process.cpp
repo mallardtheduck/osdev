@@ -200,7 +200,6 @@ void proc_end(pid_t pid) {
         cont=false;
         for (map<handle_t, bt_handle_info>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
             release_lock(proc_lock);
-            sch_yield();
             close_handle(i->second);
             take_lock_exclusive(proc_lock);
             proc_remove_handle(i->first, pid);
@@ -208,7 +207,11 @@ void proc_end(pid_t pid) {
             break;
         }
     }
-    if(proc->file.valid) fs_close(proc->file);
+    if(proc->file.valid) {
+        release_lock(proc_lock);
+        fs_close(proc->file);
+        take_lock_exclusive(proc_lock);
+    }
     proc_switch(curpid);
     for (list<proc_process>::iterator i = proc_processes->begin(); i; ++i) {
         if (i->pid == pid) {
