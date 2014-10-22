@@ -52,6 +52,8 @@ void sch_idlethread(void*);
 
 lock sch_lock;
 bool sch_inited=false;
+static const uint32_t cstart=10;
+static uint32_t counter=cstart;
 
 char *sch_threads_infofs(){
 	char *buffer=(char*)malloc(4096);
@@ -71,7 +73,7 @@ void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
     uint32_t basefreq=11931820;
-    uint32_t wantfreq=(uint32_t)cpu_get_umips()/10;
+    uint32_t wantfreq=(uint32_t)cpu_get_umips();
     dbgpf("SCH: Wf: %i\n", (int)wantfreq);
     if(wantfreq < 20) wantfreq=20;
     uint16_t value=(uint16_t)(basefreq/wantfreq);
@@ -319,13 +321,19 @@ extern "C" void sch_unlock(){
 
 void sch_isr(int, isr_regs *regs){
 	if(try_take_lock_exclusive(sch_lock)){
-        sch_abortable(true);
-        (*threads)[current_thread].eip=regs->eip;
-        release_lock(sch_lock);
-        enable_interrupts();
-		sch_yield();
-        disable_interrupts();
-        sch_abortable(false);
+        counter--;
+        if(!counter) {
+            counter=cstart;
+            sch_abortable(true);
+            (*threads)[current_thread].eip = regs->eip;
+            release_lock(sch_lock);
+            enable_interrupts();
+            sch_yield();
+            disable_interrupts();
+            sch_abortable(false);
+        }else{
+            release_lock(sch_lock);
+        }
 	}
 }
 
