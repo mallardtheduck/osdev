@@ -5,6 +5,8 @@
 #include "locks.hpp"
 #include "strutil.hpp"
 
+static const uint32_t default_userspace_priority=100;
+
 extern "C" void proc_run_usermode(void *stack, proc_entry entry, int argc, char **argv);
 
 proc_process *proc_current_process;
@@ -299,6 +301,7 @@ void proc_start(void *ptr){
 	if(!proc_switch(pid)) return;
 	if(!stackptr) stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
 	sch_abortable(true);
+    sch_set_priority(default_userspace_priority);
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 
