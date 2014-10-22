@@ -29,7 +29,12 @@ int close(int file){
 }
 
 int execve(char *name, char **argv, char **env){
-    lastchild=bt_spawn(name, 0, NULL);
+    size_t i=0;
+    if(argv){
+        while(argv[i]) ++i;
+    }
+    lastchild=bt_spawn(name, i, argv);
+    if(!lastchild) return -1;
     return lastchild;
 }
 
