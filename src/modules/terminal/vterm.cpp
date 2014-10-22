@@ -240,6 +240,11 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
     }else if(fn==bt_vid_ioctl::ClearScreen){
         memset(buffer, 0, bufsize);
         seek(opts, 0, false);
+        if(vidmode.textmode) {
+            for (size_t i = 1; i < bufsize; i += 2) {
+                buffer[i] = textcolour;
+            }
+        }
         if(backend->is_active(id)){
             backend->display_ioctl(fn, size, buf);
         }
