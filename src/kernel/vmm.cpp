@@ -529,7 +529,7 @@ void *vmm_alloc(size_t pages, vmm_allocmode::Enum mode){
 }
 
 void *vmm_alloc_at(size_t pages, size_t baseaddr){
-	hold_lock hl(vmm_lock);
+	hold_lock hl(vmm_lock, false);
 	size_t virtpage=baseaddr/VMM_PAGE_SIZE;
 	for(size_t i=0; i<pages; ++i){
 		if(vmm_cur_pagedir->is_mapped((void*)((virtpage+i)*VMM_PAGE_SIZE))) continue;
@@ -614,7 +614,7 @@ size_t vmm_gettotalmem(){
 }
 
 void vmm_set_flags(uint32_t pageaddr, amm_flags::Enum flags){
-    hold_lock hl(vmm_lock);
+    hold_lock hl(vmm_lock, false);
     vmm_cur_pagedir->set_flags(pageaddr, flags);
 }
 

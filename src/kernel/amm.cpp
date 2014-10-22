@@ -78,7 +78,7 @@ vector<amm_filemap> *amm_filemappings;
 static const uint32_t amm_mmap_marker=0xFF01000;
 
 static bool amm_inited=false;
-static lock amm_lock;
+static lock &amm_lock=vmm_lock;
 extern char _start, _end;
 
 void amm_page_fault_handler(int, isr_regs *regs);
@@ -120,7 +120,7 @@ void amm_mark_free(uint32_t pageaddr){
 
 amm_flags::Enum amm_get_flags(uint32_t pageaddr){
 	if(!amm_inited) return amm_flags::Normal;
-	hold_lock hl(amm_lock);
+	hold_lock hl(amm_lock, false);
 	if(amm_allocated_pages->has_key(pageaddr)){
 		return (*amm_allocated_pages)[pageaddr].flags;
 	}else return amm_flags::Normal;
@@ -128,7 +128,7 @@ amm_flags::Enum amm_get_flags(uint32_t pageaddr){
 
 void amm_set_info(uint32_t pageaddr, amm_flags::Enum flags, void *ptr){
     if(!amm_inited) return;
-    hold_lock hl(amm_lock);
+    hold_lock hl(amm_lock, false);
     if(amm_allocated_pages->has_key(pageaddr)) {
         dbgpf("AMM: Setting info on %x: flags: %x ptr: %x\n", pageaddr, flags, ptr);
         (*amm_allocated_pages)[pageaddr].flags=flags;
@@ -259,7 +259,7 @@ uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
 }
 
 void amm_flush(file_handle &file){
-    hold_lock hl(amm_lock);
+    hold_lock hl(amm_lock, false);
     if(!(file.mode & FS_Write)) return;
     vector<amm_filemap> &mappings=*amm_filemappings;
     for(size_t i=0; i<mappings.size(); ++i){
@@ -328,7 +328,7 @@ void amm_flush(file_handle &file){
 
 void amm_close(file_handle &file) {
     amm_flush(file);
-    hold_lock hl(amm_lock);
+    hold_lock hl(amm_lock, false);
     vector<amm_filemap> &mappings=*amm_filemappings;
     for(size_t i=0; i<mappings.size(); ++i){
         if(mappings[i].file.filedata != file.filedata) continue;
@@ -375,7 +375,7 @@ void amm_close(file_handle &file) {
 }
 
 void amm_closemap(uint64_t id) {
-    hold_lock hl(amm_lock);
+    hold_lock hl(amm_lock, false);
     vector<amm_filemap> &mappings=*amm_filemappings;
     for(size_t i=0; i<mappings.size(); ++i){
         if(mappings[i].id != id) continue;
