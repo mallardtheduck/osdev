@@ -71,9 +71,9 @@ void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
     uint32_t basefreq=11931820;
-    uint32_t wantfreq=(uint32_t)cpu_get_umips();
+    uint32_t wantfreq=(uint32_t)cpu_get_umips()/10;
     dbgpf("SCH: Wf: %i\n", (int)wantfreq);
-    if(!wantfreq) wantfreq=basefreq;
+    if(wantfreq < 20) wantfreq=20;
     uint16_t value=(uint16_t)(basefreq/wantfreq);
     if(!value) value=1;
     dbgpf("SCH: Value: %i\n", (int)value);
