@@ -37,6 +37,7 @@ vterm::vterm(uint64_t nid, i_backend *back){
 }
 
 vterm::~vterm(){
+    backend->close(id);
     if(buffer) free(buffer);
 }
 
@@ -284,10 +285,8 @@ void vterm::close(){
     if(refcount) refcount--;
     if(!refcount){
         if(terminals->get_count() > 1){
-            i_backend *back=backend;
             release_lock(&term_lock);
             terminals->delete_terminal(id);
-            back->close(id);
             return;
         }
     }
@@ -409,9 +408,10 @@ void vterm_list::delete_terminal(uint64_t id) {
         switchterm=true;
         current_vterm->deactivate();
     }
+    vterm *term=NULL;
     for(size_t i=0; i<count; ++i){
         if(terminals[i]->get_id() == id){
-            delete terminals[i];
+            term=terminals[i];
             vterm **terms=new vterm*[count-1];
             for(size_t j=0; j<i; ++j){
                 terms[j]=terminals[j];
@@ -427,6 +427,7 @@ void vterm_list::delete_terminal(uint64_t id) {
             current_vterm->activate();
             switchterm=false;
         }
+        if(term) delete term;
     }
 }
 
