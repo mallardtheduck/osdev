@@ -69,8 +69,7 @@ add_dependencies(dummy_user user)
 
 add_custom_target(build)
 add_dependencies(build kernel)
-add_dependencies(kernel moodules)
-add_dependencies(kernel user)
+add_dependencies(kernel user modules)
 
 add_custom_target(
     clean
