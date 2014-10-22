@@ -8,6 +8,8 @@
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
 
+uint64_t default_terminal;
+
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
 void init();
@@ -19,12 +21,14 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 }
 
 void init(){
-    cons_backend=new console_backend();
+    init_device();
     terminals=new vterm_list();
+    cons_backend=new console_backend();
+    cons_backend->start_switcher();
     uint64_t id=terminals->create_terminal(cons_backend);
     terminals->get(id)->sync();
     terminals->switch_terminal(id);
-    init_device();
+    default_terminal=id;
     infofs_register("TERMS", &terms_infofs);
 }
 

@@ -67,7 +67,7 @@ void *term_open(void */*id*/){
     ret->terminal->open();
     char termidvalue[128]={0};
     i64toa(ret->terminal->get_id(), termidvalue, 10);
-    setenv(terminal_var, termidvalue, 0, 0);
+    setenv(terminal_var, termidvalue, 0, getpid());
     return ret;
 }
 

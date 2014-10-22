@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <iostream>
+#include <video_dev.h>
 
 using namespace std;
 
@@ -36,22 +37,25 @@ vector<term> get_term_list(){
 int main(){
     string title="SWITCHER";
     btos_api::bt_filehandle fh=btos_get_handle(fileno(stdout));
-    bt_fioctl(fh, bt_terminal_ioctl::SetTitle , title.length(), (char*)title.c_str());
-    vector<term> terms=get_term_list();
     string termid=get_env("TERMID");
     uint64_t cterm=atoi(termid.c_str());
-    for(const term &t : terms){
-        if(t.id != cterm) cout << t.id << " : " << t.title << endl;
-    }
-    cout << "n : " << "New terminal." << endl;
-    cout << '?';
-    string input;
-    getline(cin, input);
-    if(input=="n") {
-        string shell=get_env("SHELL");
-        bt_fioctl(fh, bt_terminal_ioctl::NewTerminal, shell.length(), (char*)shell.c_str());
-    }else{
-        uint64_t new_id = atoi(input.c_str());
-        bt_fioctl(fh, bt_terminal_ioctl::SwtichTerminal, sizeof(new_id), (char *) &new_id);
+    bt_fioctl(fh, bt_terminal_ioctl::SetTitle , title.length(), (char*)title.c_str());
+    while(true) {
+        bt_fioctl(fh, bt_vid_ioctl::ClearScreen, 0, NULL);
+        vector<term> terms = get_term_list();
+        for (const term &t : terms) {
+            if (t.id != cterm) cout << t.id << " : " << t.title << endl;
+        }
+        cout << "n : " << "New terminal." << endl;
+        cout << '?';
+        string input;
+        getline(cin, input);
+        if (input == "n") {
+            string shell = get_env("SHELL");
+            bt_fioctl(fh, bt_terminal_ioctl::NewTerminal, shell.length(), (char *) shell.c_str());
+        } else {
+            uint64_t new_id = atoi(input.c_str());
+            bt_fioctl(fh, bt_terminal_ioctl::SwtichTerminal, sizeof(new_id), (char *) &new_id);
+        }
     }
 }

@@ -35,6 +35,8 @@ public:
     void open(uint64_t id);
     void close(uint64_t id);
 
+    void start_switcher();
+
 };
 
 extern console_backend *cons_backend;

@@ -125,7 +125,7 @@ const char *vterm::get_title(){
 }
 
 void vterm::activate() {
-    hold_lock hl(&term_lock);
+    hold_lock hl(&term_lock, false);
     bool scroll=false;
     backend->set_active(id);
     backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scroll);
@@ -263,13 +263,13 @@ void vterm::create_terminal(char *command) {
     terminals->get(new_id)->sync(false);
     terminals->switch_terminal(new_id);
     if(command){
-        char old_terminal_id[128]={0};
+        char old_terminal_id[128]="0";
         strncpy(old_terminal_id, getenv(terminal_var, getpid()), 128);
         char new_terminal_id[128]={0};
         i64toa(new_id, new_terminal_id, 10);
-        setenv(terminal_var, new_terminal_id, 0, 0);
+        setenv(terminal_var, new_terminal_id, 0, getpid());
         pid_t pid=spawn(command, 0, NULL);
-        setenv(terminal_var, old_terminal_id, 0, 0);
+        setenv(terminal_var, old_terminal_id, 0, getpid());
         if(!pid) terminals->get(new_id)->close();
     }
 }
@@ -343,8 +343,6 @@ void vterm::queue_input(uint32_t code) {
         release_lock(&input_lock);
         kill(curpid);
         return;
-    } else if ((code & KeyFlags::Control) && (code & KeyCodes::Escape)==KeyCodes::Escape && !(code & KeyFlags::KeyUp)) {
-        create_terminal("HDD:/BTOS/SWITCHER.ELX");
     }
     if(input_count < input_size){
         input_count++;
@@ -392,18 +390,20 @@ vterm_list::vterm_list() {
 
 uint64_t vterm_list::create_terminal(i_backend *back) {
     hold_lock hl(&vtl_lock);
-    vterm *newterm=new vterm(++id, back);
+    uint64_t new_id=++id;
+    vterm *newterm=new vterm(new_id, back);
     vterm **terms=new vterm*[count+1];
     memcpy(terms, terminals, count*sizeof(vterm*));
     free(terminals);
     terminals=terms;
     terminals[count]=newterm;
     count++;
-    return id;
+    return new_id;
 }
 
 void vterm_list::delete_terminal(uint64_t id) {
     hold_lock hl(&vtl_lock);
+    if(id==default_terminal) default_terminal=0;
     bool switchterm=false;
     if(current_vterm->get_id() == id){
         switchterm=true;
@@ -444,6 +444,7 @@ void vterm_list::switch_terminal(uint64_t id) {
 
 vterm *vterm_list::get(uint64_t id) {
     hold_lock hl(&vtl_lock);
+    if(!id) id=default_terminal;
     for(size_t i=0; i<count; ++i) {
         if (!id || terminals[i]->get_id() == id) {
             return terminals[i];

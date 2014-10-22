@@ -93,5 +93,6 @@ public:
 
 char *terms_infofs();
 extern vterm_list *terminals;
+extern uint64_t default_terminal;
 
 #endif
