@@ -280,15 +280,18 @@ void vterm::open(){
 }
 
 void vterm::close(){
-    hold_lock hl(&term_lock);
+    take_lock(&term_lock);
     if(refcount) refcount--;
     if(!refcount){
         if(terminals->get_count() > 1){
             i_backend *back=backend;
+            release_lock(&term_lock);
             terminals->delete_terminal(id);
             back->close(id);
+            return;
         }
     }
+    release_lock(&term_lock);
 }
 
 void vterm::sync(bool content) {
