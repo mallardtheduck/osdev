@@ -174,7 +174,7 @@ amm_filemap *amm_getfilemap(uint32_t addr, pid_t pid=proc_current_pid){
 }
 
 void amm_resolve_mmap(void *addr){
-    dbgpf("AMM: Resolving memory-mapped file load at %x.\n", addr);
+    //dbgpf("AMM: Resolving memory-mapped file load at %x.\n", addr);
     void *page=(void*)((uint32_t)addr & VMM_ADDRESS_MASK);
     amm_filemap *map=amm_getfilemap((uint32_t)addr);
     size_t offset=((uint32_t)page - (uint32_t)map->start)+map->offset;
