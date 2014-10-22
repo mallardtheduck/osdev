@@ -1,5 +1,6 @@
 #ifndef ATA_HPP
 #define ATA_HPP
+#include "module_api.h"
 
 #define ATA_SR_BSY     0x80
 #define ATA_SR_DRDY    0x40
@@ -135,5 +136,12 @@ typedef struct {
 } __attribute__((packed)) mbr_t;
 
 void mbr_parse(char* device);
+
+/* TODO support other sector sizes */
+#define ATA_SECTOR_SIZE 512
+
+void cache_add(size_t deviceid, size_t sector, char *data);
+bool cache_get(size_t deviceid, size_t sector, char *data);
+void cache_drop(size_t deviceid, size_t sector);
 
 #endif

@@ -22,9 +22,6 @@ struct ata_device {
 
 lock ata_lock, ata_drv_lock;
 
-/* TODO support other sector sizes */
-#define ATA_SECTOR_SIZE 512
-
 
 static void ata_io_wait(struct ata_device * dev) {
 	inb(dev->io_base + ATA_REG_ALTSTATUS);
@@ -254,7 +251,10 @@ size_t ata_read(void *instance, size_t bytes, char *buf){
 	if(bytes % 512) return 0;
 	ata_instance *inst=(ata_instance*)instance;
 	for(size_t i=0; i<bytes; i+=512){
-		ata_device_read_sector(inst->dev, inst->pos/512, (uint8_t*)&buf[i]);
+        if(!cache_get((size_t)inst->dev, inst->pos/512, &buf[i])) {
+            ata_device_read_sector(inst->dev, inst->pos / 512, (uint8_t *) &buf[i]);
+            cache_add((size_t)inst->dev, inst->pos/512, &buf[i]);
+        }
 		inst->pos+=512;
 	}
 	return bytes;
@@ -265,6 +265,7 @@ size_t ata_write(void *instance, size_t bytes, char *buf){
 	if(bytes % 512) return 0;
 	ata_instance *inst=(ata_instance*)instance;
 	for(size_t i=0; i<bytes; i+=512){
+        cache_drop((size_t)inst->dev, inst->pos/512);
 		ata_device_write_sector_retry(inst->dev, inst->pos/512, (uint8_t*)&buf[i]);
 		inst->pos+=512;
 	}
