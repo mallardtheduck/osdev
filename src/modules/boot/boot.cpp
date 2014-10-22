@@ -87,7 +87,7 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 	}else if(MATCH(current_section, "run")){
 		wait(spawn((char*)value, 0, NULL));
     }else if(MATCH(current_section, "spawn")){
-        while(true) wait(spawn((char*)value, 0, NULL));
+        spawn("INIT:/SPAWN.ELX", 1, (char**)&value);
 	}else if(MATCH(current_section, "mount")){
 		char *path, *rest;
 		if(split(value, ',', &path, &rest)){
