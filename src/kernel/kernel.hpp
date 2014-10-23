@@ -13,7 +13,7 @@
  
 /* This will only work for the 32-bit ix86 targets. */
 #if !defined(__i386__)
-#error "This tutorial needs to be compiled with a ix86-elf compiler"
+#error "This OS needs to be compiled with a ix86-elf compiler"
 #endif
 
 #include "console.hpp"
@@ -56,7 +56,7 @@ void gdt_set_kernel_stack(void* ptr);
 
 #define KERNEL_VERSION_MAJOR 0
 #define KERNEL_VERSION_MINOR 0
-#define KERNEL_REVISION "A"
+#define KERNEL_REVISION "B"
 #define KERNEL_VERSION_STRING "v0.0" KERNEL_REVISION
 #define KERNEL_OS_NAME "BT/OS"
 #define KERNEL_COPYRIGHT "(c) 2014 Stuart Brockman"
