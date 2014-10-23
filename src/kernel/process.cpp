@@ -164,6 +164,7 @@ pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent, file_
 void proc_end(pid_t pid) {
     if(pid==0) return;
     hold_lock hl(proc_lock);
+    if(!proc_get(pid)) return;
     pid_t curpid=proc_current_pid;
     if(curpid == pid) curpid=0;
     if(proc_get_status(pid) == proc_status::Ending){
