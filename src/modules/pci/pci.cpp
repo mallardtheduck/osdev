@@ -1,6 +1,7 @@
 #include "module_stubs.h"
 #include "module_cpp.hpp"
 #include "io.h"
+#include "../../include/module_stubs.h"
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
@@ -20,6 +21,17 @@ struct pci_device{
     uint8_t classcode;
     uint8_t subclass;
 };
+
+const size_t MAX_PCI_DEVICES=256;
+pci_device *pci_devices[MAX_PCI_DEVICES];
+
+size_t strlen(const char* str)
+{
+    size_t ret = 0;
+    while ( str[ret] != 0 )
+        ret++;
+    return ret;
+}
 
 uint32_t mk_pci_address(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset){
     uint32_t lbus  = (uint32_t)bus;
@@ -60,15 +72,52 @@ pci_device scan_device(uint8_t bus, uint8_t slot, uint8_t func){
     return ret;
 }
 
-extern "C" int module_main(syscall_table *systbl, char *params){
-	SYSCALL_TABLE=systbl;
-    for(uint8_t i=0; i<255; ++i){
-        pci_device dev= scan_device(0, i, 0);
-        if(dev.present){
-            dbgpf("PCI: Found device bus: 0, slot: %i, func:0, vendor: %x, devid: %x, class: %x, subclass:%x\n",
-                    i, dev.vendor, dev.devid, dev.classcode, dev.subclass);
+void add_pci_device(const pci_device &dev){
+    pci_device *ptr=new pci_device();
+    *ptr=dev;
+    for(size_t i=0; i<MAX_PCI_DEVICES; ++i){
+        if(!pci_devices[i]) {
+            pci_devices[i] = ptr;
+            return;
         }
     }
+}
 
+void pci_scan(uint8_t bus){
+    for(uint8_t slot=0; slot<255; ++slot){
+        for(uint8_t func=0; func<8; ++func) {
+            pci_device dev = scan_device(bus, slot, func);
+            if (dev.present) {
+                dbgpf("PCI: Found device bus: %i, slot: %i, func:%i, vendor: %x, devid: %x, class: %x, subclass:%x\n",
+                        bus, slot, func, dev.vendor, dev.devid, dev.classcode, dev.subclass);
+                add_pci_device(dev);
+                if(dev.classcode==0x06 && dev.subclass==0x04){
+                    uint16_t busnumbers= read_configword(bus, slot, func, 0x18);
+                    uint8_t secondary=(busnumbers & 0xFF00) >> 8;
+                    pci_scan(secondary);
+                }
+            }
+        }
+    }
+}
+
+char *pci_infofs(){
+    char *buffer=(char*)malloc(4096);
+    memset(buffer, 0, 4096);
+    sprintf(buffer, "# bus, slot, func, vendor, id, class, subclass\n");
+    for(size_t i=0; i<MAX_PCI_DEVICES; ++i){
+        if(pci_devices[i]) {
+            sprintf(&buffer[strlen(buffer)], "%i, %i, %i, %x, %x, %x, %x\n",
+                pci_devices[i]->bus, pci_devices[i]->slot, pci_devices[i]->func, pci_devices[i]->vendor,
+                pci_devices[i]->devid,  pci_devices[i]->classcode, pci_devices[i]->subclass);
+        }
+    }
+    return buffer;
+}
+
+extern "C" int module_main(syscall_table *systbl, char *params){
+	SYSCALL_TABLE=systbl;
+    pci_scan(0);
+    infofs_register("PCI", &pci_infofs);
     return 0;
 }
