@@ -167,7 +167,7 @@ void vmm_pagedir::destroy(){
 			uint32_t table=pagedir[i] & VMM_ADDRESS_MASK;
 			maptable(table);
 			for(size_t j=0; j<VMM_ENTRIES_PER_TABLE; ++j){
-                amm_mark_free(curtable[j] & VMM_ADDRESS_MASK);
+                if(curtable[j] & PageFlags::Present) amm_mark_free(curtable[j] & VMM_ADDRESS_MASK);
             }
 			amm_mark_free(table);
 		}
