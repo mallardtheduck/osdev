@@ -1,4 +1,4 @@
-import-files:=data/ctest.elx data/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/switcher.elx data/btos/spawn.elx data/btos/cmd/kill.elx
+import-files:=data/ctest.elx data/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/switcher.elx data/btos/spawn.elx data/btos/cmd/kill.elx data/btos/pci.sys
 
 all: ~/.mtoolsrc btos.img copy.always
 
@@ -34,6 +34,10 @@ data/btos/spawn.elx: ../user/spawn/spawn.elx directories.always
 
 data/btos/cmd/kill.elx: ../user/kill/kill.elx directories.always
 	cp ../user/kill/kill.elx $@
+
+
+data/btos/pci.sys: ../modules/pci/pci.sys directories.always
+	cp ../modules/pci/pci.sys $@
 
 directories.always:
 	mkdir -p data/btos/cmd
