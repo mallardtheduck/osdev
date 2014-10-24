@@ -90,13 +90,15 @@ void pci_scan(uint8_t bus){
             if (dev.present) {
                 dbgpf("PCI: Found device bus: %i, slot: %i, func:%i, vendor: %x, devid: %x, class: %x, subclass:%x\n",
                         bus, slot, func, dev.vendor, dev.devid, dev.classcode, dev.subclass);
-                uint8_t header_format=read_configword(bus, slot, func, 0x0E) & 0x7F;
-                if(header_format==0) add_pci_device(dev);
+                uint8_t header_format=read_configword(bus, slot, func, 0x0E);
+                dbgpf("PCI: header format %x\n", header_format);
+                if((header_format & 0x7F)==0) add_pci_device(dev);
                 else if(header_format==1 && dev.classcode==0x06 && dev.subclass==0x04){
                     uint16_t busnumbers= read_configword(bus, slot, func, 0x18);
                     uint8_t secondary=(busnumbers & 0xFF00) >> 8;
                     pci_scan(secondary);
                 }
+                if(func==0 && !(header_format & 0x80)) break;
             }
         }
     }
