@@ -54,6 +54,7 @@ bool initfs_close(void *filedata){
 size_t initfs_read(void *filedata, size_t bytes, char *buf){
 	initfs_file file=initfs_getfile(fdata->fileindex);
 	if(fdata->pos > file.size) return 0;
+    if(fdata->pos + bytes > file.size) bytes=file.size - fdata->pos;
 	size_t j=0;
 	for(size_t i=fdata->pos; i<file.size && j<bytes; ++i, ++j){
 		buf[j]=file.data[i];
