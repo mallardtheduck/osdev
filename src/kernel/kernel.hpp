@@ -49,6 +49,7 @@ extern "C"{
 #include "user_api.hpp"
 #include "infofs.hpp"
 #include "amm.hpp"
+#include "amm_page_accounting.hpp"
 
 void GDT_init();
 void IDT_init();

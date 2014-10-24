@@ -4,6 +4,13 @@
 #include "amm_flags.hpp"
 #include "kernel.hpp"
 
+
+const size_t VMM_MAX_REGIONS=32;
+struct vmm_region{
+    void *base;
+    size_t pages;
+};
+
 const size_t VMM_PAGE_SIZE=4096;
 const size_t VMM_KERNELSPACE_END=1024*1024*1024;
 const size_t VMM_USERSPACE_START=VMM_KERNELSPACE_END;

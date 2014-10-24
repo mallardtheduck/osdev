@@ -1,14 +1,13 @@
 #ifndef _AMM_HPP
 #define _AMM_HPP
 
-#include "amm_flags.hpp"
+#include "kernel.hpp"
+#include "amm_page_accounting.hpp"
 
 void amm_init();
-void amm_mark_alloc(uint32_t pageaddr, amm_flags::Enum flags, pid_t owner = proc_current_pid, void *ptr = NULL);
+void amm_mark_alloc(uint32_t pageaddr, amm_page_type::Enum type, void *info = NULL);
 void amm_mark_free(uint32_t pageaddr);
-amm_flags::Enum amm_get_flags(uint32_t pageaddr);
 void amm_set_guard(void *ptr);
-void amm_set_info(uint32_t pageaddr, amm_flags::Enum flags, void *ptr);
 uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size);
 void amm_flush(file_handle &file);
 void amm_close(file_handle &file);
