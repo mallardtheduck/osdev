@@ -1,6 +1,7 @@
 #include "module_stubs.h"
 
 syscall_table *SYSCALL_TABLE;
+char dbgbuf[256];
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
