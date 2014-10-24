@@ -13,16 +13,7 @@ static size_t totalpages=0;
 uint32_t init_amm_page_accounting(vmm_region regions[], void *kend){
     for(size_t i=0; i<VMM_MAX_REGIONS; ++i){
         if(!regions[i].base) break;
-        /*if(regions[i].base < kend){
-            uint32_t reg_end=(uint32_t)regions[i].base+(VMM_PAGE_SIZE * regions[i].pages);
-            if(reg_end < (uint32_t)kend) continue;
-            else{
-                size_t page_count=(reg_end - (uint32_t)kend) / VMM_PAGE_SIZE;
-                totalpages+=page_count;
-            }
-        }else{*/
-            totalpages+=regions[i].pages;
-        //}
+        totalpages+=regions[i].pages;
     }
     size_t required_space=sizeof(amm_page_info) * totalpages;
     size_t required_pages=(required_space/VMM_PAGE_SIZE)+1;
