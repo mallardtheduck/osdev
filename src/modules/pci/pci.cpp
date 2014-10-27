@@ -1,6 +1,4 @@
 #include "pci.hpp"
-#include "module_cpp.hpp"
-#include "io.h"
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
@@ -31,6 +29,12 @@ uint16_t read_configword(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset
     uint32_t pciaddr= mk_pci_address(bus, slot, func, offset);
     out32(CONFIG_ADDRESS, pciaddr);
     return (uint16_t)((in32(CONFIG_DATA) >> ((offset & 2) * 8)) & 0xffff);
+}
+
+void write_config32(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint32_t value){
+    uint32_t pciaddr=mk_pci_address(bus, slot, func, offset);
+    out32(CONFIG_ADDRESS, pciaddr);
+    out32(CONFIG_DATA, value);
 }
 
 uint16_t get_vendor(uint8_t bus, uint8_t slot){
