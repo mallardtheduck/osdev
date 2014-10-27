@@ -132,16 +132,18 @@ void proc_switch_sch(pid_t pid, bool setthread){
 bool proc_switch(pid_t pid, bool setthread){
 	if(setthread) sch_setpid(pid);
 	if(pid!=proc_current_pid){
-        hold_lock hl(proc_lock, false);
 		proc_process *newproc=proc_get(pid);
         if(!newproc) return false;
 		if(setthread){
 			proc_remove_thread(sch_get_id(), proc_current_pid);
 			proc_add_thread(sch_get_id(), pid);
 		}
-		proc_current_process=newproc;
-		proc_current_pid=newproc->pid;
-		vmm_switch(proc_current_process->pagedir);
+        {
+            hold_lock hl(proc_lock, false);
+            proc_current_process = newproc;
+            proc_current_pid = newproc->pid;
+            vmm_switch(proc_current_process->pagedir);
+        }
 	}
     return true;
 }
@@ -218,8 +220,10 @@ void proc_end(pid_t pid) {
     proc_switch(curpid);
     for (list<proc_process>::iterator i = proc_processes->begin(); i; ++i) {
         if (i->pid == pid) {
+            release_lock(proc_lock);
             vmm_deletepagedir(i->pagedir);
             proc_processes->remove(i);
+            take_lock_exclusive(proc_lock);
             break;
         }
     }
@@ -337,6 +341,7 @@ uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t 
 handle_t proc_add_handle(bt_handle_info handle, pid_t pid){
     hold_lock hl(proc_lock, false);
     proc_process *proc=proc_get(pid);
+    if(!proc) return 0;
     handle_t ret=++proc->handlecounter;
     while(!ret || proc->handles.has_key(ret)) ret=++proc->handlecounter;
     proc->handles[ret] = handle;
