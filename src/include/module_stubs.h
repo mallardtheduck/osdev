@@ -274,4 +274,16 @@ inline static void infofs_register(const char *name, info_function fn){
 	SYSCALL_TABLE->infofs_register(name, fn);
 }
 
+inline static uint16_t add_extension(kernel_extension *ext){
+    return SYSCALL_TABLE->add_extension(ext);
+}
+
+inline static kernel_extension *get_extension(uint16_t ext){
+    return SYSCALL_TABLE->get_extension(ext);
+}
+
+inline static uint16_t get_extension_id(const char *name){
+    return SYSCALL_TABLE->get_extension_id(name);
+}
+
 #endif

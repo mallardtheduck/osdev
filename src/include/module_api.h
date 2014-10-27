@@ -17,6 +17,11 @@ typedef uint64_t pid_t;
 
 typedef char* (*info_function)();
 
+struct kernel_extension;
+#ifndef __cplusplus
+typedef struct kernel_extension kernel_extension;
+#endif
+
 #define	ENV_Global 		(1<<0) //Use PID 0 (kernel) value instead
 #define ENV_ReadOnly	(1<<1) //Not changeable by user-mode code
 #define	ENV_Private 	(1<<2) //Not visible to user-mode code
@@ -103,6 +108,10 @@ struct syscall_table{
     void (*kill)(pid_t pid);
 
 	void (*infofs_register)(const char *name, info_function fn);
+
+    uint16_t (*add_extension)(kernel_extension *ext);
+    kernel_extension *(*get_extension)(uint16_t ext);
+    uint16_t (*get_extension_id)(const char *name);
 };
 
 #ifndef __cplusplus

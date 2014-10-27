@@ -218,4 +218,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
     &mod_kill,
 
 	&infofs_register,
+    &add_extension,
+    &get_extension,
+    &get_extension_id,
 };
