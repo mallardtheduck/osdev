@@ -38,7 +38,8 @@ void amm_page_fault_handler(int, isr_regs *regs);
 void amm_init(){
     int_handle(0x0e, &amm_page_fault_handler);
     amm_filemappings=new vector<amm_filemap>();
-	//size_t reservation=(&_end-&_start)/VMM_PAGE_SIZE + 4096;
+    //Hack: Find a better way of ensuring that amm_filemappings is always in a consistent state
+    amm_filemappings->reserve(32);
 	amm_inited=true;
 	init_lock(amm_lock);
 }
@@ -174,7 +175,10 @@ uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
         vmm_cur_pagedir->map_page(virtaddr/VMM_PAGE_SIZE, amm_mmap_marker/VMM_PAGE_SIZE, true, (vmm_allocmode::Enum)(mode | vmm_allocmode::NotPresent));
     }
     //dbgout("AMM: Mapping completed.\n");
-    (*amm_filemappings).push_back(*map);
+    {
+        hold_lock hl(sch_lock);
+        (*amm_filemappings).push_back(*map);
+    }
     return map->id;
 }
 
