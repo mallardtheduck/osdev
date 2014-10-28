@@ -16,9 +16,8 @@ static cache_element cache[cache_size];
 static bool find_free(size_t &index){
     for(size_t i=0; i<cache_size; ++i){
         if(!cache[i].inuse){
-            return true;
             index=i;
-            break;
+            return true;
         }
     }
     return false;
