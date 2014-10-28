@@ -258,6 +258,10 @@ inline static pid_t getpid(){
     return SYSCALL_TABLE->getpid();
 }
 
+inline static void setpid(pid_t pid){
+    SYSCALL_TABLE->setpid(pid);
+}
+
 inline static pid_t spawn(const char *exec, size_t argc, char **argv){
 	return SYSCALL_TABLE->spawn(exec, argc, argv);
 }

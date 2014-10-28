@@ -137,6 +137,10 @@ void unmask_irq(size_t irqno){
 	IRQ_clear_mask(irqno);
 }
 
+void setpid(pid_t pid){
+    proc_switch(pid);
+}
+
 module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&panic,
 	&malloc,
@@ -213,6 +217,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&getenv,
 
 	&getpid,
+    &setpid,
 	&mod_spawn,
 	&mod_wait,
     &mod_kill,
