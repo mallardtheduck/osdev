@@ -201,12 +201,12 @@ void thread_reaper(void*){
 				if((*threads)[i].to_be_deleted){
 					uint64_t id=(*threads)[i].ext_id;
                     void *stackptr=(*threads)[i].stackptr;
-					release_lock(sch_lock);
-					free(stackptr);
-                    take_lock_exclusive(sch_lock);
 					threads->erase(i);
+                    release_lock(sch_lock);
+                    free(stackptr);
+                    take_lock_exclusive(sch_lock);
 					changed=true;
-					dbgpf("SCH: Reaped %i (%i).\n", i, (uint32_t)id);
+					dbgpf("SCH: Reaped %i (%i) [%x].\n", i, (uint32_t)id, stackptr);
 					break;
 				}
 			}
