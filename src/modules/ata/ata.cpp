@@ -13,13 +13,6 @@ char dbgbuf[256];
 
 drv_driver ata_driver;
 
-struct ata_device {
-	int io_base;
-	int control;
-	int slave;
-	ata_identify_t identity;
-};
-
 lock ata_lock, ata_drv_lock;
 
 
@@ -117,7 +110,7 @@ static int ata_device_detect(struct ata_device * dev) {
 	return 0;
 }
 
-static void ata_device_read_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
+void ata_device_read_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
 	uint16_t bus = dev->io_base;
 	uint8_t slave = dev->slave;
 
@@ -154,7 +147,7 @@ try_again:
 	release_lock(&ata_lock);
 }
 
-static void ata_device_write_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
+void ata_device_write_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
 	uint16_t bus = dev->io_base;
 	uint8_t slave = dev->slave;
 
@@ -192,7 +185,7 @@ static int buffer_compare(uint32_t * ptr1, uint32_t * ptr2, size_t size) {
 	return 0;
 }
 
-static void ata_device_write_sector_retry(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
+void ata_device_write_sector_retry(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
 	uint8_t *read_buf = (uint8_t*) malloc(ATA_SECTOR_SIZE);
 	disable_interrupts();
 	do {
@@ -252,7 +245,9 @@ size_t ata_read(void *instance, size_t bytes, char *buf){
 	ata_instance *inst=(ata_instance*)instance;
 	for(size_t i=0; i<bytes; i+=512){
         if(!cache_get((size_t)inst->dev, inst->pos/512, &buf[i])) {
-            ata_device_read_sector(inst->dev, inst->pos / 512, (uint8_t *) &buf[i]);
+            release_lock(&ata_drv_lock);
+            ata_queued_read(inst->dev, inst->pos / 512, (uint8_t *) &buf[i]);
+            take_lock(&ata_drv_lock);
             cache_add((size_t)inst->dev, inst->pos/512, &buf[i]);
         }
 		inst->pos+=512;
@@ -266,14 +261,15 @@ size_t ata_write(void *instance, size_t bytes, char *buf){
 	ata_instance *inst=(ata_instance*)instance;
 	for(size_t i=0; i<bytes; i+=512){
         cache_drop((size_t)inst->dev, inst->pos/512);
-		ata_device_write_sector_retry(inst->dev, inst->pos/512, (uint8_t*)&buf[i]);
+        release_lock(&ata_drv_lock);
+        ata_queued_write(inst->dev, inst->pos/512, (uint8_t*)&buf[i]);
+        take_lock(&ata_drv_lock);
 		inst->pos+=512;
 	}
 	return bytes;
 }
 
 size_t ata_seek(void *instance, size_t pos, bool relative){
-    hold_lock hl(&ata_drv_lock);
 	ata_instance *inst=(ata_instance*)instance;
 	if(pos % 512) return inst->pos;
 	if(relative) inst->pos+=pos;
@@ -297,8 +293,10 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 	drv_driver driver={ata_open, ata_close, ata_read, ata_write, ata_seek, ata_ioctl, ata_type, ata_desc};
 	ata_driver=driver;
 	SYSCALL_TABLE=systbl;
+    dbgout("ATA: Init...\n");
 	init_lock(&ata_lock);
     init_lock(&ata_drv_lock);
+    init_queue();
 	ata_initialize();
     return 0;
 }

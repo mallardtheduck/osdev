@@ -135,6 +135,19 @@ typedef struct {
 	uint8_t     signature[2];
 } __attribute__((packed)) mbr_t;
 
+struct ata_device {
+    int io_base;
+    int control;
+    int slave;
+    ata_identify_t identity;
+};
+
+void ata_device_read_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf);
+void ata_device_write_sector_retry(struct ata_device * dev, uint32_t lba, uint8_t * buf);
+void init_queue();
+void ata_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
+void ata_queued_write(ata_device *dev, uint32_t lba, uint8_t *buf);
+
 void mbr_parse(char* device);
 
 /* TODO support other sector sizes */
