@@ -28,6 +28,7 @@ void take_lock_exclusive(lock &l, uint64_t thread){
     while(l.lockval != thread) {
         while (!__sync_bool_compare_and_swap(&l.lockval, 0, thread)) {
             if (&l != &sch_lock && sch_lock.lockval != thread) sch_setblock(&lock_blockcheck, (void *) &l.lockval);
+            else panic("Deadlock detected!");
         }
     }
     if(l.count != 0) panic("(LOCK) Newly acquired lock with non-zero count!");
@@ -45,6 +46,7 @@ void take_lock_recursive(lock &l, uint64_t thread){
     while(l.lockval != thread) {
         while (!__sync_bool_compare_and_swap(&l.lockval, 0, thread)) {
             if (&l != &sch_lock && sch_lock.lockval != thread) sch_setblock(&lock_blockcheck, (void *) &l.lockval);
+            else panic("Deadlock detected!");
         }
     }
     l.count++;
