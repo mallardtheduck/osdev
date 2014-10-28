@@ -11,7 +11,7 @@ extern "C" void proc_run_usermode(void *stack, proc_entry entry, int argc, char 
 
 proc_process *proc_current_process;
 pid_t proc_current_pid;
-list<proc_process> *proc_processes;
+list<proc_process*> *proc_processes;
 
 extern lock sch_lock;
 lock &proc_lock=sch_lock;
@@ -61,9 +61,9 @@ char *proc_infofs(){
 	sprintf(buffer, "# PID, path, memory, parent\n");
 	size_t kmem=vmm_getkernelmemory();
 	{hold_lock hl(proc_lock);
-		for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
-			sprintf(&buffer[strlen(buffer)],"%i, \"%s\", %i, %i\n", (int)i->pid, i->name.c_str(),
-				(i->pid)?vmm_getusermemory(i->pagedir):kmem, (int)i->parent);
+		for(list<proc_process*>::iterator i=proc_processes->begin(); i; ++i){
+			sprintf(&buffer[strlen(buffer)],"%i, \"%s\", %i, %i\n", (int)((*i)->pid), (*i)->name.c_str(),
+				((*i)->pid)?vmm_getusermemory((*i)->pagedir):kmem, (int)((*i)->parent));
 		}
     }
     return buffer;
@@ -87,18 +87,18 @@ char *env_infofs(){
 void proc_init(){
 	dbgout("PROC: Init\n");
 	init_lock(proc_lock);
-	proc_processes=new list<proc_process>();
-	proc_process kproc;
-	kproc.name="KERNEL";
-	kproc.pid=0;
+	proc_processes=new list<proc_process*>();
+	proc_process *kproc=new proc_process();
+	kproc->name="KERNEL";
+	kproc->pid=0;
 	curpid--;
-	kproc.parent=0;
-	kproc.pagedir=vmm_cur_pagedir;
+	kproc->parent=0;
+	kproc->pagedir=vmm_cur_pagedir;
 	proc_processes->add(kproc);
 	proc_current_process=proc_get(0);
 	proc_current_pid=0;
-	for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
-		dbgpf("PROC: Proccess %i, '%s'\n", (int)i->pid, i->name.c_str());
+	for(list<proc_process*>::iterator i=proc_processes->begin(); i; ++i){
+		dbgpf("PROC: Proccess %i, '%s'\n", (int)((*i)->pid), (*i)->name.c_str());
 	}
 	dbgpf("PROC: Current pid: %i\n", (int)proc_current_pid);
 	infofs_register("PROCS", &proc_infofs);
@@ -108,8 +108,8 @@ void proc_init(){
 
 proc_process *proc_get(pid_t pid){
 	hold_lock hl(proc_lock, false);
-	for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
-		if(i->pid==pid) return i;
+	for(list<proc_process*>::iterator i=proc_processes->begin(); i; ++i){
+		if((*i)->pid==pid) return *i;
 	}
 	return NULL;
 }
@@ -119,8 +119,8 @@ void proc_switch_sch(pid_t pid, bool setthread){
 	if(setthread) sch_setpid(pid);
 	if(pid!=proc_current_pid){
 		proc_process *newproc=NULL;
-		for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
-			if(i->pid==pid) newproc=i;
+		for(list<proc_process*>::iterator i=proc_processes->begin(); i; ++i){
+			if((*i)->pid==pid) newproc=*i;
 		}
         if(!newproc) panic("(PROC) Attempt to switch to unknown process.");
 		proc_current_process=newproc;
@@ -150,17 +150,17 @@ bool proc_switch(pid_t pid, bool setthread){
 
 pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent, file_handle *file){
 	proc_process *parent_proc=proc_get(parent);
-	proc_process newproc(parent_proc, name);
-    if(file) newproc.file=*file;
-    else newproc.file.valid=false;
-	newproc.args.push_back(name);
+	proc_process *newproc=new proc_process(parent_proc, name);
+    if(file) newproc->file=*file;
+    else newproc->file.valid=false;
+	newproc->args.push_back(name);
 	for(size_t i=0; i<argc; ++i){
-		newproc.args.push_back(argv[i]);
+		newproc->args.push_back(argv[i]);
 	}
 	{	hold_lock hl(proc_lock);
 		proc_processes->add(newproc);
 	}
-	return newproc.pid;
+	return newproc->pid;
 }
 
 void proc_end(pid_t pid) {
@@ -218,18 +218,19 @@ void proc_end(pid_t pid) {
         take_lock_exclusive(proc_lock);
     }
     proc_switch(curpid);
-    for (list<proc_process>::iterator i = proc_processes->begin(); i; ++i) {
-        if (i->pid == pid) {
+    for (list<proc_process*>::iterator i = proc_processes->begin(); i; ++i) {
+        if ((*i)->pid == pid) {
             release_lock(proc_lock);
-            vmm_deletepagedir(i->pagedir);
+            vmm_deletepagedir((*i)->pagedir);
             proc_processes->remove(i);
+            delete *i;
             take_lock_exclusive(proc_lock);
             break;
         }
     }
-    for (list<proc_process>::iterator i = proc_processes->begin(); i; ++i) {
-        if (i->parent == pid) {
-            i->parent = parent;
+    for (list<proc_process*>::iterator i = proc_processes->begin(); i; ++i) {
+        if ((*i)->parent == pid) {
+            (*i)->parent = parent;
         }
     }
 }
@@ -305,8 +306,8 @@ void proc_start(void *ptr){
 	delete (proc_info*)ptr;
 	if(!proc_switch(pid)) return;
 	if(!stackptr) stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
-	sch_abortable(true);
     sch_set_priority(default_userspace_priority);
+	sch_abortable(true);
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 
@@ -430,8 +431,8 @@ void proc_setreturn(int ret, pid_t pid){
 
 bool proc_wait_blockcheck(void *p){
 	pid_t &pid=*(pid_t*)p;
-	for(list<proc_process>::iterator i=proc_processes->begin(); i; ++i){
-		if(i->pid==pid) return false;
+	for(list<proc_process*>::iterator i=proc_processes->begin(); i; ++i){
+		if((*i)->pid==pid) return false;
 	}
 	return true;
 }
