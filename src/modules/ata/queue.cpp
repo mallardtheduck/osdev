@@ -70,12 +70,12 @@ bool queue_blockcheck(void *p){
 }
 
 void ata_queue_thread(void*){
+    pid_t pid=getpid();
     while(true){
         thread_setblock(&queue_blockcheck, (void*)&queue_count);
         {
             hold_lock hl(&queue_lock);
             ata_operation *op=get_operation();
-            pid_t pid=getpid();
             setpid(op->pid);
             if(op->type==ata_operation_types::Read){
                 ata_device_read_sector(op->device, op->lba, op->buf);
