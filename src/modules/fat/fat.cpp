@@ -1,5 +1,8 @@
 #include "module_stubs.h"
-#include "fat_filelib.h"
+#include "module_cpp.hpp"
+extern "C" {
+    #include "fat_filelib.h"
+}
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
@@ -28,7 +31,12 @@ struct fat_dir_handle{
 
 typedef struct fat_dir_handle fat_dir_handle;
 
-int strncmp(const char* s1, const char* s2, size_t n)
+void init_queue();
+size_t fat_queued_read(void *flh, uint8_t *buf, size_t size);
+size_t fat_queued_write(void *flh, uint8_t *buf, size_t size);
+size_t fat_queued_seek(void *flh, uint32_t pos, int origin);
+
+extern "C" int strncmp(const char* s1, const char* s2, size_t n)
 {
     while(n--)
         if(*s1++!=*s2++)
@@ -36,7 +44,7 @@ int strncmp(const char* s1, const char* s2, size_t n)
     return 0;
 }
 
-size_t strlen(const char *s) {
+extern "C" size_t strlen(const char *s) {
     size_t i;
     for (i = 0; s[i] != '\0'; i++) ;
     return i;
@@ -91,7 +99,7 @@ void *fat_mount(char *device){
         return NULL;
     }
 	sprintf(devicepath, "%s", device);
-	fh=fopen(devicepath, FS_Read | FS_Write);
+	fh=fopen(devicepath, (fs_mode_flags)(FS_Read | FS_Write));
 	fl_init();
 	fl_attach_locks(&take_fat_lock, &release_fat_lock);
 	fl_attach_media(&fat_device_read, &fat_device_write);
@@ -113,9 +121,9 @@ bool fat_unmount(void *mountdata){
 void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 	if(mounted && mountdata==fatmagic){
         take_fat_lock();
-		fat_file_handle *ret=malloc(sizeof(fat_file_handle));
+		fat_file_handle *ret=new fat_file_handle();
 		ret->mode=mode;
-		mode=mode & ~(FS_Delete | FS_Exclude);
+		mode=(fs_mode_flags)(mode & ~(FS_Delete | FS_Exclude));
 		char spath[BT_MAX_PATH]={0};
 		char *modifiers="";
 		fs_path_to_string(path, spath);
@@ -148,7 +156,7 @@ bool fat_close(void *filedata){
 	if(fd->mode & FS_Delete){
 		fl_remove(fd->path);
 	}
-	free(fd);
+	delete fd;
     release_fat_lock();
 	return true;
 }
@@ -156,30 +164,35 @@ bool fat_close(void *filedata){
 size_t fat_read(void *filedata, size_t bytes, char *buf){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return 0;
-    take_fat_lock();
+    /*take_fat_lock();
 	int ret=fl_fread(buf, bytes, 1, fd->flh);
-    release_fat_lock();
-	return (ret>=0)?ret:0;
+    release_fat_lock();*/
+    size_t ret=fat_queued_read(fd->flh, (uint8_t*)buf, bytes);
+    return ret;
+	//return (ret>=0)?ret:0;
 }
 
 size_t fat_write(void *filedata, size_t bytes, char *buf){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
-	if(!fd) return 0;
+	/*if(!fd) return 0;
     take_fat_lock();
 	int ret=fl_fwrite(buf, bytes, 1, fd->flh);
-    release_fat_lock();
-	return (ret>=0)?ret:0;
+    release_fat_lock();*/
+    size_t ret= fat_queued_write(fd->flh, (uint8_t*)buf, bytes);
+    return ret;
+	//return (ret>=0)?ret:0;
 }
 
 size_t fat_seek(void *filedata, int pos, bool relative){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return 0;
-    take_fat_lock();
+    //take_fat_lock();
 	int origin=SEEK_SET;
 	if(relative) origin=SEEK_CUR;
-	fl_fseek(fd->flh, pos, origin);
-	size_t ret=fl_ftell(fd->flh);
-    release_fat_lock();
+	/*fl_fseek(fd->flh, pos, origin);
+	size_t ret=fl_ftell(fd->flh);*
+    release_fat_lock();*/
+    size_t ret= fat_queued_seek(fd->flh, pos, origin);
     return ret;
 }
 
@@ -198,7 +211,7 @@ void *fat_open_dir(void *mountdata, fs_path *path, fs_mode_flags mode){
         take_fat_lock();
 		char spath[BT_MAX_PATH]={0};
 		fs_path_to_string(path, spath);
-		fat_dir_handle *ret=malloc(sizeof(fat_dir_handle));
+		fat_dir_handle *ret=new fat_dir_handle();
 		ret->mode=mode;
 		strncpy(ret->path, spath, BT_MAX_PATH);
 		ret->fld=(FL_DIR*)malloc(sizeof(FL_DIR));
@@ -231,7 +244,7 @@ bool fat_close_dir(void *dirdata){
 			dbgpf("FAT: Directory delete: %i\n", r);
 		}
 		free(dir->fld);
-		free(dir);
+		delete dir;
         release_fat_lock();
 		return true;
 	} else return false;
@@ -300,9 +313,10 @@ fs_driver fat_driver={true, "FAT", true,
 	fat_mount, fat_unmount, fat_open, fat_close, fat_read, fat_write, fat_seek, fat_ioctl, fat_flush,
 	fat_open_dir, fat_close_dir, fat_read_dir, fat_write_dir, fat_dirseek, fat_stat};
 
-int module_main(syscall_table *systbl, char *params){
+extern "C" int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
 	init_lock(&fat_lock);
+    init_queue();
 	add_filesystem(&fat_driver);
     return 0;
 }
