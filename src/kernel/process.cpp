@@ -468,7 +468,11 @@ static void close_thread_handle(void *t){
 
 void proc_remove_thread(uint64_t thread_id, pid_t pid){
     handle_t h=proc_get_thread_handle(thread_id, pid);
-    if(h) proc_remove_handle(h, pid);
+    if(h) {
+        bt_handle_info handle_info=proc_get_handle(h, pid);
+        proc_remove_handle(h, pid);
+        delete (uint64_t*)handle_info.value;
+    }
 }
 
 void proc_remove_thread_handle(handle_t h, pid_t pid){
