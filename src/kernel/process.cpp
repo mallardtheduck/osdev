@@ -496,6 +496,7 @@ uint64_t proc_get_thread(handle_t h, pid_t pid){
 handle_t proc_get_thread_handle(uint64_t thread_id, pid_t pid){
     hold_lock hl(proc_lock, false);
     proc_process *proc=proc_get(pid);
+    if(!proc) return 0;
     for(map<handle_t, bt_handle_info>::iterator i=proc->handles.begin(); i!=proc->handles.end(); ++i){
         if(i->second.type==kernel_handle_types::thread){
             if(*(uint64_t*)i->second.value==thread_id) return i->first;
