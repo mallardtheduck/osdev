@@ -113,5 +113,6 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
     pci_scan(0);
     infofs_register("PCI", &pci_infofs);
+    pci_init_extension();
     return 0;
 }

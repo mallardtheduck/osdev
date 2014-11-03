@@ -13,5 +13,6 @@ extern pci_device *pci_devices[MAX_PCI_DEVICES];
 
 uint16_t read_configword(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset);
 void write_config32(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint32_t value);
+void pci_init_extension();
 
 #endif
