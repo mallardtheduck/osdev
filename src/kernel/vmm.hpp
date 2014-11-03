@@ -47,5 +47,6 @@ size_t vmm_getkernelmemory();
 size_t vmm_gettotalmem();
 void vmm_set_flags(uint32_t pageaddr, amm_flags::Enum flags);
 amm_flags::Enum vmm_get_flags(uint32_t pageaddr);
+uint32_t vmm_physaddr(void *ptr);
 
 #endif

@@ -71,7 +71,8 @@ void vmm_pagedir::add_table(size_t tableno, uint32_t *table){
 }
 
 uint32_t vmm_pagedir::virt2phys(void *ptr, bool present){
-	hold_lock hl(vmm_framelock);
+    hold_lock hl1(vmm_lock, false);
+	hold_lock hl2(vmm_framelock);
 	uint32_t pageno=(size_t)ptr/VMM_PAGE_SIZE;
 	size_t tableindex=pageno/VMM_ENTRIES_PER_TABLE;
 	size_t tableoffset=pageno-(tableindex * VMM_ENTRIES_PER_TABLE);
@@ -127,6 +128,7 @@ size_t vmm_pagedir::find_free_virtpages(size_t pages, vmm_allocmode::Enum mode){
 }
 
 size_t vmm_pagedir::unmap_page(size_t virtpage){
+    hold_lock hlv(vmm_lock, false);
 	hold_lock hl(vmm_framelock);
 	if(!pagedir) panic("(VMM) Invalid page directory!");
 	//dbgpf("VMM: Unammping %x.\n", virtpage*VMM_PAGE_SIZE);
@@ -158,6 +160,7 @@ size_t vmm_pagedir::unmap_page(size_t virtpage){
 }
 
 void vmm_pagedir::destroy(){
+    hold_lock hlv(vmm_lock, false);
 	if(this==vmm_cur_pagedir){
 		panic("VMM: Attempt to delete current page directory!");
 	}
@@ -176,6 +179,7 @@ void vmm_pagedir::destroy(){
 }
 
 void vmm_pagedir::map_page(size_t virtpage, size_t physpage, bool alloc, vmm_allocmode::Enum mode){
+    hold_lock hlv(vmm_lock, false);
 	//dbgpf("VMM: Mapping %x (v) to %x (p).\n", virtpage*VMM_PAGE_SIZE, physpage*VMM_PAGE_SIZE);
     if(is_mapped((void*)(virtpage*VMM_PAGE_SIZE))) panic("(VMM) Remapping already mapped page!");
     uint32_t pageflags;
@@ -218,6 +222,7 @@ void vmm_pagedir::map_page(size_t virtpage, size_t physpage, bool alloc, vmm_all
 }
 
 void vmm_pagedir::set_flags(uint32_t pageaddr, amm_flags::Enum flags){
+    hold_lock hlv(vmm_lock, false);
 	uint32_t flagval = (uint32_t)flags & VMM_FLAGS_MASK;
 	size_t virtpage=pageaddr/VMM_PAGE_SIZE;
 	size_t tableindex=virtpage/VMM_ENTRIES_PER_TABLE;
@@ -512,4 +517,9 @@ void vmm_set_flags(uint32_t pageaddr, amm_flags::Enum flags){
 amm_flags::Enum vmm_get_flags(uint32_t pageaddr){
     hold_lock hl(vmm_lock, false);
     return vmm_cur_pagedir->get_flags(pageaddr);
+}
+
+uint32_t vmm_physaddr(void *ptr){
+    hold_lock hl(vmm_lock, false);
+    return vmm_cur_pagedir->virt2phys(ptr);
 }
