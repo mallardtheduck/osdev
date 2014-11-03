@@ -36,6 +36,7 @@ struct syscall_table{
 	void (*memmove)(void *dst, void *src, size_t size);
 	int (*strcmp)(char *s1, char *s2);
 	void (*strncpy)(char *dst, char *src, size_t num);
+    uint32_t (*physaddr)(void *ptr);
 
 	void (*init_lock)(lock *l);
 	void (*take_lock)(lock *l);

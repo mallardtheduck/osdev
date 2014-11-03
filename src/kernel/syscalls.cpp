@@ -150,6 +150,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&mod_memmove,
 	&mod_strcmp,
 	&mod_strncpy,
+    &vmm_physaddr,
 
 	&mod_init_lock,
 	&mod_take_lock,

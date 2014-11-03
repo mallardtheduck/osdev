@@ -39,6 +39,11 @@ inline static int strcmp(const char *s1, const char *s2){
 inline static void strncpy(char *dst, const char *src, size_t num){
 	SYSCALL_TABLE->strncpy(dst, (char*)src, num);
 }
+
+inline static uint32_t physaddr(void *ptr){
+    return SYSCALL_TABLE->physaddr(ptr);
+}
+
 inline static void init_lock(lock *l){
 	SYSCALL_TABLE->init_lock(l);
 }
