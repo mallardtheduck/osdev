@@ -61,7 +61,7 @@ void amm_accounting_mark_page(uint32_t pageaddr, amm_page_type::Enum type, void 
 }
 
 uint32_t amm_accounting_get_free_page(uint32_t max){
-    for(size_t i=0; i<totalpages; ++i) {
+    for(size_t i=totalpages; i>0; --i) {
         if(accounting[i].valid && accounting[i].type==amm_page_type::Free && accounting[i].physaddr < max) {
             return accounting[i].physaddr;
         }
