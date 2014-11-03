@@ -50,7 +50,7 @@ bool ata_queue_proc(ata_operation *op){
 typedef operation_queue<ata_operation, &ata_queue_proc, 128> ata_queue;
 ata_queue *queue;
 
-bool operation_blockckeck(void *p){
+bool operation_blockcheck(void *p){
     return ((ata_operation*)p)->status!=ata_operation_status::Pending;
 }
 
@@ -60,7 +60,7 @@ void ata_sync(){
     op.type=ata_operation_types::Sync;
     op.pid=getpid();
     queue->add(&op);
-    thread_setblock(&operation_blockckeck, (void*)&op);
+    thread_setblock(&operation_blockcheck, (void*)&op);
 }
 
 void init_queue(){
@@ -79,7 +79,7 @@ void ata_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf){
     op.pid=getpid();
     op.type=ata_operation_types::Read;
     queue->add(&op);
-    thread_setblock(&operation_blockckeck, (void*)&op);
+    thread_setblock(&operation_blockcheck, (void*)&op);
 }
 
 void ata_queued_write(ata_device *dev, uint32_t lba, uint8_t *buf){
@@ -91,5 +91,5 @@ void ata_queued_write(ata_device *dev, uint32_t lba, uint8_t *buf){
     op.pid=getpid();
     op.type=ata_operation_types::Write;
     queue->add(&op);
-    thread_setblock(&operation_blockckeck, (void*)&op);
+    thread_setblock(&operation_blockcheck, (void*)&op);
 }

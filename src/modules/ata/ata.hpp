@@ -148,6 +148,8 @@ void init_queue();
 void ata_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
 void ata_queued_write(ata_device *dev, uint32_t lba, uint8_t *buf);
 
+int ata_wait(struct ata_device * dev, int advanced);
+
 void mbr_parse(char* device);
 
 /* TODO support other sector sizes */
@@ -156,5 +158,8 @@ void mbr_parse(char* device);
 void cache_add(size_t deviceid, size_t sector, char *data);
 bool cache_get(size_t deviceid, size_t sector, char *data);
 void cache_drop(size_t deviceid, size_t sector);
+
+bool init_dma();
+void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf);
 
 #endif

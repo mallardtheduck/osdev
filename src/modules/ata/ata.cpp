@@ -24,12 +24,15 @@ static void ata_io_wait(struct ata_device * dev) {
 }
 
 
-static int ata_wait(struct ata_device * dev, int advanced) {
+int ata_wait(struct ata_device * dev, int advanced) {
 	uint8_t status = 0;
 
 	ata_io_wait(dev);
 
-	while ((status = inb(dev->io_base + ATA_REG_STATUS)) & ATA_SR_BSY);
+	while ((status = inb(dev->io_base + ATA_REG_STATUS)) & ATA_SR_BSY) {
+        dbgpf("ATA: Status: %x\n", inb(dev->io_base + ATA_REG_STATUS));
+        yield();
+    }
 
 	if (advanced) {
 		status = inb(dev->io_base + ATA_REG_STATUS);
@@ -81,7 +84,7 @@ static void ata_device_init(struct ata_device * dev) {
 	dbgpf("ATA: Sectors (48): %d\n", (uint32_t)dev->identity.sectors_48);
 	dbgpf("ATA: Sectors (24): %d\n", dev->identity.sectors_28);
 
-	outb(dev->io_base + ATA_REG_CONTROL, 0x02);
+	outb(dev->io_base + ATA_REG_CONTROL, 0);
 }
 
 static int ata_device_detect(struct ata_device * dev) {
@@ -111,19 +114,24 @@ static int ata_device_detect(struct ata_device * dev) {
 }
 
 void ata_device_read_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
+    take_lock(&ata_lock);
+
+    if(init_dma()){
+        dma_read_sector(dev, lba, buf);
+        release_lock(&ata_lock);
+        return;
+    }
 	uint16_t bus = dev->io_base;
 	uint8_t slave = dev->slave;
 
-	take_lock(&ata_lock);
-
 	int errors = 0;
 try_again:
-	outb(bus + ATA_REG_CONTROL, 0x02);
+	outb(bus + ATA_REG_CONTROL, 0);
 
 	ata_wait(dev, 0);
 
 	outb(bus + ATA_REG_HDDEVSEL, 0xe0 | slave << 4 | (lba & 0x0f000000) >> 24);
-	outb(bus + ATA_REG_FEATURES, 0x00);
+	//outb(bus + ATA_REG_FEATURES, 0x00);
 	outb(bus + ATA_REG_SECCOUNT0, 1);
 	outb(bus + ATA_REG_LBA0, (lba & 0x000000ff) >>  0);
 	outb(bus + ATA_REG_LBA1, (lba & 0x0000ff00) >>  8);
@@ -148,18 +156,19 @@ try_again:
 }
 
 void ata_device_write_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
+    take_lock(&ata_lock);
+
+    if(init_dma()){} //TODO: Use DMA
 	uint16_t bus = dev->io_base;
 	uint8_t slave = dev->slave;
 
-	take_lock(&ata_lock);
-
-	outb(bus + ATA_REG_CONTROL, 0x02);
+	outb(bus + ATA_REG_CONTROL, 0);
 
 	ata_wait(dev, 0);
 	outb(bus + ATA_REG_HDDEVSEL, 0xe0 | slave << 4 | (lba & 0x0f000000) >> 24);
 	ata_wait(dev, 0);
 
-	outb(bus + ATA_REG_FEATURES, 0x00);
+	//outb(bus + ATA_REG_FEATURES, 0x00);
 	outb(bus + ATA_REG_SECCOUNT0, 0x01);
 	outb(bus + ATA_REG_LBA0, (lba & 0x000000ff) >>  0);
 	outb(bus + ATA_REG_LBA1, (lba & 0x0000ff00) >>  8);
