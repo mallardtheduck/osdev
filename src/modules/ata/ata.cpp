@@ -30,7 +30,7 @@ int ata_wait(struct ata_device * dev, int advanced) {
 	ata_io_wait(dev);
 
 	while ((status = inb(dev->io_base + ATA_REG_STATUS)) & ATA_SR_BSY) {
-        dbgpf("ATA: Status: %x\n", inb(dev->io_base + ATA_REG_STATUS));
+        //dbgpf("ATA: Status: %x\n", inb(dev->io_base + ATA_REG_STATUS));
         yield();
     }
 
@@ -307,5 +307,6 @@ extern "C" int module_main(syscall_table *systbl, char *params){
     init_lock(&ata_drv_lock);
     init_queue();
 	ata_initialize();
+    preinit_dma();
     return 0;
 }

@@ -159,6 +159,7 @@ void cache_add(size_t deviceid, size_t sector, char *data);
 bool cache_get(size_t deviceid, size_t sector, char *data);
 void cache_drop(size_t deviceid, size_t sector);
 
+void preinit_dma();
 bool init_dma();
 void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf);
 
