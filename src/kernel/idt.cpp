@@ -258,10 +258,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 }
 
 void irq_ack(size_t irq_no) {
-	if (irq_no >= 8) {
-		outb(0xA0, 0x20);
-	}
-	outb(0x20, 0x20);
+    PIC_sendEOI(irq_no);
 }
 
 inline void out_regs(const irq_regs ctx){
