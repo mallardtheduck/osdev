@@ -30,9 +30,9 @@ void reinit_serial() {
 }
 
 int is_transmit_empty() {
-	if(!try_take_lock_exclusive(ser_lock))return -1;
+	//if(!try_take_lock_exclusive(ser_lock))return -1;
 	int ret=inb(PORT + 5) & 0x20;
-	release_lock(ser_lock);
+	//release_lock(ser_lock);
 	return ret;
 }
 
