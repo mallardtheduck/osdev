@@ -521,5 +521,6 @@ amm_flags::Enum vmm_get_flags(uint32_t pageaddr){
 
 uint32_t vmm_physaddr(void *ptr){
     hold_lock hl(vmm_lock, false);
-    return vmm_cur_pagedir->virt2phys(ptr);
+    uint32_t offset=(uint32_t)ptr & ~VMM_ADDRESS_MASK;
+    return vmm_cur_pagedir->virt2phys(ptr) | offset;
 }
