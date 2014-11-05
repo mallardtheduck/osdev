@@ -136,7 +136,13 @@ void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf){
     outb(bus + ATA_REG_CONTROL, 0);
 
     outb(bus + ATA_REG_HDDEVSEL, 0xe0 | slave << 4 | (lba & 0x0f000000) >> 24);
-    //outb(bus + ATA_REG_FEATURES, 0x00);
+    outb(bus + 1, 0x03);
+    outb(bus + 2, 0x21);
+    outb(bus + ATA_REG_COMMAND, 0xEF);
+    uint8_t q=inb(ATA_REG_STATUS);
+    dbgpf("ATA: q=%x\n", q);
+    *(bool*)blockptr=false;
+    //outb(bus + ATA_REG_FEATURES, 0x01);
     outb(bus + ATA_REG_SECCOUNT0, 1);
     outb(bus + ATA_REG_LBA0, (lba & 0x000000ff) >>  0);
     outb(bus + ATA_REG_LBA1, (lba & 0x0000ff00) >>  8);
