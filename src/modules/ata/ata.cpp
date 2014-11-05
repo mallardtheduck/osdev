@@ -36,9 +36,18 @@ int ata_wait(struct ata_device * dev, int advanced) {
 
 	if (advanced) {
 		status = inb(dev->io_base + ATA_REG_STATUS);
-		if (status   & ATA_SR_ERR)  return 1;
-		if (status   & ATA_SR_DF)   return 1;
-		if (!(status & ATA_SR_DRQ)) return 1;
+		if (status   & ATA_SR_ERR) {
+            dbgpf("ATA: ATA_SR_ERR\n");
+            return 1;
+        }
+		if (status   & ATA_SR_DF)   {
+            dbgpf("ATA: ATA_SR_DF\n");
+            return 1;
+        }
+		if (!(status & ATA_SR_DRQ)) {
+            dbgpf("ATA: ATA_SR_DRQ\n");
+            return 1;
+        }
 	}
 
 	return 0;
@@ -113,14 +122,17 @@ static int ata_device_detect(struct ata_device * dev) {
 	return 0;
 }
 
-void ata_device_read_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
+void ata_device_read_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf){
     take_lock(&ata_lock);
-
     if(init_dma()){
         dma_read_sector(dev, lba, buf);
-        release_lock(&ata_lock);
-        return;
+    }else{
+        ata_device_read_sector_pio(dev, lba, buf);
     }
+    release_lock(&ata_lock);
+}
+
+void ata_device_read_sector_pio(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
 	uint16_t bus = dev->io_base;
 	uint8_t slave = dev->slave;
 
@@ -143,7 +155,6 @@ try_again:
 		errors++;
 		if (errors > 4) {
 			dbgpf("ATA: -- Too many errors trying to read this block. Bailing.\n", 0);
-			release_lock(&ata_lock);
 			return;
 		}
 		goto try_again;
@@ -152,7 +163,6 @@ try_again:
 	int size = 256;
 	insm(bus,buf,size);
 	ata_wait(dev, 0);
-	release_lock(&ata_lock);
 }
 
 void ata_device_write_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf) {

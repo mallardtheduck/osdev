@@ -143,6 +143,7 @@ struct ata_device {
 };
 
 void ata_device_read_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf);
+void ata_device_read_sector_pio(struct ata_device * dev, uint32_t lba, uint8_t * buf);
 void ata_device_write_sector_retry(struct ata_device * dev, uint32_t lba, uint8_t * buf);
 void init_queue();
 void ata_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
