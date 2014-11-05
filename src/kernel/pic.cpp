@@ -125,5 +125,5 @@ uint16_t pic_get_isr(void)
 
 void PIC_init(){
 	dbgout("PIC: Init\n");
-	PIC_remap(0x20, 0xA0);
+	PIC_remap(0x20, 0x28);
 }
