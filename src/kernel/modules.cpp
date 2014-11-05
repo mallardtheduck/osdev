@@ -39,6 +39,7 @@ void load_module(const char *path, char *params){
 	file_handle file=fs_open(path, FS_Read);
 	if(!file.valid){
 		dbgpf("MOD: Could not open '%s'!\n", path);
+        release_lock(mod_lock);
 		return;
 	}
 	kernel_module mod;
