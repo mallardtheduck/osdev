@@ -317,7 +317,8 @@ extern "C" void sch_unlock(){
 	release_lock(sch_lock);
 }
 
-void sch_isr(int, isr_regs *regs){
+void sch_isr(int irq, isr_regs *regs){
+    irq_ack(irq);
 	if(try_take_lock_exclusive(sch_lock)){
         counter--;
         if(!counter) {

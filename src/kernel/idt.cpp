@@ -198,6 +198,8 @@ void IDT_init()
     idt_set_gate(46, (uint32_t)irq14 , 0x08, 0x8E);
     idt_set_gate(47, (uint32_t)irq15 , 0x08, 0x8E);
 
+    idt_set_gate(166, (uint32_t)irq14, 0x08, 0x8E);
+
 	/* Points the processor's internal register to the new IDT */
 	idt_flush();
 }
@@ -277,8 +279,8 @@ extern "C" void irq_handler(irq_regs *r) {
     }
 	//out_regs(*r);
 	int irq=r->int_no-IRQ_BASE;
-	irq_ack(irq);
 	if(handlers[r->int_no]) handlers[r->int_no](r->int_no, (isr_regs*)r);
+    irq_ack(irq);
     disable_interrupts();
     if(sch_can_lock()) {
         sch_abortable(true);
