@@ -65,6 +65,7 @@ void set_bus1_prdt(uint32_t bmr, prd *prd){
 }
 
 bool init_dma(){
+    return false;
     hold_lock hl(&dma_init_lock);
     if(dma_init) return true;
     if(init_pci()){

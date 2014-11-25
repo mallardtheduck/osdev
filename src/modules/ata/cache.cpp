@@ -1,7 +1,7 @@
 #include "ata.hpp"
 #include "module_stubs.h"
 
-static const size_t cache_size=1;//4096;
+static const size_t cache_size=4096;
 
 struct cache_element{
     bool inuse;
