@@ -1,4 +1,4 @@
-import-files:=data/ctest.elx data/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/switcher.elx data/btos/spawn.elx data/btos/cmd/kill.elx data/btos/pci.sys data/btos/cmd/load.elx
+import-files:=data/btos/ctest.elx data/btos/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/switcher.elx data/btos/spawn.elx data/btos/cmd/kill.elx data/btos/pci.sys data/btos/cmd/load.elx data/btos/test.sys data/btos/test.elx data/btos/cmd/mount.elx
 
 all: ~/.mtoolsrc btos.img copy.always
 
@@ -8,39 +8,47 @@ btos.img:
 		gunzip -k btos.img.gz ; \
 	fi;
 
-data/ctest.elx: ../user/ctest/ctest.elx
-	cp ../user/ctest/ctest.elx data/ctest.elx
+data/btos/ctest.elx: ../user/ctest/ctest.elx
+	cp $< $@
 
-data/cpptest.elx: ../user/cpptest/cpptest.elx
-	cp ../user/cpptest/cpptest.elx data/cpptest.elx
+data/btos/cpptest.elx: ../user/cpptest/cpptest.elx
+	cp $< $@
 
 data/btos/cmd.elx: ../user/cmd/cmd.elx directories.always
-	cp ../user/cmd/cmd.elx $@
+	cp $< $@
 
 data/btos/terminal.sys: ../modules/terminal/terminal.sys directories.always
-	cp ../modules/terminal/terminal.sys $@
+	cp $< $@
 
 data/btos/cmd/cls.elx: ../user/cls/cls.elx directories.always
-	cp ../user/cls/cls.elx $@
+	cp $< $@
 
 data/btos/cmd/termctl.elx: ../user/termctl/termctl.elx directories.always
-	cp ../user/termctl/termctl.elx $@
+	cp $< $@
 
 data/btos/switcher.elx: ../user/switcher/switcher.elx directories.always
-	cp ../user/switcher/switcher.elx $@
+	cp $< $@
 
 data/btos/spawn.elx: ../user/spawn/spawn.elx directories.always
-	cp ../user/spawn/spawn.elx $@
+	cp $< $@
 
 data/btos/cmd/kill.elx: ../user/kill/kill.elx directories.always
-	cp ../user/kill/kill.elx $@
-
+	cp $< $@
 
 data/btos/pci.sys: ../modules/pci/pci.sys directories.always
-	cp ../modules/pci/pci.sys $@
+	cp $< $@
 
 data/btos/cmd/load.elx: ../user/load/load.elx directories.always
-	cp ../user/load/load.elx $@
+	cp $< $@
+
+data/btos/test.sys: ../modules/test/test.sys directories.always
+	cp $< $@
+
+data/btos/test.elx: ../user/test/test.elx directories.always
+	cp $< $@
+
+data/btos/cmd/mount.elx: ../user/mount/mount.elx directories.always
+	cp $< $@
 
 directories.always:
 	mkdir -p data/btos/cmd
