@@ -1,4 +1,4 @@
-PROGS := test ctest cpptest cmd cls termctl switcher spawn kill load
+PROGS := test ctest cpptest cmd cls termctl switcher spawn kill load mount
 
 all: dummy.file
 	for dir in $(PROGS); do \
