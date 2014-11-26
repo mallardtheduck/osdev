@@ -3,7 +3,7 @@ export TARGET:=i686-elf
 export PATH:=$(PREFIX)/bin:$(PATH)
 
 all: modules user disk kernel
-clean: kernel-clean modules-clean user-clean
+clean: kernel-clean modules-clean user-clean disk-clean
 rebuild: clean all
 
 kernel: dummy.file
@@ -34,5 +34,8 @@ disk: disk/btos.img
 
 disk/btos.img: dummy.file
 	make -C disk
+
+disk-clean: dummy.file
+	make -C disk clean
 
 dummy.file:
