@@ -237,7 +237,8 @@ USERAPI_HANDLER(BT_STAT){
 
 USERAPI_HANDLER(BT_LOAD_MODULE){
 	if(is_safe_ptr(regs->ebx)){
-		load_module((char*)regs->ebx);
+        char *params=is_safe_ptr(regs->ecx)?(char*)regs->ecx:NULL;
+		load_module((char*)regs->ebx, params);
 	}
 }
 
