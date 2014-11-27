@@ -1,17 +1,14 @@
-#include "process.hpp"
+#ifndef _MESSAGING_HPP
+#define _MESSAGING_HPP
 
-struct msg_header{
-    uint64_t id;
-    uint16_t source;
-    uint64_t from, to;
-    uint32_t type;
-    size_t length;
-    void *content;
-};
+#include "bt_msg.h"
+#include "process.hpp"
 
 void msg_init();
 
-uint64_t msg_send(const msg_header &msg, pid_t pid);
-void msg_recv(msg_header &msg);
-void msg_getcontent(msg_header &msg, void *buffer, size_t buffersize);
-void msg_acknowledge(msg_header &msg);
+uint64_t msg_send(btos_api::bt_msg_header &msg);
+void msg_recv(btos_api::bt_msg_header &msg);
+void msg_getcontent(btos_api::bt_msg_header &msg, void *buffer, size_t buffersize);
+void msg_acknowledge(btos_api::bt_msg_header &msg);
+
+#endif

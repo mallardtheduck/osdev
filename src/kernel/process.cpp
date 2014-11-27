@@ -47,10 +47,15 @@ struct proc_process{
 	map<pid_t, int> child_returns;
 	vector<string> args;
 
+    void *msg_buffer;
+    lock msg_lock;
+
 	proc_process() : pid(++curpid) {}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
 		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(vmm_newpagedir()),
-		 handlecounter(0), status(proc_status::Running) {}
+		 handlecounter(0), status(proc_status::Running), msg_buffer(NULL) {
+        init_lock(msg_lock);
+    }
 };
 
 proc_process *proc_get(pid_t pid);
@@ -216,6 +221,13 @@ void proc_end(pid_t pid) {
         release_lock(proc_lock);
         fs_close(proc->file);
         take_lock_exclusive(proc_lock);
+    }
+    {hold_lock(proc->msg_lock);
+        if(proc->msg_buffer) {
+            //TODO: Abort message, ensuring that it's not about to be used!
+            free(proc->msg_buffer);
+            proc->msg_buffer=NULL;
+        }
     }
     proc_switch(curpid);
     for (list<proc_process*>::iterator i = proc_processes->begin(); i; ++i) {
@@ -526,4 +538,42 @@ void proc_set_status(proc_status::Enum status, pid_t pid){
 proc_status::Enum proc_get_status(pid_t pid){
     hold_lock hl(proc_lock, false);
     return proc_get(pid)->status;
+}
+
+void proc_free_message_buffer(pid_t pid){
+    hold_lock hl(proc_lock, false);
+    proc_process *p=proc_get(pid);
+    if(!p) return;
+    else{
+        hold_lock hl2(p->msg_lock);
+        if(p->msg_buffer) free(p->msg_buffer);
+        p->msg_buffer=NULL;
+    }
+}
+
+static bool proc_msg_blockcheck(void *p){
+    return !(*(void**)p);
+}
+
+uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid){
+    bool again=false;
+    do {
+        hold_lock hl(proc_lock, false);
+        proc_process *p = proc_get(pid);
+        if (!p) return 0;
+        if(again) sch_setblock(&proc_msg_blockcheck, (void*)&p->msg_buffer);
+        again=false;
+        {
+            hold_lock hl2(p->msg_lock);
+            if (p->msg_buffer){
+                again=true;
+                continue;
+            }
+            p->msg_buffer=malloc(header.length);
+            memcpy(p->msg_buffer, header.content, header.length);
+            header.content=p->msg_buffer;
+            return msg_send(header);
+        }
+    }while(again);
+    return 0;
 }

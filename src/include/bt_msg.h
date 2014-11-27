@@ -1,0 +1,37 @@
+#ifndef _BT_MSG_H
+#define _BT_MSG_H
+
+#include "bt_enum.h"
+
+#ifdef __cplusplus
+namespace btos_api{
+#endif
+
+#ifndef __cplusplus
+#define BT_MSG_MAX (1024*4069)
+#else
+const size_t BT_MSG_MAX=4096*1024;
+#endif
+
+struct bt_msg_header{
+    uint64_t id;
+    uint32_t flags;
+    uint16_t source;
+    uint64_t from, to;
+    uint32_t type;
+    size_t length;
+    void *content;
+};
+#ifndef __cplusplus
+typedef struct bt_msg_header bt_msg_header;
+#endif
+
+ENUM_START(bt_msg_flags)
+    ENUM_SET(bt_msg_flags, UserSpace, 1 >> 0),
+ENUM_END
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

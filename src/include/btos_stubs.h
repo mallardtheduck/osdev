@@ -2,6 +2,7 @@
 #define _BTOS_STUBS_H
 
 #include "btos_api.h"
+#include "bt_msg.h"
 
 #ifdef __cplusplus
 using namespace btos_api;
@@ -195,6 +196,12 @@ inline static void bt_exit(int retval){
 
 inline static bt_pid bt_getpid(){
 	return btos_call(BT_GETPID, 0, 0, 0);
+}
+
+inline static uint64_t bt_send(bt_msg_header msg){
+	uint64_t ret;
+	btos_call(BT_SEND, (uint32_t)&msg, (uint32_t)&ret, 0);
+	return ret;
 }
 
 #endif

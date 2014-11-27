@@ -77,4 +77,7 @@ void proc_terminate(pid_t pid=proc_current_pid);
 void proc_set_status(proc_status::Enum status, pid_t pid=proc_current_pid);
 proc_status::Enum proc_get_status(pid_t pid=proc_current_pid);
 
+void proc_free_message_buffer(pid_t pid=proc_current_pid);
+uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid=proc_current_pid);
+
 #endif

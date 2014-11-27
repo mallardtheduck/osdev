@@ -346,6 +346,17 @@ USERAPI_HANDLER(BT_THREAD_ABORT){
     }
 }
 
+USERAPI_HANDLER(BT_SEND){
+	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->ecx)){
+		btos_api::bt_msg_header &header=*(btos_api::bt_msg_header*)regs->ebx;
+		uint64_t &ret=*(uint64_t*)regs->ecx;
+		header.flags=header.flags | btos_api::bt_msg_flags::UserSpace;
+		header.from=proc_current_pid;
+		if(header.length > btos_api::BT_MSG_MAX) return;
+		ret=proc_send_message(header);
+	}
+}
+
 void userapi_syscall(uint16_t fn, isr_regs *regs){
 	switch(fn){
 		case 0:
@@ -416,6 +427,11 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_PRIORITIZE);
 		USERAPI_HANDLE_CALL(BT_EXIT);
 		USERAPI_HANDLE_CALL(BT_GETPID);
+
+		//Messaging
+		USERAPI_HANDLE_CALL(BT_SEND);
+		//USERAPI_HANDLE_CALL(BT_RECV);
+		//USERAPI_HANDLE_CALL(BT_SUBSCRIBE);
 
 		default:
 			regs->eax=-1;
