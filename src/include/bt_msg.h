@@ -14,6 +14,7 @@ const size_t BT_MSG_MAX=4096*1024;
 #endif
 
 struct bt_msg_header{
+    bool valid;
     uint64_t id;
     uint32_t flags;
     uint16_t source;

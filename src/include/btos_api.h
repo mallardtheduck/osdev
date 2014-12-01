@@ -82,7 +82,10 @@ enum{
 
 	BT_SEND				= 0x0901,
 	BT_RECV				= 0x0902,
-	BT_SUBSCRIBE		= 0x0903,
+	BT_CONTENT			= 0x0903,
+	BT_ACK				= 0x0904,
+	BT_SUBSCRIBE		= 0x0905,
+	BT_MSGWAIT			= 0x0906,
 
 	BT_QUERY_EXT		= 0x0F01,
 };

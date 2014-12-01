@@ -561,7 +561,11 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid){
         hold_lock hl(proc_lock, false);
         proc_process *p = proc_get(pid);
         if (!p) return 0;
-        if(again) sch_setblock(&proc_msg_blockcheck, (void*)&p->msg_buffer);
+        if(again) {
+            release_lock(proc_lock);
+            sch_setblock(&proc_msg_blockcheck, (void *) &p->msg_buffer);
+            take_lock_exclusive(proc_lock);
+        }
         again=false;
         {
             hold_lock hl2(p->msg_lock);
@@ -576,4 +580,15 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid){
         }
     }while(again);
     return 0;
+}
+
+void proc_message_wait(pid_t pid){
+    proc_process *p;
+    {
+        hold_lock hl(proc_lock, false);
+        p = proc_get(pid);
+        if (!p) return;
+        if (!p->msg_buffer) return;
+    }
+    sch_setblock(&proc_msg_blockcheck, (void*)&p->msg_buffer);
 }

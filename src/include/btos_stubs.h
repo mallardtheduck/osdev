@@ -204,4 +204,23 @@ inline static uint64_t bt_send(bt_msg_header msg){
 	return ret;
 }
 
+inline static bt_msg_header bt_recv(bool block){
+	bt_msg_header ret;
+	ret.valid=false;
+	btos_call(BT_RECV, (uint32_t)&ret, (uint32_t)block, 0);
+	return ret;
+}
+
+inline static void bt_msg_content(bt_msg_header *header, void *buf, size_t size){
+	btos_call(BT_CONTENT, (uint32_t)header, (uint32_t)buf, size);
+}
+
+inline static void bt_msg_ack(bt_msg_header *header){
+	btos_call(BT_ACK, (uint32_t)header, 0, 0);
+}
+
+inline static void bt_msgwait(){
+	btos_call(BT_MSGWAIT, 0, 0, 0);
+}
+
 #endif

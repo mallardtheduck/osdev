@@ -357,6 +357,33 @@ USERAPI_HANDLER(BT_SEND){
 	}
 }
 
+USERAPI_HANDLER(BT_RECV){
+	if(is_safe_ptr(regs->ebx)){
+		btos_api::bt_msg_header &header=*(btos_api::bt_msg_header*)regs->ebx;
+		if(regs->ecx){
+			header=msg_recv_block();
+		}else{
+			regs->eax=(uint32_t)msg_recv(header);
+		}
+	}
+}
+
+USERAPI_HANDLER(BT_CONTENT){
+	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->ecx)){
+		msg_getcontent(*(btos_api::bt_msg_header*)regs->ebx, (void*)regs->ecx, regs->edx);
+	}
+}
+
+USERAPI_HANDLER(BT_ACK){
+	if(is_safe_ptr(regs->ebx)){
+		msg_acknowledge(*(btos_api::bt_msg_header*)regs->ebx);
+	}
+}
+
+USERAPI_HANDLER(BT_MSGWAIT){
+	proc_message_wait();
+}
+
 void userapi_syscall(uint16_t fn, isr_regs *regs){
 	switch(fn){
 		case 0:
@@ -430,7 +457,10 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 
 		//Messaging
 		USERAPI_HANDLE_CALL(BT_SEND);
-		//USERAPI_HANDLE_CALL(BT_RECV);
+		USERAPI_HANDLE_CALL(BT_RECV);
+		USERAPI_HANDLE_CALL(BT_CONTENT);
+		USERAPI_HANDLE_CALL(BT_ACK);
+		USERAPI_HANDLE_CALL(BT_MSGWAIT);
 		//USERAPI_HANDLE_CALL(BT_SUBSCRIBE);
 
 		default:
