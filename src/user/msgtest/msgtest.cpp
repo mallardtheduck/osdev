@@ -28,7 +28,12 @@ int main(int argc, char **argv){
         msg.to=to;
         msg.length=strlen(argv[2]);
         msg.content=argv[2];
-        bt_send(msg);
-        bt_msgwait();
+        uint64_t id=bt_send(msg);
+        if(id) {
+            cout << "Sent message ID: " << id << endl;
+            bt_msgwait();
+        }else{
+            cout << "Could not send message." << endl;
+        }
     }
 }
