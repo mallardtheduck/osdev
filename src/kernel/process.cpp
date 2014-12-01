@@ -537,7 +537,9 @@ void proc_set_status(proc_status::Enum status, pid_t pid){
 }
 proc_status::Enum proc_get_status(pid_t pid){
     hold_lock hl(proc_lock, false);
-    return proc_get(pid)->status;
+    proc_process *p=proc_get(pid);
+    if(p) return p->status;
+    else return proc_status::DoesNotExist;
 }
 
 void proc_free_message_buffer(pid_t pid){

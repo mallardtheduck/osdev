@@ -21,6 +21,8 @@ namespace proc_status{
     enum Enum{
         Running,
         Ending,
+		Ended,
+		DoesNotExist=Ended,
     };
 };
 

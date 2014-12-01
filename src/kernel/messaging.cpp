@@ -12,6 +12,7 @@ void msg_init(){
 }
 
 uint64_t msg_send(bt_msg_header &msg){
+    if(msg.to != 0 && proc_get_status(msg.to) == proc_status::DoesNotExist) return 0;
     msg.id=++id_counter;
     msg.valid=true;
     msg_q->push_back(msg);
