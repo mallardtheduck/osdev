@@ -57,10 +57,12 @@ bool msg_get(uint64_t id, bt_msg_header &msg){
     return false;
 }
 
-void msg_getcontent(bt_msg_header &msg, void *buffer, size_t buffersize){
+size_t msg_getcontent(bt_msg_header &msg, void *buffer, size_t buffersize){
     bt_msg_header r;
-    if(!msg_get(msg.id, r)) return;
-    memcpy(buffer, r.content, buffersize>r.length?r.length:buffersize);
+    if(!msg_get(msg.id, r)) return 0;
+    size_t size=buffersize>r.length?r.length:buffersize;
+    memcpy(buffer, r.content, size);
+    return size;
 }
 
 void msg_acknowledge(bt_msg_header &msg){

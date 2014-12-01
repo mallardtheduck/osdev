@@ -370,7 +370,7 @@ USERAPI_HANDLER(BT_RECV){
 
 USERAPI_HANDLER(BT_CONTENT){
 	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->ecx)){
-		msg_getcontent(*(btos_api::bt_msg_header*)regs->ebx, (void*)regs->ecx, regs->edx);
+		regs->eax=msg_getcontent(*(btos_api::bt_msg_header*)regs->ebx, (void*)regs->ecx, regs->edx);
 	}
 }
 

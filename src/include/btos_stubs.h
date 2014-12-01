@@ -211,8 +211,8 @@ inline static bt_msg_header bt_recv(bool block){
 	return ret;
 }
 
-inline static void bt_msg_content(bt_msg_header *header, void *buf, size_t size){
-	btos_call(BT_CONTENT, (uint32_t)header, (uint32_t)buf, size);
+inline static size_t bt_msg_content(bt_msg_header *header, void *buf, size_t size){
+	return btos_call(BT_CONTENT, (uint32_t)header, (uint32_t)buf, size);
 }
 
 inline static void bt_msg_ack(bt_msg_header *header){
