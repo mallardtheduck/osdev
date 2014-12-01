@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstring>
 #include <cstdio>
+#include <string>
 #include "../../include/btos_stubs.h"
 
 using namespace std;
@@ -11,11 +12,13 @@ int main(int argc, char **argv){
         while(true){
             bt_msg_header msg=bt_recv(true);
             cout << "Message from: " << msg.from << endl;
+            cout << "ID: " << msg.id << endl;
             cout << "Length: " << msg.length << endl;
-            char* data=new char[msg.length+1];
+            char* data=new char[msg.length+1]();
             bt_msg_content(&msg, data, msg.length);
             cout << "Data: \"" << data << "\"" << endl;
             bt_msg_ack(&msg);
+            if(string(data)=="quit") return 0;
             delete data;
         }
     }else if(argc==3){
