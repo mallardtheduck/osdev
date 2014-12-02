@@ -362,6 +362,7 @@ USERAPI_HANDLER(BT_RECV){
 		btos_api::bt_msg_header &header=*(btos_api::bt_msg_header*)regs->ebx;
 		if(regs->ecx){
 			header=msg_recv_block();
+			header.content=NULL;
 		}else{
 			regs->eax=(uint32_t)msg_recv(header);
 		}
