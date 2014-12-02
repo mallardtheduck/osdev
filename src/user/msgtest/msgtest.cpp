@@ -6,20 +6,27 @@
 
 using namespace std;
 
+string output_message(bt_msg_header &msg);
+
 int main(int argc, char **argv){
     if(argc==1){
         cout << "Listening on PID " << bt_getpid() << "." << endl;
         while(true){
             bt_msg_header msg=bt_recv(true);
-            cout << "Message from: " << msg.from << endl;
-            cout << "ID: " << msg.id << endl;
-            cout << "Length: " << msg.length << endl;
-            char* data=new char[msg.length+1]();
-            bt_msg_content(&msg, data, msg.length);
-            cout << "Data: \"" << data << "\"" << endl;
+            string data=output_message(msg);
+            if(data=="echo"){
+                bt_msg_header reply;
+                reply.to=msg.from;
+                reply.reply_id=msg.id;
+                reply.flags = bt_msg_flags::Reply;
+                char *replycontent=(char*)"echo";
+                reply.content=replycontent;
+                reply.length=strlen(replycontent);
+                uint64_t replyid=bt_send(reply);
+                cout << "Sent reply ID: " << replyid << endl;
+            }
             bt_msg_ack(&msg);
-            if(string(data)=="quit") return 0;
-            delete data;
+            if(data=="quit") return 0;
         }
     }else if(argc==3){
         bt_msg_header msg;
@@ -35,5 +42,23 @@ int main(int argc, char **argv){
         }else{
             cout << "Could not send message." << endl;
         }
+        bt_msg_header reply=bt_recv(false);
+        if(reply.valid && (reply.flags & bt_msg_flags::Reply)){
+            cout << "Recieved reply: " << endl;
+            output_message(reply);
+        }
+        if(reply.valid) bt_msg_ack(&reply);
     }
+}
+
+string output_message(bt_msg_header &msg) {
+    char *data=new char[msg.length+1]();
+    cout << "Message from: " << msg.from << endl;
+    cout << "ID: " << msg.id << endl;
+    cout << "Length: " << msg.length << endl;
+    bt_msg_content(&msg, data, msg.length);
+    cout << "Data: \"" << data << "\"" << endl;
+    string ret=data;
+    delete data;
+    return ret;
 }

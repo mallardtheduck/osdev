@@ -6,6 +6,8 @@ using namespace btos_api;
 static vector<bt_msg_header> *msg_q;
 static uint64_t id_counter=0;
 
+bool msg_get(uint64_t id, bt_msg_header &msg);
+
 void msg_init(){
     dbgout("MSG: Init messaging...\n");
     msg_q=new vector<bt_msg_header>();
@@ -13,6 +15,18 @@ void msg_init(){
 
 uint64_t msg_send(bt_msg_header &msg){
     if(msg.to != 0 && proc_get_status(msg.to) == proc_status::DoesNotExist) return 0;
+    if(msg.flags & bt_msg_flags::Reply){
+        bt_msg_header prev;
+        if(!msg_get(msg.reply_id, prev)) {
+            dbgout("MSG: Attempted reply to non-existent message!\n");
+            return 0;
+        }
+        if(prev.to != msg.from || prev.from != msg.to) {
+            dbgout("MSG: Reply to/from mismatch!\n");
+            dbgpf("Expected from: %i to: %i, got from: %i to: %i\n", (int)prev.to, (int)prev.from, (int)msg.from, (int)msg.to);
+            return 0;
+        }
+    }
     msg.id=++id_counter;
     msg.valid=true;
     msg_q->push_back(msg);

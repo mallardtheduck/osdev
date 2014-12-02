@@ -16,6 +16,7 @@ const size_t BT_MSG_MAX=4096*1024;
 struct bt_msg_header{
     bool valid;
     uint64_t id;
+    uint64_t reply_id;
     uint32_t flags;
     uint16_t source;
     uint64_t from, to;
@@ -29,6 +30,7 @@ typedef struct bt_msg_header bt_msg_header;
 
 ENUM_START(bt_msg_flags)
     ENUM_SET(bt_msg_flags, UserSpace, 1 >> 0),
+    ENUM_SET(bt_msg_flags, Reply, 1 << 1),
 ENUM_END
 
 #ifdef __cplusplus
