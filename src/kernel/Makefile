@@ -43,7 +43,14 @@ btos.iso: btos.bin
 	@cp btos.bin isodir/boot/btos.bin
 	@mkdir -p isodir/boot/grub
 	@cp grub.cfg isodir/boot/grub/grub.cfg
-	grub-mkrescue -o btos.iso isodir
+	@mkdir -p isodir/boot/grub/i386-pc
+	cp -r /usr/lib/grub/i386-pc/* isodir/boot/grub/i386-pc
+	rm isodir/boot/grub/i386-pc/*.img
+	grub-mkimage -O i386-pc -d /usr/lib/grub/i386-pc -o core.img -c load_cfg --prefix=/boot/grub iso9660 biosdisk
+	cat /usr/lib/grub/i386-pc/cdboot.img core.img > isodir/boot/grub/i386-pc/eltorito.img
+	cat /usr/lib/grub/i386-pc/boot.img core.img > embedded.img
+	xorriso -report_about HINT -as mkisofs -graft-points -b boot/grub/i386-pc/eltorito.img -no-emul-boot -boot-info-table --embedded-boot embedded.img --protective-msdos-label -o btos.iso -r isodir --sort-weight 0 / --sort-weight 1 /boot
+	
 
 initfs/initfs_data.cpp: initfs/initfs_data.inc
 
