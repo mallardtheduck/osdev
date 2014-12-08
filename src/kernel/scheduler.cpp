@@ -77,10 +77,7 @@ char *sch_threads_infofs(){
 void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
-    uint32_t basefreq=11931820;
-    uint32_t wantfreq=10;
-    dbgpf("SCH: Wf: %i\n", (int)wantfreq);
-    uint16_t value=(uint16_t)(basefreq/wantfreq);
+    uint16_t value=0xFFFF;
     dbgpf("SCH: Value: %i\n", (int)value);
 	outb(0x43, 0x36);
 	outb(0x40, value & 0xFF);
@@ -243,12 +240,11 @@ inline void out_regs(const irq_regs &ctx){
 }
 
 bool sch_find_thread(sch_thread *&torun){
-	//Reset dyanmic priority of idle thread (ensures it only runs when nothing else is available)
-	//(*threads)[idle_thread].dynpriority=(*threads)[idle_thread].priority;
 	//Find runnable threads and minimum dynamic priority
 	int nrunnables=0;
 	uint32_t min=0xFFFFFFFF;
 	for(size_t i=0; i<threads->size(); ++i){
+		//Priority 0xFFFFFFFF == "idle", only run when nothing else is available.
 		if(!(*threads)[i]->priority==0xFFFFFFFF) (*threads)[i]->dynpriority=0xFFFFFFFF;
 	    if(!(*threads)[i]->runnable && (*threads)[i]->blockcheck!=NULL){
 	        (*threads)[i]->runnable=(*threads)[i]->blockcheck((*threads)[i]->bc_param);
