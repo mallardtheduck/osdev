@@ -77,10 +77,7 @@ char *sch_threads_infofs(){
 void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
-    uint32_t basefreq=11931820;
-    uint32_t wantfreq=10;
-    dbgpf("SCH: Wf: %i\n", (int)wantfreq);
-    uint16_t value=(uint16_t)(basefreq/wantfreq);
+    uint16_t value=0xFFFF;
     dbgpf("SCH: Value: %i\n", (int)value);
 	outb(0x43, 0x36);
 	outb(0x40, value & 0xFF);
