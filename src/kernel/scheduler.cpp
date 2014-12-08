@@ -243,12 +243,11 @@ inline void out_regs(const irq_regs &ctx){
 }
 
 bool sch_find_thread(sch_thread *&torun){
-	//Reset dyanmic priority of idle thread (ensures it only runs when nothing else is available)
-	//(*threads)[idle_thread].dynpriority=(*threads)[idle_thread].priority;
 	//Find runnable threads and minimum dynamic priority
 	int nrunnables=0;
 	uint32_t min=0xFFFFFFFF;
 	for(size_t i=0; i<threads->size(); ++i){
+		//Priority 0xFFFFFFFF == "idle", only run when nothing else is available.
 		if(!(*threads)[i]->priority==0xFFFFFFFF) (*threads)[i]->dynpriority=0xFFFFFFFF;
 	    if(!(*threads)[i]->runnable && (*threads)[i]->blockcheck!=NULL){
 	        (*threads)[i]->runnable=(*threads)[i]->blockcheck((*threads)[i]->bc_param);
