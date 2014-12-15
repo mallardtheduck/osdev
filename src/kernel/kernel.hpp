@@ -30,6 +30,7 @@ extern "C"{
 #define PRINTF_LONG_SUPPORT
 #include "printf.h"
 #include "liballoc.h"
+#include "memcpy.h"
 
 }
 

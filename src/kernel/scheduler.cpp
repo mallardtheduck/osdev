@@ -242,14 +242,15 @@ inline void out_regs(const irq_regs &ctx){
 	dbgpf("EFLAGS: %x ORESP: %x\n", ctx.eflags, ctx.useresp);
 }
 
-bool sch_find_thread(sch_thread *&torun){
+static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
+	static uint32_t lcycle=0;
 	//Find runnable threads and minimum dynamic priority
 	int nrunnables=0;
 	uint32_t min=0xFFFFFFFF;
 	for(size_t i=0; i<threads->size(); ++i){
 		//Priority 0xFFFFFFFF == "idle", only run when nothing else is available.
 		if(!(*threads)[i]->priority==0xFFFFFFFF) (*threads)[i]->dynpriority=0xFFFFFFFF;
-	    if(!(*threads)[i]->runnable && (*threads)[i]->blockcheck!=NULL){
+	    if(lcycle != cycle && !(*threads)[i]->runnable && (*threads)[i]->blockcheck!=NULL){
 	        (*threads)[i]->runnable=(*threads)[i]->blockcheck((*threads)[i]->bc_param);
 	    }
 		if((*threads)[i]->runnable){
@@ -258,6 +259,7 @@ bool sch_find_thread(sch_thread *&torun){
 			if((*threads)[i]->dynpriority < min) min=(*threads)[i]->dynpriority;
 		}
 	}
+	lcycle=cycle;
 
 	//If there are no runnable threads, halt. Hopefully an interrupt will awaken one soon...
 	if(nrunnables==0){
@@ -505,14 +507,16 @@ void sch_prescheduler_thread(void*){
 		take_lock_exclusive(sch_lock);
 		sch_thread *current=current_thread;
 		sch_thread *next=NULL;
-		while(sch_find_thread(next)){
-			if(next->sch_cycle==cycle){
+		uint32_t count=0;
+		while(sch_find_thread(next, cycle)){
+			if(next->sch_cycle==cycle || (count && next==idle_thread)){
 				break;
 			}
 			current->next=next;
 			current=current->next;
 			current->dynpriority=current->priority;
 			current->sch_cycle=cycle;
+			count++;
 		}
 		release_lock(sch_lock);
 		sch_yield();
