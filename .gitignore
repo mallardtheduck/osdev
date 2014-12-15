@@ -17,3 +17,9 @@ serial.out
 xxd_data.inc
 buildid.c
 btos.img
+.idea/*
+os.iml
+.cproject
+.project
+.kernel.cpp.swp
+*.img

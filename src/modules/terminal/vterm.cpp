@@ -33,6 +33,7 @@ vterm::vterm(uint64_t nid, i_backend *back){
     input_top=0;
     input_count=0;
     refcount=0;
+    scrollcount=0;
     sprintf(title, "BT/OS Terminal %i", (int)id);
 }
 
@@ -92,6 +93,7 @@ void vterm::scroll(){
         }
     }
     bufpos=((vidmode.height-1)*vidmode.width)*factor;
+    scrollcount++;
 }
 
 void vterm::do_infoline(){
@@ -153,9 +155,13 @@ void vterm::deactivate() {
 size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
     hold_lock hl(&term_lock);
     curpid=getpid();
-    if(bufpos+size > bufsize) size=bufsize-bufpos;
+    bool iline_valid=infoline && vidmode.textmode;
+    if(bufpos <= vidmode.width) iline_valid=false;
+    if(bufpos+size > bufsize) size = bufsize - bufpos;
     if(vidmode.textmode){
+        uint64_t scount=scrollcount;
         for(size_t i=0; i<size; ++i) putchar(buf[i]);
+        if(scount != scrollcount) iline_valid=false;
     }else {
         memcpy(buffer + bufpos, buf, size);
         bufpos += size;
@@ -163,7 +169,7 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
             backend->display_write(size, buf);
         }
     }
-    do_infoline();
+    if(!iline_valid) do_infoline();
     return size;
 }
 

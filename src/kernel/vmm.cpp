@@ -36,6 +36,7 @@ bool is_paging_enabled();
 
 uint32_t vmm_tableframe[VMM_ENTRIES_PER_TABLE] __attribute__((aligned(0x1000)));
 lock vmm_framelock;
+static size_t kmem=0;
 
 #include "vmm_pagedir.hpp"
 
@@ -378,6 +379,7 @@ void vmm_init(multiboot_info_t *mbt){
             dbgpf("VMM: Marking page %x\n", pageptr);
             amm_mark_alloc(vmm_cur_pagedir->virt2phys(pageptr), amm_page_type::Kernel, NULL);
             vmm_cur_pagedir->set_flags((i*VMM_PAGE_SIZE), amm_flags::Kernel);
+			kmem+=VMM_PAGE_SIZE;
         }
     }
     infofs_register("FREEMEM", &freemem_infofs);
@@ -426,6 +428,7 @@ void *vmm_alloc(size_t pages, vmm_allocmode::Enum mode){
     }
 	void *ret=(void*)(virtpage*VMM_PAGE_SIZE);
 	memset(ret, 0xaa, pages*VMM_PAGE_SIZE);
+	if(mode==vmm_allocmode::Kernel) kmem+=pages*VMM_PAGE_SIZE;
 	return ret;
 }
 
@@ -450,6 +453,7 @@ void *vmm_alloc_at(size_t pages, size_t baseaddr){
 			return NULL;
 		}
         vmm_cur_pagedir->map_page(virtpage+i, phys_page, true, mode);
+		if(mode==vmm_allocmode::Kernel) kmem+=VMM_PAGE_SIZE;
 	}
 	return (void*)baseaddr;
 }
@@ -460,7 +464,8 @@ void vmm_free(void *ptr, size_t pages){
 	size_t virtpage=(uint32_t)ptr/VMM_PAGE_SIZE;
 	for(size_t i=0; i<pages; ++i){
 		size_t physpage=vmm_cur_pagedir->unmap_page(virtpage+i);
-		amm_mark_free(physpage*VMM_PAGE_SIZE);
+		amm_mark_free((physpage+i)*VMM_PAGE_SIZE);
+		if((virtpage+i)*VMM_PAGE_SIZE < VMM_KERNELSPACE_END) kmem-=VMM_PAGE_SIZE;
 	}
 }
 
@@ -498,11 +503,7 @@ size_t vmm_getusermemory(vmm_pagedir *dir){
 }
 
 size_t vmm_getkernelmemory(){
-	size_t ret=0;
-	for(size_t i=256; i<VMM_KERNEL_PAGES; ++i){
-		if(vmm_cur_pagedir->is_mapped((void*)(i*VMM_PAGE_SIZE))) ret+=VMM_PAGE_SIZE;
-	}
-	return ret;
+	return kmem;
 }
 
 size_t vmm_gettotalmem(){

@@ -11,8 +11,8 @@ string output_message(bt_msg_header &msg);
 int main(int argc, char **argv){
     if(argc==1){
         cout << "Listening on PID " << bt_getpid() << "." << endl;
+        bt_msg_header msg=bt_recv(true);
         while(true){
-            bt_msg_header msg=bt_recv(true);
             string data=output_message(msg);
             if(data=="echo"){
                 bt_msg_header reply;
@@ -25,8 +25,11 @@ int main(int argc, char **argv){
                 uint64_t replyid=bt_send(reply);
                 cout << "Sent reply ID: " << replyid << endl;
             }
-            bt_msg_ack(&msg);
-            if(data=="quit") return 0;
+            if(data=="quit") {
+                bt_msg_ack(&msg);
+                return 0;
+            }
+            bt_next_msg(&msg);
         }
     }else if(argc==3){
         bt_msg_header msg;

@@ -22,6 +22,7 @@ struct bt_msg_header{
     uint64_t from, to;
     uint32_t type;
     size_t length;
+    bool critical;
     void *content;
 };
 #ifndef __cplusplus
