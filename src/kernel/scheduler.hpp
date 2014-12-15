@@ -27,5 +27,7 @@ void sch_abort(uint64_t ext_id);
 uint32_t sch_get_eip(bool lock=true);
 bool sch_can_lock();
 bool sch_user_abort();
+void sch_set_msgstaus(thread_msg_status::Enum status, uint64_t ext_id=sch_get_id());
+thread_msg_status::Enum sch_get_msgstatus(uint64_t ext_id=sch_get_id());
 
 #endif

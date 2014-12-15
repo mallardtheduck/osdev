@@ -38,6 +38,7 @@ struct sch_thread{
     bool user_abort;
 	sch_thread *next;
 	uint32_t sch_cycle;
+	thread_msg_status::Enum msgstatus;
 };
 
 vector<sch_thread*> *threads;
@@ -97,6 +98,7 @@ void sch_init(){
 	mainthread->abortable=false;
 	mainthread->pid=0;
 	mainthread->sch_cycle=0;
+	mainthread->msgstatus=thread_msg_status::Normal;
 	current_thread_id=mainthread->ext_id=++cur_ext_id;
 	threads->push_back(mainthread);
 	current_thread=(*threads)[threads->size()-1];
@@ -186,6 +188,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
     newthread->user_abort=false;
 	newthread->next=NULL;
 	newthread->sch_cycle=0;
+	newthread->msgstatus=thread_msg_status::Normal;
     take_lock_exclusive(sch_lock);
 	newthread->ext_id=++cur_ext_id;
 	threads->push_back(newthread);
@@ -522,4 +525,12 @@ static sch_thread *sch_get(uint64_t ext_id){
 		if((*threads)[i]->ext_id==ext_id) return (*threads)[i];
 	}
 	return NULL;
+}
+
+void sch_set_msgstaus(thread_msg_status::Enum status, uint64_t ext_id){
+	current_thread->msgstatus=status;
+}
+
+thread_msg_status::Enum sch_get_msgstatus(uint64_t ext_id){
+	return current_thread->msgstatus;
 }
