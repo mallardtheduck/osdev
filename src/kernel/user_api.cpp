@@ -369,6 +369,13 @@ USERAPI_HANDLER(BT_RECV){
 	}
 }
 
+USERAPI_HANDLER(BT_NEXTMSG){
+	if(is_safe_ptr(regs->ebx)){
+		btos_api::bt_msg_header &header=*(btos_api::bt_msg_header*)regs->ebx;
+		msg_nextmessage(header);
+	}
+}
+
 USERAPI_HANDLER(BT_CONTENT){
 	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->ecx)){
 		regs->eax=msg_getcontent(*(btos_api::bt_msg_header*)regs->ebx, (void*)regs->ecx, regs->edx);
@@ -459,6 +466,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		//Messaging
 		USERAPI_HANDLE_CALL(BT_SEND);
 		USERAPI_HANDLE_CALL(BT_RECV);
+		USERAPI_HANDLE_CALL(BT_NEXTMSG);
 		USERAPI_HANDLE_CALL(BT_CONTENT);
 		USERAPI_HANDLE_CALL(BT_ACK);
 		USERAPI_HANDLE_CALL(BT_MSGWAIT);
