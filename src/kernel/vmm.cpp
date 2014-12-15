@@ -480,7 +480,7 @@ void vmm_activate_pagedir(vmm_pagedir *pagedir){
 void vmm_switch(vmm_pagedir *dir){
 	if(dir!=vmm_cur_pagedir){
 		vmm_kernel_pagedir.copy_kernelspace(vmm_cur_pagedir);
-		dir->copy_kernelspace(&vmm_kernel_pagedir);
+		dir->copy_kernelspace(vmm_cur_pagedir);
 		vmm_cur_pagedir=dir;
 		vmm_activate_pagedir(vmm_cur_pagedir);
 	}
