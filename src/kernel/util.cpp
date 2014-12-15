@@ -82,7 +82,7 @@ extern "C" char *strncpy(char *dest, const char *src, size_t size)
         return dest; 
 }
 
-void* memcpy(void* dest, const void* src, size_t count) {
+/*void* memcpy(void* dest, const void* src, size_t count) {
         char* dst8 = (char*)dest;
         char* src8 = (char*)src;
 
@@ -90,7 +90,7 @@ void* memcpy(void* dest, const void* src, size_t count) {
             *dst8++ = *src8++;
         }
         return dest;
-}
+}*/
 
 void *memmove(void *v_dst, const void *v_src, size_t c)
 {
