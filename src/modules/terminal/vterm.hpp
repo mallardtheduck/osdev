@@ -39,6 +39,8 @@ private:
 
     void putchar(char c);
     void putstring(char *s);
+    void setcolours(uint8_t c);
+    uint8_t getcolours();
     void scroll();
     void do_infoline();
     char get_char();
@@ -69,6 +71,9 @@ public:
 
     void queue_input(uint32_t code);
     void sync(bool content=true);
+
+    void allocate_buffer();
+    void clear_buffer();
 };
 
 //extern vterm *current_vterm;
