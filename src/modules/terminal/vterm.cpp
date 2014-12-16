@@ -254,7 +254,10 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         if(backend->is_active(id)){
             backend->display_ioctl(fn, size, buf);
         }
-        if(infoline) putchar('\n');
+        if(infoline) {
+            putchar('\n');
+            do_infoline();
+        }
     }else if(fn == bt_terminal_ioctl::SetEcho){
         if(size) echo=*(bool*)buf;
     }else if(fn == bt_terminal_ioctl::SetMode){
