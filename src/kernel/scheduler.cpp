@@ -49,6 +49,7 @@ sch_thread *prescheduler_thread;
 uint64_t cur_ext_id;
 sch_thread *idle_thread;
 uint64_t sch_zero=0;
+bool sch_deferred=false;
 
 void thread_reaper(void*);
 void sch_threadtest();
@@ -487,8 +488,12 @@ void sch_abort(uint64_t ext_id){
 }
 
 bool sch_can_lock(){
-    if(!try_take_lock_exclusive(sch_lock)) return false;
+    if(!try_take_lock_exclusive(sch_lock)) {
+		sch_deferred=true;
+		return false;
+	}
     release_lock(sch_lock);
+	sch_deferred=false;
     return true;
 }
 
@@ -537,4 +542,9 @@ void sch_set_msgstaus(thread_msg_status::Enum status, uint64_t ext_id){
 
 thread_msg_status::Enum sch_get_msgstatus(uint64_t ext_id){
 	return current_thread->msgstatus;
+}
+
+
+void sch_deferred_yield(){
+	if(sch_deferred) sch_yield();
 }
