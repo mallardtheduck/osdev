@@ -139,6 +139,7 @@ const char *vterm::get_title(){
 void vterm::activate() {
     hold_lock hl(&term_lock, false);
     bool scroll=false;
+    backend->display_ioctl(bt_vid_ioctl::SetMode, sizeof(vidmode), (char*)&vidmode);
     backend->set_active(id);
     backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scroll);
     if(vidmode.textmode) {
@@ -253,13 +254,8 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         memcpy(title, buf, size);
         do_infoline();
     }else if(fn==bt_vid_ioctl::ClearScreen){
-        memset(buffer, 0, bufsize);
+        clear_buffer();
         seek(opts, 0, false);
-        if(vidmode.textmode) {
-            for (size_t i = 1; i < bufsize; i += 2) {
-                buffer[i] = textcolour;
-            }
-        }
         if(backend->is_active(id)){
             backend->display_ioctl(fn, size, buf);
         }
@@ -278,8 +274,17 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         terminals->switch_terminal(sw_id);
     }else if(fn == bt_vid_ioctl::GetModeCount){
         return backend->display_ioctl(fn, size, buf);
-    }else if(fn == bt_vid_ioctl::GetMode){
+    }else if(fn == bt_vid_ioctl::GetMode) {
         return backend->display_ioctl(fn, size, buf);
+    }else if(fn == bt_vid_ioctl::SetMode){
+        if(size==sizeof(bt_vidmode)){
+            if(backend->is_active(id)){
+                backend->display_ioctl(fn, size, buf);
+            }
+            vidmode=*(bt_vidmode*)buf;
+            allocate_buffer();
+            clear_buffer();
+        }
     }else if(fn == bt_vid_ioctl::QueryMode){
         if(size==sizeof(bt_vidmode)){
             bt_vidmode *mode=(bt_vidmode*)buf;
@@ -336,44 +341,52 @@ void vterm::close(){
 void vterm::sync(bool content) {
     hold_lock hl(&term_lock);
     backend->display_ioctl(bt_vid_ioctl::GetMode, sizeof(vidmode), (char*)&vidmode);
-    if(vidmode.textmode){
-        bufsize=(vidmode.width * vidmode.height) * (((vidmode.bpp * 2) / 8) + 1);
-    }else{
-        bufsize=(vidmode.width * vidmode.height) * (vidmode.bpp / 8);
-    }
-    if(buffer) {
-        free(buffer);
-        buffer=NULL;
-    }
-    buffer=(uint8_t*)malloc(bufsize);
+    allocate_buffer();
     if(content) {
-        size_t vpos = backend->display_seek(0, true);
-        backend->display_seek(0, false);
-        if (vidmode.textmode) {
+        size_t vpos = this->backend->display_seek(0, true);
+        this->backend->display_seek(0, false);
+        if (this->vidmode.textmode) {
             bt_vid_text_access_mode::Enum textmode = bt_vid_text_access_mode::Raw;
-            backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char *) &textmode);
-            backend->display_ioctl(bt_vid_ioctl::GetTextColours, sizeof(textcolour), (char *) &textcolour);
+            this->backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char *) &textmode);
+            this->backend->display_ioctl(bt_vid_ioctl::GetTextColours, sizeof(this->textcolour), (char *) &this->textcolour);
         }
-        backend->display_read(bufsize, (char *) buffer);
-        if (vidmode.textmode) {
+        this->backend->display_read(this->bufsize, (char *) this->buffer);
+        if (this->vidmode.textmode) {
             bt_vid_text_access_mode::Enum textmode = bt_vid_text_access_mode::Simple;
-            backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char *) &textmode);
+            this->backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char *) &textmode);
         }
-        backend->display_seek(vpos, false);
-        bufpos = backend->display_seek(0, true);
-        if (vidmode.textmode) {
-            bufpos *= 2;
+        this->backend->display_seek(vpos, false);
+        this->bufpos = this->backend->display_seek(0, true);
+        if (this->vidmode.textmode) {
+            this->bufpos *= 2;
         }
     }else{
-        memset(buffer, 0, bufsize);
-        if(vidmode.textmode) {
+        clear_buffer();
+    }
+    this->scrolling =(bool) this->backend->display_ioctl(bt_vid_ioctl::GetScrolling, 0, NULL);
+}
+
+void vterm::clear_buffer() {
+    memset(buffer, 0, bufsize);
+    if(vidmode.textmode) {
             for (size_t i = 1; i < bufsize; i += 2) {
                 buffer[i] = textcolour;
             }
         }
-        bufpos = 0;
+    bufpos = 0;
+}
+
+void vterm::allocate_buffer() {
+    if(vidmode.textmode){
+        bufsize =(vidmode.width * vidmode.height) * (((vidmode.bpp * 2) / 8) + 1);
+    }else{
+        bufsize =(vidmode.width * vidmode.height) * (vidmode.bpp / 8);
     }
-    scrolling=(bool)backend->display_ioctl(bt_vid_ioctl::GetScrolling, 0, NULL);
+    if(buffer) {
+        free(buffer);
+        buffer =NULL;
+    }
+    buffer=(uint8_t*)malloc(bufsize);
 }
 
 void vterm::queue_input(uint32_t code) {
