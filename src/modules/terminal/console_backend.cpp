@@ -29,6 +29,7 @@ static uint64_t switcher_term=0;
 
 void console_backend_input_thread(void *p){
     console_backend *backend=(console_backend*)p;
+    thread_priority(2);
     while(true){
         uint32_t key=0;
         size_t read=fread(backend->input, sizeof(key), (char*)&key);
