@@ -74,5 +74,5 @@ void release_lock(lock &l, uint64_t thread){
         __sync_bool_compare_and_swap(&l.lockval, thread, 0);
         if (l.lockval != 0) panic("(LOCK) Lock value still set!");
     }
-    if(&l != &sch_lock && sch_can_lock()) sch_yield();
+    if(&l != &sch_lock /*&& sch_can_lock()*/) sch_deferred_yield();
 }
