@@ -298,6 +298,15 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         }
     }else if(fn == bt_vid_ioctl::GetTextColours){
         return getcolours();
+    }else if(fn == bt_vid_ioctl::GetScrolling){
+        return scrolling;
+    }else if(fn == bt_vid_ioctl::SetScrolling){
+        if(size==sizeof(bool)){
+            scrolling=*(bool*)buf;
+            if(backend->is_active(id)){
+                backend->display_ioctl(fn, size, buf);
+            }
+        }
     }
     //TODO: implement more
     return 0;
