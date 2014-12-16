@@ -78,6 +78,15 @@ void vterm::putstring(char *s){
     }
 }
 
+void vterm::setcolours(uint8_t c) {
+    textcolour=c;
+    backend->display_ioctl(bt_vid_ioctl::SetTextColours, sizeof(c), (char*)&c);
+}
+
+uint8_t vterm::getcolours() {
+    return textcolour;
+}
+
 void vterm::scroll(){
     int factor=1;
     if(vidmode.textmode) factor=2;
@@ -103,7 +112,7 @@ void vterm::do_infoline(){
         seek(opts, 0, false);
         uint16_t linecol=0x1F;
         uint16_t colour=(uint16_t) backend->display_ioctl(bt_vid_ioctl::GetTextColours, 0, NULL);
-        backend->display_ioctl(bt_vid_ioctl::SetTextColours, sizeof(linecol), (char*)&linecol);
+        setcolours(linecol);
         for(size_t i=0; i<vidmode.width; ++i){
             putchar(' ');
         }
@@ -112,7 +121,7 @@ void vterm::do_infoline(){
         sprintf(buf, "[%i:%i] ", (int)terminals->get_count(), (int)id);
         putstring(buf);
         putstring(title);
-        backend->display_ioctl(bt_vid_ioctl::SetTextColours, sizeof(colour), (char*)&colour);
+        setcolours(colour);
         seek(opts, pos, false);
     }
 }
@@ -135,7 +144,7 @@ void vterm::activate() {
     if(vidmode.textmode) {
         bt_vid_text_access_mode::Enum textmode=bt_vid_text_access_mode::Raw;
         backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char*)&textmode);
-        backend->display_ioctl(bt_vid_ioctl::SetTextColours, sizeof(textcolour), (char*)&textcolour);
+        setcolours(getcolours());
     }
     backend->display_seek(0, false);
     backend->display_write(bufsize, (char*)buffer);
@@ -267,6 +276,23 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
     }else if(fn == bt_terminal_ioctl::SwtichTerminal){
         uint64_t sw_id=*(uint64_t*)buf;
         terminals->switch_terminal(sw_id);
+    }else if(fn == bt_vid_ioctl::GetModeCount){
+        return backend->display_ioctl(fn, size, buf);
+    }else if(fn == bt_vid_ioctl::GetMode){
+        return backend->display_ioctl(fn, size, buf);
+    }else if(fn == bt_vid_ioctl::QueryMode){
+        if(size==sizeof(bt_vidmode)){
+            bt_vidmode *mode=(bt_vidmode*)buf;
+            *mode=vidmode;
+            return size;
+        }
+    }else if(fn == bt_vid_ioctl::SetTextColours){
+        if(size==sizeof(uint8_t)){
+            setcolours(*(uint8_t*)buf);
+            dbgpf("VTERM: colours: %x\n", *(uint8_t*)buf);
+        }
+    }else if(fn == bt_vid_ioctl::GetTextColours){
+        return getcolours();
     }
     //TODO: implement more
     return 0;
