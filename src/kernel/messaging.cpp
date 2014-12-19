@@ -29,6 +29,10 @@ uint64_t msg_send(bt_msg_header &msg){
             dbgpf("Expected from: %i to: %i, got from: %i to: %i\n", (int)prev.to, (int)prev.from, (int)msg.from, (int)msg.to);
             return 0;
         }
+        if(prev.replied){
+            dbgout("MSG: Second reply to same message!\n");
+            return 0;
+        }
         {
             hold_lock hl(msg_lock);
             for (size_t i = 0; i < msg_q->size(); ++i) {
