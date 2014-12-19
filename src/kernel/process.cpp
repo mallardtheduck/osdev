@@ -174,83 +174,87 @@ pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent, file_
 
 void proc_end(pid_t pid) {
     if(pid==0) return;
-    hold_lock hl(proc_lock);
-    if(!proc_get(pid)) return;
-    pid_t curpid=proc_current_pid;
-    if(curpid == pid) curpid=0;
-    if(proc_get_status(pid) == proc_status::Ending){
-        dbgpf("PROC: Process %i is already ending.\n", (int) pid);
-        release_lock(proc_lock);
-        proc_wait(pid);
-        return;
-    }
-    dbgpf("PROC: Ending process %i.\n", (int) pid);
-    proc_set_status(proc_status::Ending, pid);
-    proc_process *proc = proc_get(pid);
-    if(!proc) return;
-    pid_t parent = proc->parent;
-    if (parent) {
-        proc_get(parent)->child_returns[pid] = proc->retval;
-    }
-    bool cont = true;
-    while (cont) {
-        cont=false;
-        for (map<handle_t, bt_handle_info>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
-            if(i->second.type==kernel_handle_types::thread) {
-                uint64_t thread_id = *(uint64_t *) i->second.value;
-                if (thread_id != sch_get_id()) {
-                    release_lock(proc_lock);
-                    sch_abort(thread_id);
-                    take_lock_exclusive(proc_lock);
-                    proc_remove_thread(thread_id, pid);
-                    cont = true;
-                    break;
+    {
+        hold_lock hl(proc_lock);
+        if (!proc_get(pid)) return;
+        pid_t curpid = proc_current_pid;
+        if (curpid == pid) curpid = 0;
+        if (proc_get_status(pid) == proc_status::Ending) {
+            dbgpf("PROC: Process %i is already ending.\n", (int) pid);
+            release_lock(proc_lock);
+            proc_wait(pid);
+            return;
+        }
+        dbgpf("PROC: Ending process %i.\n", (int) pid);
+        proc_set_status(proc_status::Ending, pid);
+        proc_process *proc = proc_get(pid);
+        if (!proc) return;
+        pid_t parent = proc->parent;
+        if (parent) {
+            proc_get(parent)->child_returns[pid] = proc->retval;
+        }
+        bool cont = true;
+        while (cont) {
+            cont = false;
+            for (map<handle_t, bt_handle_info>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
+                if (i->second.type == kernel_handle_types::thread) {
+                    uint64_t thread_id = *(uint64_t *) i->second.value;
+                    if (thread_id != sch_get_id()) {
+                        release_lock(proc_lock);
+                        sch_abort(thread_id);
+                        take_lock_exclusive(proc_lock);
+                        proc_remove_thread(thread_id, pid);
+                        cont = true;
+                        break;
+                    }
                 }
             }
         }
-    }
-    cont=true;
-    while(cont) {
-        cont=false;
-        for (map<handle_t, bt_handle_info>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
+        cont = true;
+        while (cont) {
+            cont = false;
+            for (map<handle_t, bt_handle_info>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
+                release_lock(proc_lock);
+                close_handle(i->second);
+                take_lock_exclusive(proc_lock);
+                proc_remove_handle(i->first, pid);
+                cont = true;
+                break;
+            }
+        }
+        if (proc->file.valid) {
             release_lock(proc_lock);
-            close_handle(i->second);
+            fs_close(proc->file);
             take_lock_exclusive(proc_lock);
-            proc_remove_handle(i->first, pid);
-            cont = true;
-            break;
+        }
+        {
+            hold_lock(proc->msg_lock);
+            if (proc->msg_buffer) {
+                //TODO: Abort message, ensuring that it's not about to be used!
+                free(proc->msg_buffer);
+                proc->msg_buffer = NULL;
+            }
+        }
+        proc_switch(curpid);
+        for (size_t i = 0; i < proc_processes->size(); ++i) {
+            proc_process *cur = (*proc_processes)[i];
+            if (cur->pid == pid) {
+                release_lock(proc_lock);
+                vmm_deletepagedir(cur->pagedir);
+                proc_processes->erase(i);
+                delete cur;
+                take_lock_exclusive(proc_lock);
+                break;
+            }
+        }
+        for (size_t i = 0; i < proc_processes->size(); ++i) {
+            proc_process *cur = (*proc_processes)[i];
+            if (cur->parent == pid) {
+                cur->parent = parent;
+            }
         }
     }
-    if(proc->file.valid) {
-        release_lock(proc_lock);
-        fs_close(proc->file);
-        take_lock_exclusive(proc_lock);
-    }
-    {hold_lock(proc->msg_lock);
-        if(proc->msg_buffer) {
-            //TODO: Abort message, ensuring that it's not about to be used!
-            free(proc->msg_buffer);
-            proc->msg_buffer=NULL;
-        }
-    }
-    proc_switch(curpid);
-    for(size_t i=0; i<proc_processes->size(); ++i){
-        proc_process *cur=(*proc_processes)[i];
-        if (cur->pid == pid) {
-            release_lock(proc_lock);
-            vmm_deletepagedir(cur->pagedir);
-            proc_processes->erase(i);
-            delete cur;
-            take_lock_exclusive(proc_lock);
-            break;
-        }
-    }
-    for(size_t i=0; i<proc_processes->size(); ++i){
-        proc_process *cur=(*proc_processes)[i];
-        if (cur->parent == pid) {
-            cur->parent = parent;
-        }
-    }
+    msg_clear(pid);
 }
 
 void proc_setenv(const pid_t pid, const string &oname, const string &value, const uint8_t flags, bool userspace){

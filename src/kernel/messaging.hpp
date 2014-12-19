@@ -20,5 +20,6 @@ btos_api::bt_msg_header msg_recv_block(pid_t pid=proc_current_pid);
 size_t msg_getcontent(btos_api::bt_msg_header &msg, void *buffer, size_t buffersize);
 void msg_acknowledge(btos_api::bt_msg_header &msg, bool set_status=true);
 void msg_nextmessage(btos_api::bt_msg_header &msg);
+void msg_clear(pid_t pid);
 
 #endif

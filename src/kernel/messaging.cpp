@@ -29,11 +29,20 @@ uint64_t msg_send(bt_msg_header &msg){
             dbgpf("Expected from: %i to: %i, got from: %i to: %i\n", (int)prev.to, (int)prev.from, (int)msg.from, (int)msg.to);
             return 0;
         }
+        {
+            hold_lock hl(msg_lock);
+            for (size_t i = 0; i < msg_q->size(); ++i) {
+                if ((*msg_q)[i].id == prev.id) {
+                    (*msg_q)[i].replied = true;
+                }
+            }
+        }
     }
     {
         hold_lock hl(msg_lock);
         msg.id = ++id_counter;
         msg.valid = true;
+        msg.recieved = msg.replied = false;
         msg_q->push_back(msg);
     }
     return msg.id;
@@ -44,6 +53,7 @@ bool msg_recv(bt_msg_header &msg, pid_t pid){
     for(size_t i=0; i<msg_q->size(); ++i){
         if((*msg_q)[i].to==pid){
             msg=(*msg_q)[i];
+            (*msg_q)[i].recieved = true;
             sch_set_msgstaus(thread_msg_status::Processing);
             return true;
         }
@@ -56,6 +66,7 @@ static bool msg_recv_nolock(bt_msg_header &msg, pid_t pid){
     for(size_t i=0; i<msg_q->size(); ++i){
         if((*msg_q)[i].to==pid){
             msg=(*msg_q)[i];
+            (*msg_q)[i].recieved = true;
             return true;
         }
     }
@@ -104,7 +115,7 @@ size_t msg_getcontent(bt_msg_header &msg, void *buffer, size_t buffersize){
 }
 
 void msg_acknowledge(bt_msg_header &msg, bool set_status){
-    hold_lock hl(msg_lock);
+    hold_lock hl(msg_lock, false);
     for(size_t i=0; i<msg_q->size(); ++i) {
         bt_msg_header &header=(*msg_q)[i];
         if(header.id==msg.id){
@@ -123,4 +134,14 @@ void msg_acknowledge(bt_msg_header &msg, bool set_status){
 void msg_nextmessage(bt_msg_header &msg){
     msg_acknowledge(msg, false);
     msg=msg_recv_block();
+}
+
+void msg_clear(pid_t pid){
+    hold_lock hl(msg_lock);
+    for(size_t i=0; i<msg_q->size(); ++i){
+        bt_msg_header &header=(*msg_q)[i];
+        if(header.to==pid || (header.from==pid && !header.recieved)){
+            msg_acknowledge(header, false);
+        }
+    }
 }
