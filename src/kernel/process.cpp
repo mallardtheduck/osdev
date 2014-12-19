@@ -592,6 +592,13 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid){
     return 0;
 }
 
+static bool proc_msg_wait_blockcheck(void *p){
+    pid_t pid=*(pid_t*)p;
+    proc_process *proc=proc_get(pid);
+    if(!proc) return false;
+    return !proc->msg_buffers.size();
+}
+
 void proc_message_wait(pid_t pid){
     proc_process *p;
     {
@@ -600,5 +607,5 @@ void proc_message_wait(pid_t pid){
         if (!p) return;
         if (!p->msg_buffers.size()) return;
     }
-    sch_setblock(&proc_msg_blockcheck, (void*)p->msg_buffers.begin());
+    sch_setblock(&proc_msg_wait_blockcheck, (void *)&pid);
 }
