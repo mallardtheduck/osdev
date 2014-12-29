@@ -4,6 +4,7 @@
 #include "module_stubs.h"
 #include "module_cpp.hpp"
 #include "keyboard.h"
+#include "mouse.h"
 #include "io.h"
 
 uint8_t ps2_read_data();
