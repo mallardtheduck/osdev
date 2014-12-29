@@ -15,6 +15,7 @@ void ps2_write_port2(uint8_t byte);
 void ps2_clear_data();
 
 void init_keyboard(uint8_t channel);
+void init_mouse(uint8_t channel);
 
 const uint16_t PS2_Data_Port     =0x60;
 const uint16_t PS2_Status_Port   =0x64;

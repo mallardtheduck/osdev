@@ -45,14 +45,14 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
     if(ch1){
         ps2_write_command(PS2_Command::EnablePort1);
         ps2_write_command(PS2_Command::DisablePort2);
+        ps2_clear_data();
         ps2_write_port1(Device_Command::Reset);
-        if(uint8_t p0test = ps2_read_data() != 0xAA){
-            dbgpf("PS2: Device 1 self-test result: %x\n", (int)p0test);
+        if(uint8_t p1test = ps2_read_data() != 0xAA){
+            dbgpf("PS2: Device 1 self-test result: %x\n", (int)p1test);
             dbgout("PS2: Device 1 failed self-test!\n");
             ch1=false;
         }else {
             ps2_write_port1(Device_Command::Identify);
-            ps2_read_data();
             uint8_t id = ps2_read_data();
             dbgpf("PS2: Detected device id: %x on port 1.\n", (int)id);
             if (id == Device_Types::MF2Keyboard || id == Device_Types::ATKeyboard) keyport = 1;
@@ -63,13 +63,14 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
     if(ch2){
         ps2_write_command(PS2_Command::EnablePort2);
         ps2_write_command(PS2_Command::DisablePort1);
+        ps2_clear_data();
         ps2_write_port2(Device_Command::Reset);
-        if(ps2_read_data() != 0xAA){
+        if(uint8_t p2test = ps2_read_data() != 0xAA){
+            dbgpf("PS2: Device 2 self-test result: %x\n", (int)p2test);
             dbgout("PS2: Device 2 failed self-test!\n");
             ch2=false;
         }else {
             ps2_write_port2(Device_Command::Identify);
-            ps2_read_data();
             uint8_t id = ps2_read_data();
             dbgpf("PS2: Detected device id: %x on port 2.\n", (int)id);
             if (id == Device_Types::MF2Keyboard || id == Device_Types::ATKeyboard) keyport = 2;
@@ -78,7 +79,8 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
         ps2_write_command(PS2_Command::DisablePort2);
     }
     dbgpf("PS2: Ports: Keyboard: %i, Mouse: %i\n", (int)keyport, (int)mouseport);
-    if(keyport) init_keyboard(1);
+    if(keyport) init_keyboard(keyport);
+    if(mouseport) init_mouse(mouseport);
     //panic("(PS2) TEST");
     return 0;
 }
@@ -98,16 +100,26 @@ uint8_t ps2_read_status(){
 }
 
 void ps2_write_command(uint8_t byte){
+    while(ps2_read_status() & (1 << 1));
     outb(PS2_Command_Port, byte);
+    while(ps2_read_status() & (1 << 1));
 }
 
 void ps2_write_port1(uint8_t byte){
-    ps2_write_data(byte);
+    uint8_t result=0xFE;
+    while(result==0xFE) {
+        ps2_write_data(byte);
+        result=ps2_read_data();
+    }
 }
 
 void ps2_write_port2(uint8_t byte){
-    ps2_write_command(PS2_Command::WritePort2InBuffer);
-    ps2_write_data(byte);
+    uint8_t result=0xFE;
+    while(result==0xFE){
+        ps2_write_command(PS2_Command::WritePort2InBuffer);
+        ps2_write_data(byte);
+        result=ps2_read_data();
+    }
 }
 
 void ps2_clear_data(){
