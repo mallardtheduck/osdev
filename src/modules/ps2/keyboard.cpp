@@ -24,7 +24,9 @@ static void updateflags(uint16_t keycode);
 static uint16_t scancode2keycode(uint8_t c);
 static uint32_t scancode2buffervalue(uint8_t c);
 
-void add_to_buffer(uint32_t c){
+static void (*write_device)(uint8_t);
+
+static void add_to_buffer(uint32_t c){
 	if(buffer_count < buffer_size){
 		buffer_count++;
 		buffer[buffer_top] = c;
@@ -34,7 +36,7 @@ void add_to_buffer(uint32_t c){
 	}
 }
 
-uint32_t read_from_buffer(){
+static uint32_t read_from_buffer(){
 	if(buffer_count){
 		int start=buffer_top-buffer_count;
 		if(start < 0) {
@@ -46,33 +48,31 @@ uint32_t read_from_buffer(){
 	}else return 0;
 }
 
-void keyboard_handler(int irq, isr_regs *regs){
+static void keyboard_handler(int irq, isr_regs *regs){
 	input_available=true;
 	irq_ack(irq);
 	enable_interrupts();
 	yield();
 }
 
-bool input_blockcheck(void*){
+static bool input_blockcheck(void*){
 	return input_available;
 }
 
-void keyboard_thread(void*){
+static void keyboard_thread(void*){
 	thread_priority(1);
 	while(true){
 		thread_setblock(input_blockcheck, NULL);
 		take_lock(&buf_lock);
 		disable_interrupts();
-		while(ps2_read_status() & 1){
-			uint8_t key=ps2_read_data();
-			if(buffer_count<buffer_size){
-				uint16_t keycode=scancode2keycode(key);
-				if(keycode){
-					add_to_buffer(scancode2buffervalue(key));
-					updateflags(keycode);
-				}else{
-					dbgpf("KEYBOARD: Ignored unmapped scancode %x (%x).\n", (int)key, (int)keycode);
-				}
+		uint8_t key=ps2_read_data();
+		if(buffer_count<buffer_size){
+			uint16_t keycode=scancode2keycode(key);
+			if(keycode){
+				add_to_buffer(scancode2buffervalue(key));
+				updateflags(keycode);
+			}else{
+				dbgpf("KEYBOARD: Ignored unmapped scancode %x (%x).\n", (int)key, (int)keycode);
 			}
 		}
 		input_available=false;
@@ -81,7 +81,7 @@ void keyboard_thread(void*){
 	}
 }
 
-bool is_capskey(uint8_t c){
+static bool is_capskey(uint8_t c){
 	uint8_t *ptr=capskeys;
 	while(true){
 		if(!ptr || !*ptr) return false;
@@ -90,7 +90,7 @@ bool is_capskey(uint8_t c){
 	}
 }
 
-bool is_numkey(uint8_t c){
+static bool is_numkey(uint8_t c){
 	uint8_t *ptr=numkeys;
 	while(true){
 		if(!ptr || !*ptr) return false;
@@ -99,7 +99,7 @@ bool is_numkey(uint8_t c){
 	}
 }
 
-uint16_t scancode2keycode(uint8_t c){
+static uint16_t scancode2keycode(uint8_t c){
 	uint16_t ret=0;
 	if(c & 0x80){
 		ret |= KeyFlags::KeyUp;
@@ -123,14 +123,14 @@ uint16_t scancode2keycode(uint8_t c){
 	return ret;
 }
 
-uint32_t scancode2buffervalue(uint8_t c){
+static uint32_t scancode2buffervalue(uint8_t c){
 	uint8_t flag=Keyboard_Flag;
 	uint8_t scancode=c;
 	uint16_t keycode=scancode2keycode(c);
 	return (flag << 24) | (scancode << 16) | keycode;
 }
 
-void updateflags(uint16_t keycode){
+static void updateflags(uint16_t keycode){
 	if(!(keycode & KeyFlags::NonASCII)) return;
 	if(keycode & KeyFlags::KeyUp){
 		if((keycode & KC_Mask) == KeyCodes::Shift) currentflags &= ~KeyFlags::Shift;
@@ -155,13 +155,8 @@ void updateflags(uint16_t keycode){
 	if(currentflags & KeyFlags::CapsLock){
 		leds |= 1 << 2;
 	}
-	if(channel==1){
-		ps2_write_port1(Device_Command::SetLEDs);
-		ps2_write_data(leds);
-	}else{
-		ps2_write_port2(Device_Command::SetLEDs);
-		ps2_write_data(leds);
-	}
+	write_device(Device_Command::SetLEDs);
+	ps2_write_data(leds);
 	return;
 }
 
@@ -239,13 +234,16 @@ void init_keyboard(uint8_t kchannel){
 	if(channel==1){
 		irq=Port1IRQ;
 		ps2_write_command(PS2_Command::EnablePort1);
-		ps2_write_port1(Device_Command::GetSetScanCode);
+		write_device=&ps2_write_port1;
+
 	}else{
 		irq=Port2IRQ;
 		ps2_write_command(PS2_Command::EnablePort2);
-		ps2_write_port2(Device_Command::GetSetScanCode);
+		write_device=&ps2_write_port2;
 	}
+	write_device(Device_Command::GetSetScanCode);
 	ps2_write_data(0x01);
+	write_device(Device_Command::EnableScanning);
 	handle_irq(irq, &keyboard_handler);
 	new_thread(&keyboard_thread, NULL);
 	add_device("KEYBD", &keyboard_driver, NULL);
