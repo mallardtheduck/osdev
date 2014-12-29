@@ -1,7 +1,4 @@
-#include "module_stubs.h"
-#include "io.h"
-#include "module_cpp.hpp"
-#include "keyboard.h"
+#include "ps2.hpp"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -67,8 +64,8 @@ void keyboard_thread(void*){
 		thread_setblock(input_blockcheck, NULL);
 		take_lock(&buf_lock);
 		disable_interrupts();
-		while(inb(0x64) & 1){
-			uint8_t key=inb(0x60);
+		while(ps2_read_status() & 1){
+			uint8_t key=ps2_read_data();
 			if(buffer_count<buffer_size){
 				uint16_t keycode=scancode2keycode(key);
 				if(keycode){
