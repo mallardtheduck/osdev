@@ -16,6 +16,7 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
     dbgpf("PS2: Config: %x\n", (int)config);
     bool ch2=config & (1 << 5);
     config=config | (1 << 0) | (1 << 1);
+    config=config & ~(1 << 6);
     dbgout("PS2: Write config\n");
     ps2_write_command(PS2_Command::WriteRAM);
     ps2_write_data(config);
@@ -76,6 +77,7 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
     }
     dbgpf("PS2: Ports: Keyboard: %i, Mouse: %i\n", (int)keyport, (int)mouseport);
     if(keyport) init_keyboard(1);
+    //panic("(PS2) TEST");
     return 0;
 }
 

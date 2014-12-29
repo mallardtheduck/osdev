@@ -217,6 +217,12 @@ void init_keyboard(uint8_t channel){
 	numkeys=us_keyboard_numkeys;
 	input_available=false;
 	uint8_t irq=(channel==1)?Port1IRQ:Port2IRQ;
+	if(channel==1){
+		ps2_write_port1(Device_Command::GetSetScanCode);
+	}else{
+		ps2_write_port2(Device_Command::GetSetScanCode);
+	}
+	ps2_write_data(0x01);
 	handle_irq(irq, &keyboard_handler);
 	new_thread(&keyboard_thread, NULL);
 	add_device("KEYBD", &keyboard_driver, NULL);
