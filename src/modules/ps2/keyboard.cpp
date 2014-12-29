@@ -10,6 +10,8 @@ lock buf_lock;
 bool input_available;
 uint16_t currentflags=0;
 
+uint8_t channel;
+
 key_info *layout;
 uint8_t *capskeys;
 uint8_t *numkeys;
@@ -143,7 +145,23 @@ void updateflags(uint16_t keycode){
 		if((keycode & KC_Mask) == KeyCodes::CapsLock) currentflags ^= KeyFlags::CapsLock;
 		if((keycode & KC_Mask) == KeyCodes::NumLock) currentflags ^= KeyFlags::NumLock;
 	}
-	//Update LEDs...
+	uint8_t leds=0;
+	if(currentflags & KeyFlags::ScrollLock){
+		leds |= 1 << 0;
+	}
+	if(currentflags & KeyFlags::NumLock){
+		leds |= 1 << 1;
+	}
+	if(currentflags & KeyFlags::CapsLock){
+		leds |= 1 << 2;
+	}
+	if(channel==1){
+		ps2_write_port1(Device_Command::SetLEDs);
+		ps2_write_data(leds);
+	}else{
+		ps2_write_port2(Device_Command::SetLEDs);
+		ps2_write_data(leds);
+	}
 	return;
 }
 
@@ -210,17 +228,20 @@ char *keyboard_desc(){
 drv_driver keyboard_driver={&keyboard_open, &keyboard_close, &keyboard_read, &keyboard_write, &keyboard_seek,
 &keyboard_ioctl, &keyboard_type, &keyboard_desc};
 
-void init_keyboard(uint8_t channel){
+void init_keyboard(uint8_t kchannel){
+	channel=kchannel;
 	init_lock(&buf_lock);
 	layout=us_keyboard_layout;
 	capskeys=us_keyboard_capskeys;
 	numkeys=us_keyboard_numkeys;
 	input_available=false;
-	uint8_t irq=(channel==1)?Port1IRQ:Port2IRQ;
+	uint8_t irq;
 	if(channel==1){
+		irq=Port1IRQ;
 		ps2_write_command(PS2_Command::EnablePort1);
 		ps2_write_port1(Device_Command::GetSetScanCode);
 	}else{
+		irq=Port2IRQ;
 		ps2_write_command(PS2_Command::EnablePort2);
 		ps2_write_port2(Device_Command::GetSetScanCode);
 	}
