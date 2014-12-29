@@ -2,9 +2,6 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-syscall_table *SYSCALL_TABLE;
-char dbgbuf[256];
-
 const size_t buffer_size=128;
 uint32_t buffer[buffer_size];
 volatile size_t buffer_count=0;
@@ -207,20 +204,21 @@ int keyboard_type(){
 }
 
 char *keyboard_desc(){
-	return (char*)"Hacky PS/2 keyboard driver.";
+	return (char*)"PS/2 keyboard.";
 }
 
 drv_driver keyboard_driver={&keyboard_open, &keyboard_close, &keyboard_read, &keyboard_write, &keyboard_seek,
 &keyboard_ioctl, &keyboard_type, &keyboard_desc};
 
-int init_keyboard(){
+void init_keyboard(uint8_t channel){
 	init_lock(&buf_lock);
 	layout=us_keyboard_layout;
 	capskeys=us_keyboard_capskeys;
 	numkeys=us_keyboard_numkeys;
 	input_available=false;
-	handle_irq(1, &keyboard_handler);
+	uint8_t irq=(channel==1)?Port1IRQ:Port2IRQ;
+	handle_irq(irq, &keyboard_handler);
 	new_thread(&keyboard_thread, NULL);
 	add_device("KEYBD", &keyboard_driver, NULL);
-	unmask_irq(1);
+	unmask_irq(irq);
 }
