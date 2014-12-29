@@ -2,27 +2,27 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-const size_t buffer_size=128;
-uint32_t buffer[buffer_size];
-volatile size_t buffer_count=0;
-size_t buffer_top=0;
-lock buf_lock;
-bool input_available;
-uint16_t currentflags=0;
+static const size_t buffer_size=128;
+static uint32_t buffer[buffer_size];
+static volatile size_t buffer_count=0;
+static size_t buffer_top=0;
+static lock buf_lock;
+static bool input_available;
+static uint16_t currentflags=0;
 
-uint8_t channel;
+static uint8_t channel;
 
-key_info *layout;
-uint8_t *capskeys;
-uint8_t *numkeys;
+static key_info *layout;
+static uint8_t *capskeys;
+static uint8_t *numkeys;
 
 extern key_info us_keyboard_layout[128];
 extern uint8_t us_keyboard_capskeys[];
 extern uint8_t us_keyboard_numkeys[];
 
-void updateflags(uint16_t keycode);
-uint16_t scancode2keycode(uint8_t c);
-uint32_t scancode2buffervalue(uint8_t c);
+static void updateflags(uint16_t keycode);
+static uint16_t scancode2keycode(uint8_t c);
+static uint32_t scancode2buffervalue(uint8_t c);
 
 void add_to_buffer(uint32_t c){
 	if(buffer_count < buffer_size){
