@@ -44,7 +44,7 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
     ps2_clear_data();
     if(ch1){
         ps2_write_command(PS2_Command::EnablePort1);
-        if(ch2) ps2_write_command(PS2_Command::DisablePort2);
+        ps2_write_command(PS2_Command::DisablePort2);
         ps2_write_port1(Device_Command::Reset);
         if(uint8_t p0test = ps2_read_data() != 0xAA){
             dbgpf("PS2: Device 1 self-test result: %x\n", (int)p0test);
@@ -55,13 +55,14 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
             ps2_read_data();
             uint8_t id = ps2_read_data();
             dbgpf("PS2: Detected device id: %x on port 1.\n", (int)id);
-            if (id == Device_Types::MF2Keyboard || id == 0xAA) keyport = 1;
+            if (id == Device_Types::MF2Keyboard || id == Device_Types::ATKeyboard) keyport = 1;
             else mouseport = 1;
         }
+        ps2_write_command(PS2_Command::DisablePort1);
     }
     if(ch2){
         ps2_write_command(PS2_Command::EnablePort2);
-        if(ch1) ps2_write_command(PS2_Command::DisablePort2);
+        ps2_write_command(PS2_Command::DisablePort1);
         ps2_write_port2(Device_Command::Reset);
         if(ps2_read_data() != 0xAA){
             dbgout("PS2: Device 2 failed self-test!\n");
@@ -71,9 +72,10 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
             ps2_read_data();
             uint8_t id = ps2_read_data();
             dbgpf("PS2: Detected device id: %x on port 2.\n", (int)id);
-            if (id == Device_Types::MF2Keyboard || id == 0xAA) keyport = 2;
+            if (id == Device_Types::MF2Keyboard || id == Device_Types::ATKeyboard) keyport = 2;
             else mouseport = 2;
         }
+        ps2_write_command(PS2_Command::DisablePort2);
     }
     dbgpf("PS2: Ports: Keyboard: %i, Mouse: %i\n", (int)keyport, (int)mouseport);
     if(keyport) init_keyboard(1);

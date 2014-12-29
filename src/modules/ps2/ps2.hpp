@@ -82,7 +82,7 @@ namespace Device_Command{
 
 namespace Device_Types{
     enum{
-        ATKeyboard          =0xFF,
+        ATKeyboard          =0xAA,
         StdMouse            =0x00,
         ScrollMouse         =0x03,
         FiveBtnMouse        =0x04,
