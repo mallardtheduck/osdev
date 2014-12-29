@@ -70,6 +70,13 @@ void mouse_thread(void*){
 		int16_t mouse_x=byte2 - ((state << 4) & 0x100);
 		int16_t mouse_y=byte3 - ((state << 3) & 0x100);
 
+		if(!(state & (1 << 3))){
+			dbgpf("PS2: Invalid first mouse byte!\n");
+			write_device(Device_Command::Reset);
+			write_device(Device_Command::EnableReporting);
+			continue;
+		}
+
 		bool button1=state & (1 << 0);
 		bool button2=state & (1 << 1);
 		bool button3=state & (1 << 2);
@@ -130,6 +137,12 @@ size_t mouse_seek(void *instance, size_t pos, bool relative){
 }
 
 int mouse_ioctl(void *instance, int fn, size_t bytes, char *buf){
+	if(fn==bt_mouse_ioctl::ClearBuffer) {
+		take_lock(&buf_lock);
+		buffer_count = 0;
+		buffer_top = 0;
+		release_lock(&buf_lock);
+	}
 	return 0;
 }
 

@@ -29,4 +29,9 @@ ENUM_SET(MouseFlags, Valid, 1 << 15),
 ENUM_END
 ENUM_TYPE(MouseFlags);
 
+ENUM_START(bt_mouse_ioctl)
+ENUM_SET(bt_mouse_ioctl, ClearBuffer, 300),
+ENUM_END
+ENUM_TYPE(bt_mouse_ioctl);
+
 #endif
