@@ -216,16 +216,14 @@ char *keyboard_desc(){
 drv_driver keyboard_driver={&keyboard_open, &keyboard_close, &keyboard_read, &keyboard_write, &keyboard_seek,
 &keyboard_ioctl, &keyboard_type, &keyboard_desc};
 
-extern "C" int module_main(syscall_table *systbl, char *params){
-		SYSCALL_TABLE=systbl;
-		init_lock(&buf_lock);
-		layout=us_keyboard_layout;
-		capskeys=us_keyboard_capskeys;
-		numkeys=us_keyboard_numkeys;
-		input_available=false;
-		handle_irq(1, &keyboard_handler);
-		new_thread(&keyboard_thread, NULL);
-		add_device("KEYBD", &keyboard_driver, NULL);
-		unmask_irq(1);
-    	return 0;
+int init_keyboard(){
+	init_lock(&buf_lock);
+	layout=us_keyboard_layout;
+	capskeys=us_keyboard_capskeys;
+	numkeys=us_keyboard_numkeys;
+	input_available=false;
+	handle_irq(1, &keyboard_handler);
+	new_thread(&keyboard_thread, NULL);
+	add_device("KEYBD", &keyboard_driver, NULL);
+	unmask_irq(1);
 }
