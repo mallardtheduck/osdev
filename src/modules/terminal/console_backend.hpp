@@ -8,7 +8,7 @@
 class console_backend : public i_backend{
 private:
     static const size_t inputbuffersize=256;
-    file_handle *display, *input;
+    file_handle *display, *input, *pointer;
     uint64_t input_thread_id;
     uint32_t inputbuffer[inputbuffersize];
     size_t input_top, input_bottom;

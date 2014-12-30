@@ -8,6 +8,7 @@
 console_backend *cons_backend;
 const char* video_device_name="DISPLAY_DEVICE";
 const char* input_device_name="INPUT_DEVICE";
+const char* pointer_device_name="POINTER_DEVICE";
 
 static uint64_t create_terminal(char *command) {
     uint64_t new_id=terminals->create_terminal(cons_backend);
@@ -54,12 +55,15 @@ console_backend::console_backend() {
 
     char video_device_path[BT_MAX_PATH]="DEV:/";
     char input_device_path[BT_MAX_PATH]="DEV:/";
+    char pointer_device_path[BT_MAX_PATH]="DEV:/";
 
     strncpy(video_device_path+5, (char*)getenv((char*)video_device_name, 0), BT_MAX_PATH-5);
     strncpy(input_device_path+5, (char*)getenv((char*)input_device_name, 0), BT_MAX_PATH-5);
+    strncpy(pointer_device_path+5, (char*)getenv((char*)pointer_device_name, 0), BT_MAX_PATH-5);
 
     display=fopen(video_device_path, (fs_mode_flags)(FS_Read | FS_Write));
-    input=fopen(input_device_path, (fs_mode_flags)(FS_Read | FS_Read));
+    input=fopen(input_device_path, (fs_mode_flags)(FS_Read));
+    pointer=fopen(pointer_device_path, (fs_mode_flags)(FS_Read));
 
     input_thread_id=new_thread(&console_backend_input_thread, (void*)this);
 }
