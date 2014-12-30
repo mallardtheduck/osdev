@@ -29,6 +29,12 @@ public:
     size_t input_seek(size_t pos, bool relative);
     int input_ioctl(int fn, size_t bytes, char *buf);
 
+    bt_terminal_mouse_info mouse_read();
+    void show_mouse();
+    void hide_mouse();
+    bool get_mouse_visibility();
+    void set_mouse_bitmap(bt_terminal_mouse_bitmap bmp);
+
     bool is_active(uint64_t id);
     void set_active(uint64_t id);
 

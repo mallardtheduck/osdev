@@ -27,4 +27,25 @@ ENUM_START(bt_terminal_ioctl)
 ENUM_END
 ENUM_TYPE(bt_terminal_ioctl);
 
+struct bt_terminal_mouse_info{
+    uint32_t x;
+    uint32_t y;
+    uint16_t flags;
+};
+
+#ifndef __cplusplus
+typedef struct bt_terminal_mouse_info bt_terminal_mouse_info;
+#endif
+
+struct bt_terminal_mouse_bitmap{
+    uint32_t w;
+    uint32_t h;
+    uint8_t bpp;
+    uint8_t *data;
+};
+
+#ifndef __cplusplus
+typedef struct bt_terminal_mouse_bitmap bt_terminal_mouse_bitmap;
+#endif
+
 #endif

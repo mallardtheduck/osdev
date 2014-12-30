@@ -98,6 +98,27 @@ int console_backend::input_ioctl(int fn, size_t bytes, char *buf) {
     return fioctl(input, fn, bytes, buf);
 }
 
+bt_terminal_mouse_info console_backend::mouse_read(){
+    bt_terminal_mouse_info ret;
+    return ret;
+}
+
+void console_backend::show_mouse() {
+
+}
+
+void console_backend::hide_mouse() {
+
+}
+
+bool console_backend::get_mouse_visibility() {
+    return false;
+}
+
+void console_backend::set_mouse_bitmap(bt_terminal_mouse_bitmap /*bmp*/) {
+
+}
+
 bool console_backend::is_active(uint64_t id) {
     return active==id;
 }
