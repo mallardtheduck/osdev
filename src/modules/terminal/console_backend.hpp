@@ -14,6 +14,8 @@ private:
     size_t input_top, input_bottom;
     lock backend_lock;
     uint64_t active;
+    bool mouse_visible;
+    bt_terminal_pointer_bitmap pointer_bitmap;
 
     friend void console_backend_input_thread(void *p);
 public:
@@ -29,11 +31,11 @@ public:
     size_t input_seek(size_t pos, bool relative);
     int input_ioctl(int fn, size_t bytes, char *buf);
 
-    bt_terminal_mouse_info mouse_read();
-    void show_mouse();
-    void hide_mouse();
-    bool get_mouse_visibility();
-    void set_mouse_bitmap(bt_terminal_mouse_bitmap bmp);
+    bt_terminal_pointer_info pointer_read();
+    void show_pointer();
+    void hide_pointer();
+    bool get_pointer_visibility();
+    void set_pointer_bitmap(bt_terminal_pointer_bitmap bmp);
 
     bool is_active(uint64_t id);
     void set_active(uint64_t id);

@@ -20,6 +20,10 @@ ENUM_START(bt_terminal_ioctl)
     ENUM_SET(bt_terminal_ioctl, GetTitle, 266),
     ENUM_SET(bt_terminal_ioctl, SetEcho, 267),
     ENUM_SET(bt_terminal_ioctl, GetEcho, 268),
+    ENUM_SET(bt_terminal_ioctl, ShowPointer, 269),
+    ENUM_SET(bt_terminal_ioctl, HidePointer, 269),
+    ENUM_SET(bt_terminal_ioctl, GetPointerVisibility, 270),
+    ENUM_SET(bt_terminal_ioctl, SetPointerBitmap, 271),
 
     ENUM_SET(bt_terminal_ioctl, NewTerminal, 291),
     ENUM_SET(bt_terminal_ioctl, DestroyTerminal, 292),
@@ -27,7 +31,7 @@ ENUM_START(bt_terminal_ioctl)
 ENUM_END
 ENUM_TYPE(bt_terminal_ioctl);
 
-struct bt_terminal_mouse_info{
+struct bt_terminal_pointer_info{
     uint32_t x;
     uint32_t y;
     uint16_t flags;
@@ -37,7 +41,7 @@ struct bt_terminal_mouse_info{
 typedef struct bt_terminal_mouse_info bt_terminal_mouse_info;
 #endif
 
-struct bt_terminal_mouse_bitmap{
+struct bt_terminal_pointer_bitmap{
     uint32_t w;
     uint32_t h;
     uint8_t bpp;

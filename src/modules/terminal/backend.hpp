@@ -15,11 +15,11 @@ public:
     virtual size_t input_seek(size_t pos, bool relative)=0;
     virtual int input_ioctl(int fn, size_t bytes, char *buf)=0;
 
-    virtual bt_terminal_mouse_info mouse_read()=0;
-    virtual void show_mouse()=0;
-    virtual void hide_mouse()=0;
-    virtual bool get_mouse_visibility()=0;
-    virtual void set_mouse_bitmap(bt_terminal_mouse_bitmap bmp)=0;
+    virtual bt_terminal_pointer_info pointer_read()=0;
+    virtual void show_pointer()=0;
+    virtual void hide_pointer()=0;
+    virtual bool get_pointer_visibility()=0;
+    virtual void set_pointer_bitmap(bt_terminal_pointer_bitmap bmp)=0;
 
     virtual bool is_active(uint64_t id)=0;
     virtual void set_active(uint64_t id)=0;

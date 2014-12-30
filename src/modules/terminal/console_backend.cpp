@@ -49,6 +49,8 @@ console_backend::console_backend() {
     init_lock(&backend_lock);
     input_top=1;
     input_bottom=0;
+    mouse_visible=false;
+    pointer_bitmap.h=0; pointer_bitmap.w=0; pointer_bitmap.bpp=0; pointer_bitmap.data=NULL;
 
     char video_device_path[BT_MAX_PATH]="DEV:/";
     char input_device_path[BT_MAX_PATH]="DEV:/";
@@ -98,24 +100,24 @@ int console_backend::input_ioctl(int fn, size_t bytes, char *buf) {
     return fioctl(input, fn, bytes, buf);
 }
 
-bt_terminal_mouse_info console_backend::mouse_read(){
-    bt_terminal_mouse_info ret;
+bt_terminal_pointer_info console_backend::pointer_read(){
+    bt_terminal_pointer_info ret;
     return ret;
 }
 
-void console_backend::show_mouse() {
+void console_backend::show_pointer() {
 
 }
 
-void console_backend::hide_mouse() {
+void console_backend::hide_pointer() {
 
 }
 
-bool console_backend::get_mouse_visibility() {
+bool console_backend::get_pointer_visibility() {
     return false;
 }
 
-void console_backend::set_mouse_bitmap(bt_terminal_mouse_bitmap /*bmp*/) {
+void console_backend::set_pointer_bitmap(bt_terminal_pointer_bitmap /*bmp*/) {
 
 }
 
