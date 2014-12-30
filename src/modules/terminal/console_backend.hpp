@@ -10,14 +10,20 @@ private:
     static const size_t inputbuffersize=256;
     file_handle *display, *input, *pointer;
     uint64_t input_thread_id;
+    uint64_t pointer_thread_id;
     uint32_t inputbuffer[inputbuffersize];
     size_t input_top, input_bottom;
     lock backend_lock;
     uint64_t active;
-    bool mouse_visible;
+    bool pointer_visible;
     bt_terminal_pointer_bitmap pointer_bitmap;
+    bt_terminal_pointer_info pointer_info;
+    uint8_t *mouseback;
 
     friend void console_backend_input_thread(void *p);
+    friend void console_backend_pointer_thread(void *p);
+
+    void update_pointer(bool erase);
 public:
     console_backend();
 

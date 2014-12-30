@@ -131,5 +131,6 @@ void init_device(){
     setenv("STDOUT", devname, 0, 0);
     setenv("STDIN", devname, 0, 0);
     setenv("STDERR", devname, 0, 0);
+    setenv("POINTER", devname, 0, 0);
     setenv(terminal_var, "0", 0 ,0);
 }

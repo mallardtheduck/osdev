@@ -21,9 +21,10 @@ ENUM_START(bt_terminal_ioctl)
     ENUM_SET(bt_terminal_ioctl, SetEcho, 267),
     ENUM_SET(bt_terminal_ioctl, GetEcho, 268),
     ENUM_SET(bt_terminal_ioctl, ShowPointer, 269),
-    ENUM_SET(bt_terminal_ioctl, HidePointer, 269),
-    ENUM_SET(bt_terminal_ioctl, GetPointerVisibility, 270),
-    ENUM_SET(bt_terminal_ioctl, SetPointerBitmap, 271),
+    ENUM_SET(bt_terminal_ioctl, HidePointer, 270),
+    ENUM_SET(bt_terminal_ioctl, GetPointerVisibility, 271),
+    ENUM_SET(bt_terminal_ioctl, SetPointerBitmap, 272),
+    ENUM_SET(bt_terminal_ioctl, GetPointerInfo, 273),
 
     ENUM_SET(bt_terminal_ioctl, NewTerminal, 291),
     ENUM_SET(bt_terminal_ioctl, DestroyTerminal, 292),
@@ -45,6 +46,8 @@ struct bt_terminal_pointer_bitmap{
     uint32_t w;
     uint32_t h;
     uint8_t bpp;
+    uint32_t spot_x;
+    uint32_t spot_y;
     uint8_t *data;
 };
 

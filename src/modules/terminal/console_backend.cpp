@@ -1,7 +1,8 @@
+#include "mouse.h"
 #include "keyboard.h"
 #include "console_backend.hpp"
 #include "vterm.hpp"
-#include "../../include/module_stubs.h"
+#include "module_stubs.h"
 #include "holdlock.hpp"
 #include "device.hpp"
 
@@ -9,6 +10,8 @@ console_backend *cons_backend;
 const char* video_device_name="DISPLAY_DEVICE";
 const char* input_device_name="INPUT_DEVICE";
 const char* pointer_device_name="POINTER_DEVICE";
+
+const uint32_t pointer_speed=500000;
 
 static uint64_t create_terminal(char *command) {
     uint64_t new_id=terminals->create_terminal(cons_backend);
@@ -45,13 +48,72 @@ void console_backend_input_thread(void *p){
         }
     }
 }
+void console_backend_pointer_thread(void *p){
+    console_backend *backend=(console_backend*)p;
+    thread_priority(2);
+    while(true){
+        bt_mouse_packet packet;
+        size_t read=fread(backend->pointer, sizeof(packet), (char*)&packet);
+        if(read){
+            hold_lock hl(&backend->backend_lock);
+            backend->update_pointer(true);
+            uint32_t oldx=backend->pointer_info.x;
+            backend->pointer_info.x+=(packet.x_motion * pointer_speed);
+            if(packet.x_motion > 0 && backend->pointer_info.x < oldx) backend->pointer_info.x=0xFFFFFFFF;
+            if(packet.x_motion < 0 && backend->pointer_info.x > oldx) backend->pointer_info.x=0;
+            uint32_t oldy=backend->pointer_info.y;
+            backend->pointer_info.y+=(packet.y_motion * pointer_speed);
+            if(packet.y_motion > 0 && backend->pointer_info.y < oldy) backend->pointer_info.y=0xFFFFFFFF;
+            if(packet.y_motion < 0 && backend->pointer_info.y > oldy) backend->pointer_info.y=0;
+            backend->pointer_info.flags=packet.flags;
+            backend->update_pointer(false);
+        }
+    }
+}
+
+void console_backend::update_pointer(bool erase) {
+    if(pointer_visible){
+        hold_lock hl(&backend_lock, false);
+        bt_vidmode mode;
+        fioctl(display, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
+        uint32_t xscale=(0xFFFFFFFF/(mode.width-1));
+        uint32_t yscale=(0xFFFFFFFF/(mode.height-1));
+        uint32_t x=(pointer_info.x/xscale);
+        uint32_t y=(pointer_info.y/yscale);
+        if(mode.textmode){
+            y=(mode.height-1)-y;
+            size_t pos=((y * mode.width) + x)*2;
+            size_t cpos=fseek(display, 0, true);
+            bt_vid_text_access_mode::Enum omode=(bt_vid_text_access_mode::Enum) fioctl(display, bt_vid_ioctl::GetTextAccessMode, 0, NULL);
+            bt_vid_text_access_mode::Enum nmode=bt_vid_text_access_mode::Raw;
+            fioctl(display, bt_vid_ioctl::SetTextAccessMode, sizeof(nmode), (char*)&nmode);
+            fseek(display, pos, false);
+            if(erase) {
+                if(mouseback) {
+                    if(*mouseback=='\0') *mouseback=' ';
+                    fwrite(display, 1, (char*)mouseback);
+                }
+            } else {
+                if(mouseback) delete mouseback;
+                mouseback=new uint8_t();
+                fread(display, 1, (char*)mouseback);
+                fseek(display, pos, false);
+                fwrite(display, 1, "\x10");
+            }
+            fioctl(display, bt_vid_ioctl::SetTextAccessMode, sizeof(omode), (char*)&omode);
+            fseek(display, cpos, false);
+        }
+    }
+}
 
 console_backend::console_backend() {
     init_lock(&backend_lock);
     input_top=1;
     input_bottom=0;
-    mouse_visible=false;
+    pointer_visible=false;
     pointer_bitmap.h=0; pointer_bitmap.w=0; pointer_bitmap.bpp=0; pointer_bitmap.data=NULL;
+    pointer_info.x=0; pointer_info.y=0; pointer_info.flags=0;
+    mouseback=NULL;
 
     char video_device_path[BT_MAX_PATH]="DEV:/";
     char input_device_path[BT_MAX_PATH]="DEV:/";
@@ -66,6 +128,7 @@ console_backend::console_backend() {
     pointer=fopen(pointer_device_path, (fs_mode_flags)(FS_Read));
 
     input_thread_id=new_thread(&console_backend_input_thread, (void*)this);
+    pointer_thread_id=new_thread(&console_backend_pointer_thread, (void*)this);
 }
 
 void console_backend::start_switcher(){
@@ -73,11 +136,17 @@ void console_backend::start_switcher(){
 }
 
 size_t console_backend::display_read(size_t bytes, char *buf) {
-    return fread(display, bytes, buf);
+    update_pointer(true);
+    size_t ret=fread(display, bytes, buf);
+    update_pointer(false);
+    return ret;
 }
 
 size_t console_backend::display_write(size_t bytes, char *buf) {
-    return fwrite(display, bytes, buf);
+    update_pointer(true);
+    size_t ret=fwrite(display, bytes, buf);
+    update_pointer(false);
+    return ret;
 }
 
 size_t console_backend::display_seek(size_t pos, bool relative) {
@@ -85,7 +154,10 @@ size_t console_backend::display_seek(size_t pos, bool relative) {
 }
 
 int console_backend::display_ioctl(int fn, size_t bytes, char *buf) {
-    return fioctl(display, fn, bytes, buf);
+    update_pointer(true);
+    int ret=fioctl(display, fn, bytes, buf);
+    update_pointer(false);
+    return ret;
 }
 
 size_t console_backend::input_read(size_t bytes, char *buf) {
@@ -110,15 +182,18 @@ bt_terminal_pointer_info console_backend::pointer_read(){
 }
 
 void console_backend::show_pointer() {
-
+    fioctl(pointer, bt_mouse_ioctl::ClearBuffer, 0, NULL);
+    pointer_visible=true;
+    update_pointer(false);
 }
 
 void console_backend::hide_pointer() {
-
+    update_pointer(true);
+    pointer_visible=false;
 }
 
 bool console_backend::get_pointer_visibility() {
-    return false;
+    return pointer_visible;
 }
 
 void console_backend::set_pointer_bitmap(bt_terminal_pointer_bitmap /*bmp*/) {

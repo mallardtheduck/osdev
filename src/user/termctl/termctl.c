@@ -40,6 +40,12 @@ int main(int argc, char **argv){
         uint64_t id=0;
         sscanf(argv[2], "%i", (int*)&id);
         bt_fioctl(fh, bt_terminal_ioctl_SwtichTerminal, sizeof(id), (char*)&id);
+    }else if(strcmp(argv[1], "pointer")==0 && argc == 3){
+        if(strcmp(argv[2], "on")==0){
+            bt_fioctl(fh, bt_terminal_ioctl_ShowPointer, 0, NULL);
+        }else if(strcmp(argv[2], "off")==0){
+            bt_fioctl(fh, bt_terminal_ioctl_HidePointer, 0, NULL);
+        }
     }
     return 0;
 }

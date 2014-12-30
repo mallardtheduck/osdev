@@ -307,6 +307,10 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
                 backend->display_ioctl(fn, size, buf);
             }
         }
+    }else if(fn == bt_terminal_ioctl::ShowPointer){
+        backend->show_pointer();
+    }else if(fn == bt_terminal_ioctl::HidePointer){
+        backend->hide_pointer();
     }
     //TODO: implement more
     return 0;
