@@ -200,6 +200,10 @@ void console_backend::set_pointer_bitmap(bt_terminal_pointer_bitmap /*bmp*/) {
 
 }
 
+bt_terminal_pointer_info console_backend::get_pointer_info(){
+    return pointer_info;
+}
+
 bool console_backend::is_active(uint64_t id) {
     return active==id;
 }

@@ -29,6 +29,7 @@ private:
     uint32_t refcount;
     lock term_lock;
     uint64_t scrollcount;
+    bool pointer_enabled;
 
     static const size_t input_size=128;
     uint32_t input_buffer[input_size];

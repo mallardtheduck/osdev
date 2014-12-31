@@ -42,6 +42,7 @@ public:
     void hide_pointer();
     bool get_pointer_visibility();
     void set_pointer_bitmap(bt_terminal_pointer_bitmap bmp);
+    bt_terminal_pointer_info get_pointer_info();
 
     bool is_active(uint64_t id);
     void set_active(uint64_t id);

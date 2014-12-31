@@ -35,6 +35,7 @@ vterm::vterm(uint64_t nid, i_backend *back){
     refcount=0;
     scrollcount=0;
     sprintf(title, "BT/OS Terminal %i", (int)id);
+    pointer_enabled=false;
 }
 
 vterm::~vterm(){
@@ -157,6 +158,11 @@ void vterm::activate() {
     backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scrolling);
     do_infoline();
     if(infoline && bufpos==0) putchar('\n');
+    if(pointer_enabled){
+        backend->show_pointer();
+    }else{
+        backend->hide_pointer();
+    }
 }
 
 void vterm::deactivate() {
@@ -309,8 +315,14 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         }
     }else if(fn == bt_terminal_ioctl::ShowPointer){
         backend->show_pointer();
+        pointer_enabled=true;
     }else if(fn == bt_terminal_ioctl::HidePointer){
         backend->hide_pointer();
+        pointer_enabled=false;
+    }else if(fn == bt_terminal_ioctl::GetPointerInfo){
+        if(size==sizeof(bt_terminal_pointer_info)){
+            *(bt_terminal_pointer_info*)buf=backend->get_pointer_info();
+        }
     }
     //TODO: implement more
     return 0;
