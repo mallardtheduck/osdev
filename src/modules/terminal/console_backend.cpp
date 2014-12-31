@@ -82,7 +82,7 @@ void console_backend::update_pointer(bool erase) {
         uint32_t y=(pointer_info.y/yscale);
         if(mode.textmode){
             y=(mode.height-1)-y;
-            size_t pos=((y * mode.width) + x)*2;
+            size_t pos=(((y * mode.width) + x) * 2) + 1;
             size_t cpos=fseek(display, 0, true);
             bt_vid_text_access_mode::Enum omode=(bt_vid_text_access_mode::Enum) fioctl(display, bt_vid_ioctl::GetTextAccessMode, 0, NULL);
             bt_vid_text_access_mode::Enum nmode=bt_vid_text_access_mode::Raw;
@@ -90,7 +90,6 @@ void console_backend::update_pointer(bool erase) {
             fseek(display, pos, false);
             if(erase) {
                 if(mouseback) {
-                    if(*mouseback=='\0') *mouseback=' ';
                     fwrite(display, 1, (char*)mouseback);
                 }
             } else {
@@ -98,7 +97,8 @@ void console_backend::update_pointer(bool erase) {
                 mouseback=new uint8_t();
                 fread(display, 1, (char*)mouseback);
                 fseek(display, pos, false);
-                fwrite(display, 1, "\x10");
+                uint8_t cursor=*mouseback ^ 0xFF;
+                fwrite(display, 1, (char*)&cursor);
             }
             fioctl(display, bt_vid_ioctl::SetTextAccessMode, sizeof(omode), (char*)&omode);
             fseek(display, cpos, false);
