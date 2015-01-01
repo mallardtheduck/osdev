@@ -39,7 +39,7 @@ struct bt_terminal_pointer_info{
 };
 
 #ifndef __cplusplus
-typedef struct bt_terminal_mouse_info bt_terminal_mouse_info;
+typedef struct bt_terminal_pointer_info bt_terminal_pointer_info;
 #endif
 
 struct bt_terminal_pointer_bitmap{
