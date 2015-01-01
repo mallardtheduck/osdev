@@ -46,6 +46,10 @@ int main(int argc, char **argv){
         }else if(strcmp(argv[2], "off")==0){
             bt_fioctl(fh, bt_terminal_ioctl_HidePointer, 0, NULL);
         }
+    }else if(strcmp(argv[1], "pointer")==0 && argc == 2){
+        bt_terminal_pointer_info info;
+        bt_fioctl(fh, bt_terminal_ioctl_GetPointerInfo, sizeof(info), (char*)&info);
+        printf("Pointer: (%i, %i) Flags: %x\n", info.x, info.y, info.flags);
     }
     return 0;
 }
