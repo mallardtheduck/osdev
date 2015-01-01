@@ -11,7 +11,23 @@ const char* video_device_name="DISPLAY_DEVICE";
 const char* input_device_name="INPUT_DEVICE";
 const char* pointer_device_name="POINTER_DEVICE";
 
-const uint32_t pointer_speed=500000;
+const uint32_t pointer_speed=300000;
+
+uint32_t abs32(int32_t i){
+    if(i>0) return i;
+    else return -i;
+}
+
+uint32_t msb32(uint32_t x)
+{
+    static const unsigned int bval[] = {0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4};
+
+    unsigned int r = 0;
+    if (x & 0xFFFF0000) { r += 16/1; x >>= 16/1; }
+    if (x & 0x0000FF00) { r += 16/2; x >>= 16/2; }
+    if (x & 0x000000F0) { r += 16/4; x >>= 16/4; }
+    return r + bval[x];
+}
 
 static uint64_t create_terminal(char *command) {
     uint64_t new_id=terminals->create_terminal(cons_backend);
@@ -56,6 +72,9 @@ void console_backend_pointer_thread(void *p){
         size_t read=fread(backend->pointer, sizeof(packet), (char*)&packet);
         if(read){
             hold_lock hl(&backend->backend_lock);
+            packet.y_motion=-packet.y_motion;
+            packet.x_motion*= msb32(abs32(packet.x_motion));
+            packet.y_motion*= msb32(abs32(packet.y_motion));
             backend->update_pointer(true);
             uint32_t oldx=backend->pointer_info.x;
             backend->pointer_info.x+=(packet.x_motion * pointer_speed);
@@ -81,7 +100,7 @@ void console_backend::update_pointer(bool erase) {
         uint32_t x=(pointer_info.x/xscale);
         uint32_t y=(pointer_info.y/yscale);
         if(mode.textmode){
-            y=(mode.height-1)-y;
+            //y=(mode.height-1)-y;
             size_t pos=(((y * mode.width) + x) * 2) + 1;
             size_t cpos=fseek(display, 0, true);
             bt_vid_text_access_mode::Enum omode=(bt_vid_text_access_mode::Enum) fioctl(display, bt_vid_ioctl::GetTextAccessMode, 0, NULL);
@@ -201,7 +220,15 @@ void console_backend::set_pointer_bitmap(bt_terminal_pointer_bitmap /*bmp*/) {
 }
 
 bt_terminal_pointer_info console_backend::get_pointer_info(){
-    return pointer_info;
+    bt_vidmode mode;
+    fioctl(display, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
+    uint32_t xscale=(0xFFFFFFFF/(mode.width-1));
+    uint32_t yscale=(0xFFFFFFFF/(mode.height-1));
+    uint32_t x=(pointer_info.x/xscale);
+    uint32_t y=(pointer_info.y/yscale);
+    bt_terminal_pointer_info ret=pointer_info;
+    ret.x=x; ret.y=y;
+    return ret;
 }
 
 bool console_backend::is_active(uint64_t id) {
