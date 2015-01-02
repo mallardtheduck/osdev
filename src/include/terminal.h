@@ -25,6 +25,10 @@ ENUM_START(bt_terminal_ioctl)
     ENUM_SET(bt_terminal_ioctl, GetPointerVisibility, 271),
     ENUM_SET(bt_terminal_ioctl, SetPointerBitmap, 272),
     ENUM_SET(bt_terminal_ioctl, GetPointerInfo, 273),
+    ENUM_SET(bt_terminal_ioctl, ReadPointerEvent, 274),
+    ENUM_SET(bt_terminal_ioctl, ReadKeyEvent, 275),
+    ENUM_SET(bt_terminal_ioctl, ReadEvent, 276),
+    ENUM_SET(bt_terminal_ioctl, ClearEvents, 277),
 
     ENUM_SET(bt_terminal_ioctl, NewTerminal, 291),
     ENUM_SET(bt_terminal_ioctl, DestroyTerminal, 292),
@@ -40,6 +44,42 @@ struct bt_terminal_pointer_info{
 
 #ifndef __cplusplus
 typedef struct bt_terminal_pointer_info bt_terminal_pointer_info;
+#endif
+
+ENUM_START(bt_terminal_pointer_event_type)
+    ENUM_SET(bt_terminal_pointer_event_type, Move, 1),
+    ENUM_SET(bt_terminal_pointer_event_type, ButtonDown, 2),
+    ENUM_SET(bt_terminal_pointer_event_type, ButtonUp, 1),
+ENUM_END
+ENUM_TYPE(bt_terminal_pointer_event_type);
+
+struct bt_terminal_pointer_event{
+    ENUM_NAME(bt_terminal_pointer_event_type) type;
+    uint32_t x;
+    uint32_t y;
+    uint32_t button;
+};
+
+#ifndef __cplusplus
+typedef struct bt_terminal_pointer_event bt_terminal_pointer_event;
+#endif
+
+ENUM_START(bt_terminal_event_type)
+    ENUM_SET(bt_terminal_event_type, Pointer, 1),
+    ENUM_SET(bt_terminal_event_type, Key, 2),
+ENUM_END
+ENUM_TYPE(bt_terminal_event_type);
+
+struct bt_terminal_event{
+    ENUM_NAME(bt_terminal_event_type) type;
+    union{
+        bt_terminal_pointer_event pointer;
+        uint32_t key;
+    };
+};
+
+#ifndef __cplusplus
+typedef struct bt_terminal_event bt_terminal_event;
 #endif
 
 struct bt_terminal_pointer_bitmap{

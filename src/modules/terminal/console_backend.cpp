@@ -84,8 +84,42 @@ void console_backend_pointer_thread(void *p){
             backend->pointer_info.y+=(packet.y_motion * pointer_speed);
             if(packet.y_motion > 0 && backend->pointer_info.y < oldy) backend->pointer_info.y=0xFFFFFFFF;
             if(packet.y_motion < 0 && backend->pointer_info.y > oldy) backend->pointer_info.y=0;
+            uint16_t oldflags=backend->pointer_info.flags;
             backend->pointer_info.flags=packet.flags;
             backend->update_pointer(false);
+            vterm *term=terminals->get(backend->active);
+            bt_vidmode mode;
+            fioctl(backend->display, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
+            uint32_t xscale=(0xFFFFFFFF/(mode.width-1));
+            uint32_t yscale=(0xFFFFFFFF/(mode.height-1));
+            uint32_t x=(backend->pointer_info.x/xscale);
+            uint32_t y=(backend->pointer_info.y/yscale);
+            if(packet.x_motion || packet.y_motion){
+                bt_terminal_pointer_event event;
+                event.type=bt_terminal_pointer_event_type::Move;
+                event.x=x;
+                event.y=y;
+                event.button=0;
+                term->queue_pointer(event);
+            }
+            if(packet.flags != oldflags){
+                bt_terminal_pointer_event event;
+                event.x=x;
+                event.y=y;
+                event.button=0;
+                uint16_t diff=0;
+                if(packet.flags > oldflags){
+                    event.type=bt_terminal_pointer_event_type::ButtonDown;
+                    diff=packet.flags - oldflags;
+                }else{
+                    event.type=bt_terminal_pointer_event_type::ButtonUp;
+                    diff=oldflags - packet.flags;
+                }
+                if(diff == MouseFlags::Button1) event.button=1;
+                if(diff == MouseFlags::Button2) event.button=2;
+                if(diff == MouseFlags::Button3) event.button=3;
+                if(event.button) term->queue_pointer(event);
+            }
         }
     }
 }

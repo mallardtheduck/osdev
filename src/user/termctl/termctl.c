@@ -50,6 +50,23 @@ int main(int argc, char **argv){
         bt_terminal_pointer_info info;
         bt_fioctl(fh, bt_terminal_ioctl_GetPointerInfo, sizeof(info), (char*)&info);
         printf("Pointer: (%i, %i) Flags: %x\n", info.x, info.y, info.flags);
+    }else if(strcmp(argv[1], "event")==0){
+        bt_fioctl(fh, bt_terminal_ioctl_ClearEvents, 0, NULL);
+        bt_terminal_event event;
+        bt_fioctl(fh, bt_terminal_ioctl_ReadEvent, sizeof(event), (char*)&event);
+        if(event.type==bt_terminal_event_type_Key){
+            printf("Keyboard event: %x\n", event.key);
+        }else if(event.type==bt_terminal_event_type_Pointer){
+            char *type=NULL;
+            if(event.pointer.type==bt_terminal_pointer_event_type_ButtonDown) type="Button Down";
+            if(event.pointer.type==bt_terminal_pointer_event_type_ButtonUp) type="Button Up";
+            if(event.pointer.type==bt_terminal_pointer_event_type_Move) type="Move";
+            printf("Pointer event: '%s' (%i, %i) %i\n", type, event.pointer.x, event.pointer.y, event.pointer.button);
+        }else{
+            printf("Unknown terminal event type: %x\n", event.type);
+        }
+    }else{
+        printf("Unknown option '%s'\n", argv[1]);
     }
     return 0;
 }
