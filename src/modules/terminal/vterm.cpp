@@ -10,6 +10,8 @@ vterm_list *terminals=NULL;
 
 extern lock term_lock;
 
+bool event_blockcheck(void *p);
+
 size_t strlen(const char* str)
 {
     size_t ret = 0;
@@ -32,9 +34,12 @@ vterm::vterm(uint64_t nid, i_backend *back){
     init_lock(&input_lock);
     input_top=0;
     input_count=0;
+    pointer_top=0;
+    pointer_count=0;
     refcount=0;
     scrollcount=0;
     sprintf(title, "BT/OS Terminal %i", (int)id);
+    pointer_enabled=false;
 }
 
 vterm::~vterm(){
@@ -157,6 +162,11 @@ void vterm::activate() {
     backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scrolling);
     do_infoline();
     if(infoline && bufpos==0) putchar('\n');
+    if(pointer_enabled){
+        backend->show_pointer();
+    }else{
+        backend->hide_pointer();
+    }
 }
 
 void vterm::deactivate() {
@@ -307,6 +317,57 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
                 backend->display_ioctl(fn, size, buf);
             }
         }
+    }else if(fn == bt_terminal_ioctl::ShowPointer){
+        backend->show_pointer();
+        pointer_enabled=true;
+    }else if(fn == bt_terminal_ioctl::HidePointer){
+        backend->hide_pointer();
+        pointer_enabled=false;
+    }else if(fn == bt_terminal_ioctl::GetPointerInfo){
+        if(size==sizeof(bt_terminal_pointer_info)){
+            *(bt_terminal_pointer_info*)buf=backend->get_pointer_info();
+        }
+    }else if(fn == bt_terminal_ioctl::ReadPointerEvent){
+        if(size==sizeof(bt_terminal_pointer_event)){
+            release_lock(&term_lock);
+            *(bt_terminal_pointer_event*)buf=get_pointer();
+            take_lock(&term_lock);
+        }
+    }
+    else if(fn == bt_terminal_ioctl::ReadKeyEvent){
+        if(size==sizeof(uint32_t)){
+            release_lock(&term_lock);
+            *(uint32_t*)buf=get_input();
+            take_lock(&term_lock);
+        }
+    }else if(fn == bt_terminal_ioctl::ReadEvent){
+        if(size==sizeof(bt_terminal_event)){
+            bt_terminal_event *event=(bt_terminal_event*)buf;
+            while(!input_count && !pointer_count){
+                release_lock(&term_lock);
+                thread_setblock(&event_blockcheck, (void*)this);
+                take_lock(&term_lock);
+            }
+            if(input_count){
+                event->type=bt_terminal_event_type::Key;
+                release_lock(&term_lock);
+                //TODO: Work out why this has to be done twice...
+                event->key= get_input();
+                event->key= get_input();
+                take_lock(&term_lock);
+            }else if(pointer_count){
+                event->type=bt_terminal_event_type::Pointer;
+                release_lock(&term_lock);
+                event->pointer= get_pointer();
+                event->pointer= get_pointer();
+                take_lock(&term_lock);
+            }
+        }
+    }else if(fn == bt_terminal_ioctl::ClearEvents){
+        input_count=0;
+        input_top=0;
+        pointer_count=0;
+        pointer_top=0;
     }
     //TODO: implement more
     return 0;
@@ -414,18 +475,28 @@ void vterm::queue_input(uint32_t code) {
     release_lock(&input_lock);
 }
 
+void vterm::queue_pointer(bt_terminal_pointer_event event) {
+    take_lock(&input_lock);
+    if(pointer_count < pointer_buffer_size){
+        pointer_count++;
+        pointer_top ++;
+        if(pointer_top==pointer_buffer_size) pointer_top=0;
+        pointer_buffer[pointer_top]=event;
+    }
+    release_lock(&input_lock);
+}
+
 bool input_blockcheck(void *p){
     vterm *v=(vterm*)p;
     return (bool)v->input_count;
 }
 
 uint32_t vterm::get_input() {
-    bool lockok=false;
-    while(!lockok) {
-        while (!input_count) thread_setblock(&input_blockcheck, (void *) this);
+    hold_lock hl(&input_lock);
+    while(!input_count){
+        release_lock(&input_lock);
+        thread_setblock(&input_blockcheck, (void *) this);
         take_lock(&input_lock);
-        if(!input_count) release_lock(&input_lock);
-        else lockok=true;
     }
     uint32_t ret=0;
     if(input_count){
@@ -434,7 +505,32 @@ uint32_t vterm::get_input() {
         ret=input_buffer[start];
         input_count--;
     }
-    release_lock(&input_lock);
+    return ret;
+}
+
+bool pointer_blockcheck(void *p){
+    vterm *v=(vterm*)p;
+    return (bool)v->pointer_count;
+}
+
+bool event_blockcheck(void *p){
+    return input_blockcheck(p) || pointer_blockcheck(p);
+}
+
+bt_terminal_pointer_event vterm::get_pointer() {
+    hold_lock hl(&input_lock);
+    while(!pointer_count){
+        release_lock(&input_lock);
+        thread_setblock(&pointer_blockcheck, (void *) this);
+        take_lock(&input_lock);
+    }
+    bt_terminal_pointer_event ret;
+    if(pointer_count){
+        int start=pointer_top-pointer_count;
+        if(start<0) start+=pointer_buffer_size;
+        ret=pointer_buffer[start];
+        pointer_count--;
+    }
     return ret;
 }
 
