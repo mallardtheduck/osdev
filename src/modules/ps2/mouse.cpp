@@ -80,7 +80,6 @@ void mouse_thread(void*){
 		bool button1=state & (1 << 0);
 		bool button2=state & (1 << 1);
 		bool button3=state & (1 << 2);
-		dbgpf("PS2: b1: %i b2: %i b3: %i x: %i y: %i\n", (int)button1, (int)button2, (int)(button3), (int)mouse_x, (int)mouse_y);
 		bt_mouse_packet packet;
 		packet.flags = MouseFlags::Valid | (button1?MouseFlags::Button1:0) | (button2?MouseFlags::Button2:0) | (button3?MouseFlags::Button3:0);
 		packet.x_motion=mouse_x;
