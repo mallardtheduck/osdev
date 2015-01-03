@@ -57,6 +57,23 @@ void write_attribute(uint8_t index, uint8_t byte){
 	outb(VGA_Ports::AttributeWrite, byte);
 }
 
+void write_dac(uint8_t index, uint8_t r, uint8_t g, uint8_t b){
+	if((r & 0x3F) != r) dbgpf("VGA: Bad red value: %x\n", r);
+	if((g & 0x3F) != g) dbgpf("VGA: Bad green value: %x\n", g);
+	if((b & 0x3F) != b) dbgpf("VGA: Bad blue value: %x\n", b);
+	outb(VGA_Ports::DACWriteAddress, index);
+	outb(VGA_Ports::DACData, r);
+	outb(VGA_Ports::DACData, g);
+	outb(VGA_Ports::DACData, b);
+}
+
+void read_dac(uint8_t index, uint8_t &r, uint8_t &g, uint8_t &b){
+	outb(VGA_Ports::DACReadAddress, index);
+	r=inb(VGA_Ports::DACData);
+	g=inb(VGA_Ports::DACData);
+	b=inb(VGA_Ports::DACData);
+}
+
 void unlock_crtc(){
 	uint8_t reg= read_crtc(CRTC_Registers::EndVrtRetrace);
 	reg |= (1 << 7);

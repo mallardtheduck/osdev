@@ -108,6 +108,8 @@ uint8_t read_crtc(uint8_t index);
 void write_crtc(uint8_t index, uint8_t byte);
 uint8_t read_attribute(uint8_t index);
 void write_attribute(uint8_t index, uint8_t byte);
+void write_dac(uint8_t index, uint8_t r, uint8_t g, uint8_t b);
+void read_dac(uint8_t index, uint8_t &r, uint8_t &g, uint8_t &b);
 
 static const size_t vga_font_size=(16*256);
 
