@@ -5,6 +5,8 @@
 #include "module_cpp.hpp"
 #include "io.h"
 
+extern volatile uint8_t * const vga_memory;
+
 namespace VGA_Ports{
 	static const uint16_t GraphicsAddress 	=0x3CE;
 	static const uint16_t GraphicsData		=0x3CF;
@@ -90,5 +92,10 @@ uint8_t read_crtc(uint8_t index);
 void write_crtc(uint8_t index, uint8_t byte);
 uint8_t read_attribute(uint8_t index);
 void write_attribute(uint8_t index, uint8_t byte);
+
+void unlock_crtc();
+void lock_crtc();
+void disable_display();
+void enable_display();
 
 #endif
