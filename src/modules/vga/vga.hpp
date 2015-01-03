@@ -49,6 +49,22 @@ namespace Sequencer_Registers{
 }
 
 namespace Attribute_Registers{
+	static const uint8_t Palette0			=0x00;
+	static const uint8_t Palette1			=0x01;
+	static const uint8_t Palette2			=0x02;
+	static const uint8_t Palette3			=0x03;
+	static const uint8_t Palette4			=0x04;
+	static const uint8_t Palette5			=0x05;
+	static const uint8_t Palette6			=0x06;
+	static const uint8_t Palette7			=0x07;
+	static const uint8_t Palette8			=0x08;
+	static const uint8_t Palette9			=0x09;
+	static const uint8_t PaletteA			=0x0A;
+	static const uint8_t PaletteB			=0x0B;
+	static const uint8_t PaletteC			=0x0C;
+	static const uint8_t PaletteD			=0x0D;
+	static const uint8_t PaletteE			=0x0E;
+	static const uint8_t PaletteF			=0x0F;
 	static const uint8_t ModeControl		=0x10;
 	static const uint8_t OverscanColour		=0x11;
 	static const uint8_t ColourPlaneEnable	=0x12;
@@ -92,6 +108,8 @@ uint8_t read_crtc(uint8_t index);
 void write_crtc(uint8_t index, uint8_t byte);
 uint8_t read_attribute(uint8_t index);
 void write_attribute(uint8_t index, uint8_t byte);
+
+static const size_t vga_font_size=(16*256);
 
 void unlock_crtc();
 void lock_crtc();

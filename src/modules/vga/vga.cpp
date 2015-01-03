@@ -62,7 +62,7 @@ void unlock_crtc(){
 	reg |= (1 << 7);
 	write_crtc(CRTC_Registers::EndVrtRetrace, reg);
 	reg= read_crtc(CRTC_Registers::EndHrzBlanking);
-	reg |= (1 << 7);
+	reg &= ~(1 << 7);
 	write_crtc(CRTC_Registers::EndHrzBlanking, reg);
 }
 
