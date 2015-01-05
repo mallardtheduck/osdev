@@ -29,23 +29,32 @@ private:
     uint32_t refcount;
     lock term_lock;
     uint64_t scrollcount;
+    bool pointer_enabled;
 
     static const size_t input_size=128;
     uint32_t input_buffer[input_size];
-    size_t input_count, input_top;
+    volatile size_t input_count, input_top;
+    static const size_t pointer_buffer_size=512;
+    bt_terminal_pointer_event pointer_buffer[pointer_buffer_size];
+    volatile size_t pointer_count, pointer_top;
     lock input_lock;
 
     pid_t curpid;
 
     void putchar(char c);
     void putstring(char *s);
+    void setcolours(uint8_t c);
+    uint8_t getcolours();
     void scroll();
     void do_infoline();
     char get_char();
     uint32_t get_input();
+    bt_terminal_pointer_event get_pointer();
     void create_terminal(char *command);
 
     friend bool input_blockcheck(void *p);
+    friend bool pointer_blockcheck(void *p);
+    friend bool event_blockcheck(void *p);
 
     static const size_t titlemax=256;
     char title[titlemax];
@@ -68,7 +77,11 @@ public:
     void close();
 
     void queue_input(uint32_t code);
+    void queue_pointer(bt_terminal_pointer_event event);
     void sync(bool content=true);
+
+    void allocate_buffer();
+    void clear_buffer();
 };
 
 //extern vterm *current_vterm;

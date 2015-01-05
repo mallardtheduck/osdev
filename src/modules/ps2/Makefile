@@ -7,7 +7,7 @@ BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -ffreestanding -Wall -Wextra -Werror -g -c -I../../include -DKERNEL_MODULE
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -T linker.ld -o keyboard.sys -ffreestanding -O2 -nostdlib -fPIC -Xlinker -q
+LINK-FLAGS := -T linker.ld -o ps2.sys -ffreestanding -O2 -nostdlib -fPIC -Xlinker -q
 LINK-OPTIONS := -lgcc
 
 BOOTFILE := boot.o
@@ -22,7 +22,7 @@ CPPOBJS := $(CPPFILES:.cpp=.o)
 CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
 
-all: keyboard.sys
+all: ps2.sys
 
 -include $(CDEPFILES) $(CPPDEPFILES)
 
@@ -30,9 +30,9 @@ clean: dummy.delete
 
 dummy.delete:
 	-@$(RM) *.o
-	-@$(RM) keyboard.sys
+	-@$(RM) ps2.sys
 
-keyboard.sys: $(ASOBJS) $(COBJS) $(CPPOBJS) linker.ld Makefile
+ps2.sys: $(ASOBJS) $(COBJS) $(CPPOBJS) linker.ld Makefile
 	$(LINK) $(LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LINK-OPTIONS)
 
 .s.o: %.s Makefile

@@ -1,4 +1,4 @@
-xxd_data.inc: data/config.ini data/boot.sys data/rtc.sys data/keyboard.sys data/ata.sys data/fat.sys data/spawn.elx
+xxd_data.inc: data/config.ini data/boot.sys data/rtc.sys data/ps2.sys data/ata.sys data/fat.sys data/spawn.elx
 	strip data/*.elx
 	strip -g data/*.sys
 	./make_inc.sh
@@ -12,7 +12,7 @@ data/rtc.sys: ../../modules/rtc/rtc.sys
 data/fat.sys: ../../modules/fat/fat.sys
 	cp $< $@
 
-data/keyboard.sys: ../../modules/keyboard/keyboard.sys
+data/ps2.sys: ../../modules/ps2/ps2.sys
 	cp $< $@
 
 data/ata.sys: ../../modules/ata/ata.sys

@@ -102,6 +102,7 @@ size_t terminal_seek(void *instance, size_t pos, bool relative){
 		terminal_column=cpos-(terminal_row * VGA_WIDTH);
 		terminal_poscursor(terminal_row, terminal_column);
 		ret=cpos;
+		inst->pos=cpos;
 	}
 	return ret;
 }
@@ -113,25 +114,11 @@ int terminal_ioctl(void *instance, int fn, size_t bytes, char *buf){
     }else if(fn==bt_vid_ioctl::SetMode){
         if(bytes>=sizeof(mode) && ((bt_vidmode*)buf)->id==mode.id) return 1;
         else return 0;
-    }else if(fn==bt_vid_ioctl::SetTextFGColour){
-        if(bytes>=1){
-            terminal_color=make_color((vga_color)*buf, (vga_color)((terminal_color & 0xF0) >> 4));
-            return 1;
-        }else return 0;
-    }else if(fn==bt_vid_ioctl::SetTextBGColour){
-        if(bytes>=1){
-            terminal_color=make_color((vga_color)(terminal_color & 0x0F), (vga_color)*buf);
-            return 1;
-        }else return 0;
     }else if(fn==bt_vid_ioctl::SetTextColours){
         if(bytes>=1){
             terminal_color=(uint8_t)*buf;
             return 1;
         }else return 0;
-    }else if(fn==bt_vid_ioctl::GetTextBGColour){
-        return ((terminal_color & 0xF0) >> 4);
-    }else if(fn==bt_vid_ioctl::GetTextFGColour){
-        return (terminal_color & 0x0F);
     }else if(fn==bt_vid_ioctl::GetTextColours){
         return terminal_color;
     }else if(fn==bt_vid_ioctl::ClearScreen){
