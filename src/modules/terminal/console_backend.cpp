@@ -75,7 +75,6 @@ void console_backend_pointer_thread(void *p){
             packet.y_motion=-packet.y_motion;
             packet.x_motion*= msb32(abs32(packet.x_motion));
             packet.y_motion*= msb32(abs32(packet.y_motion));
-            backend->update_pointer(true);
             uint32_t oldx=backend->pointer_info.x;
             backend->pointer_info.x+=(packet.x_motion * pointer_speed);
             if(packet.x_motion > 0 && backend->pointer_info.x < oldx) backend->pointer_info.x=0xFFFFFFFF;
@@ -86,7 +85,7 @@ void console_backend_pointer_thread(void *p){
             if(packet.y_motion < 0 && backend->pointer_info.y > oldy) backend->pointer_info.y=0;
             uint16_t oldflags=backend->pointer_info.flags;
             backend->pointer_info.flags=packet.flags;
-            backend->update_pointer(false);
+            backend->update_pointer();
             vterm *term=terminals->get(backend->active);
             bt_vidmode mode;
             fioctl(backend->display, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
@@ -119,23 +118,38 @@ void console_backend_pointer_thread(void *p){
                 if(diff == MouseFlags::Button1) event.button=1;
                 if(diff == MouseFlags::Button2) event.button=2;
                 if(diff == MouseFlags::Button3) event.button=3;
-                if(event.button) term->queue_pointer(event);
+                if(term && event.button) term->queue_pointer(event);
             }
         }
     }
 }
 
-void console_backend::update_pointer(bool erase) {
-    if(pointer_visible){
-        hold_lock hl(&backend_lock, false);
+void console_backend::update_pointer(){
+    if(pointer_info.x != old_pointer_info.x || pointer_info.y != old_pointer_info.y || pointer_visible != old_pointer_visible){
         bt_vidmode mode;
         fioctl(display, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
         uint32_t xscale=(0xFFFFFFFF/(mode.width-1));
         uint32_t yscale=(0xFFFFFFFF/(mode.height-1));
-        uint32_t x=(pointer_info.x/xscale);
-        uint32_t y=(pointer_info.y/yscale);
+        uint32_t oldx=old_pointer_info.x/xscale;
+        uint32_t oldy=old_pointer_info.y/yscale;
+        uint32_t newx=pointer_info.x/xscale;
+        uint32_t newy=pointer_info.y/yscale;
+        if(oldx != newx || oldy != newy) {
+            draw_pointer(oldx, oldy, true);
+            if(pointer_visible) draw_pointer(newx, newy, false);
+        }
+    }
+    old_pointer_info=pointer_info;
+    old_pointer_visible=pointer_visible;
+}
+
+void console_backend::draw_pointer(uint32_t x, uint32_t y, bool erase) {
+    if(pointer_visible){
+        hold_lock hl(&backend_lock, false);
+        bt_vidmode mode;
+        fioctl(display, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
         if(mode.textmode){
-            //y=(mode.height-1)-y;
+            dbgpf("TERM: Pointer %s at (%i, %i)\n", erase?"hide":"show", x, y);
             size_t pos=(((y * mode.width) + x) * 2) + 1;
             size_t cpos=fseek(display, 0, true);
             bt_vid_text_access_mode::Enum omode=(bt_vid_text_access_mode::Enum) fioctl(display, bt_vid_ioctl::GetTextAccessMode, 0, NULL);
@@ -190,16 +204,20 @@ void console_backend::start_switcher(){
 }
 
 size_t console_backend::display_read(size_t bytes, char *buf) {
-    update_pointer(true);
+    hold_lock hl(&backend_lock);
+    bool pointer=pointer_visible;
+    hide_pointer();
     size_t ret=fread(display, bytes, buf);
-    update_pointer(false);
+    if(pointer)show_pointer();
     return ret;
 }
 
 size_t console_backend::display_write(size_t bytes, char *buf) {
-    update_pointer(true);
+    hold_lock hl(&backend_lock);
+    bool pointer=pointer_visible;
+    hide_pointer();
     size_t ret=fwrite(display, bytes, buf);
-    update_pointer(false);
+    if(pointer)show_pointer();
     return ret;
 }
 
@@ -208,9 +226,11 @@ size_t console_backend::display_seek(size_t pos, bool relative) {
 }
 
 int console_backend::display_ioctl(int fn, size_t bytes, char *buf) {
-    update_pointer(true);
+    hold_lock hl(&backend_lock);
+    bool pointer=pointer_visible;
+    hide_pointer();
     int ret=fioctl(display, fn, bytes, buf);
-    update_pointer(false);
+    if(pointer)show_pointer();
     return ret;
 }
 
@@ -238,12 +258,12 @@ bt_terminal_pointer_info console_backend::pointer_read(){
 void console_backend::show_pointer() {
     fioctl(pointer, bt_mouse_ioctl::ClearBuffer, 0, NULL);
     pointer_visible=true;
-    update_pointer(false);
+    update_pointer();
 }
 
 void console_backend::hide_pointer() {
-    update_pointer(true);
     pointer_visible=false;
+    update_pointer();
 }
 
 bool console_backend::get_pointer_visibility() {
