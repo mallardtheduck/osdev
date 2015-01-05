@@ -10,6 +10,8 @@ static bt_mouse_packet buffer[buffer_size];
 static size_t buffer_count=0;
 static size_t buffer_top=0;
 static const bt_mouse_packet zero_packet={0, 0, 0};
+static uint8_t irq;
+static uint8_t ps2_byte;
 
 static lock buf_lock;
 
@@ -37,7 +39,11 @@ static bt_mouse_packet read_from_buffer(){
 
 
 void mouse_handler(int irq, isr_regs *regs){
-	input_available=true;
+	if(ps2_read_status() & 1) {
+		ps2_byte= ps2_read_data();
+		input_available = true;
+		mask_irq(irq);
+	}
 	irq_ack(irq);
 	enable_interrupts();
 	yield();
@@ -52,18 +58,21 @@ void mouse_thread(void*){
 	while(true){
 		thread_setblock(&input_blockcheck, NULL);
 		disable_interrupts();
-		uint8_t byte1= ps2_read_data();
+		uint8_t byte1=ps2_byte;
 		input_available=false;
+		unmask_irq(irq);
 		enable_interrupts();
 		thread_setblock(&input_blockcheck, NULL);
 		disable_interrupts();
-		uint8_t byte2= ps2_read_data();
+		uint8_t byte2=ps2_byte;
 		input_available=false;
+		unmask_irq(irq);
 		enable_interrupts();
 		thread_setblock(&input_blockcheck, NULL);
 		disable_interrupts();
-		uint8_t byte3= ps2_read_data();
+		uint8_t byte3=ps2_byte;
 		input_available=false;
+		unmask_irq(irq);
 		enable_interrupts();
 
 		uint8_t state=byte1;
@@ -158,7 +167,6 @@ drv_driver mouse_driver={&mouse_open, &mouse_close, &mouse_read, &mouse_write, &
 void init_mouse(uint8_t mchannel){
 	init_lock(&buf_lock);
 	channel=mchannel;
-	uint8_t irq;
 	if(channel==1){
 		write_device=&ps2_write_port1;
 		irq=Port1IRQ;

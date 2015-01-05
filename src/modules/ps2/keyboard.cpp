@@ -9,6 +9,8 @@ static size_t buffer_top=0;
 static lock buf_lock;
 static bool input_available;
 static uint16_t currentflags=0;
+static uint8_t irq;
+static uint8_t ps2_byte;
 
 static uint8_t channel;
 
@@ -49,7 +51,11 @@ static uint32_t read_from_buffer(){
 }
 
 static void keyboard_handler(int irq, isr_regs *regs){
-	input_available=true;
+	if(ps2_read_status() & 1) {
+		input_available = true;
+		ps2_byte=ps2_read_data();
+		mask_irq(irq);
+	}
 	irq_ack(irq);
 	enable_interrupts();
 	yield();
@@ -65,7 +71,8 @@ static void keyboard_thread(void*){
 		thread_setblock(input_blockcheck, NULL);
 		take_lock(&buf_lock);
 		disable_interrupts();
-		uint8_t key=ps2_read_data();
+		uint8_t key=ps2_byte;
+		unmask_irq(irq);
 		if(buffer_count<buffer_size){
 			uint16_t keycode=scancode2keycode(key);
 			if(keycode){
@@ -230,7 +237,6 @@ void init_keyboard(uint8_t kchannel){
 	capskeys=us_keyboard_capskeys;
 	numkeys=us_keyboard_numkeys;
 	input_available=false;
-	uint8_t irq;
 	if(channel==1){
 		irq=Port1IRQ;
 		ps2_write_command(PS2_Command::EnablePort1);
