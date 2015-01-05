@@ -100,7 +100,8 @@ void console_backend_pointer_thread(void *p){
                 event.x=x;
                 event.y=y;
                 event.button=0;
-                term->queue_pointer(event);
+                event.button=0;
+                if(term) term->queue_pointer(event);
             }
             if(packet.flags != oldflags){
                 bt_terminal_pointer_event event;
