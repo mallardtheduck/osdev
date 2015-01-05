@@ -8,6 +8,7 @@
 #include "io.h"
 
 uint8_t ps2_read_data();
+uint8_t ps2_read_data_nocheck();
 void ps2_write_data(uint8_t byte);
 uint8_t ps2_read_status();
 void ps2_write_command(uint8_t byte);

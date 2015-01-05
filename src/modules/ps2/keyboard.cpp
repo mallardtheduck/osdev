@@ -51,11 +51,9 @@ static uint32_t read_from_buffer(){
 }
 
 static void keyboard_handler(int irq, isr_regs *regs){
-	if(ps2_read_status() & 1) {
-		input_available = true;
-		ps2_byte=ps2_read_data();
-		mask_irq(irq);
-	}
+	ps2_byte=ps2_read_data_nocheck();
+	input_available = true;
+	mask_irq(irq);
 	irq_ack(irq);
 	enable_interrupts();
 	yield();
