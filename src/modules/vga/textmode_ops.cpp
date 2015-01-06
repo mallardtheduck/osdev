@@ -17,7 +17,7 @@ void text_putchar(char c);
 void text_putentryat(char c, uint8_t color, size_t x, size_t y);
 
 size_t text_read(vga_instance *inst, size_t bytes, char *buf){
-    size_t maxchar=current_mode.vidmode.width * current_mode.vidmode.height * 2;
+    size_t maxchar=current_mode->vidmode.width * current_mode->vidmode.height * 2;
     if(inst->mode==bt_vid_text_access_mode::Raw){
         if(inst->pos > maxchar) return 0;
         if(inst->pos+bytes > maxchar) bytes=maxchar-inst->pos;
@@ -36,7 +36,7 @@ size_t text_read(vga_instance *inst, size_t bytes, char *buf){
 }
 
 size_t text_write(vga_instance *inst, size_t bytes, char *buf){
-    size_t maxchar=current_mode.vidmode.width * current_mode.vidmode.height * 2;
+    size_t maxchar=current_mode->vidmode.width * current_mode->vidmode.height * 2;
     if(inst->mode==bt_vid_text_access_mode::Raw){
         if(inst->pos > maxchar) return 0;
         if(inst->pos+bytes > maxchar) bytes=maxchar-inst->pos;
@@ -62,17 +62,17 @@ size_t text_seek(vga_instance *inst, size_t pos, bool relative){
     }else{
         size_t cpos;
         if(relative){
-            cpos=(text_row * current_mode.vidmode.width) + text_column;
+            cpos=(text_row * current_mode->vidmode.width) + text_column;
             cpos+=pos;
         }else{
             cpos=pos;
         }
-        if(cpos > current_mode.vidmode.height * current_mode.vidmode.width){
+        if(cpos > current_mode->vidmode.height * current_mode->vidmode.width){
             dbgpf("VGA: Bad text seek: %i\n", cpos);
-            cpos=current_mode.vidmode.height * current_mode.vidmode.width;
+            cpos=current_mode->vidmode.height * current_mode->vidmode.width;
         }
-        text_row=cpos/current_mode.vidmode.width;
-        text_column=cpos-(text_row * current_mode.vidmode.width);
+        text_row=cpos/current_mode->vidmode.width;
+        text_column=cpos-(text_row * current_mode->vidmode.width);
         text_poscursor(text_row, text_column);
         ret=cpos;
         inst->pos=cpos;
@@ -81,8 +81,7 @@ size_t text_seek(vga_instance *inst, size_t pos, bool relative){
 }
 
 int text_ioctl(vga_instance *inst, int fn, size_t bytes, char *buf){
-    dbgpf("VGA: Text ioctl: %i\n", fn);
-    size_t maxchar=current_mode.vidmode.width * current_mode.vidmode.height * 2;
+    size_t maxchar=current_mode->vidmode.width * current_mode->vidmode.height * 2;
     if(fn==bt_vid_ioctl::SetTextColours){
         if(bytes>=1){
             text_color=(uint8_t)*buf;
@@ -132,18 +131,18 @@ size_t strlen(const char* str)
 }
 
 void text_scroll(){
-    for(size_t y=0; y<current_mode.vidmode.height; ++y){
-        for(size_t x=0; x<current_mode.vidmode.width; ++x){
-            const size_t source = y * current_mode.vidmode.width + x;
+    for(size_t y=0; y<current_mode->vidmode.height; ++y){
+        for(size_t x=0; x<current_mode->vidmode.width; ++x){
+            const size_t source = y * current_mode->vidmode.width + x;
             if(y){
-                const size_t dest = (y-1) * current_mode.vidmode.width + x;
+                const size_t dest = (y-1) * current_mode->vidmode.width + x;
                 ((uint16_t*)text_memory)[dest]=((uint16_t*)text_memory)[source];
             }
             text_putentryat(' ', text_color, x, y);
         }
     }
     text_column=0;
-    text_row=current_mode.vidmode.height-1;
+    text_row=current_mode->vidmode.height-1;
     text_poscursor(text_row, text_column);
 }
 
@@ -154,14 +153,14 @@ void text_setcolor(uint8_t color)
 
 void text_putentryat(char c, uint8_t color, size_t x, size_t y)
 {
-    size_t index = y * current_mode.vidmode.width + x;
+    size_t index = y * current_mode->vidmode.width + x;
     ((uint16_t*)text_memory)[index] = make_vgaentry(c, color);
 }
 
 void text_putchar(char c)
 {
     if(c == '\n'){
-        if(++text_row >= current_mode.vidmode.height && scrolling_enabled){
+        if(++text_row >= current_mode->vidmode.height && scrolling_enabled){
             text_scroll();
         }
         text_column = 0;
@@ -170,10 +169,10 @@ void text_putchar(char c)
         c=' ';
     }
     text_putentryat(c, text_color, text_column, text_row);
-    if ( ++text_column >= current_mode.vidmode.width )
+    if ( ++text_column >= current_mode->vidmode.width )
     {
         text_column = 0;
-        if ( ++text_row >= current_mode.vidmode.height && scrolling_enabled)
+        if ( ++text_row >= current_mode->vidmode.height && scrolling_enabled)
         {
             text_scroll();
         }
@@ -208,11 +207,11 @@ void init_text(){
     text_row = 0;
     text_column = 0;
     text_color = make_color(7, 0);
-    for ( size_t y = 0; y < current_mode.vidmode.height; y++ )
+    for ( size_t y = 0; y < current_mode->vidmode.height; y++ )
     {
-        for ( size_t x = 0; x < current_mode.vidmode.width; x++ )
+        for ( size_t x = 0; x < current_mode->vidmode.width; x++ )
         {
-            const size_t index = y * current_mode.vidmode.width + x;
+            const size_t index = y * current_mode->vidmode.width + x;
             ((uint16_t*)text_memory)[index] = make_vgaentry(' ', text_color);
         }
     }
