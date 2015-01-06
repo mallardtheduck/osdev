@@ -58,7 +58,9 @@ void console_backend_input_thread(void *p){
             if(backend->active) {
                 vterm *term=terminals->get(backend->active);
                 if ((key & KeyFlags::Control) && (key & KeyCodes::Escape)==KeyCodes::Escape && !(key & KeyFlags::KeyUp)) {
+                    release_lock(&backend->backend_lock);
                     terminals->switch_terminal(switcher_term);
+                    take_lock(&backend->backend_lock);
                 }else if (term) term->queue_input(key);
             }
         }
