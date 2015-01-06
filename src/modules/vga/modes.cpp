@@ -1,4 +1,5 @@
 #include "modes.hpp"
+#include "ops.hpp"
 
 extern uint8_t vga_font[vga_font_size];
 extern vga_palette_entry vga_palette[256];
@@ -145,7 +146,7 @@ uint8_t get_pixel_12h(uint32_t x, uint32_t y){
 	return ret;
 }
 
-void set_mode_03h_set() {
+void set_mode_03h() {
 	disable_interrupts();
 	disable_display();
 	unlock_crtc();
@@ -217,11 +218,7 @@ void set_mode_03h_set() {
 	load_font();
 	enable_display();
 	enable_interrupts();
-}
-
-void set_mode_03h(){
-	set_mode_03h_set();
-	memset((void*)text_memory, 0x00, 80*25*2);
+	init_text();
 }
 
 void set_mode_x() {
@@ -325,6 +322,6 @@ const size_t vga_mode_count=3;
 vga_mode current_mode;
 
 void init_modes(){
-	set_mode_03h_set();
 	current_mode=mode_03h;
+	set_mode_03h();
 }

@@ -11,5 +11,6 @@ size_t text_read(vga_instance *inst, size_t bytes, char *buf);
 size_t text_write(vga_instance *inst, size_t bytes, char *buf);
 size_t text_seek(vga_instance *inst, size_t pos, bool relative);
 int text_ioctl(vga_instance *inst, int fn, size_t bytes, char *buf);
+void init_text();
 
 #endif

@@ -28,7 +28,7 @@ size_t text_read(vga_instance *inst, size_t bytes, char *buf){
         if(inst->pos > chars) return 0;
         if(inst->pos+bytes > chars) bytes=chars-inst->pos;
         for(size_t i=0; i<bytes; ++i){
-            buf[i]=text_memory[inst->pos+i] & 0xFF;
+            buf[i]=((uint16_t*)text_memory)[inst->pos+i] & 0xFF;
         }
         inst->pos+=bytes;
     }
@@ -56,7 +56,6 @@ size_t text_write(vga_instance *inst, size_t bytes, char *buf){
 size_t text_seek(vga_instance *inst, size_t pos, bool relative){
     size_t ret=0;
     if(inst->mode==bt_vid_text_access_mode::Raw){
-        //TODO: Bounds checking!
         if(relative) inst->pos+=pos;
         else inst->pos=pos;
         ret=inst->pos;
@@ -82,6 +81,7 @@ size_t text_seek(vga_instance *inst, size_t pos, bool relative){
 }
 
 int text_ioctl(vga_instance *inst, int fn, size_t bytes, char *buf){
+    dbgpf("VGA: Text ioctl: %i\n", fn);
     size_t maxchar=current_mode.vidmode.width * current_mode.vidmode.height * 2;
     if(fn==bt_vid_ioctl::SetTextColours){
         if(bytes>=1){
@@ -133,11 +133,11 @@ size_t strlen(const char* str)
 
 void text_scroll(){
     for(size_t y=0; y<current_mode.vidmode.height; ++y){
-        for(size_t x=0; x<current_mode.vidmode.height; ++x){
+        for(size_t x=0; x<current_mode.vidmode.width; ++x){
             const size_t source = y * current_mode.vidmode.width + x;
             if(y){
                 const size_t dest = (y-1) * current_mode.vidmode.width + x;
-                text_memory[dest]=text_memory[source];
+                ((uint16_t*)text_memory)[dest]=((uint16_t*)text_memory)[source];
             }
             text_putentryat(' ', text_color, x, y);
         }
@@ -154,8 +154,8 @@ void text_setcolor(uint8_t color)
 
 void text_putentryat(char c, uint8_t color, size_t x, size_t y)
 {
-    const size_t index = y * current_mode.vidmode.width + x;
-    text_memory[index] = make_vgaentry(c, color);
+    size_t index = y * current_mode.vidmode.width + x;
+    ((uint16_t*)text_memory)[index] = make_vgaentry(c, color);
 }
 
 void text_putchar(char c)
@@ -202,4 +202,18 @@ void text_move(int x, int y){
     text_row=y;
     text_column=x;
     text_poscursor(text_row, text_column);
+}
+
+void init_text(){
+    text_row = 0;
+    text_column = 0;
+    text_color = make_color(7, 0);
+    for ( size_t y = 0; y < current_mode.vidmode.height; y++ )
+    {
+        for ( size_t x = 0; x < current_mode.vidmode.width; x++ )
+        {
+            const size_t index = y * current_mode.vidmode.width + x;
+            ((uint16_t*)text_memory)[index] = make_vgaentry(' ', text_color);
+        }
+    }
 }

@@ -7,7 +7,10 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
 void *vga_open(void *id){
-    return new vga_instance;
+    vga_instance *inst=new vga_instance();
+    inst->pos=0;
+    inst->mode=bt_vid_text_access_mode::Simple;
+    return (void*)inst;
 }
 
 bool vga_close(void *instance){
@@ -61,6 +64,7 @@ int vga_ioctl(void *instance, int fn, size_t bytes, char *buf){
     else if(fn==bt_vid_ioctl::GetMode) {
         if(bytes >= sizeof(size_t)) {
             size_t index = *(size_t *) buf;
+            if(index > vga_mode_count) return 0;
             bt_vidmode &mode = vga_modes[index].vidmode;
             memcpy(buf, &mode, max(bytes, sizeof(mode)));
             return max(bytes, sizeof(mode));
