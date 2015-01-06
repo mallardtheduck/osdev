@@ -407,7 +407,7 @@ void vterm::close(){
 
 void vterm::sync(bool content) {
     hold_lock hl(&term_lock);
-    backend->display_ioctl(bt_vid_ioctl::GetMode, sizeof(vidmode), (char*)&vidmode);
+    backend->display_ioctl(bt_vid_ioctl::QueryMode, sizeof(vidmode), (char*)&vidmode);
     allocate_buffer();
     if(content) {
         size_t vpos = this->backend->display_seek(0, true);
