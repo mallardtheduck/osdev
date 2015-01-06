@@ -13,8 +13,8 @@ struct vga_mode{
 };
 
 extern const size_t vga_mode_count;
-extern vga_mode vga_modes[];
-extern vga_mode current_mode;
+extern vga_mode *vga_modes[];
+extern vga_mode *current_mode;
 
 struct vga_palette_entry{
 	uint8_t r;
