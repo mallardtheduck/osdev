@@ -316,12 +316,12 @@ vga_mode mode_12h={{0x12, 640, 480, 4, false, false}, &set_mode_12h, &put_pixel_
 vga_mode mode_x={{0x58, 320, 240, 8, false, false}, &set_mode_x, &put_pixel_x, &get_pixel_x};
 vga_mode mode_03h={{0x03, 80, 25, 4, true, false}, &set_mode_03h, NULL, NULL};
 
-vga_mode vga_modes[]= {mode_03h, mode_12h, mode_x};
+vga_mode *vga_modes[]= {&mode_03h, &mode_12h, &mode_x};
 const size_t vga_mode_count=3;
 
-vga_mode current_mode;
+vga_mode *current_mode;
 
 void init_modes(){
-	current_mode=mode_03h;
+	current_mode=&mode_03h;
 	set_mode_03h();
 }
