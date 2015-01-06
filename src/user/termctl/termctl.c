@@ -71,7 +71,7 @@ int main(int argc, char **argv){
             bt_vidmode mode;
             mode.id=i;
             bt_fioctl(fh, bt_vid_ioctl_GetMode, sizeof(mode), (char*)&mode);
-            printf("Mode %i: %ix%i %ibpp %s.\n", mode.id, mode.width, mode.height, mode.bpp, mode.textmode?"text":"graphics");
+            printf("Mode %i: ID: %i %ix%i %ibpp %s.\n", (int)i, mode.id, mode.width, mode.height, mode.bpp, mode.textmode?"text":"graphics");
         }
     }else{
         printf("Unknown option '%s'\n", argv[1]);
