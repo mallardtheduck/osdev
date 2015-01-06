@@ -126,6 +126,7 @@ void vterm::do_infoline(){
         putstring(title);
         setcolours(colour);
         seek(opts, pos, false);
+        if(pos < vidmode.width) putchar('\n');
     }
 }
 
