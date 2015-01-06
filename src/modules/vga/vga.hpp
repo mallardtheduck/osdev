@@ -6,6 +6,7 @@
 #include "io.h"
 
 extern volatile uint8_t * const vga_memory;
+extern volatile uint8_t * const text_memory;
 
 namespace VGA_Ports{
 	static const uint16_t GraphicsAddress 	=0x3CE;

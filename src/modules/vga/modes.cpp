@@ -1,6 +1,7 @@
 #include "modes.hpp"
 
 extern uint8_t vga_font[vga_font_size];
+extern vga_palette_entry vga_palette[256];
 
 void select_plane(uint8_t plane) {
 	write_sequencer(Sequencer_Registers::MapMask, (uint8_t)1 << plane);
@@ -144,7 +145,7 @@ uint8_t get_pixel_12h(uint32_t x, uint32_t y){
 	return ret;
 }
 
-void set_mode_03h() {
+void set_mode_03h_set() {
 	disable_interrupts();
 	disable_display();
 	unlock_crtc();
@@ -213,10 +214,14 @@ void set_mode_03h() {
 	outb(VGA_Ports::AttributeWrite, 0x20);
 	lock_crtc();
 	load_palette();
-	memset((void*)0xB8000, 0x00, 80*25*2);
+	load_font();
 	enable_display();
 	enable_interrupts();
-	load_font();
+}
+
+void set_mode_03h(){
+	set_mode_03h_set();
+	memset((void*)text_memory, 0x00, 80*25*2);
 }
 
 void set_mode_x() {
@@ -310,36 +315,16 @@ uint8_t get_pixel_x(uint32_t x, uint32_t y){
 	return vga_memory[byte];
 }
 
-void test_mode(){
-	set_mode_12h();
-	for(int i=0; i<16; ++i){
-		for(int x=(i*40); x<((i+1)*40); ++x){
-			for(int y=0; y<240; ++y){
-				put_pixel_12h(x, y, i);
-			}
-		}
-	}
-	for(int i=0; i<16; ++i){
-		for(int y=240+(i*15); y<240+((i+1)*15); ++y) {
-			for (int x=0; x<640; ++x){
-				put_pixel_12h(x, y, i);
-			}
-		}
-	}
-	dbgpf("VGA: Pixel at (50, 50): %x\n", (int)get_pixel_12h(50, 50));
-	set_mode_x();
-	for(int x=0; x<320; ++x){
-		for(int y=0; y<240; ++y){
-			if(!(x & 1) != !(y & 1)) put_pixel_x(x, y, x);
-		}
-	}
-	set_mode_03h();
-}
+vga_mode mode_12h={{0x12, 640, 480, 4, false, false}, &set_mode_12h, &put_pixel_12h, &get_pixel_12h};
+vga_mode mode_x={{0x58, 320, 240, 8, false, false}, &set_mode_x, &put_pixel_x, &get_pixel_x};
+vga_mode mode_03h={{0x03, 80, 25, 4, true, false}, &set_mode_03h, NULL, NULL};
 
+vga_mode vga_modes[]= {mode_03h, mode_12h, mode_x};
 const size_t vga_mode_count=3;
 
-vga_mode vga_modes[]= {
-	{{0x12, 640, 480, 4, false, false}, &set_mode_12h, &put_pixel_12h, &get_pixel_12h},
-	{{0x58, 320, 240, 8, false, false}, &set_mode_x, &put_pixel_x, &get_pixel_x},
-	{{0x03, 80, 25, 4, true, false}, &set_mode_03h, NULL, NULL},
-};
+vga_mode current_mode;
+
+void init_modes(){
+	set_mode_03h_set();
+	current_mode=mode_03h;
+}

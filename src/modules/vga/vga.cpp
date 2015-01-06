@@ -1,17 +1,19 @@
 #include "vga.hpp"
+#include "modes.hpp"
+#include "device.hpp"
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-void test_mode();
-
 volatile uint8_t * const vga_memory=(uint8_t*)0xA0000;
+volatile uint8_t * const text_memory=(uint8_t*)0xB8000;
 
 extern "C" int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
-	test_mode();
+	init_modes();
+	init_device();
 	return 0;
 }
 
