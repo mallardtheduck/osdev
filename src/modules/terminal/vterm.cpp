@@ -126,6 +126,7 @@ void vterm::do_infoline(){
         putstring(title);
         setcolours(colour);
         seek(opts, pos, false);
+        if(pos < vidmode.width) putchar('\n');
     }
 }
 
@@ -220,7 +221,9 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
                     incr=0;
                 }
                 if (c == '\n') {
+                    uint64_t scount=scrollcount;
                     if(echo) putchar(c);
+                    if(scount != scrollcount) do_infoline();
                     return i + 1;
                 }
                 if (echo && put) putchar(c);
