@@ -90,6 +90,10 @@ uint8_t ps2_read_data(){
     return inb(PS2_Data_Port);
 }
 
+uint8_t ps2_read_data_nocheck(){
+    return inb(PS2_Data_Port);
+}
+
 void ps2_write_data(uint8_t byte){
     while(ps2_read_status() & (1 << 1));
     outb(PS2_Data_Port, byte);

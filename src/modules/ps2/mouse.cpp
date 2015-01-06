@@ -39,11 +39,9 @@ static bt_mouse_packet read_from_buffer(){
 
 
 void mouse_handler(int irq, isr_regs *regs){
-	if(ps2_read_status() & 1) {
-		ps2_byte= ps2_read_data();
-		input_available = true;
-		mask_irq(irq);
-	}
+	ps2_byte= ps2_read_data_nocheck();
+	input_available = true;
+	mask_irq(irq);
 	irq_ack(irq);
 	enable_interrupts();
 	yield();
