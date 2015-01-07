@@ -73,7 +73,13 @@ int vga_ioctl(void *instance, int fn, size_t bytes, char *buf){
             return bytes;
         }else return 0;
     }else if(fn==bt_vid_ioctl::SetMode) {
-        return 0;
+        if(bytes == sizeof(size_t)){
+            size_t index = *(size_t*)buf;
+            if(index > vga_mode_count) return 0;
+            vga_mode &mode = *vga_modes[index];
+            mode.set_mode();
+            current_mode=&mode;
+        }
     }else{
         if(current_mode->vidmode.textmode){
             return text_ioctl(inst, fn, bytes, buf);
