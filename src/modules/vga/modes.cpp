@@ -147,21 +147,82 @@ uint8_t get_pixel_12h(uint32_t x, uint32_t y){
 }
 
 void write_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
-	for(uint32_t i=startpos; i<startpos+count; ++i){
-		uint32_t y=(uint32_t)(i / 640);
-		uint32_t x=(uint32_t)(i - (640 * y));
-		size_t index=(i-startpos)/2;
-		uint8_t pix;
-		if(i % 2){
-			pix=(uint8_t)(data[index] & 0x0F);
-		}else{
-			pix=(uint8_t)((data[index] >> 4) & 0x0F);
+	uint32_t startbyte=startpos / 8;
+	uint8_t sbits=(uint8_t)(startpos-(startbyte * 8));
+	uint32_t bytes=(uint32_t)(count / 8);
+	if(bytes * 8 < count) bytes++;
+	for(uint8_t plane=0; plane<4; ++plane) {
+		uint8_t skipbits=sbits;
+		select_plane(plane);
+		uint32_t pixpos=startpos;
+		for(size_t byte=startbyte; byte<startbyte+bytes; ++byte){
+			uint8_t cbyte=0;
+			if(byte==startbyte || byte==startbyte+bytes-1) cbyte=vga_memory[byte];
+			for(uint8_t bit=0; bit < 8; ++bit){
+				if(skipbits){
+					skipbits--;
+					continue;
+				}
+				if(pixpos-startpos >= count) break;
+				size_t index=(pixpos-startpos)/2;
+				uint8_t dbyte;
+				if((pixpos-startpos) % 2){
+					dbyte=(uint8_t)(data[index] & 0x0F);
+				}else{
+					dbyte=(uint8_t)((data[index] >> 4) & 0x0F);
+				}
+				bool dbit=!!(dbyte & (1 << plane));
+				if(dbit){
+					cbyte |= (1 << bit);
+				}else{
+					cbyte &= ~(1 << bit);
+				}
+				pixpos++;
+			}
+			vga_memory[byte]=cbyte;
 		}
-		put_pixel_12h(x, y, pix);
 	}
 }
 
 void read_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
+	uint32_t startbyte=startpos / 8;
+	uint8_t sbits=(uint8_t)(startpos-(startbyte * 8));
+	uint32_t bytes=(uint32_t)(count / 8);
+	if(bytes * 8 < count) bytes++;
+	for(uint8_t plane=0; plane<4; ++plane) {
+		uint8_t skipbits=sbits;
+		select_plane(plane);
+		uint32_t pixpos=startpos;
+		for(size_t byte=startbyte; byte<startbyte+bytes; ++byte){
+			uint8_t cbyte=vga_memory[byte];
+			for(uint8_t bit=0; bit < 8; ++bit){
+				if(skipbits){
+					skipbits--;
+					continue;
+				}
+				if(pixpos-startpos >= count) break;
+				size_t index=(pixpos-startpos)/2;
+				uint8_t dbyte;
+				if((pixpos-startpos) % 2){
+					dbyte=(uint8_t)(data[index] & 0x0F);
+				}else{
+					dbyte=(uint8_t)((data[index] >> 4) & 0x0F);
+				}
+				bool cbit=!!(cbyte & (1 << bit));
+				if(cbit){
+					dbyte |= (1 << plane);
+				}else{
+					dbyte &= ~(1 << plane);
+				}
+				if((pixpos-startpos) % 2){
+					data[index] = (uint8_t)((data[index] & 0xF0) | (dbyte & 0x0F));
+				}else{
+					data[index] = (uint8_t)((data[index] & 0x0F) | ((dbyte << 4) & 0xF0));
+				}
+				pixpos++;
+			}
+		}
+	}
 	for(uint32_t i=startpos; i<startpos+count; ++i){
 		uint32_t y=(uint32_t)(i / 640);
 		uint32_t x=(uint32_t)(i - (640 * y));
@@ -344,7 +405,7 @@ uint8_t get_pixel_x(uint32_t x, uint32_t y){
 void write_pixels_x(uint32_t startpos, size_t count, uint8_t *data){
 	uint32_t rstartpos=startpos & ~0x03;
 	uint32_t skip=startpos-rstartpos;
-	for(size_t plane=0; plane<4; ++plane) {
+	for(uint8_t plane=0; plane<4; ++plane) {
 		if(skip){
 			skip--;
 			continue;
