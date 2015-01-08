@@ -27,8 +27,7 @@ size_t vga_read(void *instance, size_t bytes, char *buf){
     if(current_mode->vidmode.textmode){
         return text_read(inst, bytes, buf);
     }else{
-        //return graphics_read(inst, bytes, buf);
-        return 0;
+        return graphics_read(inst, bytes, buf);
     }
 }
 
@@ -37,8 +36,7 @@ size_t vga_write(void *instance, size_t bytes, char *buf){
     if(current_mode->vidmode.textmode){
         return text_write(inst, bytes, buf);
     }else {
-        //return graphics_write(inst, bytes, buf);
-        return 0;
+        return graphics_write(inst, bytes, buf);
     }
 }
 
@@ -47,8 +45,7 @@ size_t vga_seek(void *instance, size_t pos, bool relative){
     if(current_mode->vidmode.textmode){
         return text_seek(inst, pos, relative);
     }else {
-        //return graphics_seek(inst, pos, relative);
-        return 0;
+        return graphics_seek(inst, pos, relative);
     }
 }
 
