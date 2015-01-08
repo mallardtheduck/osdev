@@ -65,6 +65,7 @@ void amm_page_fault_handler(int, isr_regs *regs){
         amm_resolve_mmap((void*)addr);
     } else if(regs->error_code & ec_user){
         dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
+        out_int_info(*regs);
         proc_terminate();
     }else{
         dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
