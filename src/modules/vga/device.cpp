@@ -70,13 +70,21 @@ int vga_ioctl(void *instance, int fn, size_t bytes, char *buf){
             return bytes;
         }else return 0;
     }else if(fn==bt_vid_ioctl::SetMode) {
-        if(bytes == sizeof(size_t)){
-            size_t index = *(size_t*)buf;
-            if(index > vga_mode_count) return 0;
-            vga_mode &mode = *vga_modes[index];
-            mode.set_mode();
-            current_mode=&mode;
+        if(bytes == sizeof(bt_vidmode)) {
+            bt_vidmode vidmode = *(bt_vidmode *) buf;
+            vga_mode *mode=NULL;
+            for(size_t i=0; i<vga_mode_count; ++i){
+                if(vga_modes[i]->vidmode.id == vidmode.id){
+                    mode=vga_modes[i];
+                    break;
+                }
+            }
+            if(mode==NULL) return 0;
+            dbgpf("VGA: Mode set: %x\n", mode->vidmode.id);
+            mode->set_mode();
+            current_mode = mode;
         }
+        return 0;
     }else{
         if(current_mode->vidmode.textmode){
             return text_ioctl(inst, fn, bytes, buf);
