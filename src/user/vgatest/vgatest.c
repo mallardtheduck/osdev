@@ -10,23 +10,25 @@ int main(){
     bt_fioctl(fh, bt_vid_ioctl_QueryMode, sizeof(original_mode), (char*)&original_mode);
     size_t modecount=bt_fioctl(fh, bt_vid_ioctl_GetModeCount, 0, NULL);
     bt_vidmode mode;
-    for(size_t i=0; i<modecount; ++i){
-        mode.id=i;
-        bt_fioctl(fh, bt_vid_ioctl_GetMode, sizeof(mode), (char*)&mode);
-        if(mode.bpp == 8){
-            printf("Mode %i set.\n", (int)i);
-            bt_fioctl(fh, bt_vid_ioctl_SetMode, sizeof(mode), (char*)&mode);
-            break;
+    for(size_t i=0; i<modecount; ++i) {
+        mode.id = i;
+        bt_fioctl(fh, bt_vid_ioctl_GetMode, sizeof(mode), (char *) &mode);
+        if (!mode.textmode) {
+            bt_fioctl(fh, bt_vid_ioctl_SetMode, sizeof(mode), (char *) &mode);
+
+            bt_fseek(fh, 0, false);
+            size_t buffersize = (mode.width * mode.height);
+            if (mode.bpp == 4) buffersize /= 2;
+            for (size_t i = 0; i < buffersize; ++i) {
+                uint32_t y=i/mode.width;
+                if(mode.bpp==4) y/=2;
+                uint8_t col = y % (1 << mode.bpp);
+                if(mode.bpp==4) col |= col << 4;
+                bt_fwrite(fh, 1, (char *) &col);
+            }
+            getchar();
         }
     }
-    bt_fseek(fh, 0, false);
-    for(size_t x=0; x<mode.width; ++x){
-        for(size_t y=0; y<mode.height; ++y){
-            uint8_t col=x;
-            bt_fwrite(fh, 1, (char*)&col);
-        }
-    }
-    getchar();
     bt_fioctl(fh, bt_vid_ioctl_SetMode, sizeof(original_mode), (char*)&original_mode);
     return 0;
 }
