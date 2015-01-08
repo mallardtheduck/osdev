@@ -14,8 +14,8 @@ size_t graphics_read(vga_instance *inst, size_t bytes, char *buf){
     if(bytes > maxpix) bytes=0;
     if(bytes > maxbytes) bytes=maxbytes;
     for(size_t i=pixpos; i<pixpos+pixcount; ++i){
-        uint32_t y=(uint32_t)(pixpos / current_mode->vidmode.width);
-        uint32_t x=(uint32_t)(pixpos - (current_mode->vidmode.width * y));
+        uint32_t y=(uint32_t)(i / current_mode->vidmode.width);
+        uint32_t x=(uint32_t)(i - (current_mode->vidmode.width * y));
         uint8_t pix=current_mode->get_pixel(x, y);
         if(current_mode->vidmode.bpp == 4){
             bool high=!!(i % 2);
@@ -45,8 +45,8 @@ size_t graphics_write(vga_instance *inst, size_t bytes, char *buf){
         pixcount=bytes * 2;
     }
     for(size_t i=pixpos; i<pixpos+pixcount; ++i){
-        uint32_t y=(uint32_t)(pixpos / current_mode->vidmode.width);
-        uint32_t x=(uint32_t)(pixpos - (current_mode->vidmode.width * y));
+        uint32_t y=(uint32_t)(i / current_mode->vidmode.width);
+        uint32_t x=(uint32_t)(i - (current_mode->vidmode.width * y));
         uint8_t pix;
         if(current_mode->vidmode.bpp == 4){
             bool high=!!(i % 2);
