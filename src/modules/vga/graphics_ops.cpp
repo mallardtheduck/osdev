@@ -19,14 +19,14 @@ size_t graphics_read(vga_instance *inst, size_t bytes, char *buf){
         uint8_t pix=current_mode->get_pixel(x, y);
         if(current_mode->vidmode.bpp == 4){
             bool high=!!(i % 2);
-            size_t bufpos=i/2;
+            size_t bufpos=(i-pixpos)/2;
             if(!high){
                 buf[bufpos] = (char)((buf[bufpos] & 0xF0) | (pix & 0x0F));
             }else{
                 buf[bufpos] = (char)((buf[bufpos] & 0x0F) | ((pix << 4) & 0xF0));
             }
         }else{
-            buf[i]=(char)pix;
+            buf[i-pixpos]=(char)pix;
         }
     }
     inst->pos+=bytes;
@@ -50,14 +50,14 @@ size_t graphics_write(vga_instance *inst, size_t bytes, char *buf){
         uint8_t pix;
         if(current_mode->vidmode.bpp == 4){
             bool high=!!(i % 2);
-            size_t bufpos=i/2;
+            size_t bufpos=(i-pixpos)/2;
             if(!high){
                 pix=(uint8_t)(buf[bufpos] & 0x0F);
             }else{
                 pix=(uint8_t)((buf[bufpos] >> 4) & 0x0F);
             }
         }else{
-            pix=buf[i];
+            pix=buf[i-pixpos];
         }
         current_mode->put_pixel(x, y, pix);
     }
