@@ -27,8 +27,7 @@ size_t vga_read(void *instance, size_t bytes, char *buf){
     if(current_mode->vidmode.textmode){
         return text_read(inst, bytes, buf);
     }else{
-        //return graphics_read(inst, bytes, buf);
-        return 0;
+        return graphics_read(inst, bytes, buf);
     }
 }
 
@@ -37,8 +36,7 @@ size_t vga_write(void *instance, size_t bytes, char *buf){
     if(current_mode->vidmode.textmode){
         return text_write(inst, bytes, buf);
     }else {
-        //return graphics_write(inst, bytes, buf);
-        return 0;
+        return graphics_write(inst, bytes, buf);
     }
 }
 
@@ -47,8 +45,7 @@ size_t vga_seek(void *instance, size_t pos, bool relative){
     if(current_mode->vidmode.textmode){
         return text_seek(inst, pos, relative);
     }else {
-        //return graphics_seek(inst, pos, relative);
-        return 0;
+        return graphics_seek(inst, pos, relative);
     }
 }
 
@@ -73,6 +70,20 @@ int vga_ioctl(void *instance, int fn, size_t bytes, char *buf){
             return bytes;
         }else return 0;
     }else if(fn==bt_vid_ioctl::SetMode) {
+        if(bytes == sizeof(bt_vidmode)) {
+            bt_vidmode vidmode = *(bt_vidmode *) buf;
+            vga_mode *mode=NULL;
+            for(size_t i=0; i<vga_mode_count; ++i){
+                if(vga_modes[i]->vidmode.id == vidmode.id){
+                    mode=vga_modes[i];
+                    break;
+                }
+            }
+            if(mode==NULL) return 0;
+            dbgpf("VGA: Mode set: %x\n", mode->vidmode.id);
+            mode->set_mode();
+            current_mode = mode;
+        }
         return 0;
     }else{
         if(current_mode->vidmode.textmode){
