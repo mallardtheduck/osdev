@@ -80,9 +80,8 @@ int vga_ioctl(void *instance, int fn, size_t bytes, char *buf){
                 }
             }
             if(mode==NULL) return 0;
-            dbgpf("VGA: Mode set: %x\n", mode->vidmode.id);
-            mode->set_mode();
             current_mode = mode;
+            mode->set_mode();
         }
         return 0;
     }else{
