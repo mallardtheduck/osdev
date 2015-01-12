@@ -296,6 +296,10 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
             vidmode=*(bt_vidmode*)buf;
             allocate_buffer();
             clear_buffer();
+            if(vidmode.textmode && infoline) {
+                putchar('\n');
+                do_infoline();
+            }
         }
     }else if(fn == bt_vid_ioctl::QueryMode){
         if(size==sizeof(bt_vidmode)){
