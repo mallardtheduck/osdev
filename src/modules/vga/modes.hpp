@@ -10,6 +10,8 @@ struct vga_mode{
 	void (*set_mode)();
 	void (*put_pixel)(uint32_t x, uint32_t y, uint8_t value);
 	uint8_t (*get_pixel)(uint32_t x, uint32_t y);
+	void (*write_pixels)(uint32_t startpos, size_t count, uint8_t *data);
+	void (*read_pixels)(uint32_t startpos, size_t count, uint8_t *data);
 };
 
 extern const size_t vga_mode_count;

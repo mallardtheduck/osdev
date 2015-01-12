@@ -146,6 +146,96 @@ uint8_t get_pixel_12h(uint32_t x, uint32_t y){
 	return ret;
 }
 
+void write_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
+	uint32_t startbyte=startpos / 8;
+	uint8_t sbits=(uint8_t)(startpos-(startbyte * 8));
+	uint32_t bytes=(uint32_t)(count / 8);
+	if(bytes * 8 < count) bytes++;
+	for(uint8_t plane=0; plane<4; ++plane) {
+		uint8_t skipbits=sbits;
+		select_plane(plane);
+		uint32_t pixpos=startpos;
+		for(size_t byte=startbyte; byte<startbyte+bytes; ++byte){
+			uint8_t cbyte=0;
+			if(byte==startbyte || byte==startbyte+bytes-1) cbyte=vga_memory[byte];
+			for(uint8_t bit=0; bit < 8; ++bit){
+				if(skipbits){
+					skipbits--;
+					continue;
+				}
+				if(pixpos-startpos >= count) break;
+				size_t index=(pixpos-startpos)/2;
+				uint8_t dbyte;
+				if((pixpos-startpos) % 2){
+					dbyte=(uint8_t)(data[index] & 0x0F);
+				}else{
+					dbyte=(uint8_t)((data[index] >> 4) & 0x0F);
+				}
+				bool dbit=!!(dbyte & (1 << plane));
+				if(dbit){
+					cbyte |= (1 << bit);
+				}else{
+					cbyte &= ~(1 << bit);
+				}
+				pixpos++;
+			}
+			vga_memory[byte]=cbyte;
+		}
+	}
+}
+
+void read_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
+	uint32_t startbyte=startpos / 8;
+	uint8_t sbits=(uint8_t)(startpos-(startbyte * 8));
+	uint32_t bytes=(uint32_t)(count / 8);
+	if(bytes * 8 < count) bytes++;
+	for(uint8_t plane=0; plane<4; ++plane) {
+		uint8_t skipbits=sbits;
+		select_plane(plane);
+		uint32_t pixpos=startpos;
+		for(size_t byte=startbyte; byte<startbyte+bytes; ++byte){
+			uint8_t cbyte=vga_memory[byte];
+			for(uint8_t bit=0; bit < 8; ++bit){
+				if(skipbits){
+					skipbits--;
+					continue;
+				}
+				if(pixpos-startpos >= count) break;
+				size_t index=(pixpos-startpos)/2;
+				uint8_t dbyte;
+				if((pixpos-startpos) % 2){
+					dbyte=(uint8_t)(data[index] & 0x0F);
+				}else{
+					dbyte=(uint8_t)((data[index] >> 4) & 0x0F);
+				}
+				bool cbit=!!(cbyte & (1 << bit));
+				if(cbit){
+					dbyte |= (1 << plane);
+				}else{
+					dbyte &= ~(1 << plane);
+				}
+				if((pixpos-startpos) % 2){
+					data[index] = (uint8_t)((data[index] & 0xF0) | (dbyte & 0x0F));
+				}else{
+					data[index] = (uint8_t)((data[index] & 0x0F) | ((dbyte << 4) & 0xF0));
+				}
+				pixpos++;
+			}
+		}
+	}
+	for(uint32_t i=startpos; i<startpos+count; ++i){
+		uint32_t y=(uint32_t)(i / 640);
+		uint32_t x=(uint32_t)(i - (640 * y));
+		size_t index=(i-startpos)/2;
+		uint8_t pix=get_pixel_12h(x, y);
+		if(i % 2){
+			data[index] = (uint8_t)((data[index] & 0xF0) | (pix & 0x0F));
+		}else{
+			data[index] = (uint8_t)((data[index] & 0x0F) | ((pix << 4) & 0xF0));
+		}
+	}
+}
+
 void set_mode_03h() {
 	disable_interrupts();
 	disable_display();
@@ -312,9 +402,47 @@ uint8_t get_pixel_x(uint32_t x, uint32_t y){
 	return vga_memory[byte];
 }
 
-vga_mode mode_12h={{0x12, 640, 480, 4, false, false}, &set_mode_12h, &put_pixel_12h, &get_pixel_12h};
-vga_mode mode_x={{0x58, 320, 240, 8, false, false}, &set_mode_x, &put_pixel_x, &get_pixel_x};
-vga_mode mode_03h={{0x03, 80, 25, 4, true, false}, &set_mode_03h, NULL, NULL};
+void write_pixels_x(uint32_t startpos, size_t count, uint8_t *data){
+	uint32_t rstartpos=startpos & ~0x03;
+	uint32_t skip=startpos-rstartpos;
+	for(uint8_t plane=0; plane<4; ++plane) {
+		if(skip){
+			skip--;
+			continue;
+		}
+		size_t pstartpos=rstartpos+plane;
+		select_plane(plane);
+		for (size_t i = pstartpos; i < startpos + count; i+=4) {
+			uint32_t y = (uint32_t) (i / 320);
+			uint32_t x = (uint32_t) (i - (320 * y));
+			uint16_t byte=((y * 320) + x) / 4;
+			vga_memory[byte]=data[i-startpos];
+		}
+	}
+}
+
+void read_pixels_x(uint32_t startpos, size_t count, uint8_t *data){
+	uint32_t rstartpos=startpos & ~0x03;
+	uint32_t skip=startpos-rstartpos;
+	for(size_t plane=0; plane<4; ++plane) {
+		if(skip){
+			skip--;
+			continue;
+		}
+		size_t pstartpos=rstartpos+plane;
+		select_plane(plane);
+		for (size_t i = pstartpos; i < startpos + count; i+=4) {
+			uint32_t y = (uint32_t) (i / 320);
+			uint32_t x = (uint32_t) (i - (320 * y));
+			uint16_t byte=((y * 320) + x) / 4;
+			data[i-startpos]=vga_memory[byte];
+		}
+	}
+}
+
+vga_mode mode_12h={{0x12, 640, 480, 4, false, false}, &set_mode_12h, &put_pixel_12h, &get_pixel_12h, &write_pixels_12h, &read_pixels_12h};
+vga_mode mode_x={{0x58, 320, 240, 8, false, false}, &set_mode_x, &put_pixel_x, &get_pixel_x, &write_pixels_x, &read_pixels_x};
+vga_mode mode_03h={{0x03, 80, 25, 4, true, false}, &set_mode_03h, NULL, NULL, NULL, NULL};
 
 vga_mode *vga_modes[]= {&mode_03h, &mode_12h, &mode_x};
 const size_t vga_mode_count=3;
