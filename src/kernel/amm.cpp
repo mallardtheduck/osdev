@@ -223,10 +223,10 @@ void amm_flush(file_handle &file){
             if((uint32_t)mappings[i].start+mappings[i].size % VMM_PAGE_SIZE){
                 //dbgout("AMM: Writing last page.\n");
                 end=pages-1;
-                char *lastpageaddr=(char*)((uint32_t)mappings[i].start+((pages-1)*VMM_PAGE_SIZE));
+                char *lastpageaddr=(char*)(((uint32_t)mappings[i].start+((pages-1)*VMM_PAGE_SIZE)) & VMM_ADDRESS_MASK);
                 size_t wrsize=((uint32_t)mappings[i].start+mappings[i].size)-(uint32_t)lastpageaddr;
                 size_t wroffset=((uint32_t)lastpageaddr-(uint32_t)mappings[i].start)+mappings[i].offset;
-                //dbgpf("AMM: Writing %i bytes from offset %i to %x.\n", wrsize, mappings[i].offset, lastpageaddr);
+                //dbgpf("AMM: Writing %i bytes from  %x to %i.\n", wrsize, lastpageaddr, wroffset);
                 size_t pos=fs_seek(file, 0, true);
                 fs_seek(file, wroffset, false);
                 fs_write(file, wrsize, lastpageaddr);
