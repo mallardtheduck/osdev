@@ -26,8 +26,8 @@ void load_btos_bootscreen(uint8_t *buffer){
     size_t pixpos=0;
     for(size_t x=0; x<640; ++x){
         for(size_t y=0; y<480; ++y){
-            size_t byte=pixpos/8;
-            size_t bit=7-(pixpos-(byte*8));
+            size_t byte=pixpos >> 3;
+            size_t bit=7-(pixpos & 7);
             size_t bufpos=pixpos/2;
             uint8_t imask=1 << bit;
             bool value=!(BTOS_bootscreen_mono_bits[byte] & imask);
