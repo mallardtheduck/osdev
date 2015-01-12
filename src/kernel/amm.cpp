@@ -65,6 +65,7 @@ void amm_page_fault_handler(int, isr_regs *regs){
         amm_resolve_mmap((void*)addr);
     } else if(regs->error_code & ec_user){
         dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
+        out_int_info(*regs);
         proc_terminate();
     }else{
         dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
@@ -103,11 +104,12 @@ void amm_resolve_mmap(void *addr){
     amm_flags::Enum flags=((uint32_t)addr < VMM_KERNELSPACE_END)?amm_flags::Kernel : amm_flags::User;
     vmm_cur_pagedir->set_flags((uint32_t)page, flags);
     vmm_alloc_at(1, (uint32_t)page);
+    memset(page, 0, VMM_PAGE_SIZE);
     size_t pos= fs_seek(map->file, 0, true);
     fs_seek(map->file, offset, false);
     size_t bytes=fs_read(map->file, VMM_PAGE_SIZE, (char*)page);
     fs_seek(map->file, pos, false);
-    if(bytes != VMM_PAGE_SIZE) panic("(AMM) Memory-mapped read failed.");
+    if(bytes != VMM_PAGE_SIZE) dbgpf("AMM: Failed to read page for memory-mapped I/O. Got %i bytes.\n", bytes);
 }
 
 uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
