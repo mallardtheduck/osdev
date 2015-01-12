@@ -118,6 +118,7 @@ caddr_t sbrk(int incr){
 
 	while(limit >= alloc){
 		void *page=bt_alloc_pages(1);
+        if(!page) return -1;
 		memset(page, 0, 4096);
 		alloc+=4096;
 	}
