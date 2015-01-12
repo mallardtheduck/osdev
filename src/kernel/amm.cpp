@@ -109,7 +109,7 @@ void amm_resolve_mmap(void *addr){
     fs_seek(map->file, offset, false);
     size_t bytes=fs_read(map->file, VMM_PAGE_SIZE, (char*)page);
     fs_seek(map->file, pos, false);
-    if(bytes != VMM_PAGE_SIZE) panic("(AMM) Memory-mapped read failed.");
+    if(bytes != VMM_PAGE_SIZE) dbgpf("AMM: Failed to read page for memory-mapped I/O. Got %i bytes.\n", bytes);
 }
 
 uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
