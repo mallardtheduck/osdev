@@ -159,7 +159,7 @@ uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
         if((uint32_t)ptr+size % VMM_PAGE_SIZE){
             //dbgout("AMM: Loading last page.\n");
             end=pages-1;
-            char *lastpageaddr=(char*)((uint32_t)ptr+((pages-1)*VMM_PAGE_SIZE));
+            char *lastpageaddr=(char*)(((uint32_t)ptr+((pages-1)*VMM_PAGE_SIZE)) % VMM_ADDRESS_MASK);
             size_t rdsize=((uint32_t)ptr+size)-(uint32_t)lastpageaddr;
             size_t rdoffset=((uint32_t)lastpageaddr-(uint32_t)ptr)+offset;
             //dbgpf("AMM: Reading %i bytes from offset %i to %x.\n", rdsize, offset, lastpageaddr);
