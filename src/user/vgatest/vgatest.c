@@ -2,6 +2,7 @@
 #include <btos_stubs.h>
 #include <video_dev.h>
 #include <crt_support.h>
+#include <terminal.h>
 #include <stdlib.h>
 
 int main(){
@@ -9,6 +10,8 @@ int main(){
     if(!fh) return -1;
     bt_vidmode original_mode;
     bt_fioctl(fh, bt_vid_ioctl_QueryMode, sizeof(original_mode), (char*)&original_mode);
+    enum bt_terminal_mode terminal_mode=bt_terminal_mode_Video;
+    bt_fioctl(fh, bt_terminal_ioctl_SetMode, sizeof(terminal_mode), (char*)&terminal_mode);
     size_t modecount=bt_fioctl(fh, bt_vid_ioctl_GetModeCount, 0, NULL);
     bt_vidmode mode;
     for(size_t i=0; i<modecount; ++i) {
