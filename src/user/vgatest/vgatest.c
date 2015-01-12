@@ -4,9 +4,24 @@
 #include <crt_support.h>
 #include <terminal.h>
 #include <stdlib.h>
+#include <ioctl.h>
+#include <drivers.h>
+
+bt_filehandle open_device(){
+    bt_filehandle stdout_fh=btos_get_handle(fileno(stdout));
+    int devtype= bt_fioctl(stdout_fh, bt_ioctl_DevType, 0, NULL);
+    if(devtype!=TERMINAL){
+        printf("Output device is not a terminal.\n");
+        return 0;
+    }
+    char stdout_path[BT_MAX_PATH]={0};
+    bt_getenv("STDOUT", stdout_path, BT_MAX_PATH);
+    bt_filehandle dev_fh=bt_fopen(stdout_path, FS_Read | FS_Write);
+    return dev_fh;
+}
 
 int main(){
-    bt_filehandle fh=btos_get_handle(fileno(stdout));
+    bt_filehandle fh=open_device();
     if(!fh) return -1;
     bt_vidmode original_mode;
     bt_fioctl(fh, bt_vid_ioctl_QueryMode, sizeof(original_mode), (char*)&original_mode);
