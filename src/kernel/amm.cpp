@@ -104,6 +104,7 @@ void amm_resolve_mmap(void *addr){
     amm_flags::Enum flags=((uint32_t)addr < VMM_KERNELSPACE_END)?amm_flags::Kernel : amm_flags::User;
     vmm_cur_pagedir->set_flags((uint32_t)page, flags);
     vmm_alloc_at(1, (uint32_t)page);
+    memset(page, 0, VMM_PAGE_SIZE);
     size_t pos= fs_seek(map->file, 0, true);
     fs_seek(map->file, offset, false);
     size_t bytes=fs_read(map->file, VMM_PAGE_SIZE, (char*)page);
