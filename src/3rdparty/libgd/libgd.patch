@@ -1,0 +1,25 @@
+diff -u -r libgd-2.1.0/config/config.sub originals/libgd-2.1.0/config/config.sub
+--- libgd-2.1.0/config/config.sub	2015-01-13 09:20:00.265482466 +0000
++++ originals/libgd-2.1.0/config/config.sub	2013-06-25 10:58:55.000000000 +0100
+@@ -1354,7 +1354,7 @@
+ 	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
+ 	      | -sym* | -kopensolaris* | -plan9* \
+ 	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
+-	      | -aos* | -aros* | -btos* \
++	      | -aos* | -aros* \
+ 	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
+ 	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
+ 	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \
+diff -u -r libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
+--- libgd-2.1.0/src/gd_errors.h	2015-01-13 09:33:35.229452802 +0000
++++ originals/libgd-2.1.0/src/gd_errors.h	2013-06-25 10:58:23.000000000 +0100
+@@ -1,7 +1,7 @@
+ #ifndef GD_ERRORS_H
+ #define GD_ERRORS_H
+ 
+-#if !defined(_WIN32) && !defined(__btos__)
++#ifndef _WIN32
+ # include <syslog.h>
+ #else
+ /*
+
