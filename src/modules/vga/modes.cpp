@@ -173,9 +173,9 @@ void write_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 				}
 				bool dbit=!!(dbyte & (1 << plane));
 				if(dbit){
-					cbyte |= (1 << bit);
+					cbyte |= (1 << (7-bit));
 				}else{
-					cbyte &= ~(1 << bit);
+					cbyte &= ~(1 << (7-bit));
 				}
 				pixpos++;
 			}
@@ -208,7 +208,7 @@ void read_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 				}else{
 					dbyte=(uint8_t)((data[index] >> 4) & 0x0F);
 				}
-				bool cbit=!!(cbyte & (1 << bit));
+				bool cbit=!!(cbyte & (1 << (7-bit)));
 				if(cbit){
 					dbyte |= (1 << plane);
 				}else{
