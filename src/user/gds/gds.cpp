@@ -31,7 +31,7 @@ bt_filehandle open_device(){
     }
     char stdout_path[BT_MAX_PATH]={0};
     bt_getenv("STDOUT", stdout_path, BT_MAX_PATH);
-    bt_filehandle dev_fh=bt_fopen(stdout_path, FS_Read | FS_Write);
+    bt_filehandle dev_fh=bt_fopen(stdout_path, /*FS_Read |*/ FS_Write);
     bt_terminal_mode::Enum terminal_mode=bt_terminal_mode::Video;
     bt_fioctl(dev_fh, bt_terminal_ioctl::SetMode, sizeof(terminal_mode), (char*)&terminal_mode);
     return dev_fh;
@@ -61,12 +61,27 @@ bool graphics_mode(bt_filehandle fh, uint32_t w, uint32_t h, uint8_t bpp, screen
     return false;
 }
 
+void screen_putpixel(uint32_t x, uint32_t y, uint32_t col, screen_info screen){
+    if(x > screen.mode.width || y > screen.mode.height) return;
+    size_t pixelpos=(y * screen.mode.width) + x;
+    if(screen.mode.bpp == 8){
+        screen.buffer[pixelpos]=(uint8_t)col;
+    }else if(screen.mode.bpp==4){
+        uint8_t c=(uint8_t)col;
+        size_t bufpos=pixelpos/2;
+        if(pixelpos % 2){
+            screen.buffer[bufpos] |= (0x0F & c);
+        }else{
+            screen.buffer[bufpos] |= (0xF0 & (c << 4));
+        }
+    }
+}
+
 void write_to_screen(gdImagePtr image, screen_info screen){
     for(int x=0; x<image->sx; ++x){
         for(int y=0; y<image->sy; ++y){
             int pix= gdImageGetPixel(image, x, y);
-            size_t index=(size_t)((y*320)+x);
-            screen.buffer[index]=(uint8_t)pix;
+            screen_putpixel(x, y, pix, screen);
         }
     }
     bt_fflush(screen.fh);
@@ -75,20 +90,25 @@ void write_to_screen(gdImagePtr image, screen_info screen){
 int main(){
     bt_filehandle fh= open_device();
     screen_info screen;
-    if(!graphics_mode(fh, 320, 240, 8, screen)){
+    if(!graphics_mode(fh, 640, 480, 4, screen)){
         printf("Failed to set screen mode.\n");
         exit(-1);
     };
-    gdImagePtr im;
-    im=gdImageCreate(320,240);
-    int black=gdImageColorAllocate(im, 0, 0, 0);
-    (void)black;
-    int white=gdImageColorAllocate(im, 255, 255, 255);
+    gdImagePtr im=gdImageCreate(320,240);
+    int bg=gdImageColorAllocate(im, 0, 0, 0);
+    int fg1=gdImageColorAllocate(im, 255, 255, 255);
+    int fg2= gdImageColorAllocate(im, 0, 255, 255);
     for(int i=0; i<320; ++i) {
-        if(i) gdImageLine(im, i-1, 0, 320-i, 239, black);
-        gdImageLine(im, i, 0, 319-i, 239, white);
+        if(i) gdImageLine(im, i-1, 0, 320-i, 239, bg);
+        gdImageLine(im, i, 0, 319-i, 239, fg1);
         write_to_screen(im, screen);
     }
+    getchar();
+    gdImageLine(im, 0, 0, 319, 239, fg1);
+    gdImageLine(im, 319, 0, 0, 239, fg1);
+    gdImageFilledEllipse(im, 160, 120, 20, 20, fg2);
+    write_to_screen(im, screen);
+    bt_fflush(screen.fh);
     getchar();
     bt_fioctl(fh, bt_vid_ioctl::SetMode, sizeof(original_mode), (char *) &original_mode);
     return 0;
