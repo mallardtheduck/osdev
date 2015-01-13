@@ -99,14 +99,13 @@ void amm_resolve_mmap(void *addr){
     //dbgpf("AMM: Resolving memory-mapped file load at %x.\n", addr);
     void *page=(void*)((uint32_t)addr & VMM_ADDRESS_MASK);
     amm_filemap *map=amm_getfilemap((uint32_t)addr);
-    //If this is a write-only mapping, return.
-    if(!(map->file.mode & FS_Read)) return;
     size_t offset=((uint32_t)page - (uint32_t)map->start)+map->offset;
     vmm_cur_pagedir->unmap_page((size_t)page/VMM_PAGE_SIZE);
     amm_flags::Enum flags=((uint32_t)addr < VMM_KERNELSPACE_END)?amm_flags::Kernel : amm_flags::User;
     vmm_cur_pagedir->set_flags((uint32_t)page, flags);
     vmm_alloc_at(1, (uint32_t)page);
     memset(page, 0, VMM_PAGE_SIZE);
+    if(!(map->file.mode & FS_Read)) return;
     size_t pos= fs_seek(map->file, 0, true);
     fs_seek(map->file, offset, false);
     size_t bytes=fs_read(map->file, VMM_PAGE_SIZE, (char*)page);
@@ -202,8 +201,10 @@ void amm_flush(file_handle &file){
         if(mappings[i].size < VMM_PAGE_SIZE){
            //dbgout("AMM: Mapping is less than one page, performing fs_write.\n");
             size_t pos=fs_seek(file, 0, true);
-            fs_seek(file, mappings[i].offset, false);
-            fs_write(file, mappings[i].size, (char*)mappings[i].start);
+            if (file.mode & FS_Write) {
+                fs_seek(file, mappings[i].offset, false);
+                fs_write(file, mappings[i].size, (char *) mappings[i].start);
+            }
             fs_seek(file, pos, false);
             continue;
         }
