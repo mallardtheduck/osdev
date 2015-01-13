@@ -27,7 +27,7 @@ bt_filehandle open_device(){
 void load_btos_bootscreen(uint8_t *buffer){
     for(size_t pixpos=0; pixpos<(640*480); ++pixpos){
         size_t byte=pixpos >> 3;
-        size_t bit=7-(pixpos & 7);
+        size_t bit=pixpos & 7;
         size_t bufpos=pixpos/2;
         uint8_t imask=1 << bit;
         bool value=!(BTOS_bootscreen_mono_bits[byte] & imask);
