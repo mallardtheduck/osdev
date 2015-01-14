@@ -79,7 +79,7 @@ char *sch_threads_infofs(){
 void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
-    uint16_t value=0x7FF;
+    uint16_t value=0x7FFF;
     dbgpf("SCH: Value: %i\n", (int)value);
 	outb(0x43, 0x36);
 	outb(0x40, value & 0xFF);
@@ -383,6 +383,7 @@ void sch_setpid(pid_t pid){
 }
 
 void sch_setblock(sch_blockcheck check, void *param){
+	if(check(param)) return;
     { hold_lock hl(sch_lock);
 		current_thread->blockcheck=check;
 		current_thread->bc_param=param;
