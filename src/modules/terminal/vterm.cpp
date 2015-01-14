@@ -170,6 +170,12 @@ void vterm::activate() {
 }
 
 void vterm::deactivate() {
+    if (!vidmode.textmode) {
+        size_t pos = backend->display_seek(0, true);
+        backend->display_seek(0, false);
+        backend->display_read(bufsize, (char *) buffer);
+        backend->display_seek(pos, false);
+    }
 }
 
 size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
@@ -183,11 +189,12 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
         for(size_t i=0; i<size; ++i) putchar(buf[i]);
         if(scount != scrollcount) iline_valid=false;
     }else {
-        memcpy(buffer + bufpos, buf, size);
-        bufpos += size;
         if (backend->is_active(id)) {
             backend->display_write(size, buf);
+        }else{
+            memcpy(buffer + bufpos, buf, size);
         }
+        bufpos += size;
     }
     if(!iline_valid) do_infoline();
     return size;
@@ -234,11 +241,12 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
         return size;
     } else if (opts.mode == bt_terminal_mode::Video) {
         if (bufpos + size > bufsize) size = bufsize - bufpos;
-        memcpy(buf, buffer + bufpos, size);
-        bufpos += size;
         if (backend->is_active(id)) {
             backend->display_read(size, buf);
+        }else{
+            memcpy(buf, buffer + bufpos, size);
         }
+        bufpos += size;
         return size;
     }
     return 0;
