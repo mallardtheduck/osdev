@@ -1,7 +1,7 @@
 #ifndef _CIRCULAR_BUFFER_HPP
 #define _CIRCULAR_BUFFER_HPP
 
-template <typename T, size_t buffer_size> class circular_buffer{
+template <typename T, size_t buffer_size, T zero_value=0> class circular_buffer{
 private:
 	T buffer[size];
 	volatile size_t buffer_count=0;
@@ -25,7 +25,7 @@ public:
 			}
 			buffer_count--;
 			return buffer[start];
-		}else return 0;
+		}else return zero_value;
 	}
 
 	size_t count(){
@@ -38,6 +38,11 @@ public:
 
 	size_t max_size(){
 		return buffer_size;
+	}
+
+	void clear(){
+		buffer_count=0;
+		buffer_top=0;
 	}
 };
 
