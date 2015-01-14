@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ../env-os.sh
+
 rm -rf libgd-2.1.0
 if [ ! -f libgd-2.1.0.tar.gz ];
 then
