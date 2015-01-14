@@ -5,9 +5,9 @@
 
 static uint8_t channel;
 static bool input_available=false;
-static const bt_mouse_packet zero_packet={0, 0, 0};
+static constexpr bt_mouse_packet zero_packet={0, 0, 0};
 
-static circular_buffer<bt_mouse_packet, 512, zero_packet> mouse_buffer;
+static circular_buffer<bt_mouse_packet, 512> mouse_buffer{zero_packet};
 
 static uint8_t irq;
 static uint8_t ps2_byte;
