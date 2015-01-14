@@ -8,6 +8,8 @@
 class console_backend : public i_backend{
 private:
     file_handle *display, *input, *pointer;
+    uint64_t input_thread_id;
+    uint64_t pointer_thread_id;
     lock backend_lock;
     uint64_t active;
     bool pointer_visible, old_pointer_visible;

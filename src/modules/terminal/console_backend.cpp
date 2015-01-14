@@ -181,8 +181,6 @@ void console_backend::draw_pointer(uint32_t x, uint32_t y, bool erase) {
 
 console_backend::console_backend() {
     init_lock(&backend_lock);
-    input_top=1;
-    input_bottom=0;
     pointer_visible=false;
     pointer_bitmap.h=0; pointer_bitmap.w=0; pointer_bitmap.bpp=0; pointer_bitmap.data=NULL;
     pointer_info.x=0; pointer_info.y=0; pointer_info.flags=0;
