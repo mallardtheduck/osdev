@@ -156,7 +156,7 @@ uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
             if(file.mode & FS_Read) {
                 fs_seek(file, offset, false);
                 fs_read(file, rdsize, ptr);
-            }
+            }else memset(ptr, 0, rdsize);
             fs_seek(file, pos, false);
         }
         if((uint32_t)ptr+size % VMM_PAGE_SIZE){
@@ -170,7 +170,7 @@ uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
             if(file.mode & FS_Read) {
                 fs_seek(file, rdoffset, false);
                 fs_read(file, rdsize, lastpageaddr);
-            }
+            }else memset(lastpageaddr, 0, rdsize);
             fs_seek(file, pos, false);
         }
     }
@@ -227,7 +227,7 @@ void amm_flush(file_handle &file){
                     fs_seek(file, mappings[i].offset, false);
                     fs_write(file, wrsize, (char *) mappings[i].start);
                 }
-                memset(mappings[i].start, wrsize, 0);
+                memset(mappings[i].start, 0, wrsize);
                 if(file.mode & FS_Read) {
                     fs_seek(file, mappings[i].offset, false);
                     fs_read(file, wrsize, (char *) mappings[i].start);
@@ -246,7 +246,7 @@ void amm_flush(file_handle &file){
                     fs_seek(file, wroffset, false);
                     fs_write(file, wrsize, lastpageaddr);
                 }
-                memset(mappings[i].start, wrsize, 0);
+                memset(lastpageaddr, 0, wrsize);
                 if(file.mode & FS_Read) {
                     fs_seek(file, wroffset, false);
                     fs_read(file, wrsize, lastpageaddr);
