@@ -50,6 +50,7 @@ bool graphics_mode(bt_filehandle fh, uint32_t w, uint32_t h, uint8_t bpp, screen
             size_t buffersize = (mode.width * mode.height);
             if (mode.bpp == 4) buffersize /= 2;
             uint8_t *buffer=new uint8_t[buffersize]();
+            memset(buffer, 0, buffersize);
             bt_handle m=bt_mmap(fh, 0, (char*)buffer, buffersize);
             scr.mode=mode;
             scr.fh=fh;
@@ -70,9 +71,9 @@ void screen_putpixel(uint32_t x, uint32_t y, uint32_t col, screen_info screen){
         uint8_t c=(uint8_t)col;
         size_t bufpos=pixelpos/2;
         if(pixelpos % 2){
-            screen.buffer[bufpos] |= (0x0F & c);
+            screen.buffer[bufpos] = (uint8_t)((screen.buffer[bufpos] & 0xF0) | (0x0F & c));
         }else{
-            screen.buffer[bufpos] |= (0xF0 & (c << 4));
+            screen.buffer[bufpos] = (uint8_t)((screen.buffer[bufpos] & 0x0F) | (0xF0 & (c << 4)));
         }
     }
 }
@@ -96,10 +97,14 @@ int main(){
     };
     gdImagePtr im=gdImageCreate(320,240);
     int bg=gdImageColorAllocate(im, 0, 0, 0);
-    int fg1=gdImageColorAllocate(im, 255, 255, 255);
+    (void)bg;
+    int fg1= gdImageColorAllocate(im, 255, 255, 255);
     int fg2= gdImageColorAllocate(im, 0, 255, 255);
+    int fg3= gdImageColorAllocate(im, 255, 0, 255);
+    int fg4= gdImageColorAllocate(im, 0, 255, 0);
+    gdImageFilledRectangle(im, 0, 0, 319, 239, fg4);
     for(int i=0; i<320; ++i) {
-        if(i) gdImageLine(im, i-1, 0, 320-i, 239, bg);
+        if(i) gdImageLine(im, i-1, 0, 320-i, 239, fg3);
         gdImageLine(im, i, 0, 319-i, 239, fg1);
         write_to_screen(im, screen);
     }
