@@ -155,7 +155,6 @@ void console_backend::draw_pointer(uint32_t x, uint32_t y, bool erase) {
         bt_vidmode mode;
         fioctl(display, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
         if(mode.textmode){
-            dbgpf("TERM: Pointer %s at (%i, %i)\n", erase?"hide":"show", x, y);
             size_t pos=(((y * mode.width) + x) * 2) + 1;
             size_t cpos=fseek(display, 0, true);
             bt_vid_text_access_mode::Enum omode=(bt_vid_text_access_mode::Enum) fioctl(display, bt_vid_ioctl::GetTextAccessMode, 0, NULL);
@@ -182,8 +181,6 @@ void console_backend::draw_pointer(uint32_t x, uint32_t y, bool erase) {
 
 console_backend::console_backend() {
     init_lock(&backend_lock);
-    input_top=1;
-    input_bottom=0;
     pointer_visible=false;
     pointer_bitmap.h=0; pointer_bitmap.w=0; pointer_bitmap.bpp=0; pointer_bitmap.data=NULL;
     pointer_info.x=0; pointer_info.y=0; pointer_info.flags=0;

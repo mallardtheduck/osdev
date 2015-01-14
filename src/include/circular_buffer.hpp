@@ -1,13 +1,17 @@
 #ifndef _CIRCULAR_BUFFER_HPP
 #define _CIRCULAR_BUFFER_HPP
 
-template <typename T, size_t buffer_size, T zero_value=0> class circular_buffer{
+template <typename T, size_t buffer_size> class circular_buffer{
 private:
-	T buffer[size];
+	T buffer[buffer_size];
 	volatile size_t buffer_count=0;
 	size_t buffer_top=0;
+	T zero_value;
 
 public:
+	circular_buffer() : zero_value(0) {}
+	circular_buffer(T zero) : zero_value(zero) {}
+
 	void add_item(T c){
 		if(buffer_count < buffer_size){
 			buffer_count++;

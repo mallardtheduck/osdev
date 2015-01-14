@@ -30,10 +30,8 @@ vterm::vterm(uint64_t nid, i_backend *back){
     echo=true;
     init_lock(&term_lock);
     init_lock(&input_lock);
-    input_top=0;
-    input_count=0;
-    pointer_top=0;
-    pointer_count=0;
+    keyboard_buffer.clear();
+    pointer_buffer.clear();
     refcount=0;
     scrollcount=0;
     sprintf(title, "BT/OS Terminal %i", (int)id);
@@ -357,19 +355,19 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
     }else if(fn == bt_terminal_ioctl::ReadEvent){
         if(size==sizeof(bt_terminal_event)){
             bt_terminal_event *event=(bt_terminal_event*)buf;
-            while(!input_count && !pointer_count){
+            while(!keyboard_buffer.count() && !pointer_buffer.count()){
                 release_lock(&term_lock);
                 thread_setblock(&event_blockcheck, (void*)this);
                 take_lock(&term_lock);
             }
-            if(input_count){
+            if(keyboard_buffer.count()){
                 event->type=bt_terminal_event_type::Key;
                 release_lock(&term_lock);
                 //TODO: Work out why this has to be done twice...
                 event->key= get_input();
                 event->key= get_input();
                 take_lock(&term_lock);
-            }else if(pointer_count){
+            }else if(pointer_buffer.count()){
                 event->type=bt_terminal_event_type::Pointer;
                 release_lock(&term_lock);
                 event->pointer= get_pointer();
@@ -378,10 +376,8 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
             }
         }
     }else if(fn == bt_terminal_ioctl::ClearEvents){
-        input_count=0;
-        input_top=0;
-        pointer_count=0;
-        pointer_top=0;
+        keyboard_buffer.clear();
+        pointer_buffer.clear();
     }
     //TODO: implement more
     return 0;
@@ -487,51 +483,35 @@ void vterm::queue_input(uint32_t code) {
         kill(curpid);
         return;
     }
-    if(input_count < input_size){
-        input_count++;
-        input_top++;
-        if(input_top==input_size) input_top=0;
-        input_buffer[input_top]=code;
-    }
+    keyboard_buffer.add_item(code);
     release_lock(&input_lock);
 }
 
 void vterm::queue_pointer(bt_terminal_pointer_event event) {
     take_lock(&input_lock);
-    if(pointer_count < pointer_buffer_size){
-        pointer_count++;
-        pointer_top ++;
-        if(pointer_top==pointer_buffer_size) pointer_top=0;
-        pointer_buffer[pointer_top]=event;
-    }
+    pointer_buffer.add_item(event);
     release_lock(&input_lock);
 }
 
 bool input_blockcheck(void *p){
     vterm *v=(vterm*)p;
-    return (bool)v->input_count;
+    return (bool)v->keyboard_buffer.count();
 }
 
 uint32_t vterm::get_input() {
     hold_lock hl(&input_lock);
-    while(!input_count){
+    while(!keyboard_buffer.count()){
         release_lock(&input_lock);
         thread_setblock(&input_blockcheck, (void *) this);
         take_lock(&input_lock);
     }
-    uint32_t ret=0;
-    if(input_count){
-		int start=input_top-input_count;
-		if(start<0) start+=input_size;
-        ret=input_buffer[start];
-        input_count--;
-    }
+    uint32_t ret=keyboard_buffer.read_item();
     return ret;
 }
 
 bool pointer_blockcheck(void *p){
     vterm *v=(vterm*)p;
-    return (bool)v->pointer_count;
+    return (bool)v->pointer_buffer.count();
 }
 
 bool event_blockcheck(void *p){
@@ -540,18 +520,12 @@ bool event_blockcheck(void *p){
 
 bt_terminal_pointer_event vterm::get_pointer() {
     hold_lock hl(&input_lock);
-    while(!pointer_count){
+    while(!pointer_buffer.count()){
         release_lock(&input_lock);
         thread_setblock(&pointer_blockcheck, (void *) this);
         take_lock(&input_lock);
     }
-    bt_terminal_pointer_event ret;
-    if(pointer_count){
-        int start=pointer_top-pointer_count;
-        if(start<0) start+=pointer_buffer_size;
-        ret=pointer_buffer[start];
-        pointer_count--;
-    }
+    bt_terminal_pointer_event ret=pointer_buffer.read_item();
     return ret;
 }
 
