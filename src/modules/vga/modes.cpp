@@ -173,9 +173,9 @@ void write_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 				}
 				bool dbit=!!(dbyte & (1 << plane));
 				if(dbit){
-					cbyte |= (1 << bit);
+					cbyte |= (1 << (7-bit));
 				}else{
-					cbyte &= ~(1 << bit);
+					cbyte &= ~(1 << (7-bit));
 				}
 				pixpos++;
 			}
@@ -208,7 +208,7 @@ void read_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 				}else{
 					dbyte=(uint8_t)((data[index] >> 4) & 0x0F);
 				}
-				bool cbit=!!(cbyte & (1 << bit));
+				bool cbit=!!(cbyte & (1 << (7-bit)));
 				if(cbit){
 					dbyte |= (1 << plane);
 				}else{
@@ -221,17 +221,6 @@ void read_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 				}
 				pixpos++;
 			}
-		}
-	}
-	for(uint32_t i=startpos; i<startpos+count; ++i){
-		uint32_t y=(uint32_t)(i / 640);
-		uint32_t x=(uint32_t)(i - (640 * y));
-		size_t index=(i-startpos)/2;
-		uint8_t pix=get_pixel_12h(x, y);
-		if(i % 2){
-			data[index] = (uint8_t)((data[index] & 0xF0) | (pix & 0x0F));
-		}else{
-			data[index] = (uint8_t)((data[index] & 0x0F) | ((pix << 4) & 0xF0));
 		}
 	}
 }

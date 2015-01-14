@@ -7,6 +7,8 @@
 #include <ioctl.h>
 #include <drivers.h>
 
+#include "../../../other/art/BTOS-bootscreen-mono.xbm"
+
 bt_filehandle open_device(){
     bt_filehandle stdout_fh=btos_get_handle(fileno(stdout));
     int devtype= bt_fioctl(stdout_fh, bt_ioctl_DevType, 0, NULL);
@@ -17,7 +19,32 @@ bt_filehandle open_device(){
     char stdout_path[BT_MAX_PATH]={0};
     bt_getenv("STDOUT", stdout_path, BT_MAX_PATH);
     bt_filehandle dev_fh=bt_fopen(stdout_path, FS_Read | FS_Write);
+    bt_terminal_mode terminal_mode=bt_terminal_mode_Video;
+    bt_fioctl(dev_fh, bt_terminal_ioctl_SetMode, sizeof(terminal_mode), (char*)&terminal_mode);
     return dev_fh;
+}
+
+void load_btos_bootscreen(uint8_t *buffer){
+    for(size_t pixpos=0; pixpos<(640*480); ++pixpos){
+        size_t byte=pixpos >> 3;
+        size_t bit=pixpos & 7;
+        size_t bufpos=pixpos/2;
+        uint8_t imask=1 << bit;
+        bool value=!(BTOS_bootscreen_mono_bits[byte] & imask);
+        if(pixpos % 2){
+            if(value) {
+                buffer[bufpos] |= 0x0F;
+            }else{
+                buffer[bufpos] &= 0xF0;
+            }
+        }else{
+            if(value) {
+                buffer[bufpos] |= 0xF0;
+            }else{
+                buffer[bufpos] &= 0x0F;
+            }
+        }
+    }
 }
 
 int main(){
@@ -25,8 +52,6 @@ int main(){
     if(!fh) return -1;
     bt_vidmode original_mode;
     bt_fioctl(fh, bt_vid_ioctl_QueryMode, sizeof(original_mode), (char*)&original_mode);
-    enum bt_terminal_mode terminal_mode=bt_terminal_mode_Video;
-    bt_fioctl(fh, bt_terminal_ioctl_SetMode, sizeof(terminal_mode), (char*)&terminal_mode);
     size_t modecount=bt_fioctl(fh, bt_vid_ioctl_GetModeCount, 0, NULL);
     bt_vidmode mode;
     for(size_t i=0; i<modecount; ++i) {
@@ -71,6 +96,11 @@ int main(){
             }
             bt_fflush(fh);
             getchar();
+            if(mode.width==640 && mode.height==480 && mode.bpp==4){
+                load_btos_bootscreen(buffer);
+                bt_fflush(fh);
+                getchar();
+            }
             bt_closehandle(m);
             free(buffer);
         }
