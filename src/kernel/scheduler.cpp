@@ -311,13 +311,14 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	current_thread_id=torun->ext_id;
 	proc_switch_sch(current_thread->pid, false);
 	gdt_set_kernel_stack(current_thread->stackbase);
+	sch_deferred=false;
 	return &curstack;
 }
 
 extern "C" uint32_t sch_dolock(){
     if(!are_interrupts_enabled()) enable_interrupts();//panic("(SCH) Attempt to yield while interrupts are disabled!");
 	if(!try_take_lock_exclusive(sch_lock)){
-		dbgout("SCH: Scheduler run while locked!\n");
+		//dbgout("SCH: Scheduler run while locked!\n");
 		return 0;
 	}
 	return 1;
