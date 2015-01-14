@@ -50,7 +50,7 @@ USERAPI_HANDLER(BT_FREE_PAGES){
 }
 
 USERAPI_HANDLER(BT_CLOSEHANDLE){
-    bt_handle_info h=proc_get_handle((handle_t)regs->eax);
+    bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
     if(h.open && h.type!=kernel_handle_types::invalid){
         close_handle(h);
         proc_remove_handle((handle_t)regs->eax);
@@ -179,6 +179,7 @@ USERAPI_HANDLER(BT_MMAP){
         uint64_t *id=new uint64_t(amm_mmap(buffer->buffer, *file, regs->ecx, buffer->size));
         bt_handle_info handle=create_handle(kernel_handle_types::memory_mapping, id, &close_filemap_handle);
         regs->eax= proc_add_handle(handle);
+		return;
     }
     regs->eax=0;
 }

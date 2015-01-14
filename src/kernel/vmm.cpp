@@ -433,6 +433,7 @@ void *vmm_alloc(size_t pages, vmm_allocmode::Enum mode){
 }
 
 void *vmm_alloc_at(size_t pages, size_t baseaddr){
+	//dbgpf("VMM: Allocating %i pages at %x\n", pages, baseaddr);
 	hold_lock hl(vmm_lock, false);
 	size_t virtpage=baseaddr/VMM_PAGE_SIZE;
 	for(size_t i=0; i<pages; ++i){
@@ -464,8 +465,8 @@ void vmm_free(void *ptr, size_t pages){
 	size_t virtpage=(uint32_t)ptr/VMM_PAGE_SIZE;
 	for(size_t i=0; i<pages; ++i){
 		size_t physpage=vmm_cur_pagedir->unmap_page(virtpage+i);
-		amm_mark_free((physpage+i)*VMM_PAGE_SIZE);
-		if((virtpage+i)*VMM_PAGE_SIZE < VMM_KERNELSPACE_END) kmem-=VMM_PAGE_SIZE;
+		amm_mark_free((physpage)*VMM_PAGE_SIZE);
+		if((virtpage)*VMM_PAGE_SIZE < VMM_KERNELSPACE_END) kmem-=VMM_PAGE_SIZE;
 	}
 }
 
