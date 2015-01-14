@@ -8,8 +8,6 @@
 vterm *current_vterm=NULL;
 vterm_list *terminals=NULL;
 
-extern lock term_lock;
-
 bool event_blockcheck(void *p);
 
 size_t strlen(const char* str)
@@ -128,11 +126,11 @@ void vterm::do_infoline(){
         putstring(title);
         setcolours(colour);
         seek(opts, pos, false);
+        if(pos < vidmode.width) putchar('\n');
     }
 }
 
 uint64_t vterm::get_id() {
-    hold_lock hl(&term_lock, false);
     return id;
 }
 
@@ -157,8 +155,10 @@ void vterm::activate() {
     if(vidmode.textmode) {
         bt_vid_text_access_mode::Enum textmode=bt_vid_text_access_mode::Simple;
         backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char*)&textmode);
+        backend->display_seek(bufpos/2, false);
+    }else{
+        backend->display_seek(bufpos, false);
     }
-    backend->display_seek(bufpos/2, false);
     backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scrolling);
     do_infoline();
     if(infoline && bufpos==0) putchar('\n');
@@ -170,6 +170,12 @@ void vterm::activate() {
 }
 
 void vterm::deactivate() {
+    if (!vidmode.textmode) {
+        size_t pos = backend->display_seek(0, true);
+        backend->display_seek(0, false);
+        backend->display_read(bufsize, (char *) buffer);
+        backend->display_seek(pos, false);
+    }
 }
 
 size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
@@ -183,11 +189,12 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
         for(size_t i=0; i<size; ++i) putchar(buf[i]);
         if(scount != scrollcount) iline_valid=false;
     }else {
-        memcpy(buffer + bufpos, buf, size);
-        bufpos += size;
         if (backend->is_active(id)) {
             backend->display_write(size, buf);
+        }else{
+            memcpy(buffer + bufpos, buf, size);
         }
+        bufpos += size;
     }
     if(!iline_valid) do_infoline();
     return size;
@@ -223,7 +230,9 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
                     incr=0;
                 }
                 if (c == '\n') {
+                    uint64_t scount=scrollcount;
                     if(echo) putchar(c);
+                    if(scount != scrollcount) do_infoline();
                     return i + 1;
                 }
                 if (echo && put) putchar(c);
@@ -232,11 +241,12 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
         return size;
     } else if (opts.mode == bt_terminal_mode::Video) {
         if (bufpos + size > bufsize) size = bufsize - bufpos;
-        memcpy(buf, buffer + bufpos, size);
-        bufpos += size;
         if (backend->is_active(id)) {
             backend->display_read(size, buf);
+        }else{
+            memcpy(buf, buffer + bufpos, size);
         }
+        bufpos += size;
         return size;
     }
     return 0;
@@ -294,6 +304,10 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
             vidmode=*(bt_vidmode*)buf;
             allocate_buffer();
             clear_buffer();
+            if(vidmode.textmode && infoline) {
+                putchar('\n');
+                do_infoline();
+            }
         }
     }else if(fn == bt_vid_ioctl::QueryMode){
         if(size==sizeof(bt_vidmode)){
@@ -410,7 +424,7 @@ void vterm::close(){
 
 void vterm::sync(bool content) {
     hold_lock hl(&term_lock);
-    backend->display_ioctl(bt_vid_ioctl::GetMode, sizeof(vidmode), (char*)&vidmode);
+    backend->display_ioctl(bt_vid_ioctl::QueryMode, sizeof(vidmode), (char*)&vidmode);
     allocate_buffer();
     if(content) {
         size_t vpos = this->backend->display_seek(0, true);
@@ -447,16 +461,23 @@ void vterm::clear_buffer() {
 }
 
 void vterm::allocate_buffer() {
+    size_t newbufsize=0;
     if(vidmode.textmode){
-        bufsize =(vidmode.width * vidmode.height) * (((vidmode.bpp * 2) / 8) + 1);
+        newbufsize =(vidmode.width * vidmode.height) * (((vidmode.bpp * 2) / 8) + 1);
     }else{
-        bufsize =(vidmode.width * vidmode.height) * (vidmode.bpp / 8);
+        if(vidmode.bpp > 8) {
+            newbufsize = (vidmode.width * vidmode.height) * (vidmode.bpp / 8);
+        }else{
+            size_t depth=8/vidmode.bpp;
+            newbufsize = (vidmode.width * vidmode.height) / depth;
+        }
     }
     if(buffer) {
         free(buffer);
         buffer =NULL;
     }
-    buffer=(uint8_t*)malloc(bufsize);
+    buffer=(uint8_t*)malloc(newbufsize);
+    bufsize=newbufsize;
 }
 
 void vterm::queue_input(uint32_t code) {

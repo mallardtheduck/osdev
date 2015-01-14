@@ -15,15 +15,16 @@ private:
     size_t input_top, input_bottom;
     lock backend_lock;
     uint64_t active;
-    bool pointer_visible;
+    bool pointer_visible, old_pointer_visible;
     bt_terminal_pointer_bitmap pointer_bitmap;
-    bt_terminal_pointer_info pointer_info;
+    bt_terminal_pointer_info pointer_info, old_pointer_info;
     uint8_t *mouseback;
 
     friend void console_backend_input_thread(void *p);
     friend void console_backend_pointer_thread(void *p);
 
-    void update_pointer(bool erase);
+    void update_pointer();
+    void draw_pointer(uint32_t x, uint32_t y, bool erase);
 public:
     console_backend();
 

@@ -1,4 +1,4 @@
-MODULES := boot test rtc ps2 ata fat terminal pci
+MODULES := boot test rtc ps2 ata fat terminal pci vga
 
 all: dummy.file
 	for dir in $(MODULES); do \
