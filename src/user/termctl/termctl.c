@@ -73,6 +73,17 @@ int main(int argc, char **argv){
             bt_fioctl(fh, bt_vid_ioctl_GetMode, sizeof(mode), (char*)&mode);
             printf("Mode %i: ID: %i %ix%i %ibpp %s.\n", (int)i, mode.id, mode.width, mode.height, mode.bpp, mode.textmode?"text":"graphics");
         }
+    }else if(strcmp(argv[1], "reset")==0){
+        size_t modecount= bt_fioctl(fh, bt_vid_ioctl_GetModeCount, 0, NULL);
+        for(size_t i=0; i<modecount; ++i) {
+            bt_vidmode mode;
+            mode.id=i;
+            bt_fioctl(fh, bt_vid_ioctl_GetMode, sizeof(mode), (char*)&mode);
+            if(mode.textmode){
+                bt_fioctl(fh, bt_vid_ioctl_SetMode, sizeof(mode), (char*)&mode);
+                break;
+            }
+        }
     }else{
         printf("Unknown option '%s'\n", argv[1]);
     }
