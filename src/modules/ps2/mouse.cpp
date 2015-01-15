@@ -1,76 +1,57 @@
 #include "ps2.hpp"
+#include <circular_buffer.hpp>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
 static uint8_t channel;
 static bool input_available=false;
+static constexpr bt_mouse_packet zero_packet={0, 0, 0};
 
-static const size_t buffer_size=512;
-static bt_mouse_packet buffer[buffer_size];
-static size_t buffer_count=0;
-static size_t buffer_top=0;
-static const bt_mouse_packet zero_packet={0, 0, 0};
+static circular_buffer<bt_mouse_packet, 512> mouse_buffer{zero_packet};
+static circular_buffer<uint8_t, 48> pre_buffer{0};
+
 static uint8_t irq;
-static uint8_t ps2_byte;
 
 static lock buf_lock;
 
 static void (*write_device)(uint8_t);
 
-static void add_to_buffer(bt_mouse_packet c){
-	if(buffer_count < buffer_size){
-		buffer_count++;
-		buffer[buffer_top] = c;
-		buffer_top++;
-		if(buffer_top == buffer_size) buffer_top=0;
-	}
-}
 
-static bt_mouse_packet read_from_buffer(){
-	if(buffer_count){
-		int start=buffer_top-buffer_count;
-		if(start < 0) {
-			start+=buffer_size;
-		}
-		buffer_count--;
-		return buffer[start];
-	}else return zero_packet;
-}
-
-
-void mouse_handler(int irq, isr_regs *regs){
-	ps2_byte= ps2_read_data_nocheck();
+static void mouse_handler(int irq, isr_regs *regs){
+	uint8_t ps2_byte= ps2_read_data_nocheck();
+	pre_buffer.add_item(ps2_byte);
 	input_available = true;
-	mask_irq(irq);
-	irq_ack(irq);
 	enable_interrupts();
 	yield();
 }
 
 bool input_blockcheck(void*){
-	return input_available;
+	return !!pre_buffer.count();
 }
 
 void mouse_thread(void*){
 	thread_priority(1);
 	while(true){
+		uint8_t byte1=0, byte2=0, byte3=0;
+		while(!(byte1 & (1 << 3))) {
+			thread_setblock(&input_blockcheck, NULL);
+			disable_interrupts();
+			byte1 = pre_buffer.read_item();
+			irq_ack(irq);
+			input_available = false;
+			enable_interrupts();
+		}
 		thread_setblock(&input_blockcheck, NULL);
 		disable_interrupts();
-		uint8_t byte1=ps2_byte;
+		byte2=pre_buffer.read_item();
+		irq_ack(irq);
 		input_available=false;
-		unmask_irq(irq);
 		enable_interrupts();
 		thread_setblock(&input_blockcheck, NULL);
 		disable_interrupts();
-		uint8_t byte2=ps2_byte;
+		byte3=pre_buffer.read_item();
+		irq_ack(irq);
 		input_available=false;
-		unmask_irq(irq);
-		enable_interrupts();
-		thread_setblock(&input_blockcheck, NULL);
-		disable_interrupts();
-		uint8_t byte3=ps2_byte;
-		input_available=false;
-		unmask_irq(irq);
 		enable_interrupts();
 
 		uint8_t state=byte1;
@@ -78,9 +59,15 @@ void mouse_thread(void*){
 		int16_t mouse_y=byte3 - ((state << 3) & 0x100);
 
 		if(!(state & (1 << 3))){
-			dbgpf("PS2: Invalid first mouse byte!\n");
+			dbgpf("PS2: Invalid first mouse byte: %x!\n", state);
+			disable_interrupts();
+			pre_buffer.clear();
+			input_available=false;
+			enable_interrupts();
+			mask_irq(irq);
 			write_device(Device_Command::Reset);
 			write_device(Device_Command::EnableReporting);
+			unmask_irq(irq);
 			continue;
 		}
 
@@ -92,7 +79,7 @@ void mouse_thread(void*){
 		packet.x_motion=mouse_x;
 		packet.y_motion=mouse_y;
 		take_lock(&buf_lock);
-		add_to_buffer(packet);
+		mouse_buffer.add_item(packet);
 		release_lock(&buf_lock);
 	}
 }
@@ -110,24 +97,24 @@ bool mouse_close(void *instance){
 }
 
 bool mouseread_lockcheck(void *p){
-	return buffer_count >= *(size_t*)p;
+	return mouse_buffer.count() >= *(size_t*)p;
 }
 
 size_t mouse_read(void *instance, size_t bytes, char *cbuf){
 	if((bytes % sizeof(bt_mouse_packet))) return 0;
 	size_t values = bytes / sizeof(bt_mouse_packet);
 	bt_mouse_packet *buf=(bt_mouse_packet*)cbuf;
-	if(values > buffer_size) values=buffer_size;
+	if(values > mouse_buffer.max_size()) values=mouse_buffer.max_size();
 	while(true){
-		if(buffer_count < values){
+		if(mouse_buffer.count() < values){
 			thread_setblock(&mouseread_lockcheck, (void*)&values);
 		}
 		take_lock(&buf_lock);
-		if(buffer_count >= values) break;
+		if(mouse_buffer.count() >= values) break;
 		release_lock(&buf_lock);
 	}
 	for(size_t i=0; i<values; ++i){
-		bt_mouse_packet buffervalue=read_from_buffer();
+		bt_mouse_packet buffervalue=mouse_buffer.read_item();
 		buf[i]=buffervalue;
 	}
 	release_lock(&buf_lock);
@@ -145,8 +132,7 @@ size_t mouse_seek(void *instance, size_t pos, bool relative){
 int mouse_ioctl(void *instance, int fn, size_t bytes, char *buf){
 	if(fn==bt_mouse_ioctl::ClearBuffer) {
 		take_lock(&buf_lock);
-		buffer_count = 0;
-		buffer_top = 0;
+		mouse_buffer.clear();
 		release_lock(&buf_lock);
 	}
 	return 0;
@@ -180,10 +166,11 @@ void init_mouse(uint8_t mchannel){
 	write_device(Device_Command::Reset);
 	write_device(Device_Command::DisableReporting);
 
+	pre_buffer.clear();
 	handle_irq(irq, &mouse_handler);
 	new_thread(&mouse_thread, NULL);
-	unmask_irq(irq);
 	write_device(Device_Command::EnableReporting);
+	unmask_irq(irq);
 
 	add_device("MOUSE", &mouse_driver, NULL);
 }
