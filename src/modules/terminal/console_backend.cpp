@@ -177,7 +177,11 @@ void console_backend::draw_pointer(uint32_t x, uint32_t y, bool erase) {
             fseek(display, cpos, false);
         }else{
             if(erase){
-                if(mouseback) draw_graphics_pointer(display, x, y, pointer_bitmap, mouseback);
+                if(mouseback) {
+                    draw_graphics_pointer(display, x, y, pointer_bitmap, mouseback);
+                    free(mouseback);
+                    mouseback = NULL;
+                }
             }else {
                 if(mouseback) free(mouseback);
                 mouseback= get_graphics_pointer_background(display, x, y, pointer_bitmap);
