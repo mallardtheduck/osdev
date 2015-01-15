@@ -5,51 +5,53 @@
 
 static uint8_t channel;
 static bool input_available=false;
-static const bt_mouse_packet zero_packet={0, 0, 0};
+static constexpr bt_mouse_packet zero_packet={0, 0, 0};
 
-static circular_buffer<bt_mouse_packet, 512, zero_packet> mouse_buffer;
+static circular_buffer<bt_mouse_packet, 512> mouse_buffer{zero_packet};
+static circular_buffer<uint8_t, 48> pre_buffer{0};
 
 static uint8_t irq;
-static uint8_t ps2_byte;
-
+static thread_id_t mouse_thread_id;
 static lock buf_lock;
 
 static void (*write_device)(uint8_t);
 
 
-void mouse_handler(int irq, isr_regs *regs){
-	ps2_byte= ps2_read_data_nocheck();
+static void mouse_handler(int irq, isr_regs *regs){
+	uint8_t ps2_byte= ps2_read_data_nocheck();
+	pre_buffer.add_item(ps2_byte);
 	input_available = true;
-	mask_irq(irq);
-	irq_ack(irq);
-	enable_interrupts();
-	yield();
+	if(thread_id()!=mouse_thread_id) {
+		enable_interrupts();
+		yield();
+		disable_interrupts();
+	}
 }
 
 bool input_blockcheck(void*){
-	return input_available;
+	return !!pre_buffer.count();
 }
 
 void mouse_thread(void*){
 	thread_priority(1);
 	while(true){
+		uint8_t byte1=0, byte2=0, byte3=0;
+		while(!(byte1 & (1 << 3))) {
+			thread_setblock(&input_blockcheck, NULL);
+			disable_interrupts();
+			byte1 = pre_buffer.read_item();
+			input_available = false;
+			enable_interrupts();
+		}
 		thread_setblock(&input_blockcheck, NULL);
 		disable_interrupts();
-		uint8_t byte1=ps2_byte;
+		byte2=pre_buffer.read_item();
 		input_available=false;
-		unmask_irq(irq);
 		enable_interrupts();
 		thread_setblock(&input_blockcheck, NULL);
 		disable_interrupts();
-		uint8_t byte2=ps2_byte;
+		byte3=pre_buffer.read_item();
 		input_available=false;
-		unmask_irq(irq);
-		enable_interrupts();
-		thread_setblock(&input_blockcheck, NULL);
-		disable_interrupts();
-		uint8_t byte3=ps2_byte;
-		input_available=false;
-		unmask_irq(irq);
 		enable_interrupts();
 
 		uint8_t state=byte1;
@@ -57,9 +59,15 @@ void mouse_thread(void*){
 		int16_t mouse_y=byte3 - ((state << 3) & 0x100);
 
 		if(!(state & (1 << 3))){
-			dbgpf("PS2: Invalid first mouse byte!\n");
+			dbgpf("PS2: Invalid first mouse byte: %x!\n", state);
+			disable_interrupts();
+			pre_buffer.clear();
+			input_available=false;
+			enable_interrupts();
+			mask_irq(irq);
 			write_device(Device_Command::Reset);
 			write_device(Device_Command::EnableReporting);
+			unmask_irq(irq);
 			continue;
 		}
 
@@ -158,10 +166,11 @@ void init_mouse(uint8_t mchannel){
 	write_device(Device_Command::Reset);
 	write_device(Device_Command::DisableReporting);
 
+	pre_buffer.clear();
 	handle_irq(irq, &mouse_handler);
-	new_thread(&mouse_thread, NULL);
-	unmask_irq(irq);
+	mouse_thread_id=new_thread(&mouse_thread, NULL);
 	write_device(Device_Command::EnableReporting);
+	unmask_irq(irq);
 
 	add_device("MOUSE", &mouse_driver, NULL);
 }

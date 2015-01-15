@@ -8,6 +8,7 @@ static lock buf_lock;
 static bool input_available;
 static uint16_t currentflags=0;
 static uint8_t irq;
+static thread_id_t keyboard_thread_id;
 
 static circular_buffer<uint8_t, 16> pre_buffer;
 
@@ -31,9 +32,11 @@ static void keyboard_handler(int irq, isr_regs *regs){
 	uint8_t ps2_byte=ps2_read_data_nocheck();
 	pre_buffer.add_item(ps2_byte);
 	input_available = true;
-	irq_ack(irq);
-	enable_interrupts();
-	yield();
+	if(thread_id() != keyboard_thread_id) {
+		enable_interrupts();
+		yield();
+		disable_interrupts();
+	}
 }
 
 static bool input_blockcheck(void*){
@@ -226,7 +229,7 @@ void init_keyboard(uint8_t kchannel){
 	ps2_write_data(0x01);
 	write_device(Device_Command::EnableScanning);
 	handle_irq(irq, &keyboard_handler);
-	new_thread(&keyboard_thread, NULL);
+	keyboard_thread_id=new_thread(&keyboard_thread, NULL);
 	add_device("KEYBD", &keyboard_driver, NULL);
 	unmask_irq(irq);
 }

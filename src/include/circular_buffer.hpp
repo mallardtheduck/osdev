@@ -9,8 +9,8 @@ private:
 	T zero_value;
 
 public:
-	circular_buffer() : zero_value(0) {}
-	circular_buffer(T zero) : zero_value(zero) {}
+	constexpr circular_buffer() : zero_value(0) {}
+	constexpr circular_buffer(T zero) : zero_value(zero) {}
 
 	void add_item(T c){
 		if(buffer_count < buffer_size){
