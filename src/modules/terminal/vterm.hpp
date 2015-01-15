@@ -14,6 +14,8 @@ struct vterm_options{
     vterm_options() : mode(bt_terminal_mode::Terminal) {}
 };
 
+static constexpr bt_terminal_pointer_event zero_event={bt_terminal_pointer_event_type::None, 0, 0, 0};
+
 class vterm{
 private:
     i_backend *backend;
@@ -33,8 +35,7 @@ private:
     bool pointer_enabled;
 
     circular_buffer<uint32_t, 128> keyboard_buffer;
-    static const bt_terminal_pointer_event zero_event={bt_terminal_pointer_event_type::None, 0, 0, 0};
-    circular_buffer<bt_terminal_pointer_event, 512, zero_event> pointer_buffer;
+    circular_buffer<bt_terminal_pointer_event, 512> pointer_buffer{zero_event};
     lock input_lock;
 
     pid_t curpid;
