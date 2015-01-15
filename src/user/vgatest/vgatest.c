@@ -9,6 +9,28 @@
 
 #include "../../../other/art/BTOS-bootscreen-mono.xbm"
 
+bt_terminal_pointer_bitmap pointer_bmp={
+    .w=10,
+    .h=10,
+    .bpp=8,
+    .transparent=0,
+    .spot_x=5,
+    .spot_y=5,
+    .datasize=100,
+    .data = {
+        0, 0, 0, 0, 0x0F, 0x0F, 0, 0, 0, 0,
+        0, 0, 0, 0, 0x0F, 0x0F, 0, 0, 0, 0,
+        0, 0, 0, 0, 0x0F, 0x0F, 0, 0, 0, 0,
+        0, 0, 0, 0, 0x0F, 0x0F, 0, 0, 0, 0,
+        0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F,
+        0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F,
+        0, 0, 0, 0, 0x0F, 0x0F, 0, 0, 0, 0,
+        0, 0, 0, 0, 0x0F, 0x0F, 0, 0, 0, 0,
+        0, 0, 0, 0, 0x0F, 0x0F, 0, 0, 0, 0,
+        0, 0, 0, 0, 0x0F, 0x0F, 0, 0, 0, 0,
+    }
+};
+
 bt_filehandle open_device(){
     bt_filehandle stdout_fh=btos_get_handle(fileno(stdout));
     int devtype= bt_fioctl(stdout_fh, bt_ioctl_DevType, 0, NULL);
@@ -100,6 +122,12 @@ int main(){
                 load_btos_bootscreen(buffer);
                 bt_fflush(fh);
                 getchar();
+            }
+            if(mode.bpp == 8){
+                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp), (char*)&pointer_bmp);
+                bt_fioctl(fh, bt_terminal_ioctl_ShowPointer, 0, NULL);
+                getchar();
+                bt_fioctl(fh, bt_terminal_ioctl_HidePointer, 0, NULL);
             }
             bt_closehandle(m);
             free(buffer);

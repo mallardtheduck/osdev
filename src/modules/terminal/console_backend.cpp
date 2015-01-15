@@ -175,6 +175,14 @@ void console_backend::draw_pointer(uint32_t x, uint32_t y, bool erase) {
             }
             fioctl(display, bt_vid_ioctl::SetTextAccessMode, sizeof(omode), (char*)&omode);
             fseek(display, cpos, false);
+        }else{
+            if(erase){
+                if(mouseback) draw_graphics_pointer(display, x, y, pointer_bitmap, mouseback);
+            }else {
+                if(mouseback) free(mouseback);
+                mouseback= get_graphics_pointer_background(display, x, y, pointer_bitmap);
+                draw_graphics_pointer(display, x, y, pointer_bitmap);
+            }
         }
     }
 }
@@ -182,7 +190,7 @@ void console_backend::draw_pointer(uint32_t x, uint32_t y, bool erase) {
 console_backend::console_backend() {
     init_lock(&backend_lock);
     pointer_visible=false;
-    pointer_bitmap.h=0; pointer_bitmap.w=0; pointer_bitmap.bpp=0; pointer_bitmap.data=NULL;
+    pointer_bitmap=NULL;
     pointer_info.x=0; pointer_info.y=0; pointer_info.flags=0;
     mouseback=NULL;
 
@@ -195,8 +203,11 @@ console_backend::console_backend() {
     strncpy(pointer_device_path+5, (char*)getenv((char*)pointer_device_name, 0), BT_MAX_PATH-5);
 
     display=fopen(video_device_path, (fs_mode_flags)(FS_Read | FS_Write));
+    if(!display->valid) panic("(TERMINAL) Could not open display device!");
     input=fopen(input_device_path, (fs_mode_flags)(FS_Read));
+    if(!input->valid) panic("(TERMINAL) Could not open input device!");
     pointer=fopen(pointer_device_path, (fs_mode_flags)(FS_Read));
+    if(!pointer->valid) panic("(TERMINAL) Could not open pointing device!");
 
     input_thread_id=new_thread(&console_backend_input_thread, (void*)this);
     pointer_thread_id=new_thread(&console_backend_pointer_thread, (void*)this);
@@ -273,8 +284,11 @@ bool console_backend::get_pointer_visibility() {
     return pointer_visible;
 }
 
-void console_backend::set_pointer_bitmap(bt_terminal_pointer_bitmap /*bmp*/) {
-
+void console_backend::set_pointer_bitmap(bt_terminal_pointer_bitmap *bmp) {
+    if(pointer_bitmap) free(pointer_bitmap);
+    size_t totalsize=sizeof(bt_terminal_pointer_bitmap) + bmp->datasize;
+    pointer_bitmap = (bt_terminal_pointer_bitmap*)malloc(totalsize);
+    memcpy(pointer_bitmap, bmp, totalsize);
 }
 
 bt_terminal_pointer_info console_backend::get_pointer_info(){
