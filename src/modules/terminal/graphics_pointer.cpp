@@ -60,6 +60,8 @@ void draw_cursor_8bpp(file_handle *file, uint32_t left, uint32_t top, bt_termina
 void draw_cursor_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, uint8_t *data, bt_vidmode &mode) {
     int x=left - bitmap->spot_x;
     int y=top - bitmap->spot_y;
+    uint8_t ovalue;
+    size_t lastread=0;
     size_t pos=fseek(file, 0, true);
     for(int ypos=y; ypos < (int)(y+bitmap->h); ++ypos){
         if(ypos < 0 || ypos >= (int)(mode.height)) continue;
@@ -78,9 +80,11 @@ void draw_cursor_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_termina
             size_t outpos = (ypos * mode.width) + (xpos);
             size_t oindex = outpos/2;
             if (data != bitmap->data || value != bitmap->transparent) {
-                fseek(file, oindex, false);
-                uint8_t ovalue;
-                fread(file, 1, (char*) &ovalue);
+                if(!lastread || lastread != oindex) {
+                    fseek(file, oindex, false);
+                    fread(file, 1, (char *) &ovalue);
+                    lastread=oindex;
+                }
                 if(outpos % 2){
                     ovalue = (uint8_t)((ovalue & 0xF0) | (value & 0x0F));
                 }else{
