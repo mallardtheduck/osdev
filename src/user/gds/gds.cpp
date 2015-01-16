@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <gd.h>
 #include <btos_stubs.h>
 #include <video_dev.h>
@@ -24,6 +23,9 @@ struct screen_info{
     uint8_t *buffer;
     uint8_t *backbuffer;
 };
+
+extern bt_terminal_pointer_bitmap pointer_bmp_4bpp;
+
 
 bt_filehandle open_device(){
     bt_filehandle stdout_fh=btos_get_handle(fileno(stdout));
@@ -201,7 +203,9 @@ int main(){
     int xmov=5; int ymov=5;
     int lxps=0; int lyps=0;
     const int size=30;
-    for(int i=0; i<100000; ++i){
+    bt_fioctl(fh, bt_terminal_ioctl::SetPointerBitmap, sizeof(pointer_bmp_4bpp), (char*)&pointer_bmp_4bpp);
+    bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
+    for(int i=0; i<10000; ++i){
         gdImageFilledRectangle(im, xpos, ypos, xpos+size, ypos+size, bcol);
         gdImageFilledEllipse(im, xpos+(size/2), ypos+(size/2), size/3, size/3, fg3);
         //write_to_screen(im, 0, 0, screen);
@@ -216,6 +220,7 @@ int main(){
         if(xpos < 0 || xpos > 640-size) xmov*=-1;
         if(ypos < 0 || ypos > 480-size) ymov*=-1;
     }
+    bt_fioctl(fh, bt_terminal_ioctl::HidePointer, 0, NULL);
     getchar();
     bt_fioctl(fh, bt_vid_ioctl::SetMode, sizeof(original_mode), (char *) &original_mode);
     return 0;
