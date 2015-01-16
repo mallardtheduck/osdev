@@ -140,7 +140,7 @@ void console_backend::update_pointer(){
         uint32_t oldy=old_pointer_info.y/yscale;
         uint32_t newx=pointer_info.x/xscale;
         uint32_t newy=pointer_info.y/yscale;
-        if(oldx != newx || oldy != newy) {
+        if(oldx != newx || oldy != newy || pointer_visible != old_pointer_visible) {
             draw_pointer(oldx, oldy, true);
             if(pointer_visible) draw_pointer(newx, newy, false);
         }
@@ -150,43 +150,41 @@ void console_backend::update_pointer(){
 }
 
 void console_backend::draw_pointer(uint32_t x, uint32_t y, bool erase) {
-    if(pointer_visible){
-        hold_lock hl(&backend_lock, false);
-        bt_vidmode mode;
-        fioctl(display, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
-        if(mode.textmode){
-            size_t pos=(((y * mode.width) + x) * 2) + 1;
-            size_t cpos=fseek(display, 0, true);
-            bt_vid_text_access_mode::Enum omode=(bt_vid_text_access_mode::Enum) fioctl(display, bt_vid_ioctl::GetTextAccessMode, 0, NULL);
-            bt_vid_text_access_mode::Enum nmode=bt_vid_text_access_mode::Raw;
-            fioctl(display, bt_vid_ioctl::SetTextAccessMode, sizeof(nmode), (char*)&nmode);
+    hold_lock hl(&backend_lock, false);
+    bt_vidmode mode;
+    fioctl(display, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
+    if(mode.textmode){
+        size_t pos=(((y * mode.width) + x) * 2) + 1;
+        size_t cpos=fseek(display, 0, true);
+        bt_vid_text_access_mode::Enum omode=(bt_vid_text_access_mode::Enum) fioctl(display, bt_vid_ioctl::GetTextAccessMode, 0, NULL);
+        bt_vid_text_access_mode::Enum nmode=bt_vid_text_access_mode::Raw;
+        fioctl(display, bt_vid_ioctl::SetTextAccessMode, sizeof(nmode), (char*)&nmode);
+        fseek(display, pos, false);
+        if(erase) {
+            if(mouseback) {
+                fwrite(display, 1, (char*)mouseback);
+            }
+        } else {
+            if(mouseback) delete mouseback;
+            mouseback=new uint8_t();
+            fread(display, 1, (char*)mouseback);
             fseek(display, pos, false);
-            if(erase) {
-                if(mouseback) {
-                    fwrite(display, 1, (char*)mouseback);
-                }
-            } else {
-                if(mouseback) delete mouseback;
-                mouseback=new uint8_t();
-                fread(display, 1, (char*)mouseback);
-                fseek(display, pos, false);
-                uint8_t cursor=*mouseback ^ 0xFF;
-                fwrite(display, 1, (char*)&cursor);
+            uint8_t cursor=*mouseback ^ 0xFF;
+            fwrite(display, 1, (char*)&cursor);
+        }
+        fioctl(display, bt_vid_ioctl::SetTextAccessMode, sizeof(omode), (char*)&omode);
+        fseek(display, cpos, false);
+    }else{
+        if(erase){
+            if(mouseback) {
+                draw_graphics_pointer(display, x, y, pointer_bitmap, mouseback);
+                free(mouseback);
+                mouseback = NULL;
             }
-            fioctl(display, bt_vid_ioctl::SetTextAccessMode, sizeof(omode), (char*)&omode);
-            fseek(display, cpos, false);
-        }else{
-            if(erase){
-                if(mouseback) {
-                    draw_graphics_pointer(display, x, y, pointer_bitmap, mouseback);
-                    free(mouseback);
-                    mouseback = NULL;
-                }
-            }else {
-                if(mouseback) free(mouseback);
-                mouseback= get_graphics_pointer_background(display, x, y, pointer_bitmap);
-                draw_graphics_pointer(display, x, y, pointer_bitmap);
-            }
+        }else {
+            if(mouseback) free(mouseback);
+            mouseback= get_graphics_pointer_background(display, x, y, pointer_bitmap);
+            draw_graphics_pointer(display, x, y, pointer_bitmap);
         }
     }
 }
