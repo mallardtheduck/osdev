@@ -163,6 +163,8 @@ void console_backend::draw_pointer(uint32_t x, uint32_t y, bool erase) {
         if(erase) {
             if(mouseback) {
                 fwrite(display, 1, (char*)mouseback);
+                free(mouseback);
+                mouseback=NULL;
             }
         } else {
             if(mouseback) delete mouseback;
