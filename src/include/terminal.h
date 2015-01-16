@@ -87,13 +87,15 @@ struct bt_terminal_pointer_bitmap{
     uint32_t w;
     uint32_t h;
     uint8_t bpp;
+    uint32_t transparent;
     uint32_t spot_x;
     uint32_t spot_y;
-    uint8_t *data;
+    size_t datasize;
+    uint8_t data[];
 };
 
 #ifndef __cplusplus
-typedef struct bt_terminal_mouse_bitmap bt_terminal_mouse_bitmap;
+typedef struct bt_terminal_pointer_bitmap bt_terminal_pointer_bitmap;
 #endif
 
 #endif

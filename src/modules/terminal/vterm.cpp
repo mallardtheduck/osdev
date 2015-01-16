@@ -378,6 +378,8 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
     }else if(fn == bt_terminal_ioctl::ClearEvents){
         keyboard_buffer.clear();
         pointer_buffer.clear();
+    }else if(fn == bt_terminal_ioctl::SetPointerBitmap){
+        backend->set_pointer_bitmap((bt_terminal_pointer_bitmap*)buf);
     }
     //TODO: implement more
     return 0;
