@@ -330,10 +330,10 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
             }
         }
     }else if(fn == bt_terminal_ioctl::ShowPointer){
-        backend->show_pointer();
+        if(backend->is_active(id)) backend->show_pointer();
         pointer_enabled=true;
     }else if(fn == bt_terminal_ioctl::HidePointer){
-        backend->hide_pointer();
+        if(backend->is_active(id)) backend->hide_pointer();
         pointer_enabled=false;
     }else if(fn == bt_terminal_ioctl::GetPointerInfo){
         if(size==sizeof(bt_terminal_pointer_info)){
