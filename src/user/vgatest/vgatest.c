@@ -9,7 +9,7 @@
 
 #include "../../../other/art/BTOS-bootscreen-mono.xbm"
 
-bt_terminal_pointer_bitmap pointer_bmp={
+bt_terminal_pointer_bitmap pointer_bmp_8bpp={
     .w=11,
     .h=11,
     .bpp=8,
@@ -30,6 +30,29 @@ bt_terminal_pointer_bitmap pointer_bmp={
         0x00, 0x00, 0x00, 0x00, 0x10, 0x0F, 0x10, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x10, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00,
     }
+};
+
+bt_terminal_pointer_bitmap pointer_bmp_4bpp={
+        .w=11,
+        .h=11,
+        .bpp=8,
+        .transparent=0xE,
+        .spot_x=5,
+        .spot_y=5,
+        .datasize=((11*11)/2) + 1,
+        .data = {
+            0xEE, 0xEE, 0x00, 0x0E, 0xEE, 0xEE,
+            0xEE, 0xE0, 0xF0, 0xEE, 0xEE,
+            0xEE, 0xEE, 0x0F, 0x0E, 0xEE, 0xEE,
+            0xEE, 0xE0, 0xF0, 0xEE, 0xEE,
+            0x00, 0x00, 0x0F, 0x00, 0x00, 0x00,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xF0,
+            0x00, 0x00, 0x0F, 0x00, 0x00, 0x0E,
+            0xEE, 0xE0, 0xF0, 0xEE, 0xEE,
+            0xEE, 0xEE, 0x0F, 0x0E, 0xEE, 0xEE,
+            0xEE, 0xE0, 0xF0, 0xEE, 0xEE,
+            0xEE, 0xEE, 0x00, 0x0E, 0xEE, 0xEE
+        }
 };
 
 bt_filehandle open_device(){
@@ -125,7 +148,13 @@ int main(){
                 getchar();
             }
             if(mode.bpp == 8){
-                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp), (char*)&pointer_bmp);
+                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp_8bpp), (char*)&pointer_bmp_8bpp);
+                bt_fioctl(fh, bt_terminal_ioctl_ShowPointer, 0, NULL);
+                getchar();
+                bt_fioctl(fh, bt_terminal_ioctl_HidePointer, 0, NULL);
+            }
+            if(mode.bpp == 4){
+                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp_8bpp), (char*)&pointer_bmp_4bpp);
                 bt_fioctl(fh, bt_terminal_ioctl_ShowPointer, 0, NULL);
                 getchar();
                 bt_fioctl(fh, bt_terminal_ioctl_HidePointer, 0, NULL);
