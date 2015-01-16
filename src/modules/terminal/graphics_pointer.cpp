@@ -47,6 +47,7 @@ void draw_cursor_8bpp(file_handle *file, uint32_t left, uint32_t top, bt_termina
                 uint32_t by = (uint32_t)(ypos - y);
                 uint32_t bx = (uint32_t)(xpos - x);
                 size_t datapos = (by * bitmap->w * depth) + (bx * depth);
+                if(datapos+depth > bitmap->datasize) return;
                 size_t outpos = (ypos * mode.width * depth) + (xpos * depth);
                 if (data!=bitmap->data || !bmemcmp((void *) &data[datapos], (void *) &bitmap->transparent, depth)) {
                     fseek(file, outpos, false);
@@ -71,6 +72,7 @@ void draw_cursor_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_termina
             uint32_t bx = (uint32_t)(xpos - x);
             size_t datapos = (by * bitmap->w)  + (bx);
             size_t dindex=datapos/2;
+            if(dindex >= bitmap->datasize) return;
             uint8_t value=0;
             if(datapos % 2){
                 value = (uint8_t)(data[dindex] & 0x0F);
