@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
+#include <gdfonts.h>
 
 char dbgbuf[128];
 #define dbgpf(...) do{snprintf(dbgbuf, 128, __VA_ARGS__); bt_zero(dbgbuf);}while(false)
@@ -176,6 +177,8 @@ int main(){
         printf("Failed to set screen mode.\n");
         exit(-1);
     };
+    bt_fioctl(fh, bt_terminal_ioctl::SetPointerBitmap, sizeof(pointer_bmp_4bpp), (char*)&pointer_bmp_4bpp);
+    bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
     gdImagePtr im=gdImageCreate(640, 480);
     int bg=gdImageColorAllocate(im, 0, 0, 0);
     (void)bg;
@@ -188,11 +191,11 @@ int main(){
         if(i) gdImageLine(im, i-1, 0, 640-i, 479, fg3);
         gdImageLine(im, i, 0, 639-i, 479, fg1);
     }
-    write_to_screen(im, 0, 0, screen);
-    getchar();
     gdImageLine(im, 0, 0, 639, 479, fg1);
     gdImageLine(im, 639, 0, 0, 479, fg1);
     gdImageFilledEllipse(im, 320, 240, 50, 50, fg2);
+    gdFontPtr font=gdFontGetSmall();
+    gdImageString(im, font, 297, 232, (u_char *)"GDS TEST", bg);
     write_to_screen(im, 0, 0, screen);
     getchar();
     gdImageFilledRectangle(im, 0, 0, 639, 479, bg);
@@ -202,8 +205,6 @@ int main(){
     int xmov=5; int ymov=5;
     int lxps=0; int lyps=0;
     const int size=30;
-    bt_fioctl(fh, bt_terminal_ioctl::SetPointerBitmap, sizeof(pointer_bmp_4bpp), (char*)&pointer_bmp_4bpp);
-    bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
     for(int i=0; i<10000; ++i){
         gdImageFilledRectangle(im, xpos, ypos, xpos+size, ypos+size, bcol);
         gdImageFilledEllipse(im, xpos+(size/2), ypos+(size/2), size/3, size/3, fg3);
