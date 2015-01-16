@@ -35,7 +35,7 @@ bt_terminal_pointer_bitmap pointer_bmp_8bpp={
 bt_terminal_pointer_bitmap pointer_bmp_4bpp={
         .w=11,
         .h=11,
-        .bpp=8,
+        .bpp=4,
         .transparent=0xE,
         .spot_x=5,
         .spot_y=5,
@@ -148,13 +148,13 @@ int main(){
                 getchar();
             }
             if(mode.bpp == 8){
-                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp_8bpp), (char*)&pointer_bmp_8bpp);
+                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp_8bpp)+pointer_bmp_8bpp.datasize, (char*)&pointer_bmp_8bpp);
                 bt_fioctl(fh, bt_terminal_ioctl_ShowPointer, 0, NULL);
                 getchar();
                 bt_fioctl(fh, bt_terminal_ioctl_HidePointer, 0, NULL);
             }
             if(mode.bpp == 4){
-                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp_8bpp), (char*)&pointer_bmp_4bpp);
+                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp_8bpp)+pointer_bmp_4bpp.datasize, (char*)&pointer_bmp_4bpp);
                 bt_fioctl(fh, bt_terminal_ioctl_ShowPointer, 0, NULL);
                 getchar();
                 bt_fioctl(fh, bt_terminal_ioctl_HidePointer, 0, NULL);
