@@ -125,8 +125,7 @@ void write_to_screen(gdImagePtr image, uint32_t xpos, uint32_t ypos, screen_info
 }
 
 void exp_write_screen(gdImagePtr image, int dx, int dy, int dw, int dh, screen_info screen){
-    static bool q=false;
-    //q=!q;
+    bt_fioctl(screen.fh, bt_terminal_ioctl::HidePointer, 0, NULL);
     const size_t max_run=1024;
     uint8_t runbuf[max_run];
     size_t cur_run=0;
@@ -142,7 +141,6 @@ void exp_write_screen(gdImagePtr image, int dx, int dy, int dw, int dh, screen_i
         uint8_t shpx=screen_getpixel(x+1, y, screen, true);
         if(hpxl != shpx || lpxl != slpx) {
             uint8_t value=(uint8_t)((hpxl & 0x0F) | ((lpxl << 4) & 0xF0));
-            if(q) value=value ^ 0xFF;
             if(cur_run+1 > max_run) {
                 runbuf[cur_run] = value;
                 cur_run++;
@@ -168,6 +166,7 @@ void exp_write_screen(gdImagePtr image, int dx, int dy, int dw, int dh, screen_i
         bt_fseek(screen.fh, run_start, false);
         bt_fwrite(screen.fh, cur_run, (char*)&runbuf);
     }
+    bt_fioctl(screen.fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
 }
 
 int main(){
