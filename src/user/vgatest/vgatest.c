@@ -164,5 +164,11 @@ int main(){
         }
     }
     bt_fioctl(fh, bt_vid_ioctl_SetMode, sizeof(original_mode), (char*)&original_mode);
+    for(size_t i=0; i<256; ++i){
+        bt_video_palette_entry entry;
+        entry.index=i;
+        bt_fioctl(fh, bt_vid_ioctl_GetPaletteEntry, sizeof(entry), (char*)&entry);
+        printf("Palette entry %i: (%i, %i, %i)\n", (int)entry.index, entry.r, entry.g, entry.b);
+    }
     return 0;
 }

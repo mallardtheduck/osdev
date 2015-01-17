@@ -309,12 +309,14 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
                 do_infoline();
             }
         }
-    }else if(fn == bt_vid_ioctl::QueryMode){
-        if(size==sizeof(bt_vidmode)){
-            bt_vidmode *mode=(bt_vidmode*)buf;
-            *mode=vidmode;
+    }else if(fn == bt_vid_ioctl::QueryMode) {
+        if (size == sizeof(bt_vidmode)) {
+            bt_vidmode *mode = (bt_vidmode *) buf;
+            *mode = vidmode;
             return size;
         }
+    }else if(fn == bt_vid_ioctl::GetPaletteEntry){
+        return backend->display_ioctl(fn, size, buf);
     }else if(fn == bt_vid_ioctl::SetTextColours){
         if(size==sizeof(uint8_t)){
             setcolours(*(uint8_t*)buf);
