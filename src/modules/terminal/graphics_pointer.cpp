@@ -27,7 +27,7 @@ void draw_graphics_pointer(file_handle *file, uint32_t x, uint32_t y, bt_termina
     if(!data) data=bitmap->data;
     bt_vidmode mode;
     fioctl(file, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
-    if(!mode.bpp == bitmap->bpp) return;
+    if(mode.bpp != bitmap->bpp) return;
     if(mode.bpp >= 8){
         draw_cursor_8bpp(file, x, y, bitmap, data, mode);
     }else if(mode.bpp == 4){
@@ -47,6 +47,7 @@ void draw_cursor_8bpp(file_handle *file, uint32_t left, uint32_t top, bt_termina
                 uint32_t by = (uint32_t)(ypos - y);
                 uint32_t bx = (uint32_t)(xpos - x);
                 size_t datapos = (by * bitmap->w * depth) + (bx * depth);
+                if(datapos+depth > bitmap->datasize) return;
                 size_t outpos = (ypos * mode.width * depth) + (xpos * depth);
                 if (data!=bitmap->data || !bmemcmp((void *) &data[datapos], (void *) &bitmap->transparent, depth)) {
                     fseek(file, outpos, false);
@@ -71,6 +72,7 @@ void draw_cursor_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_termina
             uint32_t bx = (uint32_t)(xpos - x);
             size_t datapos = (by * bitmap->w)  + (bx);
             size_t dindex=datapos/2;
+            if(dindex >= bitmap->datasize) return;
             uint8_t value=0;
             if(datapos % 2){
                 value = (uint8_t)(data[dindex] & 0x0F);
@@ -102,7 +104,7 @@ uint8_t *get_graphics_pointer_background(file_handle *file, uint32_t x, uint32_t
     if(!bitmap) return NULL;
     bt_vidmode mode;
     fioctl(file, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
-    if(!mode.bpp == bitmap->bpp) return NULL;
+    if(mode.bpp != bitmap->bpp) return NULL;
     if(mode.bpp >= 8){
         return get_background_8bpp(file, x, y, bitmap, mode);
     }else if(mode.bpp==4){

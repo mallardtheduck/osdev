@@ -35,7 +35,7 @@ bt_terminal_pointer_bitmap pointer_bmp_8bpp={
 bt_terminal_pointer_bitmap pointer_bmp_4bpp={
         .w=11,
         .h=11,
-        .bpp=8,
+        .bpp=4,
         .transparent=0xE,
         .spot_x=5,
         .spot_y=5,
@@ -148,13 +148,13 @@ int main(){
                 getchar();
             }
             if(mode.bpp == 8){
-                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp_8bpp), (char*)&pointer_bmp_8bpp);
+                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp_8bpp)+pointer_bmp_8bpp.datasize, (char*)&pointer_bmp_8bpp);
                 bt_fioctl(fh, bt_terminal_ioctl_ShowPointer, 0, NULL);
                 getchar();
                 bt_fioctl(fh, bt_terminal_ioctl_HidePointer, 0, NULL);
             }
             if(mode.bpp == 4){
-                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp_8bpp), (char*)&pointer_bmp_4bpp);
+                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp_8bpp)+pointer_bmp_4bpp.datasize, (char*)&pointer_bmp_4bpp);
                 bt_fioctl(fh, bt_terminal_ioctl_ShowPointer, 0, NULL);
                 getchar();
                 bt_fioctl(fh, bt_terminal_ioctl_HidePointer, 0, NULL);
@@ -164,5 +164,12 @@ int main(){
         }
     }
     bt_fioctl(fh, bt_vid_ioctl_SetMode, sizeof(original_mode), (char*)&original_mode);
+    for(size_t i=0; i<256; ++i){
+        bt_video_palette_entry entry;
+        entry.index=i;
+        bt_fioctl(fh, bt_vid_ioctl_GetPaletteEntry, sizeof(entry), (char*)&entry);
+        printf("Palette entry %i: (%i, %i, %i)\n", (int)entry.index, entry.r, entry.g, entry.b);
+        if(!((i + 1) % (original_mode.height - 1))) getchar();
+    }
     return 0;
 }

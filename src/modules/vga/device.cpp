@@ -7,6 +7,15 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
+bt_video_palette_entry get_palette_entry(uint8_t entry){
+    bt_video_palette_entry ret;
+    ret.index = entry;
+    read_dac((uint8_t)ret.index, ret.r, ret.g, ret.b);
+    ret.r <<= 2; ret.g <<= 2; ret.b <<= 2;
+    ret.a=0xFF;
+    return ret;
+}
+
 void *vga_open(void *id){
     vga_instance *inst=new vga_instance();
     inst->pos=0;
@@ -82,6 +91,13 @@ int vga_ioctl(void *instance, int fn, size_t bytes, char *buf){
             if(mode==NULL) return 0;
             current_mode = mode;
             mode->set_mode();
+        }
+        return 0;
+    }else if(fn==bt_vid_ioctl::GetPaletteEntry) {
+        if(bytes == sizeof(bt_video_palette_entry)){
+            bt_video_palette_entry &entry=*(bt_video_palette_entry*)buf;
+            entry= get_palette_entry((uint8_t)entry.index);
+            return (int)entry.index;
         }
         return 0;
     }else{

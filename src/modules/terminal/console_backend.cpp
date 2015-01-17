@@ -289,10 +289,16 @@ bool console_backend::get_pointer_visibility() {
 }
 
 void console_backend::set_pointer_bitmap(bt_terminal_pointer_bitmap *bmp) {
+    hold_lock hl(&backend_lock);
+    bool pointer=pointer_visible;
+    hide_pointer();
     if(pointer_bitmap) free(pointer_bitmap);
+    pointer_bitmap=NULL;
+    if(!bmp) return;
     size_t totalsize=sizeof(bt_terminal_pointer_bitmap) + bmp->datasize;
     pointer_bitmap = (bt_terminal_pointer_bitmap*)malloc(totalsize);
     memcpy(pointer_bitmap, bmp, totalsize);
+    if(pointer) show_pointer();
 }
 
 bt_terminal_pointer_info console_backend::get_pointer_info(){
