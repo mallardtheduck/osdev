@@ -47,6 +47,7 @@ typedef struct bt_terminal_pointer_info bt_terminal_pointer_info;
 #endif
 
 ENUM_START(bt_terminal_pointer_event_type)
+    ENUM_SET(bt_terminal_pointer_event_type, None, 0),
     ENUM_SET(bt_terminal_pointer_event_type, Move, 1),
     ENUM_SET(bt_terminal_pointer_event_type, ButtonDown, 2),
     ENUM_SET(bt_terminal_pointer_event_type, ButtonUp, 1),
@@ -86,13 +87,15 @@ struct bt_terminal_pointer_bitmap{
     uint32_t w;
     uint32_t h;
     uint8_t bpp;
+    uint32_t transparent;
     uint32_t spot_x;
     uint32_t spot_y;
-    uint8_t *data;
+    size_t datasize;
+    uint8_t data[];
 };
 
 #ifndef __cplusplus
-typedef struct bt_terminal_mouse_bitmap bt_terminal_mouse_bitmap;
+typedef struct bt_terminal_pointer_bitmap bt_terminal_pointer_bitmap;
 #endif
 
 #endif

@@ -1,16 +1,16 @@
 #include "ps2.hpp"
+#include <circular_buffer.hpp>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-static const size_t buffer_size=128;
-static uint32_t buffer[buffer_size];
-static volatile size_t buffer_count=0;
-static size_t buffer_top=0;
+static circular_buffer<uint32_t, 128> keyboard_buffer;
 static lock buf_lock;
 static bool input_available;
 static uint16_t currentflags=0;
 static uint8_t irq;
-static uint8_t ps2_byte;
+static thread_id_t keyboard_thread_id;
+
+static circular_buffer<uint8_t, 16> pre_buffer;
 
 static uint8_t channel;
 
@@ -28,35 +28,15 @@ static uint32_t scancode2buffervalue(uint8_t c);
 
 static void (*write_device)(uint8_t);
 
-static void add_to_buffer(uint32_t c){
-	if(buffer_count < buffer_size){
-		buffer_count++;
-		buffer[buffer_top] = c;
-		buffer_top++;
-        if(buffer_top == buffer_size) buffer_top=0;
-        //dbgpf("KEYBOARD: %i in buffer, top at %i.\n", buffer_count, buffer_top);
-	}
-}
-
-static uint32_t read_from_buffer(){
-	if(buffer_count){
-		int start=buffer_top-buffer_count;
-		if(start < 0) {
-			start+=buffer_size;
-		}
-		buffer_count--;
-		//dbgpf("KEYBOARD: %i in buffer, top at %i.\n", buffer_count, buffer_top);
-		return buffer[start];
-	}else return 0;
-}
-
 static void keyboard_handler(int irq, isr_regs *regs){
-	ps2_byte=ps2_read_data_nocheck();
+	uint8_t ps2_byte=ps2_read_data_nocheck();
+	pre_buffer.add_item(ps2_byte);
 	input_available = true;
-	mask_irq(irq);
-	irq_ack(irq);
-	enable_interrupts();
-	yield();
+	if(thread_id() != keyboard_thread_id) {
+		enable_interrupts();
+		yield();
+		disable_interrupts();
+	}
 }
 
 static bool input_blockcheck(void*){
@@ -69,18 +49,18 @@ static void keyboard_thread(void*){
 		thread_setblock(input_blockcheck, NULL);
 		take_lock(&buf_lock);
 		disable_interrupts();
-		uint8_t key=ps2_byte;
-		unmask_irq(irq);
-		if(buffer_count<buffer_size){
-			uint16_t keycode=scancode2keycode(key);
-			if(keycode){
-				add_to_buffer(scancode2buffervalue(key));
-				updateflags(keycode);
-			}else{
-				dbgpf("KEYBOARD: Ignored unmapped scancode %x (%x).\n", (int)key, (int)keycode);
+		while(uint8_t key=pre_buffer.read_item()) {
+			if (!keyboard_buffer.full()) {
+				uint16_t keycode = scancode2keycode(key);
+				if (keycode) {
+					keyboard_buffer.add_item(scancode2buffervalue(key));
+					updateflags(keycode);
+				} else {
+					dbgpf("KEYBOARD: Ignored unmapped scancode %x (%x).\n", (int) key, (int) keycode);
+				}
 			}
 		}
-		input_available=false;
+		input_available = false;
 		enable_interrupts();
 		release_lock(&buf_lock);
 	}
@@ -181,24 +161,24 @@ bool keyboard_close(void *instance){
 }
 
 bool keyread_lockcheck(void *p){
-	return buffer_count >= *(size_t*)p;
+	return keyboard_buffer.count() >= *(size_t*)p;
 }
 
 size_t keyboard_read(void *instance, size_t bytes, char *cbuf){
 	if((bytes % sizeof(uint32_t))) return 0;
 	size_t values = bytes / sizeof(uint32_t);
 	uint32_t *buf=(uint32_t*)cbuf;
-	if(values > buffer_size) values=buffer_size;
+	if(values > keyboard_buffer.max_size()) values=keyboard_buffer.max_size();
 	while(true){
-		if(buffer_count < values){
+		if(keyboard_buffer.count() < values){
 			thread_setblock(&keyread_lockcheck, (void*)&values);
 		}
 		take_lock(&buf_lock);
-		if(buffer_count >= values) break;
+		if(keyboard_buffer.count() >= values) break;
 		release_lock(&buf_lock);
 	}
 	for(size_t i=0; i<values; ++i){
-		uint32_t buffervalue=read_from_buffer();
+		uint32_t buffervalue=keyboard_buffer.read_item();
 		buf[i]=buffervalue;
 	}
 	release_lock(&buf_lock);
@@ -249,7 +229,7 @@ void init_keyboard(uint8_t kchannel){
 	ps2_write_data(0x01);
 	write_device(Device_Command::EnableScanning);
 	handle_irq(irq, &keyboard_handler);
-	new_thread(&keyboard_thread, NULL);
+	keyboard_thread_id=new_thread(&keyboard_thread, NULL);
 	add_device("KEYBD", &keyboard_driver, NULL);
 	unmask_irq(irq);
 }

@@ -79,7 +79,7 @@ char *sch_threads_infofs(){
 void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
-    uint16_t value=0x7FF;
+    uint16_t value=0x7FFF;
     dbgpf("SCH: Value: %i\n", (int)value);
 	outb(0x43, 0x36);
 	outb(0x40, value & 0xFF);
@@ -311,13 +311,14 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	current_thread_id=torun->ext_id;
 	proc_switch_sch(current_thread->pid, false);
 	gdt_set_kernel_stack(current_thread->stackbase);
+	sch_deferred=false;
 	return &curstack;
 }
 
 extern "C" uint32_t sch_dolock(){
     if(!are_interrupts_enabled()) enable_interrupts();//panic("(SCH) Attempt to yield while interrupts are disabled!");
 	if(!try_take_lock_exclusive(sch_lock)){
-		dbgout("SCH: Scheduler run while locked!\n");
+		//dbgout("SCH: Scheduler run while locked!\n");
 		return 0;
 	}
 	return 1;
@@ -383,6 +384,7 @@ void sch_setpid(pid_t pid){
 }
 
 void sch_setblock(sch_blockcheck check, void *param){
+	if(check(param)) return;
     { hold_lock hl(sch_lock);
 		current_thread->blockcheck=check;
 		current_thread->bc_param=param;
