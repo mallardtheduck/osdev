@@ -5,7 +5,7 @@
 bt_terminal_pointer_bitmap pointer_bmp_4bpp={
     .w=11,
     .h=11,
-    .bpp=8,
+    .bpp=4,
     .transparent=0xE,
     .spot_x=5,
     .spot_y=5,

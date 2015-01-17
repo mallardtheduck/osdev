@@ -23,6 +23,7 @@ struct screen_info{
     size_t bufsize;
     uint8_t *buffer;
     uint8_t *backbuffer;
+    gdImagePtr image;
 };
 
 extern bt_terminal_pointer_bitmap pointer_bmp_4bpp;
@@ -66,6 +67,15 @@ bool graphics_mode(bt_filehandle fh, uint32_t w, uint32_t h, uint8_t bpp, screen
             scr.buffer=buffer;
             scr.backbuffer=backbuffer;
             scr.bufsize=buffersize;
+            scr.image=gdImageCreate(mode.width, mode.height);
+            for(size_t p=0; p<256; ++p){
+                size_t idx=(p % (1 << mode.bpp));
+                bt_video_palette_entry entry;
+                entry.index=idx;
+                bt_fioctl(fh, bt_vid_ioctl::GetPaletteEntry, sizeof(entry), (char*)&entry);
+                int c=gdImageColorAllocate(scr.image, entry.r, entry.g, entry.b);
+                dbgpf("GDS: Colour %i: (%i, %i, %i) [%i]\n", c, entry.r, entry.g, entry.b, (int)idx);
+            }
             return true;
         }
     }
@@ -177,15 +187,15 @@ int main(){
         printf("Failed to set screen mode.\n");
         exit(-1);
     };
-    bt_fioctl(fh, bt_terminal_ioctl::SetPointerBitmap, sizeof(pointer_bmp_4bpp), (char*)&pointer_bmp_4bpp);
+    bt_fioctl(fh, bt_terminal_ioctl::SetPointerBitmap, sizeof(pointer_bmp_4bpp)+pointer_bmp_4bpp.datasize, (char*)&pointer_bmp_4bpp);
     bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
-    gdImagePtr im=gdImageCreate(640, 480);
-    int bg=gdImageColorAllocate(im, 0, 0, 0);
+    gdImagePtr im=screen.image;
+    int bg= gdImageColorClosest(im, 0, 0, 0);
     (void)bg;
-    int fg1= gdImageColorAllocate(im, 255, 255, 255);
-    int fg2= gdImageColorAllocate(im, 0, 255, 255);
-    int fg3= gdImageColorAllocate(im, 255, 0, 255);
-    int fg4= gdImageColorAllocate(im, 0, 255, 0);
+    int fg1= gdImageColorClosest(im, 255, 255, 255);
+    int fg2= gdImageColorClosest(im, 0, 255, 255);
+    int fg3= gdImageColorClosest(im, 0, 255, 0);
+    int fg4= gdImageColorClosest(im, 255, 0, 0);
     gdImageFilledRectangle(im, 0, 0, 639, 479, fg4);
     for(int i=0; i<640; ++i) {
         if(i) gdImageLine(im, i-1, 0, 640-i, 479, fg3);
@@ -200,7 +210,7 @@ int main(){
     getchar();
     gdImageFilledRectangle(im, 0, 0, 639, 479, bg);
     write_to_screen(im, 0, 0, screen);
-    int bcol= gdImageColorAllocate(im, 255, 0, 0);
+    int bcol= gdImageColorClosest(im, 0, 0, 255);
     int xpos=0; int ypos=0;
     int xmov=5; int ymov=5;
     int lxps=0; int lyps=0;
