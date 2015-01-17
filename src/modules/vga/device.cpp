@@ -7,11 +7,16 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
+extern vga_palette_entry vga_palette[256];
+
 bt_video_palette_entry get_palette_entry(uint8_t entry){
     bt_video_palette_entry ret;
     ret.index = entry;
-    read_dac((uint8_t)ret.index, ret.r, ret.g, ret.b);
+    ret.r = vga_palette[entry].r << 2;
+    ret.g = vga_palette[entry].g << 2;
+    ret.b = vga_palette[entry].b << 2;
     ret.a=0xFF;
+    dbgpf("VGA: Palette entry %i: (%i, %i, %i)\n", entry, ret.r, ret.g, ret.b);
     return ret;
 }
 
