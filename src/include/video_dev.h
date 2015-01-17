@@ -30,6 +30,7 @@ ENUM_START(bt_vid_ioctl)
     ENUM_SET(bt_vid_ioctl, GetMode, 302),
     ENUM_SET(bt_vid_ioctl, SetMode, 303),
     ENUM_SET(bt_vid_ioctl, QueryMode, 304),
+    ENUM_SET(bt_vid_ioctl, GetPaletteEntry, 305),
 
     ENUM_SET(bt_vid_ioctl, SetTextColours, 401),
     ENUM_SET(bt_vid_ioctl, GetTextColours, 402),
@@ -43,5 +44,17 @@ ENUM_START(bt_vid_ioctl)
     ENUM_SET(bt_vid_ioctl, ClearScreen, 501),
 ENUM_END
 ENUM_TYPE(bt_vid_ioctl);
+
+struct bt_video_palette_entry{
+    size_t index;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t a;
+};
+
+#ifndef __cplusplus
+typedef struct bt_video_palette_entry bt_video_palette_entry;
+#endif
 
 #endif
