@@ -169,6 +169,7 @@ int main(){
         entry.index=i;
         bt_fioctl(fh, bt_vid_ioctl_GetPaletteEntry, sizeof(entry), (char*)&entry);
         printf("Palette entry %i: (%i, %i, %i)\n", (int)entry.index, entry.r, entry.g, entry.b);
+        if(!((i + 1) % (original_mode.height - 1))) getchar();
     }
     return 0;
 }
