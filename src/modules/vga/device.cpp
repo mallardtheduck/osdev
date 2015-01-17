@@ -11,6 +11,7 @@ bt_video_palette_entry get_palette_entry(uint8_t entry){
     bt_video_palette_entry ret;
     ret.index = entry;
     read_dac((uint8_t)ret.index, ret.r, ret.g, ret.b);
+    ret.r <<= 2; ret.g <<= 2; ret.b <<= 2;
     ret.a=0xFF;
     return ret;
 }
