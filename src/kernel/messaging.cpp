@@ -10,10 +10,14 @@ static lock msg_lock;
 
 bool msg_get(uint64_t id, bt_msg_header &msg);
 
+typedef map<pid_t, vector<bt_kernel_messages::Enum> > msg_subscribers_list;
+static msg_subscribers_list *msg_subscribers;
+
 void msg_init(){
     dbgout("MSG: Init messaging...\n");
     init_lock(msg_lock);
     msg_q=new vector<bt_msg_header>();
+	msg_subscribers=new msg_subscribers_list();
 }
 
 uint64_t msg_send(bt_msg_header &msg){
@@ -43,7 +47,7 @@ uint64_t msg_send(bt_msg_header &msg){
         }
     }
     {
-        hold_lock hl(msg_lock);
+        hold_lock hl(msg_lock, false);
         msg.id = ++id_counter;
         msg.valid = true;
         msg.recieved = msg.replied = false;
@@ -148,4 +152,40 @@ void msg_clear(pid_t pid){
             msg_acknowledge(header, false);
         }
     }
+	if(msg_subscribers->has_key(pid)) msg_subscribers->erase(pid);
+}
+
+void msg_subscribe(bt_kernel_messages::Enum message, pid_t pid){
+	hold_lock hl(msg_lock);
+	if(!msg_subscribers->has_key(pid)){
+		(*msg_subscribers)[pid]=vector<bt_kernel_messages::Enum>();
+	}
+	if((*msg_subscribers)[pid].find(message) == (*msg_subscribers)[pid].npos){
+		(*msg_subscribers)[pid].push_back(message);
+		dbgpf("MSG: Pid %i subscribed to %i.\n", (int)pid, (int)message);
+	}
+}
+
+void msg_unsubscribe(bt_kernel_messages::Enum message, pid_t pid){
+	hold_lock hl(msg_lock);
+	if(!msg_subscribers->has_key(pid)) return;
+	if((*msg_subscribers)[pid].find(message) != (*msg_subscribers)[pid].npos){
+		(*msg_subscribers)[pid].erase((*msg_subscribers)[pid].find(message));
+	}
+}
+
+void msg_send_event(bt_kernel_messages::Enum message, void *content, size_t size){
+	hold_lock hl(msg_lock);
+	for(msg_subscribers_list::iterator i=msg_subscribers->begin(); i!=msg_subscribers->end(); ++i){
+		if(i->second.find(message)!=i->second.npos){
+			bt_msg_header msg;
+			msg.type=message;
+			msg.to=i->first;
+			msg.content=malloc(size);
+			msg.source=0;
+			msg.from=0;
+			memcpy(msg.content, content, size);
+			msg_send(msg);
+		}
+	}
 }
