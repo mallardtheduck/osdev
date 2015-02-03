@@ -247,7 +247,7 @@ void proc_end(pid_t pid) {
         }
     }
     msg_clear(pid);
-	msg_send_event(btos_api::bt_kernel_messages::ProcessStart, (void*)&pid, sizeof(pid));
+	msg_send_event(btos_api::bt_kernel_messages::ProcessEnd, (void*)&pid, sizeof(pid));
 }
 
 void proc_setenv(const pid_t pid, const string &oname, const string &value, const uint8_t flags, bool userspace){
