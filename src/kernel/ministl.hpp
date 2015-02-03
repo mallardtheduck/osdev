@@ -31,6 +31,7 @@ class vector
         T*           data;
 
     public:
+		static const size_t npos=0xFFFFFFFF;
         ~vector()
         {
             for(unsigned int loop = 0; loop < dataSize; ++loop)
@@ -83,7 +84,7 @@ class vector
             // use copy and swap idiom.
             // Note the pass by value to initiate the copy
             swap(dataSize, x.dataSize);
-            swap(reserved, x.rserved);
+            swap(reserved, x.reserved);
             swap(data,     x.data);
 
             return *this;
@@ -162,30 +163,35 @@ class vector
         void clear()                                        { erase(0, dataSize);}
         void erase(unsigned int erase_index)                { erase(erase_index,erase_index+1);}
         void erase(unsigned int start, unsigned int end)    /* end NOT inclusive so => [start, end) */
-        {
-		if (end > dataSize)
-		{   end     = dataSize;
-		}
-		if (start > end)
-		{   start   = end;
-		}
-		unsigned int dst    = start;
-		unsigned int src    = end;
-		for(;(src < dataSize) /*&& (dst < end)*/;++dst, ++src)
 		{
-			// Move Elements down;
-			data[dst] = data[src];
+			if (end > dataSize) {
+				end = dataSize;
+			}
+			if (start > end) {
+				start = end;
+			}
+			unsigned int dst = start;
+			unsigned int src = end;
+			for (; (src < dataSize) /*&& (dst < end)*/; ++dst, ++src) {
+				// Move Elements down;
+				data[dst] = data[src];
+			}
+			unsigned int count = end - start;
+			for (; count != 0; --count) {
+				// Remove old Elements
+				--dataSize;
+				// Remember we need to manually call the destructor
+				data[dataSize].~T();
+			}
 		}
-		unsigned int count = end - start;
-		for(;count != 0; --count)
-		{
-			// Remove old Elements
-			--dataSize;
-			// Remember we need to manually call the destructor
-			data[dataSize].~T();
+
+		unsigned int find(const T &item){
+			for(size_t i=0; i<dataSize; ++i){
+				if(data[i] == item) return i;
+			}
+			return npos;
 		}
-	}
-	unsigned int begin() const  {return 0;}
+		unsigned int begin() const  {return 0;}
 
 
 }; //class vector
