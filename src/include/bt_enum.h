@@ -7,12 +7,14 @@
 #define ENUM_GET(x, y) x::y
 #define ENUM_SET(x, y, z) y = z
 #define ENUM_TYPE(x)
+#define ENUM_NAME(x) x::Enum
 #else
 #define ENUM_START(x) enum x {
 #define ENUM_END };
 #define ENUM_GET(x, y) x ## _ ## y
 #define ENUM_SET(x, y, z) x ## _ ## y = z
 #define ENUM_TYPE(x) typedef enum x x
+#define ENUM_NAME(x) x
 #endif
 
 #endif

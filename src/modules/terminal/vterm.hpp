@@ -6,12 +6,15 @@
 #include "video_dev.h"
 #include "terminal.h"
 #include "backend.hpp"
+#include "circular_buffer.hpp"
 
 struct vterm_options{
     bt_terminal_mode::Enum mode;
 
     vterm_options() : mode(bt_terminal_mode::Terminal) {}
 };
+
+static constexpr bt_terminal_pointer_event zero_event={bt_terminal_pointer_event_type::None, 0, 0, 0};
 
 class vterm{
 private:
@@ -29,10 +32,11 @@ private:
     uint32_t refcount;
     lock term_lock;
     uint64_t scrollcount;
+    bool pointer_enabled;
+    bt_terminal_pointer_bitmap *pointer_bitmap;
 
-    static const size_t input_size=128;
-    uint32_t input_buffer[input_size];
-    size_t input_count, input_top;
+    circular_buffer<uint32_t, 128> keyboard_buffer;
+    circular_buffer<bt_terminal_pointer_event, 512> pointer_buffer{zero_event};
     lock input_lock;
 
     pid_t curpid;
@@ -45,9 +49,12 @@ private:
     void do_infoline();
     char get_char();
     uint32_t get_input();
+    bt_terminal_pointer_event get_pointer();
     void create_terminal(char *command);
 
     friend bool input_blockcheck(void *p);
+    friend bool pointer_blockcheck(void *p);
+    friend bool event_blockcheck(void *p);
 
     static const size_t titlemax=256;
     char title[titlemax];
@@ -70,6 +77,7 @@ public:
     void close();
 
     void queue_input(uint32_t code);
+    void queue_pointer(bt_terminal_pointer_event event);
     void sync(bool content=true);
 
     void allocate_buffer();

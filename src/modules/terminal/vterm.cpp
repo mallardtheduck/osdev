@@ -8,7 +8,7 @@
 vterm *current_vterm=NULL;
 vterm_list *terminals=NULL;
 
-extern lock term_lock;
+bool event_blockcheck(void *p);
 
 size_t strlen(const char* str)
 {
@@ -30,11 +30,13 @@ vterm::vterm(uint64_t nid, i_backend *back){
     echo=true;
     init_lock(&term_lock);
     init_lock(&input_lock);
-    input_top=0;
-    input_count=0;
+    keyboard_buffer.clear();
+    pointer_buffer.clear();
     refcount=0;
     scrollcount=0;
     sprintf(title, "BT/OS Terminal %i", (int)id);
+    pointer_enabled=false;
+    pointer_bitmap=NULL;
 }
 
 vterm::~vterm(){
@@ -123,11 +125,11 @@ void vterm::do_infoline(){
         putstring(title);
         setcolours(colour);
         seek(opts, pos, false);
+        if(pos < vidmode.width) putchar('\n');
     }
 }
 
 uint64_t vterm::get_id() {
-    hold_lock hl(&term_lock, false);
     return id;
 }
 
@@ -152,14 +154,28 @@ void vterm::activate() {
     if(vidmode.textmode) {
         bt_vid_text_access_mode::Enum textmode=bt_vid_text_access_mode::Simple;
         backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char*)&textmode);
+        backend->display_seek(bufpos/2, false);
+    }else{
+        backend->display_seek(bufpos, false);
     }
-    backend->display_seek(bufpos/2, false);
     backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scrolling);
     do_infoline();
     if(infoline && bufpos==0) putchar('\n');
+    if(pointer_enabled){
+        backend->show_pointer();
+        if(pointer_bitmap) backend->set_pointer_bitmap(pointer_bitmap);
+    }else{
+        backend->hide_pointer();
+    }
 }
 
 void vterm::deactivate() {
+    if (!vidmode.textmode) {
+        size_t pos = backend->display_seek(0, true);
+        backend->display_seek(0, false);
+        backend->display_read(bufsize, (char *) buffer);
+        backend->display_seek(pos, false);
+    }
 }
 
 size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
@@ -173,11 +189,12 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
         for(size_t i=0; i<size; ++i) putchar(buf[i]);
         if(scount != scrollcount) iline_valid=false;
     }else {
-        memcpy(buffer + bufpos, buf, size);
-        bufpos += size;
         if (backend->is_active(id)) {
             backend->display_write(size, buf);
+        }else{
+            memcpy(buffer + bufpos, buf, size);
         }
+        bufpos += size;
     }
     if(!iline_valid) do_infoline();
     return size;
@@ -213,7 +230,9 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
                     incr=0;
                 }
                 if (c == '\n') {
+                    uint64_t scount=scrollcount;
                     if(echo) putchar(c);
+                    if(scount != scrollcount) do_infoline();
                     return i + 1;
                 }
                 if (echo && put) putchar(c);
@@ -222,11 +241,12 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
         return size;
     } else if (opts.mode == bt_terminal_mode::Video) {
         if (bufpos + size > bufsize) size = bufsize - bufpos;
-        memcpy(buf, buffer + bufpos, size);
-        bufpos += size;
         if (backend->is_active(id)) {
             backend->display_read(size, buf);
+        }else{
+            memcpy(buf, buffer + bufpos, size);
         }
+        bufpos += size;
         return size;
     }
     return 0;
@@ -284,13 +304,19 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
             vidmode=*(bt_vidmode*)buf;
             allocate_buffer();
             clear_buffer();
+            if(vidmode.textmode && infoline) {
+                putchar('\n');
+                do_infoline();
+            }
         }
-    }else if(fn == bt_vid_ioctl::QueryMode){
-        if(size==sizeof(bt_vidmode)){
-            bt_vidmode *mode=(bt_vidmode*)buf;
-            *mode=vidmode;
+    }else if(fn == bt_vid_ioctl::QueryMode) {
+        if (size == sizeof(bt_vidmode)) {
+            bt_vidmode *mode = (bt_vidmode *) buf;
+            *mode = vidmode;
             return size;
         }
+    }else if(fn == bt_vid_ioctl::GetPaletteEntry){
+        return backend->display_ioctl(fn, size, buf);
     }else if(fn == bt_vid_ioctl::SetTextColours){
         if(size==sizeof(uint8_t)){
             setcolours(*(uint8_t*)buf);
@@ -306,6 +332,65 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
             if(backend->is_active(id)){
                 backend->display_ioctl(fn, size, buf);
             }
+        }
+    }else if(fn == bt_terminal_ioctl::ShowPointer){
+        if(backend->is_active(id)) backend->show_pointer();
+        pointer_enabled=true;
+    }else if(fn == bt_terminal_ioctl::HidePointer){
+        if(backend->is_active(id)) backend->hide_pointer();
+        pointer_enabled=false;
+    }else if(fn == bt_terminal_ioctl::GetPointerInfo){
+        if(size==sizeof(bt_terminal_pointer_info)){
+            *(bt_terminal_pointer_info*)buf=backend->get_pointer_info();
+        }
+    }else if(fn == bt_terminal_ioctl::ReadPointerEvent){
+        if(size==sizeof(bt_terminal_pointer_event)){
+            release_lock(&term_lock);
+            *(bt_terminal_pointer_event*)buf=get_pointer();
+            take_lock(&term_lock);
+        }
+    }
+    else if(fn == bt_terminal_ioctl::ReadKeyEvent){
+        if(size==sizeof(uint32_t)){
+            release_lock(&term_lock);
+            *(uint32_t*)buf=get_input();
+            take_lock(&term_lock);
+        }
+    }else if(fn == bt_terminal_ioctl::ReadEvent){
+        if(size==sizeof(bt_terminal_event)){
+            bt_terminal_event *event=(bt_terminal_event*)buf;
+            while(!keyboard_buffer.count() && !pointer_buffer.count()){
+                release_lock(&term_lock);
+                thread_setblock(&event_blockcheck, (void*)this);
+                take_lock(&term_lock);
+            }
+            if(keyboard_buffer.count()){
+                event->type=bt_terminal_event_type::Key;
+                release_lock(&term_lock);
+                //TODO: Work out why this has to be done twice...
+                event->key= get_input();
+                event->key= get_input();
+                take_lock(&term_lock);
+            }else if(pointer_buffer.count()){
+                event->type=bt_terminal_event_type::Pointer;
+                release_lock(&term_lock);
+                event->pointer= get_pointer();
+                event->pointer= get_pointer();
+                take_lock(&term_lock);
+            }
+        }
+    }else if(fn == bt_terminal_ioctl::ClearEvents){
+        keyboard_buffer.clear();
+        pointer_buffer.clear();
+    }else if(fn == bt_terminal_ioctl::SetPointerBitmap){
+        if(size > sizeof(bt_terminal_pointer_bitmap)){
+            bt_terminal_pointer_bitmap *bmp=(bt_terminal_pointer_bitmap*)buf;
+            if(pointer_bitmap) free(pointer_bitmap);
+            pointer_bitmap=NULL;
+            size_t totalsize=sizeof(bt_terminal_pointer_bitmap) + bmp->datasize;
+            pointer_bitmap=(bt_terminal_pointer_bitmap*) malloc(totalsize);
+            memcpy(pointer_bitmap, bmp, totalsize);
+            if(backend->is_active(id)) backend->set_pointer_bitmap(pointer_bitmap);
         }
     }
     //TODO: implement more
@@ -349,7 +434,7 @@ void vterm::close(){
 
 void vterm::sync(bool content) {
     hold_lock hl(&term_lock);
-    backend->display_ioctl(bt_vid_ioctl::GetMode, sizeof(vidmode), (char*)&vidmode);
+    backend->display_ioctl(bt_vid_ioctl::QueryMode, sizeof(vidmode), (char*)&vidmode);
     allocate_buffer();
     if(content) {
         size_t vpos = this->backend->display_seek(0, true);
@@ -386,16 +471,23 @@ void vterm::clear_buffer() {
 }
 
 void vterm::allocate_buffer() {
+    size_t newbufsize=0;
     if(vidmode.textmode){
-        bufsize =(vidmode.width * vidmode.height) * (((vidmode.bpp * 2) / 8) + 1);
+        newbufsize =(vidmode.width * vidmode.height) * (((vidmode.bpp * 2) / 8) + 1);
     }else{
-        bufsize =(vidmode.width * vidmode.height) * (vidmode.bpp / 8);
+        if(vidmode.bpp > 8) {
+            newbufsize = (vidmode.width * vidmode.height) * (vidmode.bpp / 8);
+        }else{
+            size_t depth=8/vidmode.bpp;
+            newbufsize = (vidmode.width * vidmode.height) / depth;
+        }
     }
     if(buffer) {
         free(buffer);
         buffer =NULL;
     }
-    buffer=(uint8_t*)malloc(bufsize);
+    buffer=(uint8_t*)malloc(newbufsize);
+    bufsize=newbufsize;
 }
 
 void vterm::queue_input(uint32_t code) {
@@ -405,36 +497,49 @@ void vterm::queue_input(uint32_t code) {
         kill(curpid);
         return;
     }
-    if(input_count < input_size){
-        input_count++;
-        input_top++;
-        if(input_top==input_size) input_top=0;
-        input_buffer[input_top]=code;
-    }
+    keyboard_buffer.add_item(code);
+    release_lock(&input_lock);
+}
+
+void vterm::queue_pointer(bt_terminal_pointer_event event) {
+    take_lock(&input_lock);
+    pointer_buffer.add_item(event);
     release_lock(&input_lock);
 }
 
 bool input_blockcheck(void *p){
     vterm *v=(vterm*)p;
-    return (bool)v->input_count;
+    return (bool)v->keyboard_buffer.count();
 }
 
 uint32_t vterm::get_input() {
-    bool lockok=false;
-    while(!lockok) {
-        while (!input_count) thread_setblock(&input_blockcheck, (void *) this);
+    hold_lock hl(&input_lock);
+    while(!keyboard_buffer.count()){
+        release_lock(&input_lock);
+        thread_setblock(&input_blockcheck, (void *) this);
         take_lock(&input_lock);
-        if(!input_count) release_lock(&input_lock);
-        else lockok=true;
     }
-    uint32_t ret=0;
-    if(input_count){
-		int start=input_top-input_count;
-		if(start<0) start+=input_size;
-        ret=input_buffer[start];
-        input_count--;
+    uint32_t ret=keyboard_buffer.read_item();
+    return ret;
+}
+
+bool pointer_blockcheck(void *p){
+    vterm *v=(vterm*)p;
+    return (bool)v->pointer_buffer.count();
+}
+
+bool event_blockcheck(void *p){
+    return input_blockcheck(p) || pointer_blockcheck(p);
+}
+
+bt_terminal_pointer_event vterm::get_pointer() {
+    hold_lock hl(&input_lock);
+    while(!pointer_buffer.count()){
+        release_lock(&input_lock);
+        thread_setblock(&pointer_blockcheck, (void *) this);
+        take_lock(&input_lock);
     }
-    release_lock(&input_lock);
+    bt_terminal_pointer_event ret=pointer_buffer.read_item();
     return ret;
 }
 
