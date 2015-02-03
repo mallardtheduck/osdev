@@ -247,6 +247,7 @@ void proc_end(pid_t pid) {
         }
     }
     msg_clear(pid);
+	msg_send_event(btos_api::bt_kernel_messages::ProcessStart, (void*)&pid, sizeof(pid));
 }
 
 void proc_setenv(const pid_t pid, const string &oname, const string &value, const uint8_t flags, bool userspace){
@@ -339,6 +340,7 @@ pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
 	info->entry=proc.entry;
     info->stackptr=NULL;
 	sch_new_thread(&proc_start, (void*)info, 4096);
+	msg_send_event(btos_api::bt_kernel_messages::ProcessStart, (void*)&ret, sizeof(ret));
 	return ret;
 }
 
@@ -553,8 +555,10 @@ void proc_free_message_buffer(pid_t topid, pid_t pid){
         hold_lock hl2(p->msg_lock);
         if(!p->msg_buffers.has_key(topid)) return;
         void *ptr=p->msg_buffers[topid];
-        if(ptr) free(ptr);
         p->msg_buffers.erase(topid);
+		release_lock(proc_lock);
+		if(ptr) free(ptr);
+		take_lock_recursive(proc_lock);
     }
 }
 
