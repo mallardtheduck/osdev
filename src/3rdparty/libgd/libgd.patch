@@ -1,25 +1,48 @@
-diff -u -r libgd-2.1.0/config/config.sub originals/libgd-2.1.0/config/config.sub
---- libgd-2.1.0/config/config.sub	2015-01-13 09:20:00.265482466 +0000
-+++ originals/libgd-2.1.0/config/config.sub	2013-06-25 10:58:55.000000000 +0100
-@@ -1354,7 +1354,7 @@
+diff -rupN originals/libgd-2.1.0/config/config.sub libgd-2.1.0/config/config.sub
+--- originals/libgd-2.1.0/config/config.sub	2013-06-25 10:58:55.000000000 +0100
++++ libgd-2.1.0/config/config.sub	2015-01-14 19:24:41.200708854 +0000
+@@ -1354,7 +1354,7 @@ case $os in
  	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
  	      | -sym* | -kopensolaris* | -plan9* \
  	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
--	      | -aos* | -aros* | -btos* \
-+	      | -aos* | -aros* \
+-	      | -aos* | -aros* \
++	      | -aos* | -aros* | -btos* \
  	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
  	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
  	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \
-diff -u -r libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
---- libgd-2.1.0/src/gd_errors.h	2015-01-13 09:33:35.229452802 +0000
-+++ originals/libgd-2.1.0/src/gd_errors.h	2013-06-25 10:58:23.000000000 +0100
+diff -rupN originals/libgd-2.1.0/src/gd_errors.h libgd-2.1.0/src/gd_errors.h
+--- originals/libgd-2.1.0/src/gd_errors.h	2013-06-25 10:58:23.000000000 +0100
++++ libgd-2.1.0/src/gd_errors.h	2015-01-14 19:24:41.200708854 +0000
 @@ -1,7 +1,7 @@
  #ifndef GD_ERRORS_H
  #define GD_ERRORS_H
  
--#if !defined(_WIN32) && !defined(__btos__)
-+#ifndef _WIN32
+-#ifndef _WIN32
++#if !defined(_WIN32) && !defined(__btos__)
  # include <syslog.h>
  #else
  /*
-
+diff -rupN originals/libgd-2.1.0/src/gdpp.h libgd-2.1.0/src/gdpp.h
+--- originals/libgd-2.1.0/src/gdpp.h	2013-06-25 10:58:23.000000000 +0100
++++ libgd-2.1.0/src/gdpp.h	2015-02-04 18:25:30.273147240 +0000
+@@ -1476,7 +1476,7 @@ public:
+ 		return gdImageTrueColorPixel(im, x, y);
+ 	}
+ 
+-	const gdImagePtr GetPtr() const {
++	gdImagePtr GetPtr() const {
+ 		return im;
+ 	}
+ 
+diff -rupN originals/libgd-2.1.0/src/Makefile.in libgd-2.1.0/src/Makefile.in
+--- originals/libgd-2.1.0/src/Makefile.in	2013-06-25 14:53:39.000000000 +0100
++++ libgd-2.1.0/src/Makefile.in	2015-02-04 18:15:10.581125706 +0000
+@@ -393,7 +393,7 @@ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+ bin_SCRIPTS = bdftogd
+ EXTRA_DIST = bdftogd demoin.png entities.html entities.tcl CMakeLists.txt config.h.cmake gd_io_stream.cxx gdpp.cxx msinttypes/inttypes.h msinttypes/stdint.h
+-include_HEADERS = gd.h gdfx.h gd_io.h gdcache.h gdfontg.h gdfontl.h gdfontmb.h gdfonts.h gdfontt.h entities.h gd_color_map.h gd_errors.h gdpp.h
++include_HEADERS = gd.h gdfx.h gd_io.h gdcache.h gdfontg.h gdfontl.h gdfontmb.h gdfonts.h gdfontt.h entities.h gd_color_map.h gd_errors.h gdpp.h gd_io_stream.h
+ lib_LTLIBRARIES = libgd.la
+ libgd_la_SOURCES = gd.c gd_color.c gd_color_map.c gd_transform.c gdfx.c gd_security.c gd_gd.c gd_gd2.c gd_io.c gd_io_dp.c gd_gif_in.c    \
+                    gd_gif_out.c gd_io_file.c gd_io_ss.c gd_jpeg.c gd_png.c gd_ss.c gd_topal.c gd_wbmp.c gdcache.c gdfontg.c gdfontl.c    \
