@@ -30,5 +30,6 @@ bool sch_user_abort();
 void sch_set_msgstaus(thread_msg_status::Enum status, uint64_t ext_id=sch_get_id());
 thread_msg_status::Enum sch_get_msgstatus(uint64_t ext_id=sch_get_id());
 void sch_deferred_yield();
+uint8_t *sch_get_fpu_xmm_data();
 
 #endif

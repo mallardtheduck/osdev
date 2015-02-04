@@ -68,4 +68,11 @@ uint64_t cpu_get_speed();
 uint32_t cpu_get_umips();
 char *cpu_brandstring();
 
+extern uint8_t default_fpu_xmm_data[512];
+
+void save_fpu_xmm_data(uint8_t *data);
+void restore_fpu_xmm_data(uint8_t *data);
+void reset_fpu();
+void fpu_switch();
+
 #endif
