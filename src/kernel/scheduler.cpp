@@ -307,6 +307,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	if(torun && !torun->runnable) torun=torun->next;
 	//If there is no next, run the prescheduler instead
 	if(!torun) torun=prescheduler_thread;
+	save_fpu_xmm_data(current_thread->fpu_xmm_data);
 	current_thread=torun;
 	curstack=current_thread->stack;
 	if(!torun->ext_id) panic("(SCH) Thread with no ID?");
