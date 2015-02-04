@@ -105,6 +105,9 @@ void reset_fpu(){
 static uint8_t fpu_xmm_data_region[512] __attribute__((aligned(16)));
 
 void save_fpu_xmm_data(uint8_t *data){
+	uint32_t cr0;
+	asm volatile("mov %%cr0, %0": "=b"(cr0));
+	if(!(cr0 & (1 << 3))) return;
 	if(sse_available){
 		asm volatile("fxsave %0 " : "=m"(fpu_xmm_data_region));
 	}else{
