@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <gdfonts.h>
+#include "screen.hpp"
 
 char dbgbuf[128];
 #define dbgpf(...) do{snprintf(dbgbuf, 128, __VA_ARGS__); bt_zero(dbgbuf);}while(false)
@@ -181,15 +182,14 @@ void exp_write_screen(gdImagePtr image, int dx, int dy, int dw, int dh, screen_i
 }
 
 int main(){
-    bt_filehandle fh= open_device();
-    screen_info screen;
-    if(!graphics_mode(fh, 640, 480, 4, screen)){
-        printf("Failed to set screen mode.\n");
-        exit(-1);
-    };
-    bt_fioctl(fh, bt_terminal_ioctl::SetPointerBitmap, sizeof(pointer_bmp_4bpp)+pointer_bmp_4bpp.datasize, (char*)&pointer_bmp_4bpp);
-    bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
-    gdImagePtr im=screen.image;
+	Screen screen;
+	screen.SetMode(640, 480, 4);
+    /*bt_fioctl(fh, bt_terminal_ioctl::SetPointerBitmap, sizeof(pointer_bmp_4bpp)+pointer_bmp_4bpp.datasize, (char*)&pointer_bmp_4bpp);
+    bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);*/
+	GD::Image *imageobj=screen.GetImage();
+	gdImagePtr im;
+	if(imageobj) im=const_cast<gdImagePtr>(imageobj->GetPtr());
+	else return 0;
     int bg= gdImageColorClosest(im, 0, 0, 0);
     (void)bg;
     int fg1= gdImageColorClosest(im, 255, 255, 255);
@@ -206,10 +206,10 @@ int main(){
     gdImageFilledEllipse(im, 320, 240, 50, 50, fg2);
     gdFontPtr font=gdFontGetSmall();
     gdImageString(im, font, 297, 232, (u_char *)"GDS TEST", bg);
-    write_to_screen(im, 0, 0, screen);
-    getchar();
+    screen.UpdateScreen();
+	getchar();
     gdImageFilledRectangle(im, 0, 0, 639, 479, bg);
-    write_to_screen(im, 0, 0, screen);
+	screen.UpdateScreen();
     int bcol= gdImageColorClosest(im, 0, 0, 255);
     int xpos=0; int ypos=0;
     int xmov=5; int ymov=5;
@@ -219,8 +219,8 @@ int main(){
         gdImageFilledRectangle(im, xpos, ypos, xpos+size, ypos+size, bcol);
         gdImageFilledEllipse(im, xpos+(size/2), ypos+(size/2), size/3, size/3, fg3);
         //write_to_screen(im, 0, 0, screen);
-        exp_write_screen(im, lxps, lyps, size, size, screen);
-        exp_write_screen(im, xpos, ypos, size, size, screen);
+		screen.UpdateScreen(lxps, lyps, size, size);
+		screen.UpdateScreen(xpos, ypos, size, size);
         (void)lyps; (void)lxps;
         gdImageFilledRectangle(im, xpos, ypos, xpos+size, ypos+size, bg);
         lxps=xpos;
@@ -230,8 +230,8 @@ int main(){
         if(xpos < 0 || xpos > 640-size) xmov*=-1;
         if(ypos < 0 || ypos > 480-size) ymov*=-1;
     }
-    bt_fioctl(fh, bt_terminal_ioctl::HidePointer, 0, NULL);
+    /*bt_fioctl(fh, bt_terminal_ioctl::HidePointer, 0, NULL);
     getchar();
-    bt_fioctl(fh, bt_vid_ioctl::SetMode, sizeof(original_mode), (char *) &original_mode);
+    bt_fioctl(fh, bt_vid_ioctl::SetMode, sizeof(original_mode), (char *) &original_mode);*/
     return 0;
 }
