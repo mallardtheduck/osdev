@@ -1,4 +1,6 @@
 #include "screen.hpp"
+#include <string>
+#include <sstream>
 
 Screen::Screen(){
 	char stdout_path[BT_MAX_PATH]={0};
@@ -75,7 +77,7 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 		}
 	}
 	if(bestmode.bpp){
-		bt_fioctl(fh, bt_vid_ioctl::SetMode, sizeof(mode), (char *) &mode);
+		bt_fioctl(fh, bt_vid_ioctl::SetMode, sizeof(bestmode), (char *) &bestmode);
 		current_mode=bestmode;
 		if(current_mode.bpp >= 16){
 			image= new GD::Image(current_mode.width, current_mode.height, true);
