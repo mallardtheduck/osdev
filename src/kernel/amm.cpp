@@ -177,7 +177,7 @@ uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
     vmm_allocmode::Enum mode=((uint32_t)ptr<VMM_KERNELSPACE_END)?vmm_allocmode::Kernel:vmm_allocmode::Userlow;
     for(size_t i=start; i<end; ++i){
         //dbgpf("AMM: Mapping page %i.\n", i);
-        uint32_t virtaddr=(uint32_t)ptr+(i*VMM_PAGE_SIZE);
+        uint32_t virtaddr=(uint32_t)(ptr+(i*VMM_PAGE_SIZE)) & VMM_ADDRESS_MASK;
         vmm_free((void*)virtaddr, 1);
         vmm_cur_pagedir->map_page(virtaddr/VMM_PAGE_SIZE, amm_mmap_marker/VMM_PAGE_SIZE, true, (vmm_allocmode::Enum)(mode | vmm_allocmode::NotPresent));
     }
