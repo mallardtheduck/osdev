@@ -219,8 +219,9 @@ int main(){
         gdImageFilledRectangle(im, xpos, ypos, xpos+size, ypos+size, bcol);
         gdImageFilledEllipse(im, xpos+(size/2), ypos+(size/2), size/3, size/3, fg3);
         //write_to_screen(im, 0, 0, screen);
-		screen.UpdateScreen(lxps, lyps, size, size);
-		screen.UpdateScreen(xpos, ypos, size, size);
+		screen.UpdateScreen(lxps>0?lxps:0, lyps>0?lyps:0, size, size);
+		screen.UpdateScreen(xpos>0?xpos:0, ypos>0?ypos:0, size, size);
+		//screen.UpdateScreen();
         (void)lyps; (void)lxps;
         gdImageFilledRectangle(im, xpos, ypos, xpos+size, ypos+size, bg);
         lxps=xpos;

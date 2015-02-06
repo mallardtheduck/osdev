@@ -58,6 +58,18 @@ uint32_t Screen::BufferGetPixel(uint32_t x, uint32_t y){
 	return 0;
 }
 
+size_t Screen::GetBytePos(uint32_t x, uint32_t y) {
+	size_t ret=(y * current_mode.width) + x;
+	if(current_mode.bpp >= 8) ret *= (current_mode.bpp / 8);
+	else ret /= (8 / current_mode.bpp);
+	return ret;
+}
+
+size_t Screen::BytesPerPixel() {
+	if(current_mode.bpp <=8) return 1;
+	else return current_mode.bpp / 8;
+}
+
 bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 	bt_fioctl(fh, bt_vid_ioctl::QueryMode, sizeof(original_mode), (char*)&original_mode);
 	size_t modecount=bt_fioctl(fh, bt_vid_ioctl::GetModeCount, 0, NULL);
@@ -106,8 +118,12 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 		w = current_mode.width;
 		h = current_mode.height;
 	}
-	for(size_t row=y; row < y+h; ++row){
-		for(size_t col=x; col < x+w; ++col){
+	if(y > current_mode.height) return;
+	if(x > current_mode.width) return;
+	for(uint32_t row=y; row <= y+h; ++row){
+		if(row > current_mode.height) break;
+		for(uint32_t col=x; col <= x+w; ++col){
+			if(col > current_mode.width) break;
 			uint32_t value;
 			if(image->IsTrueColor()) {
 				value=image->GetTrueColorPixel(col, row);
@@ -118,8 +134,20 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 		}
 	}
 	bt_fioctl(fh, bt_terminal_ioctl::HidePointer, 0, NULL);
-	bt_fseek(fh, 0, false);
-	bt_fwrite(fh, buffersize, (char*)buffer);
+	if(w == current_mode.width && h == current_mode.height) {
+		bt_fseek(fh, 0, false);
+		bt_fwrite(fh, buffersize, (char *) buffer);
+	}else{
+		for(size_t row=y; row <= y+h; ++row){
+			size_t start= GetBytePos(x, row);
+			if(start > buffersize) break;
+			size_t end= GetBytePos(x+w, row) + BytesPerPixel() + 1;
+			if(end > buffersize) end=buffersize;
+			size_t bytes = end - start;
+			bt_fseek(fh, start, false);
+			bt_fwrite(fh, bytes, (char*)&buffer[start]);
+		}
+	}
 	bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
 }
 
