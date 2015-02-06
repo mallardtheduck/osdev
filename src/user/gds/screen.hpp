@@ -11,6 +11,7 @@ private:
 	GD::Image *image;
 	uint8_t *buffer;
 	size_t buffersize;
+	bool cursor_on;
 
 	void BufferPutPixel(uint32_t x, uint32_t y, uint32_t value);
 	uint32_t BufferGetPixel(uint32_t x, uint32_t y);
@@ -25,4 +26,6 @@ public:
 
 	void UpdateScreen(uint32_t x=0, uint32_t y=0, uint32_t w=0, uint32_t h=0);
 	GD::Image *GetImage();
+	void ShowCursor();
+	void HideCursor();
 };

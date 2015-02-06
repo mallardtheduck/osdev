@@ -11,6 +11,8 @@ Screen::Screen(){
 	bt_fioctl(fh, bt_terminal_ioctl::SetMode, sizeof(terminal_mode), (char*)&terminal_mode);
 
 	image=NULL;
+	buffer=NULL;
+	buffersize=0;
 	original_mode.bpp=0;
 }
 
@@ -20,6 +22,7 @@ Screen::~Screen(){
 	}
 	bt_fclose(fh);
 	if(image) delete image;
+	if(buffer) delete buffer;
 }
 
 void Screen::BufferPutPixel(uint32_t x, uint32_t y, uint32_t value) {
@@ -27,10 +30,12 @@ void Screen::BufferPutPixel(uint32_t x, uint32_t y, uint32_t value) {
 	if(!buffer) return;
 	size_t pixelpos=(y * current_mode.width) + x;
 	if(current_mode.bpp == 8){
+		if(pixelpos > buffersize) return;
 		buffer[pixelpos]=(uint8_t)value;
 	}else if(current_mode.bpp==4){
 		uint8_t c=(uint8_t)value;
 		size_t bufpos=pixelpos/2;
+		if(bufpos > buffersize) return;
 		if(pixelpos % 2){
 			buffer[bufpos] = (uint8_t)((buffer[bufpos] & 0xF0) | (0x0F & c));
 		}else{
@@ -91,6 +96,7 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 	if(bestmode.bpp){
 		bt_fioctl(fh, bt_vid_ioctl::SetMode, sizeof(bestmode), (char *) &bestmode);
 		current_mode=bestmode;
+		if(image) delete image;
 		if(current_mode.bpp >= 16){
 			image= new GD::Image(current_mode.width, current_mode.height, true);
 		}else{
@@ -102,12 +108,13 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 				bt_fioctl(fh, bt_vid_ioctl::GetPaletteEntry, sizeof(entry), (char*)&entry);
 				image->ColorAllocate(entry.r, entry.g, entry.b);
 			}
-			if(current_mode.bpp >=8) buffersize = current_mode.width * current_mode.height * (current_mode.bpp / 8);
-			else buffersize = current_mode.width * current_mode.height / (8 / current_mode.bpp);
-			buffer=new uint8_t[buffersize]();
-			bt_fseek(fh, 0, false);
-			bt_fread(fh, buffersize, (char*)buffer);
 		}
+		if(buffer) delete buffer;
+		if(current_mode.bpp >=8) buffersize = current_mode.width * current_mode.height * (current_mode.bpp / 8);
+		else buffersize = current_mode.width * current_mode.height / (8 / current_mode.bpp);
+		buffer=new uint8_t[buffersize]();
+		bt_fseek(fh, 0, false);
+		bt_fread(fh, buffersize, (char*)buffer);
 		return true;
 	}
 	return false;
@@ -133,7 +140,7 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 			BufferPutPixel(col, row, value);
 		}
 	}
-	bt_fioctl(fh, bt_terminal_ioctl::HidePointer, 0, NULL);
+	if(cursor_on) bt_fioctl(fh, bt_terminal_ioctl::HidePointer, 0, NULL);
 	if(w == current_mode.width && h == current_mode.height) {
 		bt_fseek(fh, 0, false);
 		bt_fwrite(fh, buffersize, (char *) buffer);
@@ -148,9 +155,19 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 			bt_fwrite(fh, bytes, (char*)&buffer[start]);
 		}
 	}
-	bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
+	if(cursor_on) bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
 }
 
 GD::Image *Screen::GetImage() {
 	return image;
+}
+
+void Screen::ShowCursor() {
+	bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
+	cursor_on=true;
+}
+
+void Screen::HideCursor() {
+	bt_fioctl(fh, bt_terminal_ioctl::HidePointer, 0, NULL);
+	cursor_on=false;
 }
