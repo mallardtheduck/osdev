@@ -1,8 +1,6 @@
 #include "screen.hpp"
 #include <cstring>
 #include <cstdlib>
-#include <string>
-#include <sstream>
 
 Screen::Screen(){
 	char stdout_path[BT_MAX_PATH]={0};
@@ -182,19 +180,12 @@ void Screen::SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty) 
 	bmp.w=img.Width();
 	bmp.h=img.Height();
 	bmp.transparent=img.GetTransparent();
-	//std::stringstream ss;
-	/*ss << "W: " << bmp.w << ", H:" << bmp.h << std::endl;
-	bt_zero(ss.str().c_str());
-	ss.str("");*/
 	size_t datasize;
 	if(current_mode.bpp >=8) datasize = bmp.w * bmp.h * (bmp.bpp / 8);
 	else datasize = bmp.w * bmp.h / (8 / bmp.bpp);
 	uint8_t *data=new uint8_t[datasize]();
 	for(uint32_t x=0; x<bmp.w; ++x){
 		for(uint32_t y=0; y<bmp.h; ++y){
-			/*ss << "X: " << x << ", Y: " << y << std::endl;
-			bt_zero(ss.str().c_str());
-			ss.str("");*/
 			uint32_t value=img.GetPixel(x, y);
 			value=image->ColorClosest(img.Red(value), img.Green(value), img.Blue(value));
 			size_t pixelpos=(y * bmp.w) + x;
@@ -214,17 +205,10 @@ void Screen::SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty) 
 		}
 	}
 	bmp.datasize=datasize;
-	//bt_zero("XA-");
 	void *complete=malloc(sizeof(bmp) + datasize);
-	//bt_zero("XB-");
 	memcpy(complete, &bmp, sizeof(bmp));
-	//bt_zero("XC-");
 	memcpy((char*)complete+sizeof(bmp), data, datasize);
-	//bt_zero("XD-");
 	bt_fioctl(fh, bt_terminal_ioctl::SetPointerBitmap, sizeof(bmp)+datasize, (char*)complete);
-	//bt_zero("XE-");
 	free(complete);
-	//bt_zero("XF-");
 	delete data;
-	//bt_zero("XG-");
 }

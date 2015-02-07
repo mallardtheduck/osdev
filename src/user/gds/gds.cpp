@@ -55,38 +55,29 @@ int main(){
 	cursor->FilledRectangle(0, 0, 9, 9, cursor_transparent);
 	cursor->Line(0, 0, 9, 9, cursor_white);
 	cursor->Line(0, 9, 9, 0, cursor_white);
-	//bt_zero("A");
 	screen.SetCursorImage(*cursor, 5, 5);
 	screen.ShowCursor();
 	delete cursor;
-	//bt_zero("B");
 	GD::Image *imageobj=screen.GetImage();
 	gdImagePtr im;
 	if(imageobj) im=const_cast<gdImagePtr>(imageobj->GetPtr());
 	else return 0;
-	//bt_zero("C");
     int bg= gdImageColorClosest(im, 0, 0, 0);
     (void)bg;
     int fg1= gdImageColorClosest(im, 255, 255, 255);
     int fg2= gdImageColorClosest(im, 0, 255, 255);
     int fg3= gdImageColorClosest(im, 0, 255, 0);
     int fg4= gdImageColorClosest(im, 255, 0, 0);
-	//bt_zero("D");
     gdImageFilledRectangle(im, 0, 0, 639, 479, fg4);
-	//bt_zero("DA");
     for(int i=0; i<640; ++i) {
         if(i) gdImageLine(im, i-1, 0, 640-i, 479, fg3);
         gdImageLine(im, i, 0, 639-i, 479, fg1);
     }
-	//bt_zero("DB");
     gdImageLine(im, 0, 0, 639, 479, fg1);
-	//bt_zero("DC");
     gdImageLine(im, 639, 0, 0, 479, fg1);
-	//bt_zero("E");
     gdImageFilledEllipse(im, 320, 240, 50, 50, fg2);
     gdFontPtr font=gdFontGetSmall();
     gdImageString(im, font, 297, 232, (u_char *)"GDS TEST", bg);
-	//bt_zero("F");
     screen.UpdateScreen();
 	getchar();
     gdImageFilledRectangle(im, 0, 0, 639, 479, bg);
