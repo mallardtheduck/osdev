@@ -28,4 +28,5 @@ public:
 	GD::Image *GetImage();
 	void ShowCursor();
 	void HideCursor();
+	void SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty);
 };

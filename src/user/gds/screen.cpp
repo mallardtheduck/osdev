@@ -1,4 +1,6 @@
 #include "screen.hpp"
+#include <cstring>
+#include <cstdlib>
 #include <string>
 #include <sstream>
 
@@ -30,12 +32,12 @@ void Screen::BufferPutPixel(uint32_t x, uint32_t y, uint32_t value) {
 	if(!buffer) return;
 	size_t pixelpos=(y * current_mode.width) + x;
 	if(current_mode.bpp == 8){
-		if(pixelpos > buffersize) return;
+		if(pixelpos >= buffersize) return;
 		buffer[pixelpos]=(uint8_t)value;
 	}else if(current_mode.bpp==4){
 		uint8_t c=(uint8_t)value;
 		size_t bufpos=pixelpos/2;
-		if(bufpos > buffersize) return;
+		if(bufpos >= buffersize) return;
 		if(pixelpos % 2){
 			buffer[bufpos] = (uint8_t)((buffer[bufpos] & 0xF0) | (0x0F & c));
 		}else{
@@ -170,4 +172,59 @@ void Screen::ShowCursor() {
 void Screen::HideCursor() {
 	bt_fioctl(fh, bt_terminal_ioctl::HidePointer, 0, NULL);
 	cursor_on=false;
+}
+
+void Screen::SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty) {
+	bt_terminal_pointer_bitmap bmp;
+	bmp.spot_x=hotx;
+	bmp.spot_y=hoty;
+	bmp.bpp=current_mode.bpp;
+	bmp.w=img.Width();
+	bmp.h=img.Height();
+	bmp.transparent=img.GetTransparent();
+	//std::stringstream ss;
+	/*ss << "W: " << bmp.w << ", H:" << bmp.h << std::endl;
+	bt_zero(ss.str().c_str());
+	ss.str("");*/
+	size_t datasize;
+	if(current_mode.bpp >=8) datasize = bmp.w * bmp.h * (bmp.bpp / 8);
+	else datasize = bmp.w * bmp.h / (8 / bmp.bpp);
+	uint8_t *data=new uint8_t[datasize]();
+	for(uint32_t x=0; x<bmp.w; ++x){
+		for(uint32_t y=0; y<bmp.h; ++y){
+			/*ss << "X: " << x << ", Y: " << y << std::endl;
+			bt_zero(ss.str().c_str());
+			ss.str("");*/
+			uint32_t value=img.GetPixel(x, y);
+			value=image->ColorClosest(img.Red(value), img.Green(value), img.Blue(value));
+			size_t pixelpos=(y * bmp.w) + x;
+			if(bmp.bpp == 8){
+				if(pixelpos >= datasize) continue;
+				data[pixelpos]=(uint8_t)value;
+			}else if(bmp.bpp==4){
+				uint8_t c=(uint8_t)value;
+				size_t bufpos=pixelpos/2;
+				if(bufpos >= datasize) continue;
+				if(pixelpos % 2){
+					data[bufpos] = (uint8_t)((data[bufpos] & 0xF0) | (0x0F & c));
+				}else{
+					data[bufpos] = (uint8_t)((data[bufpos] & 0x0F) | (0xF0 & (c << 4)));
+				}
+			}
+		}
+	}
+	bmp.datasize=datasize;
+	//bt_zero("XA-");
+	void *complete=malloc(sizeof(bmp) + datasize);
+	//bt_zero("XB-");
+	memcpy(complete, &bmp, sizeof(bmp));
+	//bt_zero("XC-");
+	memcpy((char*)complete+sizeof(bmp), data, datasize);
+	//bt_zero("XD-");
+	bt_fioctl(fh, bt_terminal_ioctl::SetPointerBitmap, sizeof(bmp)+datasize, (char*)complete);
+	//bt_zero("XE-");
+	free(complete);
+	//bt_zero("XF-");
+	delete data;
+	//bt_zero("XG-");
 }
