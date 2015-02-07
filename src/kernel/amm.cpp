@@ -297,7 +297,7 @@ void amm_close(file_handle &file) {
             if((uint32_t)mappings[i].start != ((uint32_t)mappings[i].start & VMM_ADDRESS_MASK)){
                 start=1;
             }
-            if((uint32_t)mappings[i].start+mappings[i].size % VMM_PAGE_SIZE){
+            if(((uint32_t)mappings[i].start+mappings[i].size) & VMM_PAGE_SIZE){
                 end=pages-1;
             }
         }
@@ -345,7 +345,7 @@ void amm_closemap(uint64_t id) {
             if((uint32_t)mappings[i].start != ((uint32_t)mappings[i].start & VMM_ADDRESS_MASK)){
                 start=1;
             }
-            if((uint32_t)mappings[i].start+mappings[i].size % VMM_PAGE_SIZE){
+            if(((uint32_t)mappings[i].start+mappings[i].size) & VMM_PAGE_SIZE){
                 end=pages-1;
             }
         }
