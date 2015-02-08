@@ -49,12 +49,15 @@ int main(){
 	Screen screen;
 	screen.SetMode(640, 480, 4);
 	GD::Image *cursor=new GD::Image(10, 10, false);
-	int cursor_transparent=cursor->ColorResolve(0, 0, 0, 0);
+	int cursor_transparent=cursor->ColorResolve(255, 0, 255, 0);
 	cursor->ColorTransparent(cursor_transparent);
-	int cursor_white=cursor->ColorAllocate(255, 255, 255);
+	int cursor_white=cursor->ColorResolve(255, 255, 255);
+	int cursor_black=cursor->ColorResolve(0, 0, 0, 255);
 	cursor->FilledRectangle(0, 0, 9, 9, cursor_transparent);
 	cursor->Line(0, 0, 9, 9, cursor_white);
 	cursor->Line(0, 9, 9, 0, cursor_white);
+	cursor->Line(5, 0, 5, 9, cursor_black);
+	cursor->Line(0, 5, 9, 5, cursor_black);
 	screen.SetCursorImage(*cursor, 5, 5);
 	screen.ShowCursor();
 	delete cursor;

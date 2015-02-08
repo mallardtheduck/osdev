@@ -179,7 +179,8 @@ void Screen::SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty) 
 	bmp.bpp=current_mode.bpp;
 	bmp.w=img.Width();
 	bmp.h=img.Height();
-	bmp.transparent=img.GetTransparent();
+	int transparent=img.GetTransparent();
+	bmp.transparent=image->ColorClosest(img.Red(transparent), img.Green(transparent), img.Blue(transparent));
 	size_t datasize;
 	if(current_mode.bpp >=8) datasize = bmp.w * bmp.h * (bmp.bpp / 8);
 	else datasize = bmp.w * bmp.h / (8 / bmp.bpp);
