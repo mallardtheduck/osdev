@@ -1,3 +1,6 @@
+#ifndef _SCREEN_HPP
+#define _SCREEN_HPP
+
 #include <btos_stubs.h>
 #include <video_dev.h>
 #include <terminal.h>
@@ -30,3 +33,5 @@ public:
 	void HideCursor();
 	void SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty);
 };
+
+#endif
