@@ -2,7 +2,7 @@
 #include <cstring>
 #include <cstdlib>
 
-Screen::Screen(){
+Screen::Screen() : BitmapSurface::BitmapSurface(1, 1, true){
 	char stdout_path[BT_MAX_PATH]={0};
 	bt_getenv("STDOUT", stdout_path, BT_MAX_PATH);
 
@@ -10,7 +10,6 @@ Screen::Screen(){
 	bt_terminal_mode::Enum terminal_mode=bt_terminal_mode::Video;
 	bt_fioctl(fh, bt_terminal_ioctl::SetMode, sizeof(terminal_mode), (char*)&terminal_mode);
 
-	image=NULL;
 	buffer=NULL;
 	buffersize=0;
 	original_mode.bpp=0;
@@ -21,7 +20,6 @@ Screen::~Screen(){
 		bt_fioctl(fh, bt_vid_ioctl::SetMode, sizeof(original_mode), (char*)&original_mode);
 	}
 	bt_fclose(fh);
-	if(image) delete image;
 	if(buffer) delete buffer;
 }
 
@@ -96,11 +94,11 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 	if(bestmode.bpp){
 		bt_fioctl(fh, bt_vid_ioctl::SetMode, sizeof(bestmode), (char *) &bestmode);
 		current_mode=bestmode;
-		if(image) delete image;
 		if(current_mode.bpp >= 16){
+			BitmapSurface::Resize(current_mode.width, current_mode.height, false);
 			image= new GD::Image(current_mode.width, current_mode.height, true);
 		}else{
-			image= new GD::Image(current_mode.width, current_mode.height, false);
+			BitmapSurface::Resize(current_mode.width, current_mode.height, true);
 			for(size_t p=0; p<256; ++p){
 				size_t idx=(p % (1 << current_mode.bpp));
 				bt_video_palette_entry entry;
@@ -212,4 +210,26 @@ void Screen::SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty) 
 	bt_fioctl(fh, bt_terminal_ioctl::SetPointerBitmap, sizeof(bmp)+datasize, (char*)complete);
 	free(complete);
 	delete data;
+}
+
+size_t Screen::AddOperation(DrawingOp op) {
+	size_t ret=BitmapSurface::AddOperation(op);
+	UpdateScreen();
+	return ret;
+}
+
+void Screen::RemoveOperation(size_t id) {
+	BitmapSurface::RemoveOperation(id);
+}
+
+size_t Screen::GetWidth() {
+	return BitmapSurface::GetWidth();
+}
+
+size_t Screen::GetHeight() {
+	return BitmapSurface::GetHeight();
+}
+
+size_t Screen::GetDepth() {
+	return BitmapSurface::GetDepth();
 }

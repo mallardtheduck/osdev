@@ -1,16 +1,6 @@
-#include <gd.h>
-#include <btos_stubs.h>
-#include <video_dev.h>
-#include <crt_support.h>
-#include <ioctl.h>
-#include <drivers.h>
-#include <terminal.h>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-#include <algorithm>
-#include <gdfonts.h>
+#include "gds.hpp"
 #include "screen.hpp"
+#include "drawingop.hpp"
 
 char dbgbuf[128];
 #define dbgpf(...) do{snprintf(dbgbuf, 128, __VA_ARGS__); bt_zero(dbgbuf);}while(false)
@@ -48,6 +38,14 @@ bt_filehandle open_device(){
 int main(){
 	Screen screen;
 	screen.SetMode(640, 480, 4);
+    DrawingOp op1;
+    op1.type = DrawingOpType::Line;
+    op1.Line.x1 = 100;
+    op1.Line.y1 = 100;
+    op1.Line.x2 = 300;
+    op1.Line.y2 = 300;
+    op1.Common.lineIndexedColour = 255;
+    screen.AddOperation(op1);
 	GD::Image *cursor=new GD::Image(10, 10, false);
 	int cursor_transparent=cursor->ColorResolve(255, 0, 255, 0);
 	cursor->ColorTransparent(cursor_transparent);

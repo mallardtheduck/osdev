@@ -11,7 +11,7 @@ enum class DrawingOpType{
 	Ellipse	= 3,
 	Arc		= 4,
 	Polygon	= 5,
-	Spline	= 6,
+	//Spline	= 6,
 	Text	= 10,
 };
 
@@ -33,19 +33,19 @@ struct DrawingOp {
 			uint32_t x, y, w, h;
 		} Box;
 		struct{
-			uint32_t x, y, vr, wr;
+			uint32_t x, y, w, h;
 		} Ellipse;
 		struct{
-			uint32_t x, y, vr, wr, a1, a2;
+			uint32_t x, y, w, h, a1, a2;
 		} Arc;
 		struct{
 			size_t points;
 			bool closed;
 			bool filled;
 		} Polygon;
-		struct{
+		/*struct{
 			size_t points;
-		} Spline;
+		} Spline;*/
 		struct{
 			size_t chars;
 			uint32_t fontID;
@@ -55,11 +55,13 @@ struct DrawingOp {
 	};
 	struct{
 		ColourType lineColourType;
+		uint32_t lineStyle;
 		union{
 			uint32_t lineTrueColour;
 			uint8_t lineIndexedColour;
 		};
 		ColourType fillColourType;
+		uint32_t fillStyle;
 		union{
 			uint32_t fillTrueColour;
 			uint8_t fillIndexedColour;

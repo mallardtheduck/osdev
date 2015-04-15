@@ -1,18 +1,22 @@
 #ifndef _SURFACE_HPP
 #define _SURFACE_HPP
 
-#include "drawingop.h"
+#include "gds.hpp"
+#include "drawingop.hpp"
 
-class Surface{
+class Surface {
 public:
-	size_t AddOperation(DrawingOp op)=0;
-	void RemoveOperation(size_t id);
+	virtual size_t AddOperation(DrawingOp op) = 0;
 
-	size_t GetWidth();
-	size_t GetHeight();
-	size_t GetDepth();
+	virtual void RemoveOperation(size_t id) = 0;
 
-	~Surface() = 0;
+	virtual size_t GetWidth() = 0;
+
+	virtual size_t GetHeight() = 0;
+
+	virtual size_t GetDepth() = 0;
+
+	virtual ~Surface() {};
 };
 
 #endif
