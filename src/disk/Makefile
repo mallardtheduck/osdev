@@ -1,4 +1,4 @@
-import-files:=data/btos/ctest.elx data/btos/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/switcher.elx data/btos/spawn.elx data/btos/cmd/kill.elx data/btos/pci.sys data/btos/cmd/load.elx data/btos/test.sys data/btos/test.elx data/btos/cmd/mount.elx data/btos/msgtest.elx data/btos/mousetest.elx data/btos/vga.sys data/btos/vgatest.elx data/btos/fputest.elx
+import-files:=data/btos/ctest.elx data/btos/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/switcher.elx data/btos/spawn.elx data/btos/cmd/kill.elx data/btos/pci.sys data/btos/cmd/load.elx data/btos/test.sys data/btos/test.elx data/btos/cmd/mount.elx data/btos/msgtest.elx data/btos/mousetest.elx data/btos/vga.sys data/btos/vgatest.elx data/btos/fputest.elx data/btos/debug.elx
 
 all: ~/.mtoolsrc btos.img copy.always
 
@@ -63,6 +63,9 @@ data/btos/vgatest.elx: ../user/vgatest/vgatest.elx directories.always
 	cp $< $@
 
 data/btos/fputest.elx: ../user/fputest/fputest.elx directories.always
+	cp $< $@
+
+data/btos/debug.elx: ../user/debug/debug.elx directories.always
 	cp $< $@
 
 directories.always:

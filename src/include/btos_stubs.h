@@ -235,4 +235,8 @@ inline static void bt_msgwait(){
 	btos_call(BT_MSGWAIT, 0, 0, 0);
 }
 
+inline static uint16_t bt_query_extension(const char *name){
+	return btos_call(BT_QUERY_EXT, (uint32_t)name, 0, 0);
+}
+
 #endif

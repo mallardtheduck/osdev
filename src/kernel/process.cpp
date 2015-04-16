@@ -522,9 +522,10 @@ handle_t proc_get_thread_handle(uint64_t thread_id, pid_t pid){
     return 0;
 }
 
-void proc_terminate(pid_t pid){
+void proc_terminate(pid_t pid, bool crash){
     dbgpf("PROC: Terminating PID: %i\n", pid);
     if(pid==0) return; // panic("(PROC) Request to terminate kernel!");
+    if(crash) debug_crash_notify(pid);
     proc_setreturn(-1);
     bool current=false;
     if(pid==proc_current_pid) {

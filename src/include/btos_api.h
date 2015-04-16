@@ -21,6 +21,9 @@ typedef bt_handle bt_threadhandle;
 typedef uint32_t bt_pid;
 typedef uint32_t bt_priority;
 
+typedef uint64_t bt_thread_id_t;
+typedef uint64_t bt_pid_t;
+
 enum{
 	BT_ALLOC_PAGES		= 0x0101,
 	BT_FREE_PAGES		= 0x0102,
