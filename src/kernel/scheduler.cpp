@@ -4,6 +4,7 @@
 
 extern char _start, _end;
 const uint32_t default_priority=10;
+const uint32_t modifier_limit=128;
 void *sch_stack;
 
 struct sch_start{
@@ -28,6 +29,7 @@ struct sch_thread{
 	sch_start *start;
 	uint32_t priority;
 	uint32_t dynpriority;
+	uint32_t modifier;
 	uint64_t ext_id;
 	pid_t pid;
 	sch_blockcheck blockcheck;
@@ -91,6 +93,7 @@ void sch_init(){
 	mainthread->to_be_deleted=false;
 	mainthread->priority=default_priority;
 	mainthread->dynpriority=0;
+	mainthread->modifier=0;
 	mainthread->magic=0xF00D;
 	mainthread->pid=proc_current_pid;
 	mainthread->blockcheck=NULL;
@@ -181,6 +184,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread->magic=0xBABE;
 	newthread->priority=default_priority;
 	newthread->dynpriority=0;
+	newthread->modifier=0;
 	newthread->blockcheck=NULL;
 	newthread->bc_param=NULL;
 	newthread->abortlevel=1;
@@ -277,12 +281,15 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 				foundtorun=true;
 				torun=(*threads)[i];
 			}
+			else if((*threads)[i]->modifier) --(*threads)[i]->modifier;
 		}
 	}
 	if(foundtorun){
+		if(torun->modifier < modifier_limit) ++torun->modifier;
 		return true;
 	}else{
 		torun=current_thread;
+		if(torun->modifier < modifier_limit) ++torun->modifier;
 		return true;
 	}
 }
@@ -521,7 +528,13 @@ void sch_prescheduler_thread(void*){
 			}
 			current->next=next;
 			current=current->next;
-			current->dynpriority=current->priority;
+			if(current->modifier < modifier_limit) ++current->modifier;
+			//Prevent overflow of dynamic priority...
+			if(current->priority + current->modifier >= current->priority){
+				current->dynpriority=current->priority + current->modifier;
+			}else{
+				current->dynpriority=0xFFFFFFFF;
+			}
 			current->sch_cycle=cycle;
 			count++;
 		}
