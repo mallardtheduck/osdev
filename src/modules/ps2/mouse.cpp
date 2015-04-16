@@ -11,7 +11,7 @@ static circular_buffer<bt_mouse_packet, 512> mouse_buffer{zero_packet};
 static circular_buffer<uint8_t, 48> pre_buffer{0};
 
 static uint8_t irq;
-
+static thread_id_t mouse_thread_id;
 static lock buf_lock;
 
 static void (*write_device)(uint8_t);
@@ -21,8 +21,11 @@ static void mouse_handler(int irq, isr_regs *regs){
 	uint8_t ps2_byte= ps2_read_data_nocheck();
 	pre_buffer.add_item(ps2_byte);
 	input_available = true;
-	enable_interrupts();
-	yield();
+	if(thread_id()!=mouse_thread_id) {
+		enable_interrupts();
+		yield();
+		disable_interrupts();
+	}
 }
 
 bool input_blockcheck(void*){
@@ -37,20 +40,17 @@ void mouse_thread(void*){
 			thread_setblock(&input_blockcheck, NULL);
 			disable_interrupts();
 			byte1 = pre_buffer.read_item();
-			irq_ack(irq);
 			input_available = false;
 			enable_interrupts();
 		}
 		thread_setblock(&input_blockcheck, NULL);
 		disable_interrupts();
 		byte2=pre_buffer.read_item();
-		irq_ack(irq);
 		input_available=false;
 		enable_interrupts();
 		thread_setblock(&input_blockcheck, NULL);
 		disable_interrupts();
 		byte3=pre_buffer.read_item();
-		irq_ack(irq);
 		input_available=false;
 		enable_interrupts();
 
@@ -168,7 +168,7 @@ void init_mouse(uint8_t mchannel){
 
 	pre_buffer.clear();
 	handle_irq(irq, &mouse_handler);
-	new_thread(&mouse_thread, NULL);
+	mouse_thread_id=new_thread(&mouse_thread, NULL);
 	write_device(Device_Command::EnableReporting);
 	unmask_irq(irq);
 

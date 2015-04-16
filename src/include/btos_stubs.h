@@ -223,6 +223,14 @@ inline static void bt_msg_ack(bt_msg_header *header){
 	btos_call(BT_ACK, (uint32_t)header, 0, 0);
 }
 
+inline static void bt_subscribe(ENUM_NAME(bt_kernel_messages) msg){
+	btos_call(BT_SUBSCRIBE, (uint32_t)msg, 0, 0);
+}
+
+inline static void bt_unsubscribe(ENUM_NAME(bt_kernel_messages) msg){
+	btos_call(BT_UNSUBSCRIBE, (uint32_t)msg, 0, 0);
+}
+
 inline static void bt_msgwait(){
 	btos_call(BT_MSGWAIT, 0, 0, 0);
 }

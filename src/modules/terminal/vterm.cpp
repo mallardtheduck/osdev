@@ -36,6 +36,7 @@ vterm::vterm(uint64_t nid, i_backend *back){
     scrollcount=0;
     sprintf(title, "BT/OS Terminal %i", (int)id);
     pointer_enabled=false;
+    pointer_bitmap=NULL;
 }
 
 vterm::~vterm(){
@@ -162,6 +163,7 @@ void vterm::activate() {
     if(infoline && bufpos==0) putchar('\n');
     if(pointer_enabled){
         backend->show_pointer();
+        if(pointer_bitmap) backend->set_pointer_bitmap(pointer_bitmap);
     }else{
         backend->hide_pointer();
     }
@@ -307,12 +309,14 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
                 do_infoline();
             }
         }
-    }else if(fn == bt_vid_ioctl::QueryMode){
-        if(size==sizeof(bt_vidmode)){
-            bt_vidmode *mode=(bt_vidmode*)buf;
-            *mode=vidmode;
+    }else if(fn == bt_vid_ioctl::QueryMode) {
+        if (size == sizeof(bt_vidmode)) {
+            bt_vidmode *mode = (bt_vidmode *) buf;
+            *mode = vidmode;
             return size;
         }
+    }else if(fn == bt_vid_ioctl::GetPaletteEntry){
+        return backend->display_ioctl(fn, size, buf);
     }else if(fn == bt_vid_ioctl::SetTextColours){
         if(size==sizeof(uint8_t)){
             setcolours(*(uint8_t*)buf);
@@ -330,10 +334,10 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
             }
         }
     }else if(fn == bt_terminal_ioctl::ShowPointer){
-        backend->show_pointer();
+        if(backend->is_active(id)) backend->show_pointer();
         pointer_enabled=true;
     }else if(fn == bt_terminal_ioctl::HidePointer){
-        backend->hide_pointer();
+        if(backend->is_active(id)) backend->hide_pointer();
         pointer_enabled=false;
     }else if(fn == bt_terminal_ioctl::GetPointerInfo){
         if(size==sizeof(bt_terminal_pointer_info)){
@@ -378,6 +382,16 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
     }else if(fn == bt_terminal_ioctl::ClearEvents){
         keyboard_buffer.clear();
         pointer_buffer.clear();
+    }else if(fn == bt_terminal_ioctl::SetPointerBitmap){
+        if(size > sizeof(bt_terminal_pointer_bitmap)){
+            bt_terminal_pointer_bitmap *bmp=(bt_terminal_pointer_bitmap*)buf;
+            if(pointer_bitmap) free(pointer_bitmap);
+            pointer_bitmap=NULL;
+            size_t totalsize=sizeof(bt_terminal_pointer_bitmap) + bmp->datasize;
+            pointer_bitmap=(bt_terminal_pointer_bitmap*) malloc(totalsize);
+            memcpy(pointer_bitmap, bmp, totalsize);
+            if(backend->is_active(id)) backend->set_pointer_bitmap(pointer_bitmap);
+        }
     }
     //TODO: implement more
     return 0;

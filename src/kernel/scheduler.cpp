@@ -41,6 +41,7 @@ struct sch_thread{
 	sch_thread *next;
 	uint32_t sch_cycle;
 	thread_msg_status::Enum msgstatus;
+	uint8_t fpu_xmm_data[512];
 };
 
 vector<sch_thread*> *threads;
@@ -103,6 +104,7 @@ void sch_init(){
 	mainthread->pid=0;
 	mainthread->sch_cycle=0;
 	mainthread->msgstatus=thread_msg_status::Normal;
+	memcpy(mainthread->fpu_xmm_data, default_fpu_xmm_data, 512);
 	current_thread_id=mainthread->ext_id=++cur_ext_id;
 	threads->push_back(mainthread);
 	current_thread=(*threads)[threads->size()-1];
@@ -194,6 +196,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread->next=NULL;
 	newthread->sch_cycle=0;
 	newthread->msgstatus=thread_msg_status::Normal;
+	memcpy(newthread->fpu_xmm_data, default_fpu_xmm_data, 512);
     take_lock_exclusive(sch_lock);
 	newthread->ext_id=++cur_ext_id;
 	threads->push_back(newthread);
@@ -311,6 +314,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	if(torun && !torun->runnable) torun=torun->next;
 	//If there is no next, run the prescheduler instead
 	if(!torun) torun=prescheduler_thread;
+	save_fpu_xmm_data(current_thread->fpu_xmm_data);
 	current_thread=torun;
 	curstack=current_thread->stack;
 	if(!torun->ext_id) panic("(SCH) Thread with no ID?");
@@ -318,6 +322,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	current_thread_id=torun->ext_id;
 	proc_switch_sch(current_thread->pid, false);
 	gdt_set_kernel_stack(current_thread->stackbase);
+	fpu_switch();
 	sch_deferred=false;
 	return &curstack;
 }
@@ -562,4 +567,8 @@ thread_msg_status::Enum sch_get_msgstatus(uint64_t ext_id){
 
 void sch_deferred_yield(){
 	if(sch_deferred) sch_yield();
+}
+
+uint8_t *sch_get_fpu_xmm_data(){
+	return current_thread->fpu_xmm_data;
 }

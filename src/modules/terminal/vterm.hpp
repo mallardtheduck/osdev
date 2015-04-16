@@ -33,6 +33,7 @@ private:
     lock term_lock;
     uint64_t scrollcount;
     bool pointer_enabled;
+    bt_terminal_pointer_bitmap *pointer_bitmap;
 
     circular_buffer<uint32_t, 128> keyboard_buffer;
     circular_buffer<bt_terminal_pointer_event, 512> pointer_buffer{zero_event};

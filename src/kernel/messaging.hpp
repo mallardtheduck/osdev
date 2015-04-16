@@ -22,4 +22,8 @@ void msg_acknowledge(btos_api::bt_msg_header &msg, bool set_status=true);
 void msg_nextmessage(btos_api::bt_msg_header &msg);
 void msg_clear(pid_t pid);
 
+void msg_subscribe(btos_api::bt_kernel_messages::Enum message, pid_t pid=proc_current_pid);
+void msg_unsubscribe(btos_api::bt_kernel_messages::Enum, pid_t pid=proc_current_pid);
+void msg_send_event(btos_api::bt_kernel_messages::Enum message, void *content, size_t size);
+
 #endif
