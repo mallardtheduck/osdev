@@ -126,7 +126,7 @@ void mod_wait(pid_t pid){
 }
 
 void mod_kill(pid_t pid){
-    proc_terminate(pid, false);
+    proc_terminate(pid);
 }
 
 void mask_irq(size_t irqno){

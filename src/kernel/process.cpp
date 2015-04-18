@@ -174,6 +174,7 @@ pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent, file_
 
 void proc_end(pid_t pid) {
     if(pid==0) return;
+    debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
     {
         hold_lock hl(proc_lock);
         if (!proc_get(pid)) return;
@@ -323,6 +324,7 @@ void proc_start(void *ptr){
 	if(!stackptr) stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
     sch_set_priority(default_userspace_priority);
 	sch_abortable(true);
+    debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 
@@ -339,6 +341,7 @@ pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
 	info->pid=ret;
 	info->entry=proc.entry;
     info->stackptr=NULL;
+    debug_event_notify(ret, 0, bt_debug_event::ProgramStart);
 	sch_new_thread(&proc_start, (void*)info, 4096);
 	msg_send_event(btos_api::bt_kernel_messages::ProcessStart, (void*)&ret, sizeof(ret));
 	return ret;
@@ -522,10 +525,9 @@ handle_t proc_get_thread_handle(uint64_t thread_id, pid_t pid){
     return 0;
 }
 
-void proc_terminate(pid_t pid, bool crash){
+void proc_terminate(pid_t pid){
     dbgpf("PROC: Terminating PID: %i\n", pid);
     if(pid==0) return; // panic("(PROC) Request to terminate kernel!");
-    if(crash) debug_crash_notify(pid);
     proc_setreturn(-1);
     bool current=false;
     if(pid==proc_current_pid) {

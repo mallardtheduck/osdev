@@ -14,7 +14,7 @@ void debug_extension_uapi(uint16_t fn, isr_regs *regs){
 	}
 }
 
-void debug_crash_notify(pid_t pid){
+void debug_event_notify(pid_t pid, uint64_t thread, bt_debug_event::Enum event, bt_exception::Enum error){
 	if(debugger_pid && debugger_pid != pid && proc_get_status(pid) == proc_status::Running){
 		btos_api::bt_msg_header msg;
 		msg.from = 0;
@@ -22,8 +22,13 @@ void debug_crash_notify(pid_t pid){
 		msg.to = debugger_pid;
 		msg.flags = 0;
 		msg.type = 1;
-		msg.length = sizeof(pid_t);
-		msg.content = (void*)&pid;
+		bt_debug_event_msg content;
+		content.pid = pid;
+		content.thread = thread;
+		content.event = event;
+		content.error = error;
+		msg.length = sizeof(content);
+		msg.content = (void*)&content;
 		uint64_t msg_id = msg_send(msg);
 		btos_api::bt_msg_header reply = msg_recv_reply_block(msg_id);
 		msg_acknowledge(reply, true);

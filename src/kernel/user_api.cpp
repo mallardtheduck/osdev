@@ -332,6 +332,7 @@ USERAPI_HANDLER(BT_WAIT_THREAD){
 }
 
 USERAPI_HANDLER(BT_END_THREAD){
+	debug_event_notify(proc_current_pid, 0, bt_debug_event::ThreadEnd);
     sch_end_thread();
 }
 

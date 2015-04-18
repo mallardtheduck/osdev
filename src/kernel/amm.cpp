@@ -66,6 +66,7 @@ void amm_page_fault_handler(int, isr_regs *regs){
     } else if(regs->error_code & ec_user){
         dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
         out_int_info(*regs);
+        debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::UnresolvedPageFault);
         proc_terminate();
     }else{
         dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);

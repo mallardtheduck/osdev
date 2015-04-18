@@ -74,7 +74,7 @@ handle_t proc_add_thread(uint64_t thread_id, pid_t pid=proc_current_pid);
 uint64_t proc_get_thread(handle_t h, pid_t pid=proc_current_pid);
 handle_t proc_get_thread_handle(uint64_t id, pid_t pid=proc_current_pid);
 
-void proc_terminate(pid_t pid=proc_current_pid, bool crash=true);
+void proc_terminate(pid_t pid=proc_current_pid);
 
 void proc_set_status(proc_status::Enum status, pid_t pid=proc_current_pid);
 proc_status::Enum proc_get_status(pid_t pid=proc_current_pid);

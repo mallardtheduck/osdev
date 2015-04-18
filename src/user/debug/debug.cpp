@@ -1,5 +1,6 @@
 #include <iostream>
 #include <btos_stubs.h>
+#include <debug.h>
 
 uint16_t debug_ext_id;
 
@@ -27,15 +28,18 @@ int main(){
 
     bt_msg_header msg = bt_recv(true);
     while(true){
-        bt_pid_t pid;
-        bt_msg_content(&msg, (void*)&pid, sizeof(pid));
-        std::cout << "PID: " << pid << " crashed." << std::endl;
-        bt_msg_header reply;
-        reply.to = 0;
-        reply.reply_id = msg.id;
-        reply.flags = bt_msg_flags::Reply;
-        reply.length = 0;
-        bt_send(reply);
+        if(msg.from == 0 && msg.source == debug_ext_id) {
+            bt_debug_event_msg content;
+            bt_msg_content(&msg, (void *) &content, sizeof(content));
+            std::cout << "PID: " << content.pid << " event." << std::endl;
+            std::cout << "Event ID: " << content.event << " Exception ID: " << content.error << std::endl;
+            bt_msg_header reply;
+            reply.to = 0;
+            reply.reply_id = msg.id;
+            reply.flags = bt_msg_flags::Reply;
+            reply.length = 0;
+            bt_send(reply);
+        }
         bt_next_msg(&msg);
     }
 
