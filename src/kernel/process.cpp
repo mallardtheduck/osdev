@@ -212,7 +212,11 @@ void proc_end(pid_t pid) {
                 }
             }
         }
-        if(sch_get_pid_threadcount(pid) > 0) sch_setblock(&proc_threads_blockcheck, (void*)&pid);
+        if(sch_get_pid_threadcount(pid) > 0) {
+            release_lock(proc_lock);
+            sch_setblock(&proc_threads_blockcheck, (void *) &pid);
+            take_lock_exclusive(proc_lock);
+        }
         cont = true;
         while (cont) {
             cont = false;
