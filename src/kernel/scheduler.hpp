@@ -12,8 +12,9 @@ namespace sch_thread_status {
 		Runnable = 0,
 		Blocked = 1,
 		DebugStopped = 2,
-		Ending = 3,
-		Special = 4,
+		DebugBlocked = 3,
+		Ending = 4,
+		Special = 5,
 	};
 }
 
