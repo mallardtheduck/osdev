@@ -320,7 +320,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	if(!torun->ext_id) panic("(SCH) Thread with no ID?");
 	lock_transfer(sch_lock, torun->ext_id);
 	current_thread_id=torun->ext_id;
-	proc_switch_sch(current_thread->pid, false);
+	proc_switch_sch(current_thread->pid);
 	gdt_set_kernel_stack(current_thread->stackbase);
 	fpu_switch();
 	sch_deferred=false;
@@ -571,4 +571,14 @@ void sch_deferred_yield(){
 
 uint8_t *sch_get_fpu_xmm_data(){
 	return current_thread->fpu_xmm_data;
+}
+
+size_t sch_get_pid_threadcount(pid_t pid){
+	take_lock_recursive(sch_lock);
+	size_t ret=0;
+	for(size_t i=0; i<threads->size(); ++i){
+		if((*threads)[i]->pid == pid) ++ret;
+	}
+	release_lock(sch_lock);
+	return ret;
 }

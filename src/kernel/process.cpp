@@ -123,8 +123,8 @@ proc_process *proc_get(pid_t pid){
 }
 
 //Note: Called from scheduler. No locking, memory allocation, etc. available!
-void proc_switch_sch(pid_t pid, bool setthread){
-	if(setthread) sch_setpid(pid);
+void proc_switch_sch(pid_t pid){
+	//sch_setpid(pid);
 	if(pid!=proc_current_pid){
 		proc_process *newproc=NULL;
         for(size_t i=0; i<proc_processes->size(); ++i){
@@ -138,15 +138,11 @@ void proc_switch_sch(pid_t pid, bool setthread){
 	}
 }
 
-bool proc_switch(pid_t pid, bool setthread){
-	if(setthread) sch_setpid(pid);
+bool proc_switch(pid_t pid){
+	sch_setpid(pid);
 	if(pid!=proc_current_pid){
 		proc_process *newproc=proc_get(pid);
         if(!newproc) return false;
-		if(setthread){
-			proc_remove_thread(sch_get_id(), proc_current_pid);
-			proc_add_thread(sch_get_id(), pid);
-		}
         {
             hold_lock hl(proc_lock, false);
             proc_current_process = newproc;
@@ -170,6 +166,11 @@ pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent, file_
 		proc_processes->push_back(newproc);
 	}
 	return newproc->pid;
+}
+
+static bool proc_threads_blockcheck(void *p){
+    pid_t pid = *(pid_t*)p;
+    return sch_get_pid_threadcount(pid) > 0;
 }
 
 void proc_end(pid_t pid) {
@@ -211,6 +212,7 @@ void proc_end(pid_t pid) {
                 }
             }
         }
+        if(sch_get_pid_threadcount(pid) > 0) sch_setblock(&proc_threads_blockcheck, (void*)&pid);
         cont = true;
         while (cont) {
             cont = false;
