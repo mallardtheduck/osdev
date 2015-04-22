@@ -7,6 +7,16 @@ const size_t default_stack_size=16*1024;
 extern bool sch_inited;
 typedef bool (*sch_blockcheck)(void*);
 
+namespace sch_thread_status {
+	enum Enum{
+		Runnable = 0,
+		Blocked = 1,
+		DebugStopped = 2,
+		Ending = 3,
+		Special = 4,
+	};
+}
+
 void sch_isr(int,isr_regs*);
 void sch_init();
 uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size=default_stack_size);
