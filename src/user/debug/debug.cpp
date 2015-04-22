@@ -15,7 +15,7 @@ uint32_t call_debug(uint16_t fn, uint32_t b, uint32_t c, uint32_t d){
 }
 
 void debug_register(){
-    call_debug(0, 0, 0, 0);
+    call_debug(bt_debug_function::Register, 0, 0, 0);
 }
 
 int main(){

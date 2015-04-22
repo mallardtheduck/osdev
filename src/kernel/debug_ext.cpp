@@ -5,7 +5,10 @@ static pid_t debugger_pid=0;
 
 void debug_extension_uapi(uint16_t fn, isr_regs *regs){
 	switch(fn){
-		case 0:
+		case bt_debug_function::Query:
+			regs->eax = (uint32_t) debugger_pid;
+			break;
+		case bt_debug_function::Register:
 			debugger_pid = proc_current_pid;
 			regs->eax = 1;
 			break;

@@ -24,6 +24,17 @@ ENUM_START(bt_exception)
 ENUM_END
 ENUM_TYPE(bt_exception);
 
+ENUM_START(bt_debug_function)
+	ENUM_SET(bt_debug_function, Query, 0),
+	ENUM_SET(bt_debug_function, Register, 1),
+	ENUM_SET(bt_debug_function, StopProcess, 2),
+	ENUM_SET(bt_debug_function, ContinueProcess, 3),
+	ENUM_SET(bt_debug_function, Peek, 4),
+	ENUM_SET(bt_debug_function, Poke, 5),
+	ENUM_SET(bt_debug_function, GetStackPtr, 6),
+ENUM_END
+ENUM_TYPE(bt_debug_function);
+
 struct bt_debug_event_msg{
 	ENUM_NAME(bt_debug_event) event;
 	ENUM_NAME(bt_exception) error;
