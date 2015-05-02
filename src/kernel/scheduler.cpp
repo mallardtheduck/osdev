@@ -577,3 +577,31 @@ size_t sch_get_pid_threadcount(pid_t pid){
 	release_lock(sch_lock);
 	return ret;
 }
+
+void sch_debug_stop(pid_t pid){
+	hold_lock hl(sch_lock);	
+	for(size_t i=0; i<threads->size(); ++i){
+		sch_thread *c = (*threads)[i];
+		if(c->pid == pid){
+			if(c->status == sch_thread_status::Runnable){
+				c->status = sch_thread_status::DebugStopped;
+			}else if(c->status == sch_thread_status::Blocked){
+				c->status = sch_thread_status::DebugBlocked;
+			}
+		}
+	}
+}
+
+void sch_debug_resume(pid_t pid){
+	hold_lock hl(sch_lock);	
+	for(size_t i=0; i<threads->size(); ++i){
+		sch_thread *c = (*threads)[i];
+		if(c->pid == pid){
+			if(c->status == sch_thread_status::DebugStopped){
+				c->status = sch_thread_status::Runnable;
+			}else if(c->status == sch_thread_status::DebugBlocked){
+				c->status = sch_thread_status::Blocked;
+			}
+		}
+	}
+}

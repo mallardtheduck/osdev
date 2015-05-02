@@ -2,6 +2,9 @@
 #define _DEBUG_H
 
 #include "bt_enum.h"
+#if !defined(KERNEL) && !defined(KERNEL_MODULE)
+#include "btos_api.h"
+#endif
 
 ENUM_START(bt_debug_event)
 	ENUM_SET(bt_debug_event, ProgramStart, 0),
@@ -40,6 +43,12 @@ struct bt_debug_event_msg{
 	ENUM_NAME(bt_exception) error;
 	uint64_t pid;
 	uint64_t thread;
+};
+
+struct bt_debug_copy_params{
+	bt_pid_t pid;
+	void *addr;
+	size_t size;
 };
 
 #endif //_DEBUG_H

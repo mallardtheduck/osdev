@@ -31,7 +31,7 @@ void userapi_handler(int, isr_regs *regs){
 	}
 }
 
-static bool is_safe_ptr(uint32_t ptr){
+bool is_safe_ptr(uint32_t ptr){
 	return ptr>=VMM_USERSPACE_START;
 }
 

@@ -6,6 +6,7 @@
 #include "../include/locktype.h"
 
 typedef uint64_t pid_t;
+typedef pid_t bt_pid_t;
 typedef uint32_t handle_t;
 
 namespace proc_env_flags{

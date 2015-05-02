@@ -4,5 +4,6 @@
 #include "kernel.hpp"
 
 void userapi_init();
+bool is_safe_ptr(uint32_t ptr);
 
 #endif
