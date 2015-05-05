@@ -98,7 +98,7 @@ enum{
 struct bt_buffer{
 	size_t size;
 	char *buffer;
-};
+} __attribute__((packed));
 
 #ifndef __cplusplus
 typedef struct bt_buffer bt_fioctl_buffer;

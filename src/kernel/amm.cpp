@@ -372,3 +372,17 @@ void amm_closemap(uint64_t id) {
         }
     }
 }
+
+bool amm_resolve_addr(void *addr){
+	if(vmm_cur_pagedir->is_mapped(addr)) return true;
+	else if(vmm_cur_pagedir->is_mapped(addr, false)){
+		addr = (void*)((uint32_t)addr & VMM_ADDRESS_MASK);
+		uint32_t physaddr=vmm_cur_pagedir->virt2phys(addr, false);
+		if(physaddr == amm_mmap_marker){
+			amm_resolve_mmap(addr);
+			return true;
+		}
+		return false;
+	}
+	return false;
+}
