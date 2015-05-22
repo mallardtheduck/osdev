@@ -253,6 +253,7 @@
     <VirtualDirectory Name="debug">
       <File Name="user/debug/Makefile"/>
       <File Name="user/debug/debug.cpp"/>
+      <File Name="user/debug/symbols.cpp"/>
     </VirtualDirectory>
     <VirtualDirectory Name="msgtest">
       <File Name="user/msgtest/Makefile"/>

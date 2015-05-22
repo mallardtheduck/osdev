@@ -219,6 +219,9 @@ extern "C" void isr_handler(isr_regs *ctx){
     if(sch_can_lock()) {
         sch_update_eip(ctx->eip);
         sch_abortable(false);
+		if(ctx->cs == 0x1B){
+			sch_update_usercontext(ctx);
+		}
     }
 	if(handlers[ctx->interrupt_number]) handlers[ctx->interrupt_number](ctx->interrupt_number, ctx);
 	else if(ctx->interrupt_number==0x06){
@@ -285,6 +288,9 @@ extern "C" void irq_handler(irq_regs *r) {
     if(sch_can_lock()) {
         sch_update_eip(r->eip);
         sch_abortable(false);
+		if(r->cs == 0x1B){
+			sch_update_usercontext((isr_regs*)r);
+		}
     }
 	//out_regs(*r);
 	int irq=r->int_no-IRQ_BASE;

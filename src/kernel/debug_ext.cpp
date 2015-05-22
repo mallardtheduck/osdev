@@ -37,6 +37,13 @@ void debug_extension_uapi(uint16_t fn, isr_regs *regs) {
 					debug_copymem(proc_current_pid, (void*)regs->ebx, p->pid, p->addr, p->size);
 				}
 			}
+		case bt_debug_function::GetContext:
+			if(is_safe_ptr(regs->ecx, sizeof(isr_regs))){
+				void *dst = (void*)regs->ecx;
+				void *src = sch_get_usercontext(regs->ebx);
+				memcpy(dst, src, sizeof(isr_regs));
+			}
+			break;
 		default:
 			break;
 	}

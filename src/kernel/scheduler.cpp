@@ -25,6 +25,7 @@ struct sch_thread{
 	uint32_t magic;
 	void *stackptr;
 	void *stackbase;
+	isr_regs *usercontext;
 	sch_start *start;
 	uint32_t priority;
 	uint32_t dynpriority;
@@ -544,7 +545,7 @@ void sch_prescheduler_thread(void*){
 }
 
 static sch_thread *sch_get(uint64_t ext_id){
-	hold_lock hl(sch_lock);
+	hold_lock hl(sch_lock, false);
 	for(size_t i=0; i<threads->size(); ++i){
 		if((*threads)[i]->ext_id==ext_id) return (*threads)[i];
 	}
@@ -552,11 +553,21 @@ static sch_thread *sch_get(uint64_t ext_id){
 }
 
 void sch_set_msgstaus(thread_msg_status::Enum status, uint64_t ext_id){
-	current_thread->msgstatus=status;
+	if(ext_id == current_thread_id){
+		current_thread->msgstatus=status;
+	}else{
+		hold_lock hl(sch_lock);
+		sch_get(ext_id)->msgstatus = status;
+	}
 }
 
 thread_msg_status::Enum sch_get_msgstatus(uint64_t ext_id){
-	return current_thread->msgstatus;
+	if(ext_id == current_thread_id){
+		return current_thread->msgstatus;
+	}else{
+		hold_lock hl(sch_lock);
+		return sch_get(ext_id)->msgstatus;
+	}
 }
 
 
@@ -603,5 +614,24 @@ void sch_debug_resume(pid_t pid){
 				c->status = sch_thread_status::Blocked;
 			}
 		}
+	}
+}
+
+void sch_update_usercontext(isr_regs *uc, uint64_t ext_id){
+	if(ext_id == current_thread_id){
+		current_thread->usercontext = uc;
+	}else{
+		hold_lock hl(sch_lock);
+		sch_get(ext_id)->usercontext = uc;
+	}
+
+}
+
+void *sch_get_usercontext(uint64_t ext_id){
+	if(ext_id == current_thread_id){
+		return current_thread->usercontext;
+	}else{
+		hold_lock hl(sch_lock);
+		return sch_get(ext_id)->usercontext;
 	}
 }

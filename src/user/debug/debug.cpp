@@ -1,8 +1,17 @@
 #include <iostream>
 #include <btos_stubs.h>
 #include <debug.h>
+#include <cstdio>
 
 uint16_t debug_ext_id;
+
+struct isr_regs {
+	uint32_t gs, fs, es, ds;
+	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
+	uint32_t interrupt_number, error_code;
+	uint32_t eip, cs, eflags;
+	uint32_t useresp, userss;
+} __attribute__((packed));
 
 bool init_debug(){
     debug_ext_id = bt_query_extension("DEBUG");
@@ -16,6 +25,21 @@ uint32_t call_debug(uint16_t fn, uint32_t b, uint32_t c, uint32_t d){
 
 void debug_register(){
     call_debug(bt_debug_function::Register, 0, 0, 0);
+}
+
+void out_context(const isr_regs ctx){
+	printf("INTERRUPT %x ERRCODE: %x\n", ctx.interrupt_number, ctx.error_code);
+	printf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
+	printf("EDI: %x ESI: %x EBP: %x KESP: %x\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
+	printf("EIP: %x CS: %x SS*: %x\n", ctx.eip, ctx.cs, ctx.userss);
+	printf("UESP: %x\n", ctx.useresp);
+	printf("EFLAGS: %x\n", ctx.eflags);
+}
+
+void debug_showcontext(uint64_t thread){
+	isr_regs ctx;
+	call_debug(bt_debug_function::GetContext, (uint32_t)thread, (uint32_t)&ctx, 0);
+	out_context(ctx);
 }
 
 int main(){
@@ -33,6 +57,9 @@ int main(){
             bt_msg_content(&msg, (void *) &content, sizeof(content));
             std::cout << "PID: " << content.pid << " event." << std::endl;
             std::cout << "Event ID: " << content.event << " Exception ID: " << content.error << std::endl;
+			if(content.event == bt_debug_event::Exception){
+				debug_showcontext(content.thread);
+			}
             bt_msg_header reply;
             reply.to = 0;
             reply.reply_id = msg.id;
