@@ -254,6 +254,8 @@
       <File Name="user/debug/Makefile"/>
       <File Name="user/debug/debug.cpp"/>
       <File Name="user/debug/symbols.cpp"/>
+      <File Name="user/debug/stacktrace.cpp"/>
+      <File Name="user/debug/debug.hpp"/>
     </VirtualDirectory>
     <VirtualDirectory Name="msgtest">
       <File Name="user/msgtest/Makefile"/>

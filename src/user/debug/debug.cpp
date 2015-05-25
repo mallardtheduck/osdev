@@ -1,17 +1,6 @@
-#include <iostream>
-#include <btos_stubs.h>
-#include <debug.h>
-#include <cstdio>
+#include "debug.hpp"
 
 uint16_t debug_ext_id;
-
-struct isr_regs {
-	uint32_t gs, fs, es, ds;
-	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
-	uint32_t interrupt_number, error_code;
-	uint32_t eip, cs, eflags;
-	uint32_t useresp, userss;
-} __attribute__((packed));
 
 bool init_debug(){
     debug_ext_id = bt_query_extension("DEBUG");
@@ -27,7 +16,7 @@ void debug_register(){
     call_debug(bt_debug_function::Register, 0, 0, 0);
 }
 
-void out_context(const isr_regs ctx){
+void out_context(const context ctx){
 	printf("INTERRUPT %x ERRCODE: %x\n", ctx.interrupt_number, ctx.error_code);
 	printf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
 	printf("EDI: %x ESI: %x EBP: %x KESP: %x\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
@@ -36,10 +25,31 @@ void out_context(const isr_regs ctx){
 	printf("EFLAGS: %x\n", ctx.eflags);
 }
 
-void debug_showcontext(uint64_t thread){
-	isr_regs ctx;
+context get_context(uint64_t thread){
+	context ctx;
 	call_debug(bt_debug_function::GetContext, (uint32_t)thread, (uint32_t)&ctx, 0);
+	return ctx;
+}
+
+void debug_showcontext(uint64_t thread){
+	context ctx = get_context(thread);
 	out_context(ctx);
+}
+
+void debug_peek(void *dst, pid_t pid, uint32_t src, size_t size){
+	bt_debug_copy_params p;
+	p.addr = (void*)src;
+	p.pid = pid;
+	p.size = size;
+	call_debug(bt_debug_function::Peek, (uint32_t)dst, (uint32_t)&p, 0);
+}
+
+void debug_poke(pid_t pid, uint32_t dst, void *src, size_t size){
+	bt_debug_copy_params p;
+	p.addr =  (void*)dst;
+	p.pid = pid;
+	p.size = size;
+	call_debug(bt_debug_function::Poke, (uint32_t)src, (uint32_t)&p, 0);
 }
 
 int main(){
@@ -58,7 +68,9 @@ int main(){
             std::cout << "PID: " << content.pid << " event." << std::endl;
             std::cout << "Event ID: " << content.event << " Exception ID: " << content.error << std::endl;
 			if(content.event == bt_debug_event::Exception){
-				debug_showcontext(content.thread);
+				context ctx = get_context(content.thread);
+				out_context(ctx);
+				do_stacktrace(content.pid, ctx);
 			}
             bt_msg_header reply;
             reply.to = 0;
