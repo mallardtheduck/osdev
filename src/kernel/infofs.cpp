@@ -65,10 +65,13 @@ size_t infofs_write(void *filedata, size_t bytes, char *buf){
 	return 0;
 }
 
-size_t infofs_seek(void *filedata, int pos, bool relative){
+size_t infofs_seek(void *filedata, size_t pos, uint32_t flags){
 	if(!filedata) return 0;
     infofs_filehandle *fdata=(infofs_filehandle*)filedata;
-    if(relative) fdata->pos+=pos;
+    if(flags & FS_Relative) fdata->pos+=pos;
+	else if (flags & FS_Backwards){
+		fdata->pos = fdata->size - pos;
+	}else if(flags == (FS_Relative | FS_Backwards)) fdata->pos -= pos;
     else fdata->pos=pos;
     return fdata->pos;
 }
@@ -110,10 +113,13 @@ bool infofs_write_dir(void *dirdata, directory_entry entry){
 	return false;
 }
 
-size_t infofs_dirseek(void *dirdata, int pos, bool relative){
+size_t infofs_dirseek(void *dirdata, size_t pos, uint32_t flags){
 	if(!dirdata) return 0;
 	infofs_dirhandle *ddata=(infofs_dirhandle*)dirdata;
-	if(relative)ddata->pos+=pos;
+	if(flags & FS_Relative) ddata->pos+=pos;
+	else if(flags & FS_Backwards){
+		ddata->pos = info_items->size() - pos;
+	} else if(flags == (FS_Backwards | FS_Relative)) ddata->pos-=pos;
 	else ddata->pos=pos;
 	return ddata->pos;
 }

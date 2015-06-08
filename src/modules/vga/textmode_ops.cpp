@@ -53,17 +53,25 @@ size_t text_write(vga_instance *inst, size_t bytes, char *buf){
     }
 }
 
-size_t text_seek(vga_instance *inst, size_t pos, bool relative){
+size_t text_seek(vga_instance *inst, size_t pos, uint32_t flags){
     size_t ret=0;
     if(inst->mode==bt_vid_text_access_mode::Raw){
-        if(relative) inst->pos+=pos;
+        if(flags & FS_Relative) inst->pos+=pos;
+		else if(flags & FS_Backwards){
+			inst->pos = (current_mode->vidmode.height * current_mode->vidmode.width * 2) - pos;
+		}else if(flags == (FS_Relative | FS_Backwards)) inst->pos-=pos;
         else inst->pos=pos;
         ret=inst->pos;
     }else{
         size_t cpos;
-        if(relative){
+        if(flags & FS_Relative){
             cpos=(text_row * current_mode->vidmode.width) + text_column;
             cpos+=pos;
+		}else if(flags & FS_Backwards){
+			cpos = (current_mode->vidmode.height * current_mode->vidmode.width) - pos;
+		}else if(flags == (FS_Relative | FS_Backwards)){
+			cpos=(text_row * current_mode->vidmode.width) + text_column;
+            cpos-=pos;
         }else{
             cpos=pos;
         }

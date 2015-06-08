@@ -34,13 +34,17 @@ size_t graphics_write(vga_instance *inst, size_t bytes, char *buf){
     return bytes;
 }
 
-size_t graphics_seek(vga_instance *inst, size_t pos, bool relative){
-    if(relative){
+size_t graphics_seek(vga_instance *inst, size_t pos, uint32_t flags){
+	size_t maxpix=current_mode->vidmode.width * current_mode->vidmode.height;
+    if(flags & FS_Relative){
         inst->pos+=pos;
+	}else if(flags & FS_Backwards){
+		inst->pos=maxpix - pos;
+	}else if(flags == (FS_Relative | FS_Backwards)){
+		inst->pos-=pos;
     }else{
         inst->pos=pos;
     }
-    size_t maxpix=current_mode->vidmode.width * current_mode->vidmode.height;
     if(inst->pos > maxpix) inst->pos=maxpix;
     if(current_mode->vidmode.bpp == 4 && inst->pos > maxpix/2) inst->pos=maxpix/2;
     return inst->pos;

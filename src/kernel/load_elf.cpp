@@ -22,7 +22,7 @@ void al_free(aligned_memory al){
 
 Elf32_Ehdr elf_read_header(file_handle &file){
 	Elf32_Ehdr ret;
-	fs_seek(file, 0, false);
+	fs_seek(file, 0, 0);
 	fs_read(file, sizeof(ret), (char*)&ret);
 	return ret;
 }

@@ -71,7 +71,7 @@ public:
 
     size_t write(vterm_options &opts, size_t size, char *buf);
     size_t read(vterm_options &opts, size_t size, char *buf);
-    size_t seek(vterm_options &opts, size_t pos, bool relative);
+    size_t seek(vterm_options &opts, size_t pos, uint32_t flags);
     int ioctl(vterm_options &opts, int fn, size_t size, char *buf);
     void open();
     void close();
