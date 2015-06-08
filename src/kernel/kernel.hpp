@@ -53,6 +53,7 @@ extern "C"{
 #include "infofs.hpp"
 #include "amm.hpp"
 #include "amm_page_accounting.hpp"
+#include "debug_ext.hpp"
 
 void GDT_init();
 void IDT_init();

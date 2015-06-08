@@ -123,8 +123,8 @@ proc_process *proc_get(pid_t pid){
 }
 
 //Note: Called from scheduler. No locking, memory allocation, etc. available!
-void proc_switch_sch(pid_t pid, bool setthread){
-	if(setthread) sch_setpid(pid);
+void proc_switch_sch(pid_t pid){
+	//sch_setpid(pid);
 	if(pid!=proc_current_pid){
 		proc_process *newproc=NULL;
         for(size_t i=0; i<proc_processes->size(); ++i){
@@ -138,15 +138,11 @@ void proc_switch_sch(pid_t pid, bool setthread){
 	}
 }
 
-bool proc_switch(pid_t pid, bool setthread){
-	if(setthread) sch_setpid(pid);
+bool proc_switch(pid_t pid){
+	sch_setpid(pid);
 	if(pid!=proc_current_pid){
 		proc_process *newproc=proc_get(pid);
         if(!newproc) return false;
-		if(setthread){
-			proc_remove_thread(sch_get_id(), proc_current_pid);
-			proc_add_thread(sch_get_id(), pid);
-		}
         {
             hold_lock hl(proc_lock, false);
             proc_current_process = newproc;
@@ -172,8 +168,14 @@ pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent, file_
 	return newproc->pid;
 }
 
+static bool proc_threads_blockcheck(void *p){
+    pid_t pid = *(pid_t*)p;
+    return sch_get_pid_threadcount(pid) > 0;
+}
+
 void proc_end(pid_t pid) {
     if(pid==0) return;
+    debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
     {
         hold_lock hl(proc_lock);
         if (!proc_get(pid)) return;
@@ -209,6 +211,11 @@ void proc_end(pid_t pid) {
                     }
                 }
             }
+        }
+        if(sch_get_pid_threadcount(pid) > 0) {
+            release_lock(proc_lock);
+            sch_setblock(&proc_threads_blockcheck, (void *) &pid);
+            take_lock_exclusive(proc_lock);
         }
         cont = true;
         while (cont) {
@@ -323,6 +330,7 @@ void proc_start(void *ptr){
 	if(!stackptr) stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
     sch_set_priority(default_userspace_priority);
 	sch_abortable(true);
+    debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 
@@ -339,6 +347,7 @@ pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
 	info->pid=ret;
 	info->entry=proc.entry;
     info->stackptr=NULL;
+    debug_event_notify(ret, 0, bt_debug_event::ProgramStart);
 	sch_new_thread(&proc_start, (void*)info, 4096);
 	msg_send_event(btos_api::bt_kernel_messages::ProcessStart, (void*)&ret, sizeof(ret));
 	return ret;

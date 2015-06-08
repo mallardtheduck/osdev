@@ -252,16 +252,19 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
     return 0;
 }
 
-size_t vterm::seek(vterm_options &/*opts*/, size_t pos, bool relative) {
+size_t vterm::seek(vterm_options &/*opts*/, size_t pos, uint32_t flags) {
     hold_lock hl(&term_lock, false);
     curpid=getpid();
     int factor=1;
     if(vidmode.textmode) factor=2;
-    if(relative) bufpos+=pos*factor;
+    if(flags & FS_Relative) bufpos+=pos*factor;
+	else if(flags & FS_Backwards){
+		bufpos = bufsize - (pos*factor);
+	}else if(flags == (FS_Relative | FS_Backwards)) bufpos -= (pos*factor);
     else bufpos=pos*factor;
     if(bufpos>bufsize) bufpos=bufsize;
     if(backend->is_active(id)){
-        backend->display_seek(pos, relative);
+        backend->display_seek(pos, flags);
     }
     return bufpos/factor;
 }

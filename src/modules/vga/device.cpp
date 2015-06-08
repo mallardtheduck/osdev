@@ -53,12 +53,12 @@ size_t vga_write(void *instance, size_t bytes, char *buf){
     }
 }
 
-size_t vga_seek(void *instance, size_t pos, bool relative){
+size_t vga_seek(void *instance, size_t pos, uint32_t flags){
     vga_instance *inst=(vga_instance*)instance;
     if(current_mode->vidmode.textmode){
-        return text_seek(inst, pos, relative);
+        return text_seek(inst, pos, flags);
     }else {
-        return graphics_seek(inst, pos, relative);
+        return graphics_seek(inst, pos, flags);
     }
 }
 

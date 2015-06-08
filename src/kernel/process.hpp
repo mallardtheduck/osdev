@@ -6,6 +6,7 @@
 #include "../include/locktype.h"
 
 typedef uint64_t pid_t;
+typedef pid_t bt_pid_t;
 typedef uint32_t handle_t;
 
 namespace proc_env_flags{
@@ -35,8 +36,8 @@ extern pid_t proc_current_pid;
 #include "load_elf.hpp"
 
 void proc_init();
-bool proc_switch(pid_t pid, bool setthread=true);
-void proc_switch_sch(pid_t pid, bool setthread=true);
+bool proc_switch(pid_t pid);
+void proc_switch_sch(pid_t pid);
 pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent=proc_current_pid);
 void proc_end(pid_t pid=proc_current_pid);
 

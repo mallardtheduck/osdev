@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeLite_Project Name="os" InternalType="">
+  <Plugins>
+    <Plugin Name="qmake">
+      <![CDATA[00010001N0005Debug000000000000]]>
+    </Plugin>
+    <Plugin Name="CMakePlugin">
+      <![CDATA[[{
+  "name": "Debug",
+  "enabled": false,
+  "buildDirectory": "build",
+  "sourceDirectory": "$(ProjectPath)",
+  "generator": "",
+  "buildType": "",
+  "arguments": [],
+  "parentProject": ""
+ }]]]>
+    </Plugin>
+  </Plugins>
+  <Description/>
+  <Dependencies/>
+  <VirtualDirectory Name="kernel">
+    <File Name="kernel/panic.hpp"/>
+    <File Name="kernel/user_api.hpp"/>
+    <File Name="kernel/devfs.hpp"/>
+    <File Name="kernel/modules.hpp"/>
+    <File Name="kernel/infofs.hpp"/>
+    <File Name="kernel/syscalls.hpp"/>
+    <File Name="kernel/pic.hpp"/>
+    <File Name="kernel/process_asm.s"/>
+    <File Name="kernel/strutil.hpp"/>
+    <File Name="kernel/debug_ext.hpp"/>
+    <File Name="kernel/serdbg.hpp"/>
+    <File Name="kernel/extensions.hpp"/>
+    <File Name="kernel/handles.cpp"/>
+    <File Name="kernel/amm.hpp"/>
+    <File Name="kernel/handles.hpp"/>
+    <File Name="kernel/amm_flags.hpp"/>
+    <File Name="kernel/amm_page_accounting.hpp"/>
+    <File Name="kernel/util.hpp"/>
+    <File Name="kernel/drivermgr.hpp"/>
+    <File Name="kernel/kernel.cpp"/>
+    <File Name="kernel/locks.hpp"/>
+    <File Name="kernel/scheduler_asm.s"/>
+    <File Name="kernel/strutil.cpp"/>
+    <File Name="kernel/filesystems.hpp"/>
+    <File Name="kernel/console.hpp"/>
+    <File Name="kernel/extensions.cpp"/>
+    <File Name="kernel/messaging.hpp"/>
+    <File Name="kernel/process_asm.o"/>
+    <File Name="kernel/debug_ext.cpp"/>
+    <File Name="kernel/scheduler.hpp"/>
+    <File Name="kernel/vmm_pagedir.hpp"/>
+    <File Name="kernel/modules.cpp"/>
+    <File Name="kernel/vmm.hpp"/>
+    <File Name="kernel/kernel.hpp"/>
+    <File Name="kernel/liballoc_hooks.cpp"/>
+    <File Name="kernel/list.hpp"/>
+    <File Name="kernel/liballoc.h"/>
+    <File Name="kernel/string.hpp"/>
+    <File Name="kernel/serdbg.cpp"/>
+    <File Name="kernel/memcpy.h"/>
+    <File Name="kernel/util.cpp"/>
+    <File Name="kernel/Makefile"/>
+    <File Name="kernel/cpuid.h"/>
+    <File Name="kernel/locks.cpp"/>
+    <File Name="kernel/amm_page_accounting.cpp"/>
+    <File Name="kernel/cpu.hpp"/>
+    <File Name="kernel/devfs.cpp"/>
+    <File Name="kernel/io.hpp"/>
+    <File Name="kernel/cpu.cpp"/>
+    <File Name="kernel/process.hpp"/>
+    <File Name="kernel/drivermgr.cpp"/>
+    <File Name="kernel/gdt.cpp"/>
+    <File Name="kernel/load_elf.hpp"/>
+    <File Name="kernel/pic.cpp"/>
+    <File Name="kernel/string.cpp"/>
+    <File Name="kernel/gdtidt.s"/>
+    <File Name="kernel/multiboot.h"/>
+    <File Name="kernel/syscalls.cpp"/>
+    <File Name="kernel/boot.s"/>
+    <File Name="kernel/printf.h"/>
+    <File Name="kernel/infofs.cpp"/>
+    <File Name="kernel/idt.hpp"/>
+    <File Name="kernel/panic.cpp"/>
+    <File Name="kernel/printf.c"/>
+    <File Name="kernel/load_elf.cpp"/>
+    <File Name="kernel/messaging.cpp"/>
+    <File Name="kernel/console.cpp"/>
+    <File Name="kernel/filesystems.cpp"/>
+    <File Name="kernel/ministl.hpp"/>
+    <File Name="kernel/cpuid.c"/>
+    <File Name="kernel/user_api.cpp"/>
+    <File Name="kernel/idt.cpp"/>
+    <File Name="kernel/memcpy.c"/>
+    <File Name="kernel/amm.cpp"/>
+    <File Name="kernel/scheduler.cpp"/>
+    <File Name="kernel/vmm.cpp"/>
+    <File Name="kernel/process.cpp"/>
+    <File Name="kernel/liballoc.c"/>
+  </VirtualDirectory>
+  <VirtualDirectory Name="modules">
+    <VirtualDirectory Name="rtc">
+      <File Name="modules/rtc/Makefile"/>
+      <File Name="modules/rtc/rtc.c"/>
+    </VirtualDirectory>
+    <File Name="modules/Makefile"/>
+    <VirtualDirectory Name="ata">
+      <File Name="modules/ata/Makefile"/>
+      <File Name="modules/ata/ata.cpp"/>
+      <File Name="modules/ata/ata.hpp"/>
+      <File Name="modules/ata/cache.cpp"/>
+      <File Name="modules/ata/dma.cpp"/>
+      <File Name="modules/ata/mbr.cpp"/>
+      <File Name="modules/ata/queue.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="boot">
+      <File Name="modules/boot/Makefile"/>
+      <File Name="modules/boot/boot.cpp"/>
+      <File Name="modules/boot/ini.c"/>
+      <File Name="modules/boot/ini.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="fat">
+      <File Name="modules/fat/Makefile"/>
+      <File Name="modules/fat/fat.cpp"/>
+      <File Name="modules/fat/fat_access.c"/>
+      <File Name="modules/fat/fat_access.h"/>
+      <File Name="modules/fat/fat_cache.c"/>
+      <File Name="modules/fat/fat_cache.h"/>
+      <File Name="modules/fat/fat_defs.h"/>
+      <File Name="modules/fat/fat_filelib.c"/>
+      <File Name="modules/fat/fat_filelib.h"/>
+      <File Name="modules/fat/fat_format.c"/>
+      <File Name="modules/fat/fat_format.h"/>
+      <File Name="modules/fat/fat_list.h"/>
+      <File Name="modules/fat/fat_misc.c"/>
+      <File Name="modules/fat/fat_misc.h"/>
+      <File Name="modules/fat/fat_opts.h"/>
+      <File Name="modules/fat/fat_string.c"/>
+      <File Name="modules/fat/fat_string.h"/>
+      <File Name="modules/fat/fat_table.c"/>
+      <File Name="modules/fat/fat_table.h"/>
+      <File Name="modules/fat/fat_types.h"/>
+      <File Name="modules/fat/fat_write.c"/>
+      <File Name="modules/fat/fat_write.h"/>
+      <File Name="modules/fat/queue.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="pci">
+      <File Name="modules/pci/Makefile"/>
+      <File Name="modules/pci/extension.cpp"/>
+      <File Name="modules/pci/pci.cpp"/>
+      <File Name="modules/pci/pci.hpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="ps2">
+      <File Name="modules/ps2/Makefile"/>
+      <File Name="modules/ps2/keyboard.cpp"/>
+      <File Name="modules/ps2/mouse.cpp"/>
+      <File Name="modules/ps2/ps2.cpp"/>
+      <File Name="modules/ps2/ps2.hpp"/>
+      <File Name="modules/ps2/us-layout.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="terminal">
+      <File Name="modules/terminal/backend.hpp"/>
+      <File Name="modules/terminal/console_backend.cpp"/>
+      <File Name="modules/terminal/console_backend.hpp"/>
+      <File Name="modules/terminal/device.cpp"/>
+      <File Name="modules/terminal/device.hpp"/>
+      <File Name="modules/terminal/graphics_pointer.cpp"/>
+      <File Name="modules/terminal/holdlock.hpp"/>
+      <File Name="modules/terminal/terminal.cpp"/>
+      <File Name="modules/terminal/terminal.hpp"/>
+      <File Name="modules/terminal/vterm.cpp"/>
+      <File Name="modules/terminal/vterm.hpp"/>
+      <File Name="modules/terminal/Makefile"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="test">
+      <File Name="modules/test/Makefile"/>
+      <File Name="modules/test/test.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="vga">
+      <File Name="modules/vga/Makefile"/>
+      <File Name="modules/vga/device.cpp"/>
+      <File Name="modules/vga/device.hpp"/>
+      <File Name="modules/vga/font.cpp"/>
+      <File Name="modules/vga/graphics_ops.cpp"/>
+      <File Name="modules/vga/modes.cpp"/>
+      <File Name="modules/vga/modes.hpp"/>
+      <File Name="modules/vga/ops.hpp"/>
+      <File Name="modules/vga/textmode_ops.cpp"/>
+      <File Name="modules/vga/vga.cpp"/>
+      <File Name="modules/vga/vga.hpp"/>
+      <File Name="modules/vga/vga_palette.cpp"/>
+    </VirtualDirectory>
+  </VirtualDirectory>
+  <VirtualDirectory Name="user">
+    <File Name="user/Makefile"/>
+    <VirtualDirectory Name="cls">
+      <File Name="user/cls/Makefile"/>
+      <File Name="user/cls/cls.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="cmd">
+      <File Name="user/cmd/Makefile"/>
+      <File Name="user/cmd/cmd.cpp"/>
+      <File Name="user/cmd/cmd.hpp"/>
+      <File Name="user/cmd/commands.cpp"/>
+      <File Name="user/cmd/globbing.cpp"/>
+      <File Name="user/cmd/input.cpp"/>
+      <File Name="user/cmd/path.cpp"/>
+      <File Name="user/cmd/prompt.cpp"/>
+      <File Name="user/cmd/table.cpp"/>
+      <File Name="user/cmd/util.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="kill">
+      <File Name="user/kill/Makefile"/>
+      <File Name="user/kill/kill.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="mount">
+      <File Name="user/mount/Makefile"/>
+      <File Name="user/mount/mount.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="spawn">
+      <File Name="user/spawn/Makefile"/>
+      <File Name="user/spawn/spawn.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="test">
+      <File Name="user/test/Makefile"/>
+      <File Name="user/test/test.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="ctest">
+      <File Name="user/ctest/Makefile"/>
+      <File Name="user/ctest/ctest.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="fputest">
+      <File Name="user/fputest/Makefile"/>
+      <File Name="user/fputest/fputest.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="load">
+      <File Name="user/load/Makefile"/>
+      <File Name="user/load/load.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="mousetest">
+      <File Name="user/mousetest/Makefile"/>
+      <File Name="user/mousetest/mousetest.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="vgatest">
+      <File Name="user/vgatest/Makefile"/>
+      <File Name="user/vgatest/vgatest.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="cpptest">
+      <File Name="user/cpptest/Makefile"/>
+      <File Name="user/cpptest/cpptest.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="debug">
+      <File Name="user/debug/Makefile"/>
+      <File Name="user/debug/debug.cpp"/>
+      <File Name="user/debug/symbols.cpp"/>
+      <File Name="user/debug/stacktrace.cpp"/>
+      <File Name="user/debug/debug.hpp"/>
+      <File Name="user/debug/events.cpp"/>
+      <File Name="user/debug/table.cpp"/>
+      <File Name="user/debug/table.hpp"/>
+      <File Name="user/debug/symbols.hpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="msgtest">
+      <File Name="user/msgtest/Makefile"/>
+      <File Name="user/msgtest/msgtest.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="termctl">
+      <File Name="user/termctl/Makefile"/>
+      <File Name="user/termctl/termctl.c"/>
+    </VirtualDirectory>
+  </VirtualDirectory>
+  <VirtualDirectory Name="disk">
+    <File Name="disk/Makefile"/>
+  </VirtualDirectory>
+  <VirtualDirectory Name="include">
+    <File Name="include/bt_enum.h"/>
+    <File Name="include/bt_msg.h"/>
+    <File Name="include/btos_api.h"/>
+    <File Name="include/btos_stubs.h"/>
+    <File Name="include/circular_buffer.hpp"/>
+    <File Name="include/crt_support.h"/>
+    <File Name="include/debug.h"/>
+    <File Name="include/drivers.h"/>
+    <File Name="include/extension.h"/>
+    <File Name="include/fs_interface.h"/>
+    <File Name="include/handle.h"/>
+    <File Name="include/holdlock.hpp"/>
+    <File Name="include/io.h"/>
+    <File Name="include/ioctl.h"/>
+    <File Name="include/keyboard.h"/>
+    <File Name="include/locktype.h"/>
+    <File Name="include/module_api.h"/>
+    <File Name="include/module_cpp.hpp"/>
+    <File Name="include/module_stubs.h"/>
+    <File Name="include/mouse.h"/>
+    <File Name="include/operation_queue.hpp"/>
+    <File Name="include/pci.h"/>
+    <File Name="include/terminal.h"/>
+    <File Name="include/video_dev.h"/>
+  </VirtualDirectory>
+  <Settings Type="Static Library">
+    <GlobalSettings>
+      <Compiler Options="" C_Options="" Assembler="">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="">
+        <LibraryPath Value="."/>
+      </Linker>
+      <ResourceCompiler Options=""/>
+    </GlobalSettings>
+    <Configuration Name="Debug" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Static Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="-g" C_Options="-g" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="" Required="yes"/>
+      <ResourceCompiler Options="" Required="no"/>
+      <General OutputFile="" IntermediateDirectory="./Debug" Command="/home/mallard/Projects/os/src/kernel/test.sh" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="/home/mallard/Projects/os/src/kernel" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="yes" RemoteHostName="localhost" RemoteHostPort="1234" DebuggerPath="" IsExtended="no">
+        <DebuggerSearchPaths/>
+        <PostConnectCommands/>
+        <StartupCommands>add-symbol-file ~/Projects/os/src/kernel/btos.bin 0x100000
+</StartupCommands>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="yes">
+        <RebuildCommand/>
+        <CleanCommand>make clean</CleanCommand>
+        <BuildCommand>make</BuildCommand>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName>None</ThirdPartyToolName>
+        <WorkingDirectory>/home/mallard/Projects/os/src</WorkingDirectory>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="yes">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+    <Configuration Name="Release" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Dynamic Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="" C_Options="" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="-O2" Required="yes"/>
+      <ResourceCompiler Options="" Required="no"/>
+      <General OutputFile="" IntermediateDirectory="./Release" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
+        <DebuggerSearchPaths/>
+        <PostConnectCommands/>
+        <StartupCommands/>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="yes">
+        <RebuildCommand/>
+        <CleanCommand>make clean</CleanCommand>
+        <BuildCommand>make</BuildCommand>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName>None</ThirdPartyToolName>
+        <WorkingDirectory>$(WorkspacePath)</WorkingDirectory>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="no">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+  </Settings>
+  <VirtualDirectory Name="crt">
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/crt0.S"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/crt_support.c"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/crt_support.h"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/crti.S"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/crtn.S"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/syscalls.c"/>
+  </VirtualDirectory>
+</CodeLite_Project>

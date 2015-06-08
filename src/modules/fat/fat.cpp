@@ -183,16 +183,23 @@ size_t fat_write(void *filedata, size_t bytes, char *buf){
 	//return (ret>=0)?ret:0;
 }
 
-size_t fat_seek(void *filedata, int pos, bool relative){
+size_t fat_seek(void *filedata, size_t pos, uint32_t flags){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return 0;
     //take_fat_lock();
+	
+	int offset = (int)pos;
 	int origin=SEEK_SET;
-	if(relative) origin=SEEK_CUR;
+	if(flags & FS_Relative) origin=SEEK_CUR;
+	if(flags & FS_Backwards) origin=SEEK_END;
+	if(flags == (FS_Backwards | FS_Relative)){
+		origin=SEEK_CUR;
+		offset=-offset;
+	}
 	/*fl_fseek(fd->flh, pos, origin);
 	size_t ret=fl_ftell(fd->flh);*
     release_fat_lock();*/
-    size_t ret= fat_queued_seek(fd->flh, pos, origin);
+    size_t ret= fat_queued_seek(fd->flh, offset, origin);
     return ret;
 }
 
@@ -274,7 +281,7 @@ bool fat_write_dir(void *dirdata, directory_entry entry){
 	return false;
 }
 
-size_t fat_dirseek(void *dirdata, int pos, bool relative){
+size_t fat_dirseek(void *dirdata, size_t pos, uint32_t flags){
 	return 0;
 }
 

@@ -233,8 +233,8 @@ size_t fs_write(file_handle &file, size_t bytes, char *buf){
 	return file.mount->driver.write(file.filedata, bytes, buf);
 }
 
-size_t fs_seek(file_handle &file, int32_t pos, bool relative){
-	return file.mount->driver.seek(file.filedata, pos, relative);
+size_t fs_seek(file_handle &file, size_t pos, uint32_t flags){
+	return file.mount->driver.seek(file.filedata, pos, flags);
 }
 
 int fs_ioctl(file_handle &file, int fn, size_t bytes, char *buf){
@@ -292,8 +292,8 @@ bool fs_write_dir(dir_handle &dir, directory_entry entry){
 	return dir.mount->driver.write_dir(dir.dirdata, entry);
 }
 
-size_t fs_seek_dir(dir_handle &dir, size_t pos, bool relative){
-	return dir.mount->driver.dirseek(dir.dirdata, pos, relative);
+size_t fs_seek_dir(dir_handle &dir, size_t pos, uint32_t flags){
+	return dir.mount->driver.dirseek(dir.dirdata, pos, flags);
 }
 
 directory_entry fs_stat(const char *path){
