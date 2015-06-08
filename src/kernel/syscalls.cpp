@@ -68,8 +68,8 @@ size_t fwrite(file_handle *h, size_t bytes, char *buf){
 	return fs_write(*h, bytes, buf);
 }
 
-size_t fseek(file_handle *handle, size_t pos, bool relative){
-	return fs_seek(*handle, pos, relative);
+size_t fseek(file_handle *handle, size_t pos, uint32_t flags){
+	return fs_seek(*handle, pos, flags);
 }
 
 int fioctl(file_handle *handle, int fn, size_t bytes, char *buf){
@@ -99,8 +99,8 @@ bool dirwrite(dir_handle *handle, directory_entry entry){
 	return fs_write_dir(*handle, entry);
 }
 
-bool dirseek(dir_handle *handle, size_t pos, bool relative){
-	return fs_seek_dir(*handle, pos, relative);
+bool dirseek(dir_handle *handle, size_t pos, uint32_t flags){
+	return fs_seek_dir(*handle, pos, flags);
 }
 
 void setenv(const char *name, char *value, uint8_t flags, pid_t pid){
