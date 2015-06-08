@@ -53,11 +53,11 @@ void debug_poke(pid_t pid, uint32_t dst, void *src, size_t size){
 }
 
 int main(){
+	std::cout << "BT/OS System Debugger" << std::endl;
     if(!init_debug()){
         std::cout << "Could not locate DEBUG extension." << std::endl;
         return 0;
     }
-    std::cout << "DEBUG extension ID: " << debug_ext_id << std::endl;
     debug_register();
 
     bt_msg_header msg = bt_recv(true);
@@ -65,8 +65,7 @@ int main(){
         if(msg.from == 0 && msg.source == debug_ext_id) {
             bt_debug_event_msg content;
             bt_msg_content(&msg, (void *) &content, sizeof(content));
-            std::cout << "PID: " << content.pid << " event." << std::endl;
-            std::cout << "Event ID: " << content.event << " Exception ID: " << content.error << std::endl;
+			out_event(content);
 			if(content.event == bt_debug_event::Exception){
 				context ctx = get_context(content.thread);
 				out_context(ctx);

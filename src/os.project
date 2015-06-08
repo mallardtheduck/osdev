@@ -256,6 +256,7 @@
       <File Name="user/debug/symbols.cpp"/>
       <File Name="user/debug/stacktrace.cpp"/>
       <File Name="user/debug/debug.hpp"/>
+      <File Name="user/debug/events.cpp"/>
     </VirtualDirectory>
     <VirtualDirectory Name="msgtest">
       <File Name="user/msgtest/Makefile"/>
