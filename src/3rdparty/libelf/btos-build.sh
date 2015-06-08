@@ -23,9 +23,10 @@ export CXXFLAGS=""
 export LDFLAGS=""
 
 PATH=$BASE_PATH/bin:$PATH
-./configure \
+ac_cv_sizeof_long_long=8 ./configure \
 	--host=$ARCH \
-	--prefix=$PREFIX 
+	--prefix=$PREFIX \
+	--enable-elf64
 
 make
 make instroot=$PWD/../install install
