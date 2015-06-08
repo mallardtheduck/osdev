@@ -4,7 +4,7 @@
 #include "module_api.h"
 #include "drivers.h"
 
-typedef void (*uapi_hanlder_fn)(uint32_t,isr_regs *);
+typedef void (*uapi_hanlder_fn)(uint16_t,isr_regs *);
 
 struct kernel_extension{
     char *name;

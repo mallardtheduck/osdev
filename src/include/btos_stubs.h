@@ -117,7 +117,7 @@ inline static size_t bt_fread(bt_filehandle file, size_t bytes, char *buffer){
 }
 
 inline static size_t bt_fioctl(bt_filehandle file, int function, size_t bytes, char *buffer){
-	bt_fioctl_buffer buf = {.size=bytes, .buffer=buffer};
+	volatile bt_fioctl_buffer buf = {bytes, buffer};
 	return btos_call(BT_FIOCTL, file, function, (uint32_t)&buf);
 }
 
@@ -130,7 +130,7 @@ inline static void bt_fflush(bt_filehandle file){
 }
 
 inline static bt_handle bt_mmap(bt_filehandle file, size_t offset, char *ptr, size_t size){
-    bt_mmap_buffer buffer={size, ptr};
+    volatile bt_mmap_buffer buffer={size, ptr};
     return btos_call(BT_MMAP, file, offset, (uint32_t)&buffer);
 }
 
@@ -233,6 +233,10 @@ inline static void bt_unsubscribe(ENUM_NAME(bt_kernel_messages) msg){
 
 inline static void bt_msgwait(){
 	btos_call(BT_MSGWAIT, 0, 0, 0);
+}
+
+inline static uint16_t bt_query_extension(const char *name){
+	return btos_call(BT_QUERY_EXT, (uint32_t)name, 0, 0);
 }
 
 #endif

@@ -12,5 +12,6 @@ uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size);
 void amm_flush(file_handle &file);
 void amm_close(file_handle &file);
 void amm_closemap(uint64_t id);
+bool amm_resolve_addr(void *addr);
 
 #endif
