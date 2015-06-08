@@ -5,6 +5,7 @@
 #include <btos_stubs.h>
 #include <debug.h>
 #include <cstdio>
+#include <string>
 
 struct context {
 	uint32_t gs, fs, es, ds;
@@ -21,5 +22,7 @@ void debug_poke(pid_t pid, uint32_t dst, void *src, size_t size);
 void do_stacktrace(bt_pid_t pid, context ctx);
 
 void out_event(const bt_debug_event_msg &event);
+
+void test_symbols(std::string filename);
 
 #endif

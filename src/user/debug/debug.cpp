@@ -52,12 +52,14 @@ void debug_poke(pid_t pid, uint32_t dst, void *src, size_t size){
 	call_debug(bt_debug_function::Poke, (uint32_t)src, (uint32_t)&p, 0);
 }
 
-int main(){
+int main(int /*argc*/, char **/*argv*/){
 	std::cout << "BT/OS System Debugger" << std::endl;
     if(!init_debug()){
         std::cout << "Could not locate DEBUG extension." << std::endl;
         return 0;
     }
+	
+	//test_symbols(argv[0]);
     debug_register();
 
     bt_msg_header msg = bt_recv(true);
