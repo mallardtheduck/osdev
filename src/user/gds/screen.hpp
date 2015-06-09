@@ -8,7 +8,6 @@ class Screen : public BitmapSurface{
 private:
 	bt_vidmode original_mode, current_mode;
 	bt_filehandle fh;
-	GD::Image *image;
 	uint8_t *buffer;
 	size_t buffersize;
 	bool cursor_on;

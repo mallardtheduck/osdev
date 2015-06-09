@@ -6,7 +6,7 @@
 #include "drawingop.hpp"
 
 class BitmapSurface : public Surface{
-private:
+protected:
 	GD::Image *image;
 
 public:

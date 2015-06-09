@@ -3,7 +3,6 @@
 #include "drawingop.hpp"
 
 char dbgbuf[128];
-#define dbgpf(...) do{snprintf(dbgbuf, 128, __VA_ARGS__); bt_zero(dbgbuf);}while(false)
 
 bt_vidmode original_mode;
 

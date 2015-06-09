@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cstdlib>
 
+class Resize;
 Screen::Screen() : BitmapSurface::BitmapSurface(1, 1, true){
 	char stdout_path[BT_MAX_PATH]={0};
 	bt_getenv("STDOUT", stdout_path, BT_MAX_PATH);
@@ -96,7 +97,6 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 		current_mode=bestmode;
 		if(current_mode.bpp >= 16){
 			BitmapSurface::Resize(current_mode.width, current_mode.height, false);
-			image= new GD::Image(current_mode.width, current_mode.height, true);
 		}else{
 			BitmapSurface::Resize(current_mode.width, current_mode.height, true);
 			for(size_t p=0; p<256; ++p){
