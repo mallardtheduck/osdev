@@ -280,6 +280,8 @@
       <File Name="user/gds/screen.cpp"/>
       <File Name="user/gds/screen.hpp"/>
       <File Name="user/gds/surface.hpp"/>
+      <File Name="user/gds/client.cpp"/>
+      <File Name="user/gds/client.hpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
@@ -310,6 +312,9 @@
     <File Name="include/pci.h"/>
     <File Name="include/terminal.h"/>
     <File Name="include/video_dev.h"/>
+    <VirtualDirectory Name="gds">
+      <File Name="include/gds/gds.h"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>

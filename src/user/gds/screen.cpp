@@ -212,24 +212,11 @@ void Screen::SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty) 
 	delete data;
 }
 
-size_t Screen::AddOperation(DrawingOp op) {
-	size_t ret=BitmapSurface::AddOperation(op);
-	UpdateScreen();
-	return ret;
+gds_SurfaceType::Enum Screen::GetType(){
+	return gds_SurfaceType::Screen;
 }
 
-void Screen::RemoveOperation(size_t id) {
-	BitmapSurface::RemoveOperation(id);
-}
-
-size_t Screen::GetWidth() {
-	return BitmapSurface::GetWidth();
-}
-
-size_t Screen::GetHeight() {
-	return BitmapSurface::GetHeight();
-}
-
-size_t Screen::GetDepth() {
-	return BitmapSurface::GetDepth();
+Screen *GetScreen(){
+	static Screen screen;
+	return &screen;
 }

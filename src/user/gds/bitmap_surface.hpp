@@ -8,15 +8,21 @@
 class BitmapSurface : public Surface{
 protected:
 	GD::Image *image;
+	uint32_t scale;
 
 public:
-	BitmapSurface(size_t w, size_t h, bool indexed);
+	BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale = 100);
 
 	virtual size_t AddOperation(DrawingOp op);
 	virtual void RemoveOperation(size_t id);
+	virtual DrawingOp GetOperation(size_t id);
 	virtual size_t GetWidth();
 	virtual size_t GetHeight();
 	virtual size_t GetDepth();
+	uint32_t GetScale();
+	void SetScale(uint32_t scale);
+	gds_SurfaceType::Enum GetType();
+	
 	virtual void Resize(size_t w, size_t h, bool indexed);
 
 	virtual ~BitmapSurface();

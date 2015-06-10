@@ -16,6 +16,9 @@
 #include <gdfonts.h>
 #include <cstddef>
 
+#include "drawingop.hpp"
+#include "client.hpp"
+
 #define dbgpf(...) do{snprintf(dbgbuf, 128, __VA_ARGS__); bt_zero(dbgbuf);}while(false)
 
 extern char dbgbuf[128];

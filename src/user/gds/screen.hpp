@@ -30,11 +30,10 @@ public:
 	void ShowCursor();
 	void HideCursor();
 	void SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty);
-	virtual size_t AddOperation(DrawingOp op) override;
-	virtual void RemoveOperation(size_t id) override;
-	virtual size_t GetWidth() override;
-	virtual size_t GetHeight() override;
-	virtual size_t GetDepth() override;
+	
+	gds_SurfaceType::Enum GetType() override;
 };
+
+Screen *GetScreen();
 
 #endif
