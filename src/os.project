@@ -283,6 +283,13 @@
       <File Name="user/gds/client.cpp"/>
       <File Name="user/gds/client.hpp"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="libgds">
+      <File Name="user/libgds/Makefile"/>
+      <File Name="user/libgds/main.cpp"/>
+      <File Name="user/libgds/protocol.cpp"/>
+      <File Name="user/libgds/util.cpp"/>
+      <File Name="user/libgds/libgds_internal.hpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
@@ -314,6 +321,7 @@
     <File Name="include/video_dev.h"/>
     <VirtualDirectory Name="gds">
       <File Name="include/gds/gds.h"/>
+      <File Name="include/gds/libgds.h"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <Settings Type="Static Library">

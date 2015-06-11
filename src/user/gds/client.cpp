@@ -3,6 +3,7 @@
 #include "screen.hpp"
 #include <map>
 #include <algorithm>
+#include <sstream>
 
 using namespace std;
 
@@ -28,6 +29,9 @@ Client::~Client() {
 }
 
 void Client::ProcessMessage(bt_msg_header msg) {
+	stringstream d;
+	d << "GDS: Message type: " << msg.type << " from: " << msg.from << endl;
+	bt_zero(d.str().c_str());
 	switch(msg.type) {
 		case gds_MsgType::Info:
 			gds_Info info;
@@ -83,7 +87,7 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			break;
 		case gds_MsgType::AddDrawingOp:
 			if(currentSurface) {
-				DrawingOp op;
+				gds_DrawingOp op;
 				bt_msg_content(&msg, (void*)&op, sizeof(op));
 				size_t op_id = currentSurface->AddOperation(op);
 				SendReply(msg, sizeof(op_id), (void*)&op_id);
@@ -97,7 +101,7 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			}
 			break;
 		case gds_MsgType::GetDrawingOp:
-			DrawingOp ret_op;
+			gds_DrawingOp ret_op;
 			ret_op.type = gds_DrawingOpType::None;
 			if(currentSurface) {
 				size_t op_id = 0;
@@ -124,6 +128,14 @@ void Client::ProcessMessage(bt_msg_header msg) {
 				uint32_t newscale;
 				bt_msg_content(&msg, (void*)&newscale, sizeof(newscale));
 				currentSurface->SetScale(newscale);
+			}
+			break;
+		case gds_MsgType::GetColour:
+			if(currentSurface) {
+				gds_TrueColour truecol;
+				bt_msg_content(&msg, (void*)&truecol, sizeof(truecol));
+				uint32_t col = currentSurface->GetColour(truecol.r, truecol.g, truecol.b);
+				SendReply(msg, sizeof(col), (void*)&col);
 			}
 			break;
 		case gds_MsgType::SelectScreen:

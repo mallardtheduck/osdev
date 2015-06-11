@@ -13,15 +13,16 @@ protected:
 public:
 	BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale = 100);
 
-	virtual size_t AddOperation(DrawingOp op);
+	virtual size_t AddOperation(gds_DrawingOp op);
 	virtual void RemoveOperation(size_t id);
-	virtual DrawingOp GetOperation(size_t id);
+	virtual gds_DrawingOp GetOperation(size_t id);
 	virtual size_t GetWidth();
 	virtual size_t GetHeight();
 	virtual size_t GetDepth();
-	uint32_t GetScale();
-	void SetScale(uint32_t scale);
-	gds_SurfaceType::Enum GetType();
+	virtual uint32_t GetScale();
+	virtual void SetScale(uint32_t scale);
+	virtual gds_SurfaceType::Enum GetType(); 
+	virtual uint32_t GetColour(uint32_t r, uint32_t g, uint32_t b);
 	
 	virtual void Resize(size_t w, size_t h, bool indexed);
 
