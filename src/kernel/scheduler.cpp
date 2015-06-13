@@ -68,12 +68,12 @@ static uint32_t counter=cstart;
 char *sch_threads_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
-	sprintf(buffer, "# ID, PID, priority, addr, status, alevel\n");
+	sprintf(buffer, "# ID, PID, priority, addr, status, alevel, load\n");
 	{hold_lock hl(sch_lock);
 		for(size_t i=0; i<threads->size(); ++i){
 			sch_thread *t=(*threads)[i];
-			sprintf(&buffer[strlen(buffer)],"%i, %i, %i, %x, %i, %i\n", (int)t->ext_id, (int)t->pid, t->priority, t->eip,
-				(int)t->status, t->abortlevel);
+			sprintf(&buffer[strlen(buffer)],"%i, %i, %i, %x, %i, %i, %i\n", (int)t->ext_id, (int)t->pid, t->priority, t->eip,
+				(int)t->status, t->abortlevel, t->modifier);
 		}
     }
     return buffer;
@@ -282,7 +282,7 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 				torun=(*threads)[i];
 			}
 			else if((*threads)[i]->modifier) --(*threads)[i]->modifier;
-		}
+		}else if((*threads)[i]->modifier) --(*threads)[i]->modifier;
 	}
 	if(foundtorun){
 		if(torun->modifier < modifier_limit) ++torun->modifier;
