@@ -1,5 +1,6 @@
 #include <gds/libgds.h>
 #include <btos_stubs.h>
+#include <crt_support.h>
 #include "libgds_internal.hpp"
 #include <cstdlib>
 #include <sstream>
@@ -9,14 +10,17 @@ using namespace std;
 
 static bt_pid_t gds_pid = 0;
 
-static void Init(){
+static bool Init(){
 	if(!gds_pid){
 		string pid_str = get_env("GDS_PID");
 		gds_pid = strtoull(pid_str.c_str(), NULL, 10);
 		if(!gds_pid){
 			cout << "ERROR: Could not communicate with GDS." << endl;
+			return false;
 		}
+		return true;
 	}
+	return true;
 }
 
 template<typename T> static T GetContent(bt_msg_header *msg){
@@ -27,7 +31,7 @@ template<typename T> static T GetContent(bt_msg_header *msg){
 }
 
 static bt_msg_header SendMessage(gds_MsgType::Enum type, size_t size, void* content, bool waitreply){
-	if(!gds_pid) Init();
+	if(!gds_pid  && !Init()) return bt_msg_header();
 	bt_msg_header msg;
 	msg.flags = 0;
 	msg.to = gds_pid;
