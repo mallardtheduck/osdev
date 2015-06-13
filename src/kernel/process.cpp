@@ -170,7 +170,7 @@ pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent, file_
 
 static bool proc_threads_blockcheck(void *p){
     pid_t pid = *(pid_t*)p;
-    return sch_get_pid_threadcount(pid) > 0;
+    return sch_get_pid_threadcount(pid) == 0;
 }
 
 void proc_end(pid_t pid) {
@@ -185,6 +185,7 @@ void proc_end(pid_t pid) {
             dbgpf("PROC: Process %i is already ending.\n", (int) pid);
             release_lock(proc_lock);
             proc_wait(pid);
+			take_lock_exclusive(proc_lock);
             return;
         }
         dbgpf("PROC: Ending process %i.\n", (int) pid);
@@ -208,7 +209,9 @@ void proc_end(pid_t pid) {
                         proc_remove_thread(thread_id, pid);
                         cont = true;
                         break;
-                    }
+                    }else{
+						sch_setpid(0);
+					}
                 }
             }
         }
@@ -331,6 +334,7 @@ void proc_start(void *ptr){
     sch_set_priority(default_userspace_priority);
 	sch_abortable(true);
     debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);
+	proc_add_thread(sch_get_id());
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 
@@ -534,7 +538,7 @@ handle_t proc_get_thread_handle(uint64_t thread_id, pid_t pid){
 void proc_terminate(pid_t pid){
     dbgpf("PROC: Terminating PID: %i\n", pid);
     if(pid==0) return; // panic("(PROC) Request to terminate kernel!");
-    proc_setreturn(-1);
+    proc_setreturn(-1, pid);
     bool current=false;
     if(pid==proc_current_pid) {
         proc_switch(0);
