@@ -1,8 +1,10 @@
 #include "screen.hpp"
 #include <cstring>
 #include <cstdlib>
+#include <sstream>
 
-class Resize;
+using namespace std;
+
 Screen::Screen() : BitmapSurface::BitmapSurface(1, 1, true){
 	char stdout_path[BT_MAX_PATH]={0};
 	bt_getenv("STDOUT", stdout_path, BT_MAX_PATH);
@@ -105,6 +107,11 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 				entry.index=idx;
 				bt_fioctl(fh, bt_vid_ioctl::GetPaletteEntry, sizeof(entry), (char*)&entry);
 				image->ColorAllocate(entry.r, entry.g, entry.b);
+			}
+			for(size_t p=0; p<256; ++p){
+				stringstream ss;
+				ss << "GDS: Colour " << p << " = (" << image->Red(p) << ", " << image->Green(p) << ", " << image->Blue(p) << ")" << endl;
+				bt_zero(ss.str().c_str());
 			}
 		}
 		if(buffer) delete buffer;

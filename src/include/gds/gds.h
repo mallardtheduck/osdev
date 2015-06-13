@@ -87,17 +87,6 @@ ENUM_START(gds_FillStyle)
 ENUM_END
 ENUM_TYPE(gds_FillStyle);
 
-struct gds_Colour{
-	ENUM_NAME(gds_ColourType) type;
-	union{
-		uint8_t indexedColour;
-		uint32_t trueColour;
-	};
-};
-#ifndef __cplusplus
-typedef struct gds_Colour gds_Colour;
-#endif
-
 struct gds_DrawingOp {
 	ENUM_NAME(gds_DrawingOpType) type;
 	union{
@@ -132,9 +121,9 @@ struct gds_DrawingOp {
 	};
 	struct{
 		uint32_t lineStyle;
-		gds_Colour lineColour;
+		uint32_t lineColour;
 		uint32_t fillStyle;
-		gds_Colour fillColour;
+		uint32_t fillColour;
 		uint8_t lineWidth;
 	} Common;
 };

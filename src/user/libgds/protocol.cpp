@@ -2,6 +2,7 @@
 #include <btos_stubs.h>
 #include "libgds_internal.hpp"
 #include <cstdlib>
+#include <sstream>
 
 using namespace std;
 
@@ -24,13 +25,25 @@ template<typename T> static T GetContent(bt_msg_header *msg){
 static bt_msg_header SendMessage(gds_MsgType::Enum type, size_t size, void* content, bool waitreply){
 	if(!gds_pid) Init();
 	bt_msg_header msg;
+	msg.flags = 0;
 	msg.to = gds_pid;
 	msg.type = type;
 	msg.length = size;
 	msg.content = content;
-	bt_send(msg);
+	msg.id = bt_send(msg);
 	if(waitreply) {
-		bt_msg_header ret=bt_recv(false);
+		bt_msg_header ret;
+		ret = bt_recv(true);
+		while(ret.reply_id != msg.id){
+			stringstream ss;
+			ss << "LIBGDS: Spurious message!" << endl;
+			ss << "Message id: " << ret.id << endl;
+			ss << "From : " << ret.from << endl;
+			ss << "Flags : " << ret.flags << endl;
+			ss << "Reply ID: " << ret.reply_id << " (Waiting for: " << msg.id << ")" << endl;
+			bt_zero(ss.str().c_str());
+			bt_next_msg(&ret);
+		}
 		return ret;
 	}
 	else return bt_msg_header();

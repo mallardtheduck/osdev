@@ -11,32 +11,32 @@ BitmapSurface::BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale){
 size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 	switch(op.type){
 		case gds_DrawingOpType::Dot:
-			image->SetPixel(op.Dot.x, op.Dot.y, op.Common.lineColour.indexedColour);
+			image->SetPixel(op.Dot.x, op.Dot.y, op.Common.lineColour);
 			break;
 
 		case gds_DrawingOpType::Line:
-			image->Line(op.Line.x1, op.Line.y1, op.Line.x2, op.Line.y2, op.Common.lineColour.indexedColour);
+			image->Line(op.Line.x1, op.Line.y1, op.Line.x2, op.Line.y2, op.Common.lineColour);
 			break;
 
 		case gds_DrawingOpType::Box:
 			if(op.Common.fillStyle > 0){
-				image->FilledRectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w, op.Box.y + op.Box.h, op.Common.fillColour.indexedColour);
+				image->FilledRectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w, op.Box.y + op.Box.h, op.Common.fillColour);
 			}
-			image->Rectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w, op.Box.y + op.Box.h, op.Common.lineColour.indexedColour);
+			image->Rectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w, op.Box.y + op.Box.h, op.Common.lineColour);
 			break;
 
 		case gds_DrawingOpType::Ellipse:
 			if(op.Common.fillStyle > 0){
-				image->FilledEllipse(op.Ellipse.x, op.Ellipse.y, op.Ellipse.w, op.Ellipse.h, op.Common.fillColour.indexedColour);
+				image->FilledEllipse(op.Ellipse.x, op.Ellipse.y, op.Ellipse.w, op.Ellipse.h, op.Common.fillColour);
 			}
-			image->Ellipse(op.Ellipse.x, op.Ellipse.y, op.Ellipse.w, op.Ellipse.h, op.Common.lineColour.indexedColour);
+			image->Ellipse(op.Ellipse.x, op.Ellipse.y, op.Ellipse.w, op.Ellipse.h, op.Common.lineColour);
 			break;
 
 		case gds_DrawingOpType::Arc:
 			if(op.Common.fillStyle > 0){
-				image->FilledArc(op.Arc.x, op.Arc.y, op.Arc.w, op.Arc.h, op.Arc.a1, op.Arc.a2, op.Common.fillColour.indexedColour, 0);
+				image->FilledArc(op.Arc.x, op.Arc.y, op.Arc.w, op.Arc.h, op.Arc.a1, op.Arc.a2, op.Common.fillColour, 0);
 			}
-			image->Arc(op.Arc.x, op.Arc.y, op.Arc.w, op.Arc.h, op.Arc.a1, op.Arc.a2, op.Common.lineColour.indexedColour);
+			image->Arc(op.Arc.x, op.Arc.y, op.Arc.w, op.Arc.h, op.Arc.a1, op.Arc.a2, op.Common.lineColour);
 
 		default:
 			break;

@@ -12,13 +12,13 @@ static uint64_t surfaceCounter = 0;
 
 static map<bt_pid_t, shared_ptr<Client>> allClients;
 
-static void SendReply(bt_msg_header msg, size_t len, void *content) {
+template<typename T> static void SendReply(bt_msg_header msg, const T &content) {
 	bt_msg_header reply;
 	reply.to = msg.from;
 	reply.reply_id = msg.id;
 	reply.flags = bt_msg_flags::Reply;
-	reply.length = len;
-	reply.content = content;
+	reply.length = sizeof(content);
+	reply.content = (void*)&content;
 	bt_send(reply);
 }
 
@@ -38,7 +38,7 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			info.clientCount = 0;
 			info.surfaceCount = 0;
 			info.version = 0;
-			SendReply(msg, sizeof(info), (void*)&info);
+			SendReply(msg, info);
 			break;
 		case gds_MsgType::NewSurface:
 			gds_SurfaceInfo s_info;
@@ -60,7 +60,7 @@ void Client::ProcessMessage(bt_msg_header msg) {
 				allSurfaces.insert(pair<uint64_t, weak_ptr<Surface>>(s_info.id, ptr));
 				currentSurface = ptr;
 			}
-			SendReply(msg, sizeof(s_info), (void*)&s_info);
+			SendReply(msg, s_info);
 			break;
 		case gds_MsgType::DeleteSurface:
 			if(currentSurface) {
@@ -83,14 +83,16 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			} else {
 				select_id = 0;
 			}
-			SendReply(msg, sizeof(select_id), (void*)&select_id);
+			SendReply(msg, select_id);
 			break;
 		case gds_MsgType::AddDrawingOp:
 			if(currentSurface) {
 				gds_DrawingOp op;
 				bt_msg_content(&msg, (void*)&op, sizeof(op));
 				size_t op_id = currentSurface->AddOperation(op);
-				SendReply(msg, sizeof(op_id), (void*)&op_id);
+				SendReply(msg, op_id);
+			}else{
+				SendReply(msg, (size_t)0);
 			}
 			break;
 		case gds_MsgType::RemoveDrawingOp:
@@ -107,8 +109,8 @@ void Client::ProcessMessage(bt_msg_header msg) {
 				size_t op_id = 0;
 				bt_msg_content(&msg, (void*)op_id, sizeof(op_id));
 				ret_op = currentSurface->GetOperation(op_id);
-				SendReply(msg, sizeof(ret_op), (void*)&ret_op);
 			}
+			SendReply(msg, ret_op);
 			break;
 		case gds_MsgType::SurfaceInfo:
 			gds_SurfaceInfo ret_s_info;
@@ -121,7 +123,7 @@ void Client::ProcessMessage(bt_msg_header msg) {
 				ret_s_info.colourType = (currentSurface->GetDepth() > 8) ? gds_ColourType::True : gds_ColourType::Indexed;
 				ret_s_info.scale = currentSurface->GetScale();
 			}
-			SendReply(msg, sizeof(ret_s_info), (void*)&ret_s_info);
+			SendReply(msg, ret_s_info);
 			break;
 		case gds_MsgType::SetScale:
 			if(currentSurface) {
@@ -135,7 +137,9 @@ void Client::ProcessMessage(bt_msg_header msg) {
 				gds_TrueColour truecol;
 				bt_msg_content(&msg, (void*)&truecol, sizeof(truecol));
 				uint32_t col = currentSurface->GetColour(truecol.r, truecol.g, truecol.b);
-				SendReply(msg, sizeof(col), (void*)&col);
+				SendReply(msg, col);
+			}else{
+				SendReply(msg, (uint32_t)0);
 			}
 			break;
 		case gds_MsgType::SelectScreen:
