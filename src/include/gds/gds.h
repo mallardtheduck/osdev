@@ -78,12 +78,13 @@ ENUM_END
 ENUM_TYPE(gds_SurfaceType);
 
 ENUM_START(gds_LineStyle)
-	ENUM_SET(gds_LineStyle, Default, 0),
+	ENUM_SET(gds_LineStyle, Solid, 0),
 ENUM_END
 ENUM_TYPE(gds_LineStyle);
 
 ENUM_START(gds_FillStyle)
-	ENUM_SET(gds_FillStyle, Default, 0),
+	ENUM_SET(gds_FillStyle, None, 0),
+	ENUM_SET(gds_FillStyle, Filled, 1),
 ENUM_END
 ENUM_TYPE(gds_FillStyle);
 

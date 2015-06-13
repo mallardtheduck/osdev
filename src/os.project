@@ -289,6 +289,7 @@
       <File Name="user/libgds/protocol.cpp"/>
       <File Name="user/libgds/util.cpp"/>
       <File Name="user/libgds/libgds_internal.hpp"/>
+      <File Name="user/libgds/primitives.cpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">

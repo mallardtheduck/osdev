@@ -108,11 +108,6 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 				bt_fioctl(fh, bt_vid_ioctl::GetPaletteEntry, sizeof(entry), (char*)&entry);
 				image->ColorAllocate(entry.r, entry.g, entry.b);
 			}
-			for(size_t p=0; p<256; ++p){
-				stringstream ss;
-				ss << "GDS: Colour " << p << " = (" << image->Red(p) << ", " << image->Green(p) << ", " << image->Blue(p) << ")" << endl;
-				bt_zero(ss.str().c_str());
-			}
 		}
 		if(buffer) delete buffer;
 		if(current_mode.bpp >=8) buffersize = current_mode.width * current_mode.height * (current_mode.bpp / 8);

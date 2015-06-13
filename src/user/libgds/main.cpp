@@ -6,30 +6,41 @@
 
 using namespace std;
 
-int main(){
-    cout << "GDS Test Program" << endl;
+int main() {
+	cout << "GDS Test Program" << endl;
 	bt_vidmode vidmode;
-	vidmode.width = 640; vidmode.height = 480; vidmode.bpp = 4;
+	vidmode.width = 640;
+	vidmode.height = 480;
+	vidmode.bpp = 4;
 	GDS_SetScreenMode(vidmode);
 	GDS_SelectScreen();
 	uint32_t green = GDS_GetColour(0, 255, 0);
 	uint32_t red = GDS_GetColour(255, 0, 0);
 	uint32_t blue = GDS_GetColour(0, 0, 255);
-	stringstream ss1;
-	ss1 << "GDSTEST: " << green << " , " << red << " , " << blue << endl;
-	bt_zero(ss1.str().c_str());
-	gds_DrawingOp op;
-	op.type = gds_DrawingOpType::Box;
-	op.Box.x = 100; op.Box.y = 100;
-	op.Box.w = 100; op.Box.h = 100;
-	for(uint32_t i = 0; i < 255; ++i){
-		op.Common.lineStyle = gds_LineStyle::Default;
-		op.Common.lineColour = red;
-		op.Common.fillColour = i;
-		GDS_AddDrawingOp(op);
+	uint32_t black = GDS_GetColour(0, 0, 0);
+	GDS_Ellipse(300, 300, 100, 100, green, blue, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	GDS_UpdateScreen();
+	for(uint32_t i = 0; i < 16; ++i) {
+		GDS_Box(100, 100, 100, 100, red, i, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		GDS_UpdateScreen(99, 99, 101, 101);
 		getchar();
 	}
-	getchar();
-    return 0;
+	GDS_Box(0, 0, 640, 480, black, black, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	GDS_UpdateScreen();
+	uint32_t lastx = 0, lasty = 0;
+	uint32_t size = 20;
+	while(true) {
+		for(uint32_t ypos = 0; ypos < 480; ypos+=size) {
+			for(uint32_t xpos = 0; xpos < 640; xpos+=size) {
+				GDS_Box(lastx, lasty, size, size, black, black, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+				GDS_Box(xpos, ypos, size, size, blue, green, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+				GDS_UpdateScreen(xpos, ypos, size, size);
+				GDS_UpdateScreen(lastx, lasty, size, size);
+				lastx = xpos;
+				lasty = ypos;
+			}
+		}
+		getchar();
+	}
+	return 0;
 }

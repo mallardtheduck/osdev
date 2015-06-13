@@ -29,9 +29,9 @@ Client::~Client() {
 }
 
 void Client::ProcessMessage(bt_msg_header msg) {
-	stringstream d;
+	/*stringstream d;
 	d << "GDS: Message type: " << msg.type << " from: " << msg.from << endl;
-	bt_zero(d.str().c_str());
+	bt_zero(d.str().c_str());*/
 	switch(msg.type) {
 		case gds_MsgType::Info:
 			gds_Info info;
