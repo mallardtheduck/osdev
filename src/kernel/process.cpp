@@ -561,13 +561,23 @@ void proc_free_message_buffer(pid_t topid, pid_t pid){
     proc_process *p=proc_get(pid);
     if(!p) return;
     else{
-        hold_lock hl2(p->msg_lock);
-        if(!p->msg_buffers.has_key(topid)) return;
+        while(!try_take_lock_exclusive(p->msg_lock)){
+			release_lock(proc_lock);
+			sch_yield();
+			take_lock_exclusive(proc_lock);
+			p=proc_get(pid);
+			if(!p) return;
+		}
+        if(!p->msg_buffers.has_key(topid)){ 
+			release_lock(p->msg_lock);
+			return;
+		}
         void *ptr=p->msg_buffers[topid];
         p->msg_buffers.erase(topid);
 		release_lock(proc_lock);
 		if(ptr) free(ptr);
 		take_lock_recursive(proc_lock);
+		release_lock(p->msg_lock);
     }
 }
 
@@ -575,34 +585,38 @@ static bool proc_msg_blockcheck(void *p){
     btos_api::bt_msg_header header=*(btos_api::bt_msg_header*)p;
     proc_process *proc=proc_get(header.from);
     if(!proc) return false;
-    return !proc->msg_buffers.has_key(header.to);
+    return !get_lock_owner(proc->msg_lock) && !proc->msg_buffers.has_key(header.to);
 }
 
-uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid){
-    bool again=false;
-    do {
-        hold_lock hl(proc_lock, false);
-        proc_process *p = proc_get(pid);
-        if (!p) return 0;
-        if(again) {
-            release_lock(proc_lock);
-            sch_setblock(&proc_msg_blockcheck, (void *)&header);
-            take_lock_exclusive(proc_lock);
-        }
-        again=false;
-        {
-            hold_lock hl2(p->msg_lock);
-            if (p->msg_buffers.has_key(header.to)){
-                again=true;
-                continue;
-            }
-            p->msg_buffers[header.to]=malloc(header.length);
-            memcpy(p->msg_buffers[header.to], header.content, header.length);
-            header.content=p->msg_buffers[header.to];
-            return msg_send(header);
-        }
-    }while(again);
-    return 0;
+uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
+	bool again=false;
+	do {
+		{
+			hold_lock hl(proc_lock, false);
+			proc_process *p = proc_get(pid);
+			if (!p) return 0;
+			if(again) {
+				release_lock(proc_lock);
+				sch_setblock(&proc_msg_blockcheck, (void *)&header);
+				take_lock_exclusive(proc_lock);
+			}
+			again=false;
+			bool ok = try_take_lock_exclusive(p->msg_lock);
+			if (!ok || p->msg_buffers.has_key(header.to)) {
+				if(ok) release_lock(p->msg_lock);
+				again=true;
+				continue;
+			}
+			p->msg_buffers[header.to]=malloc(header.length);
+			memcpy(p->msg_buffers[header.to], header.content, header.length);
+			header.content=p->msg_buffers[header.to];
+			release_lock(p->msg_lock);
+
+		}
+		uint64_t ret = msg_send(header);
+		return ret;
+	} while(again);
+	return 0;
 }
 
 static bool proc_msg_wait_blockcheck(void *p){

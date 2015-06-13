@@ -253,15 +253,16 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 	int nrunnables=0;
 	uint32_t min=0xFFFFFFFF;
 	for(size_t i=0; i<threads->size(); ++i){
+		sch_thread *ithread = (*threads)[i];
 		//Priority 0xFFFFFFFF == "idle", only run when nothing else is available.
-		if(!(*threads)[i]->priority==0xFFFFFFFF) (*threads)[i]->dynpriority=0xFFFFFFFF;
-	    if(lcycle != cycle && (*threads)[i]->status == sch_thread_status::Blocked && (*threads)[i]->blockcheck!=NULL){
-	        if((*threads)[i]->blockcheck((*threads)[i]->bc_param)) (*threads)[i]->status = sch_thread_status::Runnable;
+		if(!ithread->priority==0xFFFFFFFF) ithread->dynpriority=0xFFFFFFFF;
+	    if(lcycle != cycle && ithread->status == sch_thread_status::Blocked && ithread->blockcheck!=NULL){
+	        if(ithread->blockcheck(ithread->bc_param)) ithread->status = sch_thread_status::Runnable;
 	    }
-		if((*threads)[i]->status == sch_thread_status::Runnable){
-			if(!(*threads)[i]->priority) panic("(SCH) Thread priority 0 is not allowed.\n");
+		if(ithread->status == sch_thread_status::Runnable){
+			if(!ithread->priority) panic("(SCH) Thread priority 0 is not allowed.\n");
 			nrunnables++;
-			if((*threads)[i]->dynpriority < min) min=(*threads)[i]->dynpriority;
+			if(ithread->dynpriority < min) min=ithread->dynpriority;
 		}
 	}
 	lcycle=cycle;
@@ -275,14 +276,15 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 	//that isn't the current thread, record it
 	bool foundtorun=false;
 	for(size_t i=0; i<(*threads).size(); ++i){
-		if((*threads)[i]->status == sch_thread_status::Runnable){
-			if((*threads)[i]->dynpriority) (*threads)[i]->dynpriority-=min;
-			if((*threads)[i]!=current_thread && (*threads)[i]->dynpriority==0){
+		sch_thread *ithread = (*threads)[i];
+		if(ithread->status == sch_thread_status::Runnable){
+			if(ithread->dynpriority) ithread->dynpriority-=min;
+			if(ithread!=current_thread && ithread->dynpriority==0){
 				foundtorun=true;
-				torun=(*threads)[i];
+				torun=ithread;
 			}
-			else if((*threads)[i]->modifier) --(*threads)[i]->modifier;
-		}else if((*threads)[i]->modifier) --(*threads)[i]->modifier;
+			else if(ithread->modifier) --ithread->modifier;
+		}else if(ithread->modifier) --ithread->modifier;
 	}
 	if(foundtorun){
 		if(torun->modifier < modifier_limit) ++torun->modifier;
