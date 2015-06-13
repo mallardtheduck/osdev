@@ -53,7 +53,7 @@ uint64_t msg_send(bt_msg_header &msg){
         msg.recieved = msg.replied = false;
         msg_q->push_back(msg);
     }
-    dbgpf("MSG: Sent message ID %i.\n", (int)msg.id);
+    dbgpf("MSG: Sent message ID %i from PID %i.\n", (int)msg.id, (int)msg.from);
     return msg.id;
 }
 
