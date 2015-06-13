@@ -475,6 +475,7 @@ bool sch_abort_blockcheck(void *p){
 }
 
 void sch_abort(uint64_t ext_id){
+	if(ext_id == sch_get_id()) panic("(SCH) Thread attempting to abort itself!");
 	bool tryagain=true;
 	while(tryagain){
         take_lock_recursive(sch_lock);
