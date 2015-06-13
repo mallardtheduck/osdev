@@ -212,6 +212,7 @@ void proc_end(pid_t pid) {
                     }else{
 						sch_setpid(0);
 					}
+					proc_remove_handle(i->first, pid);
                 }
             }
         }
