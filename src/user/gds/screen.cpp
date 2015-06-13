@@ -19,11 +19,15 @@ Screen::Screen() : BitmapSurface::BitmapSurface(1, 1, true){
 }
 
 Screen::~Screen(){
+	RestoreMode();
+	bt_fclose(fh);
+	if(buffer) delete buffer;
+}
+
+void Screen::RestoreMode(){
 	if(original_mode.bpp){
 		bt_fioctl(fh, bt_vid_ioctl::SetMode, sizeof(original_mode), (char*)&original_mode);
 	}
-	bt_fclose(fh);
-	if(buffer) delete buffer;
 }
 
 void Screen::BufferPutPixel(uint32_t x, uint32_t y, uint32_t value) {

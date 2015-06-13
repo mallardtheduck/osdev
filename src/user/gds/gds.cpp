@@ -24,8 +24,11 @@ int main(int argc, char **argv){
 			s_argc = argc - 2;
 			s_argv = &argv[2];
 		}
-		bt_spawn(argv[1], s_argc, s_argv);
+		bt_pid_t root_pid = bt_spawn(argv[1], s_argc, s_argv);
+		Service(root_pid);
+		GetScreen()->RestoreMode();
+	}else{
+		cout << "Usage: " << argv[0] << " command-line." << endl;
 	}
-	Service();
     return 0;
 }

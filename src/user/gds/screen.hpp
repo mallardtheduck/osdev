@@ -30,6 +30,7 @@ public:
 	void ShowCursor();
 	void HideCursor();
 	void SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty);
+	void RestoreMode();
 	
 	gds_SurfaceType::Enum GetType() override;
 };

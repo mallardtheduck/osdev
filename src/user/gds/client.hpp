@@ -17,6 +17,6 @@ public:
 	void ProcessMessage(bt_msg_header msg);
 };
 
-void Service();
+void Service(bt_pid_t root_pid);
 
 #endif // CLIENT_HPP

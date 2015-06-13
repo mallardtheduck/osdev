@@ -3,6 +3,7 @@
 #include "libgds_internal.hpp"
 #include <cstdlib>
 #include <sstream>
+#include <iostream>
 
 using namespace std;
 
@@ -12,6 +13,9 @@ static void Init(){
 	if(!gds_pid){
 		string pid_str = get_env("GDS_PID");
 		gds_pid = strtoull(pid_str.c_str(), NULL, 10);
+		if(!gds_pid){
+			cout << "ERROR: Could not communicate with GDS." << endl;
+		}
 	}
 }
 

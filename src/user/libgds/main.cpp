@@ -40,7 +40,8 @@ int main() {
 				lasty = ypos;
 			}
 		}
-		getchar();
+		char x = getchar();
+		if(x == 'q') break;
 	}
 	return 0;
 }

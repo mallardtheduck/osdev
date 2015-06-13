@@ -28,8 +28,6 @@ ENUM_START(gds_MsgType)
 	ENUM_SET(gds_MsgType, SelectScreen,		100),
 	ENUM_SET(gds_MsgType, UpdateScreen, 	101),
 	ENUM_SET(gds_MsgType, SetScreenMode,	102),
-	
-	ENUM_SET(gds_MsgType, Shutdown,			999),
 ENUM_END
 ENUM_TYPE(gds_MsgType);
 

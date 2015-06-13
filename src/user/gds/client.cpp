@@ -159,14 +159,18 @@ void Client::ProcessMessage(bt_msg_header msg) {
 }
 
 
-void Service() {
+void Service(bt_pid_t root_pid) {
 	bt_subscribe(bt_kernel_messages::ProcessEnd);
 	bt_msg_header msg = bt_recv(true);
 	while(true) {
 		if(msg.from == 0 && msg.source == 0 && msg.type == bt_kernel_messages::ProcessEnd) {
-			bt_pid_t pid;
-			bt_msg_content(&msg, (void*)pid, sizeof(pid));
+			bt_pid_t pid = 0;
+			bt_msg_content(&msg, (void*)&pid, sizeof(pid));
+			stringstream ss;
+			ss << "GDS: PID: " << pid << " terminated." << endl;
+			bt_zero(ss.str().c_str());
 			allClients.erase(pid);
+			if(pid == root_pid) return;
 		} else {
 			if(allClients.find(msg.from) == allClients.end()) {
 				Client *newclient = new Client();
