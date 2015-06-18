@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 gds_Info GDS_Info();
-uint64_t GDS_NewSurface(ENUM_NAME(gds_SurfaceType) type, uint32_t w, uint32_t h, uint32_t scale, ENUM_NAME(gds_ColourType) colourType);
+uint64_t GDS_NewSurface(ENUM_NAME(gds_SurfaceType) type, uint32_t w, uint32_t h, uint32_t scale GDS_DEFAULT(100), ENUM_NAME(gds_ColourType) colourType GDS_DEFAULT(ENUM_GET(gds_ColourType, Indexed)));
 void GDS_DeleteSurface();
 uint64_t GDS_SelectSurface(uint64_t id);
 size_t GDS_AddDrawingOp(gds_DrawingOp op);
@@ -27,6 +27,8 @@ uint32_t GDS_GetColour(uint32_t r, uint32_t g, uint32_t b);
 void GDS_SelectScreen();
 void GDS_UpdateScreen(uint32_t x GDS_DEFAULT(0), uint32_t y GDS_DEFAULT(0), uint32_t w GDS_DEFAULT(0), uint32_t h GDS_DEFAULT(0));
 void GDS_SetScreenMode(bt_vidmode mode);
+void GDS_SetCursor(uint64_t surfaceID, uint32_t hotx, uint32_t hoty);
+void GDS_CursorVisibility(bool visible);
 
 void GDS_Dot(uint32_t x, uint32_t y, uint32_t colour, uint8_t size GDS_DEFAULT(1));
 void GDS_Line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t colour, uint8_t width GDS_DEFAULT(1), uint32_t style GDS_DEFAULT(ENUM_GET(gds_LineStyle, Solid)));
@@ -35,6 +37,7 @@ void GDS_Ellipse(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t lineCo
 void GDS_Arc(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t a1, uint32_t a2, uint32_t lineColour, uint32_t fillColour, uint8_t lineWidth GDS_DEFAULT(1), uint32_t lineStyle GDS_DEFAULT(ENUM_GET(gds_LineStyle, Solid)), uint32_t fillStyle GDS_DEFAULT(ENUM_GET(gds_FillStyle, None)));
 void GDS_Polygon(size_t points, gds_Point *pointData, bool closed,  uint32_t lineColour, uint32_t fillColour, uint8_t lineWidth GDS_DEFAULT(1), uint32_t lineStyle GDS_DEFAULT(ENUM_GET(gds_LineStyle, Solid)), uint32_t fillStyle GDS_DEFAULT(ENUM_GET(gds_FillStyle, None)));
 void GDS_Text(char *string, uint32_t fontID, uint32_t size, uint32_t colour, uint8_t style GDS_DEFAULT(ENUM_GET(gds_TextStyle, Normal)));
+void GDS_Blit(uint64_t src, uint32_t srcX, uint32_t srcY, uint32_t srcW, uint32_t srcH, uint32_t dstX, uint32_t dstY, uint32_t dstW, uint32_t dstH, uint32_t scale GDS_DEFAULT(100), uint32_t flags GDS_DEFAULT(0));
 
 #ifdef __cplusplus
 }

@@ -1,13 +1,12 @@
 #include "gds.hpp"
 #include "bitmap_surface.hpp"
 #include "screen.hpp"
-#include <map>
 #include <algorithm>
 #include <sstream>
 
 using namespace std;
 
-static map<uint64_t, weak_ptr<Surface>> allSurfaces;
+map<uint64_t, weak_ptr<Surface>> allSurfaces;
 static uint64_t surfaceCounter = 0;
 
 static map<bt_pid_t, shared_ptr<Client>> allClients;
@@ -91,7 +90,7 @@ void Client::ProcessMessage(bt_msg_header msg) {
 				bt_msg_content(&msg, (void*)&op, sizeof(op));
 				size_t op_id = currentSurface->AddOperation(op);
 				SendReply(msg, op_id);
-			}else{
+			} else {
 				SendReply(msg, (size_t)0);
 			}
 			break;
@@ -138,12 +137,12 @@ void Client::ProcessMessage(bt_msg_header msg) {
 				bt_msg_content(&msg, (void*)&truecol, sizeof(truecol));
 				uint32_t col = currentSurface->GetColour(truecol.r, truecol.g, truecol.b);
 				SendReply(msg, col);
-			}else{
+			} else {
 				SendReply(msg, (uint32_t)0);
 			}
 			break;
 		case gds_MsgType::SelectScreen:
-			currentSurface.reset(GetScreen());
+			currentSurface = GetScreen();
 			break;
 		case gds_MsgType::UpdateScreen:
 			gds_ScreenUpdateRect screen_rect;
@@ -154,6 +153,21 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			bt_vidmode mode;
 			bt_msg_content(&msg, (void*)&mode, sizeof(mode));
 			GetScreen()->SetMode(mode.width, mode.height, mode.bpp);
+			break;
+		case gds_MsgType::SetCursor: {
+				gds_CursorInfo cinfo;
+				bt_msg_content(&msg, (void*)&cinfo, sizeof(cinfo));
+				shared_ptr<Surface> cur_surface = allSurfaces[cinfo.surfaceId].lock();
+				if(cur_surface) {
+					GetScreen()->SetCursorImage(*cur_surface->Render(GetScreen()->GetScale()), cinfo.hotx, cinfo.hoty);
+				}
+			}
+			break;
+		case gds_MsgType::CursorVisibility:
+			bool cur_visible;
+			bt_msg_content(&msg, (void*)&cur_visible, sizeof(cur_visible));
+			if(cur_visible) GetScreen()->ShowCursor();
+			else GetScreen()->HideCursor();
 			break;
 	}
 }

@@ -29,7 +29,11 @@ int main(int argc, char **argv) {
 		bt_pid_t root_pid = 0;
 		root_pid = bt_spawn(elxpath, s_argc, s_argv);
 		if(root_pid) {
-			Service(root_pid);
+			try {
+				Service(root_pid);
+			} catch(exception &e) {
+				cout << "Exception:" << e.what() << endl;
+			}
 			GetScreen()->RestoreMode();
 		} else {
 			cout << "Could not load " << argv[1] << endl;

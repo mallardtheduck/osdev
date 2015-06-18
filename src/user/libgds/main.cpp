@@ -20,6 +20,12 @@ int main() {
 	uint32_t black = GDS_GetColour(0, 0, 0);
 	GDS_Ellipse(300, 300, 100, 100, green, blue, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	GDS_UpdateScreen();
+	uint32_t cursor = GDS_NewSurface(gds_SurfaceType::Bitmap, 20, 20);
+	uint32_t cur_white = GDS_GetColour(255, 255, 255);
+	GDS_Ellipse(10, 10, 20, 20, cur_white, cur_white, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	GDS_SetCursor(cursor, 10, 10);
+	GDS_CursorVisibility(true);
+	GDS_SelectScreen();
 	for(uint32_t i = 0; i < 16; ++i) {
 		GDS_Box(100, 100, 100, 100, red, i, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		GDS_UpdateScreen(99, 99, 101, 101);

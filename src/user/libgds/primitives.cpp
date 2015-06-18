@@ -70,3 +70,19 @@ extern "C" void GDS_Polygon(size_t points, gds_Point *pointData, bool closed,  u
 extern "C" void GDS_Text(char *string, uint32_t fontID, uint32_t size, uint32_t colour, uint8_t style){
 	//Need to implement variable-length params...
 }
+
+extern "C" void GDS_Blit(uint64_t src, uint32_t srcX, uint32_t srcY, uint32_t srcW, uint32_t srcH, uint32_t dstX, uint32_t dstY, uint32_t dstW, uint32_t dstH, uint32_t scale, uint32_t flags){
+	gds_DrawingOp op;
+	op.Blit.src = src;
+	op.Blit.srcX = srcX;
+	op.Blit.srcY = srcY;
+	op.Blit.srcW = srcW;
+	op.Blit.srcH = srcH;
+	op.Blit.dstX = dstX;
+	op.Blit.dstY = dstY;
+	op.Blit.dstW = dstW;
+	op.Blit.dstH = dstH;
+	op.Blit.scale = scale;
+	op.Blit.flags = flags;
+	GDS_AddDrawingOp(op);
+}

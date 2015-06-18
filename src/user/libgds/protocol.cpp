@@ -124,3 +124,15 @@ extern "C" void GDS_UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 extern "C" void GDS_SetScreenMode(bt_vidmode mode){
 	SendMessage(gds_MsgType::SetScreenMode, sizeof(mode), (void*)&mode, false);
 }
+
+extern "C" void GDS_SetCursor(uint64_t surfaceID, uint32_t hotx, uint32_t hoty){
+	gds_CursorInfo info;
+	info.hotx = hotx;
+	info.hoty = hoty;
+	info.surfaceId = surfaceID;
+	SendMessage(gds_MsgType::SetCursor, sizeof(info), (void*)&info, false);
+}
+
+extern "C" void GDS_CursorVisibility(bool visible){
+	SendMessage(gds_MsgType::CursorVisibility, sizeof(visible), (void*)&visible, false);
+}

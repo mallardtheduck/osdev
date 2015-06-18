@@ -26,7 +26,6 @@ public:
 	bool SetMode(uint32_t w, uint32_t h, uint8_t bpp);
 
 	void UpdateScreen(uint32_t x=0, uint32_t y=0, uint32_t w=0, uint32_t h=0);
-	GD::Image *GetImage();
 	void ShowCursor();
 	void HideCursor();
 	void SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty);
@@ -35,6 +34,6 @@ public:
 	gds_SurfaceType::Enum GetType() override;
 };
 
-Screen *GetScreen();
+std::shared_ptr<Screen> GetScreen();
 
 #endif

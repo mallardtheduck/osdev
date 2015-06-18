@@ -7,7 +7,7 @@
 
 class BitmapSurface : public Surface{
 protected:
-	GD::Image *image;
+	std::shared_ptr<GD::Image> image;
 	uint32_t scale;
 
 public:
@@ -23,6 +23,7 @@ public:
 	virtual void SetScale(uint32_t scale);
 	virtual gds_SurfaceType::Enum GetType(); 
 	virtual uint32_t GetColour(uint32_t r, uint32_t g, uint32_t b);
+	virtual std::shared_ptr<GD::Image> Render(uint32_t scale);
 	
 	virtual void Resize(size_t w, size_t h, bool indexed);
 

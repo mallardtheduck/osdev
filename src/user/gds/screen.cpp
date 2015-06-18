@@ -162,10 +162,6 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 	if(cursor_on) bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
 }
 
-GD::Image *Screen::GetImage() {
-	return image;
-}
-
 void Screen::ShowCursor() {
 	bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
 	cursor_on=true;
@@ -222,7 +218,8 @@ gds_SurfaceType::Enum Screen::GetType(){
 	return gds_SurfaceType::Screen;
 }
 
-Screen *GetScreen(){
-	static Screen screen;
-	return &screen;
+shared_ptr<Screen> GetScreen(){
+	static shared_ptr<Screen> screen;
+	if(!screen) screen.reset(new Screen());
+	return screen;
 }

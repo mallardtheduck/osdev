@@ -28,6 +28,8 @@ public:
 	
 	virtual uint32_t GetColour(uint32_t r, uint32_t g, uint32_t b) = 0;
 	
+	virtual std::shared_ptr<GD::Image> Render(uint32_t scale) = 0;
+	
 	virtual ~Surface() {};
 };
 

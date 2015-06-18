@@ -24,10 +24,14 @@ ENUM_START(gds_MsgType)
 	ENUM_SET(gds_MsgType, SurfaceInfo, 		7),
 	ENUM_SET(gds_MsgType, SetScale, 		8),
 	ENUM_SET(gds_MsgType, GetColour, 		9),
+	ENUM_SET(gds_MsgType, SetOpParameters,	10),
+	ENUM_SET(gds_MsgType, GetOpParameters,	11),
 		
 	ENUM_SET(gds_MsgType, SelectScreen,		100),
 	ENUM_SET(gds_MsgType, UpdateScreen, 	101),
 	ENUM_SET(gds_MsgType, SetScreenMode,	102),
+	ENUM_SET(gds_MsgType, SetCursor,		103),
+	ENUM_SET(gds_MsgType, CursorVisibility,	104),
 ENUM_END
 ENUM_TYPE(gds_MsgType);
 
@@ -40,6 +44,7 @@ ENUM_START(gds_DrawingOpType)
 	ENUM_SET(gds_DrawingOpType, Polygon, 	5),
 	//ENUM_SET(gds_DrawingOpType, Spline, 	6),
 	ENUM_SET(gds_DrawingOpType, Text, 		10),
+	ENUM_SET(gds_DrawingOpType, Blit,		11),
 	
 	ENUM_SET(gds_DrawingOpType, None, 		-1),
 ENUM_END
@@ -117,6 +122,15 @@ struct gds_DrawingOp {
 			uint32_t size;
 			uint8_t style;
 		} Text;
+		struct{
+			uint64_t src;
+			uint32_t srcX, srcY;
+			uint32_t srcW, srcH;
+			uint32_t dstX, dstY;
+			uint32_t dstW, dstH;
+			uint32_t scale;
+			uint32_t flags;
+		} Blit;
 	};
 	struct{
 		uint32_t lineStyle;
@@ -177,6 +191,14 @@ struct gds_TrueColour{
 };
 #ifndef __cplusplus
 typedef struct gds_TrueColour gds_TrueColour;
+#endif
+
+struct gds_CursorInfo{
+	uint32_t hotx, hoty;
+	uint64_t surfaceId;
+};
+#ifndef __cplusplus
+typedef struct gds_CursorInfo gds_CursorInfo;
 #endif
 
 #endif
