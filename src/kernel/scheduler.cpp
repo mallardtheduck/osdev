@@ -4,6 +4,7 @@
 
 extern char _start, _end;
 const uint32_t default_priority=10;
+const uint32_t modifier_limit=128;
 void *sch_stack;
 
 struct sch_start{
@@ -28,6 +29,7 @@ struct sch_thread{
 	sch_start *start;
 	uint32_t priority;
 	uint32_t dynpriority;
+	uint32_t modifier;
 	uint64_t ext_id;
 	pid_t pid;
 	sch_blockcheck blockcheck;
@@ -39,6 +41,7 @@ struct sch_thread{
 	sch_thread *next;
 	uint32_t sch_cycle;
 	thread_msg_status::Enum msgstatus;
+	uint8_t fpu_xmm_data[512];
 };
 
 vector<sch_thread*> *threads;
@@ -91,6 +94,7 @@ void sch_init(){
 	mainthread->to_be_deleted=false;
 	mainthread->priority=default_priority;
 	mainthread->dynpriority=0;
+	mainthread->modifier=0;
 	mainthread->magic=0xF00D;
 	mainthread->pid=proc_current_pid;
 	mainthread->blockcheck=NULL;
@@ -100,6 +104,7 @@ void sch_init(){
 	mainthread->pid=0;
 	mainthread->sch_cycle=0;
 	mainthread->msgstatus=thread_msg_status::Normal;
+	memcpy(mainthread->fpu_xmm_data, default_fpu_xmm_data, 512);
 	current_thread_id=mainthread->ext_id=++cur_ext_id;
 	threads->push_back(mainthread);
 	current_thread=(*threads)[threads->size()-1];
@@ -181,6 +186,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread->magic=0xBABE;
 	newthread->priority=default_priority;
 	newthread->dynpriority=0;
+	newthread->modifier=0;
 	newthread->blockcheck=NULL;
 	newthread->bc_param=NULL;
 	newthread->abortlevel=1;
@@ -190,6 +196,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread->next=NULL;
 	newthread->sch_cycle=0;
 	newthread->msgstatus=thread_msg_status::Normal;
+	memcpy(newthread->fpu_xmm_data, default_fpu_xmm_data, 512);
     take_lock_exclusive(sch_lock);
 	newthread->ext_id=++cur_ext_id;
 	threads->push_back(newthread);
@@ -277,12 +284,15 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 				foundtorun=true;
 				torun=(*threads)[i];
 			}
+			else if((*threads)[i]->modifier) --(*threads)[i]->modifier;
 		}
 	}
 	if(foundtorun){
+		if(torun->modifier < modifier_limit) ++torun->modifier;
 		return true;
 	}else{
 		torun=current_thread;
+		if(torun->modifier < modifier_limit) ++torun->modifier;
 		return true;
 	}
 }
@@ -304,6 +314,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	if(torun && !torun->runnable) torun=torun->next;
 	//If there is no next, run the prescheduler instead
 	if(!torun) torun=prescheduler_thread;
+	save_fpu_xmm_data(current_thread->fpu_xmm_data);
 	current_thread=torun;
 	curstack=current_thread->stack;
 	if(!torun->ext_id) panic("(SCH) Thread with no ID?");
@@ -311,6 +322,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	current_thread_id=torun->ext_id;
 	proc_switch_sch(current_thread->pid, false);
 	gdt_set_kernel_stack(current_thread->stackbase);
+	fpu_switch();
 	sch_deferred=false;
 	return &curstack;
 }
@@ -521,7 +533,13 @@ void sch_prescheduler_thread(void*){
 			}
 			current->next=next;
 			current=current->next;
-			current->dynpriority=current->priority;
+			if(current->modifier < modifier_limit) ++current->modifier;
+			//Prevent overflow of dynamic priority...
+			if(current->priority + current->modifier >= current->priority){
+				current->dynpriority=current->priority + current->modifier;
+			}else{
+				current->dynpriority=0xFFFFFFFF;
+			}
 			current->sch_cycle=cycle;
 			count++;
 		}
@@ -549,4 +567,8 @@ thread_msg_status::Enum sch_get_msgstatus(uint64_t ext_id){
 
 void sch_deferred_yield(){
 	if(sch_deferred) sch_yield();
+}
+
+uint8_t *sch_get_fpu_xmm_data(){
+	return current_thread->fpu_xmm_data;
 }

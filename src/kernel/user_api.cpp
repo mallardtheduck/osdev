@@ -26,7 +26,7 @@ void userapi_handler(int, isr_regs *regs){
 	if(ext==0){
 		userapi_syscall(fn, regs);
 	}else{
-		regs->eax=-1;
+		user_call_extension(ext, fn, regs);
 		return;
 	}
 }
@@ -393,6 +393,20 @@ USERAPI_HANDLER(BT_MSGWAIT){
 	proc_message_wait();
 }
 
+USERAPI_HANDLER(BT_SUBSCRIBE){
+	msg_subscribe((btos_api::bt_kernel_messages::Enum)regs->ebx);
+}
+
+USERAPI_HANDLER(BT_UNSUBSCRIBE){
+	msg_unsubscribe((btos_api::bt_kernel_messages::Enum)regs->ebx);
+}
+
+USERAPI_HANDLER(BT_QUERY_EXT){
+	if(is_safe_ptr(regs->ebx)){
+		regs->eax = get_extension_id((char*)regs->ebx);
+	}
+}
+
 void userapi_syscall(uint16_t fn, isr_regs *regs){
 	switch(fn){
 		case 0:
@@ -471,7 +485,11 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_CONTENT);
 		USERAPI_HANDLE_CALL(BT_ACK);
 		USERAPI_HANDLE_CALL(BT_MSGWAIT);
-		//USERAPI_HANDLE_CALL(BT_SUBSCRIBE);
+		USERAPI_HANDLE_CALL(BT_SUBSCRIBE);
+		USERAPI_HANDLE_CALL(BT_UNSUBSCRIBE);
+
+		//Extensions
+		USERAPI_HANDLE_CALL(BT_QUERY_EXT);
 
 		default:
 			regs->eax=-1;
