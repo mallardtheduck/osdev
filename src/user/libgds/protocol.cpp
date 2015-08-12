@@ -111,6 +111,10 @@ extern "C" uint32_t GDS_GetColour(uint32_t r, uint32_t g, uint32_t b){
 	return GetContent<uint32_t>(&reply);
 }
 
+extern "C" void GDS_SetOpParameters(const gds_OpParameters *params){
+	SendMessage(gds_MsgType::SetOpParameters, sizeof(gds_OpParameters) + params->size, (void*)params, false);
+}
+
 extern "C" void GDS_SelectScreen(){
 	SendMessage(gds_MsgType::SelectScreen, 0, NULL, false);
 }

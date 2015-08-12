@@ -110,14 +110,13 @@ struct gds_DrawingOp {
 			uint32_t x, y, w, h, a1, a2;
 		} Arc;
 		struct{
-			size_t points;
 			bool closed;
 		} Polygon;
 		/*struct{
 			size_t points;
 		} Spline;*/
 		struct{
-			size_t chars;
+			uint32_t x, y;
 			uint32_t fontID;
 			uint32_t size;
 			uint8_t style;
@@ -199,6 +198,16 @@ struct gds_CursorInfo{
 };
 #ifndef __cplusplus
 typedef struct gds_CursorInfo gds_CursorInfo;
+#endif
+
+struct gds_OpParameters{
+	ENUM_NAME(gds_DrawingOpType) type;
+	uint32_t op_id;
+	size_t size;
+	char data[];
+};
+#ifndef __cplusplus
+typedef struct gds_OpParameters gds_OpParameters;
 #endif
 
 #endif

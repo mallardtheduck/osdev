@@ -1,11 +1,14 @@
 #include "bitmap_surface.hpp"
 #include "drawingop.hpp"
 
+#include <sstream>
+
 BitmapSurface::BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale) {
 	if(indexed) {
 		image.reset(new GD::Image((int)w, (int)h, !indexed));
 	}
 	this->scale = scale;
+	pending_op.type = gds_DrawingOpType::None;
 }
 
 size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
@@ -46,6 +49,10 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 					image->CopyResized(srcImage->GetPtr(), op.Blit.dstX, op.Blit.dstY, op.Blit.srcX, op.Blit.srcY, op.Blit.dstW, op.Blit.dstH, op.Blit.srcW, op.Blit.srcH);
 				}
 			}
+			break;
+		case gds_DrawingOpType::Text:
+		case gds_DrawingOpType::Polygon:
+			pending_op = op;
 			break;
 
 
@@ -101,6 +108,40 @@ uint32_t BitmapSurface::GetColour(uint32_t r, uint32_t g, uint32_t b) {
 std::shared_ptr<GD::Image> BitmapSurface::Render(uint32_t scale) {
 	if(scale == this->scale) return image;
 	else return std::shared_ptr<GD::Image>();
+}
+
+void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
+	if(pending_op.type != gds_DrawingOpType::None && pending_op.type == params->type){
+		switch(pending_op.type){
+			case gds_DrawingOpType::Text:
+				image->String(gdFontGetSmall(), pending_op.Text.x, pending_op.Text.y, params->data, pending_op.Common.lineColour);
+				break;
+			case gds_DrawingOpType::Polygon:
+				{
+					size_t pointCount = params->size / sizeof(gds_Point);
+					gdPoint points[pointCount];
+					for(size_t i =0; i<pointCount; ++i){
+						std::stringstream ss;
+						points[i].x = ((gds_Point*)params->data)[i].x;
+						points[i].y = ((gds_Point*)params->data)[i].y;
+						ss << "GDS: Polygon point " << i << " (" << points[i].x << ", " << points[i].y << ")" << std::endl;
+						bt_zero(ss.str().c_str());
+					}
+					if(pending_op.Common.fillStyle == gds_FillStyle::Filled) image->FilledPolygon(points, pointCount, pending_op.Common.fillColour);
+					if(pending_op.Polygon.closed) image->Polygon(points, pointCount, pending_op.Common.lineColour);
+					else image->OpenPolygon(points, pointCount, pending_op.Common.lineColour);
+					
+				}
+				break;
+			default:
+				break;
+		}
+		pending_op.type = gds_DrawingOpType::None;
+	}
+}
+
+std::shared_ptr<gds_OpParameters> BitmapSurface::GetOpParameters(uint32_t){
+	return std::shared_ptr<gds_OpParameters>();
 }
 
 BitmapSurface::~BitmapSurface() {

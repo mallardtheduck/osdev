@@ -18,12 +18,20 @@ int main() {
 	uint32_t red = GDS_GetColour(255, 0, 0);
 	uint32_t blue = GDS_GetColour(0, 0, 255);
 	uint32_t black = GDS_GetColour(0, 0, 0);
+	uint32_t white = GDS_GetColour(255, 255, 255);
 	GDS_Ellipse(300, 300, 100, 100, green, blue, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	GDS_Text(20, 20, "Hello world!", 0, 0, white, 0);
+	gds_Point points[] = {{100, 300}, {150, 400}, {200, 300}};
+	GDS_Polygon(3, points, true, red, green, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	GDS_UpdateScreen();
-	uint32_t cursor = GDS_NewSurface(gds_SurfaceType::Bitmap, 20, 20);
+	uint32_t cursor = GDS_NewSurface(gds_SurfaceType::Bitmap, 12, 21);
+	uint32_t cur_black = GDS_GetColour(0, 0, 0);
+	(void)cur_black;
+	uint32_t cur_blue = GDS_GetColour(0, 0, 255);
 	uint32_t cur_white = GDS_GetColour(255, 255, 255);
-	GDS_Ellipse(10, 10, 20, 20, cur_white, cur_white, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	GDS_SetCursor(cursor, 10, 10);
+	gds_Point cur_points[] = {{0, 0}, {0, 16}, {3, 12}, {7, 20}, {10, 19}, {6, 11}, {11, 11}};
+	GDS_Polygon(7, cur_points, true, cur_blue, cur_white, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	GDS_SetCursor(cursor, 0, 0);
 	GDS_CursorVisibility(true);
 	GDS_SelectScreen();
 	for(uint32_t i = 0; i < 16; ++i) {

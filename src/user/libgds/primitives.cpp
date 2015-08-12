@@ -1,5 +1,6 @@
 #include <gds/libgds.h>
 #include "libgds_internal.hpp"
+#include <cstring>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -64,11 +65,41 @@ extern "C" void GDS_Arc(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t
 }
 
 extern "C" void GDS_Polygon(size_t points, gds_Point *pointData, bool closed,  uint32_t lineColour, uint32_t fillColour, uint8_t lineWidth, uint32_t lineStyle, uint32_t fillStyle){
-	//Need to implement variable-length params...
+	gds_DrawingOp op;
+	op.type = gds_DrawingOpType::Polygon;
+	op.Polygon.closed = closed;
+	op.Common.lineColour = lineColour;
+	op.Common.fillColour = fillColour;
+	op.Common.lineWidth = lineWidth;
+	op.Common.lineStyle = lineStyle;
+	op.Common.fillStyle = fillStyle;
+	uint32_t id = GDS_AddDrawingOp(op);
+	gds_OpParameters *params = (gds_OpParameters*)new char[sizeof(gds_OpParameters) + (sizeof(gds_Point) * points)];
+	params->type = gds_DrawingOpType::Polygon;
+	params->op_id = id;
+	params->size = (sizeof(gds_Point) * points);
+	memcpy(params->data, pointData, (sizeof(gds_Point) * points));
+	GDS_SetOpParameters(params);
+	delete params;
 }
 
-extern "C" void GDS_Text(char *string, uint32_t fontID, uint32_t size, uint32_t colour, uint8_t style){
-	//Need to implement variable-length params...
+extern "C" void GDS_Text(uint32_t x, uint32_t y, const char *text, uint32_t fontID, uint32_t size, uint32_t colour, uint8_t style){
+	gds_DrawingOp op;
+	op.type = gds_DrawingOpType::Text;
+	op.Text.x = x;
+	op.Text.y = y;
+	op.Text.fontID = fontID;
+	op.Text.size = size;
+	op.Common.lineColour = colour;
+	op.Common.lineStyle = style;
+	uint32_t id = GDS_AddDrawingOp(op);
+	gds_OpParameters *params = (gds_OpParameters*)new char[sizeof(gds_OpParameters) + strlen(text)]();
+	params->type = gds_DrawingOpType::Text;
+	params->op_id = id;
+	params->size = strlen(text);
+	strcpy(params->data, text);
+	GDS_SetOpParameters(params);
+	delete params;
 }
 
 extern "C" void GDS_Blit(uint64_t src, uint32_t srcX, uint32_t srcY, uint32_t srcW, uint32_t srcH, uint32_t dstX, uint32_t dstY, uint32_t dstW, uint32_t dstH, uint32_t scale, uint32_t flags){
