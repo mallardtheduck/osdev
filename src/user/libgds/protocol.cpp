@@ -104,9 +104,9 @@ extern "C" void GDS_SetScale(uint32_t scale){
 	SendMessage(gds_MsgType::SetScale, sizeof(scale), (void*)scale, false);
 }
 
-extern "C" uint32_t GDS_GetColour(uint32_t r, uint32_t g, uint32_t b){
+extern "C" uint32_t GDS_GetColour(uint8_t r, uint8_t g, uint8_t b, uint8_t a){
 	gds_TrueColour truecol;
-	truecol.r = r; truecol.g = g; truecol.b = b;
+	truecol.r = r; truecol.g = g; truecol.b = b; truecol.a = a;
 	bt_msg_header reply = SendMessage(gds_MsgType::GetColour, sizeof(truecol), (void*)&truecol, true);
 	return GetContent<uint32_t>(&reply);
 }

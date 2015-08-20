@@ -23,7 +23,7 @@ public:
 	virtual uint32_t GetScale();
 	virtual void SetScale(uint32_t scale);
 	virtual gds_SurfaceType::Enum GetType(); 
-	virtual uint32_t GetColour(uint32_t r, uint32_t g, uint32_t b);
+	virtual uint32_t GetColour(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	virtual std::shared_ptr<GD::Image> Render(uint32_t scale);
 	virtual void SetOpParameters(std::shared_ptr<gds_OpParameters>);
 	virtual std::shared_ptr<gds_OpParameters> GetOpParameters(uint32_t op);

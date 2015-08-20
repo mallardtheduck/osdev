@@ -186,7 +186,7 @@ typedef struct gds_Point gds_Point;
 #endif
 
 struct gds_TrueColour{
-	uint32_t r, g, b;
+	uint8_t r, g, b, a;
 };
 #ifndef __cplusplus
 typedef struct gds_TrueColour gds_TrueColour;

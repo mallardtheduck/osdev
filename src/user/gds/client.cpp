@@ -135,7 +135,7 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			if(currentSurface) {
 				gds_TrueColour truecol;
 				bt_msg_content(&msg, (void*)&truecol, sizeof(truecol));
-				uint32_t col = currentSurface->GetColour(truecol.r, truecol.g, truecol.b);
+				uint32_t col = currentSurface->GetColour(truecol.r, truecol.g, truecol.b, truecol.a);
 				SendReply(msg, col);
 			} else {
 				SendReply(msg, (uint32_t)0);

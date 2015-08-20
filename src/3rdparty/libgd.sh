@@ -13,6 +13,6 @@ tar xf libgd-2.1.0.tar.gz -C originals
 
 cd libgd-2.1.0
 patch -p1 < ../libgd/libgd.patch
-cp ../libgd/btos-build.sh .
+cp -p ../libgd/btos-build.sh .
 mkdir -p install
 ./btos-build.sh

@@ -101,8 +101,8 @@ gds_SurfaceType::Enum BitmapSurface::GetType() {
 	return gds_SurfaceType::Bitmap;
 }
 
-uint32_t BitmapSurface::GetColour(uint32_t r, uint32_t g, uint32_t b) {
-	return (uint32_t) image->ColorResolve(r, g, b);
+uint32_t BitmapSurface::GetColour(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+	return (uint32_t) image->ColorResolve(r, g, b, a);
 }
 
 std::shared_ptr<GD::Image> BitmapSurface::Render(uint32_t scale) {

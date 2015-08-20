@@ -179,8 +179,8 @@ void Screen::SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty) 
 	bmp.bpp=current_mode.bpp;
 	bmp.w=img.Width();
 	bmp.h=img.Height();
-	int transparent=img.GetTransparent();
-	bmp.transparent=image->ColorClosest(img.Red(transparent), img.Green(transparent), img.Blue(transparent));
+	uint32_t transparent=img.GetTransparent();
+	bmp.transparent=transparent;//image->ColorClosest(img.Red(transparent), img.Green(transparent), img.Blue(transparent));
 	size_t datasize;
 	if(current_mode.bpp >=8) datasize = bmp.w * bmp.h * (bmp.bpp / 8);
 	else datasize = bmp.w * bmp.h / (8 / bmp.bpp);
@@ -188,7 +188,7 @@ void Screen::SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty) 
 	for(uint32_t x=0; x<bmp.w; ++x){
 		for(uint32_t y=0; y<bmp.h; ++y){
 			uint32_t value=img.GetPixel(x, y);
-			value=image->ColorClosest(img.Red(value), img.Green(value), img.Blue(value));
+			if(value != transparent) value=image->ColorClosest(img.Red(value), img.Green(value), img.Blue(value));
 			size_t pixelpos=(y * bmp.w) + x;
 			if(bmp.bpp == 8){
 				if(pixelpos >= datasize) continue;

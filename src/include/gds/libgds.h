@@ -23,7 +23,7 @@ void GDS_RemoveDrawingOp(size_t index);
 gds_DrawingOp GDS_GetDrawingOp(size_t index);
 gds_SurfaceInfo GDS_SurfaceInfo();
 void GDS_SetScale(uint32_t scale);
-uint32_t GDS_GetColour(uint32_t r, uint32_t g, uint32_t b);
+uint32_t GDS_GetColour(uint8_t r, uint8_t g, uint8_t b, uint8_t a GDS_DEFAULT(0));
 void GDS_SetOpParameters(const gds_OpParameters *params);
 void GDS_SelectScreen();
 void GDS_UpdateScreen(uint32_t x GDS_DEFAULT(0), uint32_t y GDS_DEFAULT(0), uint32_t w GDS_DEFAULT(0), uint32_t h GDS_DEFAULT(0));
