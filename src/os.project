@@ -270,7 +270,6 @@
       <File Name="user/termctl/termctl.c"/>
     </VirtualDirectory>
     <VirtualDirectory Name="gds">
-      <File Name="user/gds/bitmap_surface.cpp"/>
       <File Name="user/gds/bitmap_surface.hpp"/>
       <File Name="user/gds/cursor.c"/>
       <File Name="user/gds/drawingop.cpp"/>
@@ -290,6 +289,7 @@
       <File Name="user/libgds/util.cpp"/>
       <File Name="user/libgds/libgds_internal.hpp"/>
       <File Name="user/libgds/primitives.cpp"/>
+      <File Name="user/gds/bitmap_surface.cpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">

@@ -121,16 +121,17 @@ void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
 					size_t pointCount = params->size / sizeof(gds_Point);
 					gdPoint points[pointCount];
 					for(size_t i =0; i<pointCount; ++i){
-						std::stringstream ss;
 						points[i].x = ((gds_Point*)params->data)[i].x;
 						points[i].y = ((gds_Point*)params->data)[i].y;
-						ss << "GDS: Polygon point " << i << " (" << points[i].x << ", " << points[i].y << ")" << std::endl;
-						bt_zero(ss.str().c_str());
+						
 					}
 					if(pending_op.Common.fillStyle == gds_FillStyle::Filled) image->FilledPolygon(points, pointCount, pending_op.Common.fillColour);
-					if(pending_op.Polygon.closed) image->Polygon(points, pointCount, pending_op.Common.lineColour);
-					else image->OpenPolygon(points, pointCount, pending_op.Common.lineColour);
-					
+					/*if(pending_op.Polygon.closed) image->Polygon(points, pointCount, pending_op.Common.lineColour);
+					else image->OpenPolygon(points, pointCount, pending_op.Common.lineColour);*/
+					for(size_t i=1; i<pointCount; ++i){
+						image->Line(points[i].x, points[i].y, points[i-1].x, points[i-1].y, pending_op.Common.lineColour);
+					}
+					if(pending_op.Polygon.closed) image->Line(points[0].x, points[0].y, points[pointCount-1].x, points[pointCount-1].y, pending_op.Common.lineColour);
 				}
 				break;
 			default:

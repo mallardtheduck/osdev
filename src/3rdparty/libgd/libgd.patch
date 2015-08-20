@@ -1,6 +1,49 @@
+diff -rupN originals/libgd-2.1.0/btos-build.sh libgd-2.1.0/btos-build.sh
+--- originals/libgd-2.1.0/btos-build.sh	1970-01-01 01:00:00.000000000 +0100
++++ libgd-2.1.0/btos-build.sh	2015-08-20 16:19:59.225874679 +0100
+@@ -0,0 +1,39 @@
++#!/bin/bash
++
++# architecture prefix
++ARCH="i686-pc-btos"
++
++# cumulative toolchain prefix
++PREFIX=/btos
++
++export CC=$ARCH-gcc
++export CXX=$ARCH-g++
++export LD=$ARCH-ld
++export NM="$ARCH-nm -B"
++export AR=$ARCH-ar
++export RANLIB=$ARCH-ranlib
++export STRIP=$ARCH-strip
++export OBJCOPY=$ARCH-objcopy
++export LN_S="ln -s"
++
++export CFLAGS="-g -O2"
++export CPPFLAGS=""
++export CXXFLAGS=""
++
++export LDFLAGS=""
++
++PATH=$BASE_PATH/bin:$PATH
++./configure \
++	--host=$ARCH \
++	--prefix=$PREFIX \
++	--with-png=no \
++	--with-jpeg=no \
++	--with-freetype=no \
++	--with-fontconfig=no \
++	--with-xpm=no
++
++make
++make DESTDIR=$PWD/../install install
++rm ../install/btos/lib/libgd.la
++find ../install -executable -not -name "*.elx" -type f -exec rm {}.elx \;
++find ../install -executable -not -name "*.elx" -type f -exec mv {} {}.elx \;
 diff -rupN originals/libgd-2.1.0/config/config.sub libgd-2.1.0/config/config.sub
 --- originals/libgd-2.1.0/config/config.sub	2013-06-25 10:58:55.000000000 +0100
-+++ libgd-2.1.0/config/config.sub	2015-02-07 22:52:15.617399200 +0000
++++ libgd-2.1.0/config/config.sub	2015-08-20 16:19:58.993874675 +0100
 @@ -1354,7 +1354,7 @@ case $os in
  	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
  	      | -sym* | -kopensolaris* | -plan9* \
@@ -12,19 +55,19 @@ diff -rupN originals/libgd-2.1.0/config/config.sub libgd-2.1.0/config/config.sub
  	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \
 diff -rupN originals/libgd-2.1.0/src/gd.c libgd-2.1.0/src/gd.c
 --- originals/libgd-2.1.0/src/gd.c	2013-06-25 10:58:23.000000000 +0100
-+++ libgd-2.1.0/src/gd.c	2015-02-07 23:13:35.805373077 +0000
-@@ -1230,7 +1230,7 @@ BGD_DECLARE(void) gdImageLine (gdImagePt
- 			/* 2.0.12: Michael Schwartz: divide rather than multiply;
- 			   TBB: but watch out for /0! */
- 			double ac = cos (atan2 (dy, dx));
--			if (ac != 0) {
-+			if (ac != 0 && !isnan(ac)) {
- 				wid = thick / ac;
- 			} else {
- 				wid = 1;
++++ libgd-2.1.0/src/gd.c	2015-08-20 18:58:33.306022650 +0100
+@@ -3025,7 +3025,7 @@ BGD_DECLARE(void) gdImageFilledPolygon (
+ 		for (i = 0; (i < (ints-1)); i += 2) {
+ 			/* 2.0.29: back to gdImageLine to prevent segfaults when
+ 			  performing a pattern fill */
+-			gdImageLine (im, im->polyInts[i], y, im->polyInts[i + 1], y,
++			gdImageLine (im, im->polyInts[i], y, im->polyInts[i + 1] - ((im->polyInts[i + 1] != im->polyInts[i])? 1 : 0), y,
+ 			             fill_color);
+ 		}
+ 	}
 diff -rupN originals/libgd-2.1.0/src/gd_errors.h libgd-2.1.0/src/gd_errors.h
 --- originals/libgd-2.1.0/src/gd_errors.h	2013-06-25 10:58:23.000000000 +0100
-+++ libgd-2.1.0/src/gd_errors.h	2015-02-07 22:52:15.617399200 +0000
++++ libgd-2.1.0/src/gd_errors.h	2015-08-20 16:19:59.037874676 +0100
 @@ -1,7 +1,7 @@
  #ifndef GD_ERRORS_H
  #define GD_ERRORS_H
@@ -36,7 +79,7 @@ diff -rupN originals/libgd-2.1.0/src/gd_errors.h libgd-2.1.0/src/gd_errors.h
  /*
 diff -rupN originals/libgd-2.1.0/src/gdpp.h libgd-2.1.0/src/gdpp.h
 --- originals/libgd-2.1.0/src/gdpp.h	2013-06-25 10:58:23.000000000 +0100
-+++ libgd-2.1.0/src/gdpp.h	2015-02-07 22:52:15.617399200 +0000
++++ libgd-2.1.0/src/gdpp.h	2015-08-20 16:19:59.045874676 +0100
 @@ -1476,7 +1476,7 @@ public:
  		return gdImageTrueColorPixel(im, x, y);
  	}
@@ -48,7 +91,7 @@ diff -rupN originals/libgd-2.1.0/src/gdpp.h libgd-2.1.0/src/gdpp.h
  
 diff -rupN originals/libgd-2.1.0/src/Makefile.in libgd-2.1.0/src/Makefile.in
 --- originals/libgd-2.1.0/src/Makefile.in	2013-06-25 14:53:39.000000000 +0100
-+++ libgd-2.1.0/src/Makefile.in	2015-02-07 22:52:15.617399200 +0000
++++ libgd-2.1.0/src/Makefile.in	2015-08-20 16:19:59.053874676 +0100
 @@ -393,7 +393,7 @@ top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
  bin_SCRIPTS = bdftogd
