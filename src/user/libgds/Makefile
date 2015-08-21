@@ -1,6 +1,8 @@
 OUTPUT-NAME := gdstest.elx
+LIBRARY-NAME := libgds.a
 
 BUILD-AS := i686-pc-btos-as
+BUILD-AR := i686-pc-btos-ar
 BUILD-AS-OPTIONS := -g -fPIC -c
 BUILD-CPP := i686-pc-btos-g++
 BUILD-CPP-FLAGS :=  -c
@@ -9,17 +11,20 @@ BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../include -std=gnu99
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -o $(OUTPUT-NAME) -O2
-LINK-OPTIONS := -lgcc -lstdc++
+LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L.
+AR-FLAGS := rcs -o $(LIBRARY-NAME)
+LINK-OPTIONS := -lgds -lgcc -lstdc++
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")
 CFILES := $(shell find . -type f -name "*.c")
-CPPFILES := $(shell find . -type f -name "*.cpp")
+CPPFILES := $(shell find . -type f -name "*.cpp" -not -name "main.cpp")
+MAINCPP := main.cpp
 
 ASOBJS := $(ASFILES:.s=.o)
 COBJS := $(CFILES:.c=.o)
 CPPOBJS := $(CPPFILES:.cpp=.o)
+MAINOBJ := $(MAINCPP:.cpp=.o)
 
 CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
@@ -34,8 +39,11 @@ dummy.delete:
 	-@$(RM) *.o
 	-@$(RM) $(OUTPUT-NAME)
 
-$(OUTPUT-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile
-	$(LINK) $(LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LINK-OPTIONS)
+$(LIBRARY-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile
+	$(BUILD-AR) $(AR-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS)
+
+$(OUTPUT-NAME): $(LIBRARY-NAME) $(MAINOBJ) Makefile
+	$(LINK) $(LINK-FLAGS) $(MAINOBJ) $(LINK-OPTIONS)
 
 .s.o: %.s Makefile
 	$(BUILD-AS) $< -o $@ $(BUILD-AS-OPTIONS)
