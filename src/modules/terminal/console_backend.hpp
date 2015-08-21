@@ -30,12 +30,12 @@ public:
 
     size_t display_read(size_t bytes, char *buf);
     size_t display_write(size_t bytes, char *buf);
-    size_t display_seek(size_t pos, bool relative);
+    size_t display_seek(size_t pos, uint32_t flags);
     int display_ioctl(int fn, size_t bytes, char *buf);
 
     size_t input_read(size_t bytes, char *buf);
     size_t input_write(size_t bytes, char *buf);
-    size_t input_seek(size_t pos, bool relative);
+    size_t input_seek(size_t pos, uint32_t flags);
     int input_ioctl(int fn, size_t bytes, char *buf);
 
     bt_terminal_pointer_info pointer_read();

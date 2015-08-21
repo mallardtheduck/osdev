@@ -78,32 +78,39 @@ size_t terminal_write(void *instance, size_t bytes, char *buf){
 	}
 }
 
-size_t terminal_seek(void *instance, size_t pos, bool relative){
+size_t terminal_seek(void *instance, size_t pos, uint32_t flags){
 	terminal_instance *inst=(terminal_instance*)instance;
 	size_t ret=0;
-	if(inst->mode==bt_vid_text_access_mode::Raw){
-		//TODO: Bounds checking!
-		if(relative) inst->pos+=pos;
-		else inst->pos=pos;
-		ret=inst->pos;
-	}else{
-		size_t cpos;
-		if(relative){
+    if(inst->mode==bt_vid_text_access_mode::Raw){
+        if(flags & FS_Relative) inst->pos+=pos;
+		else if(flags & FS_Backwards){
+			inst->pos = maxchar - pos;
+		}else if(flags == (FS_Relative | FS_Backwards)) inst->pos-=pos;
+        else inst->pos=pos;
+        ret=inst->pos;
+    }else{
+        size_t cpos;
+        if(flags & FS_Relative){
+            cpos=(terminal_row * VGA_WIDTH) + terminal_column;
+            cpos+=pos;
+		}else if(flags & FS_Backwards){
+			cpos = (VGA_HEIGHT * VGA_WIDTH) - pos;
+		}else if(flags == (FS_Relative | FS_Backwards)){
 			cpos=(terminal_row * VGA_WIDTH) + terminal_column;
-			cpos+=pos;
-		}else{
-			cpos=pos;
-		}
-		if(cpos > VGA_HEIGHT * VGA_WIDTH){
-			dbgpf("Bad terminal seek: %i\n", cpos);
-			cpos=VGA_HEIGHT * VGA_WIDTH;
-		}
-		terminal_row=cpos/VGA_WIDTH;
-		terminal_column=cpos-(terminal_row * VGA_WIDTH);
-		terminal_poscursor(terminal_row, terminal_column);
-		ret=cpos;
-		inst->pos=cpos;
-	}
+            cpos-=pos;
+        }else{
+            cpos=pos;
+        }
+        if(cpos > VGA_HEIGHT * VGA_WIDTH){
+            dbgpf("KTEXT: Bad seek: %i\n", cpos);
+            cpos=VGA_HEIGHT * VGA_WIDTH;
+        }
+        terminal_row=cpos/VGA_WIDTH;
+        terminal_column=cpos-(terminal_row * VGA_WIDTH);
+        terminal_poscursor(terminal_row, terminal_column);
+        ret=cpos;
+        inst->pos=cpos;
+    }
 	return ret;
 }
 

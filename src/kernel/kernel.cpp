@@ -27,6 +27,7 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	userapi_init();
     init_extensions();
     msg_init();
+	init_debug_extension();
 	load_module("INIT:/BOOT.SYS");
 	//printf("Ready.");
 	while(true)sch_block();

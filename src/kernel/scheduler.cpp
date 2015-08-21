@@ -21,11 +21,11 @@ sch_stackinfo curstack;
 
 struct sch_thread{
 	sch_stackinfo stack;
-	bool runnable;
+	sch_thread_status::Enum status;
 	uint32_t magic;
 	void *stackptr;
 	void *stackbase;
-	bool to_be_deleted;
+	isr_regs *usercontext;
 	sch_start *start;
 	uint32_t priority;
 	uint32_t dynpriority;
@@ -68,12 +68,12 @@ static uint32_t counter=cstart;
 char *sch_threads_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
-	sprintf(buffer, "# ID, PID, priority, addr, run, alevel\n");
+	sprintf(buffer, "# ID, PID, priority, addr, status, alevel, load\n");
 	{hold_lock hl(sch_lock);
 		for(size_t i=0; i<threads->size(); ++i){
 			sch_thread *t=(*threads)[i];
-			sprintf(&buffer[strlen(buffer)],"%i, %i, %i, %x, %i, %i\n", (int)t->ext_id, (int)t->pid, t->priority, t->eip,
-				(bool)t->runnable, t->abortlevel);
+			sprintf(&buffer[strlen(buffer)],"%i, %i, %i, %x, %i, %i, %i\n", (int)t->ext_id, (int)t->pid, t->priority, t->eip,
+				(int)t->status, t->abortlevel, t->modifier);
 		}
     }
     return buffer;
@@ -90,8 +90,7 @@ void sch_init(){
 	threads=new vector<sch_thread*>();
 	sch_stack=(char*)malloc(4096)+4096;
 	sch_thread *mainthread=new sch_thread();
-	mainthread->runnable=true;
-	mainthread->to_be_deleted=false;
+	mainthread->status = sch_thread_status::Runnable;
 	mainthread->priority=default_priority;
 	mainthread->dynpriority=0;
 	mainthread->modifier=0;
@@ -181,8 +180,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread->stack.ss=0x10;
 	newthread->stack.esp=stack;
 	newthread->start=start;
-	newthread->runnable=true;
-	newthread->to_be_deleted=false;
+	newthread->status = sch_thread_status::Runnable;
 	newthread->magic=0xBABE;
 	newthread->priority=default_priority;
 	newthread->dynpriority=0;
@@ -212,7 +210,7 @@ void thread_reaper(void*){
 			hold_lock lck(sch_lock);
 			changed=false;
 			for(size_t i=0; i<threads->size(); ++i){
-				if((*threads)[i]->to_be_deleted){
+				if((*threads)[i]->status == sch_thread_status::Ending){
 					sch_thread *ptr=(*threads)[i];
 					uint64_t id=(*threads)[i]->ext_id;
                     void *stackptr=(*threads)[i]->stackptr;
@@ -234,9 +232,8 @@ void thread_reaper(void*){
 void sch_end_thread(){
     proc_remove_thread(sch_get_id(), current_thread->pid);
     take_lock_exclusive(sch_lock);
-	current_thread->runnable=false;
-	current_thread->to_be_deleted=true;
-	reaper_thread->runnable=true;
+	current_thread->status = sch_thread_status::Ending;
+	reaper_thread->status = sch_thread_status::Runnable;
 	release_lock(sch_lock);
 	sch_yield();
 	panic("SCH: Attempt to run to_be_deleted thread!");
@@ -256,15 +253,16 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 	int nrunnables=0;
 	uint32_t min=0xFFFFFFFF;
 	for(size_t i=0; i<threads->size(); ++i){
+		sch_thread *ithread = (*threads)[i];
 		//Priority 0xFFFFFFFF == "idle", only run when nothing else is available.
-		if(!(*threads)[i]->priority==0xFFFFFFFF) (*threads)[i]->dynpriority=0xFFFFFFFF;
-	    if(lcycle != cycle && !(*threads)[i]->runnable && (*threads)[i]->blockcheck!=NULL){
-	        (*threads)[i]->runnable=(*threads)[i]->blockcheck((*threads)[i]->bc_param);
+		if(!ithread->priority==0xFFFFFFFF) ithread->dynpriority=0xFFFFFFFF;
+	    if(lcycle != cycle && ithread->status == sch_thread_status::Blocked && ithread->blockcheck!=NULL){
+	        if(ithread->blockcheck(ithread->bc_param)) ithread->status = sch_thread_status::Runnable;
 	    }
-		if((*threads)[i]->runnable){
-			if(!(*threads)[i]->priority) panic("(SCH) Thread priority 0 is not allowed.\n");
+		if(ithread->status == sch_thread_status::Runnable){
+			if(!ithread->priority) panic("(SCH) Thread priority 0 is not allowed.\n");
 			nrunnables++;
-			if((*threads)[i]->dynpriority < min) min=(*threads)[i]->dynpriority;
+			if(ithread->dynpriority < min) min=ithread->dynpriority;
 		}
 	}
 	lcycle=cycle;
@@ -278,14 +276,15 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 	//that isn't the current thread, record it
 	bool foundtorun=false;
 	for(size_t i=0; i<(*threads).size(); ++i){
-		if((*threads)[i]->runnable){
-			if((*threads)[i]->dynpriority) (*threads)[i]->dynpriority-=min;
-			if((*threads)[i]!=current_thread && (*threads)[i]->dynpriority==0){
+		sch_thread *ithread = (*threads)[i];
+		if(ithread->status == sch_thread_status::Runnable){
+			if(ithread->dynpriority) ithread->dynpriority-=min;
+			if(ithread!=current_thread && ithread->dynpriority==0){
 				foundtorun=true;
-				torun=(*threads)[i];
+				torun=ithread;
 			}
-			else if((*threads)[i]->modifier) --(*threads)[i]->modifier;
-		}
+			else if(ithread->modifier) --ithread->modifier;
+		}else if(ithread->modifier) --ithread->modifier;
 	}
 	if(foundtorun){
 		if(torun->modifier < modifier_limit) ++torun->modifier;
@@ -311,7 +310,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	//Clear old thread's next value, to prevent accidents
 	current_thread->next=NULL;
 	//If the thread exists, but isn't runnable (made non-runnable since last preschedule), skip it
-	if(torun && !torun->runnable) torun=torun->next;
+	if(torun && torun->status != sch_thread_status::Runnable) torun=torun->next;
 	//If there is no next, run the prescheduler instead
 	if(!torun) torun=prescheduler_thread;
 	save_fpu_xmm_data(current_thread->fpu_xmm_data);
@@ -320,7 +319,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	if(!torun->ext_id) panic("(SCH) Thread with no ID?");
 	lock_transfer(sch_lock, torun->ext_id);
 	current_thread_id=torun->ext_id;
-	proc_switch_sch(current_thread->pid, false);
+	proc_switch_sch(current_thread->pid);
 	gdt_set_kernel_stack(current_thread->stackbase);
 	fpu_switch();
 	sch_deferred=false;
@@ -371,7 +370,7 @@ void sch_set_priority(uint32_t pri){
 
 void sch_block(){
     take_lock_recursive(sch_lock);
-	current_thread->runnable=false;
+	current_thread->status=sch_thread_status::Blocked;
 	release_lock(sch_lock);
 	sch_yield();
 }
@@ -379,8 +378,8 @@ void sch_block(){
 void sch_unblock(uint64_t ext_id){
 	hold_lock hl(sch_lock);
 	for(size_t i=0; i<threads->size(); ++i){
-		if((*threads)[i]->ext_id==ext_id && !(*threads)[i]->to_be_deleted){
-			(*threads)[i]->runnable=true;
+		if((*threads)[i]->ext_id==ext_id && (*threads)[i]->status != sch_thread_status::Ending){
+			(*threads)[i]->status=sch_thread_status::Blocked;
 			break;
 		}
 	}
@@ -476,6 +475,7 @@ bool sch_abort_blockcheck(void *p){
 }
 
 void sch_abort(uint64_t ext_id){
+	if(ext_id == sch_get_id()) panic("(SCH) Thread attempting to abort itself!");
 	bool tryagain=true;
 	while(tryagain){
         take_lock_recursive(sch_lock);
@@ -484,9 +484,8 @@ void sch_abort(uint64_t ext_id){
 			if((*threads)[i]->ext_id==ext_id){
 				found=true;
 				if((*threads)[i]->abortable){
-					(*threads)[i]->runnable=false;
-					(*threads)[i]->to_be_deleted=true;
-					reaper_thread->runnable=true;
+					(*threads)[i]->status=sch_thread_status::Ending;
+					reaper_thread->status=sch_thread_status::Runnable;
 					tryagain=false;
 				}else{
                     (*threads)[i]->user_abort=true;
@@ -519,7 +518,7 @@ bool sch_user_abort(){
 }
 
 void sch_prescheduler_thread(void*){
-	current_thread->runnable=false;
+	current_thread->status=sch_thread_status::Special;
 	uint32_t cycle=0;
 	while(true){
 		cycle++;
@@ -549,7 +548,7 @@ void sch_prescheduler_thread(void*){
 }
 
 static sch_thread *sch_get(uint64_t ext_id){
-	hold_lock hl(sch_lock);
+	hold_lock hl(sch_lock, false);
 	for(size_t i=0; i<threads->size(); ++i){
 		if((*threads)[i]->ext_id==ext_id) return (*threads)[i];
 	}
@@ -557,11 +556,21 @@ static sch_thread *sch_get(uint64_t ext_id){
 }
 
 void sch_set_msgstaus(thread_msg_status::Enum status, uint64_t ext_id){
-	current_thread->msgstatus=status;
+	if(ext_id == current_thread_id){
+		current_thread->msgstatus=status;
+	}else{
+		hold_lock hl(sch_lock);
+		sch_get(ext_id)->msgstatus = status;
+	}
 }
 
 thread_msg_status::Enum sch_get_msgstatus(uint64_t ext_id){
-	return current_thread->msgstatus;
+	if(ext_id == current_thread_id){
+		return current_thread->msgstatus;
+	}else{
+		hold_lock hl(sch_lock);
+		return sch_get(ext_id)->msgstatus;
+	}
 }
 
 
@@ -571,4 +580,61 @@ void sch_deferred_yield(){
 
 uint8_t *sch_get_fpu_xmm_data(){
 	return current_thread->fpu_xmm_data;
+}
+
+size_t sch_get_pid_threadcount(pid_t pid){
+	take_lock_recursive(sch_lock);
+	size_t ret=0;
+	for(size_t i=0; i<threads->size(); ++i){
+		if((*threads)[i]->pid == pid) ++ret;
+	}
+	release_lock(sch_lock);
+	return ret;
+}
+
+void sch_debug_stop(pid_t pid){
+	hold_lock hl(sch_lock);	
+	for(size_t i=0; i<threads->size(); ++i){
+		sch_thread *c = (*threads)[i];
+		if(c->pid == pid){
+			if(c->status == sch_thread_status::Runnable){
+				c->status = sch_thread_status::DebugStopped;
+			}else if(c->status == sch_thread_status::Blocked){
+				c->status = sch_thread_status::DebugBlocked;
+			}
+		}
+	}
+}
+
+void sch_debug_resume(pid_t pid){
+	hold_lock hl(sch_lock);	
+	for(size_t i=0; i<threads->size(); ++i){
+		sch_thread *c = (*threads)[i];
+		if(c->pid == pid){
+			if(c->status == sch_thread_status::DebugStopped){
+				c->status = sch_thread_status::Runnable;
+			}else if(c->status == sch_thread_status::DebugBlocked){
+				c->status = sch_thread_status::Blocked;
+			}
+		}
+	}
+}
+
+void sch_update_usercontext(isr_regs *uc, uint64_t ext_id){
+	if(ext_id == current_thread_id){
+		current_thread->usercontext = uc;
+	}else{
+		hold_lock hl(sch_lock);
+		sch_get(ext_id)->usercontext = uc;
+	}
+
+}
+
+void *sch_get_usercontext(uint64_t ext_id){
+	if(ext_id == current_thread_id){
+		return current_thread->usercontext;
+	}else{
+		hold_lock hl(sch_lock);
+		return sch_get(ext_id)->usercontext;
+	}
 }

@@ -253,6 +253,13 @@
     <VirtualDirectory Name="debug">
       <File Name="user/debug/Makefile"/>
       <File Name="user/debug/debug.cpp"/>
+      <File Name="user/debug/symbols.cpp"/>
+      <File Name="user/debug/stacktrace.cpp"/>
+      <File Name="user/debug/debug.hpp"/>
+      <File Name="user/debug/events.cpp"/>
+      <File Name="user/debug/table.cpp"/>
+      <File Name="user/debug/table.hpp"/>
+      <File Name="user/debug/symbols.hpp"/>
     </VirtualDirectory>
     <VirtualDirectory Name="msgtest">
       <File Name="user/msgtest/Makefile"/>
@@ -261,6 +268,28 @@
     <VirtualDirectory Name="termctl">
       <File Name="user/termctl/Makefile"/>
       <File Name="user/termctl/termctl.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="gds">
+      <File Name="user/gds/cursor.c"/>
+      <File Name="user/gds/drawingop.cpp"/>
+      <File Name="user/gds/drawingop.hpp"/>
+      <File Name="user/gds/gds.cpp"/>
+      <File Name="user/gds/gds.hpp"/>
+      <File Name="user/gds/screen.cpp"/>
+      <File Name="user/gds/screen.hpp"/>
+      <File Name="user/gds/surface.hpp"/>
+      <File Name="user/gds/client.cpp"/>
+      <File Name="user/gds/client.hpp"/>
+      <File Name="user/gds/bitmap_surface.cpp"/>
+      <File Name="user/gds/bitmap_surface.hpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="libgds">
+      <File Name="user/libgds/Makefile"/>
+      <File Name="user/libgds/main.cpp"/>
+      <File Name="user/libgds/protocol.cpp"/>
+      <File Name="user/libgds/util.cpp"/>
+      <File Name="user/libgds/libgds_internal.hpp"/>
+      <File Name="user/libgds/primitives.cpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
@@ -291,6 +320,10 @@
     <File Name="include/pci.h"/>
     <File Name="include/terminal.h"/>
     <File Name="include/video_dev.h"/>
+    <VirtualDirectory Name="gds">
+      <File Name="include/gds/gds.h"/>
+      <File Name="include/gds/libgds.h"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>

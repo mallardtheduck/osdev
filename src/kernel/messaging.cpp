@@ -53,6 +53,7 @@ uint64_t msg_send(bt_msg_header &msg){
         msg.recieved = msg.replied = false;
         msg_q->push_back(msg);
     }
+    //dbgpf("MSG: Sent message ID %i from PID %i.\n", (int)msg.id, (int)msg.from);
     return msg.id;
 }
 
@@ -189,4 +190,51 @@ void msg_send_event(bt_kernel_messages::Enum message, void *content, size_t size
 			msg_send(msg);
 		}
 	}
+}
+
+bool msg_recv_reply(btos_api::bt_msg_header &msg, uint64_t msg_id){
+    hold_lock hl(msg_lock);
+    for(size_t i=0; i<msg_q->size(); ++i){
+        if((*msg_q)[i].to==0 && ((*msg_q)[i].flags & btos_api::bt_msg_flags::Reply) && (*msg_q)[i].reply_id == msg_id){
+            msg=(*msg_q)[i];
+            (*msg_q)[i].recieved = true;
+            sch_set_msgstaus(thread_msg_status::Processing);
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool msg_recv_reply_nolock(bt_msg_header &msg, uint64_t msg_id){
+    if(get_lock_owner(msg_lock)) return false;
+    for(size_t i=0; i<msg_q->size(); ++i){
+        if((*msg_q)[i].to==0 && ((*msg_q)[i].flags & btos_api::bt_msg_flags::Reply) && (*msg_q)[i].reply_id == msg_id){
+            msg=(*msg_q)[i];
+            (*msg_q)[i].recieved = true;
+            return true;
+        }
+    }
+    return false;
+}
+
+struct msg_reply_blockcheck_params{
+    bt_msg_header *msg;
+    uint64_t msg_id;
+};
+
+bool msg_reply_blockcheck(void *p){
+    msg_reply_blockcheck_params *params=(msg_reply_blockcheck_params*)p;
+    bool ret=msg_recv_reply_nolock(*params->msg, params->msg_id);
+    return ret;
+}
+
+bt_msg_header msg_recv_reply_block(uint64_t msg_id){
+    bt_msg_header ret;
+    if(!msg_recv_reply(ret, msg_id)){
+        sch_set_msgstaus(thread_msg_status::Waiting);
+        msg_reply_blockcheck_params params={&ret, msg_id};
+        sch_setblock(&msg_reply_blockcheck, (void*)&params);
+    }
+    sch_set_msgstaus(thread_msg_status::Processing);
+    return ret;
 }

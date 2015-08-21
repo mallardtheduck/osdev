@@ -417,7 +417,7 @@ void *vmm_alloc(size_t pages, vmm_allocmode::Enum mode){
             page_type=amm_page_type::Userspace;
         }
 		uint32_t phys_page= amm_accounting_get_free_page();
-        amm_mark_alloc(phys_page, page_type, NULL);
+        amm_mark_alloc(phys_page, page_type, mode==vmm_allocmode::Kernel?NULL:proc_current_process);
         phys_page/=VMM_PAGE_SIZE;
 		if(!phys_page){
 		    dbgpf("VMM: Allocation of %i pages failed.\n", pages);
@@ -447,7 +447,7 @@ void *vmm_alloc_at(size_t pages, size_t baseaddr){
             page_type=amm_page_type::Userspace;
         }
         uint32_t phys_page= amm_accounting_get_free_page();
-        amm_mark_alloc(phys_page, page_type, NULL);
+        amm_mark_alloc(phys_page, page_type, mode==vmm_allocmode::Kernel?NULL:proc_current_process);
         phys_page/=VMM_PAGE_SIZE;
 		if(!phys_page){
 			dbgpf("VMM: Allocation of %i pages failed.\n", pages);
@@ -455,12 +455,14 @@ void *vmm_alloc_at(size_t pages, size_t baseaddr){
 		}
         vmm_cur_pagedir->map_page(virtpage+i, phys_page, true, mode);
 		if(mode==vmm_allocmode::Kernel) kmem+=VMM_PAGE_SIZE;
+		memset((void*)((virtpage+i)*VMM_PAGE_SIZE), 0xaa, VMM_PAGE_SIZE);
 	}
 	return (void*)baseaddr;
 }
 
 void vmm_free(void *ptr, size_t pages){
 	hold_lock hl(vmm_lock, false);
+	if((uint32_t)ptr != ((uint32_t)ptr & VMM_ADDRESS_MASK)) panic("(VMM) Attempt to free misaligned page!");
 	memset(ptr, 0xfe, pages * VMM_PAGE_SIZE);
 	size_t virtpage=(uint32_t)ptr/VMM_PAGE_SIZE;
 	for(size_t i=0; i<pages; ++i){

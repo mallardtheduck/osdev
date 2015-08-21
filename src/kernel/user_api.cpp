@@ -31,8 +31,31 @@ void userapi_handler(int, isr_regs *regs){
 	}
 }
 
-static bool is_safe_ptr(uint32_t ptr){
-	return ptr>=VMM_USERSPACE_START;
+bool is_safe_ptr(uint32_t ptr, size_t size, pid_t pid){
+	if(ptr >= VMM_USERSPACE_START){
+		pid_t cur_pid = proc_current_pid;
+		proc_switch(pid);
+		for(size_t i=0; i<size; ++i){
+			if(!amm_resolve_addr((char*)ptr + i)){ 
+				proc_switch(cur_pid);
+				dbgpf("UAPI: Verification of pointer %x (%i) for %i failed.\n", ptr, size, pid);
+				return false;
+			}
+		}
+		proc_switch(cur_pid);
+		return true;
+	}else return false;
+}
+
+bool is_safe_string(uint32_t ptr, pid_t pid){
+	char c = 0xFF;
+	size_t i = 0;
+	while(c){
+		if(!is_safe_ptr(ptr + i, 1, pid)) return false;
+		c = *((char*)ptr + i);
+		++i;
+	}
+	return true;
 }
 
 USERAPI_HANDLER(zero){
@@ -44,7 +67,7 @@ USERAPI_HANDLER(BT_ALLOC_PAGES){
 }
 
 USERAPI_HANDLER(BT_FREE_PAGES){
-	if(is_safe_ptr(regs->ebx)){
+	if(is_safe_ptr(regs->ebx, 0)){
 		vmm_free((void*)regs->ebx, regs->ecx);
 	}
 }
@@ -62,7 +85,7 @@ USERAPI_HANDLER(BT_GET_ARGC){
 }
 
 USERAPI_HANDLER(BT_GET_ARG){
-	if(is_safe_ptr(regs->ecx)){
+	if(is_safe_ptr(regs->ecx, regs->edx)){
 		regs->eax=proc_get_arg(regs->ebx, (char*)regs->ecx, regs->edx);
 	}
 }
@@ -96,19 +119,19 @@ USERAPI_HANDLER(BT_DESTROY_LOCK){
 }
 
 USERAPI_HANDLER(BT_MOUNT){
-	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->ecx) && is_safe_ptr(regs->edx)){
+	if(is_safe_string(regs->ebx) && is_safe_string(regs->ecx) && is_safe_string(regs->edx)){
 		regs->eax=fs_mount((char*)regs->ebx, (char*)regs->ecx, (char*)regs->edx);
 	}
 }
 
 USERAPI_HANDLER(BT_UNMOUNT){
-	if(is_safe_ptr(regs->ebx)){
+	if(is_safe_string(regs->ebx)){
 		regs->eax=fs_unmount((char*)regs->ebx);
 	}
 }
 
 USERAPI_HANDLER(BT_FOPEN){
-    if(is_safe_ptr(regs->ebx)){
+    if(is_safe_string(regs->ebx)){
         file_handle *file=new file_handle(fs_open((char*)regs->ebx, (fs_mode_flags)regs->ecx));
         if(file->valid){
         	regs->eax=proc_add_file(file);
@@ -130,23 +153,23 @@ USERAPI_HANDLER(BT_FCLOSE){
 
 USERAPI_HANDLER(BT_FWRITE){
     file_handle *file=proc_get_file(regs->ebx);
-    if(file && is_safe_ptr(regs->edx)){
+    if(file && is_safe_ptr(regs->edx, regs->ecx)){
         regs->eax=fs_write(*file, regs->ecx, (char*)regs->edx);
     }
 }
 
 USERAPI_HANDLER(BT_FREAD){
     file_handle *file=proc_get_file(regs->ebx);
-    if(file && is_safe_ptr(regs->edx)){
+    if(file && is_safe_ptr(regs->edx, regs->ecx)){
         regs->eax=fs_read(*file, regs->ecx, (char*)regs->edx);
     }
 }
 
 USERAPI_HANDLER(BT_FIOCTL){
 	file_handle *file=proc_get_file(regs->ebx);
-    if(file && is_safe_ptr(regs->edx)){
+    if(file && is_safe_ptr(regs->edx, sizeof(btos_api::bt_fioctl_buffer))){
     	btos_api::bt_fioctl_buffer *buf=(btos_api::bt_fioctl_buffer*)regs->edx;
-    	if(buf->size==0 || is_safe_ptr((uint32_t)buf->buffer)){
+    	if(buf->size==0 || is_safe_ptr((uint32_t)buf->buffer, buf->size)){
     		regs->eax=fs_ioctl(*file, regs->ecx, buf->size, buf->buffer);
     	}
     }
@@ -173,9 +196,9 @@ static void close_filemap_handle(void *f){
 
 USERAPI_HANDLER(BT_MMAP){
     file_handle *file=proc_get_file(regs->ebx);
-    if(file && is_safe_ptr(regs->edx)){
+    if(file && is_safe_ptr(regs->edx, sizeof(btos_api::bt_mmap_buffer))){
         btos_api::bt_mmap_buffer *buffer=(btos_api::bt_mmap_buffer*)regs->edx;
-        if(!is_safe_ptr((uint32_t)buffer->buffer)) return;
+        if(!is_safe_ptr((uint32_t)buffer->buffer, buffer->size)) return;
         uint64_t *id=new uint64_t(amm_mmap(buffer->buffer, *file, regs->ecx, buffer->size));
         bt_handle_info handle=create_handle(kernel_handle_types::memory_mapping, id, &close_filemap_handle);
         regs->eax= proc_add_handle(handle);
@@ -186,7 +209,7 @@ USERAPI_HANDLER(BT_MMAP){
 
 USERAPI_HANDLER(BT_DOPEN){
    //TODO: Flags...
-    if(is_safe_ptr(regs->ebx)){
+    if(is_safe_string(regs->ebx)){
         dir_handle *dir=new dir_handle(fs_open_dir((char*)regs->ebx, (fs_mode_flags)regs->ecx));
         if(dir->valid) {
         	regs->eax=proc_add_dir(dir);
@@ -208,7 +231,7 @@ USERAPI_HANDLER(BT_DCLOSE){
 
 USERAPI_HANDLER(BT_DWRITE){
 	dir_handle *dir=proc_get_dir(regs->ebx);
-	if(dir && is_safe_ptr(regs->ecx)){
+	if(dir && is_safe_ptr(regs->ecx, sizeof(directory_entry))){
 		directory_entry *entry=(directory_entry*)regs->ecx;
 		fs_write_dir(*dir, *entry);
 	}
@@ -216,7 +239,7 @@ USERAPI_HANDLER(BT_DWRITE){
 
 USERAPI_HANDLER(BT_DREAD){
 	dir_handle *dir=proc_get_dir(regs->ebx);
-	if(dir && is_safe_ptr(regs->ecx)){
+	if(dir && is_safe_ptr(regs->ecx, sizeof(directory_entry))){
 		directory_entry *entry=(directory_entry*)regs->ecx;
 		*entry=fs_read_dir(*dir);
 	}
@@ -230,21 +253,21 @@ USERAPI_HANDLER(BT_DSEEK){
 }
 
 USERAPI_HANDLER(BT_STAT){
-	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->ecx)){
+	if(is_safe_string(regs->ebx) && is_safe_ptr(regs->ecx, sizeof(directory_entry))){
 		directory_entry *entry=(directory_entry*)regs->ecx;
 		*entry=fs_stat((char*)regs->ebx);
 	}
 }
 
 USERAPI_HANDLER(BT_LOAD_MODULE){
-	if(is_safe_ptr(regs->ebx)){
-        char *params=is_safe_ptr(regs->ecx)?(char*)regs->ecx:NULL;
+	if(is_safe_string(regs->ebx)){
+        char *params=is_safe_string(regs->ecx)?(char*)regs->ecx:NULL;
 		load_module((char*)regs->ebx, params);
 	}
 }
 
 USERAPI_HANDLER(BT_GETENV){
-	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->ecx)){
+	if(is_safe_string(regs->ebx) && is_safe_ptr(regs->ecx, regs->edx)){
 		string value=proc_getenv((char*)regs->ebx, true);
 		if(value != "" && value.length() < regs->edx){
 			strncpy((char*)regs->ecx, value.c_str(), regs->edx);
@@ -254,19 +277,19 @@ USERAPI_HANDLER(BT_GETENV){
 }
 
 USERAPI_HANDLER(BT_SETENV){
-	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->ecx)){
+	if(is_safe_string(regs->ebx) && is_safe_string(regs->ecx)){
 		proc_setenv((char*)regs->ebx, (char*)regs->ecx, regs->edx, true);
 		regs->eax=true;
 	}
 }
 
 USERAPI_HANDLER(BT_SPAWN){
-	if(is_safe_ptr(regs->ebx) &&  (!regs->ecx || is_safe_ptr(regs->edx))){
+	if(is_safe_string(regs->ebx) &&  (!regs->ecx || is_safe_ptr(regs->edx, sizeof(char*) * regs->ecx))){
 		if(regs->ecx){
 			size_t argc=regs->ecx;
 			char **argv=(char**)regs->edx;
 			for(size_t i=0; i<argc; ++i){
-				if(!is_safe_ptr((uint32_t)argv[i])) return;
+				if(!is_safe_string((uint32_t)argv[i])) return;
 			}
 		}
 		dbgpf("UAPI:Spawning %s\n", (char*)regs->ebx);
@@ -303,7 +326,7 @@ USERAPI_HANDLER(BT_NEW_THREAD){
         regs->eax=0;
         return;
     }
-    if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->edx) && (!regs->ecx || is_safe_ptr(regs->ecx))){
+    if(is_safe_ptr(regs->ebx, sizeof(proc_entry)) && is_safe_ptr(regs->edx, 0) && (!regs->ecx || is_safe_ptr(regs->ecx, 0))){
         uint64_t id=proc_new_user_thread((proc_entry)regs->ebx, (void*)regs->ecx, (void*)regs->edx);
         regs->eax=proc_get_thread_handle(id);
     }
@@ -332,6 +355,7 @@ USERAPI_HANDLER(BT_WAIT_THREAD){
 }
 
 USERAPI_HANDLER(BT_END_THREAD){
+	debug_event_notify(proc_current_pid, 0, bt_debug_event::ThreadEnd);
     sch_end_thread();
 }
 
@@ -348,8 +372,8 @@ USERAPI_HANDLER(BT_THREAD_ABORT){
 }
 
 USERAPI_HANDLER(BT_SEND){
-	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->ecx)){
-		btos_api::bt_msg_header &header=*(btos_api::bt_msg_header*)regs->ebx;
+	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_msg_header)) && is_safe_ptr(regs->ecx, sizeof(uint64_t))){
+		btos_api::bt_msg_header header=*(btos_api::bt_msg_header*)regs->ebx;
 		uint64_t &ret=*(uint64_t*)regs->ecx;
 		header.flags=header.flags | btos_api::bt_msg_flags::UserSpace;
 		header.from=proc_current_pid;
@@ -359,7 +383,7 @@ USERAPI_HANDLER(BT_SEND){
 }
 
 USERAPI_HANDLER(BT_RECV){
-	if(is_safe_ptr(regs->ebx)){
+	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_msg_header))){
 		btos_api::bt_msg_header &header=*(btos_api::bt_msg_header*)regs->ebx;
 		if(regs->ecx){
 			header=msg_recv_block();
@@ -371,20 +395,20 @@ USERAPI_HANDLER(BT_RECV){
 }
 
 USERAPI_HANDLER(BT_NEXTMSG){
-	if(is_safe_ptr(regs->ebx)){
+	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_msg_header))){
 		btos_api::bt_msg_header &header=*(btos_api::bt_msg_header*)regs->ebx;
 		msg_nextmessage(header);
 	}
 }
 
 USERAPI_HANDLER(BT_CONTENT){
-	if(is_safe_ptr(regs->ebx) && is_safe_ptr(regs->ecx)){
+	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_msg_header)) && is_safe_ptr(regs->ecx, regs->edx)){
 		regs->eax=msg_getcontent(*(btos_api::bt_msg_header*)regs->ebx, (void*)regs->ecx, regs->edx);
 	}
 }
 
 USERAPI_HANDLER(BT_ACK){
-	if(is_safe_ptr(regs->ebx)){
+	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_msg_header))){
 		msg_acknowledge(*(btos_api::bt_msg_header*)regs->ebx);
 	}
 }
@@ -402,7 +426,7 @@ USERAPI_HANDLER(BT_UNSUBSCRIBE){
 }
 
 USERAPI_HANDLER(BT_QUERY_EXT){
-	if(is_safe_ptr(regs->ebx)){
+	if(is_safe_string(regs->ebx)){
 		regs->eax = get_extension_id((char*)regs->ebx);
 	}
 }

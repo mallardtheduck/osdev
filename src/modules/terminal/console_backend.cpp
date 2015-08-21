@@ -259,8 +259,8 @@ size_t console_backend::display_write(size_t bytes, char *buf) {
     return ret;
 }
 
-size_t console_backend::display_seek(size_t pos, bool relative) {
-    return fseek(display, pos, relative);
+size_t console_backend::display_seek(size_t pos, uint32_t flags) {
+    return fseek(display, pos, flags);
 }
 
 int console_backend::display_ioctl(int fn, size_t bytes, char *buf) {
@@ -280,8 +280,8 @@ size_t console_backend::input_write(size_t bytes, char *buf) {
     return fwrite(input, bytes, buf);
 }
 
-size_t console_backend::input_seek(size_t pos, bool relative) {
-    return fseek(input, pos, relative);
+size_t console_backend::input_seek(size_t pos, uint32_t flags) {
+    return fseek(input, pos, flags);
 }
 
 int console_backend::input_ioctl(int fn, size_t bytes, char *buf) {
