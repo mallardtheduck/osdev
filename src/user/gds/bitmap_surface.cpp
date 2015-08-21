@@ -12,6 +12,7 @@ BitmapSurface::BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale) {
 }
 
 size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
+	image->SetThickness(op.Common.lineWidth);
 	switch(op.type) {
 		case gds_DrawingOpType::Dot:
 			image->SetPixel(op.Dot.x, op.Dot.y, op.Common.lineColour);
