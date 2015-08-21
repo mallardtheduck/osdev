@@ -100,7 +100,6 @@ void amm_resolve_mmap(void *addr){
     //dbgpf("AMM: Resolving memory-mapped file load at %x.\n", addr);
     void *page=(void*)((uint32_t)addr & VMM_ADDRESS_MASK);
     amm_filemap *map=amm_getfilemap((uint32_t)addr);
-    //If this is a write-only mapping, return.
     size_t offset=((uint32_t)page - (uint32_t)map->start)+map->offset;
     vmm_cur_pagedir->unmap_page((size_t)page/VMM_PAGE_SIZE);
     amm_flags::Enum flags=((uint32_t)addr < VMM_KERNELSPACE_END)?amm_flags::Kernel : amm_flags::User;

@@ -20,24 +20,24 @@ file(GLOB_RECURSE UHDR src/user/*.hpp src/user/*.h)
 
 file(GLOB_RECURSE GHDR src/include/*.hpp src/include/*.h)
 
-include_directories(src/include ../cross/i686-pc-btos/include)
+include_directories(src/include ../cross/i686-pc-btos/include src/3rdparty/install/btos/include)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 
 add_executable(
     dummy_kernel
-    ${KSRC} ${GHDR}
+    ${KSRC} ${KHDR} ${GHDR}
 )
 set_target_properties(dummy_kernel PROPERTIES COMPILE_DEFINITIONS "KERNEL")
 
 add_executable(
 	dummy_modules
-	${MSRC} ${GHDR}
+	${MSRC} ${MHDR} ${GHDR}
 )
 set_target_properties(dummy_modules PROPERTIES COMPILE_DEFINITIONS "KERNEL_MODULE")
 
 add_executable(
 	dummy_user
-	${USRC} ${GHDR}
+	${USRC} ${UHDR} ${GHDR}
 )
 
 add_custom_target(
