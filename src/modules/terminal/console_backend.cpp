@@ -137,10 +137,11 @@ bool pointer_draw_blockcheck(void *p){
 
 void console_backend_pointer_draw_thread(void *p){
 	console_backend *backend=(console_backend*)p;
+	uint32_t &serial = backend->pointer_cur_serial;
 	while(true){
-		uint32_t serial = backend->pointer_draw_serial;
 		uint32_t *bc_params[2] = {&serial, &backend->pointer_draw_serial};
 		thread_setblock(&pointer_draw_blockcheck, (void*)bc_params);
+		serial = backend->pointer_draw_serial;
 		{
 			hold_lock hl(&backend->backend_lock, true);
 			if(backend->pointer_info.x != backend->old_pointer_info.x || backend->pointer_info.y != backend->old_pointer_info.y || backend->pointer_visible != backend->old_pointer_visible){
@@ -156,6 +157,8 @@ void console_backend_pointer_draw_thread(void *p){
 					backend->draw_pointer(oldx, oldy, true);
 					if(backend->pointer_visible) backend->draw_pointer(newx, newy, false);
 				}
+				backend->cur_pointer_x=newx;
+				backend->cur_pointer_y=newy;
 			}
 			backend->old_pointer_info=backend->pointer_info;
 			backend->old_pointer_visible=backend->pointer_visible;
@@ -216,6 +219,7 @@ console_backend::console_backend() {
     pointer_info.x=0; pointer_info.y=0; pointer_info.flags=0;
     mouseback=NULL;
 	pointer_draw_serial=0;
+	pointer_cur_serial=0;
 
     char video_device_path[BT_MAX_PATH]="DEV:/";
     char input_device_path[BT_MAX_PATH]="DEV:/";
@@ -300,6 +304,11 @@ void console_backend::show_pointer() {
 }
 
 void console_backend::hide_pointer() {
+	hold_lock hl(&backend_lock, false);
+	if(old_pointer_visible){
+		draw_pointer(cur_pointer_x, cur_pointer_y, true);
+		old_pointer_visible = false;
+	}
     pointer_visible=false;
     update_pointer();
 }

@@ -17,7 +17,8 @@ private:
     bt_terminal_pointer_bitmap *pointer_bitmap;
     bt_terminal_pointer_info pointer_info, old_pointer_info;
     uint8_t *mouseback;
-	uint32_t pointer_draw_serial;
+	uint32_t pointer_draw_serial, pointer_cur_serial;
+	uint32_t cur_pointer_x, cur_pointer_y;
 
     friend void console_backend_input_thread(void *p);
     friend void console_backend_pointer_thread(void *p);
