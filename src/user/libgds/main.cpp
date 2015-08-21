@@ -31,7 +31,7 @@ int main() {
 	gds_Point cur_points[] = {{0, 0}, {0, 13}, {3, 10}, {6, 15}, {8, 15}, {8, 14}, {6, 9}, {10, 9}, {1, 0}};
 	GDS_Box(0, 0, 11, 20, cur_transp, cur_transp, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	GDS_Polygon(9, cur_points, true, cur_black, cur_white, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	GDS_SetCursor(cursor, 0, 0);
+	GDS_SetCursor(cursor, 1, 1);
 	GDS_CursorVisibility(true);
 	GDS_SelectScreen();
 	for(uint32_t i = 0; i < 16; ++i) {
@@ -43,11 +43,20 @@ int main() {
 	GDS_UpdateScreen();
 	uint32_t lastx = 0, lasty = 0;
 	uint32_t size = 20;
+	uint32_t sprite = GDS_NewSurface(gds_SurfaceType::Bitmap, size, size);
+	uint32_t sp_magenta = GDS_GetColour(255, 0, 255);
+	uint32_t sp_cyan = GDS_GetColour(0, 255, 255);
+	GDS_Box(0, 0, 19, 19, sp_magenta, sp_cyan, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	uint32_t sp_yellow = GDS_GetColour(255, 255, 0);
+	GDS_Line(0, 0, 19, 19, sp_yellow, 1,  gds_LineStyle::Solid);
+	GDS_Line(19, 0, 0, 19, sp_yellow, 1,  gds_LineStyle::Solid);
+	GDS_SelectScreen();
 	while(true) {
 		for(uint32_t ypos = 0; ypos < 480; ypos+=size) {
 			for(uint32_t xpos = 0; xpos < 640; xpos+=size) {
 				GDS_Box(lastx, lasty, size, size, black, black, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-				GDS_Box(xpos, ypos, size, size, blue, green, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+				//GDS_Box(xpos, ypos, size, size, blue, green, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+				GDS_Blit(sprite, 0, 0, size, size, xpos, ypos, size, size);
 				GDS_UpdateScreen(xpos, ypos, size, size);
 				GDS_UpdateScreen(lastx, lasty, size, size);
 				lastx = xpos;

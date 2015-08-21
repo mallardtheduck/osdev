@@ -104,6 +104,7 @@ extern "C" void GDS_Text(uint32_t x, uint32_t y, const char *text, uint32_t font
 
 extern "C" void GDS_Blit(uint64_t src, uint32_t srcX, uint32_t srcY, uint32_t srcW, uint32_t srcH, uint32_t dstX, uint32_t dstY, uint32_t dstW, uint32_t dstH, uint32_t scale, uint32_t flags){
 	gds_DrawingOp op;
+	op.type = gds_DrawingOpType::Blit;
 	op.Blit.src = src;
 	op.Blit.srcX = srcX;
 	op.Blit.srcY = srcY;
