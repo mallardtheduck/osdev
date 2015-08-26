@@ -74,6 +74,9 @@ data/btos/gds.elx: ../user/gds/gds.elx directories.always
 data/btos/tests/gdstest.elx: ../user/libgds/gdstest.elx directories.always
 	cp $< $@
 
+data/btos/tests/fputest.elx: ../user/fputest/fputest.elx directories.always
+	cp $< $@
+
 directories.always:
 	mkdir -p data/btos/cmd
 	mkdir -p data/btos/temp
