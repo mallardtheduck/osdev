@@ -215,10 +215,6 @@ inline static int fioctl(file_handle *handle, int fn, size_t bytes, char *buf){
 	return SYSCALL_TABLE->fioctl(handle, fn, bytes, buf);
 }
 
-inline static file_handle *fcreate(const char *path){
-	return SYSCALL_TABLE->fcreate(path);
-}
-
 inline static dir_handle *diropen(const char *path, fs_mode_flags mode){
 	return SYSCALL_TABLE->diropen(path, mode);
 }
@@ -237,10 +233,6 @@ inline static bool dirwrite(dir_handle *handle, directory_entry entry){
 
 inline static bool dirseek(dir_handle *handle, size_t pos, bool relative){
 	return SYSCALL_TABLE->dirseek(handle, pos, relative);
-}
-
-inline static dir_handle *dircreate(const char *path){
-	return SYSCALL_TABLE->dircreate(path);
 }
 
 inline static directory_entry stat(const char *path){

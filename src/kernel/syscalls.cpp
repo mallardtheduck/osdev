@@ -202,14 +202,12 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&fseek,
 	&fioctl,
     &fflush,
-	NULL,
 
 	diropen,
 	dirclose,
 	dirread,
 	dirwrite,
 	dirseek,
-	NULL,
 	&fs_stat,
 
 	&load_module,
