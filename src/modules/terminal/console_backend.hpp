@@ -14,7 +14,7 @@ private:
     lock backend_lock;
     uint64_t active;
     bool pointer_visible, old_pointer_visible;
-	bool autohide;
+	bool autohide, frozen;
     bt_terminal_pointer_bitmap *pointer_bitmap;
     bt_terminal_pointer_info pointer_info, old_pointer_info;
     uint8_t *mouseback;
@@ -46,7 +46,9 @@ public:
     bool get_pointer_visibility();
     void set_pointer_bitmap(bt_terminal_pointer_bitmap *bmp);
     bt_terminal_pointer_info get_pointer_info();
-	void set_cursor_autohide(bool val);
+	void set_pointer_autohide(bool val);
+	virtual void freeze_pointer();
+	virtual void unfreeze_pointer();
 
     bool is_active(uint64_t id);
     void set_active(uint64_t id);
