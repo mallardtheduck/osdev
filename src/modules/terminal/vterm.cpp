@@ -561,7 +561,7 @@ void vterm::update_current_pid(){
 			termid=atoi64(getenv(terminal_var, pid));
 		}
 		if(termid == id){
-			dbgpf("TERM: %i updating curpid from %i to %i\n", (int)id, (int)curpid, (int)id);
+			//dbgpf("TERM: %i updating curpid from %i to %i\n", (int)id, (int)curpid, (int)id);
 			curpid = pid;
 		}
 	}
