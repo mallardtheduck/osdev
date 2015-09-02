@@ -135,6 +135,7 @@ Elf32_Addr elf_symbol_value(file_handle &file, const Elf32_Ehdr &header, size_t 
 
 void elf_do_reloc_module(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr &section, void *base){
 	size_t n_relocs=section.size/sizeof(Elf32_Rel);
+	dbgpf("ELF: Performing %i relocations...\n", n_relocs);
 	for(size_t i=0; i<n_relocs; ++i){
 		Elf32_Rel rel=elf_read_rel(file, section, i);
 		Elf32_Addr symval=elf_symbol_value(file, header, ELF32_R_SYM(rel.info));
@@ -158,6 +159,7 @@ void elf_do_reloc_module(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr
 				break;
 		}
 	}
+	dbgout("ELF: Relocations complete.\n");
 }
 
 loaded_elf_module elf_load_module(file_handle &file){
@@ -170,9 +172,9 @@ loaded_elf_module elf_load_module(file_handle &file){
 	for(int i=0; i<header.phnum; ++i){
 		Elf32_Phdr prog=elf_read_progheader(file, header, i);
 		if(prog.type==PT_LOAD){
-            amm_mmap((char*)ret.mem.aligned+prog.vaddr, file, prog.offset, prog.filesz);
-			/*fs_seek(file, prog.offset, false);
-			fs_read(file, prog.filesz, (char*)ret.mem.aligned+prog.vaddr);*/
+            //amm_mmap((char*)ret.mem.aligned+prog.vaddr, file, prog.offset, prog.filesz);
+			fs_seek(file, prog.offset, false);
+			fs_read(file, prog.filesz, (char*)ret.mem.aligned+prog.vaddr);
 		}
 	}
 	for(int i=0; i<header.shnum; ++i){

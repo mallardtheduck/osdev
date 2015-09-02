@@ -164,29 +164,29 @@ bool fat_close(void *filedata){
 size_t fat_read(void *filedata, size_t bytes, char *buf){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return 0;
-    /*take_fat_lock();
+    take_fat_lock();
 	int ret=fl_fread(buf, bytes, 1, fd->flh);
-    release_fat_lock();*/
-    size_t ret=fat_queued_read(fd->flh, (uint8_t*)buf, bytes);
-    return ret;
-	//return (ret>=0)?ret:0;
+    release_fat_lock();
+    /*size_t ret=fat_queued_read(fd->flh, (uint8_t*)buf, bytes);
+    return ret;*/
+	return (ret>=0)?ret:0;
 }
 
 size_t fat_write(void *filedata, size_t bytes, char *buf){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
-	/*if(!fd) return 0;
+	if(!fd) return 0;
     take_fat_lock();
 	int ret=fl_fwrite(buf, bytes, 1, fd->flh);
-    release_fat_lock();*/
-    size_t ret= fat_queued_write(fd->flh, (uint8_t*)buf, bytes);
-    return ret;
-	//return (ret>=0)?ret:0;
+    release_fat_lock();
+    /*size_t ret= fat_queued_write(fd->flh, (uint8_t*)buf, bytes);
+    return ret;*/
+	return (ret>=0)?ret:0;
 }
 
 size_t fat_seek(void *filedata, size_t pos, uint32_t flags){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return 0;
-    //take_fat_lock();
+    take_fat_lock();
 	
 	int offset = (int)pos;
 	int origin=SEEK_SET;
@@ -196,10 +196,10 @@ size_t fat_seek(void *filedata, size_t pos, uint32_t flags){
 		origin=SEEK_CUR;
 		offset=-offset;
 	}
-	/*fl_fseek(fd->flh, pos, origin);
-	size_t ret=fl_ftell(fd->flh);*
-    release_fat_lock();*/
-    size_t ret= fat_queued_seek(fd->flh, offset, origin);
+	fl_fseek(fd->flh, pos, origin);
+	size_t ret=fl_ftell(fd->flh);
+    release_fat_lock();
+    //size_t ret= fat_queued_seek(fd->flh, offset, origin);
     return ret;
 }
 
