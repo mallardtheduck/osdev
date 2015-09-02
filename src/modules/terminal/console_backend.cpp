@@ -136,6 +136,7 @@ bool pointer_draw_blockcheck(void *p){
 }
 
 void console_backend_pointer_draw_thread(void *p){
+	thread_priority(1000);
 	console_backend *backend=(console_backend*)p;
 	uint32_t &serial = backend->pointer_cur_serial;
 	while(true){
