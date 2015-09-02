@@ -21,6 +21,7 @@ public:
     virtual bool get_pointer_visibility()=0;
     virtual void set_pointer_bitmap(bt_terminal_pointer_bitmap *bmp)=0;
     virtual bt_terminal_pointer_info get_pointer_info()=0;
+	virtual void set_cursor_autohide(bool val) = 0;
 
     virtual bool is_active(uint64_t id)=0;
     virtual void set_active(uint64_t id)=0;

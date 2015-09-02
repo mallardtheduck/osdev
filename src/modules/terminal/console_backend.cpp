@@ -220,6 +220,7 @@ console_backend::console_backend() {
     mouseback=NULL;
 	pointer_draw_serial=0;
 	pointer_cur_serial=0;
+	autohide = true;
 
     char video_device_path[BT_MAX_PATH]="DEV:/";
     char input_device_path[BT_MAX_PATH]="DEV:/";
@@ -248,7 +249,7 @@ void console_backend::start_switcher(){
 size_t console_backend::display_read(size_t bytes, char *buf) {
     hold_lock hl(&backend_lock);
     bool pointer=pointer_visible;
-    hide_pointer();
+    if(autohide) hide_pointer();
     size_t ret=fread(display, bytes, buf);
     if(pointer)show_pointer();
     return ret;
@@ -257,7 +258,7 @@ size_t console_backend::display_read(size_t bytes, char *buf) {
 size_t console_backend::display_write(size_t bytes, char *buf) {
     hold_lock hl(&backend_lock);
     bool pointer=pointer_visible;
-    hide_pointer();
+    if(autohide) hide_pointer();
     size_t ret=fwrite(display, bytes, buf);
     if(pointer)show_pointer();
     return ret;
@@ -340,6 +341,10 @@ bt_terminal_pointer_info console_backend::get_pointer_info(){
     bt_terminal_pointer_info ret=pointer_info;
     ret.x=x; ret.y=y;
     return ret;
+}
+
+void console_backend::set_cursor_autohide(bool val){
+	autohide = val;
 }
 
 bool console_backend::is_active(uint64_t id) {

@@ -398,7 +398,11 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
             memcpy(pointer_bitmap, bmp, totalsize);
             if(backend->is_active(id)) backend->set_pointer_bitmap(pointer_bitmap);
         }
-    }
+    }else if(fn == bt_terminal_ioctl::CursorAutoHide){
+		if(size == sizeof(bool)){
+			backend->set_cursor_autohide(*(bool*)buf);
+		}
+	}
     //TODO: implement more
     return 0;
 }
