@@ -14,10 +14,12 @@ private:
     lock backend_lock;
     uint64_t active;
     bool pointer_visible, old_pointer_visible;
+	bool autohide;
     bt_terminal_pointer_bitmap *pointer_bitmap;
     bt_terminal_pointer_info pointer_info, old_pointer_info;
     uint8_t *mouseback;
-	uint32_t pointer_draw_serial;
+	uint32_t pointer_draw_serial, pointer_cur_serial;
+	uint32_t cur_pointer_x, cur_pointer_y;
 
     friend void console_backend_input_thread(void *p);
     friend void console_backend_pointer_thread(void *p);
@@ -44,6 +46,7 @@ public:
     bool get_pointer_visibility();
     void set_pointer_bitmap(bt_terminal_pointer_bitmap *bmp);
     bt_terminal_pointer_info get_pointer_info();
+	void set_cursor_autohide(bool val);
 
     bool is_active(uint64_t id);
     void set_active(uint64_t id);
