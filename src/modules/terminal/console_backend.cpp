@@ -136,6 +136,7 @@ bool pointer_draw_blockcheck(void *p){
 }
 
 void console_backend_pointer_draw_thread(void *p){
+	thread_priority(1000);
 	console_backend *backend=(console_backend*)p;
 	uint32_t &serial = backend->pointer_cur_serial;
 	while(true){
@@ -265,6 +266,7 @@ size_t console_backend::display_write(size_t bytes, char *buf) {
 }
 
 size_t console_backend::display_seek(size_t pos, uint32_t flags) {
+	hold_lock hl(&backend_lock);
     return fseek(display, pos, flags);
 }
 
