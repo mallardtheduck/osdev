@@ -53,6 +53,7 @@ void take_lock_recursive(lock &l, uint64_t thread){
             else panic("(LOCK) Deadlock - waiting for lock while holding scheduler lock!");
         }
     }
+	l.waiting=false;
     l.count++;
     if(l.lockval==0) panic("(LOCK) Lock value not set!");
 }
