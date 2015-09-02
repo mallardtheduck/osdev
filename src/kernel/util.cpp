@@ -1,4 +1,5 @@
 #include "util.hpp"
+#undef memset
 
 #define swap(x,y) { x = x + y; y = x - y; x = x - y; }
 
@@ -55,12 +56,13 @@ char* itoa(int num, char* str, int base)
     return str;
 }
 
-void *memset(void *s, int c, size_t n)
+extern "C" void *memset(void *s, int c, size_t n)
 {
-	unsigned char* p=(unsigned char*)s;
+	asm volatile ("cld; rep stosb" : "+D"(s) : "a"(c), "c"(n) : "cc", "memory" );
+	/*unsigned char* p=(unsigned char*)s;
 	while(n--){
 		*(p++) = (unsigned char)c;
-	}
+	}*/
 	return s;
 }
 

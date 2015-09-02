@@ -178,6 +178,7 @@ void vterm::deactivate() {
         backend->display_read(bufsize, (char *) buffer);
         backend->display_seek(pos, false);
     }
+	backend->hide_pointer();
 	dbgpf("TERM:- %i curpid: %i\n", id, (int)curpid);
 }
 
@@ -398,10 +399,14 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
             memcpy(pointer_bitmap, bmp, totalsize);
             if(backend->is_active(id)) backend->set_pointer_bitmap(pointer_bitmap);
         }
-    }else if(fn == bt_terminal_ioctl::CursorAutoHide){
+    }else if(fn == bt_terminal_ioctl::PointerAutoHide){
 		if(size == sizeof(bool)){
-			backend->set_cursor_autohide(*(bool*)buf);
+			backend->set_pointer_autohide(*(bool*)buf);
 		}
+	}else if(fn == bt_terminal_ioctl::PointerFreeze){
+		backend->freeze_pointer();
+	}else if(fn == bt_terminal_ioctl::PointerUnfreeze){
+		backend->unfreeze_pointer();
 	}
     //TODO: implement more
     return 0;

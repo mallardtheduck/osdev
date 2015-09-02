@@ -132,14 +132,15 @@ void console_backend_pointer_thread(void *p){
 
 bool pointer_draw_blockcheck(void *p){
 	uint32_t **params = (uint32_t**)p;
-	return *params[0] != *params[1];
+	return !(*(bool*)params[2]) && *params[0] != *params[1];
 }
 
 void console_backend_pointer_draw_thread(void *p){
+	thread_priority(1000);
 	console_backend *backend=(console_backend*)p;
 	uint32_t &serial = backend->pointer_cur_serial;
 	while(true){
-		uint32_t *bc_params[2] = {&serial, &backend->pointer_draw_serial};
+	uint32_t *bc_params[3] = {&serial, &backend->pointer_draw_serial, (uint32_t*)&backend->frozen};
 		thread_setblock(&pointer_draw_blockcheck, (void*)bc_params);
 		serial = backend->pointer_draw_serial;
 		{
@@ -221,6 +222,7 @@ console_backend::console_backend() {
 	pointer_draw_serial=0;
 	pointer_cur_serial=0;
 	autohide = true;
+	frozen = false;
 
     char video_device_path[BT_MAX_PATH]="DEV:/";
     char input_device_path[BT_MAX_PATH]="DEV:/";
@@ -265,6 +267,7 @@ size_t console_backend::display_write(size_t bytes, char *buf) {
 }
 
 size_t console_backend::display_seek(size_t pos, uint32_t flags) {
+	hold_lock hl(&backend_lock);
     return fseek(display, pos, flags);
 }
 
@@ -343,8 +346,17 @@ bt_terminal_pointer_info console_backend::get_pointer_info(){
     return ret;
 }
 
-void console_backend::set_cursor_autohide(bool val){
+void console_backend::set_pointer_autohide(bool val){
 	autohide = val;
+}
+
+void console_backend::freeze_pointer(){
+	frozen = true;
+}
+
+void console_backend::unfreeze_pointer(){
+	frozen = false;
+	if(pointer_draw_serial != pointer_cur_serial) yield();
 }
 
 bool console_backend::is_active(uint64_t id) {

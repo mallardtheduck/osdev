@@ -146,6 +146,17 @@ uint8_t get_pixel_12h(uint32_t x, uint32_t y){
 	return ret;
 }
 
+static uint8_t smallbuffer[1024];
+
+inline uint8_t *get_copybuffer(size_t size){
+	if(size <= 1024) return smallbuffer;
+	else return (uint8_t*)malloc(size);
+}
+
+inline void free_copybuffer(uint8_t *ptr){
+	if(ptr != smallbuffer) free(ptr);
+}
+
 void write_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 	uint32_t startbyte=startpos / 8;
 	uint8_t sbits=(uint8_t)(startpos-(startbyte * 8));
@@ -155,6 +166,7 @@ void write_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 		uint8_t skipbits=sbits;
 		select_plane(plane);
 		uint32_t pixpos=startpos;
+		uint8_t *copybuffer = get_copybuffer(bytes);
 		for(size_t byte=startbyte; byte<startbyte+bytes; ++byte){
 			uint8_t cbyte=0;
 			if(byte==startbyte || byte==startbyte+bytes-1) cbyte=vga_memory[byte];
@@ -179,8 +191,11 @@ void write_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 				}
 				pixpos++;
 			}
-			vga_memory[byte]=cbyte;
+			//vga_memory[byte]=cbyte;
+			copybuffer[byte - startbyte] = cbyte;
 		}
+		memcpy((void*)(vga_memory + startbyte), copybuffer, bytes);
+		free_copybuffer(copybuffer);
 	}
 }
 
