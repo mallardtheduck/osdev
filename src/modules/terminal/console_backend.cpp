@@ -130,23 +130,45 @@ void console_backend_pointer_thread(void *p){
     }
 }
 
+bool pointer_draw_blockcheck(void *p){
+	uint32_t **params = (uint32_t**)p;
+	return *params[0] != *params[1];
+}
+
+void console_backend_pointer_draw_thread(void *p){
+	thread_priority(1000);
+	console_backend *backend=(console_backend*)p;
+	uint32_t &serial = backend->pointer_cur_serial;
+	while(true){
+		uint32_t *bc_params[2] = {&serial, &backend->pointer_draw_serial};
+		thread_setblock(&pointer_draw_blockcheck, (void*)bc_params);
+		serial = backend->pointer_draw_serial;
+		{
+			hold_lock hl(&backend->backend_lock, true);
+			if(backend->pointer_info.x != backend->old_pointer_info.x || backend->pointer_info.y != backend->old_pointer_info.y || backend->pointer_visible != backend->old_pointer_visible){
+				bt_vidmode mode;
+				fioctl(backend->display, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
+				uint32_t xscale=(0xFFFFFFFF/(mode.width-1));
+				uint32_t yscale=(0xFFFFFFFF/(mode.height-1));
+				uint32_t oldx=backend->old_pointer_info.x/xscale;
+				uint32_t oldy=backend->old_pointer_info.y/yscale;
+				uint32_t newx=backend->pointer_info.x/xscale;
+				uint32_t newy=backend->pointer_info.y/yscale;
+				if(oldx != newx || oldy != newy || backend->pointer_visible != backend->old_pointer_visible) {
+					backend->draw_pointer(oldx, oldy, true);
+					if(backend->pointer_visible) backend->draw_pointer(newx, newy, false);
+				}
+				backend->cur_pointer_x=newx;
+				backend->cur_pointer_y=newy;
+			}
+			backend->old_pointer_info=backend->pointer_info;
+			backend->old_pointer_visible=backend->pointer_visible;
+		}
+	}
+}
+
 void console_backend::update_pointer(){
-    if(pointer_info.x != old_pointer_info.x || pointer_info.y != old_pointer_info.y || pointer_visible != old_pointer_visible){
-        bt_vidmode mode;
-        fioctl(display, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
-        uint32_t xscale=(0xFFFFFFFF/(mode.width-1));
-        uint32_t yscale=(0xFFFFFFFF/(mode.height-1));
-        uint32_t oldx=old_pointer_info.x/xscale;
-        uint32_t oldy=old_pointer_info.y/yscale;
-        uint32_t newx=pointer_info.x/xscale;
-        uint32_t newy=pointer_info.y/yscale;
-        if(oldx != newx || oldy != newy || pointer_visible != old_pointer_visible) {
-            draw_pointer(oldx, oldy, true);
-            if(pointer_visible) draw_pointer(newx, newy, false);
-        }
-    }
-    old_pointer_info=pointer_info;
-    old_pointer_visible=pointer_visible;
+    ++pointer_draw_serial;
 }
 
 void console_backend::draw_pointer(uint32_t x, uint32_t y, bool erase) {
@@ -197,6 +219,9 @@ console_backend::console_backend() {
     pointer_bitmap=NULL;
     pointer_info.x=0; pointer_info.y=0; pointer_info.flags=0;
     mouseback=NULL;
+	pointer_draw_serial=0;
+	pointer_cur_serial=0;
+	autohide = true;
 
     char video_device_path[BT_MAX_PATH]="DEV:/";
     char input_device_path[BT_MAX_PATH]="DEV:/";
@@ -215,6 +240,7 @@ console_backend::console_backend() {
 
     input_thread_id=new_thread(&console_backend_input_thread, (void*)this);
     pointer_thread_id=new_thread(&console_backend_pointer_thread, (void*)this);
+	pointer_draw_thread_id=new_thread(&console_backend_pointer_draw_thread, (void*)this);
 }
 
 void console_backend::start_switcher(){
@@ -224,7 +250,7 @@ void console_backend::start_switcher(){
 size_t console_backend::display_read(size_t bytes, char *buf) {
     hold_lock hl(&backend_lock);
     bool pointer=pointer_visible;
-    hide_pointer();
+    if(autohide) hide_pointer();
     size_t ret=fread(display, bytes, buf);
     if(pointer)show_pointer();
     return ret;
@@ -233,14 +259,15 @@ size_t console_backend::display_read(size_t bytes, char *buf) {
 size_t console_backend::display_write(size_t bytes, char *buf) {
     hold_lock hl(&backend_lock);
     bool pointer=pointer_visible;
-    hide_pointer();
+    if(autohide) hide_pointer();
     size_t ret=fwrite(display, bytes, buf);
     if(pointer)show_pointer();
     return ret;
 }
 
-size_t console_backend::display_seek(size_t pos, bool relative) {
-    return fseek(display, pos, relative);
+size_t console_backend::display_seek(size_t pos, uint32_t flags) {
+	hold_lock hl(&backend_lock);
+    return fseek(display, pos, flags);
 }
 
 int console_backend::display_ioctl(int fn, size_t bytes, char *buf) {
@@ -260,8 +287,8 @@ size_t console_backend::input_write(size_t bytes, char *buf) {
     return fwrite(input, bytes, buf);
 }
 
-size_t console_backend::input_seek(size_t pos, bool relative) {
-    return fseek(input, pos, relative);
+size_t console_backend::input_seek(size_t pos, uint32_t flags) {
+    return fseek(input, pos, flags);
 }
 
 int console_backend::input_ioctl(int fn, size_t bytes, char *buf) {
@@ -280,6 +307,11 @@ void console_backend::show_pointer() {
 }
 
 void console_backend::hide_pointer() {
+	hold_lock hl(&backend_lock, false);
+	if(old_pointer_visible){
+		draw_pointer(cur_pointer_x, cur_pointer_y, true);
+		old_pointer_visible = false;
+	}
     pointer_visible=false;
     update_pointer();
 }
@@ -311,6 +343,10 @@ bt_terminal_pointer_info console_backend::get_pointer_info(){
     bt_terminal_pointer_info ret=pointer_info;
     ret.x=x; ret.y=y;
     return ret;
+}
+
+void console_backend::set_cursor_autohide(bool val){
+	autohide = val;
 }
 
 bool console_backend::is_active(uint64_t id) {

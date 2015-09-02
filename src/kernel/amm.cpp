@@ -66,6 +66,7 @@ void amm_page_fault_handler(int, isr_regs *regs){
     } else if(regs->error_code & ec_user){
         dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
         out_int_info(*regs);
+        debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::UnresolvedPageFault);
         proc_terminate();
     }else{
         dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
@@ -99,7 +100,6 @@ void amm_resolve_mmap(void *addr){
     //dbgpf("AMM: Resolving memory-mapped file load at %x.\n", addr);
     void *page=(void*)((uint32_t)addr & VMM_ADDRESS_MASK);
     amm_filemap *map=amm_getfilemap((uint32_t)addr);
-    //If this is a write-only mapping, return.
     size_t offset=((uint32_t)page - (uint32_t)map->start)+map->offset;
     vmm_cur_pagedir->unmap_page((size_t)page/VMM_PAGE_SIZE);
     amm_flags::Enum flags=((uint32_t)addr < VMM_KERNELSPACE_END)?amm_flags::Kernel : amm_flags::User;
@@ -163,7 +163,7 @@ uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
         if((uint32_t)ptr+size % VMM_PAGE_SIZE){
             //dbgout("AMM: Loading last page.\n");
             end=pages-1;
-            char *lastpageaddr=(char*)(((uint32_t)ptr+((pages-1)*VMM_PAGE_SIZE)) % VMM_ADDRESS_MASK);
+            char *lastpageaddr=(char*)(((uint32_t)ptr+((pages-1)*VMM_PAGE_SIZE)) & VMM_ADDRESS_MASK);
             size_t rdsize=((uint32_t)ptr+size)-(uint32_t)lastpageaddr;
             size_t rdoffset=((uint32_t)lastpageaddr-(uint32_t)ptr)+offset;
             //dbgpf("AMM: Reading %i bytes from offset %i to %x.\n", rdsize, offset, lastpageaddr);
@@ -178,7 +178,7 @@ uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
     vmm_allocmode::Enum mode=((uint32_t)ptr<VMM_KERNELSPACE_END)?vmm_allocmode::Kernel:vmm_allocmode::Userlow;
     for(size_t i=start; i<end; ++i){
         //dbgpf("AMM: Mapping page %i.\n", i);
-        uint32_t virtaddr=(uint32_t)ptr+(i*VMM_PAGE_SIZE);
+        uint32_t virtaddr=(uint32_t)(ptr+(i*VMM_PAGE_SIZE)) & VMM_ADDRESS_MASK;
         vmm_free((void*)virtaddr, 1);
         vmm_cur_pagedir->map_page(virtaddr/VMM_PAGE_SIZE, amm_mmap_marker/VMM_PAGE_SIZE, true, (vmm_allocmode::Enum)(mode | vmm_allocmode::NotPresent));
     }
@@ -297,7 +297,7 @@ void amm_close(file_handle &file) {
             if((uint32_t)mappings[i].start != ((uint32_t)mappings[i].start & VMM_ADDRESS_MASK)){
                 start=1;
             }
-            if((uint32_t)mappings[i].start+mappings[i].size % VMM_PAGE_SIZE){
+            if(((uint32_t)mappings[i].start+mappings[i].size) & VMM_PAGE_SIZE){
                 end=pages-1;
             }
         }
@@ -345,7 +345,7 @@ void amm_closemap(uint64_t id) {
             if((uint32_t)mappings[i].start != ((uint32_t)mappings[i].start & VMM_ADDRESS_MASK)){
                 start=1;
             }
-            if((uint32_t)mappings[i].start+mappings[i].size % VMM_PAGE_SIZE){
+            if(((uint32_t)mappings[i].start+mappings[i].size) & VMM_PAGE_SIZE){
                 end=pages-1;
             }
         }
@@ -370,4 +370,18 @@ void amm_closemap(uint64_t id) {
             }
         }
     }
+}
+
+bool amm_resolve_addr(void *addr){
+	if(vmm_cur_pagedir->is_mapped(addr)) return true;
+	else if(vmm_cur_pagedir->is_mapped(addr, false)){
+		addr = (void*)((uint32_t)addr & VMM_ADDRESS_MASK);
+		uint32_t physaddr=vmm_cur_pagedir->virt2phys(addr, false);
+		if(physaddr == amm_mmap_marker){
+			amm_resolve_mmap(addr);
+			return true;
+		}
+		return false;
+	}
+	return false;
 }

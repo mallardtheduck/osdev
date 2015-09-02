@@ -23,3 +23,8 @@ os.iml
 .project
 .kernel.cpp.swp
 *.img
+src/.codelite
+src/.codelite/*
+src/kernel/isodir
+src/kernel/isodir/*
+*~

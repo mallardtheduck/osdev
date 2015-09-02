@@ -21,6 +21,9 @@ typedef bt_handle bt_threadhandle;
 typedef uint32_t bt_pid;
 typedef uint32_t bt_priority;
 
+typedef uint64_t bt_thread_id_t;
+typedef uint64_t bt_pid_t;
+
 enum{
 	BT_ALLOC_PAGES		= 0x0101,
 	BT_FREE_PAGES		= 0x0102,
@@ -86,7 +89,8 @@ enum{
 	BT_CONTENT			= 0x0904,
 	BT_ACK				= 0x0905,
 	BT_SUBSCRIBE		= 0x0906,
-	BT_MSGWAIT			= 0x0907,
+	BT_UNSUBSCRIBE		= 0x0907,
+	BT_MSGWAIT			= 0x0908,
 
 	BT_QUERY_EXT		= 0x0F01,
 };
@@ -94,7 +98,7 @@ enum{
 struct bt_buffer{
 	size_t size;
 	char *buffer;
-};
+} __attribute__((packed));
 
 #ifndef __cplusplus
 typedef struct bt_buffer bt_fioctl_buffer;

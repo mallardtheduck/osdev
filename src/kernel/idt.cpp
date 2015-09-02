@@ -219,6 +219,9 @@ extern "C" void isr_handler(isr_regs *ctx){
     if(sch_can_lock()) {
         sch_update_eip(ctx->eip);
         sch_abortable(false);
+		if(ctx->cs == 0x1B){
+			sch_update_usercontext(ctx);
+		}
     }
 	if(handlers[ctx->interrupt_number]) handlers[ctx->interrupt_number](ctx->interrupt_number, ctx);
 	else if(ctx->interrupt_number==0x06){
@@ -226,14 +229,20 @@ extern "C" void isr_handler(isr_regs *ctx){
 		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
 		out_int_info(*ctx);
 		if(ctx->eip < VMM_USERSPACE_START) panic("Invalid opcode.");
-        else proc_terminate();
+        else {
+            debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::InvalidOpCode);
+            proc_terminate();
+        }
 	}
 	else if(ctx->interrupt_number==0x0D){
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
 		out_int_info(*ctx);
         if(ctx->eip < VMM_USERSPACE_START) panic("General Protection Fault.");
-        else proc_terminate();
+        else {
+            debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::ProtectionFault);
+            proc_terminate();
+        }
 	}
 	else if(ctx->interrupt_number==0x08){
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
@@ -246,7 +255,10 @@ extern "C" void isr_handler(isr_regs *ctx){
         dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
         out_int_info(*ctx);
         if(ctx->eip < VMM_USERSPACE_START) panic("Devide by zero!");
-        else proc_terminate();
+        else{
+            debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::DivideByZero);
+            proc_terminate();
+        }
     }else{
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
@@ -276,6 +288,9 @@ extern "C" void irq_handler(irq_regs *r) {
     if(sch_can_lock()) {
         sch_update_eip(r->eip);
         sch_abortable(false);
+		if(r->cs == 0x1B){
+			sch_update_usercontext((isr_regs*)r);
+		}
     }
 	//out_regs(*r);
 	int irq=r->int_no-IRQ_BASE;

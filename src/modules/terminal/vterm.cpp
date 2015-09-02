@@ -37,6 +37,7 @@ vterm::vterm(uint64_t nid, i_backend *back){
     sprintf(title, "BT/OS Terminal %i", (int)id);
     pointer_enabled=false;
     pointer_bitmap=NULL;
+	curpid = 0;
 }
 
 vterm::~vterm(){
@@ -167,6 +168,7 @@ void vterm::activate() {
     }else{
         backend->hide_pointer();
     }
+	dbgpf("TERM:+ %i curpid: %i\n", id, (int)curpid);
 }
 
 void vterm::deactivate() {
@@ -176,11 +178,12 @@ void vterm::deactivate() {
         backend->display_read(bufsize, (char *) buffer);
         backend->display_seek(pos, false);
     }
+	dbgpf("TERM:- %i curpid: %i\n", id, (int)curpid);
 }
 
 size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
     hold_lock hl(&term_lock);
-    curpid=getpid();
+    update_current_pid();
     bool iline_valid=infoline && vidmode.textmode;
     if(bufpos <= vidmode.width) iline_valid=false;
     if(bufpos+size > bufsize) size = bufsize - bufpos;
@@ -202,7 +205,7 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
 
 size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
     hold_lock hl(&term_lock);
-    curpid=getpid();
+    update_current_pid();
     if (opts.mode == bt_terminal_mode::Terminal || opts.mode == bt_terminal_mode::Keyboard) {
         int incr;
         for(size_t i=0; i<size; i+=incr) {
@@ -252,23 +255,26 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf) {
     return 0;
 }
 
-size_t vterm::seek(vterm_options &/*opts*/, size_t pos, bool relative) {
+size_t vterm::seek(vterm_options &/*opts*/, size_t pos, uint32_t flags) {
     hold_lock hl(&term_lock, false);
-    curpid=getpid();
+	update_current_pid();
     int factor=1;
     if(vidmode.textmode) factor=2;
-    if(relative) bufpos+=pos*factor;
+    if(flags & FS_Relative) bufpos+=pos*factor;
+	else if(flags & FS_Backwards){
+		bufpos = bufsize - (pos*factor);
+	}else if(flags == (FS_Relative | FS_Backwards)) bufpos -= (pos*factor);
     else bufpos=pos*factor;
     if(bufpos>bufsize) bufpos=bufsize;
     if(backend->is_active(id)){
-        backend->display_seek(pos, relative);
+        backend->display_seek(pos, flags);
     }
     return bufpos/factor;
 }
 
 int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
     hold_lock hl(&term_lock);
-    curpid=getpid();
+	update_current_pid();
     if(fn==bt_terminal_ioctl::SetTitle){
         memset(title, 0, titlemax);
         memcpy(title, buf, size);
@@ -309,12 +315,14 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
                 do_infoline();
             }
         }
-    }else if(fn == bt_vid_ioctl::QueryMode){
-        if(size==sizeof(bt_vidmode)){
-            bt_vidmode *mode=(bt_vidmode*)buf;
-            *mode=vidmode;
+    }else if(fn == bt_vid_ioctl::QueryMode) {
+        if (size == sizeof(bt_vidmode)) {
+            bt_vidmode *mode = (bt_vidmode *) buf;
+            *mode = vidmode;
             return size;
         }
+    }else if(fn == bt_vid_ioctl::GetPaletteEntry){
+        return backend->display_ioctl(fn, size, buf);
     }else if(fn == bt_vid_ioctl::SetTextColours){
         if(size==sizeof(uint8_t)){
             setcolours(*(uint8_t*)buf);
@@ -390,7 +398,11 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
             memcpy(pointer_bitmap, bmp, totalsize);
             if(backend->is_active(id)) backend->set_pointer_bitmap(pointer_bitmap);
         }
-    }
+    }else if(fn == bt_terminal_ioctl::CursorAutoHide){
+		if(size == sizeof(bool)){
+			backend->set_cursor_autohide(*(bool*)buf);
+		}
+	}
     //TODO: implement more
     return 0;
 }
@@ -545,6 +557,20 @@ char vterm::get_char(){
     return KB_char(get_input());
 }
 
+void vterm::update_current_pid(){
+	pid_t pid = getpid();
+	if(pid){
+		uint64_t termid=0;
+		if(getenv(terminal_var, pid)){
+			termid=atoi64(getenv(terminal_var, pid));
+		}
+		if(termid == id){
+			//dbgpf("TERM: %i updating curpid from %i to %i\n", (int)id, (int)curpid, (int)id);
+			curpid = pid;
+		}
+	}
+}
+
 vterm_list::vterm_list() {
     terminals=(vterm**)malloc(0);
     count=0;
@@ -592,7 +618,10 @@ void vterm_list::delete_terminal(uint64_t id) {
             current_vterm->activate();
             switchterm=false;
         }
-        if(term) delete term;
+        if(term){ 
+			delete term;
+			break;
+		}
     }
 }
 
@@ -609,7 +638,7 @@ void vterm_list::switch_terminal(uint64_t id) {
 }
 
 vterm *vterm_list::get(uint64_t id) {
-    hold_lock hl(&vtl_lock);
+    hold_lock hl(&vtl_lock, false);
     if(!id) id=default_terminal;
     for(size_t i=0; i<count; ++i) {
         if (!id || terminals[i]->get_id() == id) {

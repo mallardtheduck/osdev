@@ -29,6 +29,7 @@ ENUM_START(bt_terminal_ioctl)
     ENUM_SET(bt_terminal_ioctl, ReadKeyEvent, 275),
     ENUM_SET(bt_terminal_ioctl, ReadEvent, 276),
     ENUM_SET(bt_terminal_ioctl, ClearEvents, 277),
+	ENUM_SET(bt_terminal_ioctl, CursorAutoHide, 278),
 
     ENUM_SET(bt_terminal_ioctl, NewTerminal, 291),
     ENUM_SET(bt_terminal_ioctl, DestroyTerminal, 292),

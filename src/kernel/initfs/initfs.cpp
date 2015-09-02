@@ -128,14 +128,21 @@ directory_entry initfs_stat(void *, fs_path *path){
 	}
 }
 
-size_t initfs_seek(void *filedata, int pos, bool relative){
-	if(relative) fdata->pos+=pos;
+size_t initfs_seek(void *filedata, size_t pos, uint32_t flags){
+	if(flags & FS_Relative) fdata->pos+=pos;
+	else if(flags & FS_Backwards){
+		initfs_file file=initfs_getfile(fdata->fileindex);
+		fdata->pos = file.size - pos;
+	} else if(flags == (FS_Backwards | FS_Relative)) fdata->pos-=pos;
 	else fdata->pos=pos;
 	return fdata->pos;
 }
 
-size_t initfs_dirseek(void *dirdata, int pos, bool relative){
-	if(relative) ddata->pos+=pos;
+size_t initfs_dirseek(void *dirdata, size_t pos, uint32_t flags){
+	if(flags & FS_Relative) ddata->pos+=pos;
+	else if(flags & FS_Backwards){
+		ddata->pos = initfs_getfilecount() - pos;
+	} else if(flags == (FS_Backwards | FS_Relative)) ddata->pos-=pos;
 	else ddata->pos=pos;
 	return ddata->pos;
 }

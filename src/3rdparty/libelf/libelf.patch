@@ -1,0 +1,21 @@
+diff -rupN libelf-0.8.9/lib/elf_repl.h originals/libelf-0.8.9/lib/elf_repl.h
+--- libelf-0.8.9/lib/elf_repl.h	2015-06-08 11:45:04.837295717 +0100
++++ originals/libelf-0.8.9/lib/elf_repl.h	2006-07-07 23:16:15.000000000 +0100
+@@ -973,8 +973,6 @@ typedef struct {
+     } c_un;
+ } Elf32_Cap;
+ 
+-#if __LIBELF64
+-
+ typedef struct {
+     Elf64_Xword     	c_tag;
+     union {
+@@ -983,8 +981,6 @@ typedef struct {
+     } c_un;
+ } Elf64_Cap;
+ 
+-#endif /* __LIBELF64 */
+-
+ #define CA_SUNW_NULL	0	/* c_un ignored */
+ #define CA_SUNW_HW_1	1	/* c_un.c_val */
+ #define CA_SUNW_SF_1	2	/* c_un.c_val */

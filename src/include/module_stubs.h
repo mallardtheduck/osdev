@@ -295,4 +295,24 @@ inline static uint16_t get_extension_id(const char *name){
     return SYSCALL_TABLE->get_extension_id(name);
 }
 
+inline static uint64_t msg_send(API_NS bt_msg_header *msg){
+	return SYSCALL_TABLE->msg_send(msg);
+}
+
+inline static size_t msg_getcontent(API_NS bt_msg_header *msg, void *buffer, size_t buffersize){
+	return SYSCALL_TABLE->msg_getcontent(msg, buffer, buffersize);
+}
+
+inline static void msg_acknowledge(API_NS bt_msg_header *msg, bool set_status){
+	SYSCALL_TABLE->msg_acknowledge(msg, set_status);
+}
+
+inline static void msg_recv_reply(API_NS bt_msg_header *msg, uint64_t msg_id){
+	SYSCALL_TABLE->msg_recv_reply(msg, msg_id);
+}
+
+inline static API_NS bt_msg_header msg_recv_reply_block(uint64_t msg_id){
+	return SYSCALL_TABLE->msg_recv_reply_block(msg_id);
+}
+
 #endif

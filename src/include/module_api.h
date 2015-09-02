@@ -10,6 +10,7 @@
 #include "drivers.h"
 #include "fs_interface.h"
 #include "locktype.h"
+#include "bt_msg.h"
 
 typedef void(*thread_func)(void*);
 typedef uint64_t thread_id_t;
@@ -19,7 +20,10 @@ typedef char* (*info_function)();
 
 struct kernel_extension;
 #ifndef __cplusplus
-typedef struct kernel_extension kernel_extension;
+	typedef struct kernel_extension kernel_extension;
+	#define API_NS
+#else
+	#define API_NS btos_api::
 #endif
 
 #define	ENV_Global 		(1<<0) //Use PID 0 (kernel) value instead
@@ -67,7 +71,7 @@ struct syscall_table{
 	bool (*devclose)(void *handle);
 	size_t (*devread)(void *handle, size_t bytes, char *buffer);
 	size_t (*devwrite)(void *handle, size_t bytes, char *buffer);
-	size_t (*devseek)(void *handle, size_t pos, bool relative);
+	size_t (*devseek)(void *handle, size_t pos, uint32_t flags);
 	int (*devioctl)(void *handle, int fn, size_t bytes, char *buffer);
 	int (*devtype)(const char *name);
 	char *(*devdesc)(const char *name);
@@ -85,7 +89,7 @@ struct syscall_table{
 	bool (*fclose)(file_handle *handle);
 	size_t (*fread)(file_handle *handle, size_t bytes, char *buf);
 	size_t (*fwrite)(file_handle *handle, size_t bytes, char *buf);
-	size_t (*fseek)(file_handle *handle, size_t pos, bool relative);
+	size_t (*fseek)(file_handle *handle, size_t pos, uint32_t flags);
 	int (*fioctl)(file_handle *handle, int fn, size_t bytes, char *buf);
     void (*fflush)(file_handle *handle);
 	file_handle *(*fcreate)(const char *path);
@@ -94,7 +98,7 @@ struct syscall_table{
 	bool (*dirclose)(dir_handle *handle);
 	directory_entry (*dirread)(dir_handle *handle);
 	bool (*dirwrite)(dir_handle *handle, directory_entry entry);
-	bool (*dirseek)(dir_handle *handle, size_t pos, bool relative);
+	bool (*dirseek)(dir_handle *handle, size_t pos, uint32_t flags);
 	dir_handle *(*dircreate)(const char *path);
 	directory_entry (*stat)(const char *path);
 
@@ -114,6 +118,12 @@ struct syscall_table{
     uint16_t (*add_extension)(kernel_extension *ext);
     kernel_extension *(*get_extension)(uint16_t ext);
     uint16_t (*get_extension_id)(const char *name);
+	
+	uint64_t (*msg_send)(API_NS bt_msg_header *msg);
+	size_t (*msg_getcontent)(API_NS bt_msg_header *msg, void *buffer, size_t buffersize);
+	void (*msg_acknowledge)(API_NS bt_msg_header *msg, bool set_status);
+	bool (*msg_recv_reply)(API_NS bt_msg_header *msg, uint64_t msg_id);
+	API_NS bt_msg_header (*msg_recv_reply_block)(uint64_t msg_id);
 };
 
 #ifndef __cplusplus

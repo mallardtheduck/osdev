@@ -68,8 +68,8 @@ size_t fwrite(file_handle *h, size_t bytes, char *buf){
 	return fs_write(*h, bytes, buf);
 }
 
-size_t fseek(file_handle *handle, size_t pos, bool relative){
-	return fs_seek(*handle, pos, relative);
+size_t fseek(file_handle *handle, size_t pos, uint32_t flags){
+	return fs_seek(*handle, pos, flags);
 }
 
 int fioctl(file_handle *handle, int fn, size_t bytes, char *buf){
@@ -99,8 +99,8 @@ bool dirwrite(dir_handle *handle, directory_entry entry){
 	return fs_write_dir(*handle, entry);
 }
 
-bool dirseek(dir_handle *handle, size_t pos, bool relative){
-	return fs_seek_dir(*handle, pos, relative);
+bool dirseek(dir_handle *handle, size_t pos, uint32_t flags){
+	return fs_seek_dir(*handle, pos, flags);
 }
 
 void setenv(const char *name, char *value, uint8_t flags, pid_t pid){
@@ -139,6 +139,22 @@ void unmask_irq(size_t irqno){
 
 void setpid(pid_t pid){
     proc_switch(pid);
+}
+
+uint64_t mod_msg_send(btos_api::bt_msg_header *msg){
+	return msg_send(*msg);
+}
+
+size_t mod_msg_getcontent(btos_api::bt_msg_header *msg, void *buffer, size_t buffersize){
+	return msg_getcontent(*msg, buffer, buffersize);
+}
+
+void mod_msg_acknowledge(btos_api::bt_msg_header *msg, bool set_status){
+	msg_acknowledge(*msg, set_status);
+}
+
+bool mod_msg_recv_reply(btos_api::bt_msg_header *msg, uint64_t msg_id){
+	return msg_recv_reply(*msg, msg_id);
 }
 
 module_api::syscall_table MODULE_SYSCALL_TABLE={
@@ -227,4 +243,10 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
     &add_extension,
     &get_extension,
     &get_extension_id,
+	
+	&mod_msg_send,
+	&mod_msg_getcontent,
+	&mod_msg_acknowledge,
+	&mod_msg_recv_reply,
+	&msg_recv_reply_block,
 };

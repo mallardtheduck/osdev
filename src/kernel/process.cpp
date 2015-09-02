@@ -123,8 +123,8 @@ proc_process *proc_get(pid_t pid){
 }
 
 //Note: Called from scheduler. No locking, memory allocation, etc. available!
-void proc_switch_sch(pid_t pid, bool setthread){
-	if(setthread) sch_setpid(pid);
+void proc_switch_sch(pid_t pid){
+	//sch_setpid(pid);
 	if(pid!=proc_current_pid){
 		proc_process *newproc=NULL;
         for(size_t i=0; i<proc_processes->size(); ++i){
@@ -138,15 +138,11 @@ void proc_switch_sch(pid_t pid, bool setthread){
 	}
 }
 
-bool proc_switch(pid_t pid, bool setthread){
-	if(setthread) sch_setpid(pid);
+bool proc_switch(pid_t pid){
+	sch_setpid(pid);
 	if(pid!=proc_current_pid){
 		proc_process *newproc=proc_get(pid);
         if(!newproc) return false;
-		if(setthread){
-			proc_remove_thread(sch_get_id(), proc_current_pid);
-			proc_add_thread(sch_get_id(), pid);
-		}
         {
             hold_lock hl(proc_lock, false);
             proc_current_process = newproc;
@@ -172,8 +168,14 @@ pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent, file_
 	return newproc->pid;
 }
 
+static bool proc_threads_blockcheck(void *p){
+    pid_t pid = *(pid_t*)p;
+    return sch_get_pid_threadcount(pid) == 0;
+}
+
 void proc_end(pid_t pid) {
     if(pid==0) return;
+    debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
     {
         hold_lock hl(proc_lock);
         if (!proc_get(pid)) return;
@@ -183,6 +185,7 @@ void proc_end(pid_t pid) {
             dbgpf("PROC: Process %i is already ending.\n", (int) pid);
             release_lock(proc_lock);
             proc_wait(pid);
+			take_lock_exclusive(proc_lock);
             return;
         }
         dbgpf("PROC: Ending process %i.\n", (int) pid);
@@ -206,9 +209,17 @@ void proc_end(pid_t pid) {
                         proc_remove_thread(thread_id, pid);
                         cont = true;
                         break;
-                    }
+                    }else{
+						sch_setpid(0);
+					}
+					proc_remove_handle(i->first, pid);
                 }
             }
+        }
+        if(sch_get_pid_threadcount(pid) > 0) {
+            release_lock(proc_lock);
+            sch_setblock(&proc_threads_blockcheck, (void *) &pid);
+            take_lock_exclusive(proc_lock);
         }
         cont = true;
         while (cont) {
@@ -247,6 +258,7 @@ void proc_end(pid_t pid) {
         }
     }
     msg_clear(pid);
+	msg_send_event(btos_api::bt_kernel_messages::ProcessEnd, (void*)&pid, sizeof(pid));
 }
 
 void proc_setenv(const pid_t pid, const string &oname, const string &value, const uint8_t flags, bool userspace){
@@ -322,6 +334,8 @@ void proc_start(void *ptr){
 	if(!stackptr) stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
     sch_set_priority(default_userspace_priority);
 	sch_abortable(true);
+    debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);
+	proc_add_thread(sch_get_id());
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 
@@ -338,7 +352,9 @@ pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
 	info->pid=ret;
 	info->entry=proc.entry;
     info->stackptr=NULL;
+    debug_event_notify(ret, 0, bt_debug_event::ProgramStart);
 	sch_new_thread(&proc_start, (void*)info, 4096);
+	msg_send_event(btos_api::bt_kernel_messages::ProcessStart, (void*)&ret, sizeof(ret));
 	return ret;
 }
 
@@ -440,7 +456,7 @@ void proc_remove_dir(handle_t h, pid_t pid){
 void proc_setreturn(int ret, pid_t pid){
     hold_lock hl(proc_lock);
 	proc_process *proc=proc_get(pid);
-	proc->retval=ret;
+	if(proc && proc->status == proc_status::Running) proc->retval=ret;
 }
 
 bool proc_wait_blockcheck(void *p){
@@ -523,7 +539,7 @@ handle_t proc_get_thread_handle(uint64_t thread_id, pid_t pid){
 void proc_terminate(pid_t pid){
     dbgpf("PROC: Terminating PID: %i\n", pid);
     if(pid==0) return; // panic("(PROC) Request to terminate kernel!");
-    proc_setreturn(-1);
+    proc_setreturn(-1, pid);
     bool current=false;
     if(pid==proc_current_pid) {
         proc_switch(0);
@@ -550,11 +566,23 @@ void proc_free_message_buffer(pid_t topid, pid_t pid){
     proc_process *p=proc_get(pid);
     if(!p) return;
     else{
-        hold_lock hl2(p->msg_lock);
-        if(!p->msg_buffers.has_key(topid)) return;
+        while(!try_take_lock_exclusive(p->msg_lock)){
+			release_lock(proc_lock);
+			sch_yield();
+			take_lock_exclusive(proc_lock);
+			p=proc_get(pid);
+			if(!p) return;
+		}
+        if(!p->msg_buffers.has_key(topid)){ 
+			release_lock(p->msg_lock);
+			return;
+		}
         void *ptr=p->msg_buffers[topid];
-        if(ptr) free(ptr);
         p->msg_buffers.erase(topid);
+		release_lock(proc_lock);
+		if(ptr) free(ptr);
+		take_lock_recursive(proc_lock);
+		release_lock(p->msg_lock);
     }
 }
 
@@ -562,34 +590,38 @@ static bool proc_msg_blockcheck(void *p){
     btos_api::bt_msg_header header=*(btos_api::bt_msg_header*)p;
     proc_process *proc=proc_get(header.from);
     if(!proc) return false;
-    return !proc->msg_buffers.has_key(header.to);
+    return !get_lock_owner(proc->msg_lock) && !proc->msg_buffers.has_key(header.to);
 }
 
-uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid){
-    bool again=false;
-    do {
-        hold_lock hl(proc_lock, false);
-        proc_process *p = proc_get(pid);
-        if (!p) return 0;
-        if(again) {
-            release_lock(proc_lock);
-            sch_setblock(&proc_msg_blockcheck, (void *)&header);
-            take_lock_exclusive(proc_lock);
-        }
-        again=false;
-        {
-            hold_lock hl2(p->msg_lock);
-            if (p->msg_buffers.has_key(header.to)){
-                again=true;
-                continue;
-            }
-            p->msg_buffers[header.to]=malloc(header.length);
-            memcpy(p->msg_buffers[header.to], header.content, header.length);
-            header.content=p->msg_buffers[header.to];
-            return msg_send(header);
-        }
-    }while(again);
-    return 0;
+uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
+	bool again=false;
+	do {
+		{
+			hold_lock hl(proc_lock, false);
+			proc_process *p = proc_get(pid);
+			if (!p) return 0;
+			if(again) {
+				release_lock(proc_lock);
+				sch_setblock(&proc_msg_blockcheck, (void *)&header);
+				take_lock_exclusive(proc_lock);
+			}
+			again=false;
+			bool ok = try_take_lock_exclusive(p->msg_lock);
+			if (!ok || p->msg_buffers.has_key(header.to)) {
+				if(ok) release_lock(p->msg_lock);
+				again=true;
+				continue;
+			}
+			p->msg_buffers[header.to]=malloc(header.length);
+			memcpy(p->msg_buffers[header.to], header.content, header.length);
+			header.content=p->msg_buffers[header.to];
+			release_lock(p->msg_lock);
+
+		}
+		uint64_t ret = msg_send(header);
+		return ret;
+	} while(again);
+	return 0;
 }
 
 static bool proc_msg_wait_blockcheck(void *p){

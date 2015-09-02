@@ -53,6 +53,7 @@ extern "C"{
 #include "infofs.hpp"
 #include "amm.hpp"
 #include "amm_page_accounting.hpp"
+#include "debug_ext.hpp"
 
 void GDT_init();
 void IDT_init();
@@ -63,7 +64,7 @@ void gdt_set_kernel_stack(void* ptr);
 #define KERNEL_REVISION "B"
 #define KERNEL_VERSION_STRING "v0.0" KERNEL_REVISION
 #define KERNEL_OS_NAME "BT/OS"
-#define KERNEL_COPYRIGHT "(c) 2014 Stuart Brockman"
+#define KERNEL_COPYRIGHT "(c) 2014-2015 Stuart Brockman"
 extern char *kernel_buildid;
 
 #endif
