@@ -265,6 +265,7 @@ size_t console_backend::display_write(size_t bytes, char *buf) {
 }
 
 size_t console_backend::display_seek(size_t pos, uint32_t flags) {
+	hold_lock hl(&backend_lock);
     return fseek(display, pos, flags);
 }
 
