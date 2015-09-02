@@ -82,6 +82,8 @@ public:
 
     void allocate_buffer();
     void clear_buffer();
+	
+	void update_current_pid();
 };
 
 //extern vterm *current_vterm;
