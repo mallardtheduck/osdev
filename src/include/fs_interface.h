@@ -77,6 +77,11 @@ struct fs_path{
 typedef struct fs_path fs_path;
 #endif
 
+enum fs_seek_flags{
+	FS_Relative 	= 1,
+	FS_Backwards 	= 1 << 1,
+};
+
 #if defined(KERNEL) || defined(KERNEL_MODULE)
 
 struct fs_driver{
@@ -89,14 +94,14 @@ struct fs_driver{
 	bool (*close)(void *filedata);
 	size_t (*read)(void *filedata, size_t bytes, char *buf);
 	size_t (*write)(void *filedata, size_t bytes, char *buf);
-	size_t (*seek)(void *filedata, int pos, bool relative);
+	size_t (*seek)(void *filedata, size_t pos, uint32_t flags);
 	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
     void (*flush)(void *filedata);
 	void *(*open_dir)(void *mountdata, fs_path *path, fs_mode_flags mode);
 	bool (*close_dir)(void *dirdata);
 	directory_entry (*read_dir)(void *dirdata);
 	bool (*write_dir)(void *dirdata, directory_entry entry);
-	size_t (*dirseek)(void *dirdata, int pos, bool relative);
+	size_t (*dirseek)(void *dirdata, size_t pos, uint32_t flags);
 	directory_entry (*stat)(void *mountdata, fs_path *path);
 };
 

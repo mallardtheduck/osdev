@@ -78,9 +78,16 @@ int link(char *old, char *new){
 }
 
 int lseek(int file, int ptr, int dir){
-    bool relative=false;
-    if(dir==SEEK_CUR) relative=true;
-    return bt_fseek(btos_get_handle(file), ptr, relative);
+	uint32_t flags = 0;
+    if(dir==SEEK_CUR){ 
+		flags = FS_Relative;
+		if(ptr < 0){ 
+			flags |= FS_Backwards;
+			ptr = -ptr;
+		}
+	}
+	else if(dir==SEEK_END) flags = FS_Backwards;
+    return bt_fseek(btos_get_handle(file), ptr, flags);
 }
 
 int open(const char *name, int flags, ...){
@@ -118,7 +125,7 @@ caddr_t sbrk(int incr){
 
 	while(limit >= alloc){
 		void *page=bt_alloc_pages(1);
-        if(!page) return -1;
+        if(!page) return NULL;
 		memset(page, 0, 4096);
 		alloc+=4096;
 	}

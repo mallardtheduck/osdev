@@ -288,10 +288,13 @@ size_t ata_write(void *instance, size_t bytes, char *buf){
 	return bytes;
 }
 
-size_t ata_seek(void *instance, size_t pos, bool relative){
+size_t ata_seek(void *instance, size_t pos, uint32_t flags){
 	ata_instance *inst=(ata_instance*)instance;
 	if(pos % 512) return inst->pos;
-	if(relative) inst->pos+=pos;
+	if(flags & FS_Relative) inst->pos+=pos;
+	else if(flags & FS_Backwards){
+		inst->pos = (inst->dev->identity.sectors_48 * 512) - pos;
+	}else if(flags == (FS_Relative | FS_Backwards)) inst->pos-=pos;
 	else inst->pos=pos;
 	return inst->pos;
 }

@@ -7,6 +7,17 @@ const size_t default_stack_size=16*1024;
 extern bool sch_inited;
 typedef bool (*sch_blockcheck)(void*);
 
+namespace sch_thread_status {
+	enum Enum{
+		Runnable = 0,
+		Blocked = 1,
+		DebugStopped = 2,
+		DebugBlocked = 3,
+		Ending = 4,
+		Special = 5,
+	};
+}
+
 void sch_isr(int,isr_regs*);
 void sch_init();
 uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size=default_stack_size);
@@ -30,5 +41,11 @@ bool sch_user_abort();
 void sch_set_msgstaus(thread_msg_status::Enum status, uint64_t ext_id=sch_get_id());
 thread_msg_status::Enum sch_get_msgstatus(uint64_t ext_id=sch_get_id());
 void sch_deferred_yield();
+uint8_t *sch_get_fpu_xmm_data();
+size_t sch_get_pid_threadcount(pid_t pid);
+void sch_debug_stop(pid_t pid);
+void sch_debug_resume(pid_t pid);
+void sch_update_usercontext(isr_regs *uc, uint64_t ext_id=sch_get_id());
+void *sch_get_usercontext(uint64_t ext_id=sch_get_id());
 
 #endif

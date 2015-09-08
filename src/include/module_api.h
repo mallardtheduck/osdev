@@ -67,7 +67,7 @@ struct syscall_table{
 	bool (*devclose)(void *handle);
 	size_t (*devread)(void *handle, size_t bytes, char *buffer);
 	size_t (*devwrite)(void *handle, size_t bytes, char *buffer);
-	size_t (*devseek)(void *handle, size_t pos, bool relative);
+	size_t (*devseek)(void *handle, size_t pos, uint32_t flags);
 	int (*devioctl)(void *handle, int fn, size_t bytes, char *buffer);
 	int (*devtype)(const char *name);
 	char *(*devdesc)(const char *name);
@@ -85,17 +85,15 @@ struct syscall_table{
 	bool (*fclose)(file_handle *handle);
 	size_t (*fread)(file_handle *handle, size_t bytes, char *buf);
 	size_t (*fwrite)(file_handle *handle, size_t bytes, char *buf);
-	size_t (*fseek)(file_handle *handle, size_t pos, bool relative);
+	size_t (*fseek)(file_handle *handle, size_t pos, uint32_t flags);
 	int (*fioctl)(file_handle *handle, int fn, size_t bytes, char *buf);
     void (*fflush)(file_handle *handle);
-	file_handle *(*fcreate)(const char *path);
 
 	dir_handle *(*diropen)(const char *path, fs_mode_flags mode);
 	bool (*dirclose)(dir_handle *handle);
 	directory_entry (*dirread)(dir_handle *handle);
 	bool (*dirwrite)(dir_handle *handle, directory_entry entry);
-	bool (*dirseek)(dir_handle *handle, size_t pos, bool relative);
-	dir_handle *(*dircreate)(const char *path);
+	bool (*dirseek)(dir_handle *handle, size_t pos, uint32_t flags);
 	directory_entry (*stat)(const char *path);
 
 	void (*module_load)(const char *path, char *params);

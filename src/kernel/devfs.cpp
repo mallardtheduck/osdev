@@ -37,8 +37,8 @@ size_t devfs_write(void *filedata, size_t bytes, char *buf){
 	return drv_write(filedata, bytes, buf);
 }
 
-size_t devfs_seek(void *filedata, int pos, bool relative){
-	return drv_seek(filedata, pos, relative);
+size_t devfs_seek(void *filedata, size_t pos, uint32_t flags){
+	return drv_seek(filedata, pos, flags);
 }
 
 int devfs_ioctl(void *filedata, int fn, size_t bytes, char *buf){
@@ -86,8 +86,15 @@ bool devfs_write_dir(void *, directory_entry){
 	return false;
 }
 
-size_t devfs_dirseek(void *dirdata, int pos, bool relative){
-	if(relative) ddata->pos+=pos;
+size_t devfs_dirseek(void *dirdata, size_t pos, uint32_t flags){
+	if(flags & FS_Relative) ddata->pos+=pos;
+	else if(flags & FS_Backwards){
+		int count = 0;
+		char *name;
+		void *drvi=drv_firstdevice(&name);
+		while((drvi = drv_nextdevice(drvi, &name))) count++;
+		ddata->pos = count - pos;
+	} else if(flags == (FS_Backwards | FS_Relative)) ddata->pos-=pos;
 	else ddata->pos=pos;
 	return ddata->pos;
 }

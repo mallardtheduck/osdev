@@ -72,7 +72,7 @@ size_t test_driver_write(void *instance, size_t bytes, char *buf){
 	return 0;
 }
 
-size_t test_driver_seek(void *instance, size_t pos, bool relative){
+size_t test_driver_seek(void *instance, size_t pos, uint32_t flags){
 	return 0;
 }
 

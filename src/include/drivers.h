@@ -56,7 +56,7 @@ struct drv_driver{
 	bool (*close)(void *instance);
 	size_t (*read)(void *instance, size_t bytes, char *buf);
 	size_t (*write)(void *instance, size_t bytes, char *buf);
-	size_t (*seek)(void *instance, size_t pos, bool relative);
+	size_t (*seek)(void *instance, size_t pos, uint32_t flags);
 	int (*ioctl)(void *instance, int fn, size_t bytes, char *buf);
 	int (*type)();
 	char *(*desc)();
@@ -80,6 +80,7 @@ struct isr_regs {
 	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
 	uint32_t interrupt_number, error_code;
 	uint32_t eip, cs, eflags;
+	uint32_t useresp, userss;
 } __attribute__((packed));
 
 #ifndef __cplusplus
