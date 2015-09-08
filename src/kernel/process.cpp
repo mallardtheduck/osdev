@@ -456,7 +456,7 @@ void proc_remove_dir(handle_t h, pid_t pid){
 void proc_setreturn(int ret, pid_t pid){
     hold_lock hl(proc_lock);
 	proc_process *proc=proc_get(pid);
-	proc->retval=ret;
+	if(proc && proc->status == proc_status::Running) proc->retval=ret;
 }
 
 bool proc_wait_blockcheck(void *p){

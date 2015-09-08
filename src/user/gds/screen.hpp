@@ -11,6 +11,7 @@ private:
 	uint8_t *buffer;
 	size_t buffersize;
 	bool cursor_on;
+	bt_terminal_pointer_bitmap cursor_bmp_info;
 
 private:
 

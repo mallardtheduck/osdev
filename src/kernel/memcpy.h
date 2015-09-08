@@ -57,6 +57,7 @@ extern "C" {
 #endif
 
 void *memcpy(void *dest, const void *src, size_t count);
+#define   memcpy(d,s,n)            __builtin_memcpy(d,s,n)
 
 #ifdef __cplusplus
 }

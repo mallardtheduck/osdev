@@ -3,12 +3,15 @@
 extern lock sch_lock;
 
 bool lock_blockcheck(void *p){
-	return !((lock*)p)->lockval;
+	lock *l = (lock*)p;
+	l->waiting = true;
+	return !l->lockval;
 }
 
 void init_lock(lock &l){
     l.lockval=0;
     l.count=0;
+	l.waiting=false;
 }
 
 uint64_t get_lock_owner(lock &l){
@@ -31,6 +34,7 @@ void take_lock_exclusive(lock &l, uint64_t thread){
             else panic("(LOCK) Deadlock - waiting for lock while holding scheduler lock!");
         }
     }
+	l.waiting=false;
     if(l.count != 0) panic("(LOCK) Newly acquired lock with non-zero count!");
     l.count++;
     if(l.lockval==0) panic("(LOCK) Lock value not set!");
@@ -49,6 +53,7 @@ void take_lock_recursive(lock &l, uint64_t thread){
             else panic("(LOCK) Deadlock - waiting for lock while holding scheduler lock!");
         }
     }
+	l.waiting=false;
     l.count++;
     if(l.lockval==0) panic("(LOCK) Lock value not set!");
 }
@@ -71,8 +76,10 @@ void release_lock(lock &l, uint64_t thread){
     if(l.count==0) panic("(LOCK) Attempt to release lock with zero count!");
     l.count--;
     if(!l.count) {
+		bool waiters = l.waiting;
         __sync_bool_compare_and_swap(&l.lockval, thread, 0);
         if (l.lockval != 0) panic("(LOCK) Lock value still set!");
+		if(waiters) sch_yield();
     }
     /*if(&l != &sch_lock && sch_can_lock())*/ sch_deferred_yield();
 }

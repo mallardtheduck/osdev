@@ -11,6 +11,7 @@ private:
 #endif
     volatile uint64_t lockval;
     uint32_t count;
+	bool waiting;
 #if defined(__cplusplus) && defined(KERNEL)
     friend void init_lock(lock &l);
     friend uint64_t get_lock_owner(lock &l);

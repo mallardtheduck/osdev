@@ -119,15 +119,35 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 		buffer=new uint8_t[buffersize]();
 		bt_fseek(fh, 0, false);
 		bt_fread(fh, buffersize, (char*)buffer);
+		bool autohide = false;
+		bt_fioctl(fh, bt_terminal_ioctl::PointerAutoHide, sizeof(autohide), (char*)&autohide);
 		return true;
 	}
 	return false;
 }
 
 void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
+	bool hide_cursor = false;	
 	if (!x && !y && !w && !h) {
 		w = current_mode.width;
 		h = current_mode.height;
+	}
+	if(cursor_on){
+		hide_cursor = true;
+		bt_terminal_pointer_info pointer_info;
+		bt_fioctl(fh, bt_terminal_ioctl::GetPointerInfo, sizeof(pointer_info), (char*)&pointer_info);
+		int32_t sxpos = pointer_info.x;
+		int32_t sypos = pointer_info.y;
+		sxpos -= cursor_bmp_info.spot_x;
+		sypos -= cursor_bmp_info.spot_y;
+		uint32_t x1 = max(0, sxpos);
+		uint32_t y1 = max(0, sypos);
+		uint32_t x2 = x1 + cursor_bmp_info.w;
+		uint32_t y2 = y1 + cursor_bmp_info.h;
+		if(x1 < x && x2 < x) hide_cursor = false; 
+		if(x1 > x + w && x2 > x + w)  hide_cursor = false;
+		if(y1 < y && y2 < y) hide_cursor = false; 
+		if(y1 > y + h && y2 > y + h) hide_cursor = false; 
 	}
 	if(y > current_mode.height) return;
 	if(x > current_mode.width) return;
@@ -144,7 +164,8 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 			BufferPutPixel(col, row, value);
 		}
 	}
-	if(cursor_on) bt_fioctl(fh, bt_terminal_ioctl::HidePointer, 0, NULL);
+	bt_fioctl(fh, bt_terminal_ioctl::PointerFreeze, 0, NULL);
+	if(hide_cursor) bt_fioctl(fh, bt_terminal_ioctl::HidePointer, 0, NULL);
 	if(w == current_mode.width && h == current_mode.height) {
 		bt_fseek(fh, 0, false);
 		bt_fwrite(fh, buffersize, (char *) buffer);
@@ -159,7 +180,8 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 			bt_fwrite(fh, bytes, (char*)&buffer[start]);
 		}
 	}
-	if(cursor_on) bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
+	if(hide_cursor) bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
+	bt_fioctl(fh, bt_terminal_ioctl::PointerUnfreeze, 0, NULL);
 }
 
 void Screen::ShowCursor() {
@@ -179,6 +201,8 @@ void Screen::SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty) 
 	bmp.bpp=current_mode.bpp;
 	bmp.w=img.Width();
 	bmp.h=img.Height();
+	cursor_bmp_info = bmp;
+	cursor_bmp_info.datasize = 0;
 	uint32_t transparent=img.GetTransparent();
 	bmp.transparent=transparent;//image->ColorClosest(img.Red(transparent), img.Green(transparent), img.Blue(transparent));
 	size_t datasize;
