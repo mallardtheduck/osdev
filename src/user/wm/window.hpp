@@ -15,6 +15,7 @@ public:
 	
 	void Draw();
 	void SetPosition(uint32_t x, uint32_t y);
+	void SetTitle(std::string title);
 };
 
 #endif // WINDOW_HPP

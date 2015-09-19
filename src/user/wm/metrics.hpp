@@ -12,6 +12,9 @@ static const uint32_t TitleBarSize = 20;
 #define LineColour GDS_GetColour(0, 0, 0)
 #define BorderColour GDS_GetColour(255, 255, 0)
 #define SeperatorColour GDS_GetColour(64, 64, 64)
+#define TitleTextColour GDS_GetColour(255, 255, 255)
+#define InactiveTitleColour GDS_GetColour(64, 64, 64)
+#define SymbolColour GDS_GetColour(0, 0, 0)
 
 #define GetColour(x) x
 

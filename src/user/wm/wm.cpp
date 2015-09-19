@@ -30,6 +30,7 @@ int main(){
 	GDS_Box(0, 0, 400, 250, GDS_GetColour(0, 0, 0), GDS_GetColour(255, 255, 255), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	Window win(surface);
 	win.SetPosition(100, 100);
+	win.SetTitle("Window 1");
 	win.Draw();
 	GDS_UpdateScreen();
 	getchar();
