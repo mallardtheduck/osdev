@@ -26,12 +26,11 @@ struct bt_msg_header{
     bool critical, recieved, replied;
     void *content;
 };
-#ifndef __cplusplus
-typedef struct bt_msg_header bt_msg_header;
-#endif
+
+BT_STRUCT_TYPE(bt_msg_header);
 
 ENUM_START(bt_msg_flags)
-    ENUM_SET(bt_msg_flags, UserSpace, 1 >> 0),
+    ENUM_SET(bt_msg_flags, UserSpace, 1 << 0),
     ENUM_SET(bt_msg_flags, Reply, 1 << 1),
 ENUM_END
 ENUM_TYPE(bt_msg_flags);
@@ -41,6 +40,24 @@ ENUM_START(bt_kernel_messages)
 	ENUM_SET(bt_kernel_messages, ProcessEnd, 2),
 ENUM_END
 ENUM_TYPE(bt_kernel_messages);
+
+ENUM_START(bt_msg_filter_flags)
+	ENUM_SET(bt_msg_filter_flags, From, 1 << 0),
+	ENUM_SET(bt_msg_filter_flags, Reply, 1 << 1),
+	ENUM_SET(bt_msg_filter_flags, Type, 1 << 2),
+	ENUM_SET(bt_msg_filter_flags, Source, 1 << 3),
+ENUM_END
+ENUM_TYPE(bt_msg_filter_flags);
+
+struct bt_msg_filter{
+	ENUM_NAME(bt_msg_filter_flags) flags;
+	uint64_t pid;
+	uint64_t reply_to;
+	uint32_t type;
+	uint32_t source;
+};
+
+BT_STRUCT_TYPE(bt_msg_filter);
 
 #ifdef __cplusplus
 }
