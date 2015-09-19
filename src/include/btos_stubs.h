@@ -235,6 +235,17 @@ inline static void bt_msgwait(){
 	btos_call(BT_MSGWAIT, 0, 0, 0);
 }
 
+inline static bt_msg_header bt_recv_filtered(bt_msg_filter filter){
+	bt_msg_header ret;
+	ret.valid=false;
+	btos_call(BT_RECVFILTERED, (uint32_t)&filter, (uint32_t)&ret, 0);
+	return ret;
+}
+
+inline static void bt_next_msg_filtered(bt_msg_header *msg, bt_msg_filter filter){
+	btos_call(BT_NEXTMSGFILTERED, (uint32_t)&filter, (uint32_t)&msg, 0);
+}
+
 inline static uint16_t bt_query_extension(const char *name){
 	return btos_call(BT_QUERY_EXT, (uint32_t)name, 0, 0);
 }

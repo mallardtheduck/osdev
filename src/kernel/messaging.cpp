@@ -238,3 +238,50 @@ bt_msg_header msg_recv_reply_block(uint64_t msg_id){
     sch_set_msgstaus(thread_msg_status::Processing);
     return ret;
 }
+
+bool msg_is_match(bt_msg_header msg, bt_msg_filter filter){
+	if(msg.critical) return true;
+	if((filter.flags & bt_msg_filter_flags::From) && msg.from != filter.pid) return false;
+	if((filter.flags & bt_msg_filter_flags::Reply) && msg.reply_id != filter.reply_to) return false;
+	if((filter.flags & bt_msg_filter_flags::Type) && msg.type != filter.type) return false;
+	if((filter.flags & bt_msg_filter_flags::Source) && msg.source != filter.source) return false;
+	return true;
+}
+
+struct msg_filter_blockcheck_params{
+	pid_t pid;
+	bt_msg_filter filter;
+};
+
+bool msg_filter_blockcheck(void *p){
+	msg_filter_blockcheck_params &params=*(msg_filter_blockcheck_params*)p;
+	if(get_lock_owner(msg_lock)) return false;
+	for(size_t i=0; i<msg_q->size(); ++i){
+		bt_msg_header &msg=(*msg_q)[i];
+		if(msg.to == params.pid && msg_is_match(msg, params.filter)) return true;
+	}
+	return false;
+}
+
+bt_msg_header msg_recv_filtered(bt_msg_filter filter, pid_t pid){
+	hold_lock hl(msg_lock);
+	while(true){
+		for(size_t i=0; i<msg_q->size(); ++i){
+			bt_msg_header &msg=(*msg_q)[i];
+			if(msg.to == pid && msg_is_match(msg, filter)) {
+				sch_set_msgstaus(thread_msg_status::Processing);
+				return msg;
+			}
+		}
+		release_lock(msg_lock);
+		sch_set_msgstaus(thread_msg_status::Waiting);
+		msg_filter_blockcheck_params p = {pid, filter};
+		sch_setblock(&msg_filter_blockcheck, (void*)&p);
+		take_lock_exclusive(msg_lock);
+	}
+}
+
+void msg_nextmessage_filtered(bt_msg_filter filter, bt_msg_header &msg){
+    msg_acknowledge(msg, false);
+    msg=msg_recv_filtered(filter);
+}
