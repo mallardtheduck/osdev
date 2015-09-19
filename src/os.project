@@ -291,6 +291,12 @@
       <File Name="user/libgds/libgds_internal.hpp"/>
       <File Name="user/libgds/primitives.cpp"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="wm">
+      <File Name="user/wm/Makefile"/>
+      <File Name="user/wm/wm.cpp"/>
+      <File Name="user/wm/window.cpp"/>
+      <File Name="user/wm/window.hpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
