@@ -14,7 +14,7 @@ public:
 	~Window();
 	
 	void Draw();
-
+	void SetPosition(uint32_t x, uint32_t y);
 };
 
 #endif // WINDOW_HPP
