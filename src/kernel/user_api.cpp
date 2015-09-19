@@ -417,6 +417,19 @@ USERAPI_HANDLER(BT_MSGWAIT){
 	proc_message_wait();
 }
 
+USERAPI_HANDLER(BT_RECVFILTERED){
+	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_msg_filter)) && is_safe_ptr(regs->ecx, sizeof(btos_api::bt_msg_header))){
+		(*(btos_api::bt_msg_header*)regs->ecx) = msg_recv_filtered(*(btos_api::bt_msg_filter*)regs->ebx);
+	}
+}
+
+USERAPI_HANDLER(BT_NEXTMSGFILTERED){
+	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_msg_filter)) && is_safe_ptr(regs->ecx, sizeof(btos_api::bt_msg_header))){
+		btos_api::bt_msg_header &header=*(btos_api::bt_msg_header*)regs->ecx;
+		msg_nextmessage_filtered(*(btos_api::bt_msg_filter*)regs->ebx, header);
+	}
+}
+
 USERAPI_HANDLER(BT_SUBSCRIBE){
 	msg_subscribe((btos_api::bt_kernel_messages::Enum)regs->ebx);
 }
@@ -511,6 +524,8 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_MSGWAIT);
 		USERAPI_HANDLE_CALL(BT_SUBSCRIBE);
 		USERAPI_HANDLE_CALL(BT_UNSUBSCRIBE);
+		USERAPI_HANDLE_CALL(BT_RECVFILTERED);
+		USERAPI_HANDLE_CALL(BT_NEXTMSGFILTERED);
 
 		//Extensions
 		USERAPI_HANDLE_CALL(BT_QUERY_EXT);
