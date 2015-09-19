@@ -41,7 +41,10 @@ static bt_msg_header SendMessage(gds_MsgType::Enum type, size_t size, void* cont
 	msg.id = bt_send(msg);
 	if(waitreply) {
 		bt_msg_header ret;
-		ret = bt_recv(true);
+		bt_msg_filter filter;
+		filter.flags = bt_msg_filter_flags::Reply;
+		filter.reply_to = msg.id;
+		ret = bt_recv_filtered(filter);
 		while(ret.reply_id != msg.id){
 			stringstream ss;
 			ss << "LIBGDS: Spurious message!" << endl;
