@@ -36,6 +36,7 @@ vterm::vterm(uint64_t nid, i_backend *back){
     scrollcount=0;
     sprintf(title, "BT/OS Terminal %i", (int)id);
     pointer_enabled=false;
+	pointer_autohide = true;
     pointer_bitmap=NULL;
 	curpid = 0;
 }
@@ -168,6 +169,7 @@ void vterm::activate() {
     }else{
         backend->hide_pointer();
     }
+	backend->set_pointer_autohide(pointer_autohide);
 	dbgpf("TERM:+ %i curpid: %i\n", id, (int)curpid);
 }
 
@@ -401,6 +403,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         }
     }else if(fn == bt_terminal_ioctl::PointerAutoHide){
 		if(size == sizeof(bool)){
+			pointer_autohide = *(bool*)buf;
 			backend->set_pointer_autohide(*(bool*)buf);
 		}
 	}else if(fn == bt_terminal_ioctl::PointerFreeze){

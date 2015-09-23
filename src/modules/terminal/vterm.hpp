@@ -33,6 +33,7 @@ private:
     lock term_lock;
     uint64_t scrollcount;
     bool pointer_enabled;
+	bool pointer_autohide;
     bt_terminal_pointer_bitmap *pointer_bitmap;
 
     circular_buffer<uint32_t, 128> keyboard_buffer;
