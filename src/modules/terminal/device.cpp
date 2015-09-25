@@ -74,7 +74,7 @@ void *term_open(void */*id*/){
 bool term_close(void *instance){
     if(instance){
         term_instance *inst=(term_instance*)instance;
-        inst->terminal->close();
+        inst->terminal->close(inst->opts);
         delete inst;
         return true;
     }

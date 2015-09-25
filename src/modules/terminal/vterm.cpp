@@ -4,6 +4,7 @@
 #include "keyboard.h"
 #include "device.hpp"
 #include "holdlock.hpp"
+#include "bt_msg.h"
 
 vterm *current_vterm=NULL;
 vterm_list *terminals=NULL;
@@ -36,8 +37,12 @@ vterm::vterm(uint64_t nid, i_backend *back){
     scrollcount=0;
     sprintf(title, "BT/OS Terminal %i", (int)id);
     pointer_enabled=false;
+	pointer_autohide = true;
     pointer_bitmap=NULL;
 	curpid = 0;
+	events_pid = 0;
+	event_mode = bt_terminal_event_mode::None;
+	event_mode_enabled = false;
 }
 
 vterm::~vterm(){
@@ -168,6 +173,7 @@ void vterm::activate() {
     }else{
         backend->hide_pointer();
     }
+	backend->set_pointer_autohide(pointer_autohide);
 	dbgpf("TERM:+ %i curpid: %i\n", id, (int)curpid);
 }
 
@@ -350,57 +356,28 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         if(size==sizeof(bt_terminal_pointer_info)){
             *(bt_terminal_pointer_info*)buf=backend->get_pointer_info();
         }
-    }else if(fn == bt_terminal_ioctl::ReadPointerEvent){
-        if(size==sizeof(bt_terminal_pointer_event)){
-            release_lock(&term_lock);
-            *(bt_terminal_pointer_event*)buf=get_pointer();
-            take_lock(&term_lock);
-        }
-    }
-    else if(fn == bt_terminal_ioctl::ReadKeyEvent){
-        if(size==sizeof(uint32_t)){
-            release_lock(&term_lock);
-            *(uint32_t*)buf=get_input();
-            take_lock(&term_lock);
-        }
-    }else if(fn == bt_terminal_ioctl::ReadEvent){
-        if(size==sizeof(bt_terminal_event)){
-            bt_terminal_event *event=(bt_terminal_event*)buf;
-            while(!keyboard_buffer.count() && !pointer_buffer.count()){
-                release_lock(&term_lock);
-                thread_setblock(&event_blockcheck, (void*)this);
-                take_lock(&term_lock);
-            }
-            if(keyboard_buffer.count()){
-                event->type=bt_terminal_event_type::Key;
-                release_lock(&term_lock);
-                //TODO: Work out why this has to be done twice...
-                event->key= get_input();
-                event->key= get_input();
-                take_lock(&term_lock);
-            }else if(pointer_buffer.count()){
-                event->type=bt_terminal_event_type::Pointer;
-                release_lock(&term_lock);
-                event->pointer= get_pointer();
-                event->pointer= get_pointer();
-                take_lock(&term_lock);
-            }
-        }
-    }else if(fn == bt_terminal_ioctl::ClearEvents){
-        keyboard_buffer.clear();
-        pointer_buffer.clear();
-    }else if(fn == bt_terminal_ioctl::SetPointerBitmap){
-        if(size > sizeof(bt_terminal_pointer_bitmap)){
-            bt_terminal_pointer_bitmap *bmp=(bt_terminal_pointer_bitmap*)buf;
-            if(pointer_bitmap) free(pointer_bitmap);
-            pointer_bitmap=NULL;
-            size_t totalsize=sizeof(bt_terminal_pointer_bitmap) + bmp->datasize;
-            pointer_bitmap=(bt_terminal_pointer_bitmap*) malloc(totalsize);
-            memcpy(pointer_bitmap, bmp, totalsize);
-            if(backend->is_active(id)) backend->set_pointer_bitmap(pointer_bitmap);
-        }
-    }else if(fn == bt_terminal_ioctl::PointerAutoHide){
+	}else if(fn == bt_terminal_ioctl::StartEventMode){
+		if(!event_mode_enabled){
+			events_pid = getpid();
+			opts.event_mode_owner = true;
+			event_mode_enabled = true;
+		}
+    }else if(fn == bt_terminal_ioctl::EndEventMode){
+		if(event_mode_enabled && opts.event_mode_owner){
+			event_mode_enabled = false;
+			opts.event_mode_owner = false;
+			event_mode = bt_terminal_event_mode::None;
+			events_pid = 0;
+		}
+	}else if(fn == bt_terminal_ioctl::SetEventMode){
+		if(event_mode_enabled && opts.event_mode_owner){
+			if(size == sizeof(bt_terminal_event_mode::Enum)){
+				event_mode = *(bt_terminal_event_mode::Enum*)buf;
+			}
+		}
+	}else if(fn == bt_terminal_ioctl::PointerAutoHide){
 		if(size == sizeof(bool)){
+			pointer_autohide = *(bool*)buf;
 			backend->set_pointer_autohide(*(bool*)buf);
 		}
 	}else if(fn == bt_terminal_ioctl::PointerFreeze){
@@ -425,8 +402,21 @@ void vterm::create_terminal(char *command) {
         setenv(terminal_var, new_terminal_id, 0, getpid());
         pid_t pid=spawn(command, 0, NULL);
         setenv(terminal_var, old_terminal_id, 0, getpid());
-        if(!pid) terminals->get(new_id)->close();
+		vterm_options opts;
+        if(!pid) terminals->get(new_id)->close(opts);
     }
+}
+
+void vterm::send_event(const bt_terminal_event &e){
+	btos_api::bt_msg_header msg;
+	memset((void*)&msg, 0, sizeof(msg));
+	bt_terminal_event *content = new bt_terminal_event();
+	*content = e;
+	msg.to = events_pid;
+	msg.source = terminal_extension_id;
+	msg.content = content;
+	msg.length = sizeof(*content);
+	msg_send(&msg);
 }
 
 void vterm::open(){
@@ -434,8 +424,13 @@ void vterm::open(){
     refcount++;
 }
 
-void vterm::close(){
+void vterm::close(vterm_options &opts){
     take_lock(&term_lock);
+	if(event_mode_enabled && opts.event_mode_owner){
+		event_mode_enabled = false;
+		events_pid = 0;
+		event_mode = bt_terminal_event_mode::None;
+	}
     if(refcount) refcount--;
     if(!refcount){
         if(terminals->get_count() > 1){
@@ -512,12 +507,25 @@ void vterm::queue_input(uint32_t code) {
         kill(curpid);
         return;
     }
-    keyboard_buffer.add_item(code);
+	if(event_mode_enabled && (event_mode & bt_terminal_event_mode::Keyboard)){
+		bt_terminal_event event;
+		event.type = bt_terminal_event_type::Key;
+		event.key = code;
+		send_event(event);
+	}else{
+		keyboard_buffer.add_item(code);
+	}
     release_lock(&input_lock);
 }
 
 void vterm::queue_pointer(bt_terminal_pointer_event event) {
     take_lock(&input_lock);
+	if(event_mode_enabled && (event_mode & bt_terminal_event_mode::Pointer)){
+		bt_terminal_event e;
+		e.type = bt_terminal_event_type::Pointer;
+		e.pointer = event;
+		send_event(e);
+	}
     pointer_buffer.add_item(event);
     release_lock(&input_lock);
 }

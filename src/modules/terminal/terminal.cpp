@@ -4,11 +4,19 @@
 #include "vterm.hpp"
 #include "device.hpp"
 #include "console_backend.hpp"
+#include "extension.h"
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
 
 uint64_t default_terminal;
+uint16_t terminal_extension_id;
+
+kernel_extension terminal_extension={
+	"TERMINAL",
+	NULL,
+	NULL
+};
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -21,6 +29,7 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 }
 
 void init(){
+	terminal_extension_id = add_extension(&terminal_extension);
     init_device();
     terminals=new vterm_list();
     cons_backend=new console_backend();
