@@ -4,6 +4,7 @@
 #include "keyboard.h"
 #include "device.hpp"
 #include "holdlock.hpp"
+#include "bt_msg.h"
 
 vterm *current_vterm=NULL;
 vterm_list *terminals=NULL;
@@ -39,6 +40,9 @@ vterm::vterm(uint64_t nid, i_backend *back){
 	pointer_autohide = true;
     pointer_bitmap=NULL;
 	curpid = 0;
+	events_pid = 0;
+	event_mode = bt_terminal_event_mode::None;
+	event_mode_enabled = false;
 }
 
 vterm::~vterm(){
@@ -352,7 +356,26 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         if(size==sizeof(bt_terminal_pointer_info)){
             *(bt_terminal_pointer_info*)buf=backend->get_pointer_info();
         }
-    }else if(fn == bt_terminal_ioctl::PointerAutoHide){
+	}else if(fn == bt_terminal_ioctl::StartEventMode){
+		if(!event_mode_enabled){
+			events_pid = getpid();
+			opts.event_mode_owner = true;
+			event_mode_enabled = true;
+		}
+    }else if(fn == bt_terminal_ioctl::EndEventMode){
+		if(event_mode_enabled && opts.event_mode_owner){
+			event_mode_enabled = false;
+			opts.event_mode_owner = false;
+			event_mode = bt_terminal_event_mode::None;
+			events_pid = 0;
+		}
+	}else if(fn == bt_terminal_ioctl::SetEventMode){
+		if(event_mode_enabled && opts.event_mode_owner){
+			if(size == sizeof(bt_terminal_event_mode::Enum)){
+				event_mode = *(bt_terminal_event_mode::Enum*)buf;
+			}
+		}
+	}else if(fn == bt_terminal_ioctl::PointerAutoHide){
 		if(size == sizeof(bool)){
 			pointer_autohide = *(bool*)buf;
 			backend->set_pointer_autohide(*(bool*)buf);
@@ -379,8 +402,21 @@ void vterm::create_terminal(char *command) {
         setenv(terminal_var, new_terminal_id, 0, getpid());
         pid_t pid=spawn(command, 0, NULL);
         setenv(terminal_var, old_terminal_id, 0, getpid());
-        if(!pid) terminals->get(new_id)->close();
+		vterm_options opts;
+        if(!pid) terminals->get(new_id)->close(opts);
     }
+}
+
+void vterm::send_event(const bt_terminal_event &e){
+	btos_api::bt_msg_header msg;
+	memset((void*)&msg, 0, sizeof(msg));
+	bt_terminal_event *content = new bt_terminal_event();
+	*content = e;
+	msg.to = events_pid;
+	msg.source = terminal_extension_id;
+	msg.content = content;
+	msg.length = sizeof(*content);
+	msg_send(&msg);
 }
 
 void vterm::open(){
@@ -388,8 +424,13 @@ void vterm::open(){
     refcount++;
 }
 
-void vterm::close(){
+void vterm::close(vterm_options &opts){
     take_lock(&term_lock);
+	if(event_mode_enabled && opts.event_mode_owner){
+		event_mode_enabled = false;
+		events_pid = 0;
+		event_mode = bt_terminal_event_mode::None;
+	}
     if(refcount) refcount--;
     if(!refcount){
         if(terminals->get_count() > 1){
@@ -466,12 +507,25 @@ void vterm::queue_input(uint32_t code) {
         kill(curpid);
         return;
     }
-    keyboard_buffer.add_item(code);
+	if(event_mode_enabled && (event_mode & bt_terminal_event_mode::Keyboard)){
+		bt_terminal_event event;
+		event.type = bt_terminal_event_type::Key;
+		event.key = code;
+		send_event(event);
+	}else{
+		keyboard_buffer.add_item(code);
+	}
     release_lock(&input_lock);
 }
 
 void vterm::queue_pointer(bt_terminal_pointer_event event) {
     take_lock(&input_lock);
+	if(event_mode_enabled && (event_mode & bt_terminal_event_mode::Pointer)){
+		bt_terminal_event e;
+		e.type = bt_terminal_event_type::Pointer;
+		e.pointer = event;
+		send_event(e);
+	}
     pointer_buffer.add_item(event);
     release_lock(&input_lock);
 }

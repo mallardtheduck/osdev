@@ -4,6 +4,7 @@
 #include <video_dev.h>
 #include <string.h>
 #include <stdbool.h>
+#include <bt_msg.h>
 
 bt_handle btos_get_handle(int fd);
 bool btos_path_parse(const char *opath, char *buffer, size_t size);
@@ -51,7 +52,27 @@ int main(int argc, char **argv){
         bt_fioctl(fh, bt_terminal_ioctl_GetPointerInfo, sizeof(info), (char*)&info);
         printf("Pointer: (%i, %i) Flags: %x\n", info.x, info.y, info.flags);
     }else if(strcmp(argv[1], "event")==0) {
-        
+		bt_fioctl(fh, bt_terminal_ioctl_StartEventMode, 0, NULL);
+		bt_terminal_event_mode emode = bt_terminal_event_mode_Both;
+		bt_fioctl(fh, bt_terminal_ioctl_SetEventMode, sizeof(emode), (void*)&emode);
+		bt_msg_filter filter;
+		filter.flags = bt_msg_filter_flags_Source;
+		filter.source = bt_query_extension("TERMINAL");
+		bt_msg_header hdr = bt_recv_filtered(filter);
+		bt_terminal_event event;
+		bt_msg_content(&hdr, (void*)&event, sizeof(event));
+		bt_msg_ack(&hdr);
+		if (event.type == bt_terminal_event_type_Key) {
+		printf("Keyboard event: %x\n", event.key);
+        } else if (event.type == bt_terminal_event_type_Pointer) {
+            char *type = NULL;
+            if (event.pointer.type == bt_terminal_pointer_event_type_ButtonDown) type = "Button Down";
+            if (event.pointer.type == bt_terminal_pointer_event_type_ButtonUp) type = "Button Up";
+            if (event.pointer.type == bt_terminal_pointer_event_type_Move) type = "Move";
+            printf("Pointer event: '%s' (%i, %i) %i\n", type, event.pointer.x, event.pointer.y, event.pointer.button);
+        } else {
+            printf("Unknown terminal event type: %x\n", event.type);
+        }
     }else if(strcmp(argv[1], "modes")==0){
         size_t modecount= bt_fioctl(fh, bt_vid_ioctl_GetModeCount, 0, NULL);
         for(size_t i=0; i<modecount; ++i){

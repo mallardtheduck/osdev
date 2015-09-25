@@ -3,4 +3,6 @@
 
 #include "module_cpp.hpp"
 
+extern uint16_t terminal_extension_id;
+
 #endif
