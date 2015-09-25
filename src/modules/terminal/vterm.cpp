@@ -352,55 +352,6 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
         if(size==sizeof(bt_terminal_pointer_info)){
             *(bt_terminal_pointer_info*)buf=backend->get_pointer_info();
         }
-    }else if(fn == bt_terminal_ioctl::ReadPointerEvent){
-        if(size==sizeof(bt_terminal_pointer_event)){
-            release_lock(&term_lock);
-            *(bt_terminal_pointer_event*)buf=get_pointer();
-            take_lock(&term_lock);
-        }
-    }
-    else if(fn == bt_terminal_ioctl::ReadKeyEvent){
-        if(size==sizeof(uint32_t)){
-            release_lock(&term_lock);
-            *(uint32_t*)buf=get_input();
-            take_lock(&term_lock);
-        }
-    }else if(fn == bt_terminal_ioctl::ReadEvent){
-        if(size==sizeof(bt_terminal_event)){
-            bt_terminal_event *event=(bt_terminal_event*)buf;
-            while(!keyboard_buffer.count() && !pointer_buffer.count()){
-                release_lock(&term_lock);
-                thread_setblock(&event_blockcheck, (void*)this);
-                take_lock(&term_lock);
-            }
-            if(keyboard_buffer.count()){
-                event->type=bt_terminal_event_type::Key;
-                release_lock(&term_lock);
-                //TODO: Work out why this has to be done twice...
-                event->key= get_input();
-                event->key= get_input();
-                take_lock(&term_lock);
-            }else if(pointer_buffer.count()){
-                event->type=bt_terminal_event_type::Pointer;
-                release_lock(&term_lock);
-                event->pointer= get_pointer();
-                event->pointer= get_pointer();
-                take_lock(&term_lock);
-            }
-        }
-    }else if(fn == bt_terminal_ioctl::ClearEvents){
-        keyboard_buffer.clear();
-        pointer_buffer.clear();
-    }else if(fn == bt_terminal_ioctl::SetPointerBitmap){
-        if(size > sizeof(bt_terminal_pointer_bitmap)){
-            bt_terminal_pointer_bitmap *bmp=(bt_terminal_pointer_bitmap*)buf;
-            if(pointer_bitmap) free(pointer_bitmap);
-            pointer_bitmap=NULL;
-            size_t totalsize=sizeof(bt_terminal_pointer_bitmap) + bmp->datasize;
-            pointer_bitmap=(bt_terminal_pointer_bitmap*) malloc(totalsize);
-            memcpy(pointer_bitmap, bmp, totalsize);
-            if(backend->is_active(id)) backend->set_pointer_bitmap(pointer_bitmap);
-        }
     }else if(fn == bt_terminal_ioctl::PointerAutoHide){
 		if(size == sizeof(bool)){
 			pointer_autohide = *(bool*)buf;
