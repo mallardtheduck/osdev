@@ -10,8 +10,9 @@
 
 struct vterm_options{
     bt_terminal_mode::Enum mode;
+	bool event_mode_owner;
 
-    vterm_options() : mode(bt_terminal_mode::Terminal) {}
+    vterm_options() : mode(bt_terminal_mode::Terminal), event_mode_owner(false) {}
 };
 
 static constexpr bt_terminal_pointer_event zero_event={bt_terminal_pointer_event_type::None, 0, 0, 0};
@@ -33,6 +34,7 @@ private:
     lock term_lock;
     uint64_t scrollcount;
     bool pointer_enabled;
+	bool pointer_autohide;
     bt_terminal_pointer_bitmap *pointer_bitmap;
 
     circular_buffer<uint32_t, 128> keyboard_buffer;
@@ -40,6 +42,9 @@ private:
     lock input_lock;
 
     pid_t curpid;
+	pid_t events_pid;
+	bt_terminal_event_mode::Enum event_mode;
+	bool event_mode_enabled;
 
     void putchar(char c);
     void putstring(char *s);
@@ -51,6 +56,7 @@ private:
     uint32_t get_input();
     bt_terminal_pointer_event get_pointer();
     void create_terminal(char *command);
+	void send_event(const bt_terminal_event &e);
 
     friend bool input_blockcheck(void *p);
     friend bool pointer_blockcheck(void *p);
@@ -74,7 +80,7 @@ public:
     size_t seek(vterm_options &opts, size_t pos, uint32_t flags);
     int ioctl(vterm_options &opts, int fn, size_t size, char *buf);
     void open();
-    void close();
+    void close(vterm_options &opts);
 
     void queue_input(uint32_t code);
     void queue_pointer(bt_terminal_pointer_event event);

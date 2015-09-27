@@ -1,4 +1,4 @@
-PROGS := test ctest cpptest cmd cls termctl switcher spawn kill load mount msgtest mousetest vgatest fputest gds debug crash libgds wm
+PROGS := test ctest cpptest cmd cls termctl switcher spawn kill load mount msgtest mousetest vgatest fputest gds debug crash libgds
 
 all: dummy.file
 	for dir in $(PROGS); do \

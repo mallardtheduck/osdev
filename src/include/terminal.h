@@ -25,10 +25,9 @@ ENUM_START(bt_terminal_ioctl)
     ENUM_SET(bt_terminal_ioctl, GetPointerVisibility, 271),
     ENUM_SET(bt_terminal_ioctl, SetPointerBitmap, 272),
     ENUM_SET(bt_terminal_ioctl, GetPointerInfo, 273),
-    ENUM_SET(bt_terminal_ioctl, ReadPointerEvent, 274),
-    ENUM_SET(bt_terminal_ioctl, ReadKeyEvent, 275),
-    ENUM_SET(bt_terminal_ioctl, ReadEvent, 276),
-    ENUM_SET(bt_terminal_ioctl, ClearEvents, 277),
+	ENUM_SET(bt_terminal_ioctl, StartEventMode, 274),
+	ENUM_SET(bt_terminal_ioctl, EndEventMode, 275),
+	ENUM_SET(bt_terminal_ioctl, SetEventMode, 276),
 	ENUM_SET(bt_terminal_ioctl, PointerAutoHide, 278),
 	ENUM_SET(bt_terminal_ioctl, PointerFreeze, 279),
 	ENUM_SET(bt_terminal_ioctl, PointerUnfreeze, 280),
@@ -38,6 +37,14 @@ ENUM_START(bt_terminal_ioctl)
     ENUM_SET(bt_terminal_ioctl, SwtichTerminal, 293),
 ENUM_END
 ENUM_TYPE(bt_terminal_ioctl);
+
+ENUM_START(bt_terminal_event_mode)
+	ENUM_SET(bt_terminal_event_mode, None, 0),
+	ENUM_SET(bt_terminal_event_mode, Keyboard, 1),
+	ENUM_SET(bt_terminal_event_mode, Pointer, 2),
+	ENUM_SET(bt_terminal_event_mode, Both, 3),
+ENUM_END
+ENUM_TYPE(bt_terminal_event_mode);
 
 struct bt_terminal_pointer_info{
     uint32_t x;
