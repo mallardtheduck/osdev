@@ -4,7 +4,7 @@
 
 using namespace std;
 
-void DrawButton(uint32_t x, uint32_t y, uint32_t w, uint32_t h){
+void DrawButtonUp(uint32_t x, uint32_t y, uint32_t w, uint32_t h){
 	GDS_Box(x+1, y+1, w-2, h-2, GetColour(ButtonHighlightColour), GetColour(ButtonFaceColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	GDS_Line(x+1, y+h-1, x+w-1, y+h-1, GetColour(ButtonShadowColour), 1);
 	GDS_Line(x+w-1, y+h-1, x+w-1, y+2, GetColour(ButtonShadowColour), 1);
@@ -15,16 +15,27 @@ void DrawButton(uint32_t x, uint32_t y, uint32_t w, uint32_t h){
 	GDS_Dot(x+w, y+h, GetColour(TitleBarColour), 1);
 }
 
+void DrawButtonDown(uint32_t x, uint32_t y, uint32_t w, uint32_t h){
+	GDS_Box(x+1, y+1, w-2, h-2, GetColour(ButtonShadowColour), GetColour(ButtonFaceColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	GDS_Line(x+1, y+h-1, x+w-1, y+h-1, GetColour(ButtonHighlightColour), 1);
+	GDS_Line(x+w-1, y+h-1, x+w-1, y+2, GetColour(ButtonHighlightColour), 1);
+	GDS_Box(x, y, w, h, GetColour(LineColour), GetColour(BorderColour), 1);
+	GDS_Dot(x, y, GetColour(TitleBarColour), 1);
+	GDS_Dot(x+w, y, GetColour(TitleBarColour), 1);
+	GDS_Dot(x, y+h, GetColour(TitleBarColour), 1);
+	GDS_Dot(x+w, y+h, GetColour(TitleBarColour), 1);
+}
+
 void DrawMaxButton(uint32_t x, uint32_t y){
 	uint32_t buttonSize = GetMetric(TitleBarSize)-2;
-	DrawButton(x, y, buttonSize, buttonSize);
+	DrawButtonUp(x, y, buttonSize, buttonSize);
 	uint32_t borderWidth = buttonSize / 4;
 	GDS_Box(x + borderWidth, y + borderWidth, buttonSize - (2*borderWidth), buttonSize - (2*borderWidth), GetColour(SymbolColour), 0, 2);
 }
 
 void DrawMinButton(uint32_t x, uint32_t y){
 	uint32_t buttonSize = GetMetric(TitleBarSize)-2;
-	DrawButton(x, y, buttonSize, buttonSize);
+	DrawButtonUp(x, y, buttonSize, buttonSize);
 	uint32_t symbolSize = buttonSize / 4;
 	uint32_t borderWidth = (buttonSize - symbolSize) / 2;
 	GDS_Box(x + borderWidth, y + borderWidth, buttonSize - (2*borderWidth), buttonSize - (2*borderWidth), 0, GetColour(SymbolColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
@@ -32,7 +43,7 @@ void DrawMinButton(uint32_t x, uint32_t y){
 
 void DrawCloseButton(uint32_t x, uint32_t y){
 	uint32_t buttonSize = GetMetric(TitleBarSize)-2;
-	DrawButton(x, y, buttonSize, buttonSize);
+	DrawButtonUp(x, y, buttonSize, buttonSize);
 	uint32_t borderWidth = buttonSize / 4;
 	GDS_Line(x + borderWidth, y + borderWidth, (x + buttonSize) - borderWidth, (y + buttonSize) - borderWidth, GetColour(SymbolColour), 2);
 	GDS_Line(x + borderWidth, (y + buttonSize) - borderWidth, (x + buttonSize) - borderWidth, y + borderWidth, GetColour(SymbolColour), 2);
@@ -41,7 +52,7 @@ void DrawCloseButton(uint32_t x, uint32_t y){
 void DrawMenuButton(uint32_t x, uint32_t y){
 	uint32_t buttonHeight = GetMetric(TitleBarSize)-2;
 	uint32_t buttonWidth = 50;
-	DrawButton(x, y, buttonWidth, buttonHeight);
+	DrawButtonUp(x, y, buttonWidth, buttonHeight);
 	uint32_t borderWidth = buttonHeight / 4;
 	uint32_t symLength = buttonHeight - borderWidth;
 	GDS_Line(x + borderWidth, y + borderWidth, x + symLength, y + borderWidth, GetColour(SymbolColour), 2);

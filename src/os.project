@@ -333,6 +333,9 @@
       <File Name="include/gds/gds.h"/>
       <File Name="include/gds/libgds.h"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="wm">
+      <File Name="include/wm/wm.h"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>
