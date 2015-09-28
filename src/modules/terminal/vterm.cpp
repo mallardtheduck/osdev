@@ -174,7 +174,6 @@ void vterm::activate() {
         backend->hide_pointer();
     }
 	backend->set_pointer_autohide(pointer_autohide);
-	dbgpf("TERM:+ %i curpid: %i\n", id, (int)curpid);
 }
 
 void vterm::deactivate() {
@@ -185,7 +184,6 @@ void vterm::deactivate() {
         backend->display_seek(pos, false);
     }
 	backend->hide_pointer();
-	dbgpf("TERM:- %i curpid: %i\n", id, (int)curpid);
 }
 
 size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {
@@ -333,7 +331,6 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
     }else if(fn == bt_vid_ioctl::SetTextColours){
         if(size==sizeof(uint8_t)){
             setcolours(*(uint8_t*)buf);
-            dbgpf("VTERM: colours: %x\n", *(uint8_t*)buf);
         }
     }else if(fn == bt_vid_ioctl::GetTextColours){
         return getcolours();
