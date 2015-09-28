@@ -372,6 +372,16 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf) {
 				event_mode = *(bt_terminal_event_mode::Enum*)buf;
 			}
 		}
+	}else if(fn == bt_terminal_ioctl::SetPointerBitmap){
+		if(size > sizeof(bt_terminal_pointer_bitmap)){
+			bt_terminal_pointer_bitmap *bmp=(bt_terminal_pointer_bitmap*)buf;
+			if(pointer_bitmap) free(pointer_bitmap);
+			pointer_bitmap=NULL;
+			size_t totalsize=sizeof(bt_terminal_pointer_bitmap) + bmp->datasize;
+			pointer_bitmap=(bt_terminal_pointer_bitmap*) malloc(totalsize);
+			memcpy(pointer_bitmap, bmp, totalsize);
+			if(backend->is_active(id)) backend->set_pointer_bitmap(pointer_bitmap);
+		}
 	}else if(fn == bt_terminal_ioctl::PointerAutoHide){
 		if(size == sizeof(bool)){
 			pointer_autohide = *(bool*)buf;
