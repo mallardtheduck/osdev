@@ -299,6 +299,8 @@
       <File Name="user/wm/metrics.hpp"/>
       <File Name="user/wm/drawing.cpp"/>
       <File Name="user/wm/drawing.hpp"/>
+      <File Name="user/wm/windows.hpp"/>
+      <File Name="user/wm/windows.cpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">

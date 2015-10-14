@@ -1,6 +1,7 @@
 #include <iostream>
 #include <gds/libgds.h>
 #include <cstdio>
+#include "windows.hpp"
 #include "window.hpp"
 
 using namespace std;
@@ -17,6 +18,15 @@ void InitCursor(){
 	GDS_CursorVisibility(true);
 }
 
+shared_ptr<Window> CreateTestWin(string title, uint32_t x, uint32_t y, uint32_t w, uint32_t h){
+	uint64_t surface = GDS_NewSurface(gds_SurfaceType::Bitmap, w, h);
+	GDS_Box(0, 0, 400, 250, GDS_GetColour(0, 0, 0), GDS_GetColour(255, 255, 255), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	shared_ptr<Window> win(new Window(surface));
+	win->SetPosition(x, y);
+	win->SetTitle(title);
+	return win;
+}
+
 int main(){
     cout << "BT/OS WM" << endl;
 	bt_vidmode vidmode;
@@ -26,13 +36,18 @@ int main(){
 	GDS_SetScreenMode(vidmode);
 	InitCursor();
 	GDS_SelectScreen();
-	uint64_t surface = GDS_NewSurface(gds_SurfaceType::Bitmap, 400, 250);
-	GDS_Box(0, 0, 400, 250, GDS_GetColour(0, 0, 0), GDS_GetColour(255, 255, 255), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	Window win(surface);
-	win.SetPosition(100, 100);
-	win.SetTitle("Window 1");
-	win.Draw();
-	GDS_UpdateScreen();
+	shared_ptr<Window> win1 = CreateTestWin("Window 1", 50, 50, 200, 100);
+	win1->SetZOrder(10);
+	AddWindow(win1);
+	DrawWindows();
+	getchar();
+	shared_ptr<Window> win2 = CreateTestWin("Window 2", 100, 100, 250, 150);
+	win2->SetZOrder(20);
+	AddWindow(win2);
+	DrawWindows();
+	getchar();
+	win1->SetZOrder(30);
+	DrawWindows();
 	getchar();
     return 0;
 }
