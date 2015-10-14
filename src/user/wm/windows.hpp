@@ -8,6 +8,6 @@ uint64_t AddWindow(std::shared_ptr<Window> win);
 void RemoveWindow(uint64_t id);
 std::shared_ptr<Window> GetWindow(uint64_t id);
 std::shared_ptr<Window> GetActiveWindow();
-void DrawWindows();
+void DrawWindows(const Rect &r = Rect());
 
 #endif

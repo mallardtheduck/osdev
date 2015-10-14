@@ -2,6 +2,7 @@
 #define METRICS_HPP
 
 static const uint32_t TitleBarSize = 20;
+static const uint32_t BorderWidth = 1;
 
 #define GetMetric(x) x
 
@@ -14,7 +15,7 @@ static const uint32_t TitleBarSize = 20;
 #define SeperatorColour GDS_GetColour(64, 64, 64)
 #define TitleTextColour GDS_GetColour(255, 255, 255)
 #define InactiveTitleColour GDS_GetColour(64, 64, 64)
-#define SymbolColour GDS_GetColour(0, 0, 0)
+#define SymbolColour GDS_GetColour(0, 0, 0) 
 
 #define GetColour(x) x
 

@@ -44,10 +44,14 @@ int main(){
 	shared_ptr<Window> win2 = CreateTestWin("Window 2", 100, 100, 250, 150);
 	win2->SetZOrder(20);
 	AddWindow(win2);
-	DrawWindows();
-	getchar();
-	win1->SetZOrder(30);
-	DrawWindows();
+	DrawWindows(win2->GetBoundingRect());
+	while(getchar() != 'x'){
+		win1->SetZOrder(30);
+		DrawWindows(win1->GetBoundingRect());
+		getchar();
+		win1->SetZOrder(10);
+		DrawWindows(win1->GetBoundingRect());
+	}
 	getchar();
     return 0;
 }

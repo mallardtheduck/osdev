@@ -9,6 +9,7 @@
 using namespace std;
 
 map<uint64_t, shared_ptr<Window>> windows;
+shared_ptr<Window> activeWindow;
 uint64_t id_counter;
 
 template <typename M, typename V> 
@@ -27,6 +28,7 @@ bool ZOrderSort(shared_ptr<Window> a, shared_ptr<Window> b){
 uint64_t AddWindow(shared_ptr<Window> win){
 	uint64_t id = ++id_counter;
 	windows[id] = win;
+	if(!activeWindow) activeWindow = win;
 	return id;
 }
 
@@ -39,17 +41,17 @@ shared_ptr<Window> GetWindow(uint64_t id){
 }
 
 shared_ptr<Window> GetActiveWindow(){
-	return std::shared_ptr<Window>();
+	return activeWindow;
 }
 
-void DrawWindows(){
+void DrawWindows(const Rect &r){
 	vector<shared_ptr<Window>> wins;
 	MapToVec(windows, wins);
 	sort(begin(wins), end(wins), &ZOrderSort);
 	
 	GDS_SelectScreen();
 	for(auto w: wins){
-		w->Draw(false);
+		w->Draw(w == activeWindow);
 	}
-	GDS_UpdateScreen();
+	GDS_UpdateScreen(r.x, r.y, r.w, r.h);
 }
