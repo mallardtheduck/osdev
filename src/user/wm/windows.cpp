@@ -1,4 +1,5 @@
 #include "windows.hpp"
+#include "metrics.hpp"
 
 #include <map>
 #include <vector>
@@ -50,6 +51,8 @@ void DrawWindows(const Rect &r){
 	sort(begin(wins), end(wins), &ZOrderSort);
 	
 	GDS_SelectScreen();
+	gds_SurfaceInfo info = GDS_SurfaceInfo();
+	GDS_Box(0, 0, info.w, info.h, GetColour(BackgroundColour), GetColour(BackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	for(auto w: wins){
 		w->Draw(w == activeWindow);
 	}
