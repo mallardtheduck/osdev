@@ -4,8 +4,6 @@
 #include <btos_stubs.h>
 #include <terminal.h>
 
-#include <sstream>
-
 using namespace std;
 
 void Service(){
@@ -25,10 +23,6 @@ void Service(){
 	while(true){
 		bt_terminal_event event;
 		bt_msg_content(&header, (void*)&event, sizeof(event));
-		stringstream ss;
-		ss << "WM: Input message ID:" << header.id << endl;
-		ss << "WM: Header addr:" << &header << endl;
-		bt_zero(ss.str().c_str());
 		HandleInput(event);
 		bt_next_msg_filtered(&header, terminal_filter);
 	}

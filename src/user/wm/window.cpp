@@ -41,12 +41,12 @@ uint32_t Window::GetZOrder(){
 
 Rect Window::GetBoundingRect(){
 	Rect ret;
-	ret.x = x - GetMetric(BorderWidth);
-	ret.y = x - GetMetric(BorderWidth);
+	ret.x = x ;//- GetMetric(BorderWidth);
+	ret.y = x ;//- GetMetric(BorderWidth);
 	GDS_SelectSurface(gds_id);
 	gds_SurfaceInfo info = GDS_SurfaceInfo();
-	ret.w = info.w + (2 * GetMetric(BorderWidth));
-	ret.h = info.h + (2 * GetMetric(BorderWidth)) + GetMetric(TitleBarSize);
+	ret.w = info.w ; //+ (2 * GetMetric(BorderWidth));
+	ret.h = info.h /*+ (2 * GetMetric(BorderWidth))*/ + GetMetric(TitleBarSize);
 	return ret;
 }
 
