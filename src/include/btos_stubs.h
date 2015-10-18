@@ -243,7 +243,7 @@ inline static bt_msg_header bt_recv_filtered(bt_msg_filter filter){
 }
 
 inline static void bt_next_msg_filtered(bt_msg_header *msg, bt_msg_filter filter){
-	btos_call(BT_NEXTMSGFILTERED, (uint32_t)&filter, (uint32_t)&msg, 0);
+	btos_call(BT_NEXTMSGFILTERED, (uint32_t)&filter, (uint32_t)msg, 0);
 }
 
 inline static uint16_t bt_query_extension(const char *name){
