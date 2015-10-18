@@ -3,6 +3,7 @@
 #include <cstdio>
 #include "windows.hpp"
 #include "window.hpp"
+#include "service.hpp"
 
 using namespace std;
 
@@ -45,13 +46,6 @@ int main(){
 	win2->SetZOrder(20);
 	AddWindow(win2);
 	DrawWindows(win2->GetBoundingRect());
-	while(getchar() != 'x'){
-		win1->SetZOrder(30);
-		DrawWindows(win1->GetBoundingRect());
-		getchar();
-		win1->SetZOrder(10);
-		DrawWindows(win1->GetBoundingRect());
-	}
-	getchar();
+	Service();
     return 0;
 }

@@ -49,3 +49,11 @@ Rect Window::GetBoundingRect(){
 	ret.h = info.h + (2 * GetMetric(BorderWidth)) + GetMetric(TitleBarSize);
 	return ret;
 }
+
+void Window::KeyInput(uint32_t /*key*/){
+	
+}
+
+void Window::PointerInput(const bt_terminal_pointer_event &/*pevent*/){
+	
+}

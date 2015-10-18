@@ -301,6 +301,8 @@
       <File Name="user/wm/drawing.hpp"/>
       <File Name="user/wm/windows.hpp"/>
       <File Name="user/wm/windows.cpp"/>
+      <File Name="user/wm/service.cpp"/>
+      <File Name="user/wm/service.hpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">

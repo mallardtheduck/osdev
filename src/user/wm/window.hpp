@@ -1,6 +1,8 @@
 #ifndef WINDOW_HPP
 #define WINDOW_HPP
 
+#include <btos_api.h>
+#include <terminal.h>
 #include <string>
 
 struct Rect{
@@ -27,6 +29,9 @@ public:
 	uint32_t GetZOrder();
 	
 	Rect GetBoundingRect();
+	
+	void KeyInput(uint32_t key);
+	void PointerInput(const bt_terminal_pointer_event &pevent);
 };
 
 #endif // WINDOW_HPP

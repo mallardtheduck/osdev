@@ -45,10 +45,15 @@ shared_ptr<Window> GetActiveWindow(){
 	return activeWindow;
 }
 
-void DrawWindows(const Rect &r){
+vector<shared_ptr<Window>> SortWindows(){
 	vector<shared_ptr<Window>> wins;
 	MapToVec(windows, wins);
 	sort(begin(wins), end(wins), &ZOrderSort);
+	return wins;
+}
+
+void DrawWindows(const Rect &r){
+	vector<shared_ptr<Window>> wins = SortWindows();
 	
 	GDS_SelectScreen();
 	gds_SurfaceInfo info = GDS_SurfaceInfo();
@@ -57,4 +62,40 @@ void DrawWindows(const Rect &r){
 		w->Draw(w == activeWindow);
 	}
 	GDS_UpdateScreen(r.x, r.y, r.w, r.h);
+}
+
+shared_ptr<Window> GetWindowAt(uint32_t x, uint32_t y){
+	shared_ptr<Window> ret;
+	for(auto w: windows){
+		Rect wrect = w.second->GetBoundingRect();
+		if(x >= wrect.x && x <=wrect.x + wrect.w && y >= wrect.y && y <= wrect.y + wrect.h){
+			if(!ret || w.second->GetZOrder() > ret->GetZOrder()) ret = w.second;
+		}
+	}
+	return ret;
+}
+
+void BringToFront(shared_ptr<Window> win){
+	vector<shared_ptr<Window>> wins = SortWindows();
+	uint32_t zcounter = 0;
+	for(auto w: wins){
+		w->SetZOrder(++zcounter);
+	}
+	win->SetZOrder(++zcounter);
+}
+
+void HandleInput(const bt_terminal_event &event){
+	if(event.type == bt_terminal_event_type::Key && activeWindow) activeWindow->KeyInput(event.key);
+	else if(event.type ==  bt_terminal_event_type::Pointer){
+		shared_ptr<Window> win = GetWindowAt(event.pointer.x, event.pointer.y);
+		if(!win) return;
+		if(event.pointer.type == bt_terminal_pointer_event_type::ButtonDown){
+			shared_ptr<Window> old = activeWindow;
+			activeWindow = win;
+			BringToFront(win);
+			DrawWindows(old->GetBoundingRect());
+			DrawWindows(activeWindow->GetBoundingRect());
+		}
+		win->PointerInput(event.pointer);
+	}
 }
