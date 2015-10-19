@@ -70,6 +70,21 @@ bool try_take_lock_exclusive(lock &l, uint64_t thread){
     return ret;
 }
 
+bool try_take_lock_recursive(lock &l, uint64_t thread){
+    if(!sch_active()) return true;
+	if(l.lockval==thread && thread!=0){
+        l.count++;
+        return true;
+    }
+    bool ret=__sync_bool_compare_and_swap(&l.lockval, 0, thread);
+    if(ret) {
+        if (l.count != 0) panic("(LOCK) Newly acquired lock with non-zero count!");
+        l.count++;
+    }
+    if(l.lockval==0) panic("(LOCK) Lock value not set!");
+    return ret;
+}
+
 void release_lock(lock &l, uint64_t thread){
     if(!sch_active()) return;
     if(l.lockval!=thread) panic("(LOCK) Attempt to release lock that isn't held!\n");

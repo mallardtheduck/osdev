@@ -11,6 +11,7 @@ uint64_t get_lock_owner(lock &l);
 void take_lock_exclusive(lock &l, uint64_t thread = sch_get_id());
 void take_lock_recursive(lock &l, uint64_t thread = sch_get_id());
 bool try_take_lock_exclusive(lock &l, uint64_t thread = sch_get_id());
+bool try_take_lock_recursive(lock &l, uint64_t thread = sch_get_id());
 void release_lock(lock &l, uint64_t thread=sch_get_id());
 void lock_transfer(lock &l, uint64_t to, uint64_t from = sch_get_id());
 uint64_t get_lock_owner(lock &l);
