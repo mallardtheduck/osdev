@@ -33,6 +33,8 @@ public:
 	
 	void KeyInput(uint32_t key);
 	void PointerInput(const bt_terminal_pointer_event &pevent);
+	void PointerEnter();
+	void PointerLeave();
 };
 
 #endif // WINDOW_HPP

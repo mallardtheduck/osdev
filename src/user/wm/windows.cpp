@@ -13,6 +13,7 @@ using namespace std;
 
 map<uint64_t, shared_ptr<Window>> windows;
 shared_ptr<Window> activeWindow;
+shared_ptr<Window> pointerWindow;
 uint64_t id_counter;
 
 template <typename M, typename V> 
@@ -90,6 +91,11 @@ void HandleInput(const bt_terminal_event &event){
 	if(event.type == bt_terminal_event_type::Key && activeWindow) activeWindow->KeyInput(event.key);
 	else if(event.type ==  bt_terminal_event_type::Pointer){
 		shared_ptr<Window> win = GetWindowAt(event.pointer.x, event.pointer.y);
+			if(win != pointerWindow){
+			if(pointerWindow) pointerWindow->PointerLeave();
+			if(win) win->PointerEnter();
+			pointerWindow = win;
+		}
 		if(!win) return;
 		if(event.pointer.type == bt_terminal_pointer_event_type::ButtonDown){
 			shared_ptr<Window> old = activeWindow;

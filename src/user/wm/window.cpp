@@ -1,4 +1,6 @@
+#include <sstream>
 #include <gds/libgds.h>
+#include <btos_stubs.h>
 #include "window.hpp"
 #include "metrics.hpp"
 #include "drawing.hpp"
@@ -54,10 +56,26 @@ Rect Window::GetBoundingRect(){
 	return ret;
 }
 
-void Window::KeyInput(uint32_t /*key*/){
-	
+void Window::KeyInput(uint32_t key){
+	stringstream ss;
+	ss << "WM: Window '" << title << "' key input:" << key << endl;
+	bt_zero(ss.str().c_str());
 }
 
 void Window::PointerInput(const bt_terminal_pointer_event &/*pevent*/){
-	
+	stringstream ss;
+	ss << "WM: Window '" << title << "' pointer input."<< endl;
+	//bt_zero(ss.str().c_str());
+}
+
+void Window::PointerEnter(){
+	stringstream ss;
+	ss << "WM: Window '" << title << "' pointer enter."<< endl;
+	bt_zero(ss.str().c_str());
+}
+
+void Window::PointerLeave(){
+	stringstream ss;
+	ss << "WM: Window '" << title << "' pointer leave."<< endl;
+	bt_zero(ss.str().c_str());
 }
