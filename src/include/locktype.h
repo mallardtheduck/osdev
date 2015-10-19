@@ -19,6 +19,7 @@ private:
     friend void take_lock_exclusive(lock &l, uint64_t thread);
     friend void take_lock_recursive(lock &l, uint64_t thread);
     friend bool try_take_lock_exclusive(lock &l, uint64_t thread);
+	friend bool try_take_lock_recursive(lock &l, uint64_t thread);
     friend void release_lock(lock &l, uint64_t thread);
     friend bool lock_blockcheck(void *p);
 #endif
