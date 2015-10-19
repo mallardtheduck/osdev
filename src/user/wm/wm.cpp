@@ -21,7 +21,7 @@ void InitCursor(){
 
 shared_ptr<Window> CreateTestWin(string title, uint32_t x, uint32_t y, uint32_t w, uint32_t h){
 	uint64_t surface = GDS_NewSurface(gds_SurfaceType::Bitmap, w, h);
-	GDS_Box(0, 0, 400, 250, GDS_GetColour(0, 0, 0), GDS_GetColour(255, 255, 255), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	GDS_Box(0, 0, w, h, GDS_GetColour(0, 0, 0), GDS_GetColour(255, 255, 255), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	shared_ptr<Window> win(new Window(surface));
 	win->SetPosition(x, y);
 	win->SetTitle(title);
@@ -40,12 +40,13 @@ int main(){
 	shared_ptr<Window> win1 = CreateTestWin("Window 1", 50, 50, 200, 100);
 	win1->SetZOrder(10);
 	AddWindow(win1);
-	DrawWindows();
-	getchar();
 	shared_ptr<Window> win2 = CreateTestWin("Window 2", 100, 100, 250, 150);
 	win2->SetZOrder(20);
 	AddWindow(win2);
-	DrawWindows(win2->GetBoundingRect());
+	shared_ptr<Window> win3 = CreateTestWin("Window 3", 300, 200, 300, 250);
+	win3->SetZOrder(30);
+	AddWindow(win3);
+	DrawWindows();
 	Service();
     return 0;
 }

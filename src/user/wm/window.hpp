@@ -24,6 +24,7 @@ public:
 	void Draw(bool active);
 	void SetPosition(uint32_t x, uint32_t y);
 	void SetTitle(std::string title);
+	std::string GetTitle();
 	
 	void SetZOrder(uint32_t zorder);
 	uint32_t GetZOrder();

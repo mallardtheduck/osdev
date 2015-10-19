@@ -31,6 +31,10 @@ void Window::SetTitle(string ntitle){
 	title=ntitle;
 }
 
+std::string Window::GetTitle(){
+	return title;
+}
+
 void Window::SetZOrder(uint32_t zorder){
 	z = zorder;
 }
@@ -42,7 +46,7 @@ uint32_t Window::GetZOrder(){
 Rect Window::GetBoundingRect(){
 	Rect ret;
 	ret.x = x ;//- GetMetric(BorderWidth);
-	ret.y = x ;//- GetMetric(BorderWidth);
+	ret.y = y ;//- GetMetric(BorderWidth);
 	GDS_SelectSurface(gds_id);
 	gds_SurfaceInfo info = GDS_SurfaceInfo();
 	ret.w = info.w ; //+ (2 * GetMetric(BorderWidth));

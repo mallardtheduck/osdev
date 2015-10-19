@@ -4,8 +4,10 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <sstream>
 
 #include <gds/libgds.h>
+#include <btos_stubs.h>
 
 using namespace std;
 
@@ -68,7 +70,7 @@ shared_ptr<Window> GetWindowAt(uint32_t x, uint32_t y){
 	shared_ptr<Window> ret;
 	for(auto w: windows){
 		Rect wrect = w.second->GetBoundingRect();
-		if(x >= wrect.x && x <=wrect.x + wrect.w && y >= wrect.y && y <= wrect.y + wrect.h){
+		if(x >= wrect.x && x <= (wrect.x + wrect.w) && y >= wrect.y && y <= (wrect.y + wrect.h)){
 			if(!ret || w.second->GetZOrder() > ret->GetZOrder()) ret = w.second;
 		}
 	}
