@@ -49,13 +49,13 @@ struct proc_process{
 	vector<string> args;
 
     map<pid_t, void*> msg_buffers;
-    lock msg_lock;
 
-	proc_process() : pid(++curpid) {}
+	proc_process() : pid(++curpid) {
+		init_lock(ulock);
+	}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
 		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(vmm_newpagedir()),
 		 handlecounter(0), status(proc_status::Running) {
-        init_lock(msg_lock);
 		init_lock(ulock);
     }
 };
@@ -129,7 +129,7 @@ proc_process *proc_get_lock(pid_t pid){
 	while(true){
 		take_lock_recursive(proc_lock);
 		proc_process *ret = proc_get(pid);
-		if(!pid){
+		if(!ret){
 			release_lock(proc_lock);
 			return NULL;
 		}
@@ -138,6 +138,7 @@ proc_process *proc_get_lock(pid_t pid){
 			return ret;
 		}
 		release_lock(proc_lock);
+		sch_yield();
 	}
 }
 
@@ -556,6 +557,7 @@ handle_t proc_get_thread_handle(uint64_t thread_id, pid_t pid){
 			}
         }
     }
+	release_lock(proc->ulock);
     return ret;
 }
 
@@ -590,17 +592,8 @@ proc_status::Enum proc_get_status(pid_t pid){
 void proc_free_message_buffer(pid_t topid, pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return;
-	while(!try_take_lock_exclusive(proc->msg_lock)){
-		sch_yield();
-	}
-	if(!proc->msg_buffers.has_key(topid)){ 
-		release_lock(proc->msg_lock);
-		release_lock(proc->ulock);
-		return;
-	}
 	void *ptr=proc->msg_buffers[topid];
 	proc->msg_buffers.erase(topid);
-	release_lock(proc->msg_lock);
 	release_lock(proc->ulock);
 	if(ptr) free(ptr);
 }
@@ -609,7 +602,7 @@ static bool proc_msg_blockcheck(void *p){
     btos_api::bt_msg_header header=*(btos_api::bt_msg_header*)p;
     proc_process *proc=proc_get(header.from);
     if(!proc) return false;
-    return !get_lock_owner(proc->msg_lock) && !proc->msg_buffers.has_key(header.to);
+    return !get_lock_owner(proc->ulock) && !proc->msg_buffers.has_key(header.to);
 }
 
 uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
@@ -619,21 +612,28 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 			sch_setblock(&proc_msg_blockcheck, (void *)&header);
 		}
 		again=false;
-		proc_process *proc=proc_get_lock(pid);
-		if(!proc) return 0;
-		bool ok = try_take_lock_exclusive(proc->msg_lock);
-		if (!ok || proc->msg_buffers.has_key(header.to)) {
-			if(ok) release_lock(proc->msg_lock);
-			release_lock(proc->ulock);
+		take_lock_recursive(proc_lock);
+		proc_process *proc=proc_get(pid);
+		proc_process *to=proc_get(header.to);
+		if(!proc || !to) {
+			release_lock(proc_lock);
+			return 0;
+		}
+		bool proc_ok = try_take_lock_recursive(proc->ulock);
+		bool to_ok = try_take_lock_recursive(to->ulock);
+		release_lock(proc_lock);
+		if (!proc_ok || !to_ok || proc->msg_buffers.has_key(header.to)) {
+			if(proc_ok) release_lock(proc->ulock);
+			if(to_ok) release_lock(to->ulock);
 			again=true;
 			continue;
 		}
 		proc->msg_buffers[header.to]=malloc(header.length);
 		memcpy(proc->msg_buffers[header.to], header.content, header.length);
 		header.content=proc->msg_buffers[header.to];
-		release_lock(proc->msg_lock);
 		uint64_t ret = msg_send(header);
 		release_lock(proc->ulock);
+		release_lock(to->ulock);
 		return ret;
 	} while(again);
 	return 0;
