@@ -11,6 +11,8 @@ struct Rect{
 	Rect(uint32_t _x, uint32_t _y, uint32_t _w, uint32_t _h) : x(_x), y(_y), w(_w), h(_h) {} 
 };
 
+bool InRect(uint32_t x, uint32_t y, const Rect &r);
+
 class Window{
 private:
 	uint32_t x, y, z;

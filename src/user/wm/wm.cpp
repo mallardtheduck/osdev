@@ -47,6 +47,7 @@ int main(){
 	win3->SetZOrder(30);
 	AddWindow(win3);
 	DrawWindows();
+	RefreshScreen();
 	Service();
     return 0;
 }

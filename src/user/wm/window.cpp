@@ -7,6 +7,11 @@
 
 using namespace std;
 
+bool InRect(uint32_t x, uint32_t y, const Rect &r){
+	if(x >= r.x && x <= (r.x + r.w) && y >= r.y && y <= (r.y + r.h)) return true;
+	else return false;
+}
+
 Window::Window(uint64_t surface_id) : x(0), y(0), gds_id(surface_id)
 {
 }
