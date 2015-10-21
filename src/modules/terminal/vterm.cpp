@@ -43,6 +43,7 @@ vterm::vterm(uint64_t nid, i_backend *back){
 	events_pid = 0;
 	event_mode = bt_terminal_event_mode::None;
 	event_mode_enabled = false;
+	last_move_message = 0;
 }
 
 vterm::~vterm(){
@@ -414,7 +415,7 @@ void vterm::create_terminal(char *command) {
     }
 }
 
-void vterm::send_event(const bt_terminal_event &e){
+uint64_t vterm::send_event(const bt_terminal_event &e){
 	btos_api::bt_msg_header msg;
 	memset((void*)&msg, 0, sizeof(msg));
 	bt_terminal_event *content = new bt_terminal_event();
@@ -423,7 +424,7 @@ void vterm::send_event(const bt_terminal_event &e){
 	msg.source = terminal_extension_id;
 	msg.content = content;
 	msg.length = sizeof(*content);
-	msg_send(&msg);
+	return msg_send(&msg);
 }
 
 void vterm::open(){
@@ -528,10 +529,12 @@ void vterm::queue_input(uint32_t code) {
 void vterm::queue_pointer(bt_terminal_pointer_event event) {
     take_lock(&input_lock);
 	if(event_mode_enabled && (event_mode & bt_terminal_event_mode::Pointer)){
-		bt_terminal_event e;
-		e.type = bt_terminal_event_type::Pointer;
-		e.pointer = event;
-		send_event(e);
+		if(event.type != bt_terminal_pointer_event_type::Move || !last_move_message || msg_query_recieved(last_move_message)){
+			bt_terminal_event e;
+			e.type = bt_terminal_event_type::Pointer;
+			e.pointer = event;
+			last_move_message = send_event(e);
+		}
 	}
     pointer_buffer.add_item(event);
     release_lock(&input_lock);
