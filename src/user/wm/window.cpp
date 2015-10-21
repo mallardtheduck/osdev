@@ -9,7 +9,7 @@
 using namespace std;
 
 bool InRect(uint32_t x, uint32_t y, const Rect &r){
-	if(x >= r.x && x <= (r.x + r.w) && y >= r.y && y <= (r.y + r.h)) return true;
+	if(x >= r.x && x < (r.x + r.w) && y >= r.y && y < (r.y + r.h)) return true;
 	else return false;
 }
 
@@ -32,9 +32,9 @@ void Window::Draw(bool active){
 	GDS_SelectSurface(gds_id);
 	gds_SurfaceInfo info = GDS_SurfaceInfo();
 	GDS_SelectScreen();
-	GDS_Blit(gds_id, 0, 0, info.w, info.h, pos.x + GetMetric(BorderWidth), pos.y + GetMetric(TitleBarSize) + GetMetric(BorderWidth), info.w, info.h);
+	GDS_Blit(gds_id, 0, 0, info.w, info.h, pos.x + GetMetric(BorderWidth), pos.y + GetMetric(TitleBarSize), info.w, info.h);
 	DrawTitleBar(pos.x, pos.y, info.w + (2 * GetMetric(BorderWidth)), title, active);
-	DrawBorder(pos.x, pos.y, info.w + (2 * GetMetric(BorderWidth)), info.h + GetMetric(TitleBarSize) + (2 * GetMetric(BorderWidth)));
+	DrawBorder(pos.x, pos.y, info.w + (2 * GetMetric(BorderWidth)), info.h + GetMetric(TitleBarSize) + GetMetric(BorderWidth));
 }
 
 void Window::SetPosition(Point p){
@@ -70,12 +70,12 @@ uint32_t Window::GetZOrder(){
 
 Rect Window::GetBoundingRect(){
 	Rect ret;
-	ret.x = pos.x ;//- GetMetric(BorderWidth);
-	ret.y = pos.y ;//- GetMetric(BorderWidth);
+	ret.x = pos.x;
+	ret.y = pos.y;
 	GDS_SelectSurface(gds_id);
 	gds_SurfaceInfo info = GDS_SurfaceInfo();
 	ret.w = info.w + (2 * GetMetric(BorderWidth));
-	ret.h = info.h + (2 * GetMetric(BorderWidth)) + GetMetric(TitleBarSize);
+	ret.h = info.h + GetMetric(BorderWidth) + GetMetric(TitleBarSize);
 	return ret;
 }
 

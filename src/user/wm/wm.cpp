@@ -14,7 +14,7 @@ void InitCursor(){
 	uint32_t cur_transp = GDS_GetColour(0, 0, 0, 255);
 	uint32_t cur_white = GDS_GetColour(255, 255, 255);
 	gds_Point cur_points[] = {{0, 0}, {0, 13}, {3, 10}, {6, 15}, {8, 15}, {8, 14}, {6, 9}, {10, 9}, {1, 0}};
-	GDS_Box(0, 0, 11, 20, cur_transp, cur_transp, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	GDS_Box(0, 0, 12, 21, cur_transp, cur_transp, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	GDS_Polygon(9, cur_points, true, cur_black, cur_white, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	GDS_SetCursor(cursor, 1, 1);
 	GDS_CursorVisibility(true);
