@@ -36,6 +36,7 @@ private:
     bool pointer_enabled;
 	bool pointer_autohide;
     bt_terminal_pointer_bitmap *pointer_bitmap;
+	uint64_t last_move_message;
 
     circular_buffer<uint32_t, 128> keyboard_buffer;
     circular_buffer<bt_terminal_pointer_event, 512> pointer_buffer{zero_event};
@@ -56,7 +57,7 @@ private:
     uint32_t get_input();
     bt_terminal_pointer_event get_pointer();
     void create_terminal(char *command);
-	void send_event(const bt_terminal_event &e);
+	uint64_t send_event(const bt_terminal_event &e);
 
     friend bool input_blockcheck(void *p);
     friend bool pointer_blockcheck(void *p);
