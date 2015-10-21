@@ -40,7 +40,8 @@ static uint64_t create_terminal(char *command) {
         setenv(terminal_var, new_terminal_id, 0, getpid());
         pid_t pid=spawn(command, 0, NULL);
         setenv(terminal_var, old_terminal_id, 0, getpid());
-        if(!pid) terminals->get(new_id)->close();
+		vterm_options opts;
+        if(!pid) terminals->get(new_id)->close(opts);
     }
     return new_id;
 }

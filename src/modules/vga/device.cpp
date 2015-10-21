@@ -16,7 +16,6 @@ bt_video_palette_entry get_palette_entry(uint8_t entry){
     ret.g = vga_palette[entry].g << 2;
     ret.b = vga_palette[entry].b << 2;
     ret.a=0xFF;
-    dbgpf("VGA: Palette entry %i: (%i, %i, %i)\n", entry, ret.r, ret.g, ret.b);
     return ret;
 }
 
