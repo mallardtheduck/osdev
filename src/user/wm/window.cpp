@@ -4,6 +4,7 @@
 #include "window.hpp"
 #include "metrics.hpp"
 #include "drawing.hpp"
+#include "windows.hpp"
 
 using namespace std;
 
@@ -12,7 +13,7 @@ bool InRect(uint32_t x, uint32_t y, const Rect &r){
 	else return false;
 }
 
-Window::Window(uint64_t surface_id) : x(0), y(0), gds_id(surface_id)
+Window::Window(uint64_t surface_id) : gds_id(surface_id)
 {
 }
 
@@ -24,14 +25,20 @@ void Window::Draw(bool active){
 	GDS_SelectSurface(gds_id);
 	gds_SurfaceInfo info = GDS_SurfaceInfo();
 	GDS_SelectScreen();
-	GDS_Blit(gds_id, 0, 0, info.w, info.h, x, y + GetMetric(TitleBarSize), info.w, info.h);
-	DrawTitleBar(x, y, info.w, title, active);
-	DrawBorder(x, y, info.w, info.h + GetMetric(TitleBarSize));
+	GDS_Blit(gds_id, 0, 0, info.w, info.h, pos.x, pos.y + GetMetric(TitleBarSize), info.w, info.h);
+	DrawTitleBar(pos.x, pos.y, info.w, title, active);
+	DrawBorder(pos.x, pos.y, info.w, info.h + GetMetric(TitleBarSize));
 }
 
-void Window::SetPosition(uint32_t nx, uint32_t ny){
-	x=nx;
-	y=ny;
+void Window::SetPosition(Point p){
+	Rect oldrect = GetBoundingRect();
+	pos = p;
+	Rect newrect = GetBoundingRect();
+	if(visible){
+		DrawWindows();
+		RefreshScreen(oldrect);
+		RefreshScreen(newrect);
+	}
 }
 
 void Window::SetTitle(string ntitle){
@@ -42,8 +49,12 @@ std::string Window::GetTitle(){
 	return title;
 }
 
-void Window::SetZOrder(uint32_t zorder){
+void Window::SetZOrder(uint32_t zorder, bool update){
 	z = zorder;
+	if(update && visible){
+		DrawWindows();
+		RefreshScreen(GetBoundingRect());
+	}
 }
 
 uint32_t Window::GetZOrder(){
@@ -52,8 +63,8 @@ uint32_t Window::GetZOrder(){
 
 Rect Window::GetBoundingRect(){
 	Rect ret;
-	ret.x = x ;//- GetMetric(BorderWidth);
-	ret.y = y ;//- GetMetric(BorderWidth);
+	ret.x = pos.x ;//- GetMetric(BorderWidth);
+	ret.y = pos.y ;//- GetMetric(BorderWidth);
 	GDS_SelectSurface(gds_id);
 	gds_SurfaceInfo info = GDS_SurfaceInfo();
 	ret.w = info.w ; //+ (2 * GetMetric(BorderWidth));
@@ -83,4 +94,17 @@ void Window::PointerLeave(){
 	stringstream ss;
 	ss << "WM: Window '" << title << "' pointer leave."<< endl;
 	bt_zero(ss.str().c_str());
+}
+
+void Window::SetVisible(bool v){
+	bool oldvisible = visible;
+	visible = v;
+	if(oldvisible){
+		DrawWindows();
+		RefreshScreen(GetBoundingRect());
+	}
+}
+
+bool Window::GetVisible(){
+	return visible;
 }

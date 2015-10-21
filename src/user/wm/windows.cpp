@@ -60,12 +60,12 @@ vector<shared_ptr<Window>> SortWindows(){
 
 void DrawWindows(){
 	vector<shared_ptr<Window>> wins = SortWindows();
-	
 	GDS_SelectScreen();
 	gds_SurfaceInfo info = GDS_SurfaceInfo();
 	GDS_Box(0, 0, info.w, info.h, GetColour(BackgroundColour), GetColour(BackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	shared_ptr<Window> awin = activeWindow.lock();
 	for(auto w: wins){
-		w->Draw(w == activeWindow.lock());
+		w->Draw(w == awin);
 	}
 }
 
@@ -87,9 +87,9 @@ void BringToFront(shared_ptr<Window> win){
 	vector<shared_ptr<Window>> wins = SortWindows();
 	uint32_t zcounter = 0;
 	for(auto w: wins){
-		w->SetZOrder(++zcounter);
+		w->SetZOrder(++zcounter, false);
 	}
-	win->SetZOrder(++zcounter);
+	win->SetZOrder(++zcounter, false);
 }
 
 void HandleInput(const bt_terminal_event &event){
