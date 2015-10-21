@@ -24,23 +24,29 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 
 		case gds_DrawingOpType::Box:
 			if(op.Common.fillStyle > 0) {
-				image->FilledRectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w, op.Box.y + op.Box.h, op.Common.fillColour);
+				image->FilledRectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.fillColour);
 			}
-			image->Rectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w, op.Box.y + op.Box.h, op.Common.lineColour);
+			if(op.Common.lineWidth > 0){ 
+				image->Rectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.lineColour);
+			}
 			break;
 
 		case gds_DrawingOpType::Ellipse:
 			if(op.Common.fillStyle > 0) {
 				image->FilledEllipse(op.Ellipse.x, op.Ellipse.y, op.Ellipse.w, op.Ellipse.h, op.Common.fillColour);
 			}
-			image->Ellipse(op.Ellipse.x, op.Ellipse.y, op.Ellipse.w, op.Ellipse.h, op.Common.lineColour);
+			if(op.Common.lineWidth > 0){ 
+				image->Ellipse(op.Ellipse.x, op.Ellipse.y, op.Ellipse.w, op.Ellipse.h, op.Common.lineColour);
+			}
 			break;
 
 		case gds_DrawingOpType::Arc:
 			if(op.Common.fillStyle > 0) {
 				image->FilledArc(op.Arc.x, op.Arc.y, op.Arc.w, op.Arc.h, op.Arc.a1, op.Arc.a2, op.Common.fillColour, 0);
 			}
-			image->Arc(op.Arc.x, op.Arc.y, op.Arc.w, op.Arc.h, op.Arc.a1, op.Arc.a2, op.Common.lineColour);
+			if(op.Common.lineWidth > 0){ 
+				image->Arc(op.Arc.x, op.Arc.y, op.Arc.w, op.Arc.h, op.Arc.a1, op.Arc.a2, op.Common.lineColour);
+			}
 			break;
 
 		case gds_DrawingOpType::Blit: {
@@ -127,8 +133,10 @@ void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
 						
 					}
 					if(pending_op.Common.fillStyle == gds_FillStyle::Filled) image->FilledPolygon(points, pointCount, pending_op.Common.fillColour);
-					if(pending_op.Polygon.closed) image->Polygon(points, pointCount, pending_op.Common.lineColour);
-					else image->OpenPolygon(points, pointCount, pending_op.Common.lineColour);
+					if(pending_op.Common.lineWidth > 0){ 
+						if(pending_op.Polygon.closed) image->Polygon(points, pointCount, pending_op.Common.lineColour);
+						else image->OpenPolygon(points, pointCount, pending_op.Common.lineColour);
+					}
 				}
 				break;
 			default:
