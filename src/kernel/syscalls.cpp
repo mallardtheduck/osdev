@@ -247,4 +247,5 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&mod_msg_acknowledge,
 	&mod_msg_recv_reply,
 	&msg_recv_reply_block,
+	&msg_query_recieved,
 };
