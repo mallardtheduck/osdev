@@ -285,3 +285,12 @@ void msg_nextmessage_filtered(bt_msg_filter filter, bt_msg_header &msg){
     msg_acknowledge(msg, false);
     msg=msg_recv_filtered(filter);
 }
+
+bool msg_query_recieved(uint64_t id){
+	hold_lock hl(msg_lock);
+	for(size_t i=0; i<msg_q->size(); ++i){
+		bt_msg_header &msg=(*msg_q)[i];
+		if(msg.id == id) return false;
+	}
+	return true;
+}
