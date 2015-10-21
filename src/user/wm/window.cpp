@@ -32,9 +32,9 @@ void Window::Draw(bool active){
 	GDS_SelectSurface(gds_id);
 	gds_SurfaceInfo info = GDS_SurfaceInfo();
 	GDS_SelectScreen();
-	GDS_Blit(gds_id, 0, 0, info.w, info.h, pos.x, pos.y + GetMetric(TitleBarSize), info.w, info.h);
-	DrawTitleBar(pos.x, pos.y, info.w, title, active);
-	DrawBorder(pos.x, pos.y, info.w, info.h + GetMetric(TitleBarSize));
+	GDS_Blit(gds_id, 0, 0, info.w, info.h, pos.x + GetMetric(BorderWidth), pos.y + GetMetric(TitleBarSize) + GetMetric(BorderWidth), info.w, info.h);
+	DrawTitleBar(pos.x, pos.y, info.w + (2 * GetMetric(BorderWidth)), title, active);
+	DrawBorder(pos.x, pos.y, info.w + (2 * GetMetric(BorderWidth)), info.h + GetMetric(TitleBarSize) + (2 * GetMetric(BorderWidth)));
 }
 
 void Window::SetPosition(Point p){
@@ -74,8 +74,8 @@ Rect Window::GetBoundingRect(){
 	ret.y = pos.y ;//- GetMetric(BorderWidth);
 	GDS_SelectSurface(gds_id);
 	gds_SurfaceInfo info = GDS_SurfaceInfo();
-	ret.w = info.w ; //+ (2 * GetMetric(BorderWidth));
-	ret.h = info.h /*+ (2 * GetMetric(BorderWidth))*/ + GetMetric(TitleBarSize);
+	ret.w = info.w + (2 * GetMetric(BorderWidth));
+	ret.h = info.h + (2 * GetMetric(BorderWidth)) + GetMetric(TitleBarSize);
 	return ret;
 }
 
