@@ -18,6 +18,7 @@ struct Point{
 };
 
 bool InRect(uint32_t x, uint32_t y, const Rect &r);
+Rect Reoriginate(const Rect &r, const Point &p);
 
 class Window{
 private:

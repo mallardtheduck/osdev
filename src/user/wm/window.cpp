@@ -13,6 +13,13 @@ bool InRect(uint32_t x, uint32_t y, const Rect &r){
 	else return false;
 }
 
+Rect Reoriginate(const Rect &r, const Point &p){
+	Rect ret = r;
+	ret.x -= p.x;
+	ret.y -= p.y;
+	return ret;
+}
+
 Window::Window(uint64_t surface_id) : gds_id(surface_id)
 {
 }
