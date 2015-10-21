@@ -93,7 +93,7 @@ extern "C" void GDS_Text(uint32_t x, uint32_t y, const char *text, uint32_t font
 	op.Common.lineColour = colour;
 	op.Common.lineStyle = style;
 	uint32_t id = GDS_AddDrawingOp(op);
-	gds_OpParameters *params = (gds_OpParameters*)new char[sizeof(gds_OpParameters) + strlen(text)]();
+	gds_OpParameters *params = (gds_OpParameters*)new char[sizeof(gds_OpParameters) + strlen(text) + 1]();
 	params->type = gds_DrawingOpType::Text;
 	params->op_id = id;
 	params->size = strlen(text);
