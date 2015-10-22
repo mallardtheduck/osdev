@@ -282,6 +282,7 @@
       <File Name="user/gds/client.hpp"/>
       <File Name="user/gds/bitmap_surface.cpp"/>
       <File Name="user/gds/bitmap_surface.hpp"/>
+      <File Name="user/gds/Makefile"/>
     </VirtualDirectory>
     <VirtualDirectory Name="libgds">
       <File Name="user/libgds/Makefile"/>
@@ -296,6 +297,10 @@
       <File Name="user/wm/wm.cpp"/>
       <File Name="user/wm/window.cpp"/>
       <File Name="user/wm/window.hpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="nctest">
+      <File Name="user/nctest/Makefile"/>
+      <File Name="user/nctest/nctest.cpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
