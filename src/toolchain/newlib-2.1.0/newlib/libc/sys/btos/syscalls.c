@@ -13,7 +13,7 @@
 #include "crt_support.h"
 
 char *__env[1] = { 0 };
-char **environ = __env;
+//char **environ = __env;
 
 static bt_pid lastchild=0;
 
@@ -160,3 +160,37 @@ int write(int file, char *ptr, int len){
 	return bt_fwrite(btos_get_handle(file), len, ptr);
 }
 
+int gettimeofday(struct timeval *tv, void *tz){
+	return 0;
+}
+
+int access(const char *pathname, int mode){
+	return 0;
+}
+
+char *getwd(char *buf){
+	if(buf == NULL) buf = malloc(BT_MAX_PATH);
+	bt_getenv("CWD", buf, BT_MAX_PATH);
+	return buf;
+}
+
+int mkdir(const char *name, mode_t mode){
+	char path[BT_MAX_PATH]={0};
+	if(btos_path_parse(name, path, BT_MAX_PATH)){
+		bt_handle dh = bt_dopen(path, FS_Create);
+		bt_dclose(dh);
+		return 0;
+	}else return ENOENT;
+}
+
+int chdir(const char *name){
+	char path[BT_MAX_PATH]={0};
+	if(btos_path_parse(name, path, BT_MAX_PATH)){
+		bt_setenv("CWD", path, 0);
+		return 0;
+	}else return -1;
+}
+
+mode_t umask(mode_t mask){
+	return 0666;
+}
