@@ -227,7 +227,7 @@ void proc_end(pid_t pid) {
 		cont = false;
 		for (map<handle_t, bt_handle_info>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
 			if (i->second.type == kernel_handle_types::thread) {
-				uint64_t thread_id = *(uint64_t *) i->second.value;
+ 				uint64_t thread_id = *(uint64_t *) i->second.value;
 				if (thread_id != sch_get_id()) {
 					sch_abort(thread_id);
 					proc_remove_thread(thread_id, pid);
@@ -235,8 +235,10 @@ void proc_end(pid_t pid) {
 					break;
 				}else{
 					sch_setpid(0);
+					proc_remove_handle(i->first, pid);
+					cont = true;
+					break;
 				}
-				proc_remove_handle(i->first, pid);
 			}
 		}
 	}
