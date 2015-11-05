@@ -19,6 +19,17 @@ struct Point{
 
 bool InRect(uint32_t x, uint32_t y, const Rect &r);
 Rect Reoriginate(const Rect &r, const Point &p);
+Point Reoriginate(const Point &pr, const Point &po);
+
+enum class WindowArea{
+	Content,
+	Title,
+	MenuButton,
+	CloseButton,
+	MinButton,
+	MaxButton,
+	Border
+};
 
 class Window{
 private:
@@ -28,6 +39,7 @@ private:
 	std::string title;
 	bool visible = false;
 	
+	WindowArea GetWindowArea(Point p);
 public:
 	Window(uint64_t surface_id);
 	~Window();

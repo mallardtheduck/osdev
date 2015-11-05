@@ -20,6 +20,13 @@ Rect Reoriginate(const Rect &r, const Point &p){
 	return ret;
 }
 
+Point Reoriginate(const Point &pr, const Point &po){
+	Point ret = pr;
+	ret.x -= po.x;
+	ret.y -= po.y;
+	return ret;
+}
+
 Window::Window(uint64_t surface_id) : gds_id(surface_id)
 {
 }
@@ -85,10 +92,11 @@ void Window::KeyInput(uint32_t key){
 	bt_zero(ss.str().c_str());
 }
 
-void Window::PointerInput(const bt_terminal_pointer_event &/*pevent*/){
+void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 	stringstream ss;
-	ss << "WM: Window '" << title << "' pointer input."<< endl;
-	//bt_zero(ss.str().c_str());
+	Point epoint = Reoriginate(Point(pevent.x, pevent.y), pos);
+	ss << "WM: Window '" << title << "' pointer input at (" << epoint.x << "," << epoint.y << ")."<< endl;
+	bt_zero(ss.str().c_str());
 }
 
 void Window::PointerEnter(){
