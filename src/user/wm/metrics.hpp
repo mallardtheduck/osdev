@@ -3,6 +3,8 @@
 
 static const uint32_t TitleBarSize = 20;
 static const uint32_t BorderWidth = 1;
+static const uint32_t ButtonSize = TitleBarSize - 2;
+static const uint32_t MenuButtonWidth = 50;
 
 #define GetMetric(x) x
 

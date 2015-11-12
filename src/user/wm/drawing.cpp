@@ -26,24 +26,27 @@ void DrawButtonDown(uint32_t x, uint32_t y, uint32_t w, uint32_t h, bool active)
 	GDS_Dot(x+w-1, y+h-1, active?GetColour(TitleBarColour):GetColour(InactiveTitleColour), 1);
 }
 
-void DrawMaxButton(uint32_t x, uint32_t y, bool active){
+void DrawMaxButton(uint32_t x, uint32_t y, bool active, bool down = false){
 	uint32_t buttonSize = GetMetric(TitleBarSize)-2;
-	DrawButtonUp(x, y, buttonSize, buttonSize, active);
+	if(down) DrawButtonDown(x, y, buttonSize, buttonSize, active);
+	else DrawButtonUp(x, y, buttonSize, buttonSize, active);
 	uint32_t borderWidth = buttonSize / 4;
 	GDS_Box(x + borderWidth, y + borderWidth, buttonSize - (2*borderWidth), buttonSize - (2*borderWidth), GetColour(SymbolColour), 0, 2);
 }
 
-void DrawMinButton(uint32_t x, uint32_t y, bool active){
-	uint32_t buttonSize = GetMetric(TitleBarSize)-2;
-	DrawButtonUp(x, y, buttonSize, buttonSize, active);
+void DrawMinButton(uint32_t x, uint32_t y, bool active, bool down = false){
+	uint32_t buttonSize = GetMetric(ButtonSize);
+	if(down) DrawButtonDown(x, y, buttonSize, buttonSize, active);
+	else DrawButtonUp(x, y, buttonSize, buttonSize, active);
 	uint32_t symbolSize = buttonSize / 4;
 	uint32_t borderWidth = (buttonSize - symbolSize) / 2;
 	GDS_Box(x + borderWidth, y + borderWidth, buttonSize - (2*borderWidth), buttonSize - (2*borderWidth), 0, GetColour(SymbolColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 }
 
-void DrawCloseButton(uint32_t x, uint32_t y, bool active){
-	uint32_t buttonSize = GetMetric(TitleBarSize)-2;
-	DrawButtonUp(x, y, buttonSize, buttonSize, active);
+void DrawCloseButton(uint32_t x, uint32_t y, bool active, bool down = false){
+	uint32_t buttonSize = GetMetric(ButtonSize);
+	if(down) DrawButtonDown(x, y, buttonSize, buttonSize, active);
+	else DrawButtonUp(x, y, buttonSize, buttonSize, active);
 	uint32_t half = buttonSize / 2;
 	uint32_t quarter = buttonSize / 4;
 	GDS_Line(x + quarter, y + quarter, x + half, y + half, GetColour(SymbolColour), 2);
@@ -52,10 +55,11 @@ void DrawCloseButton(uint32_t x, uint32_t y, bool active){
 	GDS_Line(x + (buttonSize - quarter) - 1, y + (buttonSize - quarter) - 1, x + half - 1, y + half - 1, GetColour(SymbolColour), 2);
 }
 
-void DrawMenuButton(uint32_t x, uint32_t y, bool active){
-	uint32_t buttonHeight = GetMetric(TitleBarSize)-2;
-	uint32_t buttonWidth = 50;
-	DrawButtonUp(x, y, buttonWidth, buttonHeight, active);
+void DrawMenuButton(uint32_t x, uint32_t y, bool active, bool down = false){
+	uint32_t buttonHeight = GetMetric(ButtonSize);
+	uint32_t buttonWidth = GetMetric(MenuButtonWidth);
+	if(down) DrawButtonDown(x, y, buttonWidth, buttonHeight, active);
+	else DrawButtonUp(x, y, buttonWidth, buttonHeight, active);
 	uint32_t borderWidth = buttonHeight / 4;
 	uint32_t symLength = buttonHeight - borderWidth;
 	GDS_Line(x + borderWidth, y + borderWidth, x + symLength, y + borderWidth, GetColour(SymbolColour), 2);
@@ -64,13 +68,12 @@ void DrawMenuButton(uint32_t x, uint32_t y, bool active){
 	GDS_Text(x + symLength + 5, y + 2, "Menu", 0, 0, GetColour(SymbolColour));
 }
 
-void DrawTitleBar(uint32_t x, uint32_t y, uint32_t w, string title, bool active){
+void DrawTitleBar(uint32_t x, uint32_t y, uint32_t w, string title, bool active, WindowArea pressed){
 	GDS_Box(x, y, w, GetMetric(TitleBarSize), GetColour(SeperatorColour), active?GetColour(TitleBarColour):GetColour(InactiveTitleColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	uint32_t buttonSize = GetMetric(TitleBarSize)-2;
-	DrawMenuButton(x+1, y+1, active);
-	DrawMaxButton(x + w - buttonSize - 1, y+1, active);
-	DrawMinButton(x + w - (buttonSize * 2) - 1, y+1, active);
-	DrawCloseButton(x + w - (buttonSize * 3) - 1, y+1, active);
+	DrawMenuButton(x + GetMetric(BorderWidth), y + GetMetric(BorderWidth), active, (pressed == WindowArea::MenuButton));
+	DrawMaxButton(x + w - GetMetric(ButtonSize) - GetMetric(BorderWidth), y+GetMetric(BorderWidth), active, (pressed == WindowArea::MaxButton));
+	DrawMinButton(x + w - (GetMetric(ButtonSize) * 2) - GetMetric(BorderWidth), y+GetMetric(BorderWidth), active, (pressed == WindowArea::MinButton));
+	DrawCloseButton(x + w - (GetMetric(ButtonSize) * 3) - GetMetric(BorderWidth), y+GetMetric(BorderWidth), active, (pressed == WindowArea::CloseButton));
 	GDS_Text(x+55, y+3, title.c_str(), 0, 0, GetColour(TitleTextColour), 0);
 }
 

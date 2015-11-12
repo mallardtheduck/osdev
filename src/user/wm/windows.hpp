@@ -12,5 +12,7 @@ std::shared_ptr<Window> GetActiveWindow();
 void DrawWindows();
 void HandleInput(const bt_terminal_event &event);
 void RefreshScreen(const Rect &r = Rect());
+void WindowGrab(uint64_t id);
+void UnGrab();
 
 #endif

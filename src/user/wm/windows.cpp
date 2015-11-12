@@ -1,5 +1,6 @@
 #include "windows.hpp"
 #include "metrics.hpp"
+#include "service.hpp"
 
 #include <map>
 #include <vector>
@@ -14,6 +15,7 @@ using namespace std;
 map<uint64_t, shared_ptr<Window>> windows;
 weak_ptr<Window> activeWindow;
 weak_ptr<Window> pointerWindow;
+weak_ptr<Window> grabbedWindow;
 uint64_t id_counter;
 vector<weak_ptr<Window>> sortedWindows;
 
@@ -35,6 +37,7 @@ uint64_t AddWindow(shared_ptr<Window> win){
 	windows[id] = win;
 	shared_ptr<Window> awin = activeWindow.lock();
 	if(!awin) activeWindow = win;
+	win->id = id;
 	return id;
 }
 
@@ -93,9 +96,33 @@ void BringToFront(shared_ptr<Window> win){
 }
 
 void HandleInput(const bt_terminal_event &event){
+	static Point curpos = {UINT32_MAX, UINT32_MAX};
+	if(auto gwin = grabbedWindow.lock()){
+		if(event.type == bt_terminal_event_type::Key) gwin->KeyInput(event.key);
+		else if(event.type ==  bt_terminal_event_type::Pointer) {
+			if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == curpos.x && event.pointer.y == curpos.y) return;
+			gwin->PointerInput(event.pointer);
+			curpos.x = event.pointer.x; curpos.y = event.pointer.y;
+			bt_terminal_pointer_info info;
+			bt_fioctl(stdin_handle, bt_terminal_ioctl::GetPointerInfo, sizeof(info), (char*)&info);
+			while(info.x != curpos.x || info.y != curpos.y){
+				bt_terminal_pointer_event e;
+				e.type = bt_terminal_pointer_event_type::Move;
+				e.x = info.x;
+				e.y = info.y;
+				gwin->PointerInput(e);
+				curpos.x = info.x;
+				curpos.y = info.y;
+				bt_fioctl(stdin_handle, bt_terminal_ioctl::GetPointerInfo, sizeof(info), (char*)&info);
+			}
+		}
+		return;
+	}
 	shared_ptr<Window> awin = activeWindow.lock();
 	if(event.type == bt_terminal_event_type::Key && awin) awin->KeyInput(event.key);
 	else if(event.type ==  bt_terminal_event_type::Pointer){
+		if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == curpos.x && event.pointer.y == curpos.y) return;
+		curpos.x = event.pointer.x; curpos.y = event.pointer.y;
 		shared_ptr<Window> win = GetWindowAt(event.pointer.x, event.pointer.y);
 		shared_ptr<Window> pwin = pointerWindow.lock();
 		if(win != pwin){
@@ -104,7 +131,7 @@ void HandleInput(const bt_terminal_event &event){
 			pointerWindow = win;
 		}
 		if(!win) return;
-		if(event.pointer.type == bt_terminal_pointer_event_type::ButtonDown){
+		if(event.pointer.type == bt_terminal_pointer_event_type::ButtonDown && win != activeWindow.lock()){
 			shared_ptr<Window> old = awin;
 			activeWindow = win;
 			BringToFront(win);
@@ -114,4 +141,12 @@ void HandleInput(const bt_terminal_event &event){
 		}
 		win->PointerInput(event.pointer);
 	}
+}
+
+void WindowGrab(uint64_t id){
+	grabbedWindow = GetWindow(id);
+}
+
+void UnGrab(){
+	grabbedWindow.reset();
 }

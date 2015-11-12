@@ -1,16 +1,18 @@
 #include "service.hpp"
 #include "windows.hpp"
 
-#include <btos_stubs.h>
 #include <terminal.h>
 
 using namespace std;
+
+bt_handle stdin_handle;
 
 void Service(){
 	char stdout_path[BT_MAX_PATH]={0};
 	bt_getenv("STDIN", stdout_path, BT_MAX_PATH);
 
 	bt_handle fh=bt_fopen(stdout_path, FS_Read | FS_Write);
+	stdin_handle = fh;
 	bt_fioctl(fh, bt_terminal_ioctl::StartEventMode, 0, NULL);
 	bt_terminal_event_mode::Enum event_mode = bt_terminal_event_mode::Both;
 	bt_fioctl(fh, bt_terminal_ioctl::SetEventMode, sizeof(event_mode), (char*)&event_mode);

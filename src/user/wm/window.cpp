@@ -35,12 +35,13 @@ Window::~Window()
 {
 }
 
-void Window::Draw(bool active){
+void Window::Draw(bool active, bool content){
+	this->active = active;
 	GDS_SelectSurface(gds_id);
 	gds_SurfaceInfo info = GDS_SurfaceInfo();
 	GDS_SelectScreen();
-	GDS_Blit(gds_id, 0, 0, info.w, info.h, pos.x + GetMetric(BorderWidth), pos.y + GetMetric(TitleBarSize), info.w, info.h);
-	DrawTitleBar(pos.x, pos.y, info.w + (2 * GetMetric(BorderWidth)), title, active);
+	if(content) GDS_Blit(gds_id, 0, 0, info.w, info.h, pos.x + GetMetric(BorderWidth), pos.y + GetMetric(TitleBarSize), info.w, info.h);
+	DrawTitleBar(pos.x, pos.y, info.w + (2 * GetMetric(BorderWidth)), title, active, pressed);
 	DrawBorder(pos.x, pos.y, info.w + (2 * GetMetric(BorderWidth)), info.h + GetMetric(TitleBarSize) + GetMetric(BorderWidth));
 }
 
@@ -93,10 +94,42 @@ void Window::KeyInput(uint32_t key){
 }
 
 void Window::PointerInput(const bt_terminal_pointer_event &pevent){
+	if(dragging){
+		if(pevent.type == bt_terminal_pointer_event_type::ButtonUp){
+			UnGrab();
+			dragging = false;
+		}else{
+			Point curpos = Point(pevent.x, pevent.y);
+			Point newpos = {curpos.x - dragoffset.x, curpos.y - dragoffset.y};
+			if(newpos.x == pos.x && newpos.y == pos.y) return;
+			Rect oldrect = GetBoundingRect();
+			pos = newpos;
+			DrawWindows();
+			RefreshScreen(oldrect);
+			RefreshScreen(GetBoundingRect());
+		}
+	}
 	stringstream ss;
 	Point epoint = Reoriginate(Point(pevent.x, pevent.y), pos);
-	ss << "WM: Window '" << title << "' pointer input at (" << epoint.x << "," << epoint.y << ")."<< endl;
+	WindowArea over = GetWindowArea(epoint);
+	ss << "WM: Window '" << title << "' pointer input at (" << epoint.x << "," << epoint.y << ") - " << pevent.type << "."<< endl;
+	ss << "Area: " << (int)over << endl;
 	bt_zero(ss.str().c_str());
+	if(pevent.type == bt_terminal_pointer_event_type::ButtonDown){
+		pressed = over;
+		if(pressed != WindowArea::Content){
+			RefreshTitleBar();
+			if(pressed == WindowArea::Title){
+				WindowGrab(id);
+				dragoffset = epoint;
+				dragging = true;
+			}
+		}
+	}
+	if(pevent.type == bt_terminal_pointer_event_type::ButtonUp && pressed != WindowArea::None){
+		pressed = WindowArea::None;
+		RefreshTitleBar();
+	}
 }
 
 void Window::PointerEnter(){
@@ -109,6 +142,10 @@ void Window::PointerLeave(){
 	stringstream ss;
 	ss << "WM: Window '" << title << "' pointer leave."<< endl;
 	bt_zero(ss.str().c_str());
+	if(pressed != WindowArea::None){
+		pressed = WindowArea::None;
+		RefreshTitleBar();
+	}
 }
 
 void Window::SetVisible(bool v){
@@ -122,4 +159,32 @@ void Window::SetVisible(bool v){
 
 bool Window::GetVisible(){
 	return visible;
+}
+
+WindowArea Window::GetWindowArea(Point p){
+	GDS_SelectSurface(gds_id);
+	gds_SurfaceInfo info = GDS_SurfaceInfo();
+	if(p.x >= GetMetric(BorderWidth) && p.x < GetMetric(BorderWidth) + info.w){
+		if(p.y >= GetMetric(BorderWidth)){
+			if(p.y >= GetMetric(TitleBarSize)){
+				if(p.y < GetMetric(TitleBarSize) + info.h) return WindowArea::Content;
+				else return WindowArea::Border;
+			}else{
+				if(p.x < GetMetric(MenuButtonWidth) + GetMetric(BorderWidth)) return WindowArea::MenuButton;
+				if(p.x >= info.w - GetMetric(ButtonSize) - GetMetric(BorderWidth)) return WindowArea::MaxButton;
+				if(p.x >= info.w - (GetMetric(ButtonSize) * 2) - GetMetric(BorderWidth)) return WindowArea::MinButton;
+				if(p.x >= info.w - (GetMetric(ButtonSize) * 3) - GetMetric(BorderWidth)) return WindowArea::CloseButton;
+				return WindowArea::Title;
+			}
+		}else return WindowArea::Border;
+	}else{
+		return WindowArea::Border;
+	}
+}
+
+void Window::RefreshTitleBar(){
+	Draw(active, false);
+	Rect r = GetBoundingRect();
+	r.h = GetMetric(TitleBarSize);
+	RefreshScreen(r);
 }

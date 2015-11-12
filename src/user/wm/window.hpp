@@ -28,7 +28,8 @@ enum class WindowArea{
 	CloseButton,
 	MinButton,
 	MaxButton,
-	Border
+	Border,
+	None
 };
 
 class Window{
@@ -38,13 +39,20 @@ private:
 	uint64_t gds_id;
 	std::string title;
 	bool visible = false;
+	bool active = false;
+	bool dragging = false;
+	Point dragoffset;
+	WindowArea pressed = WindowArea::None;
 	
 	WindowArea GetWindowArea(Point p);
+	void RefreshTitleBar();
 public:
+	uint64_t id = UINT64_MAX;
+	
 	Window(uint64_t surface_id);
 	~Window();
 	
-	void Draw(bool active);
+	void Draw(bool active, bool content = true);
 	void SetPosition(Point p);
 	void SetTitle(std::string title);
 	std::string GetTitle();
