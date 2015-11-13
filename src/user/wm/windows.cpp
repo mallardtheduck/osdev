@@ -126,7 +126,7 @@ void HandleInput(const bt_terminal_event &event){
 			curpos.x = event.pointer.x; curpos.y = event.pointer.y;
 			bt_terminal_pointer_info info;
 			bt_fioctl(stdin_handle, bt_terminal_ioctl::GetPointerInfo, sizeof(info), (char*)&info);
-			while(info.x != curpos.x || info.y != curpos.y){
+			while((info.x != curpos.x || info.y != curpos.y) && (info.flags & 1 << event.pointer.button)){
 				bt_terminal_pointer_event e;
 				e.type = bt_terminal_pointer_event_type::Move;
 				e.x = info.x;

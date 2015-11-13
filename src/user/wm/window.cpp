@@ -84,12 +84,12 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			SetPosition(newpos);
 		}
 	}
-	stringstream ss;
+	//stringstream ss;
 	Point epoint = Reoriginate(Point(pevent.x, pevent.y), pos);
 	WindowArea over = GetWindowArea(epoint);
-	ss << "WM: Window '" << title << "' pointer input at (" << epoint.x << "," << epoint.y << ") - " << pevent.type << "."<< endl;
-	ss << "Area: " << (int)over << endl;
-	bt_zero(ss.str().c_str());
+	//ss << "WM: Window '" << title << "' pointer input at (" << epoint.x << "," << epoint.y << ") - " << pevent.type << "."<< endl;
+	//ss << "Area: " << (int)over << endl;
+	//bt_zero(ss.str().c_str());
 	if(pevent.type == bt_terminal_pointer_event_type::ButtonDown){
 		pressed = over;
 		if(pressed != WindowArea::Content){
