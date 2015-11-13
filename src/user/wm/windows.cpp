@@ -61,19 +61,40 @@ vector<shared_ptr<Window>> SortWindows(){
 	return wins;
 }
 
-void DrawWindows(){
+void DrawWindows(const Rect &r){
+	bool rect = (r.x != 0 || r.y != 0 || r.w != 0 || r.h != 0);
 	vector<shared_ptr<Window>> wins = SortWindows();
 	GDS_SelectScreen();
-	gds_SurfaceInfo info = GDS_SurfaceInfo();
-	GDS_Box(0, 0, info.w, info.h, GetColour(BackgroundColour), GetColour(BackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	if(rect) GDS_Box(r.x, r.y, r.w, r.h, GetColour(BackgroundColour), GetColour(BackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	else{
+		gds_SurfaceInfo info = GDS_SurfaceInfo();
+		GDS_Box(0, 0, info.w, info.h, GetColour(BackgroundColour), GetColour(BackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	}
 	shared_ptr<Window> awin = activeWindow.lock();
 	for(auto w: wins){
-		w->Draw(w == awin);
+		if(!rect || Overlaps(r, w->GetBoundingRect())) w->Draw(w == awin);
+	}
+}
+
+void DrawWindows(const vector<Rect> &v){
+	vector<shared_ptr<Window>> wins = SortWindows();
+	GDS_SelectScreen();
+	for(auto r: v) GDS_Box(r.x, r.y, r.w, r.h, GetColour(BackgroundColour), GetColour(BackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	shared_ptr<Window> awin = activeWindow.lock();
+	for(auto w: wins){
+		for(auto r: v) if(Overlaps(r, w->GetBoundingRect())){
+			w->Draw(w==awin);
+			break;
+		}
 	}
 }
 
 void RefreshScreen(const Rect &r){
 	GDS_UpdateScreen(r.x, r.y, r.w, r.h);
+}
+
+void RefreshScreen(const vector<Rect> &v){
+	for(auto r: v) GDS_UpdateScreen(r.x, r.y, r.w, r.h);
 }
 
 shared_ptr<Window> GetWindowAt(uint32_t x, uint32_t y){
@@ -135,9 +156,7 @@ void HandleInput(const bt_terminal_event &event){
 			shared_ptr<Window> old = awin;
 			activeWindow = win;
 			BringToFront(win);
-			DrawWindows();
-			RefreshScreen(old->GetBoundingRect());
-			RefreshScreen(win->GetBoundingRect());
+			DrawAndRefreshWindows(TileRects(win->GetBoundingRect(), old->GetBoundingRect()));
 		}
 		win->PointerInput(event.pointer);
 	}
@@ -149,4 +168,14 @@ void WindowGrab(uint64_t id){
 
 void UnGrab(){
 	grabbedWindow.reset();
+}
+
+void DrawAndRefreshWindows(const Rect &r){
+	DrawWindows(r);
+	RefreshScreen(r);
+}
+
+void DrawAndRefreshWindows(const vector<Rect> &v){
+	DrawWindows(v);
+	RefreshScreen(v);
 }

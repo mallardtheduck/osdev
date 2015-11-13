@@ -5,21 +5,7 @@
 #include <terminal.h>
 #include <string>
 
-struct Rect{
-	uint32_t x, y, w, h;
-	Rect(): x(0), y(0), w(0), h(0) {};
-	Rect(uint32_t _x, uint32_t _y, uint32_t _w, uint32_t _h) : x(_x), y(_y), w(_w), h(_h) {} 
-};
-
-struct Point{
-	uint32_t x, y;
-	Point(): x(0), y(0) {}
-	Point(uint32_t _x, uint32_t _y): x(_x), y(_y) {}
-};
-
-bool InRect(uint32_t x, uint32_t y, const Rect &r);
-Rect Reoriginate(const Rect &r, const Point &p);
-Point Reoriginate(const Point &pr, const Point &po);
+#include "rect.hpp"
 
 enum class WindowArea{
 	Content,

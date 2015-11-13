@@ -8,25 +8,6 @@
 
 using namespace std;
 
-bool InRect(uint32_t x, uint32_t y, const Rect &r){
-	if(x >= r.x && x < (r.x + r.w) && y >= r.y && y < (r.y + r.h)) return true;
-	else return false;
-}
-
-Rect Reoriginate(const Rect &r, const Point &p){
-	Rect ret = r;
-	ret.x -= p.x;
-	ret.y -= p.y;
-	return ret;
-}
-
-Point Reoriginate(const Point &pr, const Point &po){
-	Point ret = pr;
-	ret.x -= po.x;
-	ret.y -= po.y;
-	return ret;
-}
-
 Window::Window(uint64_t surface_id) : gds_id(surface_id)
 {
 }
@@ -50,9 +31,7 @@ void Window::SetPosition(Point p){
 	pos = p;
 	Rect newrect = GetBoundingRect();
 	if(visible){
-		DrawWindows();
-		RefreshScreen(oldrect);
-		RefreshScreen(newrect);
+		DrawAndRefreshWindows(TileRects(newrect, oldrect));
 	}
 }
 
@@ -102,11 +81,7 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			Point curpos = Point(pevent.x, pevent.y);
 			Point newpos = {curpos.x - dragoffset.x, curpos.y - dragoffset.y};
 			if(newpos.x == pos.x && newpos.y == pos.y) return;
-			Rect oldrect = GetBoundingRect();
-			pos = newpos;
-			DrawWindows();
-			RefreshScreen(oldrect);
-			RefreshScreen(GetBoundingRect());
+			SetPosition(newpos);
 		}
 	}
 	stringstream ss;

@@ -297,12 +297,14 @@
       <File Name="user/wm/window.cpp"/>
       <File Name="user/wm/window.hpp"/>
       <File Name="user/wm/metrics.hpp"/>
-      <File Name="user/wm/drawing.cpp"/>
       <File Name="user/wm/drawing.hpp"/>
       <File Name="user/wm/windows.hpp"/>
       <File Name="user/wm/windows.cpp"/>
       <File Name="user/wm/service.cpp"/>
       <File Name="user/wm/service.hpp"/>
+      <File Name="user/wm/drawing.cpp"/>
+      <File Name="user/wm/rect.cpp"/>
+      <File Name="user/wm/rect.hpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
