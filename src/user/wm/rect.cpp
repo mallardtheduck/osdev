@@ -20,8 +20,8 @@ bool operator<(const Rect &r1, const Rect &r2){
 	else return false;
 }
 
-bool InRect(uint32_t x, uint32_t y, const Rect &r){
-	if(x >= r.x && x < (r.x + r.w) && y >= r.y && y < (r.y + r.h)) return true;
+bool InRect(int32_t x, int32_t y, const Rect &r){
+	if(x >= r.x && x < (r.x + (int32_t)r.w) && y >= r.y && y < (r.y + (int32_t)r.h)) return true;
 	else return false;
 }
 
@@ -30,7 +30,7 @@ bool InRect(const Point &p, const Rect &r){
 }
 
 bool Overlaps(const Rect &r1, const Rect &r2){
-	return !(r1.x + r1.w < r2.x || r1.y + r1.h < r2.y || r1.x > r2.x + r2.w || r1.y > r2.y + r2.h);
+	return !(r1.x + (int32_t)r1.w < r2.x || r1.y + (int32_t)r1.h < r2.y || r1.x > r2.x + (int32_t)r2.w || r1.y > r2.y + (int32_t)r2.h);
 }
 
 bool Contains(const Rect &r1, const Rect &r2){
@@ -69,15 +69,15 @@ vector<Rect> SplitUp(const Rect &r1, const Rect &r2){
 		ret.insert(ret.end(), splits.begin(), splits.end());
 	}
 	if(InRect(r1.x + r1.w, r1.y, r2)){
-		vector<Rect> splits = SplitRect(r2, {r1.x + r1.w, r1.y});
+		vector<Rect> splits = SplitRect(r2, {r1.x + (int32_t)r1.w, r1.y});
 		ret.insert(ret.end(), splits.begin(), splits.end());
 	}
 	if(InRect(r1.x, r1.y + r1.h, r2)){
-		vector<Rect> splits = SplitRect(r2, {r1.x, r1.y + r1.h});
+		vector<Rect> splits = SplitRect(r2, {r1.x, r1.y + (int32_t)r1.h});
 		ret.insert(ret.end(), splits.begin(), splits.end());
 	}
 	if(InRect(r1.x + r1.w, r1.y + r1.h, r2)){
-		vector<Rect> splits = SplitRect(r2, {r1.x + r1.w, r1.y+ r1.h});
+		vector<Rect> splits = SplitRect(r2, {r1.x + (int32_t)r1.w, r1.y + (int32_t)r1.h});
 		ret.insert(ret.end(), splits.begin(), splits.end());
 	}
 	sort(ret.begin(), ret.end());

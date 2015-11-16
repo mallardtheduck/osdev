@@ -4,6 +4,7 @@
 #include <btos_api.h>
 #include <terminal.h>
 #include <string>
+#include <gds/gds.h>
 
 #include "rect.hpp"
 
@@ -23,15 +24,21 @@ private:
 	Point pos;
 	uint32_t z = 0;
 	uint64_t gds_id;
+	gds_SurfaceInfo gds_info;
+	uint64_t gds_title_id = 0;
+	gds_SurfaceInfo gds_titleinfo;
 	std::string title;
 	bool visible = false;
 	bool active = false;
+	bool last_active = false;
 	bool dragging = false;
 	Point dragoffset;
+	Point last_drag_pos = {0, 0};
 	WindowArea pressed = WindowArea::None;
 	
 	WindowArea GetWindowArea(Point p);
-	void RefreshTitleBar();
+	void RefreshTitleBar(bool force = false);
+	bool UpdateTitleBar(bool force = false);
 public:
 	uint64_t id = UINT64_MAX;
 	

@@ -10,6 +10,8 @@ using namespace std;
 
 Window::Window(uint64_t surface_id) : gds_id(surface_id)
 {
+	GDS_SelectSurface(gds_id);
+	gds_info = GDS_SurfaceInfo();
 }
 
 Window::~Window()
@@ -19,11 +21,13 @@ Window::~Window()
 void Window::Draw(bool active, bool content){
 	this->active = active;
 	GDS_SelectSurface(gds_id);
-	gds_SurfaceInfo info = GDS_SurfaceInfo();
 	GDS_SelectScreen();
-	if(content) GDS_Blit(gds_id, 0, 0, info.w, info.h, pos.x + GetMetric(BorderWidth), pos.y + GetMetric(TitleBarSize), info.w, info.h);
-	DrawTitleBar(pos.x, pos.y, info.w + (2 * GetMetric(BorderWidth)), title, active, pressed);
-	DrawBorder(pos.x, pos.y, info.w + (2 * GetMetric(BorderWidth)), info.h + GetMetric(TitleBarSize) + GetMetric(BorderWidth));
+	if(content) GDS_Blit(gds_id, 0, 0, gds_info.w, gds_info.h, pos.x + GetMetric(BorderWidth), pos.y + GetMetric(TitleBarSize), gds_info.w, gds_info.h);
+	UpdateTitleBar();
+	GDS_SelectScreen();
+	GDS_Blit(gds_title_id, 0, 0, gds_titleinfo.w, gds_titleinfo.h, pos.x, pos.y, gds_titleinfo.w, gds_titleinfo.h);
+	DrawBorder(pos.x, pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize) + GetMetric(BorderWidth));
+	last_active = active;
 }
 
 void Window::SetPosition(Point p){
@@ -72,16 +76,41 @@ void Window::KeyInput(uint32_t key){
 	bt_zero(ss.str().c_str());
 }
 
+void RefreshRectEdges(int32_t x, int32_t y, uint32_t w, uint32_t h, uint32_t lineWidth){
+		if(x >= 0) RefreshScreen({x, y, lineWidth, h});
+		if(y >= 0) RefreshScreen({x, y, w, lineWidth});
+		RefreshScreen({x + (int32_t)w - 1, y, lineWidth, h});
+		RefreshScreen({x, y + (int32_t)h - 1, w, lineWidth});
+}
+
 void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 	if(dragging){
+		Point curpos = Point(pevent.x, pevent.y);
+		Point newpos = {curpos.x - dragoffset.x, curpos.y - dragoffset.y};
 		if(pevent.type == bt_terminal_pointer_event_type::ButtonUp){
 			UnGrab();
 			dragging = false;
-		}else{
-			Point curpos = Point(pevent.x, pevent.y);
-			Point newpos = {curpos.x - dragoffset.x, curpos.y - dragoffset.y};
-			if(newpos.x == pos.x && newpos.y == pos.y) return;
 			SetPosition(newpos);
+			if(!GetMetric(FullWindowDrag)){
+				Rect winRect = {last_drag_pos.x, last_drag_pos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize)};
+				DrawWindows(winRect);
+				GDS_SelectScreen();
+				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
+			}
+		}else{
+			if(GetMetric(FullWindowDrag)){;
+				if(newpos.x == pos.x && newpos.y == pos.y) return;
+				SetPosition(newpos);
+			}else{
+				if(newpos.x == pos.x && newpos.y == pos.y) return;
+				Rect winRect = {last_drag_pos.x, last_drag_pos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize)};
+				DrawWindows(winRect);
+				GDS_SelectScreen();
+				DrawBorder(newpos.x, newpos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize));
+				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
+				last_drag_pos = newpos;
+				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
+			}
 		}
 	}
 	//stringstream ss;
@@ -93,17 +122,18 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 	if(pevent.type == bt_terminal_pointer_event_type::ButtonDown){
 		pressed = over;
 		if(pressed != WindowArea::Content){
-			RefreshTitleBar();
 			if(pressed == WindowArea::Title){
 				WindowGrab(id);
 				dragoffset = epoint;
 				dragging = true;
+			}else{
+				RefreshTitleBar(true);
 			}
 		}
 	}
 	if(pevent.type == bt_terminal_pointer_event_type::ButtonUp && pressed != WindowArea::None){
 		pressed = WindowArea::None;
-		RefreshTitleBar();
+		RefreshTitleBar(true);
 	}
 }
 
@@ -139,16 +169,16 @@ bool Window::GetVisible(){
 WindowArea Window::GetWindowArea(Point p){
 	GDS_SelectSurface(gds_id);
 	gds_SurfaceInfo info = GDS_SurfaceInfo();
-	if(p.x >= GetMetric(BorderWidth) && p.x < GetMetric(BorderWidth) + info.w){
+	if(p.x >= GetMetric(BorderWidth) && p.x < GetMetric(BorderWidth) + (int32_t)info.w){
 		if(p.y >= GetMetric(BorderWidth)){
 			if(p.y >= GetMetric(TitleBarSize)){
-				if(p.y < GetMetric(TitleBarSize) + info.h) return WindowArea::Content;
+				if(p.y < GetMetric(TitleBarSize) + (int32_t)info.h) return WindowArea::Content;
 				else return WindowArea::Border;
 			}else{
 				if(p.x < GetMetric(MenuButtonWidth) + GetMetric(BorderWidth)) return WindowArea::MenuButton;
-				if(p.x >= info.w - GetMetric(ButtonSize) - GetMetric(BorderWidth)) return WindowArea::MaxButton;
-				if(p.x >= info.w - (GetMetric(ButtonSize) * 2) - GetMetric(BorderWidth)) return WindowArea::MinButton;
-				if(p.x >= info.w - (GetMetric(ButtonSize) * 3) - GetMetric(BorderWidth)) return WindowArea::CloseButton;
+				if(p.x >= (int32_t)info.w - GetMetric(ButtonSize) - GetMetric(BorderWidth)) return WindowArea::MaxButton;
+				if(p.x >= (int32_t)info.w - (GetMetric(ButtonSize) * 2) - GetMetric(BorderWidth)) return WindowArea::MinButton;
+				if(p.x >= (int32_t)info.w - (GetMetric(ButtonSize) * 3) - GetMetric(BorderWidth)) return WindowArea::CloseButton;
 				return WindowArea::Title;
 			}
 		}else return WindowArea::Border;
@@ -157,9 +187,27 @@ WindowArea Window::GetWindowArea(Point p){
 	}
 }
 
-void Window::RefreshTitleBar(){
-	Draw(active, false);
-	Rect r = GetBoundingRect();
-	r.h = GetMetric(TitleBarSize);
-	RefreshScreen(r);
+void Window::RefreshTitleBar(bool force){
+	if(UpdateTitleBar(force)){
+		GDS_SelectScreen();
+		GDS_Blit(gds_title_id, 0, 0, gds_titleinfo.w, gds_titleinfo.h, pos.x, pos.y, gds_titleinfo.w, gds_titleinfo.h);
+		Rect r = GetBoundingRect();
+		r.h = GetMetric(TitleBarSize);
+		RefreshScreen(r);
+	}
+}
+
+bool Window::UpdateTitleBar(bool force){
+	if(!gds_title_id || active != last_active || force){
+		if(gds_title_id){
+			GDS_SelectSurface(gds_title_id);
+			GDS_DeleteSurface();
+			gds_title_id = 0;
+		}
+		gds_title_id = DrawTitleBar(gds_info.w + (2 * GetMetric(BorderWidth)), title, active, pressed);
+		GDS_SelectSurface(gds_title_id);
+		gds_titleinfo = GDS_SurfaceInfo();
+		return true;
+	}
+	return false;
 }

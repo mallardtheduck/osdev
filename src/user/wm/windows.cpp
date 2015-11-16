@@ -89,12 +89,20 @@ void DrawWindows(const vector<Rect> &v){
 	}
 }
 
-void RefreshScreen(const Rect &r){
+void RefreshScreen(Rect r){
+	if(r.x < 0){
+		r.w += r.x;
+		r.x = 0;
+	}
+	if(r.y < 0){
+		r.h += r.y;
+		r.y = 0;
+	}
 	GDS_UpdateScreen(r.x, r.y, r.w, r.h);
 }
 
 void RefreshScreen(const vector<Rect> &v){
-	for(auto r: v) GDS_UpdateScreen(r.x, r.y, r.w, r.h);
+	for(auto r: v) RefreshScreen(r);
 }
 
 shared_ptr<Window> GetWindowAt(uint32_t x, uint32_t y){
@@ -117,16 +125,16 @@ void BringToFront(shared_ptr<Window> win){
 }
 
 void HandleInput(const bt_terminal_event &event){
-	static Point curpos = {UINT32_MAX, UINT32_MAX};
+	static Point curpos = {INT32_MAX, INT32_MAX};
 	if(auto gwin = grabbedWindow.lock()){
 		if(event.type == bt_terminal_event_type::Key) gwin->KeyInput(event.key);
 		else if(event.type ==  bt_terminal_event_type::Pointer) {
-			if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == curpos.x && event.pointer.y == curpos.y) return;
+			if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == (uint32_t)curpos.x && event.pointer.y == (uint32_t)curpos.y) return;
 			gwin->PointerInput(event.pointer);
 			curpos.x = event.pointer.x; curpos.y = event.pointer.y;
 			bt_terminal_pointer_info info;
 			bt_fioctl(stdin_handle, bt_terminal_ioctl::GetPointerInfo, sizeof(info), (char*)&info);
-			while((info.x != curpos.x || info.y != curpos.y) && (info.flags & 1 << event.pointer.button)){
+			while((info.x != (uint32_t)curpos.x || info.y != (uint32_t)curpos.y) && (info.flags & 1 << event.pointer.button)){
 				bt_terminal_pointer_event e;
 				e.type = bt_terminal_pointer_event_type::Move;
 				e.x = info.x;
@@ -142,7 +150,7 @@ void HandleInput(const bt_terminal_event &event){
 	shared_ptr<Window> awin = activeWindow.lock();
 	if(event.type == bt_terminal_event_type::Key && awin) awin->KeyInput(event.key);
 	else if(event.type ==  bt_terminal_event_type::Pointer){
-		if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == curpos.x && event.pointer.y == curpos.y) return;
+		if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == (uint32_t)curpos.x && event.pointer.y == (uint32_t)curpos.y) return;
 		curpos.x = event.pointer.x; curpos.y = event.pointer.y;
 		shared_ptr<Window> win = GetWindowAt(event.pointer.x, event.pointer.y);
 		shared_ptr<Window> pwin = pointerWindow.lock();

@@ -68,13 +68,15 @@ void DrawMenuButton(uint32_t x, uint32_t y, bool active, bool down = false){
 	GDS_Text(x + symLength + 5, y + 2, "Menu", 0, 0, GetColour(SymbolColour));
 }
 
-void DrawTitleBar(uint32_t x, uint32_t y, uint32_t w, string title, bool active, WindowArea pressed){
-	GDS_Box(x, y, w, GetMetric(TitleBarSize), GetColour(SeperatorColour), active?GetColour(TitleBarColour):GetColour(InactiveTitleColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	DrawMenuButton(x + GetMetric(BorderWidth), y + GetMetric(BorderWidth), active, (pressed == WindowArea::MenuButton));
-	DrawMaxButton(x + w - GetMetric(ButtonSize) - GetMetric(BorderWidth), y+GetMetric(BorderWidth), active, (pressed == WindowArea::MaxButton));
-	DrawMinButton(x + w - (GetMetric(ButtonSize) * 2) - GetMetric(BorderWidth), y+GetMetric(BorderWidth), active, (pressed == WindowArea::MinButton));
-	DrawCloseButton(x + w - (GetMetric(ButtonSize) * 3) - GetMetric(BorderWidth), y+GetMetric(BorderWidth), active, (pressed == WindowArea::CloseButton));
-	GDS_Text(x+55, y+3, title.c_str(), 0, 0, GetColour(TitleTextColour), 0);
+uint64_t DrawTitleBar(uint32_t w, string title, bool active, WindowArea pressed){
+	uint64_t ret = GDS_NewSurface(gds_SurfaceType::Bitmap, w, GetMetric(TitleBarSize));
+	GDS_Box(0, 0, w, GetMetric(TitleBarSize), GetColour(SeperatorColour), active?GetColour(TitleBarColour):GetColour(InactiveTitleColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	DrawMenuButton(GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::MenuButton));
+	DrawMaxButton(w - GetMetric(ButtonSize) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::MaxButton));
+	DrawMinButton(w - (GetMetric(ButtonSize) * 2) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::MinButton));
+	DrawCloseButton(w - (GetMetric(ButtonSize) * 3) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::CloseButton));
+	GDS_Text(55, 3, title.c_str(), 0, 0, GetColour(TitleTextColour), 0);
+	return ret;
 }
 
 void DrawBorder(uint32_t x, uint32_t y, uint32_t w, uint32_t h){

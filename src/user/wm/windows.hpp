@@ -12,7 +12,7 @@ std::shared_ptr<Window> GetActiveWindow();
 void DrawWindows(const Rect &r = Rect());
 void DrawWindows(const std::vector<Rect> &v);
 void HandleInput(const bt_terminal_event &event);
-void RefreshScreen(const Rect &r = Rect());
+void RefreshScreen(Rect r = Rect());
 void RefreshScreen(const std::vector<Rect> &v);
 void DrawAndRefreshWindows(const Rect &r = Rect());
 void DrawAndRefreshWindows(const std::vector<Rect> &v);
