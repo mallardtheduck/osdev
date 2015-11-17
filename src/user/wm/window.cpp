@@ -119,7 +119,7 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 	//ss << "WM: Window '" << title << "' pointer input at (" << epoint.x << "," << epoint.y << ") - " << pevent.type << "."<< endl;
 	//ss << "Area: " << (int)over << endl;
 	//bt_zero(ss.str().c_str());
-	if(pevent.type == bt_terminal_pointer_event_type::ButtonDown){
+	if(pevent.type == bt_terminal_pointer_event_type::ButtonDown && pevent.button == 1){
 		pressed = over;
 		if(pressed != WindowArea::Content){
 			if(pressed == WindowArea::Title){
@@ -131,7 +131,13 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			}
 		}
 	}
-	if(pevent.type == bt_terminal_pointer_event_type::ButtonUp && pressed != WindowArea::None){
+	if(pevent.type == bt_terminal_pointer_event_type::ButtonUp && pevent.button == 1 && pressed != WindowArea::None){
+		if(pressed == over){
+			if(pressed == WindowArea::MenuButton) OpenMenu();
+			if(pressed == WindowArea::CloseButton) Close();
+			if(pressed == WindowArea::HideButton) Hide();
+			if(pressed == WindowArea::ExpandButton) Expand();
+		}
 		pressed = WindowArea::None;
 		RefreshTitleBar(true);
 	}
@@ -176,9 +182,9 @@ WindowArea Window::GetWindowArea(Point p){
 				else return WindowArea::Border;
 			}else{
 				if(p.x < GetMetric(MenuButtonWidth) + GetMetric(BorderWidth)) return WindowArea::MenuButton;
-				if(p.x >= (int32_t)info.w - GetMetric(ButtonSize) - GetMetric(BorderWidth)) return WindowArea::MaxButton;
-				if(p.x >= (int32_t)info.w - (GetMetric(ButtonSize) * 2) - GetMetric(BorderWidth)) return WindowArea::MinButton;
-				if(p.x >= (int32_t)info.w - (GetMetric(ButtonSize) * 3) - GetMetric(BorderWidth)) return WindowArea::CloseButton;
+				if(p.x >= (int32_t)info.w - GetMetric(ButtonSize)) return WindowArea::ExpandButton;
+				if(p.x >= (int32_t)info.w - (GetMetric(ButtonSize) * 2)) return WindowArea::HideButton;
+				if(p.x >= (int32_t)info.w - (GetMetric(ButtonSize) * 3)) return WindowArea::CloseButton;
 				return WindowArea::Title;
 			}
 		}else return WindowArea::Border;
@@ -210,4 +216,28 @@ bool Window::UpdateTitleBar(bool force){
 		return true;
 	}
 	return false;
+}
+
+void Window::OpenMenu(){
+	stringstream ss;
+	ss << "WM: Window '" << title << "' open menu."<< endl;
+	bt_zero(ss.str().c_str());
+}
+
+void Window::Close(){
+	stringstream ss;
+	ss << "WM: Window '" << title << "' close."<< endl;
+	bt_zero(ss.str().c_str());
+}
+
+void Window::Hide(){
+	stringstream ss;
+	ss << "WM: Window '" << title << "' hide."<< endl;
+	bt_zero(ss.str().c_str());
+}
+
+void Window::Expand(){
+	stringstream ss;
+	ss << "WM: Window '" << title << "' expand."<< endl;
+	bt_zero(ss.str().c_str());
 }

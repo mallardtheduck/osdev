@@ -23,6 +23,8 @@ void InitCursor(){
 shared_ptr<Window> CreateTestWin(string title, uint32_t x, uint32_t y, uint32_t w, uint32_t h){
 	uint64_t surface = GDS_NewSurface(gds_SurfaceType::Bitmap, w, h);
 	GDS_Box(0, 0, w, h, GDS_GetColour(0, 0, 0), GDS_GetColour(255, 255, 255), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	GDS_Line(0, 0, w, h, GDS_GetColour(0, 0, 0));
+	GDS_Line(0, h, w, 0, GDS_GetColour(0, 0, 0));
 	shared_ptr<Window> win(new Window(surface));
 	win->SetPosition(Point(x, y));
 	win->SetTitle(title);

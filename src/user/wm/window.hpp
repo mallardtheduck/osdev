@@ -13,8 +13,8 @@ enum class WindowArea{
 	Title,
 	MenuButton,
 	CloseButton,
-	MinButton,
-	MaxButton,
+	HideButton,
+	ExpandButton,
 	Border,
 	None
 };
@@ -59,6 +59,10 @@ public:
 	void PointerInput(const bt_terminal_pointer_event &pevent);
 	void PointerEnter();
 	void PointerLeave();
+	void OpenMenu();
+	void Close();
+	void Hide();
+	void Expand();
 	
 	void SetVisible(bool v);
 	bool GetVisible();
