@@ -34,6 +34,7 @@ private:
 	bool dragging = false;
 	Point dragoffset;
 	Point last_drag_pos = {0, 0};
+	int64_t gds_drag_id;
 	WindowArea pressed = WindowArea::None;
 	
 	WindowArea GetWindowArea(Point p);
@@ -45,7 +46,7 @@ public:
 	Window(uint64_t surface_id);
 	~Window();
 	
-	void Draw(bool active, bool content = true);
+	void Draw(bool active, bool content = true, uint64_t target = 0);
 	void SetPosition(Point p);
 	void SetTitle(std::string title);
 	std::string GetTitle();
