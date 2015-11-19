@@ -241,11 +241,13 @@ bt_msg_header msg_recv_reply_block(uint64_t msg_id){
 
 bool msg_is_match(bt_msg_header msg, bt_msg_filter filter){
 	if(msg.critical) return true;
-	if((filter.flags & bt_msg_filter_flags::From) && msg.from != filter.pid) return false;
-	if((filter.flags & bt_msg_filter_flags::Reply) && msg.reply_id != filter.reply_to) return false;
-	if((filter.flags & bt_msg_filter_flags::Type) && msg.type != filter.type) return false;
-	if((filter.flags & bt_msg_filter_flags::Source) && msg.source != filter.source) return false;
-	return true;
+	bool ret = true;
+	if((filter.flags & bt_msg_filter_flags::From) && msg.from != filter.pid) ret = false;
+	if((filter.flags & bt_msg_filter_flags::Reply) && msg.reply_id != filter.reply_to) ret = false;
+	if((filter.flags & bt_msg_filter_flags::Type) && msg.type != filter.type) ret = false;
+	if((filter.flags & bt_msg_filter_flags::Source) && msg.source != filter.source) ret = false;
+	if((filter.flags & bt_msg_filter_flags::Invert)) ret = !ret;
+	return ret;
 }
 
 struct msg_filter_blockcheck_params{
