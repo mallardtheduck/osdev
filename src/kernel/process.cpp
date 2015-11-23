@@ -195,7 +195,6 @@ static bool proc_threads_blockcheck(void *p){
 
 void proc_end(pid_t pid) {
     if(pid==0) return;
-    debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
 	take_lock_exclusive(proc_lock);
 	if (!proc_get(pid)) return;
 	pid_t curpid = proc_current_pid;
@@ -204,9 +203,9 @@ void proc_end(pid_t pid) {
 		dbgpf("PROC: Process %i is already ending.\n", (int) pid);
 		release_lock(proc_lock);
 		proc_wait(pid);
-		take_lock_exclusive(proc_lock);
 		return;
 	}
+	debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
 	dbgpf("PROC: Ending process %i.\n", (int) pid);
 	proc_set_status(proc_status::Ending, pid);
 	proc_process *proc = proc_get(pid);
@@ -651,7 +650,10 @@ static bool proc_msg_wait_blockcheck(void *p){
 void proc_message_wait(pid_t pid){
     proc_process *proc = proc_get_lock(pid);
 	if (!proc) return;
-	if (!proc->msg_buffers.size()) return;
+	if (!proc->msg_buffers.size()){
+		release_lock(proc->ulock);
+		return;
+	}
 	release_lock(proc->ulock);
     sch_setblock(&proc_msg_wait_blockcheck, (void *)&pid);
 }
