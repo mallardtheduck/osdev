@@ -1,11 +1,17 @@
 #include "service.hpp"
 #include "windows.hpp"
+#include "client.hpp"
 
 #include <terminal.h>
+
+#include <map>
+#include <sstream>
 
 using namespace std;
 
 bt_handle stdin_handle;
+
+map<bt_pid_t, shared_ptr<Client>> clients;
 
 void Service(){
 	char stdout_path[BT_MAX_PATH]={0};
@@ -17,15 +23,35 @@ void Service(){
 	bt_terminal_event_mode::Enum event_mode = bt_terminal_event_mode::Both;
 	bt_fioctl(fh, bt_terminal_ioctl::SetEventMode, sizeof(event_mode), (char*)&event_mode);
 	
-	bt_msg_filter terminal_filter;
-	terminal_filter.flags = (bt_msg_filter_flags::Enum) (bt_msg_filter_flags::From | bt_msg_filter_flags::Source);
-	terminal_filter.pid = 0;
-	terminal_filter.source = bt_query_extension("TERMINAL");
-	bt_msg_header header = bt_recv_filtered(terminal_filter);
-	while(true){
-		bt_terminal_event event;
-		bt_msg_content(&header, (void*)&event, sizeof(event));
-		HandleInput(event);
-		bt_next_msg_filtered(&header, terminal_filter);
+	uint16_t terminal_ext_id = bt_query_extension("TERMINAL");
+	
+	bt_subscribe(bt_kernel_messages::ProcessEnd);
+	bt_msg_header msg = bt_recv(true);
+	while(true) {
+		if(msg.from == 0 && msg.source == 0 && msg.type == bt_kernel_messages::ProcessEnd) {
+			bt_pid_t pid = 0;
+			bt_msg_content(&msg, (void*)&pid, sizeof(pid));
+			stringstream ss;
+			ss << "WM: PID: " << pid << " terminated." << endl;
+			bt_zero(ss.str().c_str());
+			clients.erase(pid);
+			//if(pid == root_pid) return;
+		} else if(msg.from == 0 && msg.source == terminal_ext_id) {
+			bt_terminal_event event;
+			bt_msg_content(&msg, (void*)&event, sizeof(event));
+			HandleInput(event);
+		}else {
+			if(clients.find(msg.from) == clients.end()) {
+				Client *newclient = new Client();
+				if(newclient) {
+					shared_ptr<Client> ptr(newclient);
+					clients.insert(pair<bt_pid_t, shared_ptr<Client>>(msg.from, ptr));
+				}
+			}
+			try {
+				clients.at(msg.from)->ProcessMessage(msg);
+			} catch(out_of_range&) {}
+		}
+		bt_next_msg(&msg);
 	}
 }

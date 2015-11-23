@@ -305,6 +305,12 @@
       <File Name="user/wm/drawing.cpp"/>
       <File Name="user/wm/rect.cpp"/>
       <File Name="user/wm/rect.hpp"/>
+      <File Name="user/wm/client.hpp"/>
+      <File Name="user/wm/client.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="libwm">
+      <File Name="user/libwm/Makefile"/>
+      <File Name="user/libwm/main.cpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
@@ -341,6 +347,7 @@
     </VirtualDirectory>
     <VirtualDirectory Name="wm">
       <File Name="include/wm/wm.h"/>
+      <File Name="include/wm/libwm.h"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <Settings Type="Static Library">

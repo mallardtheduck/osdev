@@ -33,8 +33,8 @@ ENUM_START(wm_EventType)
 	ENUM_SET(wm_EventType, KeyPress, 			1 << 7),
 	ENUM_SET(wm_EventType, Close,				1 << 8),
 	ENUM_SET(wm_EventType, Hide,				1 << 9),
-	ENUM_SET(wm_EventType, Expand				1 << 10),
-	ENUM_SET(wm_EventType, MenuSelection		1 << 11),
+	ENUM_SET(wm_EventType, Expand,				1 << 10),
+	ENUM_SET(wm_EventType, MenuSelection,		1 << 11),
 ENUM_END
 ENUM_TYPE(wm_EventType)
 
@@ -58,7 +58,7 @@ struct wm_Event{
 		struct{
 			uint64_t id;
 		} Menu;
-	}
+	};
 };
 
 ENUM_START(wm_RequestType)
@@ -72,5 +72,13 @@ ENUM_START(wm_RequestType)
 	ENUM_SET(wm_RequestType, ChangeFlags, 		8),
 ENUM_END
 ENUM_TYPE(wm_RequestType)
+
+struct wm_Request{
+	ENUM_NAME(wm_RequestType) type;
+	union{
+		wm_WindowInfo info;
+		uint32_t events;
+	};
+};
 
 #endif
