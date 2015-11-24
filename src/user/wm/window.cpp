@@ -48,12 +48,20 @@ void Window::SetPosition(Point p){
 	bt_zero(ss.str().c_str());
 }
 
+Point Window::GetPosition(){
+	return pos;
+}
+
 void Window::SetTitle(string ntitle){
 	title=ntitle;
 }
 
 std::string Window::GetTitle(){
 	return title;
+}
+
+uint64_t Window::GetSurface(){
+	return gds_id;
 }
 
 void Window::SetZOrder(uint32_t zorder, bool update){

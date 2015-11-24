@@ -6,19 +6,22 @@
 #ifdef __cplusplus
 	#include <cstdint>
 	#include <cstddef>
+	static const size_t WM_TITLE_MAX = 255;
 #else
 	#include <stdint.h>
 	#include <stddef.h>
+	#define WM_TITLE_MAX 255;
 #endif
 
 ENUM_START(wm_WindowOptions)
-	ENUM_SET(wm_WindowOptions, NoFrame, 	1 << 0),
-	ENUM_SET(wm_WindowOptions, NoMenu, 		1 << 1),
-	ENUM_SET(wm_WindowOptions, NoExpand, 	1 << 2),
-	ENUM_SET(wm_WindowOptions, NoHide,		1 << 3),
-	ENUM_SET(wm_WindowOptions, NoClose, 	1 << 4),
-	ENUM_SET(wm_WindowOptions, Resizable, 	1 << 5),
-	ENUM_SET(wm_WindowOptions, ToolWindow, 	1 << 6),
+	ENUM_SET(wm_WindowOptions, Visible, 	1 << 0),
+	ENUM_SET(wm_WindowOptions, NoFrame, 	1 << 1),
+	ENUM_SET(wm_WindowOptions, NoMenu, 		1 << 2),
+	ENUM_SET(wm_WindowOptions, NoExpand, 	1 << 3),
+	ENUM_SET(wm_WindowOptions, NoHide,		1 << 4),
+	ENUM_SET(wm_WindowOptions, NoClose, 	1 << 5),
+	ENUM_SET(wm_WindowOptions, Resizable, 	1 << 6),
+	ENUM_SET(wm_WindowOptions, ToolWindow, 	1 << 7),
 ENUM_END
 ENUM_TYPE(wm_WindowOptions)
 
@@ -42,11 +45,13 @@ struct wm_WindowInfo{
 	int32_t x, y;
 	ENUM_NAME(wm_WindowOptions) options;
 	uint64_t gds_id;
+	char title[WM_TITLE_MAX];
 };
 BT_STRUCT_TYPE(wm_WindowInfo);
 
 struct wm_Event{
 	ENUM_NAME(wm_EventType) type;
+	uint64_t window_id;
 	union{
 		struct{
 			uint32_t x, y;
@@ -64,21 +69,15 @@ struct wm_Event{
 ENUM_START(wm_RequestType)
 	ENUM_SET(wm_RequestType, SelectWindow, 		1),
 	ENUM_SET(wm_RequestType, CreateWindow, 		2),
-	ENUM_SET(wm_RequestType, WindowInfo, 		3),
-	ENUM_SET(wm_RequestType, Subscribe, 		4),
-	ENUM_SET(wm_RequestType, Update, 			5),
-	ENUM_SET(wm_RequestType, ReplaceSurface,	6),
-	ENUM_SET(wm_RequestType, MoveWindow, 		7),
-	ENUM_SET(wm_RequestType, ChangeFlags, 		8),
+	ENUM_SET(wm_RequestType, DestroyWindow,		3),
+	ENUM_SET(wm_RequestType, WindowInfo, 		4),
+	ENUM_SET(wm_RequestType, Subscribe, 		5),
+	ENUM_SET(wm_RequestType, Update, 			6),
+	ENUM_SET(wm_RequestType, ReplaceSurface,	7),
+	ENUM_SET(wm_RequestType, MoveWindow, 		8),
+	ENUM_SET(wm_RequestType, ChangeFlags, 		9),
+	ENUM_SET(wm_RequestType, SetTitle,			10),
 ENUM_END
 ENUM_TYPE(wm_RequestType)
-
-struct wm_Request{
-	ENUM_NAME(wm_RequestType) type;
-	union{
-		wm_WindowInfo info;
-		uint32_t events;
-	};
-};
 
 #endif

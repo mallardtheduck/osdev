@@ -48,8 +48,10 @@ public:
 	
 	void Draw(bool active, bool content = true, uint64_t target = 0);
 	void SetPosition(Point p);
+	Point GetPosition();
 	void SetTitle(std::string title);
 	std::string GetTitle();
+	uint64_t GetSurface();
 	
 	void SetZOrder(uint32_t zorder, bool update = true);
 	uint32_t GetZOrder();
