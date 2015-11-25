@@ -51,6 +51,7 @@ static bt_msg_header SendMessage(gds_MsgType::Enum type, size_t size, void* cont
 			ss << "Message id: " << ret.id << endl;
 			ss << "From : " << ret.from << endl;
 			ss << "Flags : " << ret.flags << endl;
+			ss << "Critical : " << ret.critical << endl;
 			ss << "Reply ID: " << ret.reply_id << " (Waiting for: " << msg.id << ")" << endl;
 			bt_zero(ss.str().c_str());
 			bt_next_msg_filtered(&ret, filter);

@@ -1,6 +1,7 @@
 #include <sstream>
 #include <gds/libgds.h>
 #include <btos_stubs.h>
+#include <wm/wm.h>
 #include "window.hpp"
 #include "metrics.hpp"
 #include "drawing.hpp"
@@ -40,7 +41,7 @@ void Window::SetPosition(Point p){
 	Rect oldrect = GetBoundingRect();
 	pos = p;
 	Rect newrect = GetBoundingRect();
-	if(visible){
+	if(GetVisible()){
 		DrawAndRefreshWindows(TileRects(newrect, oldrect));
 	}
 	stringstream ss;
@@ -66,7 +67,7 @@ uint64_t Window::GetSurface(){
 
 void Window::SetZOrder(uint32_t zorder, bool update){
 	z = zorder;
-	if(update && visible){
+	if(update && GetVisible()){
 		DrawWindows();
 		RefreshScreen(GetBoundingRect());
 	}
@@ -91,6 +92,14 @@ void Window::KeyInput(uint32_t key){
 	stringstream ss;
 	ss << "WM: Window '" << title << "' key input:" << key << endl;
 	bt_zero(ss.str().c_str());
+	shared_ptr<Client> client = owner.lock();
+	if(client && (event_subs & wm_EventType::Keyboard)){
+		wm_Event e;
+		e.window_id = id;
+		e.type = wm_EventType::Keyboard;
+		e.Key.code = key;
+		client->SendEvent(e);
+	}
 }
 
 void RefreshRectEdges(int32_t x, int32_t y, uint32_t w, uint32_t h, uint32_t lineWidth){
@@ -135,19 +144,15 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 				Rect winRect = {last_drag_pos.x, last_drag_pos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize)};
 				DrawWindows(winRect);
 				GDS_SelectScreen();
-				DrawBorder(newpos.x, newpos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize));
+				DrawBorder(newpos.x, newpos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize));
 				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
 				last_drag_pos = newpos;
 				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
 			}
 		}
 	}
-	//stringstream ss;
 	Point epoint = Reoriginate(Point(pevent.x, pevent.y), pos);
 	WindowArea over = GetWindowArea(epoint);
-	//ss << "WM: Window '" << title << "' pointer input at (" << epoint.x << "," << epoint.y << ") - " << pevent.type << "."<< endl;
-	//ss << "Area: " << (int)over << endl;
-	//bt_zero(ss.str().c_str());
 	if(pevent.type == bt_terminal_pointer_event_type::ButtonDown && pevent.button == 1){
 		pressed = over;
 		if(pressed != WindowArea::Content){
@@ -170,12 +175,35 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 		pressed = WindowArea::None;
 		RefreshTitleBar(true);
 	}
+	if(over == WindowArea::Content){
+		wm_Event e;
+		if(pevent.type == bt_terminal_pointer_event_type::ButtonDown) e.type = wm_EventType::PointerButtonDown;
+		else if(pevent.type == bt_terminal_pointer_event_type::ButtonUp) e.type = wm_EventType::PointerButtonUp;
+		else if(pevent.type == bt_terminal_pointer_event_type::Move) e.type = wm_EventType::PointerMove;
+		else return;
+		shared_ptr<Client> client = owner.lock();
+		if(client && (e.type & event_subs) == e.type){
+			Point cpoint = Reoriginate(epoint, {GetMetric(BorderWidth), GetMetric(TitleBarSize)});
+			e.window_id = id;
+			e.Pointer.x = cpoint.x;
+			e.Pointer.y = cpoint.y;
+			e.Pointer.button = pevent.button;
+			client->SendEvent(e);
+		}
+	}
 }
 
 void Window::PointerEnter(){
 	stringstream ss;
 	ss << "WM: Window '" << title << "' pointer enter."<< endl;
 	bt_zero(ss.str().c_str());
+	shared_ptr<Client> client = owner.lock();
+	if(client && (event_subs & wm_EventType::PointerEnter)){
+		wm_Event e;
+		e.window_id = id;
+		e.type = wm_EventType::PointerEnter;
+		client->SendEvent(e);
+	}
 }
 
 void Window::PointerLeave(){
@@ -186,19 +214,27 @@ void Window::PointerLeave(){
 		pressed = WindowArea::None;
 		RefreshTitleBar();
 	}
+	shared_ptr<Client> client = owner.lock();
+	if(client && (event_subs & wm_EventType::PointerLeave)){
+		wm_Event e;
+		e.window_id = id;
+		e.type = wm_EventType::PointerLeave;
+		client->SendEvent(e);
+	}
 }
 
 void Window::SetVisible(bool v){
-	bool oldvisible = visible;
-	visible = v;
-	if(oldvisible){
+	bool oldvisible = GetVisible();
+	if(v) options |= wm_WindowOptions::Visible;
+	else options &= ~wm_WindowOptions::Visible;
+	if(oldvisible != GetVisible()){
 		DrawWindows();
 		RefreshScreen(GetBoundingRect());
 	}
 }
 
 bool Window::GetVisible(){
-	return visible;
+	return (options & wm_WindowOptions::Visible);
 }
 
 WindowArea Window::GetWindowArea(Point p){
@@ -226,7 +262,7 @@ void Window::RefreshTitleBar(bool force){
 	if(UpdateTitleBar(force)){
 		GDS_SelectScreen();
 		GDS_Blit(gds_title_id, 0, 0, gds_titleinfo.w, gds_titleinfo.h, pos.x, pos.y, gds_titleinfo.w, gds_titleinfo.h);
-		DrawBorder(pos.x, pos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize));
+		DrawBorder(pos.x, pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize));
 		Rect r = GetBoundingRect();
 		r.h = GetMetric(TitleBarSize);
 		RefreshScreen(r);
@@ -257,17 +293,57 @@ void Window::OpenMenu(){
 void Window::Close(){
 	stringstream ss;
 	ss << "WM: Window '" << title << "' close."<< endl;
-	bt_zero(ss.str().c_str());
+	shared_ptr<Client> client = owner.lock();
+	if(client && (event_subs & wm_EventType::Close)){
+		wm_Event e;
+		e.window_id = id;
+		e.type = wm_EventType::Close;
+		client->SendEvent(e);
+	}
 }
 
 void Window::Hide(){
 	stringstream ss;
 	ss << "WM: Window '" << title << "' hide."<< endl;
 	bt_zero(ss.str().c_str());
+	shared_ptr<Client> client = owner.lock();
+	if(client && (event_subs & wm_EventType::Hide)){
+		wm_Event e;
+		e.window_id = id;
+		e.type = wm_EventType::Hide;
+		client->SendEvent(e);
+	}
 }
 
 void Window::Expand(){
 	stringstream ss;
 	ss << "WM: Window '" << title << "' expand."<< endl;
 	bt_zero(ss.str().c_str());
+	shared_ptr<Client> client = owner.lock();
+	if(client && (event_subs & wm_EventType::Expand)){
+		wm_Event e;
+		e.window_id = id;
+		e.type = wm_EventType::Expand;
+		client->SendEvent(e);
+	}
+}
+
+void Window::SetOwner(std::weak_ptr<Client> o){
+	owner = o;
+}
+
+void Window::Subscribe(uint32_t subs){
+	event_subs = subs;
+}
+
+uint32_t Window::Subscribe(){
+	return event_subs;
+}
+
+void Window::SetOptions(uint32_t opts){
+	options = opts;
+}
+
+uint32_t Window::GetOptions(){
+	return options;
 }

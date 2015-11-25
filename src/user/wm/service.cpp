@@ -13,7 +13,7 @@ bt_handle stdin_handle;
 
 map<bt_pid_t, shared_ptr<Client>> clients;
 
-void Service(){
+void Service(bt_pid_t root_pid){
 	char stdout_path[BT_MAX_PATH]={0};
 	bt_getenv("STDIN", stdout_path, BT_MAX_PATH);
 
@@ -26,6 +26,7 @@ void Service(){
 	uint16_t terminal_ext_id = bt_query_extension("TERMINAL");
 	
 	bt_subscribe(bt_kernel_messages::ProcessEnd);
+	bt_subscribe(bt_kernel_messages::MessageReceipt);
 	bt_msg_header msg = bt_recv(true);
 	while(true) {
 		if(msg.from == 0 && msg.source == 0 && msg.type == bt_kernel_messages::ProcessEnd) {
@@ -35,14 +36,23 @@ void Service(){
 			ss << "WM: PID: " << pid << " terminated." << endl;
 			bt_zero(ss.str().c_str());
 			clients.erase(pid);
-			//if(pid == root_pid) return;
-		} else if(msg.from == 0 && msg.source == terminal_ext_id) {
+			if(pid == root_pid) return;
+		}else if(msg.from == 0 && msg.source == 0 && msg.type == bt_kernel_messages::MessageReceipt) {
+			bt_msg_header omsg;
+			bt_msg_content(&msg, (void*)&omsg, sizeof(omsg));
+			stringstream ss;
+			ss << "WM: Reciept from: " << omsg.to << "." << endl;
+			bt_zero(ss.str().c_str());
+			if(clients.find(msg.to) != clients.end()){
+				clients.at(omsg.to)->SendNextEvent();
+			}
+		}else if(msg.from == 0 && msg.source == terminal_ext_id) {
 			bt_terminal_event event;
 			bt_msg_content(&msg, (void*)&event, sizeof(event));
 			HandleInput(event);
 		}else {
 			if(clients.find(msg.from) == clients.end()) {
-				Client *newclient = new Client();
+				Client *newclient = new Client(msg.from);
 				if(newclient) {
 					shared_ptr<Client> ptr(newclient);
 					clients.insert(pair<bt_pid_t, shared_ptr<Client>>(msg.from, ptr));

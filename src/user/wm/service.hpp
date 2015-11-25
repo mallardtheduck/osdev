@@ -5,6 +5,6 @@
 
 extern bt_handle stdin_handle;
 
-void Service();
+void Service(bt_pid_t root);
 
 #endif

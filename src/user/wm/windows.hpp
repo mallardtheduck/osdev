@@ -18,5 +18,6 @@ void DrawAndRefreshWindows(const Rect &r = Rect());
 void DrawAndRefreshWindows(const std::vector<Rect> &v);
 void WindowGrab(uint64_t id);
 void UnGrab();
+void BringToFront(std::shared_ptr<Window> win);
 
 #endif

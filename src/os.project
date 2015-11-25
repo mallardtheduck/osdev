@@ -311,6 +311,9 @@
     <VirtualDirectory Name="libwm">
       <File Name="user/libwm/Makefile"/>
       <File Name="user/libwm/main.cpp"/>
+      <File Name="user/libwm/libwm_internal.hpp"/>
+      <File Name="user/libwm/util.cpp"/>
+      <File Name="user/libwm/protocol.cpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">

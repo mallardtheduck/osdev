@@ -2,11 +2,16 @@
 #include <gds/libgds.h>
 #include <cstdio>
 #include <btos_stubs.h>
+#include <crt_support.h>
 #include "windows.hpp"
 #include "window.hpp"
 #include "service.hpp"
 
 using namespace std;
+
+static void set_env(const string &name, const string &value) {
+	bt_setenv(name.c_str(), value.c_str(), 0);
+}
 
 void InitCursor(){
 	uint32_t cursor = GDS_NewSurface(gds_SurfaceType::Bitmap, 12, 21);
@@ -33,22 +38,48 @@ shared_ptr<Window> CreateTestWin(string title, uint32_t x, uint32_t y, uint32_t 
 	return win;
 }
 
-int main(){
+int main(int argc, char **argv){
     cout << "BT/OS WM" << endl;
-	bt_vidmode vidmode;
-	vidmode.width = 640;
-	vidmode.height = 480;
-	vidmode.bpp = 4;
-	GDS_SetScreenMode(vidmode);
-	InitCursor();
-	DrawWindows();
-	RefreshScreen();
-	shared_ptr<Window> win1 = CreateTestWin("Window 1", 50, 50, 200, 100);
-	win1->SetZOrder(10);
-	shared_ptr<Window> win2 = CreateTestWin("Window 2", 100, 100, 250, 150);
-	win2->SetZOrder(20);
-	shared_ptr<Window> win3 = CreateTestWin("Window 3", 300, 200, 300, 250);
-	win3->SetZOrder(30);
-	Service();
+	bt_pid pid = bt_getpid();
+	char pid_str[64] = {0};
+	snprintf(pid_str, 64, "%i", pid);
+	set_env("WM_PID", pid_str);
+	if(argc > 1) {
+		int s_argc = 0;
+		char **s_argv = NULL;
+		if(argc > 2) {
+			s_argc = argc - 2;
+			s_argv = &argv[2];
+		}
+		char elxpath[BT_MAX_PATH];
+		btos_path_parse(argv[1], elxpath, BT_MAX_PATH);
+		bt_pid_t root_pid = 0;
+		root_pid = bt_spawn(elxpath, s_argc, s_argv);
+		if(root_pid) {
+			try {
+				bt_vidmode vidmode;
+				vidmode.width = 640;
+				vidmode.height = 480;
+				vidmode.bpp = 4;
+				GDS_SetScreenMode(vidmode);
+				InitCursor();
+				DrawWindows();
+				RefreshScreen();
+				shared_ptr<Window> win1 = CreateTestWin("Window 1", 50, 50, 200, 100);
+				win1->SetZOrder(10);
+				shared_ptr<Window> win2 = CreateTestWin("Window 2", 100, 100, 250, 150);
+				win2->SetZOrder(20);
+				shared_ptr<Window> win3 = CreateTestWin("Window 3", 300, 200, 300, 250);
+				win3->SetZOrder(30);
+				Service(root_pid);
+			} catch(exception &e) {
+				cout << "Exception:" << e.what() << endl;
+			}
+		} else {
+			cout << "Could not load " << argv[1] << endl;
+		}
+	} else {
+		cout << "Usage: " << argv[0] << " command-line." << endl;
+	}
     return 0;
 }

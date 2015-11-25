@@ -7,7 +7,6 @@ using namespace std;
 template<typename T> static T GetContent(const bt_msg_header &msg){
 	T ret;
 	bt_msg_content((bt_msg_header*)&msg, (void*)&ret, sizeof(ret));
-	bt_msg_ack((bt_msg_header*)&msg);
 	return ret;
 }
 
@@ -21,12 +20,20 @@ template<typename T> static void SendReply(const bt_msg_header &msg, const T &co
 	bt_send(reply);
 }
 
-Client::Client()
-{
+template<typename T> static void SendMessage(bt_pid_t to, wm_MessageType::Enum type, const T &content) {
+	bt_msg_header msg;
+	msg.type = type;
+	msg.to = to;
+	msg.flags = 0;
+	msg.length = sizeof(content);
+	msg.content = (void*)&content;
+	bt_send(msg);
 }
 
-Client::~Client()
-{
+Client::Client(bt_pid_t p): pid(p) 
+{}
+
+Client::~Client(){
 	for(auto win: windows){
 		RemoveWindow(win.first);
 	}
@@ -47,8 +54,13 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 			shared_ptr<Window> win(new Window(info.gds_id));
 			win->SetPosition({info.x, info.y});
 			win->SetTitle(info.title);
+			win->Subscribe(info.subscriptions);
+			win->SetOwner(shared_from_this());
 			uint64_t id = AddWindow(win);
 			windows.insert({id, win});
+			BringToFront(win);
+			DrawAndRefreshWindows(win->GetBoundingRect());
+			currentWindow =	win;
 			SendReply(msg, id);
 			break;
 		}
@@ -67,18 +79,23 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 				info.x = p.x;
 				info.y = p.y;
 				info.options = wm_WindowOptions::Visible;
+				info.subscriptions = currentWindow->Subscribe();
 				info.gds_id = currentWindow->GetSurface();
 			}else{
 				info.x = 0;
 				info.y = 0;
-				info.options = (wm_WindowOptions::Enum)0;
+				info.options = 0;
+				info.subscriptions = 0;
 				info.gds_id = 0;
 			}
 			SendReply(msg, info);
 			break;
 		}
 		case wm_RequestType::Subscribe:{
-			//TODO: Implement
+			if(currentWindow){
+				wm_WindowInfo info = GetContent<wm_WindowInfo>(msg);
+				currentWindow->Subscribe(info.subscriptions);
+			}
 			break;
 		}
 		case wm_RequestType::Update:{
@@ -98,8 +115,11 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 			}
 			break;
 		}
-		case wm_RequestType::ChangeFlags:{
-			//TODO: Implement
+		case wm_RequestType::ChangeOptions:{
+			if(currentWindow){
+				wm_WindowInfo info = GetContent<wm_WindowInfo>(msg);
+				currentWindow->SetOptions(info.options);
+			}
 			break;
 		}
 		case wm_RequestType::SetTitle:{
@@ -109,5 +129,20 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 			}
 			break;
 		}
+	}
+}
+
+void Client::SendEvent(const wm_Event &e){
+	eventQ.push(e);
+	if(!msgPending) SendNextEvent();
+}
+
+void Client::SendNextEvent(){
+	if(eventQ.size()){
+		SendMessage(pid, wm_MessageType::Event, eventQ.front());
+		eventQ.pop();
+		msgPending = true;
+	}else{
+		msgPending = false;
 	}
 }
