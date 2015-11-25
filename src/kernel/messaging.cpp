@@ -6,7 +6,7 @@ using namespace btos_api;
 
 static vector<bt_msg_header> *msg_q;
 static uint64_t id_counter=0;
-static lock msg_lock;
+lock msg_lock;
 
 bool msg_get(uint64_t id, bt_msg_header &msg);
 void msg_send_receipt(const bt_msg_header &omsg);
@@ -39,7 +39,7 @@ uint64_t msg_send(bt_msg_header &msg){
             return 0;
         }
         {
-            hold_lock hl(msg_lock);
+            hold_lock hl(msg_lock, false);
             for (size_t i = 0; i < msg_q->size(); ++i) {
                 if ((*msg_q)[i].id == prev.id) {
                     (*msg_q)[i].replied = true;
@@ -106,7 +106,7 @@ bt_msg_header msg_recv_block(pid_t pid){
 }
 
 bool msg_get(uint64_t id, bt_msg_header &msg){
-    hold_lock hl(msg_lock);
+    hold_lock hl(msg_lock, false);
     for(size_t i=0; i<msg_q->size(); ++i){
         if((*msg_q)[i].id==id){
             msg=(*msg_q)[i];
@@ -190,6 +190,7 @@ void msg_send_event(bt_kernel_messages::Enum message, void *content, size_t size
 			msg.source=0;
 			msg.from=0;
 			msg.flags=0;
+			msg.critical=false;
 			memcpy(msg.content, content, size);
 			msg_send(msg);
 		}
@@ -207,6 +208,7 @@ void msg_send_receipt(const bt_msg_header &omsg){
 			msg.source=0;
 			msg.from=0;
 			msg.flags=0;
+			msg.critical=false;
 			memcpy(msg.content, &omsg, sizeof(omsg));
 			((bt_msg_header*)msg.content)->content=0;
 			msg_send(msg);

@@ -94,6 +94,16 @@ extern "C" void WM_Update(){
 	SendMessage(wm_RequestType::Update, 0, NULL, false);
 }
 
+extern "C" void WM_UpdateRect(int32_t x, int32_t y, uint32_t w, uint32_t h){
+	wm_Rect r;
+	r.x = x; r.y = y; r.w = w; r.h = h;
+	SendMessage(wm_RequestType::UpdateRect, r, false);
+}
+
+void WM_UpdateRect(wm_Rect r){
+	SendMessage(wm_RequestType::UpdateRect, r, false);
+}
+
 extern "C" void WM_ReplaceSurface(uint64_t gds_id){
 	SendMessage(wm_RequestType::ReplaceSurface, gds_id, false);
 }

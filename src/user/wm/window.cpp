@@ -53,6 +53,10 @@ Point Window::GetPosition(){
 	return pos;
 }
 
+Point Window::GetContentPosition(){
+	return {pos.x + GetMetric(BorderWidth), pos.y + GetMetric(TitleBarSize)};
+}
+
 void Window::SetTitle(string ntitle){
 	title=ntitle;
 }

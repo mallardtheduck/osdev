@@ -606,6 +606,8 @@ static bool proc_msg_blockcheck(void *p){
     return !get_lock_owner(proc->ulock) && !proc->msg_buffers.has_key(header.to);
 }
 
+extern lock msg_lock;
+
 uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 	bool again=false;
 	do {
@@ -622,10 +624,12 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 		}
 		bool proc_ok = try_take_lock_recursive(proc->ulock);
 		bool to_ok = try_take_lock_recursive(to->ulock);
+		bool msg_ok = try_take_lock_recursive(msg_lock);
 		release_lock(proc_lock);
-		if (!proc_ok || !to_ok || proc->msg_buffers.has_key(header.to)) {
+		if (!proc_ok || !to_ok || !msg_ok || proc->msg_buffers.has_key(header.to)) {
 			if(proc_ok) release_lock(proc->ulock);
 			if(to_ok) release_lock(to->ulock);
+			if(msg_ok) release_lock(msg_lock);
 			again=true;
 			continue;
 		}
@@ -635,6 +639,7 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 		uint64_t ret = msg_send(header);
 		release_lock(proc->ulock);
 		release_lock(to->ulock);
+		release_lock(msg_lock);
 		return ret;
 	} while(again);
 	return 0;

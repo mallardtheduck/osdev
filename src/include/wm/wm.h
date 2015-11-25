@@ -53,6 +53,12 @@ struct wm_WindowInfo{
 };
 BT_STRUCT_TYPE(wm_WindowInfo);
 
+struct wm_Rect{
+	int32_t x, y;
+	uint32_t w, h;
+};
+BT_STRUCT_TYPE(wm_Rect);
+
 struct wm_Event{
 	ENUM_NAME(wm_EventType) type;
 	uint64_t window_id;
@@ -77,10 +83,11 @@ ENUM_START(wm_RequestType)
 	ENUM_SET(wm_RequestType, WindowInfo, 		4),
 	ENUM_SET(wm_RequestType, Subscribe, 		5),
 	ENUM_SET(wm_RequestType, Update, 			6),
-	ENUM_SET(wm_RequestType, ReplaceSurface,	7),
-	ENUM_SET(wm_RequestType, MoveWindow, 		8),
-	ENUM_SET(wm_RequestType, ChangeOptions,		9),
-	ENUM_SET(wm_RequestType, SetTitle,			10),
+	ENUM_SET(wm_RequestType, UpdateRect,		7),
+	ENUM_SET(wm_RequestType, ReplaceSurface,	8),
+	ENUM_SET(wm_RequestType, MoveWindow, 		9),
+	ENUM_SET(wm_RequestType, ChangeOptions,		10),
+	ENUM_SET(wm_RequestType, SetTitle,			11),
 ENUM_END
 ENUM_TYPE(wm_RequestType)
 

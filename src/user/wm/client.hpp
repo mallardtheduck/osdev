@@ -6,7 +6,7 @@
 #include <btos_stubs.h>
 #include <map>
 #include <memory>
-#include <queue>
+#include <deque>
 #include <wm/wm.h>
 
 class Window;
@@ -16,7 +16,7 @@ private:
 	bool msgPending = false;
 	bt_pid_t pid;
 	std::map<uint64_t, std::shared_ptr<Window>> windows;
-	std::queue<wm_Event> eventQ;
+	std::deque<wm_Event> eventQ;
 	
 	std::shared_ptr<Window> currentWindow;
 public:

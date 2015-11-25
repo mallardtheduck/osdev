@@ -40,10 +40,7 @@ void Service(bt_pid_t root_pid){
 		}else if(msg.from == 0 && msg.source == 0 && msg.type == bt_kernel_messages::MessageReceipt) {
 			bt_msg_header omsg;
 			bt_msg_content(&msg, (void*)&omsg, sizeof(omsg));
-			stringstream ss;
-			ss << "WM: Reciept from: " << omsg.to << "." << endl;
-			bt_zero(ss.str().c_str());
-			if(clients.find(msg.to) != clients.end()){
+			if(clients.find(omsg.to) != clients.end()){
 				clients.at(omsg.to)->SendNextEvent();
 			}
 		}else if(msg.from == 0 && msg.source == terminal_ext_id) {

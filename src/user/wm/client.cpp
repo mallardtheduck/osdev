@@ -2,6 +2,9 @@
 #include "client.hpp"
 #include "windows.hpp"
 
+#include <sstream>
+#include <algorithm>
+
 using namespace std;
 
 template<typename T> static T GetContent(const bt_msg_header &msg){
@@ -104,6 +107,16 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 			}
 			break;
 		}
+		case wm_RequestType::UpdateRect:{
+			if(currentWindow){
+				wm_Rect r = GetContent<wm_Rect>(msg);
+				Rect rect = {r.x, r.y, r.w, r.h};
+				Point p = currentWindow->GetContentPosition();
+				rect = Reoriginate(rect, {-p.x, -p.y});
+				DrawAndRefreshWindows(rect);
+			}
+			break;
+		}
 		case wm_RequestType::ReplaceSurface:{
 			//TODO: Implement
 			break;
@@ -133,14 +146,18 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 }
 
 void Client::SendEvent(const wm_Event &e){
-	eventQ.push(e);
+	if(e.type == wm_EventType::PointerMove && msgPending){
+		auto i = find_if(eventQ.begin(), eventQ.end(), [](const wm_Event &e){return e.type == wm_EventType::PointerMove;});
+		if(i != eventQ.end()) eventQ.erase(i);
+	}
+	eventQ.push_back(e);
 	if(!msgPending) SendNextEvent();
 }
 
 void Client::SendNextEvent(){
 	if(eventQ.size()){
 		SendMessage(pid, wm_MessageType::Event, eventQ.front());
-		eventQ.pop();
+		eventQ.pop_front();
 		msgPending = true;
 	}else{
 		msgPending = false;
