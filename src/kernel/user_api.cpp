@@ -377,6 +377,7 @@ USERAPI_HANDLER(BT_SEND){
 		uint64_t &ret=*(uint64_t*)regs->ecx;
 		header.flags=header.flags | btos_api::bt_msg_flags::UserSpace;
 		header.from=proc_current_pid;
+		header.critical=false;
 		if(header.length > btos_api::BT_MSG_MAX) return;
 		ret=proc_send_message(header);
 	}
