@@ -11,6 +11,7 @@ private:
     uint64_t input_thread_id;
     uint64_t pointer_thread_id;
 	uint64_t pointer_draw_thread_id;
+	bool pointer_draw_running;
     lock backend_lock;
     uint64_t active;
     bool pointer_visible, old_pointer_visible;
