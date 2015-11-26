@@ -135,6 +135,13 @@ void Window::KeyInput(uint32_t key){
 	}
 }
 
+void DrawAndRefreshRectEdges(int32_t x, int32_t y, uint32_t w, uint32_t h, uint32_t lineWidth){
+	if(x >= 0) DrawAndRefreshWindows({x, y, lineWidth, h});
+	if(y >= 0) DrawAndRefreshWindows({x, y, w, lineWidth});
+	DrawAndRefreshWindows({x + (int32_t)w - 1, y, lineWidth, h});
+	DrawAndRefreshWindows({x, y + (int32_t)h - 1, w, lineWidth});
+}
+
 void RefreshRectEdges(int32_t x, int32_t y, uint32_t w, uint32_t h, uint32_t lineWidth){
 	if(x >= 0) RefreshScreen({x, y, lineWidth, h});
 	if(y >= 0) RefreshScreen({x, y, w, lineWidth});
@@ -175,11 +182,9 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 				DrawAndRefreshWindows(TileRects(newrect, oldrect));
 			}else{
 				if(newpos.x == pos.x && newpos.y == pos.y) return;
-				Rect winRect = {last_drag_pos.x, last_drag_pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize)};
-				DrawWindows(winRect);
 				GDS_SelectScreen();
 				DrawBorder(newpos.x, newpos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize));
-				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
+				DrawAndRefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
 				last_drag_pos = newpos;
 				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
 			}
