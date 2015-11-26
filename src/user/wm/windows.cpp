@@ -42,7 +42,9 @@ uint64_t AddWindow(shared_ptr<Window> win){
 }
 
 void RemoveWindow(uint64_t id){
+	Rect bounds = GetWindow(id)->GetBoundingRect();
 	windows.erase(id);
+	DrawAndRefreshWindows(bounds);
 }
 
 shared_ptr<Window> GetWindow(uint64_t id){
@@ -70,10 +72,24 @@ void DrawWindows(const Rect &r){
 		gds_SurfaceInfo info = GDS_SurfaceInfo();
 		GDS_Box(0, 0, info.w, info.h, GetColour(BackgroundColour), GetColour(BackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	}
+	shared_ptr<Window> lastWin;
+	bool drawing = true;
+	if(rect){
+		for(auto i = wins.rbegin(); i != wins.rend(); ++i){
+			if(Contains((*i)->GetBoundingRect(), r)) {
+				lastWin = *i;
+				drawing = false;
+				break;
+			}
+		}
+	}
 	shared_ptr<Window> awin = activeWindow.lock();
 	for(auto w: wins){
-		if(rect && Overlaps(r, w->GetBoundingRect())) w->Draw(w == awin, r);
-		else if(!rect) w->Draw(w == awin);
+		if(rect && w == lastWin) drawing = true;
+		if(drawing){
+			if(rect && Overlaps(r, w->GetBoundingRect())) w->Draw(w == awin, r);
+			else if(!rect) w->Draw(w == awin);
+		}
 	}
 }
 
@@ -109,6 +125,7 @@ shared_ptr<Window> GetWindowAt(uint32_t x, uint32_t y){
 	shared_ptr<Window> ret;
 	for(auto w = sortedWindows.rbegin(); w != sortedWindows.rend(); ++w){
 		shared_ptr<Window> win = w->lock();
+		if(!win) continue;
 		Rect wrect = win->GetBoundingRect();
 		if(InRect(x, y, wrect)) return win;
 	}
@@ -164,7 +181,11 @@ void HandleInput(const bt_terminal_event &event){
 			shared_ptr<Window> old = awin;
 			activeWindow = win;
 			BringToFront(win);
-			DrawAndRefreshWindows(TileRects(win->GetBoundingRect(), old->GetBoundingRect()));
+			if(old){
+				DrawAndRefreshWindows(TileRects(win->GetBoundingRect(), old->GetBoundingRect()));
+			}else{
+				DrawAndRefreshWindows(win->GetBoundingRect());
+			}
 		}
 		win->PointerInput(event.pointer);
 	}

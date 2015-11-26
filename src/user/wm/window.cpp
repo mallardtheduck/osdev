@@ -9,14 +9,12 @@
 
 using namespace std;
 
-Window::Window(uint64_t surface_id) : gds_id(surface_id)
-{
+Window::Window(uint64_t surface_id) : gds_id(surface_id){
 	GDS_SelectSurface(gds_id);
 	gds_info = GDS_SurfaceInfo();
 }
 
-Window::~Window()
-{
+Window::~Window(){
 }
 
 void Window::Draw(bool active, bool content, uint64_t target){
