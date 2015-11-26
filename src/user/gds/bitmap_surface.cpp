@@ -3,6 +3,8 @@
 
 #include <sstream>
 
+using namespace std;
+
 BitmapSurface::BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale) {
 	if(indexed) {
 		image.reset(new GD::Image((int)w, (int)h, !indexed));
@@ -19,6 +21,11 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 			break;
 
 		case gds_DrawingOpType::Line:
+			//Workaround for hang in libgd.
+			if(op.Line.x1 > op.Line.x2){
+				swap(op.Line.x1, op.Line.x2);
+				swap(op.Line.y1, op.Line.y2);
+			}
 			image->Line(op.Line.x1, op.Line.y1, op.Line.x2, op.Line.y2, op.Common.lineColour);
 			break;
 
