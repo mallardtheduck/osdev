@@ -195,6 +195,8 @@ static bool proc_threads_blockcheck(void *p){
 
 void proc_end(pid_t pid) {
     if(pid==0) return;
+	//This is not in the "right" place, but cannot be done once we have the lock.
+	debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
 	take_lock_exclusive(proc_lock);
 	if (!proc_get(pid)) return;
 	pid_t curpid = proc_current_pid;
@@ -205,7 +207,6 @@ void proc_end(pid_t pid) {
 		proc_wait(pid);
 		return;
 	}
-	debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
 	dbgpf("PROC: Ending process %i.\n", (int) pid);
 	proc_set_status(proc_status::Ending, pid);
 	proc_process *proc = proc_get(pid);
