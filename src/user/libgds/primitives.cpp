@@ -4,7 +4,7 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-extern "C" void GDS_Dot(uint32_t x, uint32_t y, uint32_t colour, uint8_t size){
+extern "C" void GDS_Dot(int32_t x, int32_t y, uint32_t colour, uint8_t size){
 	gds_DrawingOp op;
 	op.type = gds_DrawingOpType::Dot;
 	op.Dot.x = x; op.Dot.y = y;
@@ -13,7 +13,7 @@ extern "C" void GDS_Dot(uint32_t x, uint32_t y, uint32_t colour, uint8_t size){
 	GDS_AddDrawingOp(op);
 }
 
-extern "C" void GDS_Line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t colour, uint8_t width, uint32_t style){
+extern "C" void GDS_Line(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t colour, uint8_t width, uint32_t style){
 	gds_DrawingOp op;
 	op.type = gds_DrawingOpType::Line;
 	op.Line.x1 = x1; op.Line.y1 = y1;
@@ -24,7 +24,7 @@ extern "C" void GDS_Line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uin
 	GDS_AddDrawingOp(op);
 }
 
-extern "C" void GDS_Box(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t lineColour, uint32_t fillColour, uint8_t lineWidth, uint32_t lineStyle, uint32_t fillStyle){
+extern "C" void GDS_Box(int32_t x, int32_t y, uint32_t w, uint32_t h, uint32_t lineColour, uint32_t fillColour, uint8_t lineWidth, uint32_t lineStyle, uint32_t fillStyle){
 	gds_DrawingOp op;
 	op.type = gds_DrawingOpType::Box;
 	op.Box.x = x; op.Box.y = y;
@@ -37,7 +37,7 @@ extern "C" void GDS_Box(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t
 	GDS_AddDrawingOp(op);
 }
 
-extern "C" void GDS_Ellipse(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t lineColour, uint32_t fillColour, uint8_t lineWidth, uint32_t lineStyle, uint32_t fillStyle){
+extern "C" void GDS_Ellipse(int32_t x, int32_t y, uint32_t w, uint32_t h, uint32_t lineColour, uint32_t fillColour, uint8_t lineWidth, uint32_t lineStyle, uint32_t fillStyle){
 	gds_DrawingOp op;
 	op.type = gds_DrawingOpType::Ellipse;
 	op.Ellipse.x = x; op.Ellipse.y = y;
@@ -50,7 +50,7 @@ extern "C" void GDS_Ellipse(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint
 	GDS_AddDrawingOp(op);
 }
 
-extern "C" void GDS_Arc(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t a1, uint32_t a2, uint32_t lineColour, uint32_t fillColour, uint8_t lineWidth, uint32_t lineStyle, uint32_t fillStyle){
+extern "C" void GDS_Arc(int32_t x, int32_t y, uint32_t w, uint32_t h, uint32_t a1, uint32_t a2, uint32_t lineColour, uint32_t fillColour, uint8_t lineWidth, uint32_t lineStyle, uint32_t fillStyle){
 	gds_DrawingOp op;
 	op.type = gds_DrawingOpType::Arc;
 	op.Arc.x = x; op.Arc.y = y;
@@ -83,7 +83,7 @@ extern "C" void GDS_Polygon(size_t points, gds_Point *pointData, bool closed,  u
 	delete params;
 }
 
-extern "C" void GDS_Text(uint32_t x, uint32_t y, const char *text, uint32_t fontID, uint32_t size, uint32_t colour, uint8_t style){
+extern "C" void GDS_Text(int32_t x, int32_t y, const char *text, uint32_t fontID, uint32_t size, uint32_t colour, uint8_t style){
 	gds_DrawingOp op;
 	op.type = gds_DrawingOpType::Text;
 	op.Text.x = x;
@@ -102,7 +102,7 @@ extern "C" void GDS_Text(uint32_t x, uint32_t y, const char *text, uint32_t font
 	delete params;
 }
 
-extern "C" void GDS_Blit(uint64_t src, uint32_t srcX, uint32_t srcY, uint32_t srcW, uint32_t srcH, uint32_t dstX, uint32_t dstY, uint32_t dstW, uint32_t dstH, uint32_t scale, uint32_t flags){
+extern "C" void GDS_Blit(uint64_t src, uint32_t srcX, uint32_t srcY, uint32_t srcW, uint32_t srcH, int32_t dstX, int32_t dstY, uint32_t dstW, uint32_t dstH, uint32_t scale, uint32_t flags){
 	gds_DrawingOp op;
 	op.type = gds_DrawingOpType::Blit;
 	op.Blit.src = src;

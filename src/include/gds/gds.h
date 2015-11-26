@@ -95,19 +95,22 @@ struct gds_DrawingOp {
 	ENUM_NAME(gds_DrawingOpType) type;
 	union{
 		struct{
-			uint32_t x, y;
+			int32_t x, y;
 		} Dot;
 		struct{
-			uint32_t x1, y1, x2, y2;
+			int32_t x1, y1, x2, y2;
 		} Line;
 		struct{
-			uint32_t x, y, w, h;
+			int32_t x, y;
+			uint32_t w, h;
 		} Box;
 		struct{
-			uint32_t x, y, w, h;
+			int32_t x, y;
+			uint32_t w, h;
 		} Ellipse;
 		struct{
-			uint32_t x, y, w, h, a1, a2;
+			int32_t x, y;
+			uint32_t w, h, a1, a2;
 		} Arc;
 		struct{
 			bool closed;
@@ -116,7 +119,7 @@ struct gds_DrawingOp {
 			size_t points;
 		} Spline;*/
 		struct{
-			uint32_t x, y;
+			int32_t x, y;
 			uint32_t fontID;
 			uint32_t size;
 			uint8_t style;
@@ -125,7 +128,7 @@ struct gds_DrawingOp {
 			uint64_t src;
 			uint32_t srcX, srcY;
 			uint32_t srcW, srcH;
-			uint32_t dstX, dstY;
+			int32_t dstX, dstY;
 			uint32_t dstW, dstH;
 			uint32_t scale;
 			uint32_t flags;
@@ -179,7 +182,7 @@ typedef struct gds_ScreenUpdateRect gds_ScreenUpdateRect;
 #endif
 
 struct gds_Point{
-	uint32_t x, y;
+	int32_t x, y;
 };
 #ifndef __cplusplus
 typedef struct gds_Point gds_Point;
