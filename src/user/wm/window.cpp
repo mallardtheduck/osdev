@@ -54,7 +54,7 @@ void Window::Draw(bool active, const Rect &r){
 		GDS_Blit(gds_title_id, titleSrc.x, titleSrc.y, titleSrc.w, titleSrc.h, titleDst.x, titleDst.y, titleDst.w, titleDst.h);
 		drew = true;
 	}
-	DrawBorder(pos.x, pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize) + GetMetric(BorderWidth));
+	DrawBorder(pos.x, pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize) + GetMetric(BorderWidth), r);
 	last_active = active;
 	if(!drew){
 		stringstream ss;
@@ -301,9 +301,9 @@ void Window::RefreshTitleBar(bool force){
 	if(UpdateTitleBar(force)){
 		GDS_SelectScreen();
 		GDS_Blit(gds_title_id, 0, 0, gds_titleinfo.w, gds_titleinfo.h, pos.x, pos.y, gds_titleinfo.w, gds_titleinfo.h);
-		DrawBorder(pos.x, pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize));
 		Rect r = GetBoundingRect();
 		r.h = GetMetric(TitleBarSize);
+		DrawBorder(pos.x, pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize), r);
 		RefreshScreen(r);
 	}
 }

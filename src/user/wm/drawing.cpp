@@ -79,6 +79,25 @@ uint64_t DrawTitleBar(uint32_t w, string title, bool active, WindowArea pressed)
 	return ret;
 }
 
-void DrawBorder(uint32_t x, uint32_t y, uint32_t w, uint32_t h){
-	GDS_Box(x, y, w, h, GetColour(BorderColour), 1);
+void DrawBorderHorzLine(int32_t x1, int32_t y, int32_t x2, const Rect &bounds){
+	if((x1 < bounds.x && x2 < bounds.x) || (x1 >= bounds.x + (int32_t)bounds.w && x2 >= bounds.x + (int32_t)bounds.w) || y < bounds.y || y >= bounds.y + (int32_t)bounds.h) return;
+	if(x1 > x2) swap(x1, x2);
+	if(x1 < bounds.x) x1 = bounds.x;
+	if(x2 > bounds.x + (int32_t)bounds.w) x2 = bounds.x + bounds.w;
+	GDS_Line(x1, y, x2, y, GetColour(BorderColour), 1);
+}
+
+void DrawBorderVertLine(int32_t x, int32_t y1, int32_t y2, const Rect &bounds){
+	if((y1 < bounds.y && y2 < (int32_t)bounds.y) || (y1 >= bounds.y + (int32_t)bounds.h && y2 >= bounds.y + (int32_t)bounds.h) || x < bounds.x || x > bounds.x + (int32_t)bounds.w) return;
+	if(y1 > y2) swap(y1, y2);
+	if(y1 < bounds.y) y1 = bounds.y;
+	if(y2 > bounds.y + (int32_t)bounds.h) y2 = bounds.y + bounds.h;
+	GDS_Line(x, y1, x, y2, GetColour(BorderColour), 1);
+}
+
+void DrawBorder(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const Rect &bounds){
+	DrawBorderHorzLine(x, y, x + w - 1, bounds);
+	DrawBorderHorzLine(x, y + h - 1, x + w - 1, bounds);
+	DrawBorderVertLine(x, y, y + h - 1, bounds);
+	DrawBorderVertLine(x + w - 1, y, y + h - 1, bounds);
 }
