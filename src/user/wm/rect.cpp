@@ -30,7 +30,7 @@ bool InRect(const Point &p, const Rect &r){
 }
 
 bool Overlaps(const Rect &r1, const Rect &r2){
-	return !(r1.x + (int32_t)r1.w < r2.x || r1.y + (int32_t)r1.h < r2.y || r1.x > r2.x + (int32_t)r2.w || r1.y > r2.y + (int32_t)r2.h);
+	return !(r1.x + (int32_t)r1.w <= r2.x || r1.y + (int32_t)r1.h <= r2.y || r1.x >= r2.x + (int32_t)r2.w || r1.y >= r2.y + (int32_t)r2.h);
 }
 
 bool Contains(const Rect &r1, const Rect &r2){
@@ -58,7 +58,7 @@ vector<Rect> SplitRect(const Rect &r, const Point &p){
 	ret.push_back(Rect(p.x, r.y, (r.x + r.w) - p.x, p.y - r.y));
 	ret.push_back(Rect(r.x, p.y, p.x - r.x, (r.y + r.h) - p.y));
 	ret.push_back(Rect(p.x, p.y, (r.x + r.w) - p.x, (r.y + r.h) - p.y));
-	remove_if(ret.begin(), ret.end(), [](Rect &r){ return r.w == 0 || r.h == 0; });
+	remove_if(ret.begin(), ret.end(), [](const Rect &r){ return r.w == 0 || r.h == 0; });
 	return ret;
 }
 
@@ -103,4 +103,10 @@ vector<Rect> TileRects(const Rect &r1, const Rect &r2){
 		}
 	}
 	return ret;
+}
+
+Rect Constrain(Rect r, const Rect &bounds){
+	if(r.x + r.w >= bounds.w) r.w = bounds.w - r.x;
+	if(r.y + r.h >= bounds.h) r.h = bounds.h - r.y;
+	return r;
 }

@@ -72,7 +72,8 @@ void DrawWindows(const Rect &r){
 	}
 	shared_ptr<Window> awin = activeWindow.lock();
 	for(auto w: wins){
-		if(!rect || Overlaps(r, w->GetBoundingRect())) w->Draw(w == awin);
+		if(rect && Overlaps(r, w->GetBoundingRect())) w->Draw(w == awin, r);
+		else if(!rect) w->Draw(w == awin);
 	}
 }
 
@@ -83,8 +84,7 @@ void DrawWindows(const vector<Rect> &v){
 	shared_ptr<Window> awin = activeWindow.lock();
 	for(auto w: wins){
 		for(auto r: v) if(Overlaps(r, w->GetBoundingRect())){
-			w->Draw(w==awin);
-			break;
+			w->Draw(w==awin, r);
 		}
 	}
 }

@@ -25,16 +25,47 @@ void Window::Draw(bool active, bool content, uint64_t target){
 		pos.x = 0; pos.y = 0;
 	}
 	this->active = active;
-	GDS_SelectSurface(gds_id);
 	if(!target) GDS_SelectScreen();
 	else GDS_SelectSurface(target);
 	if(content) GDS_Blit(gds_id, 0, 0, gds_info.w, gds_info.h, pos.x + GetMetric(BorderWidth), pos.y + GetMetric(TitleBarSize), gds_info.w, gds_info.h);
-	UpdateTitleBar();
+	RefreshTitleBar();
 	if(!target) GDS_SelectScreen();
 	else GDS_SelectSurface(target);
 	GDS_Blit(gds_title_id, 0, 0, gds_titleinfo.w, gds_titleinfo.h, pos.x, pos.y, gds_titleinfo.w, gds_titleinfo.h);
 	DrawBorder(pos.x, pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize) + GetMetric(BorderWidth));
 	last_active = active;
+}
+
+void Window::Draw(bool active, const Rect &r){
+	this->active = active;
+	GDS_SelectScreen();
+	Point cpos = GetContentPosition();
+	bool drew = false;
+	if(Overlaps(r, {cpos.x, cpos.y, gds_info.w, gds_info.h})){
+		Rect contentDst = {max(r.x, cpos.x), max(r.y, cpos.y), min((cpos.x + gds_info.w), (r.x + r.w)) - max(r.x, cpos.x), min((cpos.y + gds_info.h), (r.y + r.h)) - max(r.y, cpos.y)};
+		Rect contentSrc = Reoriginate(contentDst, cpos);
+		GDS_Blit(gds_id, contentSrc.x, contentSrc.y, contentSrc.w, contentSrc.h, contentDst.x, contentDst.y, contentDst.w, contentDst.h);
+		drew = true;
+	}
+	if(Overlaps(r, {pos.x, pos.y, gds_titleinfo.w, gds_titleinfo.h})){
+		RefreshTitleBar();
+		Rect titleDst = {max(r.x, pos.x), max(r.y, pos.y), min((pos.x + gds_titleinfo.w), (r.x + r.w)) - max(r.x, pos.x), min((pos.y + gds_titleinfo.h), (r.y + r.h)) - max(r.y, pos.y)};
+		Rect titleSrc = Reoriginate(titleDst, pos);
+		GDS_Blit(gds_title_id, titleSrc.x, titleSrc.y, titleSrc.w, titleSrc.h, titleDst.x, titleDst.y, titleDst.w, titleDst.h);
+		drew = true;
+	}
+	DrawBorder(pos.x, pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize) + GetMetric(BorderWidth));
+	last_active = active;
+	if(!drew){
+		stringstream ss;
+		ss << "WM: Draw with no overlap!" << endl;
+		ss << "WM: Draw rect: (" << r.x << ", " << r.y << ") " << r.w << " x " << r.h << "." << endl;
+		Rect bounding = GetBoundingRect();
+		ss << "WM: Bounding rect: (" << bounding.x << ", " << bounding.y << ") " << bounding.w << " x " << bounding.h << "." << endl;
+		ss << "WM: Content rect: (" << cpos.x << ", " << cpos.y << ") " << gds_info.w << " x " << gds_info.h << "." << endl;
+		ss << "WM: Content rect: (" << pos.x << ", " << pos.y << ") " << gds_titleinfo.w << " x " << gds_titleinfo.h << "." << endl;
+		bt_zero(ss.str().c_str());
+	}
 }
 
 void Window::SetPosition(Point p){
@@ -83,12 +114,10 @@ uint32_t Window::GetZOrder(){
 
 Rect Window::GetBoundingRect(){
 	Rect ret;
-	ret.x = pos.x;
-	ret.y = pos.y;
-	GDS_SelectSurface(gds_id);
-	gds_SurfaceInfo info = GDS_SurfaceInfo();
-	ret.w = info.w + (2 * GetMetric(BorderWidth));
-	ret.h = info.h + GetMetric(BorderWidth) + GetMetric(TitleBarSize);
+	ret.x = pos.x - 1;
+	ret.y = pos.y - 1;
+	ret.w = gds_info.w + (2 * GetMetric(BorderWidth)) + 1;
+	ret.h = gds_info.h + GetMetric(BorderWidth) + GetMetric(TitleBarSize) + 1;
 	return ret;
 }
 
@@ -120,18 +149,19 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 		if(pevent.type == bt_terminal_pointer_event_type::ButtonUp){
 			UnGrab();
 			dragging = false;
-			GDS_SelectSurface(gds_drag_id);
-			GDS_DeleteSurface();
-			gds_drag_id = 0;
-			SetPosition(newpos);
-			if(!GetMetric(FullWindowDrag)){
-				Rect winRect = {last_drag_pos.x, last_drag_pos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize)};
+			if(GetMetric(FullWindowDrag)){
+				GDS_SelectSurface(gds_drag_id);
+				GDS_DeleteSurface();
+				gds_drag_id = 0;
+			}else{
+				Rect winRect = {last_drag_pos.x, last_drag_pos.y, gds_info.w + (2 * GetMetric(BorderWidth)) + 10, gds_info.h + GetMetric(TitleBarSize)};
 				DrawWindows(winRect);
 				GDS_SelectScreen();
-				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
+				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
 			}
+			SetPosition(newpos);
 		}else{
-			if(GetMetric(FullWindowDrag)){;
+			if(GetMetric(FullWindowDrag)){
 				if(!gds_drag_id){
 					gds_drag_id = GDS_NewSurface(gds_SurfaceType::Bitmap, gds_info.w, gds_info.h + GetMetric(TitleBarSize));
 					Draw(active, true, gds_drag_id);
@@ -145,13 +175,13 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 				DrawAndRefreshWindows(TileRects(newrect, oldrect));
 			}else{
 				if(newpos.x == pos.x && newpos.y == pos.y) return;
-				Rect winRect = {last_drag_pos.x, last_drag_pos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize)};
+				Rect winRect = {last_drag_pos.x, last_drag_pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize)};
 				DrawWindows(winRect);
 				GDS_SelectScreen();
 				DrawBorder(newpos.x, newpos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize));
-				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
+				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
 				last_drag_pos = newpos;
-				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
+				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
 			}
 		}
 	}
