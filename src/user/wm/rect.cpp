@@ -21,7 +21,7 @@ bool operator<(const Rect &r1, const Rect &r2){
 }
 
 bool InRect(int32_t x, int32_t y, const Rect &r){
-	if(x >= r.x && x < (r.x + (int32_t)r.w) && y >= r.y && y < (r.y + (int32_t)r.h)) return true;
+	if(x >= r.x && x < (r.x + (int32_t)r.w - 1) && y > r.y && y < (r.y + (int32_t)r.h) - 1) return true;
 	else return false;
 }
 
@@ -30,7 +30,7 @@ bool InRect(const Point &p, const Rect &r){
 }
 
 bool Overlaps(const Rect &r1, const Rect &r2){
-	return !(r1.x + (int32_t)r1.w <= r2.x || r1.y + (int32_t)r1.h <= r2.y || r1.x >= r2.x + (int32_t)r2.w || r1.y >= r2.y + (int32_t)r2.h);
+	return !(r1.x + (int32_t)r1.w - 1 < r2.x || r1.y + (int32_t)r1.h - 1 < r2.y || r1.x > r2.x + (int32_t)r2.w - 1 || r1.y > r2.y + (int32_t)r2.h - 1);
 }
 
 bool Contains(const Rect &r1, const Rect &r2){

@@ -132,8 +132,8 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 	bool hide_cursor = false;	
 	if (!x && !y && !w && !h) {
-		w = current_mode.width - 1;
-		h = current_mode.height - 1;
+		w = current_mode.width;
+		h = current_mode.height;
 	}
 	if(cursor_on){
 		hide_cursor = true;
@@ -154,11 +154,11 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 	}
 	if(y > current_mode.height) return;
 	if(x > current_mode.width) return;
-	if(x + w >= current_mode.width) w = current_mode.width - x - 1;
-	if(y + h >= current_mode.height) h = current_mode.height - y - 1;
-	for(uint32_t row=y; row <= y+h; ++row){
+	if(x + w > current_mode.width) w = current_mode.width - x;
+	if(y + h > current_mode.height) h = current_mode.height - y;
+	for(uint32_t row=y; row < y+h; ++row){
 		if(row > current_mode.height) break;
-		for(uint32_t col=x; col <= x+w; ++col){
+		for(uint32_t col=x; col < x+w; ++col){
 			if(col > current_mode.width) break;
 			uint32_t value;
 			if(image->IsTrueColor()) {
@@ -175,7 +175,7 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 		bt_fseek(fh, 0, false);
 		bt_fwrite(fh, buffersize, (char *) buffer);
 	}else{
-		for(size_t row=y; row <= y+h; ++row){
+		for(size_t row=y; row < y+h; ++row){
 			size_t start= GetBytePos(x, row);
 			if(start > buffersize) break;
 			size_t end= GetBytePos(x+w, row, true) + BytesPerPixel() + 2;

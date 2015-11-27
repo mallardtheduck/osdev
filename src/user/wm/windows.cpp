@@ -85,6 +85,7 @@ void DrawWindows(const Rect &r){
 	}
 	shared_ptr<Window> awin = activeWindow.lock();
 	for(auto w: wins){
+		if(!w->GetVisible()) continue;
 		if(rect && w == lastWin) drawing = true;
 		if(drawing){
 			if(rect && Overlaps(r, w->GetBoundingRect())) w->Draw(w == awin, r);

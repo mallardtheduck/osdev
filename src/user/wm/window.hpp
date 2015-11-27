@@ -75,7 +75,7 @@ public:
 	void Hide();
 	void Expand();
 	
-	void SetVisible(bool v);
+	void SetVisible(bool v, bool update = true);
 	bool GetVisible();
 	void SetOwner(std::weak_ptr<Client> o);
 	void Subscribe(uint32_t subs);
