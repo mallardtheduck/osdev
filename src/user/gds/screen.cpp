@@ -68,10 +68,13 @@ uint32_t Screen::BufferGetPixel(uint32_t x, uint32_t y){
 	return 0;
 }
 
-size_t Screen::GetBytePos(uint32_t x, uint32_t y) {
+size_t Screen::GetBytePos(uint32_t x, uint32_t y, bool upper) {
 	size_t ret=(y * current_mode.width) + x;
 	if(current_mode.bpp >= 8) ret *= (current_mode.bpp / 8);
-	else ret /= (8 / current_mode.bpp);
+	else {
+		ret /= (8 / current_mode.bpp);
+		ret += upper ? 1 : 0;
+	}
 	return ret;
 }
 
@@ -175,7 +178,7 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 		for(size_t row=y; row <= y+h; ++row){
 			size_t start= GetBytePos(x, row);
 			if(start > buffersize) break;
-			size_t end= GetBytePos(x+w, row) + BytesPerPixel() + 2;
+			size_t end= GetBytePos(x+w, row, true) + BytesPerPixel() + 2;
 			if(end > buffersize) end=buffersize;
 			size_t bytes = end - start;
 			bt_fseek(fh, start, false);
