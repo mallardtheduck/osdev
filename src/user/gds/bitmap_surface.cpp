@@ -2,6 +2,10 @@
 #include "drawingop.hpp"
 
 #include <sstream>
+#include <gdfontmb.h>
+#include <gdfontt.h>
+#include <gdfontg.h>
+#include <gdfontl.h>
 
 using namespace std;
 
@@ -127,8 +131,29 @@ std::shared_ptr<GD::Image> BitmapSurface::Render(uint32_t scale) {
 void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
 	if(pending_op.type != gds_DrawingOpType::None && pending_op.type == params->type){
 		switch(pending_op.type){
+			//Temporary font code. Replace once FreeType is supported.
 			case gds_DrawingOpType::Text:
-				image->String(gdFontGetSmall(), pending_op.Text.x, pending_op.Text.y, params->data, pending_op.Common.lineColour);
+				gdFontPtr font;
+				switch(pending_op.Text.fontID){
+					case gds_TEMPFonts::Small:
+						font = gdFontGetSmall();
+						break;
+					case gds_TEMPFonts::Large:
+						font = gdFontGetLarge();
+						break;
+					case gds_TEMPFonts::MediumBold:
+						font = gdFontGetMediumBold();
+						break;
+					case gds_TEMPFonts::Giant:
+						font = gdFontGetGiant();
+						break;
+					case gds_TEMPFonts::Tiny:
+						font = gdFontGetTiny();
+						break;
+					default:
+						font = gdFontGetSmall();
+				}
+				image->String(font, pending_op.Text.x, pending_op.Text.y, params->data, pending_op.Common.lineColour);
 				break;
 			case gds_DrawingOpType::Polygon:
 				{

@@ -213,4 +213,13 @@ struct gds_OpParameters{
 typedef struct gds_OpParameters gds_OpParameters;
 #endif
 
+ENUM_START(gds_TEMPFonts)
+	ENUM_SET(gds_TEMPFonts, Small, 		0),
+	ENUM_SET(gds_TEMPFonts, Large, 		1),
+	ENUM_SET(gds_TEMPFonts, MediumBold,	2),
+	ENUM_SET(gds_TEMPFonts, Giant, 		3),
+	ENUM_SET(gds_TEMPFonts, Tiny, 		4),
+ENUM_END
+ENUM_TYPE(gds_TEMPFonts);
+
 #endif
