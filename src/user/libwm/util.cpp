@@ -1,9 +1,10 @@
 #include <btos_stubs.h>
-#include "libgds_internal.hpp"
+#include "libwm_internal.hpp"
 
 using namespace std;
 
-namespace libgds_internal{
+namespace libwm_internal{
+
 	string get_env(const string &name){
 		char value[128];
 		string ret;

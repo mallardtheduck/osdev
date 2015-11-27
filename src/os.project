@@ -296,6 +296,24 @@
       <File Name="user/wm/wm.cpp"/>
       <File Name="user/wm/window.cpp"/>
       <File Name="user/wm/window.hpp"/>
+      <File Name="user/wm/metrics.hpp"/>
+      <File Name="user/wm/drawing.hpp"/>
+      <File Name="user/wm/windows.hpp"/>
+      <File Name="user/wm/windows.cpp"/>
+      <File Name="user/wm/service.cpp"/>
+      <File Name="user/wm/service.hpp"/>
+      <File Name="user/wm/drawing.cpp"/>
+      <File Name="user/wm/rect.cpp"/>
+      <File Name="user/wm/rect.hpp"/>
+      <File Name="user/wm/client.hpp"/>
+      <File Name="user/wm/client.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="libwm">
+      <File Name="user/libwm/Makefile"/>
+      <File Name="user/libwm/main.cpp"/>
+      <File Name="user/libwm/libwm_internal.hpp"/>
+      <File Name="user/libwm/util.cpp"/>
+      <File Name="user/libwm/protocol.cpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
@@ -329,6 +347,10 @@
     <VirtualDirectory Name="gds">
       <File Name="include/gds/gds.h"/>
       <File Name="include/gds/libgds.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="wm">
+      <File Name="include/wm/wm.h"/>
+      <File Name="include/wm/libwm.h"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <Settings Type="Static Library">

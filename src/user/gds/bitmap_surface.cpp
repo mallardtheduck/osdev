@@ -2,6 +2,12 @@
 #include "drawingop.hpp"
 
 #include <sstream>
+#include <gdfontmb.h>
+#include <gdfontt.h>
+#include <gdfontg.h>
+#include <gdfontl.h>
+
+using namespace std;
 
 BitmapSurface::BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale) {
 	if(indexed) {
@@ -19,28 +25,39 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 			break;
 
 		case gds_DrawingOpType::Line:
+			//Workaround for hang in libgd.
+			if(op.Line.x1 > op.Line.x2){
+				swap(op.Line.x1, op.Line.x2);
+				swap(op.Line.y1, op.Line.y2);
+			}
 			image->Line(op.Line.x1, op.Line.y1, op.Line.x2, op.Line.y2, op.Common.lineColour);
 			break;
 
 		case gds_DrawingOpType::Box:
 			if(op.Common.fillStyle > 0) {
-				image->FilledRectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w, op.Box.y + op.Box.h, op.Common.fillColour);
+				image->FilledRectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.fillColour);
 			}
-			image->Rectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w, op.Box.y + op.Box.h, op.Common.lineColour);
+			if(op.Common.lineWidth > 0){ 
+				image->Rectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.lineColour);
+			}
 			break;
 
 		case gds_DrawingOpType::Ellipse:
 			if(op.Common.fillStyle > 0) {
 				image->FilledEllipse(op.Ellipse.x, op.Ellipse.y, op.Ellipse.w, op.Ellipse.h, op.Common.fillColour);
 			}
-			image->Ellipse(op.Ellipse.x, op.Ellipse.y, op.Ellipse.w, op.Ellipse.h, op.Common.lineColour);
+			if(op.Common.lineWidth > 0){ 
+				image->Ellipse(op.Ellipse.x, op.Ellipse.y, op.Ellipse.w, op.Ellipse.h, op.Common.lineColour);
+			}
 			break;
 
 		case gds_DrawingOpType::Arc:
 			if(op.Common.fillStyle > 0) {
 				image->FilledArc(op.Arc.x, op.Arc.y, op.Arc.w, op.Arc.h, op.Arc.a1, op.Arc.a2, op.Common.fillColour, 0);
 			}
-			image->Arc(op.Arc.x, op.Arc.y, op.Arc.w, op.Arc.h, op.Arc.a1, op.Arc.a2, op.Common.lineColour);
+			if(op.Common.lineWidth > 0){ 
+				image->Arc(op.Arc.x, op.Arc.y, op.Arc.w, op.Arc.h, op.Arc.a1, op.Arc.a2, op.Common.lineColour);
+			}
 			break;
 
 		case gds_DrawingOpType::Blit: {
@@ -114,8 +131,29 @@ std::shared_ptr<GD::Image> BitmapSurface::Render(uint32_t scale) {
 void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
 	if(pending_op.type != gds_DrawingOpType::None && pending_op.type == params->type){
 		switch(pending_op.type){
+			//Temporary font code. Replace once FreeType is supported.
 			case gds_DrawingOpType::Text:
-				image->String(gdFontGetSmall(), pending_op.Text.x, pending_op.Text.y, params->data, pending_op.Common.lineColour);
+				gdFontPtr font;
+				switch(pending_op.Text.fontID){
+					case gds_TEMPFonts::Small:
+						font = gdFontGetSmall();
+						break;
+					case gds_TEMPFonts::Large:
+						font = gdFontGetLarge();
+						break;
+					case gds_TEMPFonts::MediumBold:
+						font = gdFontGetMediumBold();
+						break;
+					case gds_TEMPFonts::Giant:
+						font = gdFontGetGiant();
+						break;
+					case gds_TEMPFonts::Tiny:
+						font = gdFontGetTiny();
+						break;
+					default:
+						font = gdFontGetSmall();
+				}
+				image->String(font, pending_op.Text.x, pending_op.Text.y, params->data, pending_op.Common.lineColour);
 				break;
 			case gds_DrawingOpType::Polygon:
 				{
@@ -127,8 +165,10 @@ void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
 						
 					}
 					if(pending_op.Common.fillStyle == gds_FillStyle::Filled) image->FilledPolygon(points, pointCount, pending_op.Common.fillColour);
-					if(pending_op.Polygon.closed) image->Polygon(points, pointCount, pending_op.Common.lineColour);
-					else image->OpenPolygon(points, pointCount, pending_op.Common.lineColour);
+					if(pending_op.Common.lineWidth > 0){ 
+						if(pending_op.Polygon.closed) image->Polygon(points, pointCount, pending_op.Common.lineColour);
+						else image->OpenPolygon(points, pointCount, pending_op.Common.lineColour);
+					}
 				}
 				break;
 			default:

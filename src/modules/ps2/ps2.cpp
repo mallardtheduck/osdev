@@ -10,6 +10,7 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
     dbgout("PS2: Disable ports\n");
     ps2_write_command(PS2_Command::DisablePort1);
     ps2_write_command(PS2_Command::DisablePort2);
+	ps2_clear_data();
     dbgout("PS2: Read config\n");
     ps2_write_command(PS2_Command::ReadRAM);
     uint8_t config=ps2_read_data();

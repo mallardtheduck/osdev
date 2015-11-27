@@ -246,6 +246,10 @@ inline static void bt_next_msg_filtered(bt_msg_header *msg, bt_msg_filter filter
 	btos_call(BT_NEXTMSGFILTERED, (uint32_t)&filter, (uint32_t)msg, 0);
 }
 
+inline static bool bt_query_msg(uint64_t id){
+	return (bool)btos_call(BT_MSGQUERY, (uint32_t)&id, 0, 0);
+}
+
 inline static uint16_t bt_query_extension(const char *name){
 	return btos_call(BT_QUERY_EXT, (uint32_t)name, 0, 0);
 }

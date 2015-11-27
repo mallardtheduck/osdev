@@ -38,6 +38,7 @@ ENUM_TYPE(bt_msg_flags);
 ENUM_START(bt_kernel_messages)
 	ENUM_SET(bt_kernel_messages, ProcessStart, 1),
 	ENUM_SET(bt_kernel_messages, ProcessEnd, 2),
+	ENUM_SET(bt_kernel_messages, MessageReceipt, 3),
 ENUM_END
 ENUM_TYPE(bt_kernel_messages);
 
@@ -46,6 +47,7 @@ ENUM_START(bt_msg_filter_flags)
 	ENUM_SET(bt_msg_filter_flags, Reply, 1 << 1),
 	ENUM_SET(bt_msg_filter_flags, Type, 1 << 2),
 	ENUM_SET(bt_msg_filter_flags, Source, 1 << 3),
+	ENUM_SET(bt_msg_filter_flags, Invert, 1 << 31),
 ENUM_END
 ENUM_TYPE(bt_msg_filter_flags);
 

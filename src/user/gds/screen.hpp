@@ -17,7 +17,7 @@ private:
 
 	void BufferPutPixel(uint32_t x, uint32_t y, uint32_t value);
 	uint32_t BufferGetPixel(uint32_t x, uint32_t y);
-	size_t GetBytePos(uint32_t x, uint32_t y);
+	size_t GetBytePos(uint32_t x, uint32_t y, bool upper = false);
 	size_t BytesPerPixel();
 
 public:
