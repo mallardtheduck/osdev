@@ -181,8 +181,8 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			}else{
 				if(newpos.x == pos.x && newpos.y == pos.y) return;
 				GDS_SelectScreen();
-				DrawBorder(newpos.x, newpos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize));
 				DrawAndRefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
+				DrawBorder(newpos.x, newpos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize));
 				last_drag_pos = newpos;
 				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
 			}
