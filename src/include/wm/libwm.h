@@ -10,6 +10,7 @@ extern "C"{
 
 uint64_t WM_SelectWindow(uint64_t id);
 uint64_t WM_CreateWindow(wm_WindowInfo info);
+uint64_t WM_NewWindow(int32_t x, int32_t y, uint32_t options, uint32_t subscriptions, uint64_t gds_id, const char *title);
 void WM_DestroyWindow();
 wm_WindowInfo WM_WindowInfo();
 void WM_Subscribe(uint32_t events);

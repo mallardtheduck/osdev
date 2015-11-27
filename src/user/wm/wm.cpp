@@ -65,12 +65,12 @@ int main(int argc, char **argv){
 				InitCursor();
 				DrawWindows();
 				RefreshScreen();
-				shared_ptr<Window> win1 = CreateTestWin("Window 1", 50, 50, 200, 100);
+				/*shared_ptr<Window> win1 = CreateTestWin("Window 1", 50, 50, 200, 100);
 				win1->SetZOrder(10);
 				shared_ptr<Window> win2 = CreateTestWin("Window 2", 100, 100, 250, 150);
 				win2->SetZOrder(20);
 				shared_ptr<Window> win3 = CreateTestWin("Window 3", 300, 200, 300, 250);
-				win3->SetZOrder(30);
+				win3->SetZOrder(30);*/
 				Service(root_pid);
 			} catch(exception &e) {
 				cout << "Exception:" << e.what() << endl;

@@ -98,6 +98,12 @@
     <File Name="kernel/vmm.cpp"/>
     <File Name="kernel/process.cpp"/>
     <File Name="kernel/liballoc.c"/>
+    <VirtualDirectory Name="initfs">
+      <VirtualDirectory Name="data">
+        <File Name="kernel/initfs/data/config.ini"/>
+      </VirtualDirectory>
+      <File Name="kernel/initfs/Makefile"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="modules">
     <VirtualDirectory Name="rtc">
@@ -314,6 +320,10 @@
       <File Name="user/libwm/libwm_internal.hpp"/>
       <File Name="user/libwm/util.cpp"/>
       <File Name="user/libwm/protocol.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="wmmenu">
+      <File Name="user/wmmenu/Makefile"/>
+      <File Name="user/wmmenu/wmmenu.cpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
