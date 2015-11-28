@@ -325,6 +325,12 @@
       <File Name="user/wmmenu/Makefile"/>
       <File Name="user/wmmenu/wmmenu.cpp"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="startwm">
+      <File Name="user/startwm/Makefile"/>
+      <File Name="user/startwm/startwm.cpp"/>
+      <File Name="user/startwm/table.cpp"/>
+      <File Name="user/startwm/table.hpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
