@@ -377,6 +377,7 @@ USERAPI_HANDLER(BT_SEND){
 		uint64_t &ret=*(uint64_t*)regs->ecx;
 		header.flags=header.flags | btos_api::bt_msg_flags::UserSpace;
 		header.from=proc_current_pid;
+		header.critical=false;
 		if(header.length > btos_api::BT_MSG_MAX) return;
 		ret=proc_send_message(header);
 	}
@@ -417,6 +418,14 @@ USERAPI_HANDLER(BT_MSGWAIT){
 	proc_message_wait();
 }
 
+USERAPI_HANDLER(BT_SUBSCRIBE){
+	msg_subscribe((btos_api::bt_kernel_messages::Enum)regs->ebx);
+}
+
+USERAPI_HANDLER(BT_UNSUBSCRIBE){
+	msg_unsubscribe((btos_api::bt_kernel_messages::Enum)regs->ebx);
+}
+
 USERAPI_HANDLER(BT_RECVFILTERED){
 	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_msg_filter)) && is_safe_ptr(regs->ecx, sizeof(btos_api::bt_msg_header))){
 		(*(btos_api::bt_msg_header*)regs->ecx) = msg_recv_filtered(*(btos_api::bt_msg_filter*)regs->ebx);
@@ -430,12 +439,10 @@ USERAPI_HANDLER(BT_NEXTMSGFILTERED){
 	}
 }
 
-USERAPI_HANDLER(BT_SUBSCRIBE){
-	msg_subscribe((btos_api::bt_kernel_messages::Enum)regs->ebx);
-}
-
-USERAPI_HANDLER(BT_UNSUBSCRIBE){
-	msg_unsubscribe((btos_api::bt_kernel_messages::Enum)regs->ebx);
+USERAPI_HANDLER(BT_MSGQUERY){
+	if(is_safe_ptr(regs->ebx, sizeof(uint64_t))){
+		regs->eax = msg_query_recieved(*(uint64_t*)regs->ebx);
+	}
 }
 
 USERAPI_HANDLER(BT_QUERY_EXT){
@@ -526,6 +533,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_UNSUBSCRIBE);
 		USERAPI_HANDLE_CALL(BT_RECVFILTERED);
 		USERAPI_HANDLE_CALL(BT_NEXTMSGFILTERED);
+		USERAPI_HANDLE_CALL(BT_MSGQUERY);
 
 		//Extensions
 		USERAPI_HANDLE_CALL(BT_QUERY_EXT);

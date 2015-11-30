@@ -3,29 +3,31 @@
 
 using namespace std;
 
-string get_env(const string &name){
-	char value[128];
-	string ret;
-	size_t size=bt_getenv(name.c_str(), value, 128);
-	ret=value;
-	if(size>128){
-		char *buf=new char[size];
-		bt_getenv(name.c_str(), value, size);
-		ret=buf;
+namespace libgds_internal{
+	string get_env(const string &name){
+		char value[128];
+		string ret;
+		size_t size=bt_getenv(name.c_str(), value, 128);
+		ret=value;
+		if(size>128){
+			char *buf=new char[size];
+			bt_getenv(name.c_str(), value, size);
+			ret=buf;
+		}
+		if(size) return ret;
+		else return "";
 	}
-	if(size) return ret;
-	else return "";
-}
 
-string get_env(const string &name, const string &def_value){
-	string ret=get_env(name);
-	if(ret==""){
-		set_env(name, def_value);
-		return def_value;
+	string get_env(const string &name, const string &def_value){
+		string ret=get_env(name);
+		if(ret==""){
+			set_env(name, def_value);
+			return def_value;
+		}
+		return ret;
 	}
-	return ret;
-}
 
-void set_env(const string &name, const string &value){
-	bt_setenv(name.c_str(), value.c_str(), 0);
+	void set_env(const string &name, const string &value){
+		bt_setenv(name.c_str(), value.c_str(), 0);
+	}
 }

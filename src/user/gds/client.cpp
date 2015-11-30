@@ -148,6 +148,7 @@ void Client::ProcessMessage(bt_msg_header msg) {
 				bt_msg_content(&msg, (void*)params.get(), msg.length);
 				currentSurface->SetOpParameters(params);
 			}
+			break;
 		case gds_MsgType::SelectScreen:
 			currentSurface = GetScreen();
 			break;

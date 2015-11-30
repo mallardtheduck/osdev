@@ -30,6 +30,7 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 
 void init(){
 	terminal_extension_id = add_extension(&terminal_extension);
+	infofs_register("TERMS", &terms_infofs);
     init_device();
     terminals=new vterm_list();
     cons_backend=new console_backend();
@@ -38,7 +39,6 @@ void init(){
     terminals->get(id)->sync();
     terminals->switch_terminal(id);
     default_terminal=id;
-    infofs_register("TERMS", &terms_infofs);
 }
 
 extern "C" void __cxa_pure_virtual()

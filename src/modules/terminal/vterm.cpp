@@ -169,8 +169,8 @@ void vterm::activate() {
     do_infoline();
     if(infoline && bufpos==0) putchar('\n');
     if(pointer_enabled){
+		if(pointer_bitmap) backend->set_pointer_bitmap(pointer_bitmap);
         backend->show_pointer();
-        if(pointer_bitmap) backend->set_pointer_bitmap(pointer_bitmap);
     }else{
         backend->hide_pointer();
     }
@@ -178,13 +178,14 @@ void vterm::activate() {
 }
 
 void vterm::deactivate() {
+	backend->set_pointer_autohide(true);
+	backend->hide_pointer();
     if (!vidmode.textmode) {
         size_t pos = backend->display_seek(0, true);
         backend->display_seek(0, false);
         backend->display_read(bufsize, (char *) buffer);
         backend->display_seek(pos, false);
     }
-	backend->hide_pointer();
 }
 
 size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf) {

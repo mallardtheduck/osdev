@@ -61,7 +61,7 @@ void gdt_set_kernel_stack(void* ptr);
 
 #define KERNEL_VERSION_MAJOR 0
 #define KERNEL_VERSION_MINOR 0
-#define KERNEL_REVISION "B"
+#define KERNEL_REVISION "C"
 #define KERNEL_VERSION_STRING "v0.0" KERNEL_REVISION
 #define KERNEL_OS_NAME "BT/OS"
 #define KERNEL_COPYRIGHT "(c) 2014-2015 Stuart Brockman"

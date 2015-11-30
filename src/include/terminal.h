@@ -60,7 +60,7 @@ ENUM_START(bt_terminal_pointer_event_type)
     ENUM_SET(bt_terminal_pointer_event_type, None, 0),
     ENUM_SET(bt_terminal_pointer_event_type, Move, 1),
     ENUM_SET(bt_terminal_pointer_event_type, ButtonDown, 2),
-    ENUM_SET(bt_terminal_pointer_event_type, ButtonUp, 1),
+    ENUM_SET(bt_terminal_pointer_event_type, ButtonUp, 3),
 ENUM_END
 ENUM_TYPE(bt_terminal_pointer_event_type);
 

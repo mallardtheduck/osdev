@@ -307,4 +307,8 @@ inline static API_NS bt_msg_header msg_recv_reply_block(uint64_t msg_id){
 	return SYSCALL_TABLE->msg_recv_reply_block(msg_id);
 }
 
+inline static bool msg_query_recieved(uint64_t id){
+	return SYSCALL_TABLE->msg_query_recieved(id);
+}
+
 #endif

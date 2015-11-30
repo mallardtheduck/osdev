@@ -122,6 +122,7 @@ struct syscall_table{
 	void (*msg_acknowledge)(API_NS bt_msg_header *msg, bool set_status);
 	bool (*msg_recv_reply)(API_NS bt_msg_header *msg, uint64_t msg_id);
 	API_NS bt_msg_header (*msg_recv_reply_block)(uint64_t msg_id);
+	bool (*msg_query_recieved)(uint64_t id);
 };
 
 #ifndef __cplusplus
