@@ -6,7 +6,6 @@
 #include <string>
 #include <iostream>
 
-
 typedef std::map<std::string, std::string> table_row;
 
 struct table{

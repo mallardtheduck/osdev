@@ -1,4 +1,4 @@
-import-files:=data/btos/tests/ctest.elx data/btos/tests/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/switcher.elx data/btos/spawn.elx data/btos/cmd/kill.elx data/btos/pci.sys data/btos/cmd/load.elx data/btos/test.sys data/btos/tests/test.elx data/btos/cmd/mount.elx data/btos/tests/msgtest.elx data/btos/tests/mousetest.elx data/btos/vga.sys data/btos/tests/vgatest.elx data/btos/tests/fputest.elx data/btos/gds.elx data/btos/debug.elx data/btos/tests/crash.elx data/btos/tests/gdstest.elx data/btos/wm.elx data/btos/tests/wmtest.elx
+import-files:=data/btos/tests/ctest.elx data/btos/tests/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/switcher.elx data/btos/spawn.elx data/btos/cmd/kill.elx data/btos/pci.sys data/btos/cmd/load.elx data/btos/test.sys data/btos/tests/test.elx data/btos/cmd/mount.elx data/btos/tests/msgtest.elx data/btos/tests/mousetest.elx data/btos/vga.sys data/btos/tests/vgatest.elx data/btos/tests/fputest.elx data/btos/gds.elx data/btos/debug.elx data/btos/tests/crash.elx data/btos/tests/gdstest.elx data/btos/wm.elx data/btos/tests/wmtest.elx data/btos/bin/wmmenu.elx data/btos/bin/startwm.elx
 
 all: ~/.mtoolsrc btos.img copy.always
 
@@ -82,11 +82,18 @@ data/btos/wm.elx: ../user/wm/wm.elx directories.always
 	
 data/btos/tests/wmtest.elx: ../user/libwm/wmtest.elx directories.always
 	cp $< $@
+	
+data/btos/bin/wmmenu.elx: ../user/wmmenu/wmmenu.elx directories.always
+	cp $< $@
+
+data/btos/bin/startwm.elx: ../user/startwm/startwm.elx directories.always
+	cp $< $@
 
 directories.always:
 	mkdir -p data/btos/cmd
 	mkdir -p data/btos/temp
 	mkdir -p data/btos/tests
+	mkdir -p data/btos/bin
 
 ~/.mtoolsrc:
 	echo "mtools_skip_check=1" > ~/.mtoolsrc

@@ -75,6 +75,17 @@ extern "C" uint64_t WM_CreateWindow(wm_WindowInfo info){
 	return GetContent<uint64_t>(reply);
 }
 
+extern "C" uint64_t WM_NewWindow(int32_t x, int32_t y, uint32_t options, uint32_t subscriptions, uint64_t gds_id, const char *title){
+	wm_WindowInfo info;
+	info.x = x;
+	info.y = y;
+	info.options = options;
+	info.subscriptions = subscriptions;
+	info.gds_id = gds_id;
+	strncpy(info.title, title, WM_TITLE_MAX);
+	return WM_CreateWindow(info);
+}
+
 extern "C" void WM_DestroyWindow(){
 	SendMessage(wm_RequestType::DestroyWindow, 0, NULL, false);
 }
