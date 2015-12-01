@@ -58,7 +58,7 @@ void console_backend_input_thread(void *p){
             hold_lock hl(&backend->backend_lock);
             if(backend->active) {
                 vterm *term=terminals->get(backend->active);
-                if ((key & KeyFlags::NonASCII) && (key & KeyFlags::Control) && (key & KeyCodes::Escape)==KeyCodes::Escape && !(key & KeyFlags::KeyUp)) {
+                if ((key & KeyFlags::NonASCII) && (key & KeyFlags::Control) && (key & KC_Mask)==KeyCodes::Escape && !(key & KeyFlags::KeyUp)) {
                     release_lock(&backend->backend_lock);
                     terminals->switch_terminal(switcher_term);
                     take_lock(&backend->backend_lock);
