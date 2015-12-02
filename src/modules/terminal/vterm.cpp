@@ -313,6 +313,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			if(buf){
 				strncpy(buf, title, MIN(size, titlemax));
 			}
+			break;
 		}
 		case bt_terminal_ioctl::ClearScreen: {
 			clear_buffer();
