@@ -48,8 +48,20 @@ public:
     void set_pointer_bitmap(bt_terminal_pointer_bitmap *bmp);
     bt_terminal_pointer_info get_pointer_info();
 	void set_pointer_autohide(bool val);
-	virtual void freeze_pointer();
-	virtual void unfreeze_pointer();
+	void freeze_pointer();
+	void unfreeze_pointer();
+	
+	void set_text_colours(uint8_t c);
+	uint8_t get_text_colours();
+	size_t get_screen_mode_count();
+	void set_screen_mode(const bt_vidmode &mode);
+	bt_vidmode get_screen_mode(size_t index);
+	bt_vidmode get_current_screen_mode();
+	void set_screen_scroll(bool v);
+	bool get_screen_scroll();
+	void set_text_access_mode(bt_vid_text_access_mode::Enum mode);
+	bt_video_palette_entry get_palette_entry(uint8_t entry);
+	void clear_screen();
 
     bool is_active(uint64_t id);
     void set_active(uint64_t id);

@@ -383,3 +383,55 @@ void console_backend::close(uint64_t id){
         term->activate();
     }
 }
+
+void console_backend::set_text_colours(uint8_t c){
+	fioctl(display, bt_vid_ioctl::SetTextColours, sizeof(c), (char*)&c);
+}
+
+uint8_t console_backend::get_text_colours(){
+	return fioctl(display, bt_vid_ioctl::GetTextColours, 0, NULL);
+}
+
+size_t console_backend::get_screen_mode_count(){
+	return fioctl(display, bt_vid_ioctl::GetModeCount, 0, NULL);
+}
+
+bt_vidmode console_backend::get_screen_mode(size_t index){
+	bt_vidmode ret;
+	*(size_t*)&ret = index;
+	fioctl(display, bt_vid_ioctl::GetMode, sizeof(ret), (char*)&ret);
+	return ret;
+}
+
+void console_backend::set_screen_mode(const bt_vidmode &mode){
+	fioctl(display, bt_vid_ioctl::SetMode, sizeof(mode), (char*)&mode);
+}
+
+bt_vidmode console_backend::get_current_screen_mode(){
+	bt_vidmode ret;
+	fioctl(display, bt_vid_ioctl::QueryMode, sizeof(ret), (char*)&ret);
+	return ret;
+}
+
+void console_backend::set_screen_scroll(bool v){
+	fioctl(display, bt_vid_ioctl::SetScrolling, sizeof(v), (char*)&v);
+}
+
+bool console_backend::get_screen_scroll(){
+	return fioctl(display, bt_vid_ioctl::GetScrolling, 0, NULL);
+}
+
+void console_backend::set_text_access_mode(bt_vid_text_access_mode::Enum mode){
+	fioctl(display, bt_vid_ioctl::SetTextAccessMode, sizeof(mode), (char*)&mode);
+}
+
+bt_video_palette_entry console_backend::get_palette_entry(uint8_t entry){
+	bt_video_palette_entry ret;
+	*(uint8_t*)&ret = entry;
+	fioctl(display, bt_vid_ioctl::GetPaletteEntry, sizeof(ret), (char*)&ret);
+	return ret;
+}
+
+void console_backend::clear_screen(){
+	fioctl(display, bt_vid_ioctl::ClearScreen, 0, NULL);
+}

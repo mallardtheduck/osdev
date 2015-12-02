@@ -96,7 +96,7 @@ void vterm::putstring(char *s)
 void vterm::setcolours(uint8_t c)
 {
 	textcolour=c;
-	backend->display_ioctl(bt_vid_ioctl::SetTextColours, sizeof(c), (char*)&c);
+	backend->set_text_colours(c);
 }
 
 uint8_t vterm::getcolours()
@@ -130,7 +130,7 @@ void vterm::do_infoline()
 		size_t pos=seek(opts, 0, true);
 		seek(opts, 0, false);
 		uint16_t linecol=0x1F;
-		uint16_t colour=(uint16_t) backend->display_ioctl(bt_vid_ioctl::GetTextColours, 0, NULL);
+		uint16_t colour=(uint16_t) backend->get_text_colours();
 		setcolours(linecol);
 		for(size_t i=0; i<vidmode.width; ++i) {
 			putchar(' ');
@@ -161,24 +161,22 @@ void vterm::activate()
 {
 	hold_lock hl(&term_lock, false);
 	bool scroll=false;
-	backend->display_ioctl(bt_vid_ioctl::SetMode, sizeof(vidmode), (char*)&vidmode);
+	backend->set_screen_mode(vidmode);
 	backend->set_active(id);
-	backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scroll);
+	backend->set_screen_scroll(scroll);
 	if(vidmode.textmode) {
-		bt_vid_text_access_mode::Enum textmode=bt_vid_text_access_mode::Raw;
-		backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char*)&textmode);
+		backend->set_text_access_mode(bt_vid_text_access_mode::Raw);
 		setcolours(getcolours());
 	}
 	backend->display_seek(0, false);
 	backend->display_write(bufsize, (char*)buffer);
 	if(vidmode.textmode) {
-		bt_vid_text_access_mode::Enum textmode=bt_vid_text_access_mode::Simple;
-		backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char*)&textmode);
+		backend->set_text_access_mode(bt_vid_text_access_mode::Simple);
 		backend->display_seek(bufpos/2, false);
 	} else {
 		backend->display_seek(bufpos, false);
 	}
-	backend->display_ioctl(bt_vid_ioctl::SetScrolling, sizeof(bool), (char*)&scrolling);
+	backend->set_screen_scroll(scrolling);
 	do_infoline();
 	if(infoline && bufpos==0) putchar('\n');
 	if(pointer_enabled) {
@@ -319,7 +317,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			clear_buffer();
 			seek(opts, 0, false);
 			if(backend->is_active(id)) {
-				backend->display_ioctl(bt_vid_ioctl::ClearScreen, size, buf);
+				backend->clear_screen();
 			}
 			if(infoline) {
 				putchar('\n');
@@ -361,17 +359,20 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			break;
 		}
 		case bt_terminal_ioctl::GetScreenModeCount: {
-			return backend->display_ioctl(bt_vid_ioctl::GetModeCount, size, buf);
+			return backend->get_screen_mode_count();
 			break;
 		}
 		case bt_terminal_ioctl::GetScreenMode: {
-			return backend->display_ioctl(bt_vid_ioctl::GetMode, size, buf);
+			if(buf) {
+				*(bt_vidmode*)buf = backend->get_screen_mode(*(size_t*)buf);
+				return sizeof(bt_vidmode);
+			}
 			break;
 		}
 		case bt_terminal_ioctl::SetScreenMode: {
-			if(size==sizeof(bt_vidmode)) {
+			if(buf && size==sizeof(bt_vidmode)) {
 				if(backend->is_active(id)) {
-					backend->display_ioctl(bt_vid_ioctl::SetMode, size, buf);
+					backend->set_screen_mode(*(bt_vidmode*)buf);
 				}
 				vidmode=*(bt_vidmode*)buf;
 				allocate_buffer();
@@ -392,7 +393,10 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			break;
 		}
 		case bt_terminal_ioctl::GetPaletteEntry: {
-			return backend->display_ioctl(bt_vid_ioctl::GetPaletteEntry, size, buf);
+			if(buf){
+				*(bt_video_palette_entry*)buf = backend->get_palette_entry(*(size_t*)buf);
+				return sizeof(bt_video_palette_entry);
+			}
 			break;
 		}
 		case bt_terminal_ioctl::SetTextColours: {
@@ -413,7 +417,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			if(size==sizeof(bool)) {
 				scrolling=*(bool*)buf;
 				if(backend->is_active(id)) {
-					backend->display_ioctl(bt_vid_ioctl::SetScrolling, size, buf);
+					backend->set_screen_scroll(scrolling);
 				}
 			}
 			break;
@@ -555,21 +559,17 @@ void vterm::close(vterm_options &opts)
 void vterm::sync(bool content)
 {
 	hold_lock hl(&term_lock);
-	backend->display_ioctl(bt_vid_ioctl::QueryMode, sizeof(vidmode), (char*)&vidmode);
+	vidmode = backend->get_current_screen_mode();
 	allocate_buffer();
 	if(content) {
 		size_t vpos = this->backend->display_seek(0, true);
 		this->backend->display_seek(0, false);
 		if(this->vidmode.textmode) {
-			bt_vid_text_access_mode::Enum textmode = bt_vid_text_access_mode::Raw;
-			this->backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char *) &textmode);
-			this->backend->display_ioctl(bt_vid_ioctl::GetTextColours, sizeof(this->textcolour), (char *) &this->textcolour);
+			backend->set_text_access_mode(bt_vid_text_access_mode::Raw);
+			backend->set_text_colours(textcolour);
 		}
 		this->backend->display_read(this->bufsize, (char *) this->buffer);
-		if(this->vidmode.textmode) {
-			bt_vid_text_access_mode::Enum textmode = bt_vid_text_access_mode::Simple;
-			this->backend->display_ioctl(bt_vid_ioctl::SetTextAccessMode, sizeof(textmode), (char *) &textmode);
-		}
+		if(this->vidmode.textmode) 	backend->set_text_access_mode(bt_vid_text_access_mode::Simple);
 		this->backend->display_seek(vpos, false);
 		this->bufpos = this->backend->display_seek(0, true);
 		if(this->vidmode.textmode) {
@@ -578,7 +578,7 @@ void vterm::sync(bool content)
 	} else {
 		clear_buffer();
 	}
-	this->scrolling =(bool) this->backend->display_ioctl(bt_vid_ioctl::GetScrolling, 0, NULL);
+	this->scrolling = backend->get_screen_scroll();
 }
 
 void vterm::clear_buffer()
