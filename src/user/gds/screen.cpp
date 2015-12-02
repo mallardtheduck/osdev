@@ -11,7 +11,7 @@ Screen::Screen() : BitmapSurface::BitmapSurface(1, 1, true){
 
 	fh=bt_fopen(stdout_path, FS_Read | FS_Write);
 	bt_terminal_mode::Enum terminal_mode=bt_terminal_mode::Video;
-	bt_fioctl(fh, bt_terminal_ioctl::SetMode, sizeof(terminal_mode), (char*)&terminal_mode);
+	bt_fioctl(fh, bt_terminal_ioctl::SetTerminalMode, sizeof(terminal_mode), (char*)&terminal_mode);
 
 	buffer=NULL;
 	buffersize=0;

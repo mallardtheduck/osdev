@@ -12,8 +12,8 @@ ENUM_END
 ENUM_TYPE(bt_terminal_mode);
 
 ENUM_START(bt_terminal_ioctl)
-    ENUM_SET(bt_terminal_ioctl, SetMode, 261),
-    ENUM_SET(bt_terminal_ioctl, GetMode, 262),
+    ENUM_SET(bt_terminal_ioctl, SetTerminalMode, 261),
+    ENUM_SET(bt_terminal_ioctl, GetTerminalMode, 262),
     ENUM_SET(bt_terminal_ioctl, SetInfoLine, 263),
     ENUM_SET(bt_terminal_ioctl, GetInfoLine, 264),
     ENUM_SET(bt_terminal_ioctl, SetTitle, 265),
@@ -33,8 +33,18 @@ ENUM_START(bt_terminal_ioctl)
 	ENUM_SET(bt_terminal_ioctl, PointerUnfreeze, 280),
 
     ENUM_SET(bt_terminal_ioctl, NewTerminal, 291),
-    ENUM_SET(bt_terminal_ioctl, DestroyTerminal, 292),
     ENUM_SET(bt_terminal_ioctl, SwtichTerminal, 293),
+	
+	ENUM_SET(bt_terminal_ioctl, ClearScreen, 501),
+	ENUM_SET(bt_terminal_ioctl, GetScreenModeCount, 301),
+	ENUM_SET(bt_terminal_ioctl, GetScreenMode, 302),
+	ENUM_SET(bt_terminal_ioctl, SetScreenMode, 303),
+	ENUM_SET(bt_terminal_ioctl, QueryScreenMode, 304),
+	ENUM_SET(bt_terminal_ioctl, GetPaletteEntry, 305),
+	ENUM_SET(bt_terminal_ioctl, SetTextColours, 401),
+	ENUM_SET(bt_terminal_ioctl, GetTextColours, 402),
+	ENUM_SET(bt_terminal_ioctl, GetScrolling, 403),
+	ENUM_SET(bt_terminal_ioctl, SetScrolling, 404),
 ENUM_END
 ENUM_TYPE(bt_terminal_ioctl);
 

@@ -331,6 +331,12 @@
       <File Name="user/startwm/table.cpp"/>
       <File Name="user/startwm/table.hpp"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="switcher">
+      <File Name="user/switcher/utils.cpp"/>
+      <File Name="user/switcher/switcher.hpp"/>
+      <File Name="user/switcher/switcher.cpp"/>
+      <File Name="user/switcher/Makefile"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>

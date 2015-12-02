@@ -66,7 +66,7 @@ bt_filehandle open_device(){
     bt_getenv("STDOUT", stdout_path, BT_MAX_PATH);
     bt_filehandle dev_fh=bt_fopen(stdout_path, FS_Read | FS_Write);
     bt_terminal_mode terminal_mode=bt_terminal_mode_Video;
-    bt_fioctl(dev_fh, bt_terminal_ioctl_SetMode, sizeof(terminal_mode), (char*)&terminal_mode);
+    bt_fioctl(dev_fh, bt_terminal_ioctl_SetTerminalMode, sizeof(terminal_mode), (char*)&terminal_mode);
     return dev_fh;
 }
 
