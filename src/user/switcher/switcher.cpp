@@ -41,7 +41,7 @@ int main(){
     uint64_t cterm=atoi(termid.c_str());
     bt_fioctl(fh, bt_terminal_ioctl::SetTitle , title.length(), (char*)title.c_str());
     while(true) {
-        bt_fioctl(fh, bt_vid_ioctl::ClearScreen, 0, NULL);
+        bt_fioctl(fh, bt_terminal_ioctl::ClearScreen, 0, NULL);
         vector<term> terms = get_term_list();
         for (const term &t : terms) {
             if (t.id != cterm) cout << t.id << " : " << t.title << endl;
