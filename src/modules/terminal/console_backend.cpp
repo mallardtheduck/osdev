@@ -271,15 +271,6 @@ size_t console_backend::display_seek(size_t pos, uint32_t flags) {
     return fseek(display, pos, flags);
 }
 
-int console_backend::display_ioctl(int fn, size_t bytes, char *buf) {
-    hold_lock hl(&backend_lock);
-    bool pointer=pointer_visible;
-    hide_pointer();
-    int ret=fioctl(display, fn, bytes, buf);
-    if(pointer)show_pointer();
-    return ret;
-}
-
 size_t console_backend::input_read(size_t bytes, char *buf) {
     return fread(input, bytes, buf);
 }
@@ -290,10 +281,6 @@ size_t console_backend::input_write(size_t bytes, char *buf) {
 
 size_t console_backend::input_seek(size_t pos, uint32_t flags) {
     return fseek(input, pos, flags);
-}
-
-int console_backend::input_ioctl(int fn, size_t bytes, char *buf) {
-    return fioctl(input, fn, bytes, buf);
 }
 
 bt_terminal_pointer_info console_backend::pointer_read(){

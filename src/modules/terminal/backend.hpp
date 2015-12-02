@@ -9,12 +9,10 @@ public:
     virtual size_t display_read(size_t bytes, char *buf)=0;
     virtual size_t display_write(size_t bytes, char *buf)=0;
     virtual size_t display_seek(size_t pos, uint32_t flags)=0;
-    virtual int display_ioctl(int fn, size_t bytes, char *buf)=0;
 
     virtual size_t input_read(size_t bytes, char *buf)=0;
     virtual size_t input_write(size_t bytes, char *buf)=0;
     virtual size_t input_seek(size_t pos, uint32_t flags)=0;
-    virtual int input_ioctl(int fn, size_t bytes, char *buf)=0;
 
     virtual bt_terminal_pointer_info pointer_read()=0;
     virtual void show_pointer()=0;
