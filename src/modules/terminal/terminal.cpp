@@ -34,7 +34,6 @@ void init(){
     init_device();
     terminals=new vterm_list();
     cons_backend=new console_backend();
-    cons_backend->start_switcher();
     uint64_t id=terminals->create_terminal(cons_backend);
     terminals->get(id)->sync();
     terminals->switch_terminal(id);

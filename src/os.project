@@ -374,6 +374,7 @@
       <File Name="include/wm/wm.h"/>
       <File Name="include/wm/libwm.h"/>
     </VirtualDirectory>
+    <File Name="include/ministl.hpp"/>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>

@@ -35,6 +35,8 @@ public:
 	virtual void set_text_access_mode(bt_vid_text_access_mode::Enum mode) = 0;
 	virtual bt_video_palette_entry get_palette_entry(uint8_t entry) = 0;
 	virtual void clear_screen() = 0;
+	
+	virtual void register_global_shortcut(uint16_t keycode, uint64_t termid) = 0;
 
     virtual bool is_active(uint64_t id)=0;
     virtual void set_active(uint64_t id)=0;

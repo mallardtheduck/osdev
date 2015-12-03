@@ -4,6 +4,7 @@
 #include "backend.hpp"
 #include "module_api.h"
 #include "fs_interface.h"
+#include <ministl.hpp>
 
 class console_backend : public i_backend{
 private:
@@ -21,6 +22,7 @@ private:
     uint8_t *mouseback;
 	uint32_t pointer_draw_serial, pointer_cur_serial;
 	uint32_t cur_pointer_x, cur_pointer_y;
+	map<uint16_t, uint64_t> global_shortcuts;
 
     friend void console_backend_input_thread(void *p);
     friend void console_backend_pointer_thread(void *p);
@@ -60,15 +62,14 @@ public:
 	void set_text_access_mode(bt_vid_text_access_mode::Enum mode);
 	bt_video_palette_entry get_palette_entry(uint8_t entry);
 	void clear_screen();
+	
+	void register_global_shortcut(uint16_t keycode, uint64_t termid);
 
     bool is_active(uint64_t id);
     void set_active(uint64_t id);
 
     void open(uint64_t id);
     void close(uint64_t id);
-
-    void start_switcher();
-
 };
 
 extern console_backend *cons_backend;

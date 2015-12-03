@@ -494,8 +494,13 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			backend->unfreeze_pointer();
 			break;
 		}
+		case bt_terminal_ioctl::RegisterGlobalShortcut:{ 
+			if(buf){
+				uint16_t keycode = *(uint16_t*)buf;
+				backend->register_global_shortcut(keycode, id);
+			}
+		}
 	}
-	//TODO: implement more
 	return 0;
 }
 

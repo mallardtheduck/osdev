@@ -29,25 +29,6 @@ uint32_t msb32(uint32_t x)
     return r + bval[x];
 }
 
-static uint64_t create_terminal(char *command) {
-    uint64_t new_id=terminals->create_terminal(cons_backend);
-    terminals->get(new_id)->sync(false);
-    if(command){
-        char old_terminal_id[128]="0";
-        strncpy(old_terminal_id, getenv(terminal_var, getpid()), 128);
-        char new_terminal_id[128]={0};
-        i64toa(new_id, new_terminal_id, 10);
-        setenv(terminal_var, new_terminal_id, 0, getpid());
-        pid_t pid=spawn(command, 0, NULL);
-        setenv(terminal_var, old_terminal_id, 0, getpid());
-		vterm_options opts;
-        if(!pid) terminals->get(new_id)->close(opts);
-    }
-    return new_id;
-}
-
-static uint64_t switcher_term=0;
-
 void console_backend_input_thread(void *p){
     console_backend *backend=(console_backend*)p;
     thread_priority(2);
@@ -58,10 +39,12 @@ void console_backend_input_thread(void *p){
             hold_lock hl(&backend->backend_lock);
             if(backend->active) {
                 vterm *term=terminals->get(backend->active);
-                if ((key & KeyFlags::NonASCII) && (key & KeyFlags::Control) && (key & KC_Mask)==KeyCodes::Escape && !(key & KeyFlags::KeyUp)) {
-                    release_lock(&backend->backend_lock);
-                    terminals->switch_terminal(switcher_term);
-                    take_lock(&backend->backend_lock);
+				uint16_t keycode = (uint16_t)key;
+				if(backend->global_shortcuts.has_key(keycode)){
+					uint64_t termid = backend->global_shortcuts[keycode];
+					release_lock(&backend->backend_lock);
+					terminals->switch_terminal(termid);
+					take_lock(&backend->backend_lock);
                 }else if (term) {
                     release_lock(&backend->backend_lock);
                     term->queue_input(key);
@@ -244,10 +227,6 @@ console_backend::console_backend() {
 	pointer_draw_thread_id=new_thread(&console_backend_pointer_draw_thread, (void*)this);
 }
 
-void console_backend::start_switcher(){
-    switcher_term=create_terminal("HDD:/BTOS/SWITCHER.ELX");
-}
-
 size_t console_backend::display_read(size_t bytes, char *buf) {
     hold_lock hl(&backend_lock);
     bool pointer=pointer_visible;
@@ -421,4 +400,8 @@ bt_video_palette_entry console_backend::get_palette_entry(uint8_t entry){
 
 void console_backend::clear_screen(){
 	fioctl(display, bt_vid_ioctl::ClearScreen, 0, NULL);
+}
+
+void console_backend::register_global_shortcut(uint16_t keycode, uint64_t termid){
+	global_shortcuts[keycode] = termid;
 }
