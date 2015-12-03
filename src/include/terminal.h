@@ -34,6 +34,7 @@ ENUM_START(bt_terminal_ioctl)
 
     ENUM_SET(bt_terminal_ioctl, NewTerminal, 291),
     ENUM_SET(bt_terminal_ioctl, SwtichTerminal, 293),
+	ENUM_SET(bt_terminal_ioctl, RegisterGlobalShortcut, 294),
 	
 	ENUM_SET(bt_terminal_ioctl, ClearScreen, 501),
 	ENUM_SET(bt_terminal_ioctl, GetScreenModeCount, 301),
