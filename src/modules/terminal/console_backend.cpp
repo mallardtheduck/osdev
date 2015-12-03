@@ -348,6 +348,16 @@ void console_backend::close(uint64_t id){
         dbgpf("TERM: Activating terminal %i\n", (int)term->get_id());
         term->activate();
     }
+	bool found = false;
+	do{
+		for(auto i = global_shortcuts.begin(); i!=global_shortcuts.end(); ++i){
+			if(i->second == id){
+				global_shortcuts.erase(i);
+				found = true;
+				break;
+			}
+		}
+	}while(found);
 }
 
 void console_backend::set_text_colours(uint8_t c){
