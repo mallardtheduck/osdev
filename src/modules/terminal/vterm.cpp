@@ -227,7 +227,7 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf)
 {
 	hold_lock hl(&term_lock);
 	update_current_pid();
-	if(opts.mode == bt_terminal_mode::Terminal || opts.mode == bt_terminal_mode::Keyboard) {
+	if(opts.mode == bt_terminal_mode::Terminal) {
 		int incr;
 		for(size_t i=0; i<size; i+=incr) {
 			incr=1;

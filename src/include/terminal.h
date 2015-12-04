@@ -6,8 +6,6 @@
 ENUM_START(bt_terminal_mode)
     ENUM_SET(bt_terminal_mode, Terminal, 0),
     ENUM_SET(bt_terminal_mode, Video, 1),
-    ENUM_SET(bt_terminal_mode, Keyboard, 2),
-    ENUM_SET(bt_terminal_mode, Pointer, 3),
 ENUM_END
 ENUM_TYPE(bt_terminal_mode);
 
