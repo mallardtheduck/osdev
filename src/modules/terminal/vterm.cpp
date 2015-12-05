@@ -720,45 +720,27 @@ i_backend *vterm::get_backend(){
 
 vterm_list::vterm_list()
 {
-	terminals=(vterm**)malloc(0);
-	count=0;
-	id=0;
+	id = 0;
 	init_lock(&vtl_lock);
 }
 
 uint64_t vterm_list::create_terminal(i_backend *back)
 {
 	hold_lock hl(&vtl_lock);
+	if(!back->can_create()) return 0;
 	uint64_t new_id=++id;
 	vterm *newterm=new vterm(new_id, back);
-	vterm **terms=new vterm*[count+1];
-	memcpy(terms, terminals, count*sizeof(vterm*));
-	free(terminals);
-	terminals=terms;
-	terminals[count]=newterm;
-	count++;
+	terminals.push_back(newterm);
 	return new_id;
 }
 
 void vterm_list::delete_terminal(uint64_t id)
 {
 	hold_lock hl(&vtl_lock);
-	for(size_t i=0; i<count; ++i) {
-		vterm *term=NULL;
+	for(size_t i=0; i<terminals.size(); ++i) {
 		if(terminals[i]->get_id() == id) {
-			term=terminals[i];
-			vterm **terms=new vterm*[count-1];
-			for(size_t j=0; j<i; ++j) {
-				terms[j]=terminals[j];
-			}
-			for(size_t j=i+1; j<count; ++j) {
-				terms[j-1]=terminals[j];
-			}
-			free(terminals);
-			terminals=terms;
-			count--;
-		}
-		if(term) {
+			vterm *term=terminals[i];
+			terminals.erase(i);
 			term->deactivate();
 			delete term;
 			break;
@@ -769,7 +751,7 @@ void vterm_list::delete_terminal(uint64_t id)
 vterm *vterm_list::get(uint64_t id)
 {
 	hold_lock hl(&vtl_lock, false);
-	for(size_t i=0; i<count; ++i) {
+	for(size_t i=0; i<terminals.size(); ++i) {
 		if(!id || terminals[i]->get_id() == id) {
 			return terminals[i];
 		}
@@ -779,7 +761,7 @@ vterm *vterm_list::get(uint64_t id)
 
 size_t vterm_list::get_count()
 {
-	return count;
+	return terminals.size();
 }
 
 char *terms_infofs()
@@ -788,7 +770,7 @@ char *terms_infofs()
 	vterm_list *t=terminals;
 	memset(buffer, 0, 4096);
 	sprintf(buffer, "# ID, title\n");
-	for(size_t i=0; i<t->count; ++i) {
+	for(size_t i=0; i<t->terminals.size(); ++i) {
 		sprintf(&buffer[strlen(buffer)], "%i, \"%s\"\n", (int)t->terminals[i]->get_id(), t->terminals[i]->get_title());
 	}
 	return buffer;

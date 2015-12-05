@@ -7,6 +7,7 @@
 #include "terminal.h"
 #include "backend.hpp"
 #include "circular_buffer.hpp"
+#include <ministl.hpp>
 
 struct vterm_options{
     bt_terminal_mode::Enum mode;
@@ -100,8 +101,7 @@ public:
 
 class vterm_list{
 private:
-    vterm **terminals;
-    size_t count;
+	vector<vterm*> terminals;
     uint64_t id;
     lock vtl_lock;
 

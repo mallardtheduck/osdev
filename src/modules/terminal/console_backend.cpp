@@ -424,3 +424,7 @@ void console_backend::switch_terminal(uint64_t id){
 		target->activate();
 	}
 }
+
+bool console_backend::can_create(){
+	return true;
+}
