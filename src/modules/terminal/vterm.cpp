@@ -8,7 +8,7 @@
 
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 
-vterm *current_vterm=NULL;
+//vterm *current_vterm=NULL;
 vterm_list *terminals=NULL;
 
 bool event_blockcheck(void *p);
@@ -190,6 +190,7 @@ void vterm::activate()
 
 void vterm::deactivate()
 {
+	if(!backend->is_active(id)) return;
 	backend->set_pointer_autohide(true);
 	backend->hide_pointer();
 	if(!vidmode.textmode) {
@@ -355,7 +356,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 		}
 		case bt_terminal_ioctl::SwtichTerminal: {
 			uint64_t sw_id=*(uint64_t*)buf;
-			terminals->switch_terminal(sw_id);
+			backend->switch_terminal(sw_id);
 			break;
 		}
 		case bt_terminal_ioctl::GetScreenModeCount: {
@@ -509,7 +510,7 @@ void vterm::create_terminal(char *command)
 	uint64_t new_id=terminals->create_terminal(backend);
 	dbgpf("TERM: Created new terminal %i.\n", (int) new_id);
 	terminals->get(new_id)->sync(false);
-	terminals->switch_terminal(new_id);
+	backend->switch_terminal(new_id);
 	if(command) {
 		char old_terminal_id[128]="0";
 		strncpy(old_terminal_id, getenv(terminal_var, getpid()), 128);
@@ -713,6 +714,10 @@ void vterm::update_current_pid()
 	}
 }
 
+i_backend *vterm::get_backend(){
+	return backend;
+}
+
 vterm_list::vterm_list()
 {
 	terminals=(vterm**)malloc(0);
@@ -738,14 +743,8 @@ uint64_t vterm_list::create_terminal(i_backend *back)
 void vterm_list::delete_terminal(uint64_t id)
 {
 	hold_lock hl(&vtl_lock);
-	if(id==default_terminal) default_terminal=0;
-	bool switchterm=false;
-	if(current_vterm->get_id() == id) {
-		switchterm=true;
-		current_vterm->deactivate();
-	}
-	vterm *term=NULL;
 	for(size_t i=0; i<count; ++i) {
+		vterm *term=NULL;
 		if(terminals[i]->get_id() == id) {
 			term=terminals[i];
 			vterm **terms=new vterm*[count-1];
@@ -758,27 +757,11 @@ void vterm_list::delete_terminal(uint64_t id)
 			free(terminals);
 			terminals=terms;
 			count--;
-		} else if(switchterm) {
-			current_vterm=terminals[i];
-			current_vterm->activate();
-			switchterm=false;
 		}
 		if(term) {
+			term->deactivate();
 			delete term;
 			break;
-		}
-	}
-}
-
-void vterm_list::switch_terminal(uint64_t id)
-{
-	hold_lock hl(&vtl_lock);
-	for(size_t i=0; i<count; ++i) {
-		if(terminals[i]->get_id() == id) {
-			if(current_vterm) current_vterm->deactivate();
-			current_vterm=terminals[i];
-			current_vterm->activate();
-			return;
 		}
 	}
 }
@@ -786,7 +769,6 @@ void vterm_list::switch_terminal(uint64_t id)
 vterm *vterm_list::get(uint64_t id)
 {
 	hold_lock hl(&vtl_lock, false);
-	if(!id) id=default_terminal;
 	for(size_t i=0; i<count; ++i) {
 		if(!id || terminals[i]->get_id() == id) {
 			return terminals[i];

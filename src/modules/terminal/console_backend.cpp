@@ -43,7 +43,7 @@ void console_backend_input_thread(void *p){
 				if(backend->global_shortcuts.has_key(keycode)){
 					uint64_t termid = backend->global_shortcuts[keycode];
 					release_lock(&backend->backend_lock);
-					terminals->switch_terminal(termid);
+					backend->switch_terminal(termid);
 					take_lock(&backend->backend_lock);
                 }else if (term) {
                     release_lock(&backend->backend_lock);
@@ -414,4 +414,13 @@ void console_backend::clear_screen(){
 
 void console_backend::register_global_shortcut(uint16_t keycode, uint64_t termid){
 	global_shortcuts[keycode] = termid;
+}
+
+void console_backend::switch_terminal(uint64_t id){
+	vterm *target = terminals->get(id);
+	vterm *current = terminals->get(active);
+	if(target && target->get_backend() == this){
+		if(current) current->deactivate();
+		target->activate();
+	}
 }

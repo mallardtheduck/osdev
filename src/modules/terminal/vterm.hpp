@@ -1,5 +1,5 @@
 #ifndef _VTERM_HPP
-#define _VTERM_CPP
+#define _VTERM_HPP
 
 #include <stdint.h>
 #include "module_api.h"
@@ -16,6 +16,8 @@ struct vterm_options{
 };
 
 static constexpr bt_terminal_pointer_event zero_event={bt_terminal_pointer_event_type::None, 0, 0, 0};
+
+class i_backend;
 
 class vterm{
 private:
@@ -91,6 +93,7 @@ public:
     void clear_buffer();
 	
 	void update_current_pid();
+	i_backend *get_backend();
 };
 
 //extern vterm *current_vterm;
@@ -107,7 +110,6 @@ public:
 
     uint64_t create_terminal(i_backend *back);
     void delete_terminal(uint64_t id);
-    void switch_terminal(uint64_t id);
     vterm *get(uint64_t id);
     size_t get_count();
 
@@ -116,6 +118,5 @@ public:
 
 char *terms_infofs();
 extern vterm_list *terminals;
-extern uint64_t default_terminal;
 
 #endif

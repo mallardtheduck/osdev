@@ -4,6 +4,8 @@
 #include "terminal.h"
 #include "video_dev.h"
 
+class vterm;
+
 class i_backend{
 public:
     virtual size_t display_read(size_t bytes, char *buf)=0;
@@ -43,6 +45,7 @@ public:
 
     virtual void open(uint64_t id)=0;
     virtual void close(uint64_t id)=0;
+	virtual void switch_terminal(uint64_t id) = 0;
 
     virtual ~i_backend(){};
 };

@@ -36,7 +36,7 @@ void init(){
     cons_backend=new console_backend();
     uint64_t id=terminals->create_terminal(cons_backend);
     terminals->get(id)->sync();
-    terminals->switch_terminal(id);
+    cons_backend->switch_terminal(id);
     default_terminal=id;
 }
 

@@ -70,6 +70,7 @@ public:
 
     void open(uint64_t id);
     void close(uint64_t id);
+	void switch_terminal(uint64_t id);
 };
 
 extern console_backend *cons_backend;
