@@ -65,6 +65,14 @@ struct bt_terminal_pointer_info{
 typedef struct bt_terminal_pointer_info bt_terminal_pointer_info;
 #endif
 
+ENUM_START(bt_terminal_message_type)
+	ENUM_SET(bt_terminal_message_type, InputEvent, 0),
+	ENUM_SET(bt_terminal_message_type, TerminalActivate, 1),
+	ENUM_SET(bt_terminal_message_type, TerminalDeactivate, 2),
+	ENUM_SET(bt_terminal_message_type, BackendOperation, 3),
+ENUM_END
+ENUM_TYPE(bt_terminal_message_type);
+
 ENUM_START(bt_terminal_pointer_event_type)
     ENUM_SET(bt_terminal_pointer_event_type, None, 0),
     ENUM_SET(bt_terminal_pointer_event_type, Move, 1),
@@ -83,6 +91,42 @@ struct bt_terminal_pointer_event{
 #ifndef __cplusplus
 typedef struct bt_terminal_pointer_event bt_terminal_pointer_event;
 #endif
+
+ENUM_START(bt_terminal_backend_operation_type)
+	ENUM_SET(bt_terminal_backend_operation_type, DisplayRead, 0),
+	ENUM_SET(bt_terminal_backend_operation_type, DisplayWrite, 1),
+	ENUM_SET(bt_terminal_backend_operation_type, DisplaySeek, 2),
+	ENUM_SET(bt_terminal_backend_operation_type, InputRead, 3),
+	ENUM_SET(bt_terminal_backend_operation_type, InputWrite, 4),
+	ENUM_SET(bt_terminal_backend_operation_type, InputSeek, 5),
+	ENUM_SET(bt_terminal_backend_operation_type, ShowPointer, 6),
+	ENUM_SET(bt_terminal_backend_operation_type, HidePointer, 7),
+	ENUM_SET(bt_terminal_backend_operation_type, GetPointerVisibility, 8),
+	ENUM_SET(bt_terminal_backend_operation_type, SetPointerBitmap, 9),
+	ENUM_SET(bt_terminal_backend_operation_type, GetPointerInfo, 10),
+	ENUM_SET(bt_terminal_backend_operation_type, SetPointerAutohide, 11),
+	ENUM_SET(bt_terminal_backend_operation_type, FreezePointer, 12),
+	ENUM_SET(bt_terminal_backend_operation_type, UnfreezePointer, 13),
+	ENUM_SET(bt_terminal_backend_operation_type, SetTextColours, 14),
+	ENUM_SET(bt_terminal_backend_operation_type, GetTextColours, 15),
+	ENUM_SET(bt_terminal_backend_operation_type, GetScreenModeCount, 16),
+	ENUM_SET(bt_terminal_backend_operation_type, SetScreenMode, 17),
+	ENUM_SET(bt_terminal_backend_operation_type, GetScreenMode, 18),
+	ENUM_SET(bt_terminal_backend_operation_type, GetCurrentScreenMode, 19),
+	ENUM_SET(bt_terminal_backend_operation_type, SetScreenScroll, 20),
+	ENUM_SET(bt_terminal_backend_operation_type, GetScreenScroll, 21),
+	ENUM_SET(bt_terminal_backend_operation_type, SetTextAccessMode, 22),
+	ENUM_SET(bt_terminal_backend_operation_type, GetPaletteEntry, 23),
+	ENUM_SET(bt_terminal_backend_operation_type, ClearScreen, 24),
+	ENUM_SET(bt_terminal_backend_operation_type, RegisterGlobalShortcut, 25),
+	ENUM_SET(bt_terminal_backend_operation_type, IsActive, 25),
+	ENUM_SET(bt_terminal_backend_operation_type, SetActive, 26),
+	ENUM_SET(bt_terminal_backend_operation_type, Open, 27),
+	ENUM_SET(bt_terminal_backend_operation_type, Close, 28),
+	ENUM_SET(bt_terminal_backend_operation_type, SwitchTerminal, 29),
+	ENUM_SET(bt_terminal_backend_operation_type, CanCreate, 30),
+ENUM_END
+ENUM_TYPE(bt_terminal_backend_operation_type);
 
 ENUM_START(bt_terminal_event_type)
     ENUM_SET(bt_terminal_event_type, Pointer, 1),
@@ -116,5 +160,12 @@ struct bt_terminal_pointer_bitmap{
 #ifndef __cplusplus
 typedef struct bt_terminal_pointer_bitmap bt_terminal_pointer_bitmap;
 #endif
+
+ENUM_START(bt_terminal_api)
+	ENUM_SET(bt_terminal_api, RegisterBackend, 0),
+	ENUM_SET(bt_terminal_api, CreateTerminal, 1),
+	ENUM_SET(bt_terminal_api, ReadBuffer, 2),
+ENUM_END
+ENUM_TYPE(bt_terminal_api);
 
 #endif

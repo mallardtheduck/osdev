@@ -41,7 +41,6 @@ public:
     size_t input_write(size_t bytes, char *buf);
     size_t input_seek(size_t pos, uint32_t flags);
 
-    bt_terminal_pointer_info pointer_read();
     void show_pointer();
     void hide_pointer();
     bool get_pointer_visibility();

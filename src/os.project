@@ -178,6 +178,8 @@
       <File Name="modules/terminal/vterm.cpp"/>
       <File Name="modules/terminal/vterm.hpp"/>
       <File Name="modules/terminal/Makefile"/>
+      <File Name="modules/terminal/api.hpp"/>
+      <File Name="modules/terminal/api.cpp"/>
     </VirtualDirectory>
     <VirtualDirectory Name="test">
       <File Name="modules/test/Makefile"/>

@@ -262,11 +262,6 @@ size_t console_backend::input_seek(size_t pos, uint32_t flags) {
     return fseek(input, pos, flags);
 }
 
-bt_terminal_pointer_info console_backend::pointer_read(){
-    bt_terminal_pointer_info ret;
-    return ret;
-}
-
 void console_backend::show_pointer() {
     fioctl(pointer, bt_mouse_ioctl::ClearBuffer, 0, NULL);
     pointer_visible=true;

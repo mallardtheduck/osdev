@@ -3,6 +3,8 @@
 
 typedef void (*handle_close_fn)(void*);
 
+typedef uint32_t bt_handle_t;
+
 struct bt_handle_info {
     uint32_t type;
     bool open;

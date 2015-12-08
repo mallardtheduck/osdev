@@ -532,6 +532,7 @@ uint64_t vterm::send_event(const bt_terminal_event &e)
 	*content = e;
 	msg.to = events_pid;
 	msg.source = terminal_extension_id;
+	msg.type = bt_terminal_message_type::InputEvent;
 	msg.content = content;
 	msg.length = sizeof(*content);
 	return msg_send(&msg);

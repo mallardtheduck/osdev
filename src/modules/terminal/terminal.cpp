@@ -5,6 +5,7 @@
 #include "device.hpp"
 #include "console_backend.hpp"
 #include "extension.h"
+#include "api.hpp"
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
@@ -15,7 +16,7 @@ uint16_t terminal_extension_id;
 kernel_extension terminal_extension={
 	"TERMINAL",
 	NULL,
-	NULL
+	terminal_uapi
 };
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
