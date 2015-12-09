@@ -3,6 +3,16 @@
 
 #include "bt_enum.h"
 
+#if defined(KERNEL) || defined(KERNEL_MODULE)
+#include <module_api.h>
+#else
+#include <btos_api.h>
+#endif
+
+#ifdef __cplusplus
+using namespace btos_api;
+#endif
+
 ENUM_START(bt_terminal_mode)
     ENUM_SET(bt_terminal_mode, Terminal, 0),
     ENUM_SET(bt_terminal_mode, Video, 1),
@@ -145,6 +155,14 @@ struct bt_terminal_event{
 #ifndef __cplusplus
 typedef struct bt_terminal_event bt_terminal_event;
 #endif
+
+struct bt_terminal_backend_operation{
+	bt_handle_t handle;
+	ENUM_NAME(bt_terminal_backend_operation_type) type;
+	size_t datasize;
+	char data[];
+};
+BT_STRUCT_TYPE(bt_terminal_backend_operation);
 
 struct bt_terminal_pointer_bitmap{
     uint32_t w;

@@ -8,8 +8,11 @@ extern uapi_hanlder_fn terminal_uapi;
 
 class user_backend : public i_backend{
 	pid_t pid;
+	bt_handle_t handle_id;
 	
 public:
+	user_backend(pid_t p, bt_handle_t h);
+
 	size_t display_read(size_t bytes, char *buf);
     size_t display_write(size_t bytes, char *buf);
     size_t display_seek(size_t pos, uint32_t flags);

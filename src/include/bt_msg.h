@@ -9,9 +9,9 @@ namespace btos_api{
 #endif
 
 #ifndef __cplusplus
-#define BT_MSG_MAX (1024*4069)
+#define BT_MSG_MAX (4069)
 #else
-const size_t BT_MSG_MAX=4096*1024;
+const size_t BT_MSG_MAX=4096;
 #endif
 
 struct bt_msg_header{

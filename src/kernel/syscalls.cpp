@@ -250,4 +250,5 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&msg_query_recieved,
 	
 	&proc_add_handle,
+	&proc_get_handle,
 };

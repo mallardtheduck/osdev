@@ -13,6 +13,7 @@ namespace btos_api{
 #endif
 
 typedef uint32_t bt_handle;
+typedef uint32_t bt_handle_t;
 typedef bt_handle bt_lockhandle;
 typedef bt_handle bt_filehandle;
 typedef bt_handle bt_dirhandle;

@@ -1,17 +1,18 @@
-#include "switcher.hpp"
-#include "../../include/btos_api.h"
-#include "../../include/terminal.h"
-#include "../../include/btos_stubs.h"
 #include <fstream>
 #include <cstdlib>
 #include <cstdint>
 #include <iostream>
 #include <video_dev.h>
 #include <keyboard.h>
+#include <btos_api.h>
+#include <terminal.h>
+#include <btos_stubs.h>
+#include <crt_support.h>
+#include "switcher.hpp"
 
 using namespace std;
 
-extern "C" btos_api::bt_handle btos_get_handle(int fd);
+//extern "C" btos_api::bt_handle btos_get_handle(int fd);
 
 struct term{
     uint64_t id;
