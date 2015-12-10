@@ -12,10 +12,6 @@ public:
     virtual size_t display_write(size_t bytes, char *buf)=0;
     virtual size_t display_seek(size_t pos, uint32_t flags)=0;
 
-    virtual size_t input_read(size_t bytes, char *buf)=0;
-    virtual size_t input_write(size_t bytes, char *buf)=0;
-    virtual size_t input_seek(size_t pos, uint32_t flags)=0;
-
     virtual void show_pointer()=0;
     virtual void hide_pointer()=0;
     virtual bool get_pointer_visibility()=0;

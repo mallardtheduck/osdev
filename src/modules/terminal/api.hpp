@@ -17,10 +17,6 @@ public:
     size_t display_write(size_t bytes, char *buf);
     size_t display_seek(size_t pos, uint32_t flags);
 
-    size_t input_read(size_t bytes, char *buf);
-    size_t input_write(size_t bytes, char *buf);
-    size_t input_seek(size_t pos, uint32_t flags);
-
     void show_pointer();
     void hide_pointer();
     bool get_pointer_visibility();
