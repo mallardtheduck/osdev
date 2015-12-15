@@ -176,6 +176,8 @@ struct bt_terminal_pointer_bitmap{
 typedef struct bt_terminal_pointer_bitmap bt_terminal_pointer_bitmap;
 #endif
 
+#ifndef NO_TERMINAL_API
+
 ENUM_START(bt_terminal_api)
 	ENUM_SET(bt_terminal_api, RegisterBackend, 0),
 	ENUM_SET(bt_terminal_api, CreateTerminal, 1),
@@ -183,5 +185,41 @@ ENUM_START(bt_terminal_api)
 	ENUM_SET(bt_terminal_api, QueueEvent, 3),
 ENUM_END
 ENUM_TYPE(bt_terminal_api);
+
+#if !defined(KERNEL) && !defined(KERNEL_MODULE)
+#include <btos_stubs.h>
+
+#define USE_BT_TERMINAL_API uint16_t bt_terminal_ext_id = 0
+extern uint16_t bt_terminal_ext_id;
+
+inline static void bt_terminial_init(){
+	if(bt_terminal_ext_id == 0) bt_terminal_ext_id = bt_query_extension("TERMINAL");
+}
+
+inline static uint32_t bt_terminal_api_call(uint16_t fn, uint32_t b, uint32_t c, uint32_t d){
+	bt_terminial_init();
+	uint32_t a = (bt_terminal_ext_id << 16) + fn;
+	return btos_call(a, b, c, d);
+}
+
+inline static bt_handle_t bt_terminal_create_backend(){
+	return bt_terminal_api_call(ENUM_GET(bt_terminal_api, RegisterBackend), 0, 0, 0);
+}
+
+inline static bt_handle_t bt_terminal_create_terminal(bt_handle_t backend){
+	return bt_terminal_api_call(ENUM_GET(bt_terminal_api, CreateTerminal), backend, 0, 0);
+}
+
+inline static void bt_terminal_read_buffer(bt_handle_t terminal, size_t size, uint8_t *buf){
+	bt_terminal_api_call(ENUM_GET(bt_terminal_api, ReadBuffer), terminal, size, (uint32_t)buf);
+}
+
+inline static void bt_terminal_queue_event(bt_handle_t terminal, bt_terminal_event *event){
+	bt_terminal_api_call(ENUM_GET(bt_terminal_api, QueueEvent), terminal, (uint32_t)event, 0);
+}
+
+#endif
+
+#endif
 
 #endif
