@@ -11,7 +11,8 @@ class user_backend : public i_backend{
 	bt_handle_t handle_id;
 	
 public:
-	user_backend(pid_t p, bt_handle_t h);
+	user_backend(pid_t p);
+	void set_handlde_id(bt_handle_t h);
 
 	size_t display_read(size_t bytes, char *buf);
     size_t display_write(size_t bytes, char *buf);

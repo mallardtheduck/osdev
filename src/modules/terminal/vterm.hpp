@@ -95,6 +95,8 @@ public:
 	
 	void update_current_pid();
 	i_backend *get_backend();
+	
+	void read_buffer(size_t size, uint8_t *buf);
 };
 
 //extern vterm *current_vterm;

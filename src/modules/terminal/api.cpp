@@ -1,5 +1,6 @@
 #include <module_stubs.h>
 #include <terminal.h>
+#include "vterm.hpp"
 #include "api.hpp"
 #include "terminal.hpp"
 
@@ -50,18 +51,75 @@ template<typename R> R send_request_get_reply(pid_t pid, bt_handle_t handle, bt_
 	return ret;
 }
 
-void terminal_uapi_fn(uint16_t fn, isr_regs */*regs*/){
+void close_backend(void *p){
+	delete (user_backend*)p;
+}
+
+void close_terminal(void *p){
+	uint64_t *termid = (uint64_t*)p;
+	terminals->delete_terminal(*termid);
+	delete termid;
+}
+
+void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
+	uint32_t backend_handle_type = (terminal_extension_id << 16) | 0x01;
+	uint32_t terminal_handle_type = (terminal_extension_id << 16) | 0x02;
 	switch(fn){
 		case bt_terminal_api::RegisterBackend:{
+			bt_handle_info handle;
+			handle.open = true;
+			handle.close = &close_backend;
+			handle.type = backend_handle_type;
+			user_backend *backend = new user_backend(getpid());
+			handle.value = (void*)backend;
+			bt_handle_t handle_id = add_user_handle(handle, getpid());
+			backend->set_handlde_id(handle_id);
+			regs->eax = handle_id;
 			break;
 		}
 		case bt_terminal_api::CreateTerminal:{
+			bt_handle_t backend_id = regs->ebx;
+			bt_handle_info backend_handle = get_user_handle(backend_id, getpid());
+			if(backend_handle.type == backend_handle_type){
+				uint64_t *terminal_id = new uint64_t(terminals->create_terminal((i_backend*)backend_handle.value));
+				bt_handle_info terminal_handle;
+				terminal_handle.open = true;
+				terminal_handle.close = &close_terminal;
+				terminal_handle.type = terminal_handle_type;
+				terminal_handle.value = (void*)terminal_id;
+				bt_handle_t handle_id = add_user_handle(terminal_handle, getpid());
+				regs->eax = handle_id;
+			}
 			break;
 		}
 		case bt_terminal_api::ReadBuffer:{
+			bt_handle_info handle = get_user_handle((bt_handle_t)regs->ebx, getpid());
+			if(handle.type == terminal_handle_type){
+				uint64_t termid = *(uint64_t*)handle.value;
+				vterm *vt = terminals->get(termid);
+				if(vt) vt->read_buffer((size_t)regs->ecx, (uint8_t*)regs->edx);
+			}
 			break;
 		}
 		case bt_terminal_api::QueueEvent:{
+			bt_handle_info handle = get_user_handle((bt_handle_t)regs->ebx, getpid());
+			if(handle.type == terminal_handle_type){
+				uint64_t termid = *(uint64_t*)handle.value;
+				vterm *vt = terminals->get(termid);
+				if(vt){
+					bt_terminal_event *e = (bt_terminal_event*)regs->ecx;
+					switch(e->type){
+						case bt_terminal_event_type::Pointer:{
+							vt->queue_pointer(e->pointer);
+							break;
+						}
+						case bt_terminal_event_type::Key:{
+							vt->queue_input(e->key);
+							break;
+						}
+					}
+				}
+			}
 			break;
 		}
 	}
@@ -69,7 +127,11 @@ void terminal_uapi_fn(uint16_t fn, isr_regs */*regs*/){
 
 uapi_hanlder_fn terminal_uapi = &terminal_uapi_fn;
 
-user_backend::user_backend(pid_t p, bt_handle_t h) : pid(p), handle_id(h) {}
+user_backend::user_backend(pid_t p) : pid(p), handle_id(0) {}
+
+void user_backend::set_handlde_id(bt_handle_t h){
+	handle_id = h;
+}
 
 size_t user_backend::display_read(size_t bytes, char *buf){
 	for(size_t i=0; i<bytes; i+=BT_MSG_MAX){

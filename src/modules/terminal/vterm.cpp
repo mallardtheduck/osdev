@@ -719,6 +719,11 @@ i_backend *vterm::get_backend(){
 	return backend;
 }
 
+void vterm::read_buffer(size_t size, uint8_t *buf){
+	if(size > bufsize) size = bufsize;
+	memcpy(buf, buffer, size);
+}
+
 vterm_list::vterm_list()
 {
 	id = 0;
