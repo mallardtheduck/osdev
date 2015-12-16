@@ -508,19 +508,21 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 void vterm::create_terminal(char *command)
 {
 	uint64_t new_id=terminals->create_terminal(backend);
-	dbgpf("TERM: Created new terminal %i.\n", (int) new_id);
-	terminals->get(new_id)->sync(false);
-	backend->switch_terminal(new_id);
-	if(command) {
-		char old_terminal_id[128]="0";
-		strncpy(old_terminal_id, getenv(terminal_var, getpid()), 128);
-		char new_terminal_id[128]= {0};
-		i64toa(new_id, new_terminal_id, 10);
-		setenv(terminal_var, new_terminal_id, 0, getpid());
-		pid_t pid=spawn(command, 0, NULL);
-		setenv(terminal_var, old_terminal_id, 0, getpid());
-		vterm_options opts;
-		if(!pid) terminals->get(new_id)->close(opts);
+	if(new_id){
+		dbgpf("TERM: Created new terminal %i.\n", (int) new_id);
+		terminals->get(new_id)->sync(false);
+		backend->switch_terminal(new_id);
+		if(command) {
+			char old_terminal_id[128]="0";
+			strncpy(old_terminal_id, getenv(terminal_var, getpid()), 128);
+			char new_terminal_id[128]= {0};
+			i64toa(new_id, new_terminal_id, 10);
+			setenv(terminal_var, new_terminal_id, 0, getpid());
+			pid_t pid=spawn(command, 0, NULL);
+			setenv(terminal_var, old_terminal_id, 0, getpid());
+			vterm_options opts;
+			if(!pid) terminals->get(new_id)->close(opts);
+		}
 	}
 }
 
@@ -720,6 +722,7 @@ i_backend *vterm::get_backend(){
 }
 
 void vterm::read_buffer(size_t size, uint8_t *buf){
+	//hold_lock hl(&term_lock);
 	if(size > bufsize) size = bufsize;
 	memcpy(buf, buffer, size);
 }
@@ -752,6 +755,23 @@ void vterm_list::delete_terminal(uint64_t id)
 			break;
 		}
 	}
+}
+
+void vterm_list::delete_backend(i_backend *back){
+	hold_lock hl(&vtl_lock);
+	bool found = false;
+	do{
+		found = false;
+		for(size_t i=0; i<terminals.size(); ++i) {
+			if(terminals[i]->get_backend() == back){
+				vterm *term=terminals[i];
+				terminals.erase(i);
+				delete term;
+				found = true;
+				break;
+			}
+		}
+	}while(found);
 }
 
 vterm *vterm_list::get(uint64_t id)

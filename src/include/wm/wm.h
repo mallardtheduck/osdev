@@ -27,6 +27,7 @@ ENUM_END
 ENUM_TYPE(wm_WindowOptions)
 
 ENUM_START(wm_EventType)
+	ENUM_SET(wm_EventType, None,				0),
 	ENUM_SET(wm_EventType, PointerMove, 		1 << 0),
 	ENUM_SET(wm_EventType, PointerButtonDown, 	1 << 1),
 	ENUM_SET(wm_EventType, PointerButtonUp,		1 << 2),

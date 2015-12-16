@@ -4,7 +4,7 @@
 #include <extension.h>
 #include "backend.hpp"
 
-extern uapi_hanlder_fn terminal_uapi;
+void terminal_uapi_fn(uint16_t fn, isr_regs *regs);
 
 class user_backend : public i_backend{
 	pid_t pid;

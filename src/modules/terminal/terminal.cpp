@@ -16,7 +16,7 @@ uint16_t terminal_extension_id;
 kernel_extension terminal_extension={
 	"TERMINAL",
 	NULL,
-	terminal_uapi
+	&terminal_uapi_fn
 };
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"

@@ -112,6 +112,7 @@ public:
 
     uint64_t create_terminal(i_backend *back);
     void delete_terminal(uint64_t id);
+	void delete_backend(i_backend *back);
     vterm *get(uint64_t id);
     size_t get_count();
 

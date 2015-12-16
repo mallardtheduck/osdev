@@ -3,6 +3,7 @@
 #include "vterm.hpp"
 #include "api.hpp"
 #include "terminal.hpp"
+#include "device.hpp"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b)) 
 
@@ -34,7 +35,7 @@ uint64_t send_request(pid_t pid, bt_handle_t handle, bt_terminal_backend_operati
 template<typename R, typename P> R send_request_get_reply(pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type, P param){
 	btos_api::bt_msg_header msg;
 	uint64_t msgid = send_request(pid, handle, type, param);
-	msg_recv_reply(&msg, msgid);
+	msg = msg_recv_reply_block(msgid);
 	R ret;
 	msg_getcontent(&msg, (void*)&ret, sizeof(R));
 	msg_acknowledge(&msg, false);
@@ -44,7 +45,7 @@ template<typename R, typename P> R send_request_get_reply(pid_t pid, bt_handle_t
 template<typename R> R send_request_get_reply(pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type){
 	btos_api::bt_msg_header msg;
 	uint64_t msgid = send_request(pid, handle, type);
-	msg_recv_reply(&msg, msgid);
+	msg = msg_recv_reply_block(msgid);
 	R ret;
 	msg_getcontent(&msg, (void*)&ret, sizeof(R));
 	msg_acknowledge(&msg, false);
@@ -52,7 +53,9 @@ template<typename R> R send_request_get_reply(pid_t pid, bt_handle_t handle, bt_
 }
 
 void close_backend(void *p){
-	delete (user_backend*)p;
+	user_backend *back = (user_backend*)p;
+	terminals->delete_backend(back);
+	delete back;
 }
 
 void close_terminal(void *p){
@@ -64,6 +67,7 @@ void close_terminal(void *p){
 void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 	uint32_t backend_handle_type = (terminal_extension_id << 16) | 0x01;
 	uint32_t terminal_handle_type = (terminal_extension_id << 16) | 0x02;
+	dbgpf("TERM: API call %i\n", fn);
 	switch(fn){
 		case bt_terminal_api::RegisterBackend:{
 			bt_handle_info handle;
@@ -81,14 +85,21 @@ void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 			bt_handle_t backend_id = regs->ebx;
 			bt_handle_info backend_handle = get_user_handle(backend_id, getpid());
 			if(backend_handle.type == backend_handle_type){
-				uint64_t *terminal_id = new uint64_t(terminals->create_terminal((i_backend*)backend_handle.value));
-				bt_handle_info terminal_handle;
-				terminal_handle.open = true;
-				terminal_handle.close = &close_terminal;
-				terminal_handle.type = terminal_handle_type;
-				terminal_handle.value = (void*)terminal_id;
-				bt_handle_t handle_id = add_user_handle(terminal_handle, getpid());
-				regs->eax = handle_id;
+				uint64_t terminal_id = terminals->create_terminal((i_backend*)backend_handle.value);
+				if(terminal_id){
+					vterm *vt = terminals->get(terminal_id);
+					vt->sync(false);
+					vt->activate();
+					bt_handle_info terminal_handle;
+					terminal_handle.open = true;
+					terminal_handle.close = &close_terminal;
+					terminal_handle.type = terminal_handle_type;
+					terminal_handle.value = (void*)new uint64_t(terminal_id);
+					bt_handle_t handle_id = add_user_handle(terminal_handle, getpid());
+					regs->eax = handle_id;
+				}else{
+					regs->eax = 0;
+				}
 			}
 			break;
 		}
@@ -122,10 +133,27 @@ void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 			}
 			break;
 		}
+		case bt_terminal_api::TerminalRun:{
+			bt_handle_info handle = get_user_handle((bt_handle_t)regs->ebx, getpid());
+			if(handle.type == terminal_handle_type){
+				uint64_t termid = *(uint64_t*)handle.value;
+				vterm *vt = terminals->get(termid);
+				if(vt){
+					char *command = (char*)regs->ecx;
+					char old_terminal_id[128]="0";
+					strncpy(old_terminal_id, getenv(terminal_var, getpid()), 128);
+					char new_terminal_id[128]= {0};
+					i64toa(vt->get_id(), new_terminal_id, 10);
+					setenv(terminal_var, new_terminal_id, 0, getpid());
+					pid_t pid=spawn(command, 0, NULL);
+					setenv(terminal_var, old_terminal_id, 0, getpid());
+					*(pid_t*)regs->edx = pid;
+				}
+			}
+			break;
+		}
 	}
 }
-
-uapi_hanlder_fn terminal_uapi = &terminal_uapi_fn;
 
 user_backend::user_backend(pid_t p) : pid(p), handle_id(0) {}
 
@@ -138,7 +166,7 @@ size_t user_backend::display_read(size_t bytes, char *buf){
 		size_t partsize = MIN(i + BT_MSG_MAX, bytes) - i;
 		uint64_t msgid = send_request(pid, handle_id, bt_terminal_backend_operation_type::DisplayRead, partsize);
 		bt_msg_header msg;
-		msg_recv_reply(&msg, msgid);
+		msg = msg_recv_reply_block(msgid);
 		size_t readsize = msg.length;
 		msg_getcontent(&msg, (void*)(buf + i), readsize);
 		msg_acknowledge(&msg, false);
@@ -150,11 +178,11 @@ size_t user_backend::display_read(size_t bytes, char *buf){
 size_t user_backend::display_write(size_t bytes, char *buf){
 	for(size_t i=0; i<bytes; i+=(BT_MSG_MAX - sizeof(bt_terminal_backend_operation))){
 		size_t partsize = MIN(i + BT_MSG_MAX, bytes) - i;
-		uint64_t msgid = send_request(pid, handle_id, bt_terminal_backend_operation_type::DisplayRead, (buf + i), partsize);
+		uint64_t msgid = send_request(pid, handle_id, bt_terminal_backend_operation_type::DisplayWrite, (buf + i), partsize);
 		bt_msg_header msg;
-		msg_recv_reply(&msg, msgid);
+		msg = msg_recv_reply_block(msgid);
 		size_t readsize = 0;
-		msg_getcontent(&msg, (void*)readsize, sizeof(readsize));
+		msg_getcontent(&msg, (void*)&readsize, sizeof(readsize));
 		msg_acknowledge(&msg, false);
 		if(readsize != partsize) return i + readsize;
 	}

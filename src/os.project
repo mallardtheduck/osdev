@@ -339,6 +339,10 @@
       <File Name="user/switcher/switcher.cpp"/>
       <File Name="user/switcher/Makefile"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="termwin">
+      <File Name="user/termwin/Makefile"/>
+      <File Name="user/termwin/termwin.cpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>

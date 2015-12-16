@@ -141,14 +141,29 @@ void WM_SetTitle(const std::string title){
 	WM_SetTitle(title.c_str());
 }
 
-extern "C" wm_Event WM_GetEvent(){
+extern "C" bt_msg_filter WM_GetEventFilter(){
 	bt_msg_filter filter;
 	filter.flags = (bt_msg_filter_flags::Enum)(bt_msg_filter_flags::From | bt_msg_filter_flags::Type);
 	filter.pid = wm_pid;
 	filter.type = wm_MessageType::Event;
+	return filter;
+}
+
+extern "C" wm_Event WM_ParseMessage(bt_msg_header *msg){
+	wm_Event ret;
+	if(msg && msg->from == wm_pid && msg->type == wm_MessageType::Event && msg->length == sizeof(wm_Event)){
+		ret = GetContent<wm_Event>(*msg);
+	}else{
+		ret.type = wm_EventType::None;
+	}
+	return ret;
+}
+
+extern "C" wm_Event WM_GetEvent(){
+	bt_msg_filter filter = WM_GetEventFilter();
 	bt_msg_header msg = bt_recv_filtered(filter);
 	wm_Event ret;
-	ret = GetContent<wm_Event>(msg);
+	ret = WM_ParseMessage(&msg);
 	bt_msg_ack(&msg);
 	return ret;
 }
