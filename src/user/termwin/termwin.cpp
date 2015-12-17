@@ -60,31 +60,46 @@ template<typename T> void send_reply(const bt_msg_header &msg, const T *content,
 }
 
 template<typename T> T get_content(bt_msg_header &msg){
-	T ret;
-	bt_msg_content(&msg, &ret, sizeof(ret));
-	return ret;
+	if(msg.length == sizeof(T)){
+		T ret;
+		bt_msg_content(&msg, &ret, sizeof(ret));
+		return ret;
+	}else{
+		stringstream ss;
+		ss << "TW: Message length mismatch. Expected " << sizeof(T) << " got " << msg.length << "." << endl;
+		ss << "TW: Message type: " << msg.type << " from: " << msg.from << " (source: " << msg.source << ")" << endl;
+		bt_zero(ss.str().c_str());
+		return T();
+	}
 }
 
 uint32_t getcolour(uint8_t id){
+	static uint32_t colours[16] = {0};
+	if(id < 16 && colours[id]) return colours[id];
 	switch(id){
-		case 0: return GDS_GetColour(0, 0, 0);
-		case 1: return GDS_GetColour(0, 0, 0xaa);
-		case 2: return GDS_GetColour(0, 0xaa, 0);
-		case 3: return GDS_GetColour(0, 0xaa, 0xaa);
-		case 4: return GDS_GetColour(0xaa, 0, 0);
-		case 5: return GDS_GetColour(0xaa, 0, 0xaa);
-		case 6: return GDS_GetColour(0xaa, 0x55, 0);
-		case 7: return GDS_GetColour(0xaa, 0xaa, 0xaa);
-		case 8: return GDS_GetColour(0x55, 0x55, 0x55);
-		case 9: return GDS_GetColour(0x55, 0x55, 0xff);
-		case 10: return GDS_GetColour(0x55, 0xff, 0x55);
-		case 11: return GDS_GetColour(0x55, 0xff, 0xff);
-		case 12: return GDS_GetColour(0xff, 0x55, 0x55);
-		case 13: return GDS_GetColour(0xff, 0x55, 0xff);
-		case 14: return GDS_GetColour(0xff, 0xff, 0x55);
-		case 15: return GDS_GetColour(0xff, 0xff, 0xff);
-		default: return GDS_GetColour(0, 0, 0);
+		case 0: return colours[0] = GDS_GetColour(0, 0, 0);
+		case 1: return colours[1] = GDS_GetColour(0, 0, 0xaa);
+		case 2: return colours[2] = GDS_GetColour(0, 0xaa, 0);
+		case 3: return colours[3] = GDS_GetColour(0, 0xaa, 0xaa);
+		case 4: return colours[4] = GDS_GetColour(0xaa, 0, 0);
+		case 5: return colours[5] = GDS_GetColour(0xaa, 0, 0xaa);
+		case 6: return colours[6] = GDS_GetColour(0xaa, 0x55, 0);
+		case 7: return colours[7] = GDS_GetColour(0xaa, 0xaa, 0xaa);
+		case 8: return colours[8] = GDS_GetColour(0x55, 0x55, 0x55);
+		case 9: return colours[9] = GDS_GetColour(0x55, 0x55, 0xff);
+		case 10: return colours[10] = GDS_GetColour(0x55, 0xff, 0x55);
+		case 11: return colours[11] = GDS_GetColour(0x55, 0xff, 0xff);
+		case 12: return colours[12] = GDS_GetColour(0xff, 0x55, 0x55);
+		case 13: return colours[13] = GDS_GetColour(0xff, 0x55, 0xff);
+		case 14: return colours[14] = GDS_GetColour(0xff, 0xff, 0x55);
+		case 15: return colours[15] = GDS_GetColour(0xff, 0xff, 0xff);
+		default: return colours[0] = GDS_GetColour(0, 0, 0);
 	}
+}
+
+bool compare_chars(char a, char b){
+	if(a < 32 && b < 32) return true;
+	else return a == b;
 }
 
 void render_terminal(bt_handle_t terminal_handle, uint64_t surf, uint64_t /*win*/){
@@ -94,38 +109,94 @@ void render_terminal(bt_handle_t terminal_handle, uint64_t surf, uint64_t /*win*
 	bt_terminal_read_buffer(terminal_handle, buffer_size, tempbuffer);
 	uint32_t minX = UINT32_MAX, minY = UINT32_MAX, maxX = 0, maxY = 0;
 	for(size_t line = 0; line < terminal_mode.height; ++line){
+		vector<pair<size_t, uint16_t>> line_changes;
 		for(size_t col = 0; col < terminal_mode.width; ++col){
-			char c[2] = {0};
 			size_t buffaddr = ((line * terminal_mode.width) + col) * 2;
-			if(tempbuffer[buffaddr] != buffer[buffaddr] || tempbuffer[buffaddr + 1] != buffer[buffaddr + 1]){
+			if(!compare_chars(tempbuffer[buffaddr], buffer[buffaddr]) || tempbuffer[buffaddr + 1] != buffer[buffaddr + 1]){
 				minX = min(minX, (uint32_t)(col * font_width));
 				minY = min(minY, (uint32_t)(line * font_height));
 				maxX = max(maxX, (uint32_t)((col * font_width) + font_width));
 				maxY = max(maxY, (uint32_t)((line * font_height) + font_height));
 				buffer[buffaddr] = tempbuffer[buffaddr];
 				buffer[buffaddr + 1] = tempbuffer[buffaddr + 1];
-				c[0] = buffer[buffaddr];
-				uint8_t bgcol = buffer[buffaddr + 1] >> 4;
-				uint8_t fgcol = buffer[buffaddr + 1] & 0x0F;
-				GDS_Box(col * font_width, line * font_height, font_width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-				if(c[0] > 32) GDS_Text(col * font_width, line * font_height, c, font, 0, getcolour(fgcol));
+				uint16_t change = (buffer[buffaddr] > 32 ? buffer[buffaddr] : ' ') | buffer[buffaddr + 1] << 8;
+				line_changes.push_back(make_pair(col, change));
 			}
 		}
+		if(line_changes.size()){
+			size_t start = UINT32_MAX;
+			size_t end = 0;
+			stringstream text;
+			uint8_t col = 0, ncol = 0;
+			for(auto change : line_changes){
+				bool draw = false;
+				if(start == UINT32_MAX) start = end = change.first;
+				if(change.first == end){
+					++end;
+					char c = change.second & 0xFF;
+					uint8_t ccol = (change.second & 0xFF00) >> 8;
+					if(ccol == col){
+						text << c;
+					}else{
+						ncol = ccol;
+						draw = true;
+					}
+				}else{
+					draw = true;
+				}
+				if(draw){
+					if(text.str().length()){
+						uint8_t bgcol = col >> 4;
+						uint8_t fgcol = col & 0x0F;
+						uint32_t width = text.str().length() * font_width;
+						GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+						GDS_Text(start * font_width, line * font_height, text.str().c_str(), font, 0, getcolour(fgcol));
+						WM_UpdateRect(start * font_width, line * font_height, width, font_height);
+					}
+					text.str("");
+					text << (char)(change.second & 0xFF);
+					start = change.first;
+					end = change.first + 1;
+					col = ncol;
+				}
+			}
+			if(start != UINT32_MAX){
+				uint8_t bgcol = col >> 4;
+				uint8_t fgcol = col & 0x0F;
+				uint32_t width = (end * font_width) - (start * font_width);
+				GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+				GDS_Text(start * font_width, line * font_height, text.str().c_str(), font, 0, getcolour(fgcol));
+				WM_UpdateRect(start * font_width, line * font_height, width, font_height);
+			}
+		}
+		/*if(maxX){
+			stringstream ss;
+			ss << "TW: Updating rect: (" << minX << "," << minY << ") - (" << maxX << "," << maxY << ")" << endl;
+			bt_zero(ss.str().c_str());
+			//WM_SelectWindow(win);
+			WM_UpdateRect(minX, minY, maxX - minX, maxY - minY);
+			minX = UINT32_MAX, minY = UINT32_MAX, maxX = 0, maxY = 0;
+		}*/
 	}
-	if(maxX){
+	/*if(maxX){
+		stringstream ss;
+		ss << "TW: Updating rect: (" << minX << "," << minY << ") - (" << maxX << "," << maxY << ")" << endl;
+		bt_zero(ss.str().c_str());
 		//WM_SelectWindow(win);
 		WM_UpdateRect(minX, minY, maxX - minX, maxY - minY);
-	}
+	}*/
 }
 
 void mainthread(void*){
 	size_t cpos  = 0;
+	size_t refcount = 0;
 	uint8_t textcolours = 0x07;
 	uint64_t surf = GDS_NewSurface(gds_SurfaceType::Bitmap, terminal_mode.width * font_width, terminal_mode.height * font_height);
 	uint64_t win = WM_NewWindow(50, 50, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close, surf, "Terminal Window");
 	ready = true;
 	bt_msg_header msg = bt_recv(true);
-	while(true){
+	bool loop = true;
+	while(loop){
 		if(msg.from == 0 && msg.source == bt_terminal_ext_id && msg.type == bt_terminal_message_type::BackendOperation){
 			bt_terminal_backend_operation *op = (bt_terminal_backend_operation*)new uint8_t[msg.length];
 			bt_msg_content(&msg, op, msg.length);
@@ -150,7 +221,7 @@ void mainthread(void*){
 						size_t pos;
 						uint32_t flags;
 					};
-					sp seek_params = get_content<sp>(msg);
+					sp seek_params = *(sp*)op->data;
 					if((seek_params.flags & FS_Backwards) && (seek_params.flags & FS_Relative)) cpos -= seek_params.pos;
 					else if (seek_params.flags & FS_Relative) cpos += seek_params.pos;
 					else cpos = seek_params.pos;
@@ -158,7 +229,7 @@ void mainthread(void*){
 					break;
 				}
 				case bt_terminal_backend_operation_type::DisplayRead:{
-					size_t readsize = get_content<size_t>(msg);
+					size_t readsize = *(size_t*)op->data;
 					send_reply(msg, &buffer[cpos], readsize);
 					cpos += readsize;
 					break;
@@ -166,7 +237,7 @@ void mainthread(void*){
 				case bt_terminal_backend_operation_type::DisplayWrite:{
 					cpos += msg.length;
 					send_reply(msg, msg.length);
-					render_terminal(terminal_handle, surf, win);
+					//render_terminal(terminal_handle, surf, win);
 					break;
 				}
 				case bt_terminal_backend_operation_type::IsActive:{
@@ -174,16 +245,29 @@ void mainthread(void*){
 					break;
 				}
 				case bt_terminal_backend_operation_type::SetTextColours:{
-					textcolours = get_content<uint8_t>(msg);
+					textcolours = *(uint8_t*)op->data;
 					break;
 				}
 				case bt_terminal_backend_operation_type::GetTextColours:{
 					send_reply(msg, textcolours);
 					break;
 				}
+				case bt_terminal_backend_operation_type::Refresh:{
+					render_terminal(terminal_handle, surf, win);
+					break;
+				}
+				case bt_terminal_backend_operation_type::Open:{
+					++refcount;
+					break;
+				}
+				case bt_terminal_backend_operation_type::Close:{
+					--refcount;
+					if(refcount == 0) loop = false;
+					break;
+				}
 				default:{
 					bt_zero("TW: Unhandled backend operation.\n");
-					render_terminal(terminal_handle, surf, win);
+					//render_terminal(terminal_handle, surf, win);
 				}
 			}
 			delete op;

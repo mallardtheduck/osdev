@@ -423,3 +423,6 @@ void console_backend::switch_terminal(uint64_t id){
 bool console_backend::can_create(){
 	return true;
 }
+
+void console_backend::refresh(){
+}

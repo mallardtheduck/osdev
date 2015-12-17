@@ -155,7 +155,7 @@ void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 	}
 }
 
-user_backend::user_backend(pid_t p) : pid(p), handle_id(0) {}
+user_backend::user_backend(pid_t p) : pid(p), handle_id(0), active_id(0) {}
 
 void user_backend::set_handlde_id(bt_handle_t h){
 	handle_id = h;
@@ -281,10 +281,12 @@ void user_backend::register_global_shortcut(uint16_t keycode, uint64_t termid){
 }
 
 bool user_backend::is_active(uint64_t id){
+	if(id == active_id) return true;
 	return send_request_get_reply<bool>(pid, handle_id, bt_terminal_backend_operation_type::IsActive, id);
 }
 
 void user_backend::set_active(uint64_t id){
+	active_id = id;
 	send_request(pid, handle_id, bt_terminal_backend_operation_type::SetActive, id);
 }
 
@@ -302,4 +304,8 @@ void user_backend::switch_terminal(uint64_t id){
 
 bool user_backend::can_create(){
 	return send_request_get_reply<bool>(pid, handle_id, bt_terminal_backend_operation_type::CanCreate);
+}
+
+void user_backend::refresh(){
+	send_request(pid, handle_id, bt_terminal_backend_operation_type::Refresh);
 }

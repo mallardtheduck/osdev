@@ -135,6 +135,7 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 		w = current_mode.width;
 		h = current_mode.height;
 	}
+	if(!w || !h) return;
 	if(cursor_on){
 		hide_cursor = true;
 		bt_terminal_pointer_info pointer_info;

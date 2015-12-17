@@ -47,6 +47,7 @@ vterm::vterm(uint64_t nid, i_backend *back)
 	event_mode = bt_terminal_event_mode::None;
 	event_mode_enabled = false;
 	last_move_message = 0;
+	backend->open(nid);
 }
 
 vterm::~vterm()
@@ -130,7 +131,7 @@ void vterm::do_infoline()
 		size_t pos=seek(opts, 0, true);
 		seek(opts, 0, false);
 		uint16_t linecol=0x1F;
-		uint16_t colour=(uint16_t) backend->get_text_colours();
+		uint8_t colour=backend->get_text_colours();
 		setcolours(linecol);
 		for(size_t i=0; i<vidmode.width; ++i) {
 			putchar(' ');
@@ -143,6 +144,7 @@ void vterm::do_infoline()
 		setcolours(colour);
 		seek(opts, pos, false);
 		if(pos < vidmode.width) putchar('\n');
+		backend->refresh();
 	}
 }
 
@@ -186,6 +188,7 @@ void vterm::activate()
 		backend->hide_pointer();
 	}
 	backend->set_pointer_autohide(pointer_autohide);
+	backend->refresh();
 }
 
 void vterm::deactivate()
@@ -221,6 +224,7 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf)
 		bufpos += size;
 	}
 	if(!iline_valid) do_infoline();
+	backend->refresh();
 	return size;
 }
 
@@ -256,11 +260,17 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf)
 				}
 				if(c == '\n') {
 					uint64_t scount=scrollcount;
-					if(echo) putchar(c);
+					if(echo){
+						putchar(c);
+						backend->refresh();
+					}
 					if(scount != scrollcount) do_infoline();
 					return i + 1;
 				}
-				if(echo && put) putchar(c);
+				if(echo && put) {
+					putchar(c);
+					backend->refresh();
+				}
 			}
 		}
 		return size;
@@ -502,6 +512,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			}
 		}
 	}
+	backend->refresh();
 	return 0;
 }
 

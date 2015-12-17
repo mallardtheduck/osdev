@@ -9,6 +9,7 @@ void terminal_uapi_fn(uint16_t fn, isr_regs *regs);
 class user_backend : public i_backend{
 	pid_t pid;
 	bt_handle_t handle_id;
+	uint64_t active_id;
 	
 public:
 	user_backend(pid_t p);
@@ -48,6 +49,7 @@ public:
     void close(uint64_t id);
 	void switch_terminal(uint64_t id);
 	bool can_create();
+	void refresh();
 };
 
 #endif

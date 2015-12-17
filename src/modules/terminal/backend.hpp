@@ -42,6 +42,7 @@ public:
     virtual void close(uint64_t id)=0;
 	virtual void switch_terminal(uint64_t id) = 0;
 	virtual bool can_create() = 0;
+	virtual void refresh() = 0;
 
     virtual ~i_backend(){};
 };

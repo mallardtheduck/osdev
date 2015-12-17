@@ -132,6 +132,7 @@ ENUM_START(bt_terminal_backend_operation_type)
 	ENUM_SET(bt_terminal_backend_operation_type, Close, 26),
 	ENUM_SET(bt_terminal_backend_operation_type, SwitchTerminal, 27),
 	ENUM_SET(bt_terminal_backend_operation_type, CanCreate, 28),
+	ENUM_SET(bt_terminal_backend_operation_type, Refresh, 29),
 ENUM_END
 ENUM_TYPE(bt_terminal_backend_operation_type);
 
