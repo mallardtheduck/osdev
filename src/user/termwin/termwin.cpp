@@ -210,9 +210,6 @@ void mainthread(void*){
 		if(msg.from == 0 && msg.source == bt_terminal_ext_id && msg.type == bt_terminal_message_type::BackendOperation){
 			bt_terminal_backend_operation *op = (bt_terminal_backend_operation*)new uint8_t[msg.length];
 			bt_msg_content(&msg, op, msg.length);
-			stringstream ss;
-			ss << "TW: Backend operation: " << op->type << endl;
-			bt_zero(ss.str().c_str());
 			switch(op->type){
 				case bt_terminal_backend_operation_type::CanCreate:{
 					send_reply(msg, (bool)(refcount == 0));
@@ -294,7 +291,9 @@ void mainthread(void*){
 					break;
 				}
 				default:{
-					bt_zero("TW: Unhandled backend operation.\n");
+					stringstream ss;
+					ss << "TW: Unhandled backend operation: " << op->type << endl;
+					bt_zero(ss.str().c_str());
 				}
 			}
 			delete op;
@@ -322,9 +321,6 @@ int main(){
 	bt_threadhandle thread = bt_new_thread(&mainthread, NULL, mainthread_stack + mainthread_stack_size);
 	while(!ready) bt_yield();
 	terminal_handle = bt_terminal_create_terminal(backend_handle);
-	stringstream ss;
-	ss << "TW: Backend: " <<  backend_handle << " Terminal: " << terminal_handle << endl;
-	bt_zero(ss.str().c_str());
 	string shell = get_env("SHELL");
 	bt_terminal_run(terminal_handle, shell.c_str());
 	bt_wait_thread(thread);

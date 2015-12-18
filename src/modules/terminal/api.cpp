@@ -67,7 +67,6 @@ void close_terminal(void *p){
 void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 	uint32_t backend_handle_type = (terminal_extension_id << 16) | 0x01;
 	uint32_t terminal_handle_type = (terminal_extension_id << 16) | 0x02;
-	dbgpf("TERM: API call %i\n", fn);
 	switch(fn){
 		case bt_terminal_api::RegisterBackend:{
 			bt_handle_info handle;
