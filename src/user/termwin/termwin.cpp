@@ -7,17 +7,22 @@
 #include <terminal.h>
 #include <sstream>
 #include <algorithm>
+#include <fstream>
+#include <cstring>
+#include "table.hpp"
 
 USE_BT_TERMINAL_API;
 
 using namespace std;
 
+const string ProcInfoPath = "info:/procs";
+
 const size_t terminal_width = 80;
 const size_t terminal_height = 25;
 const bt_vidmode terminal_mode = {1, terminal_width, terminal_height, 4, true, false}; 
-const uint32_t font_width = 5;
-const uint32_t font_height = 8;
-const gds_TEMPFonts::Enum font = gds_TEMPFonts::Tiny;
+const uint32_t font_width = 6;
+const uint32_t font_height = 13;
+const gds_TEMPFonts::Enum font = gds_TEMPFonts::Small;
 const size_t buffer_size = (terminal_width * terminal_height * 2);
 uint8_t buffer[buffer_size];
 const size_t mainthread_stack_size = 16 * 1024;
@@ -73,6 +78,21 @@ template<typename T> T get_content(bt_msg_header &msg){
 	}
 }
 
+void kill_children(){
+	bool found = true;
+	while(found){
+		found = false;
+		ifstream procinfostream(ProcInfoPath);
+		table procs = parsecsv(procinfostream);
+		for(auto row: procs.rows){
+			if(strtoul(row["parent"].c_str(), NULL, 0) == bt_getpid()){
+				bt_kill(strtoul(row["PID"].c_str(), NULL, 0));
+				found = true;
+			}
+		}
+	}
+}
+
 uint32_t getcolour(uint8_t id){
 	static uint32_t colours[16] = {0};
 	if(id < 16 && colours[id]) return colours[id];
@@ -102,24 +122,28 @@ bool compare_chars(char a, char b){
 	else return a == b;
 }
 
-void render_terminal(bt_handle_t terminal_handle, uint64_t surf, uint64_t /*win*/){
+void render_terminal(bt_handle_t terminal_handle){
 	if(!terminal_handle) return;
-	GDS_SelectSurface(surf);
+	static char ltitle[WM_TITLE_MAX] = {0};
+	char title[WM_TITLE_MAX];
+	bt_terminal_get_title(terminal_handle, WM_TITLE_MAX, title);
+	if(strncmp(ltitle, title, WM_TITLE_MAX)) {
+		WM_SetTitle(title);
+		strncpy(ltitle, title, WM_TITLE_MAX);
+	}
+	static size_t lpos = SIZE_MAX;
+	size_t pos = bt_terminal_get_pos(terminal_handle);
 	uint8_t tempbuffer[buffer_size];
 	bt_terminal_read_buffer(terminal_handle, buffer_size, tempbuffer);
-	uint32_t minX = UINT32_MAX, minY = UINT32_MAX, maxX = 0, maxY = 0;
 	for(size_t line = 0; line < terminal_mode.height; ++line){
 		vector<pair<size_t, uint16_t>> line_changes;
 		for(size_t col = 0; col < terminal_mode.width; ++col){
-			size_t buffaddr = ((line * terminal_mode.width) + col) * 2;
-			if(!compare_chars(tempbuffer[buffaddr], buffer[buffaddr]) || tempbuffer[buffaddr + 1] != buffer[buffaddr + 1]){
-				minX = min(minX, (uint32_t)(col * font_width));
-				minY = min(minY, (uint32_t)(line * font_height));
-				maxX = max(maxX, (uint32_t)((col * font_width) + font_width));
-				maxY = max(maxY, (uint32_t)((line * font_height) + font_height));
-				buffer[buffaddr] = tempbuffer[buffaddr];
-				buffer[buffaddr + 1] = tempbuffer[buffaddr + 1];
-				uint16_t change = (buffer[buffaddr] > 32 ? buffer[buffaddr] : ' ') | buffer[buffaddr + 1] << 8;
+			size_t bufaddr = ((line * terminal_mode.width) + col) * 2;
+			if(!compare_chars(tempbuffer[bufaddr], buffer[bufaddr]) || tempbuffer[bufaddr + 1] != buffer[bufaddr + 1] || bufaddr == pos || bufaddr == lpos){
+				buffer[bufaddr] = tempbuffer[bufaddr];
+				if(bufaddr == pos) buffer[bufaddr + 1] = ((tempbuffer[bufaddr + 1] & 0x0f) << 4) | ((tempbuffer[bufaddr + 1] & 0xf0) >> 4);
+				else buffer[bufaddr + 1] = tempbuffer[bufaddr + 1];
+				uint16_t change = (buffer[bufaddr] > 32 ? buffer[bufaddr] : ' ') | buffer[bufaddr + 1] << 8;
 				line_changes.push_back(make_pair(col, change));
 			}
 		}
@@ -169,30 +193,16 @@ void render_terminal(bt_handle_t terminal_handle, uint64_t surf, uint64_t /*win*
 				WM_UpdateRect(start * font_width, line * font_height, width, font_height);
 			}
 		}
-		/*if(maxX){
-			stringstream ss;
-			ss << "TW: Updating rect: (" << minX << "," << minY << ") - (" << maxX << "," << maxY << ")" << endl;
-			bt_zero(ss.str().c_str());
-			//WM_SelectWindow(win);
-			WM_UpdateRect(minX, minY, maxX - minX, maxY - minY);
-			minX = UINT32_MAX, minY = UINT32_MAX, maxX = 0, maxY = 0;
-		}*/
 	}
-	/*if(maxX){
-		stringstream ss;
-		ss << "TW: Updating rect: (" << minX << "," << minY << ") - (" << maxX << "," << maxY << ")" << endl;
-		bt_zero(ss.str().c_str());
-		//WM_SelectWindow(win);
-		WM_UpdateRect(minX, minY, maxX - minX, maxY - minY);
-	}*/
+	lpos = pos;
 }
 
 void mainthread(void*){
 	size_t cpos  = 0;
 	size_t refcount = 0;
-	uint8_t textcolours = 0x07;
+	uint8_t textcolours = 0x07; 
 	uint64_t surf = GDS_NewSurface(gds_SurfaceType::Bitmap, terminal_mode.width * font_width, terminal_mode.height * font_height);
-	uint64_t win = WM_NewWindow(50, 50, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close, surf, "Terminal Window");
+	/*uint64_t win =*/ WM_NewWindow(50, 50, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close, surf, "Terminal Window");
 	ready = true;
 	bt_msg_header msg = bt_recv(true);
 	bool loop = true;
@@ -205,7 +215,7 @@ void mainthread(void*){
 			bt_zero(ss.str().c_str());
 			switch(op->type){
 				case bt_terminal_backend_operation_type::CanCreate:{
-					send_reply(msg, true);
+					send_reply(msg, (bool)(refcount == 0));
 					break;
 				}
 				case bt_terminal_backend_operation_type::GetCurrentScreenMode:{
@@ -237,7 +247,6 @@ void mainthread(void*){
 				case bt_terminal_backend_operation_type::DisplayWrite:{
 					cpos += msg.length;
 					send_reply(msg, msg.length);
-					//render_terminal(terminal_handle, surf, win);
 					break;
 				}
 				case bt_terminal_backend_operation_type::IsActive:{
@@ -253,7 +262,7 @@ void mainthread(void*){
 					break;
 				}
 				case bt_terminal_backend_operation_type::Refresh:{
-					render_terminal(terminal_handle, surf, win);
+					render_terminal(terminal_handle);
 					break;
 				}
 				case bt_terminal_backend_operation_type::Open:{
@@ -264,10 +273,28 @@ void mainthread(void*){
 					--refcount;
 					if(refcount == 0) loop = false;
 					break;
+				}case bt_terminal_backend_operation_type::GetPointerVisibility:{
+					send_reply(msg, false);
+					break;
+				}
+				case bt_terminal_backend_operation_type::GetPointerInfo:{
+					send_reply(msg, bt_terminal_pointer_info());
+					break;
+				}
+				case bt_terminal_backend_operation_type::GetScreenModeCount:{
+					send_reply(msg, (size_t)1);
+					break;
+				}
+				case bt_terminal_backend_operation_type::GetScreenMode:{
+					send_reply(msg, terminal_mode);
+					break;
+				}
+				case bt_terminal_backend_operation_type::GetPaletteEntry:{
+					send_reply(msg, bt_video_palette_entry());
+					break;
 				}
 				default:{
 					bt_zero("TW: Unhandled backend operation.\n");
-					//render_terminal(terminal_handle, surf, win);
 				}
 			}
 			delete op;
@@ -285,6 +312,8 @@ void mainthread(void*){
 		}
 		bt_next_msg(&msg);
 	}
+	kill_children();
+	bt_end_thread();
 }
 
 int main(){

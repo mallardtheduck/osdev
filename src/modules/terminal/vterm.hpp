@@ -97,6 +97,8 @@ public:
 	i_backend *get_backend();
 	
 	void read_buffer(size_t size, uint8_t *buf);
+	void set_backend(i_backend *back);
+	size_t getpos();
 };
 
 //extern vterm *current_vterm;
@@ -121,5 +123,6 @@ public:
 
 char *terms_infofs();
 extern vterm_list *terminals;
+size_t strlen(const char *str);
 
 #endif

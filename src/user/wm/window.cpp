@@ -88,6 +88,10 @@ Point Window::GetContentPosition(){
 
 void Window::SetTitle(string ntitle){
 	title=ntitle;
+	RefreshTitleBar(true);
+	Rect r = GetBoundingRect();
+	r.h = GetMetric(TitleBarSize);
+	DrawAndRefreshWindows(r);
 }
 
 std::string Window::GetTitle(){

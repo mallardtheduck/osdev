@@ -215,9 +215,9 @@ void proc_end(pid_t pid) {
 	pid_t parent = proc->parent;
 	release_lock(proc_lock);
 	if (parent){
-		proc_process *parent_proc = proc_get(parent);
+		proc_process *parent_proc = proc_get_lock(parent);
 		if(parent_proc){
-			take_lock_exclusive(parent_proc->ulock);
+			//take_lock_exclusive(parent_proc->ulock);
 			parent_proc->child_returns[pid] = proc->retval;
 			release_lock(parent_proc->ulock);
 		}

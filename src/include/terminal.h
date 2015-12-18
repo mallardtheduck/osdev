@@ -185,6 +185,8 @@ ENUM_START(bt_terminal_api)
 	ENUM_SET(bt_terminal_api, ReadBuffer, 2),
 	ENUM_SET(bt_terminal_api, QueueEvent, 3),
 	ENUM_SET(bt_terminal_api, TerminalRun, 4),
+	ENUM_SET(bt_terminal_api, GetTerminalPos, 5),
+	ENUM_SET(bt_terminal_api, GetTerminalTitle, 6),
 ENUM_END
 ENUM_TYPE(bt_terminal_api);
 
@@ -224,7 +226,14 @@ inline static bt_pid_t bt_terminal_run(bt_handle_t terminal, const char *command
 	bt_pid_t ret;
 	bt_terminal_api_call(ENUM_GET(bt_terminal_api, TerminalRun), terminal, (uint32_t)command, (uint32_t)&ret);
 	return ret;
-	
+}
+
+inline static size_t bt_terminal_get_pos(bt_handle_t terminal){
+	return (size_t) bt_terminal_api_call(ENUM_GET(bt_terminal_api, GetTerminalPos), terminal, 0, 0);
+}
+
+inline static size_t bt_terminal_get_title(bt_handle_t terminal, size_t size, char *buf){
+	return bt_terminal_api_call(ENUM_GET(bt_terminal_api, GetTerminalTitle), terminal, size, (uint32_t)buf);
 }
 
 #endif

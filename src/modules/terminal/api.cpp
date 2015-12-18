@@ -60,8 +60,8 @@ void close_backend(void *p){
 
 void close_terminal(void *p){
 	uint64_t *termid = (uint64_t*)p;
-	terminals->delete_terminal(*termid);
-	delete termid;
+	vterm *vt = terminals->get(*termid);
+	if(vt) vt->set_backend(NULL);
 }
 
 void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
@@ -151,6 +151,27 @@ void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 				}
 			}
 			break;
+		}
+		case bt_terminal_api::GetTerminalPos:{
+			bt_handle_info handle = get_user_handle((bt_handle_t)regs->ebx, getpid());
+			if(handle.type == terminal_handle_type){
+				uint64_t termid = *(uint64_t*)handle.value;
+				vterm *vt = terminals->get(termid);
+				if(vt){
+					regs->eax = (uint32_t)vt->getpos();
+				}
+			}
+		}
+		case bt_terminal_api::GetTerminalTitle:{
+			bt_handle_info handle = get_user_handle((bt_handle_t)regs->ebx, getpid());
+			if(handle.type == terminal_handle_type){
+				uint64_t termid = *(uint64_t*)handle.value;
+				vterm *vt = terminals->get(termid);
+				if(vt && regs->edx && regs->ecx){
+					strncpy((char*)regs->edx, vt->get_title(), regs->ecx);
+					regs->eax = strlen(vt->get_title());
+				}
+			}
 		}
 	}
 }
@@ -244,8 +265,8 @@ void user_backend::set_screen_mode(const bt_vidmode &mode){
 	send_request(pid, handle_id, bt_terminal_backend_operation_type::SetScreenMode, mode);
 }
 
-bt_vidmode user_backend::get_screen_mode(size_t /*index*/){
-	return send_request_get_reply<bt_vidmode>(pid, handle_id, bt_terminal_backend_operation_type::GetScreenMode);
+bt_vidmode user_backend::get_screen_mode(size_t index){
+	return send_request_get_reply<bt_vidmode>(pid, handle_id, bt_terminal_backend_operation_type::GetScreenMode, index);
 }
 
 bt_vidmode user_backend::get_current_screen_mode(){

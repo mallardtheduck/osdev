@@ -13,12 +13,10 @@ vterm_list *terminals=NULL;
 
 bool event_blockcheck(void *p);
 
-size_t strlen(const char* str)
-{
-	size_t ret = 0;
-	while(str[ret] != 0)
-		ret++;
-	return ret;
+size_t strlen(const char *str){
+	size_t len;
+    for (len = 0; str[len]; (len)++);
+	return len;
 }
 
 vterm::vterm(uint64_t nid, i_backend *back)
@@ -47,12 +45,12 @@ vterm::vterm(uint64_t nid, i_backend *back)
 	event_mode = bt_terminal_event_mode::None;
 	event_mode_enabled = false;
 	last_move_message = 0;
-	backend->open(nid);
+	if(backend) backend->open(nid);
 }
 
 vterm::~vterm()
 {
-	backend->close(id);
+	if(backend) backend->close(id);
 	if(buffer) free(buffer);
 }
 
@@ -61,7 +59,7 @@ void vterm::putchar(char c)
 	if(!vidmode.textmode) return;
 	if(c == '\n') {
 		bufpos=(((bufpos/(vidmode.width*2))+1) * (vidmode.width*2));
-		if(backend->is_active(id)) backend->display_write(1, &c);
+		if(backend && backend->is_active(id)) backend->display_write(1, &c);
 	} else if(c == 0x08) {
 		if(bufpos >= 2) {
 			bufpos -= 2;
@@ -69,7 +67,7 @@ void vterm::putchar(char c)
 			buffer[bufpos++] = textcolour;
 			bufpos -= 2;
 		}
-		if(backend->is_active(id)) {
+		if(backend && backend->is_active(id)) {
 			size_t cpos = backend->display_seek(0, true);
 			cpos--;
 			backend->display_seek(cpos, false);
@@ -80,7 +78,7 @@ void vterm::putchar(char c)
 	} else {
 		buffer[bufpos++]=(uint8_t)c;
 		buffer[bufpos++]=textcolour;
-		if(backend->is_active(id)) backend->display_write(1, &c);
+		if(backend && backend->is_active(id)) backend->display_write(1, &c);
 	}
 	if(bufpos>=bufsize) {
 		scroll();
@@ -97,7 +95,7 @@ void vterm::putstring(char *s)
 void vterm::setcolours(uint8_t c)
 {
 	textcolour=c;
-	backend->set_text_colours(c);
+	if(backend) backend->set_text_colours(c);
 }
 
 uint8_t vterm::getcolours()
@@ -127,7 +125,7 @@ void vterm::scroll()
 void vterm::do_infoline()
 {
 	vterm_options opts;
-	if(backend->is_active(id) && infoline && vidmode.textmode) {
+	if(backend && backend->is_active(id) && infoline && vidmode.textmode) {
 		size_t pos=seek(opts, 0, true);
 		seek(opts, 0, false);
 		uint16_t linecol=0x1F;
@@ -155,7 +153,7 @@ uint64_t vterm::get_id()
 
 const char *vterm::get_title()
 {
-	hold_lock hl(&term_lock);
+	//hold_lock hl(&term_lock);
 	return title;
 }
 
@@ -163,36 +161,39 @@ void vterm::activate()
 {
 	hold_lock hl(&term_lock, false);
 	bool scroll=false;
-	backend->set_screen_mode(vidmode);
-	backend->set_active(id);
-	backend->set_screen_scroll(scroll);
-	if(vidmode.textmode) {
-		backend->set_text_access_mode(bt_vid_text_access_mode::Raw);
-		setcolours(getcolours());
+	if(backend) {
+		backend->set_screen_mode(vidmode);
+		backend->set_active(id);
+		backend->set_screen_scroll(scroll);
+		if(vidmode.textmode) {
+			backend->set_text_access_mode(bt_vid_text_access_mode::Raw);
+			setcolours(getcolours());
+		}
+		backend->display_seek(0, false);
+		backend->display_write(bufsize, (char*)buffer);
+		if(vidmode.textmode) {
+			backend->set_text_access_mode(bt_vid_text_access_mode::Simple);
+			backend->display_seek(bufpos/2, false);
+		} else {
+			backend->display_seek(bufpos, false);
+		}
+		backend->set_screen_scroll(scrolling);
+		do_infoline();
+		if(infoline && bufpos==0) putchar('\n');
+		if(pointer_enabled) {
+			if(pointer_bitmap) backend->set_pointer_bitmap(pointer_bitmap);
+			backend->show_pointer();
+		} else {
+			backend->hide_pointer();
+		}
+		backend->set_pointer_autohide(pointer_autohide);
+		backend->refresh();
 	}
-	backend->display_seek(0, false);
-	backend->display_write(bufsize, (char*)buffer);
-	if(vidmode.textmode) {
-		backend->set_text_access_mode(bt_vid_text_access_mode::Simple);
-		backend->display_seek(bufpos/2, false);
-	} else {
-		backend->display_seek(bufpos, false);
-	}
-	backend->set_screen_scroll(scrolling);
-	do_infoline();
-	if(infoline && bufpos==0) putchar('\n');
-	if(pointer_enabled) {
-		if(pointer_bitmap) backend->set_pointer_bitmap(pointer_bitmap);
-		backend->show_pointer();
-	} else {
-		backend->hide_pointer();
-	}
-	backend->set_pointer_autohide(pointer_autohide);
-	backend->refresh();
 }
 
 void vterm::deactivate()
 {
+	if(!backend) return;
 	if(!backend->is_active(id)) return;
 	backend->set_pointer_autohide(true);
 	backend->hide_pointer();
@@ -216,7 +217,7 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf)
 		for(size_t i=0; i<size; ++i) putchar(buf[i]);
 		if(scount != scrollcount) iline_valid=false;
 	} else {
-		if(backend->is_active(id)) {
+		if(backend && backend->is_active(id)) {
 			backend->display_write(size, buf);
 		} else {
 			memcpy(buffer + bufpos, buf, size);
@@ -224,7 +225,7 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf)
 		bufpos += size;
 	}
 	if(!iline_valid) do_infoline();
-	backend->refresh();
+	if(backend) backend->refresh();
 	return size;
 }
 
@@ -262,21 +263,21 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf)
 					uint64_t scount=scrollcount;
 					if(echo){
 						putchar(c);
-						backend->refresh();
+						if(backend) backend->refresh();
 					}
 					if(scount != scrollcount) do_infoline();
 					return i + 1;
 				}
 				if(echo && put) {
 					putchar(c);
-					backend->refresh();
+					if(backend) backend->refresh();
 				}
 			}
 		}
 		return size;
 	} else if(opts.mode == bt_terminal_mode::Video) {
 		if(bufpos + size > bufsize) size = bufsize - bufpos;
-		if(backend->is_active(id)) {
+		if(backend && backend->is_active(id)) {
 			backend->display_read(size, buf);
 		} else {
 			memcpy(buf, buffer + bufpos, size);
@@ -299,7 +300,7 @@ size_t vterm::seek(vterm_options &/*opts*/, size_t pos, uint32_t flags)
 	} else if(flags == (FS_Relative | FS_Backwards)) bufpos -= (pos*factor);
 	else bufpos=pos*factor;
 	if(bufpos>bufsize) bufpos=bufsize;
-	if(backend->is_active(id)) {
+	if(backend && backend->is_active(id)) {
 		backend->display_seek(pos, flags);
 	}
 	return bufpos/factor;
@@ -327,7 +328,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 		case bt_terminal_ioctl::ClearScreen: {
 			clear_buffer();
 			seek(opts, 0, false);
-			if(backend->is_active(id)) {
+			if(backend && backend->is_active(id)) {
 				backend->clear_screen();
 			}
 			if(infoline) {
@@ -366,23 +367,23 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 		}
 		case bt_terminal_ioctl::SwtichTerminal: {
 			uint64_t sw_id=*(uint64_t*)buf;
-			backend->switch_terminal(sw_id);
+			if(backend) backend->switch_terminal(sw_id);
 			break;
 		}
 		case bt_terminal_ioctl::GetScreenModeCount: {
-			return backend->get_screen_mode_count();
+			return backend ? backend->get_screen_mode_count() : 0;
 			break;
 		}
 		case bt_terminal_ioctl::GetScreenMode: {
 			if(buf) {
-				*(bt_vidmode*)buf = backend->get_screen_mode(*(size_t*)buf);
+				*(bt_vidmode*)buf = backend ? backend->get_screen_mode(*(size_t*)buf) : bt_vidmode();
 				return sizeof(bt_vidmode);
 			}
 			break;
 		}
 		case bt_terminal_ioctl::SetScreenMode: {
 			if(buf && size==sizeof(bt_vidmode)) {
-				if(backend->is_active(id)) {
+				if(backend && backend->is_active(id)) {
 					backend->set_screen_mode(*(bt_vidmode*)buf);
 				}
 				vidmode=*(bt_vidmode*)buf;
@@ -405,7 +406,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 		}
 		case bt_terminal_ioctl::GetPaletteEntry: {
 			if(buf){
-				*(bt_video_palette_entry*)buf = backend->get_palette_entry(*(size_t*)buf);
+				*(bt_video_palette_entry*)buf = backend ? backend->get_palette_entry(*(size_t*)buf) : bt_video_palette_entry();
 				return sizeof(bt_video_palette_entry);
 			}
 			break;
@@ -427,19 +428,19 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 		case bt_terminal_ioctl::SetScrolling: {
 			if(size==sizeof(bool)) {
 				scrolling=*(bool*)buf;
-				if(backend->is_active(id)) {
+				if(backend && backend->is_active(id)) {
 					backend->set_screen_scroll(scrolling);
 				}
 			}
 			break;
 		}
 		case bt_terminal_ioctl::ShowPointer: {
-			if(backend->is_active(id)) backend->show_pointer();
+			if(backend && backend->is_active(id)) backend->show_pointer();
 			pointer_enabled=true;
 			break;
 		}
 		case bt_terminal_ioctl::HidePointer: {
-			if(backend->is_active(id)) backend->hide_pointer();
+			if(backend && backend->is_active(id)) backend->hide_pointer();
 			pointer_enabled=false;
 			break;
 		}
@@ -449,7 +450,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 		}
 		case bt_terminal_ioctl::GetPointerInfo: {
 			if(size==sizeof(bt_terminal_pointer_info)) {
-				*(bt_terminal_pointer_info*)buf=backend->get_pointer_info();
+				*(bt_terminal_pointer_info*)buf = backend ? backend->get_pointer_info() : bt_terminal_pointer_info();
 			}
 			break;
 		}
@@ -486,33 +487,33 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 				size_t totalsize=sizeof(bt_terminal_pointer_bitmap) + bmp->datasize;
 				pointer_bitmap=(bt_terminal_pointer_bitmap*) malloc(totalsize);
 				memcpy(pointer_bitmap, bmp, totalsize);
-				if(backend->is_active(id)) backend->set_pointer_bitmap(pointer_bitmap);
+				if(backend && backend->is_active(id)) backend->set_pointer_bitmap(pointer_bitmap);
 			}
 			break;
 		}
 		case bt_terminal_ioctl::PointerAutoHide: {
 			if(size == sizeof(bool)) {
 				pointer_autohide = *(bool*)buf;
-				backend->set_pointer_autohide(*(bool*)buf);
+				if(backend && backend->is_active(id)) backend->set_pointer_autohide(*(bool*)buf);
 			}
 			break;
 		}
 		case bt_terminal_ioctl::PointerFreeze: {
-			backend->freeze_pointer();
+			if(backend && backend->is_active(id)) backend->freeze_pointer();
 			break;
 		}
 		case bt_terminal_ioctl::PointerUnfreeze: {
-			backend->unfreeze_pointer();
+			if(backend && backend->is_active(id)) backend->unfreeze_pointer();
 			break;
 		}
 		case bt_terminal_ioctl::RegisterGlobalShortcut:{ 
 			if(buf){
 				uint16_t keycode = *(uint16_t*)buf;
-				backend->register_global_shortcut(keycode, id);
+				if(backend) backend->register_global_shortcut(keycode, id);
 			}
 		}
 	}
-	backend->refresh();
+	if(backend && backend->is_active(id)) backend->refresh();
 	return 0;
 }
 
@@ -522,7 +523,7 @@ void vterm::create_terminal(char *command)
 	if(new_id){
 		dbgpf("TERM: Created new terminal %i.\n", (int) new_id);
 		terminals->get(new_id)->sync(false);
-		backend->switch_terminal(new_id);
+		if(backend && backend->is_active(id)) backend->switch_terminal(new_id);
 		if(command) {
 			char old_terminal_id[128]="0";
 			strncpy(old_terminal_id, getenv(terminal_var, getpid()), 128);
@@ -579,6 +580,7 @@ void vterm::close(vterm_options &opts)
 void vterm::sync(bool content)
 {
 	hold_lock hl(&term_lock);
+	if(!backend) return;
 	vidmode = backend->get_current_screen_mode();
 	allocate_buffer();
 	if(content) {
@@ -738,6 +740,15 @@ void vterm::read_buffer(size_t size, uint8_t *buf){
 	memcpy(buf, buffer, size);
 }
 
+void vterm::set_backend(i_backend *back){
+	hold_lock hl(&term_lock);
+	backend = back;
+}
+
+size_t vterm::getpos(){
+	return bufpos;
+}
+
 vterm_list::vterm_list()
 {
 	id = 0;
@@ -770,19 +781,11 @@ void vterm_list::delete_terminal(uint64_t id)
 
 void vterm_list::delete_backend(i_backend *back){
 	hold_lock hl(&vtl_lock);
-	bool found = false;
-	do{
-		found = false;
-		for(size_t i=0; i<terminals.size(); ++i) {
-			if(terminals[i]->get_backend() == back){
-				vterm *term=terminals[i];
-				terminals.erase(i);
-				delete term;
-				found = true;
-				break;
-			}
+	for(size_t i=0; i<terminals.size(); ++i) {
+		if(terminals[i]->get_backend() == back){
+			terminals[i]->set_backend(NULL);
 		}
-	}while(found);
+	}
 }
 
 vterm *vterm_list::get(uint64_t id)
@@ -806,9 +809,9 @@ char *terms_infofs()
 	char *buffer=(char*)malloc(4096);
 	vterm_list *t=terminals;
 	memset(buffer, 0, 4096);
-	sprintf(buffer, "# ID, title\n");
+	sprintf(buffer, "# ID, title, backend\n");
 	for(size_t i=0; i<t->terminals.size(); ++i) {
-		sprintf(&buffer[strlen(buffer)], "%i, \"%s\"\n", (int)t->terminals[i]->get_id(), t->terminals[i]->get_title());
+		sprintf(&buffer[strlen(buffer)], "%i, \"%s\", %x\n", (int)t->terminals[i]->get_id(), t->terminals[i]->get_title(), t->terminals[i]->get_backend());
 	}
 	return buffer;
 }

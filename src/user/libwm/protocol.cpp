@@ -128,13 +128,13 @@ extern "C" void WM_MoveWindow(int32_t x, int32_t y){
 extern "C" void WM_ChangeOptions(uint32_t opts){
 	wm_WindowInfo info;
 	info.options = opts;
-	SendMessage(wm_RequestType::MoveWindow, info, false);
+	SendMessage(wm_RequestType::ChangeOptions, info, false);
 }
 
 extern "C" void WM_SetTitle(const char *title){
 	wm_WindowInfo info;
 	strncpy(info.title, title, WM_TITLE_MAX);
-	SendMessage(wm_RequestType::MoveWindow, info, false);
+	SendMessage(wm_RequestType::SetTitle, info, false);
 }
 
 void WM_SetTitle(const std::string title){
