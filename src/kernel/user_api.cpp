@@ -98,16 +98,21 @@ USERAPI_HANDLER(BT_CREATE_LOCK){
 USERAPI_HANDLER(BT_LOCK){
     lock *l=proc_get_lock(regs->ebx);
     if(l) take_lock_exclusive(*l);
+	sch_abortable(true);
 }
 
 USERAPI_HANDLER(BT_TRY_LOCK){
     lock *l=proc_get_lock(regs->ebx);
-    if(l) regs->eax=try_take_lock_exclusive(*l);
+    if(l && try_take_lock_exclusive(*l)){
+		regs->eax = 1;
+		sch_abortable(true);
+	}else regs->eax = 0;
 }
 
 USERAPI_HANDLER(BT_UNLOCK){
     lock *l=proc_get_lock(regs->ebx);
 	if(l) release_lock(*l);
+	sch_abortable(false);
 }
 
 USERAPI_HANDLER(BT_DESTROY_LOCK){
@@ -452,6 +457,8 @@ USERAPI_HANDLER(BT_QUERY_EXT){
 }
 
 void userapi_syscall(uint16_t fn, isr_regs *regs){
+	int a = sch_get_abortlevel();
+	dbgpf("UAPI: Abortlevel on enter: %i\n", a);
 	switch(fn){
 		case 0:
          	zero_call(regs);
@@ -542,6 +549,9 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 			regs->eax=-1;
 			break;
 	}
+	int b = sch_get_abortlevel();
+	dbgpf("UAPI: Abortlevel on exit: %i\n", b);
+	if(a != b) panic("(UAPI) Non-zero abortlevel in userspace!\n");
     if(sch_user_abort()) sch_end_thread();
 }
 

@@ -135,7 +135,7 @@ void render_terminal(bt_handle_t terminal_handle){
 	size_t pos = bt_terminal_get_pos(terminal_handle);
 	uint8_t tempbuffer[buffer_size];
 	bt_terminal_read_buffer(terminal_handle, buffer_size, tempbuffer);
-	for(size_t line = 0; line < terminal_mode.height; ++line){
+	for(ptrdiff_t line = terminal_mode.height - 1; line >= 0; --line){
 		vector<pair<size_t, uint16_t>> line_changes;
 		for(size_t col = 0; col < terminal_mode.width; ++col){
 			size_t bufaddr = ((line * terminal_mode.width) + col) * 2;

@@ -157,6 +157,10 @@ bool mod_msg_recv_reply(btos_api::bt_msg_header *msg, uint64_t msg_id){
 	return msg_recv_reply(*msg, msg_id);
 }
 
+void mod_abortable(bool abortable){
+	sch_abortable(abortable);
+}
+
 module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&panic,
 	&malloc,
@@ -186,7 +190,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&sch_unblock,
 	&sch_wait,
 	&sch_setblock,
-	&sch_abortable,
+	&mod_abortable,
 	&sch_abort,
 
 	&drv_add_device,

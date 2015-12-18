@@ -447,20 +447,25 @@ uint32_t sch_get_eip(bool lock){
     return ret;
 }
 
-void sch_abortable(bool abortable){
+void sch_abortable(bool abortable, uint64_t ext_id){
+	sch_thread *thread = current_thread;
+	if(ext_id != current_thread_id){;
+		for(size_t i=0; i<threads->size(); ++i){
+			if((*threads)[i]->ext_id==ext_id){
+				thread = (*threads)[i];
+				break;
+			}
+		}
+	}
     int alevel;
-    {
+	if(abortable) alevel = __sync_sub_and_fetch(&thread->abortlevel, 1);
+	else alevel = __sync_add_and_fetch(&thread->abortlevel, 1);
+	if(alevel <= 0){
         hold_lock hl(sch_lock, false);
-		current_thread->abortlevel += abortable ? -1 : 1;
-        alevel = current_thread->abortlevel;
-    }
-	if(alevel<=0){
-        hold_lock hl(sch_lock, false);
-		current_thread->abortlevel=0;
-		current_thread->abortable=true;
+		thread->abortlevel=0;
+		thread->abortable=true;
 	}else{
-        hold_lock hl(sch_lock, false);
-		current_thread->abortable=false;
+		thread->abortable=false;
 	}
 }
 
@@ -637,4 +642,8 @@ void *sch_get_usercontext(uint64_t ext_id){
 		hold_lock hl(sch_lock);
 		return sch_get(ext_id)->usercontext;
 	}
+}
+
+int sch_get_abortlevel(){
+	return current_thread->abortlevel;
 }

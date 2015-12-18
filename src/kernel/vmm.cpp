@@ -72,18 +72,23 @@ void vmm_pagedir::add_table(size_t tableno, uint32_t *table){
 }
 
 uint32_t vmm_pagedir::virt2phys(void *ptr, bool present){
-    hold_lock hl1(vmm_lock, false);
-	hold_lock hl2(vmm_framelock);
-	uint32_t pageno=(size_t)ptr/VMM_PAGE_SIZE;
-	size_t tableindex=pageno/VMM_ENTRIES_PER_TABLE;
-	size_t tableoffset=pageno-(tableindex * VMM_ENTRIES_PER_TABLE);
-	uint32_t table=pagedir[tableindex];
-	if(!(table & TableFlags::Present)) return 0;
-	table &= VMM_ADDRESS_MASK;
-	maptable(table);
-	uint32_t ret=curtable[tableoffset];
-	if(!(ret & PageFlags::Present) && present) return 0;
-	ret &= VMM_ADDRESS_MASK;
+	uint32_t ret;
+	{
+		hold_lock hl1(vmm_lock, false);
+		{
+			hold_lock hl2(vmm_framelock);
+			uint32_t pageno=(size_t)ptr/VMM_PAGE_SIZE;
+			size_t tableindex=pageno/VMM_ENTRIES_PER_TABLE;
+			size_t tableoffset=pageno-(tableindex * VMM_ENTRIES_PER_TABLE);
+			uint32_t table=pagedir[tableindex];
+			if(!(table & TableFlags::Present)) return 0;
+			table &= VMM_ADDRESS_MASK;
+			maptable(table);
+			ret=curtable[tableoffset];
+			if(!(ret & PageFlags::Present) && present) return 0;
+			ret &= VMM_ADDRESS_MASK;
+		}
+	}
 	return ret;
 }
 
@@ -103,7 +108,9 @@ size_t vmm_pagedir::find_free_virtpages(size_t pages, vmm_allocmode::Enum mode){
 	if(loopstart < loopend){
 		for(size_t i=loopstart; i<loopend; ++i){
 			void *pageptr=(void*)(i*VMM_PAGE_SIZE);
-			if(!is_mapped(pageptr, false) && !(get_flags((uint32_t)pageptr) & amm_flags::Do_Not_Use)){
+			bool im = is_mapped(pageptr, false) ;
+			bool gf = (get_flags((uint32_t)pageptr) & amm_flags::Do_Not_Use);
+			if(!im && !gf){
 				if(!startpage) startpage=i;
 				freecount++;
 			}else {

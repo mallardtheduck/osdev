@@ -198,7 +198,10 @@ void proc_end(pid_t pid) {
 	//This is not in the "right" place, but cannot be done once we have the lock.
 	debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
 	take_lock_exclusive(proc_lock);
-	if (!proc_get(pid)) return;
+	if (!proc_get(pid)){
+		release_lock(proc_lock);
+		return;
+	}
 	pid_t curpid = proc_current_pid;
 	if (curpid == pid) curpid = 0;
 	if (proc_get_status(pid) == proc_status::Ending) {
@@ -260,6 +263,7 @@ void proc_end(pid_t pid) {
 		if (cur->pid == pid) {
 			vmm_deletepagedir(cur->pagedir);
 			proc_processes->erase(i);
+			release_lock(proc->ulock);
 			delete cur;
 			break;
 		}
@@ -585,7 +589,7 @@ void proc_set_status(proc_status::Enum status, pid_t pid){
 }
 proc_status::Enum proc_get_status(pid_t pid){
     proc_process *proc=proc_get_lock(pid);
-    if(!proc) return proc_status::DoesNotExist;
+    if(!proc) return proc_status::DoesNotExist;	
     proc_status::Enum ret = proc->status;
     release_lock(proc->ulock);
 	return ret;
@@ -610,15 +614,19 @@ static bool proc_msg_blockcheck(void *p){
 extern lock msg_lock;
 
 uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
+	int a = sch_get_abortlevel();
 	bool again=false;
 	do {
+		dbgpf("PROC: A: %i\n", sch_get_abortlevel());
 		if(again) {
 			sch_setblock(&proc_msg_blockcheck, (void *)&header);
 		}
 		again=false;
+		dbgpf("PROC: B: %i\n", sch_get_abortlevel());
 		take_lock_recursive(proc_lock);
 		proc_process *proc=proc_get(pid);
 		proc_process *to=proc_get(header.to);
+		dbgpf("PROC: C: %i\n", sch_get_abortlevel());
 		if(!proc || !to) {
 			release_lock(proc_lock);
 			return 0;
@@ -626,21 +634,30 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 		bool proc_ok = try_take_lock_recursive(proc->ulock);
 		bool to_ok = try_take_lock_recursive(to->ulock);
 		bool msg_ok = try_take_lock_recursive(msg_lock);
+		dbgpf("PROC: D: %i\n", sch_get_abortlevel());
 		release_lock(proc_lock);
 		if (!proc_ok || !to_ok || !msg_ok || proc->msg_buffers.has_key(header.to)) {
 			if(proc_ok) release_lock(proc->ulock);
 			if(to_ok) release_lock(to->ulock);
 			if(msg_ok) release_lock(msg_lock);
+			dbgpf("PROC: E: %i\n", sch_get_abortlevel());
 			again=true;
 			continue;
 		}
 		proc->msg_buffers[header.to]=malloc(header.length);
 		memcpy(proc->msg_buffers[header.to], header.content, header.length);
 		header.content=proc->msg_buffers[header.to];
+		dbgpf("PROC: Da: %i\n", sch_get_abortlevel());
 		uint64_t ret = msg_send(header);
+		dbgpf("PROC: F: %i\n", sch_get_abortlevel());
 		release_lock(proc->ulock);
 		release_lock(to->ulock);
 		release_lock(msg_lock);
+		int b = sch_get_abortlevel();
+		if(a != b){
+			dbgpf("PROC: Abortlevel changed! Was %i, now %i.\n", a, b);
+			panic("(PROC) Abort level incorrect.");
+		}
 		return ret;
 	} while(again);
 	return 0;

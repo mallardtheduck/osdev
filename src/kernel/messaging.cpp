@@ -35,7 +35,6 @@ uint64_t msg_send(bt_msg_header &msg){
             return 0;
         }
         if(prev.replied){
-            dbgout("MSG: Second reply to same message!\n");
             return 0;
         }
         {
