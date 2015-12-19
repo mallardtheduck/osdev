@@ -136,7 +136,7 @@ void vterm::do_infoline()
 		}
 		seek(opts, 0, false);
 		char buf[8];
-		sprintf(buf, "[%i:%i] ", (int)terminals->get_count(), (int)id);
+		sprintf(buf, "[%i] ", (int)id);
 		putstring(buf);
 		putstring(title);
 		setcolours(colour);
