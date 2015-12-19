@@ -378,8 +378,8 @@ void sch_block(){
 void sch_unblock(uint64_t ext_id){
 	hold_lock hl(sch_lock);
 	for(size_t i=0; i<threads->size(); ++i){
-		if((*threads)[i]->ext_id==ext_id && (*threads)[i]->status != sch_thread_status::Ending){
-			(*threads)[i]->status=sch_thread_status::Runnable;
+		if((*threads)[i]->ext_id==ext_id){
+			if((*threads)[i]->status == sch_thread_status::Blocked) (*threads)[i]->status=sch_thread_status::Runnable;
 			break;
 		}
 	}
@@ -400,10 +400,14 @@ void sch_setblock(sch_blockcheck check, void *param){
 		current_thread->blockcheck=check;
 		current_thread->bc_param=param;
     }
-    sch_abortable(true);
+	bool changeabort = false;
+	if(sch_get_abortlevel()){
+		changeabort = true;
+		sch_abortable(true);
+	}
     sch_block();
     sch_clearblock();
-    sch_abortable(false);
+    if(changeabort) sch_abortable(false);
 }
 
 void sch_clearblock(){

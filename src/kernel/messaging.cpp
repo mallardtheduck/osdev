@@ -265,6 +265,7 @@ bt_msg_header msg_recv_reply_block(uint64_t msg_id){
 bool msg_is_match(bt_msg_header msg, bt_msg_filter filter){
 	if(msg.critical) return true;
 	bool ret = true;
+	if((filter.flags & bt_msg_filter_flags::NonReply) && (msg.flags & bt_msg_flags::Reply)) ret = false;
 	if((filter.flags & bt_msg_filter_flags::From) && msg.from != filter.pid) ret = false;
 	if((filter.flags & bt_msg_filter_flags::Reply) && msg.reply_id != filter.reply_to) ret = false;
 	if((filter.flags & bt_msg_filter_flags::Type) && msg.type != filter.type) ret = false;

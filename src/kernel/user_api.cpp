@@ -27,8 +27,12 @@ void userapi_handler(int, isr_regs *regs){
 		userapi_syscall(fn, regs);
 	}else{
 		user_call_extension(ext, fn, regs);
-		return;
 	}
+	if(sch_get_abortlevel() != 1){
+		dbgpf("UAPI: Abortlevel: %i, ext: %i fn: %x\n", sch_get_abortlevel(), (int)ext, (int)fn);
+		panic("(UAPI) Non-zero abortlevel on return to userspace!\n");
+	}
+    if(sch_user_abort()) sch_end_thread();
 }
 
 bool is_safe_ptr(uint32_t ptr, size_t size, pid_t pid){
@@ -457,8 +461,6 @@ USERAPI_HANDLER(BT_QUERY_EXT){
 }
 
 void userapi_syscall(uint16_t fn, isr_regs *regs){
-	int a = sch_get_abortlevel();
-	dbgpf("UAPI: Abortlevel on enter: %i\n", a);
 	switch(fn){
 		case 0:
          	zero_call(regs);
@@ -549,9 +551,5 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 			regs->eax=-1;
 			break;
 	}
-	int b = sch_get_abortlevel();
-	dbgpf("UAPI: Abortlevel on exit: %i\n", b);
-	if(a != b) panic("(UAPI) Non-zero abortlevel in userspace!\n");
-    if(sch_user_abort()) sch_end_thread();
 }
 

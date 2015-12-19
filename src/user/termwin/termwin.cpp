@@ -25,10 +25,17 @@ const uint32_t font_height = 13;
 const gds_TEMPFonts::Enum font = gds_TEMPFonts::Small;
 const size_t buffer_size = (terminal_width * terminal_height * 2);
 uint8_t buffer[buffer_size];
-const size_t mainthread_stack_size = 16 * 1024;
-char mainthread_stack[mainthread_stack_size];
+uint8_t tempbuffer[buffer_size];
+const size_t thread_stack_size = 16 * 1024;
+char mainthread_stack[thread_stack_size];
+char renderthread_stack[thread_stack_size];
 bt_handle_t terminal_handle = 0;
 volatile bool ready = false;
+volatile int render_counter = 0;
+bt_handle_t renderthread = 0;
+volatile bool endrender = false;
+bt_handle_t bufferlock = 0;
+size_t curpos;
 
 string get_env(const string &name){
 	char value[128];
@@ -122,79 +129,102 @@ bool compare_chars(char a, char b){
 	else return a == b;
 }
 
-void render_terminal(bt_handle_t terminal_handle){
+void render_terminal_thread(){
 	if(!terminal_handle) return;
-	static char ltitle[WM_TITLE_MAX] = {0};
-	char title[WM_TITLE_MAX];
-	bt_terminal_get_title(terminal_handle, WM_TITLE_MAX, title);
-	if(strncmp(ltitle, title, WM_TITLE_MAX)) {
-		WM_SetTitle(title);
-		strncpy(ltitle, title, WM_TITLE_MAX);
-	}
-	static size_t lpos = SIZE_MAX;
-	size_t pos = bt_terminal_get_pos(terminal_handle);
-	uint8_t tempbuffer[buffer_size];
-	bt_terminal_read_buffer(terminal_handle, buffer_size, tempbuffer);
-	for(ptrdiff_t line = terminal_mode.height - 1; line >= 0; --line){
-		vector<pair<size_t, uint16_t>> line_changes;
-		for(size_t col = 0; col < terminal_mode.width; ++col){
-			size_t bufaddr = ((line * terminal_mode.width) + col) * 2;
-			if(!compare_chars(tempbuffer[bufaddr], buffer[bufaddr]) || tempbuffer[bufaddr + 1] != buffer[bufaddr + 1] || bufaddr == pos || bufaddr == lpos){
-				buffer[bufaddr] = tempbuffer[bufaddr];
-				if(bufaddr == pos) buffer[bufaddr + 1] = ((tempbuffer[bufaddr + 1] & 0x0f) << 4) | ((tempbuffer[bufaddr + 1] & 0xf0) >> 4);
-				else buffer[bufaddr + 1] = tempbuffer[bufaddr + 1];
-				uint16_t change = (buffer[bufaddr] > 32 ? buffer[bufaddr] : ' ') | buffer[bufaddr + 1] << 8;
-				line_changes.push_back(make_pair(col, change));
+	int render_counted = 0;
+	while(true){
+		while(render_counter != render_counted){
+			render_counted = render_counter;
+			static char ltitle[WM_TITLE_MAX] = {0};
+			char title[WM_TITLE_MAX];
+			bt_terminal_get_title(terminal_handle, WM_TITLE_MAX, title);
+			if(strncmp(ltitle, title, WM_TITLE_MAX)) {
+				WM_SetTitle(title);
+				strncpy(ltitle, title, WM_TITLE_MAX);
 			}
-		}
-		if(line_changes.size()){
-			size_t start = UINT32_MAX;
-			size_t end = 0;
-			stringstream text;
-			uint8_t col = 0, ncol = 0;
-			for(auto change : line_changes){
-				bool draw = false;
-				if(start == UINT32_MAX) start = end = change.first;
-				if(change.first == end){
-					++end;
-					char c = change.second & 0xFF;
-					uint8_t ccol = (change.second & 0xFF00) >> 8;
-					if(ccol == col){
-						text << c;
-					}else{
-						ncol = ccol;
-						draw = true;
+			static size_t lpos = SIZE_MAX;
+			for(ptrdiff_t line = terminal_mode.height - 1; line >= 0; --line){
+				vector<pair<size_t, uint16_t>> line_changes;
+				bt_lock(bufferlock);
+				for(size_t col = 0; col < terminal_mode.width; ++col){
+					size_t bufaddr = ((line * terminal_mode.width) + col) * 2;
+					if(!compare_chars(tempbuffer[bufaddr], buffer[bufaddr]) || tempbuffer[bufaddr + 1] != buffer[bufaddr + 1] || bufaddr == curpos || bufaddr == lpos){
+						buffer[bufaddr] = tempbuffer[bufaddr];
+						if(bufaddr == curpos) buffer[bufaddr + 1] = ((tempbuffer[bufaddr + 1] & 0x0f) << 4) | ((tempbuffer[bufaddr + 1] & 0xf0) >> 4);
+						else buffer[bufaddr + 1] = tempbuffer[bufaddr + 1];
+						uint16_t change = (buffer[bufaddr] > 32 ? buffer[bufaddr] : ' ') | buffer[bufaddr + 1] << 8;
+						line_changes.push_back(make_pair(col, change));
 					}
-				}else{
-					draw = true;
 				}
-				if(draw){
-					if(text.str().length()){
+				bt_unlock(bufferlock);
+				if(line_changes.size()){
+					size_t start = UINT32_MAX;
+					size_t end = 0;
+					stringstream text;
+					uint8_t col = 0, ncol = 0;
+					for(auto change : line_changes){
+						bool draw = false;
+						if(start == UINT32_MAX) start = end = change.first;
+						if(change.first == end){
+							++end;
+							char c = change.second & 0xFF;
+							uint8_t ccol = (change.second & 0xFF00) >> 8;
+							if(ccol == col){
+								text << c;
+							}else{
+								ncol = ccol;
+								draw = true;
+							}
+						}else{
+							draw = true;
+						}
+						if(draw){
+							if(text.str().length()){
+								uint8_t bgcol = col >> 4;
+								uint8_t fgcol = col & 0x0F;
+								uint32_t width = text.str().length() * font_width;
+								GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+								GDS_Text(start * font_width, line * font_height, text.str().c_str(), font, 0, getcolour(fgcol));
+								WM_UpdateRect(start * font_width, line * font_height, width, font_height);
+							}
+							text.str("");
+							text << (char)(change.second & 0xFF);
+							start = change.first;
+							end = change.first + 1;
+							col = ncol;
+						}
+					}
+					if(start != UINT32_MAX){
 						uint8_t bgcol = col >> 4;
 						uint8_t fgcol = col & 0x0F;
-						uint32_t width = text.str().length() * font_width;
+						uint32_t width = (end * font_width) - (start * font_width);
 						GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 						GDS_Text(start * font_width, line * font_height, text.str().c_str(), font, 0, getcolour(fgcol));
 						WM_UpdateRect(start * font_width, line * font_height, width, font_height);
 					}
-					text.str("");
-					text << (char)(change.second & 0xFF);
-					start = change.first;
-					end = change.first + 1;
-					col = ncol;
 				}
 			}
-			if(start != UINT32_MAX){
-				uint8_t bgcol = col >> 4;
-				uint8_t fgcol = col & 0x0F;
-				uint32_t width = (end * font_width) - (start * font_width);
-				GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-				GDS_Text(start * font_width, line * font_height, text.str().c_str(), font, 0, getcolour(fgcol));
-				WM_UpdateRect(start * font_width, line * font_height, width, font_height);
-			}
+			lpos = curpos;
 		}
+		bt_block_thread();
+		if(endrender) bt_end_thread();
 	}
-	lpos = pos;
+}
+
+void renderthread_start(void *){
+	render_terminal_thread();
+}
+
+
+void render_terminal(){
+	if(!terminal_handle) return;
+	if(!renderthread) renderthread = bt_new_thread(&renderthread_start, NULL, renderthread_stack + thread_stack_size);
+	bt_lock(bufferlock);
+	curpos = bt_terminal_get_pos(terminal_handle);
+	bt_terminal_read_buffer(terminal_handle, buffer_size, tempbuffer);
+	++render_counter;
+	bt_unlock(bufferlock);
+	bt_unblock_thread(renderthread);
 }
 
 void mainthread(void*){
@@ -204,7 +234,9 @@ void mainthread(void*){
 	uint64_t surf = GDS_NewSurface(gds_SurfaceType::Bitmap, terminal_mode.width * font_width, terminal_mode.height * font_height);
 	/*uint64_t win =*/ WM_NewWindow(50, 50, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close, surf, "Terminal Window");
 	ready = true;
-	bt_msg_header msg = bt_recv(true);
+	bt_msg_filter filter;
+	filter.flags = bt_msg_filter_flags::NonReply;
+	bt_msg_header msg = bt_recv_filtered(filter);
 	bool loop = true;
 	while(loop){
 		if(msg.from == 0 && msg.source == bt_terminal_ext_id && msg.type == bt_terminal_message_type::BackendOperation){
@@ -259,7 +291,7 @@ void mainthread(void*){
 					break;
 				}
 				case bt_terminal_backend_operation_type::Refresh:{
-					render_terminal(terminal_handle);
+					render_terminal();
 					break;
 				}
 				case bt_terminal_backend_operation_type::Open:{
@@ -309,16 +341,19 @@ void mainthread(void*){
 				}
 			}
 		}
-		bt_next_msg(&msg);
+		bt_next_msg_filtered(&msg, filter);
 	}
+	endrender = true;
+	bt_unblock_thread(renderthread);
 	kill_children();
 	bt_end_thread();
 }
 
 int main(){
 	bt_terminial_init();
+	bufferlock = bt_create_lock();
 	bt_handle_t backend_handle = bt_terminal_create_backend();
-	bt_threadhandle thread = bt_new_thread(&mainthread, NULL, mainthread_stack + mainthread_stack_size);
+	bt_threadhandle thread = bt_new_thread(&mainthread, NULL, mainthread_stack + thread_stack_size);
 	while(!ready) bt_yield();
 	terminal_handle = bt_terminal_create_terminal(backend_handle);
 	string shell = get_env("SHELL");

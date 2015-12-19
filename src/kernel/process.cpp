@@ -351,8 +351,9 @@ void proc_start(void *ptr){
 	if(!stackptr) stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
     sch_set_priority(default_userspace_priority);
 	sch_abortable(true);
-    debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);
 	proc_add_thread(sch_get_id());
+    debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);
+	if(sch_get_abortlevel()) panic("(PROC) Entering userspace with non-zero abortlevel.");
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 
@@ -614,19 +615,15 @@ static bool proc_msg_blockcheck(void *p){
 extern lock msg_lock;
 
 uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
-	int a = sch_get_abortlevel();
 	bool again=false;
 	do {
-		dbgpf("PROC: A: %i\n", sch_get_abortlevel());
 		if(again) {
 			sch_setblock(&proc_msg_blockcheck, (void *)&header);
 		}
 		again=false;
-		dbgpf("PROC: B: %i\n", sch_get_abortlevel());
 		take_lock_recursive(proc_lock);
 		proc_process *proc=proc_get(pid);
 		proc_process *to=proc_get(header.to);
-		dbgpf("PROC: C: %i\n", sch_get_abortlevel());
 		if(!proc || !to) {
 			release_lock(proc_lock);
 			return 0;
@@ -634,30 +631,21 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 		bool proc_ok = try_take_lock_recursive(proc->ulock);
 		bool to_ok = try_take_lock_recursive(to->ulock);
 		bool msg_ok = try_take_lock_recursive(msg_lock);
-		dbgpf("PROC: D: %i\n", sch_get_abortlevel());
 		release_lock(proc_lock);
 		if (!proc_ok || !to_ok || !msg_ok || proc->msg_buffers.has_key(header.to)) {
 			if(proc_ok) release_lock(proc->ulock);
 			if(to_ok) release_lock(to->ulock);
 			if(msg_ok) release_lock(msg_lock);
-			dbgpf("PROC: E: %i\n", sch_get_abortlevel());
 			again=true;
 			continue;
 		}
 		proc->msg_buffers[header.to]=malloc(header.length);
 		memcpy(proc->msg_buffers[header.to], header.content, header.length);
 		header.content=proc->msg_buffers[header.to];
-		dbgpf("PROC: Da: %i\n", sch_get_abortlevel());
 		uint64_t ret = msg_send(header);
-		dbgpf("PROC: F: %i\n", sch_get_abortlevel());
 		release_lock(proc->ulock);
 		release_lock(to->ulock);
 		release_lock(msg_lock);
-		int b = sch_get_abortlevel();
-		if(a != b){
-			dbgpf("PROC: Abortlevel changed! Was %i, now %i.\n", a, b);
-			panic("(PROC) Abort level incorrect.");
-		}
 		return ret;
 	} while(again);
 	return 0;

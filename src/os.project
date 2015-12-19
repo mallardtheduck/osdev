@@ -47,7 +47,6 @@
     <File Name="kernel/console.hpp"/>
     <File Name="kernel/extensions.cpp"/>
     <File Name="kernel/messaging.hpp"/>
-    <File Name="kernel/process_asm.o"/>
     <File Name="kernel/debug_ext.cpp"/>
     <File Name="kernel/scheduler.hpp"/>
     <File Name="kernel/vmm_pagedir.hpp"/>
