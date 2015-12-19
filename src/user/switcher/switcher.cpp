@@ -23,10 +23,21 @@ vector<term> get_term_list(){
     vector<term> ret;
     ifstream terms("INFO:/TERMS");
     string s;
+	string backend;
+	string termid=get_env("TERMID");
+    uint64_t cterm=atoi(termid.c_str());
+	while(getline(terms, s)){
+        if(s[0]=='#') continue;
+        vector<string> line=split(s, ',');
+        if(line.size()>=3) {
+			if((uint64_t)atoi(line[0].c_str()) == cterm) backend = line[2];
+			break;
+        }
+    }
     while(getline(terms, s)){
         if(s[0]=='#') continue;
         vector<string> line=split(s, ',');
-        if(line.size()>=2) {
+        if(line.size()>=3 && line[2] == backend) {
             term t;
             t.id = atoi(line[0].c_str());
             t.title=line[1];
