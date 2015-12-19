@@ -143,7 +143,7 @@ void render_terminal_thread(){
 				strncpy(ltitle, title, WM_TITLE_MAX);
 			}
 			static size_t lpos = SIZE_MAX;
-			for(ptrdiff_t line = terminal_mode.height - 1; line >= 0; --line){
+			for(size_t line = 0; line < terminal_mode.height; ++line){
 				vector<pair<size_t, uint16_t>> line_changes;
 				bt_lock(bufferlock);
 				for(size_t col = 0; col < terminal_mode.width; ++col){
