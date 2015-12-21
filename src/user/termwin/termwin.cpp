@@ -158,6 +158,8 @@ void render_terminal_thread(){
 				}
 				bt_unlock(bufferlock);
 				if(line_changes.size()){
+					size_t firststart = UINT32_MAX;
+					size_t overallend = 0;
 					size_t start = UINT32_MAX;
 					size_t end = 0;
 					stringstream text;
@@ -165,6 +167,8 @@ void render_terminal_thread(){
 					for(auto change : line_changes){
 						bool draw = false;
 						if(start == UINT32_MAX) start = end = change.first;
+						if(firststart == UINT32_MAX) firststart = change.first;
+						overallend = change.first;
 						if(change.first == end){
 							++end;
 							char c = change.second & 0xFF;
@@ -185,7 +189,7 @@ void render_terminal_thread(){
 								uint32_t width = text.str().length() * font_width;
 								GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 								GDS_Text(start * font_width, line * font_height, text.str().c_str(), font, 0, getcolour(fgcol));
-								WM_UpdateRect(start * font_width, line * font_height, width, font_height);
+								//WM_UpdateRect(start * font_width, line * font_height, width, font_height);
 							}
 							text.str("");
 							text << (char)(change.second & 0xFF);
@@ -200,8 +204,8 @@ void render_terminal_thread(){
 						uint32_t width = (end * font_width) - (start * font_width);
 						GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 						GDS_Text(start * font_width, line * font_height, text.str().c_str(), font, 0, getcolour(fgcol));
-						WM_UpdateRect(start * font_width, line * font_height, width, font_height);
 					}
+					WM_UpdateRect(firststart * font_width, line * font_height, (overallend - firststart + 1) * font_width, font_height);
 				}
 			}
 			lpos = curpos;
