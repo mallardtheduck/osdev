@@ -326,6 +326,10 @@ void mainthread(void*){
 					send_reply(msg, bt_video_palette_entry());
 					break;
 				}
+				case bt_terminal_backend_operation_type::ClearScreen:{
+					memset(buffer, 0, buffer_size);
+					break;
+				}
 				default:{
 					stringstream ss;
 					ss << "TW: Unhandled backend operation: " << op->type << endl;
