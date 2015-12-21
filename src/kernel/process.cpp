@@ -350,6 +350,8 @@ void proc_start(void *ptr){
 	if(!proc_switch(pid)) return;
 	if(!stackptr) stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
     sch_set_priority(default_userspace_priority);
+	//Yes, there are supposed to be two of these calls.
+	sch_abortable(true);
 	sch_abortable(true);
 	proc_add_thread(sch_get_id());
     debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);

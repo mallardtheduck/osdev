@@ -98,7 +98,7 @@ void sch_init(){
 	mainthread->pid=proc_current_pid;
 	mainthread->blockcheck=NULL;
 	mainthread->bc_param=NULL;
-	mainthread->abortlevel=1;
+	mainthread->abortlevel=2;
 	mainthread->abortable=false;
 	mainthread->pid=0;
 	mainthread->sch_cycle=0;
@@ -187,7 +187,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread->modifier=0;
 	newthread->blockcheck=NULL;
 	newthread->bc_param=NULL;
-	newthread->abortlevel=1;
+	newthread->abortlevel=2;
 	newthread->abortable=false;
 	newthread->pid=0;
     newthread->user_abort=false;
