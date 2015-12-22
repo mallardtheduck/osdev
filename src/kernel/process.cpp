@@ -117,12 +117,15 @@ void proc_init(){
 }
 
 proc_process *proc_get(pid_t pid){
-	hold_lock hl(proc_lock, false);
-    for(size_t i=0; i<proc_processes->size(); ++i){
-        proc_process *cur=(*proc_processes)[i];
-		if(cur->pid==pid) return cur;
+	if(proc_current_process && pid == proc_current_pid) return proc_current_process;
+	{
+		hold_lock hl(proc_lock, false);
+		for(size_t i=0; i<proc_processes->size(); ++i){
+			proc_process *cur=(*proc_processes)[i];
+			if(cur->pid==pid) return cur;
+		}
+		return NULL;
 	}
-	return NULL;
 }
 
 proc_process *proc_get_lock(pid_t pid){
