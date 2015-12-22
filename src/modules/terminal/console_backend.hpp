@@ -4,6 +4,7 @@
 #include "backend.hpp"
 #include "module_api.h"
 #include "fs_interface.h"
+#include <ministl.hpp>
 
 class console_backend : public i_backend{
 private:
@@ -21,6 +22,7 @@ private:
     uint8_t *mouseback;
 	uint32_t pointer_draw_serial, pointer_cur_serial;
 	uint32_t cur_pointer_x, cur_pointer_y;
+	map<uint16_t, uint64_t> global_shortcuts;
 
     friend void console_backend_input_thread(void *p);
     friend void console_backend_pointer_thread(void *p);
@@ -34,31 +36,42 @@ public:
     size_t display_read(size_t bytes, char *buf);
     size_t display_write(size_t bytes, char *buf);
     size_t display_seek(size_t pos, uint32_t flags);
-    int display_ioctl(int fn, size_t bytes, char *buf);
 
     size_t input_read(size_t bytes, char *buf);
     size_t input_write(size_t bytes, char *buf);
     size_t input_seek(size_t pos, uint32_t flags);
-    int input_ioctl(int fn, size_t bytes, char *buf);
 
-    bt_terminal_pointer_info pointer_read();
     void show_pointer();
     void hide_pointer();
     bool get_pointer_visibility();
     void set_pointer_bitmap(bt_terminal_pointer_bitmap *bmp);
     bt_terminal_pointer_info get_pointer_info();
 	void set_pointer_autohide(bool val);
-	virtual void freeze_pointer();
-	virtual void unfreeze_pointer();
+	void freeze_pointer();
+	void unfreeze_pointer();
+	
+	void set_text_colours(uint8_t c);
+	uint8_t get_text_colours();
+	size_t get_screen_mode_count();
+	void set_screen_mode(const bt_vidmode &mode);
+	bt_vidmode get_screen_mode(size_t index);
+	bt_vidmode get_current_screen_mode();
+	void set_screen_scroll(bool v);
+	bool get_screen_scroll();
+	void set_text_access_mode(bt_vid_text_access_mode::Enum mode);
+	bt_video_palette_entry get_palette_entry(uint8_t entry);
+	void clear_screen();
+	
+	void register_global_shortcut(uint16_t keycode, uint64_t termid);
 
     bool is_active(uint64_t id);
     void set_active(uint64_t id);
 
     void open(uint64_t id);
     void close(uint64_t id);
-
-    void start_switcher();
-
+	void switch_terminal(uint64_t id);
+	bool can_create();
+	void refresh();
 };
 
 extern console_backend *cons_backend;

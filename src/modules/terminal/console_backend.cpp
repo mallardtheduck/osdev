@@ -29,25 +29,6 @@ uint32_t msb32(uint32_t x)
     return r + bval[x];
 }
 
-static uint64_t create_terminal(char *command) {
-    uint64_t new_id=terminals->create_terminal(cons_backend);
-    terminals->get(new_id)->sync(false);
-    if(command){
-        char old_terminal_id[128]="0";
-        strncpy(old_terminal_id, getenv(terminal_var, getpid()), 128);
-        char new_terminal_id[128]={0};
-        i64toa(new_id, new_terminal_id, 10);
-        setenv(terminal_var, new_terminal_id, 0, getpid());
-        pid_t pid=spawn(command, 0, NULL);
-        setenv(terminal_var, old_terminal_id, 0, getpid());
-		vterm_options opts;
-        if(!pid) terminals->get(new_id)->close(opts);
-    }
-    return new_id;
-}
-
-static uint64_t switcher_term=0;
-
 void console_backend_input_thread(void *p){
     console_backend *backend=(console_backend*)p;
     thread_priority(2);
@@ -58,10 +39,12 @@ void console_backend_input_thread(void *p){
             hold_lock hl(&backend->backend_lock);
             if(backend->active) {
                 vterm *term=terminals->get(backend->active);
-                if ((key & KeyFlags::NonASCII) && (key & KeyFlags::Control) && (key & KeyCodes::Escape)==KeyCodes::Escape && !(key & KeyFlags::KeyUp)) {
-                    release_lock(&backend->backend_lock);
-                    terminals->switch_terminal(switcher_term);
-                    take_lock(&backend->backend_lock);
+				uint16_t keycode = (uint16_t)key;
+				if(backend->global_shortcuts.has_key(keycode)){
+					uint64_t termid = backend->global_shortcuts[keycode];
+					release_lock(&backend->backend_lock);
+					backend->switch_terminal(termid);
+					take_lock(&backend->backend_lock);
                 }else if (term) {
                     release_lock(&backend->backend_lock);
                     term->queue_input(key);
@@ -244,10 +227,6 @@ console_backend::console_backend() {
 	pointer_draw_thread_id=new_thread(&console_backend_pointer_draw_thread, (void*)this);
 }
 
-void console_backend::start_switcher(){
-    switcher_term=create_terminal("HDD:/BTOS/SWITCHER.ELX");
-}
-
 size_t console_backend::display_read(size_t bytes, char *buf) {
     hold_lock hl(&backend_lock);
     bool pointer=pointer_visible;
@@ -271,15 +250,6 @@ size_t console_backend::display_seek(size_t pos, uint32_t flags) {
     return fseek(display, pos, flags);
 }
 
-int console_backend::display_ioctl(int fn, size_t bytes, char *buf) {
-    hold_lock hl(&backend_lock);
-    bool pointer=pointer_visible;
-    hide_pointer();
-    int ret=fioctl(display, fn, bytes, buf);
-    if(pointer)show_pointer();
-    return ret;
-}
-
 size_t console_backend::input_read(size_t bytes, char *buf) {
     return fread(input, bytes, buf);
 }
@@ -290,15 +260,6 @@ size_t console_backend::input_write(size_t bytes, char *buf) {
 
 size_t console_backend::input_seek(size_t pos, uint32_t flags) {
     return fseek(input, pos, flags);
-}
-
-int console_backend::input_ioctl(int fn, size_t bytes, char *buf) {
-    return fioctl(input, fn, bytes, buf);
-}
-
-bt_terminal_pointer_info console_backend::pointer_read(){
-    bt_terminal_pointer_info ret;
-    return ret;
 }
 
 void console_backend::show_pointer() {
@@ -382,4 +343,86 @@ void console_backend::close(uint64_t id){
         dbgpf("TERM: Activating terminal %i\n", (int)term->get_id());
         term->activate();
     }
+	bool found = false;
+	do{
+		for(auto i = global_shortcuts.begin(); i!=global_shortcuts.end(); ++i){
+			if(i->second == id){
+				global_shortcuts.erase(i);
+				found = true;
+				break;
+			}
+		}
+	}while(found);
+}
+
+void console_backend::set_text_colours(uint8_t c){
+	fioctl(display, bt_vid_ioctl::SetTextColours, sizeof(c), (char*)&c);
+}
+
+uint8_t console_backend::get_text_colours(){
+	return fioctl(display, bt_vid_ioctl::GetTextColours, 0, NULL);
+}
+
+size_t console_backend::get_screen_mode_count(){
+	return fioctl(display, bt_vid_ioctl::GetModeCount, 0, NULL);
+}
+
+bt_vidmode console_backend::get_screen_mode(size_t index){
+	bt_vidmode ret;
+	*(size_t*)&ret = index;
+	fioctl(display, bt_vid_ioctl::GetMode, sizeof(ret), (char*)&ret);
+	return ret;
+}
+
+void console_backend::set_screen_mode(const bt_vidmode &mode){
+	fioctl(display, bt_vid_ioctl::SetMode, sizeof(mode), (char*)&mode);
+}
+
+bt_vidmode console_backend::get_current_screen_mode(){
+	bt_vidmode ret;
+	fioctl(display, bt_vid_ioctl::QueryMode, sizeof(ret), (char*)&ret);
+	return ret;
+}
+
+void console_backend::set_screen_scroll(bool v){
+	fioctl(display, bt_vid_ioctl::SetScrolling, sizeof(v), (char*)&v);
+}
+
+bool console_backend::get_screen_scroll(){
+	return fioctl(display, bt_vid_ioctl::GetScrolling, 0, NULL);
+}
+
+void console_backend::set_text_access_mode(bt_vid_text_access_mode::Enum mode){
+	fioctl(display, bt_vid_ioctl::SetTextAccessMode, sizeof(mode), (char*)&mode);
+}
+
+bt_video_palette_entry console_backend::get_palette_entry(uint8_t entry){
+	bt_video_palette_entry ret;
+	*(uint8_t*)&ret = entry;
+	fioctl(display, bt_vid_ioctl::GetPaletteEntry, sizeof(ret), (char*)&ret);
+	return ret;
+}
+
+void console_backend::clear_screen(){
+	fioctl(display, bt_vid_ioctl::ClearScreen, 0, NULL);
+}
+
+void console_backend::register_global_shortcut(uint16_t keycode, uint64_t termid){
+	global_shortcuts[keycode] = termid;
+}
+
+void console_backend::switch_terminal(uint64_t id){
+	vterm *target = terminals->get(id);
+	vterm *current = terminals->get(active);
+	if(target && target->get_backend() == this){
+		if(current) current->deactivate();
+		target->activate();
+	}
+}
+
+bool console_backend::can_create(){
+	return true;
+}
+
+void console_backend::refresh(){
 }

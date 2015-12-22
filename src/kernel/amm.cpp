@@ -67,7 +67,10 @@ void amm_page_fault_handler(int, isr_regs *regs){
         dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
         out_int_info(*regs);
         debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::UnresolvedPageFault);
-        proc_terminate();
+		//If a process kills itself, the thread will be assigned PID 0 and will #PF when attempting to return to userspace
+		//Therefore, if we encounter a userspace #PF on PID 0, end the thread.
+        if(proc_current_pid)proc_terminate();
+		else sch_end_thread();
     }else{
         dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
         dbgpf("AMM: Physical address: %x\n", physaddr);

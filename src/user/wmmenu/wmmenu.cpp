@@ -10,7 +10,8 @@ using namespace std;
 const uint32_t LineHeight = 20;
 
 vector<pair<string, string>> options = {
-	{"Test app", "hdd:/btos/tests/wmtest.elx"},
+	{"Test application", "hdd:/btos/tests/wmtest.elx"},
+	{"Terminal window", "hdd:/btos/bin/termwin.elx"},
 	{"Quit", "QUIT"},
 };
 

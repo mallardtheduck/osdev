@@ -128,27 +128,42 @@ extern "C" void WM_MoveWindow(int32_t x, int32_t y){
 extern "C" void WM_ChangeOptions(uint32_t opts){
 	wm_WindowInfo info;
 	info.options = opts;
-	SendMessage(wm_RequestType::MoveWindow, info, false);
+	SendMessage(wm_RequestType::ChangeOptions, info, false);
 }
 
 extern "C" void WM_SetTitle(const char *title){
 	wm_WindowInfo info;
 	strncpy(info.title, title, WM_TITLE_MAX);
-	SendMessage(wm_RequestType::MoveWindow, info, false);
+	SendMessage(wm_RequestType::SetTitle, info, false);
 }
 
 void WM_SetTitle(const std::string title){
 	WM_SetTitle(title.c_str());
 }
 
-extern "C" wm_Event WM_GetEvent(){
+extern "C" bt_msg_filter WM_GetEventFilter(){
 	bt_msg_filter filter;
 	filter.flags = (bt_msg_filter_flags::Enum)(bt_msg_filter_flags::From | bt_msg_filter_flags::Type);
 	filter.pid = wm_pid;
 	filter.type = wm_MessageType::Event;
+	return filter;
+}
+
+extern "C" wm_Event WM_ParseMessage(bt_msg_header *msg){
+	wm_Event ret;
+	if(msg && msg->from == wm_pid && msg->type == wm_MessageType::Event && msg->length == sizeof(wm_Event)){
+		ret = GetContent<wm_Event>(*msg);
+	}else{
+		ret.type = wm_EventType::None;
+	}
+	return ret;
+}
+
+extern "C" wm_Event WM_GetEvent(){
+	bt_msg_filter filter = WM_GetEventFilter();
 	bt_msg_header msg = bt_recv_filtered(filter);
 	wm_Event ret;
-	ret = GetContent<wm_Event>(msg);
+	ret = WM_ParseMessage(&msg);
 	bt_msg_ack(&msg);
 	return ret;
 }

@@ -311,4 +311,12 @@ inline static bool msg_query_recieved(uint64_t id){
 	return SYSCALL_TABLE->msg_query_recieved(id);
 }
 
+inline static bt_handle_t add_user_handle(bt_handle_info info, pid_t pid){
+	return SYSCALL_TABLE->add_user_handle(info, pid);
+}
+
+inline static bt_handle_info get_user_handle(bt_handle_t h, pid_t pid){
+	return SYSCALL_TABLE->get_user_handle(h, pid);
+}
+
 #endif

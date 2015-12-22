@@ -11,7 +11,7 @@ Screen::Screen() : BitmapSurface::BitmapSurface(1, 1, true){
 
 	fh=bt_fopen(stdout_path, FS_Read | FS_Write);
 	bt_terminal_mode::Enum terminal_mode=bt_terminal_mode::Video;
-	bt_fioctl(fh, bt_terminal_ioctl::SetMode, sizeof(terminal_mode), (char*)&terminal_mode);
+	bt_fioctl(fh, bt_terminal_ioctl::SetTerminalMode, sizeof(terminal_mode), (char*)&terminal_mode);
 
 	buffer=NULL;
 	buffersize=0;
@@ -26,7 +26,7 @@ Screen::~Screen(){
 
 void Screen::RestoreMode(){
 	if(original_mode.bpp){
-		bt_fioctl(fh, bt_vid_ioctl::SetMode, sizeof(original_mode), (char*)&original_mode);
+		bt_fioctl(fh, bt_terminal_ioctl::SetScreenMode, sizeof(original_mode), (char*)&original_mode);
 	}
 }
 
@@ -84,14 +84,14 @@ size_t Screen::BytesPerPixel() {
 }
 
 bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
-	bt_fioctl(fh, bt_vid_ioctl::QueryMode, sizeof(original_mode), (char*)&original_mode);
-	size_t modecount=bt_fioctl(fh, bt_vid_ioctl::GetModeCount, 0, NULL);
+	bt_fioctl(fh, bt_terminal_ioctl::QueryScreenMode, sizeof(original_mode), (char*)&original_mode);
+	size_t modecount=bt_fioctl(fh, bt_terminal_ioctl::GetScreenModeCount, 0, NULL);
 	bt_vidmode bestmode;
 	bestmode.bpp=0;
 	bt_vidmode mode;
 	for(size_t i=0; i<modecount; ++i) {
 		mode.id = i;
-		bt_fioctl(fh, bt_vid_ioctl::GetMode, sizeof(mode), (char *) &mode);
+		bt_fioctl(fh, bt_terminal_ioctl::GetScreenMode, sizeof(mode), (char *) &mode);
 		if(mode.textmode) continue;
 		if(mode.width >= w && mode.height >= h && mode.bpp >=bpp){
 			if(bestmode.bpp && mode.width <= bestmode.width && mode.height <= bestmode.height && mode.bpp <= bestmode.bpp){
@@ -102,7 +102,7 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 		}
 	}
 	if(bestmode.bpp){
-		bt_fioctl(fh, bt_vid_ioctl::SetMode, sizeof(bestmode), (char *) &bestmode);
+		bt_fioctl(fh, bt_terminal_ioctl::SetScreenMode, sizeof(bestmode), (char *) &bestmode);
 		current_mode=bestmode;
 		if(current_mode.bpp >= 16){
 			BitmapSurface::Resize(current_mode.width, current_mode.height, false);
@@ -112,7 +112,7 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 				size_t idx=(p % (1 << current_mode.bpp));
 				bt_video_palette_entry entry;
 				entry.index=idx;
-				bt_fioctl(fh, bt_vid_ioctl::GetPaletteEntry, sizeof(entry), (char*)&entry);
+				bt_fioctl(fh, bt_terminal_ioctl::GetPaletteEntry, sizeof(entry), (char*)&entry);
 				image->ColorAllocate(entry.r, entry.g, entry.b);
 			}
 		}
@@ -135,6 +135,7 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 		w = current_mode.width;
 		h = current_mode.height;
 	}
+	if(!w || !h) return;
 	if(cursor_on){
 		hide_cursor = true;
 		bt_terminal_pointer_info pointer_info;

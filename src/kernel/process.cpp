@@ -198,7 +198,10 @@ void proc_end(pid_t pid) {
 	//This is not in the "right" place, but cannot be done once we have the lock.
 	debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
 	take_lock_exclusive(proc_lock);
-	if (!proc_get(pid)) return;
+	if (!proc_get(pid)){
+		release_lock(proc_lock);
+		return;
+	}
 	pid_t curpid = proc_current_pid;
 	if (curpid == pid) curpid = 0;
 	if (proc_get_status(pid) == proc_status::Ending) {
@@ -215,9 +218,9 @@ void proc_end(pid_t pid) {
 	pid_t parent = proc->parent;
 	release_lock(proc_lock);
 	if (parent){
-		proc_process *parent_proc = proc_get(parent);
+		proc_process *parent_proc = proc_get_lock(parent);
 		if(parent_proc){
-			take_lock_exclusive(parent_proc->ulock);
+			//take_lock_exclusive(parent_proc->ulock);
 			parent_proc->child_returns[pid] = proc->retval;
 			release_lock(parent_proc->ulock);
 		}
@@ -260,6 +263,7 @@ void proc_end(pid_t pid) {
 		if (cur->pid == pid) {
 			vmm_deletepagedir(cur->pagedir);
 			proc_processes->erase(i);
+			release_lock(proc->ulock);
 			delete cur;
 			break;
 		}
@@ -346,9 +350,12 @@ void proc_start(void *ptr){
 	if(!proc_switch(pid)) return;
 	if(!stackptr) stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
     sch_set_priority(default_userspace_priority);
+	//Yes, there are supposed to be two of these calls.
 	sch_abortable(true);
-    debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);
+	sch_abortable(true);
 	proc_add_thread(sch_get_id());
+    debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);
+	if(sch_get_abortlevel()) panic("(PROC) Entering userspace with non-zero abortlevel.");
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 
@@ -585,7 +592,7 @@ void proc_set_status(proc_status::Enum status, pid_t pid){
 }
 proc_status::Enum proc_get_status(pid_t pid){
     proc_process *proc=proc_get_lock(pid);
-    if(!proc) return proc_status::DoesNotExist;
+    if(!proc) return proc_status::DoesNotExist;	
     proc_status::Enum ret = proc->status;
     release_lock(proc->ulock);
 	return ret;

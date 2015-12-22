@@ -98,7 +98,7 @@ void sch_init(){
 	mainthread->pid=proc_current_pid;
 	mainthread->blockcheck=NULL;
 	mainthread->bc_param=NULL;
-	mainthread->abortlevel=1;
+	mainthread->abortlevel=2;
 	mainthread->abortable=false;
 	mainthread->pid=0;
 	mainthread->sch_cycle=0;
@@ -187,7 +187,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread->modifier=0;
 	newthread->blockcheck=NULL;
 	newthread->bc_param=NULL;
-	newthread->abortlevel=1;
+	newthread->abortlevel=2;
 	newthread->abortable=false;
 	newthread->pid=0;
     newthread->user_abort=false;
@@ -378,8 +378,8 @@ void sch_block(){
 void sch_unblock(uint64_t ext_id){
 	hold_lock hl(sch_lock);
 	for(size_t i=0; i<threads->size(); ++i){
-		if((*threads)[i]->ext_id==ext_id && (*threads)[i]->status != sch_thread_status::Ending){
-			(*threads)[i]->status=sch_thread_status::Blocked;
+		if((*threads)[i]->ext_id==ext_id){
+			if((*threads)[i]->status == sch_thread_status::Blocked) (*threads)[i]->status=sch_thread_status::Runnable;
 			break;
 		}
 	}
@@ -400,10 +400,14 @@ void sch_setblock(sch_blockcheck check, void *param){
 		current_thread->blockcheck=check;
 		current_thread->bc_param=param;
     }
-    sch_abortable(true);
+	bool changeabort = false;
+	if(sch_get_abortlevel()){
+		changeabort = true;
+		sch_abortable(true);
+	}
     sch_block();
     sch_clearblock();
-    sch_abortable(false);
+    if(changeabort) sch_abortable(false);
 }
 
 void sch_clearblock(){
@@ -447,20 +451,25 @@ uint32_t sch_get_eip(bool lock){
     return ret;
 }
 
-void sch_abortable(bool abortable){
+void sch_abortable(bool abortable, uint64_t ext_id){
+	sch_thread *thread = current_thread;
+	if(ext_id != current_thread_id){;
+		for(size_t i=0; i<threads->size(); ++i){
+			if((*threads)[i]->ext_id==ext_id){
+				thread = (*threads)[i];
+				break;
+			}
+		}
+	}
     int alevel;
-    {
+	if(abortable) alevel = __sync_sub_and_fetch(&thread->abortlevel, 1);
+	else alevel = __sync_add_and_fetch(&thread->abortlevel, 1);
+	if(alevel <= 0){
         hold_lock hl(sch_lock, false);
-		current_thread->abortlevel += abortable ? -1 : 1;
-        alevel = current_thread->abortlevel;
-    }
-	if(alevel<=0){
-        hold_lock hl(sch_lock, false);
-		current_thread->abortlevel=0;
-		current_thread->abortable=true;
+		thread->abortlevel=0;
+		thread->abortable=true;
 	}else{
-        hold_lock hl(sch_lock, false);
-		current_thread->abortable=false;
+		thread->abortable=false;
 	}
 }
 
@@ -637,4 +646,8 @@ void *sch_get_usercontext(uint64_t ext_id){
 		hold_lock hl(sch_lock);
 		return sch_get(ext_id)->usercontext;
 	}
+}
+
+int sch_get_abortlevel(){
+	return current_thread->abortlevel;
 }

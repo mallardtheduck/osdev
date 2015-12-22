@@ -11,10 +11,12 @@
 #include "fs_interface.h"
 #include "locktype.h"
 #include "bt_msg.h"
+#include "handle.h"
 
 typedef void(*thread_func)(void*);
 typedef uint64_t thread_id_t;
 typedef uint64_t pid_t;
+typedef uint32_t bt_handle_t;
 
 typedef char* (*info_function)();
 
@@ -123,6 +125,9 @@ struct syscall_table{
 	bool (*msg_recv_reply)(API_NS bt_msg_header *msg, uint64_t msg_id);
 	API_NS bt_msg_header (*msg_recv_reply_block)(uint64_t msg_id);
 	bool (*msg_query_recieved)(uint64_t id);
+	
+	bt_handle_t (*add_user_handle)(bt_handle_info info, pid_t pid);
+	bt_handle_info (*get_user_handle)(bt_handle_t h, pid_t pid);
 };
 
 #ifndef __cplusplus

@@ -5,6 +5,7 @@
 #include "device.hpp"
 #include "console_backend.hpp"
 #include "extension.h"
+#include "api.hpp"
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
@@ -15,7 +16,7 @@ uint16_t terminal_extension_id;
 kernel_extension terminal_extension={
 	"TERMINAL",
 	NULL,
-	NULL
+	&terminal_uapi_fn
 };
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -34,10 +35,9 @@ void init(){
     init_device();
     terminals=new vterm_list();
     cons_backend=new console_backend();
-    cons_backend->start_switcher();
     uint64_t id=terminals->create_terminal(cons_backend);
     terminals->get(id)->sync();
-    terminals->switch_terminal(id);
+    cons_backend->switch_terminal(id);
     default_terminal=id;
 }
 

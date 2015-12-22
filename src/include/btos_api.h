@@ -10,9 +10,13 @@
 
 #ifdef __cplusplus
 namespace btos_api{
+#define BTOS_API_NS btos_api::
+#else
+#define BTOS_API_NS
 #endif
 
 typedef uint32_t bt_handle;
+typedef uint32_t bt_handle_t;
 typedef bt_handle bt_lockhandle;
 typedef bt_handle bt_filehandle;
 typedef bt_handle bt_dirhandle;

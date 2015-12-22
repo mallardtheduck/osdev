@@ -50,7 +50,7 @@ void debug_extension_uapi(uint16_t fn, isr_regs *regs) {
 }
 
 void debug_event_notify(pid_t pid, uint64_t thread, bt_debug_event::Enum event, bt_exception::Enum error) {
-	if(debugger_pid && debugger_pid != pid && proc_get_status(pid) == proc_status::Running) {
+	if(debugger_pid && debugger_pid != pid && proc_get_status(pid) == proc_status::Running && proc_get_status(debugger_pid) == proc_status::Running) {
 		btos_api::bt_msg_header msg;
 		msg.from = 0;
 		msg.source = debug_ext_id;

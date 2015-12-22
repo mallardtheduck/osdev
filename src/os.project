@@ -47,7 +47,6 @@
     <File Name="kernel/console.hpp"/>
     <File Name="kernel/extensions.cpp"/>
     <File Name="kernel/messaging.hpp"/>
-    <File Name="kernel/process_asm.o"/>
     <File Name="kernel/debug_ext.cpp"/>
     <File Name="kernel/scheduler.hpp"/>
     <File Name="kernel/vmm_pagedir.hpp"/>
@@ -178,6 +177,8 @@
       <File Name="modules/terminal/vterm.cpp"/>
       <File Name="modules/terminal/vterm.hpp"/>
       <File Name="modules/terminal/Makefile"/>
+      <File Name="modules/terminal/api.hpp"/>
+      <File Name="modules/terminal/api.cpp"/>
     </VirtualDirectory>
     <VirtualDirectory Name="test">
       <File Name="modules/test/Makefile"/>
@@ -331,6 +332,18 @@
       <File Name="user/startwm/table.cpp"/>
       <File Name="user/startwm/table.hpp"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="switcher">
+      <File Name="user/switcher/utils.cpp"/>
+      <File Name="user/switcher/switcher.hpp"/>
+      <File Name="user/switcher/switcher.cpp"/>
+      <File Name="user/switcher/Makefile"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="termwin">
+      <File Name="user/termwin/Makefile"/>
+      <File Name="user/termwin/termwin.cpp"/>
+      <File Name="user/termwin/table.hpp"/>
+      <File Name="user/termwin/table.cpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
@@ -368,6 +381,7 @@
       <File Name="include/wm/wm.h"/>
       <File Name="include/wm/libwm.h"/>
     </VirtualDirectory>
+    <File Name="include/ministl.hpp"/>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>

@@ -27,8 +27,12 @@ void userapi_handler(int, isr_regs *regs){
 		userapi_syscall(fn, regs);
 	}else{
 		user_call_extension(ext, fn, regs);
-		return;
 	}
+	if(sch_get_abortlevel() != 1){
+		dbgpf("UAPI: Abortlevel: %i, ext: %i fn: %x\n", sch_get_abortlevel(), (int)ext, (int)fn);
+		panic("(UAPI) Non-zero abortlevel on return to userspace!\n");
+	}
+    if(sch_user_abort()) sch_end_thread();
 }
 
 bool is_safe_ptr(uint32_t ptr, size_t size, pid_t pid){
@@ -98,16 +102,21 @@ USERAPI_HANDLER(BT_CREATE_LOCK){
 USERAPI_HANDLER(BT_LOCK){
     lock *l=proc_get_lock(regs->ebx);
     if(l) take_lock_exclusive(*l);
+	sch_abortable(true);
 }
 
 USERAPI_HANDLER(BT_TRY_LOCK){
     lock *l=proc_get_lock(regs->ebx);
-    if(l) regs->eax=try_take_lock_exclusive(*l);
+    if(l && try_take_lock_exclusive(*l)){
+		regs->eax = 1;
+		sch_abortable(true);
+	}else regs->eax = 0;
 }
 
 USERAPI_HANDLER(BT_UNLOCK){
     lock *l=proc_get_lock(regs->ebx);
 	if(l) release_lock(*l);
+	sch_abortable(false);
 }
 
 USERAPI_HANDLER(BT_DESTROY_LOCK){
@@ -542,6 +551,5 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 			regs->eax=-1;
 			break;
 	}
-    if(sch_user_abort()) sch_end_thread();
 }
 

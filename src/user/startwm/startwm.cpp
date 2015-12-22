@@ -3,6 +3,8 @@
 #include <string>
 #include <cstdlib>
 #include <btos_stubs.h>
+#include <crt_support.h>
+#include <terminal.h>
 #include "table.hpp"
 
 using namespace std;
@@ -18,6 +20,9 @@ int main(){
 	const char *args[2] = {WMPath.c_str(), ShellPath.c_str()};
 	bt_pid_t pid = bt_spawn(GDSPath.c_str(), 2, (char**)args);
 	bt_wait(pid);
+	bt_fioctl(btos_get_handle(fileno(stdout)), bt_terminal_ioctl::HidePointer, 0, NULL);
+	bool ph = true;
+	bt_fioctl(btos_get_handle(fileno(stdout)), bt_terminal_ioctl::PointerAutoHide, sizeof(ph), (char*)ph);
 	cout << "Ending remaining GUI processes...";
 	cout.flush();
 	bool found = true;

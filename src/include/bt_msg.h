@@ -9,9 +9,9 @@ namespace btos_api{
 #endif
 
 #ifndef __cplusplus
-#define BT_MSG_MAX (1024*4069)
+#define BT_MSG_MAX (4069)
 #else
-const size_t BT_MSG_MAX=4096*1024;
+const size_t BT_MSG_MAX=4096;
 #endif
 
 struct bt_msg_header{
@@ -47,12 +47,13 @@ ENUM_START(bt_msg_filter_flags)
 	ENUM_SET(bt_msg_filter_flags, Reply, 1 << 1),
 	ENUM_SET(bt_msg_filter_flags, Type, 1 << 2),
 	ENUM_SET(bt_msg_filter_flags, Source, 1 << 3),
+	ENUM_SET(bt_msg_filter_flags, NonReply, 1 << 4),
 	ENUM_SET(bt_msg_filter_flags, Invert, 1 << 31),
 ENUM_END
 ENUM_TYPE(bt_msg_filter_flags);
 
 struct bt_msg_filter{
-	ENUM_NAME(bt_msg_filter_flags) flags;
+	uint32_t flags;
 	uint64_t pid;
 	uint64_t reply_to;
 	uint32_t type;

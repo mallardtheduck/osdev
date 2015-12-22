@@ -43,7 +43,7 @@ void Service(bt_pid_t root_pid){
 			if(clients.find(omsg.to) != clients.end()){
 				clients.at(omsg.to)->SendNextEvent();
 			}
-		}else if(msg.from == 0 && msg.source == terminal_ext_id) {
+		}else if(msg.from == 0 && msg.source == terminal_ext_id && msg.type == bt_terminal_message_type::InputEvent) {
 			bt_terminal_event event;
 			bt_msg_content(&msg, (void*)&event, sizeof(event));
 			HandleInput(event);
