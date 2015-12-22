@@ -1,4 +1,4 @@
-import-files:=data/btos/tests/ctest.elx data/btos/tests/cpptest.elx data/btos/cmd.elx data/btos/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/switcher.elx data/btos/spawn.elx data/btos/cmd/kill.elx data/btos/pci.sys data/btos/cmd/load.elx data/btos/test.sys data/btos/tests/test.elx data/btos/cmd/mount.elx data/btos/tests/msgtest.elx data/btos/tests/mousetest.elx data/btos/vga.sys data/btos/tests/vgatest.elx data/btos/tests/fputest.elx data/btos/gds.elx data/btos/debug.elx data/btos/tests/crash.elx data/btos/tests/gdstest.elx data/btos/wm.elx data/btos/tests/wmtest.elx data/btos/bin/wmmenu.elx data/btos/bin/startwm.elx data/btos/bin/termwin.elx
+import-files:=data/btos/tests/ctest.elx data/btos/tests/cpptest.elx data/btos/cmd/cmd.elx data/btos/system/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/system/switcher.elx data/btos/cmd/spawn.elx data/btos/cmd/kill.elx data/btos/drivers/pci.sys data/btos/cmd/load.elx data/btos/tests/test.sys data/btos/tests/test.elx data/btos/cmd/mount.elx data/btos/tests/msgtest.elx data/btos/tests/mousetest.elx data/btos/drivers/vga.sys data/btos/tests/vgatest.elx data/btos/tests/fputest.elx data/btos/system/gds.elx data/btos/bin/debug.elx data/btos/tests/crash.elx data/btos/tests/gdstest.elx data/btos/system/wm.elx data/btos/tests/wmtest.elx data/btos/bin/wmmenu.elx data/btos/bin/startwm.elx data/btos/bin/termwin.elx
 
 all: ~/.mtoolsrc btos.img copy.always
 
@@ -14,10 +14,10 @@ data/btos/tests/ctest.elx: ../user/ctest/ctest.elx
 data/btos/tests/cpptest.elx: ../user/cpptest/cpptest.elx
 	cp $< $@
 
-data/btos/cmd.elx: ../user/cmd/cmd.elx directories.always
+data/btos/cmd/cmd.elx: ../user/cmd/cmd.elx directories.always
 	cp $< $@
 
-data/btos/terminal.sys: ../modules/terminal/terminal.sys directories.always
+data/btos/system/terminal.sys: ../modules/terminal/terminal.sys directories.always
 	cp $< $@
 
 data/btos/cmd/cls.elx: ../user/cls/cls.elx directories.always
@@ -26,22 +26,22 @@ data/btos/cmd/cls.elx: ../user/cls/cls.elx directories.always
 data/btos/cmd/termctl.elx: ../user/termctl/termctl.elx directories.always
 	cp $< $@
 
-data/btos/switcher.elx: ../user/switcher/switcher.elx directories.always
+data/btos/system/switcher.elx: ../user/switcher/switcher.elx directories.always
 	cp $< $@
 
-data/btos/spawn.elx: ../user/spawn/spawn.elx directories.always
+data/btos/cmd/spawn.elx: ../user/spawn/spawn.elx directories.always
 	cp $< $@
 
 data/btos/cmd/kill.elx: ../user/kill/kill.elx directories.always
 	cp $< $@
 
-data/btos/pci.sys: ../modules/pci/pci.sys directories.always
+data/btos/drivers/pci.sys: ../modules/pci/pci.sys directories.always
 	cp $< $@
 
 data/btos/cmd/load.elx: ../user/load/load.elx directories.always
 	cp $< $@
 
-data/btos/test.sys: ../modules/test/test.sys directories.always
+data/btos/tests/test.sys: ../modules/test/test.sys directories.always
 	cp $< $@
 
 data/btos/tests/test.elx: ../user/test/test.elx directories.always
@@ -56,19 +56,19 @@ data/btos/tests/msgtest.elx: ../user/msgtest/msgtest.elx directories.always
 data/btos/tests/mousetest.elx: ../user/mousetest/mousetest.elx directories.always
 	cp $< $@
 
-data/btos/vga.sys: ../modules/vga/vga.sys directories.always
+data/btos/drivers/vga.sys: ../modules/vga/vga.sys directories.always
 	cp $< $@
 
 data/btos/tests/vgatest.elx: ../user/vgatest/vgatest.elx directories.always
 	cp $< $@
 
-data/btos/debug.elx: ../user/debug/debug.elx directories.always
+data/btos/bin/debug.elx: ../user/debug/debug.elx directories.always
 	cp $< $@
 
 data/btos/tests/crash.elx: ../user/crash/crash.elx directories.always
 	cp $< $@
 
-data/btos/gds.elx: ../user/gds/gds.elx directories.always
+data/btos/system/gds.elx: ../user/gds/gds.elx directories.always
 	cp $< $@
 	
 data/btos/tests/gdstest.elx: ../user/libgds/gdstest.elx directories.always
@@ -77,7 +77,7 @@ data/btos/tests/gdstest.elx: ../user/libgds/gdstest.elx directories.always
 data/btos/tests/fputest.elx: ../user/fputest/fputest.elx directories.always
 	cp $< $@
 	
-data/btos/wm.elx: ../user/wm/wm.elx directories.always
+data/btos/system/wm.elx: ../user/wm/wm.elx directories.always
 	cp $< $@
 	
 data/btos/tests/wmtest.elx: ../user/libwm/wmtest.elx directories.always
@@ -97,6 +97,8 @@ directories.always:
 	mkdir -p data/btos/temp
 	mkdir -p data/btos/tests
 	mkdir -p data/btos/bin
+	mkdir -p data/btos/system
+	mkdir -p data/btos/drivers
 
 ~/.mtoolsrc:
 	echo "mtools_skip_check=1" > ~/.mtoolsrc
