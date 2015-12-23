@@ -46,13 +46,11 @@ void amm_init(){
 
 void amm_mark_alloc(uint32_t pageaddr, amm_page_type::Enum type, void *info){
 	if(!amm_inited) return;
-    hold_lock hl(amm_lock, false);
     amm_accounting_mark_page(pageaddr, type, info);
 }
 
 void amm_mark_free(uint32_t pageaddr){
 	if(!amm_inited) return;
-	hold_lock hl(amm_lock, false);
     amm_accounting_mark_page(pageaddr, amm_page_type::Free, NULL);
 }
 

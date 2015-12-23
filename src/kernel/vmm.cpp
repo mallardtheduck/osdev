@@ -521,17 +521,14 @@ size_t vmm_gettotalmem(){
 }
 
 void vmm_set_flags(uint32_t pageaddr, amm_flags::Enum flags){
-    hold_lock hl(vmm_lock, false);
     vmm_cur_pagedir->set_flags(pageaddr, flags);
 }
 
 amm_flags::Enum vmm_get_flags(uint32_t pageaddr){
-    hold_lock hl(vmm_lock, false);
     return vmm_cur_pagedir->get_flags(pageaddr);
 }
 
 uint32_t vmm_physaddr(void *ptr){
-    hold_lock hl(vmm_lock, false);
     uint32_t offset=(uint32_t)ptr & ~VMM_ADDRESS_MASK;
     return vmm_cur_pagedir->virt2phys(ptr) | offset;
 }
