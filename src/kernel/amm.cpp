@@ -192,9 +192,15 @@ uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){
 }
 
 void amm_flush(file_handle &file){
-    hold_lock hl(amm_lock, false);
     if(!(file.mode & FS_Write)) return;
-    vector<amm_filemap> &mappings=*amm_filemappings;
+    //vector<amm_filemap> &mappings=*amm_filemappings;
+	vector<amm_filemap> mappings;
+	{
+		hold_lock hl(amm_lock, false);
+		for(size_t i=0; i<amm_filemappings->size(); ++i){
+			if((*amm_filemappings)[i].file.filedata == file.filedata) mappings.push_back((*amm_filemappings)[i]);
+		}
+	}
     for(size_t i=0; i<mappings.size(); ++i){
         if(mappings[i].file.filedata != file.filedata) continue;
         //dbgpf("AMM: Flusing mapping %i\n", i);
@@ -279,8 +285,13 @@ void amm_flush(file_handle &file){
 
 void amm_close(file_handle &file) {
     amm_flush(file);
-    hold_lock hl(amm_lock, false);
-    vector<amm_filemap> &mappings=*amm_filemappings;
+	vector<amm_filemap> mappings;
+	{
+		hold_lock hl(amm_lock, false);
+		for(size_t i=0; i<amm_filemappings->size(); ++i){
+			if((*amm_filemappings)[i].file.filedata == file.filedata) mappings.push_back((*amm_filemappings)[i]);
+		}
+	}
     for(size_t i=0; i<mappings.size(); ++i){
         if(mappings[i].file.filedata != file.filedata) continue;
         pid_t curpid=proc_current_pid;
@@ -314,6 +325,7 @@ void amm_close(file_handle &file) {
     }
     bool changed=true;
     while(changed){
+		hold_lock hl(amm_lock, false);
         changed=false;
         for(size_t i=0; i<mappings.size(); ++i){
             if(mappings[i].file.filedata == file.filedata){
@@ -326,51 +338,49 @@ void amm_close(file_handle &file) {
 }
 
 void amm_closemap(uint64_t id) {
-    hold_lock hl(amm_lock, false);
-    vector<amm_filemap> &mappings=*amm_filemappings;
-    for(size_t i=0; i<mappings.size(); ++i){
-        if(mappings[i].id != id) continue;
-        amm_flush(mappings[i].file);
-        pid_t curpid=proc_current_pid;
-        proc_switch(mappings[i].pid);
-        //dbgpf("AMM: Closing memory mapping %i\n", i);
-        if(mappings[i].size < VMM_PAGE_SIZE) continue;
-        size_t pages=mappings[i].size/VMM_PAGE_SIZE;
-        size_t start=0;
-        size_t end=pages;
-        bool exact=false;
-        if(pages*VMM_PAGE_SIZE==mappings[i].size &&
-                (uint32_t)mappings[i].start==((uint32_t)mappings[i].start & VMM_ADDRESS_MASK)) exact=true;
-        else pages++;
-        if(!exact){
-            if((uint32_t)mappings[i].start != ((uint32_t)mappings[i].start & VMM_ADDRESS_MASK)){
-                start=1;
-            }
-            if(((uint32_t)mappings[i].start+mappings[i].size) & VMM_PAGE_SIZE){
-                end=pages-1;
-            }
-        }
-        for(size_t j=start; j<end; ++j) {
-            uint32_t virtaddr = ((uint32_t) mappings[i].start + (j * VMM_PAGE_SIZE)) & VMM_ADDRESS_MASK;
-            if (!vmm_cur_pagedir->is_mapped((void *) virtaddr)){
-                //dbgpf("AMM: Re-mapping page at %x\n", virtaddr);
-                vmm_cur_pagedir->unmap_page(virtaddr/VMM_PAGE_SIZE);
-                vmm_alloc_at(1, virtaddr);
-            }
-        }
-        proc_switch(curpid);
-    }
-    bool changed=true;
-    while(changed){
-        changed=false;
-        for(size_t i=0; i<mappings.size(); ++i){
-            if(mappings[i].id == id){
-                mappings.erase(i);
-                changed=true;
-                break;
-            }
-        }
-    }
+	amm_filemap mapping;
+	bool found = false;
+	{
+		hold_lock hl(amm_lock, false);
+		for(size_t i=0; i<amm_filemappings->size(); ++i){
+			if((*amm_filemappings)[i].id == id){ 
+				found = true;
+				mapping = (*amm_filemappings)[i];
+				amm_filemappings->erase(i);
+				break;
+			}
+		}
+	}
+	if(!found) return;
+	amm_flush(mapping.file);
+	if(mapping.size < VMM_PAGE_SIZE) return;
+	pid_t curpid=proc_current_pid;
+	proc_switch(mapping.pid);
+	//dbgpf("AMM: Closing memory mapping %i\n", i);
+	size_t pages=mapping.size/VMM_PAGE_SIZE;
+	size_t start=0;
+	size_t end=pages;
+	bool exact=false;
+	if(pages*VMM_PAGE_SIZE==mapping.size &&
+			(uint32_t)mapping.start==((uint32_t)mapping.start & VMM_ADDRESS_MASK)) exact=true;
+	else pages++;
+	if(!exact){
+		if((uint32_t)mapping.start != ((uint32_t)mapping.start & VMM_ADDRESS_MASK)){
+			start=1;
+		}
+		if(((uint32_t)mapping.start+mapping.size) & VMM_PAGE_SIZE){
+			end=pages-1;
+		}
+	}
+	for(size_t j=start; j<end; ++j) {
+		uint32_t virtaddr = ((uint32_t) mapping.start + (j * VMM_PAGE_SIZE)) & VMM_ADDRESS_MASK;
+		if (!vmm_cur_pagedir->is_mapped((void *) virtaddr)){
+			//dbgpf("AMM: Re-mapping page at %x\n", virtaddr);
+			vmm_cur_pagedir->unmap_page(virtaddr/VMM_PAGE_SIZE);
+			vmm_alloc_at(1, virtaddr);
+		}
+	}
+	proc_switch(curpid);
 }
 
 size_t amm_resolve_addr(void *addr){
