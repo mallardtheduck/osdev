@@ -39,8 +39,11 @@ bool is_safe_ptr(uint32_t ptr, size_t size, pid_t pid){
 	if(ptr >= VMM_USERSPACE_START){
 		pid_t cur_pid = proc_current_pid;
 		proc_switch(pid);
-		for(size_t i=0; i<size; ++i){
-			if(!amm_resolve_addr((char*)ptr + i)){ 
+		size_t i = 0;
+		while(i<size){
+			size_t res = amm_resolve_addr((char*)ptr + i);
+			i += res;
+			if(!res){ 
 				proc_switch(cur_pid);
 				dbgpf("UAPI: Verification of pointer %x (%i) for %i failed.\n", ptr, size, pid);
 				return false;
