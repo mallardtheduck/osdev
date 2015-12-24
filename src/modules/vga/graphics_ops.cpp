@@ -123,6 +123,7 @@ void graphics_end(){
 	op.status = vga_operation_status::Pending;
 	queue->add(&op);
 	thread_setblock(&operation_blockcheck, (void*)&op);
+	queue->wait_for_end();
 	delete queue;
 	queue = NULL;
 }
