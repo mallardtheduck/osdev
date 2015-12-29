@@ -94,11 +94,13 @@ void draw_cursor_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_termina
 			}
 		}
 		uint8_t *gdata = gbuffer;
-		size_t outpos = (ypos * mode.width) + (x);
+		size_t offset = 0;
+		if(y <= 0 && ypos == 0 && x < 0) offset = ((-x) / 2) + ((-x) % 2);
+		size_t outpos = (ypos * mode.width) + (x) + (offset * 2);
 		size_t oindex = outpos / 2;
 		if(enable_transp){
 			fseek(file, oindex, false);
-			fread(file, dsize, (char*)gdata);
+			fread(file, dsize - offset, (char*)gdata+offset);
 			for(size_t i=0; i<dsize; ++i){
 				int fxpos;
 				int sxpos;
@@ -119,7 +121,7 @@ void draw_cursor_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_termina
 			if(left % 2) memcpy(gdata, linedata, dsize);
 			else{
 				fseek(file, oindex, false);
-				fread(file, dsize, (char*)gdata);
+				fread(file, dsize - offset, (char*)gdata+offset);
 				for(size_t i=0; i<dsize; ++i){
 					if(i == 0) gdata[i] = (gdata[i] & 0xF0) | (linedata[i] & 0x0F);
 					else if(i == dsize - 1) gdata[i] = (gdata[i] & 0x0F) | (linedata[i] & 0xF0);
@@ -128,7 +130,7 @@ void draw_cursor_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_termina
 			}
 		}
 		fseek(file, oindex, false);
-		fwrite(file, dsize, (char*)gdata);
+		fwrite(file, dsize - offset, (char*)gdata+offset);
     }
     fseek(file, pos, false);
 	if(freebuffers){
@@ -190,7 +192,9 @@ uint8_t *get_background_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_
 	}
     for(int ypos=y; ypos < (int)(y+bitmap->h); ++ypos){
         if(ypos < 0 || ypos >= (int)(mode.height)) continue;
-		size_t outpos = (ypos * mode.width) + (x);
+		size_t offset = 0;
+		if(y <= 0 && ypos == 0 && x < 0) offset = ((-x) / 2) + ((-x) % 2);
+		size_t outpos = (ypos * mode.width) + (x) + (offset * 2);
 		size_t oindex = outpos / 2;
         size_t dsize = 0;
 		uint8_t *linedata;
@@ -202,7 +206,7 @@ uint8_t *get_background_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_
 			linedata = linebuffer;
 		}
 		fseek(file, oindex, false);
-		fread(file, dsize, (char*)linedata);
+		fread(file, dsize - offset, (char*)linedata+offset);
 		if(!(left % 2)){
 			uint8_t *dest = (ret + (((ypos - y) * bitmap->w) / 2));
 			for(size_t i=0; i<dsize - 1; ++i){
