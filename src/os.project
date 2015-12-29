@@ -344,6 +344,10 @@
       <File Name="user/termwin/table.hpp"/>
       <File Name="user/termwin/table.cpp"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="breakout">
+      <File Name="user/breakout/Makefile"/>
+      <File Name="user/breakout/breakout.cpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
