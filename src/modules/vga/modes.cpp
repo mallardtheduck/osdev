@@ -160,10 +160,13 @@ inline void free_copybuffer(uint8_t *ptr){
 void write_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 	uint32_t startbyte=startpos / 8;
 	uint8_t sbits=(uint8_t)(startpos-(startbyte * 8));
+	count += sbits;
 	uint32_t bytes=(uint32_t)(count / 8);
 	if(bytes * 8 < count) bytes++;
+	uint8_t xbits = (bytes * 8) - count;
 	for(uint8_t plane=0; plane<4; ++plane) {
 		uint8_t skipbits=sbits;
+		uint8_t goodbits=8 - xbits;
 		select_plane(plane);
 		uint32_t pixpos=startpos;
 		uint8_t *copybuffer = get_copybuffer(bytes);
@@ -174,6 +177,10 @@ void write_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 				if(skipbits){
 					skipbits--;
 					continue;
+				}
+				if(byte==startbyte+bytes-1){
+					if(goodbits) goodbits--;
+					else break;
 				}
 				if(pixpos-startpos >= count) break;
 				size_t index=(pixpos-startpos)/2;
@@ -202,10 +209,13 @@ void write_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 void read_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 	uint32_t startbyte=startpos / 8;
 	uint8_t sbits=(uint8_t)(startpos-(startbyte * 8));
+	count += sbits;
 	uint32_t bytes=(uint32_t)(count / 8);
 	if(bytes * 8 < count) bytes++;
+	uint8_t xbits = (bytes * 8) - count;
 	for(uint8_t plane=0; plane<4; ++plane) {
 		uint8_t skipbits=sbits;
+		uint8_t goodbits=8 - xbits;
 		select_plane(plane);
 		uint32_t pixpos=startpos;
 		for(size_t byte=startbyte; byte<startbyte+bytes; ++byte){
@@ -214,6 +224,10 @@ void read_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 				if(skipbits){
 					skipbits--;
 					continue;
+				}
+				if(byte==startbyte+bytes-1){
+					if(goodbits) goodbits--;
+					else break;
 				}
 				if(pixpos-startpos >= count) break;
 				size_t index=(pixpos-startpos)/2;

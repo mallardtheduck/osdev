@@ -28,4 +28,12 @@ public:
 	~hold_lock() { release_lock(*l);}
 };
 
+template<typename T> T atomic_increment(T& var){
+	return __sync_add_and_fetch(&var, 1);
+}
+
+template<typename T> T atomic_decrement(T& var){
+	return __sync_sub_and_fetch(&var, 1);
+}
+
 #endif

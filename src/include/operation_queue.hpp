@@ -11,6 +11,7 @@ private:
     opT *queue[queue_size];
     size_t queue_count, queue_top;
     lock queue_lock;
+	thread_id_t thread;
 
     static bool operation_queue_blockcheck(void *q){
         return *(size_t*)q > 0;
@@ -50,10 +51,11 @@ public:
         queue_count=0;
         queue_top=0;
         init_lock(&queue_lock);
-        new_thread(&operation_queue_process_thread, (void*)this);
+        thread = new_thread(&operation_queue_process_thread, (void*)this);
     }
 
     void add(opT* op){
+		if(thread == 0) return;
         hold_lock hl(&queue_lock);
         while(queue_count >= queue_size){
             release_lock(&queue_lock);
@@ -67,6 +69,11 @@ public:
             if(queue_top == queue_size) queue_top=0;
         }
     }
+	
+	void wait_for_end(){
+		thread_wait(thread);
+		thread = 0;
+	}
 };
 
 #endif
