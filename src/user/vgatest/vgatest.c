@@ -39,7 +39,7 @@ bt_terminal_pointer_bitmap pointer_bmp_4bpp={
         .transparent=0xE,
         .spot_x=5,
         .spot_y=5,
-        .datasize=((11*11)/2) + 1,
+        .datasize=((12*11)/2) + 1,
         .data = {
             0xEE, 0xEE, 0x00, 0x0E, 0xEE, 0xEE,
             0xEE, 0xEE, 0x0F, 0x0E, 0xEE, 0xEE,
@@ -154,7 +154,7 @@ int main(){
                 bt_fioctl(fh, bt_terminal_ioctl_HidePointer, 0, NULL);
             }
             if(mode.bpp == 4){
-                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp_8bpp)+pointer_bmp_4bpp.datasize, (char*)&pointer_bmp_4bpp);
+                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp_4bpp)+pointer_bmp_4bpp.datasize, (char*)&pointer_bmp_4bpp);
                 bt_fioctl(fh, bt_terminal_ioctl_ShowPointer, 0, NULL);
                 getchar();
                 bt_fioctl(fh, bt_terminal_ioctl_HidePointer, 0, NULL);
