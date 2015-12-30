@@ -7,7 +7,6 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include <btos.h>
-#include <module/drivers.h>
 #include "crt_support.h"
 
 char *__env[1] = { 0 };
