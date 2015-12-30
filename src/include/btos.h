@@ -6,5 +6,6 @@
 #include "btos/fs_interface.h"
 #include "btos/ioctl.h"
 #include "btos/btos_stubs.h"
+#include "btos/devices.h"
 
 #endif

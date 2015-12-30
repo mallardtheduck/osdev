@@ -4,7 +4,6 @@
 #include <dev/terminal.h>
 #include <crt_support.h>
 #include <stdlib.h>
-#include <module/drivers.h>
 
 #include "../../../other/art/BTOS-bootscreen-mono.xbm"
 

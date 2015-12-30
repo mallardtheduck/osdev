@@ -363,6 +363,7 @@
       <File Name="include/btos/btos_stubs.h"/>
       <File Name="include/btos/ioctl.h"/>
       <File Name="include/btos/fs_interface.h"/>
+      <File Name="include/btos/devices.h"/>
     </VirtualDirectory>
     <VirtualDirectory Name="dev">
       <File Name="include/dev/terminal.h"/>

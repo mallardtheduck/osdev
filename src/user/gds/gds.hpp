@@ -6,7 +6,6 @@
 #include <gdpp.h>
 #include <dev/video_dev.h>
 #include <crt_support.h>
-#include <module/drivers.h>
 #include <dev/terminal.h>
 #include <cstring>
 #include <cstdio>
