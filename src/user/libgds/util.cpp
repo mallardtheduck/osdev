@@ -1,4 +1,4 @@
-#include <btos_stubs.h>
+#include <btos.h>
 #include "libgds_internal.hpp"
 
 using namespace std;

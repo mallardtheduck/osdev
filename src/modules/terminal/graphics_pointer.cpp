@@ -1,6 +1,6 @@
-#include <module_stubs.h>
-#include <terminal.h>
-#include <video_dev.h>
+#include <btos_module.h>
+#include <dev/terminal.h>
+#include <dev/video_dev.h>
 #include "terminal.hpp"
 
 void draw_cursor_8bpp(file_handle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, uint8_t *data, bt_vidmode &mode);

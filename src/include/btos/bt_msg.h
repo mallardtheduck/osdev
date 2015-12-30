@@ -2,7 +2,7 @@
 #ifndef _BT_MSG_H
 #define _BT_MSG_H
 
-#include "bt_enum.h"
+#include "../util/bt_enum.h"
 
 #ifdef __cplusplus
 namespace btos_api{

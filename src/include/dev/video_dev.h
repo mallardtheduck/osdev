@@ -3,6 +3,11 @@
 
 #ifndef __cplusplus
 #include <stdbool.h>
+#include <stdint.h>
+#include <stddef.h>
+#else
+#include <cstdint>
+#include <cstddef>
 #endif
 
 struct bt_vidmode{
@@ -18,7 +23,7 @@ struct bt_vidmode{
 typedef struct bt_vidmode bt_vidmode;
 #endif
 
-#include "bt_enum.h"
+#include <util/bt_enum.h>
 
 ENUM_START(bt_vid_text_access_mode)
     ENUM_SET(bt_vid_text_access_mode, Simple, 0),

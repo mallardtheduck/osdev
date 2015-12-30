@@ -1,28 +1,11 @@
-#include "module_stubs.h"
+#include <btos_module.h>
+
+USE_SYSCALL_TABLE;
+USE_DEBUG_PRINTF;
 
 #define FORMAT "%02i:%02i:%02i %02i/%02i/%02i"
-syscall_table *SYSCALL_TABLE;
-char dbgbuf[256];
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-
-static inline void outb(uint16_t port, uint8_t val)
-{
-    asm volatile ( "outb %0, %1" : : "a"(val), "Nd"(port) );
-    /* TODO: Is it wrong to use 'N' for the port? It's not a 8-bit constant. */
-    /* TODO: Should %1 be %w1? */
-    /* TODO: Is there any reason to force the use of eax and edx? */
-}
-
-static inline uint8_t inb(uint16_t port)
-{
-    uint8_t ret;
-    asm volatile ( "inb %1, %0" : "=a"(ret) : "Nd"(port) );
-    /* TODO: Is it wrong to use 'N' for the port? It's not a 8-bit constant. */
-    /* TODO: Should %1 be %w1? */
-    /* TODO: Is there any reason to force the use of eax and edx? */
-    return ret;
-}
 
 uint8_t read_cmos(int reg){
 	outb(0x70, reg);

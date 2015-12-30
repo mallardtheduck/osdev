@@ -1,7 +1,7 @@
 #ifndef _HANDLES_HPP
 #define _HANDLES_HPP
 
-#include <handle.h>
+#include <module/handle.h>
 
 namespace kernel_handle_types{
     static const uint32_t invalid=0;

@@ -1,6 +1,6 @@
+#include <btos.h>
 #include <sstream>
 #include <gds/libgds.h>
-#include <btos_stubs.h>
 #include <wm/wm.h>
 #include "window.hpp"
 #include "metrics.hpp"

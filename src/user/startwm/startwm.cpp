@@ -1,10 +1,10 @@
+#include <btos.h>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <cstdlib>
-#include <btos_stubs.h>
 #include <crt_support.h>
-#include <terminal.h>
+#include <dev/terminal.h>
 #include "table.hpp"
 
 using namespace std;

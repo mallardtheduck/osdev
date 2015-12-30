@@ -1,9 +1,9 @@
 #ifndef _DEBUG_H
 #define _DEBUG_H
 
-#include "bt_enum.h"
+#include <util/bt_enum.h>
 #if !defined(KERNEL) && !defined(KERNEL_MODULE)
-#include "btos_api.h"
+#include <btos.h>
 #endif
 
 ENUM_START(bt_debug_event)

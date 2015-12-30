@@ -1,7 +1,7 @@
 #ifndef _IOCTL_H
 #define _IOCTL_H
 
-#include "bt_enum.h"
+#include <util/bt_enum.h>
 
 ENUM_START(bt_ioctl)
 ENUM_SET(bt_ioctl, DevType, 1),

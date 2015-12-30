@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
-#include <terminal.h>
+#include <dev/terminal.h>
 
 bt_terminal_pointer_bitmap pointer_bmp_4bpp={
     .w=11,

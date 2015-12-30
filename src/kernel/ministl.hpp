@@ -4,6 +4,6 @@
 extern "C"{
 	#include "../kernel/liballoc.h"
 }
-#include <ministl.hpp>
+#include <util/ministl.hpp>
 
 #endif

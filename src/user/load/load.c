@@ -1,5 +1,5 @@
+#include <btos.h>
 #include <stdio.h>
-#include <btos_stubs.h>
 #include <crt_support.h>
 #include <stdlib.h>
 

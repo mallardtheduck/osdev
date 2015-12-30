@@ -1,5 +1,4 @@
-#include "../../../../../include/btos_stubs.h"
-#include "../../../../../../include/btos_api.h"
+#include <btos.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>

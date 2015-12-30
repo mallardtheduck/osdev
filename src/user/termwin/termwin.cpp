@@ -1,10 +1,10 @@
+#include <btos.h>
 #include <wm/libwm.h>
 #include <gds/libgds.h>
 #include <string>
 #include <vector>
 #include <utility>
-#include <btos_stubs.h>
-#include <terminal.h>
+#include <dev/terminal.h>
 #include <sstream>
 #include <algorithm>
 #include <fstream>

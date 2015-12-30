@@ -1,5 +1,5 @@
+#include <btos.h>
 #include <wm/libwm.h>
-#include <btos_stubs.h>
 #include <crt_support.h>
 #include "libwm_internal.hpp"
 #include <cstdlib>

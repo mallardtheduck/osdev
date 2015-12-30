@@ -1,14 +1,13 @@
 #ifndef _GDS_HPP
 #define _GDS_HPP
 
+#include <btos.h>
 #include <gd.h>
 #include <gdpp.h>
-#include <btos_stubs.h>
-#include <video_dev.h>
+#include <dev/video_dev.h>
 #include <crt_support.h>
-#include <ioctl.h>
-#include <drivers.h>
-#include <terminal.h>
+#include <module/drivers.h>
+#include <dev/terminal.h>
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>

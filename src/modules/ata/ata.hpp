@@ -1,6 +1,6 @@
 #ifndef ATA_HPP
 #define ATA_HPP
-#include "module_api.h"
+#include <btos_module.h>
 
 #define ATA_SR_BSY     0x80
 #define ATA_SR_DRDY    0x40

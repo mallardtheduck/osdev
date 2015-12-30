@@ -1,10 +1,9 @@
 #include <stdio.h>
-#include <btos_stubs.h>
-#include <terminal.h>
-#include <video_dev.h>
+#include <btos.h>
+#include <dev/terminal.h>
+#include <dev/video_dev.h>
 #include <string.h>
 #include <stdbool.h>
-#include <bt_msg.h>
 
 bt_handle btos_get_handle(int fd);
 bool btos_path_parse(const char *opath, char *buffer, size_t size);

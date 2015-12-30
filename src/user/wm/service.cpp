@@ -2,7 +2,7 @@
 #include "windows.hpp"
 #include "client.hpp"
 
-#include <terminal.h>
+#include <dev/terminal.h>
 
 #include <map>
 #include <sstream>

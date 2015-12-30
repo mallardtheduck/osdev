@@ -1,9 +1,9 @@
 #ifndef _DEBUG_HPP
 #define _DEBUG_HPP
 
+#include <btos.h>
 #include <iostream>
-#include <btos_stubs.h>
-#include <debug.h>
+#include <ext/debug.h>
 #include <cstdio>
 #include <string>
 

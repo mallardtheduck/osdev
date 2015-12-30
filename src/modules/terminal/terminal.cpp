@@ -1,14 +1,13 @@
-#include "module_stubs.h"
-#include "fs_interface.h"
+#include <btos_module.h>
+#include <btos/fs_interface.h>
 #include "terminal.hpp"
 #include "vterm.hpp"
 #include "device.hpp"
 #include "console_backend.hpp"
-#include "extension.h"
 #include "api.hpp"
 
-syscall_table *SYSCALL_TABLE;
-char dbgbuf[256];
+USE_SYSCALL_TABLE;
+USE_DEBUG_PRINTF;
 
 uint64_t default_terminal;
 uint16_t terminal_extension_id;

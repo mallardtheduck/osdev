@@ -1,9 +1,9 @@
+#include <btos.h>
 #include <wm/libwm.h>
 #include <gds/libgds.h>
 #include <string>
 #include <vector>
 #include <utility>
-#include <btos_stubs.h>
 
 using namespace std;
 

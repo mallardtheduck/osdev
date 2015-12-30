@@ -1,7 +1,7 @@
 #ifndef _GDS_H
 #define _GDS_H
 
-#include "../bt_enum.h"
+#include <util/bt_enum.h>
 
 #ifdef __cplusplus
 	#include <cstdint>

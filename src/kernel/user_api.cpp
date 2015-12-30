@@ -1,5 +1,5 @@
 #include "user_api.hpp"
-#include "../include/btos_api.h"
+#include <btos/btos_api.h>
 #include "locks.hpp"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 

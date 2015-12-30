@@ -2,8 +2,7 @@
 #define _LIBWM_H
 
 #include <wm/wm.h>
-#include <btos_api.h>
-#include <bt_msg.h>
+#include <btos.h>
 
 #ifdef __cplusplus
 #include <string>

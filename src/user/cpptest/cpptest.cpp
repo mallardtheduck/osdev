@@ -1,9 +1,9 @@
+#include <btos.h>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <fstream>
-#include <btos_stubs.h>
-#include <terminal.h>
+#include <dev/terminal.h>
 
 extern "C" bt_handle btos_get_handle(int fd);
 

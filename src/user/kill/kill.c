@@ -1,5 +1,5 @@
+#include <btos.h>
 #include <stdio.h>
-#include <btos_stubs.h>
 #include <stdlib.h>
 
 int main(int argc, char **argv){

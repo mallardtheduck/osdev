@@ -1,10 +1,10 @@
+#include <btos.h>
 #include <gds/libgds.h>
-#include <btos_stubs.h>
 #include <crt_support.h>
-#include "libgds_internal.hpp"
 #include <cstdlib>
 #include <sstream>
 #include <iostream>
+#include "libgds_internal.hpp"
 
 using namespace std;
 

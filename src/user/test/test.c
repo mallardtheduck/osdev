@@ -1,8 +1,8 @@
-#include "btos_stubs.h"
-#include "keyboard.h"
+#include <btos.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <dev/keyboard.h>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 

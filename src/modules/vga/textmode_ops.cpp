@@ -1,7 +1,7 @@
+#include <dev/video_dev.h>
 #include "ops.hpp"
 #include "device.hpp"
 #include "modes.hpp"
-#include "video_dev.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 

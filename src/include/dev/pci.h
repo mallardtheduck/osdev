@@ -1,8 +1,7 @@
 #ifndef _PCI_H
 #define _PCI_H
 
-#include "module_stubs.h"
-#include "extension.h"
+#include <btos_module.h>
 
 struct pci_device{
     bool present;

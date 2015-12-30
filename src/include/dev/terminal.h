@@ -1,12 +1,12 @@
 #ifndef _TERMINAL_H
 #define _TERMINAL_H
 
-#include "bt_enum.h"
+#include <util/bt_enum.h>
 
 #if defined(KERNEL) || defined(KERNEL_MODULE)
-#include <module_api.h>
+#include <btos_module.h>
 #else
-#include <btos_api.h>
+#include <btos.h>
 #endif
 
 #ifdef __cplusplus
@@ -191,7 +191,7 @@ ENUM_END
 ENUM_TYPE(bt_terminal_api);
 
 #if !defined(KERNEL) && !defined(KERNEL_MODULE)
-#include <btos_stubs.h>
+#include <btos.h>
 
 #define USE_BT_TERMINAL_API uint16_t bt_terminal_ext_id = 0
 extern uint16_t bt_terminal_ext_id;

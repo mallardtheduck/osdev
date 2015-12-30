@@ -5,7 +5,7 @@
     #include "fat_custom.h"
 #endif
 
-#include "module_stubs.h"
+#include <btos_module.h>
 
 //-------------------------------------------------------------
 // Configuration

@@ -1,8 +1,8 @@
 #ifndef _MODES_HPP
 #define _MODES_HPP
 
+#include <dev/video_dev.h>
 #include "vga.hpp"
-#include "video_dev.h"
 
 struct vga_mode{
 	bt_vidmode vidmode;

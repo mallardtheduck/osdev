@@ -1,9 +1,9 @@
+#include <btos_module.h>
+#include <dev/video_dev.h>
 #include "vga.hpp"
 #include "modes.hpp"
-#include "drivers.h"
 #include "device.hpp"
 #include "ops.hpp"
-#include "../../include/video_dev.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 

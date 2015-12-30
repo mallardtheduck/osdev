@@ -3,7 +3,7 @@
 
 #include "window.hpp"
 
-#include <btos_stubs.h>
+#include <btos.h>
 #include <map>
 #include <memory>
 #include <deque>
