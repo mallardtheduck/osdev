@@ -1,7 +1,7 @@
 #ifndef _DRIVERMGR_HPP
 #define _DRIVERMGR_HPP
 
-#include <drivers.h>
+#include <module/drivers.h>
 
 void drv_init();
 void drv_add_device(char *name, drv_driver *driver, void *id);

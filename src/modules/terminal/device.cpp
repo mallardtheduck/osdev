@@ -1,7 +1,6 @@
+#include <btos_module.h>
+#include <util/holdlock.hpp>
 #include "vterm.hpp"
-#include "module_stubs.h"
-#include "drivers.h"
-#include "holdlock.hpp"
 
 lock term_lock;
 

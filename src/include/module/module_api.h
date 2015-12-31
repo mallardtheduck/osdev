@@ -8,9 +8,9 @@
 #endif
 
 #include "drivers.h"
-#include "fs_interface.h"
+#include "../btos/fs_interface.h"
 #include "locktype.h"
-#include "bt_msg.h"
+#include "../btos/bt_msg.h"
 #include "handle.h"
 
 typedef void(*thread_func)(void*);

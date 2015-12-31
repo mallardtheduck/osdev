@@ -1,8 +1,8 @@
 #ifndef _OPERATION_QUEUE_HPP
 #define _OPERATION_QUEUE_HPP
 
-#include "module_stubs.h"
-#include "holdlock.hpp"
+#include <btos_module.h>
+#include <util/holdlock.hpp>
 
 template<typename opT, bool (*proccessFn)(opT*), size_t queue_size> class operation_queue{
 private:

@@ -1,10 +1,8 @@
+#include <btos.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <btos_api.h>
-#include <btos_stubs.h>
-#include <ioctl.h>
-#include <video_dev.h>
+#include <dev/video_dev.h>
 #include <crt_support.h>
 
 __attribute__ ((constructor)) void cons_test(void)

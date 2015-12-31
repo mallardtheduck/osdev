@@ -10,7 +10,7 @@ http://code.google.com/p/inih/
 #ifndef __INI_H__
 #define __INI_H__
 
-#include "module_stubs.h"
+#include <btos_module.h>
 
 typedef file_handle FILE;
 

@@ -1,11 +1,9 @@
+#include <btos.h>
 #include <stdio.h>
-#include <btos_stubs.h>
-#include <video_dev.h>
+#include <dev/video_dev.h>
+#include <dev/terminal.h>
 #include <crt_support.h>
-#include <terminal.h>
 #include <stdlib.h>
-#include <ioctl.h>
-#include <drivers.h>
 
 #include "../../../other/art/BTOS-bootscreen-mono.xbm"
 

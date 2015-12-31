@@ -1,9 +1,7 @@
 #ifndef	_VGA_HPP
 #define _VGA_HPP
 
-#include "module_stubs.h"
-#include "module_cpp.hpp"
-#include "io.h"
+#include <btos_module.h>
 
 extern volatile uint8_t * const vga_memory;
 extern volatile uint8_t * const text_memory;

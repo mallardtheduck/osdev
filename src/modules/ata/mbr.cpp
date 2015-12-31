@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include "ata.hpp"
-#include "module_stubs.h"
-#include "module_cpp.hpp"
+#include <btos_module.h>
 
 struct part_entry{
 	uint8_t boot;

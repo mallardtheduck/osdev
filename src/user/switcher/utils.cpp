@@ -1,6 +1,6 @@
-#include "switcher.hpp"
-#include "../../include/btos_stubs.h"
+#include <btos.h>
 #include <sstream>
+#include "switcher.hpp"
 
 using namespace std;
 

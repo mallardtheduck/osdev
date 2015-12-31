@@ -1,4 +1,4 @@
-#include <btos_stubs.h>
+#include <btos.h>
 #include "libwm_internal.hpp"
 
 using namespace std;

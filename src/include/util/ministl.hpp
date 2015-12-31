@@ -2,8 +2,7 @@
 #define _MINISTL_HPP
 
 #if defined(KERNEL_MODULE)
-#include <module_stubs.h>
-#include <module_cpp.hpp>
+#include <btos_module.h>
 #elif !defined(KERNEL)
 #error "ministl is for kernel-mode only"
 #endif

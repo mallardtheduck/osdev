@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include <btos_api.h>
+#include <btos.h>
 
 struct symbol{
 	std::string name;

@@ -1,7 +1,7 @@
 #ifndef _WM_H
 #define _WM_H
 
-#include "../bt_enum.h"
+#include <util/bt_enum.h>
 
 #ifdef __cplusplus
 	#include <cstdint>

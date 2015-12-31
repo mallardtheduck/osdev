@@ -1,7 +1,7 @@
+#include <util/operation_queue.hpp>
 #include "ops.hpp"
 #include "modes.hpp"
 #include "device.hpp"
-#include <operation_queue.hpp>
 
 namespace vga_operation_types{
 	enum Enum{

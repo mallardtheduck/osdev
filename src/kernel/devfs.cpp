@@ -1,6 +1,6 @@
 #include "devfs.hpp"
 #include "kernel.hpp"
-#include "../include/ioctl.h"
+#include <btos/ioctl.h>
 
 void* const devfs_magic=(void*)0xDE7F5;
 void* const devfs_dirmagic=(void*)0xDE7D19;

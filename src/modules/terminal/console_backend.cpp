@@ -1,9 +1,9 @@
-#include "mouse.h"
-#include "keyboard.h"
+#include <btos_module.h>
+#include <util/holdlock.hpp>
+#include <dev/mouse.h>
+#include <dev/keyboard.h>
 #include "console_backend.hpp"
 #include "vterm.hpp"
-#include "module_stubs.h"
-#include "holdlock.hpp"
 #include "device.hpp"
 
 console_backend *cons_backend;

@@ -1,5 +1,5 @@
 #include "kernel.hpp"
-#include "../include/video_dev.h"
+#include <dev/video_dev.h>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 

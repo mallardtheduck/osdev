@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <btos_stubs.h>
-#include <terminal.h>
+#include <btos.h>
+#include <dev/terminal.h>
 
 bt_handle btos_get_handle(int fd);
 

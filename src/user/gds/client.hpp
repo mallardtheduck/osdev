@@ -4,7 +4,7 @@
 #include <set>
 #include <memory>
 #include <map>
-#include <bt_msg.h>
+#include <btos/bt_msg.h>
 #include "surface.hpp"
 
 extern std::map<uint64_t, std::weak_ptr<Surface>> allSurfaces;

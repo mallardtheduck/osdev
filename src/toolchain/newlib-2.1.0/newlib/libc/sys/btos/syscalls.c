@@ -6,10 +6,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <stdio.h>
-#include "../../../../../include/btos_stubs.h"
-#include "../../../../../include/drivers.h"
-#include "../../../../../include/ioctl.h"
-#include "../../../../../../include/fs_interface.h"
+#include <btos.h>
 #include "crt_support.h"
 
 char *__env[1] = { 0 };

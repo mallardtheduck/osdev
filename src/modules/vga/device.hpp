@@ -1,7 +1,7 @@
 #ifndef _DEVICE_HPP
 #define _DEVICE_HPP
 
-#include "video_dev.h"
+#include <dev/video_dev.h>
 
 struct vga_instance{
     size_t pos;

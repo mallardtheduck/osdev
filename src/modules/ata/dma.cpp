@@ -1,7 +1,6 @@
 #include "ata.hpp"
-#include "pci.h"
-#include "io.h"
-#include "holdlock.hpp"
+#include <dev/pci.h>
+#include <util/holdlock.hpp>
 
 static bool dma_init=false;
 pci_call_table *PCI_CALL_TABLE;

@@ -2,7 +2,7 @@
 #define _LOCKS_HPP
 
 #include "kernel.hpp"
-#include "../include/locktype.h"
+#include <module/locktype.h>
 
 bool lock_blockcheck(void *p);
 

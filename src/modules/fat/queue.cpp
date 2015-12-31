@@ -1,6 +1,6 @@
-#include <module_stubs.h>
-#include <holdlock.hpp>
-#include <operation_queue.hpp>
+#include <btos_module.h>
+#include <util/holdlock.hpp>
+#include <util/operation_queue.hpp>
 extern "C" {
     #include "fat_filelib.h"
 }

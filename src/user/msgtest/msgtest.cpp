@@ -1,9 +1,9 @@
+#include <btos.h>
 #include <iostream>
 #include <cstring>
 #include <cstdio>
 #include <string>
 #include <cstdlib>
-#include "../../include/btos_stubs.h"
 
 using namespace std;
 

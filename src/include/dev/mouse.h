@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "bt_enum.h"
+#include <util/bt_enum.h>
 
 struct bt_mouse_packet{
 	uint16_t flags;

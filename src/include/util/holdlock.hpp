@@ -1,7 +1,7 @@
 #ifndef _HOLDLOCK_HPP
 #define _HOLDLOCK_HPP
 
-#include "module_stubs.h"
+#include <btos_module.h>
 
 class hold_lock{
 private:

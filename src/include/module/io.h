@@ -39,11 +39,11 @@ inline static void insm(unsigned short port, unsigned char * data, unsigned long
 	asm volatile ("rep insw" : "+D" (data), "+c" (size) : "d" (port) : "memory");
 }
 
-inline void disable_interrupts(){
+inline static void disable_interrupts(){
 	asm volatile("cli");
 }
 
-inline void enable_interrupts(){
+inline static void enable_interrupts(){
 	asm volatile("sti");
 }
 
