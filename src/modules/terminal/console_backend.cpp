@@ -1,9 +1,9 @@
-#include "mouse.h"
-#include "keyboard.h"
+#include <btos_module.h>
+#include <util/holdlock.hpp>
+#include <dev/mouse.h>
+#include <dev/keyboard.h>
 #include "console_backend.hpp"
 #include "vterm.hpp"
-#include "module_stubs.h"
-#include "holdlock.hpp"
 #include "device.hpp"
 
 console_backend *cons_backend;
@@ -123,8 +123,11 @@ void console_backend_pointer_draw_thread(void *p){
 	thread_priority(1000);
 	console_backend *backend=(console_backend*)p;
 	while(true){
-		uint32_t *bc_params[3] = {&backend->pointer_cur_serial, &backend->pointer_draw_serial, (uint32_t*)&backend->frozen};
-		thread_setblock(&pointer_draw_blockcheck, (void*)bc_params);
+		if(backend->pointer_cur_serial == backend->pointer_draw_serial){
+			uint32_t *bc_params[3] = {&backend->pointer_cur_serial, &backend->pointer_draw_serial, (uint32_t*)&backend->frozen};
+			thread_setblock(&pointer_draw_blockcheck, (void*)bc_params);
+		}
+		backend->pointer_cur_serial = backend->pointer_draw_serial;
 		{
 			hold_lock hl(&backend->backend_lock, true);
 			if(backend->pointer_info.x != backend->old_pointer_info.x || backend->pointer_info.y != backend->old_pointer_info.y || backend->pointer_visible != backend->old_pointer_visible){
@@ -146,7 +149,6 @@ void console_backend_pointer_draw_thread(void *p){
 			backend->old_pointer_info=backend->pointer_info;
 			backend->old_pointer_visible=backend->pointer_visible;
 		}
-		backend->pointer_cur_serial = backend->pointer_draw_serial;
 	}
 }
 

@@ -1,16 +1,16 @@
+#include <btos.h>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <cstdlib>
-#include <btos_stubs.h>
 #include <crt_support.h>
-#include <terminal.h>
+#include <dev/terminal.h>
 #include "table.hpp"
 
 using namespace std;
 
-const string GDSPath = "hdd:/btos/gds.elx";
-const string WMPath = "hdd:/btos/wm.elx";
+const string GDSPath = "hdd:/btos/system/gds.elx";
+const string WMPath = "hdd:/btos/system/wm.elx";
 const string ShellPath = "hdd:/btos/bin/wmmenu.elx";
 
 const string ProcInfoPath = "info:/procs";

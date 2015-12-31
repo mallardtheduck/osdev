@@ -2,9 +2,9 @@
 #define _CONSOLE_BACKEND_HPP
 
 #include "backend.hpp"
-#include "module_api.h"
-#include "fs_interface.h"
-#include <ministl.hpp>
+#include <btos_module.h>
+#include <btos/fs_interface.h>
+#include <util/ministl.hpp>
 
 class console_backend : public i_backend{
 private:

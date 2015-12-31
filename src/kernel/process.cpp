@@ -84,6 +84,12 @@ char *env_infofs(){
 	sprintf(buffer, "# name, value, flags\n");
     {
         hold_lock hl(env_lock);
+		env_t &kenv=proc_get(0)->environment;
+		for(env_t::iterator i = kenv.begin(); i != kenv.end(); ++i){
+			if(i->second.flags & proc_env_flags::Global){
+				sprintf(&buffer[strlen(buffer)], "\"%s\", \"%s\", %x\n", i->first.c_str(), i->second.value.c_str(), (int) i->second.flags);
+			}
+		}
         for (env_t::iterator i = proc_current_process->environment.begin(); i != proc_current_process->environment.end(); ++i) {
             if (!(i->second.flags & proc_env_flags::Private)) {
                 sprintf(&buffer[strlen(buffer)], "\"%s\", \"%s\", %x\n", i->first.c_str(), i->second.value.c_str(), (int) i->second.flags);
@@ -117,12 +123,15 @@ void proc_init(){
 }
 
 proc_process *proc_get(pid_t pid){
-	hold_lock hl(proc_lock, false);
-    for(size_t i=0; i<proc_processes->size(); ++i){
-        proc_process *cur=(*proc_processes)[i];
-		if(cur->pid==pid) return cur;
+	if(proc_current_process && pid == proc_current_pid) return proc_current_process;
+	{
+		hold_lock hl(proc_lock, false);
+		for(size_t i=0; i<proc_processes->size(); ++i){
+			proc_process *cur=(*proc_processes)[i];
+			if(cur->pid==pid) return cur;
+		}
+		return NULL;
 	}
-	return NULL;
 }
 
 proc_process *proc_get_lock(pid_t pid){

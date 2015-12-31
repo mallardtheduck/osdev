@@ -1,7 +1,7 @@
-#include "module_stubs.h"
+#include <btos_module.h>
 
-syscall_table *SYSCALL_TABLE;
-char dbgbuf[256];
+USE_SYSCALL_TABLE;
+USE_DEBUG_PRINTF;
 char *current_section="default";
 
 #include "ini.h"

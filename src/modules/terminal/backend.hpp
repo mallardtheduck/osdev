@@ -1,8 +1,8 @@
 #ifndef _BACKEND_HPP
 #define _BACKEND_HPP
-#include "module_api.h"
-#include "terminal.h"
-#include "video_dev.h"
+#include <btos_module.h>
+#include <dev/terminal.h>
+#include <dev/video_dev.h>
 
 class vterm;
 

@@ -1,11 +1,9 @@
+#include <btos.h>
 #include <stdio.h>
-#include <btos_stubs.h>
-#include <video_dev.h>
+#include <dev/video_dev.h>
+#include <dev/terminal.h>
 #include <crt_support.h>
-#include <terminal.h>
 #include <stdlib.h>
-#include <ioctl.h>
-#include <drivers.h>
 
 #include "../../../other/art/BTOS-bootscreen-mono.xbm"
 
@@ -33,24 +31,24 @@ bt_terminal_pointer_bitmap pointer_bmp_8bpp={
 };
 
 bt_terminal_pointer_bitmap pointer_bmp_4bpp={
-        .w=11,
+        .w=12,
         .h=11,
         .bpp=4,
         .transparent=0xE,
         .spot_x=5,
         .spot_y=5,
-        .datasize=((11*11)/2) + 1,
+        .datasize=((12*11)/2) + 1,
         .data = {
             0xEE, 0xEE, 0x00, 0x0E, 0xEE, 0xEE,
-            0xEE, 0xE0, 0xF0, 0xEE, 0xEE,
             0xEE, 0xEE, 0x0F, 0x0E, 0xEE, 0xEE,
-            0xEE, 0xE0, 0xF0, 0xEE, 0xEE,
-            0x00, 0x00, 0x0F, 0x00, 0x00, 0x00,
-            0xFF, 0xFF, 0xFF, 0xFF, 0xF0,
+            0xEE, 0xEE, 0x0F, 0x0E, 0xEE, 0xEE,
+            0xEE, 0xEE, 0x0F, 0x0E, 0xEE, 0xEE,
             0x00, 0x00, 0x0F, 0x00, 0x00, 0x0E,
-            0xEE, 0xE0, 0xF0, 0xEE, 0xEE,
+            0x0F, 0xFF, 0xFF, 0xFF, 0xFF, 0x0E,
+            0x00, 0x00, 0x0F, 0x00, 0x00, 0x0E,
             0xEE, 0xEE, 0x0F, 0x0E, 0xEE, 0xEE,
-            0xEE, 0xE0, 0xF0, 0xEE, 0xEE,
+            0xEE, 0xEE, 0x0F, 0x0E, 0xEE, 0xEE,
+            0xEE, 0xEE, 0x0F, 0x0E, 0xEE, 0xEE,
             0xEE, 0xEE, 0x00, 0x0E, 0xEE, 0xEE
         }
 };
@@ -154,7 +152,7 @@ int main(){
                 bt_fioctl(fh, bt_terminal_ioctl_HidePointer, 0, NULL);
             }
             if(mode.bpp == 4){
-                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp_8bpp)+pointer_bmp_4bpp.datasize, (char*)&pointer_bmp_4bpp);
+                bt_fioctl(fh, bt_terminal_ioctl_SetPointerBitmap, sizeof(pointer_bmp_4bpp)+pointer_bmp_4bpp.datasize, (char*)&pointer_bmp_4bpp);
                 bt_fioctl(fh, bt_terminal_ioctl_ShowPointer, 0, NULL);
                 getchar();
                 bt_fioctl(fh, bt_terminal_ioctl_HidePointer, 0, NULL);

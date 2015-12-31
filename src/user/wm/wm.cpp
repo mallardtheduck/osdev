@@ -1,7 +1,7 @@
+#include <btos.h>
 #include <iostream>
 #include <gds/libgds.h>
 #include <cstdio>
-#include <btos_stubs.h>
 #include <crt_support.h>
 #include "windows.hpp"
 #include "window.hpp"

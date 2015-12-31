@@ -1,10 +1,9 @@
+#include <btos_module.h>
+#include <dev/keyboard.h>
+#include <util/holdlock.hpp>
 #include "vterm.hpp"
-#include "module_stubs.h"
 #include "terminal.hpp"
-#include "keyboard.h"
 #include "device.hpp"
-#include "holdlock.hpp"
-#include "bt_msg.h"
 
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 

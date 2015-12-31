@@ -1,8 +1,8 @@
 #ifndef WINDOW_HPP
 #define WINDOW_HPP
 
-#include <btos_api.h>
-#include <terminal.h>
+#include <btos.h>
+#include <dev/terminal.h>
 #include <string>
 #include <gds/gds.h>
 #include <memory>

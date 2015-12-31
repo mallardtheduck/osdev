@@ -8,7 +8,7 @@
 #include <sstream>
 
 #include <gds/libgds.h>
-#include <btos_stubs.h>
+#include <btos.h>
 
 using namespace std;
 

@@ -1,5 +1,5 @@
 #include "ata.hpp"
-#include "module_stubs.h"
+#include <btos_module.h>
 
 static const size_t cache_size=4096;
 

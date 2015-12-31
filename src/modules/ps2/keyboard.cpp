@@ -1,5 +1,5 @@
 #include "ps2.hpp"
-#include <circular_buffer.hpp>
+#include <util/circular_buffer.hpp>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 

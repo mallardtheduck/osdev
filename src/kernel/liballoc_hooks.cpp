@@ -4,8 +4,8 @@ extern "C"{
 }
 
 #include "locks.hpp"
-
-lock la_lock;
+extern lock vmm_lock;
+lock &la_lock = vmm_lock;
 bool la_inited=false;
 
 void *vmm_ministack_alloc(size_t pages=1);
@@ -23,7 +23,7 @@ extern "C" int liballoc_lock(){
 		init_lock(la_lock);
 		la_inited=true;
 	}
-    take_lock_exclusive(la_lock);
+    take_lock_recursive(la_lock);
 	return 0;
 }
 

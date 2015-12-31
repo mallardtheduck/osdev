@@ -2,7 +2,7 @@
 #define _LIBGDS_H
 
 #include "gds.h"
-#include "../video_dev.h"
+#include <dev/video_dev.h>
 
 #ifdef __cplusplus
 #define GDS_DEFAULT(x) = x

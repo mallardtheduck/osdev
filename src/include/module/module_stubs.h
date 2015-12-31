@@ -11,7 +11,12 @@
 	#pragma GCC diagnostic ignored "-Wwrite-strings"
 #endif
 
+extern syscall_table *SYSCALL_TABLE;
 extern char dbgbuf[256];
+
+#define USE_SYSCALL_TABLE syscall_table *SYSCALL_TABLE
+#define USE_DEBUG_PRINTF char dbgbuf[256]
+
 #define dbgpf(...) do{sprintf(dbgbuf, __VA_ARGS__); dbgout(dbgbuf);}while(false)
 #define sprintf(...) SYSCALL_TABLE->sprintf(__VA_ARGS__)
 

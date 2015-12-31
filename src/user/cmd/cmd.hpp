@@ -1,6 +1,6 @@
 #ifndef _CMD_HPP
 #define _CMD_HPP
-#include "../../include/btos_stubs.h"
+#include <btos.h>
 #include <string>
 #include <vector>
 #include <iostream>

@@ -35,7 +35,6 @@ struct sch_thread{
 	sch_blockcheck blockcheck;
 	void *bc_param;
 	uint32_t eip;
-	bool abortable;
 	int abortlevel;
     bool user_abort;
 	sch_thread *next;
@@ -99,7 +98,6 @@ void sch_init(){
 	mainthread->blockcheck=NULL;
 	mainthread->bc_param=NULL;
 	mainthread->abortlevel=2;
-	mainthread->abortable=false;
 	mainthread->pid=0;
 	mainthread->sch_cycle=0;
 	mainthread->msgstatus=thread_msg_status::Normal;
@@ -188,7 +186,6 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread->blockcheck=NULL;
 	newthread->bc_param=NULL;
 	newthread->abortlevel=2;
-	newthread->abortable=false;
 	newthread->pid=0;
     newthread->user_abort=false;
 	newthread->next=NULL;
@@ -364,14 +361,11 @@ const uint64_t &sch_get_id(){
 }
 
 void sch_set_priority(uint32_t pri){
-	hold_lock hl(sch_lock);
 	current_thread->priority=pri;
 }
 
 void sch_block(){
-    take_lock_recursive(sch_lock);
 	current_thread->status=sch_thread_status::Blocked;
-	release_lock(sch_lock);
 	sch_yield();
 }
 
@@ -390,16 +384,13 @@ bool sch_active(){
 }
 
 void sch_setpid(pid_t pid){
-	hold_lock hl(sch_lock, false);
 	current_thread->pid=pid;
 }
 
 void sch_setblock(sch_blockcheck check, void *param){
 	if(check(param)) return;
-    { hold_lock hl(sch_lock);
-		current_thread->blockcheck=check;
-		current_thread->bc_param=param;
-    }
+	current_thread->blockcheck=check;
+	current_thread->bc_param=param;
 	bool changeabort = false;
 	if(sch_get_abortlevel()){
 		changeabort = true;
@@ -411,7 +402,6 @@ void sch_setblock(sch_blockcheck check, void *param){
 }
 
 void sch_clearblock(){
-	hold_lock hl(sch_lock, false);
 	current_thread->blockcheck=NULL;
 	current_thread->bc_param=NULL;
 }
@@ -440,15 +430,11 @@ void sch_wait(uint64_t ext_id){
 }
 
 extern "C" void sch_update_eip(uint32_t eip){
-    hold_lock hl(sch_lock, false);
 	current_thread->eip=eip;
 }
 
 uint32_t sch_get_eip(bool lock){
-    if(lock) take_lock_recursive(sch_lock);
-    uint32_t ret=current_thread->eip;
-    if(lock) release_lock(sch_lock);
-    return ret;
+	return current_thread->eip;
 }
 
 void sch_abortable(bool abortable, uint64_t ext_id){
@@ -462,14 +448,10 @@ void sch_abortable(bool abortable, uint64_t ext_id){
 		}
 	}
     int alevel;
-	if(abortable) alevel = __sync_sub_and_fetch(&thread->abortlevel, 1);
-	else alevel = __sync_add_and_fetch(&thread->abortlevel, 1);
-	if(alevel <= 0){
-        hold_lock hl(sch_lock, false);
+	if(abortable) alevel = atomic_decrement(thread->abortlevel);
+	else alevel = atomic_increment(thread->abortlevel);
+	if(alevel < 0){
 		thread->abortlevel=0;
-		thread->abortable=true;
-	}else{
-		thread->abortable=false;
 	}
 }
 
@@ -477,7 +459,7 @@ bool sch_abort_blockcheck(void *p){
 	uint64_t &ext_id=*(uint64_t*)p;
 	for(size_t i=0; i<threads->size(); ++i){
 		if((*threads)[i]->ext_id==ext_id){
-			return (*threads)[i]->abortable;
+			return (*threads)[i]->abortlevel > 0;
 		}
 	}
 	return true;
@@ -492,7 +474,7 @@ void sch_abort(uint64_t ext_id){
 		for(size_t i=0; i<threads->size(); ++i){
 			if((*threads)[i]->ext_id==ext_id){
 				found=true;
-				if((*threads)[i]->abortable){
+				if(!(*threads)[i]->abortlevel){
 					(*threads)[i]->status=sch_thread_status::Ending;
 					reaper_thread->status=sch_thread_status::Runnable;
 					tryagain=false;
@@ -520,10 +502,7 @@ bool sch_can_lock(){
 }
 
 bool sch_user_abort(){
-    take_lock_recursive(sch_lock);
-    bool ret=current_thread->user_abort;
-    release_lock(sch_lock);
-    return ret;
+    return current_thread->user_abort;
 }
 
 void sch_prescheduler_thread(void*){
@@ -557,11 +536,14 @@ void sch_prescheduler_thread(void*){
 }
 
 static sch_thread *sch_get(uint64_t ext_id){
-	hold_lock hl(sch_lock, false);
-	for(size_t i=0; i<threads->size(); ++i){
-		if((*threads)[i]->ext_id==ext_id) return (*threads)[i];
+	if(ext_id == current_thread->ext_id) return current_thread;
+	{
+		hold_lock hl(sch_lock, false);
+		for(size_t i=0; i<threads->size(); ++i){
+			if((*threads)[i]->ext_id==ext_id) return (*threads)[i];
+		}
+		return NULL;
 	}
-	return NULL;
 }
 
 void sch_set_msgstaus(thread_msg_status::Enum status, uint64_t ext_id){

@@ -1,7 +1,7 @@
 #ifndef _API_HPP
 #define _API_HPP
 
-#include <extension.h>
+#include <btos_module.h>
 #include "backend.hpp"
 
 void terminal_uapi_fn(uint16_t fn, isr_regs *regs);

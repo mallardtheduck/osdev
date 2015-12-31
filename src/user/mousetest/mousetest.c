@@ -1,6 +1,6 @@
+#include <btos.h>
 #include <stdio.h>
-#include <mouse.h>
-#include <btos_stubs.h>
+#include <dev/mouse.h>
 
 int main(){
     bt_filehandle fh= bt_fopen("DEV:/MOUSE0", FS_Read);

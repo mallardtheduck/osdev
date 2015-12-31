@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "bt_enum.h"
+#include <util/bt_enum.h>
 
 ENUM_START(KeyFlags)
 ENUM_SET(KeyFlags, KeyUp, 1 << 15),

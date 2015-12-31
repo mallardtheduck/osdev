@@ -1,12 +1,10 @@
 #ifndef _PCI_HPP
 #define _PCI_HPP
 
-#include "module_stubs.h"
-#include "module_cpp.hpp"
-#include "io.h"
+#include <btos_module.h>
 
 #define PCI_NO_STUBS
-#include "pci.h"
+#include <dev/pci.h>
 
 const size_t MAX_PCI_DEVICES=256;
 extern pci_device *pci_devices[MAX_PCI_DEVICES];

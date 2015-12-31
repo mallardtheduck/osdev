@@ -3,8 +3,19 @@
 
 static map<uint16_t, module_api::kernel_extension*> *extensions;
 
+char *extensions_infofs(){
+	char *buffer=(char*)malloc(4096);
+	memset(buffer, 0, 4096);
+	sprintf(buffer, "# id, name\n");
+	for(map<uint16_t, module_api::kernel_extension*>::iterator i=extensions->begin(); i!=extensions->end(); ++i){
+		sprintf(&buffer[strlen(buffer)], "%i, %s\n", (int)i->first, i->second->name);
+	}
+	return buffer;
+}
+
 void init_extensions(){
     extensions=new map<uint16_t, module_api::kernel_extension*>();
+	infofs_register("EXTENSIONS", &extensions_infofs);
 }
 
 uint16_t add_extension(module_api::kernel_extension *ext){

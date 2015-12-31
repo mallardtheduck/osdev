@@ -2,11 +2,10 @@
 #include <cstdlib>
 #include <cstdint>
 #include <iostream>
-#include <video_dev.h>
-#include <keyboard.h>
-#include <btos_api.h>
-#include <terminal.h>
-#include <btos_stubs.h>
+#include <btos.h>
+#include <dev/video_dev.h>
+#include <dev/keyboard.h>
+#include <dev/terminal.h>
 #include <crt_support.h>
 #include "switcher.hpp"
 

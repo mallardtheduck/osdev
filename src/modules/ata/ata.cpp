@@ -1,8 +1,6 @@
-#include "module_stubs.h"
-#include "io.h"
+#include <btos_module.h>
+#include <util/holdlock.hpp>
 #include "ata.hpp"
-#include "module_cpp.hpp"
-#include "holdlock.hpp"
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];

@@ -1,5 +1,4 @@
-#include "module_stubs.h"
-#include "module_cpp.hpp"
+#include <btos_module.h>
 extern "C" {
     #include "fat_filelib.h"
 }

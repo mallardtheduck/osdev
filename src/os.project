@@ -171,7 +171,6 @@
       <File Name="modules/terminal/device.cpp"/>
       <File Name="modules/terminal/device.hpp"/>
       <File Name="modules/terminal/graphics_pointer.cpp"/>
-      <File Name="modules/terminal/holdlock.hpp"/>
       <File Name="modules/terminal/terminal.cpp"/>
       <File Name="modules/terminal/terminal.hpp"/>
       <File Name="modules/terminal/vterm.cpp"/>
@@ -349,30 +348,7 @@
     <File Name="disk/Makefile"/>
   </VirtualDirectory>
   <VirtualDirectory Name="include">
-    <File Name="include/bt_enum.h"/>
-    <File Name="include/bt_msg.h"/>
-    <File Name="include/btos_api.h"/>
-    <File Name="include/btos_stubs.h"/>
-    <File Name="include/circular_buffer.hpp"/>
     <File Name="include/crt_support.h"/>
-    <File Name="include/debug.h"/>
-    <File Name="include/drivers.h"/>
-    <File Name="include/extension.h"/>
-    <File Name="include/fs_interface.h"/>
-    <File Name="include/handle.h"/>
-    <File Name="include/holdlock.hpp"/>
-    <File Name="include/io.h"/>
-    <File Name="include/ioctl.h"/>
-    <File Name="include/keyboard.h"/>
-    <File Name="include/locktype.h"/>
-    <File Name="include/module_api.h"/>
-    <File Name="include/module_cpp.hpp"/>
-    <File Name="include/module_stubs.h"/>
-    <File Name="include/mouse.h"/>
-    <File Name="include/operation_queue.hpp"/>
-    <File Name="include/pci.h"/>
-    <File Name="include/terminal.h"/>
-    <File Name="include/video_dev.h"/>
     <VirtualDirectory Name="gds">
       <File Name="include/gds/gds.h"/>
       <File Name="include/gds/libgds.h"/>
@@ -381,7 +357,43 @@
       <File Name="include/wm/wm.h"/>
       <File Name="include/wm/libwm.h"/>
     </VirtualDirectory>
-    <File Name="include/ministl.hpp"/>
+    <VirtualDirectory Name="btos">
+      <File Name="include/btos/btos_api.h"/>
+      <File Name="include/btos/bt_msg.h"/>
+      <File Name="include/btos/btos_stubs.h"/>
+      <File Name="include/btos/ioctl.h"/>
+      <File Name="include/btos/fs_interface.h"/>
+      <File Name="include/btos/devices.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="dev">
+      <File Name="include/dev/terminal.h"/>
+      <File Name="include/dev/video_dev.h"/>
+      <File Name="include/dev/pci.h"/>
+      <File Name="include/dev/mouse.h"/>
+      <File Name="include/dev/keyboard.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="ext">
+      <File Name="include/ext/debug.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="module">
+      <File Name="include/module/module_stubs.h"/>
+      <File Name="include/module/module_api.h"/>
+      <File Name="include/module/handle.h"/>
+      <File Name="include/module/locktype.h"/>
+      <File Name="include/module/module_cpp.hpp"/>
+      <File Name="include/module/io.h"/>
+      <File Name="include/module/extension.h"/>
+      <File Name="include/module/drivers.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="util">
+      <File Name="include/util/operation_queue.hpp"/>
+      <File Name="include/util/holdlock.hpp"/>
+      <File Name="include/util/circular_buffer.hpp"/>
+      <File Name="include/util/bt_enum.h"/>
+      <File Name="include/util/ministl.hpp"/>
+    </VirtualDirectory>
+    <File Name="include/btos.h"/>
+    <File Name="include/btos_module.h"/>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>

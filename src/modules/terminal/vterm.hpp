@@ -2,12 +2,12 @@
 #define _VTERM_HPP
 
 #include <stdint.h>
-#include "module_api.h"
-#include "video_dev.h"
-#include "terminal.h"
+#include <btos_module.h>
+#include <dev/video_dev.h>
+#include <dev/terminal.h>
+#include <util/circular_buffer.hpp>
+#include <util/ministl.hpp>
 #include "backend.hpp"
-#include "circular_buffer.hpp"
-#include <ministl.hpp>
 
 struct vterm_options{
     bt_terminal_mode::Enum mode;

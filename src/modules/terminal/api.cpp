@@ -1,5 +1,5 @@
-#include <module_stubs.h>
-#include <terminal.h>
+#include <btos_module.h>
+#include <dev/terminal.h>
 #include "vterm.hpp"
 #include "api.hpp"
 #include "terminal.hpp"
