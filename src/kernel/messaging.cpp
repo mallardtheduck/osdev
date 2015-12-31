@@ -129,7 +129,7 @@ void msg_acknowledge(bt_msg_header &msg, bool set_status){
 		for(size_t i=0; i<msg_q->size(); ++i) {
 			bt_msg_header &header=(*msg_q)[i];
 			if(header.id==msg.id){
-				if(header.flags & bt_msg_flags::UserSpace){
+				if(!(header.flags & bt_msg_flags::Reply) && (header.flags & bt_msg_flags::UserSpace)){
 					proc_free_message_buffer(header.to, header.from);
 				}else{
 					free(header.content);

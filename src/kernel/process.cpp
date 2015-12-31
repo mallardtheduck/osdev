@@ -626,6 +626,12 @@ static bool proc_msg_blockcheck(void *p){
 extern lock msg_lock;
 
 uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
+	if(header.flags & btos_api::bt_msg_flags::Reply){
+		void *content = malloc(header.length);
+		memcpy(content, header.content, header.length);
+		header.content = content;
+		return msg_send(header);
+	}
 	bool again=false;
 	do {
 		if(again) {
