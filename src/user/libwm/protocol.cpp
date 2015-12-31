@@ -167,3 +167,7 @@ extern "C" wm_Event WM_GetEvent(){
 	bt_msg_ack(&msg);
 	return ret;
 }
+
+extern "C" void WM_Sync(){
+	SendMessage(wm_RequestType::Sync, 0, NULL, true);
+}

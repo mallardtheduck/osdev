@@ -142,6 +142,9 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 			}
 			break;
 		}
+		case wm_RequestType::Sync:{
+			SendReply(msg, true);
+		}
 	}
 }
 
