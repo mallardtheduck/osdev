@@ -80,4 +80,10 @@ inline static char KB_char(uint32_t value){
 	else return 0;
 }
 
+inline static uint16_t KB_code(uint32_t value){
+	if((value >> 24) != Keyboard_Flag) return 0;
+	uint16_t keycode=(uint16_t)value;
+	return keycode;
+}
+
 #endif
