@@ -107,7 +107,7 @@
   <VirtualDirectory Name="modules">
     <VirtualDirectory Name="rtc">
       <File Name="modules/rtc/Makefile"/>
-      <File Name="modules/rtc/rtc.c"/>
+      <File Name="modules/rtc/rtc.cpp"/>
     </VirtualDirectory>
     <File Name="modules/Makefile"/>
     <VirtualDirectory Name="ata">
@@ -356,6 +356,10 @@
       <File Name="user/breakout/game.cpp"/>
       <File Name="user/breakout/sprite.hpp"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="sleep">
+      <File Name="user/sleep/Makefile"/>
+      <File Name="user/sleep/sleep.c"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
@@ -384,6 +388,7 @@
       <File Name="include/dev/pci.h"/>
       <File Name="include/dev/mouse.h"/>
       <File Name="include/dev/keyboard.h"/>
+      <File Name="include/dev/rtc.h"/>
     </VirtualDirectory>
     <VirtualDirectory Name="ext">
       <File Name="include/ext/debug.h"/>
