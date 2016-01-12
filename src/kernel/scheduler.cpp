@@ -384,6 +384,7 @@ bool sch_active(){
 }
 
 void sch_setpid(pid_t pid){
+	if(proc_get_status(pid) == proc_status::DoesNotExist) panic("(SCH) Attempt to associate thread to non existent process!");
 	current_thread->pid=pid;
 }
 

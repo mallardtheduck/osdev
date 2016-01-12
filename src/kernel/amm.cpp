@@ -327,9 +327,9 @@ void amm_close(file_handle &file) {
     while(changed){
 		hold_lock hl(amm_lock, false);
         changed=false;
-        for(size_t i=0; i<mappings.size(); ++i){
-            if(mappings[i].file.filedata == file.filedata){
-                mappings.erase(i);
+        for(size_t i=0; i<(*amm_filemappings).size(); ++i){
+            if((*amm_filemappings)[i].file.filedata == file.filedata){
+                (*amm_filemappings).erase(i);
                 changed=true;
                 break;
             }
