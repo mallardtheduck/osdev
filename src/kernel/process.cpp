@@ -199,7 +199,7 @@ pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent, file_
 
 static bool proc_threads_blockcheck(void *p){
     pid_t pid = *(pid_t*)p;
-    return sch_get_pid_threadcount(pid) == 0;
+    return sch_get_pid_threadcount(pid, true) == 0;
 }
 
 void proc_end(pid_t pid) {
@@ -246,7 +246,6 @@ void proc_end(pid_t pid) {
 					cont = true;
 					break;
 				}else{
-					sch_setpid(0);
 					proc_remove_handle(i->first, pid);
 					cont = true;
 					break;
@@ -254,7 +253,7 @@ void proc_end(pid_t pid) {
 			}
 		}
 	}
-	if(sch_get_pid_threadcount(pid) > 0) sch_setblock(&proc_threads_blockcheck, (void *) &pid);
+	if(sch_get_pid_threadcount(pid, true) > 0) sch_setblock(&proc_threads_blockcheck, (void *) &pid);
 	cont = true;
 	while (cont) {
 		cont = false;

@@ -42,7 +42,7 @@ void sch_set_msgstaus(thread_msg_status::Enum status, uint64_t ext_id=sch_get_id
 thread_msg_status::Enum sch_get_msgstatus(uint64_t ext_id=sch_get_id());
 void sch_deferred_yield();
 uint8_t *sch_get_fpu_xmm_data();
-size_t sch_get_pid_threadcount(pid_t pid);
+size_t sch_get_pid_threadcount(pid_t pid, bool ignore_current = false);
 void sch_debug_stop(pid_t pid);
 void sch_debug_resume(pid_t pid);
 void sch_update_usercontext(isr_regs *uc, uint64_t ext_id=sch_get_id());
