@@ -108,6 +108,9 @@
     <VirtualDirectory Name="rtc">
       <File Name="modules/rtc/Makefile"/>
       <File Name="modules/rtc/rtc.cpp"/>
+      <File Name="modules/rtc/api.cpp"/>
+      <File Name="modules/rtc/rtc.hpp"/>
+      <File Name="modules/rtc/clocktime.cpp"/>
     </VirtualDirectory>
     <File Name="modules/Makefile"/>
     <VirtualDirectory Name="ata">

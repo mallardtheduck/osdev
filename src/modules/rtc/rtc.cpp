@@ -1,12 +1,8 @@
-#include <btos_module.h>
-
-#define RTC_NO_STUBS
-#include <dev/rtc.h>
+#include "rtc.hpp"
 
 USE_SYSCALL_TABLE;
 USE_DEBUG_PRINTF;
 
-#define FORMAT "%02i:%02i:%02i %02i/%02i/%02i"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
 const uint16_t RTC_Index = 0x70;
@@ -33,12 +29,6 @@ uint8_t read_cmos(int reg){
 bool cmos_update_in_progress(){
 	return read_cmos(0x0A) & (1<<7);
 }
-
-struct datetime{
-	int day, month, year;
-	int hour, minute, second;
-};
-typedef struct datetime datetime;
 
 inline static int bcdtobin(int bcd){
 	return ( (bcd & 0xF0) >> 1) + ( (bcd & 0xF0) >> 3) + (bcd & 0xf);
@@ -75,13 +65,14 @@ datetime read_rtc(){
 		ret.hour+=12;
 		if(ret.hour==24) ret.hour=12;
 	}
+	ret.year += 2000;
 	if(!rtc_24h && !rtc_pm && ret.hour==12) ret.hour=0;
 	return ret;
 }
 
 char *rtc_infofs(){
 	char *buf=(char*)malloc(128);
-	datetime dt=read_rtc();
+	datetime dt=current_datetime();
 	sprintf(buf, FORMAT "\n", dt.hour, dt.minute, dt.second, dt.day, dt.month, dt.year);
 	return buf;
 }
@@ -138,52 +129,17 @@ void init_interrupt(){
 	unmask_irq(RTC_IRQ);
 }
 
-struct rtc_sleep_params{
-	uint64_t start;
-	uint32_t duration;
-};
-
-bool rtc_sleep_blockcheck(void *p){
-	rtc_sleep_params &params = *(rtc_sleep_params*)p;
-	return (msec_counter - params.start >= params.duration);
-}
-
-void rtc_sleep(uint32_t msec){
-	rtc_sleep_params p = {msec_counter, msec};
-	thread_setblock(&rtc_sleep_blockcheck, (void*)&p);
-}
-
-uint64_t rtc_millis(){
-	return msec_counter;
-}
-
-rtc_calltable calltable = {&rtc_sleep, &rtc_millis};
-
-void rtc_uapi(uint16_t id,isr_regs *regs){
-	switch(id){
-		case bt_rtc_api::Sleep:{
-			rtc_sleep(regs->ebx);
-			break;
-		}
-		case bt_rtc_api::Millis:{
-			*(uint64_t*)regs->ebx = rtc_millis();
-			break;
-		}
-	}
-}
-
-kernel_extension rtc_extension{RTC_EXTENSION_NAME, (void*)&calltable, &rtc_uapi};
-
 extern "C" int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
 	init_interrupt();
 	datetime dt=read_rtc();
 	dbgpf("RTC: " FORMAT "\n", dt.hour, dt.minute, dt.second, dt.day, dt.month, dt.year);
+	init_clock(dt);
 	char buf[128];
 	sprintf(buf, FORMAT, dt.hour, dt.minute, dt.second, dt.day, dt.month, dt.year);
 	setenv("BOOT_TIME", buf, ENV_Global, 0);
 	infofs_register("RTC", &rtc_infofs);
 	infofs_register("MSEC", &msec_infofs);
-	add_extension(&rtc_extension);
+	init_api();
 	return 0;
 }
