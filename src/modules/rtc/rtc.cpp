@@ -153,12 +153,20 @@ void rtc_sleep(uint32_t msec){
 	thread_setblock(&rtc_sleep_blockcheck, (void*)&p);
 }
 
-rtc_calltable calltable = {&rtc_sleep};
+uint64_t rtc_millis(){
+	return msec_counter;
+}
+
+rtc_calltable calltable = {&rtc_sleep, &rtc_millis};
 
 void rtc_uapi(uint16_t id,isr_regs *regs){
 	switch(id){
 		case bt_rtc_api::Sleep:{
 			rtc_sleep(regs->ebx);
+			break;
+		}
+		case bt_rtc_api::Millis:{
+			*(uint64_t*)regs->ebx = rtc_millis();
 			break;
 		}
 	}

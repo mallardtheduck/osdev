@@ -10,5 +10,5 @@ int main(int argc, char **argv){
 		return 0;
 	}
 	uint32_t msec = strtoul(argv[1], NULL, 0);
-	rtc_sleep(msec);
+	bt_rtc_sleep(msec);
 }

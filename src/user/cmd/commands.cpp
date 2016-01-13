@@ -3,6 +3,9 @@
 #include <iostream>
 #include <unordered_map>
 #include <sstream>
+#include <dev/rtc.h>
+
+USE_BT_RTC_API;
 
 using namespace std;
 
@@ -268,6 +271,24 @@ void setenv_command(const command &cmd){
 	}
 }
 
+void time_command(const command &cmd){
+	vector<string> commandline=cmd.args;
+	if(commandline.size() < 2){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " command" << endl;
+	}else{
+		ostream &output=*cmd.output;
+		commandline.erase(commandline.begin());
+		command ncmd = cmd;
+		ncmd.args = commandline;
+		uint64_t start = bt_rtc_millis();
+		run_command(ncmd);
+		uint64_t end = bt_rtc_millis();
+		output << "Time: " << (end - start) << "ms." << endl;
+	}
+	
+}
+
 unordered_map<string, command_fn> builtin_commands={
 	{"ls", &ls_command},
 	{"dir", &ls_command},
@@ -299,6 +320,7 @@ unordered_map<string, command_fn> builtin_commands={
 	{"glob", &list_command},
 	{"setenv", &setenv_command},
 	{"set", &setenv_command},
+	{"time", &time_command},
 };
 
 bool run_builtin(const command &cmd){

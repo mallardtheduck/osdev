@@ -7,6 +7,7 @@
 
 ENUM_START(bt_rtc_api)
 	ENUM_SET(bt_rtc_api, Sleep, 1),
+	ENUM_SET(bt_rtc_api, Millis, 2),
 ENUM_END;
 ENUM_TYPE(bt_rtc_api);
 
@@ -16,6 +17,7 @@ ENUM_TYPE(bt_rtc_api);
 
 struct rtc_calltable{
 	void (*rtc_sleep)(uint32_t msec);
+	uint64_t (*rtc_millis)();
 };
 
 #ifndef RTC_NO_STUBS
@@ -33,6 +35,10 @@ inline static void rtc_init(){
 
 inline static void rtc_sleep(uint32_t msec){
 	RTC_CALL_TABLE->rtc_sleep(msec);
+}
+
+inline static uint64_t rtc_millis(){
+	return RTC_CALL_TABLE->rtc_millis();
 }
 
 #endif
@@ -54,8 +60,14 @@ inline static uint32_t bt_rtc_api_call(uint16_t fn, uint32_t b, uint32_t c, uint
 	return btos_call(a, b, c, d);
 }
 
-inline static void rtc_sleep(uint32_t msec){
+inline static void bt_rtc_sleep(uint32_t msec){
 	bt_rtc_api_call(ENUM_GET(bt_rtc_api, Sleep), msec, 0, 0);
+}
+
+inline static uint64_t bt_rtc_millis(){
+	uint64_t ret;
+	bt_rtc_api_call(ENUM_GET(bt_rtc_api, Millis), (uint32_t)&ret, 0, 0);
+	return ret;
 }
 
 #endif
