@@ -574,11 +574,11 @@ uint8_t *sch_get_fpu_xmm_data(){
 	return current_thread->fpu_xmm_data;
 }
 
-size_t sch_get_pid_threadcount(pid_t pid, bool ignore_current){
+size_t sch_get_pid_threadcount(pid_t pid, bool ignore_current, uint64_t ext_id){
 	take_lock_recursive(sch_lock);
 	size_t ret=0;
 	for(size_t i=0; i<threads->size(); ++i){
-		if((*threads)[i]->pid == pid && (!ignore_current || (*threads)[i] != current_thread)) ++ret;
+		if((*threads)[i]->pid == pid && (!ignore_current || (*threads)[i]->ext_id != ext_id)) ++ret;
 	}
 	release_lock(sch_lock);
 	return ret;

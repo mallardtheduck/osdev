@@ -197,9 +197,14 @@ pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent, file_
 	return newproc->pid;
 }
 
+struct proc_threads_blockcheck_params{
+	pid_t pid;
+	uint64_t tid;
+};
+
 static bool proc_threads_blockcheck(void *p){
-    pid_t pid = *(pid_t*)p;
-    return sch_get_pid_threadcount(pid, true) == 0;
+    proc_threads_blockcheck_params &params = *(proc_threads_blockcheck_params*)p;
+    return sch_get_pid_threadcount(params.pid, true, params.tid) == 0;
 }
 
 void proc_end(pid_t pid) {
@@ -253,7 +258,10 @@ void proc_end(pid_t pid) {
 			}
 		}
 	}
-	if(sch_get_pid_threadcount(pid, true) > 0) sch_setblock(&proc_threads_blockcheck, (void *) &pid);
+	if(sch_get_pid_threadcount(pid, true) > 0){
+		proc_threads_blockcheck_params params = {pid, sch_get_id()};
+		sch_setblock(&proc_threads_blockcheck, (void *) &params);
+	}
 	cont = true;
 	while (cont) {
 		cont = false;
