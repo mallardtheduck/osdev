@@ -38,26 +38,17 @@ uint64_t seconds_in_month(int month, int year){
 
 uint64_t datetime2epoch(const datetime &dt){
 	uint64_t ret = 0;
-	dbgpf("RTC: %i\n", (int)ret);
 	ret = dt.second;
-	dbgpf("RTC: %i\n", (int)ret);
 	ret += dt.minute * secondsPerMinute;
-	dbgpf("RTC: %i\n", (int)ret);
 	ret += dt.hour * secondsPerHour;
-	dbgpf("RTC: %i\n", (int)ret);
 	ret += dt.day * secondsPerDay;
-	dbgpf("RTC: %i\n", (int)ret);
 	for(size_t m = 0; m < (size_t)dt.month; ++m){
 		ret += secondsPerMonth[m];
 	}
-	dbgpf("RTC: %i\n", (int)ret);
 	for(int y = epochYear; y < dt.year; ++y){
 		ret += seconds_in_year(y);
 	}
-	dbgpf("RTC: %i\n", (int)ret);
-	if(is_leap_year(dt.year) && dt.month > 2) ret+=secondsPerDay;
-	dbgpf("RTC: %i\n", (int)ret);
-	
+	if(is_leap_year(dt.year) && dt.month > 2) ret+=secondsPerDay;	
 	return ret * 1000;
 }
 

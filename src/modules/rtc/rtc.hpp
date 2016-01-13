@@ -3,7 +3,8 @@
 #define RTC_NO_STUBS
 #include <dev/rtc.h>
 
-#define FORMAT "%02i:%02i:%02i %02i/%02i/%02i"
+//ISO-8061-ish format. Using 'T' as a delimeter instead of space (as ISO dictates) is bad for reaability, so is not used.
+#define FORMAT "%02i-%02i-%02i %02i:%02i:%02i"
 
 extern volatile uint64_t msec_counter;
 

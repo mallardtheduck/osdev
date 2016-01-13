@@ -73,7 +73,7 @@ datetime read_rtc(){
 char *rtc_infofs(){
 	char *buf=(char*)malloc(128);
 	datetime dt=current_datetime();
-	sprintf(buf, FORMAT "\n", dt.hour, dt.minute, dt.second, dt.day, dt.month, dt.year);
+	sprintf(buf, FORMAT "\n", dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
 	return buf;
 }
 
@@ -133,10 +133,10 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
 	init_interrupt();
 	datetime dt=read_rtc();
-	dbgpf("RTC: " FORMAT "\n", dt.hour, dt.minute, dt.second, dt.day, dt.month, dt.year);
+	dbgpf("RTC: " FORMAT "\n",  dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
 	init_clock(dt);
 	char buf[128];
-	sprintf(buf, FORMAT, dt.hour, dt.minute, dt.second, dt.day, dt.month, dt.year);
+	sprintf(buf, FORMAT, dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
 	setenv("BOOT_TIME", buf, ENV_Global, 0);
 	infofs_register("RTC", &rtc_infofs);
 	infofs_register("MSEC", &msec_infofs);
