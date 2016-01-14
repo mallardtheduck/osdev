@@ -16,3 +16,4 @@ struct datetime{
 void init_api();
 void init_clock(const datetime bootTime);
 datetime current_datetime();
+uint64_t datetime2epoch(const datetime &dt);

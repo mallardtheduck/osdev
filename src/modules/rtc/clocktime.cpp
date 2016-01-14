@@ -55,23 +55,23 @@ uint64_t datetime2epoch(const datetime &dt){
 datetime epoch2datetime(uint64_t ep){
 	datetime ret = {0, 0, epochYear, 0, 0, 0};
 	ep /= 1000;
-	while(ep > (unsigned)seconds_in_year(ret.year)){
+	while(ep >= (unsigned)seconds_in_year(ret.year)){
 		ep -= seconds_in_year(ret.year);
 		++ret.year;
 	}
-	while(ep > (unsigned)seconds_in_month(ret.month, ret.year)){
+	while(ep >= (unsigned)seconds_in_month(ret.month, ret.year)){
 		ep -= seconds_in_month(ret.month, ret.year);
 		++ret.month;
 	}
-	while(ep > secondsPerDay){
+	while(ep >= secondsPerDay){
 		ep-=secondsPerDay;
 		++ret.day;
 	}
-	while(ep > secondsPerHour){
+	while(ep >= secondsPerHour){
 		ep-=secondsPerHour;
 		++ret.hour;
 	}
-	while(ep > secondsPerMinute){
+	while(ep >= secondsPerMinute){
 		ep-=secondsPerMinute;
 		++ret.minute;
 	}

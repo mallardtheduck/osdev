@@ -9,6 +9,8 @@ const uint16_t RTC_Index = 0x70;
 const uint16_t RTC_Data = 0x71;
 const uint8_t RTC_IRQ = 0x08;
 const int RTC_Rate = 6;
+const uint64_t ResyncRate = 5000;
+
 volatile uint64_t msec_counter = 0;
 volatile uint32_t int_counter42 = 0;
 volatile uint32_t int_counter1000 = 0;
@@ -34,15 +36,12 @@ inline static int bcdtobin(int bcd){
 	return ( (bcd & 0xF0) >> 1) + ( (bcd & 0xF0) >> 3) + (bcd & 0xf);
 }
 
-datetime read_rtc(){
+datetime get_rtc_time(){
 	int status=read_cmos(0x0B);
 	bool rtc_bin=(status & 4);
 	bool rtc_24h=(status & 2);
 	bool rtc_pm=false;
-	dbgpf("RTC: 24-Hour:%i Binary:%i\n", (int)rtc_24h, (int)rtc_bin);
 	datetime ret;
-	while(!cmos_update_in_progress());
-	while(cmos_update_in_progress());
 	ret.day=read_cmos(0x07);
 	ret.month=read_cmos(0x08);
 	ret.year=read_cmos(0x09);
@@ -68,6 +67,12 @@ datetime read_rtc(){
 	ret.year += 2000;
 	if(!rtc_24h && !rtc_pm && ret.hour==12) ret.hour=0;
 	return ret;
+}
+
+datetime read_rtc(){
+	while(!cmos_update_in_progress());
+	while(cmos_update_in_progress());
+	return get_rtc_time();
 }
 
 char *rtc_infofs(){
@@ -99,20 +104,45 @@ char *msec_infofs(){
 	return buf;
 }
 
+void set_update_int(bool value){
+	uint8_t regB = read_cmos(0x0B);
+	if(value) regB |= (1 << 4);
+	else regB &= ~(1 << 4);
+}
+
 void rtc_interrupt(int, isr_regs*){
-	++msec_counter;
-	++int_counter42;
-	++int_counter1000;
-	if(int_counter42 == 42){
-		--msec_counter;
-		int_counter42 = 0;
+	uint8_t regC = read_cmos(0x0C);
+	if(regC & (1 << 6)){
+		++msec_counter;
+		++int_counter42;
+		++int_counter1000;
+		if(int_counter42 == 42){
+			--msec_counter;
+			int_counter42 = 0;
+		}
+		if(int_counter1000 == 1000){
+			--msec_counter;
+			int_counter42 = 0;
+			int_counter1000 = 0;
+		}
+		if(msec_counter % ResyncRate == 0){
+			set_update_int(true);
+		}
 	}
-	if(int_counter1000 == 1000){
-		--msec_counter;
-		int_counter42 = 0;
-		int_counter1000 = 0;
+	if(regC & (1 << 4)){
+		datetime rtc_time = get_rtc_time();
+		uint64_t rtc_epoch = datetime2epoch(rtc_time);
+		uint64_t ass_epoch = datetime2epoch(current_datetime());
+		if(ass_epoch > rtc_epoch){
+			uint64_t diff = ass_epoch - rtc_epoch;
+			if(msec_counter > diff) msec_counter -= diff;
+			else msec_counter = 0;
+		}else{
+			uint64_t diff = rtc_epoch - ass_epoch;
+			msec_counter += diff;
+		}
+		set_update_int(false);
 	}
-	read_cmos(0x0C);
 }
 
 void init_interrupt(){
