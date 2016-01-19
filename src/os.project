@@ -111,6 +111,7 @@
       <File Name="modules/rtc/api.cpp"/>
       <File Name="modules/rtc/rtc.hpp"/>
       <File Name="modules/rtc/clocktime.cpp"/>
+      <File Name="modules/rtc/timer.cpp"/>
     </VirtualDirectory>
     <File Name="modules/Makefile"/>
     <VirtualDirectory Name="ata">

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dev/rtc.h>
+#include <btos/bt_msg.h>
 
 USE_BT_RTC_API;
 

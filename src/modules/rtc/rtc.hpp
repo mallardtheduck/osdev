@@ -7,6 +7,7 @@
 #define FORMAT "%02i-%02i-%02i %02i:%02i:%02i"
 
 extern volatile uint64_t msec_counter;
+extern uint16_t extension_id;
 
 struct datetime{
 	int day, month, year;
@@ -17,3 +18,7 @@ void init_api();
 void init_clock(const datetime bootTime);
 datetime current_datetime();
 uint64_t datetime2epoch(const datetime &dt);
+
+void init_timer();
+void create_timer(isr_regs *regs);
+void reset_timer(isr_regs *regs);

@@ -1,5 +1,7 @@
 #include "rtc.hpp"
 
+uint16_t extension_id;
+
 struct rtc_sleep_params{
 	uint64_t start;
 	uint32_t duration;
@@ -31,11 +33,20 @@ void rtc_uapi(uint16_t id,isr_regs *regs){
 			*(uint64_t*)regs->ebx = rtc_millis();
 			break;
 		}
+		case bt_rtc_api::CreateTimer:{
+			create_timer(regs);
+			break;
+		}
+		case bt_rtc_api::ResetTimer:{
+			reset_timer(regs);
+			break;
+		}
 	}
 }
 
 kernel_extension rtc_extension{RTC_EXTENSION_NAME, (void*)&calltable, &rtc_uapi};
 
 void init_api(){
-	add_extension(&rtc_extension);
+	init_timer();
+	extension_id = add_extension(&rtc_extension);
 }

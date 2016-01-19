@@ -108,6 +108,8 @@ void set_update_int(bool value){
 	uint8_t regB = read_cmos(0x0B);
 	if(value) regB |= (1 << 4);
 	else regB &= ~(1 << 4);
+	outb(RTC_Index, 0x8B);
+	outb(RTC_Data, regB);
 }
 
 void rtc_interrupt(int, isr_regs*){
