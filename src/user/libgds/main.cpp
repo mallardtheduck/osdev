@@ -1,7 +1,7 @@
 #include <iostream>
 #include <gds/libgds.h>
 #include <sstream>
-#include <btos_stubs.h>
+#include <btos.h>
 #include <cstdio>
 
 using namespace std;
