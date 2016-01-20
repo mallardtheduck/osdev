@@ -48,6 +48,7 @@ void update_next_event(){
 }
 
 void timer_thread(void*){
+	thread_priority(2);
 	while(true){
 		thread_setblock(&events_blockcheck, NULL);
 		thread_setblock(&next_event_blockcheck, NULL);
