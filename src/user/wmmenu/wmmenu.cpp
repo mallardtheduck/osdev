@@ -12,6 +12,7 @@ const uint32_t LineHeight = 20;
 vector<pair<string, string>> options = {
 	{"Test application", "hdd:/btos/tests/wmtest.elx"},
 	{"Terminal window", "hdd:/btos/bin/termwin.elx"},
+	{"Breakout", "hdd:/btos/bin/breakout.elx"},
 	{"Quit", "QUIT"},
 };
 
