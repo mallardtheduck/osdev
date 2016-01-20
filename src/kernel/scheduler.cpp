@@ -81,7 +81,7 @@ char *sch_threads_infofs(){
 void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
-    uint16_t value=0x7FFF;
+    uint16_t value=193182 / 50;
     dbgpf("SCH: Value: %i\n", (int)value);
 	outb(0x43, 0x36);
 	outb(0x40, value & 0xFF);
