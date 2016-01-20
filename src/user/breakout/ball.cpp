@@ -43,8 +43,17 @@ bool Ball::Step(){
 		ly = y;
 		x += xvel;
 		y += yvel;
-		if(x < 0 || x > 320) BounceSide();
-		if(y < 0) BounceEdge();
+		if(x < 0) {
+			x = 0;
+			BounceSide();
+		}else if(x > 320){
+			x = 320;
+			BounceSide();
+		}
+		if(y < 0){
+			y = 0;
+			BounceEdge();
+		}
 		if(y > 240) Reset();
 		return true;
 	}else if(reset){
