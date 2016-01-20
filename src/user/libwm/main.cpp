@@ -1,6 +1,6 @@
 #include <gds/libgds.h>
 #include <wm/libwm.h>
-#include <btos_stubs.h>
+#include <btos.h>
 
 #include <cstring>
 #include <sstream>
