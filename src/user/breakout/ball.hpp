@@ -27,6 +27,7 @@ public:
 	void Reset();
 	void BounceSide();
 	void BounceEdge();
+	void BounceAngle(float angle);
 };
 
 #endif

@@ -2,6 +2,7 @@
 #include <gds/libgds.h>
 #include <wm/libwm.h>
 #include "ball.hpp"
+#include <cmath>
 
 void Ball::Launch(){
 	if(!launched){
@@ -27,6 +28,13 @@ void Ball::BounceSide(){
 }
 void Ball::BounceEdge(){
 	yvel = -yvel;
+}
+
+void Ball::BounceAngle(float angle){
+	xvel = angle * 10;
+	double cosval = xvel / sqrt(200);
+	double sinval = sin(acos(cosval));
+	yvel = -(sqrt(200) * sinval);
 }
 
 bool Ball::Step(){

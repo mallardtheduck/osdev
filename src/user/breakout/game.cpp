@@ -16,6 +16,7 @@ std::shared_ptr<Paddle> paddle;
 vector<shared_ptr<Sprite>> sprites;
 queue<wm_Rect> drawQ;
 bool redrawScreen = false;
+uint32_t curblocks = 0;
 
 bool operator==(const wm_Rect &a, const wm_Rect &b){
 	return (a.x == b.x) && (a.y == b.y) && (a.w == b.w) && (a.h == b.h);
@@ -53,6 +54,11 @@ void DrawTitle(){
 	GDS_Text(15, 215, "Left/Right to move, Space to launch ball", gds_TEMPFonts::MediumBold, 0, green);
 }
 
+void DrawEndScreen(){
+	uint32_t red = GDS_GetColour(255, 127, 127);
+	GDS_Text(110, 40, "You win!", gds_TEMPFonts::Giant, 0, red);
+}
+
 void InitBlocks(){
 	uint32_t colours[] = {GDS_GetColour(255, 0, 255), GDS_GetColour(0, 255, 255), GDS_GetColour(255, 255, 0)};
 	size_t ncolours = sizeof(colours) / sizeof(uint32_t);
@@ -60,10 +66,15 @@ void InitBlocks(){
 	for(size_t y = 0; y < 100; y+=Block::height){
 		for(size_t x = 0; x < 320; x+=Block::width){
 			AddSprite(new Block(x, y, colours[colidx]));
+			++curblocks;
 			++colidx;
 			if(colidx == ncolours) colidx = 0;
 		}
 	}
+}
+
+void RemoveBlock(){
+	--curblocks;
 }
 
 void GameEvent(const wm_Event &e){
@@ -72,7 +83,7 @@ void GameEvent(const wm_Event &e){
 	}
 }
 
-void GameStep(){
+bool GameStep(){
 	DrawBackground();
 	vector<shared_ptr<Sprite>> currentSprites(sprites);
 	for(auto s : currentSprites){
@@ -83,6 +94,8 @@ void GameStep(){
 			drawQ.push(postRect);
 		}
 	}
+	if(curblocks == 0) return true;
+	else return false;
 }
 
 bool ZOrderSort(shared_ptr<Sprite> a, shared_ptr<Sprite> b){
@@ -117,4 +130,10 @@ void InitGame(){
 	InitBlocks();
 	redrawScreen = true;
 	GameDraw();
+}
+
+void EndGame(){
+	sprites = {};
+	ball.reset();
+	paddle.reset();
 }

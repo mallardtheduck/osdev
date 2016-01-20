@@ -17,6 +17,7 @@ bool Block::Step(){
 	if(Overlaps(GetBoundingRect(), ball->GetBoundingRect())){
 		ball->BounceEdge();
 		RemoveSprite(shared_from_this());
+		RemoveBlock();
 	}
 	return false;
 }

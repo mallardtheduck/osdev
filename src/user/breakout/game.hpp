@@ -13,13 +13,16 @@ bool Overlaps(const wm_Rect &r1, const wm_Rect &r2);
 
 void DrawBackground();
 void DrawTitle();
+void DrawEndScreen();
 
 void InitGame();
+void EndGame();
 void GameEvent(const wm_Event &e);
-void GameStep();
+bool GameStep();
 void GameDraw();
 
 void AddSprite(Sprite *s);
 void RemoveSprite(std::shared_ptr<Sprite> s);
+void RemoveBlock();
 
 #endif

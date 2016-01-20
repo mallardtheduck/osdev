@@ -18,8 +18,14 @@ void Paddle::Right(){
 }
 
 bool Paddle::Step(){
-	if(Overlaps(ball->GetBoundingRect(), GetBoundingRect())){
-		ball->BounceEdge();
+	wm_Rect ballRect = ball->GetBoundingRect();
+	wm_Rect paddleRect = GetBoundingRect();
+	if(Overlaps(ballRect, paddleRect)){
+		int32_t paddleCentre = paddleRect.x + (paddleRect.w / 2);
+		int32_t ballCentre = ballRect.x + (ballRect.w / 2);
+		int32_t diff = ballCentre - paddleCentre;
+		float angle = (float)diff / ((float)paddleRect.w / 2.0);
+		ball->BounceAngle(angle);
 	}
 	if(dx){
 		uint32_t lx = x;
