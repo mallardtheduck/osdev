@@ -7,9 +7,9 @@
 typedef void (*uapi_hanlder_fn)(uint16_t,isr_regs *);
 
 struct kernel_extension{
-    char *name;
-    void *calltable;
-    uapi_hanlder_fn uapi_handler;
+	char *name;
+	void *calltable;
+	uapi_hanlder_fn uapi_handler;
 };
 
 #ifndef __cplusplus

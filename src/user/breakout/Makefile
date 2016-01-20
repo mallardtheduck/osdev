@@ -1,14 +1,16 @@
+OUTPUT-NAME := breakout.elx
+
 BUILD-AS := i686-pc-btos-as
 BUILD-AS-OPTIONS := -g -fPIC -c
 BUILD-CPP := i686-pc-btos-g++
 BUILD-CPP-FLAGS :=  -c
-BUILD-CPP-OPTIONS := -ffreestanding -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -c -I../../include -DKERNEL_MODULE -std=gnu++11
+BUILD-CPP-OPTIONS := -Wall -Wextra -Werror -g -c -I../../include -std=gnu++11
 BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
-BUILD-C-OPTIONS := -ffreestanding -Wall -Wextra -Werror -g -c -I../../include -DKERNEL_MODULE
+BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../include -std=gnu99
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -T linker.ld -o rtc.sys -ffreestanding -O2 -nostdlib -fPIC -Xlinker -q
-LINK-OPTIONS := -lgcc
+LINK-FLAGS := -o $(OUTPUT-NAME) -O2
+LINK-OPTIONS := -lgcc -L../libgds -L../libwm  -lgds -lwm -lstdc++ -lm
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")
@@ -22,7 +24,7 @@ CPPOBJS := $(CPPFILES:.cpp=.o)
 CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
 
-all: rtc.sys
+all: $(OUTPUT-NAME)
 
 -include $(CDEPFILES) $(CPPDEPFILES)
 
@@ -30,9 +32,9 @@ clean: dummy.delete
 
 dummy.delete:
 	-@$(RM) *.o
-	-@$(RM) rtc.sys
+	-@$(RM) $(OUTPUT-NAME)
 
-rtc.sys: $(ASOBJS) $(COBJS) $(CPPOBJS) linker.ld Makefile
+$(OUTPUT-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile
 	$(LINK) $(LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LINK-OPTIONS)
 
 .s.o: %.s Makefile

@@ -89,6 +89,7 @@ ENUM_START(wm_RequestType)
 	ENUM_SET(wm_RequestType, MoveWindow, 		9),
 	ENUM_SET(wm_RequestType, ChangeOptions,		10),
 	ENUM_SET(wm_RequestType, SetTitle,			11),
+	ENUM_SET(wm_RequestType, Sync,				12),
 ENUM_END
 ENUM_TYPE(wm_RequestType)
 

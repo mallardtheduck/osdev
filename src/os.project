@@ -107,7 +107,11 @@
   <VirtualDirectory Name="modules">
     <VirtualDirectory Name="rtc">
       <File Name="modules/rtc/Makefile"/>
-      <File Name="modules/rtc/rtc.c"/>
+      <File Name="modules/rtc/rtc.cpp"/>
+      <File Name="modules/rtc/api.cpp"/>
+      <File Name="modules/rtc/rtc.hpp"/>
+      <File Name="modules/rtc/clocktime.cpp"/>
+      <File Name="modules/rtc/timer.cpp"/>
     </VirtualDirectory>
     <File Name="modules/Makefile"/>
     <VirtualDirectory Name="ata">
@@ -343,6 +347,23 @@
       <File Name="user/termwin/table.hpp"/>
       <File Name="user/termwin/table.cpp"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="breakout">
+      <File Name="user/breakout/Makefile"/>
+      <File Name="user/breakout/breakout.cpp"/>
+      <File Name="user/breakout/ball.hpp"/>
+      <File Name="user/breakout/ball.cpp"/>
+      <File Name="user/breakout/block.hpp"/>
+      <File Name="user/breakout/block.cpp"/>
+      <File Name="user/breakout/paddle.hpp"/>
+      <File Name="user/breakout/paddle.cpp"/>
+      <File Name="user/breakout/game.hpp"/>
+      <File Name="user/breakout/game.cpp"/>
+      <File Name="user/breakout/sprite.hpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="sleep">
+      <File Name="user/sleep/Makefile"/>
+      <File Name="user/sleep/sleep.c"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
@@ -371,6 +392,7 @@
       <File Name="include/dev/pci.h"/>
       <File Name="include/dev/mouse.h"/>
       <File Name="include/dev/keyboard.h"/>
+      <File Name="include/dev/rtc.h"/>
     </VirtualDirectory>
     <VirtualDirectory Name="ext">
       <File Name="include/ext/debug.h"/>
