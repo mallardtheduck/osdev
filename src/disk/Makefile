@@ -113,5 +113,5 @@ copy.always: directories.always $(shell find data -type f) $(import-files)
 	mcopy -i btos.img@@1M data/* ::/ -s -o
 
 clean:
-	rm btos.img
-	rm -rf data/*
+	-rm btos.img
+	-rm -rf data/*

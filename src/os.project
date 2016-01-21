@@ -513,4 +513,20 @@
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/crtn.S"/>
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/syscalls.c"/>
   </VirtualDirectory>
+  <VirtualDirectory Name="tarinit">
+    <VirtualDirectory Name="test">
+      <File Name="tarinit/test/Makefile"/>
+      <VirtualDirectory Name="data">
+        <File Name="tarinit/test/data/config.ini"/>
+      </VirtualDirectory>
+    </VirtualDirectory>
+    <File Name="tarinit/Makefile"/>
+  </VirtualDirectory>
+  <VirtualDirectory Name="iso">
+    <File Name="iso/Makefile"/>
+    <VirtualDirectory Name="test">
+      <File Name="iso/test/Makefile"/>
+      <File Name="iso/test/grub.cfg"/>
+    </VirtualDirectory>
+  </VirtualDirectory>
 </CodeLite_Project>
