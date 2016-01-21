@@ -45,18 +45,22 @@ char *cpu_brandstring(){
 	return get_brandstring();
 }
 
-uint64_t cpu_get_speed(){	
-	outb(0x43,0x34);
-	outb(0x40,0);
-	outb(0x40,0);
-	uint64_t start = rdtsc();
-	for (volatile int i=0x10000;i>0;i--) (void)i;
-	outb(0x43,0x04);
-	uint64_t end=rdtsc();
-	uint8_t lo=inb(0x40);
-	uint8_t hi=inb(0x40);
-	uint32_t ticks=(0x10000 - (hi*256+lo));
-	return (end-start)*1193180 / ticks;
+uint64_t cpu_get_speed(){
+	static uint64_t speed = 0;
+	if(!speed){
+		outb(0x43,0x34);
+		outb(0x40,0);
+		outb(0x40,0);
+		uint64_t start = rdtsc();
+		for (volatile int i=0x10000;i>0;i--) (void)i;
+		outb(0x43,0x04);
+		uint64_t end=rdtsc();
+		uint8_t lo=inb(0x40);
+		uint8_t hi=inb(0x40);
+		uint32_t ticks=(0x10000 - (hi*256+lo));
+		speed = (end-start)*1193180 / ticks;
+	}
+	return speed;
 }
 
 uint32_t cpu_get_umips(){
