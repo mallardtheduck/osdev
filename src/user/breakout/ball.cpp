@@ -24,20 +24,30 @@ void Ball::Draw(){
 }
 
 void Ball::BounceSide(){
-	xvel = -xvel;
+	if(!bounced){
+		xvel = -xvel;
+		bounced = true;
+	}
 }
 void Ball::BounceEdge(){
-	yvel = -yvel;
+	if(!bounced){
+		yvel = -yvel;
+		bounced = true;
+	}
 }
 
 void Ball::BounceAngle(float angle){
-	xvel = angle * 10;
-	double cosval = xvel / sqrt(200);
-	double sinval = sin(acos(cosval));
-	yvel = -(sqrt(200) * sinval);
+	if(!bounced){
+		xvel = angle * 10;
+		double cosval = xvel / sqrt(200);
+		double sinval = sin(acos(cosval));
+		yvel = -(sqrt(200) * sinval);
+		bounced = true;
+	}
 }
 
 bool Ball::Step(){
+	bool ret = false;
 	if(launched){
 		lx = x;
 		ly = y;
@@ -55,13 +65,13 @@ bool Ball::Step(){
 			BounceEdge();
 		}
 		if(y > 240) Reset();
-		return true;
+		ret = true;
 	}else if(reset){
 		reset = false;
-		return true;
-	}else{
-		return false;
+		ret = true;
 	}
+	bounced = false;
+	return ret;
 }
 
 void Ball::Input(const wm_Event &e){

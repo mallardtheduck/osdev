@@ -81,8 +81,11 @@ char *sch_threads_infofs(){
 void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
-    uint16_t value=193182 / 50;
-    dbgpf("SCH: Value: %i\n", (int)value);
+	uint8_t sch_freq = 50;
+	if(cpu_get_umips() < 1000) sch_freq = 30;
+	if(cpu_get_umips() < 500) sch_freq = 20;
+    uint16_t value=193182 / sch_freq;
+    dbgpf("SCH: Scheduler frequency: %i\n", (int)sch_freq);
 	outb(0x43, 0x36);
 	outb(0x40, value & 0xFF);
 	outb(0x40, (value >> 8) & 0xFF);
