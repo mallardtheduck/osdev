@@ -102,6 +102,8 @@
         <File Name="kernel/initfs/data/config.ini"/>
       </VirtualDirectory>
       <File Name="kernel/initfs/Makefile"/>
+      <File Name="kernel/initfs/initfs.hpp"/>
+      <File Name="kernel/initfs/initfs.cpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="modules">
