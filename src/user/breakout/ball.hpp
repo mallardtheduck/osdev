@@ -10,6 +10,7 @@ private:
 	uint32_t lx = 0, ly = 0;
 	bool launched = false;
 	bool reset = true;
+	bool bounced = false;
 	
 public:
 	static const uint32_t size = 20;

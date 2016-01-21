@@ -21,7 +21,7 @@ int main(){
 	DrawBackground();
 	DrawTitle();
 	WM_Update();
-	bt_handle_t timer = bt_rtc_create_timer(50);
+	bt_handle_t timer = bt_rtc_create_timer(100);
 	gamestate state = gamestate::Title;
 	while(true){
 		btos_api::bt_msg_header msg = bt_recv(true);
@@ -40,9 +40,9 @@ int main(){
 			}
 			case gamestate::GamePlay:{
 				if(msg.from == 0 && msg.source == bt_rtc_ext_id){
+					bt_rtc_reset_timer(timer);
 					bool end = GameStep();
 					GameDraw();
-					bt_rtc_reset_timer(timer);
 					if(end) state = gamestate::Finish;
 				}else{
 					GameEvent(e);
