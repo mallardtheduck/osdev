@@ -1,10 +1,11 @@
 test.iso: ../../kernel/btos.bin
-	@mkdir -p isodir
-	@mkdir -p isodir/boot
-	@cp ../../kernel/btos.bin isodir/boot/btos.bin
-	@mkdir -p isodir/boot/grub
-	@cp grub.cfg isodir/boot/grub/grub.cfg
-	@mkdir -p isodir/boot/grub/i386-pc
+	mkdir -p isodir
+	mkdir -p isodir/boot
+	cp ../../kernel/btos.bin isodir/boot/btos.bin
+	cp ../../tarinit/test/init.tar isodir/boot/init.tar
+	mkdir -p isodir/boot/grub
+	cp grub.cfg isodir/boot/grub/grub.cfg
+	mkdir -p isodir/boot/grub/i386-pc
 	cp -r /usr/lib/grub/i386-pc/* isodir/boot/grub/i386-pc
 	rm isodir/boot/grub/i386-pc/*.img
 	grub-mkimage -O i386-pc -d /usr/lib/grub/i386-pc -o core.img -c load_cfg --prefix=/boot/grub iso9660 biosdisk
