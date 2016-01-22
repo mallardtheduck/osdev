@@ -97,14 +97,8 @@
     <File Name="kernel/vmm.cpp"/>
     <File Name="kernel/process.cpp"/>
     <File Name="kernel/liballoc.c"/>
-    <VirtualDirectory Name="initfs">
-      <VirtualDirectory Name="data">
-        <File Name="kernel/initfs/data/config.ini"/>
-      </VirtualDirectory>
-      <File Name="kernel/initfs/Makefile"/>
-      <File Name="kernel/initfs/initfs.hpp"/>
-      <File Name="kernel/initfs/initfs.cpp"/>
-    </VirtualDirectory>
+    <File Name="kernel/initfs.cpp"/>
+    <File Name="kernel/initfs.hpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="modules">
     <VirtualDirectory Name="rtc">

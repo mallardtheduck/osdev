@@ -33,13 +33,6 @@ rebuild: clean all
 dummy.delete:
 	-@$(RM) *.o
 	-@$(RM) btos.bin
-	-@$(RM) initfs/xxd_data.inc
-	make -C initfs clean
-
-initfs/initfs_data.cpp: initfs/initfs_data.inc
-
-initfs/initfs_data.inc:
-	$(MAKE) -C initfs
 
 btos.bin: boot.o $(ASOBJS) $(COBJS) $(CPPOBJS) linker.ld
 	$(LINK) $(LINK-FLAGS) boot.o $(ASOBJS) $(CPPOBJS) $(COBJS) $(LINK-OPTIONS)

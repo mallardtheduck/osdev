@@ -1,10 +1,37 @@
 #include "initfs.hpp"
+#include "ministl.hpp"
+#include "strutil.hpp"
+
+struct initfs_file{
+	string name;
+	unsigned char *data;
+	size_t size;
+};
+
+struct tar_header{
+    char filename[100];
+    char mode[8];
+    char uid[8];
+    char gid[8];
+    char size[12];
+    char mtime[12];
+    char chksum[8];
+    char typeflag[1];
+};
+
+vector<initfs_file> *initfs_data;
 
 struct initfs_handle{
 	size_t fileindex;
 	size_t pos;
 	initfs_handle(size_t index, size_t p=0) : fileindex(index), pos(p) {}
 };
+
+size_t tar_size(const char *in){
+	size_t size = 0, j, count = 1;
+	for (j = 11; j > 0; j--, count *= 8) size += ((in[j - 1] - '0') * count);
+	return size;
+}
 
 #define fdata ((initfs_handle*)filedata)
 
@@ -16,13 +43,11 @@ struct initfs_dirhandle{
 #define ddata ((initfs_dirhandle*)dirdata)
 
 size_t initfs_getfilecount(){
-	size_t ret=0;
-	while(initfs_data[++ret].valid);
-	return ret;
+	return initfs_data->size();
 }
 
 initfs_file initfs_getfile(int index){
-	return initfs_data[index];
+	return (*initfs_data)[index];
 }
 
 void *initfs_mount(char *){
@@ -39,7 +64,7 @@ void *initfs_open(void *, fs_path *path, fs_mode_flags){
 	int files=initfs_getfilecount();
 	for(int i=0; i<files; ++i){
 		initfs_file file=initfs_getfile(i);
-		if(strcmp(path->str, file.name)==0){
+		if(to_upper(file.name) == to_upper(path->str)){
 			return (void*)new initfs_handle(i);
 		}
 	}
@@ -91,7 +116,7 @@ directory_entry initfs_read_dir(void *dirdata){
 		return ret;
 	}
 	initfs_file file=initfs_getfile(ddata->pos);
-	strncpy(ret.filename, file.name, 255);
+	strncpy(ret.filename, file.name.c_str(), 255);
 	ret.size=file.size;
 	ret.type=FS_File;
 	ret.valid=true;
@@ -117,7 +142,7 @@ directory_entry initfs_stat(void *, fs_path *path){
 		int files=initfs_getfilecount();
 		for(int i=0; i<files; ++i){
 			initfs_file file=initfs_getfile(i);
-			if(strcmp(path->str, file.name)==0){
+			if(to_upper(file.name) == to_upper(path->str)){
 				initfs_dirhandle dh(i);
 				return initfs_read_dir(&dh);
 			}
@@ -154,11 +179,28 @@ fs_driver initfs_driver = {true, "INITFS", false,
 	initfs_stat};
 
 fs_driver initfs_getdriver(){
-	int files=initfs_getfilecount();
-	dbgpf("INITFS: Files in InitFS: %i\n", files);
-	for(int i=0; i<files; ++i){
-		initfs_file file=initfs_getfile(i);
-		dbgpf("INITFS: '%s' %i bytes\n", file.name, file.size);
+	if(!initfs_data){
+		initfs_data = new vector<initfs_file>();
+		multiboot_info_t *mbi = vmm_get_multiboot();
+		if(mbi->mods_count > 0){
+			module_t *mod = (module_t *)mbi->mods_addr;
+			tar_header *th = (tar_header*)mod->mod_start;
+			dbgpf("INITFS: Module starts at %x and ends at %x\n", mod->mod_start, mod->mod_end);
+			while((uint32_t)th < mod->mod_end){
+				if(th->filename[0] == '\0') break;
+				unsigned char *data = (unsigned char*)((uint32_t)th + 512);
+				size_t size = tar_size(th->size);
+				dbgpf("INITFS: %s, %x, %i\n", th->filename, data, size);
+				initfs_file file;
+				file.data = data;
+				file.name = th->filename;
+				file.size = size;
+				initfs_data->push_back(file);
+				th = (tar_header*)((uint32_t) data + ((size & ~511) + 512));
+			}
+		}else{
+			panic("(INITFS) No tar module loaded!");
+		}
 	}
 	return initfs_driver;
 }
