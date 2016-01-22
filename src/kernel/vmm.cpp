@@ -403,17 +403,6 @@ void vmm_init(multiboot_info_t *mbt){
 			kmem+=VMM_PAGE_SIZE;
         }
     }
-	dbgout("VMM: Accounting for modules...\n");
-	for(size_t i = 0; i<mbt->mods_count; ++i){
-		module_t *mod = (module_t*)(mbt->mods_addr + (sizeof(module_t) * i));
-		size_t firstpage = mod->mod_start & VMM_ADDRESS_MASK;
-		size_t lastpage = mod->mod_end & VMM_ADDRESS_MASK;
-		dbgpf("VMM: Module at %x - %x\n", firstpage, lastpage);
-		for(size_t page = firstpage; page <= lastpage; page+=VMM_PAGE_SIZE){
-			amm_mark_alloc(page, amm_page_type::Kernel, NULL);
-		}
-	}
-	dbgout("VMM: Done\n");
     infofs_register("FREEMEM", &freemem_infofs);
     infofs_register("TOTALMEM", &totalmem_infofs);
     infofs_register("ACTIVEMEM", &totalused_infofs);
