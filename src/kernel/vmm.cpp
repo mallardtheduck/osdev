@@ -3,6 +3,8 @@
 
 #define PAGING_ENABLED_FLAG 0x80000000
 
+multiboot_info_t *multiboot_info;
+
 namespace PageFlags{
 	enum{
 		Present 		= 1 << 0,
@@ -277,7 +279,6 @@ size_t vmm_totalmem=0;
 
 void *vmm_ministack_alloc(size_t pages=1);
 void vmm_ministack_free(void *ptr, size_t pages=1);
-void vmm_identity_map(uint32_t *pagedir, size_t page, bool alloc=true);
 void vmm_page_fault_handler(int,isr_regs*);
 void vmm_checkstack();
 
@@ -308,6 +309,7 @@ char *totalused_infofs(){
 }
 
 void vmm_init(multiboot_info_t *mbt){
+	multiboot_info = mbt;
 	init_lock(vmm_lock);
 	init_lock(vmm_framelock);
 	dbgout("VMM: Init\n");
@@ -338,12 +340,12 @@ void vmm_init(multiboot_info_t *mbt){
     	if(vmm_regions[i].base){
     		for(size_t j=0; j<vmm_regions[i].pages; ++j){
     			size_t phys_page_num=((size_t)vmm_regions[i].base/VMM_PAGE_SIZE)+j;
-    			void* phys_page_addr=(void*)(phys_page_num*VMM_PAGE_SIZE);
+    			//void* phys_page_addr=(void*)(phys_page_num*VMM_PAGE_SIZE);
     			if(phys_page_num < 256) panic("(VMM) Page number too low!");
     			if(phys_page_num>=k_first_page && phys_page_num<=k_last_page){
     				dbgpf("VMM: Region %i, page %i (%x) - KERNEL\n", i, j, phys_page_num);
     			}else{
-    				memset(phys_page_addr, 0, VMM_PAGE_SIZE);
+    				//memset(phys_page_addr, 0, VMM_PAGE_SIZE);
     				++totalpages;
     			}
     		}
@@ -374,6 +376,18 @@ void vmm_init(multiboot_info_t *mbt){
     cr0 |= PAGING_ENABLED_FLAG;
     asm volatile("mov %0, %%cr0":: "b"(cr0));
     dbgout("Done.\n");
+	dbgout("VMM: Identity mapping modules...\n");
+	for(size_t i = 0; i<mbt->mods_count; ++i){
+		module_t *mod = (module_t*)(mbt->mods_addr + (sizeof(module_t) * i));
+		size_t firstpage = mod->mod_start & VMM_ADDRESS_MASK;
+		size_t lastpage = mod->mod_end & VMM_ADDRESS_MASK;
+		dbgpf("VMM: Module at %x - %x\n", firstpage, lastpage);
+		for(size_t page = firstpage; page <= lastpage; page+=VMM_PAGE_SIZE){
+			vmm_kernel_pagedir.identity_map(page / VMM_PAGE_SIZE, false);
+			vmm_kernel_pagedir.set_flags(page, amm_flags::Kernel);
+		}
+	}
+	dbgout("VMM: Done\n");
     vmm_cur_pagedir=&vmm_kernel_pagedir;
     dbgout("VMM: Init complete.\n");
     dbgout("VMM: Init AMM...\n");
@@ -389,6 +403,17 @@ void vmm_init(multiboot_info_t *mbt){
 			kmem+=VMM_PAGE_SIZE;
         }
     }
+	dbgout("VMM: Accounting for modules...\n");
+	for(size_t i = 0; i<mbt->mods_count; ++i){
+		module_t *mod = (module_t*)(mbt->mods_addr + (sizeof(module_t) * i));
+		size_t firstpage = mod->mod_start & VMM_ADDRESS_MASK;
+		size_t lastpage = mod->mod_end & VMM_ADDRESS_MASK;
+		dbgpf("VMM: Module at %x - %x\n", firstpage, lastpage);
+		for(size_t page = firstpage; page <= lastpage; page+=VMM_PAGE_SIZE){
+			amm_mark_alloc(page, amm_page_type::Kernel, NULL);
+		}
+	}
+	dbgout("VMM: Done\n");
     infofs_register("FREEMEM", &freemem_infofs);
     infofs_register("TOTALMEM", &totalmem_infofs);
     infofs_register("ACTIVEMEM", &totalused_infofs);
@@ -531,4 +556,8 @@ amm_flags::Enum vmm_get_flags(uint32_t pageaddr){
 uint32_t vmm_physaddr(void *ptr){
     uint32_t offset=(uint32_t)ptr & ~VMM_ADDRESS_MASK;
     return vmm_cur_pagedir->virt2phys(ptr) | offset;
+}
+
+multiboot_info_t *vmm_get_multiboot(){
+	return multiboot_info;
 }
