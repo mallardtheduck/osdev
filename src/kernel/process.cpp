@@ -661,6 +661,7 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 			if(to_ok) release_lock(to->ulock);
 			if(msg_ok) release_lock(msg_lock);
 			again=true;
+			sch_yield();
 			continue;
 		}
 		proc->msg_buffers[header.to]=malloc(header.length);
