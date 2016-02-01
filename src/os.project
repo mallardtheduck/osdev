@@ -523,6 +523,12 @@
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/crti.S"/>
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/crtn.S"/>
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/syscalls.c"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/dirent.c"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/Makefile.am"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/getenv.c"/>
+    <VirtualDirectory Name="sys">
+      <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/dirent.h"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="tarinit">
     <VirtualDirectory Name="test">
