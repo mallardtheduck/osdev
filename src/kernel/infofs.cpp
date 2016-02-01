@@ -103,6 +103,7 @@ directory_entry infofs_read_dir(void *dirdata){
 	directory_entry ret;
 	ret.valid=true;
 	strncpy(ret.filename, name.c_str(), 255);
+	ret.id = (uint64_t)(*info_items)[name];
 	ret.size=0;
 	ret.type=FS_File;
 	ddata->pos++;
@@ -129,6 +130,7 @@ directory_entry infofs_stat(void *mountdata, fs_path *path){
 		directory_entry ret;
 		ret.valid=true;
 		strncpy(ret.filename, "/", 255);
+		ret.id = 0;
 		ret.size=0;
 		ret.type=FS_Directory;
 		return ret;
@@ -137,6 +139,7 @@ directory_entry infofs_stat(void *mountdata, fs_path *path){
 	directory_entry ret;
     ret.valid=true;
     strncpy(ret.filename, path->str, 255);
+	ret.id = (uint64_t)(*info_items)[path->str];
     ret.size=0;
     ret.type=FS_File;
     return ret;

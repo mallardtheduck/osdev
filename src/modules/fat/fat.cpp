@@ -127,6 +127,7 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		char *modifiers="";
 		fs_path_to_string(path, spath);
 		strncpy(ret->path, spath, BT_MAX_PATH);
+		if(mode & FS_Truncate && mode & FS_AtEnd) mode = (fs_mode_flags)(mode & ~FS_AtEnd);
 		if(mode==FS_Read) modifiers="r";
 		if((mode & ~(FS_Create | FS_Truncate))==FS_Write ) modifiers="w";
 		if(mode==(FS_Write | FS_AtEnd | FS_Create) || mode==(FS_Write | FS_AtEnd)) modifiers="a";
@@ -267,6 +268,7 @@ directory_entry fat_read_dir(void *dirdata){
 			strncpy(ret.filename, ent.filename, 255);
 			ret.type=(ent.is_dir)?FS_Directory:FS_File;
 			ret.size=ent.size;
+			ret.id=ent.cluster;
             release_fat_lock();
 			return ret;
 		} else {
@@ -291,8 +293,10 @@ directory_entry fat_stat(void *mountdata, fs_path *path){
 		fs_path_to_string(path, spath);
 		fs_item_types type=FS_Invalid;
 		size_t filesize=0;
+		uint64_t id = 0;
 		void *flh=fl_fopen(spath, "r");
 		if(flh){
+			id = ((FL_FILE*)flh)->startcluster;
 			type=FS_File;
 			fl_fseek(flh, 0xFFFFFFFF, SEEK_SET);
 			filesize=fl_ftell(flh);
@@ -310,6 +314,7 @@ directory_entry fat_stat(void *mountdata, fs_path *path){
         strncpy(ret.filename, lastpart->str, BT_MAX_SEGLEN);
         ret.type=type;
         ret.size=filesize;
+		ret.id=id;
         release_fat_lock();
         return ret;
 	}else return invalid_directory_entry;

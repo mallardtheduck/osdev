@@ -8,6 +8,7 @@
 
 extern volatile uint64_t msec_counter;
 extern uint16_t extension_id;
+extern uint64_t boot_msec;
 
 struct datetime{
 	int day, month, year;

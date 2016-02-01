@@ -55,6 +55,7 @@ typedef enum fs_mode_flags fs_mode_flags;
 
 struct BT_DE_NAME{
 	bool valid;
+	uint64_t id;
 	char filename[BT_MAX_SEGLEN];
 	size_t size;
 	fs_item_types type;
@@ -64,7 +65,7 @@ struct BT_DE_NAME{
 typedef struct BT_DE_NAME BT_DE_NAME;
 #endif
 
-static const BT_DE_NAME invalid_directory_entry={false, "", 0, FS_Invalid};
+static const BT_DE_NAME invalid_directory_entry={false, 0, "", 0, FS_Invalid};
 
 #undef BT_DE_NAME
 

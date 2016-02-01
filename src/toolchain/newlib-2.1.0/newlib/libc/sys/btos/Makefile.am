@@ -10,7 +10,7 @@ else
 extra_objs =
 endif
 
-lib_a_SOURCES =
+lib_a_SOURCES = dirent.c getenv.c
 lib_a_LIBADD = $(extra_objs)
 EXTRA_lib_a_SOURCES = syscalls.c crt_support.c crt0.S crtn.S crti.S
 lib_a_DEPENDENCIES = $(extra_objs)

@@ -5,8 +5,6 @@
 #include <sstream>
 #include <dev/rtc.h>
 
-USE_BT_RTC_API;
-
 using namespace std;
 
 typedef void (*command_fn)(const command &);

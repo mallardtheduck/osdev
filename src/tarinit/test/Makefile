@@ -1,7 +1,7 @@
-xxd_data.inc: data/config.ini data/boot.sys data/rtc.sys data/ps2.sys data/ata.sys data/fat.sys data/spawn.elx
+init.tar: Makefile data/config.ini data/boot.sys data/rtc.sys data/ps2.sys data/ata.sys data/fat.sys data/spawn.elx
 	strip data/*.elx
 	strip -g data/*.sys
-	./make_inc.sh
+	tar -cvf $@ -C data/ `ls data/`
 
 data/boot.sys: ../../modules/boot/boot.sys
 	cp $< $@
@@ -23,5 +23,6 @@ data/spawn.elx: ../../user/spawn/spawn.elx
 
 clean: dummy.file
 	find data/ -not -name config.ini -type f -exec rm {} \;
+	-rm init.tar
 
 dummy.file:

@@ -22,7 +22,7 @@
 #include "serdbg.hpp"
 
 #include "filesystems.hpp"
-#include "initfs/initfs.hpp"
+#include "initfs.hpp"
 
 extern "C"{
 

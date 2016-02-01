@@ -4,8 +4,6 @@
 #include <iostream>
 #include "game.hpp"
 
-USE_BT_RTC_API;
-
 using namespace std;
 
 enum class gamestate{

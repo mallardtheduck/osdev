@@ -97,12 +97,8 @@
     <File Name="kernel/vmm.cpp"/>
     <File Name="kernel/process.cpp"/>
     <File Name="kernel/liballoc.c"/>
-    <VirtualDirectory Name="initfs">
-      <VirtualDirectory Name="data">
-        <File Name="kernel/initfs/data/config.ini"/>
-      </VirtualDirectory>
-      <File Name="kernel/initfs/Makefile"/>
-    </VirtualDirectory>
+    <File Name="kernel/initfs.cpp"/>
+    <File Name="kernel/initfs.hpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="modules">
     <VirtualDirectory Name="rtc">
@@ -364,6 +360,21 @@
       <File Name="user/sleep/Makefile"/>
       <File Name="user/sleep/sleep.c"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="tar">
+      <File Name="user/tar/buffer.c"/>
+      <File Name="user/tar/create.c"/>
+      <File Name="user/tar/extract.c"/>
+      <File Name="user/tar/getoldopt.c"/>
+      <File Name="user/tar/Makefile"/>
+      <File Name="user/tar/names.c"/>
+      <File Name="user/tar/port.c"/>
+      <File Name="user/tar/port.h"/>
+      <File Name="user/tar/tar.c"/>
+      <File Name="user/tar/tar.h"/>
+      <File Name="user/tar/list.c"/>
+      <File Name="user/tar/stubs.c"/>
+      <File Name="user/tar/stubs.h"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
@@ -512,5 +523,27 @@
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/crti.S"/>
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/crtn.S"/>
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/syscalls.c"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/dirent.c"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/Makefile.am"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/getenv.c"/>
+    <VirtualDirectory Name="sys">
+      <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/dirent.h"/>
+    </VirtualDirectory>
+  </VirtualDirectory>
+  <VirtualDirectory Name="tarinit">
+    <VirtualDirectory Name="test">
+      <File Name="tarinit/test/Makefile"/>
+      <VirtualDirectory Name="data">
+        <File Name="tarinit/test/data/config.ini"/>
+      </VirtualDirectory>
+    </VirtualDirectory>
+    <File Name="tarinit/Makefile"/>
+  </VirtualDirectory>
+  <VirtualDirectory Name="iso">
+    <File Name="iso/Makefile"/>
+    <VirtualDirectory Name="test">
+      <File Name="iso/test/Makefile"/>
+      <File Name="iso/test/grub.cfg"/>
+    </VirtualDirectory>
   </VirtualDirectory>
 </CodeLite_Project>
