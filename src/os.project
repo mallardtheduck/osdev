@@ -360,6 +360,21 @@
       <File Name="user/sleep/Makefile"/>
       <File Name="user/sleep/sleep.c"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="tar">
+      <File Name="user/tar/buffer.c"/>
+      <File Name="user/tar/create.c"/>
+      <File Name="user/tar/extract.c"/>
+      <File Name="user/tar/getoldopt.c"/>
+      <File Name="user/tar/Makefile"/>
+      <File Name="user/tar/names.c"/>
+      <File Name="user/tar/port.c"/>
+      <File Name="user/tar/port.h"/>
+      <File Name="user/tar/tar.c"/>
+      <File Name="user/tar/tar.h"/>
+      <File Name="user/tar/list.c"/>
+      <File Name="user/tar/stubs.c"/>
+      <File Name="user/tar/stubs.h"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
