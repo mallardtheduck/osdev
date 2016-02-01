@@ -15,7 +15,7 @@ DIR *opendir (const char *name){
 int readdir_r (DIR *__restrict dirp, struct dirent *__restrict entry, struct dirent **__restrict result){
 	bt_directory_entry de = bt_dread(*dirp);
 	if(de.valid){
-		entry->d_ino = 0;
+		entry->d_ino = de.id;
 		strncpy(entry->d_name, de.filename, MAXNAMLEN);
 		entry->d_namlen = strlen(entry->d_name);
 		entry->d_reclen = sizeof(entry);
@@ -30,6 +30,7 @@ int readdir_r (DIR *__restrict dirp, struct dirent *__restrict entry, struct dir
 struct dirent *readdir (DIR *dirp){
 	static struct dirent ret;
 	readdir_r(dirp, &ret, NULL);
+	return &ret;
 }
 
 void rewinddir (DIR *dirp){

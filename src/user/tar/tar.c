@@ -58,11 +58,8 @@ int main(argc, argv)
 	 */
 
 	tar = "tar";		/* Set program name */
-
 	options(argc, argv);
-
 	name_init(argc, argv);
-
 	if (f_create) {
 		if (f_extract || f_list) goto dupflags;
 		create_archive();

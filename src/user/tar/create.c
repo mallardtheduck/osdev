@@ -87,6 +87,7 @@ dump_file(p)
 	if (0 != f_follow_links? stat(p, statbuf): lstat(p, statbuf))
 	{
 badperror:
+		fprintf(stderr, "Error: ");
 		perror(p);
 badfile:
 		errors++;
@@ -191,7 +192,7 @@ badfile:
 
 		if (f_verbose) {
 			annorec(stdout, (char *)NULL);
-			printf("%s\n", p);
+			printf("file: %s\n", p);
 		}
 	donefile:
 		break;
@@ -225,7 +226,7 @@ badfile:
 		finish_header(header);		/* Nothing more to do to it */
 		if (f_verbose) {
 			annorec(stdout, (char *)NULL);
-			printf("%s\n", p);
+			printf("link: %s\n", p);
 		}
 	}
 		break;
@@ -270,7 +271,7 @@ badfile:
 		}
 		if (f_verbose) {
 			annorec(stdout, (char *)NULL);
-			printf("%s\n", p);
+			printf("dir: %s\n", p);
 		}
 
 		/* Hack to remove "./" from the front of all the file names */
@@ -346,7 +347,7 @@ badfile:
 		finish_header(header);
 		if (f_verbose) {
 			annorec(stdout, (char *)NULL);
-			printf("%s\n", p);
+			printf("special: %s\n", p);
 		}
 		break;
 

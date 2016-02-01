@@ -136,8 +136,41 @@ caddr_t sbrk(int incr){
 }
 
 int stat(const char *file, struct stat *st){
-    st->st_mode = S_IFCHR;
-    return 0;
+	char path[BT_MAX_PATH]={0};
+	if(btos_path_parse(file, path, BT_MAX_PATH)){
+		bt_directory_entry e = bt_stat(path);
+		if(e.valid){
+			st->st_dev = 0;
+			st->st_ino = e.id;
+			switch(e.type){
+				case FS_File:
+					st->st_mode = S_IFREG | S_IRWXU | S_IRWXG | S_IRWXO;
+					break;
+				case FS_Directory:
+					st->st_mode = S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO;
+					break;
+				case FS_Link:
+					st->st_mode = S_IFLNK | S_IRWXU | S_IRWXG | S_IRWXO;
+					break;
+				case FS_Device:
+					st->st_mode = S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO;
+					break;
+				case FS_Invalid:
+					return -1;
+			}
+			st->st_nlink = 1;
+			st->st_uid = 0;
+			st->st_gid = 0;
+			st->st_rdev = 0;
+			st->st_size = e.size;
+			st->st_atime = 0;
+			st->st_mtime = 0;
+			st->st_ctime = 0;
+			st->st_blksize = 1;
+			st->st_blocks = e.size;
+			return 0;
+		}else return -1;
+	}else return -1;
 }
 
 clock_t times(struct tms *buf){
