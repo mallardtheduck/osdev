@@ -10,6 +10,7 @@ ENUM_START(bt_rtc_api)
 	ENUM_SET(bt_rtc_api, Millis, 2),
 	ENUM_SET(bt_rtc_api, CreateTimer, 3),
 	ENUM_SET(bt_rtc_api, ResetTimer, 4),
+	ENUM_SET(bt_rtc_api, GetTime, 5),
 ENUM_END;
 ENUM_TYPE(bt_rtc_api);
 
@@ -82,6 +83,11 @@ inline static void bt_rtc_reset_timer(bt_handle_t timer){
 	bt_rtc_api_call(ENUM_GET(bt_rtc_api, ResetTimer), (uint32_t)timer, 0, 0);
 }
 
+inline static uint64_t bt_rtc_get_time(){
+	uint64_t ret;
+	bt_rtc_api_call(ENUM_GET(bt_rtc_api, GetTime), (uint32_t)&ret, 0, 0);
+	return ret;
+}
 
 #endif
 

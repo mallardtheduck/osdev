@@ -3,8 +3,6 @@
 #include <dev/rtc.h>
 #include <btos/bt_msg.h>
 
-USE_BT_RTC_API;
-
 int main(int argc, char **argv){
 	if(argc != 2){
 		printf("Usage: %s msec\n", argv[0]);

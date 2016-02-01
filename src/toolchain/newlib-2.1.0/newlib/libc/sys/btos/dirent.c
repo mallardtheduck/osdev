@@ -1,11 +1,15 @@
-#include "dirent.h"
+#include <sys/dirent.h>
 #include <stdlib.h>
 #include <string.h>
+#include "crt_support.h"
 
-DIR *opendir (const char *path){
-	DIR *ret = malloc(sizeof(DIR));
-	if(ret) *ret = bt_dopen(path, FS_Read);
-	return ret;
+DIR *opendir (const char *name){
+	char path[BT_MAX_PATH]={0};
+	if(btos_path_parse(name, path, BT_MAX_PATH)){
+		DIR *ret = malloc(sizeof(DIR));
+		if(ret) *ret = bt_dopen(path, FS_Read);
+		return ret;
+	}else return NULL;
 }
 
 int readdir_r (DIR *__restrict dirp, struct dirent *__restrict entry, struct dirent **__restrict result){

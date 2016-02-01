@@ -155,6 +155,10 @@ void open_archive(read)
 	 * that will reblock the output of compress to the user's specs.
 	 */
 	if (f_compress) {
+		fprintf(stderr,
+				"tar: compression not implemented.\n");
+			exit(EX_ARGSBAD);
+		#if 0
 		int pipes[2];
 		int err;
 
@@ -223,6 +227,7 @@ void open_archive(read)
 #ifdef BSD42
 		f_reblock++;		/* Pipe will give random # of bytes */
 #endif //BSD42
+	#endif //0
 	}
 
 	ar_reading = read;

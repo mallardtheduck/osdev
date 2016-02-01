@@ -21,6 +21,10 @@ uint64_t rtc_millis(){
 	return msec_counter;
 }
 
+uint64_t rtc_get_time(){
+	return msec_counter + boot_msec;
+}
+
 rtc_calltable calltable = {&rtc_sleep, &rtc_millis};
 
 void rtc_uapi(uint16_t id,isr_regs *regs){
@@ -39,6 +43,10 @@ void rtc_uapi(uint16_t id,isr_regs *regs){
 		}
 		case bt_rtc_api::ResetTimer:{
 			reset_timer(regs);
+			break;
+		}
+		case bt_rtc_api::GetTime:{
+			*(uint64_t*)regs->ebx = rtc_get_time();
 			break;
 		}
 	}
