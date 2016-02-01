@@ -84,7 +84,7 @@ string parse_path(string path){
 
 bool is_directory(const string &path){
 	bt_directory_entry de=bt_stat(path.c_str());
-	if(de.type==FS_Directory) return true;
+	if(de.valid && de.type==FS_Directory) return true;
 	else return false;
 }
 
