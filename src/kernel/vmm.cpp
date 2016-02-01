@@ -523,7 +523,8 @@ void vmm_deletepagedir(vmm_pagedir *dir){
 }
 
 size_t vmm_getusermemory(vmm_pagedir *dir){
-	return dir->getuserpagecount() * VMM_PAGE_SIZE;
+	if(dir)	return dir->getuserpagecount() * VMM_PAGE_SIZE;
+	else return 0;
 }
 
 size_t vmm_getkernelmemory(){
