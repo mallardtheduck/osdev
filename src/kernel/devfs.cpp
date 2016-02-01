@@ -75,6 +75,7 @@ directory_entry devfs_read_dir(void *dirdata){
 	if(drvi){
 		ret.valid=true;
 		strncpy(ret.filename, name, 255);
+		ret.id = (uint64_t)drv_get(name);
 		ret.size=0;
 		ret.type=FS_Device;
 		ddata->pos++;
@@ -114,6 +115,7 @@ directory_entry devfs_stat(void *, fs_path *path){
 	if(dev){
 		ret.valid=true;
 		strncpy(ret.filename, path->str, 255);
+		ret.id = (uint64_t)dev;
 		ret.size=0;
 		ret.type=FS_Device;
 	}

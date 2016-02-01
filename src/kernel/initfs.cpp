@@ -117,6 +117,7 @@ directory_entry initfs_read_dir(void *dirdata){
 	}
 	initfs_file file=initfs_getfile(ddata->pos);
 	strncpy(ret.filename, file.name.c_str(), 255);
+	ret.id = (uint64_t)file.data;
 	ret.size=file.size;
 	ret.type=FS_File;
 	ret.valid=true;
@@ -134,6 +135,7 @@ directory_entry initfs_stat(void *, fs_path *path){
 		dbgout("INITFS: Stat root.\n");
 		directory_entry ret;
 		ret.filename[0]='\0';
+		ret.id = 0;
 		ret.size=initfs_getfilecount();
 		ret.type=FS_Directory;
 		ret.valid=true;
