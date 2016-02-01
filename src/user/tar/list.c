@@ -12,6 +12,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "stubs.h"
 
 char *ctime();				/* From libc.a */
 
@@ -27,6 +31,7 @@ struct stat hstat[1];			/* Stat struct corresponding */
 
 void print_header();
 void skip_file();
+int read_header();
 
 
 /*
@@ -230,7 +235,7 @@ from_oct(digs, where)
 {
 	register long	value;
 
-	while (isspace(*where)) {		/* Skip spaces */
+	while (isspace((unsigned)*where)) {		/* Skip spaces */
 		where++;
 		if (--digs <= 0)
 			return -1;		/* All blank field */
@@ -241,7 +246,7 @@ from_oct(digs, where)
 		--digs;
 	}
 
-	if (digs > 0 && *where && !isspace(*where))
+	if (digs > 0 && *where && !isspace((unsigned)*where))
 		return -1;			/* Ended on non-space/nul */
 
 	return value;
@@ -337,7 +342,7 @@ print_header()
 			"",
 			size,
 			timestamp+4, timestamp+20,
-			sizeof(head->header.name),
+			(int)sizeof(head->header.name),
 			head->header.name);
 	} else {
 		printf("%s", head->header.name);
@@ -441,20 +446,23 @@ demode(mode, string)
 		}
 	}
 
-	if (mode & S_ISUID)
+	if (mode & S_ISUID){
 		if (string[-7] == 'x')
 			string[-7] = 's';
 		else
 			string[-7] = 'S';
-	if (mode & S_ISGID)
+	}
+	if (mode & S_ISGID){
 		if (string[-4] == 'x')
 			string[-4] = 's';
 		else
 			string[-4] = 'S';
-	if (mode & S_ISVTX)
+	}
+	if (mode & S_ISVTX){
 		if (string[-1] == 'x')
 			string[-1] = 't';
 		else
 			string[-1] = 'T';
+	}
 	*string = '\0';
 }

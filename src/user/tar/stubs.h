@@ -11,5 +11,6 @@ int lstat(const char *path, struct stat *buf);
 
 #define major(x) 0
 #define minor(x) 0
+#define makedev(x, y) 0
 
 #endif

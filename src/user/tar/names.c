@@ -9,18 +9,19 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
+#include <string.h>
 #include "tar.h"
 
 static int	saveuid = -993;
 static char	saveuname[TUNMLEN];
-static int	my_uid = -993;
+//static int	my_uid = -993;
 
 static int	savegid = -993;
 static char	savegname[TGNMLEN];
-static int	my_gid = -993;
+//static int	my_gid = -993;
 
-#define myuid	( my_uid < 0? my_uid = getuid(): my_uid )
-#define	mygid	( my_gid < 0? my_gid = getgid(): my_gid )
+#define myuid	0 //( my_uid < 0? my_uid = getuid(): my_uid )
+#define	mygid	0 //( my_gid < 0? my_gid = getgid(): my_gid )
 
 
 #ifndef NONAMES
@@ -38,7 +39,7 @@ finduname(uname, uid)
 	int	uid;
 {
 	struct passwd	*pw;
-	extern struct passwd *getpwuid ();
+	//extern struct passwd *getpwuid ();
 
 	if (uid != saveuid) {
 		saveuid = uid;
@@ -77,7 +78,7 @@ findgname(gname, gid)
 	int	gid;
 {
 	struct group	*gr;
-	extern struct group *getgrgid ();
+	//extern struct group *getgrgid ();
 
 	if (gid != savegid) {
 		savegid = gid;

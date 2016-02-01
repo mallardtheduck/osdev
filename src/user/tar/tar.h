@@ -182,3 +182,9 @@ void flush_archive();
 void open_archive(int read);
 void close_archive();
 void name_close();
+void name_gather();
+int name_match(register char *p);
+void names_notfound();
+int finduid(char uname[TUNMLEN]);
+int findgid(char gname[TUNMLEN]);
+	
