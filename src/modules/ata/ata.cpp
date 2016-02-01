@@ -14,7 +14,7 @@ drv_driver ata_driver;
 lock ata_lock, ata_drv_lock;
 
 
-static void ata_io_wait(struct ata_device * dev) {
+void ata_io_wait(struct ata_device * dev) {
 	inb(dev->io_base + ATA_REG_ALTSTATUS);
 	inb(dev->io_base + ATA_REG_ALTSTATUS);
 	inb(dev->io_base + ATA_REG_ALTSTATUS);
@@ -105,6 +105,7 @@ static int ata_device_detect(struct ata_device * dev) {
 	dbgpf("ATA: Device detected: 0x%2x 0x%2x\n", cl, ch);
 	if (cl == 0xFF && ch == 0xFF) {
 		/* Nothing here */
+		dbgout("ATA: No device.\n");
 		return 0;
 	}
 	if (cl == 0x00 && ch == 0x00) {
@@ -113,6 +114,12 @@ static int ata_device_detect(struct ata_device * dev) {
 		char devicename[9]="ATA";
 		add_device(devicename, &ata_driver, (void*)dev);
 		mbr_parse(devicename);
+		return 1;
+	}
+	if (cl == 0x14 && ch == 0xEB) {
+		atapi_device_init(dev);
+		char devicename[9]="ATAPI";
+		add_device(devicename, &atapi_driver, (void*)dev);
 		return 1;
 	}
 
@@ -317,7 +324,7 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 	init_lock(&ata_lock);
     init_lock(&ata_drv_lock);
     init_queue();
+	preinit_dma();
 	ata_initialize();
-    preinit_dma();
     return 0;
 }

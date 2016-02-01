@@ -118,6 +118,7 @@
       <File Name="modules/ata/dma.cpp"/>
       <File Name="modules/ata/mbr.cpp"/>
       <File Name="modules/ata/queue.cpp"/>
+      <File Name="modules/ata/atapi.cpp"/>
     </VirtualDirectory>
     <VirtualDirectory Name="boot">
       <File Name="modules/boot/Makefile"/>

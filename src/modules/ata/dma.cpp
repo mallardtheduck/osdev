@@ -49,6 +49,28 @@ bool dma_blockcheck(void *q){
     return *(bool*)q;
 }
 
+void ata_reset_wait(uint32_t bus){
+	if(bus == bus0_io_base){
+		bus0done = false;
+	}else if(bus == bus1_io_base){
+		bus1done = false;
+	}else{
+		panic("ATA: Unknown device!");
+	}
+}
+
+void ata_wait_irq(uint32_t bus){
+	void *blockptr;
+	if(bus == bus0_io_base){
+		blockptr=(void*)&bus0done;
+	}else if(bus == bus1_io_base){
+		blockptr=(void*)&bus1done;
+	}else{
+		panic("ATA: Unknown device!");
+	}
+	thread_setblock(&dma_blockcheck, blockptr);
+}
+
 void set_bus0_prdt(uint32_t bmr, prd *prd){
     uint32_t phys=physaddr((void*)prd);
     dbgpf("ATA: Setting bus 0 PRDT pointer to %x.\n", phys);
@@ -84,10 +106,6 @@ bool init_dma(){
         init_lock(&dma_lock);
         set_bus0_prdt(bmr, new prd());
         set_bus1_prdt(bmr, new prd());
-        handle_irq(14, &dma_int_handler);
-        handle_irq(15, &dma_int_handler);
-        unmask_irq(14);
-        unmask_irq(15);
         dma_init=true;
         return true;
     }
@@ -168,5 +186,9 @@ void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf){
 }
 
 void preinit_dma(){
+	handle_irq(14, &dma_int_handler);
+	handle_irq(15, &dma_int_handler);
+	unmask_irq(14);
+	unmask_irq(15);
     init_lock(&dma_init_lock);
 }

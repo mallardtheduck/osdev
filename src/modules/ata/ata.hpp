@@ -142,12 +142,16 @@ struct ata_device {
     ata_identify_t identity;
 };
 
+extern lock ata_lock, ata_drv_lock;
+
 void ata_device_read_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf);
 void ata_device_read_sector_pio(struct ata_device * dev, uint32_t lba, uint8_t * buf);
 void ata_device_write_sector_retry(struct ata_device * dev, uint32_t lba, uint8_t * buf);
 void init_queue();
 void ata_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
 void ata_queued_write(ata_device *dev, uint32_t lba, uint8_t *buf);
+
+void atapi_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
 
 int ata_wait(struct ata_device * dev, int advanced);
 
@@ -163,5 +167,12 @@ void cache_drop(size_t deviceid, size_t sector);
 void preinit_dma();
 bool init_dma();
 void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf);
+
+extern drv_driver atapi_driver;
+void atapi_device_init(ata_device *dev);
+void ata_io_wait(struct ata_device * dev);
+void atapi_device_read(ata_device *dev, uint32_t lba, uint8_t *buf);
+void ata_reset_wait(uint32_t bus);
+void ata_wait_irq(uint32_t bus);
 
 #endif
