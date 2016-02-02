@@ -198,7 +198,7 @@ fs_driver initfs_getdriver(){
 				file.name = th->filename;
 				file.size = size;
 				initfs_data->push_back(file);
-				th = (tar_header*)((uint32_t) data + ((size & ~511) + 512));
+				th = (tar_header*)((uint32_t) data + (512 * (size % 512 ? (size / 512) + 1 : size / 512)));
 			}
 		}else{
 			panic("(INITFS) No tar module loaded!");
