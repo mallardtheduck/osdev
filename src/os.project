@@ -202,6 +202,9 @@
       <File Name="modules/iso9660/linker.ld"/>
       <File Name="modules/iso9660/Makefile"/>
       <File Name="modules/iso9660/iso9660.cpp"/>
+      <File Name="modules/iso9660/lib9660.c"/>
+      <File Name="modules/iso9660/lib9660.h"/>
+      <File Name="modules/iso9660/tb9660.c"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="user">
