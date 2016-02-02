@@ -7,7 +7,7 @@ void atapi_test(ata_device *dev);
 void atapi_device_init(ata_device *dev){
 	dbgpf("ATA: Initializing ATAPI device on bus %d\n", dev->io_base);
 
-	outb(dev->io_base + 1, 1);
+	outb(dev->io_base + ATA_REG_ERROR, 1);
 	outb(dev->control, 0);
 
 	outb(dev->io_base + ATA_REG_HDDEVSEL, 0xA0 | dev->slave << 4);
@@ -37,57 +37,55 @@ void atapi_device_init(ata_device *dev){
 	dbgpf("ATA: Device Name:  %s\n", dev->identity.model);
 	dbgpf("ATA: Sectors (48): %d\n", (uint32_t)dev->identity.sectors_48);
 	dbgpf("ATA: Sectors (24): %d\n", dev->identity.sectors_28);
+	
+	dev->atapi_packet_size = 0xFF;
+	if((dev->identity.flags & 0x03) == 0) dev->atapi_packet_size = 12;
+	if((dev->identity.flags & 0x03) == 1) dev->atapi_packet_size = 16;
+	dbgpf("ATA: ATAPI Packet size: %d (%i)\n", dev->atapi_packet_size, (int)(dev->identity.flags & 0x03));
+	
 
-	outb(dev->io_base + ATA_REG_CONTROL, 0);
+	outb(dev->control, 0);
 	
 	atapi_test(dev);
 }
 
-void atapi_device_read(ata_device *dev, uint32_t lba, uint8_t *buf){
+size_t atapi_scsi_command(ata_device *dev, uint8_t cmd[12], size_t size, uint8_t *buf){
 	uint16_t bus = dev->io_base;
 	uint8_t slave = dev->slave;
-	size_t errors;
-
-	uint8_t read_cmd[12] = { 0xA8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	dbgpf("ATA: Executing ATAPI SCSI command: %x\n", cmd[0]);
 	
-try_again:
-	dbgout("ATAPI: 0\n");
-	outb(bus + ATA_REG_CONTROL, 0);
-
+	outb(dev->io_base + ATA_REG_HDDEVSEL, slave << 4);
 	ata_wait(dev, 0);
-	dbgout("ATAPI: 1\n");
-
-	outb(bus + ATA_REG_HDDEVSEL, slave << 4);
-	ata_wait(dev, 0);
+	outb(dev->control, 0x00);
 	outb(bus + ATA_REG_FEATURES, 0x00);
-	outb(bus + ATA_REG_LBA1, (lba & 0x0000ff00) >>  8);
-	outb(bus + ATA_REG_LBA2, (lba & 0x00ff0000) >> 16);
-	dbgout("ATAPI: 2\n");
-	ata_reset_wait(bus);
-	outb(bus + ATA_REG_COMMAND, ATA_CMD_PACKET);
-	dbgout("ATAPI: 3\n");
-	ata_wait_irq(bus);
-	dbgout("ATAPI: 4\n");
-	ata_reset_wait(bus);
-	dbgout("ATAPI: 5\n");
-	outsm(bus, read_cmd, 6);
-	dbgout("ATAPI: 6\n");
-	ata_wait_irq(bus);
-	dbgout("ATAPI: 7\n");
-
-	if (ata_wait(dev, 1)) {
-		dbgpf("ATA: Error during ATAPI read of lba block %d\n", lba);
-		errors++;
-		if (errors > 4) {
-			dbgpf("ATA: -- Too many errors trying to read this block. Bailing.\n", 0);
-			return;
-		}
-		goto try_again;
-	}
-
-	int size = 256;
-	insm(bus,buf,size);
+	outb(bus + ATA_REG_LBA1, (size & 0x000000ff) >> 0);
+	outb(bus + ATA_REG_LBA2, (size & 0x0000ff00) >> 8);
+	outb(bus +  ATA_REG_COMMAND, ATA_CMD_PACKET);
 	ata_wait(dev, 0);
+	while(!(inb(dev->control) & ATA_SR_DRQ));
+	ata_reset_wait(bus);
+	for(size_t i=0; i<6; ++i){
+		out16(bus, ((uint16_t*)cmd)[i]);
+	}
+	ata_wait_irq(bus);
+	ata_reset_wait(bus);
+	size_t read = inb(bus + ATA_REG_LBA1) + (inb(bus + ATA_REG_LBA2) << 8);
+	for(size_t i=0; i<read/2; ++i){
+		((uint16_t*)buf)[i] = in16(bus);
+	}
+	ata_wait(dev, 0);
+	return read;
+}
+
+void atapi_device_read(ata_device *dev, uint32_t lba, uint8_t *buf){
+	uint8_t read_cmd[12] = {0xA8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	read_cmd[9] = 1;              /* 1 sector */
+	read_cmd[2] = (lba >> 0x18) & 0xFF;   /* most sig. byte of LBA */
+	read_cmd[3] = (lba >> 0x10) & 0xFF;
+	read_cmd[4] = (lba >> 0x08) & 0xFF;
+	read_cmd[5] = (lba >> 0x00) & 0xFF;
+	
+	atapi_scsi_command(dev, read_cmd, 2048, buf);
 }
 
 struct atapi_instance{
@@ -113,16 +111,16 @@ bool atapi_close(void *instance){
 
 size_t atapi_read(void *instance, size_t bytes, char *buf){
     hold_lock hl(&ata_drv_lock);
-	if(bytes % 512) return 0;
+	if(bytes % ATAPI_SECTOR_SIZE) return 0;
 	atapi_instance *inst=(atapi_instance*)instance;
-	for(size_t i=0; i<bytes; i+=512){
-        if(!cache_get((size_t)inst->dev, inst->pos/512, &buf[i])) {
+	for(size_t i=0; i<bytes; i+=ATAPI_SECTOR_SIZE){
+        if(!cache_get((size_t)inst->dev, inst->pos/ATAPI_SECTOR_SIZE, &buf[i])) {
             release_lock(&ata_drv_lock);
-            atapi_queued_read(inst->dev, inst->pos / 512, (uint8_t *) &buf[i]);
+            atapi_queued_read(inst->dev, inst->pos / ATAPI_SECTOR_SIZE, (uint8_t *) &buf[i]);
             take_lock(&ata_drv_lock);
-            cache_add((size_t)inst->dev, inst->pos/512, &buf[i]);
+            cache_add((size_t)inst->dev, inst->pos/ATAPI_SECTOR_SIZE, &buf[i]);
         }
-		inst->pos+=512;
+		inst->pos+=ATAPI_SECTOR_SIZE;
 	}
 	return bytes;
 }
@@ -133,10 +131,10 @@ size_t atapi_write(void */*instance*/, size_t /*bytes*/, char */*buf*/){
 
 size_t atapi_seek(void *instance, size_t pos, uint32_t flags){
 	atapi_instance *inst=(atapi_instance*)instance;
-	if(pos % 512) return inst->pos;
+	if(pos % ATAPI_SECTOR_SIZE) return inst->pos;
 	if(flags & FS_Relative) inst->pos+=pos;
 	else if(flags & FS_Backwards){
-		inst->pos = (inst->dev->identity.sectors_48 * 512) - pos;
+		inst->pos = (inst->dev->identity.sectors_48 * ATAPI_SECTOR_SIZE) - pos;
 	}else if(flags == (FS_Relative | FS_Backwards)) inst->pos-=pos;
 	else inst->pos=pos;
 	return inst->pos;
@@ -157,9 +155,8 @@ char *atapi_desc(){
 drv_driver atapi_driver={&atapi_open, &atapi_close, &atapi_read, &atapi_write, &atapi_seek, &atapi_ioctl, &atapi_type, &atapi_desc};
 
 void atapi_test(ata_device *dev){
-	uint8_t buf[512];
+	uint8_t buf[2048] = {0};
 	atapi_device_read(dev, 0, buf);
 	
 	dbgpf("ATAPI TEST: %x %x %x\n", (int)buf[0], (int)buf[1], (int)buf[2]);
-	panic("q");
 }

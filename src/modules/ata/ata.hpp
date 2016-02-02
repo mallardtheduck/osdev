@@ -69,8 +69,8 @@
 #define ATA_REG_LBA3       0x09
 #define ATA_REG_LBA4       0x0A
 #define ATA_REG_LBA5       0x0B
-#define ATA_REG_CONTROL    0x0C
-#define ATA_REG_ALTSTATUS  0x0C
+//#define ATA_REG_CONTROL    0x0C
+//#define ATA_REG_ALTSTATUS  0x0C
 #define ATA_REG_DEVADDRESS 0x0D
 
 // Channels:
@@ -139,6 +139,7 @@ struct ata_device {
     int io_base;
     int control;
     int slave;
+	size_t atapi_packet_size;
     ata_identify_t identity;
 };
 
@@ -159,6 +160,7 @@ void mbr_parse(char* device);
 
 /* TODO support other sector sizes */
 #define ATA_SECTOR_SIZE 512
+#define ATAPI_SECTOR_SIZE 2048
 
 void cache_add(size_t deviceid, size_t sector, char *data);
 bool cache_get(size_t deviceid, size_t sector, char *data);

@@ -15,10 +15,10 @@ lock ata_lock, ata_drv_lock;
 
 
 void ata_io_wait(struct ata_device * dev) {
-	inb(dev->io_base + ATA_REG_ALTSTATUS);
-	inb(dev->io_base + ATA_REG_ALTSTATUS);
-	inb(dev->io_base + ATA_REG_ALTSTATUS);
-	inb(dev->io_base + ATA_REG_ALTSTATUS);
+	inb(dev->control);
+	inb(dev->control);
+	inb(dev->control);
+	inb(dev->control);
 }
 
 
@@ -60,7 +60,7 @@ static void ata_device_init(struct ata_device * dev) {
 
 	dbgpf("ATA: Initializing IDE device on bus %d\n", dev->io_base);
 
-	outb(dev->io_base + 1, 1);
+	outb(dev->io_base + ATA_REG_ERROR, 1);
 	outb(dev->control, 0);
 
 	outb(dev->io_base + ATA_REG_HDDEVSEL, 0xA0 | dev->slave << 4);
@@ -91,7 +91,7 @@ static void ata_device_init(struct ata_device * dev) {
 	dbgpf("ATA: Sectors (48): %d\n", (uint32_t)dev->identity.sectors_48);
 	dbgpf("ATA: Sectors (24): %d\n", dev->identity.sectors_28);
 
-	outb(dev->io_base + ATA_REG_CONTROL, 0);
+	outb(dev->control, 0);
 }
 
 static int ata_device_detect(struct ata_device * dev) {
@@ -143,7 +143,7 @@ void ata_device_read_sector_pio(struct ata_device * dev, uint32_t lba, uint8_t *
 
 	int errors = 0;
 try_again:
-	outb(bus + ATA_REG_CONTROL, 0);
+	outb(dev->control, 0);
 
 	ata_wait(dev, 0);
 
@@ -177,7 +177,7 @@ void ata_device_write_sector(struct ata_device * dev, uint32_t lba, uint8_t * bu
 	uint16_t bus = dev->io_base;
 	uint8_t slave = dev->slave;
 
-	outb(bus + ATA_REG_CONTROL, 0);
+	outb(dev->control, 0);
 
 	ata_wait(dev, 0);
 	outb(bus + ATA_REG_HDDEVSEL, 0xe0 | slave << 4 | (lba & 0x0f000000) >> 24);

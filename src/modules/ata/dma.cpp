@@ -26,6 +26,7 @@ uint32_t bmr;
 volatile bool bus0done, bus1done;
 
 void dma_int_handler(int irq, isr_regs *){
+	dbgpf("ATA: IRQ %i\n", irq);
     uint8_t bus0status=inb(bmr+0x02);
     uint8_t bus1status=inb(bmr+0x0A);
     if(bus0status & 0x04){
@@ -40,9 +41,11 @@ void dma_int_handler(int irq, isr_regs *){
         bus1done=true;
         outb(bmr+0x0A, 0x04);
     }
+	if(irq == 14) bus0done = true;
+	if(irq == 15) bus1done = true;
     irq_ack(irq);
-    enable_interrupts();
-    yield();
+    /*enable_interrupts();
+    yield();*/
 }
 
 bool dma_blockcheck(void *q){
@@ -144,14 +147,14 @@ void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf){
     }else{
         panic("(ATA) Unrecognised device!");
     }
-    outb(bus + ATA_REG_CONTROL, 2);
+    outb(dev->control, 2);
     outb(bmr + base, DMA_READ);
 
     uint8_t status=inb(bmr + base + 2);
     outb(bmr + base + 2, status | 2 | 4);
 
     ata_wait(dev, 0);
-    outb(bus + ATA_REG_CONTROL, 0);
+    outb(dev->control, 0);
 
     outb(bus + ATA_REG_HDDEVSEL, 0xe0 | slave << 4 | (lba & 0x0f000000) >> 24);
     outb(bus + 1, 0x03);
@@ -186,6 +189,7 @@ void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf){
 }
 
 void preinit_dma(){
+	dbgout("ATA: DMA/IRQ Pre-Init.\n");
 	handle_irq(14, &dma_int_handler);
 	handle_irq(15, &dma_int_handler);
 	unmask_irq(14);

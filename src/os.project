@@ -198,6 +198,11 @@
       <File Name="modules/vga/vga.hpp"/>
       <File Name="modules/vga/vga_palette.cpp"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="iso9660">
+      <File Name="modules/iso9660/linker.ld"/>
+      <File Name="modules/iso9660/Makefile"/>
+      <File Name="modules/iso9660/iso9660.cpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="user">
     <File Name="user/Makefile"/>

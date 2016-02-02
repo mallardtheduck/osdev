@@ -294,7 +294,7 @@ extern "C" void irq_handler(irq_regs *r) {
     }
 	//out_regs(*r);
 	int irq=r->int_no-IRQ_BASE;
-	if(handlers[r->int_no]) handlers[r->int_no](r->int_no, (isr_regs*)r);
+	if(handlers[r->int_no]) handlers[r->int_no](r->int_no - 32, (isr_regs*)r);
     irq_ack(irq);
     disable_interrupts();
     if(sch_can_lock()) {
