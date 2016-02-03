@@ -4,8 +4,8 @@
 class vmm_pagedir{
 private:
     uint32_t* pagedir;
-    uint32_t* curtable;
-    uint32_t phys_addr;
+    uint32_t* curtable = 0;
+    uint32_t phys_addr = 0;
     size_t userpagecount;
 
     void maptable(uint32_t phys_addr);
@@ -37,6 +37,9 @@ public:
     size_t unmap_page(size_t virtpage);
 
     void copy_kernelspace(vmm_pagedir *other){
+		if(!pagedir) panic("(VMM) Copy to NULL page directory.");
+		if(!other) panic("(VMM) Copy from NULL object.");
+		if(!other->pagedir) panic("(VMM) Copy from NULL page directory.");
     	memcpy(pagedir, other->pagedir, VMM_KERNEL_TABLES * sizeof(uint32_t));
     }
 

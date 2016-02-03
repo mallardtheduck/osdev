@@ -116,6 +116,22 @@ inline void disable_pic(){
 	outb(0x21, 0xff);
 }
 
+class interrupt_lock{
+private:
+	bool active = false;
+
+public:
+	interrupt_lock() {
+        if(are_interrupts_enabled()){
+			active = true;
+			disable_interrupts();
+		}
+    }
+	~interrupt_lock() {
+		if(active) enable_interrupts();
+	}
+};
+
 #endif
 
 

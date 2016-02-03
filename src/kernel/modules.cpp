@@ -50,5 +50,6 @@ void load_module(const char *path, char *params){
 	loaded_modules->push_back(mod);
 	release_lock(mod_lock);
 	//sch_new_thread(&module_thread_start, (void*)mod.elf.entry);
+	//if(!mod.elf.entry) panic("(MOD) Module has no entry point!");
 	mod.elf.entry(&MODULE_SYSCALL_TABLE, params);
 }

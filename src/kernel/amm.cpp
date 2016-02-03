@@ -70,6 +70,7 @@ void amm_page_fault_handler(int, isr_regs *regs){
         if(proc_current_pid)proc_terminate();
 		else sch_end_thread();
     }else{
+		out_int_info(*regs);
         dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
         dbgpf("AMM: Physical address: %x\n", physaddr);
         if (addr < VMM_PAGE_SIZE) {

@@ -23,6 +23,16 @@ char *fs_mounts_infofs(){
 	return buffer;
 }
 
+char *fs_registered_infofs(){
+	char *buffer=(char*)malloc(4096);
+	memset(buffer, 0, 4096);
+	sprintf(buffer, "# name, addr\n");
+	for(map<string, fs_driver>::iterator i=fs_drivers->begin(); i!=fs_drivers->end(); ++i){
+		sprintf(&buffer[strlen(buffer)], "%s, %x\n", i->first.c_str(), i->second);
+	}
+	return buffer;
+}
+
 void fs_init(){
 	dbgout("FS: Init\n");
 	init_lock(fs_lock);
@@ -45,6 +55,7 @@ void fs_init(){
 	}
 	fs_close_dir(dir);
 	infofs_register("MOUNTS", &fs_mounts_infofs);
+	infofs_register("FILESYSTEMS", &fs_registered_infofs);
 }
 
 fs_path *new_fs_path(const string &path, bool toupper=true){

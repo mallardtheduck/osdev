@@ -46,7 +46,7 @@ void atapi_device_init(ata_device *dev){
 
 	outb(dev->control, 0);
 	
-	atapi_test(dev);
+	//atapi_test(dev);
 }
 
 size_t atapi_scsi_command(ata_device *dev, uint8_t cmd[12], size_t size, uint8_t *buf){
@@ -77,15 +77,16 @@ size_t atapi_scsi_command(ata_device *dev, uint8_t cmd[12], size_t size, uint8_t
 	return read;
 }
 
-void atapi_device_read(ata_device *dev, uint32_t lba, uint8_t *buf){
+int atapi_device_read(ata_device *dev, uint32_t lba, uint8_t *buf){
 	uint8_t read_cmd[12] = {0xA8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	read_cmd[9] = 1;              /* 1 sector */
 	read_cmd[2] = (lba >> 0x18) & 0xFF;   /* most sig. byte of LBA */
 	read_cmd[3] = (lba >> 0x10) & 0xFF;
 	read_cmd[4] = (lba >> 0x08) & 0xFF;
 	read_cmd[5] = (lba >> 0x00) & 0xFF;
+	dbgpf("ATA: Read ATAPI sector %i.\n", lba);
 	
-	atapi_scsi_command(dev, read_cmd, 2048, buf);
+	return atapi_scsi_command(dev, read_cmd, 2048, buf);
 }
 
 struct atapi_instance{

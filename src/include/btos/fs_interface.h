@@ -87,7 +87,7 @@ enum fs_seek_flags{
 
 struct fs_driver{
 	bool valid;
-	char name[9];
+	char *name;
 	bool needs_device;
 	void *(*mount)(char *device);
 	bool (*unmount)(void *mountdata);

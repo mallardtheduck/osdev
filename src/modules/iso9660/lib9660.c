@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #endif
 
+#define DEBUG
+#define printf dbgpf
+
 #ifdef L9660_HAVE_STDIO
 #include <stdio.h>
 #else
@@ -170,15 +173,15 @@ static l9660_status prebuffer(l9660_file *f)
 #if defined(DEBUG)
 static void print_dirent(l9660_dirent *dent)
 {
-    if (!getenv("L9660_DEBUG"))
-        return;
+    /*if (!getenv("L9660_DEBUG"))
+        return;*/
 
     printf("| ---- dirent\n");
     printf("| length        %d\n", dent->length);
     printf("| xattr_length  %d\n", dent->xattr_length);
     printf("| sector        %u\n", READ32(dent->sector));
     printf("| size          %u\n", READ32(dent->size));
-    printf("| name          \"%.*s\"\n", dent->name_len, dent->name);
+    printf("| name          \"%s\"\n", dent->name);
     printf("| ---- end dirent\n");
 }
 #endif
@@ -288,6 +291,9 @@ rebuffer:
     f->position += aligneven(dirent->length);
 
     *pdirent = dirent;
+	#ifdef DEBUG
+            print_dirent(dirent);
+	#endif
     return L9660_OK;
 }
 

@@ -51,13 +51,28 @@ void vmm_pagedir::init(uint32_t *dir){
 
 void vmm_pagedir::init(){
 	curtable=(uint32_t*)&vmm_tableframe;
-	pagedir=(uint32_t*)vmm_alloc(1, vmm_allocmode::Kernel);
-	phys_addr=vmm_cur_pagedir->virt2phys(pagedir);
-	memset(pagedir, 0, VMM_ENTRIES_PER_TABLE * sizeof(uint32_t));
-	if((uint32_t)curtable != ((uint32_t)curtable & VMM_ADDRESS_MASK)) panic("VMM: Misaligned table frame!");
+	if((uint32_t)curtable != ((uint32_t)curtable & VMM_ADDRESS_MASK)){
+		dbgpf("VMM: Table frame at: %x\n", curtable);
+		panic("VMM: Misaligned table frame!");
+	}
+	uint32_t *pdir = (uint32_t*)vmm_alloc(1, vmm_allocmode::Kernel);
+	//pagedir=(uint32_t*)vmm_alloc(1, vmm_allocmode::Kernel);
+	dbgpf("VMM: Pagedir at %x\n", pdir);
+	if(!pdir) panic("(VMM) Failed to allocate page directory!");
+	{
+		interrupt_lock il;
+		memset(pdir, 0, VMM_ENTRIES_PER_TABLE * sizeof(uint32_t));
+	}
+	dbgpf("VMM: Pagedir at %x\n", pdir);
+	pagedir = pdir;
+	phys_addr = vmm_cur_pagedir->virt2phys(pdir);
 }
 
 void vmm_pagedir::maptable(uint32_t phys_addr){
+	if((uint32_t)curtable != ((uint32_t)curtable & VMM_ADDRESS_MASK)){
+		dbgpf("VMM: Table frame at: %x\n", curtable);
+		panic("VMM: Misaligned table frame!");
+	}
     uint32_t virtpage=(uint32_t)curtable/VMM_PAGE_SIZE;
     uint32_t physpage=phys_addr/VMM_PAGE_SIZE;
     size_t tableindex=virtpage/VMM_ENTRIES_PER_TABLE;
@@ -79,14 +94,20 @@ uint32_t vmm_pagedir::virt2phys(void *ptr, bool present){
 		hold_lock hl1(vmm_lock, false);
 		{
 			hold_lock hl2(vmm_framelock);
+			interrupt_lock il;
 			uint32_t pageno=(size_t)ptr/VMM_PAGE_SIZE;
 			size_t tableindex=pageno/VMM_ENTRIES_PER_TABLE;
 			size_t tableoffset=pageno-(tableindex * VMM_ENTRIES_PER_TABLE);
 			uint32_t table=pagedir[tableindex];
 			if(!(table & TableFlags::Present)) return 0;
 			table &= VMM_ADDRESS_MASK;
-			maptable(table);
-			ret=curtable[tableoffset];
+			if(is_paging_enabled()){
+				interrupt_lock il;
+				maptable(table);
+				ret=curtable[tableoffset];
+			}else{
+				ret=((uint32_t*)table)[tableoffset];
+			}
 			if(!(ret & PageFlags::Present) && present) return 0;
 			ret &= VMM_ADDRESS_MASK;
 		}

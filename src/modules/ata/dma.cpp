@@ -26,21 +26,23 @@ uint32_t bmr;
 volatile bool bus0done, bus1done;
 
 void dma_int_handler(int irq, isr_regs *){
-	dbgpf("ATA: IRQ %i\n", irq);
-    uint8_t bus0status=inb(bmr+0x02);
-    uint8_t bus1status=inb(bmr+0x0A);
-    if(bus0status & 0x04){
-        dbgpf("ATA: Bus 0 interrupt!\n");
-        dbgpf("ATA: Bus 0 status: %x\n", bus0status);
-        bus0done=true;
-        outb(bmr+0x02, 0x04);
-    }
-    if(bus1status & 0x04){
-        dbgpf("ATA: Bus 1 interrupt!\n");
-        dbgpf("ATA: Bus 1 status: %x\n", bus1status);
-        bus1done=true;
-        outb(bmr+0x0A, 0x04);
-    }
+	//dbgpf("ATA: IRQ %i\n", irq);
+	if(dma_init){
+		uint8_t bus0status=inb(bmr+0x02);
+		uint8_t bus1status=inb(bmr+0x0A);
+		if(bus0status & 0x04){
+			dbgpf("ATA: Bus 0 interrupt!\n");
+			dbgpf("ATA: Bus 0 status: %x\n", bus0status);
+			bus0done=true;
+			outb(bmr+0x02, 0x04);
+		}
+		if(bus1status & 0x04){
+			dbgpf("ATA: Bus 1 interrupt!\n");
+			dbgpf("ATA: Bus 1 status: %x\n", bus1status);
+			bus1done=true;
+			outb(bmr+0x0A, 0x04);
+		}
+	}
 	if(irq == 14) bus0done = true;
 	if(irq == 15) bus1done = true;
     irq_ack(irq);
