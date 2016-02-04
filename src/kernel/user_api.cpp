@@ -22,7 +22,7 @@ void userapi_handler(int, isr_regs *regs){
 	enable_interrupts();
 	uint16_t *id=(uint16_t*)(&regs->eax);
 	uint16_t ext=id[1], fn=id[0];
-	dbgpf("UAPI: Extension: %x, Function: %x\n", (int)ext, (int)fn);
+	//dbgpf("UAPI: Extension: %x, Function: %x\n", (int)ext, (int)fn);
 	if(ext==0){
 		userapi_syscall(fn, regs);
 	}else{
@@ -45,7 +45,7 @@ bool is_safe_ptr(uint32_t ptr, size_t size, pid_t pid){
 			i += res;
 			if(!res){ 
 				proc_switch(cur_pid);
-				dbgpf("UAPI: Verification of pointer %x (%i) for %i failed.\n", ptr, size, pid);
+				dbgpf("UAPI: Verification of pointer %x (%i) for %i failed.\n", ptr, (int)size, (int)pid);
 				return false;
 			}
 		}

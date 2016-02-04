@@ -28,7 +28,7 @@ char *fs_registered_infofs(){
 	memset(buffer, 0, 4096);
 	sprintf(buffer, "# name, addr\n");
 	for(map<string, fs_driver>::iterator i=fs_drivers->begin(); i!=fs_drivers->end(); ++i){
-		sprintf(&buffer[strlen(buffer)], "%s, %x\n", i->first.c_str(), i->second);
+		sprintf(&buffer[strlen(buffer)], "%s, %p\n", i->first.c_str(), &i->second);
 	}
 	return buffer;
 }
@@ -46,12 +46,12 @@ void fs_init(){
 	fs_mount("DEV", NULL, "DEVFS");
 	directory_entry root=fs_stat("INIT:");
 	if(!root.valid) panic("(FS) Cannot stat root of INIT:!\n");
-	dbgpf("FS: Root size: %i, type: 0x%x.\n", root.size, root.type);
+	dbgpf("FS: Root size: %i, type: 0x%x.\n", (int)root.size, root.type);
 	dir_handle dir=fs_open_dir("INIT:", FS_Read);
 	while(true){
 		directory_entry entry=fs_read_dir(dir);
 		if(!entry.valid) break;
-		dbgpf("FS: %s %i 0x%x\n", entry.filename, entry.size, entry.type);
+		dbgpf("FS: %s %i 0x%x\n", entry.filename, (int)entry.size, entry.type);
 	}
 	fs_close_dir(dir);
 	infofs_register("MOUNTS", &fs_mounts_infofs);
@@ -109,6 +109,7 @@ fs_path *new_fs_path(const string &path, bool toupper=true){
 }
 
 void delete_fs_path(fs_path *p){
+	if(!p) return;
 	if(p->next) delete_fs_path(p->next);
 	delete[] p->str;
 	delete p;

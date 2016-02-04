@@ -102,7 +102,7 @@ size_t terminal_seek(void *instance, size_t pos, uint32_t flags){
             cpos=pos;
         }
         if(cpos > VGA_HEIGHT * VGA_WIDTH){
-            dbgpf("KTEXT: Bad seek: %i\n", cpos);
+            dbgpf("KTEXT: Bad seek: %i\n", (int)cpos);
             cpos=VGA_HEIGHT * VGA_WIDTH;
         }
         terminal_row=cpos/VGA_WIDTH;

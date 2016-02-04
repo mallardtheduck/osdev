@@ -18,6 +18,7 @@ char dbgbuf[256];
 
 lock iso9660_lock;
 const size_t block_size = 2048;
+char path_buffer[BT_MAX_PATH] = {0};
 
 size_t strlen(const char *s) {
 	size_t i;
@@ -99,7 +100,7 @@ void *iso9660_open(void *mountdata, fs_path *path, fs_mode_flags flags){
 	if(mount){
 		take_lock(&iso9660_lock);
 		if((flags & FS_Write) || (flags & FS_Truncate))	return NULL;
-		char pathstr[BT_MAX_PATH] = {0};
+		char *pathstr = path_buffer;
 		fs_path_to_string(path, pathstr);
 		l9660_dir root;
 		l9660_fs_open_root(&root, &mount->fs);
@@ -163,24 +164,22 @@ void *iso9660_open_dir(void *mountdata, fs_path *path, fs_mode_flags flags){
 	iso9660_mountdata *mount = (iso9660_mountdata*)mountdata;
 	if(mount){
 		if((flags & FS_Write) || (flags & FS_Truncate))	return NULL;
-		char pathstr[BT_MAX_PATH] = {0};
+		take_lock(&iso9660_lock);
+		char *pathstr = path_buffer;
 		fs_path_to_string(path, pathstr);
 		l9660_dir *dir = new l9660_dir();
 		if(is_path_root(path)){
 			dbgout("ISO9660: Opening root directory.\n");
-			//take_lock(&iso9660_lock);
 			l9660_fs_open_root(dir, &mount->fs);
-			//release_lock(&iso9660_lock);
-			return dir;
 		}else{
 			dbgpf("ISO9660: Opening directory: '%s'\n", pathstr);
-			take_lock(&iso9660_lock);
 			l9660_dir root;
 			l9660_fs_open_root(&root, &mount->fs);
 			l9660_opendirat(dir, &root, pathstr);
-			release_lock(&iso9660_lock);
-			return dir;
 		}
+		release_lock(&iso9660_lock);
+		dbgpf("ISO9660: Returning %p\n", dir);
+		return dir;
 	}
 	return NULL;
 }
@@ -243,13 +242,13 @@ directory_entry iso9660_stat(void *mountdata, fs_path *path){
 	if(mount){
 		directory_entry ret;
 		l9660_file file;
-		char pathstr[BT_MAX_PATH] = {0};
+		take_lock(&iso9660_lock);
+		char *pathstr = path_buffer;
 		fs_path_to_string(path, pathstr);
 		dbgpf("ISO9660: Stat '%s'\n", pathstr);
 		if(is_path_root(path)) dbgout("ISO9660: Root.\n");
 		l9660_dir root;
 		l9660_status status;
-		take_lock(&iso9660_lock);
 		l9660_fs_open_root(&root, &mount->fs);
 		if(!is_path_root(path)) status = l9660_openat(&file, &root, pathstr);
 		else status = L9660_ENOTFILE;

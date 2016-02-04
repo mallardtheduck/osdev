@@ -159,7 +159,7 @@ try_again:
 		dbgpf("ATA: Error during ATA read of lba block %d\n", lba);
 		errors++;
 		if (errors > 4) {
-			dbgpf("ATA: -- Too many errors trying to read this block. Bailing.\n", 0);
+			dbgpf("ATA: -- Too many errors trying to read this block. Bailing.\n");
 			return;
 		}
 		goto try_again;

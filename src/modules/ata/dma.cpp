@@ -120,7 +120,7 @@ bool init_dma(){
 char dma_buffer[ATA_SECTOR_SIZE] __attribute__((aligned(0x1000)));
 
 void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf){
-    dbgpf("ATA: DMA read: dev: %x, lba: %x, buf: %x\n", dev, lba, physaddr((void*)buf));
+    dbgpf("ATA: DMA read: dev: %p, lba: %x, buf: %x\n", dev, lba, physaddr((void*)buf));
     memset(buf, 0, ATA_SECTOR_SIZE);
     if(!dma_init) return;
     int bus=dev->io_base;

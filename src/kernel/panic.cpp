@@ -146,5 +146,23 @@ void panic(char *msg){
     write_string_at(12, 50, buf, 0x1C);
     write_string_at(14, 2, "Additional information may be available in the error log (if enabled).", 0x1F);
     write_string_at(17, 24, " Please restart your computer. ", 0xF0);
-    asm volatile("hlt");
+	vmm_debug_check();
+    while(true) asm volatile("hlt");
+}
+
+void kernel_debug_stacktrace(isr_regs *ctx){
+	uint32_t bp = 0;
+	uint32_t stack[2] = {ctx->ebp, ctx->eip};
+	for(int count = 0; count < 100; ++count){
+		dbgpf("STACK TRACE: %i : %x (EBP: %x)\n", count, stack[1], stack[0]);
+		if(stack[0] != bp){ 
+			bp = stack[0];
+			if(bp < 4096){
+				dbgout("STACK CORRUPT.\n");
+				break;
+			}
+			memcpy((void*)stack, (void*)bp, sizeof(stack));
+		}
+		else break;
+	}
 }

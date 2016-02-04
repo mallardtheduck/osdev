@@ -21,11 +21,11 @@ static void mouse_handler(int irq, isr_regs *regs){
 	uint8_t ps2_byte= ps2_read_data_nocheck();
 	pre_buffer.add_item(ps2_byte);
 	input_available = true;
-	if(thread_id()!=mouse_thread_id) {
+	/*if(thread_id()!=mouse_thread_id) {
 		enable_interrupts();
 		yield();
 		disable_interrupts();
-	}
+	}*/
 }
 
 bool input_blockcheck(void*){

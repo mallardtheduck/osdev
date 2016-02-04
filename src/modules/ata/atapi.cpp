@@ -41,7 +41,7 @@ void atapi_device_init(ata_device *dev){
 	dev->atapi_packet_size = 0xFF;
 	if((dev->identity.flags & 0x03) == 0) dev->atapi_packet_size = 12;
 	if((dev->identity.flags & 0x03) == 1) dev->atapi_packet_size = 16;
-	dbgpf("ATA: ATAPI Packet size: %d (%i)\n", dev->atapi_packet_size, (int)(dev->identity.flags & 0x03));
+	dbgpf("ATA: ATAPI Packet size: %d (%i)\n", (int)dev->atapi_packet_size, (int)(dev->identity.flags & 0x03));
 	
 
 	outb(dev->control, 0);

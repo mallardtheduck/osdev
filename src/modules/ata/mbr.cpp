@@ -95,13 +95,13 @@ void mbr_parse(char *device){
 	memcpy((void*)part_table, (void*)&blockbuf[0x1be], 64);
 	for(size_t i=0; i<4; ++i){
 		part_entry &p=part_table[i];
-		dbgpf("ATA: MBR parition %i: %x, %i,+%i\n", i, (int)p.system, p.start_lba, p.sectors);
+		dbgpf("ATA: MBR parition %i: %x, %i,+%i\n", (int)i, (int)p.system, p.start_lba, (int)p.sectors);
 		if(p.system){
 			mbr_part_instance *pi=new mbr_part_instance();
 			pi->start=p.start_lba; pi->sectors=p.sectors;
 			strncpy(pi->device, device, 9);
 			char devname[9];
-			sprintf(devname, "%sP", device, i);
+			sprintf(devname, "%sP", device);
 			add_device(devname, &mbr_driver, pi);
 		}
 	}

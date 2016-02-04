@@ -72,7 +72,7 @@ char *proc_infofs(){
 		for(size_t i=0; i<proc_processes->size(); ++i){
             proc_process *cur=(*proc_processes)[i];
 			sprintf(&buffer[strlen(buffer)],"%i, \"%s\", %i, %i\n", (int)(cur->pid), cur->name.c_str(),
-				(cur->pid)?vmm_getusermemory(cur->pagedir):kmem, (int)(cur->parent));
+				(int)((cur->pid)?vmm_getusermemory(cur->pagedir):kmem), (int)(cur->parent));
 		}
     }
     return buffer;
@@ -351,7 +351,7 @@ struct proc_info{
 void *proc_alloc_stack(size_t size){
 	size_t pages=(size/VMM_PAGE_SIZE);
 	uint32_t baseaddr=0-(pages*VMM_PAGE_SIZE);
-	dbgpf("PROC: %i pages of stack at %x.\n", pages, baseaddr);
+	dbgpf("PROC: %i pages of stack at %x.\n", (int)pages, baseaddr);
 	vmm_alloc_at(pages, baseaddr);
 	memset((void*)baseaddr, 0, size);
 	//Stack pointer starts 4 bytes below top, just in case something tries to read the top-level return address.
@@ -587,7 +587,7 @@ handle_t proc_get_thread_handle(uint64_t thread_id, pid_t pid){
 }
 
 void proc_terminate(pid_t pid){
-    dbgpf("PROC: Terminating PID: %i\n", pid);
+    dbgpf("PROC: Terminating PID: %i\n", (int)pid);
     if(pid==0) return; // panic("(PROC) Request to terminate kernel!");
     proc_setreturn(-1, pid);
     bool current=false;

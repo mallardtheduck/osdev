@@ -95,7 +95,10 @@ bool try_take_lock_recursive(lock &l, uint64_t thread){
 
 void release_lock(lock &l, uint64_t thread){
     if(!sch_active()) return;
-    if(l.lockval!=thread) panic("(LOCK) Attempt to release lock that isn't held!\n");
+    if(l.lockval!=thread){
+		dbgpf("LOCK: %i != %i\n", (int)l.lockval, (int)thread);
+		panic("(LOCK) Attempt to release lock that isn't held!\n");
+	}
     if(l.count==0) panic("(LOCK) Attempt to release lock with zero count!");
     l.count--;
     if(!l.count) {

@@ -70,6 +70,7 @@ uint32_t amm_accounting_get_free_page(uint32_t max){
     hold_lock hl(amm_a_lock);
     for(size_t i=totalpages; i>0; --i) {
         if(accounting[i].valid && accounting[i].type==amm_page_type::Free && accounting[i].physaddr < max) {
+			if(!accounting[i].physaddr) panic("(AMM_A) Page accounting data corrupt!");
             return accounting[i].physaddr;
         }
     }

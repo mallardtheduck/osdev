@@ -159,7 +159,7 @@ extern "C" void sch_wrapper(){
         start = current_thread->start;
         ext_id=(int)current_thread->ext_id;
     }
-	dbgpf("SCH: Starting new thread %x (%i) at %x (param %x) [%x].\n", current_thread, (int)ext_id, start->ptr, start->param, start);
+	dbgpf("SCH: Starting new thread %p (%i) at %p (param %p) [%p].\n", current_thread, (int)ext_id, start->ptr, start->param, start);
     void (*entry)(void*) = start->ptr;
     void *param = start->param;
     free(start);
@@ -220,7 +220,7 @@ void thread_reaper(void*){
 					delete ptr;
                     take_lock_exclusive(sch_lock);
 					changed=true;
-					dbgpf("SCH: Reaped %i (%i) [%x].\n", i, (uint32_t)id, stackptr);
+					dbgpf("SCH: Reaped %i (%i) [%p].\n", (int)i, (int)id, stackptr);
 					break;
 				}
 			}
