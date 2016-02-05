@@ -200,4 +200,6 @@ l9660_status l9660_seek(l9660_file *file, int whence, int32_t offset);
 /*! Return the current position (suitable for passing to l9660_seek(file, SEEK_SET, ...)) */
 uint32_t     l9660_tell(l9660_file *file);
 
+void replace_char(char *s, char c, char r);
+
 #endif

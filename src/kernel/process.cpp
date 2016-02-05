@@ -389,7 +389,7 @@ pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
 	info->entry=proc.entry;
     info->stackptr=NULL;
     debug_event_notify(ret, 0, bt_debug_event::ProgramStart);
-	sch_new_thread(&proc_start, (void*)info, 4096);
+	sch_new_thread(&proc_start, (void*)info, 8192);
 	msg_send_event(btos_api::bt_kernel_messages::ProcessStart, (void*)&ret, sizeof(ret));
 	return ret;
 }

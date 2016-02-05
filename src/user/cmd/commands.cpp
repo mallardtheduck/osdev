@@ -79,7 +79,6 @@ void cd_command(const command &cmd){
 		string newpath=parse_path(commandline[1]);
 		bt_directory_entry ent=bt_stat(newpath.c_str());
 		if(!ent.valid || ent.type != FS_Directory){
-			cout << "Valid: " << ent.valid << " Type: " << ent.type << endl;
 			cout << "No such directory." << endl;
 		}else if(newpath.length()) set_cwd(newpath);
 	}

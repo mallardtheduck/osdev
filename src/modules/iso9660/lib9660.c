@@ -85,6 +85,43 @@ static char *strchrnul(const char *s, int c)
     return (char *) s;
 }
 
+static size_t strpos(const char *s, char c){
+	size_t ret = 0;
+	while(s && *s){
+		if(*s == c) return ret;
+		++ret; ++s;
+	}
+	return ret;
+}
+
+size_t strlen(const char * str){
+    const char *s;
+    for (s = str; *s; ++s) {}
+    return(s - str);
+}
+
+void replace_char(char *s, char c, char r){
+	while(s && *s){
+		if(*s == c) *s = r;
+		++s;
+	}
+}
+
+bool compare_filenames(const char *isoname, const char *filename, size_t len){
+	char *comparename = (char*)isoname;
+	//if filename does not contain ';', but isoname does
+	if(strpos(filename, ';') >= strlen(filename) && strpos(isoname, ';') < strlen(isoname)){
+		comparename = malloc(strlen(isoname));
+		strncpy(comparename, isoname, strlen(isoname) + 1);
+		replace_char(comparename, ';', '\0');
+		len = strlen(comparename);
+	}
+	bool ret = (len == strlen(filename));
+	if(ret) ret = (memcmp(comparename, filename, len) == 0);
+	if(comparename != isoname) free(comparename);
+	return ret;
+}
+
 static inline uint16_t fsectoff(l9660_file *f)
 {
     return f->position % 2048;
@@ -218,18 +255,7 @@ static l9660_status openat_raw(l9660_file *child, l9660_dir *parent, const char 
 #ifdef DEBUG
             print_dirent(dent);
 #endif
-
-            /* wrong length */
-            if (seglen > dent->name_len)
-                continue;
-
-            /* check name */
-            if (memcmp(seg, dent->name, seglen) != 0)
-                continue;
-
-            /* check for a revision tag */
-            if (dent->name_len > seglen && dent->name[seglen] != ';')
-                continue;
+			if(!compare_filenames(dent->name, seg, dent->name_len)) continue;
 
             /* all tests pass */
             break;
