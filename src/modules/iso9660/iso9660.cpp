@@ -121,8 +121,13 @@ void *iso9660_open(void *mountdata, fs_path *path, fs_mode_flags flags){
 		if((flags & FS_Write) || (flags & FS_Truncate))	return NULL;
 		scoped_ptr<l9660_dir> parent(get_parent(mount, path));
 		l9660_file *file = new l9660_file();
-		l9660_openat(file, parent.get(), fs_path_last_part(path)->str);
-		if((flags & FS_AtEnd)) l9660_seek(file, L9660_SEEK_END, 0);
+		l9660_status status = l9660_openat(file, parent.get(), fs_path_last_part(path)->str);
+		if(status == L9660_OK){
+			if((flags & FS_AtEnd)) l9660_seek(file, L9660_SEEK_END, 0);
+		}else{
+			delete file;
+			file = NULL;
+		}
 		release_lock(&iso9660_lock);
 		return (void*)file;
 	}
@@ -184,13 +189,18 @@ void *iso9660_open_dir(void *mountdata, fs_path *path, fs_mode_flags flags){
 		char *pathstr = path_buffer;
 		fs_path_to_string(path, pathstr);
 		l9660_dir *dir = new l9660_dir();
+		l9660_status status;
 		if(is_path_root(path)){
 			dbgout("ISO9660: Opening root directory.\n");
-			l9660_fs_open_root(dir, &mount->fs);
+			status = l9660_fs_open_root(dir, &mount->fs);
 		}else{
 			dbgpf("ISO9660: Opening directory: '%s'\n", pathstr);
 			scoped_ptr<l9660_dir> parent(get_parent(mount, path));
-			l9660_opendirat(dir, parent.get(), fs_path_last_part(path)->str);
+			status = l9660_opendirat(dir, parent.get(), fs_path_last_part(path)->str);
+		}
+		if(status != L9660_OK){
+			delete dir;
+			dir = NULL;
 		}
 		release_lock(&iso9660_lock);
 		dbgpf("ISO9660: Returning %p\n", dir);
