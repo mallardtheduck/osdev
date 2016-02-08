@@ -110,16 +110,31 @@ bool atapi_close(void *instance){
 	}else return false;
 }
 
+bool atapi_cache_get(size_t dev, uint32_t pos, char *buf){
+	for(size_t i=0; i<4; ++i){
+		uint32_t ata_pos = (pos / ATA_SECTOR_SIZE) + i;
+		if(!cache_get(dev, ata_pos, &buf[ATA_SECTOR_SIZE * i])) return false;
+	}
+	return true;
+}
+
+void atapi_cache_add(size_t dev, uint32_t pos, char *buf){
+	for(size_t i=0; i<4; ++i){
+		uint32_t ata_pos = (pos / ATA_SECTOR_SIZE) + i;
+		cache_add(dev, ata_pos, &buf[ATA_SECTOR_SIZE * i]);
+	}
+}
+
 size_t atapi_read(void *instance, size_t bytes, char *buf){
     hold_lock hl(&ata_drv_lock);
 	if(bytes % ATAPI_SECTOR_SIZE) return 0;
 	atapi_instance *inst=(atapi_instance*)instance;
 	for(size_t i=0; i<bytes; i+=ATAPI_SECTOR_SIZE){
-        if(!cache_get((size_t)inst->dev, inst->pos/ATAPI_SECTOR_SIZE, &buf[i])) {
+        if(!atapi_cache_get((size_t)inst->dev, inst->pos, &buf[i])) {
             release_lock(&ata_drv_lock);
             atapi_queued_read(inst->dev, inst->pos / ATAPI_SECTOR_SIZE, (uint8_t *) &buf[i]);
             take_lock(&ata_drv_lock);
-            cache_add((size_t)inst->dev, inst->pos/ATAPI_SECTOR_SIZE, &buf[i]);
+            atapi_cache_add((size_t)inst->dev, inst->pos, &buf[i]);
         }
 		inst->pos+=ATAPI_SECTOR_SIZE;
 	}
