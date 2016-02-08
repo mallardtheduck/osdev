@@ -433,6 +433,7 @@
       <File Name="include/util/circular_buffer.hpp"/>
       <File Name="include/util/bt_enum.h"/>
       <File Name="include/util/ministl.hpp"/>
+      <File Name="include/util/scoped_ptr.hpp"/>
     </VirtualDirectory>
     <File Name="include/btos.h"/>
     <File Name="include/btos_module.h"/>
