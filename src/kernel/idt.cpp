@@ -35,6 +35,8 @@ struct idt_ptr idtp;
 extern "C" void idt_flush();
 extern "C" uint32_t get_ss();
 
+extern uint32_t df_selector;
+
 /* Use this function to set an entry in the IDT. Alot simpler
 *  than twiddling with the GDT ;) */
 void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)
@@ -74,7 +76,7 @@ void IDT_init()
 	idt_set_gate(5, (uint32_t)isr5, 0x08, 0x8E);
 	idt_set_gate(6, (uint32_t)isr6, 0x08, 0x8E);
 	idt_set_gate(7, (uint32_t)isr7, 0x08, 0x8E);
-	idt_set_gate(8, (uint32_t)isr8, 0x08, 0x8E);
+	idt_set_gate(8, 0, df_selector * 8, 0x85);
 	idt_set_gate(9, (uint32_t)isr9, 0x08, 0x8E);
 	idt_set_gate(10, (uint32_t)isr10, 0x08, 0x8E);
 	idt_set_gate(11, (uint32_t)isr11, 0x08, 0x8E);
