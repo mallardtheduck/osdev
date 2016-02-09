@@ -45,7 +45,7 @@ bool is_safe_ptr(uint32_t ptr, size_t size, pid_t pid){
 			i += res;
 			if(!res){ 
 				proc_switch(cur_pid);
-				dbgpf("UAPI: Verification of pointer %x (%i) for %i failed.\n", ptr, size, pid);
+				dbgpf("UAPI: Verification of pointer %x (%i) for %i failed.\n", ptr, (int)size, (int)pid);
 				return false;
 			}
 		}

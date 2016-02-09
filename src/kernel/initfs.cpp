@@ -187,18 +187,18 @@ fs_driver initfs_getdriver(){
 		if(mbi->mods_count > 0){
 			module_t *mod = (module_t *)mbi->mods_addr;
 			tar_header *th = (tar_header*)mod->mod_start;
-			dbgpf("INITFS: Module starts at %x and ends at %x\n", mod->mod_start, mod->mod_end);
+			dbgpf("INITFS: Module starts at %x and ends at %x\n", (int)mod->mod_start, (int)mod->mod_end);
 			while((uint32_t)th < mod->mod_end){
 				if(th->filename[0] == '\0') break;
 				unsigned char *data = (unsigned char*)((uint32_t)th + 512);
 				size_t size = tar_size(th->size);
-				dbgpf("INITFS: %s, %x, %i\n", th->filename, data, size);
+				dbgpf("INITFS: %s, %x, %i\n", th->filename, (int)data, (int)size);
 				initfs_file file;
 				file.data = data;
 				file.name = th->filename;
 				file.size = size;
 				initfs_data->push_back(file);
-				th = (tar_header*)((uint32_t) data + ((size & ~511) + 512));
+				th = (tar_header*)((uint32_t) data + (512 * (size % 512 ? (size / 512) + 1 : size / 512)));
 			}
 		}else{
 			panic("(INITFS) No tar module loaded!");

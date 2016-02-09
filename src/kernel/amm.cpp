@@ -34,6 +34,7 @@ static lock &amm_lock=vmm_lock;
 extern char _start, _end;
 
 void amm_page_fault_handler(int, isr_regs *regs);
+char *modules_infofs();
 
 void amm_init(){
     int_handle(0x0e, &amm_page_fault_handler);
@@ -70,8 +71,11 @@ void amm_page_fault_handler(int, isr_regs *regs){
         if(proc_current_pid)proc_terminate();
 		else sch_end_thread();
     }else{
+		out_int_info(*regs);
         dbgpf("AMM: Page fault on %x at %x!\n", addr, regs->eip);
         dbgpf("AMM: Physical address: %x\n", physaddr);
+		kernel_debug_stacktrace(regs);
+		dbgout(modules_infofs());
         if (addr < VMM_PAGE_SIZE) {
             panic("(AMM) Probable NULL pointer dereference!");
         } else if(vmm_get_flags(addr & VMM_ADDRESS_MASK) == amm_flags::Guard_Page){
@@ -112,7 +116,7 @@ void amm_resolve_mmap(void *addr){
     fs_seek(map->file, offset, false);
     size_t bytes=fs_read(map->file, VMM_PAGE_SIZE, (char*)page);
     fs_seek(map->file, pos, false);
-    if(bytes != VMM_PAGE_SIZE) dbgpf("AMM: Failed to read page for memory-mapped I/O. Got %i bytes.\n", bytes);
+    if(bytes != VMM_PAGE_SIZE) dbgpf("AMM: Failed to read page for memory-mapped I/O. Got %i bytes.\n", (int)bytes);
 }
 
 uint64_t amm_mmap(char *ptr, file_handle &file, size_t offset, size_t size){

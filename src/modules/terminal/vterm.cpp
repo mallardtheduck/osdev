@@ -810,7 +810,7 @@ char *terms_infofs()
 	memset(buffer, 0, 4096);
 	sprintf(buffer, "# ID, title, backend\n");
 	for(size_t i=0; i<t->terminals.size(); ++i) {
-		sprintf(&buffer[strlen(buffer)], "%i, \"%s\", %x\n", (int)t->terminals[i]->get_id(), t->terminals[i]->get_title(), t->terminals[i]->get_backend());
+		sprintf(&buffer[strlen(buffer)], "%i, \"%s\", %p\n", (int)t->terminals[i]->get_id(), t->terminals[i]->get_title(), t->terminals[i]->get_backend());
 	}
 	return buffer;
 }

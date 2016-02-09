@@ -14,11 +14,11 @@ drv_driver ata_driver;
 lock ata_lock, ata_drv_lock;
 
 
-static void ata_io_wait(struct ata_device * dev) {
-	inb(dev->io_base + ATA_REG_ALTSTATUS);
-	inb(dev->io_base + ATA_REG_ALTSTATUS);
-	inb(dev->io_base + ATA_REG_ALTSTATUS);
-	inb(dev->io_base + ATA_REG_ALTSTATUS);
+void ata_io_wait(struct ata_device * dev) {
+	inb(dev->control);
+	inb(dev->control);
+	inb(dev->control);
+	inb(dev->control);
 }
 
 
@@ -56,11 +56,11 @@ static void ata_soft_reset(struct ata_device * dev) {
 	outb(dev->control, 0x00);
 }
 
-static void ata_device_init(struct ata_device * dev) {
+static bool ata_device_init(struct ata_device * dev) {
 
 	dbgpf("ATA: Initializing IDE device on bus %d\n", dev->io_base);
 
-	outb(dev->io_base + 1, 1);
+	outb(dev->io_base + ATA_REG_ERROR, 1);
 	outb(dev->control, 0);
 
 	outb(dev->io_base + ATA_REG_HDDEVSEL, 0xA0 | dev->slave << 4);
@@ -72,6 +72,11 @@ static void ata_device_init(struct ata_device * dev) {
 	int status = inb(dev->io_base + ATA_REG_COMMAND);
 	dbgpf("ATA: Device status: %d\n", status);
 
+	if(status == 0) {
+		dbgpf("ATA: Device does not exist.\n");
+		return false;
+	}
+
 	ata_wait(dev, 0);
 
 	uint16_t * buf = (uint16_t *)&dev->identity;
@@ -79,7 +84,7 @@ static void ata_device_init(struct ata_device * dev) {
 	for (int i = 0; i < 256; ++i) {
 		buf[i] = ins(dev->io_base);
 	}
-
+	
 	uint8_t * ptr = (uint8_t *)&dev->identity.model;
 	for (int i = 0; i < 39; i+=2) {
 		uint8_t tmp = ptr[i+1];
@@ -91,7 +96,8 @@ static void ata_device_init(struct ata_device * dev) {
 	dbgpf("ATA: Sectors (48): %d\n", (uint32_t)dev->identity.sectors_48);
 	dbgpf("ATA: Sectors (24): %d\n", dev->identity.sectors_28);
 
-	outb(dev->io_base + ATA_REG_CONTROL, 0);
+	outb(dev->control, 0);
+	return true;
 }
 
 static int ata_device_detect(struct ata_device * dev) {
@@ -105,14 +111,22 @@ static int ata_device_detect(struct ata_device * dev) {
 	dbgpf("ATA: Device detected: 0x%2x 0x%2x\n", cl, ch);
 	if (cl == 0xFF && ch == 0xFF) {
 		/* Nothing here */
+		dbgout("ATA: No device.\n");
 		return 0;
 	}
 	if (cl == 0x00 && ch == 0x00) {
 		/* Parallel ATA device */
-		ata_device_init(dev);
-		char devicename[9]="ATA";
-		add_device(devicename, &ata_driver, (void*)dev);
-		mbr_parse(devicename);
+		if(ata_device_init(dev)){
+			char devicename[9]="ATA";
+			add_device(devicename, &ata_driver, (void*)dev);
+			mbr_parse(devicename);
+		}
+		return 1;
+	}
+	if (cl == 0x14 && ch == 0xEB) {
+		atapi_device_init(dev);
+		char devicename[9]="ATAPI";
+		add_device(devicename, &atapi_driver, (void*)dev);
 		return 1;
 	}
 
@@ -136,7 +150,7 @@ void ata_device_read_sector_pio(struct ata_device * dev, uint32_t lba, uint8_t *
 
 	int errors = 0;
 try_again:
-	outb(bus + ATA_REG_CONTROL, 0);
+	outb(dev->control, 0);
 
 	ata_wait(dev, 0);
 
@@ -152,7 +166,7 @@ try_again:
 		dbgpf("ATA: Error during ATA read of lba block %d\n", lba);
 		errors++;
 		if (errors > 4) {
-			dbgpf("ATA: -- Too many errors trying to read this block. Bailing.\n", 0);
+			dbgpf("ATA: -- Too many errors trying to read this block. Bailing.\n");
 			return;
 		}
 		goto try_again;
@@ -170,7 +184,7 @@ void ata_device_write_sector(struct ata_device * dev, uint32_t lba, uint8_t * bu
 	uint16_t bus = dev->io_base;
 	uint8_t slave = dev->slave;
 
-	outb(bus + ATA_REG_CONTROL, 0);
+	outb(dev->control, 0);
 
 	ata_wait(dev, 0);
 	outb(bus + ATA_REG_HDDEVSEL, 0xe0 | slave << 4 | (lba & 0x0f000000) >> 24);
@@ -317,7 +331,7 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 	init_lock(&ata_lock);
     init_lock(&ata_drv_lock);
     init_queue();
+	preinit_dma();
 	ata_initialize();
-    preinit_dma();
     return 0;
 }

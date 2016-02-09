@@ -1,4 +1,4 @@
-ISOS := test
+ISOS := test livecd
 
 all: dummy.file
 	for dir in $(ISOS); do \

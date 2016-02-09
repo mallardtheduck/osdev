@@ -135,7 +135,7 @@ Elf32_Addr elf_symbol_value(file_handle &file, const Elf32_Ehdr &header, size_t 
 
 void elf_do_reloc_module(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr &section, void *base){
 	size_t n_relocs=section.size/sizeof(Elf32_Rel);
-	dbgpf("ELF: Performing %i relocations...\n", n_relocs);
+	dbgpf("ELF: Performing %i relocations...\n", (int)n_relocs);
 	for(size_t i=0; i<n_relocs; ++i){
 		Elf32_Rel rel=elf_read_rel(file, section, i);
 		Elf32_Addr symval=elf_symbol_value(file, header, ELF32_R_SYM(rel.info));
@@ -205,7 +205,7 @@ loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
 			if(prog.vaddr < VMM_KERNELSPACE_END) panic("ELF: Attempt to load process into kernel space!");
 			size_t p=fs_seek(file, prog.offset, false);
 			if(p!=prog.offset){
-				dbgpf("ELF: Seek failure - expected: %i, got %i.\n", prog.offset, p);
+				dbgpf("ELF: Seek failure - expected: %i, got %i.\n", (int)prog.offset, (int)p);
 				panic("(ELF) Seek failed during program load!");
 			}
 			uint32_t base=prog.vaddr;

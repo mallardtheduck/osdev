@@ -1,4 +1,4 @@
-import-files:=data/btos/tests/ctest.elx data/btos/tests/cpptest.elx data/btos/cmd/cmd.elx data/btos/system/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/system/switcher.elx data/btos/cmd/spawn.elx data/btos/cmd/kill.elx data/btos/drivers/pci.sys data/btos/cmd/load.elx data/btos/tests/test.sys data/btos/tests/test.elx data/btos/cmd/mount.elx data/btos/tests/msgtest.elx data/btos/tests/mousetest.elx data/btos/drivers/vga.sys data/btos/tests/vgatest.elx data/btos/tests/fputest.elx data/btos/system/gds.elx data/btos/bin/debug.elx data/btos/tests/crash.elx data/btos/tests/gdstest.elx data/btos/system/wm.elx data/btos/tests/wmtest.elx data/btos/bin/wmmenu.elx data/btos/bin/startwm.elx data/btos/bin/termwin.elx data/btos/bin/breakout.elx data/btos/cmd/sleep.elx data/btos/cmd/tar.elx
+import-files:=data/btos/tests/ctest.elx data/btos/tests/cpptest.elx data/btos/cmd/cmd.elx data/btos/system/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/system/switcher.elx data/btos/cmd/spawn.elx data/btos/cmd/kill.elx data/btos/drivers/pci.sys data/btos/cmd/load.elx data/btos/tests/test.sys data/btos/tests/test.elx data/btos/cmd/mount.elx data/btos/tests/msgtest.elx data/btos/tests/mousetest.elx data/btos/drivers/vga.sys data/btos/tests/vgatest.elx data/btos/tests/fputest.elx data/btos/system/gds.elx data/btos/bin/debug.elx data/btos/tests/crash.elx data/btos/tests/gdstest.elx data/btos/system/wm.elx data/btos/tests/wmtest.elx data/btos/bin/wmmenu.elx data/btos/bin/startwm.elx data/btos/bin/termwin.elx data/btos/bin/breakout.elx data/btos/cmd/sleep.elx data/btos/cmd/tar.elx data/btos/drivers/iso9660.sys
 
 all: ~/.mtoolsrc btos.img copy.always
 
@@ -99,6 +99,9 @@ data/btos/cmd/sleep.elx: ../user/sleep/sleep.elx directories.always
 	cp $< $@
 
 data/btos/cmd/tar.elx: ../user/tar/tar.elx directories.always
+	cp $< $@
+
+data/btos/drivers/iso9660.sys: ../modules/iso9660/iso9660.sys directories.always
 	cp $< $@
 
 directories.always:

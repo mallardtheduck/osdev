@@ -59,12 +59,17 @@ extern "C" void tss_flush(/*uint8_t tss_segment*/);
 // Internal function prototypes.
 static void gdt_set_gate(int32_t,uint32_t,uint32_t,uint8_t,uint8_t);
 static void gdt_set_tss(int32_t num);
+static void gdt_set_df_tss(int32_t num);
 
-static const size_t gdt_num_entries = 6;
+static const size_t gdt_num_entries = 7;
 
 gdt_entry_t gdt_entries[gdt_num_entries];
 gdt_ptr_t   gdt_ptr;
 tss_entry tss;
+tss_entry df_tss;
+uint32_t df_selector = 6;
+
+uint32_t df_stack[1024];
 
 void GDT_init()
 {
@@ -78,6 +83,7 @@ void GDT_init()
 	gdt_set_gate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // User mode code segment
 	gdt_set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // User mode data segment
 	gdt_set_tss(5);
+	gdt_set_df_tss(6);
 
 	gdt_flush();
 	tss_flush(/*0x2B*/);
@@ -102,6 +108,22 @@ static void gdt_set_tss(int32_t num){
    	uint32_t limit = base + sizeof(tss_entry);
 	gdt_set_gate(num, base, limit, 0xE9, 0x0F);
 	memset(&tss, 0, sizeof(tss_entry));
+}
+
+static void df_handler(){
+	panic("(GDT) Double fault!");
+}
+
+static void gdt_set_df_tss(int32_t num){
+	uint32_t base = (uint32_t) &df_tss;
+	uint32_t limit = base + sizeof(tss_entry);
+	gdt_set_gate(num, base, limit, 0x89, 0x0F);
+	memset(&df_tss, 0, sizeof(tss_entry));
+	df_tss.ss0 = 0x10;
+	df_tss.esp0 = (uint32_t)&df_stack[1024];
+	df_tss.cs = 0x08;
+	df_tss.eip = (uint32_t)&df_handler;
+	df_tss.ds = 0x10;
 }
 
 void gdt_set_kernel_stack(void* ptr){

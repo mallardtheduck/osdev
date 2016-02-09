@@ -25,6 +25,7 @@ struct sch_thread{
 	uint32_t magic;
 	void *stackptr;
 	void *stackbase;
+	size_t stackpages;
 	isr_regs *usercontext;
 	sch_start *start;
 	uint32_t priority;
@@ -159,7 +160,7 @@ extern "C" void sch_wrapper(){
         start = current_thread->start;
         ext_id=(int)current_thread->ext_id;
     }
-	dbgpf("SCH: Starting new thread %x (%i) at %x (param %x) [%x].\n", current_thread, (int)ext_id, start->ptr, start->param, start);
+	dbgpf("SCH: Starting new thread %p (%i) at %p (param %p) [%p].\n", current_thread, (int)ext_id, start->ptr, start->param, start);
     void (*entry)(void*) = start->ptr;
     void *param = start->param;
     free(start);
@@ -172,7 +173,16 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	sch_start *start=(sch_start*)malloc(sizeof(sch_start));
 	start->ptr=ptr;
 	start->param=param;
-	uint32_t stack=(uint32_t)malloc(stack_size);
+	//uint32_t stack=(uint32_t)malloc(stack_size);
+	newthread->stackpages = stack_size / VMM_PAGE_SIZE;
+	if(newthread->stackpages * VMM_PAGE_SIZE < stack_size) ++newthread->stackpages;
+	uint32_t stack = (uint32_t)vmm_alloc(newthread->stackpages + 1);
+	{
+		interrupt_lock il;
+		vmm_free((void*)stack, 1);
+		vmm_set_flags(stack, (amm_flags::Enum)(amm_flags::Do_Not_Use | amm_flags::Guard_Page));
+	}
+	stack += VMM_PAGE_SIZE;
 	newthread->stackptr=(void*)stack;
 	stack+=stack_size;
 	stack-=4;
@@ -214,13 +224,15 @@ void thread_reaper(void*){
 					sch_thread *ptr=(*threads)[i];
 					uint64_t id=(*threads)[i]->ext_id;
                     void *stackptr=(*threads)[i]->stackptr;
+					size_t stackpages = (*threads)[i]->stackpages;
 					threads->erase(i);
                     release_lock(sch_lock);
-                    free(stackptr);
+                    vmm_free(stackptr, stackpages);
+					vmm_set_flags(((uint32_t)stackptr) - VMM_PAGE_SIZE, amm_flags::Normal);
 					delete ptr;
                     take_lock_exclusive(sch_lock);
 					changed=true;
-					dbgpf("SCH: Reaped %i (%i) [%x].\n", i, (uint32_t)id, stackptr);
+					dbgpf("SCH: Reaped %i (%i) [%p].\n", (int)i, (int)id, stackptr);
 					break;
 				}
 			}

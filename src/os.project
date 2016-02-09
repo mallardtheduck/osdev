@@ -118,6 +118,7 @@
       <File Name="modules/ata/dma.cpp"/>
       <File Name="modules/ata/mbr.cpp"/>
       <File Name="modules/ata/queue.cpp"/>
+      <File Name="modules/ata/atapi.cpp"/>
     </VirtualDirectory>
     <VirtualDirectory Name="boot">
       <File Name="modules/boot/Makefile"/>
@@ -196,6 +197,14 @@
       <File Name="modules/vga/vga.cpp"/>
       <File Name="modules/vga/vga.hpp"/>
       <File Name="modules/vga/vga_palette.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="iso9660">
+      <File Name="modules/iso9660/linker.ld"/>
+      <File Name="modules/iso9660/Makefile"/>
+      <File Name="modules/iso9660/iso9660.cpp"/>
+      <File Name="modules/iso9660/lib9660.c"/>
+      <File Name="modules/iso9660/lib9660.h"/>
+      <File Name="modules/iso9660/tb9660.c"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="user">
@@ -424,6 +433,7 @@
       <File Name="include/util/circular_buffer.hpp"/>
       <File Name="include/util/bt_enum.h"/>
       <File Name="include/util/ministl.hpp"/>
+      <File Name="include/util/scoped_ptr.hpp"/>
     </VirtualDirectory>
     <File Name="include/btos.h"/>
     <File Name="include/btos_module.h"/>
@@ -538,12 +548,22 @@
       </VirtualDirectory>
     </VirtualDirectory>
     <File Name="tarinit/Makefile"/>
+    <VirtualDirectory Name="livecd">
+      <File Name="tarinit/livecd/Makefile"/>
+      <VirtualDirectory Name="data">
+        <File Name="tarinit/livecd/data/config.ini"/>
+      </VirtualDirectory>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="iso">
     <File Name="iso/Makefile"/>
     <VirtualDirectory Name="test">
       <File Name="iso/test/Makefile"/>
       <File Name="iso/test/grub.cfg"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="livecd">
+      <File Name="iso/livecd/Makefile"/>
+      <File Name="iso/livecd/grub.cfg"/>
     </VirtualDirectory>
   </VirtualDirectory>
 </CodeLite_Project>

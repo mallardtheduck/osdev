@@ -1,6 +1,10 @@
 #include "ata.hpp"
 #include <btos_module.h>
 
+//#define CACHE_DISABLE
+
+#ifndef CACHE_DISABLE
+
 static const size_t cache_size=4096;
 
 struct cache_element{
@@ -66,3 +70,11 @@ void cache_drop(size_t deviceid, size_t sector){
         }
     }
 }
+
+#else
+
+void cache_add(size_t, size_t, char *){}
+bool cache_get(size_t, size_t, char *){return false;}
+void cache_drop(size_t, size_t){}
+
+#endif

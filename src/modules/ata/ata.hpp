@@ -69,8 +69,8 @@
 #define ATA_REG_LBA3       0x09
 #define ATA_REG_LBA4       0x0A
 #define ATA_REG_LBA5       0x0B
-#define ATA_REG_CONTROL    0x0C
-#define ATA_REG_ALTSTATUS  0x0C
+//#define ATA_REG_CONTROL    0x0C
+//#define ATA_REG_ALTSTATUS  0x0C
 #define ATA_REG_DEVADDRESS 0x0D
 
 // Channels:
@@ -139,8 +139,11 @@ struct ata_device {
     int io_base;
     int control;
     int slave;
+	size_t atapi_packet_size;
     ata_identify_t identity;
 };
+
+extern lock ata_lock, ata_drv_lock;
 
 void ata_device_read_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf);
 void ata_device_read_sector_pio(struct ata_device * dev, uint32_t lba, uint8_t * buf);
@@ -149,12 +152,15 @@ void init_queue();
 void ata_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
 void ata_queued_write(ata_device *dev, uint32_t lba, uint8_t *buf);
 
+size_t atapi_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
+
 int ata_wait(struct ata_device * dev, int advanced);
 
 void mbr_parse(char* device);
 
 /* TODO support other sector sizes */
 #define ATA_SECTOR_SIZE 512
+#define ATAPI_SECTOR_SIZE 2048
 
 void cache_add(size_t deviceid, size_t sector, char *data);
 bool cache_get(size_t deviceid, size_t sector, char *data);
@@ -163,5 +169,12 @@ void cache_drop(size_t deviceid, size_t sector);
 void preinit_dma();
 bool init_dma();
 void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf);
+
+extern drv_driver atapi_driver;
+void atapi_device_init(ata_device *dev);
+void ata_io_wait(struct ata_device * dev);
+int atapi_device_read(ata_device *dev, uint32_t lba, uint8_t *buf);
+void ata_reset_wait(uint32_t bus);
+void ata_wait_irq(uint32_t bus);
 
 #endif

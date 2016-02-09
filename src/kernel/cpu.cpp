@@ -21,7 +21,7 @@ void init_cpu(){
 	char *idstring=cpu_idstring();
 	uint64_t speed=cpu_get_speed();	
 	char *brandstring=get_brandstring();
-	printf("CPU: %s %s. Speed: %i UMIPS.\n", idstring, brandstring, speed/1000000);
+	printf("CPU: %s %s. Speed: %i UMIPS.\n", idstring, brandstring, (int)(speed/1000000));
 	uint32_t a, b, c, d;
 	cpuid(1, a, b, c, d);
 	if(d & cpu_features::CPUID_FEAT_EDX_FPU) {

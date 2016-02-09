@@ -50,4 +50,6 @@ amm_flags::Enum vmm_get_flags(uint32_t pageaddr);
 uint32_t vmm_physaddr(void *ptr);
 multiboot_info_t *vmm_get_multiboot();
 
+void vmm_debug_check();
+
 #endif

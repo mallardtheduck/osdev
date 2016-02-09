@@ -40,6 +40,16 @@ uint32_t vmm_tableframe[VMM_ENTRIES_PER_TABLE] __attribute__((aligned(0x1000)));
 lock vmm_framelock;
 static size_t kmem=0;
 
+vmm_region vmm_regions[VMM_MAX_REGIONS]={0, 0};
+uint32_t vmm_kpagedir[VMM_ENTRIES_PER_TABLE] __attribute__((aligned(0x1000)));
+uint32_t vmm_kinitable[VMM_ENTRIES_PER_TABLE] __attribute__((aligned(0x1000)));
+size_t vmm_totalmem=0;
+
+void *vmm_ministack_alloc(size_t pages=1);
+void vmm_ministack_free(void *ptr, size_t pages=1);
+void vmm_page_fault_handler(int,isr_regs*);
+void vmm_checkstack();
+
 #include "vmm_pagedir.hpp"
 
 void vmm_pagedir::init(uint32_t *dir){
@@ -51,20 +61,46 @@ void vmm_pagedir::init(uint32_t *dir){
 
 void vmm_pagedir::init(){
 	curtable=(uint32_t*)&vmm_tableframe;
-	pagedir=(uint32_t*)vmm_alloc(1, vmm_allocmode::Kernel);
-	phys_addr=vmm_cur_pagedir->virt2phys(pagedir);
-	memset(pagedir, 0, VMM_ENTRIES_PER_TABLE * sizeof(uint32_t));
-	if((uint32_t)curtable != ((uint32_t)curtable & VMM_ADDRESS_MASK)) panic("VMM: Misaligned table frame!");
+	if((uint32_t)curtable != ((uint32_t)curtable & VMM_ADDRESS_MASK)){
+		dbgpf("VMM: Table frame at: %p\n", curtable);
+		panic("VMM: Misaligned table frame!");
+	}
+	uint32_t *pdir = (uint32_t*)vmm_alloc(1, vmm_allocmode::Kernel);
+	//pagedir=(uint32_t*)vmm_alloc(1, vmm_allocmode::Kernel);
+	dbgpf("VMM: Pagedir at %p\n", pdir);
+	if(!pdir) panic("(VMM) Failed to allocate page directory!");
+	{
+		interrupt_lock il;
+		memset(pdir, 0, VMM_ENTRIES_PER_TABLE * sizeof(uint32_t));
+	}
+	dbgpf("VMM: Pagedir at %p\n", pdir);
+	phys_addr = vmm_cur_pagedir->virt2phys(pdir);
+	pagedir = pdir;
+	dbgpf("VMM: pdir: %p pagdir: %p\n", pdir, pagedir);
 }
 
 void vmm_pagedir::maptable(uint32_t phys_addr){
+	if((uint32_t)curtable != ((uint32_t)curtable & VMM_ADDRESS_MASK)){
+		dbgpf("VMM: Table frame at: %p\n", curtable);
+		panic("(VMM) Misaligned table frame!");
+	}
+	if(phys_addr != (phys_addr & VMM_ADDRESS_MASK)){
+		panic("(VMM) Request to map misaligned table address!");
+	}
     uint32_t virtpage=(uint32_t)curtable/VMM_PAGE_SIZE;
     uint32_t physpage=phys_addr/VMM_PAGE_SIZE;
     size_t tableindex=virtpage/VMM_ENTRIES_PER_TABLE;
     size_t tableoffset=virtpage-(tableindex * VMM_ENTRIES_PER_TABLE);
     uint32_t table=pagedir[tableindex] & VMM_ADDRESS_MASK;
-    ((uint32_t*)table)[tableoffset]=(physpage*VMM_PAGE_SIZE) | (PageFlags::Present | PageFlags::Writable);
-    vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
+	if(table != (uint32_t)&vmm_kinitable){
+		dbgpf("VMM: %x != %p\n", table, &vmm_kinitable);
+		panic("(VMM) Cannot map using non-identity-mapped page table.");
+	}
+	if((((uint32_t*)table)[tableoffset] & VMM_ADDRESS_MASK) != (physpage * VMM_PAGE_SIZE)){
+		//dbgpf("VMM: Mapping table at physical %x to virtual %p using table %x.\n", phys_addr, curtable, table);
+		((uint32_t*)table)[tableoffset]=(physpage*VMM_PAGE_SIZE) | (PageFlags::Present | PageFlags::Writable);
+		vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
+	}
 }
 
 void vmm_pagedir::add_table(size_t tableno, uint32_t *table){
@@ -79,14 +115,20 @@ uint32_t vmm_pagedir::virt2phys(void *ptr, bool present){
 		hold_lock hl1(vmm_lock, false);
 		{
 			hold_lock hl2(vmm_framelock);
+			interrupt_lock il;
 			uint32_t pageno=(size_t)ptr/VMM_PAGE_SIZE;
 			size_t tableindex=pageno/VMM_ENTRIES_PER_TABLE;
 			size_t tableoffset=pageno-(tableindex * VMM_ENTRIES_PER_TABLE);
 			uint32_t table=pagedir[tableindex];
 			if(!(table & TableFlags::Present)) return 0;
 			table &= VMM_ADDRESS_MASK;
-			maptable(table);
-			ret=curtable[tableoffset];
+			if(is_paging_enabled()){
+				interrupt_lock il;
+				maptable(table);
+				ret=curtable[tableoffset];
+			}else{
+				ret=((uint32_t*)table)[tableoffset];
+			}
 			if(!(ret & PageFlags::Present) && present) return 0;
 			ret &= VMM_ADDRESS_MASK;
 		}
@@ -151,7 +193,7 @@ size_t vmm_pagedir::unmap_page(size_t virtpage){
 	maptable(table);
 	uint32_t entry=curtable[tableoffset];
     uint32_t ret=entry & VMM_ADDRESS_MASK;
-	curtable[tableoffset]&=VMM_FLAGS_MASK;
+	curtable[tableoffset] = 0;//&=VMM_FLAGS_MASK;
 	bool freetable=true;
 	for(size_t i=0; i<VMM_ENTRIES_PER_TABLE; ++i){
 		if(curtable[i]){
@@ -160,8 +202,8 @@ size_t vmm_pagedir::unmap_page(size_t virtpage){
 		}
 	}
 	if(freetable){
-		dbgpf("VMM: Page table %i no longer needed.\n", tableindex);
-		pagedir[tableindex] = 0 | TableFlags::Writable;
+		dbgpf("VMM: Page table %i no longer needed.\n", (int)tableindex);
+		pagedir[tableindex] = 0 ;//| TableFlags::Writable;
         amm_mark_free(table);
 	}
 	vmm_refresh_addr(virtpage * VMM_PAGE_SIZE);
@@ -208,7 +250,7 @@ void vmm_pagedir::map_page(size_t virtpage, size_t physpage, bool alloc, vmm_all
 		if(alloc){
 			table=amm_accounting_get_free_page();
             amm_accounting_mark_page(table, amm_page_type::PageTable, (void*)this);
-			dbgpf("VMM: Creating new page table %i at %x (p)\n", tableindex, table);
+			dbgpf("VMM: Creating new page table %i at %x (p)\n", (int)tableindex, (int)table);
 			add_table(tableindex, (uint32_t*)table);
 			if(is_paging_enabled()){
 				maptable(table);
@@ -271,29 +313,20 @@ bool vmm_pagedir::is_dirty(uint32_t pageaddr){
     return ret & PageFlags::Dirty;
 }
 
-vmm_region vmm_regions[VMM_MAX_REGIONS]={0, 0};
-uint32_t vmm_kpagedir[VMM_ENTRIES_PER_TABLE] __attribute__((aligned(0x1000)));
-uint32_t vmm_kinitable[VMM_ENTRIES_PER_TABLE] __attribute__((aligned(0x1000)));
 vmm_pagedir *vmm_cur_pagedir, vmm_kernel_pagedir;
-size_t vmm_totalmem=0;
-
-void *vmm_ministack_alloc(size_t pages=1);
-void vmm_ministack_free(void *ptr, size_t pages=1);
-void vmm_page_fault_handler(int,isr_regs*);
-void vmm_checkstack();
 
 char *freemem_infofs(){
 	char *buffer=(char*)malloc(512);
     memset(buffer, 0, 512);
     size_t freemem= amm_accounting_count_free_pages() * VMM_PAGE_SIZE;
-    sprintf(buffer, "%i\n", freemem);
+    sprintf(buffer, "%i\n", (int)freemem);
     return buffer;
 }
 
 char *totalmem_infofs(){
 	char *buffer=(char*)malloc(512);
     memset(buffer, 0, 512);
-    sprintf(buffer, "%i\n", vmm_totalmem);
+    sprintf(buffer, "%i\n", (int)vmm_totalmem);
     return buffer;
 }
 
@@ -304,7 +337,7 @@ char *totalused_infofs(){
     for(size_t i=0; i<VMM_MAX_PAGES; ++i){
        	if(vmm_cur_pagedir->is_mapped((void*)(i*VMM_PAGE_SIZE))) used+=VMM_PAGE_SIZE;
     }
-    sprintf(buffer, "%i\n", used);
+    sprintf(buffer, "%i\n", (int)used);
     return buffer;
 }
 
@@ -316,13 +349,13 @@ void vmm_init(multiboot_info_t *mbt){
 	memory_map_t *mmap = (memory_map_t*)mbt->mmap_addr;
 	size_t k_first_page=((size_t)&_start/VMM_PAGE_SIZE);
 	size_t k_last_page=((size_t)&_end/VMM_PAGE_SIZE);
-	dbgpf("VMM: Kernel start: %x (page %x) end: %x (page %x).\n", &_start,
-		k_first_page, &_end, k_last_page);
+	dbgpf("VMM: Kernel start: %p (page %x) end: %p (page %x).\n", &_start,
+		(int)k_first_page, &_end, (int)k_last_page);
 	size_t cregion=0;
 	vmm_totalmem=0;
     while(mmap < (memory_map_t*)mbt->mmap_addr + mbt->mmap_length) {
 		if(mmap->type == 1 && mmap->length_low > 0){
-			dbgpf("VMM: Usable region base: 0x%x pages: %u\n", mmap->base_addr_low, mmap->length_low/VMM_PAGE_SIZE);
+			dbgpf("VMM: Usable region base: 0x%x pages: %u\n", (int)mmap->base_addr_low, (unsigned)(mmap->length_low/VMM_PAGE_SIZE));
 			if(mmap->base_addr_low < 1024*1024 && mmap->length_low < 1024*1024){
 				dbgpf("VMM: Ignoring low 1MB RAM\n");
 			}else{
@@ -343,7 +376,7 @@ void vmm_init(multiboot_info_t *mbt){
     			//void* phys_page_addr=(void*)(phys_page_num*VMM_PAGE_SIZE);
     			if(phys_page_num < 256) panic("(VMM) Page number too low!");
     			if(phys_page_num>=k_first_page && phys_page_num<=k_last_page){
-    				dbgpf("VMM: Region %i, page %i (%x) - KERNEL\n", i, j, phys_page_num);
+    				dbgpf("VMM: Region %i, page %i (%x) - KERNEL\n", (int)i, (int)j, (int)phys_page_num);
     			}else{
     				//memset(phys_page_addr, 0, VMM_PAGE_SIZE);
     				++totalpages;
@@ -351,21 +384,30 @@ void vmm_init(multiboot_info_t *mbt){
     		}
     	}else break;
     }
-    dbgpf("VMM: Total pages: %i\n", totalpages);
-    printf("VMM: Total RAM: %iKB\n", vmm_totalmem/1024);
-   	dbgpf("VMM: Initializing kernel page directory at %x.\n", vmm_kpagedir);
+    dbgpf("VMM: Total pages: %i\n", (int)totalpages);
+    printf("VMM: Total RAM: %iKB\n", (int)(vmm_totalmem/1024));
+   	dbgpf("VMM: Initializing kernel page directory at %x.\n", (int)vmm_kpagedir);
 	for(size_t i=0; i<VMM_ENTRIES_PER_TABLE; ++i){
 		vmm_kpagedir[i]=0 | TableFlags::Writable;
 	}
-	dbgpf("VMM: Initializing initial page table at %x.\n", vmm_kinitable);
+	dbgpf("VMM: Initializing initial page table at %x.\n", (int)vmm_kinitable);
 	memset((void*)vmm_kinitable, 0, VMM_PAGE_SIZE);
 	vmm_kernel_pagedir.init(vmm_kpagedir);
 	vmm_kernel_pagedir.add_table(0, vmm_kinitable);
     dbgpf("VMM: Init accounting...\n");
     size_t firstfreepage=init_amm_page_accounting(vmm_regions, (void*)&_end);
-    dbgpf("VMM: First free page: %x\n", firstfreepage);
-    dbgpf("VMM: Setting up identity mappings.\n");
-    for(size_t i=1; i<firstfreepage; ++i){
+	size_t kernel_ends_at_page = firstfreepage;
+	dbgout("VMM: Finding end of modules...\n");
+	for(size_t i = 0; i<mbt->mods_count; ++i){
+		module_t *mod = (module_t*)(mbt->mods_addr + (sizeof(module_t) * i));
+		size_t firstpage = mod->mod_start & VMM_ADDRESS_MASK;
+		size_t lastpage = mod->mod_end & VMM_ADDRESS_MASK;
+		dbgpf("VMM: Module at %x - %x\n", (int)firstpage, (int)lastpage);
+		if(lastpage > firstfreepage) firstfreepage = lastpage;
+	}
+    dbgpf("VMM: First free page: %x\n", (int)firstfreepage);
+    dbgpf("VMM: Setting up kernel identity mappings.\n");
+    for(size_t i=1; i<kernel_ends_at_page; ++i){
     	vmm_kernel_pagedir.identity_map(i, false);
     }
     int_handle(0x0e, &vmm_page_fault_handler);
@@ -381,7 +423,7 @@ void vmm_init(multiboot_info_t *mbt){
 		module_t *mod = (module_t*)(mbt->mods_addr + (sizeof(module_t) * i));
 		size_t firstpage = mod->mod_start & VMM_ADDRESS_MASK;
 		size_t lastpage = mod->mod_end & VMM_ADDRESS_MASK;
-		dbgpf("VMM: Module at %x - %x\n", firstpage, lastpage);
+		dbgpf("VMM: Module at %x - %x\n", (int)firstpage, (int)lastpage);
 		for(size_t page = firstpage; page <= lastpage; page+=VMM_PAGE_SIZE){
 			vmm_kernel_pagedir.identity_map(page / VMM_PAGE_SIZE, false);
 			vmm_kernel_pagedir.set_flags(page, amm_flags::Kernel);
@@ -397,7 +439,7 @@ void vmm_init(multiboot_info_t *mbt){
     for(size_t i=1; i<VMM_KERNEL_PAGES; ++i){
         void *pageptr=(void*)(i*VMM_PAGE_SIZE);
         if(vmm_cur_pagedir->is_mapped(pageptr)){
-            dbgpf("VMM: Marking page %x\n", pageptr);
+            dbgpf("VMM: Marking page %x\n", (int)pageptr);
             amm_mark_alloc(vmm_cur_pagedir->virt2phys(pageptr), amm_page_type::Kernel, NULL);
             vmm_cur_pagedir->set_flags((i*VMM_PAGE_SIZE), amm_flags::Kernel);
 			kmem+=VMM_PAGE_SIZE;
@@ -441,7 +483,7 @@ void *vmm_alloc(size_t pages, vmm_allocmode::Enum mode){
         amm_mark_alloc(phys_page, page_type, mode==vmm_allocmode::Kernel?NULL:proc_current_process);
         phys_page/=VMM_PAGE_SIZE;
 		if(!phys_page){
-		    dbgpf("VMM: Allocation of %i pages failed.\n", pages);
+		    dbgpf("VMM: Allocation of %i pages failed.\n", (int)pages);
             panic("(VMM) Out of memory!");
 		    return NULL;
 		}
@@ -471,7 +513,7 @@ void *vmm_alloc_at(size_t pages, size_t baseaddr){
         amm_mark_alloc(phys_page, page_type, mode==vmm_allocmode::Kernel?NULL:proc_current_process);
         phys_page/=VMM_PAGE_SIZE;
 		if(!phys_page){
-			dbgpf("VMM: Allocation of %i pages failed.\n", pages);
+			dbgpf("VMM: Allocation of %i pages failed.\n", (int)pages);
 			return NULL;
 		}
         vmm_cur_pagedir->map_page(virtpage+i, phys_page, true, mode);
@@ -511,6 +553,7 @@ void vmm_switch(vmm_pagedir *dir){
 }
 
 vmm_pagedir *vmm_newpagedir(){
+	interrupt_lock il;
 	vmm_pagedir *ret=new vmm_pagedir();
 	ret->init();
 	ret->copy_kernelspace(vmm_cur_pagedir);
@@ -550,4 +593,20 @@ uint32_t vmm_physaddr(void *ptr){
 
 multiboot_info_t *vmm_get_multiboot(){
 	return multiboot_info;
+}
+
+void vmm_debug_check(){
+	//Don't run this on a running system...
+	init_lock(vmm_lock);
+	for(size_t i=0; i<VMM_MAX_PAGES; ++i){
+		uint32_t physaddr = vmm_cur_pagedir->virt2phys((void*)(i * VMM_PAGE_SIZE));
+		if(physaddr){
+			for(size_t j=0; j<VMM_MAX_PAGES; ++j){
+				if(i != j && vmm_cur_pagedir->virt2phys((void*)(j * VMM_PAGE_SIZE)) == physaddr){
+					dbgpf("VMM: Pages %i and %i are both mapped to %x.\n", (int)i, (int)j, (int)physaddr);
+				}
+			}
+		}
+	}
+	dbgout("VMM: Debug check complete.\n");
 }
