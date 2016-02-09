@@ -152,7 +152,7 @@ void init_queue();
 void ata_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
 void ata_queued_write(ata_device *dev, uint32_t lba, uint8_t *buf);
 
-void atapi_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
+size_t atapi_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
 
 int ata_wait(struct ata_device * dev, int advanced);
 

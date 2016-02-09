@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #endif
 
-#define DEBUG
+//#define DEBUG
 #define printf dbgpf
 
 #ifdef L9660_HAVE_STDIO
@@ -365,7 +365,7 @@ l9660_status l9660_read(l9660_file *f, void* buf, size_t size, size_t *read)
 {
     l9660_status rv;
 
-    if ((rv = prebuffer(f)))
+    if ((rv = buffer(f)))
         return rv;
 
     uint16_t rem = 2048 - fsectoff(f);
@@ -373,6 +373,8 @@ l9660_status l9660_read(l9660_file *f, void* buf, size_t size, size_t *read)
         rem = f->length - f->position;
     if (rem < size)
         size = rem;
+		
+	//printf("L9660: offset %i is in sector %i\n", f->position, f->position / 2048);
 
     memcpy(buf, BUF(f) + fsectoff(f), size);
 

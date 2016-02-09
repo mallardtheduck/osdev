@@ -83,6 +83,7 @@ bool read_sector(struct l9660_fs *fs, void *buf, uint32_t sector){
 	fseek(mount->fh, readaddr, false);
 	int ret=fread(mount->fh, block_size, (char*)buf);
 	release_lock(&iso9660_lock);
+	if(ret == 0) panic("(ISO9660) read_sector failed.");
 	return !!ret;
 }
 
@@ -147,8 +148,16 @@ size_t iso9660_read(void *filedata, size_t bytes, char *buf){
 	l9660_file *file = (l9660_file*)filedata;
 	if(file){
 		take_lock(&iso9660_lock);
-		size_t ret;
-		l9660_read(file, buf, bytes, &ret);
+		size_t ret = 0;
+		size_t left = bytes;
+		while(ret < bytes){
+			size_t read = 0;
+			l9660_status status = l9660_read(file, buf, left, &read);
+			if(status != L9660_OK) break;
+			left-=read;
+			buf+=read;
+			ret+=read;
+		}
 		release_lock(&iso9660_lock);
 		return ret;
 	}
@@ -161,17 +170,19 @@ size_t iso9660_write(void *filedata, size_t bytes, char *buf){
 
 size_t iso9660_seek(void *filedata, size_t pos, uint32_t flags){
 	l9660_file *file = (l9660_file*)filedata;
+	size_t ret = 0;
 	if(file){
 		take_lock(&iso9660_lock);
 		int32_t offset = pos;
 		int whence = L9660_SEEK_SET;
 		if((flags & FS_Backwards)) pos = -pos;
 		if((flags & FS_Relative)) whence = L9660_SEEK_CUR;
-		l9660_seek(file, whence, offset);
+		l9660_status status = l9660_seek(file, whence, offset);
+		if(status != L9660_OK) panic("(ISO9660) Seek failure.");
+		ret = l9660_tell(file);
 		release_lock(&iso9660_lock);
-		return l9660_tell(file);
 	}
-	return 0;
+	return ret;
 }
 
 int iso9660_ioctl(void *filedata, int fn, size_t bytes, char *buf){
@@ -284,6 +295,7 @@ directory_entry iso9660_stat(void *mountdata, fs_path *path){
 			status = l9660_openat(file.get(), parent.get(), fs_path_last_part(path)->str);
 		}
 		else status = L9660_ENOTFILE;
+		dbgpf("ISO9660: Stat staus %i\n", status);
 		if(status == L9660_OK || status == L9660_ENOTFILE){
 			ret.valid = true;
 			fs_path *lastpart=fs_path_last_part(path);
@@ -298,6 +310,8 @@ directory_entry iso9660_stat(void *mountdata, fs_path *path){
 				ret.size = 0;
 				ret.id = 0;
 			}
+		}else{
+			ret.valid = false;
 		}
 		release_lock(&iso9660_lock);
 		return ret;

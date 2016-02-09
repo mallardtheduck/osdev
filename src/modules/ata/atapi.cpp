@@ -2,6 +2,21 @@
 #include <util/holdlock.hpp>
 #include "ata.hpp"
 
+int
+memcmp(const void *vs1, const void *vs2, size_t n){
+	unsigned char u1, u2;
+	char *s1 = (char*)vs1; char *s2 = (char*)vs2;
+
+	for ( ; n-- ; s1++, s2++) {
+		u1 = * (unsigned char *) s1;
+		u2 = * (unsigned char *) s2;
+		if ( u1 != u2) {
+			return (u1-u2);
+		}
+		}
+	return 0;
+}
+
 void atapi_test(ata_device *dev);
 
 void atapi_device_init(ata_device *dev){
@@ -50,6 +65,7 @@ void atapi_device_init(ata_device *dev){
 }
 
 size_t atapi_scsi_command(ata_device *dev, uint8_t cmd[12], size_t size, uint8_t *buf){
+	memset(buf, 0, size);
 	uint16_t bus = dev->io_base;
 	uint8_t slave = dev->slave;
 	dbgpf("ATA: Executing ATAPI SCSI command: %x\n", cmd[0]);
@@ -69,11 +85,22 @@ size_t atapi_scsi_command(ata_device *dev, uint8_t cmd[12], size_t size, uint8_t
 	}
 	ata_wait_irq(bus);
 	ata_reset_wait(bus);
+	uint8_t status = inb(dev->control);
+	dbgpf("ATA: ATAPI status: %x\n", (int)status);
+	if(status & ATA_SR_ERR){
+		dbgout("ATA: ATAPI command error.\n");
+		//panic("(ATA) ATAPI command error.");
+		return 0;
+	}
 	size_t read = inb(bus + ATA_REG_LBA1) + (inb(bus + ATA_REG_LBA2) << 8);
+	
+	if(read != size) panic("(ATA) ATAPI data size mismatch.");
+	
 	for(size_t i=0; i<read/2; ++i){
 		((uint16_t*)buf)[i] = in16(bus);
 	}
 	ata_wait(dev, 0);
+	while((inb(dev->control) & ATA_SR_DRQ));
 	return read;
 }
 
@@ -86,7 +113,9 @@ int atapi_device_read(ata_device *dev, uint32_t lba, uint8_t *buf){
 	read_cmd[5] = (lba >> 0x00) & 0xFF;
 	dbgpf("ATA: Read ATAPI sector %i.\n", lba);
 	
-	return atapi_scsi_command(dev, read_cmd, 2048, buf);
+	size_t ret = atapi_scsi_command(dev, read_cmd, ATAPI_SECTOR_SIZE, buf);
+	
+	return ret;
 }
 
 struct atapi_instance{
@@ -132,8 +161,9 @@ size_t atapi_read(void *instance, size_t bytes, char *buf){
 	for(size_t i=0; i<bytes; i+=ATAPI_SECTOR_SIZE){
         if(!atapi_cache_get((size_t)inst->dev, inst->pos, &buf[i])) {
             release_lock(&ata_drv_lock);
-            atapi_queued_read(inst->dev, inst->pos / ATAPI_SECTOR_SIZE, (uint8_t *) &buf[i]);
-            take_lock(&ata_drv_lock);
+            size_t read = atapi_queued_read(inst->dev, inst->pos / ATAPI_SECTOR_SIZE, (uint8_t *) &buf[i]);
+			if(read != ATAPI_SECTOR_SIZE) panic("(ATA) ATAPI sector read failed!");
+			take_lock(&ata_drv_lock);
             atapi_cache_add((size_t)inst->dev, inst->pos, &buf[i]);
         }
 		inst->pos+=ATAPI_SECTOR_SIZE;
@@ -171,7 +201,7 @@ char *atapi_desc(){
 drv_driver atapi_driver={&atapi_open, &atapi_close, &atapi_read, &atapi_write, &atapi_seek, &atapi_ioctl, &atapi_type, &atapi_desc};
 
 void atapi_test(ata_device *dev){
-	uint8_t buf[2048] = {0};
+	uint8_t buf[ATAPI_SECTOR_SIZE] = {0};
 	atapi_device_read(dev, 0, buf);
 	
 	dbgpf("ATAPI TEST: %x %x %x\n", (int)buf[0], (int)buf[1], (int)buf[2]);

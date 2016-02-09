@@ -56,7 +56,7 @@ static void ata_soft_reset(struct ata_device * dev) {
 	outb(dev->control, 0x00);
 }
 
-static void ata_device_init(struct ata_device * dev) {
+static bool ata_device_init(struct ata_device * dev) {
 
 	dbgpf("ATA: Initializing IDE device on bus %d\n", dev->io_base);
 
@@ -72,6 +72,11 @@ static void ata_device_init(struct ata_device * dev) {
 	int status = inb(dev->io_base + ATA_REG_COMMAND);
 	dbgpf("ATA: Device status: %d\n", status);
 
+	if(status == 0) {
+		dbgpf("ATA: Device does not exist.\n");
+		return false;
+	}
+
 	ata_wait(dev, 0);
 
 	uint16_t * buf = (uint16_t *)&dev->identity;
@@ -79,7 +84,7 @@ static void ata_device_init(struct ata_device * dev) {
 	for (int i = 0; i < 256; ++i) {
 		buf[i] = ins(dev->io_base);
 	}
-
+	
 	uint8_t * ptr = (uint8_t *)&dev->identity.model;
 	for (int i = 0; i < 39; i+=2) {
 		uint8_t tmp = ptr[i+1];
@@ -92,6 +97,7 @@ static void ata_device_init(struct ata_device * dev) {
 	dbgpf("ATA: Sectors (24): %d\n", dev->identity.sectors_28);
 
 	outb(dev->control, 0);
+	return true;
 }
 
 static int ata_device_detect(struct ata_device * dev) {
@@ -110,10 +116,11 @@ static int ata_device_detect(struct ata_device * dev) {
 	}
 	if (cl == 0x00 && ch == 0x00) {
 		/* Parallel ATA device */
-		ata_device_init(dev);
-		char devicename[9]="ATA";
-		add_device(devicename, &ata_driver, (void*)dev);
-		mbr_parse(devicename);
+		if(ata_device_init(dev)){
+			char devicename[9]="ATA";
+			add_device(devicename, &ata_driver, (void*)dev);
+			mbr_parse(devicename);
+		}
 		return 1;
 	}
 	if (cl == 0x14 && ch == 0xEB) {
