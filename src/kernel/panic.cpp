@@ -146,7 +146,7 @@ void panic(char *msg){
     write_string_at(12, 50, buf, 0x1C);
     write_string_at(14, 2, "Additional information may be available in the error log (if enabled).", 0x1F);
     write_string_at(17, 24, " Please restart your computer. ", 0xF0);
-	vmm_debug_check();
+	//vmm_debug_check();
     while(true) asm volatile("hlt");
 }
 
