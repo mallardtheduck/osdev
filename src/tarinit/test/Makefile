@@ -1,4 +1,4 @@
-init.tar: Makefile data/config.ini data/boot.sys data/rtc.sys data/ps2.sys data/ata.sys data/fat.sys data/spawn.elx data/iso9660.sys
+init.tar: Makefile data/config.ini data/boot.sys data/rtc.sys data/ps2.sys data/ata.sys data/fat.sys data/spawn.elx
 	strip data/*.elx
 	strip -g data/*.sys
 	tar -cvf $@ -C data/ `ls data/`
@@ -19,9 +19,6 @@ data/ata.sys: ../../modules/ata/ata.sys
 	cp $< $@
 
 data/spawn.elx: ../../user/spawn/spawn.elx
-	cp $< $@
-
-data/iso9660.sys: ../../modules/iso9660/iso9660.sys
 	cp $< $@
 
 clean: dummy.file

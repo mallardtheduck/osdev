@@ -10,11 +10,25 @@ using namespace std;
 const uint32_t LineHeight = 20;
 
 vector<pair<string, string>> options = {
-	{"Test application", "hdd:/btos/tests/wmtest.elx"},
-	{"Terminal window", "hdd:/btos/bin/termwin.elx"},
-	{"Breakout", "hdd:/btos/bin/breakout.elx"},
+	{"Test application", ":/btos/tests/wmtest.elx"},
+	{"Terminal window", ":/btos/bin/termwin.elx"},
+	{"Breakout", ":/btos/bin/breakout.elx"},
 	{"Quit", "QUIT"},
 };
+
+string get_env(const string &name){
+	char value[128];
+	string ret;
+	size_t size=bt_getenv(name.c_str(), value, 128);
+	ret=value;
+	if(size>128){
+		char *buf=new char[size];
+		bt_getenv(name.c_str(), value, size);
+		ret=buf;
+	}
+	if(size) return ret;
+	else return "";
+}
 
 size_t RenderMenu(uint64_t surf, uint32_t ypos = UINT32_MAX, bool down = true){
 	GDS_SelectSurface(surf);
@@ -37,6 +51,7 @@ size_t RenderMenu(uint64_t surf, uint32_t ypos = UINT32_MAX, bool down = true){
 }
 
 int main(){
+	string systemdrive = get_env("SYSTEMDRIVE");
 	uint64_t surf = GDS_NewSurface(gds_SurfaceType::Bitmap, 200, LineHeight * options.size());
 	/*uint64_t win =*/ WM_NewWindow(5, 5, wm_WindowOptions::Default, wm_EventType::PointerButtonDown | wm_EventType::PointerButtonUp | wm_EventType::Close, surf, "WM Menu");
 	RenderMenu(surf);
@@ -54,7 +69,8 @@ int main(){
 				auto &o = options[buttonIndex];
 				if(o.second == "QUIT") break;
 				else{
-					bt_spawn(o.second.c_str(), 0, NULL);
+					string path = systemdrive + o.second;
+					bt_spawn(path.c_str(), 0, NULL);
 				}
 			}
 			WM_Update();
