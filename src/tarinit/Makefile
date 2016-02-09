@@ -1,4 +1,4 @@
-TARS := test
+TARS := test livecd
 
 all: dummy.file
 	for dir in $(TARS); do \

@@ -548,12 +548,22 @@
       </VirtualDirectory>
     </VirtualDirectory>
     <File Name="tarinit/Makefile"/>
+    <VirtualDirectory Name="livecd">
+      <File Name="tarinit/livecd/Makefile"/>
+      <VirtualDirectory Name="data">
+        <File Name="tarinit/livecd/data/config.ini"/>
+      </VirtualDirectory>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="iso">
     <File Name="iso/Makefile"/>
     <VirtualDirectory Name="test">
       <File Name="iso/test/Makefile"/>
       <File Name="iso/test/grub.cfg"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="livecd">
+      <File Name="iso/livecd/Makefile"/>
+      <File Name="iso/livecd/grub.cfg"/>
     </VirtualDirectory>
   </VirtualDirectory>
 </CodeLite_Project>
