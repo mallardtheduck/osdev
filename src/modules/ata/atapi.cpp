@@ -65,43 +65,53 @@ void atapi_device_init(ata_device *dev){
 }
 
 size_t atapi_scsi_command(ata_device *dev, uint8_t cmd[12], size_t size, uint8_t *buf){
-	memset(buf, 0, size);
-	uint16_t bus = dev->io_base;
-	uint8_t slave = dev->slave;
-	//dbgpf("ATA: Executing ATAPI SCSI command: %x\n", cmd[0]);
-	
-	outb(dev->io_base + ATA_REG_HDDEVSEL, slave << 4);
-	ata_wait(dev, 0);
-	outb(dev->control, 0x00);
-	outb(bus + ATA_REG_FEATURES, 0x00);
-	outb(bus + ATA_REG_LBA1, (size & 0x000000ff) >> 0);
-	outb(bus + ATA_REG_LBA2, (size & 0x0000ff00) >> 8);
-	outb(bus +  ATA_REG_COMMAND, ATA_CMD_PACKET);
-	ata_wait(dev, 0);
-	while(!(inb(dev->control) & ATA_SR_DRQ));
-	ata_reset_wait(bus);
-	for(size_t i=0; i<6; ++i){
-		out16(bus, ((uint16_t*)cmd)[i]);
+	const int max_fails = 5;
+	int fails = 0;
+	while(true){
+		memset(buf, 0, size);
+		uint16_t bus = dev->io_base;
+		uint8_t slave = dev->slave;
+		//dbgpf("ATA: Executing ATAPI SCSI command: %x\n", cmd[0]);
+		
+		outb(dev->io_base + ATA_REG_HDDEVSEL, slave << 4);
+		ata_wait(dev, 0);
+		outb(dev->control, 0x00);
+		outb(bus + ATA_REG_FEATURES, 0x00);
+		outb(bus + ATA_REG_LBA1, (size & 0x000000ff) >> 0);
+		outb(bus + ATA_REG_LBA2, (size & 0x0000ff00) >> 8);
+		outb(bus +  ATA_REG_COMMAND, ATA_CMD_PACKET);
+		ata_wait(dev, 0);
+		while(!(inb(dev->control) & ATA_SR_DRQ));
+		ata_reset_wait(bus);
+		for(size_t i=0; i<6; ++i){
+			out16(bus, ((uint16_t*)cmd)[i]);
+		}
+		ata_wait_irq(bus);
+		ata_reset_wait(bus);
+		uint8_t status = inb(dev->control);
+		//dbgpf("ATA: ATAPI status: %x\n", (int)status);
+		if(status & ATA_SR_ERR){
+			dbgout("ATA: ATAPI command error.\n");
+			fails++;
+			if(fails < max_fails) continue;
+			else return 0;
+		}
+		size_t read = inb(bus + ATA_REG_LBA1) + (inb(bus + ATA_REG_LBA2) << 8);
+		
+		if(read != size){
+			dbgout("ATA: ATAPI data size mismatch.\n");
+			fails++;
+			if(fails < max_fails) continue;
+			else return 0;
+		}
+		
+		for(size_t i=0; i<read/2; ++i){
+			((uint16_t*)buf)[i] = in16(bus);
+		}
+		ata_wait(dev, 0);
+		while((inb(dev->control) & ATA_SR_DRQ));
+		return read;
 	}
-	ata_wait_irq(bus);
-	ata_reset_wait(bus);
-	uint8_t status = inb(dev->control);
-	//dbgpf("ATA: ATAPI status: %x\n", (int)status);
-	if(status & ATA_SR_ERR){
-		dbgout("ATA: ATAPI command error.\n");
-		//panic("(ATA) ATAPI command error.");
-		return 0;
-	}
-	size_t read = inb(bus + ATA_REG_LBA1) + (inb(bus + ATA_REG_LBA2) << 8);
-	
-	if(read != size) panic("(ATA) ATAPI data size mismatch.");
-	
-	for(size_t i=0; i<read/2; ++i){
-		((uint16_t*)buf)[i] = in16(bus);
-	}
-	ata_wait(dev, 0);
-	while((inb(dev->control) & ATA_SR_DRQ));
-	return read;
 }
 
 int atapi_device_read(ata_device *dev, uint32_t lba, uint8_t *buf){
