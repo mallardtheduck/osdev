@@ -36,7 +36,7 @@ void init_cpu(){
 }
 
 char *cpu_idstring() {
-	static char s[16] = "BogusProces!";
+	static char s[16] = "UNKNOWN CPU.";
 	cpuid_string(0, (int*)(s));
 	return s;
 }
