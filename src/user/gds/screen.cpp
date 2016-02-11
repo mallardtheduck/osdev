@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <sstream>
 
+#define DBG(x) do{std::stringstream dbgss; dbgss << x << endl; bt_zero(dbgss.str().c_str());}while(0)
+
 using namespace std;
 
 Screen::Screen() : BitmapSurface::BitmapSurface(1, 1, true){
@@ -84,6 +86,7 @@ size_t Screen::BytesPerPixel() {
 }
 
 bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
+	DBG("GDS: Setting mode " << w << "x" << h << " " << (int)bpp << "bpp.");
 	bt_fioctl(fh, bt_terminal_ioctl::QueryScreenMode, sizeof(original_mode), (char*)&original_mode);
 	size_t modecount=bt_fioctl(fh, bt_terminal_ioctl::GetScreenModeCount, 0, NULL);
 	bt_vidmode bestmode;

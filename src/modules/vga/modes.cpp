@@ -24,7 +24,7 @@ void load_font(){
 	for(int i=0; i<256; ++i){
 		int srcidx=i*16;
 		int dstidx=i*32;
-		dbgpf("VGA: Copy character from %p to %p.\n", &vga_font[dstidx], &vga_memory[dstidx]);
+		//dbgpf("VGA: Copy character from %p to %p.\n", &vga_font[dstidx], &vga_memory[dstidx]);
 		memset((void*)&vga_memory[dstidx], 0, 32);
 		memcpy((void*)&vga_memory[dstidx], &vga_font[srcidx], 16);
 	}

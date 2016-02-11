@@ -56,7 +56,7 @@ static void keyboard_thread(void*){
 					keyboard_buffer.add_item(scancode2buffervalue(key));
 					updateflags(keycode);
 				} else {
-					dbgpf("KEYBOARD: Ignored unmapped scancode %x (%x).\n", (int) key, (int) keycode);
+					//dbgpf("KEYBOARD: Ignored unmapped scancode %x (%x).\n", (int) key, (int) keycode);
 				}
 			}
 		}

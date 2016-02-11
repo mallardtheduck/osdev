@@ -125,7 +125,7 @@ Rect Window::GetBoundingRect(){
 
 void Window::KeyInput(uint32_t key){
 	stringstream ss;
-	ss << "WM: Window '" << title << "' key input:" << key << endl;
+	//ss << "WM: Window '" << title << "' key input:" << key << endl;
 	bt_zero(ss.str().c_str());
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::Keyboard)){

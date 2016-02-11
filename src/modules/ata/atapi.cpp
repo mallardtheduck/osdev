@@ -68,7 +68,7 @@ size_t atapi_scsi_command(ata_device *dev, uint8_t cmd[12], size_t size, uint8_t
 	memset(buf, 0, size);
 	uint16_t bus = dev->io_base;
 	uint8_t slave = dev->slave;
-	dbgpf("ATA: Executing ATAPI SCSI command: %x\n", cmd[0]);
+	//dbgpf("ATA: Executing ATAPI SCSI command: %x\n", cmd[0]);
 	
 	outb(dev->io_base + ATA_REG_HDDEVSEL, slave << 4);
 	ata_wait(dev, 0);
@@ -86,7 +86,7 @@ size_t atapi_scsi_command(ata_device *dev, uint8_t cmd[12], size_t size, uint8_t
 	ata_wait_irq(bus);
 	ata_reset_wait(bus);
 	uint8_t status = inb(dev->control);
-	dbgpf("ATA: ATAPI status: %x\n", (int)status);
+	//dbgpf("ATA: ATAPI status: %x\n", (int)status);
 	if(status & ATA_SR_ERR){
 		dbgout("ATA: ATAPI command error.\n");
 		//panic("(ATA) ATAPI command error.");
@@ -111,7 +111,7 @@ int atapi_device_read(ata_device *dev, uint32_t lba, uint8_t *buf){
 	read_cmd[3] = (lba >> 0x10) & 0xFF;
 	read_cmd[4] = (lba >> 0x08) & 0xFF;
 	read_cmd[5] = (lba >> 0x00) & 0xFF;
-	dbgpf("ATA: Read ATAPI sector %i.\n", lba);
+	//dbgpf("ATA: Read ATAPI sector %i.\n", lba);
 	
 	size_t ret = atapi_scsi_command(dev, read_cmd, ATAPI_SECTOR_SIZE, buf);
 	
