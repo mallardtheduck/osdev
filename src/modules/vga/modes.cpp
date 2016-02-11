@@ -9,7 +9,14 @@ void select_plane(uint8_t plane) {
 	write_graphics(Graphics_Registers::ReadMapSelect, plane);
 }
 
+void wait_for_retrace(){
+	while(inb(VGA_Ports::InputStatus1) & 0x08);
+	while(!(inb(VGA_Ports::InputStatus1) & 0x08));
+}
+
 void load_palette() {
+	wait_for_retrace();
+	outb(VGA_Ports::DACWriteAddress, 0);
 	for(int i=0; i<256; ++i){
 		vga_palette_entry entry=vga_palette[i];
 		write_dac(i, entry.r, entry.g, entry.b);
@@ -321,8 +328,8 @@ void set_mode_03h() {
 	write_attribute(Attribute_Registers::ColourSelect, 0x00);
 	inb(VGA_Ports::InputStatus1);
 	outb(VGA_Ports::AttributeWrite, 0x20);
-	lock_crtc();
 	load_palette();
+	lock_crtc();
 	load_font();
 	enable_display();
 	enable_interrupts();
@@ -468,6 +475,7 @@ const size_t vga_mode_count=3;
 vga_mode *current_mode;
 
 void init_modes(){
+	load_palette();
 	current_mode=&mode_03h;
 	set_mode_03h();
 }
