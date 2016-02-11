@@ -52,7 +52,6 @@ static void keyboard_thread(void*){
 		disable_interrupts();
 		while(uint8_t key=pre_buffer.read_item()) {
 			if (!keyboard_buffer.full()) {
-				dbgpf("PS2: Keyboard scancode %x.\n", (int)key);
 				uint16_t keycode = scancode2keycode(key);
 				if (keycode) {
 					keyboard_buffer.add_item(scancode2buffervalue(key));
