@@ -103,8 +103,10 @@ void release_lock(lock &l, uint64_t thread){
     l.count--;
     if(!l.count) {
 		bool waiters = l.waiting;
+		disable_interrupts();
         __sync_bool_compare_and_swap(&l.lockval, thread, 0);
         if (l.lockval != 0) panic("(LOCK) Lock value still set!");
+		enable_interrupts();
 		if(waiters) sch_yield();
     }
 	if(&l != &sch_lock) sch_abortable(true);
