@@ -71,7 +71,6 @@ void write_dac(uint8_t index, uint8_t r, uint8_t g, uint8_t b){
 	outb(VGA_Ports::DACData, r);
 	outb(VGA_Ports::DACData, g);
 	outb(VGA_Ports::DACData, b);
-	dbgpf("VGA: DAC write %i, %x %x %x\n", index, r, g, b);
 }
 
 void read_dac(uint8_t index, uint8_t &r, uint8_t &g, uint8_t &b){
@@ -79,7 +78,6 @@ void read_dac(uint8_t index, uint8_t &r, uint8_t &g, uint8_t &b){
 	r=inb(VGA_Ports::DACData);
 	g=inb(VGA_Ports::DACData);
 	b=inb(VGA_Ports::DACData);
-	dbgpf("VGA: DAC read %i %x %x %x\n", index, r, g, b);
 }
 
 void unlock_crtc(){
