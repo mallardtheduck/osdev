@@ -36,7 +36,7 @@ void init_cpu(){
 }
 
 char *cpu_idstring() {
-	static char s[16] = "BogusProces!";
+	static char s[16] = "UNKNOWN CPU.";
 	cpuid_string(0, (int*)(s));
 	return s;
 }
@@ -73,11 +73,13 @@ void init_fpu_xmm(){
 		asm volatile("mov %%cr0, %0": "=b"(cr0));
 		cr0 &= ~(1 << 2);
 		cr0 |= (1 << 1);
+		cr0 |= (1 << 5);
 		asm volatile("mov %0, %%cr0":: "b"(cr0));
 		reset_fpu();
 		save_fpu_xmm_data(default_fpu_xmm_data);
 		fpu_switch();
 		int_handle(0x07, &fpu_nm_handler);
+		int_handle(0x10, &fpu_nm_handler);
 		if(sse_available){
 			uint32_t cr4;
 			asm volatile("mov %%cr4, %0": "=b"(cr4));
@@ -111,7 +113,7 @@ static uint8_t fpu_xmm_data_region[512] __attribute__((aligned(16)));
 void save_fpu_xmm_data(uint8_t *data){
 	uint32_t cr0;
 	asm volatile("mov %%cr0, %0": "=b"(cr0));
-	if(!(cr0 & (1 << 3))) return;
+	if((cr0 & (1 << 3))) return;
 	if(sse_available){
 		asm volatile("fxsave %0 " : "=m"(fpu_xmm_data_region));
 	}else{
@@ -129,7 +131,7 @@ void restore_fpu_xmm_data(uint8_t *data){
 	}
 }
 
-void fpu_nm_handler(int, isr_regs*){
+void fpu_nm_handler(int, isr_regs *){
 	fpu_ready();
 	restore_fpu_xmm_data(sch_get_fpu_xmm_data());
 }

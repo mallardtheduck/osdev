@@ -9,7 +9,14 @@ void select_plane(uint8_t plane) {
 	write_graphics(Graphics_Registers::ReadMapSelect, plane);
 }
 
+void wait_for_retrace(){
+	while(inb(VGA_Ports::InputStatus1) & 0x08);
+	while(!(inb(VGA_Ports::InputStatus1) & 0x08));
+}
+
 void load_palette() {
+	wait_for_retrace();
+	outb(VGA_Ports::DACWriteAddress, 0);
 	for(int i=0; i<256; ++i){
 		vga_palette_entry entry=vga_palette[i];
 		write_dac(i, entry.r, entry.g, entry.b);
@@ -19,17 +26,17 @@ void load_palette() {
 void load_font(){
 	write_graphics(Graphics_Registers::MiscGraphics, 0x04);
 	write_sequencer(Sequencer_Registers::SeqMemoryMode, 0x06);
+	write_graphics(Graphics_Registers::GraphicsMode, 0x00);
 	select_plane(2);
 	for(int i=0; i<256; ++i){
-		int srcidx=i*8;
+		int srcidx=i*16;
 		int dstidx=i*32;
+		//dbgpf("VGA: Copy character from %p to %p.\n", &vga_font[dstidx], &vga_memory[dstidx]);
 		memset((void*)&vga_memory[dstidx], 0, 32);
-		for(int j=0; j<16; ++j){
-			vga_memory[dstidx + (j * 2)]=vga_font[srcidx + j];
-			vga_memory[dstidx + (j * 2) + 1]=vga_font[srcidx + j];
-		}
+		memcpy((void*)&vga_memory[dstidx], &vga_font[srcidx], 16);
 	}
 	select_plane(0);
+	write_graphics(Graphics_Registers::GraphicsMode, 0x10);
 	write_sequencer(Sequencer_Registers::MapMask, 0x03);
 	write_sequencer(Sequencer_Registers::SeqMemoryMode, 0x02);
 	write_graphics(Graphics_Registers::MiscGraphics, 0x0E);
@@ -41,7 +48,7 @@ void set_mode_12h() {
 	unlock_crtc();
 	outb(VGA_Ports::MiscOutputWrite, 0xE3);
 	write_sequencer(Sequencer_Registers::Reset, 0x03);
-	write_sequencer(Sequencer_Registers::ClockingMode, 0x21);
+	write_sequencer(Sequencer_Registers::ClockingMode, 0x01);
 	write_sequencer(Sequencer_Registers::MapMask, 0x08);
 	write_sequencer(Sequencer_Registers::CharMapSelect, 0x00);
 	write_sequencer(Sequencer_Registers::SeqMemoryMode, 0x06);
@@ -281,7 +288,7 @@ void set_mode_03h() {
 	write_crtc(CRTC_Registers::CursorLocHigh, 0x00);
 	write_crtc(CRTC_Registers::CursorLocLow, 0x50);
 	write_crtc(CRTC_Registers::StartVrtRetrace, 0x9C);
-	write_crtc(CRTC_Registers::EndVrtRetrace, 0x0E);
+	write_crtc(CRTC_Registers::EndVrtRetrace, 0x8E);
 	write_crtc(CRTC_Registers::EndVrtDisplay, 0x8F);
 	write_crtc(CRTC_Registers::Offset, 0x28);
 	write_crtc(CRTC_Registers::UnderlineLoc, 0x1F);
@@ -321,8 +328,8 @@ void set_mode_03h() {
 	write_attribute(Attribute_Registers::ColourSelect, 0x00);
 	inb(VGA_Ports::InputStatus1);
 	outb(VGA_Ports::AttributeWrite, 0x20);
-	lock_crtc();
 	load_palette();
+	lock_crtc();
 	load_font();
 	enable_display();
 	enable_interrupts();
@@ -468,6 +475,7 @@ const size_t vga_mode_count=3;
 vga_mode *current_mode;
 
 void init_modes(){
+	load_palette();
 	current_mode=&mode_03h;
 	set_mode_03h();
 }

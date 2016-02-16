@@ -15,8 +15,8 @@ namespace VGA_Ports{
 	static const uint16_t AttributeRead		=0x3C1;
 	static const uint16_t CRTCAddress		=0x3D4;
 	static const uint16_t CRTCData			=0x3D5;
-	static const uint16_t DACReadAddress	=0x3C8;
-	static const uint16_t DACWriteAddress	=0x3C7;
+	static const uint16_t DACReadAddress	=0x3C7;
+	static const uint16_t DACWriteAddress	=0x3C8;
 	static const uint16_t DACData			=0x3C9;
 	static const uint16_t DACState			=0x3C7;
 	static const uint16_t MiscOutputRead	=0x3CC;
