@@ -1,0 +1,25 @@
+diff -rupN libuuid-1.0.3/config.sub originals/libuuid-1.0.3/config.sub
+--- libuuid-1.0.3/config.sub	2016-02-16 12:16:23.239841685 +0000
++++ originals/libuuid-1.0.3/config.sub	2014-08-12 09:19:20.000000000 +0100
+@@ -1376,7 +1376,7 @@ case $os in
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+-	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -btos* )
++	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+diff -rupN libuuid-1.0.3/randutils.c originals/libuuid-1.0.3/randutils.c
+--- libuuid-1.0.3/randutils.c	2016-02-16 12:36:54.111819642 +0000
++++ originals/libuuid-1.0.3/randutils.c	2014-08-12 09:07:18.000000000 +0100
+@@ -13,9 +13,7 @@
+ #include <string.h>
+ #include <sys/time.h>
+ 
+-#ifndef __btos__
+ #include <sys/syscall.h>
+-#endif
+ 
+ #include "randutils.h"
+ 
