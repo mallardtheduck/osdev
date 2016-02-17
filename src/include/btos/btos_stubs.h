@@ -32,6 +32,10 @@ inline static void bt_closehandle(bt_handle h){
     btos_call(BT_CLOSEHANDLE, (uint32_t)h, 0, 0);
 }
 
+inline static bool bt_queryhandle(bt_handle h){
+	return !!btos_call(BT_QUERYHANDLE, (uint32_t)h, 0, 0);
+}
+
 inline static size_t bt_get_argc(){
 	return btos_call(BT_GET_ARGC, 0, 0, 0);
 }

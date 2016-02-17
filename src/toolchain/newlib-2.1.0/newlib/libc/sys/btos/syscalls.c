@@ -318,3 +318,12 @@ int usleep(useconds_t useconds)
 	bt_rtc_sleep(msec);
    	return 0;
 }
+
+int getpagesize(void){
+	return 4096;
+}
+
+char *getwd(char *path_name){
+	bt_getenv("CWD", path_name, BT_MAX_PATH);
+	return path_name;
+}

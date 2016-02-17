@@ -538,7 +538,11 @@
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/getenv.c"/>
     <VirtualDirectory Name="sys">
       <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/dirent.h"/>
+      <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/setjmp.h"/>
+      <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/siginfo.h"/>
     </VirtualDirectory>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/signal.c"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/setjmp.c"/>
   </VirtualDirectory>
   <VirtualDirectory Name="tarinit">
     <VirtualDirectory Name="test">

@@ -87,6 +87,15 @@ USERAPI_HANDLER(BT_CLOSEHANDLE){
     }
 }
 
+USERAPI_HANDLER(BT_QUERYHANDLE){
+	bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
+	if(h.open && h.type!=kernel_handle_types::invalid){
+		regs->eax = 1;
+	}else{
+		regs->eax = 0;
+	}
+}
+
 USERAPI_HANDLER(BT_GET_ARGC){
 	regs->eax=proc_get_argc();
 }
@@ -476,6 +485,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
         //USERAPI_HANDLE_CALL(BT_GUARD_PAGE);
         //USERAPI_HANDLE_CALL(BT_PF_HANDLE);
         USERAPI_HANDLE_CALL(BT_CLOSEHANDLE);
+		USERAPI_HANDLE_CALL(BT_QUERYHANDLE);
 
 		USERAPI_HANDLE_CALL(BT_GET_ARGC);
 		USERAPI_HANDLE_CALL(BT_GET_ARG);
