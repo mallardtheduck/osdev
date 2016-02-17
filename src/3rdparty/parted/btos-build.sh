@@ -22,7 +22,7 @@ export CFLAGS="-g -O2 -I$HOME/Projects/os/src/3rdparty/install/btos/include -I$H
 export CPPFLAGS=""
 export CXXFLAGS=""
 
-export LDFLAGS="-L$HOME/Projects/os/src/3rdparty/install/btos/lib"
+export LDFLAGS="-L$HOME/Projects/os/src/3rdparty/install/btos/lib -liconv"
 
 autoconf
 PATH=$BASE_PATH/bin:$PATH
