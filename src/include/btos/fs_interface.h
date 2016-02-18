@@ -79,6 +79,7 @@ typedef struct fs_path fs_path;
 #endif
 
 enum fs_seek_flags{
+	FS_Set			= 0,
 	FS_Relative 	= 1,
 	FS_Backwards 	= 1 << 1,
 };
