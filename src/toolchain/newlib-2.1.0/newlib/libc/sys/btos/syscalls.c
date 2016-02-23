@@ -327,3 +327,12 @@ char *getwd(char *path_name){
 	bt_getenv("CWD", path_name, BT_MAX_PATH);
 	return path_name;
 }
+
+int fcntl(int fd, int cmd, ... /* arg */){
+	return 0;
+}
+
+
+uid_t getuid(){
+	return 0;
+}
