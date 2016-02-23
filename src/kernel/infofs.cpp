@@ -65,7 +65,7 @@ size_t infofs_write(void *filedata, size_t bytes, char *buf){
 	return 0;
 }
 
-size_t infofs_seek(void *filedata, size_t pos, uint32_t flags){
+bt_filesize_t infofs_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
 	if(!filedata) return 0;
     infofs_filehandle *fdata=(infofs_filehandle*)filedata;
     if(flags & FS_Relative) fdata->pos+=pos;

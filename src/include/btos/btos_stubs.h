@@ -125,8 +125,10 @@ inline static size_t bt_fioctl(bt_filehandle file, int function, size_t bytes, c
 	return btos_call(BT_FIOCTL, file, function, (uint32_t)&buf);
 }
 
-inline static size_t bt_fseek(bt_filehandle file, size_t bytes, uint32_t flags){
-	return btos_call(BT_FSEEK, file, bytes, flags);
+inline static bt_filesize_t bt_fseek(bt_filehandle file, bt_filesize_t bytes, uint32_t flags){
+	volatile bt_filesize_t ret = bytes;
+	btos_call(BT_FSEEK, file, (uint32_t)&ret, flags);
+	return ret;
 }
 
 inline static void bt_fflush(bt_filehandle file){

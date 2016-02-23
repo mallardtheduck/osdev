@@ -198,8 +198,10 @@ USERAPI_HANDLER(BT_FIOCTL){
 
 USERAPI_HANDLER(BT_FSEEK){
     file_handle *file=proc_get_file(regs->ebx);
-    if(file){
-        regs->eax=fs_seek(*file, regs->ecx, regs->edx);
+    if(file && is_safe_ptr(regs->ecx, sizeof(bt_filesize_t))){
+		bt_filesize_t *pos = (bt_filesize_t*)regs->ecx;
+        *pos=fs_seek(*file, *pos, regs->edx);
+		regs->eax = 0; 
     }
 }
 

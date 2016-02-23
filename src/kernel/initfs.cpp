@@ -155,7 +155,7 @@ directory_entry initfs_stat(void *, fs_path *path){
 	}
 }
 
-size_t initfs_seek(void *filedata, size_t pos, uint32_t flags){
+bt_filesize_t initfs_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
 	if(flags & FS_Relative) fdata->pos+=pos;
 	else if(flags & FS_Backwards){
 		initfs_file file=initfs_getfile(fdata->fileindex);

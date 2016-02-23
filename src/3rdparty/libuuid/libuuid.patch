@@ -1,45 +1,5 @@
-diff -rupN libuuid-1.0.3/btos-build.sh originals/libuuid-1.0.3/btos-build.sh
---- libuuid-1.0.3/btos-build.sh	2016-02-23 18:46:10.224117201 +0000
-+++ originals/libuuid-1.0.3/btos-build.sh	1970-01-01 01:00:00.000000000 +0100
-@@ -1,36 +0,0 @@
--#!/bin/bash
--
--source ../../env-os.sh
--
--# architecture prefix
--ARCH="i686-pc-btos"
--
--# cumulative toolchain prefix
--PREFIX=/btos
--
--export CC=$ARCH-gcc
--export CXX=$ARCH-g++
--export LD=$ARCH-ld
--export NM="$ARCH-nm -B"
--export AR=$ARCH-ar
--export RANLIB=$ARCH-ranlib
--export STRIP=$ARCH-strip
--export OBJCOPY=$ARCH-objcopy
--export LN_S="ln -s"
--
--export CFLAGS="-g -O2"
--export CPPFLAGS=""
--export CXXFLAGS=""
--
--export LDFLAGS=""
--
--autoconf
--PATH=$BASE_PATH/bin:$PATH
--./configure \
--	--host=$ARCH \
--	--prefix=$PREFIX
--
--make
--make DESTDIR=$PWD/../install install
--find ../install -executable -not -name "*.elx" -type f -exec rm {}.elx \;
--find ../install -executable -not -name "*.elx" -type f -exec mv {} {}.elx \;
 diff -rupN libuuid-1.0.3/config.sub originals/libuuid-1.0.3/config.sub
---- libuuid-1.0.3/config.sub	2016-02-23 18:46:10.224117201 +0000
+--- libuuid-1.0.3/config.sub	2016-02-23 19:33:25.204223955 +0000
 +++ originals/libuuid-1.0.3/config.sub	2014-08-12 09:19:20.000000000 +0100
 @@ -1376,7 +1376,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
@@ -51,7 +11,7 @@ diff -rupN libuuid-1.0.3/config.sub originals/libuuid-1.0.3/config.sub
  		;;
  	-qnx*)
 diff -rupN libuuid-1.0.3/gen_uuid.c originals/libuuid-1.0.3/gen_uuid.c
---- libuuid-1.0.3/gen_uuid.c	2016-02-23 19:14:21.360180882 +0000
+--- libuuid-1.0.3/gen_uuid.c	2016-02-23 19:33:25.204223955 +0000
 +++ originals/libuuid-1.0.3/gen_uuid.c	2014-08-12 09:07:18.000000000 +0100
 @@ -266,7 +266,6 @@ static int get_node_id(unsigned char *no
  static int get_clock(uint32_t *clock_high, uint32_t *clock_low,
@@ -72,7 +32,7 @@ diff -rupN libuuid-1.0.3/gen_uuid.c originals/libuuid-1.0.3/gen_uuid.c
  
  #if defined(HAVE_UUIDD) && defined(HAVE_SYS_UN_H)
 diff -rupN libuuid-1.0.3/randutils.c originals/libuuid-1.0.3/randutils.c
---- libuuid-1.0.3/randutils.c	2016-02-23 18:46:10.224117201 +0000
+--- libuuid-1.0.3/randutils.c	2016-02-23 19:33:25.204223955 +0000
 +++ originals/libuuid-1.0.3/randutils.c	2014-08-12 09:07:18.000000000 +0100
 @@ -13,9 +13,7 @@
  #include <string.h>

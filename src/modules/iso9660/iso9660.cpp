@@ -168,7 +168,7 @@ size_t iso9660_write(void *filedata, size_t bytes, char *buf){
 	return 0;
 }
 
-size_t iso9660_seek(void *filedata, size_t pos, uint32_t flags){
+bt_filesize_t iso9660_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
 	l9660_file *file = (l9660_file*)filedata;
 	size_t ret = 0;
 	if(file){

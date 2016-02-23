@@ -56,7 +56,7 @@ size_t vga_write(void *instance, size_t bytes, char *buf){
     }
 }
 
-size_t vga_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t vga_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	hold_lock hl(&vga_device_lock);
     vga_instance *inst=(vga_instance*)instance;
     if(current_mode->vidmode.textmode){

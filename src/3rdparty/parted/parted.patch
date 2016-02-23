@@ -1,5 +1,5 @@
 diff -rupN parted-3.2/aclocal.m4 originals/parted-3.2/aclocal.m4
---- parted-3.2/aclocal.m4	2016-02-18 09:55:05.460977418 +0000
+--- parted-3.2/aclocal.m4	2016-02-23 19:35:01.532227582 +0000
 +++ originals/parted-3.2/aclocal.m4	2014-07-29 04:02:51.000000000 +0100
 @@ -180,6 +180,61 @@ else
  fi[]dnl
@@ -64,7 +64,7 @@ diff -rupN parted-3.2/aclocal.m4 originals/parted-3.2/aclocal.m4
  #
  # This file is free software; the Free Software Foundation
 diff -rupN parted-3.2/build-aux/config.sub originals/parted-3.2/build-aux/config.sub
---- parted-3.2/build-aux/config.sub	2016-02-18 09:55:05.460977418 +0000
+--- parted-3.2/build-aux/config.sub	2016-02-23 19:34:43.808226914 +0000
 +++ originals/parted-3.2/build-aux/config.sub	2014-05-26 22:51:01.000000000 +0100
 @@ -1380,7 +1380,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
@@ -76,7 +76,7 @@ diff -rupN parted-3.2/build-aux/config.sub originals/parted-3.2/build-aux/config
  		;;
  	-qnx*)
 diff -rupN parted-3.2/configure originals/parted-3.2/configure
---- parted-3.2/configure	2016-02-18 11:25:13.612880569 +0000
+--- parted-3.2/configure	2016-02-23 19:35:04.524227695 +0000
 +++ originals/parted-3.2/configure	2014-07-29 04:04:04.000000000 +0100
 @@ -4180,8 +4180,7 @@ case "$host_os" in
  	linux*) OS=linux ;;
@@ -89,7 +89,7 @@ diff -rupN parted-3.2/configure originals/parted-3.2/configure
  
  
 diff -rupN parted-3.2/configure.ac originals/parted-3.2/configure.ac
---- parted-3.2/configure.ac	2016-02-18 09:55:05.460977418 +0000
+--- parted-3.2/configure.ac	2016-02-23 19:34:43.816226915 +0000
 +++ originals/parted-3.2/configure.ac	2014-06-15 19:17:43.000000000 +0100
 @@ -61,8 +61,7 @@ case "$host_os" in
  	linux*) OS=linux ;;
@@ -102,7 +102,7 @@ diff -rupN parted-3.2/configure.ac originals/parted-3.2/configure.ac
  AC_SUBST([OS])
  
 diff -rupN parted-3.2/lib/error.c originals/parted-3.2/lib/error.c
---- parted-3.2/lib/error.c	2016-02-18 09:55:05.460977418 +0000
+--- parted-3.2/lib/error.c	2016-02-23 19:34:43.816226915 +0000
 +++ originals/parted-3.2/lib/error.c	2014-05-26 22:51:01.000000000 +0100
 @@ -49,10 +49,6 @@
  # define _(String) String
@@ -125,7 +125,7 @@ diff -rupN parted-3.2/lib/error.c originals/parted-3.2/lib/error.c
  #  ifndef F_GETFL
  #   error Please port fcntl to your platform
 diff -rupN parted-3.2/lib/fsync.c originals/parted-3.2/lib/fsync.c
---- parted-3.2/lib/fsync.c	2016-02-18 09:55:05.460977418 +0000
+--- parted-3.2/lib/fsync.c	2016-02-23 19:34:43.816226915 +0000
 +++ originals/parted-3.2/lib/fsync.c	2014-07-29 03:57:48.000000000 +0100
 @@ -76,12 +76,6 @@ fsync (int fd)
    return 0;
@@ -141,7 +141,7 @@ diff -rupN parted-3.2/lib/fsync.c originals/parted-3.2/lib/fsync.c
  
  # error "This platform lacks fsync function, and Gnulib doesn't provide a replacement. This is a bug in Gnulib."
 diff -rupN parted-3.2/lib/sleep.c originals/parted-3.2/lib/sleep.c
---- parted-3.2/lib/sleep.c	2016-02-18 09:55:05.460977418 +0000
+--- parted-3.2/lib/sleep.c	2016-02-23 19:34:43.816226915 +0000
 +++ originals/parted-3.2/lib/sleep.c	2014-05-26 22:51:01.000000000 +0100
 @@ -69,17 +69,6 @@ rpl_sleep (unsigned int seconds)
    return sleep (seconds);
@@ -162,7 +162,7 @@ diff -rupN parted-3.2/lib/sleep.c originals/parted-3.2/lib/sleep.c
  
   #error "Please port gnulib sleep.c to your platform, possibly using usleep() or select(), then report this to bug-gnulib."
 diff -rupN parted-3.2/libparted/arch/btos.c originals/parted-3.2/libparted/arch/btos.c
---- parted-3.2/libparted/arch/btos.c	2016-02-18 13:08:16.880769838 +0000
+--- parted-3.2/libparted/arch/btos.c	2016-02-23 20:52:30.076402627 +0000
 +++ originals/parted-3.2/libparted/arch/btos.c	1970-01-01 01:00:00.000000000 +0100
 @@ -1,232 +0,0 @@
 -#include <config.h>
@@ -186,7 +186,7 @@ diff -rupN parted-3.2/libparted/arch/btos.c originals/parted-3.2/libparted/arch/
 -	const size_t sector_size = 512;
 -
 -	bt_handle_t fh = bt_fopen(dev->path, FS_Read);
--	size_t size = bt_fseek(fh, 0, FS_Backwards);
+-	long long size = bt_fseek(fh, 0, FS_Backwards);
 -	bt_fclose(fh);
 -
 -	dev->sector_size = sector_size;
@@ -398,7 +398,7 @@ diff -rupN parted-3.2/libparted/arch/btos.c originals/parted-3.2/libparted/arch/
 -        disk_ops:       &btos_disk_ops
 -};
 diff -rupN parted-3.2/libparted/architecture.c originals/parted-3.2/libparted/architecture.c
---- parted-3.2/libparted/architecture.c	2016-02-18 09:57:04.976975278 +0000
+--- parted-3.2/libparted/architecture.c	2016-02-23 19:34:43.816226915 +0000
 +++ originals/parted-3.2/libparted/architecture.c	2014-06-15 19:17:43.000000000 +0100
 @@ -34,9 +34,6 @@ ped_set_architecture ()
  #elif defined(__BEOS__)
@@ -411,7 +411,7 @@ diff -rupN parted-3.2/libparted/architecture.c originals/parted-3.2/libparted/ar
  	extern PedArchitecture ped_gnu_arch;
  	const PedArchitecture* arch = &ped_gnu_arch;
 diff -rupN parted-3.2/libparted/fs/ext2/ext2.h originals/parted-3.2/libparted/fs/ext2/ext2.h
---- parted-3.2/libparted/fs/ext2/ext2.h	2016-02-18 09:55:05.464977418 +0000
+--- parted-3.2/libparted/fs/ext2/ext2.h	2016-02-23 19:34:43.816226915 +0000
 +++ originals/parted-3.2/libparted/fs/ext2/ext2.h	2014-06-15 19:17:43.000000000 +0100
 @@ -32,12 +32,6 @@
  #  define _(String) (String)
@@ -427,7 +427,7 @@ diff -rupN parted-3.2/libparted/fs/ext2/ext2.h originals/parted-3.2/libparted/fs
  
  #ifdef HAVE_LINUX_EXT2_FS_H__FAILS_TO_COMPILE
 diff -rupN parted-3.2/libparted/fs/xfs/platform_defs.h originals/parted-3.2/libparted/fs/xfs/platform_defs.h
---- parted-3.2/libparted/fs/xfs/platform_defs.h	2016-02-18 09:55:05.464977418 +0000
+--- parted-3.2/libparted/fs/xfs/platform_defs.h	2016-02-23 19:34:43.816226915 +0000
 +++ originals/parted-3.2/libparted/fs/xfs/platform_defs.h	2014-06-15 19:17:43.000000000 +0100
 @@ -37,9 +37,7 @@
  #include <stdio.h>
@@ -451,7 +451,7 @@ diff -rupN parted-3.2/libparted/fs/xfs/platform_defs.h originals/parted-3.2/libp
  # define constpp	const char * const *
  #else
 diff -rupN parted-3.2/libparted/labels/gpt.c originals/parted-3.2/libparted/labels/gpt.c
---- parted-3.2/libparted/labels/gpt.c	2016-02-18 09:55:05.464977418 +0000
+--- parted-3.2/libparted/labels/gpt.c	2016-02-23 19:34:43.816226915 +0000
 +++ originals/parted-3.2/libparted/labels/gpt.c	2014-06-15 19:25:53.000000000 +0100
 @@ -33,9 +33,7 @@
  #include <inttypes.h>
@@ -465,7 +465,7 @@ diff -rupN parted-3.2/libparted/labels/gpt.c originals/parted-3.2/libparted/labe
  #include <unistd.h>
  #include <uuid/uuid.h>
 diff -rupN parted-3.2/libparted/labels/sun.c originals/parted-3.2/libparted/labels/sun.c
---- parted-3.2/libparted/labels/sun.c	2016-02-18 09:55:05.464977418 +0000
+--- parted-3.2/libparted/labels/sun.c	2016-02-23 19:34:43.816226915 +0000
 +++ originals/parted-3.2/libparted/labels/sun.c	2014-06-15 19:17:43.000000000 +0100
 @@ -26,12 +26,6 @@
  #include <parted/endian.h>
@@ -481,7 +481,7 @@ diff -rupN parted-3.2/libparted/labels/sun.c originals/parted-3.2/libparted/labe
  #  include <libintl.h>
  #  define _(String) dgettext (PACKAGE, String)
 diff -rupN parted-3.2/libparted/Makefile.am originals/parted-3.2/libparted/Makefile.am
---- parted-3.2/libparted/Makefile.am	2016-02-18 09:55:05.464977418 +0000
+--- parted-3.2/libparted/Makefile.am	2016-02-23 19:34:43.816226915 +0000
 +++ originals/parted-3.2/libparted/Makefile.am	2014-07-28 03:29:16.000000000 +0100
 @@ -47,8 +47,7 @@ libparted_la_SOURCES  = debug.c			\
  EXTRA_libparted_la_SOURCES    = arch/linux.c	\
@@ -494,7 +494,7 @@ diff -rupN parted-3.2/libparted/Makefile.am originals/parted-3.2/libparted/Makef
  libparted_la_LIBADD =	\
    fs/libfs.la		\
 diff -rupN parted-3.2/libparted/Makefile.in originals/parted-3.2/libparted/Makefile.in
---- parted-3.2/libparted/Makefile.in	2016-02-18 09:55:25.416977061 +0000
+--- parted-3.2/libparted/Makefile.in	2016-02-23 19:35:03.496227656 +0000
 +++ originals/parted-3.2/libparted/Makefile.in	2014-07-29 04:02:56.000000000 +0100
 @@ -1205,8 +1205,7 @@ libparted_la_SOURCES = debug.c			\
  EXTRA_libparted_la_SOURCES = arch/linux.c	\
@@ -523,7 +523,7 @@ diff -rupN parted-3.2/libparted/Makefile.in originals/parted-3.2/libparted/Makef
  @AMDEP_TRUE@@am__include@ @am__quote@arch/$(DEPDIR)/linux.Plo@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@cs/$(DEPDIR)/constraint.Plo@am__quote@
 diff -rupN parted-3.2/libparted/unit.c originals/parted-3.2/libparted/unit.c
---- parted-3.2/libparted/unit.c	2016-02-18 13:14:02.712763645 +0000
+--- parted-3.2/libparted/unit.c	2016-02-23 19:34:43.816226915 +0000
 +++ originals/parted-3.2/libparted/unit.c	2014-06-15 19:17:43.000000000 +0100
 @@ -247,7 +247,7 @@ ped_unit_format_custom_byte (const PedDe
  	    (w < 100.) ? 1 :
@@ -535,7 +535,7 @@ diff -rupN parted-3.2/libparted/unit.c originals/parted-3.2/libparted/unit.c
  #else
  	snprintf (buf, 100, "%1$.*2$f%3$s", d, p, ped_unit_get_name (unit));
 diff -rupN parted-3.2/parted/ui.c originals/parted-3.2/parted/ui.c
---- parted-3.2/parted/ui.c	2016-02-18 12:06:37.400836089 +0000
+--- parted-3.2/parted/ui.c	2016-02-23 19:34:43.816226915 +0000
 +++ originals/parted-3.2/parted/ui.c	2014-06-15 19:17:43.000000000 +0100
 @@ -30,11 +30,6 @@
  #include <setjmp.h>

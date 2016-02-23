@@ -68,7 +68,7 @@ size_t fwrite(file_handle *h, size_t bytes, char *buf){
 	return fs_write(*h, bytes, buf);
 }
 
-size_t fseek(file_handle *handle, size_t pos, uint32_t flags){
+bt_filesize_t fseek(file_handle *handle, bt_filesize_t pos, uint32_t flags){
 	return fs_seek(*handle, pos, flags);
 }
 
