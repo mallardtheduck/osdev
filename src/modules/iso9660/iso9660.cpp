@@ -319,10 +319,14 @@ directory_entry iso9660_stat(void *mountdata, fs_path *path){
 	return directory_entry();
 }
 
+bool iso9660_format(char *, void *){
+	return false;
+}
+
 fs_driver iso9660_driver = {true, "iso9660", false, iso9660_mount, iso9660_unmount,
 							iso9660_open, iso9660_close, iso9660_read, iso9660_write, iso9660_seek, iso9660_ioctl, iso9660_flush,
 							iso9660_open_dir, iso9660_close_dir, iso9660_read_dir, iso9660_write_dir, iso9660_dirseek,
-							iso9660_stat};
+							iso9660_stat, iso9660_format};
 
 
 extern "C" int module_main(syscall_table *systbl, char *params){

@@ -384,6 +384,10 @@
       <File Name="user/tar/stubs.c"/>
       <File Name="user/tar/stubs.h"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="format">
+      <File Name="user/format/format.c"/>
+      <File Name="user/format/Makefile"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>

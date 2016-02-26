@@ -148,8 +148,8 @@ inline static size_t devwrite(void *handle, size_t bytes, char *buffer){
 	return SYSCALL_TABLE->devwrite(handle, bytes, buffer);
 }
 
-inline static size_t devseek(void *handle, size_t pos, bool relative){
-	return SYSCALL_TABLE->devseek(handle, pos, relative);
+inline static size_t devseek(void *handle, size_t pos, uint32_t flags){
+	return SYSCALL_TABLE->devseek(handle, pos, flags);
 }
 
 inline static int devioctl(void *handle, int fn, size_t bytes, char *buf){
@@ -212,8 +212,8 @@ inline static size_t fwrite(file_handle *handle, size_t bytes, char *buf){
 	return SYSCALL_TABLE->fwrite(handle, bytes, buf);
 }
 
-inline static size_t fseek(file_handle *handle, size_t pos, bool relative){
-	return SYSCALL_TABLE->fseek(handle, pos, relative);
+inline static size_t fseek(file_handle *handle, size_t pos, uint32_t flags){
+	return SYSCALL_TABLE->fseek(handle, pos, flags);
 }
 
 inline static int fioctl(file_handle *handle, int fn, size_t bytes, char *buf){

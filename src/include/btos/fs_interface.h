@@ -107,6 +107,7 @@ struct fs_driver{
 	bool (*write_dir)(void *dirdata, directory_entry entry);
 	size_t (*dirseek)(void *dirdata, size_t pos, uint32_t flags);
 	directory_entry (*stat)(void *mountdata, fs_path *path);
+	bool (*format)(char *device, void *options);
 };
 
 #ifndef __cplusplus

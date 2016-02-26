@@ -307,8 +307,8 @@ bt_filesize_t ata_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	ata_instance *inst=(ata_instance*)instance;
 	if((int)pos == 1) panic("q");
 	if(pos % 512) return inst->pos;
-	if(flags & FS_Relative) inst->pos+=pos;
-	else if(flags & FS_Backwards){
+	if(flags == FS_Relative) inst->pos+=pos;
+	else if(flags == FS_Backwards){
 		inst->pos = (inst->dev->length * 512) - pos;
 	}else if(flags == (FS_Relative | FS_Backwards)) inst->pos-=pos;
 	else inst->pos=pos;

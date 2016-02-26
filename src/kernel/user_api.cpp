@@ -282,6 +282,12 @@ USERAPI_HANDLER(BT_STAT){
 	}
 }
 
+USERAPI_HANDLER(BT_FORMAT){
+	if(is_safe_string(regs->ebx) && is_safe_string(regs->ecx) && (!regs->edx || is_safe_ptr(regs->edx, 1))){
+		regs->eax = fs_format((const char*)regs->ebx, (const char*)regs->ecx, (void*)regs->edx);
+	}
+}
+
 USERAPI_HANDLER(BT_LOAD_MODULE){
 	if(is_safe_string(regs->ebx)){
         char *params=is_safe_string(regs->ecx)?(char*)regs->ecx:NULL;
@@ -530,6 +536,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_DREAD);
 		USERAPI_HANDLE_CALL(BT_DSEEK);
 		USERAPI_HANDLE_CALL(BT_STAT);
+		USERAPI_HANDLE_CALL(BT_FORMAT);
 
 		//Modules
 		USERAPI_HANDLE_CALL(BT_LOAD_MODULE);

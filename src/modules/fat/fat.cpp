@@ -1,4 +1,5 @@
 #include <btos_module.h>
+class fatfs_format;
 extern "C" {
     #include "fat_filelib.h"
 }
@@ -99,8 +100,6 @@ void *fat_mount(char *device){
     }
 	sprintf(devicepath, "%s", device);
 	fh=fopen(devicepath, (fs_mode_flags)(FS_Read | FS_Write));
-	fl_init();
-	fl_attach_locks(&take_fat_lock, &release_fat_lock);
 	fl_attach_media(&fat_device_read, &fat_device_write);
 	mounted=true;
     release_fat_lock();
@@ -320,14 +319,37 @@ directory_entry fat_stat(void *mountdata, fs_path *path){
 	}else return invalid_directory_entry;
 }
 
+bool fat_format(char *device, void*){
+    take_fat_lock();
+	if(mounted) {
+		release_fat_lock();
+		return false;
+	}
+	sprintf(devicepath, "%s", device);
+	fh=fopen(devicepath, (fs_mode_flags)(FS_Read | FS_Write));
+	if(!fh){
+		release_fat_lock();
+		return false;
+	}
+	bt_filesize_t fsize = fseek(fh, 0, FS_Backwards);
+	uint32_t sectors = fsize / 512;
+	dbgpf("FAT: Formatting %s, %i blocks (%i bytes).\n", device, sectors, (int)fsize);
+	fl_attach_media(&fat_device_read, &fat_device_write);
+	fl_format(sectors, "BT/OS FAT");
+    release_fat_lock();
+	return true;
+}
+
 fs_driver fat_driver={true, "FAT", true,
 	fat_mount, fat_unmount, fat_open, fat_close, fat_read, fat_write, fat_seek, fat_ioctl, fat_flush,
-	fat_open_dir, fat_close_dir, fat_read_dir, fat_write_dir, fat_dirseek, fat_stat};
+	fat_open_dir, fat_close_dir, fat_read_dir, fat_write_dir, fat_dirseek, fat_stat, fat_format};
 
 extern "C" int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
 	init_lock(&fat_lock);
     init_queue();
+	fl_init();
+	fl_attach_locks(&take_fat_lock, &release_fat_lock);
 	add_filesystem(&fat_driver);
     return 0;
 }

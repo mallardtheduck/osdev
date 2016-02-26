@@ -131,6 +131,10 @@ inline static bt_filesize_t bt_fseek(bt_filehandle file, bt_filesize_t bytes, ui
 	return ret;
 }
 
+inline static bool bt_format(const char *fs, const char *device, void *options){
+	return !!btos_call(BT_FORMAT, (uint32_t)fs, (uint32_t)device, (uint32_t)options);
+}
+
 inline static void bt_fflush(bt_filehandle file){
     btos_call(BT_FFLUSH, file, 0, 0);
 }
