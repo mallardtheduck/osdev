@@ -20,5 +20,6 @@ size_t fs_seek_dir(dir_handle &dir, size_t pos, uint32_t flags);
 directory_entry fs_stat(const char *path);
 void fs_registerfs(const fs_driver &driver);
 void fs_flush(file_handle &file);
+bool fs_format(const char *name, const char *device, void *options);
 
 #endif

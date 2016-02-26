@@ -75,6 +75,7 @@ enum{
 	BT_DREAD			= 0x0513,
 	BT_DSEEK			= 0x0514,
 	BT_STAT				= 0x0520,
+	BT_FORMAT			= 0x0530,
 
 	BT_LOAD_MODULE		= 0x0601,
 

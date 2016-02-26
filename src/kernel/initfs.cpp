@@ -174,11 +174,15 @@ size_t initfs_dirseek(void *dirdata, size_t pos, uint32_t flags){
 	return ddata->pos;
 }
 
+bool initfs_format(char*, void*){
+	return false;
+}
+
 fs_driver initfs_driver = {true, "INITFS", false,
 	initfs_mount, initfs_unmount,
 	initfs_open, initfs_close, initfs_read, initfs_write, initfs_seek, initfs_ioctl, initfs_flush,
 	initfs_open_dir, initfs_close_dir, initfs_read_dir, initfs_write_dir, initfs_dirseek,
-	initfs_stat};
+	initfs_stat, initfs_format};
 
 fs_driver initfs_getdriver(){
 	if(!initfs_data){
