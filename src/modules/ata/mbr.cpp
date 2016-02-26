@@ -63,10 +63,10 @@ size_t mbr_write(void *instance, size_t bytes, char *buf){
 	return 0;
 }
 
-size_t mbr_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t mbr_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	if(instance){
     	mbr_instance *inst=(mbr_instance*)instance;
-    	size_t r=devseek(inst->dh, pos, flags);
+    	bt_filesize_t r=devseek(inst->dh, pos, flags);
     	inst->devpos=r; inst->pos=r-(inst->part->start*512);
     	return inst->pos;
     }

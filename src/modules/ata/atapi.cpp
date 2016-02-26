@@ -185,7 +185,7 @@ size_t atapi_write(void */*instance*/, size_t /*bytes*/, char */*buf*/){
     return 0;
 }
 
-size_t atapi_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t atapi_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	atapi_instance *inst=(atapi_instance*)instance;
 	if(pos % ATAPI_SECTOR_SIZE) return inst->pos;
 	if(flags & FS_Relative) inst->pos+=pos;

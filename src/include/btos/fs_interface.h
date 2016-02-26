@@ -19,6 +19,8 @@ static const size_t BT_MAX_SEGLEN=256;
 #define BT_MAX_SEGLEN 256
 #endif
 
+typedef int64_t bt_filesize_t;
+
 enum fs_item_types{
 	FS_File=0x00,
 	FS_Directory=0x01,
@@ -57,7 +59,7 @@ struct BT_DE_NAME{
 	bool valid;
 	uint64_t id;
 	char filename[BT_MAX_SEGLEN];
-	size_t size;
+	bt_filesize_t size;
 	fs_item_types type;
 };
 
@@ -79,6 +81,7 @@ typedef struct fs_path fs_path;
 #endif
 
 enum fs_seek_flags{
+	FS_Set			= 0,
 	FS_Relative 	= 1,
 	FS_Backwards 	= 1 << 1,
 };
@@ -95,7 +98,7 @@ struct fs_driver{
 	bool (*close)(void *filedata);
 	size_t (*read)(void *filedata, size_t bytes, char *buf);
 	size_t (*write)(void *filedata, size_t bytes, char *buf);
-	size_t (*seek)(void *filedata, size_t pos, uint32_t flags);
+	bt_filesize_t (*seek)(void *filedata, bt_filesize_t pos, uint32_t flags);
 	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
     void (*flush)(void *filedata);
 	void *(*open_dir)(void *mountdata, fs_path *path, fs_mode_flags mode);

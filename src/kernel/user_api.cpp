@@ -87,6 +87,15 @@ USERAPI_HANDLER(BT_CLOSEHANDLE){
     }
 }
 
+USERAPI_HANDLER(BT_QUERYHANDLE){
+	bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
+	if(h.open && h.type!=kernel_handle_types::invalid){
+		regs->eax = 1;
+	}else{
+		regs->eax = 0;
+	}
+}
+
 USERAPI_HANDLER(BT_GET_ARGC){
 	regs->eax=proc_get_argc();
 }
@@ -189,8 +198,10 @@ USERAPI_HANDLER(BT_FIOCTL){
 
 USERAPI_HANDLER(BT_FSEEK){
     file_handle *file=proc_get_file(regs->ebx);
-    if(file){
-        regs->eax=fs_seek(*file, regs->ecx, regs->edx);
+    if(file && is_safe_ptr(regs->ecx, sizeof(bt_filesize_t))){
+		bt_filesize_t *pos = (bt_filesize_t*)regs->ecx;
+        *pos=fs_seek(*file, *pos, regs->edx);
+		regs->eax = 0; 
     }
 }
 
@@ -476,6 +487,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
         //USERAPI_HANDLE_CALL(BT_GUARD_PAGE);
         //USERAPI_HANDLE_CALL(BT_PF_HANDLE);
         USERAPI_HANDLE_CALL(BT_CLOSEHANDLE);
+		USERAPI_HANDLE_CALL(BT_QUERYHANDLE);
 
 		USERAPI_HANDLE_CALL(BT_GET_ARGC);
 		USERAPI_HANDLE_CALL(BT_GET_ARG);

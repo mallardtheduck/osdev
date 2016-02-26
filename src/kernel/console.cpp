@@ -78,7 +78,7 @@ size_t terminal_write(void *instance, size_t bytes, char *buf){
 	}
 }
 
-size_t terminal_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t terminal_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	terminal_instance *inst=(terminal_instance*)instance;
 	size_t ret=0;
     if(inst->mode==bt_vid_text_access_mode::Raw){

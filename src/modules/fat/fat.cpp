@@ -183,7 +183,7 @@ size_t fat_write(void *filedata, size_t bytes, char *buf){
 	return (ret>=0)?ret:0;
 }
 
-size_t fat_seek(void *filedata, size_t pos, uint32_t flags){
+bt_filesize_t fat_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return 0;
     take_fat_lock();

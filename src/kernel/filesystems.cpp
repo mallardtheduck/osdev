@@ -245,7 +245,7 @@ size_t fs_write(file_handle &file, size_t bytes, char *buf){
 	return file.mount->driver.write(file.filedata, bytes, buf);
 }
 
-size_t fs_seek(file_handle &file, size_t pos, uint32_t flags){
+bt_filesize_t fs_seek(file_handle &file, bt_filesize_t pos, uint32_t flags){
 	return file.mount->driver.seek(file.filedata, pos, flags);
 }
 

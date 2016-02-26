@@ -37,7 +37,7 @@ size_t devfs_write(void *filedata, size_t bytes, char *buf){
 	return drv_write(filedata, bytes, buf);
 }
 
-size_t devfs_seek(void *filedata, size_t pos, uint32_t flags){
+bt_filesize_t devfs_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
 	return drv_seek(filedata, pos, flags);
 }
 

@@ -190,7 +190,7 @@ size_t keyboard_write(void *instance, size_t bytes, char *buf){
 	return 0;
 }
 
-size_t keyboard_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t keyboard_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	return 0;
 }
 

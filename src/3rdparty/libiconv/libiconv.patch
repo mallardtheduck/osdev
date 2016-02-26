@@ -1,0 +1,47 @@
+diff -rupN libiconv-1.14/build-aux/config.sub originals/libiconv-1.14/build-aux/config.sub
+--- libiconv-1.14/build-aux/config.sub	2016-02-17 20:36:31.479799217 +0000
++++ originals/libiconv-1.14/build-aux/config.sub	2009-06-21 12:17:33.000000000 +0100
+@@ -1282,7 +1282,7 @@ case $os in
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+-	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -btos*)
++	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+diff -rupN libiconv-1.14/libcharset/build-aux/config.sub originals/libiconv-1.14/libcharset/build-aux/config.sub
+--- libiconv-1.14/libcharset/build-aux/config.sub	2016-02-17 20:37:41.431797964 +0000
++++ originals/libiconv-1.14/libcharset/build-aux/config.sub	2009-06-21 12:17:33.000000000 +0100
+@@ -1214,7 +1214,7 @@ case $os in
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+-	      | -skyos* | -haiku* | -rdos* | -btos* )
++	      | -skyos* | -haiku* | -rdos*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+diff -rupN libiconv-1.14/srclib/error.c originals/libiconv-1.14/srclib/error.c
+--- libiconv-1.14/srclib/error.c	2016-02-17 20:47:59.947786888 +0000
++++ originals/libiconv-1.14/srclib/error.c	2011-08-07 14:42:06.000000000 +0100
+@@ -49,10 +49,6 @@
+ # define _(String) String
+ #endif
+ 
+-#ifdef __btos__
+-#include <btos.h>
+-#endif
+-
+ /* If NULL, error will flush stdout, then print on stderr the program
+    name, a colon and a space.  Otherwise, error will call this
+    function without parameters instead.  */
+@@ -131,8 +127,6 @@ is_open (int fd)
+      that they are open but point to an INVALID_HANDLE_VALUE.  There is no
+      fcntl, and the gnulib replacement fcntl does not support F_GETFL.  */
+   return (HANDLE) _get_osfhandle (fd) != INVALID_HANDLE_VALUE;
+-# elif defined(__btos__)
+-  return bt_queryhandle(btos_get_handle(fd));
+ # else
+ #  ifndef F_GETFL
+ #   error Please port fcntl to your platform
