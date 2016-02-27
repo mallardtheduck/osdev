@@ -6,13 +6,14 @@
 #endif
 
 #include <btos/devices.h>
+#include <btos/fs_interface.h>
 
 struct drv_driver{
 	void *(*open)(void *id);
 	bool (*close)(void *instance);
 	size_t (*read)(void *instance, size_t bytes, char *buf);
 	size_t (*write)(void *instance, size_t bytes, char *buf);
-	size_t (*seek)(void *instance, size_t pos, uint32_t flags);
+	bt_filesize_t (*seek)(void *instance, bt_filesize_t pos, uint32_t flags);
 	int (*ioctl)(void *instance, int fn, size_t bytes, char *buf);
 	int (*type)();
 	char *(*desc)();

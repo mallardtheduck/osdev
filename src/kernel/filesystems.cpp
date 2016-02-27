@@ -10,7 +10,7 @@ map<string, fs_driver> *fs_drivers;
 lock fs_lock;
 
 static const fs_driver invalid_fs_driver={false, "", false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL};
+	NULL, NULL, NULL, NULL, NULL, NULL};
 static const fs_mountpoint invalid_mountpoint={false, "", "", invalid_fs_driver, NULL};
 
 char *fs_mounts_infofs(){
@@ -245,7 +245,7 @@ size_t fs_write(file_handle &file, size_t bytes, char *buf){
 	return file.mount->driver.write(file.filedata, bytes, buf);
 }
 
-size_t fs_seek(file_handle &file, size_t pos, uint32_t flags){
+bt_filesize_t fs_seek(file_handle &file, bt_filesize_t pos, uint32_t flags){
 	return file.mount->driver.seek(file.filedata, pos, flags);
 }
 
@@ -330,4 +330,11 @@ void fs_flush(file_handle &file){
     if(!file.valid) return;
     amm_flush(file);
     file.mount->driver.flush(file.filedata);
+}
+
+bool fs_format(const char *fs, const char *device, void *options){
+	dbgpf("FS: Format %s with %s.\n", device, fs);
+	fs_driver driver=getfs(fs);
+	if(!driver.valid) return false;
+	return driver.format((char*)device, options);
 }

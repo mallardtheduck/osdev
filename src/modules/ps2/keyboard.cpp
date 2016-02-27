@@ -30,6 +30,7 @@ static void (*write_device)(uint8_t);
 
 static void keyboard_handler(int irq, isr_regs *regs){
 	uint8_t ps2_byte=ps2_read_data_nocheck();
+	if(ps2_byte == 0xFA) return;
 	pre_buffer.add_item(ps2_byte);
 	input_available = true;
 	/*if(thread_id() != keyboard_thread_id) {
@@ -56,7 +57,7 @@ static void keyboard_thread(void*){
 					keyboard_buffer.add_item(scancode2buffervalue(key));
 					updateflags(keycode);
 				} else {
-					dbgpf("KEYBOARD: Ignored unmapped scancode %x (%x).\n", (int) key, (int) keycode);
+					//dbgpf("KEYBOARD: Ignored unmapped scancode %x (%x).\n", (int) key, (int) keycode);
 				}
 			}
 		}
@@ -189,7 +190,7 @@ size_t keyboard_write(void *instance, size_t bytes, char *buf){
 	return 0;
 }
 
-size_t keyboard_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t keyboard_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	return 0;
 }
 
@@ -227,6 +228,26 @@ void init_keyboard(uint8_t kchannel){
 	}
 	write_device(Device_Command::GetSetScanCode);
 	ps2_write_data(0x01);
+	write_device(Device_Command::GetSetScanCode);
+	ps2_write_data(0x00);
+	uint8_t byte = 0xFA;
+	while(byte == 0xFA) byte = ps2_read_data();
+	dbgpf("PS2: Scan set: %x\n", byte);
+	if(byte == 0x02 || byte == 0x41){
+		if(channel == 1){
+			dbgpf("PS2: Keyboard does not support scan set 1. Re-enabling translation.\n");
+			dbgout("PS2: Read config\n");
+			ps2_write_command(PS2_Command::ReadRAM);
+			uint8_t config=ps2_read_data();
+			dbgpf("PS2: Config: %x\n", (int)config);
+			config |= (1 << 6);
+			dbgout("PS2: Write config\n");
+			ps2_write_command(PS2_Command::WriteRAM);
+			ps2_write_data(config);
+		}else{
+			panic("(PS2) Keyboard does not support scan set 1 and cannot be translated.");
+		}
+	}
 	write_device(Device_Command::EnableScanning);
 	handle_irq(irq, &keyboard_handler);
 	keyboard_thread_id=new_thread(&keyboard_thread, NULL);

@@ -73,7 +73,7 @@ struct syscall_table{
 	bool (*devclose)(void *handle);
 	size_t (*devread)(void *handle, size_t bytes, char *buffer);
 	size_t (*devwrite)(void *handle, size_t bytes, char *buffer);
-	size_t (*devseek)(void *handle, size_t pos, uint32_t flags);
+	bt_filesize_t (*devseek)(void *handle, bt_filesize_t pos, uint32_t flags);
 	int (*devioctl)(void *handle, int fn, size_t bytes, char *buffer);
 	int (*devtype)(const char *name);
 	char *(*devdesc)(const char *name);
@@ -91,7 +91,7 @@ struct syscall_table{
 	bool (*fclose)(file_handle *handle);
 	size_t (*fread)(file_handle *handle, size_t bytes, char *buf);
 	size_t (*fwrite)(file_handle *handle, size_t bytes, char *buf);
-	size_t (*fseek)(file_handle *handle, size_t pos, uint32_t flags);
+	bt_filesize_t (*fseek)(file_handle *handle, bt_filesize_t pos, uint32_t flags);
 	int (*fioctl)(file_handle *handle, int fn, size_t bytes, char *buf);
     void (*fflush)(file_handle *handle);
 

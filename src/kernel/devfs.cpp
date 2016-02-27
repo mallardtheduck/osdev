@@ -37,7 +37,7 @@ size_t devfs_write(void *filedata, size_t bytes, char *buf){
 	return drv_write(filedata, bytes, buf);
 }
 
-size_t devfs_seek(void *filedata, size_t pos, uint32_t flags){
+bt_filesize_t devfs_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
 	return drv_seek(filedata, pos, flags);
 }
 
@@ -122,10 +122,14 @@ directory_entry devfs_stat(void *, fs_path *path){
 	return ret;
 }
 
+bool devfs_format(char*, void*){
+	return false;
+}
+
 fs_driver devfs_driver = {true, "DEVFS", false, devfs_mount, devfs_unmount,
 							devfs_open, devfs_close, devfs_read, devfs_write, devfs_seek, devfs_ioctl, devfs_flush,
 							devfs_open_dir, devfs_close_dir, devfs_read_dir, devfs_write_dir, devfs_dirseek,
-							devfs_stat};
+							devfs_stat, devfs_format};
 
 fs_driver devfs_getdriver(){
 	return devfs_driver;

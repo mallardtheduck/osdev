@@ -125,7 +125,7 @@ size_t mouse_write(void *instance, size_t bytes, char *cbuf){
 	return 0;
 }
 
-size_t mouse_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t mouse_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	return 0;
 }
 

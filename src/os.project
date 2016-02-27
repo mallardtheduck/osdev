@@ -384,6 +384,10 @@
       <File Name="user/tar/stubs.c"/>
       <File Name="user/tar/stubs.h"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="format">
+      <File Name="user/format/format.c"/>
+      <File Name="user/format/Makefile"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
@@ -538,7 +542,11 @@
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/getenv.c"/>
     <VirtualDirectory Name="sys">
       <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/dirent.h"/>
+      <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/setjmp.h"/>
+      <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/siginfo.h"/>
     </VirtualDirectory>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/signal.c"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/setjmp.c"/>
   </VirtualDirectory>
   <VirtualDirectory Name="tarinit">
     <VirtualDirectory Name="test">

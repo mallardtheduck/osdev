@@ -36,6 +36,7 @@ enum{
     BT_PF_HANDLE        = 0x0105,
     BT_SET_PAGEFLAGS    = 0x0106,
     BT_CLOSEHANDLE      = 0x0107,
+	BT_QUERYHANDLE		= 0x0108,
 
 	BT_GET_ARGC			= 0x0111,
 	BT_GET_ARG			= 0x0112,
@@ -74,6 +75,7 @@ enum{
 	BT_DREAD			= 0x0513,
 	BT_DSEEK			= 0x0514,
 	BT_STAT				= 0x0520,
+	BT_FORMAT			= 0x0530,
 
 	BT_LOAD_MODULE		= 0x0601,
 

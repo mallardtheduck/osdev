@@ -32,6 +32,10 @@ inline static void bt_closehandle(bt_handle h){
     btos_call(BT_CLOSEHANDLE, (uint32_t)h, 0, 0);
 }
 
+inline static bool bt_queryhandle(bt_handle h){
+	return !!btos_call(BT_QUERYHANDLE, (uint32_t)h, 0, 0);
+}
+
 inline static size_t bt_get_argc(){
 	return btos_call(BT_GET_ARGC, 0, 0, 0);
 }
@@ -121,8 +125,14 @@ inline static size_t bt_fioctl(bt_filehandle file, int function, size_t bytes, c
 	return btos_call(BT_FIOCTL, file, function, (uint32_t)&buf);
 }
 
-inline static size_t bt_fseek(bt_filehandle file, size_t bytes, uint32_t flags){
-	return btos_call(BT_FSEEK, file, bytes, flags);
+inline static bt_filesize_t bt_fseek(bt_filehandle file, bt_filesize_t bytes, uint32_t flags){
+	volatile bt_filesize_t ret = bytes;
+	btos_call(BT_FSEEK, file, (uint32_t)&ret, flags);
+	return ret;
+}
+
+inline static bool bt_format(const char *fs, const char *device, void *options){
+	return !!btos_call(BT_FORMAT, (uint32_t)fs, (uint32_t)device, (uint32_t)options);
 }
 
 inline static void bt_fflush(bt_filehandle file){

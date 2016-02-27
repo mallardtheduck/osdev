@@ -27,7 +27,7 @@ int close(int file){
     bt_handle h=btos_get_handle(file);
     int ret=bt_fclose(h);
     if(ret) btos_remove_filenum(file);
-	else erno = EBADF;
+	else errno = EBADF;
     return ret;
 }
 
@@ -38,7 +38,7 @@ int execve(char *name, char **argv, char **env){
     }
     lastchild=bt_spawn(name, i, argv);
     if(!lastchild){
-		erno = ENOENT;
+		errno = ENOENT;
 		return -1;
 	}
     return lastchild;
@@ -109,11 +109,11 @@ int open(const char *name, int flags, ...){
 		bt_filehandle fh=bt_fopen(path, mode);
 		if(fh) return btos_set_filenum(fh);
 		else{
-			erno = ENOENT;
+			errno = ENOENT;
 			return -1;
 		}
 	}else{
-		erno = ENOENT;
+		errno = ENOENT;
 		return -1;
 	}
 }
@@ -180,22 +180,22 @@ int stat(const char *file, struct stat *st){
 			st->st_blocks = e.size;
 			return 0;
 		}else{
-			erno = ENOENT;
+			errno = ENOENT;
 			return -1;
 		}
 	}else{
-		erno = EINVAL;
+		errno = EINVAL;
 		return -1;
 	}
 }
 
 clock_t times(struct tms *buf){
-	erno = ENOTSUP;
+	errno = ENOTSUP;
 	return -1;
 }
 
 int unlink(char *name){
-	bt_handle_t fh = bt_fopen(path, FS_Delete);
+	bt_handle_t fh = bt_fopen(name, FS_Delete);
 	if(!fh){
 		errno = ENOENT;
 		return -1;
@@ -222,14 +222,14 @@ int creat(const char *path, mode_t mode){
 
 int chmod(const char *path, mode_t mode){
 	(void)path; (void)mode;
-	erno = ENOTSUP;
+	errno = ENOTSUP;
 	return -1;
 }
 
 
 int symlink(const char *path1, const char *path2){
 	(void)path1; (void)path2;
-	erno = ENOTSUP;
+	errno = ENOTSUP;
 	return -1;
 }
 
@@ -242,50 +242,50 @@ int mkdir(const char *name, mode_t mode){
 			bt_dclose(dh);
 			return 0;
 		}else{
-			erno = ENOENT;
+			errno = ENOENT;
 			return -1;
 		}
 	}else{
-		erno = EINVAL;
+		errno = EINVAL;
 		return -1;
 	}
 }
 
 int pipe(int fildes[2]){
 	(void)fildes;
-	erno = ENOTSUP;
+	errno = ENOTSUP;
 	return -1;
 }
 
 int dup(int fildes){
-	erno = ENOTSUP;
+	errno = ENOTSUP;
 	(void)fildes;
 	return -1;
 }
 
 mode_t umask(mode_t cmask){
 	(void)cmask;
-	erno = ENOTSUP;
+	errno = ENOTSUP;
 	return 0;
 }
 
 
 ssize_t readlink(const char *__restrict path, char *__restrict buf, size_t bufsize){
 	(void)path; (void)buf; (void)bufsize;
-	erno = ENOTSUP;
+	errno = ENOTSUP;
 	return -1;
 }
 
 struct passwd *getpwuid(uid_t uid){
 	(void)uid;
-	erno = ENOTSUP;
+	errno = ENOTSUP;
 	return NULL;
 }
 
 
 struct passwd *getpwnam(const char *name){
 	(void)name;
-	ERNO = ENOTSUP;
+	errno = ENOTSUP;
 	return NULL;
 }
 
@@ -294,13 +294,13 @@ void setgrent(){
 
 struct group *getgrgid(gid_t gid){
 	(void)gid;
-	ERNO = ENOTSUP;
+	errno = ENOTSUP;
 	return NULL;
 }
 
 struct group *getgrnam(const char *name){
 	(void)name;
-	ERNO = ENOTSUP;
+	errno = ENOTSUP;
 	return NULL;
 }
 
@@ -309,5 +309,30 @@ int gettimeofday(struct timeval *__restrict tv, void *__restrict tz){
 	uint64_t time = bt_rtc_get_time();
 	tv->tv_sec = (time / 1000) + 946684800; //Seconds between 1/1/1970 and 1/1/2000.
 	tv->tv_usec = (time % 1000) * 1000;
+	return 0;
+}
+
+int usleep(useconds_t useconds)
+{
+	uint32_t msec = useconds / 1000;
+	bt_rtc_sleep(msec);
+   	return 0;
+}
+
+int getpagesize(void){
+	return 4096;
+}
+
+char *getwd(char *path_name){
+	bt_getenv("CWD", path_name, BT_MAX_PATH);
+	return path_name;
+}
+
+int fcntl(int fd, int cmd, ... /* arg */){
+	return 0;
+}
+
+
+uid_t getuid(){
 	return 0;
 }

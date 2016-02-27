@@ -1,5 +1,6 @@
 #include "kernel.hpp"
 #include "locks.hpp"
+#include "vmm_pagedir.hpp"
 
 lock amm_a_lock;
 
@@ -14,6 +15,7 @@ static amm_page_info* accounting;
 static size_t totalpages=0;
 
 uint32_t init_amm_page_accounting(vmm_region regions[], void *kend){
+	dbgpf("AMM_A: Init at %p.\n", kend);
     for(size_t i=0; i<VMM_MAX_REGIONS; ++i){
         if(!regions[i].base) break;
         totalpages+=regions[i].pages;
@@ -43,14 +45,20 @@ uint32_t init_amm_page_accounting(vmm_region regions[], void *kend){
 
 void amm_accounting_add_free_page(uint32_t pageaddr){
     hold_lock hl(amm_a_lock);
-    for(size_t i=0; i<totalpages; ++i){
-        if(!accounting[i].valid){
-            accounting[i].physaddr=pageaddr;
-            accounting[i].type=amm_page_type::Free;
-            accounting[i].valid=true;
-            return;
-        }
-    }
+	static size_t i = 0;
+	bool fullsearch = false;
+	while(!fullsearch){
+		for(; i<totalpages; ++i){
+			if(!accounting[i].valid){
+				accounting[i].physaddr=pageaddr;
+				accounting[i].type=amm_page_type::Free;
+				accounting[i].valid=true;
+				return;
+			}
+		}
+		i = 0;
+		fullsearch = true;
+	}
     panic("(AMM_A) Ran out of page entries!");
 }
 
@@ -69,10 +77,12 @@ void amm_accounting_mark_page(uint32_t pageaddr, amm_page_type::Enum type, void 
 uint32_t amm_accounting_get_free_page(uint32_t max){
     hold_lock hl(amm_a_lock);
     for(size_t i=totalpages; i>0; --i) {
-        if(accounting[i].valid && accounting[i].type==amm_page_type::Free && accounting[i].physaddr < max) {
-			if(!accounting[i].physaddr) panic("(AMM_A) Page accounting data corrupt!");
-            return accounting[i].physaddr;
-        }
+		if(vmm_cur_pagedir->is_mapped(&accounting[i])){
+			if(accounting[i].valid && accounting[i].type==amm_page_type::Free && accounting[i].physaddr < max) {
+				if(!accounting[i].physaddr) panic("(AMM_A) Page accounting data corrupt!");
+				return accounting[i].physaddr;
+			}
+		}
     }
     panic("(AMM_A) Out of memory!");
     return 0;

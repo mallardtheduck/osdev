@@ -10,7 +10,7 @@ file_handle fs_open(const char *path, fs_mode_flags mode);
 bool fs_close(file_handle &file);
 size_t fs_read(file_handle &file, size_t bytes, char *buf);
 size_t fs_write(file_handle &file, size_t bytes, char *buf);
-size_t fs_seek(file_handle &file, size_t pos, uint32_t flags);
+bt_filesize_t fs_seek(file_handle &file, bt_filesize_t pos, uint32_t flags);
 int fs_ioctl(file_handle &file, int fn, size_t bytes, char *buf);
 dir_handle fs_open_dir(const char *path, fs_mode_flags mode);
 bool fs_close_dir(dir_handle &dir);
@@ -20,5 +20,6 @@ size_t fs_seek_dir(dir_handle &dir, size_t pos, uint32_t flags);
 directory_entry fs_stat(const char *path);
 void fs_registerfs(const fs_driver &driver);
 void fs_flush(file_handle &file);
+bool fs_format(const char *name, const char *device, void *options);
 
 #endif

@@ -14,13 +14,13 @@ struct part_entry{
 } __attribute__((packed));
 
 struct mbr_part_instance{
-	uint32_t start, sectors;
+	uint64_t start, sectors;
 	char device[9];
 };
 
 struct mbr_instance{
 	mbr_part_instance *part;
-	uint32_t pos, devpos;
+	bt_filesize_t pos, devpos;
 	void *dh;
 };
 
@@ -63,11 +63,23 @@ size_t mbr_write(void *instance, size_t bytes, char *buf){
 	return 0;
 }
 
-size_t mbr_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t mbr_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	if(instance){
-    	mbr_instance *inst=(mbr_instance*)instance;
-    	size_t r=devseek(inst->dh, pos, flags);
-    	inst->devpos=r; inst->pos=r-(inst->part->start*512);
+		mbr_instance *inst=(mbr_instance*)instance;
+		if(flags == FS_Set){
+			inst->pos = pos;
+		}else if(flags == FS_Relative){
+			inst->pos += pos;
+		}else if(flags == FS_Backwards){
+			inst->pos = (inst->part->sectors * 512) - pos;
+		}else if(flags == (FS_Relative | FS_Backwards)){
+			inst->pos -= pos;
+		}
+		bt_filesize_t devpos = inst->pos + (inst->part->start * 512);
+		if((uint64_t)devpos > (inst->part->start * inst->part->sectors) * 512) devpos = (inst->part->start * inst->part->sectors) * 512;
+		devpos = devseek(inst->dh, devpos, FS_Set);
+		inst->pos = devpos - (inst->part->start * 512);
+		inst->devpos = devpos;
     	return inst->pos;
     }
     return 0;

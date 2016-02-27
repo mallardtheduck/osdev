@@ -65,7 +65,7 @@ size_t infofs_write(void *filedata, size_t bytes, char *buf){
 	return 0;
 }
 
-size_t infofs_seek(void *filedata, size_t pos, uint32_t flags){
+bt_filesize_t infofs_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
 	if(!filedata) return 0;
     infofs_filehandle *fdata=(infofs_filehandle*)filedata;
     if(flags & FS_Relative) fdata->pos+=pos;
@@ -145,9 +145,13 @@ directory_entry infofs_stat(void *mountdata, fs_path *path){
     return ret;
 }
 
+bool infofs_format(char*, void*){
+	return false;
+}
+
 fs_driver infofs_driver={true, "INFOFS", false, infofs_mount, infofs_unmount, infofs_open, infofs_close, infofs_read,
 	infofs_write, infofs_seek, infofs_ioctl, infofs_flush, infofs_open_dir, infofs_close_dir, infofs_read_dir, infofs_write_dir,
-	infofs_dirseek, infofs_stat};
+	infofs_dirseek, infofs_stat, infofs_format};
 
 void infofs_register(const char *name, info_function fn){
 	if(!info_items) info_items=new map<string, info_function>();

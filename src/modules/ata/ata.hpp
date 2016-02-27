@@ -141,6 +141,7 @@ struct ata_device {
     int slave;
 	size_t atapi_packet_size;
     ata_identify_t identity;
+	uint64_t length;
 };
 
 extern lock ata_lock, ata_drv_lock;

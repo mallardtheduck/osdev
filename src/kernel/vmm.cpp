@@ -232,8 +232,10 @@ void vmm_pagedir::destroy(){
 
 void vmm_pagedir::map_page(size_t virtpage, size_t physpage, bool alloc, vmm_allocmode::Enum mode){
     hold_lock hlv(vmm_lock, false);
-	//dbgpf("VMM: Mapping %x (v) to %x (p).\n", virtpage*VMM_PAGE_SIZE, physpage*VMM_PAGE_SIZE);
-    if(is_mapped((void*)(virtpage*VMM_PAGE_SIZE))) panic("(VMM) Remapping already mapped page!");
+	//dbgpf("VMM: Mapping %x (v) to %x (p).\n", (int)(virtpage*VMM_PAGE_SIZE), (int)(physpage*VMM_PAGE_SIZE));
+    if(is_mapped((void*)(virtpage*VMM_PAGE_SIZE))) {
+		panic("(VMM) Remapping already mapped page!");
+	}
     uint32_t pageflags;
     if(mode & vmm_allocmode::NotPresent){
         pageflags = 0;
@@ -395,7 +397,8 @@ void vmm_init(multiboot_info_t *mbt){
 	vmm_kernel_pagedir.init(vmm_kpagedir);
 	vmm_kernel_pagedir.add_table(0, vmm_kinitable);
     dbgpf("VMM: Init accounting...\n");
-    size_t firstfreepage=init_amm_page_accounting(vmm_regions, (void*)&_end);
+	size_t firstfreepage = (((uint32_t)&_end)/VMM_PAGE_SIZE) + 1;
+    //size_t firstfreepage=init_amm_page_accounting(vmm_regions, (void*)&_end);
 	size_t kernel_ends_at_page = firstfreepage;
 	dbgout("VMM: Finding end of modules...\n");
 	for(size_t i = 0; i<mbt->mods_count; ++i){
@@ -403,13 +406,24 @@ void vmm_init(multiboot_info_t *mbt){
 		size_t firstpage = mod->mod_start & VMM_ADDRESS_MASK;
 		size_t lastpage = mod->mod_end & VMM_ADDRESS_MASK;
 		dbgpf("VMM: Module at %x - %x\n", (int)firstpage, (int)lastpage);
-		if(lastpage > firstfreepage) firstfreepage = lastpage;
+		if(lastpage/VMM_PAGE_SIZE > firstfreepage) firstfreepage = lastpage/VMM_PAGE_SIZE;
 	}
+	size_t amm_start = firstfreepage + 1;
+	size_t amm_end = init_amm_page_accounting(vmm_regions, (void*)(amm_start * VMM_PAGE_SIZE));
     dbgpf("VMM: First free page: %x\n", (int)firstfreepage);
     dbgpf("VMM: Setting up kernel identity mappings.\n");
     for(size_t i=1; i<kernel_ends_at_page; ++i){
     	vmm_kernel_pagedir.identity_map(i, false);
     }
+	dbgpf("VMM: Setting up AMM identity mappings.\n");
+	size_t amm_real_end = 0;
+	if(amm_end > 1024){
+		amm_real_end = amm_end;
+		amm_end = 1024;
+	}
+	for(size_t i = amm_start; i < amm_end; ++i){
+		vmm_kernel_pagedir.identity_map(i, false);
+	}
     int_handle(0x0e, &vmm_page_fault_handler);
     dbgout("VMM: Enabing paging...");
     asm volatile("mov %0, %%cr3":: "b"(vmm_kpagedir));
@@ -418,6 +432,13 @@ void vmm_init(multiboot_info_t *mbt){
     cr0 |= PAGING_ENABLED_FLAG;
     asm volatile("mov %0, %%cr0":: "b"(cr0));
     dbgout("Done.\n");
+	vmm_cur_pagedir=&vmm_kernel_pagedir;
+	if(amm_real_end){
+		dbgout("VMM: Setting up rest of AMM identity mappings.\n");
+		for(size_t i = 1024; i < amm_real_end; ++i){
+			vmm_kernel_pagedir.identity_map(i);
+		}
+	}
 	dbgout("VMM: Identity mapping modules...\n");
 	for(size_t i = 0; i<mbt->mods_count; ++i){
 		module_t *mod = (module_t*)(mbt->mods_addr + (sizeof(module_t) * i));
@@ -425,12 +446,11 @@ void vmm_init(multiboot_info_t *mbt){
 		size_t lastpage = mod->mod_end & VMM_ADDRESS_MASK;
 		dbgpf("VMM: Module at %x - %x\n", (int)firstpage, (int)lastpage);
 		for(size_t page = firstpage; page <= lastpage; page+=VMM_PAGE_SIZE){
-			vmm_kernel_pagedir.identity_map(page / VMM_PAGE_SIZE, false);
+			vmm_kernel_pagedir.identity_map(page / VMM_PAGE_SIZE);
 			vmm_kernel_pagedir.set_flags(page, amm_flags::Kernel);
 		}
 	}
 	dbgout("VMM: Done\n");
-    vmm_cur_pagedir=&vmm_kernel_pagedir;
     dbgout("VMM: Init complete.\n");
     dbgout("VMM: Init AMM...\n");
     amm_init();

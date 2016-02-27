@@ -1,0 +1,46 @@
+diff -rupN libuuid-1.0.3/config.sub originals/libuuid-1.0.3/config.sub
+--- libuuid-1.0.3/config.sub	2016-02-23 19:33:25.204223955 +0000
++++ originals/libuuid-1.0.3/config.sub	2014-08-12 09:19:20.000000000 +0100
+@@ -1376,7 +1376,7 @@ case $os in
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+-	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -btos* )
++	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+diff -rupN libuuid-1.0.3/gen_uuid.c originals/libuuid-1.0.3/gen_uuid.c
+--- libuuid-1.0.3/gen_uuid.c	2016-02-23 19:33:25.204223955 +0000
++++ originals/libuuid-1.0.3/gen_uuid.c	2014-08-12 09:07:18.000000000 +0100
+@@ -266,7 +266,6 @@ static int get_node_id(unsigned char *no
+ static int get_clock(uint32_t *clock_high, uint32_t *clock_low,
+ 		     uint16_t *ret_clock_seq, int *num)
+ {
+-#ifndef __btos__
+ 	THREAD_LOCAL int		adjustment = 0;
+ 	THREAD_LOCAL struct timeval	last = {0, 0};
+ 	THREAD_LOCAL int		state_fd = -2;
+@@ -374,9 +373,6 @@ try_again:
+ 	*clock_low = clock_reg;
+ 	*ret_clock_seq = clock_seq;
+ 	return ret;
+-#else
+-	return -1;
+-#endif
+ }
+ 
+ #if defined(HAVE_UUIDD) && defined(HAVE_SYS_UN_H)
+diff -rupN libuuid-1.0.3/randutils.c originals/libuuid-1.0.3/randutils.c
+--- libuuid-1.0.3/randutils.c	2016-02-23 19:33:25.204223955 +0000
++++ originals/libuuid-1.0.3/randutils.c	2014-08-12 09:07:18.000000000 +0100
+@@ -13,9 +13,7 @@
+ #include <string.h>
+ #include <sys/time.h>
+ 
+-#ifndef __btos__
+ #include <sys/syscall.h>
+-#endif
+ 
+ #include "randutils.h"
+ 

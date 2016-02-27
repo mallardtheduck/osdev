@@ -94,7 +94,10 @@ static bool ata_device_init(struct ata_device * dev) {
 
 	dbgpf("ATA: Device Name:  %s\n", dev->identity.model);
 	dbgpf("ATA: Sectors (48): %d\n", (uint32_t)dev->identity.sectors_48);
-	dbgpf("ATA: Sectors (24): %d\n", dev->identity.sectors_28);
+	dbgpf("ATA: Sectors (28): %d\n", dev->identity.sectors_28);
+	if(dev->identity.sectors_48 != 0) dev->length = dev->identity.sectors_48;
+	else dev->length = dev->identity.sectors_28;
+	dbgpf("ATA: Length: %i\n", (int)dev->length);
 
 	outb(dev->control, 0);
 	return true;
@@ -251,7 +254,7 @@ static int ata_finalize(void) {
 
 struct ata_instance{
 	ata_device *dev;
-	size_t pos;
+	bt_filesize_t pos;
 };
 
 void *ata_open(void *id){
@@ -300,12 +303,13 @@ size_t ata_write(void *instance, size_t bytes, char *buf){
 	return bytes;
 }
 
-size_t ata_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t ata_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	ata_instance *inst=(ata_instance*)instance;
+	if((int)pos == 1) panic("q");
 	if(pos % 512) return inst->pos;
-	if(flags & FS_Relative) inst->pos+=pos;
-	else if(flags & FS_Backwards){
-		inst->pos = (inst->dev->identity.sectors_48 * 512) - pos;
+	if(flags == FS_Relative) inst->pos+=pos;
+	else if(flags == FS_Backwards){
+		inst->pos = (inst->dev->length * 512) - pos;
 	}else if(flags == (FS_Relative | FS_Backwards)) inst->pos-=pos;
 	else inst->pos=pos;
 	return inst->pos;

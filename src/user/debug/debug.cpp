@@ -1,4 +1,9 @@
 #include "debug.hpp"
+#include "table.hpp"
+#include <fstream>
+#include <cstdlib>
+
+using namespace std;
 
 uint16_t debug_ext_id;
 
@@ -52,7 +57,15 @@ void debug_poke(pid_t pid, uint32_t dst, void *src, size_t size){
 	call_debug(bt_debug_function::Poke, (uint32_t)src, (uint32_t)&p, 0);
 }
 
-int main(int /*argc*/, char **/*argv*/){
+void debug_stop(pid_t pid){
+	call_debug(bt_debug_function::StopProcess, (uint32_t)pid, 0, 0);
+}
+
+void debug_continue(pid_t pid){
+	call_debug(bt_debug_function::ContinueProcess, (uint32_t)pid, 0, 0);
+}
+
+int main(int argc, char **argv){
 	std::cout << "BT/OS System Debugger" << std::endl;
     if(!init_debug()){
         std::cout << "Could not locate DEBUG extension." << std::endl;
@@ -61,6 +74,22 @@ int main(int /*argc*/, char **/*argv*/){
 	
 	//test_symbols(argv[0]);
     debug_register();
+	
+	if(argc == 2){
+		pid_t pid = atoi(argv[1]);
+		debug_stop(pid);
+		ifstream info("INFO:/THREADS");
+		table tbl = parsecsv(info);
+		for(auto row: tbl.rows){
+			if(atoi(row["PID"].c_str()) == pid){
+				context ctx = get_context(atoi(row["ID"].c_str()));
+				out_context(ctx);
+				do_stacktrace(pid, ctx);
+			}
+		}
+		debug_continue(pid);
+		return 0;
+	}
 
     bt_msg_header msg = bt_recv(true);
     while(true){
