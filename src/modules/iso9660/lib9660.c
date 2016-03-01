@@ -352,6 +352,8 @@ l9660_status l9660_seek(l9660_file *f, int whence, int32_t offset)
         if ((rv = buffer(f)))
             return rv;
     }
+	
+	if(f->position > f->length) f->position = f->length;
 
     return L9660_OK;
 }

@@ -118,8 +118,8 @@ bool iso9660_unmount(void *mountdata){
 void *iso9660_open(void *mountdata, fs_path *path, fs_mode_flags flags){
 	iso9660_mountdata *mount = (iso9660_mountdata*)mountdata;
 	if(mount){
-		take_lock(&iso9660_lock);
 		if((flags & FS_Write) || (flags & FS_Truncate))	return NULL;
+		take_lock(&iso9660_lock);
 		scoped_ptr<l9660_dir> parent(get_parent(mount, path));
 		l9660_file *file = new l9660_file();
 		l9660_status status = l9660_openat(file, parent.get(), fs_path_last_part(path)->str);
@@ -153,7 +153,7 @@ size_t iso9660_read(void *filedata, size_t bytes, char *buf){
 		while(ret < bytes){
 			size_t read = 0;
 			l9660_status status = l9660_read(file, buf, left, &read);
-			if(status != L9660_OK) break;
+			if(status != L9660_OK || read == 0) break;
 			left-=read;
 			buf+=read;
 			ret+=read;
