@@ -5,6 +5,7 @@
 #include <sys/times.h>
 #include <sys/errno.h>
 #include <sys/time.h>
+#include <sys/termios.h>
 #include <pwd.h>
 #include <grp.h>
 #include <stdio.h>
@@ -335,4 +336,42 @@ int fcntl(int fd, int cmd, ... /* arg */){
 
 uid_t getuid(){
 	return 0;
+}
+
+int tcgetattr(int fd, struct termios *termios_p){
+	if(isatty(fd)){
+		memset(termios_p, 0, sizeof(*termios_p));
+		termios_p->c_cc[1] = 8;
+		return 0;
+	}
+	return 1;
+}
+
+int tcsetattr(int fildes, int optional_actions, const struct termios *termios_p){}
+
+int fsync(int fd){
+	bt_fflush(btos_get_handle(fd));
+}
+
+char *realpath(const char *path, char *resolved_path){
+	if(!resolved_path) resolved_path = malloc(BT_MAX_PATH);
+	btos_path_parse(path, resolved_path, BT_MAX_PATH);
+	return resolved_path;
+}
+
+char *getcwd(char *buf, size_t size){
+	if(!buf) buf = malloc(BT_MAX_PATH);
+	bt_getenv("CWD", buf, BT_MAX_PATH);
+	return buf;
+}
+
+int chdir(const char *path){
+	char buf[BT_MAX_PATH] = {0};
+	btos_path_parse(path, buf, BT_MAX_PATH);
+	bt_setenv("CWD", path, 0);
+	return 0;
+}
+
+int lstat(const char *path, struct stat *buf){
+	return stat(path, buf);
 }
