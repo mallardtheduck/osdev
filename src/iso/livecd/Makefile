@@ -111,6 +111,16 @@ isodir/btos/cmd/format.elx: ../../user/format/format.elx directories.always
 	cp $< $@
 
 
+grub.always:
+	mkdir -p isodir/btos/grub/
+	cp -R ../../3rdparty/install/btos/lib/grub/i386-pc isodir/btos/grub
+	tar cvf isodir/btos/grub/i386_pc.tar -C isodir/btos/grub/i386-pc `ls isodir/btos/grub/i386-pc`
+	cp ../../3rdparty/install/btos/sbin/grub-bios-setup.elx isodir/btos/grub/grubbios.elx
+	cp ../../3rdparty/install/btos/bin/grub-mkimage.elx isodir/btos/grub/grubmkim.elx
+	cp ../../3rdparty/install/btos/bin/grub-mklayout.elx isodir/btos/grub/grubmkla.elx
+	cp ../../3rdparty/install/btos/bin/grub-mkrelpath.elx isodir/btos/grub/grubmkrp.elx
+	cp load_cfg isodir/btos/grub
+
 directories.always:
 	mkdir -p isodir/btos/cmd
 	mkdir -p isodir/btos/temp
@@ -119,7 +129,7 @@ directories.always:
 	mkdir -p isodir/btos/system
 	mkdir -p isodir/btos/drivers
 
-livecd.iso: ../../kernel/btos.bin ../../tarinit/livecd/init.tar $(import-files)
+livecd.iso: ../../kernel/btos.bin ../../tarinit/livecd/init.tar $(import-files) grub.always
 	mkdir -p isodir
 	mkdir -p isodir/boot
 	cp ../../kernel/btos.bin isodir/boot/btos.bin

@@ -148,6 +148,7 @@ void ata_device_read_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf
 }
 
 void ata_device_read_sector_pio(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
+	if(lba > dev->length) return;
 	uint16_t bus = dev->io_base;
 	uint8_t slave = dev->slave;
 
@@ -181,6 +182,7 @@ try_again:
 }
 
 void ata_device_write_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
+	if(lba > dev->length) return;
     take_lock(&ata_lock);
 
     if(init_dma()){} //TODO: Use DMA
@@ -277,30 +279,43 @@ size_t ata_read(void *instance, size_t bytes, char *buf){
     hold_lock hl(&ata_drv_lock);
 	if(bytes % 512) return 0;
 	ata_instance *inst=(ata_instance*)instance;
+	size_t read = 0;
 	for(size_t i=0; i<bytes; i+=512){
+		if((uint64_t)inst->pos > inst->dev->length * 512){
+			dbgout("ATA: Attempt to read past end of disk!\n");
+			dbgpf("ATA: %i %i\n", (int)inst->pos, (int)inst->dev->length);
+			break;
+		}
         if(!cache_get((size_t)inst->dev, inst->pos/512, &buf[i])) {
             release_lock(&ata_drv_lock);
             ata_queued_read(inst->dev, inst->pos / 512, (uint8_t *) &buf[i]);
             take_lock(&ata_drv_lock);
             cache_add((size_t)inst->dev, inst->pos/512, &buf[i]);
         }
+		read += 512;
 		inst->pos+=512;
 	}
-	return bytes;
+	return read;
 }
 
 size_t ata_write(void *instance, size_t bytes, char *buf){
     hold_lock hl(&ata_drv_lock);
 	if(bytes % 512) return 0;
 	ata_instance *inst=(ata_instance*)instance;
+	size_t written = 0;
 	for(size_t i=0; i<bytes; i+=512){
+		if((uint64_t)inst->pos > inst->dev->length * 512){
+			dbgout("ATA: Attempt to write past end of disk!\n");
+			break;
+		}
         cache_drop((size_t)inst->dev, inst->pos/512);
         release_lock(&ata_drv_lock);
         ata_queued_write(inst->dev, inst->pos/512, (uint8_t*)&buf[i]);
         take_lock(&ata_drv_lock);
+		written += 512;
 		inst->pos+=512;
 	}
-	return bytes;
+	return written;
 }
 
 bt_filesize_t ata_seek(void *instance, bt_filesize_t pos, uint32_t flags){
@@ -312,6 +327,8 @@ bt_filesize_t ata_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 		inst->pos = (inst->dev->length * 512) - pos;
 	}else if(flags == (FS_Relative | FS_Backwards)) inst->pos-=pos;
 	else inst->pos=pos;
+	if(inst->pos < 0) inst->pos = 0;
+	if(inst->pos > (bt_filesize_t)inst->dev->length * 512) inst->pos = (inst->dev->length * 512);
 	return inst->pos;
 }
 

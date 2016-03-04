@@ -33,5 +33,5 @@ PATH=$BASE_PATH/bin:$PATH
 
 make
 make DESTDIR=$PWD/../install install
-find ../install -executable -not -name "*.elx" -type f -exec rm {}.elx \;
-find ../install -executable -not -name "*.elx" -type f -exec mv {} {}.elx \;
+find ../install -path ../install/btos/lib/grub -prune -o -executable -not -name "*.elx" -type f -exec rm {}.elx \;
+find ../install -path ../install/btos/lib/grub -prune -o -executable -not -name "*.elx" -type f -exec mv {} {}.elx \;
