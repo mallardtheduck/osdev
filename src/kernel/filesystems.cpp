@@ -115,9 +115,10 @@ void delete_fs_path(fs_path *p){
 	delete p;
 }
 
-fs_driver &getfs(const char *name){
+const fs_driver &getfs(const char *name){
 	hold_lock hl(fs_lock);
-	return (*fs_drivers)[name];
+	if(fs_drivers->has_key(name)) return (*fs_drivers)[name];
+	else return invalid_fs_driver;
 }
 
 fs_mountpoint &getmount(const char *name){

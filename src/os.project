@@ -544,6 +544,8 @@
       <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/dirent.h"/>
       <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/setjmp.h"/>
       <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/siginfo.h"/>
+      <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/limits.h"/>
+      <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/termios.h"/>
     </VirtualDirectory>
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/signal.c"/>
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/setjmp.c"/>

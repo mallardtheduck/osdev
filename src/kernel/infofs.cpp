@@ -69,7 +69,7 @@ bt_filesize_t infofs_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
 	if(!filedata) return 0;
     infofs_filehandle *fdata=(infofs_filehandle*)filedata;
     if(flags & FS_Relative) fdata->pos+=pos;
-	else if (flags & FS_Backwards){
+	else if (flags == FS_Backwards){
 		fdata->pos = fdata->size - pos;
 	}else if(flags == (FS_Relative | FS_Backwards)) fdata->pos -= pos;
     else fdata->pos=pos;
