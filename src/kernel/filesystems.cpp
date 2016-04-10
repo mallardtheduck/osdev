@@ -324,6 +324,7 @@ directory_entry fs_stat(const char *path){
 	fs_path *ppath=new_fs_path(fspath);
 	ret=mount.driver.stat(mount.mountdata, ppath);
 	delete_fs_path(ppath);
+	dbgpf("FS: stat '%s', type: %i\n", path, ret.type);
 	return ret;
 }
 

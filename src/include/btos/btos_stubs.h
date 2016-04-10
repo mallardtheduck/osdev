@@ -157,9 +157,9 @@ inline static bool bt_dwrite(bt_dirhandle dir, bt_directory_entry entry){
 }
 
 inline static bt_directory_entry bt_dread(bt_dirhandle dir){
-	bt_directory_entry ret;
+	volatile bt_directory_entry ret;
 	btos_call(BT_DREAD, dir, (uint32_t)&ret, 0);
-	return ret;
+	return *(bt_directory_entry*)&ret;
 }
 
 inline static size_t bt_dseek(bt_dirhandle dir, size_t bytes, uint32_t flags){
@@ -167,9 +167,9 @@ inline static size_t bt_dseek(bt_dirhandle dir, size_t bytes, uint32_t flags){
 }
 
 inline static bt_directory_entry bt_stat(const char *path){
-	bt_directory_entry ret;
+	volatile bt_directory_entry ret;
 	btos_call(BT_STAT, (uint32_t)path, (uint32_t)&ret, 0);
-	return ret;
+	return *(bt_directory_entry*)&ret;
 }
 
 inline static bool bt_load_module(const char *path, const char *params){
@@ -209,16 +209,16 @@ inline static bt_pid bt_getpid(){
 }
 
 inline static uint64_t bt_send(bt_msg_header msg){
-	uint64_t ret;
+	volatile uint64_t ret;
 	btos_call(BT_SEND, (uint32_t)&msg, (uint32_t)&ret, 0);
 	return ret;
 }
 
 inline static bt_msg_header bt_recv(bool block){
-	bt_msg_header ret;
+	volatile bt_msg_header ret;
 	ret.valid=false;
 	btos_call(BT_RECV, (uint32_t)&ret, (uint32_t)block, 0);
-	return ret;
+	return *(bt_msg_header*)&ret;
 }
 
 inline static void bt_next_msg(bt_msg_header *msg){
@@ -246,10 +246,10 @@ inline static void bt_msgwait(){
 }
 
 inline static bt_msg_header bt_recv_filtered(bt_msg_filter filter){
-	bt_msg_header ret;
+	volatile bt_msg_header ret;
 	ret.valid=false;
 	btos_call(BT_RECVFILTERED, (uint32_t)&filter, (uint32_t)&ret, 0);
-	return ret;
+	return *(bt_msg_header*)&ret;
 }
 
 inline static void bt_next_msg_filtered(bt_msg_header *msg, bt_msg_filter filter){
