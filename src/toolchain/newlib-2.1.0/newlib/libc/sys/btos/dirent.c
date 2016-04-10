@@ -29,8 +29,8 @@ int readdir_r (DIR *__restrict dirp, struct dirent *__restrict entry, struct dir
 
 struct dirent *readdir (DIR *dirp){
 	static struct dirent ret;
-	readdir_r(dirp, &ret, NULL);
-	return &ret;
+	if(readdir_r(dirp, &ret, NULL) == 0) return &ret;
+	else return NULL;
 }
 
 void rewinddir (DIR *dirp){
