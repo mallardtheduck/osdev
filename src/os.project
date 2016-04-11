@@ -388,6 +388,10 @@
       <File Name="user/format/format.c"/>
       <File Name="user/format/Makefile"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="install">
+      <File Name="user/install/install.cpp"/>
+      <File Name="user/install/Makefile"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
