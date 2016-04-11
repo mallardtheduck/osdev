@@ -1,4 +1,4 @@
-import-files:= isodir/btos/tests/ctest.elx isodir/btos/tests/cpptest.elx isodir/btos/cmd/cmd.elx isodir/btos/system/terminal.sys isodir/btos/cmd/cls.elx isodir/btos/cmd/termctl.elx isodir/btos/system/switcher.elx isodir/btos/cmd/spawn.elx isodir/btos/cmd/kill.elx isodir/btos/drivers/pci.sys isodir/btos/cmd/load.elx isodir/btos/tests/test.sys isodir/btos/tests/test.elx isodir/btos/cmd/mount.elx isodir/btos/tests/msgtest.elx isodir/btos/tests/mousetest.elx isodir/btos/drivers/vga.sys isodir/btos/tests/vgatest.elx isodir/btos/tests/fputest.elx isodir/btos/system/gds.elx isodir/btos/bin/debug.elx isodir/btos/tests/crash.elx isodir/btos/tests/gdstest.elx isodir/btos/system/wm.elx isodir/btos/tests/wmtest.elx isodir/btos/bin/wmmenu.elx isodir/btos/bin/startwm.elx isodir/btos/bin/termwin.elx isodir/btos/bin/breakout.elx isodir/btos/cmd/sleep.elx isodir/btos/cmd/tar.elx isodir/btos/drivers/iso9660.sys isodir/btos/drivers/fat.sys isodir/btos/cmd/iconv.elx isodir/btos/cmd/parted.elx isodir/btos/cmd/format.elx
+import-files:= isodir/btos/tests/ctest.elx isodir/btos/tests/cpptest.elx isodir/btos/cmd/cmd.elx isodir/btos/system/terminal.sys isodir/btos/cmd/cls.elx isodir/btos/cmd/termctl.elx isodir/btos/system/switcher.elx isodir/btos/cmd/spawn.elx isodir/btos/cmd/kill.elx isodir/btos/drivers/pci.sys isodir/btos/cmd/load.elx isodir/btos/tests/test.sys isodir/btos/tests/test.elx isodir/btos/cmd/mount.elx isodir/btos/tests/msgtest.elx isodir/btos/tests/mousetest.elx isodir/btos/drivers/vga.sys isodir/btos/tests/vgatest.elx isodir/btos/tests/fputest.elx isodir/btos/system/gds.elx isodir/btos/bin/debug.elx isodir/btos/tests/crash.elx isodir/btos/tests/gdstest.elx isodir/btos/system/wm.elx isodir/btos/tests/wmtest.elx isodir/btos/bin/wmmenu.elx isodir/btos/bin/startwm.elx isodir/btos/bin/termwin.elx isodir/btos/bin/breakout.elx isodir/btos/cmd/sleep.elx isodir/btos/cmd/tar.elx isodir/btos/drivers/iso9660.sys isodir/btos/drivers/fat.sys isodir/btos/cmd/iconv.elx isodir/btos/cmd/parted.elx isodir/btos/cmd/format.elx isodir/btos/bin/install.elx
 
 all: livecd.iso
 
@@ -108,6 +108,9 @@ isodir/btos/cmd/parted.elx: ../../3rdparty/install/btos/sbin/parted.elx director
 	cp $< $@
 
 isodir/btos/cmd/format.elx: ../../user/format/format.elx directories.always
+	cp $< $@
+	
+isodir/btos/bin/install.elx: ../../user/install/install.elx directories.always
 	cp $< $@
 
 
