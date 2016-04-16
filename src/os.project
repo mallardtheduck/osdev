@@ -268,7 +268,6 @@
     <VirtualDirectory Name="debug">
       <File Name="user/debug/Makefile"/>
       <File Name="user/debug/debug.cpp"/>
-      <File Name="user/debug/symbols.cpp"/>
       <File Name="user/debug/stacktrace.cpp"/>
       <File Name="user/debug/debug.hpp"/>
       <File Name="user/debug/events.cpp"/>
@@ -395,6 +394,7 @@
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
+    <File Name="user/debug/symbols.cpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="include">
     <File Name="include/crt_support.h"/>
@@ -578,6 +578,12 @@
     <VirtualDirectory Name="livecd">
       <File Name="iso/livecd/Makefile"/>
       <File Name="iso/livecd/grub.cfg"/>
+    </VirtualDirectory>
+  </VirtualDirectory>
+  <VirtualDirectory Name="packages">
+    <File Name="packages/Makefile"/>
+    <VirtualDirectory Name="btos">
+      <File Name="packages/btos/Makefile"/>
     </VirtualDirectory>
   </VirtualDirectory>
 </CodeLite_Project>
