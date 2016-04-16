@@ -197,6 +197,7 @@ void copy_command(const command &cmd){
 			return;
 		}
 		for(const string &file : from){
+			bt_directory_entry ent = bt_stat(parse_path(file).c_str());
 			if(is_directory(file)){
 				cout << "Ignoring directory " << file << endl;
 				continue;
@@ -215,12 +216,31 @@ void copy_command(const command &cmd){
 				cout << "Could not create target " << target << endl;
 				return;
 			}
+			bt_filesize_t sofar = 0;
 			while(true){
-				char buffer[512];
-				streamsize bytes_read=fromfile.read(buffer, 512).gcount();
+				if(ent.size > 10240){
+					int progress = (100 * sofar) / ent.size;
+					streampos outpos = cout.tellp();
+					for(size_t i = 0; i < file.length() + 10; ++i){
+						cout << " ";
+					}
+					cout.seekp(outpos);
+					cout << file << " : " << progress << "%";
+					cout.seekp(outpos);
+				}
+				char buffer[4096];
+				streamsize bytes_read=fromfile.read(buffer, 4096).gcount();
 				if(bytes_read){
 					tofile.write(buffer, bytes_read);
 				}else break;
+				sofar+=bytes_read;
+			}
+			if(ent.size > 10240){
+				streampos outpos = cout.tellp();
+				for(size_t i = 0; i < file.length() + 10; ++i){
+					cout << " ";
+				}
+				cout.seekp(outpos);
 			}
 		}
 	}
