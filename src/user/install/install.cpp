@@ -60,8 +60,8 @@ bool yesno(string message, char def = '\0'){
 		char c = line[0];
 		if(c == 'y' || c == 'Y') return true;
 		if(c == 'n' || c == 'N') return false;
-		if(c == '\n' && def == 'y') return true;
-		if(c == '\n' && def == 'y') return false;
+		if(c == '\0' && def == 'y') return true;
+		if(c == '\0' && def == 'n') return false;
 	}
 }
 
@@ -114,17 +114,19 @@ partition_info select_partition(){
 		}
 	}
 	if(ret.fs != "fat16" && ret.fs != "fat32"){
-		if(yesno("This partition does not have a compatible filesystem. Format it? (This WILL destroy all data in the partition.)", 'n')){
+		if(yesno("This partition does not have a compatible filesystem. Format it? (This WILL destroy all data in the partition!)", 'n')){
 			bt_format("FAT", ret.path.c_str(), NULL);
 		}else{
 			exit(0);
 		}
+	}else if(yesno("Format parition? (This WILL destroy all data in the partition!)", 'n')){
+			bt_format("FAT", ret.path.c_str(), NULL);
 	}
 	return ret;
 }
 
 string mount_partition(const partition_info &part){
-	bt_mount("hdd", part.path.c_str(), part.fs.c_str());
+	bt_mount("hdd", part.path.c_str(), "FAT");
 	return "hdd";
 }
 
@@ -136,7 +138,8 @@ bool copy_files(const string &mountpoint){
 	bt_setenv("CWD", destpath.c_str(), 0);
 	char *args[] = {(char*)"xvf", (char*)datapath.c_str()};
 	string tarpath = sysdrive + ":/btos/cmd/tar.elx";
-	bt_spawn(sysdrive.c_str(), 2, args);
+	bt_pid_t pid = bt_spawn(tarpath.c_str(), 2, args);
+	bt_wait(pid);
 	bt_setenv("CWD", cwd.c_str(), 0);
 	return true;
 }
