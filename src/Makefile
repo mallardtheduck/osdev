@@ -2,8 +2,8 @@ export PREFIX:=$(HOME)/Projects/os/cross
 export TARGET:=i686-elf
 export PATH:=$(PREFIX)/bin:$(PATH)
 
-all: modules user kernel disk tarinit iso
-clean: kernel-clean modules-clean user-clean disk-clean tarinit-clean iso-clean
+all: modules user kernel disk tarinit iso packages
+clean: kernel-clean modules-clean user-clean disk-clean tarinit-clean iso-clean packages-clean
 rebuild: clean all
 
 kernel: dummy.file
@@ -49,5 +49,11 @@ iso: dummy.file
 
 iso-clean:
 	make -C iso clean
+
+packages: dummy.file
+	make -C packages
+
+packages-clean: dummy.file
+	make -C packages clean
 
 dummy.file:
