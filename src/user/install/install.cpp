@@ -30,6 +30,21 @@ struct partition_info{
 	string fs;
 };
 
+
+string get_env(const string &name){
+	char value[128];
+	string ret;
+	size_t size=bt_getenv(name.c_str(), value, 128);
+	ret=value;
+	if(size>128){
+		char *buf=new char[size];
+		bt_getenv(name.c_str(), value, size);
+		ret=buf;
+	}
+	if(size) return ret;
+	else return "";
+}
+
 bool yesno(string message, char def = '\0'){
 	cout << message << endl;
 		while(true){
@@ -108,8 +123,46 @@ partition_info select_partition(){
 	return ret;
 }
 
+string mount_partition(const partition_info &part){
+	bt_mount("hdd", part.path.c_str(), part.fs.c_str());
+	return "hdd";
+}
+
+bool copy_files(const string &mountpoint){
+	string sysdrive = get_env("SYSTEMDRIVE");
+	string datapath = sysdrive + ":/btos.tar";
+	string destpath = mountpoint + ":/";
+	string cwd = get_env("CWD");
+	bt_setenv("CWD", destpath.c_str(), 0);
+	char *args[] = {(char*)"xvf", (char*)datapath.c_str()};
+	string tarpath = sysdrive + ":/btos/cmd/tar.elx";
+	bt_spawn(sysdrive.c_str(), 2, args);
+	bt_setenv("CWD", cwd.c_str(), 0);
+	return true;
+}
+
+void configure_install(const string &mountpoint, const partition_info &part){
+	(void)mountpoint; (void)part;
+}
+
+bool install_grub(const string &mountpoint, const partition_info &part){
+	(void)mountpoint; (void)part;
+	return true;
+}
+
+void write_answers(const string &mountpoint, const partition_info &part, bool rootinstall){
+	(void)mountpoint; (void)part; (void)rootinstall;
+}
+
 int main(){
     cout << "BT/OS Installer" << endl << endl;
 	partition_info partition = select_partition();
+	string mountpoint = mount_partition(partition);
+	if(copy_files(mountpoint)){
+		configure_install(mountpoint, partition);
+		bool rootinstall = install_grub(mountpoint, partition);
+		write_answers(mountpoint, partition, rootinstall);
+	}
+	
     return 0;
 }
