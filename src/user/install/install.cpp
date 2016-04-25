@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <sstream>
 #include <map>
@@ -130,10 +131,8 @@ string mount_partition(const partition_info &part){
 	return "hdd";
 }
 
-bool copy_files(const string &mountpoint){
+void untar(const string &datapath, const string &destpath){
 	string sysdrive = get_env("SYSTEMDRIVE");
-	string datapath = sysdrive + ":/btos.tar";
-	string destpath = mountpoint + ":/";
 	string cwd = get_env("CWD");
 	bt_setenv("CWD", destpath.c_str(), 0);
 	char *args[] = {(char*)"xvf", (char*)datapath.c_str()};
@@ -141,11 +140,47 @@ bool copy_files(const string &mountpoint){
 	bt_pid_t pid = bt_spawn(tarpath.c_str(), 2, args);
 	bt_wait(pid);
 	bt_setenv("CWD", cwd.c_str(), 0);
+}
+
+bool copy_files(const string &mountpoint){
+	cout << "Copying files..." << endl;
+	string sysdrive = get_env("SYSTEMDRIVE");
+	string datapath = sysdrive + ":/btos.tar";
+	string kernelpath = sysdrive + ":/kernel.tar";
+	string destpath = mountpoint + ":/";
+	untar(datapath, destpath);
+	untar(kernelpath, destpath);
 	return true;
 }
 
+void replace_in_string(std::string& str, const std::string& from, const std::string& to) {
+    if(from.empty())
+        return;
+    size_t start_pos = 0;
+    while((start_pos = str.find(from, start_pos)) != string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length();
+    }
+}
+
+void replace_in_file(const string &file, const string &placholder, const string &replacement){
+	ifstream ifs(file);
+	string str;
+	ifs.seekg(0, ios::end);
+	str.reserve(ifs.tellg());
+	ifs.seekg(0, ios::beg);
+	str.assign((istreambuf_iterator<char>(ifs)), istreambuf_iterator<char>());
+	ifs.close();
+	replace_in_string(str, placholder, replacement);
+	ofstream ofs(file);
+	ofs << str;
+}
+
 void configure_install(const string &mountpoint, const partition_info &part){
-	(void)mountpoint; (void)part;
+	cout << "Configuring install..." << endl;
+	string configpath = mountpoint + ":/btos/boot/initfs/config.ini";
+	replace_in_file(configpath, "$DRIVE$", mountpoint);
+	replace_in_file(configpath, "$DEVICE$", part.path);
 }
 
 bool install_grub(const string &mountpoint, const partition_info &part){

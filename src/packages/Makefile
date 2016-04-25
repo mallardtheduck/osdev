@@ -1,4 +1,4 @@
-PACKAGES := btos
+PACKAGES := btos kernel
 
 all: dummy.file
 	for dir in $(PACKAGES); do \

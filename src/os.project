@@ -585,5 +585,17 @@
     <VirtualDirectory Name="btos">
       <File Name="packages/btos/Makefile"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="kernel">
+      <File Name="packages/kernel/Makefile"/>
+      <VirtualDirectory Name="pkgfiles">
+        <VirtualDirectory Name="btos">
+          <VirtualDirectory Name="boot">
+            <VirtualDirectory Name="initfs">
+              <File Name="packages/kernel/pkgfiles/btos/boot/initfs/config.ini"/>
+            </VirtualDirectory>
+          </VirtualDirectory>
+        </VirtualDirectory>
+      </VirtualDirectory>
+    </VirtualDirectory>
   </VirtualDirectory>
 </CodeLite_Project>
