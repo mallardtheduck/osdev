@@ -593,6 +593,10 @@
             <VirtualDirectory Name="initfs">
               <File Name="packages/kernel/pkgfiles/btos/boot/initfs/config.ini"/>
             </VirtualDirectory>
+            <VirtualDirectory Name="grub">
+              <File Name="packages/kernel/pkgfiles/btos/boot/grub/grub.cfg"/>
+              <File Name="packages/kernel/pkgfiles/btos/boot/grub/load_cfg"/>
+            </VirtualDirectory>
           </VirtualDirectory>
         </VirtualDirectory>
       </VirtualDirectory>

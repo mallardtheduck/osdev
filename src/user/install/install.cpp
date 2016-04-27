@@ -3,8 +3,10 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include <vector>
 #include <limits>
 #include <parted/parted.h>
+#include <uuid/uuid.h>
 #include <btos.h>
 
 using namespace std;
@@ -99,7 +101,7 @@ partition_info select_partition(){
 	}
 	cout <<  endl;
 	partition_info ret;
-	cout << "Select a partition by number or 'q' to quit (use 'parted' to create/modify paritions)." << endl;
+	cout << "Select a partition by number or 'q' to quit (use 'parted' to create/modify partitions)." << endl;
 	while(true){
 		string line;
 		getline(cin, line);
@@ -110,7 +112,7 @@ partition_info select_partition(){
 		if(partno > 0){
 			try{
 				ret = selectmap.at(partno);
-				break;
+				break;	
 			}catch(out_of_range){}
 		}
 	}
@@ -176,15 +178,70 @@ void replace_in_file(const string &file, const string &placholder, const string 
 	ofs << str;
 }
 
+void make_tar(const string &dir, const string &tar){
+	string sysdrive = get_env("SYSTEMDRIVE");
+	string tarpath = sysdrive + ":/btos/cmd/tar.elx";
+	string cwd = get_env("CWD");
+	bt_setenv("CWD", dir.c_str(), 0);
+	vector<string> files;
+	bt_handle_t dh = bt_dopen(dir.c_str(), FS_Read);
+	bt_directory_entry de = bt_dread(dh);
+	while(de.valid){
+		files.push_back(de.filename);
+		de = bt_dread(dh);
+	}
+	bt_dclose(dh);
+	const char *args[files.size() + 2];
+	size_t argc = 0;
+	args[argc++] = "cvf";
+	args[argc++] = tar.c_str();
+	for(auto f : files){
+		args[argc++] = f.c_str();
+	}
+	bt_pid_t pid = bt_spawn(tarpath.c_str(), argc, (char**)args);
+	bt_wait(pid);
+	bt_setenv("CWD", cwd.c_str(), 0);
+}
+
 void configure_install(const string &mountpoint, const partition_info &part){
 	cout << "Configuring install..." << endl;
 	string configpath = mountpoint + ":/btos/boot/initfs/config.ini";
 	replace_in_file(configpath, "$DRIVE$", mountpoint);
 	replace_in_file(configpath, "$DEVICE$", part.path);
+	string inittar = mountpoint + ":/btos/boot/init.tar";
+	string initfspath = mountpoint + ":/btos/boot/initfs";
+	cout << "Building init.tar..." << endl;
+	make_tar(initfspath, inittar);
 }
 
 bool install_grub(const string &mountpoint, const partition_info &part){
-	(void)mountpoint; (void)part;
+	cout << "Installing GRUB (bootloader)..." << endl;
+	string loadcfgpath = mountpoint + ":/btos/boot/grub/load_cfg";
+	uuid_t uuid;
+	uuid_generate(uuid);
+	char uuidc[64];
+	uuid_unparse_upper(uuid, uuidc);
+	string uuidfile = mountpoint + ":/btos/boot/" + uuidc + ".id";
+	ofstream ofs(uuidfile);
+	ofs << "This file identifies this installation during boot." << endl;
+	ofs.close();
+	replace_in_file(loadcfgpath, "$UUID$", uuidc);
+	string mkim = mountpoint + ":/btos/boot/grub/grubmkim.elx";
+	string cwd = get_env("CWD");
+	bt_setenv("CWD", (mountpoint + ":/").c_str(), 0);
+	const char *mkimargs[] = {"-O", "i386-pc", "-d", "/btos/boot/grub/i386-pc", "--prefix=/btos/boot/grub/i386-pc", "-o", "/btos/boot/grub/i386-pc/core.img", "biosdisk", "msdospart", "part_msdos", "fat", "-c", loadcfgpath.c_str()};
+	bt_pid_t mkimpid = bt_spawn(mkim.c_str(), 13, (char**)mkimargs);
+	bt_wait(mkimpid);
+	string bios = mountpoint + ":/btos/boot/grub/grubbios.elx";
+	const char *biosargs1[] = {"-d", "/btos/boot/grub/i386-pc", part.path.c_str()};
+	bt_pid_t biospid1 = bt_spawn(bios.c_str(), 3, (char**)biosargs1);
+	bt_wait(biospid1);
+	if(yesno("Do you want to install GRUB to this drive's MBR? (Choose 'yes' unless you have another bootloader that you can configure.)", 'y')){
+		const char *biosargs2[] = {"-d", "/btos/boot/grub/i386-pc", part.devicepath.c_str()};
+		bt_pid_t biospid2 = bt_spawn(bios.c_str(), 3, (char**)biosargs2);
+		bt_wait(biospid2);
+	}
+	bt_setenv("CWD", cwd.c_str(), 0);
 	return true;
 }
 
