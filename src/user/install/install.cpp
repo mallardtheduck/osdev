@@ -229,8 +229,8 @@ bool install_grub(const string &mountpoint, const partition_info &part){
 	string mkim = mountpoint + ":/btos/boot/grub/grubmkim.elx";
 	string cwd = get_env("CWD");
 	bt_setenv("CWD", (mountpoint + ":/").c_str(), 0);
-	const char *mkimargs[] = {"-O", "i386-pc", "-d", "/btos/boot/grub/i386-pc", "--prefix=/btos/boot/grub/i386-pc", "-o", "/btos/boot/grub/i386-pc/core.img", "biosdisk", "msdospart", "part_msdos", "fat", "-c", loadcfgpath.c_str()};
-	bt_pid_t mkimpid = bt_spawn(mkim.c_str(), 13, (char**)mkimargs);
+	const char *mkimargs[] = {"-O", "i386-pc", "-d", "/btos/boot/grub/i386-pc", "--prefix=/btos/boot/grub/i386-pc", "-o", "/btos/boot/grub/i386-pc/core.img", "biosdisk", "msdospart", "part_msdos", "fat", "search", "configfile", "multiboot", "-c", loadcfgpath.c_str()};
+	bt_pid_t mkimpid = bt_spawn(mkim.c_str(), sizeof(mkimargs)/sizeof(mkimargs[0]), (char**)mkimargs);
 	bt_wait(mkimpid);
 	string bios = mountpoint + ":/btos/boot/grub/grubbios.elx";
 	const char *biosargs1[] = {"-d", "/btos/boot/grub/i386-pc", part.path.c_str()};

@@ -1,4 +1,2 @@
-find search --file /btos/boot/$UUID$.id
-insmod /btos/boot/grub/i386-pc/configfile.mod
-insmod /btos/boot/grub/i386-pc/multiboot.mod
+search --file /btos/boot/$UUID$.id --set
 configfile /btos/boot/grub/grub.cfg
