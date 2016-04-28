@@ -2,6 +2,9 @@
 #include "ministl.hpp"
 #include "strutil.hpp"
 
+#define isspace(c) ((c) == ' ')
+#define isodigit(c) ((c) >= '0' && (c) <= '7')
+
 struct initfs_file{
 	string name;
 	unsigned char *data;
@@ -27,10 +30,28 @@ struct initfs_handle{
 	initfs_handle(size_t index, size_t p=0) : fileindex(index), pos(p) {}
 };
 
+long from_oct(register int digs, register const char *where){
+	register long	value;
+
+	while (isspace((unsigned)*where)) {		/* Skip spaces */
+		where++;
+		if (--digs <= 0)
+			return -1;		/* All blank field */
+	}
+	value = 0;
+	while (digs > 0 && isodigit(*where)) {	/* Scan til nonoctal */
+		value = (value << 3) | (*where++ - '0');
+		--digs;
+	}
+
+	if (digs > 0 && *where && !isspace((unsigned)*where))
+		return -1;			/* Ended on non-space/nul */
+
+	return value;
+}
+
 size_t tar_size(const char *in){
-	size_t size = 0, j, count = 1;
-	for (j = 11; j > 0; j--, count *= 8) size += ((in[j - 1] - '0') * count);
-	return size;
+	return from_oct(12, in);
 }
 
 #define fdata ((initfs_handle*)filedata)
