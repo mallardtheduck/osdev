@@ -1,6 +1,7 @@
 all: livecd.iso
 	
 btos-files: ../../packages/btos.tar
+	mkdir -p isodir
 	tar xf ../../packages/btos.tar -C isodir
 	cp ../../packages/btos.tar isodir
 	cp ../../packages/kernel.tar isodir
