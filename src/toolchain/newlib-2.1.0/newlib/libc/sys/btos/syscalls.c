@@ -84,7 +84,7 @@ int link(char *old, char *new){
     return -1;
 }
 
-int lseek(int file, int ptr, int dir){
+off_t lseek(int file, off_t ptr, int dir){
 	uint32_t flags = 0;
     if(dir==SEEK_CUR){ 
 		flags = FS_Relative;
