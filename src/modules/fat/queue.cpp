@@ -37,7 +37,7 @@ struct fat_operation{
 
 bool fat_queue_proc(fat_operation *op){
     pid_t pid=getpid();
-    setpid(op->pid);
+    if(!setpid(op->pid)) return false;
     if(op->type==fat_operation_types::Read){
         op->size=fl_fread(op->buf, op->size, 1, op->flh);
         op->status=fat_operation_status::Complete;

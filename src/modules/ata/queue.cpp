@@ -33,7 +33,7 @@ struct ata_operation{
 
 bool ata_queue_proc(ata_operation *op){
     pid_t pid=getpid();
-    setpid(op->pid);
+    if(!setpid(op->pid)) return false;
     if(op->type==ata_operation_types::Read){
         ata_device_read_sector(op->device, op->lba, op->buf);
         op->status=ata_operation_status::Complete;

@@ -203,7 +203,7 @@ void ata_device_write_sector(struct ata_device * dev, uint32_t lba, uint8_t * bu
 	outb(bus + ATA_REG_COMMAND, ATA_CMD_WRITE_PIO);
 	ata_wait(dev, 0);
 	int size = ATA_SECTOR_SIZE / 2;
-	outsm(bus,buf,size);
+	outsm(bus, buf, size);
 	outb(bus + 0x07, ATA_CMD_CACHE_FLUSH);
 	ata_wait(dev, 0);
 	release_lock(&ata_lock);
@@ -320,11 +320,12 @@ size_t ata_write(void *instance, size_t bytes, char *buf){
 
 bt_filesize_t ata_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	ata_instance *inst=(ata_instance*)instance;
-	if((int)pos == 1) panic("q");
 	if(pos % 512) return inst->pos;
 	if(flags == FS_Relative) inst->pos+=pos;
 	else if(flags == FS_Backwards){
+		dbgpf("ATA: Length: %i, pos: %i\n", (int)inst->dev->length, (int)pos);
 		inst->pos = (inst->dev->length * 512) - pos;
+		dbgpf("ATA: Final pos: %i\n", (int)inst->pos);
 	}else if(flags == (FS_Relative | FS_Backwards)) inst->pos-=pos;
 	else inst->pos=pos;
 	if(inst->pos < 0) inst->pos = 0;
