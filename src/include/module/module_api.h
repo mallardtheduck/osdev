@@ -108,7 +108,7 @@ struct syscall_table{
 	char *(*getenv)(const char *name, pid_t pid);
 
 	pid_t (*getpid)();
-    void (*setpid)(pid_t pid);
+    bool (*setpid)(pid_t pid);
 	pid_t (*spawn)(const char *exec, size_t argc, char **argv);
 	void (*wait)(pid_t pid);
     void (*kill)(pid_t pid);
