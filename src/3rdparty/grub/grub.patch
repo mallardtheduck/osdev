@@ -1,5 +1,5 @@
 diff -rupN grub-2.00/build-aux/config.sub originals/grub-2.00/build-aux/config.sub
---- grub-2.00/build-aux/config.sub	2016-05-09 22:24:00.345034706 +0100
+--- grub-2.00/build-aux/config.sub	2016-05-10 00:00:06.288983876 +0100
 +++ originals/grub-2.00/build-aux/config.sub	2012-06-18 22:08:46.000000000 +0100
 @@ -1368,8 +1368,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
@@ -72,7 +72,7 @@ diff -rupN grub-2.00/config.h originals/grub-2.00/config.h
 +
 +#endif
 diff -rupN grub-2.00/configure originals/grub-2.00/configure
---- grub-2.00/configure	2016-05-09 22:24:00.349034705 +0100
+--- grub-2.00/configure	2016-05-10 00:00:06.288983876 +0100
 +++ originals/grub-2.00/configure	2012-06-26 12:59:16.000000000 +0100
 @@ -9139,7 +9139,7 @@ else
      We can't simply define LARGE_OFF_T to be 9223372036854775807,
@@ -120,7 +120,7 @@ diff -rupN grub-2.00/configure originals/grub-2.00/configure
  		       && LARGE_OFF_T % 2147483647 == 1)
  		      ? 1 : -1];
 diff -rupN grub-2.00/grub-core/disk/ahci.c originals/grub-2.00/grub-core/disk/ahci.c
---- grub-2.00/grub-core/disk/ahci.c	2016-05-09 22:24:00.349034705 +0100
+--- grub-2.00/grub-core/disk/ahci.c	2016-05-10 00:00:06.288983876 +0100
 +++ originals/grub-2.00/grub-core/disk/ahci.c	2012-03-10 12:23:16.000000000 +0000
 @@ -600,8 +600,8 @@ grub_ahci_readwrite_real (struct grub_ah
  		dev->command_table[0].prdt[0].data_base,
@@ -134,7 +134,7 @@ diff -rupN grub-2.00/grub-core/disk/ahci.c originals/grub-2.00/grub-core/disk/ah
    if (parms->write)
      grub_memcpy ((char *) grub_dma_get_virt (bufc), parms->buffer, parms->size);
 diff -rupN grub-2.00/grub-core/gnulib/sleep.c originals/grub-2.00/grub-core/gnulib/sleep.c
---- grub-2.00/grub-core/gnulib/sleep.c	2016-05-09 22:24:00.349034705 +0100
+--- grub-2.00/grub-core/gnulib/sleep.c	2016-05-10 00:00:06.288983876 +0100
 +++ originals/grub-2.00/grub-core/gnulib/sleep.c	2010-12-01 14:45:43.000000000 +0000
 @@ -68,15 +68,6 @@ rpl_sleep (unsigned int seconds)
    return sleep (seconds);
@@ -153,7 +153,7 @@ diff -rupN grub-2.00/grub-core/gnulib/sleep.c originals/grub-2.00/grub-core/gnul
  
   #error "Please port gnulib sleep.c to your platform, possibly using usleep() or select(), then report this to bug-gnulib."
 diff -rupN grub-2.00/grub-core/kern/emu/hostdisk.c originals/grub-2.00/grub-core/kern/emu/hostdisk.c
---- grub-2.00/grub-core/kern/emu/hostdisk.c	2016-05-09 22:24:54.117033608 +0100
+--- grub-2.00/grub-core/kern/emu/hostdisk.c	2016-05-10 00:00:06.288983876 +0100
 +++ originals/grub-2.00/grub-core/kern/emu/hostdisk.c	2012-06-25 09:32:04.000000000 +0100
 @@ -115,11 +115,6 @@ struct hd_geometry
  # endif /* ! RAW_FLOPPY_MAJOR */
@@ -220,7 +220,7 @@ diff -rupN grub-2.00/grub-core/kern/emu/hostdisk.c originals/grub-2.00/grub-core
  grub_err_t
  grub_util_fd_seek (int fd, const char *name, grub_uint64_t off)
 diff -rupN grub-2.00/grub-core/kern/emu/mm.c originals/grub-2.00/grub-core/kern/emu/mm.c
---- grub-2.00/grub-core/kern/emu/mm.c	2016-05-09 22:24:00.349034705 +0100
+--- grub-2.00/grub-core/kern/emu/mm.c	2016-05-10 00:00:06.288983876 +0100
 +++ originals/grub-2.00/grub-core/kern/emu/mm.c	2012-02-07 23:13:14.000000000 +0000
 @@ -25,10 +25,6 @@
  #include <string.h>
@@ -234,7 +234,7 @@ diff -rupN grub-2.00/grub-core/kern/emu/mm.c originals/grub-2.00/grub-core/kern/
  grub_malloc (grub_size_t size)
  {
 diff -rupN grub-2.00/grub-core/lib/backtrace.c originals/grub-2.00/grub-core/lib/backtrace.c
---- grub-2.00/grub-core/lib/backtrace.c	2016-05-09 22:24:00.349034705 +0100
+--- grub-2.00/grub-core/lib/backtrace.c	2016-05-10 00:00:06.288983876 +0100
 +++ originals/grub-2.00/grub-core/lib/backtrace.c	2012-02-26 19:56:25.000000000 +0000
 @@ -39,7 +39,7 @@ grub_backtrace_print_address (void *addr
  	  + segment->size > (grub_uint8_t *) addr)
@@ -246,7 +246,7 @@ diff -rupN grub-2.00/grub-core/lib/backtrace.c originals/grub-2.00/grub-core/lib
  	}
    }
 diff -rupN grub-2.00/grub-core/lib/minilzo/lzoconf.h originals/grub-2.00/grub-core/lib/minilzo/lzoconf.h
---- grub-2.00/grub-core/lib/minilzo/lzoconf.h	2016-05-09 22:24:00.349034705 +0100
+--- grub-2.00/grub-core/lib/minilzo/lzoconf.h	2016-05-10 00:00:06.288983876 +0100
 +++ originals/grub-2.00/grub-core/lib/minilzo/lzoconf.h	2011-10-14 18:10:35.000000000 +0100
 @@ -53,7 +53,7 @@
  #  include <config.h>
@@ -258,7 +258,7 @@ diff -rupN grub-2.00/grub-core/lib/minilzo/lzoconf.h originals/grub-2.00/grub-co
  
  /***********************************************************************
 diff -rupN grub-2.00/grub-core/lib/minilzo/minilzo.c originals/grub-2.00/grub-core/lib/minilzo/minilzo.c
---- grub-2.00/grub-core/lib/minilzo/minilzo.c	2016-05-09 22:24:00.349034705 +0100
+--- grub-2.00/grub-core/lib/minilzo/minilzo.c	2016-05-10 00:00:06.292983876 +0100
 +++ originals/grub-2.00/grub-core/lib/minilzo/minilzo.c	2012-02-29 14:04:03.000000000 +0000
 @@ -58,12 +58,7 @@
  #  include <config.h>
@@ -275,7 +275,7 @@ diff -rupN grub-2.00/grub-core/lib/minilzo/minilzo.c originals/grub-2.00/grub-co
  
  #ifndef __LZODEFS_H_INCLUDED
 diff -rupN grub-2.00/grub-core/lib/xzembed/xz_dec_lzma2.c originals/grub-2.00/grub-core/lib/xzembed/xz_dec_lzma2.c
---- grub-2.00/grub-core/lib/xzembed/xz_dec_lzma2.c	2016-05-09 22:24:00.349034705 +0100
+--- grub-2.00/grub-core/lib/xzembed/xz_dec_lzma2.c	2016-05-10 00:00:06.292983876 +0100
 +++ originals/grub-2.00/grub-core/lib/xzembed/xz_dec_lzma2.c	2010-12-01 14:45:43.000000000 +0000
 @@ -24,8 +24,6 @@
  #include "xz_private.h"
@@ -287,7 +287,7 @@ diff -rupN grub-2.00/grub-core/lib/xzembed/xz_dec_lzma2.c originals/grub-2.00/gr
   * Range decoder initialization eats the first five bytes of each LZMA chunk.
   */
 diff -rupN grub-2.00/grub-core/net/ip.c originals/grub-2.00/grub-core/net/ip.c
---- grub-2.00/grub-core/net/ip.c	2016-05-09 22:24:00.349034705 +0100
+--- grub-2.00/grub-core/net/ip.c	2016-05-10 00:00:06.292983876 +0100
 +++ originals/grub-2.00/grub-core/net/ip.c	2012-06-09 10:12:46.000000000 +0100
 @@ -403,7 +403,7 @@ grub_net_recv_ip4_packets (struct grub_n
  					    * sizeof (grub_uint32_t)))
@@ -308,7 +308,7 @@ diff -rupN grub-2.00/grub-core/net/ip.c originals/grub-2.00/grub-core/net/ip.c
        return GRUB_ERR_NONE;
      }
 diff -rupN grub-2.00/grub-core/net/tcp.c originals/grub-2.00/grub-core/net/tcp.c
---- grub-2.00/grub-core/net/tcp.c	2016-05-09 22:24:00.349034705 +0100
+--- grub-2.00/grub-core/net/tcp.c	2016-05-10 00:00:06.292983876 +0100
 +++ originals/grub-2.00/grub-core/net/tcp.c	2012-06-22 16:42:07.000000000 +0100
 @@ -766,7 +766,7 @@ grub_net_recv_tcp_packet (struct grub_ne
  					     >> 12) * sizeof (grub_uint32_t)))
@@ -320,7 +320,7 @@ diff -rupN grub-2.00/grub-core/net/tcp.c originals/grub-2.00/grub-core/net/tcp.c
        return GRUB_ERR_NONE;
      }
 diff -rupN grub-2.00/grub-core/net/udp.c originals/grub-2.00/grub-core/net/udp.c
---- grub-2.00/grub-core/net/udp.c	2016-05-09 22:24:00.349034705 +0100
+--- grub-2.00/grub-core/net/udp.c	2016-05-10 00:00:06.292983876 +0100
 +++ originals/grub-2.00/grub-core/net/udp.c	2012-06-09 10:12:46.000000000 +0100
 @@ -155,7 +155,7 @@ grub_net_recv_udp_packet (struct grub_ne
    if (nb->tail - nb->data < (grub_ssize_t) sizeof (*udph))
@@ -332,7 +332,7 @@ diff -rupN grub-2.00/grub-core/net/udp.c originals/grub-2.00/grub-core/net/udp.c
        return GRUB_ERR_NONE;
      }
 diff -rupN grub-2.00/grub-core/rs_decoder.S originals/grub-2.00/grub-core/rs_decoder.S
---- grub-2.00/grub-core/rs_decoder.S	2016-05-09 22:24:00.349034705 +0100
+--- grub-2.00/grub-core/rs_decoder.S	2016-05-10 00:00:06.292983876 +0100
 +++ originals/grub-2.00/grub-core/rs_decoder.S	1970-01-01 01:00:00.000000000 +0100
 @@ -1,484 +0,0 @@
 -	.file	"reed_solomon.c"
@@ -820,7 +820,7 @@ diff -rupN grub-2.00/grub-core/rs_decoder.S originals/grub-2.00/grub-core/rs_dec
 -	.size	grub_reed_solomon_recover, .-grub_reed_solomon_recover
 -	.ident	"GCC: (GNU) 4.8.1"
 diff -rupN grub-2.00/util/getroot.c originals/grub-2.00/util/getroot.c
---- grub-2.00/util/getroot.c	2016-05-09 22:24:00.349034705 +0100
+--- grub-2.00/util/getroot.c	2016-05-10 23:00:09.816554365 +0100
 +++ originals/grub-2.00/util/getroot.c	2012-06-22 16:42:07.000000000 +0100
 @@ -143,13 +143,6 @@
  # endif /* ! RAW_FLOPPY_MAJOR */
@@ -934,12 +934,16 @@ diff -rupN grub-2.00/util/getroot.c originals/grub-2.00/util/getroot.c
  #else
  
    /* This might be truly slow, but is there any better way?  */
-@@ -2185,12 +2094,6 @@ devmapper_out:
+@@ -2185,16 +2094,6 @@ devmapper_out:
        *ptr = 0;
      }
    return ret;
 -#elif defined(__btos__)
 -  char *ret = xstrdup(os_dev);
+-  char *c;
+-  for(c = ret; *c; ++c){
+-     if(*c >= 'A' && *c <= 'Z') *c = (*c - 'A') + 'a';
+-  }
 -  int ata = (grub_memcmp(ret, "dev:/ata", strlen("dev:/ata")) == 0) && strlen(ret) == strlen("dev:/ataxpy");
 -  if(!ata) return ret;
 -  ret[9] = 0;
@@ -947,7 +951,7 @@ diff -rupN grub-2.00/util/getroot.c originals/grub-2.00/util/getroot.c
  #else
  # warning "The function `convert_system_partition_to_system_disk' might not work on your OS correctly."
    return xstrdup (os_dev);
-@@ -2472,10 +2375,6 @@ grub_util_biosdisk_get_grub_dev (const c
+@@ -2476,10 +2375,6 @@ grub_util_biosdisk_get_grub_dev (const c
  
      return make_device_name (drive, strtol (p, NULL, 10) - 1, -1);
    }
@@ -959,7 +963,7 @@ diff -rupN grub-2.00/util/getroot.c originals/grub-2.00/util/getroot.c
  # warning "The function `grub_util_biosdisk_get_grub_dev' might not work on your OS correctly."
    return make_device_name (drive, -1, -1);
 diff -rupN grub-2.00/util/grub-mkimage.c originals/grub-2.00/util/grub-mkimage.c
---- grub-2.00/util/grub-mkimage.c	2016-05-09 22:24:00.353034705 +0100
+--- grub-2.00/util/grub-mkimage.c	2016-05-10 00:00:06.292983876 +0100
 +++ originals/grub-2.00/util/grub-mkimage.c	2012-06-26 03:15:15.000000000 +0100
 @@ -575,7 +575,7 @@ static ISzAlloc g_Alloc = { SzAlloc, SzF
  
@@ -998,7 +1002,7 @@ diff -rupN grub-2.00/util/grub-mkimage.c originals/grub-2.00/util/grub-mkimage.c
    size_t prefix_size = 0;
    char *kernel_path;
 diff -rupN grub-2.00/util/misc.c originals/grub-2.00/util/misc.c
---- grub-2.00/util/misc.c	2016-05-09 22:24:00.353034705 +0100
+--- grub-2.00/util/misc.c	2016-05-10 00:00:06.292983876 +0100
 +++ originals/grub-2.00/util/misc.c	2012-03-08 12:49:11.000000000 +0000
 @@ -149,7 +149,7 @@ grub_util_write_image_at (const void *im
  			  const char *name)
