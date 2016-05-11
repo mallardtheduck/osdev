@@ -1,6 +1,6 @@
 import-files:= data/btos/tests/ctest.elx data/btos/tests/cpptest.elx data/btos/cmd/cmd.elx data/btos/system/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/system/switcher.elx data/btos/cmd/spawn.elx data/btos/cmd/kill.elx data/btos/drivers/pci.sys data/btos/cmd/load.elx data/btos/tests/test.sys data/btos/tests/test.elx data/btos/cmd/mount.elx data/btos/tests/msgtest.elx data/btos/tests/mousetest.elx data/btos/drivers/vga.sys data/btos/tests/vgatest.elx data/btos/tests/fputest.elx data/btos/system/gds.elx data/btos/bin/debug.elx data/btos/tests/crash.elx data/btos/tests/gdstest.elx data/btos/system/wm.elx data/btos/tests/wmtest.elx data/btos/bin/wmmenu.elx data/btos/bin/startwm.elx data/btos/bin/termwin.elx data/btos/bin/breakout.elx data/btos/cmd/sleep.elx data/btos/cmd/tar.elx data/btos/drivers/iso9660.sys data/btos/drivers/fat.sys data/btos/cmd/iconv.elx data/btos/cmd/parted.elx data/btos/cmd/format.elx data/btos/bin/install.elx
 
-all: ../btos.tar
+all: ../base.tar
 
 data/btos/tests/ctest.elx: ../../user/ctest/ctest.elx directories.always
 	cp $< $@
@@ -129,10 +129,10 @@ directories.always:
 	mkdir -p data/btos/system
 	mkdir -p data/btos/drivers
 
-../btos.tar: $(import-files) grub.always
+../base.tar: $(import-files) grub.always
 	-cp -R pkgfiles/* data
-	tar cf ../btos.tar -C data .
+	tar cf ../base.tar -C data .
 
 clean:
 	-rm -rf data
-	-rm ../btos.tar
+	-rm ../base.tar
