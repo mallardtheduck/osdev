@@ -17,6 +17,6 @@ popd && \
 \
 cd $HOME/Projects/os/src && \
 cd build-newlib && \
-../newlib-2.1.0/configure --target=$TARGET --prefix=$PREFIX && \
+../newlib-2.1.0/configure --enable-newlib-io-long-long --target=$TARGET --prefix=$PREFIX && \
 make && \
 make install

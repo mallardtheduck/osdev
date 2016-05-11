@@ -1,9 +1,9 @@
 all: ../install.tar
 
 directories.always:
-	mkdir -p data/btos/boot/initfs
+	mkdir -p data/btos
 
-../install.tar:
+../install.tar: directories.always
 	-cp -R pkgfiles/* data
 	tar cf ../install.tar -C data .
 

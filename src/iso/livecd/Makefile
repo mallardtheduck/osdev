@@ -3,8 +3,8 @@ all: livecd.iso
 btos-files: ../../packages/base.tar
 	mkdir -p isodir
 	tar xf ../../packages/base.tar -C isodir
-	cp ../../packages/base.tar isodir
-	cp ../../packages/kernel.tar isodir
+	mkdir -p isodir/packages
+	cp ../../packages/*.tar isodir/packages
 
 livecd.iso: ../../kernel/btos.bin ../../tarinit/livecd/init.tar btos-files
 	mkdir -p isodir

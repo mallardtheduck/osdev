@@ -147,11 +147,13 @@ void untar(const string &datapath, const string &destpath){
 bool copy_files(const string &mountpoint){
 	cout << "Copying files..." << endl;
 	string sysdrive = get_env("SYSTEMDRIVE");
-	string datapath = sysdrive + ":/btos.tar";
-	string kernelpath = sysdrive + ":/kernel.tar";
+	string datapath = sysdrive + ":/packages/base.tar";
+	string kernelpath = sysdrive + ":/packages/kernel.tar";
+	string installpath = sysdrive + ":/packages/install.tar";
 	string destpath = mountpoint + ":/";
 	untar(datapath, destpath);
 	untar(kernelpath, destpath);
+	untar(installpath, destpath);
 	return true;
 }
 
@@ -233,12 +235,12 @@ bool install_grub(const string &mountpoint, const partition_info &part){
 	bt_pid_t mkimpid = bt_spawn(mkim.c_str(), sizeof(mkimargs)/sizeof(mkimargs[0]), (char**)mkimargs);
 	bt_wait(mkimpid);
 	string bios = mountpoint + ":/btos/boot/grub/grubbios.elx";
-	const char *biosargs1[] = {"-d", "/btos/boot/grub/i386-pc", part.path.c_str()};
-	bt_pid_t biospid1 = bt_spawn(bios.c_str(), 3, (char**)biosargs1);
+	const char *biosargs1[] = {"-vv", "-d", "/btos/boot/grub/i386-pc", part.path.c_str()};
+	bt_pid_t biospid1 = bt_spawn(bios.c_str(), 4, (char**)biosargs1);
 	bt_wait(biospid1);
 	if(yesno("Do you want to install GRUB to this drive's MBR? (Choose 'yes' unless you have another bootloader that you can configure.)", 'y')){
-		const char *biosargs2[] = {"-d", "/btos/boot/grub/i386-pc", part.devicepath.c_str()};
-		bt_pid_t biospid2 = bt_spawn(bios.c_str(), 3, (char**)biosargs2);
+		const char *biosargs2[] = {"-vv", "-d", "/btos/boot/grub/i386-pc", part.devicepath.c_str()};
+		bt_pid_t biospid2 = bt_spawn(bios.c_str(), 4, (char**)biosargs2);
 		bt_wait(biospid2);
 	}
 	bt_setenv("CWD", cwd.c_str(), 0);
@@ -246,7 +248,12 @@ bool install_grub(const string &mountpoint, const partition_info &part){
 }
 
 void write_answers(const string &mountpoint, const partition_info &part, bool rootinstall){
-	(void)mountpoint; (void)part; (void)rootinstall;
+	string setuppath = mountpoint + ":/btos/setup.ini";
+	replace_in_file(setuppath, "$DEVICE$", part.devicepath);
+	replace_in_file(setuppath, "$PART$", part.path);
+	replace_in_file(setuppath, "$FS$", part.fs);
+	replace_in_file(setuppath, "$DRIVE$", mountpoint);
+	replace_in_file(setuppath, "$MBR$", rootinstall ? "true" : "false");
 }
 
 int main(){
