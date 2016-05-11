@@ -2,7 +2,7 @@ export PREFIX:=$(HOME)/Projects/os/cross
 export TARGET:=i686-elf
 export PATH:=$(PREFIX)/bin:$(PATH)
 
-all: modules user kernel disk tarinit packages iso
+all: modules user kernel tarinit packages iso disk
 clean: kernel-clean modules-clean user-clean disk-clean tarinit-clean packages-clean iso-clean
 rebuild: clean all
 
