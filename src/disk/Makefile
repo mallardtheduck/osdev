@@ -9,7 +9,7 @@ btos.img:
 ~/.mtoolsrc:
 	echo "mtools_skip_check=1" > ~/.mtoolsrc
 
-copy.always: $(shell find data -type f)
+copy.always: $(shell find data -type f) ../packages/base.tar
 	tar xf ../packages/base.tar -C data
 	mcopy -i btos.img@@1M data/* ::/ -s -o
 
