@@ -137,8 +137,14 @@ void unmask_irq(size_t irqno){
 	IRQ_clear_mask(irqno);
 }
 
-void setpid(pid_t pid){
-    proc_switch(pid);
+bool setpid(pid_t pid){
+	if(proc_get_status(pid) != proc_status::DoesNotExist){
+		proc_switch(pid);
+		if(proc_current_pid != pid) return false;
+		return true;
+	}else{
+		return false;
+	}
 }
 
 uint64_t mod_msg_send(btos_api::bt_msg_header *msg){

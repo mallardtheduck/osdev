@@ -268,13 +268,13 @@
     <VirtualDirectory Name="debug">
       <File Name="user/debug/Makefile"/>
       <File Name="user/debug/debug.cpp"/>
-      <File Name="user/debug/symbols.cpp"/>
       <File Name="user/debug/stacktrace.cpp"/>
       <File Name="user/debug/debug.hpp"/>
       <File Name="user/debug/events.cpp"/>
       <File Name="user/debug/table.cpp"/>
       <File Name="user/debug/table.hpp"/>
       <File Name="user/debug/symbols.hpp"/>
+      <File Name="user/debug/symbols.cpp"/>
     </VirtualDirectory>
     <VirtualDirectory Name="msgtest">
       <File Name="user/msgtest/Makefile"/>
@@ -387,6 +387,10 @@
     <VirtualDirectory Name="format">
       <File Name="user/format/format.c"/>
       <File Name="user/format/Makefile"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="install">
+      <File Name="user/install/install.cpp"/>
+      <File Name="user/install/Makefile"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
@@ -574,6 +578,36 @@
     <VirtualDirectory Name="livecd">
       <File Name="iso/livecd/Makefile"/>
       <File Name="iso/livecd/grub.cfg"/>
+    </VirtualDirectory>
+  </VirtualDirectory>
+  <VirtualDirectory Name="packages">
+    <File Name="packages/Makefile"/>
+    <VirtualDirectory Name="base">
+      <File Name="packages/base/Makefile"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="kernel">
+      <File Name="packages/kernel/Makefile"/>
+      <VirtualDirectory Name="pkgfiles">
+        <VirtualDirectory Name="btos">
+          <VirtualDirectory Name="boot">
+            <VirtualDirectory Name="initfs">
+              <File Name="packages/kernel/pkgfiles/btos/boot/initfs/config.ini"/>
+            </VirtualDirectory>
+            <VirtualDirectory Name="grub">
+              <File Name="packages/kernel/pkgfiles/btos/boot/grub/grub.cfg"/>
+              <File Name="packages/kernel/pkgfiles/btos/boot/grub/load_cfg"/>
+            </VirtualDirectory>
+          </VirtualDirectory>
+        </VirtualDirectory>
+      </VirtualDirectory>
+    </VirtualDirectory>
+    <VirtualDirectory Name="install">
+      <VirtualDirectory Name="pkgfiles">
+        <VirtualDirectory Name="btos">
+          <File Name="packages/install/pkgfiles/btos/setup.ini"/>
+        </VirtualDirectory>
+      </VirtualDirectory>
+      <File Name="packages/install/Makefile"/>
     </VirtualDirectory>
   </VirtualDirectory>
 </CodeLite_Project>
