@@ -37,6 +37,7 @@ int is_transmit_empty() {
 }
 
 void write_serial(const char a) {
+	if(a == '\n') write_serial('\r');
 	//if(!try_take_lock_exclusive(ser_lock)) return;
     bool interrupts= are_interrupts_enabled();
     disable_interrupts();
