@@ -172,7 +172,7 @@ bool init_dma();
 void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf);
 
 extern drv_driver atapi_driver;
-void atapi_device_init(ata_device *dev);
+bool atapi_device_init(ata_device *dev);
 void ata_io_wait(struct ata_device * dev);
 int atapi_device_read(ata_device *dev, uint32_t lba, uint8_t *buf);
 void ata_reset_wait(uint32_t bus);
