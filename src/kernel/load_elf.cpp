@@ -135,7 +135,6 @@ Elf32_Addr elf_symbol_value(file_handle &file, const Elf32_Ehdr &header, size_t 
 
 void elf_do_reloc_module(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr &section, void *base){
 	size_t n_relocs=section.size/sizeof(Elf32_Rel);
-	dbgpf("ELF: Performing %i relocations...\n", (int)n_relocs);
 	for(size_t i=0; i<n_relocs; ++i){
 		Elf32_Rel rel=elf_read_rel(file, section, i);
 		Elf32_Addr symval=elf_symbol_value(file, header, ELF32_R_SYM(rel.info));
@@ -159,7 +158,6 @@ void elf_do_reloc_module(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr
 				break;
 		}
 	}
-	dbgout("ELF: Relocations complete.\n");
 }
 
 loaded_elf_module elf_load_module(file_handle &file){
