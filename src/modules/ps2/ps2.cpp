@@ -21,13 +21,13 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
     dbgout("PS2: Write config\n");
     ps2_write_command(PS2_Command::WriteRAM);
     ps2_write_data(config);
-    dbgout("PS2: Controller self-test\n");
+    /*dbgout("PS2: Controller self-test\n");
     ps2_write_command(PS2_Command::TestController);
     uint8_t test=ps2_read_data();
     if(test != 0x55){
         dbgout("PS2: contoller failed self-test!\n");
         return 0;
-    }
+    }*/
     if(ch2){
         ps2_write_command(PS2_Command::EnablePort2);
         ps2_write_command(PS2_Command::ReadRAM);
@@ -45,7 +45,7 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
     ps2_clear_data();
     if(ch1){
         ps2_write_command(PS2_Command::EnablePort1);
-        ps2_write_command(PS2_Command::DisablePort2);
+        //ps2_write_command(PS2_Command::DisablePort2);
         ps2_clear_data();
         ps2_write_port1(Device_Command::Reset);
         if(uint8_t p1test = ps2_read_data() != 0xAA){
@@ -63,7 +63,7 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
     }
     if(ch2){
         ps2_write_command(PS2_Command::EnablePort2);
-        ps2_write_command(PS2_Command::DisablePort1);
+        //ps2_write_command(PS2_Command::DisablePort1);
         ps2_clear_data();
         ps2_write_port2(Device_Command::Reset);
         if(uint8_t p2test = ps2_read_data() != 0xAA){
@@ -82,13 +82,13 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
     dbgpf("PS2: Ports: Keyboard: %i, Mouse: %i\n", (int)keyport, (int)mouseport);
     if(keyport) init_keyboard(keyport);
     if(mouseport) init_mouse(mouseport);
-    //panic("(PS2) TEST");
     return 0;
 }
 
 uint8_t ps2_read_data(){
     while(!(ps2_read_status() & 1));
-    return inb(PS2_Data_Port);
+    uint8_t ret = inb(PS2_Data_Port);
+	return ret;
 }
 
 uint8_t ps2_read_data_nocheck(){
@@ -101,7 +101,8 @@ void ps2_write_data(uint8_t byte){
 }
 
 uint8_t ps2_read_status(){
-    return inb(PS2_Status_Port);
+    uint8_t ret = inb(PS2_Status_Port);
+	return ret;
 }
 
 void ps2_write_command(uint8_t byte){
@@ -112,7 +113,7 @@ void ps2_write_command(uint8_t byte){
 
 void ps2_write_port1(uint8_t byte){
     uint8_t result=0xFE;
-    while(result==0xFE) {
+    while(result != 0xFA) {
         ps2_write_data(byte);
         result=ps2_read_data();
     }
@@ -120,7 +121,7 @@ void ps2_write_port1(uint8_t byte){
 
 void ps2_write_port2(uint8_t byte){
     uint8_t result=0xFE;
-    while(result==0xFE){
+    while(result != 0xFA){
         ps2_write_command(PS2_Command::WritePort2InBuffer);
         ps2_write_data(byte);
         result=ps2_read_data();
