@@ -116,5 +116,6 @@ void unlock_crtc();
 void lock_crtc();
 void disable_display();
 void enable_display();
+void dump_regs();
 
 #endif
