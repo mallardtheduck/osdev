@@ -15,7 +15,7 @@ void wait_for_retrace(){
 }
 
 void load_palette() {
-	wait_for_retrace();
+	//wait_for_retrace();
 	outb(VGA_Ports::DACWriteAddress, 0);
 	for(int i=0; i<256; ++i){
 		vga_palette_entry entry=vga_palette[i];
@@ -43,6 +43,7 @@ void load_font(){
 }
 
 void set_mode_12h() {
+	dbgout("VGA: Setting mode 12h (640x480x4bpp)\n");
 	disable_interrupts();
 	disable_display();
 	unlock_crtc();
@@ -262,6 +263,7 @@ void read_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 }
 
 void set_mode_03h() {
+	dbgout("VGA: Setting mode 03h (text)\n");
 	disable_interrupts();
 	disable_display();
 	unlock_crtc();
@@ -337,6 +339,7 @@ void set_mode_03h() {
 }
 
 void set_mode_x() {
+	dbgout("VGA: Setting mode X (320x240x8bpp)\n");
 	disable_interrupts();
 	disable_display();
 	unlock_crtc();

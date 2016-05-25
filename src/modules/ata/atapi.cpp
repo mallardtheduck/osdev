@@ -19,7 +19,7 @@ memcmp(const void *vs1, const void *vs2, size_t n){
 
 void atapi_test(ata_device *dev);
 
-void atapi_device_init(ata_device *dev){
+bool atapi_device_init(ata_device *dev){
 	dbgpf("ATA: Initializing ATAPI device on bus %d\n", dev->io_base);
 
 	outb(dev->io_base + ATA_REG_ERROR, 1);
@@ -28,11 +28,26 @@ void atapi_device_init(ata_device *dev){
 	outb(dev->io_base + ATA_REG_HDDEVSEL, 0xA0 | dev->slave << 4);
 	ata_io_wait(dev);
 
+	outb(dev->io_base + ATA_REG_COMMAND, ATA_CMD_IDENTIFY);
+	ata_io_wait(dev);
+	
+	unsigned char cl = inb(dev->io_base + ATA_REG_LBA1);
+	unsigned char ch = inb(dev->io_base + ATA_REG_LBA2);
+	
+	if(!(cl == 0x14 && ch == 0xEB) && !(cl == 0x69 && ch == 0x96)){
+		return false;
+	}
+
 	outb(dev->io_base + ATA_REG_COMMAND, ATA_CMD_IDENTIFY_PACKET);
 	ata_io_wait(dev);
 
 	int status = inb(dev->io_base + ATA_REG_COMMAND);
 	dbgpf("ATA: Device status: %d\n", status);
+	
+	if(status == 0 || (status & ATA_SR_ERR)) {
+		dbgpf("ATA: Device does not exist or not ATAPI.\n");
+		return false;
+	}
 
 	ata_wait(dev, 0);
 
@@ -62,6 +77,8 @@ void atapi_device_init(ata_device *dev){
 	outb(dev->control, 0);
 	
 	//atapi_test(dev);
+	
+	return true;
 }
 
 size_t atapi_scsi_command(ata_device *dev, uint8_t cmd[12], size_t size, uint8_t *buf){

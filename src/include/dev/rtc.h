@@ -25,11 +25,11 @@ struct rtc_calltable{
 
 #ifndef RTC_NO_STUBS
 
-extern rtc_calltable RTC_CALL_TABLE;
+extern rtc_calltable *RTC_CALL_TABLE;
 
-#define USE_RTC rtc_calltable RTC_CALL_TABLE
+#define USE_RTC rtc_calltable *RTC_CALL_TABLE
 
-inline static void rtc_init(){
+inline static bool rtc_init(){
 	uint16_t extid = get_extension_id(RTC_EXTENSION_NAME);
 	if(!extid) return false;
 	RTC_CALL_TABLE = (rtc_calltable*) get_extension(extid)->calltable;

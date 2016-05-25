@@ -82,20 +82,17 @@ void read_dac(uint8_t index, uint8_t &r, uint8_t &g, uint8_t &b){
 
 void unlock_crtc(){
 	uint8_t reg= read_crtc(CRTC_Registers::EndVrtRetrace);
-	reg |= (1 << 7);
+	reg &= ~(1 << 7);
 	write_crtc(CRTC_Registers::EndVrtRetrace, reg);
 	reg= read_crtc(CRTC_Registers::EndHrzBlanking);
-	reg &= ~(1 << 7);
+	reg |= (1 << 7);
 	write_crtc(CRTC_Registers::EndHrzBlanking, reg);
 }
 
 void lock_crtc(){
 	uint8_t reg= read_crtc(CRTC_Registers::EndVrtRetrace);
-	reg &= ~(1 << 7);
+	reg |= (1 << 7);
 	write_crtc(CRTC_Registers::EndVrtRetrace, reg);
-	reg= read_crtc(CRTC_Registers::EndHrzBlanking);
-	reg &= ~(1 << 7);
-	write_crtc(CRTC_Registers::EndHrzBlanking, reg);
 }
 
 void disable_display(){
@@ -142,7 +139,7 @@ void dump_regs(){
 	dbgpf("VGA: S %x\n", (int)read_crtc(CRTC_Registers::CRTCModeControl));
 	dbgpf("VGA: T %x\n", (int)read_crtc(CRTC_Registers::LineCompare));
 	dbgpf("VGA: U %x\n", (int)read_graphics(Graphics_Registers::SetReset));
-	dbgpf("VGA: V %x\n", (int)read_graphics(Graphics_Registers::EnableSetReset));;
+	dbgpf("VGA: V %x\n", (int)read_graphics(Graphics_Registers::EnableSetReset));
 	dbgpf("VGA: W %x\n", (int)read_graphics(Graphics_Registers::ColourCompare));
 	dbgpf("VGA: X %x\n", (int)read_graphics(Graphics_Registers::DataRotate));
 	dbgpf("VGA: Y %x\n", (int)read_graphics(Graphics_Registers::ReadMapSelect));
