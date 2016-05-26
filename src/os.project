@@ -99,6 +99,15 @@
     <File Name="kernel/liballoc.c"/>
     <File Name="kernel/initfs.cpp"/>
     <File Name="kernel/initfs.hpp"/>
+    <File Name="kernel/mm2.cpp"/>
+    <File Name="kernel/mm2.hpp"/>
+    <VirtualDirectory Name="mm2">
+      <File Name="kernel/mm2/physical.cpp"/>
+      <File Name="kernel/mm2/virtual.cpp"/>
+      <File Name="kernel/mm2/mm2_internal.hpp"/>
+      <File Name="kernel/mm2/pagedirectory.hpp"/>
+      <File Name="kernel/mm2/pagedirectory.cpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="modules">
     <VirtualDirectory Name="rtc">

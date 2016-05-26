@@ -37,6 +37,7 @@ extern "C"{
 #include "util.hpp"
 #include "panic.hpp"
 #include "vmm.hpp"
+#include "mm2.hpp"
 #include "idt.hpp"
 #include "pic.hpp"
 #include "handles.hpp"
