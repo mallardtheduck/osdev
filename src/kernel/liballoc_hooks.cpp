@@ -3,11 +3,6 @@ extern "C"{
 	#include "liballoc.h"
 }
 
-#include "locks.hpp"
-extern lock vmm_lock;
-lock &la_lock = vmm_lock;
-bool la_inited=false;
-
 void *vmm_ministack_alloc(size_t pages=1);
 void vmm_ministack_free(void *ptr, size_t pages=1);
 
@@ -19,11 +14,7 @@ void vmm_ministack_free(void *ptr, size_t pages=1);
  * failure.
  */
 extern "C" int liballoc_lock(){
-	if(!la_inited){
-		init_lock(la_lock);
-		la_inited=true;
-	}
-    take_lock_recursive(la_lock);
+	disable_interrupts();
 	return 0;
 }
 
@@ -34,7 +25,7 @@ extern "C" int liballoc_lock(){
  * \return 0 if the lock was successfully released.
  */
 extern "C" int liballoc_unlock(){
-	release_lock(la_lock);
+	enable_interrupts();
 	return 0;
 }
 
@@ -47,7 +38,7 @@ extern "C" int liballoc_unlock(){
  */
 extern "C" void* liballoc_alloc(size_t pages){
 	//return mm_alloc(pages * 4096);
-	return vmm_alloc(pages);
+	return mm2_virtual_alloc(pages);
 }
 
 /** This frees previously allocated memory. The void* parameter passed
@@ -60,6 +51,6 @@ extern "C" void* liballoc_alloc(size_t pages){
  */
 extern "C" int liballoc_free(void *ptr, size_t pages){
 	//mm_free(ptr);
-	vmm_free(ptr, pages);
+	mm2_virtual_free(ptr, pages);
 	return 0;
 }

@@ -1,6 +1,8 @@
 #include "vmm.hpp"
 #include "locks.hpp"
 
+#if 0
+
 #define PAGING_ENABLED_FLAG 0x80000000
 
 multiboot_info_t *multiboot_info;
@@ -630,3 +632,5 @@ void vmm_debug_check(){
 	}
 	dbgout("VMM: Debug check complete.\n");
 }
+
+#endif

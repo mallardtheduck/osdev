@@ -107,6 +107,9 @@
       <File Name="kernel/mm2/mm2_internal.hpp"/>
       <File Name="kernel/mm2/pagedirectory.hpp"/>
       <File Name="kernel/mm2/pagedirectory.cpp"/>
+      <File Name="kernel/mm2/mm2_public.hpp"/>
+      <File Name="kernel/mm2/mm2_mmap.cpp"/>
+      <File Name="kernel/mm2/page_faults.cpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="modules">

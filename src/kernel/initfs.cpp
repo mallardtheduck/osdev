@@ -208,7 +208,7 @@ fs_driver initfs_driver = {true, "INITFS", false,
 fs_driver initfs_getdriver(){
 	if(!initfs_data){
 		initfs_data = new vector<initfs_file>();
-		multiboot_info_t *mbi = vmm_get_multiboot();
+		multiboot_info_t *mbi = mbt;
 		if(mbi->mods_count > 0){
 			module_t *mod = (module_t *)mbi->mods_addr;
 			tar_header *th = (tar_header*)mod->mod_start;

@@ -36,7 +36,7 @@ extern "C"{
 
 #include "util.hpp"
 #include "panic.hpp"
-#include "vmm.hpp"
+//#include "vmm.hpp"
 #include "mm2.hpp"
 #include "idt.hpp"
 #include "pic.hpp"
@@ -52,7 +52,7 @@ extern "C"{
 #include "modules.hpp"
 #include "user_api.hpp"
 #include "infofs.hpp"
-#include "amm.hpp"
+//#include "amm.hpp"
 #include "amm_page_accounting.hpp"
 #include "debug_ext.hpp"
 
@@ -67,5 +67,7 @@ void gdt_set_kernel_stack(void* ptr);
 #define KERNEL_OS_NAME "BT/OS"
 #define KERNEL_COPYRIGHT "(c) 2014-2016 Stuart Brockman"
 extern char *kernel_buildid;
+
+extern multiboot_info_t *mbt;
 
 #endif

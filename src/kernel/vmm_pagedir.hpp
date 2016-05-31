@@ -1,6 +1,8 @@
 #ifndef _VMM_PAGEDIR_HPP
 #define _VMM_PAGEDIR_HPP
 
+#if 0
+
 class vmm_pagedir{
 private:
     uint32_t* pagedir;
@@ -53,5 +55,6 @@ public:
     amm_flags::Enum get_flags(uint32_t pageaddr);
     bool is_dirty(uint32_t pageaddr);
 };
+#endif
 
 #endif

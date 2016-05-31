@@ -3,13 +3,14 @@
 #include "pagedirectory.hpp"
 
 namespace MM2{
+	static lock virtual_lock;
 
 	static const uint32_t CR0_Paging_Enabled = 0x80000000;
 
 	static uint32_t init_kernel_pagedir[MM2_Table_Entries] __attribute__((aligned(0x1000)));
 	static char kpd_place[sizeof(PageDirectory)];
-	static PageDirectory *kernel_pagedir;
-	static PageDirectory *current_pagedir;
+	PageDirectory *kernel_pagedir;
+	PageDirectory *current_pagedir;
 	
 	lock table_frame_lock;
 
@@ -28,6 +29,7 @@ namespace MM2{
 	}
 
 	void mm2_virtual_init(){
+		init_lock(virtual_lock);
 		dbgout("MM2: Virtual memory manager init.\n");
 		memset(&init_kernel_pagedir, 0, sizeof(init_kernel_pagedir));
 		size_t pages_to_idmap = div_ceil((uint32_t)get_kernel_end(), MM2_Page_Size);
@@ -58,6 +60,7 @@ namespace MM2{
 		asm volatile("mov %0, %%cr0":: "b"(cr0));
 		dbgout("Done.\n");
 		
+		int_handle(0x0e, &page_fault_handler);
 		current_pagedir = kernel_pagedir = new(&kpd_place) PageDirectory(init_kernel_pagedir);
 		init_lock(table_frame_lock);
 	}
@@ -65,9 +68,22 @@ namespace MM2{
 	void *mm2_virtual_alloc(size_t pages, uint32_t mode){
 		return current_pagedir->alloc(pages, mode);
 	}
+	
+	void mm2_virtual_free(void *ptr, size_t pages){
+		current_pagedir->free_pages(ptr, pages);
+	}
 
 	void mm2_invlpg(void *pageaddr){
 		asm volatile("invlpg (%0)" ::"r" (pageaddr) : "memory");
+	}
+	
+	void mm2_switch(PageDirectory *newdir){
+		disable_interrupts();
+		kernel_pagedir->copy_kernelspace(*current_pagedir);
+		newdir->copy_kernelspace(*kernel_pagedir);
+		newdir->activate();
+		current_pagedir=newdir;
+		enable_interrupts();
 	}
 
 }

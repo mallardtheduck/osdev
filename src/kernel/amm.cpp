@@ -3,6 +3,8 @@
 #include "locks.hpp"
 #include "vmm_pagedir.hpp"
 
+#if 0
+
 static const uint32_t ec_user = (1 << 2);
 
 struct amm_pagedetails{
@@ -400,3 +402,5 @@ size_t amm_resolve_addr(void *addr){
 	}
 	return 0;
 }
+
+#endif

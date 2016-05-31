@@ -36,12 +36,12 @@ void userapi_handler(int, isr_regs *regs){
 }
 
 bool is_safe_ptr(uint32_t ptr, size_t size, pid_t pid){
-	if(ptr >= VMM_USERSPACE_START){
+	if(ptr >= MM2::MM2_Kernel_Boundary){
 		pid_t cur_pid = proc_current_pid;
 		proc_switch(pid);
 		size_t i = 0;
 		while(i<size){
-			size_t res = amm_resolve_addr((char*)ptr + i);
+			size_t res = MM2::current_pagedir->resolve_addr((char*)ptr + i);
 			i += res;
 			if(!res){ 
 				proc_switch(cur_pid);
@@ -70,12 +70,12 @@ USERAPI_HANDLER(zero){
 }
 
 USERAPI_HANDLER(BT_ALLOC_PAGES){
-	regs->eax = (uint32_t)vmm_alloc(regs->ebx, vmm_allocmode::Userlow);
+	regs->eax = (uint32_t)MM2::current_pagedir->alloc(regs->ebx, MM2::MM2_Alloc_Mode::Userlow);
 }
 
 USERAPI_HANDLER(BT_FREE_PAGES){
 	if(is_safe_ptr(regs->ebx, 0)){
-		vmm_free((void*)regs->ebx, regs->ecx);
+		MM2::current_pagedir->free_pages((void*)regs->ebx, regs->ecx);
 	}
 }
 
@@ -213,7 +213,7 @@ USERAPI_HANDLER(BT_FFLUSH){
 }
 
 static void close_filemap_handle(void *f){
-    amm_closemap(*(uint64_t*)f);
+    MM2::mm2_closemap(*(uint64_t*)f);
     delete (uint64_t*)f;
 }
 
@@ -222,7 +222,7 @@ USERAPI_HANDLER(BT_MMAP){
     if(file && is_safe_ptr(regs->edx, sizeof(btos_api::bt_mmap_buffer))){
         btos_api::bt_mmap_buffer *buffer=(btos_api::bt_mmap_buffer*)regs->edx;
         if(!is_safe_ptr((uint32_t)buffer->buffer, buffer->size)) return;
-        uint64_t *id=new uint64_t(amm_mmap(buffer->buffer, *file, regs->ecx, buffer->size));
+        uint64_t *id=new uint64_t(MM2::mm2_mmap(buffer->buffer, *file, regs->ecx, buffer->size));
         bt_handle_info handle=create_handle(kernel_handle_types::memory_mapping, id, &close_filemap_handle);
         regs->eax= proc_add_handle(handle);
 		return;

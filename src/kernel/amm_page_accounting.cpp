@@ -2,6 +2,8 @@
 #include "locks.hpp"
 #include "vmm_pagedir.hpp"
 
+#if 0
+
 lock amm_a_lock;
 
 struct amm_page_info{
@@ -96,3 +98,5 @@ size_t amm_accounting_count_free_pages(){
     }
     return ret;
 }
+
+#endif

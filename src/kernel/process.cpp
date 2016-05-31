@@ -40,7 +40,7 @@ struct proc_process{
 	int retval;
     file_handle file;
 
-	vmm_pagedir *pagedir;
+	MM2::PageDirectory *pagedir;
 	handle_t handlecounter;
     proc_status::Enum status;
 
@@ -54,7 +54,7 @@ struct proc_process{
 		init_lock(ulock);
 	}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
-		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(vmm_newpagedir()),
+		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(new MM2::PageDirectory),
 		 handlecounter(0), status(proc_status::Running) {
 		init_lock(ulock);
     }
@@ -67,12 +67,12 @@ char *proc_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
 	sprintf(buffer, "# PID, path, memory, parent\n");
-	size_t kmem=vmm_getkernelmemory();
+	size_t kmem=MM2::current_pagedir->get_kernel_used();
 	{hold_lock hl(proc_lock);
 		for(size_t i=0; i<proc_processes->size(); ++i){
             proc_process *cur=(*proc_processes)[i];
 			sprintf(&buffer[strlen(buffer)],"%i, \"%s\", %i, %i\n", (int)(cur->pid), cur->name.c_str(),
-				(int)((cur->pid)?vmm_getusermemory(cur->pagedir):kmem), (int)(cur->parent));
+				(int)((cur->pid)?cur->pagedir->get_user_used():kmem), (int)(cur->parent));
 		}
     }
     return buffer;
@@ -108,7 +108,7 @@ void proc_init(){
 	kproc->pid=0;
 	curpid--;
 	kproc->parent=0;
-	kproc->pagedir=vmm_cur_pagedir;
+	kproc->pagedir=MM2::current_pagedir;
 	proc_processes->push_back(kproc);
 	proc_current_process=proc_get(0);
 	proc_current_pid=0;
@@ -163,7 +163,7 @@ void proc_switch_sch(pid_t pid){
         if(!newproc) panic("(PROC) Attempt to switch to unknown process.");
 		proc_current_process=newproc;
 		proc_current_pid=newproc->pid;
-		vmm_switch(proc_current_process->pagedir);
+		MM2::mm2_switch(proc_current_process->pagedir);
 	}
 }
 
@@ -176,7 +176,7 @@ bool proc_switch(pid_t pid){
             hold_lock hl(proc_lock, false);
             proc_current_process = newproc;
             proc_current_pid = newproc->pid;
-            vmm_switch(proc_current_process->pagedir);
+            MM2::mm2_switch(proc_current_process->pagedir);
         }
 	}
     return true;
@@ -277,7 +277,7 @@ void proc_end(pid_t pid) {
 	for (size_t i = 0; i < proc_processes->size(); ++i) {
 		proc_process *cur = (*proc_processes)[i];
 		if (cur->pid == pid) {
-			vmm_deletepagedir(cur->pagedir);
+			delete cur->pagedir;
 			proc_processes->erase(i);
 			release_lock(proc->ulock);
 			delete cur;
@@ -349,10 +349,10 @@ struct proc_info{
 };
 
 void *proc_alloc_stack(size_t size){
-	size_t pages=(size/VMM_PAGE_SIZE);
-	uint32_t baseaddr=0-(pages*VMM_PAGE_SIZE);
+	size_t pages=(size/MM2::MM2_Page_Size);
+	uint32_t baseaddr=0-(pages*MM2::MM2_Page_Size);
 	dbgpf("PROC: %i pages of stack at %x.\n", (int)pages, baseaddr);
-	vmm_alloc_at(pages, baseaddr);
+	MM2::current_pagedir->alloc_pages_at(pages, (void*)baseaddr);
 	memset((void*)baseaddr, 0, size);
 	//Stack pointer starts 4 bytes below top, just in case something tries to read the top-level return address.
 	return (void*)(0-sizeof(uint32_t));
@@ -364,7 +364,7 @@ void proc_start(void *ptr){
     void *stackptr = ((proc_info*)ptr)->stackptr;
 	delete (proc_info*)ptr;
 	if(!proc_switch(pid)) return;
-	if(!stackptr) stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
+	if(!stackptr) stackptr=proc_alloc_stack(4*MM2::MM2_Page_Size);
     sch_set_priority(default_userspace_priority);
 	//Yes, there are supposed to be two of these calls.
 	sch_abortable(true);

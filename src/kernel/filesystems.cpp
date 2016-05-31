@@ -228,7 +228,7 @@ bool fs_close(file_handle &file){
 	if(!file.valid) return true;
 	bool ret=file.mount->driver.close(file.filedata);
 	if(ret) {
-        amm_close(file);
+        MM2::mm2_close(file);
         file.valid=false;
         delete file.mount;
         dbgout("FS: Closed a file.\n");
@@ -330,7 +330,7 @@ directory_entry fs_stat(const char *path){
 
 void fs_flush(file_handle &file){
     if(!file.valid) return;
-    amm_flush(file);
+    MM2::mm2_flush(file);
     file.mount->driver.flush(file.filedata);
 }
 

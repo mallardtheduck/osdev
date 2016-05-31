@@ -200,18 +200,18 @@ loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
 	for(int i=0; i<header.phnum; ++i){
 		Elf32_Phdr prog=elf_read_progheader(file, header, i);
 		if(prog.type==PT_LOAD){
-			if(prog.vaddr < VMM_KERNELSPACE_END) panic("ELF: Attempt to load process into kernel space!");
+			if(prog.vaddr < MM2::MM2_Kernel_Boundary) panic("ELF: Attempt to load process into kernel space!");
 			size_t p=fs_seek(file, prog.offset, false);
 			if(p!=prog.offset){
 				dbgpf("ELF: Seek failure - expected: %i, got %i.\n", (int)prog.offset, (int)p);
 				panic("(ELF) Seek failed during program load!");
 			}
 			uint32_t base=prog.vaddr;
-			uint32_t pages=(prog.memsz/VMM_PAGE_SIZE)+1;
-			vmm_alloc_at(pages, base);
+			uint32_t pages=(prog.memsz/MM2::MM2_Page_Size)+1;
+			MM2::current_pagedir->alloc_pages_at(pages, (void*)base);
 			memset((void*)prog.vaddr, 0, prog.memsz);
 			//size_t b=fs_read(file, prog.filesz, (char*)prog.vaddr);
-            amm_mmap((char*)prog.vaddr, file, p, prog.filesz);
+            MM2::mm2_mmap((char*)prog.vaddr, file, p, prog.filesz);
 			/*if(b!=prog.filesz){
 				dbgpf("ELF: Read failure - expected: %i, got %i.\n", prog.filesz, b);
 				panic("(ELF) Read failed during program load!");
