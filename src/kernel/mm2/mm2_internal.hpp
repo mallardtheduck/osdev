@@ -11,6 +11,7 @@ namespace MM2{
 	const size_t MM2_Table_Entries = 1024;
 	const size_t MM2_Kernel_Pages = MM2_Kernel_Boundary / MM2_Page_Size;
 	const size_t MM2_Kernel_Tables = MM2_Kernel_Pages / MM2_Table_Entries;
+	const size_t MM2_Total_Pages = 0xFFFFFFFF / MM2_Page_Size;
 
 	enum class PageStatus{
 		Free,
@@ -47,6 +48,9 @@ namespace MM2{
 	physical_page *physical_alloc(size_t max_addr = 0xFFFFFFFF);
 	void physical_free(physical_page *page);
 	void physical_free(uint32_t addr);
+	void physical_mark_used(uint32_t addr);
+	void physical_infofs_register();
+	
 	void mm2_invlpg(void *pageaddr);
 	
 	void *mm2_virtual_alloc(size_t pages, uint32_t mode = MM2_Alloc_Mode::Kernel);

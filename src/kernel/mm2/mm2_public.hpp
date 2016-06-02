@@ -30,14 +30,14 @@ namespace MM2{
 		Dirty			= 1 << 6,
 		Global			= 1 << 7,
 
-        Do_Not_Use      = 1 << 9,
-        Do_Not_Move     = 1 << 10,
-        Do_Not_Swap     = 1 << 11,
+		Do_Not_Use      = 1 << 9,
+		Do_Not_Move     = 1 << 10,
+		Do_Not_Swap     = 1 << 11,
 
-        Kernel          = Do_Not_Move | Do_Not_Swap,
-        User            = Usermode,
-        Guard_Page      = Do_Not_Use | Do_Not_Swap,
-        PageTable       = Do_Not_Move | Do_Not_Swap;
+		Kernel          = Do_Not_Move | Do_Not_Swap,
+		User            = Usermode,
+		Guard_Page      = Do_Not_Use | Do_Not_Swap,
+		PageTable       = Do_Not_Move | Do_Not_Swap;
 	};
 	
 	void mm2_switch(PageDirectory *newdir);

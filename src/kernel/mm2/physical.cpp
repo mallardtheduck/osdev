@@ -9,8 +9,22 @@ namespace MM2{
 	static char *end_of_kernel;
 	static size_t total_pages;
 	static physical_page *physical_pages;
-
+	static size_t total_memory;
+	static size_t free_pages;
+	
 	static lock mm2_pmm_lock;
+	
+	static char *totalmem_infofs(){
+		char *ret = (char*)malloc(128);
+		sprintf(ret, "%u", (unsigned)total_memory);
+		return ret;
+	}
+	
+	static char *freemem_infofs(){
+		char *ret = (char*)malloc(128);
+		sprintf(ret, "%u", (unsigned)(free_pages * MM2_Page_Size));
+		return ret;
+	}
 
 	static void init_account(){
 		for(size_t i = 0; i < total_pages; ++i){
@@ -56,7 +70,9 @@ namespace MM2{
 			mmap = (memory_map_t*) ( (unsigned int)mmap + mmap->size + sizeof(unsigned int) );
 		}
 		
-		dbgpf("MM2: PMM: %i pages.\n", (int)total_pages);
+		total_memory = total_pages * MM2_Page_Size;
+		free_pages = total_pages;
+		dbgpf("MM2: PMM: %i pages (%i bytes RAM).\n", (int)total_pages, (int)total_memory);
 		physical_pages = (physical_page*)mm2_init_alloc(sizeof(physical_page) * total_pages);
 		
 		dbgpf("MM2: PMM: physical_pages array at %x.\n", (uint32_t)physical_pages);
@@ -72,13 +88,13 @@ namespace MM2{
 						physical_pages[current_page].address = page_addr;
 						physical_pages[current_page].status = PageStatus::Free;
 						physical_pages[current_page].zeroed = false;
+						++current_page;
 					}
 					dbgpf("MM2: Accounted region base: 0x%x pages: %u\n", (int)mmap->base_addr_low, (unsigned)(mmap->length_low/MM2_Page_Size));
 				}
 			}
 			mmap = (memory_map_t*) ( (unsigned int)mmap + mmap->size + sizeof(unsigned int) );
 		}
-		
 		init_account();
 		init_lock(mm2_pmm_lock);
 	}
@@ -91,29 +107,60 @@ namespace MM2{
 			if(idx > total_pages) idx = total_pages - 1;
 			if(physical_pages[idx].status == PageStatus::Free && physical_pages[idx].address < max_addr){
 				physical_pages[idx].status = PageStatus::InUse;
+				--free_pages;
+				dbgpf("MM2: Allocated physical page %p.\n", (void*)physical_pages[idx].address);
+				lastidx = idx;
 				return &physical_pages[idx];
 			}
+			--idx;
 		}
+		panic("(MM2) PYSICAL PAGE ALLOCATION FAILED!\n");
 		return NULL; //OOM!
 	}
 
 	void physical_free(physical_page *page){
 		hold_lock hl(mm2_pmm_lock, false);
 		if(page->status == PageStatus::InUse) page->status = PageStatus::Free;
+		++free_pages;
+	}
+	
+	static physical_page *find_page(uint32_t addr){
+		size_t min = 0;
+		size_t max = total_pages - 1;
+		size_t guess = (min + max) / 2;
+		while(physical_pages[guess].address != addr){
+			if(physical_pages[guess].address < addr){
+				min = guess + 1;
+			}else{
+				max = guess - 1;
+			}
+			guess = (min + max) / 2;
+			if(max < min) return NULL;
+		}
+		return &physical_pages[guess];
 	}
 
 	void physical_free(uint32_t addr){
 		hold_lock hl(mm2_pmm_lock);
-		for(size_t i = 0; i < total_pages; ++i){
-			if(physical_pages[i].address == addr){
-				physical_free(&physical_pages[i]);
-				break;
-			}
-		}
+		addr = addr & MM2_Address_Mask;
+		physical_page *page = find_page(addr);
+		if(page) physical_free(page);
 	}
 
 	void *get_kernel_end(){
 		return (void*)end_of_kernel;
 	}
+	
+	void physical_mark_used(uint32_t addr){
+		addr = addr & MM2_Address_Mask;
+		physical_page *page = find_page(addr);
+		if(page){
+			page->status = PageStatus::InUse;
+		}
+	}
 
+	void physical_infofs_register(){
+		infofs_register("TOTALMEM", &totalmem_infofs);
+		infofs_register("FREEMEM", &freemem_infofs);
+	}
 }

@@ -20,6 +20,7 @@ namespace MM2{
 		
 		uint32_t *table = (uint32_t*)(init_kernel_pagedir[tableno] & MM2_Address_Mask);
 		table[entry] = (pageno * MM2_Page_Size) | MM2_PageFlags::Present | MM2_PageFlags::Writable;
+		physical_mark_used(pageno * MM2_Page_Size);
 	}
 
 	static uint32_t div_ceil(uint32_t num, uint32_t den){
@@ -47,7 +48,7 @@ namespace MM2{
 			dbgpf("MM2: VMM: Pages to identity map: %i, tables needed: %i\n", (int)pages_to_idmap, (int)tables_needed);
 		}
 		
-		for(size_t page = 0; page < pages_to_idmap; ++page){
+		for(size_t page = 1; page < pages_to_idmap; ++page){
 			idmap_page(page);
 		}
 		dbgpf("MM2: VMM: Identity mapped %i pages.\n", (int)pages_to_idmap);
@@ -62,6 +63,7 @@ namespace MM2{
 		
 		int_handle(0x0e, &page_fault_handler);
 		current_pagedir = kernel_pagedir = new(&kpd_place) PageDirectory(init_kernel_pagedir);
+		current_pagedir->guard_page_at(NULL);
 		init_lock(table_frame_lock);
 	}
 

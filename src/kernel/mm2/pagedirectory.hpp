@@ -9,7 +9,9 @@ namespace MM2{
 	class PageDirectory{
 	private:
 		uint32_t *directory;
+		uint32_t directory_physical = 0;
 		lock *directory_lock;
+		uint32_t current_table = 0;
 		
 		bool map_table(uint32_t tableaddr);
 		void create_table(size_t tableno);

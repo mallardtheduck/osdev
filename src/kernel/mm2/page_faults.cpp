@@ -9,9 +9,10 @@ namespace MM2{
 	void page_fault_handler(int, isr_regs *regs){
 		uint32_t addr;
 		asm volatile("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
+		dbgpf("MM2: Page fault on %x at %x!\n", addr, regs->eip);
 		uint32_t physaddr=current_pagedir->virt2phys((void*)addr);
 		if(regs->error_code & ec_user){
-			dbgpf("MM2: Page fault on %x at %x!\n", addr, regs->eip);
+			//dbgpf("MM2: Page fault on %x at %x!\n", addr, regs->eip);
 			out_int_info(*regs);
 			debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::UnresolvedPageFault);
 			//If a process kills itself, the thread will be assigned PID 0 and will #PF when attempting to return to userspace

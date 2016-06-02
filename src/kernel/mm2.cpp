@@ -5,7 +5,8 @@ void mm2_init(multiboot_info_t *mbt){
 	dbgout("MM2: Init.\n");
 	MM2::mm2_physical_init(mbt);
 	MM2::mm2_virtual_init();
-	panic("(MM2) MM2 is not finished!");
+	MM2::physical_infofs_register();
+	//panic("(MM2) MM2 is not finished!");
 }
 
 void *mm2_virtual_alloc(size_t pages, uint32_t mode){
