@@ -9,6 +9,7 @@ namespace MM2{
 	static uint32_t table_frame[MM2_Table_Entries] __attribute__((aligned(0x1000)));
 
 	bool PageDirectory::map_table(uint32_t tableaddr){
+		if((tableaddr & MM2_Address_Mask) == 0) return false;
 		tableaddr = tableaddr & MM2_Address_Mask;
 		size_t framepageidx = (uint32_t)&table_frame / MM2_Page_Size;
 		size_t frametableno = framepageidx / MM2_Table_Entries;
@@ -32,8 +33,25 @@ namespace MM2{
 	}
 
 	PageDirectory::~PageDirectory(){
+		if(this == current_pagedir) panic("(MM2) Attempt to delete current page directory!");
+		{
+			hold_lock hl(*directory_lock);
+			for(size_t i = MM2_Kernel_Tables; i < MM2_Table_Entries; ++i){
+				hold_lock hl(table_frame_lock);
+				if(map_table(directory[i])){
+					for(size_t j = 0; j < MM2_Table_Entries; ++j){
+						if(table_frame[j] & MM2_TableFlags::Present){
+							physical_free(table_frame[j] & MM2_Address_Mask);
+							table_frame[j] = 0;
+						}
+					}
+					physical_free(directory[i] & MM2_Address_Mask);
+					directory[i] = 0;
+				}
+			}
+			delete directory;
+		}
 		delete directory_lock;
-		//TODO: Deallocate memory!
 	}
 
 	PageDirectory::PageDirectory(uint32_t *a){
