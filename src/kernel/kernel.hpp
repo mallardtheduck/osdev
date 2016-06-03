@@ -36,7 +36,6 @@ extern "C"{
 
 #include "util.hpp"
 #include "panic.hpp"
-//#include "vmm.hpp"
 #include "mm2.hpp"
 #include "idt.hpp"
 #include "pic.hpp"
@@ -52,8 +51,6 @@ extern "C"{
 #include "modules.hpp"
 #include "user_api.hpp"
 #include "infofs.hpp"
-//#include "amm.hpp"
-#include "amm_page_accounting.hpp"
 #include "debug_ext.hpp"
 
 void GDT_init();
