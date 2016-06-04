@@ -22,7 +22,7 @@ void al_free(aligned_memory al){
 
 Elf32_Ehdr elf_read_header(file_handle &file){
 	Elf32_Ehdr ret;
-	fs_seek(file, 0, 0);
+	fs_seek(file, 0, FS_Set);
 	fs_read(file, sizeof(ret), (char*)&ret);
 	return ret;
 }
@@ -60,7 +60,7 @@ bool elf_verify_header(const Elf32_Ehdr &header){
 Elf32_Shdr elf_read_sectionheader(file_handle &file, const Elf32_Ehdr &header, size_t index){
 	size_t offset=header.shoff+(index*sizeof(Elf32_Shdr));
 	Elf32_Shdr ret;
-	fs_seek(file, offset, false);
+	fs_seek(file, offset, FS_Set);
 	fs_read(file, sizeof(ret), (char*)&ret);
 	return ret;
 }
@@ -68,7 +68,7 @@ Elf32_Shdr elf_read_sectionheader(file_handle &file, const Elf32_Ehdr &header, s
 Elf32_Phdr elf_read_progheader(file_handle &file, const Elf32_Ehdr &header, size_t index){
 	size_t offset=header.phoff+(index*sizeof(Elf32_Phdr));
 	Elf32_Phdr ret;
-	fs_seek(file, offset, false);
+	fs_seek(file, offset, FS_Set);
 	fs_read(file, sizeof(ret), (char*)&ret);
 	return ret;
 }
@@ -80,7 +80,7 @@ size_t elf_get_stringoffset(file_handle &file, const Elf32_Ehdr &header){
 
 Elf32_Rel elf_read_rel(file_handle &file, const Elf32_Shdr &section, size_t index){
 	Elf32_Rel ret;
-	fs_seek(file, section.offset+(sizeof(Elf32_Rel)*index), false);
+	fs_seek(file, section.offset+(sizeof(Elf32_Rel)*index), FS_Set);
 	fs_read(file, sizeof(ret), (char*)&ret);
 	return ret;
 }
@@ -89,7 +89,7 @@ bool elf_getstring(file_handle &file, const Elf32_Ehdr &header, size_t offset, c
 	size_t strpos=elf_get_stringoffset(file, header);
 	if(strpos){
 		size_t readpos=strpos + offset;
-		fs_seek(file, readpos, false);
+		fs_seek(file, readpos, FS_Set);
 		fs_read(file, bufsize, buf);
 		return true;
 	}else{
@@ -125,7 +125,7 @@ Elf32_Addr elf_symbol_value(file_handle &file, const Elf32_Ehdr &header, size_t 
 		if(section.type==SHT_SYMTAB){
 			size_t offset=section.offset+(symbol * sizeof(Elf32_Sym));
 			Elf32_Sym symbolentry;
-			fs_seek(file, offset, false);
+			fs_seek(file, offset, FS_Set);
 			fs_read(file, sizeof(symbolentry), (char*)&symbolentry);
 			return symbolentry.value;
 		}
@@ -171,7 +171,7 @@ loaded_elf_module elf_load_module(file_handle &file){
 		Elf32_Phdr prog=elf_read_progheader(file, header, i);
 		if(prog.type==PT_LOAD){
             //amm_mmap((char*)ret.mem.aligned+prog.vaddr, file, prog.offset, prog.filesz);
-			fs_seek(file, prog.offset, false);
+			fs_seek(file, prog.offset, FS_Set);
 			fs_read(file, prog.filesz, (char*)ret.mem.aligned+prog.vaddr);
 		}
 	}
@@ -201,7 +201,7 @@ loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
 		Elf32_Phdr prog=elf_read_progheader(file, header, i);
 		if(prog.type==PT_LOAD){
 			if(prog.vaddr < MM2::MM2_Kernel_Boundary) panic("ELF: Attempt to load process into kernel space!");
-			size_t p=fs_seek(file, prog.offset, false);
+			size_t p=fs_seek(file, prog.offset, FS_Set);
 			if(p!=prog.offset){
 				dbgpf("ELF: Seek failure - expected: %i, got %i.\n", (int)prog.offset, (int)p);
 				panic("(ELF) Seek failed during program load!");
@@ -213,7 +213,7 @@ loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
 			//size_t b=fs_read(file, prog.filesz, (char*)prog.vaddr);
             MM2::mm2_mmap((char*)prog.vaddr, file, p, prog.filesz);
 			/*if(b!=prog.filesz){
-				dbgpf("ELF: Read failure - expected: %i, got %i.\n", prog.filesz, b);
+				dbgpf("ELF: Read failure - expected: %i, got %i.\n", (int)prog.filesz, (int)b);
 				panic("(ELF) Read failed during program load!");
 			}*/
 		}
