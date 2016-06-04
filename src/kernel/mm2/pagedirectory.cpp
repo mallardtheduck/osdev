@@ -30,6 +30,7 @@ namespace MM2{
 		memset(directory, 0, MM2_Page_Size);
 		directory_physical = MM2::current_pagedir->virt2phys(directory);
 		dbgpf("MM2: Creating new page directory at %p.\n", (void*)directory);
+		regions = new vector<region>();
 	}
 
 	PageDirectory::~PageDirectory(){
@@ -60,6 +61,7 @@ namespace MM2{
 		init_lock(*directory_lock);
 		directory = a;
 		directory_physical = (uint32_t)a;
+		regions = NULL;
 	}
 
 	void *PageDirectory::alloc(size_t pages, uint32_t mode){
@@ -157,6 +159,7 @@ namespace MM2{
 	}
 	
 	size_t PageDirectory::resolve_addr(void *addr){
+		handle_pf(addr);
 		hold_lock hl(*directory_lock);
 		uint32_t physaddr = virt2phys(addr);
 		size_t ret = 0;
@@ -236,7 +239,7 @@ namespace MM2{
 	
 	void PageDirectory::guard_page_at(void *ptr){
 		hold_lock hl(*directory_lock);
-		dbgpf("MM2: Setting guard page at %p.\n", ptr);
+		//dbgpf("MM2: Setting guard page at %p.\n", ptr);
 		size_t pageno = (uint32_t)ptr / MM2_Page_Size;
 		size_t entry = get_table_entry(pageno);
 		if(entry & MM2_PageFlags::Present){
@@ -265,5 +268,41 @@ namespace MM2{
 	
 	void PageDirectory::activate(){
 		asm volatile("mov %0, %%cr3":: "b"(directory_physical));
+	}
+	
+	void PageDirectory::add_region(void *addr, size_t size, void (*pf_handle)(uint64_t id, void *addr), uint64_t id){
+		region r;
+		r.addr = addr;
+		r.size = size;
+		r.pf_handle = pf_handle;
+		r.id = id;
+		regions->push_back(r);
+	}
+	
+	void PageDirectory::remove_region(void *addr){
+		for(size_t i = 0; i < regions->size(); ++i){
+			region &r = (*regions)[i];
+			if(r.addr == addr){
+				regions->erase(i);
+				return;
+			}
+		}
+	}
+	
+	bool PageDirectory::handle_pf(void *addr){
+		if(is_mapped(addr)) return false;
+		if(!regions) return false;
+		for(size_t i = 0; i < regions->size(); ++i){
+			region &r = (*regions)[i];
+			if(r.addr <= addr && (char*)r.addr + r.size > addr){
+				r.pf_handle(r.id, addr);
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	void PageDirectory::kernel_pagedir_regions_init(){
+		if(!regions) regions = new vector<region>();
 	}
 }

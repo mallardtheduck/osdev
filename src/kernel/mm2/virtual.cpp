@@ -63,8 +63,9 @@ namespace MM2{
 		
 		int_handle(0x0e, &page_fault_handler);
 		current_pagedir = kernel_pagedir = new(&kpd_place) PageDirectory(init_kernel_pagedir);
-		current_pagedir->guard_page_at(NULL);
 		init_lock(table_frame_lock);
+		current_pagedir->guard_page_at(NULL);
+		kernel_pagedir->kernel_pagedir_regions_init();
 	}
 
 	void *mm2_virtual_alloc(size_t pages, uint32_t mode){

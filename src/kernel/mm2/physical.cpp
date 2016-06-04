@@ -124,8 +124,8 @@ namespace MM2{
 	}
 	
 	static physical_page *find_page(uint32_t addr){
-		size_t min = 0;
-		size_t max = total_pages - 1;
+		int min = 0;
+		int max = total_pages - 1;
 		size_t guess = (min + max) / 2;
 		while(physical_pages[guess].address != addr){
 			if(physical_pages[guess].address < addr){

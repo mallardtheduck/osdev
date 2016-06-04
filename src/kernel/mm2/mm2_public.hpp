@@ -42,7 +42,7 @@ namespace MM2{
 	
 	void mm2_switch(PageDirectory *newdir);
 	
-	uint64_t mm2_mmap(char *ptr, file_handle &file, size_t offset, size_t size);
+	uint64_t mm2_mmap(char *ptr, file_handle &file, bt_filesize_t offset, size_t size);
 	void mm2_flush(file_handle &file);
 	void mm2_close(file_handle &file);
 	void mm2_closemap(uint64_t id);

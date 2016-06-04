@@ -57,6 +57,8 @@ namespace MM2{
 	
 	void *get_kernel_end();
 	void page_fault_handler(int, isr_regs *regs);
+	
+	void init_mmap();
 }
 
 #include "pagedirectory.hpp"
