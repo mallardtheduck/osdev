@@ -24,7 +24,6 @@ namespace MM2{
 	struct physical_page{
 		uint32_t address;
 		PageStatus status;
-		bool zeroed;
 		PageDirectory *pagedir;
 	};
 

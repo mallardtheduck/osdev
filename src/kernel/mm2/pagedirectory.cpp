@@ -34,6 +34,7 @@ namespace MM2{
 
 	PageDirectory::~PageDirectory(){
 		if(this == current_pagedir) panic("(MM2) Attempt to delete current page directory!");
+		dbgpf("MM2: Deleing page directory %p (directory: %p).\n", (void*)this, (void*)directory);
 		{
 			hold_lock hl(*directory_lock);
 			for(size_t i = MM2_Kernel_Tables; i < MM2_Table_Entries; ++i){
@@ -49,7 +50,7 @@ namespace MM2{
 					directory[i] = 0;
 				}
 			}
-			delete directory;
+			mm2_virtual_free((void*)directory, 1);
 		}
 		delete directory_lock;
 	}
@@ -91,7 +92,7 @@ namespace MM2{
 				void *page_addr = (void*)((uint32_t)virtual_addr + (page * MM2_Page_Size));
 				map_page_at(page_addr, MM2_PageFlags::Present | MM2_PageFlags::Writable | MM2_PageFlags::Usermode);
 			}
-			dbgpf("MM2: Allocated %i pages at %p.\n", (int)pages, virtual_addr);
+			//dbgpf("MM2: Allocated %i pages at %p.\n", (int)pages, virtual_addr);
 		}
 		return virtual_addr;
 	}
@@ -123,7 +124,7 @@ namespace MM2{
 	}
 	
 	void PageDirectory::set_table_entry(size_t pageindex, uint32_t entry){
-		dbgpf("MM2: Setting page table entry %i (%x) to %x.\n", (int)pageindex, (unsigned)(pageindex * MM2_Page_Size), entry);
+		//dbgpf("MM2: Setting page table entry %i (%x) to %x.\n", (int)pageindex, (unsigned)(pageindex * MM2_Page_Size), entry);
 		hold_lock hl(*directory_lock, false);
 		size_t tableno = pageindex / MM2_Table_Entries;
 		size_t pageno = pageindex % MM2_Table_Entries;
@@ -144,7 +145,7 @@ namespace MM2{
 		hold_lock hl(*directory_lock, false);
 		uint32_t entry = get_table_entry((uint32_t)addr / MM2_Page_Size);
 		entry &= MM2_Address_Mask;
-		entry += (uint32_t)addr & ~MM2_Address_Mask;
+		if(entry) entry += (uint32_t)addr & ~MM2_Address_Mask;
 		return entry;
 	}
 	
@@ -158,7 +159,12 @@ namespace MM2{
 	size_t PageDirectory::resolve_addr(void *addr){
 		hold_lock hl(*directory_lock);
 		uint32_t physaddr = virt2phys(addr);
-		return physaddr % MM2_Page_Size;
+		size_t ret = 0;
+		if(physaddr) {
+			ret = physaddr % MM2_Page_Size;
+			if(ret == 0) ret = MM2_Page_Size;
+		}
+		return ret;
 	}
 
 
@@ -174,7 +180,7 @@ namespace MM2{
 		hold_lock hl(*directory_lock, false);
 		physical_page *page = physical_alloc();
 		map_page_at(addr, page, flags);
-		dbgpf("MM2: Zeroing page at %p.\n", addr);
+		//dbgpf("MM2: Zeroing page at %p.\n", addr);
 		memset(addr, 0, MM2_Page_Size);
 	}
 	
@@ -230,6 +236,7 @@ namespace MM2{
 	
 	void PageDirectory::guard_page_at(void *ptr){
 		hold_lock hl(*directory_lock);
+		dbgpf("MM2: Setting guard page at %p.\n", ptr);
 		size_t pageno = (uint32_t)ptr / MM2_Page_Size;
 		size_t entry = get_table_entry(pageno);
 		if(entry & MM2_PageFlags::Present){
@@ -242,7 +249,7 @@ namespace MM2{
 	}
 	
 	void PageDirectory::free_pages(void *addr, size_t pages){
-		dbgpf("MM2: Freeing %i pages at %p.\n", (int)pages, addr);
+		//dbgpf("MM2: Freeing %i pages at %p.\n", (int)pages, addr);
 		hold_lock hl(*directory_lock);
 		for(size_t i = 0; i < pages; ++i){
 			uint32_t pageaddr = (uint32_t)addr + (i * MM2_Page_Size);

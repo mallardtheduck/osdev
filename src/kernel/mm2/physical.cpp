@@ -87,7 +87,6 @@ namespace MM2{
 					for(size_t page_addr = mmap->base_addr_low; page_addr + MM2_Page_Size < mmap->length_low; page_addr+=MM2_Page_Size){
 						physical_pages[current_page].address = page_addr;
 						physical_pages[current_page].status = PageStatus::Free;
-						physical_pages[current_page].zeroed = false;
 						++current_page;
 					}
 					dbgpf("MM2: Accounted region base: 0x%x pages: %u\n", (int)mmap->base_addr_low, (unsigned)(mmap->length_low/MM2_Page_Size));
@@ -108,7 +107,7 @@ namespace MM2{
 			if(physical_pages[idx].status == PageStatus::Free && physical_pages[idx].address < max_addr){
 				physical_pages[idx].status = PageStatus::InUse;
 				--free_pages;
-				dbgpf("MM2: Allocated physical page %p.\n", (void*)physical_pages[idx].address);
+				//dbgpf("MM2: Allocated physical page %p.\n", (void*)physical_pages[idx].address);
 				lastidx = idx;
 				return &physical_pages[idx];
 			}
