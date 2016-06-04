@@ -23,6 +23,9 @@ namespace MM2{
 		lock *directory_lock;
 		uint32_t current_table = 0;
 		
+		size_t klowfree = 0;
+		size_t ulowfree = MM2_Boundary_Page;
+		
 		bool map_table(uint32_t tableaddr);
 		void create_table(size_t tableno);
 		uint32_t get_table_entry(size_t pageno);

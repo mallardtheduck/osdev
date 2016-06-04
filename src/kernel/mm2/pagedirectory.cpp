@@ -68,8 +68,8 @@ namespace MM2{
 		hold_lock hl(*directory_lock);
 		void *virtual_addr = NULL;
 		if(mode & MM2_Alloc_Mode::Kernel || mode & MM2_Alloc_Mode::Userlow){
-			uint32_t startpage = 0;
-			if(mode & MM2_Alloc_Mode::Userlow) startpage = MM2_Boundary_Page;
+			uint32_t startpage = klowfree;
+			if(mode & MM2_Alloc_Mode::Userlow) startpage = ulowfree;
 			size_t found = 0;
 			size_t firstpage = 0;
 			for(uint32_t pageno = startpage; pageno < MM2_Total_Pages; ++pageno){
@@ -77,6 +77,8 @@ namespace MM2{
 					if(!firstpage) firstpage = pageno;
 					++found;
 				}else{
+					if(pages == 1 && (mode & MM2_Alloc_Mode::Kernel)) klowfree = pageno; 
+					if(pages == 1 && (mode & MM2_Alloc_Mode::Userlow)) ulowfree = pageno;
 					firstpage = 0;
 					found = 0;
 				}
@@ -95,6 +97,8 @@ namespace MM2{
 				map_page_at(page_addr, MM2_PageFlags::Present | MM2_PageFlags::Writable | MM2_PageFlags::Usermode);
 			}
 			//dbgpf("MM2: Allocated %i pages at %p.\n", (int)pages, virtual_addr);
+		}else{
+			dbgpf("MM2: Failed to allocate %i pages!\n", (int)pages);
 		}
 		return virtual_addr;
 	}
@@ -207,6 +211,7 @@ namespace MM2{
 		if(!&pdir) panic("(MM2) Copy from NULL object.");
 		if(!pdir.directory) panic("(MM2) Copy from NULL page directory.");
     	memcpy(directory, pdir.directory, MM2_Kernel_Tables * sizeof(uint32_t));
+		klowfree = pdir.klowfree;
 	}
 	
 	size_t PageDirectory::get_kernel_used(){
@@ -257,6 +262,8 @@ namespace MM2{
 		for(size_t i = 0; i < pages; ++i){
 			uint32_t pageaddr = (uint32_t)addr + (i * MM2_Page_Size);
 			uint32_t pageno = pageaddr / MM2_Page_Size;
+			if(pageno < MM2_Kernel_Pages && pageno < klowfree) klowfree = pageno;
+			else if(pageno >= MM2_Kernel_Pages && pageno < ulowfree) ulowfree = pageno;
 			uint32_t entry = get_table_entry(pageno);
 			if(entry & MM2_PageFlags::Present){
 				physical_free(entry & MM2_Address_Mask);
