@@ -60,6 +60,7 @@ void timer_thread(void*){
 			msg.source = extension_id;
 			msg.type = 0;
 			msg.critical = 0;
+			msg.flags = 0;
 			msg.length = sizeof(bt_handle_t);
 			msg.content = malloc(sizeof(bt_handle_t));
 			timer_info *timer = (*timers)[next_event->timer_id];
