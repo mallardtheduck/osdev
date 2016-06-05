@@ -149,7 +149,10 @@ void sch_threadtest(){
 
 void sch_idlethread(void*){
 	sch_set_priority(0xFFFFFFFF);
-	while(true)asm volatile("hlt");
+	while(true){
+		asm volatile("hlt");
+		sch_yield();
+	}
 }
 
 extern "C" void sch_wrapper(){
