@@ -88,5 +88,14 @@ namespace MM2{
 		current_pagedir=newdir;
 		enable_interrupts();
 	}
-
+	
+	bool interrupts = false;
+	
+	void mm2_liballoc_lock(){
+		take_lock_exclusive(virtual_lock);
+	}
+	
+	void mm2_liballoc_unlock(){
+		release_lock(virtual_lock);
+	}
 }

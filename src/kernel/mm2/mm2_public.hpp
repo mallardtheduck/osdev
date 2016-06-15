@@ -46,6 +46,9 @@ namespace MM2{
 	void mm2_flush(file_handle &file);
 	void mm2_close(file_handle &file);
 	void mm2_closemap(uint64_t id);
+	
+	void mm2_liballoc_lock();
+	void mm2_liballoc_unlock();
 }
 
 #endif

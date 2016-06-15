@@ -14,7 +14,7 @@ void vmm_ministack_free(void *ptr, size_t pages=1);
  * failure.
  */
 extern "C" int liballoc_lock(){
-	disable_interrupts();
+	MM2::mm2_liballoc_lock();
 	return 0;
 }
 
@@ -25,7 +25,7 @@ extern "C" int liballoc_lock(){
  * \return 0 if the lock was successfully released.
  */
 extern "C" int liballoc_unlock(){
-	enable_interrupts();
+	MM2::mm2_liballoc_unlock();
 	return 0;
 }
 
