@@ -65,7 +65,7 @@ namespace MM2{
 		current_pagedir = kernel_pagedir = new(&kpd_place) PageDirectory(init_kernel_pagedir);
 		init_lock(table_frame_lock);
 		current_pagedir->guard_page_at(NULL);
-		kernel_pagedir->kernel_pagedir_regions_init();
+		kernel_pagedir->kernel_pagedir_late_init();
 	}
 
 	void *mm2_virtual_alloc(size_t pages, uint32_t mode){

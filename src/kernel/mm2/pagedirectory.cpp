@@ -7,6 +7,7 @@ namespace MM2{
 	
 	static lock kdir_lock;
 	static uint32_t table_frame[MM2_Table_Entries] __attribute__((aligned(0x1000)));
+	size_t PageDirectory::kpages;
 
 	bool PageDirectory::map_table(uint32_t tableaddr){
 		if((tableaddr & MM2_Address_Mask) == 0) return false;
@@ -180,6 +181,11 @@ namespace MM2{
 		uint32_t entry = page->address | flags;
 		set_table_entry((uint32_t)addr / MM2_Page_Size, entry);
 		mm2_invlpg(addr);
+		if((uint32_t)addr > MM2_Kernel_Boundary){
+			++upages;
+		}else{
+			++kpages;
+		}
 	}
 	
 	void PageDirectory::map_page_at(void *addr, uint32_t flags){
@@ -215,31 +221,11 @@ namespace MM2{
 	}
 	
 	size_t PageDirectory::get_kernel_used(){
-		hold_lock hl(*directory_lock);
-		size_t ret = 0;
-		for(size_t i = 0; i < MM2_Kernel_Tables; ++i){
-			hold_lock hl(table_frame_lock);
-			if(map_table(directory[i])){
-				for(size_t j = 0; j < MM2_Table_Entries; ++j){
-					if(table_frame[j] & MM2_TableFlags::Present) ret += MM2_Page_Size;
-				}
-			}
-		}
-		return ret;
+		return kpages * MM2_Page_Size;
 	}
 	
 	size_t PageDirectory::get_user_used(){
-		hold_lock hl(*directory_lock);
-		size_t ret = 0;
-		for(size_t i = MM2_Kernel_Tables; i < MM2_Table_Entries; ++i){
-			hold_lock hl(table_frame_lock);
-			if(map_table(directory[i])){
-				for(size_t j = 0; j < MM2_Table_Entries; ++j){
-					if(table_frame[j] & MM2_TableFlags::Present) ret += MM2_Page_Size;
-				}
-			}
-		}
-		return ret;
+		return upages * MM2_Page_Size;
 	}
 	
 	void PageDirectory::guard_page_at(void *ptr){
@@ -269,6 +255,11 @@ namespace MM2{
 				physical_free(entry & MM2_Address_Mask);
 			}
 			set_table_entry(pageno, 0);
+			if(pageaddr > MM2_Kernel_Boundary){
+				--upages;
+			}else{
+				--kpages;
+			}
 			mm2_invlpg((void*)pageaddr);
 		}
 	}
@@ -309,7 +300,17 @@ namespace MM2{
 		return false;
 	}
 	
-	void PageDirectory::kernel_pagedir_regions_init(){
-		if(!regions) regions = new vector<region>();
+	void PageDirectory::kernel_pagedir_late_init(){
+		if(!regions){
+			regions = new vector<region>();
+			for(size_t i = 0; i < MM2_Kernel_Tables; ++i){
+				hold_lock hl(table_frame_lock);
+				if(map_table(directory[i])){
+					for(size_t j = 0; j < MM2_Table_Entries; ++j){
+						if(table_frame[j] & MM2_TableFlags::Present) ++kpages;
+					}
+				}
+			}
+		}
 	}
 }

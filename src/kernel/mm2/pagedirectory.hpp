@@ -25,6 +25,8 @@ namespace MM2{
 		
 		size_t klowfree = 0;
 		size_t ulowfree = MM2_Boundary_Page;
+		static size_t kpages;
+		size_t upages = 0;
 		
 		bool map_table(uint32_t tableaddr);
 		void create_table(size_t tableno);
@@ -62,7 +64,7 @@ namespace MM2{
 		
 		bool handle_pf(void *addr);
 		
-		void kernel_pagedir_regions_init();
+		void kernel_pagedir_late_init();
 	};
 	
 	extern PageDirectory *kernel_pagedir;
