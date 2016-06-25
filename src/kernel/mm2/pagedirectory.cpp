@@ -178,7 +178,7 @@ namespace MM2{
 
 	void PageDirectory::map_page_at(void *addr, physical_page *page, uint32_t flags){
 		hold_lock hl(*directory_lock, false);
-		uint32_t entry = page->address | flags;
+		uint32_t entry = page->address() | flags;
 		set_table_entry((uint32_t)addr / MM2_Page_Size, entry);
 		mm2_invlpg(addr);
 		if((uint32_t)addr > MM2_Kernel_Boundary){
@@ -199,14 +199,14 @@ namespace MM2{
 	
 	void PageDirectory::create_table(size_t tableno){
 		physical_page *page = physical_alloc();
-		dbgpf("MM2: Creating table %i at %x.\n", (int)tableno, (uint32_t)page->address);
+		dbgpf("MM2: Creating table %i at %x.\n", (int)tableno, (uint32_t)page->address());
 		uint32_t flags = MM2_TableFlags::Present | MM2_TableFlags::Writable;
 		if(tableno >= MM2_Kernel_Tables) flags |= MM2_TableFlags::Usermode;
-		directory[tableno] = page->address | flags;
+		directory[tableno] = page->address() | flags;
 		{
 			hold_lock hl(table_frame_lock, false);
 			uint32_t last_table = current_table;
-			map_table(page->address);
+			map_table(page->address());
 			memset(table_frame, 0, MM2_Page_Size);
 			if(last_table) map_table(last_table);
 		}

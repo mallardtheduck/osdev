@@ -28,7 +28,7 @@ namespace MM2{
 
 	static void init_account(){
 		for(size_t i = 0; i < total_pages; ++i){
-			if(physical_pages[i].address < (size_t)end_of_kernel) physical_pages[i].status = PageStatus::InUse;
+			if(physical_pages[i].address() < (size_t)end_of_kernel) physical_pages[i].status(PageStatus::InUse);
 		}
 	}
 
@@ -85,8 +85,8 @@ namespace MM2{
 					dbgpf("MM2: Ignoring low 1MB RAM\n");
 				}else{
 					for(size_t page_addr = mmap->base_addr_low; page_addr + MM2_Page_Size < mmap->length_low; page_addr+=MM2_Page_Size){
-						physical_pages[current_page].address = page_addr;
-						physical_pages[current_page].status = PageStatus::Free;
+						physical_pages[current_page].address(page_addr);
+						physical_pages[current_page].status(PageStatus::Free);
 						++current_page;
 					}
 					dbgpf("MM2: Accounted region base: 0x%x pages: %u\n", (int)mmap->base_addr_low, (unsigned)(mmap->length_low/MM2_Page_Size));
@@ -104,8 +104,8 @@ namespace MM2{
 		size_t idx = lastidx - 1;
 		while(idx != lastidx){
 			if(idx > total_pages) idx = total_pages - 1;
-			if(physical_pages[idx].status == PageStatus::Free && physical_pages[idx].address < max_addr){
-				physical_pages[idx].status = PageStatus::InUse;
+			if(physical_pages[idx].status() == PageStatus::Free && physical_pages[idx].address() < max_addr){
+				physical_pages[idx].status(PageStatus::InUse);
 				--free_pages;
 				//dbgpf("MM2: Allocated physical page %p.\n", (void*)physical_pages[idx].address);
 				lastidx = idx;
@@ -119,7 +119,7 @@ namespace MM2{
 
 	void physical_free(physical_page *page){
 		hold_lock hl(mm2_pmm_lock, false);
-		if(page->status == PageStatus::InUse) page->status = PageStatus::Free;
+		if(page->status() == PageStatus::InUse) page->status(PageStatus::Free);
 		++free_pages;
 	}
 	
@@ -127,8 +127,8 @@ namespace MM2{
 		int min = 0;
 		int max = total_pages - 1;
 		size_t guess = (min + max) / 2;
-		while(physical_pages[guess].address != addr){
-			if(physical_pages[guess].address < addr){
+		while(physical_pages[guess].address() != addr){
+			if(physical_pages[guess].address() < addr){
 				min = guess + 1;
 			}else{
 				max = guess - 1;
@@ -154,7 +154,7 @@ namespace MM2{
 		addr = addr & MM2_Address_Mask;
 		physical_page *page = find_page(addr);
 		if(page){
-			page->status = PageStatus::InUse;
+			page->status(PageStatus::InUse);
 		}
 	}
 

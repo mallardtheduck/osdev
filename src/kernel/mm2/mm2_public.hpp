@@ -49,6 +49,11 @@ namespace MM2{
 	
 	void mm2_liballoc_lock();
 	void mm2_liballoc_unlock();
+	
+	uint64_t shm_create();
+	void shm_close(uint64_t id);
+	uint64_t shm_map(uint64_t id, void *addr, uint32_t offset, size_t pages);
+	void shm_close_map(uint64_t id);
 }
 
 #endif

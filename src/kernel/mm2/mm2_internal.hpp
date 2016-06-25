@@ -12,6 +12,7 @@ namespace MM2{
 	const size_t MM2_Kernel_Pages = MM2_Kernel_Boundary / MM2_Page_Size;
 	const size_t MM2_Kernel_Tables = MM2_Kernel_Pages / MM2_Table_Entries;
 	const size_t MM2_Total_Pages = 0xFFFFFFFF / MM2_Page_Size;
+	const uint32_t MM2_Address_Mask = 0xFFFFF000;
 
 	enum class PageStatus{
 		Free,
@@ -21,10 +22,38 @@ namespace MM2{
 
 	class PageDirectory;
 	
-	struct physical_page{
-		uint32_t address;
-		PageStatus status;
-		PageDirectory *pagedir;
+	class physical_page{
+	private:
+		uint32_t value;
+	public:
+		physical_page(uint32_t addr, PageStatus status){
+			int s;
+			memcpy(&s, &status, sizeof(s));
+			value = addr | s;
+		}
+		
+		uint32_t address(){
+			return value & MM2_Address_Mask;
+		}
+		
+		uint32_t address(uint32_t a){
+			value = (value & ~MM2_Address_Mask) | a;
+			return a;
+		}
+		
+		PageStatus status(){
+			int sv = (value & ~MM2_Address_Mask);
+			PageStatus s;
+			memcpy(&s, &sv, sizeof(s));
+			return s;
+		}
+		
+		PageStatus status(PageStatus s){
+			int sv;
+			memcpy(&sv, &s, sizeof(s));
+			value = (value & MM2_Address_Mask) | sv;
+			return s;
+		}
 	};
 
 	namespace MM2_TableFlags{
@@ -38,7 +67,6 @@ namespace MM2{
 		LargePages		= 1 << 6;
 	};
 
-	static const uint32_t MM2_Address_Mask = 0xFFFFF000;
 	extern lock table_frame_lock;
 
 	void *mm2_init_alloc(size_t size);
@@ -59,6 +87,7 @@ namespace MM2{
 	void page_fault_handler(int, isr_regs *regs);
 	
 	void init_mmap();
+	void init_shm();
 }
 
 #include "pagedirectory.hpp"
