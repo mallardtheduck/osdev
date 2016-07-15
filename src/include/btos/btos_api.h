@@ -33,10 +33,12 @@ enum{
 	BT_FREE_PAGES		= 0x0102,
     BT_ALLOC_AT         = 0x0103,
     BT_GUARD_PAGE       = 0x0104,
-    BT_PF_HANDLE        = 0x0105,
-    BT_SET_PAGEFLAGS    = 0x0106,
+    BT_CREATE_REGION    = 0x0105,
     BT_CLOSEHANDLE      = 0x0107,
 	BT_QUERYHANDLE		= 0x0108,
+	BT_CREATE_SHM		= 0x0109,
+	BT_SHM_ID			= 0x010A,
+	BT_SHM_MAP			= 0x010B,
 
 	BT_GET_ARGC			= 0x0111,
 	BT_GET_ARG			= 0x0112,
@@ -112,6 +114,7 @@ struct bt_buffer{
 #ifndef __cplusplus
 typedef struct bt_buffer bt_fioctl_buffer;
 typedef struct bt_buffer bt_mmap_buffer;
+typedef struct bt_buffer bt_buffer;
 #else
 typedef bt_buffer bt_fioctl_buffer;
 typedef bt_buffer bt_mmap_buffer;

@@ -397,6 +397,10 @@
       <File Name="user/install/install.cpp"/>
       <File Name="user/install/Makefile"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="shmtest">
+      <File Name="user/shmtest/Makefile"/>
+      <File Name="user/shmtest/shmtest.c"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>

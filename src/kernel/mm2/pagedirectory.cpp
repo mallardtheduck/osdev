@@ -293,6 +293,7 @@ namespace MM2{
 		for(size_t i = 0; i < regions->size(); ++i){
 			region &r = (*regions)[i];
 			if(r.addr <= addr && (char*)r.addr + r.size > addr){
+				//dbgpf("MM2: PF at %p is in region %p; handling with %p (id %i).\n", addr, r.addr, (void*)r.pf_handle, (int)r.id);
 				r.pf_handle(r.id, addr);
 				return true;
 			}

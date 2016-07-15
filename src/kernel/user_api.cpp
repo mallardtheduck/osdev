@@ -96,6 +96,43 @@ USERAPI_HANDLER(BT_QUERYHANDLE){
 	}
 }
 
+static void close_shm_space_handle(void *f){
+    MM2::shm_close(*(uint64_t*)f);
+    delete (uint64_t*)f;
+}
+
+USERAPI_HANDLER(BT_CREATE_SHM){
+	uint64_t *id = new uint64_t(MM2::shm_create());
+	bt_handle_info handle=create_handle(kernel_handle_types::shm_space, id, &close_shm_space_handle);
+	regs->eax = proc_add_handle(handle);
+}
+
+USERAPI_HANDLER(BT_SHM_ID){
+	bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
+	if(is_safe_ptr(regs->ecx, sizeof(uint64_t*))){
+		if(h.open && h.type == kernel_handle_types::shm_space){
+			*(uint64_t*)regs->ecx = *(uint64_t*)h.value;
+		}
+	}
+}
+
+static void close_shm_map_handle(void *f){
+    MM2::shm_close_map(*(uint64_t*)f);
+    delete (uint64_t*)f;
+}
+
+USERAPI_HANDLER(BT_SHM_MAP){
+	if(is_safe_ptr(regs->ebx, sizeof(uint64_t*)) && is_safe_ptr(regs->edx, sizeof(btos_api::bt_buffer*))){
+		btos_api::bt_buffer *buf = (btos_api::bt_buffer*)regs->edx;
+		if(is_safe_ptr((uint32_t)buf->buffer, buf->size)){
+			uint64_t shm_id = *(uint64_t*) regs->ebx;
+			uint64_t *id = new uint64_t(MM2::shm_map(shm_id, (void*)buf->buffer, regs->ecx, buf->size / MM2::MM2_Page_Size));
+			bt_handle_info handle=create_handle(kernel_handle_types::shm_mapping, id, &close_shm_map_handle);
+			regs->eax = proc_add_handle(handle);
+		}
+	}	
+}
+
 USERAPI_HANDLER(BT_GET_ARGC){
 	regs->eax=proc_get_argc();
 }
@@ -491,9 +528,12 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_FREE_PAGES);
         //USERAPI_HANDLE_CALL(BT_ALLOC_AT);
         //USERAPI_HANDLE_CALL(BT_GUARD_PAGE);
-        //USERAPI_HANDLE_CALL(BT_PF_HANDLE);
+        //USERAPI_HANDLE_CALL(BT_CREATE_REGION);
         USERAPI_HANDLE_CALL(BT_CLOSEHANDLE);
 		USERAPI_HANDLE_CALL(BT_QUERYHANDLE);
+		USERAPI_HANDLE_CALL(BT_CREATE_SHM);
+		USERAPI_HANDLE_CALL(BT_SHM_ID);
+		USERAPI_HANDLE_CALL(BT_SHM_MAP);
 
 		USERAPI_HANDLE_CALL(BT_GET_ARGC);
 		USERAPI_HANDLE_CALL(BT_GET_ARG);
