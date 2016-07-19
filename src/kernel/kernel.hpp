@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <btos/btos_api.h>
+
 #pragma GCC diagnostic ignored "-Wwrite-strings"
  
 /* Check if the compiler thinks if we are targeting the wrong operating system. */

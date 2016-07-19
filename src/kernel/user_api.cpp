@@ -102,7 +102,7 @@ static void close_shm_space_handle(void *f){
 }
 
 USERAPI_HANDLER(BT_CREATE_SHM){
-	uint64_t *id = new uint64_t(MM2::shm_create());
+	uint64_t *id = new uint64_t(MM2::shm_create(regs->ebx));
 	bt_handle_info handle=create_handle(kernel_handle_types::shm_space, id, &close_shm_space_handle);
 	regs->eax = proc_add_handle(handle);
 }
@@ -122,11 +122,10 @@ static void close_shm_map_handle(void *f){
 }
 
 USERAPI_HANDLER(BT_SHM_MAP){
-	if(is_safe_ptr(regs->ebx, sizeof(uint64_t*)) && is_safe_ptr(regs->edx, sizeof(btos_api::bt_buffer*))){
-		btos_api::bt_buffer *buf = (btos_api::bt_buffer*)regs->edx;
-		if(is_safe_ptr((uint32_t)buf->buffer, buf->size)){
-			uint64_t shm_id = *(uint64_t*) regs->ebx;
-			uint64_t *id = new uint64_t(MM2::shm_map(shm_id, (void*)buf->buffer, regs->ecx, buf->size / MM2::MM2_Page_Size));
+	if(is_safe_ptr(regs->ebx, sizeof(uint64_t*)) && is_safe_ptr(regs->edx, sizeof(btos_api::bt_shm_mapping*))){
+		btos_api::bt_shm_mapping *mapping = (btos_api::bt_shm_mapping*)regs->edx;
+		if(is_safe_ptr((uint32_t)mapping->addr, mapping->pages * MM2::MM2_Page_Size)){
+			uint64_t *id = new uint64_t(MM2::shm_map(mapping->id, mapping->addr, mapping->offset, mapping->pages, mapping->flags));
 			bt_handle_info handle=create_handle(kernel_handle_types::shm_mapping, id, &close_shm_map_handle);
 			regs->eax = proc_add_handle(handle);
 		}

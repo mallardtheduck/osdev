@@ -416,12 +416,12 @@
       <File Name="include/wm/libwm.h"/>
     </VirtualDirectory>
     <VirtualDirectory Name="btos">
-      <File Name="include/btos/btos_api.h"/>
       <File Name="include/btos/bt_msg.h"/>
       <File Name="include/btos/btos_stubs.h"/>
       <File Name="include/btos/ioctl.h"/>
       <File Name="include/btos/fs_interface.h"/>
       <File Name="include/btos/devices.h"/>
+      <File Name="include/btos/btos_api.h"/>
     </VirtualDirectory>
     <VirtualDirectory Name="dev">
       <File Name="include/dev/terminal.h"/>

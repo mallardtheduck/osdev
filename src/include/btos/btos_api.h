@@ -7,6 +7,7 @@
 #endif
 
 #include "fs_interface.h"
+#include "../util/bt_enum.h"
 
 #ifdef __cplusplus
 namespace btos_api{
@@ -111,14 +112,30 @@ struct bt_buffer{
 	char *buffer;
 } __attribute__((packed));
 
+struct bt_shm_mapping{
+	uint64_t id;
+	void *addr;
+	uint32_t offset;
+	size_t pages;
+	uint32_t flags;
+};
+
 #ifndef __cplusplus
 typedef struct bt_buffer bt_fioctl_buffer;
 typedef struct bt_buffer bt_mmap_buffer;
 typedef struct bt_buffer bt_buffer;
+typedef struct bt_shm_mapping bt_shm_mapping;
 #else
 typedef bt_buffer bt_fioctl_buffer;
 typedef bt_buffer bt_mmap_buffer;
 #endif
+
+ENUM_START(bt_shm_flags)
+	ENUM_SET(bt_shm_flags, Normal, 0),
+	ENUM_SET(bt_shm_flags, ReadOnly, 1 << 0),
+	ENUM_SET(bt_shm_flags, CopyOnWrite, 1 << 1),
+ENUM_END
+ENUM_TYPE(bt_shm_flags);
 
 #ifdef __cplusplus
 }

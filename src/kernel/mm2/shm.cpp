@@ -7,6 +7,8 @@ namespace MM2{
 	
 	struct shm_space{
 		map<uint32_t, physical_page*> pages;
+		uint32_t flags;
+		pid_t owner;
 	};
 	
 	struct shm_mapping{
@@ -14,6 +16,7 @@ namespace MM2{
 		void *addr;
 		uint32_t offset;
 		size_t pages;
+		uint32_t flags;
 	};
 	
 	static map<uint64_t, shm_space> *spaces;
@@ -21,10 +24,12 @@ namespace MM2{
 	static uint64_t space_id_counter = 0;
 	static uint64_t mapping_id_counter = 0;
 	
-	uint64_t shm_create(){
+	uint64_t shm_create(uint32_t flags){
 		hold_lock hl(shm_lock);
 		uint64_t id = ++space_id_counter;
 		(*spaces)[id] = shm_space();
+		(*spaces)[id].flags = flags;
+		(*spaces)[id].owner = proc_current_pid;
 		dbgpf("MM2: Created SHM space %i\n", (int)id);
 		return id;
 	}
@@ -57,10 +62,14 @@ namespace MM2{
 		}
 		void *addr_page = (void*)((uint32_t)addr & MM2_Address_Mask);
 		dbgpf("MM2: Mapping shared page %p from SHM mapping %i at address %p.\n", (void*)page, (int)id, addr_page);
+		uint32_t pageflags = MM2_PageFlags::Present | MM2_PageFlags::Usermode;
+		if((space.owner == proc_current_pid || !(space.flags & btos_api::bt_shm_flags::ReadOnly)) && !(mapping.flags & btos_api::bt_shm_flags::ReadOnly)){
+			pageflags |= MM2_PageFlags::Writable;
+		}
 		current_pagedir->map_page_at(addr_page, page, MM2_PageFlags::Present | MM2_PageFlags::Writable | MM2_PageFlags::Usermode);
 	}
 	
-	uint64_t shm_map(uint64_t id, void *addr, uint32_t offset, size_t pages){
+	uint64_t shm_map(uint64_t id, void *addr, uint32_t offset, size_t pages, uint32_t flags){
 		hold_lock hl(shm_lock);
 		dbgout("MM2: Creating SHM mapping.\n");
 		if(!spaces->has_key(id)) {
