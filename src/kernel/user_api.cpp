@@ -122,8 +122,8 @@ static void close_shm_map_handle(void *f){
 }
 
 USERAPI_HANDLER(BT_SHM_MAP){
-	if(is_safe_ptr(regs->ebx, sizeof(uint64_t*)) && is_safe_ptr(regs->edx, sizeof(btos_api::bt_shm_mapping*))){
-		btos_api::bt_shm_mapping *mapping = (btos_api::bt_shm_mapping*)regs->edx;
+	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_shm_mapping*))){
+		btos_api::bt_shm_mapping *mapping = (btos_api::bt_shm_mapping*)regs->ebx;
 		if(is_safe_ptr((uint32_t)mapping->addr, mapping->pages * MM2::MM2_Page_Size)){
 			uint64_t *id = new uint64_t(MM2::shm_map(mapping->id, mapping->addr, mapping->offset, mapping->pages, mapping->flags));
 			bt_handle_info handle=create_handle(kernel_handle_types::shm_mapping, id, &close_shm_map_handle);
