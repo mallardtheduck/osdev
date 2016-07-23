@@ -230,7 +230,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		dbgpf("\nInterrupt %i at %x!\n", (int)ctx->interrupt_number, (int)ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
 		out_int_info(*ctx);
-		if(ctx->eip < VMM_USERSPACE_START) panic("Invalid opcode.");
+		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Invalid opcode.");
         else {
             debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::InvalidOpCode);
             proc_terminate();
@@ -240,7 +240,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		dbgpf("\nInterrupt %i at %x!\n", (int)ctx->interrupt_number, (int)ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
 		out_int_info(*ctx);
-        if(ctx->eip < VMM_USERSPACE_START) panic("General Protection Fault.");
+        if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("General Protection Fault.");
         else {
             debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::ProtectionFault);
             proc_terminate();
@@ -250,13 +250,13 @@ extern "C" void isr_handler(isr_regs *ctx){
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
 		out_int_info(*ctx);
-        if(ctx->eip < VMM_USERSPACE_START) panic("Double fault.");
+        if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Double fault.");
         else proc_terminate();
 	}else if(ctx->interrupt_number==0x00){
         dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
         dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
         out_int_info(*ctx);
-        if(ctx->eip < VMM_USERSPACE_START) panic("Devide by zero!");
+        if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Devide by zero!");
         else{
             debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::DivideByZero);
             proc_terminate();

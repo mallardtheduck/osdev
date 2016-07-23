@@ -36,6 +36,26 @@ inline static bool bt_queryhandle(bt_handle h){
 	return !!btos_call(BT_QUERYHANDLE, (uint32_t)h, 0, 0);
 }
 
+inline static bt_handle_t bt_create_shm(uint32_t flags){
+	return (bt_handle_t)btos_call(BT_CREATE_SHM, flags, 0, 0);
+}
+
+inline static uint64_t bt_shm_id(bt_handle_t h){
+	volatile uint64_t ret;
+	btos_call(BT_SHM_ID, (uint32_t)h, (uint32_t)&ret, 0);
+	return ret;
+}
+
+inline static bt_handle_t bt_shm_map(uint64_t id, void *addr, uint32_t offset, size_t pages, uint32_t flags){
+	volatile bt_shm_mapping mapping;
+	mapping.id = id;
+	mapping.addr = addr;
+	mapping.offset = offset;
+	mapping.pages = pages;
+	mapping.flags = flags;
+	return (bt_handle_t)btos_call(BT_SHM_MAP, (uint32_t)&mapping, 0, 0);
+}
+
 inline static size_t bt_get_argc(){
 	return btos_call(BT_GET_ARGC, 0, 0, 0);
 }

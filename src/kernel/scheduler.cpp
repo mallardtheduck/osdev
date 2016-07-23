@@ -149,7 +149,10 @@ void sch_threadtest(){
 
 void sch_idlethread(void*){
 	sch_set_priority(0xFFFFFFFF);
-	while(true)asm volatile("hlt");
+	while(true){
+		asm volatile("hlt");
+		sch_yield();
+	}
 }
 
 extern "C" void sch_wrapper(){
@@ -174,15 +177,15 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	start->ptr=ptr;
 	start->param=param;
 	//uint32_t stack=(uint32_t)malloc(stack_size);
-	newthread->stackpages = stack_size / VMM_PAGE_SIZE;
-	if(newthread->stackpages * VMM_PAGE_SIZE < stack_size) ++newthread->stackpages;
-	uint32_t stack = (uint32_t)vmm_alloc(newthread->stackpages + 1);
+	newthread->stackpages = stack_size / MM2::MM2_Page_Size;
+	if(newthread->stackpages * MM2::MM2_Page_Size < stack_size) ++newthread->stackpages;
+	uint32_t stack = (uint32_t)mm2_virtual_alloc(newthread->stackpages + 1);
 	{
 		interrupt_lock il;
-		vmm_free((void*)stack, 1);
-		vmm_set_flags(stack, (amm_flags::Enum)(amm_flags::Do_Not_Use | amm_flags::Guard_Page));
+		mm2_virtual_free((void*)stack, 1);
+		MM2::current_pagedir->guard_page_at((void*)stack);
 	}
-	stack += VMM_PAGE_SIZE;
+	stack += MM2::MM2_Page_Size;
 	newthread->stackptr=(void*)stack;
 	stack+=stack_size;
 	stack-=4;
@@ -227,8 +230,7 @@ void thread_reaper(void*){
 					size_t stackpages = (*threads)[i]->stackpages;
 					threads->erase(i);
                     release_lock(sch_lock);
-                    vmm_free(stackptr, stackpages);
-					vmm_set_flags(((uint32_t)stackptr) - VMM_PAGE_SIZE, amm_flags::Normal);
+                    mm2_virtual_free(stackptr, stackpages);
 					delete ptr;
                     take_lock_exclusive(sch_lock);
 					changed=true;

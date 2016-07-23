@@ -167,6 +167,10 @@ void mod_abortable(bool abortable){
 	sch_abortable(abortable);
 }
 
+uint32_t physical_addr(void *addr){
+	return MM2::current_pagedir->virt2phys(addr);
+}
+
 module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&panic,
 	&malloc,
@@ -176,7 +180,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&mod_memmove,
 	&mod_strcmp,
 	&mod_strncpy,
-    &vmm_physaddr,
+    &physical_addr,
 
 	&mod_init_lock,
 	&mod_take_lock,

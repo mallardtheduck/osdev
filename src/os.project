@@ -33,10 +33,7 @@
     <File Name="kernel/serdbg.hpp"/>
     <File Name="kernel/extensions.hpp"/>
     <File Name="kernel/handles.cpp"/>
-    <File Name="kernel/amm.hpp"/>
     <File Name="kernel/handles.hpp"/>
-    <File Name="kernel/amm_flags.hpp"/>
-    <File Name="kernel/amm_page_accounting.hpp"/>
     <File Name="kernel/util.hpp"/>
     <File Name="kernel/drivermgr.hpp"/>
     <File Name="kernel/kernel.cpp"/>
@@ -49,9 +46,7 @@
     <File Name="kernel/messaging.hpp"/>
     <File Name="kernel/debug_ext.cpp"/>
     <File Name="kernel/scheduler.hpp"/>
-    <File Name="kernel/vmm_pagedir.hpp"/>
     <File Name="kernel/modules.cpp"/>
-    <File Name="kernel/vmm.hpp"/>
     <File Name="kernel/kernel.hpp"/>
     <File Name="kernel/liballoc_hooks.cpp"/>
     <File Name="kernel/list.hpp"/>
@@ -63,7 +58,6 @@
     <File Name="kernel/Makefile"/>
     <File Name="kernel/cpuid.h"/>
     <File Name="kernel/locks.cpp"/>
-    <File Name="kernel/amm_page_accounting.cpp"/>
     <File Name="kernel/cpu.hpp"/>
     <File Name="kernel/devfs.cpp"/>
     <File Name="kernel/io.hpp"/>
@@ -92,13 +86,24 @@
     <File Name="kernel/user_api.cpp"/>
     <File Name="kernel/idt.cpp"/>
     <File Name="kernel/memcpy.c"/>
-    <File Name="kernel/amm.cpp"/>
     <File Name="kernel/scheduler.cpp"/>
-    <File Name="kernel/vmm.cpp"/>
     <File Name="kernel/process.cpp"/>
     <File Name="kernel/liballoc.c"/>
     <File Name="kernel/initfs.cpp"/>
     <File Name="kernel/initfs.hpp"/>
+    <File Name="kernel/mm2.cpp"/>
+    <File Name="kernel/mm2.hpp"/>
+    <VirtualDirectory Name="mm2">
+      <File Name="kernel/mm2/physical.cpp"/>
+      <File Name="kernel/mm2/virtual.cpp"/>
+      <File Name="kernel/mm2/mm2_internal.hpp"/>
+      <File Name="kernel/mm2/pagedirectory.hpp"/>
+      <File Name="kernel/mm2/pagedirectory.cpp"/>
+      <File Name="kernel/mm2/mm2_public.hpp"/>
+      <File Name="kernel/mm2/page_faults.cpp"/>
+      <File Name="kernel/mm2/mm2_mmap.cpp"/>
+      <File Name="kernel/mm2/shm.cpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="modules">
     <VirtualDirectory Name="rtc">
@@ -392,6 +397,10 @@
       <File Name="user/install/install.cpp"/>
       <File Name="user/install/Makefile"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="shmtest">
+      <File Name="user/shmtest/Makefile"/>
+      <File Name="user/shmtest/shmtest.c"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
@@ -407,12 +416,12 @@
       <File Name="include/wm/libwm.h"/>
     </VirtualDirectory>
     <VirtualDirectory Name="btos">
-      <File Name="include/btos/btos_api.h"/>
       <File Name="include/btos/bt_msg.h"/>
       <File Name="include/btos/btos_stubs.h"/>
       <File Name="include/btos/ioctl.h"/>
       <File Name="include/btos/fs_interface.h"/>
       <File Name="include/btos/devices.h"/>
+      <File Name="include/btos/btos_api.h"/>
     </VirtualDirectory>
     <VirtualDirectory Name="dev">
       <File Name="include/dev/terminal.h"/>

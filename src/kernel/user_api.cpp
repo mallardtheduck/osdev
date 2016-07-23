@@ -36,12 +36,12 @@ void userapi_handler(int, isr_regs *regs){
 }
 
 bool is_safe_ptr(uint32_t ptr, size_t size, pid_t pid){
-	if(ptr >= VMM_USERSPACE_START){
+	if(ptr >= MM2::MM2_Kernel_Boundary){
 		pid_t cur_pid = proc_current_pid;
 		proc_switch(pid);
 		size_t i = 0;
 		while(i<size){
-			size_t res = amm_resolve_addr((char*)ptr + i);
+			size_t res = MM2::current_pagedir->resolve_addr((char*)ptr + i);
 			i += res;
 			if(!res){ 
 				proc_switch(cur_pid);
@@ -70,12 +70,12 @@ USERAPI_HANDLER(zero){
 }
 
 USERAPI_HANDLER(BT_ALLOC_PAGES){
-	regs->eax = (uint32_t)vmm_alloc(regs->ebx, vmm_allocmode::Userlow);
+	regs->eax = (uint32_t)MM2::current_pagedir->alloc(regs->ebx, MM2::MM2_Alloc_Mode::Userlow);
 }
 
 USERAPI_HANDLER(BT_FREE_PAGES){
 	if(is_safe_ptr(regs->ebx, 0)){
-		vmm_free((void*)regs->ebx, regs->ecx);
+		MM2::current_pagedir->free_pages((void*)regs->ebx, regs->ecx);
 	}
 }
 
@@ -94,6 +94,42 @@ USERAPI_HANDLER(BT_QUERYHANDLE){
 	}else{
 		regs->eax = 0;
 	}
+}
+
+static void close_shm_space_handle(void *f){
+    MM2::shm_close(*(uint64_t*)f);
+    delete (uint64_t*)f;
+}
+
+USERAPI_HANDLER(BT_CREATE_SHM){
+	uint64_t *id = new uint64_t(MM2::shm_create(regs->ebx));
+	bt_handle_info handle=create_handle(kernel_handle_types::shm_space, id, &close_shm_space_handle);
+	regs->eax = proc_add_handle(handle);
+}
+
+USERAPI_HANDLER(BT_SHM_ID){
+	bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
+	if(is_safe_ptr(regs->ecx, sizeof(uint64_t*))){
+		if(h.open && h.type == kernel_handle_types::shm_space){
+			*(uint64_t*)regs->ecx = *(uint64_t*)h.value;
+		}
+	}
+}
+
+static void close_shm_map_handle(void *f){
+    MM2::shm_close_map(*(uint64_t*)f);
+    delete (uint64_t*)f;
+}
+
+USERAPI_HANDLER(BT_SHM_MAP){
+	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_shm_mapping*))){
+		btos_api::bt_shm_mapping *mapping = (btos_api::bt_shm_mapping*)regs->ebx;
+		if(is_safe_ptr((uint32_t)mapping->addr, mapping->pages * MM2::MM2_Page_Size)){
+			uint64_t *id = new uint64_t(MM2::shm_map(mapping->id, mapping->addr, mapping->offset, mapping->pages, mapping->flags));
+			bt_handle_info handle=create_handle(kernel_handle_types::shm_mapping, id, &close_shm_map_handle);
+			regs->eax = proc_add_handle(handle);
+		}
+	}	
 }
 
 USERAPI_HANDLER(BT_GET_ARGC){
@@ -213,7 +249,7 @@ USERAPI_HANDLER(BT_FFLUSH){
 }
 
 static void close_filemap_handle(void *f){
-    amm_closemap(*(uint64_t*)f);
+    MM2::mm2_closemap(*(uint64_t*)f);
     delete (uint64_t*)f;
 }
 
@@ -222,7 +258,7 @@ USERAPI_HANDLER(BT_MMAP){
     if(file && is_safe_ptr(regs->edx, sizeof(btos_api::bt_mmap_buffer))){
         btos_api::bt_mmap_buffer *buffer=(btos_api::bt_mmap_buffer*)regs->edx;
         if(!is_safe_ptr((uint32_t)buffer->buffer, buffer->size)) return;
-        uint64_t *id=new uint64_t(amm_mmap(buffer->buffer, *file, regs->ecx, buffer->size));
+        uint64_t *id=new uint64_t(MM2::mm2_mmap(buffer->buffer, *file, regs->ecx, buffer->size));
         bt_handle_info handle=create_handle(kernel_handle_types::memory_mapping, id, &close_filemap_handle);
         regs->eax= proc_add_handle(handle);
 		return;
@@ -491,9 +527,12 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_FREE_PAGES);
         //USERAPI_HANDLE_CALL(BT_ALLOC_AT);
         //USERAPI_HANDLE_CALL(BT_GUARD_PAGE);
-        //USERAPI_HANDLE_CALL(BT_PF_HANDLE);
+        //USERAPI_HANDLE_CALL(BT_CREATE_REGION);
         USERAPI_HANDLE_CALL(BT_CLOSEHANDLE);
 		USERAPI_HANDLE_CALL(BT_QUERYHANDLE);
+		USERAPI_HANDLE_CALL(BT_CREATE_SHM);
+		USERAPI_HANDLE_CALL(BT_SHM_ID);
+		USERAPI_HANDLE_CALL(BT_SHM_MAP);
 
 		USERAPI_HANDLE_CALL(BT_GET_ARGC);
 		USERAPI_HANDLE_CALL(BT_GET_ARG);

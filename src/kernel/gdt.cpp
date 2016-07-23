@@ -124,6 +124,8 @@ static void gdt_set_df_tss(int32_t num){
 	df_tss.cs = 0x08;
 	df_tss.eip = (uint32_t)&df_handler;
 	df_tss.ds = 0x10;
+	df_tss.ss = 0x10;
+	df_tss.esp = (uint32_t)&df_stack[1024];
 }
 
 void gdt_set_kernel_stack(void* ptr){
