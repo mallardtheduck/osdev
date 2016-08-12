@@ -401,6 +401,12 @@
       <File Name="user/shmtest/Makefile"/>
       <File Name="user/shmtest/shmtest.c"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="elltest">
+      <File Name="user/elltest/elltest.c"/>
+      <File Name="user/elltest/Makefile"/>
+      <File Name="user/elltest/testlib.c"/>
+      <File Name="user/elltest/testlib.h"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
