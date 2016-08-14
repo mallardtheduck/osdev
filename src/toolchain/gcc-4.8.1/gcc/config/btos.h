@@ -23,3 +23,11 @@
 #undef ENDFILE_SPEC
 #define ENDFILE_SPEC "%{!shared:crtend.o%s} crtn.o%s"
 
+#undef LINK_SPEC
+#define LINK_SPEC "\
+  %{shared:-shared} \
+  %{!shared: \
+    %{!static: \
+      %{rdynamic:-export-dynamic} \
+      -dynamic-linker ELOADER.ELX} \
+      %{static:-static}}"

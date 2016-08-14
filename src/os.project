@@ -104,6 +104,7 @@
       <File Name="kernel/mm2/mm2_mmap.cpp"/>
       <File Name="kernel/mm2/shm.cpp"/>
     </VirtualDirectory>
+    <File Name="kernel/linker.ld"/>
   </VirtualDirectory>
   <VirtualDirectory Name="modules">
     <VirtualDirectory Name="rtc">
@@ -406,6 +407,15 @@
       <File Name="user/elltest/Makefile"/>
       <File Name="user/elltest/testlib.c"/>
       <File Name="user/elltest/testlib.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="eloader">
+      <File Name="user/eloader/Makefile"/>
+      <File Name="user/eloader/linker.ld"/>
+      <File Name="user/eloader/elf.cpp"/>
+      <File Name="user/eloader/elf.hpp"/>
+      <File Name="user/eloader/eloader.cpp"/>
+      <File Name="user/eloader/util.cpp"/>
+      <File Name="user/eloader/util.hpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
