@@ -24,6 +24,10 @@ inline static void *bt_alloc_pages(size_t pages){
 	return (void*)btos_call(BT_ALLOC_PAGES, pages, 0, 0);
 }
 
+inline static void *bt_alloc_at(size_t pages, void *ptr){
+	return (void*)btos_call(BT_ALLOC_AT, pages, (uint32_t)ptr, 0);
+}
+
 inline static void bt_free_pages(void *address, size_t pages){
 	btos_call(BT_FREE_PAGES, (uint32_t)address, pages, 0);
 }

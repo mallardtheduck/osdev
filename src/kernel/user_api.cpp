@@ -73,6 +73,18 @@ USERAPI_HANDLER(BT_ALLOC_PAGES){
 	regs->eax = (uint32_t)MM2::current_pagedir->alloc(regs->ebx, MM2::MM2_Alloc_Mode::Userlow);
 }
 
+USERAPI_HANLDER(BT_ALLOC_AT){
+	size_t pages = regs->ebx;
+	size_t addr = regs->ecx;
+	if(addr != addr % MM2::MM2_Address_Mask) return;
+	if((size_t)ptr < MM2::MM2_Kernel_Boundary) return;
+	for(size_t i = 0; i < pages; ++i){
+		size_t pageaddr = addr + (i * MM2::MM2_Page_Size);
+		if(pageaddr < MM2::MM2_Kernel_Boundary) return;
+		
+	}
+}
+
 USERAPI_HANDLER(BT_FREE_PAGES){
 	if(is_safe_ptr(regs->ebx, 0)){
 		MM2::current_pagedir->free_pages((void*)regs->ebx, regs->ecx);
@@ -525,7 +537,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
         //Memory managment
 		USERAPI_HANDLE_CALL(BT_ALLOC_PAGES);
 		USERAPI_HANDLE_CALL(BT_FREE_PAGES);
-        //USERAPI_HANDLE_CALL(BT_ALLOC_AT);
+        USERAPI_HANDLE_CALL(BT_ALLOC_AT);
         //USERAPI_HANDLE_CALL(BT_GUARD_PAGE);
         //USERAPI_HANDLE_CALL(BT_CREATE_REGION);
         USERAPI_HANDLE_CALL(BT_CLOSEHANDLE);

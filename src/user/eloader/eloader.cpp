@@ -1,5 +1,6 @@
 #include <btos.h>
 #include "util.hpp"
+#include "elf.hpp"
 
 char stdout_path[BT_MAX_PATH];
 bt_handle_t stdout;
@@ -26,7 +27,7 @@ int main(){
 	
 	program_file = bt_fopen(program_path, FS_Read);
 	Elf32_Ehdr ehdr = elf_read_header(program_file);
-	
+	(void)ehdr;
 	
     return 0;
 }
