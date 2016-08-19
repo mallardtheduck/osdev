@@ -376,7 +376,14 @@ void proc_start(void *ptr){
 }
 
 pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
-	file_handle file=fs_open((char*)path.c_str(), FS_Read);
+	file_handle file;
+	if(!is_kvar_set("LOADER")){
+		file=fs_open((char*)path.c_str(), FS_Read);
+	}else{
+		string loader = get_kvar("LOADER");
+		dbgpf("PROC: Using program loader: %s\n", loader.c_str());
+		file=fs_open((char*)loader.c_str(), FS_Read);
+	}
     pid_t ret=proc_new(path, argc, argv, parent, &file);
 	if(!file.valid){
         proc_end(ret);

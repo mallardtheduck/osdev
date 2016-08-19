@@ -21,8 +21,8 @@ int main(){
 	stdout=bt_fopen(stdout_path, FS_Write);
 	
 	size_t argc = bt_get_argc();
-	if(argc < 2) return -1;
-	bt_get_arg(1, program_arg, BT_MAX_PATH);
+	if(argc < 1) return -1;
+	bt_get_arg(0, program_arg, BT_MAX_PATH);
 	btos_path_parse(program_arg, program_path, BT_MAX_PATH);
 	
 	program_file = bt_fopen(program_path, FS_Read);

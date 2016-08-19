@@ -324,4 +324,12 @@ inline static bt_handle_info get_user_handle(bt_handle_t h, pid_t pid){
 	return SYSCALL_TABLE->get_user_handle(h, pid);
 }
 
+inline static void set_kvar(const char *name, const char *value){
+	SYSCALL_TABLE->set_kvar(name, value);
+}
+
+inline static size_t get_kvar(const char *name, char *buffer, size_t size){
+	return SYSCALL_TABLE->get_kvar(name, buffer, size);
+}
+
 #endif

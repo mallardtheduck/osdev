@@ -105,6 +105,8 @@
       <File Name="kernel/mm2/shm.cpp"/>
     </VirtualDirectory>
     <File Name="kernel/linker.ld"/>
+    <File Name="kernel/kvars.hpp"/>
+    <File Name="kernel/kvars.cpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="modules">
     <VirtualDirectory Name="rtc">

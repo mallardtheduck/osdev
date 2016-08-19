@@ -171,6 +171,16 @@ uint32_t physical_addr(void *addr){
 	return MM2::current_pagedir->virt2phys(addr);
 }
 
+void mod_set_kvar(const char *name, const char *value){
+	set_kvar(name, value);
+}
+
+size_t mod_get_kvar(const char *name, char *buffer, size_t size){
+	string value = get_kvar(name);
+	strncpy(buffer, value.c_str(), size);
+	return value.length();
+}
+
 module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&panic,
 	&malloc,
@@ -265,4 +275,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	
 	&proc_add_handle,
 	&proc_get_handle,
+	
+	&mod_set_kvar,
+	&mod_get_kvar,
 };

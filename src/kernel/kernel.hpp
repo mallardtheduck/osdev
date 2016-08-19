@@ -42,6 +42,7 @@ extern "C"{
 #include "idt.hpp"
 #include "pic.hpp"
 #include "handles.hpp"
+#include "kvars.hpp"
 #include "messaging.hpp"
 #include "process.hpp"
 #include "scheduler.hpp"
