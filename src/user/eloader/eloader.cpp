@@ -1,6 +1,7 @@
 #include <btos.h>
 #include "util.hpp"
 #include "elf.hpp"
+#include "el_load_elf.hpp"
 
 char stdout_path[BT_MAX_PATH];
 bt_handle_t stdout;
@@ -9,7 +10,7 @@ char program_arg[BT_MAX_PATH];
 char program_path[BT_MAX_PATH];
 bt_handle_t program_file;
 
-void loader_heap_base = 0xE0000000;
+size_t loader_heap_base = 0xE0000000;
 
 void puts(const char *str){
 	bt_fwrite(stdout, strlen(str), str);
@@ -23,13 +24,10 @@ int main(){
 	if(argc < 2) return -1;
 	bt_get_arg(1, program_arg, BT_MAX_PATH);
 	btos_path_parse(program_arg, program_path, BT_MAX_PATH);
-	puts(program_path);
-	puts("\n");
 	
 	program_file = bt_fopen(program_path, FS_Read);
-	Elf32_Ehdr ehdr = elf_read_header(program_file);
-	
-
+	entrypoint e = load_elf_proc(program_file);
+	if(e) e();
 
     return 0;
 }

@@ -416,6 +416,8 @@
       <File Name="user/eloader/eloader.cpp"/>
       <File Name="user/eloader/util.cpp"/>
       <File Name="user/eloader/util.hpp"/>
+      <File Name="user/eloader/el_load_elf.cpp"/>
+      <File Name="user/eloader/el_load_elf.hpp"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
