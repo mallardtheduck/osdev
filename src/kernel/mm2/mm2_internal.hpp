@@ -12,7 +12,6 @@ namespace MM2{
 	const size_t MM2_Kernel_Pages = MM2_Kernel_Boundary / MM2_Page_Size;
 	const size_t MM2_Kernel_Tables = MM2_Kernel_Pages / MM2_Table_Entries;
 	const size_t MM2_Total_Pages = 0xFFFFFFFF / MM2_Page_Size;
-	const uint32_t MM2_Address_Mask = 0xFFFFF000;
 
 	enum class PageStatus{
 		Free,

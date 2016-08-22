@@ -9,6 +9,7 @@ char program_arg[BT_MAX_PATH];
 char program_path[BT_MAX_PATH];
 bt_handle_t program_file;
 
+void loader_heap_base = 0xE0000000;
 
 void puts(const char *str){
 	bt_fwrite(stdout, strlen(str), str);
@@ -27,8 +28,9 @@ int main(){
 	
 	program_file = bt_fopen(program_path, FS_Read);
 	Elf32_Ehdr ehdr = elf_read_header(program_file);
-	(void)ehdr;
 	
+
+
     return 0;
 }
 

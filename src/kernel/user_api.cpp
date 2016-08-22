@@ -73,15 +73,15 @@ USERAPI_HANDLER(BT_ALLOC_PAGES){
 	regs->eax = (uint32_t)MM2::current_pagedir->alloc(regs->ebx, MM2::MM2_Alloc_Mode::Userlow);
 }
 
-USERAPI_HANLDER(BT_ALLOC_AT){
+USERAPI_HANDLER(BT_ALLOC_AT){
 	size_t pages = regs->ebx;
 	size_t addr = regs->ecx;
 	if(addr != addr % MM2::MM2_Address_Mask) return;
-	if((size_t)ptr < MM2::MM2_Kernel_Boundary) return;
+	if(addr < MM2::MM2_Kernel_Boundary) return;
 	for(size_t i = 0; i < pages; ++i){
 		size_t pageaddr = addr + (i * MM2::MM2_Page_Size);
 		if(pageaddr < MM2::MM2_Kernel_Boundary) return;
-		
+		MM2::current_pagedir->alloc_pages_at(1, (void*)pageaddr);
 	}
 }
 
