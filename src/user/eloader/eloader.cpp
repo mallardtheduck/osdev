@@ -10,8 +10,6 @@ char program_arg[BT_MAX_PATH];
 char program_path[BT_MAX_PATH];
 bt_handle_t program_file;
 
-size_t loader_heap_base = 0xE0000000;
-
 void puts(const char *str){
 	bt_fwrite(stdout, strlen(str), str);
 }

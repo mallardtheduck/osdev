@@ -420,6 +420,10 @@
       <File Name="user/eloader/util.hpp"/>
       <File Name="user/eloader/el_load_elf.cpp"/>
       <File Name="user/eloader/el_load_elf.hpp"/>
+      <File Name="user/eloader/el_malloc.cpp"/>
+      <File Name="user/eloader/el_malloc.hpp"/>
+      <File Name="user/eloader/liballoc.c"/>
+      <File Name="user/eloader/liballoc.h"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">

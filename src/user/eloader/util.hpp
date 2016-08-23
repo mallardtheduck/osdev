@@ -10,5 +10,8 @@ int strlen(const char *s);
 char *strncpy(char *s1, const char *s2, size_t n);
 void *memset(void *s, int c, size_t n);
 int strcmp(const char *s1, const char *s2);
+void puts(const char *str);
+char* itoa(int num, char* str, int base = 10);
+void puti(int val);
 
 #endif

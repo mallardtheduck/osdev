@@ -142,6 +142,61 @@ struct Elf32_Sym {
 	Elf32_Half	shndx;
 } __attribute__((packed));
 
+
+struct Elf32_Dyn{
+	Elf32_Sword	tag;
+   	union {
+   		Elf32_Word	val;
+   		Elf32_Addr	ptr;
+	} un;
+} __attribute__((packed));
+
+enum Dyn_Tags{
+	DT_NULL		=0,
+	DT_NEEDED	=1,
+	DT_PLTRELSZ	=2,
+	DT_PLTGOT	=3,
+	DT_HASH		=4,
+	DT_STRTAB	=5,
+	DT_SYMTAB	=6,
+	DT_RELA		=7,
+	DT_RELASZ	=8,
+	DT_RELAENT	=9,
+	DT_STRSZ	=10,
+	DT_SYMENT	=11,
+	DT_INIT		=12,
+	DT_FINI		=13,
+	DT_SONAME	=14,
+	DT_RPATH 	=15,
+	DT_SYMBOLIC	=16,
+	DT_REL		=17,
+	DT_RELSZ	=18,
+	DT_RELENT	=19,
+	DT_PLTREL	=20,
+	DT_DEBUG	=21,
+	DT_TEXTREL	=22,
+	DT_JMPREL	=23,
+	DT_ENCODING	=32,
+	OLD_DT_LOOS	=0x60000000,
+	DT_LOOS		=0x6000000d,
+	DT_HIOS		=0x6ffff000,
+	DT_VALRNGLO	=0x6ffffd00,
+	DT_VALRNGHI	=0x6ffffdff,
+	DT_ADDRRNGLO=0x6ffffe00,
+	DT_ADDRRNGHI=0x6ffffeff,
+	DT_VERSYM	=0x6ffffff0,
+	DT_RELACOUNT=0x6ffffff9,
+	DT_RELCOUNT	=0x6ffffffa,
+	DT_FLAGS_1	=0x6ffffffb,
+	DT_VERDEF	=0x6ffffffc,
+	DT_VERDEFNUM=0x6ffffffd,
+	DT_VERNEED	=0x6ffffffe,
+	DT_VERNEEDNUM=0x6fffffff,
+	OLD_DT_HIOS =0x6fffffff,
+	DT_LOPROC	=0x70000000,
+	DT_HIPROC	=0x7fffffff,
+};
+
 const int STN_UNDEF=0;
 
 #define ELF32_R_SYM(i)	((i)>>8)
