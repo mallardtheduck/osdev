@@ -346,9 +346,9 @@ USERAPI_HANDLER(BT_LOAD_MODULE){
 USERAPI_HANDLER(BT_GETENV){
 	if(is_safe_string(regs->ebx) && is_safe_ptr(regs->ecx, regs->edx)){
 		string value=proc_getenv((char*)regs->ebx, true);
-		if(value != "" && value.length() < regs->edx){
+		if(value != ""){
 			strncpy((char*)regs->ecx, value.c_str(), regs->edx);
-			regs->eax=value.length();
+			regs->eax=value.length() + 1;
 		}else regs->eax=0;
 	}
 }

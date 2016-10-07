@@ -1,6 +1,7 @@
 #include "el_load_elf.hpp"
 #include "util.hpp"
 #include "el_malloc.hpp"
+#include "libpath.hpp"
 
 const size_t Kernel_Boundary = 1024*1024*1024;
 
@@ -39,9 +40,10 @@ static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum){
 				Elf32_Dyn &needed = dynamic[neededidx];
 				char neededpath[BT_MAX_PATH] = {0};
 				strncpy(neededpath, (char*)strtaboff + needed.un.ptr, BT_MAX_PATH);
-				puts("NEEDED: ");
-				puts(neededpath);
-				puts("\n");
+				bt_handle_t lib = open_lib(neededpath);
+				if(lib){
+					
+				}
 			}else break;
 		}
 	}
