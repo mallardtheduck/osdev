@@ -42,7 +42,11 @@ static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum){
 				strncpy(neededpath, (char*)strtaboff + needed.un.ptr, BT_MAX_PATH);
 				bt_handle_t lib = open_lib(neededpath);
 				if(lib){
-					
+
+				}else{
+					puts("ELOADER: Library not found: ");
+					puts(neededpath);
+					puts("\n");
 				}
 			}else break;
 		}
