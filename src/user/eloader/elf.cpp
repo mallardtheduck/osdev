@@ -1,4 +1,5 @@
 #include "elf.hpp"
+#include "liballoc.h"
 
 Elf32_Ehdr elf_read_header(bt_handle_t file){
 	Elf32_Ehdr ret;
@@ -45,4 +46,21 @@ bool elf_getstring(bt_handle_t file, const Elf32_Ehdr &header, size_t offset, ch
 	}else{
 		return false;
 	}
+}
+
+size_t get_dynamic_entry_idx(Elf32_Dyn *dynamic, Elf32_Sword tag, size_t start){
+	size_t i = start;
+	while(dynamic[i].tag != 0){
+		if(dynamic[i].tag == tag) return i;
+		++i;
+	}
+	return -1;
+}
+
+Elf32_Dyn* load_dynamic_section(bt_handle_t file, Elf32_Ehdr header, int phnum){
+	Elf32_Phdr prog=elf_read_progheader(file, header, phnum);
+	Elf32_Dyn *dynamic = (Elf32_Dyn*)malloc(prog.filesz);
+	bt_fseek(file, prog.offset, FS_Set);
+	bt_fread(file, prog.filesz, (char*)dynamic);
+	return dynamic;
 }
