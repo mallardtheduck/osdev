@@ -108,6 +108,22 @@ bool btos_path_parse(const char *opath, char *buffer, size_t size){
 	return true;
 }
 
+char *remove_filepart(char *path){
+	bt_directory_entry ent = bt_stat(path);
+	if(ent.valid && ent.type == FS_Directory) return path;
+	else{
+		size_t len = strlen(path);
+		for(size_t i = len; true; --i){
+			if(path[i] == '/'){
+				path[i] = '\0';
+				return path;
+			}
+			if(i == 0) break;
+		}
+		return NULL;
+	}
+}
+
 static void reverse(char str[], int length)
 {
     int start = 0;

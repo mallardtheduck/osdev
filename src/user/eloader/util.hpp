@@ -6,6 +6,7 @@
 
 bool btos_path_parse(const char *opath, char *buffer, size_t size);
 bool btos_path_is_absolute(const char *path);
+char *remove_filepart(char *path);
 int strlen(const char *s);
 char *strncpy(char *s1, const char *s2, size_t n);
 void *memset(void *s, int c, size_t n);

@@ -34,7 +34,17 @@ bt_handle_t open_lib(const char *name){
         }
         free(libPathStr);
         if(!ret){
-
+            char appPath[BT_MAX_PATH] = {0};
+            bt_get_arg(0, appPath, BT_MAX_PATH);
+            remove_filepart(appPath);
+            strncpy(appPath + strlen(appPath), "/", BT_MAX_PATH - strlen(appPath));
+            strncpy(appPath + strlen(appPath), name, BT_MAX_PATH - strlen(appPath));
+            char checkPath[BT_MAX_PATH] = {0};
+            btos_path_parse(appPath, checkPath, BT_MAX_PATH);
+            bt_directory_entry ent = bt_stat(checkPath);
+            if(ent.valid && ent.type == FS_File){
+                ret = bt_fopen(checkPath, FS_Read);
+            }
         }
     }else{
         ret = bt_fopen(name, FS_Read);
