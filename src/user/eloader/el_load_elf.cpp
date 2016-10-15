@@ -3,33 +3,15 @@
 #include "el_malloc.hpp"
 #include "libpath.hpp"
 
-static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, uint32_t base);
+static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum);
 
 const size_t Kernel_Boundary = 1024*1024*1024;
 
 char **loaded_modules = NULL;
 size_t loaded_module_count = 0;
 
-struct module_details{
-	Elf32_Sym *symtab;
-	size_t symtab_size;
-	void *strtab;
-	size_t strtab_size;
-	void *hashtab;
-	void *got;
-	Elf32_Rel *reltab;
-	size_t reltab_size;
-	Elf32_Rela *relatab;
-	size_t relatab_size;
-	void *pltrel;
-	size_t pltrel_size;
-	int pltrel_type;
-	void *init;
-	void *fini;
-};
-
-module_details **loaded_module_details = NULL;
-size_t module_details_count = 0;
+Elf32_Dyn **loaded_dynamic_sections = NULL;
+size_t dynamic_section_count = 0;
 
 void panic(const char *msg){
 	bt_zero(msg);
@@ -57,16 +39,14 @@ static bool is_loaded(const char *name){
 	return false;
 }
 
-void add_module_details(const module_details &details){
-	++module_details_count;
-	if(module_details_count==1){
-		loaded_module_details = (module_details**)malloc(sizeof(module_details*));
+void add_module_dynamic(Elf32_Dyn *dynamic){
+	++dynamic_section_count;
+	if(dynamic_section_count==1){
+		loaded_dynamic_sections = (Elf32_Dyn**)malloc(sizeof(Elf32_Dyn*));
 	}else{
-		loaded_module_details = (module_details**)realloc(loaded_module_details, sizeof(module_details*) * module_details_count);
+		loaded_dynamic_sections = (Elf32_Dyn**)realloc(loaded_dynamic_sections, sizeof(Elf32_Dyn*) * dynamic_section_count);
 	}
-	module_details *newdetails = (module_details*)malloc(sizeof(module_details));
-	*newdetails = details;
-	loaded_module_details[module_details_count - 1] = newdetails;
+	loaded_dynamic_sections[dynamic_section_count - 1] = dynamic;
 }
 
 static size_t elf_getsize(bt_handle_t file){
@@ -95,14 +75,12 @@ static void load_elf_library(bt_handle_t file){
             bt_mmap(file, prog.offset, (char*)mem+prog.vaddr, prog.filesz);
 		}
 	}
-	if(dynsection) load_dynamic(file, header, dynsection, (uint32_t)mem);
+	if(dynsection) load_dynamic(file, header, dynsection);
 }
 
-static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, uint32_t base){
+static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum){
 	Elf32_Dyn *dynamic = load_dynamic_section(file, header, phnum);
 	size_t strtabidx = get_dynamic_entry_idx(dynamic, DT_STRTAB);
-	module_details details;
-	memset(&details, 0, sizeof(details));
 	if(strtabidx != (size_t)-1){
 		char *strtaboff = (char*)dynamic[strtabidx].un.ptr;
 		size_t nidx = 0;
@@ -125,57 +103,13 @@ static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, uint32_
 					}
 					break;
 				}
-				case DT_PLTRELSZ:
-					details.pltrel_size = current.un.val;
-					break;
-				case DT_PLTGOT:
-					details.got = (void*)(base + current.un.val);
-					break;
-				case DT_HASH:
-					details.hashtab = (void*)(base + current.un.val);
-					break;
-				case DT_STRTAB:
-					details.strtab = (void*)(base + current.un.val);
-					break;
-				case DT_SYMTAB:
-					details.symtab = (Elf32_Sym*)(base + current.un.val);
-					break;
-				case DT_RELA:
-					details.relatab = (Elf32_Rela*)(base + current.un.val);
-					break;
-				case DT_RELAENT:
-					details.relatab_size = current.un.val;
-					break;
-				case DT_STRSZ:
-					details.strtab_size = current.un.val;
-					break;
-				case DT_SYMENT:
-					details.symtab_size = current.un.val;
-					break;
-				case DT_INIT:
-					details.init = (void*)(base + current.un.val);
-					break;
-				case DT_FINI:
-					details.init = (void*)(base + current.un.val);
-					break;
-				case DT_REL:
-					details.reltab = (Elf32_Rel*)(base + current.un.val);
-					break;
-				case DT_RELENT:
-					details.reltab_size = current.un.val;
-					break;
-				case DT_PLTREL:
-					details.pltrel_type = current.un.val;
-					break;
-				case DT_JMPREL:
-					details.pltrel = (void*)(base + current.un.val);
-					break;				
+				default:
+					break;			
 			}
 			++nidx;
 		}
-		add_module_details(details);
+		add_module_dynamic(dynamic);
 	}
-	free(dynamic);
 }
 
 entrypoint load_elf_proc(bt_handle_t file){
@@ -199,6 +133,6 @@ entrypoint load_elf_proc(bt_handle_t file){
 			bt_mmap(file, p, (char*)prog.vaddr, prog.filesz);
 		}
 	}
-	if(dynsection) load_dynamic(file, header, dynsection, 0);
+	if(dynsection) load_dynamic(file, header, dynsection);
 	return (entrypoint)(header.entry);
 }
