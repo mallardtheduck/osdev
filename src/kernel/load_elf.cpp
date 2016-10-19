@@ -119,28 +119,10 @@ size_t elf_getbase(file_handle &file){
 	return base;
 }
 
-Elf32_Addr elf_symbol_value(file_handle &file, const Elf32_Ehdr &header, size_t symbol){
-	for(size_t i=0; i<header.shnum; ++i){
-		Elf32_Shdr section=elf_read_sectionheader(file, header, i);
-		if(section.type==SHT_SYMTAB){
-			size_t offset=section.offset+(symbol * sizeof(Elf32_Sym));
-			Elf32_Sym symbolentry;
-			fs_seek(file, offset, FS_Set);
-			fs_read(file, sizeof(symbolentry), (char*)&symbolentry);
-			return symbolentry.value;
-		}
-	}
-	return 0;
-}
-
 void elf_do_reloc_module(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr &section, void *base){
 	size_t n_relocs=section.size/sizeof(Elf32_Rel);
 	for(size_t i=0; i<n_relocs; ++i){
 		Elf32_Rel rel=elf_read_rel(file, section, i);
-		Elf32_Addr symval=elf_symbol_value(file, header, ELF32_R_SYM(rel.info));
-		if(symval) symval+=(uint32_t)base;
-		/*dbgpf("ELF: Reloc: offset: %x, info: %x, symbol: %i (%x), type: %i\n",
-			rel.offset, rel.info, ELF32_R_SYM(rel.info), symval, ELF32_R_TYPE(rel.info));*/
 		uint32_t *ref=(uint32_t*)((char*)base+rel.offset);
 		uint32_t newval=-1;
 		switch(ELF32_R_TYPE(rel.info)){
