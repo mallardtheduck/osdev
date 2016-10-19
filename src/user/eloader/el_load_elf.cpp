@@ -3,11 +3,16 @@
 #include "el_malloc.hpp"
 #include "libpath.hpp"
 
-static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum);
+static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const char *name);
 
 const size_t Kernel_Boundary = 1024*1024*1024;
 
-char **loaded_modules = NULL;
+struct loaded_module{
+	char *name;
+	Elf32_Dyn *dynsection;
+};
+
+loaded_module *loaded_modules = NULL;
 size_t loaded_module_count = 0;
 
 Elf32_Dyn **loaded_dynamic_sections = NULL;
@@ -18,35 +23,27 @@ void panic(const char *msg){
 	bt_exit(-1);
 }
 
-static void add_module(const char *name){
+static void add_module(const char *name, Elf32_Dyn *dynsection){
 	++loaded_module_count;
 	if(loaded_module_count==1){
-		loaded_modules = (char**)malloc(sizeof(char*));
+		loaded_modules = (loaded_module*)malloc(sizeof(loaded_module));
 	}else{
-		loaded_modules = (char**)realloc(loaded_modules, sizeof(char*) * loaded_module_count);
+		loaded_modules = (loaded_module*)realloc(loaded_modules, sizeof(loaded_module) * loaded_module_count);
 	}
 	size_t strSize = strlen(name) + 1;
 	char *newstring = (char*)malloc(strSize);
 	memset(newstring, 0, strSize);
 	strncpy(newstring, name, strSize);
-	loaded_modules[loaded_module_count - 1] = newstring;
+	loaded_module &module = loaded_modules[loaded_module_count - 1];
+	module.name = newstring;
+	module.dynsection = dynsection;
 }
 
 static bool is_loaded(const char *name){
 	for(size_t i=0; i<loaded_module_count; ++i){
-		if(strcmp(name, loaded_modules[i]) == 0) return true;
+		if(strcmp(name, loaded_modules[i].name) == 0) return true;
 	}
 	return false;
-}
-
-void add_module_dynamic(Elf32_Dyn *dynamic){
-	++dynamic_section_count;
-	if(dynamic_section_count==1){
-		loaded_dynamic_sections = (Elf32_Dyn**)malloc(sizeof(Elf32_Dyn*));
-	}else{
-		loaded_dynamic_sections = (Elf32_Dyn**)realloc(loaded_dynamic_sections, sizeof(Elf32_Dyn*) * dynamic_section_count);
-	}
-	loaded_dynamic_sections[dynamic_section_count - 1] = dynamic;
 }
 
 static size_t elf_getsize(bt_handle_t file){
@@ -61,7 +58,7 @@ static size_t elf_getsize(bt_handle_t file){
 	return limit-base;
 }
 
-static void load_elf_library(bt_handle_t file){
+static void load_elf_library(bt_handle_t file, const char *name){
 	Elf32_Ehdr header=elf_read_header(file);
 	size_t ramsize=elf_getsize(file);
 	size_t pages=ramsize/4096;
@@ -75,11 +72,12 @@ static void load_elf_library(bt_handle_t file){
             bt_mmap(file, prog.offset, (char*)mem+prog.vaddr, prog.filesz);
 		}
 	}
-	if(dynsection) load_dynamic(file, header, dynsection);
+	if(dynsection) load_dynamic(file, header, dynsection, name);
 }
 
-static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum){
+static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const char *name){
 	Elf32_Dyn *dynamic = load_dynamic_section(file, header, phnum);
+	add_module(name, dynamic);
 	size_t strtabidx = get_dynamic_entry_idx(dynamic, DT_STRTAB);
 	if(strtabidx != (size_t)-1){
 		char *strtaboff = (char*)dynamic[strtabidx].un.ptr;
@@ -93,8 +91,7 @@ static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum){
 					if(!is_loaded(needed)){
 						bt_handle_t lib = open_lib(needed);
 						if(lib){
-							add_module(needed);
-							load_elf_library(lib);
+							load_elf_library(lib, name);
 						}else{
 							puts("ELOADER: Library not found: ");
 							puts(needed);
@@ -108,7 +105,6 @@ static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum){
 			}
 			++nidx;
 		}
-		add_module_dynamic(dynamic);
 	}
 }
 
@@ -133,6 +129,6 @@ entrypoint load_elf_proc(bt_handle_t file){
 			bt_mmap(file, p, (char*)prog.vaddr, prog.filesz);
 		}
 	}
-	if(dynsection) load_dynamic(file, header, dynsection);
+	if(dynsection) load_dynamic(file, header, dynsection, "MAIN");
 	return (entrypoint)(header.entry);
 }
