@@ -64,3 +64,17 @@ Elf32_Dyn* load_dynamic_section(bt_handle_t file, Elf32_Ehdr header, int phnum){
 	bt_fread(file, prog.filesz, (char*)dynamic);
 	return dynamic;
 }
+
+Elf32_Addr elf_symbol_value(bt_handle_t file, const Elf32_Ehdr &header, size_t symbol){
+	for(size_t i=0; i<header.shnum; ++i){
+		Elf32_Shdr section=elf_read_sectionheader(file, header, i);
+		if(section.type==SHT_SYMTAB){
+			size_t offset=section.offset+(symbol * sizeof(Elf32_Sym));
+			Elf32_Sym symbolentry;
+			bt_fseek(file, offset, FS_Set);
+			bt_fread(file, sizeof(symbolentry), (char*)&symbolentry);
+			return symbolentry.value;
+		}
+	}
+	return 0;
+}

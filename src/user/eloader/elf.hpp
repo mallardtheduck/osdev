@@ -68,6 +68,12 @@ enum RtT_Types {
 	R_386_32		= 1, // Symbol + Offset
 	R_386_PC32		= 2,  // Symbol + Offset - Section Offset
 	R_386_GOT32		= 3,
+	R_386_PLT32		= 4,
+	R_386_COPY		= 5,
+	R_386_GLOB_DATA = 6,
+	R_386_JMP_SLOT	= 7,
+	R_386_RELATIVE	= 8,
+	R_386_GOTOFF	= 9,
 	R_386_GOTPC		= 10,
 };
 
