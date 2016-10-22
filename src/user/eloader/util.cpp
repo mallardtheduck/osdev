@@ -182,3 +182,14 @@ void puti(int val){
 	itoa(val, buf);
 	puts(buf);
 }
+
+
+void* memcpy(void* destination, void* source, size_t num)
+{
+	char* d = (char*)destination;
+	char* s = (char*)source;
+	for (size_t i = 0; i < num; i++) {
+		d[i] = s[i];
+	}
+	return destination;
+}

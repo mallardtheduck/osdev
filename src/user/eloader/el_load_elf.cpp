@@ -110,7 +110,7 @@ static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const c
 	}
 }
 
-static intptr_t hash_lookup(const char *symbol, const loaded_module &module){
+static Elf32_Sym hash_lookup(const char *symbol, const loaded_module &module){
 	size_t hashtbl_idx = get_dynamic_entry_idx(module.dynamic, DT_HASH);
 	uint32_t *hashtbl = (uint32_t*)(module.dynamic[hashtbl_idx].un.ptr + module.base);
 	size_t bucket_count = hashtbl[0];
@@ -129,17 +129,21 @@ static intptr_t hash_lookup(const char *symbol, const loaded_module &module){
 		char *symname = strtab + symbol_entry.name;
 		if(strcmp(symbol, symname)==0){
 			if(symbol_entry.shndx != SHN_UNDEF){
-				return symbol_entry.value + module.base;
+				return symbol_entry;
 			}else{
-				return 0;
+				Elf32_Sym ret;
+				ret.shndx = SHN_UNDEF;
+				return ret;
 			}
 		}
 		chain_idx = chain_table[chain_idx];
 	}
-	return 0;
+	Elf32_Sym ret;
+	ret.shndx = SHN_UNDEF;
+	return ret;
 }
 
-static intptr_t get_symbol(const loaded_module &module, size_t symbol){
+static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *sym_size=NULL){
 	puts("get_symbol\n");
 	size_t symtab_idx = get_dynamic_entry_idx(module.dynamic, DT_SYMTAB);
 	Elf32_Sym *symtab = (Elf32_Sym*)(module.base + module.dynamic[symtab_idx].un.ptr);
@@ -150,8 +154,11 @@ static intptr_t get_symbol(const loaded_module &module, size_t symbol){
 	puts("\n");
 	for(size_t i=0; i<loaded_module_count; ++i){
 		loaded_module &cmod = loaded_modules[i];
-		intptr_t value = hash_lookup(symname, cmod);
-		if(value) return value;
+		Elf32_Sym entry = hash_lookup(symname, cmod);
+		if(entry.shndx != SHN_UNDEF) {
+			if(sym_size) *sym_size = entry.size;
+			return (entry.value + cmod.base);
+		}
 	}
 	return 0;
 }
@@ -178,7 +185,9 @@ static void relocate_module_rel(const loaded_module &module, Elf32_Addr ptr, siz
 				break;
 			}
 			case R_386_COPY:{
-				*ref = *(uint32_t*)get_symbol(module, ELF32_R_SYM(rel.info));
+				size_t sym_size = 0;
+				void *addr = (void*)get_symbol(module, ELF32_R_SYM(rel.info), &sym_size);
+				memcpy(ref, addr, sym_size);
 				break;
 			}
 			case R_386_GLOB_DATA:
