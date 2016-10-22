@@ -110,6 +110,35 @@ static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const c
 	}
 }
 
+static intptr_t hash_lookup(const char *symbol, const loaded_module &module){
+	size_t hashtbl_idx = get_dynamic_entry_idx(module.dynamic, DT_HASH);
+	uint32_t *hashtbl = (uint32_t*)(module.dynamic[hashtbl_idx].un.ptr + module.base);
+	size_t bucket_count = hashtbl[0];
+	size_t chain_count = hashtbl[1];
+	uint32_t *bucket_table = &hashtbl[2];
+	uint32_t *chain_table = &bucket_table[bucket_count];
+	size_t symtab_idx = get_dynamic_entry_idx(module.dynamic, DT_SYMTAB);
+	Elf32_Sym *symtab = (Elf32_Sym*)(module.base + module.dynamic[symtab_idx].un.ptr);
+	size_t strtab_idx = get_dynamic_entry_idx(module.dynamic, DT_STRTAB);
+	char *strtab = (char*)(module.base + module.dynamic[strtab_idx].un.ptr);
+	size_t symhash = elf_hash(symbol);
+	size_t bucket_idx = (symhash % bucket_count);
+	size_t chain_idx = bucket_table[bucket_idx];
+	while(chain_idx < chain_count){
+		Elf32_Sym symbol_entry = symtab[chain_idx];
+		char *symname = strtab + symbol_entry.name;
+		if(strcmp(symbol, symname)==0){
+			if(symbol_entry.shndx != SHN_UNDEF){
+				return symbol_entry.value + module.base;
+			}else{
+				return 0;
+			}
+		}
+		chain_idx = chain_table[chain_idx];
+	}
+	return 0;
+}
+
 static intptr_t get_symbol(const loaded_module &module, size_t symbol){
 	puts("get_symbol\n");
 	size_t symtab_idx = get_dynamic_entry_idx(module.dynamic, DT_SYMTAB);
@@ -121,21 +150,8 @@ static intptr_t get_symbol(const loaded_module &module, size_t symbol){
 	puts("\n");
 	for(size_t i=0; i<loaded_module_count; ++i){
 		loaded_module &cmod = loaded_modules[i];
-		size_t csymtab_idx = get_dynamic_entry_idx(cmod.dynamic, DT_SYMTAB);
-		Elf32_Sym *csymtab = (Elf32_Sym*)(cmod.base + cmod.dynamic[csymtab_idx].un.ptr);
-		size_t cstrtab_idx = get_dynamic_entry_idx(cmod.dynamic, DT_STRTAB);
-		char *cstrtab = (char*)(cmod.base + cmod.dynamic[cstrtab_idx].un.ptr);
-		size_t csym_idx = 0;
-		while(true){
-			Elf32_Sym &csym = csymtab[csym_idx];
-			char *csymname = cstrtab + csym.name;
-			if(strcmp("_end", csymname)==0) break;
-			if(csym.shndx != SHN_UNDEF && strcmp(symname, csymname)==0){
-				puts("found\n");
-				return cmod.base + csym.value;
-			}
-			++csym_idx;
-		}
+		intptr_t value = hash_lookup(symname, cmod);
+		if(value) return value;
 	}
 	return 0;
 }

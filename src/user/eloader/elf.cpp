@@ -78,3 +78,18 @@ Elf32_Addr elf_symbol_value(bt_handle_t file, const Elf32_Ehdr &header, size_t s
 	}
 	return 0;
 }
+
+size_t elf_hash(const char *pname)
+{
+	const unsigned char *name = (const unsigned char*)pname;
+    size_t h = 0, g;
+ 
+        while (*name)
+        {
+             h = (h << 4) + *name++;
+             if ((g = h & 0xf0000000))
+                  h ^= g >> 24;
+                   h &= ~g;
+        }
+        return h;
+}
