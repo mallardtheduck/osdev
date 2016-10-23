@@ -144,18 +144,24 @@ static Elf32_Sym hash_lookup(const char *symbol, const loaded_module &module){
 }
 
 static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *sym_size=NULL){
-	puts("get_symbol\n");
+	// puts("get_symbol\n");
 	size_t symtab_idx = get_dynamic_entry_idx(module.dynamic, DT_SYMTAB);
 	Elf32_Sym *symtab = (Elf32_Sym*)(module.base + module.dynamic[symtab_idx].un.ptr);
 	size_t strtab_idx = get_dynamic_entry_idx(module.dynamic, DT_STRTAB);
 	char *strtab = (char*)(module.base + module.dynamic[strtab_idx].un.ptr);
 	char *symname = strtab + symtab[symbol].name;
-	puts(symname);
-	puts("\n");
+	// puts(symname);
+	// puts("\n");
 	for(size_t i=0; i<loaded_module_count; ++i){
 		loaded_module &cmod = loaded_modules[i];
+		if(&cmod == &module) continue;
 		Elf32_Sym entry = hash_lookup(symname, cmod);
 		if(entry.shndx != SHN_UNDEF) {
+			// puts("found in ");
+			// puts(cmod.name);
+			// puts(" value: ");
+			// puti(entry.value);
+			// puts("\n");
 			if(sym_size) *sym_size = entry.size;
 			return (entry.value + cmod.base);
 		}
@@ -164,7 +170,7 @@ static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *s
 }
 
 static void relocate_module_rel(const loaded_module &module, Elf32_Addr ptr, size_t sz){
-	puts("relocate_module_rel\n");
+	// puts("relocate_module_rel\n");
 	Elf32_Rel *relptr = (Elf32_Rel*)(module.base + ptr);
 	size_t len = sz / sizeof(Elf32_Rel);
 	for(size_t i = 0; i < len; ++i){
@@ -206,7 +212,7 @@ static void relocate_module_rel(const loaded_module &module, Elf32_Addr ptr, siz
 }
 
 static void relocate_module_rela(const loaded_module &module, Elf32_Addr ptr, size_t sz){
-	puts("relocate_module_rela\n");
+	// puts("relocate_module_rela\n");
 	Elf32_Rela *relptr = (Elf32_Rela*)(module.base + ptr);
 	size_t len = sz / sizeof(Elf32_Rela);
 	for(size_t i = 0; i < len; ++i){
@@ -227,7 +233,9 @@ static void relocate_module_rela(const loaded_module &module, Elf32_Addr ptr, si
 				break;
 			}
 			case R_386_COPY:{
-				*ref = *(uint32_t*)get_symbol(module, ELF32_R_SYM(rela.info));
+				size_t sym_size = 0;
+				void *addr = (void*)get_symbol(module, ELF32_R_SYM(rela.info), &sym_size);
+				memcpy(ref, addr, sym_size);
 				break;
 			}
 			case R_386_GLOB_DATA:
@@ -248,12 +256,12 @@ static void relocate_module_rela(const loaded_module &module, Elf32_Addr ptr, si
 }
 
 void dynamic_link(){
-	puts("dynamic_link\n");
-	for(size_t i=0; i<loaded_module_count; ++i){
+	// puts("dynamic_link\n");
+	for(ptrdiff_t i=loaded_module_count-1; i>=0; --i){
 		loaded_module &module = loaded_modules[i];
-		puts("Module: ");
-		puts(module.name);
-		puts("\n");
+		// puts("Module: ");
+		// puts(module.name);
+		// puts("\n");
 		Elf32_Dyn *&dynamic = module.dynamic;
 		size_t idx=0;
 		while(dynamic[idx].tag != 0){
@@ -283,7 +291,7 @@ void dynamic_link(){
 			++idx;
 		}
 	}
-	puts("dynamic_link done\n");
+	// puts("dynamic_link done\n");
 }
 
 entrypoint load_elf_proc(bt_handle_t file){
