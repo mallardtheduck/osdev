@@ -3,8 +3,6 @@
 #include "el_malloc.hpp"
 #include "libpath.hpp"
 
-static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const char *name, intptr_t base);
-
 const size_t Kernel_Boundary = 1024*1024*1024;
 
 struct loaded_module{
@@ -12,6 +10,9 @@ struct loaded_module{
 	Elf32_Dyn *dynamic;
 	intptr_t base;
 };
+
+static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const char *name, intptr_t base);
+static void relocate_and_link_module(const loaded_module &module, bool load);
 
 loaded_module *loaded_modules = NULL;
 size_t loaded_module_count = 0;
@@ -21,7 +22,7 @@ void panic(const char *msg){
 	bt_exit(-1);
 }
 
-static void add_module(const char *name, Elf32_Dyn *dynsection, intptr_t base){
+static loaded_module *add_module(const char *name, Elf32_Dyn *dynsection, intptr_t base){
 	++loaded_module_count;
 	if(loaded_module_count==1){
 		loaded_modules = (loaded_module*)malloc(sizeof(loaded_module));
@@ -36,6 +37,7 @@ static void add_module(const char *name, Elf32_Dyn *dynsection, intptr_t base){
 	module.name = newstring;
 	module.dynamic = dynsection;
 	module.base = base;
+	return &module;
 }
 
 static bool is_loaded(const char *name){
@@ -79,7 +81,8 @@ static void load_elf_library(bt_handle_t file, const char *name){
 
 static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const char *name, intptr_t base){
 	Elf32_Dyn *dynamic = load_dynamic_section(file, header, phnum);
-	add_module(name, dynamic, base);
+	loaded_module *module=add_module(name, dynamic, base);
+	relocate_and_link_module(*module, true);
 	size_t strtabidx = get_dynamic_entry_idx(dynamic, DT_STRTAB);
 	if(strtabidx != (size_t)-1){
 		char *strtaboff = (char*)dynamic[strtabidx].un.ptr;
@@ -169,7 +172,9 @@ static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *s
 	return 0;
 }
 
-static void do_relocation(const loaded_module module, const Elf32_Rela &rela){
+static void do_relocation(const loaded_module module, const Elf32_Rela &rela, bool load){
+	if(load && ELF32_R_TYPE(rela.info) != R_386_RELATIVE) return;
+	if(!load && ELF32_R_TYPE(rela.info) == R_386_RELATIVE) return;
 	uint32_t *ref=(uint32_t*)(module.base+rela.offset);
 	switch(ELF32_R_TYPE(rela.info)){
 		case R_386_NONE: break;
@@ -205,7 +210,7 @@ static void do_relocation(const loaded_module module, const Elf32_Rela &rela){
 	}
 }
 
-static void relocate_module_rel(const loaded_module &module, Elf32_Addr ptr, size_t sz){
+static void relocate_module_rel(const loaded_module &module, Elf32_Addr ptr, size_t sz, bool load){
 	// puts("relocate_module_rel\n");
 	Elf32_Rel *relptr = (Elf32_Rel*)(module.base + ptr);
 	size_t len = sz / sizeof(Elf32_Rel);
@@ -216,55 +221,59 @@ static void relocate_module_rel(const loaded_module &module, Elf32_Addr ptr, siz
 		rela.offset = rel.offset;
 		rela.info = rel.info;
 		rela.addend = *ref;
-		do_relocation(module, rela);
+		do_relocation(module, rela, load);
 	}
 }
 
-static void relocate_module_rela(const loaded_module &module, Elf32_Addr ptr, size_t sz){
+static void relocate_module_rela(const loaded_module &module, Elf32_Addr ptr, size_t sz, bool load){
 	// puts("relocate_module_rela\n");
 	Elf32_Rela *relptr = (Elf32_Rela*)(module.base + ptr);
 	size_t len = sz / sizeof(Elf32_Rela);
 	for(size_t i = 0; i < len; ++i){
 		Elf32_Rela &rela = relptr[i];
-		do_relocation(module, rela);
+		do_relocation(module, rela, load);
 	}
 }
 
-void dynamic_link(){
+static void relocate_and_link_module(const loaded_module &module, bool load){
+	Elf32_Dyn *const &dynamic = module.dynamic;
+	size_t idx=0;
+	while(dynamic[idx].tag != 0){
+		Elf32_Dyn &current = dynamic[idx];
+		switch(current.tag){
+			case DT_REL:{
+				size_t rel_sz_idx = get_dynamic_entry_idx(dynamic, DT_RELSZ);
+				size_t rel_sz = dynamic[rel_sz_idx].un.val;
+				relocate_module_rel(module, current.un.ptr, rel_sz, load);
+				break;
+			}
+			case DT_RELA:{
+				size_t rela_sz_idx = get_dynamic_entry_idx(dynamic, DT_RELASZ);
+				size_t rela_sz = dynamic[rela_sz_idx].un.val;
+				relocate_module_rela(module, current.un.ptr, rela_sz, load);
+				break;
+			}
+			case DT_JMPREL:{
+				size_t jmprel_sz_idx = get_dynamic_entry_idx(dynamic, DT_PLTRELSZ);
+				size_t jmprel_type_idx = get_dynamic_entry_idx(dynamic, DT_PLTREL);
+				size_t jmprel_sz = dynamic[jmprel_sz_idx].un.val;
+				size_t jmprel_type = dynamic[jmprel_type_idx].un.val;
+				if(jmprel_type == DT_REL) relocate_module_rel(module, current.un.ptr, jmprel_sz, load);
+				else if(jmprel_type == DT_RELA) relocate_module_rela(module, current.un.ptr, jmprel_sz, load);
+			}
+		}
+		++idx;
+	}
+}
+
+static void relocate_and_link(){
 	// puts("dynamic_link\n");
 	for(ptrdiff_t i=loaded_module_count-1; i>=0; --i){
 		loaded_module &module = loaded_modules[i];
 		// puts("Module: ");
 		// puts(module.name);
 		// puts("\n");
-		Elf32_Dyn *&dynamic = module.dynamic;
-		size_t idx=0;
-		while(dynamic[idx].tag != 0){
-			Elf32_Dyn &current = dynamic[idx];
-			switch(current.tag){
-				case DT_REL:{
-					size_t rel_sz_idx = get_dynamic_entry_idx(dynamic, DT_RELSZ);
-					size_t rel_sz = dynamic[rel_sz_idx].un.val;
-					relocate_module_rel(module, current.un.ptr, rel_sz);
-					break;
-				}
-				case DT_RELA:{
-					size_t rela_sz_idx = get_dynamic_entry_idx(dynamic, DT_RELASZ);
-					size_t rela_sz = dynamic[rela_sz_idx].un.val;
-					relocate_module_rela(module, current.un.ptr, rela_sz);
-					break;
-				}
-				case DT_JMPREL:{
-					size_t jmprel_sz_idx = get_dynamic_entry_idx(dynamic, DT_PLTRELSZ);
-					size_t jmprel_type_idx = get_dynamic_entry_idx(dynamic, DT_PLTREL);
-					size_t jmprel_sz = dynamic[jmprel_sz_idx].un.val;
-					size_t jmprel_type = dynamic[jmprel_type_idx].un.val;
-					if(jmprel_type == DT_REL) relocate_module_rel(module, current.un.ptr, jmprel_sz);
-					else if(jmprel_type == DT_RELA) relocate_module_rela(module, current.un.ptr, jmprel_sz);
-				}
-			}
-			++idx;
-		}
+		relocate_and_link_module(module, false);
 	}
 	// puts("dynamic_link done\n");
 }
@@ -292,7 +301,7 @@ entrypoint load_elf_proc(bt_handle_t file){
 	}
 	if(dynsection) {
 		load_dynamic(file, header, dynsection, "MAIN", 0);
-		dynamic_link();
+		relocate_and_link();
 	}
 	return (entrypoint)(header.entry);
 }
