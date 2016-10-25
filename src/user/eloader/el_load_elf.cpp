@@ -143,7 +143,7 @@ static Elf32_Sym hash_lookup(const char *symbol, const loaded_module &module){
 	return ret;
 }
 
-static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *sym_size=NULL){
+static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *sym_size=NULL, bool allow_self=true){
 	// puts("get_symbol\n");
 	size_t symtab_idx = get_dynamic_entry_idx(module.dynamic, DT_SYMTAB);
 	Elf32_Sym *symtab = (Elf32_Sym*)(module.base + module.dynamic[symtab_idx].un.ptr);
@@ -152,9 +152,9 @@ static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *s
 	char *symname = strtab + symtab[symbol].name;
 	// puts(symname);
 	// puts("\n");
-	for(size_t i=0; i<loaded_module_count; ++i){
+	for(ptrdiff_t i=loaded_module_count-1; i>=0; --i){
 		loaded_module &cmod = loaded_modules[i];
-		if(&cmod == &module) continue;
+		if(!allow_self && &cmod == &module) continue;
 		Elf32_Sym entry = hash_lookup(symname, cmod);
 		if(entry.shndx != SHN_UNDEF) {
 			// puts("found in ");
@@ -169,6 +169,42 @@ static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *s
 	return 0;
 }
 
+static void do_relocation(const loaded_module module, const Elf32_Rela &rela){
+	uint32_t *ref=(uint32_t*)(module.base+rela.offset);
+	switch(ELF32_R_TYPE(rela.info)){
+		case R_386_NONE: break;
+		case R_386_32:{
+			intptr_t symbol = get_symbol(module, ELF32_R_SYM(rela.info));
+			uint32_t val = symbol + rela.addend;
+			*ref = val;
+			break;
+		}
+		case R_386_PC32:{
+			intptr_t symbol = get_symbol(module, ELF32_R_SYM(rela.info));
+			uint32_t val = symbol + rela.addend - module.base;
+			*ref = val;
+			break;
+		}
+		case R_386_COPY:{
+			size_t sym_size = 0;
+			void *addr = (void*)get_symbol(module, ELF32_R_SYM(rela.info), &sym_size, false);
+			memcpy(ref, addr, sym_size);
+			break;
+		}
+		case R_386_GLOB_DATA:
+		case R_386_JMP_SLOT:{
+			*ref = get_symbol(module, ELF32_R_SYM(rela.info));
+			break;
+		}
+		case R_386_RELATIVE:{
+			*ref = module.base + rela.addend;
+			break;
+		}
+		default:
+			puts("Unsupported relocation!\n");
+	}
+}
+
 static void relocate_module_rel(const loaded_module &module, Elf32_Addr ptr, size_t sz){
 	// puts("relocate_module_rel\n");
 	Elf32_Rel *relptr = (Elf32_Rel*)(module.base + ptr);
@@ -176,38 +212,11 @@ static void relocate_module_rel(const loaded_module &module, Elf32_Addr ptr, siz
 	for(size_t i = 0; i < len; ++i){
 		Elf32_Rel &rel = relptr[i];
 		uint32_t *ref=(uint32_t*)(module.base+rel.offset);
-		switch(ELF32_R_TYPE(rel.info)){
-			case R_386_NONE: break;
-			case R_386_32:{
-				intptr_t symbol = get_symbol(module, ELF32_R_SYM(rel.info));
-				uint32_t val = symbol + *ref;
-				*ref = val;
-				break;
-			}
-			case R_386_PC32:{
-				intptr_t symbol = get_symbol(module, ELF32_R_SYM(rel.info));
-				uint32_t val = symbol + *ref - module.base;
-				*ref = val;
-				break;
-			}
-			case R_386_COPY:{
-				size_t sym_size = 0;
-				void *addr = (void*)get_symbol(module, ELF32_R_SYM(rel.info), &sym_size);
-				memcpy(ref, addr, sym_size);
-				break;
-			}
-			case R_386_GLOB_DATA:
-			case R_386_JMP_SLOT:{
-				*ref = get_symbol(module, ELF32_R_SYM(rel.info));
-				break;
-			}
-			case R_386_RELATIVE:{
-				*ref += module.base;
-				break;
-			}
-			default:
-				puts("Unsupported relocation!\n");
-		}
+		Elf32_Rela rela;
+		rela.offset = rel.offset;
+		rela.info = rel.info;
+		rela.addend = *ref;
+		do_relocation(module, rela);
 	}
 }
 
@@ -217,41 +226,7 @@ static void relocate_module_rela(const loaded_module &module, Elf32_Addr ptr, si
 	size_t len = sz / sizeof(Elf32_Rela);
 	for(size_t i = 0; i < len; ++i){
 		Elf32_Rela &rela = relptr[i];
-		uint32_t *ref=(uint32_t*)(module.base+rela.offset);
-		switch(ELF32_R_TYPE(rela.info)){
-			case R_386_NONE: break;
-			case R_386_32:{
-				intptr_t symbol = get_symbol(module, ELF32_R_SYM(rela.info));
-				uint32_t val = symbol + rela.addend;
-				*ref = val;
-				break;
-			}
-			case R_386_PC32:{
-				intptr_t symbol = get_symbol(module, ELF32_R_SYM(rela.info));
-				uint32_t val = symbol + rela.addend - module.base;
-				*ref = val;
-				break;
-			}
-			case R_386_COPY:{
-				size_t sym_size = 0;
-				void *addr = (void*)get_symbol(module, ELF32_R_SYM(rela.info), &sym_size);
-				memcpy(ref, addr, sym_size);
-				break;
-			}
-			case R_386_GLOB_DATA:
-			case R_386_JMP_SLOT:{
-				*ref = get_symbol(module, ELF32_R_SYM(rela.info));
-				break;
-			}
-			case R_386_RELATIVE:{
-				*ref = module.base + rela.addend;
-				break;
-			}
-			default:
-				puts("Unsupported relocation!\n");
-		}
-		if(ELF32_R_TYPE(rela.info) == R_386_NONE) break;
-		++i;
+		do_relocation(module, rela);
 	}
 }
 
