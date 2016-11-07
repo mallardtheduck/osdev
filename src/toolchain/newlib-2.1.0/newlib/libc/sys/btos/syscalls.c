@@ -16,7 +16,7 @@
 USE_BT_RTC_API;
 
 char *__env[1] = { 0 };
-char **environ = __env;
+static char **environ = __env;
 
 static bt_pid lastchild=0;
 
