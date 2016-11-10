@@ -36,6 +36,7 @@ fragment <<EOF
    MA 02110-1301, USA.  */
 
 #define TARGET_IS_${EMULATION_NAME}
+#define EXTRA_SHLIB_EXTENSION ".ell"
 
 #include "sysdep.h"
 #include "bfd.h"
