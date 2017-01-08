@@ -169,6 +169,9 @@ static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *s
 			return (entry.value + cmod.base);
 		}
 	}
+	puts("ELOADER: Symbol not found: ");
+	puts(symname);
+	puts("\n");
 	return 0;
 }
 
