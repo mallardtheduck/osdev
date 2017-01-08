@@ -7,3 +7,10 @@ _init:
 .global  _fini
 _fini:
 	push %ebp
+
+.section .data
+    .global __dso_handle
+    .weak   __dso_handle
+    .hidden __dso_handle
+__dso_handle:
+	.long	0

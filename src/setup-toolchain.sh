@@ -23,7 +23,8 @@ tar xvfj gcc-4.8.1.tar.bz2
 # fi
 # tar xvfz newlib-2.1.0.tar.gz
 
-cp -Rv toolchain/* .  && \
+cp -Rv toolchain/binutils-2.23/* ./binutils-2.23  && \
+cp -Rv toolchain/gcc-4.8.1/* ./gcc-4.8.1  && \
 \
 pushd gcc-4.8.1/libstdc++-v3 && \
 autoconf2.64 && \
@@ -69,5 +70,6 @@ make install-target-libgcc && \
 make newlib && \
 \
 cd $HOME/Projects/os/src/build-gcc && \
+cp ../toolchain/misc/libtool i686-pc-btos/libstdc++-v3 && \
 make && \
 make install

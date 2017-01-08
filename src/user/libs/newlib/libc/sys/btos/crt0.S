@@ -21,9 +21,3 @@ mov $0x0805, %eax
 int $0x80
 .wait:
 jmp .wait
-
-.section .data
-    .global ___dso_handle
-    .weak   ___dso_handle
-___dso_handle:
-	.long	0
