@@ -16,12 +16,12 @@ then
 fi
 tar xvfj gcc-4.8.1.tar.bz2
 
-rm -rf newlib-2.1.0
-if [ ! -f newlib-2.1.0.tar.gz ];
-then
-	wget ftp://sourceware.org/pub/newlib/newlib-2.1.0.tar.gz
-fi
-tar xvfz newlib-2.1.0.tar.gz
+# rm -rf newlib-2.1.0
+# if [ ! -f newlib-2.1.0.tar.gz ];
+# then
+# 	wget ftp://sourceware.org/pub/newlib/newlib-2.1.0.tar.gz
+# fi
+# tar xvfz newlib-2.1.0.tar.gz
 
 cp -Rv toolchain/* .  && \
 \
@@ -29,12 +29,12 @@ pushd gcc-4.8.1/libstdc++-v3 && \
 autoconf2.64 && \
 popd && \
 \
-pushd newlib-2.1.0/newlib/libc/sys && \
-autoconf && \
-cd btos && \
-autoreconf && \
-popd && \
-\
+# pushd newlib-2.1.0/newlib/libc/sys && \
+# autoconf && \
+# cd btos && \
+# autoreconf && \
+# popd && \
+# \
 cd $HOME/Projects/os/src
 rm -rf build-binutils
 mkdir build-binutils && \
@@ -53,19 +53,20 @@ make all-target-libgcc && \
 make install-gcc && \
 make install-target-libgcc && \
 \
-cd $HOME/Projects/os/src
-pushd newlib-2.1.0/newlib/libc/sys/btos && \
-i686-pc-btos-as crti.S -o crti.o && \
-i686-pc-btos-as crtn.S -o crtn.o && \
-cp crti.o $PREFIX/$TARGET/lib/ && \
-cp crtn.o $PREFIX/$TARGET/lib/ && \
-popd
-rm -rf build-newlib
-mkdir build-newlib && \
-cd build-newlib && \
-../newlib-2.1.0/configure --target=$TARGET --prefix=$PREFIX && \
-make && \
-make install && \ 
+# cd $HOME/Projects/os/src
+# pushd newlib-2.1.0/newlib/libc/sys/btos && \
+# i686-pc-btos-as crti.S -o crti.o && \
+# i686-pc-btos-as crtn.S -o crtn.o && \
+# cp crti.o $PREFIX/$TARGET/lib/ && \
+# cp crtn.o $PREFIX/$TARGET/lib/ && \
+# popd
+# rm -rf build-newlib
+# mkdir build-newlib && \
+# cd build-newlib && \
+# ../newlib-2.1.0/configure --target=$TARGET --prefix=$PREFIX && \
+# make && \
+# make install && \ 
+make newlib && \
 \
 cd $HOME/Projects/os/src/build-gcc && \
 make && \

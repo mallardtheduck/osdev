@@ -1,4 +1,4 @@
-LIBS := libc libm
+LIBS := libm libc
 
 all: dummy.file
 	for dir in $(LIBS); do \
