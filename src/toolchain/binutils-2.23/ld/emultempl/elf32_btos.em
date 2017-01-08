@@ -1648,6 +1648,9 @@ gld${EMULATION_NAME}_open_dynamic_archive
     {
       sprintf (string, "%s/lib%s%s%s", search->name,
 	       filename, arch, EXTRA_SHLIB_EXTENSION);
+         if (! ldfile_try_open_bfd (string, entry))
+          {
+          sprintf(string, "%s/%s%s%s", search->name, filename, arch, EXTRA_SHLIB_EXTENSION);
 #endif
 
   if (! ldfile_try_open_bfd (string, entry))
@@ -1656,6 +1659,7 @@ gld${EMULATION_NAME}_open_dynamic_archive
       return FALSE;
     }
 #ifdef EXTRA_SHLIB_EXTENSION
+        }
     }
 #endif
 

@@ -12,6 +12,7 @@ bt_handle_t program_file;
 
 void puts(const char *str){
 	bt_fwrite(stdout, strlen(str), str);
+	bt_zero(str);
 }
 
 int main(){

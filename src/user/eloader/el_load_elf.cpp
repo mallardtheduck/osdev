@@ -85,7 +85,7 @@ static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const c
 	relocate_and_link_module(*module, true);
 	size_t strtabidx = get_dynamic_entry_idx(dynamic, DT_STRTAB);
 	if(strtabidx != (size_t)-1){
-		char *strtaboff = (char*)dynamic[strtabidx].un.ptr;
+		char *strtaboff = (char*)(dynamic[strtabidx].un.ptr + base);
 		size_t nidx = 0;
 		while(dynamic[nidx].tag != 0){
 			Elf32_Dyn &current = dynamic[nidx];
@@ -127,7 +127,7 @@ static Elf32_Sym hash_lookup(const char *symbol, const loaded_module &module){
 	size_t symhash = elf_hash(symbol);
 	size_t bucket_idx = (symhash % bucket_count);
 	size_t chain_idx = bucket_table[bucket_idx];
-	while(chain_idx < chain_count){
+	while(chain_idx < chain_count && chain_idx){
 		Elf32_Sym symbol_entry = symtab[chain_idx];
 		char *symname = strtab + symbol_entry.name;
 		if(strcmp(symbol, symname)==0){
@@ -266,6 +266,22 @@ static void relocate_and_link_module(const loaded_module &module, bool load){
 	}
 }
 
+static void init_module(const loaded_module &module){
+	Elf32_Dyn *const &dynamic = module.dynamic;
+	size_t idx=0;
+	while(dynamic[idx].tag != 0){
+		Elf32_Dyn &current = dynamic[idx];
+		switch(current.tag){
+			case DT_INIT:{
+				typedef void (*init_fn_t)();
+				init_fn_t init_fn =(init_fn_t)(current.un.ptr + module.base);
+				init_fn();
+			}
+		}
+		++idx;
+	}
+}
+
 static void relocate_and_link(){
 	// puts("dynamic_link\n");
 	for(ptrdiff_t i=loaded_module_count-1; i>=0; --i){
@@ -276,6 +292,13 @@ static void relocate_and_link(){
 		relocate_and_link_module(module, false);
 	}
 	// puts("dynamic_link done\n");
+}
+
+static void init_modules(){
+	for(ptrdiff_t i=loaded_module_count-1; i>=0; --i){
+		loaded_module &module = loaded_modules[i];
+		init_module(module);
+	}
 }
 
 entrypoint load_elf_proc(bt_handle_t file){
@@ -302,6 +325,7 @@ entrypoint load_elf_proc(bt_handle_t file){
 	if(dynsection) {
 		load_dynamic(file, header, dynsection, "MAIN", 0);
 		relocate_and_link();
+		init_modules();
 	}
 	return (entrypoint)(header.entry);
 }

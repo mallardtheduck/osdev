@@ -357,6 +357,12 @@ case "${host}" in
     oext=lo
     lpfx=
     aext=la ;;
+  i[3-7]86-*-btos*)
+   	use_libtool=yes
+		 oext=lo
+		 aext=la
+		 lpfx=
+   	;;
   *) ;; #shared library not supported for ${host}
 esac
 

@@ -8,7 +8,7 @@ ELL-BUILD-C-FLAGS := -c -fPIC
 ELL-BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../include -std=gnu99
 LINK := i686-pc-btos-gcc
 ELX-LINK-FLAGS := -o $(OUTPUT-NAME) -O2
-ELX-LINK-OPTIONS := -lgcc -l:testlib.ell
+ELX-LINK-OPTIONS := -lgcc_s -l:testlib.ell
 ELL-LINK-FLAGS := -O2 -fPIC -shared
 ELL-LINK-OPTIONS := -o $(LIB-NAME)
 

@@ -1,4 +1,4 @@
-import-files:= data/btos/tests/ctest.elx data/btos/tests/cpptest.elx data/btos/cmd/cmd.elx data/btos/system/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/system/switcher.elx data/btos/cmd/spawn.elx data/btos/cmd/kill.elx data/btos/drivers/pci.sys data/btos/cmd/load.elx data/btos/tests/test.sys data/btos/tests/test.elx data/btos/cmd/mount.elx data/btos/tests/msgtest.elx data/btos/tests/mousetest.elx data/btos/drivers/vga.sys data/btos/tests/vgatest.elx data/btos/tests/fputest.elx data/btos/system/gds.elx data/btos/bin/debug.elx data/btos/tests/crash.elx data/btos/tests/gdstest.elx data/btos/system/wm.elx data/btos/tests/wmtest.elx data/btos/bin/wmmenu.elx data/btos/bin/startwm.elx data/btos/bin/termwin.elx data/btos/bin/breakout.elx data/btos/cmd/sleep.elx data/btos/cmd/tar.elx data/btos/drivers/iso9660.sys data/btos/drivers/fat.sys data/btos/cmd/iconv.elx data/btos/cmd/parted.elx data/btos/cmd/format.elx data/btos/bin/install.elx data/btos/tests/shmtest.elx data/btos/tests/elltest.elx data/btos/tests/testlib.ell
+import-files:= data/btos/tests/ctest.elx data/btos/tests/cpptest.elx data/btos/cmd/cmd.elx data/btos/system/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/system/switcher.elx data/btos/cmd/spawn.elx data/btos/cmd/kill.elx data/btos/drivers/pci.sys data/btos/cmd/load.elx data/btos/tests/test.sys data/btos/cmd/mount.elx data/btos/tests/msgtest.elx data/btos/tests/mousetest.elx data/btos/drivers/vga.sys data/btos/tests/vgatest.elx data/btos/tests/fputest.elx data/btos/system/gds.elx data/btos/bin/debug.elx data/btos/tests/crash.elx data/btos/tests/gdstest.elx data/btos/system/wm.elx data/btos/tests/wmtest.elx data/btos/bin/wmmenu.elx data/btos/bin/startwm.elx data/btos/bin/termwin.elx data/btos/bin/breakout.elx data/btos/cmd/sleep.elx data/btos/cmd/tar.elx data/btos/drivers/iso9660.sys data/btos/drivers/fat.sys data/btos/cmd/iconv.elx data/btos/cmd/parted.elx data/btos/cmd/format.elx data/btos/bin/install.elx data/btos/tests/shmtest.elx data/btos/tests/elltest.elx data/btos/tests/testlib.ell data/btos/lib/libc.ell data/btos/lib/libm.ell data/btos/lib/stdc++.ell data/btos/lib/libgcc_s.ell
 pkg-files:= $(shell find pkgfiles -type f)
 
 
@@ -38,9 +38,6 @@ data/btos/cmd/load.elx: ../../user/load/load.elx create.directories
 	cp $< $@
 
 data/btos/tests/test.sys: ../../modules/test/test.sys create.directories
-	cp $< $@
-
-data/btos/tests/test.elx: ../../user/test/test.elx create.directories
 	cp $< $@
 
 data/btos/cmd/mount.elx: ../../user/mount/mount.elx create.directories
@@ -124,6 +121,18 @@ data/btos/tests/elltest.elx: ../../user/elltest/elltest.elx create.directories
 data/btos/tests/testlib.ell: ../../user/elltest/testlib.ell create.directories
 	cp $< $@
 
+data/btos/lib/libc.ell: ../../user/libs/newlib/libc/libc.ell
+	cp $< $@
+
+data/btos/lib/libm.ell: ../../user/libs/newlib/libm/libm.ell
+	cp $< $@
+
+data/btos/lib/stdc++.ell: ../../../cross/i686-pc-btos/lib/stdc++.ell
+	cp $< $@
+
+data/btos/lib/libgcc_s.ell: ../../../cross/i686-pc-btos/lib/libgcc_s.ell
+	cp $< $@
+
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx
 	mkdir -p data/btos/boot/grub/
 	cp -R ../../3rdparty/install/btos/lib/grub/i386-pc data/btos/boot/grub
@@ -140,6 +149,7 @@ create.directories:
 	mkdir -p data/btos/bin
 	mkdir -p data/btos/system
 	mkdir -p data/btos/drivers
+	mkdir -p data/btos/lib
 	touch create.directories
 
 ../base.tar: $(import-files) $(pkg-files) copy.grub

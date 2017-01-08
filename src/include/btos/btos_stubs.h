@@ -11,8 +11,8 @@ using namespace btos_api;
 #endif
 
 inline static uint32_t btos_call(uint32_t fn, uint32_t p1, uint32_t p2, uint32_t p3){
-	uint32_t ret=0;
-	uint32_t regs[4];
+	volatile uint32_t ret=0;
+	volatile uint32_t regs[4];
 	regs[0] = fn; regs[1] = p1; regs[2] = p2; regs[3] = p3;
 	asm volatile(
 		"push %%ebx\n"
