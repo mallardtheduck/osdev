@@ -1,4 +1,4 @@
-import-files:= data/btos/tests/ctest.elx data/btos/tests/cpptest.elx data/btos/cmd/cmd.elx data/btos/system/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/system/switcher.elx data/btos/cmd/spawn.elx data/btos/cmd/kill.elx data/btos/drivers/pci.sys data/btos/cmd/load.elx data/btos/tests/test.sys data/btos/cmd/mount.elx data/btos/tests/msgtest.elx data/btos/tests/mousetest.elx data/btos/drivers/vga.sys data/btos/tests/vgatest.elx data/btos/tests/fputest.elx data/btos/system/gds.elx data/btos/bin/debug.elx data/btos/tests/crash.elx data/btos/tests/gdstest.elx data/btos/system/wm.elx data/btos/tests/wmtest.elx data/btos/bin/wmmenu.elx data/btos/bin/startwm.elx data/btos/bin/termwin.elx data/btos/bin/breakout.elx data/btos/cmd/sleep.elx data/btos/cmd/tar.elx data/btos/drivers/iso9660.sys data/btos/drivers/fat.sys data/btos/cmd/iconv.elx data/btos/cmd/parted.elx data/btos/cmd/format.elx data/btos/bin/install.elx data/btos/tests/shmtest.elx data/btos/tests/elltest.elx data/btos/tests/testlib.ell data/btos/lib/libc.ell data/btos/lib/libm.ell data/btos/lib/libstdc++.ell data/btos/lib/libgcc_s.ell
+import-files:= data/btos/tests/ctest.elx data/btos/tests/cpptest.elx data/btos/cmd/cmd.elx data/btos/system/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/system/switcher.elx data/btos/cmd/spawn.elx data/btos/cmd/kill.elx data/btos/drivers/pci.sys data/btos/cmd/load.elx data/btos/tests/test.sys data/btos/cmd/mount.elx data/btos/tests/msgtest.elx data/btos/tests/mousetest.elx data/btos/drivers/vga.sys data/btos/tests/vgatest.elx data/btos/tests/fputest.elx data/btos/system/gds.elx data/btos/bin/debug.elx data/btos/tests/crash.elx data/btos/tests/gdstest.elx data/btos/system/wm.elx data/btos/tests/wmtest.elx data/btos/bin/wmmenu.elx data/btos/bin/startwm.elx data/btos/bin/termwin.elx data/btos/bin/breakout.elx data/btos/cmd/sleep.elx data/btos/cmd/tar.elx data/btos/drivers/iso9660.sys data/btos/drivers/fat.sys data/btos/cmd/iconv.elx data/btos/cmd/parted.elx data/btos/cmd/format.elx data/btos/bin/install.elx data/btos/tests/shmtest.elx data/btos/tests/elltest.elx data/btos/tests/testlib.ell data/btos/lib/libc.ell data/btos/lib/libm.ell data/btos/lib/stdc++.ell data/btos/lib/libgcc_s.ell
 pkg-files:= $(shell find pkgfiles -type f)
 
 
@@ -127,7 +127,7 @@ data/btos/lib/libc.ell: ../../user/libs/newlib/libc/libc.ell
 data/btos/lib/libm.ell: ../../user/libs/newlib/libm/libm.ell
 	cp $< $@
 
-data/btos/lib/libstdc++.ell: ../../../cross/i686-pc-btos/lib/libstdc++.ell
+data/btos/lib/stdc++.ell: ../../../cross/i686-pc-btos/lib/stdc++.ell
 	cp $< $@
 
 data/btos/lib/libgcc_s.ell: ../../../cross/i686-pc-btos/lib/libgcc_s.ell

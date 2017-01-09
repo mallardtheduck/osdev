@@ -1,6 +1,7 @@
 LIBS := libm libc
 
 all: dummy.file
+	make -C libc startfiles
 	for dir in $(LIBS); do \
 		make -C $$dir; \
 	done

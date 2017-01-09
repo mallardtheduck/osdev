@@ -35,15 +35,21 @@ CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 
 all: $(LIBRARY-NAME) $(STATIC-NAME) $(STARTUP-OBJS) copy
 
+startfiles: copy-startfiles
+
 -include $(CDEPFILES) $(CPPDEPFILES)
 
 copy:
+	mkdir -p $(DESTINATION)/lib
+	mkdir -p $(DESTINATION)/include
 	cp $(LIBRARY-NAME) $(DESTINATION)/lib
 	cp $(STATIC-NAME) $(DESTINATION)/lib
-	for file in $(STARTUP-OBJS); do cp $$file $(DESTINATION)/lib; done
 	for folder in $(INCLUDE-FOLDERS); do \
 		(cd $$folder && find -type f -name "*.h" -exec cp --parents {} $(DESTINATION)/include \;); \
 	done
+
+copy-startfiles: $(STARTUP-OBJS)
+	for file in $(STARTUP-OBJS); do cp $$file $(DESTINATION)/lib; done
 
 clean: dummy.delete
 

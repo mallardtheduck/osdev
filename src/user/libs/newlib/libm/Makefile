@@ -9,7 +9,7 @@ BUILD-AS-OPTIONS := -g -c -fPIC
 AR-FLAGS := rcs -o $(STATIC-NAME)
 BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c -fPIC -DINTERNAL_NEWLIB -D_COMPILING_NEWLIB -ffreestanding
-BUILD-C-OPTIONS := -Wall -Wextra -g -c -I../../../../include -I./common -std=gnu99
+BUILD-C-OPTIONS := -Wall -Wextra -g -c -I../../../../include -I../libc/include -I./common -std=gnu99
 LINK := i686-pc-btos-gcc
 LINK-FLAGS := -O2 -fPIC -shared -nodefaultlibs -ffreestanding
 LINK-OPTIONS := -o $(LIBRARY-NAME)

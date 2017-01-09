@@ -2676,7 +2676,7 @@ btos*)
   libname_spec='$name'
   shrext_cmds=".ell"
   need_lib_prefix=no
-  library_names_spec='$libname${shared_ext} $libname.a'
+  library_names_spec='$libname${shared_ext}'
   dynamic_linker="$host_os ld.ell"
   shlibpath_var=LIBPATH
   ;;

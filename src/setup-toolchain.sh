@@ -48,13 +48,13 @@ cd $HOME/Projects/os/src
 rm -rf build-gcc
 mkdir build-gcc && \
 cd build-gcc && \
-../gcc-4.8.1/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers && \
+../gcc-4.8.1/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers --with-newlib --disable-multilib && \
 make all-gcc && \
 make all-target-libgcc && \
 make install-gcc && \
 make install-target-libgcc && \
 \
-# cd $HOME/Projects/os/src
+cd $HOME/Projects/os/src && \
 # pushd newlib-2.1.0/newlib/libc/sys/btos && \
 # i686-pc-btos-as crti.S -o crti.o && \
 # i686-pc-btos-as crtn.S -o crtn.o && \
@@ -70,6 +70,7 @@ make install-target-libgcc && \
 make newlib && \
 \
 cd $HOME/Projects/os/src/build-gcc && \
+mkdir -p i686-pc-btos/libstdc++-v3 && \
 cp ../toolchain/misc/libtool i686-pc-btos/libstdc++-v3 && \
 make && \
 make install
