@@ -468,6 +468,14 @@ public:
 	{
 		return &data_[size_];
 	}
+
+	iterator rbegin(){
+		return &data_[size_];
+	}
+
+	iterator rend(){
+		return (iterator)(char*)(&data_[0] - sizeof(value_type));
+	}
 private:
 	size_type size_, capacity_;
 	pointer data_;
