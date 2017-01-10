@@ -6,6 +6,7 @@
 const size_t Kernel_Boundary = 1024*1024*1024;
 
 struct loaded_module{
+	uint32_t id;
 	char *name;
 	Elf32_Dyn *dynamic;
 	intptr_t base;
@@ -23,6 +24,7 @@ void panic(const char *msg){
 }
 
 static loaded_module *add_module(const char *name, Elf32_Dyn *dynsection, intptr_t base){
+	static uint32_t id_counter = 0;
 	++loaded_module_count;
 	if(loaded_module_count==1){
 		loaded_modules = (loaded_module*)malloc(sizeof(loaded_module));
@@ -37,6 +39,7 @@ static loaded_module *add_module(const char *name, Elf32_Dyn *dynsection, intptr
 	module.name = newstring;
 	module.dynamic = dynsection;
 	module.base = base;
+	module.id = ++id_counter;
 	return &module;
 }
 
@@ -270,15 +273,27 @@ static void relocate_and_link_module(const loaded_module &module, bool load){
 }
 
 static void init_module(const loaded_module &module){
+	typedef void (*init_fn_t)(uint32_t id);
 	Elf32_Dyn *const &dynamic = module.dynamic;
 	size_t idx=0;
 	while(dynamic[idx].tag != 0){
 		Elf32_Dyn &current = dynamic[idx];
 		switch(current.tag){
 			case DT_INIT:{
-				typedef void (*init_fn_t)();
 				init_fn_t init_fn =(init_fn_t)(current.un.ptr + module.base);
-				init_fn();
+				init_fn(module.id);
+				break;
+			}
+			case DT_INIT_ARRAY:{
+				size_t array_size_idx = get_dynamic_entry_idx(dynamic, DT_INIT_ARRAYSZ);
+				size_t array_size = dynamic[array_size_idx].un.val;
+				intptr_t *array = (intptr_t*)(current.un.ptr + module.base);
+				size_t array_count = array_size / sizeof(intptr_t);
+				for(size_t i  = 0; i < array_count; ++i){
+					init_fn_t init_fn = (init_fn_t)(array[i]);
+					init_fn(module.id);
+				}
+				break;
 			}
 		}
 		++idx;
