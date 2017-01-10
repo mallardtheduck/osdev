@@ -5,7 +5,7 @@ DESTINATION := $(HOME)/Projects/os/cross/i686-pc-btos
 
 BUILD-AS := i686-pc-btos-gcc
 BUILD-AR := i686-pc-btos-ar
-BUILD-AS-OPTIONS := -g -c -fPIC
+BUILD-AS-OPTIONS := -g -c -fPIC -D_I386MACH_NEED_SOTYPE_FUNCTION
 AR-FLAGS := rcs -o $(STATIC-NAME)
 BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c -fPIC -DINTERNAL_NEWLIB -D_COMPILING_NEWLIB -ffreestanding
