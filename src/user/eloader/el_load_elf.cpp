@@ -12,11 +12,19 @@ struct loaded_module{
 	intptr_t base;
 };
 
+struct symbol_override{
+	const char *name;
+	intptr_t value;
+};
+
 static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const char *name, intptr_t base);
 static void relocate_and_link_module(const loaded_module &module, bool load);
 
-loaded_module *loaded_modules = NULL;
-size_t loaded_module_count = 0;
+static loaded_module *loaded_modules = NULL;
+static size_t loaded_module_count = 0;
+
+static symbol_override *overrides = NULL;
+static size_t override_count = 0;
 
 void panic(const char *msg){
 	bt_zero(msg);
@@ -41,6 +49,40 @@ static loaded_module *add_module(const char *name, Elf32_Dyn *dynsection, intptr
 	module.base = base;
 	module.id = ++id_counter;
 	return &module;
+}
+
+static void add_symbol_override(const char *name, intptr_t value){
+	++override_count;
+	if(override_count == 1){
+		overrides = (symbol_override*)malloc(sizeof(symbol_override));
+	}else{
+		overrides = (symbol_override*)realloc(overrides, sizeof(symbol_override) * override_count);
+	}
+	symbol_override &override = overrides[override_count - 1];
+	size_t strSize = strlen(name) + 1;
+	char *newstring = (char*)malloc(strSize);
+	memset(newstring, 0, strSize);
+	strncpy(newstring, name, strSize);
+	override.name = newstring;
+	override.value = value;
+	puts("SYMBOL OVERRIDEN: ");
+	puts(newstring);
+	puts(" = ");
+	puti((int)value);
+	puts("\n");
+}
+
+static intptr_t get_symbol_override(const char *name){
+	if(name){
+		for(size_t i = 0; i < override_count; ++i){
+			//~ puts(name);
+			//~ puts(" =?= ");
+			//~ puts(overrides[i].name);
+			//~ puts("\n");
+			if(strcmp(name, overrides[i].name) == 0) return overrides[i].value;
+		}
+	}
+	return 0;
 }
 
 static bool is_loaded(const char *name){
@@ -149,13 +191,20 @@ static Elf32_Sym hash_lookup(const char *symbol, const loaded_module &module){
 	return ret;
 }
 
-static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *sym_size=NULL, bool allow_self=true){
-	// puts("get_symbol\n");
+static char* get_symbol_name(const loaded_module &module, size_t symbol){
 	size_t symtab_idx = get_dynamic_entry_idx(module.dynamic, DT_SYMTAB);
 	Elf32_Sym *symtab = (Elf32_Sym*)(module.base + module.dynamic[symtab_idx].un.ptr);
 	size_t strtab_idx = get_dynamic_entry_idx(module.dynamic, DT_STRTAB);
 	char *strtab = (char*)(module.base + module.dynamic[strtab_idx].un.ptr);
 	char *symname = strtab + symtab[symbol].name;
+	return symname;
+}
+
+static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *sym_size=NULL, bool allow_self=true, bool ignore_overrides=false){
+	// puts("get_symbol\n");
+	char *symname = get_symbol_name(module, symbol);
+	intptr_t override = get_symbol_override(symname);
+	if(override && !ignore_overrides) return override;
 	// puts(symname);
 	// puts("\n");
 	for(ptrdiff_t i=loaded_module_count-1; i>=0; --i){
@@ -179,8 +228,11 @@ static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *s
 }
 
 static void do_relocation(const loaded_module module, const Elf32_Rela &rela, bool load){
-	if(load && ELF32_R_TYPE(rela.info) != R_386_RELATIVE) return;
-	if(!load && ELF32_R_TYPE(rela.info) == R_386_RELATIVE) return;
+	if(load){
+		 if(ELF32_R_TYPE(rela.info) != R_386_RELATIVE && ELF32_R_TYPE(rela.info) != R_386_COPY) return;
+	 }else{
+		  if(ELF32_R_TYPE(rela.info) == R_386_RELATIVE) return;
+	  }
 	uint32_t *ref=(uint32_t*)(module.base+rela.offset);
 	switch(ELF32_R_TYPE(rela.info)){
 		case R_386_NONE: break;
@@ -197,9 +249,23 @@ static void do_relocation(const loaded_module module, const Elf32_Rela &rela, bo
 			break;
 		}
 		case R_386_COPY:{
-			size_t sym_size = 0;
-			void *addr = (void*)get_symbol(module, ELF32_R_SYM(rela.info), &sym_size, false);
-			memcpy(ref, addr, sym_size);
+			if(load){
+				const char *name = get_symbol_name(module, ELF32_R_SYM(rela.info));
+				add_symbol_override(name, (intptr_t)ref);
+			}else{
+				size_t sym_size = 0;
+				void *addr = (void*)get_symbol(module, ELF32_R_SYM(rela.info), &sym_size, false, true);
+				puts("R_386_COPY ");
+				puti(module.id);
+				puts(" - ");
+				puti((int)addr);
+				puts(" -> ");
+				puti((int)ref);
+				puts(" - ");
+				puti(sym_size);
+				puts("\n");
+				memcpy(ref, addr, sym_size);
+			}
 			break;
 		}
 		case R_386_GLOB_DATA:
