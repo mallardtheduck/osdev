@@ -65,11 +65,11 @@ static void add_symbol_override(const char *name, intptr_t value){
 	strncpy(newstring, name, strSize);
 	override.name = newstring;
 	override.value = value;
-	puts("SYMBOL OVERRIDEN: ");
-	puts(newstring);
-	puts(" = ");
-	puti((int)value);
-	puts("\n");
+	// puts("SYMBOL OVERRIDEN: ");
+	// puts(newstring);
+	// puts(" = ");
+	// puti((int)value);
+	// puts("\n");
 }
 
 static intptr_t get_symbol_override(const char *name){
@@ -255,15 +255,15 @@ static void do_relocation(const loaded_module module, const Elf32_Rela &rela, bo
 			}else{
 				size_t sym_size = 0;
 				void *addr = (void*)get_symbol(module, ELF32_R_SYM(rela.info), &sym_size, false, true);
-				puts("R_386_COPY ");
-				puti(module.id);
-				puts(" - ");
-				puti((int)addr);
-				puts(" -> ");
-				puti((int)ref);
-				puts(" - ");
-				puti(sym_size);
-				puts("\n");
+				// puts("R_386_COPY ");
+				// puti(module.id);
+				// puts(" - ");
+				// puti((int)addr);
+				// puts(" -> ");
+				// puti((int)ref);
+				// puts(" - ");
+				// puti(sym_size);
+				// puts("\n");
 				memcpy(ref, addr, sym_size);
 			}
 			break;

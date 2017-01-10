@@ -53,7 +53,6 @@ int btos_set_filenum(bt_handle fh){
 }
 
 bt_handle btos_get_handle(int fd){
-	bt_zero("b_g_h\n");
 	btos_open_std_streams();
     if(fd < fh_count) return filehandles[fd];
     else return 0;
