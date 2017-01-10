@@ -1,5 +1,7 @@
 LIBRARY-NAME := libc.ell
+G-LIBRARY-NAME := libg.ell
 STATIC-NAME := libc.a
+G-STATIC-NAME := libg.a
 STARTUP-OBJS := sys/btos/crt0.o sys/btos/crti.o sys/btos/crtn.o
 
 DESTINATION := $(HOME)/Projects/os/cross/i686-pc-btos
@@ -12,7 +14,7 @@ BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c -fPIC -DINTERNAL_NEWLIB -D_COMPILING_NEWLIB -ffreestanding
 BUILD-C-OPTIONS := -Wall -Wextra -g -c -I../../../../include -I./sys/btos -I./include -std=gnu99
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -O2 -fPIC -shared -nodefaultlibs -ffreestanding -lm
+LINK-FLAGS := -O2 -fPIC -shared -nodefaultlibs -ffreestanding -lm -lgcc_s
 LINK-OPTIONS := -o $(LIBRARY-NAME)
 
 FOLDERS := argz ctype errno locale machine reent search signal stdio stdlib string sys syscalls time
@@ -44,6 +46,8 @@ copy:
 	mkdir -p $(DESTINATION)/include
 	cp $(LIBRARY-NAME) $(DESTINATION)/lib
 	cp $(STATIC-NAME) $(DESTINATION)/lib
+	cp $(LIBRARY-NAME) $(DESTINATION)/lib/$(G-LIBRARY-NAME)
+	cp $(STATIC-NAME) $(DESTINATION)/lib/$(G-STATIC-NAME)
 	for folder in $(INCLUDE-FOLDERS); do \
 		(cd $$folder && find -type f -name "*.h" -exec cp --parents {} $(DESTINATION)/include \;); \
 	done

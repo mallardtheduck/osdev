@@ -13,7 +13,10 @@ static char *argsptr[ARGC_MAX]={0};
 static bt_handle *filehandles=NULL;
 static size_t fh_count=0;
 
+static bool std_streams_open = false;
+
 void btos_open_std_streams(){
+	if(std_streams_open) return;
     char buffer[BT_MAX_PATH];
     size_t s=bt_getenv("STDIN", buffer, BT_MAX_PATH);
     if(s){
@@ -32,6 +35,7 @@ void btos_open_std_streams(){
         bt_handle output=bt_fopen(buffer, FS_Write | FS_AtEnd);
         btos_set_specific_filenum(2, output);
     }
+    std_streams_open = true;
 }
 
 int btos_set_filenum(bt_handle fh){
@@ -49,6 +53,8 @@ int btos_set_filenum(bt_handle fh){
 }
 
 bt_handle btos_get_handle(int fd){
+	bt_zero("b_g_h\n");
+	btos_open_std_streams();
     if(fd < fh_count) return filehandles[fd];
     else return 0;
 }
