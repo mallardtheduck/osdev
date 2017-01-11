@@ -153,7 +153,7 @@ create.directories:
 	touch create.directories
 
 ../base.tar: $(import-files) $(pkg-files) copy.grub
-	-cp -R pkgfiles/* data
+	#cp -R pkgfiles/* data
 	tar cf ../base.tar -C data .
 
 clean:

@@ -44,12 +44,12 @@ startfiles: copy-startfiles
 copy:
 	mkdir -p $(DESTINATION)/lib
 	mkdir -p $(DESTINATION)/include
-	cp $(LIBRARY-NAME) $(DESTINATION)/lib
-	cp $(STATIC-NAME) $(DESTINATION)/lib
-	cp $(LIBRARY-NAME) $(DESTINATION)/lib/$(G-LIBRARY-NAME)
-	cp $(STATIC-NAME) $(DESTINATION)/lib/$(G-STATIC-NAME)
+	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib
+	cp -u $(STATIC-NAME) $(DESTINATION)/lib
+	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib/$(G-LIBRARY-NAME)
+	cp -u $(STATIC-NAME) $(DESTINATION)/lib/$(G-STATIC-NAME)
 	for folder in $(INCLUDE-FOLDERS); do \
-		(cd $$folder && find -type f -name "*.h" -exec cp --parents {} $(DESTINATION)/include \;); \
+		(cd $$folder && find -type f -name "*.h" -exec cp -u --parents {} $(DESTINATION)/include \;); \
 	done
 
 copy-startfiles: $(STARTUP-OBJS)
@@ -112,6 +112,3 @@ stdio/svfwscanf.o: stdio/vfwscanf.c
 
 stdio/svfiwscanf.o: stdio/vfwscanf.c
 	$(BUILD-C) -MMD -MP $(BUILD-C-FLAGS) -DSTRING_ONLY -DINTEGER_ONLY $< -o $@ $(BUILD-C-OPTIONS) -I$(shell dirname $<) -I../libm/common
-
-#stdlib/mallocr.o: stdlib/mallocr.c
-#	$(BUILD-C) -MMD -MP $(BUILD-C-FLAGS) -DDEFINE_MALLOC -DDEFINE_FREE -DDEFINE_REALLOC -DDEFINE_MEMALIGN -DDEFINE_VALLOC -DDEFINE_PVALLOC -DDEFINE_CALLOC -DDEFINE_CFREE -DDEFINE_MALLOC_USABLE_SIZE -DDEFINE_MALLINFO -DDEFINE_MALLOC_STATS -DDEFINE_MALLOPT -D $< -o $@ $(BUILD-C-OPTIONS) -I$(shell dirname $<) -I../libm/common

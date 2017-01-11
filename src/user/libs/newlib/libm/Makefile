@@ -35,11 +35,9 @@ all: $(LIBRARY-NAME) $(STATIC-NAME) copy
 -include $(CDEPFILES) $(CPPDEPFILES)
 
 copy:
-	cp $(LIBRARY-NAME) $(DESTINATION)/lib
-	cp $(STATIC-NAME) $(DESTINATION)/lib
-#	for folder in $(INCLUDE-FOLDERS); do \
-#		(cd $$folder && find -type f -name "*.h" -exec cp --parents {} $(DESTINATION)/include \;); \
-#	done
+	mkdir -p $(DESTINATION)/lib
+	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib
+	cp -u $(STATIC-NAME) $(DESTINATION)/lib
 
 clean: dummy.delete
 
