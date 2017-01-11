@@ -95,7 +95,7 @@ USERAPI_HANDLER(BT_CLOSEHANDLE){
     bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
     if(h.open && h.type!=kernel_handle_types::invalid){
         close_handle(h);
-        proc_remove_handle((handle_t)regs->eax);
+        proc_remove_handle((handle_t)regs->ebx);
     }
 }
 

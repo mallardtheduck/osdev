@@ -415,6 +415,9 @@ uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t 
 handle_t proc_add_handle(bt_handle_info handle, pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return 0;
+    //~ for(auto i = proc->handles.begin(); i!=proc->handles.end(); ++i){
+		//~ if(i->second.value == handle.value) panic("(PROC) Duplicate handle add!");
+	//~ }
     handle_t ret=++proc->handlecounter;
     while(!ret || proc->handles.has_key(ret)) ret=++proc->handlecounter;
     proc->handles[ret] = handle;
