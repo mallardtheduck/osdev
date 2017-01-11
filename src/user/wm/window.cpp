@@ -159,8 +159,10 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			UnGrab();
 			dragging = false;
 			if(GetMetric(FullWindowDrag)){
-				GDS_SelectSurface(gds_drag_id);
-				GDS_DeleteSurface();
+				if(gds_drag_id){
+					GDS_SelectSurface(gds_drag_id);
+					GDS_DeleteSurface();
+				}
 				gds_drag_id = 0;
 				SetVisible(true, false);
 			}else{
