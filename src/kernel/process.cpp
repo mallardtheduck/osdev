@@ -520,7 +520,7 @@ bool proc_wait_blockcheck(void *p){
 }
 
 int proc_wait(pid_t pid){
-	if(proc_get(pid)){
+	while(proc_get(pid)){
 		sch_setblock(&proc_wait_blockcheck, (void*)&pid);
 	}
     {
