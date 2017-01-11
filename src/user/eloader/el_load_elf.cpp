@@ -244,7 +244,7 @@ static void do_relocation(const loaded_module module, const Elf32_Rela &rela, bo
 		}
 		case R_386_PC32:{
 			intptr_t symbol = get_symbol(module, ELF32_R_SYM(rela.info));
-			uint32_t val = symbol + rela.addend - module.base;
+			uint32_t val = symbol + rela.addend - (module.base+rela.offset);
 			*ref = val;
 			break;
 		}
@@ -339,6 +339,9 @@ static void relocate_and_link_module(const loaded_module &module, bool load){
 }
 
 static void init_module(const loaded_module &module){
+	// puts("Init: ");
+	// puts(module.name);
+	// puts("\n");
 	typedef void (*init_fn_t)(uint32_t id);
 	Elf32_Dyn *const &dynamic = module.dynamic;
 	size_t idx=0;
