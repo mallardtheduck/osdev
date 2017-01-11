@@ -7,6 +7,16 @@
 
 extern "C" bt_handle btos_get_handle(int fd);
 
+class global_test{
+	public:
+	global_test(){
+		std::cout << "Global constructor." << std::endl;
+	}
+	~global_test(){
+		std::cout << "Global destructor." << std::endl;
+	}
+} global_test_inst;
+
 std::vector<std::string> args2vector(int argc, char **argv){
 	std::vector<std::string> ret;
 	for(int i=0; i<argc; ++i){
@@ -30,6 +40,11 @@ int main(int argc, char **argv){
     std::cout << "std::cout works" << std::endl;
     std::cerr << "std::cerr works" << std::endl;
     std::string input;
+	try{
+		throw 42;
+	}catch(int ex){
+		std::cout << "Exception test: " << ex << std::endl;
+	}
     std::cout << "Enter some text: ";
     getline(std::cin, input);
     std::cout << "You entered: " << input << std::endl;
