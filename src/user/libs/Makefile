@@ -1,4 +1,4 @@
-LIBS := newlib
+LIBS := newlib libgds libwm
 
 all: dummy.file
 	for dir in $(LIBS); do \

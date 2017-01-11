@@ -93,6 +93,27 @@ vector<symbol> get_symbols(bt_pid_t pid){
 	}
 	elf_end(e);
 	close(fd);
+	fd = open("INIT:/ELOADER.ELX", O_RDONLY, 0);
+	e = elf_begin(fd, ELF_C_READ, NULL);
+	if(!e) throw string("Symbol load fail.");
+	scn = NULL;
+	while((scn = elf_nextscn(e, scn))){
+		gelf_getshdr(scn, &shdr);
+		if(shdr.sh_type == SHT_SYMTAB){
+			Elf_Data *data = elf_getdata(scn, NULL);
+			size_t count = shdr.sh_size / shdr.sh_entsize;
+			GElf_Sym sym;
+			for(size_t ndx = 0; ndx < count; ++ndx){
+				symbol s;
+				gelf_getsym(data, ndx, &sym);
+				s.name = elf_strptr(e, shdr.sh_link, sym.st_name);
+				s.address = sym.st_value;
+				ret.push_back(s);
+			}
+		}
+	}
+	elf_end(e);
+	close(fd);
 	return ret;
 }
 

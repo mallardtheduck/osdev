@@ -6,7 +6,7 @@ static const char *LIBPATH_ENV = "LIBPATH";
 bt_handle_t open_lib(const char *name){
     bt_handle_t ret = 0;
     if(!btos_path_is_absolute(name)){
-        char *libPathStr = (char*)malloc(0);
+        char *libPathStr = NULL;
         size_t lpLen = bt_getenv(LIBPATH_ENV, libPathStr, 0);
         if(lpLen > 0){
             libPathStr = (char*)realloc(libPathStr, lpLen + 1);

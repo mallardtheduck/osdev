@@ -1,19 +1,21 @@
-OUTPUT-NAME := gdstest.elx
-LIBRARY-NAME := libgds.a
+OUTPUT-NAME := wmtest.elx
+LIBRARY-NAME := wm.ell
 
 BUILD-AS := i686-pc-btos-as
 BUILD-AR := i686-pc-btos-ar
 BUILD-AS-OPTIONS := -g -fPIC -c
 BUILD-CPP := i686-pc-btos-g++
-BUILD-CPP-FLAGS :=  -c
-BUILD-CPP-OPTIONS := -Wall -Wextra -Werror -g -c -I../../include -std=gnu++11
+BUILD-CPP-FLAGS :=  -c -fPIC
+BUILD-CPP-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -std=gnu++11
 BUILD-C := i686-pc-btos-gcc
-BUILD-C-FLAGS := -c
-BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../include -std=gnu99
+BUILD-C-FLAGS := -c -fPIC
+BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -std=gnu99
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L.
+LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L. -L../libgds
+LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L. -L../libgds
 AR-FLAGS := rcs -o $(LIBRARY-NAME)
-LINK-OPTIONS := -lgds -lgcc_s -lstdc++ -lm
+LINK-OPTIONS := -lgds -lwm -lgcc_s -lstdc++ -lm
+LIB-LINK-OPTIONS := -lgds -lgcc_s -lstdc++ -lm
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")
@@ -29,7 +31,7 @@ MAINOBJ := $(MAINCPP:.cpp=.o)
 CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
 
-all: $(OUTPUT-NAME)
+all: $(OUTPUT-NAME) $(LIBRARY-NAME)
 
 -include $(CDEPFILES) $(CPPDEPFILES)
 
@@ -40,7 +42,7 @@ dummy.delete:
 	-@$(RM) $(OUTPUT-NAME)
 
 $(LIBRARY-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile
-	$(BUILD-AR) $(AR-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS)
+	$(LINK) $(LIB-LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LIB-LINK-OPTIONS)
 
 $(OUTPUT-NAME): $(LIBRARY-NAME) $(MAINOBJ) Makefile
 	$(LINK) $(LINK-FLAGS) $(MAINOBJ) $(LINK-OPTIONS)
