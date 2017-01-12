@@ -1,5 +1,5 @@
 diff -rupN libuuid-1.0.3/config.sub originals/libuuid-1.0.3/config.sub
---- libuuid-1.0.3/config.sub	2016-02-23 19:33:25.204223955 +0000
+--- libuuid-1.0.3/config.sub	2017-01-10 10:53:03.910009876 +0000
 +++ originals/libuuid-1.0.3/config.sub	2014-08-12 09:19:20.000000000 +0100
 @@ -1376,7 +1376,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
@@ -10,8 +10,27 @@ diff -rupN libuuid-1.0.3/config.sub originals/libuuid-1.0.3/config.sub
  	# Remember, each alternative MUST END IN *, to match a version number.
  		;;
  	-qnx*)
+diff -rupN libuuid-1.0.3/configure originals/libuuid-1.0.3/configure
+--- libuuid-1.0.3/configure	2017-01-12 10:27:19.893142712 +0000
++++ originals/libuuid-1.0.3/configure	2014-08-12 09:19:19.000000000 +0100
+@@ -10786,15 +10786,6 @@ uts4*)
+   shlibpath_var=LD_LIBRARY_PATH
+   ;;
+ 
+-btos*)
+-  libname_spec='$name'
+-  shrext_cmds=".ell"
+-  need_lib_prefix=no
+-  library_names_spec='$libname${shared_ext}'
+-  dynamic_linker="$host_os ELOADER"
+-  shlibpath_var=LIBPATH
+-  soname_spec='$libname${shared_ext}.$major'
+-  ;;
+ *)
+   dynamic_linker=no
+   ;;
 diff -rupN libuuid-1.0.3/gen_uuid.c originals/libuuid-1.0.3/gen_uuid.c
---- libuuid-1.0.3/gen_uuid.c	2016-02-23 19:33:25.204223955 +0000
+--- libuuid-1.0.3/gen_uuid.c	2017-01-10 10:53:03.910009876 +0000
 +++ originals/libuuid-1.0.3/gen_uuid.c	2014-08-12 09:07:18.000000000 +0100
 @@ -266,7 +266,6 @@ static int get_node_id(unsigned char *no
  static int get_clock(uint32_t *clock_high, uint32_t *clock_low,
@@ -32,7 +51,7 @@ diff -rupN libuuid-1.0.3/gen_uuid.c originals/libuuid-1.0.3/gen_uuid.c
  
  #if defined(HAVE_UUIDD) && defined(HAVE_SYS_UN_H)
 diff -rupN libuuid-1.0.3/randutils.c originals/libuuid-1.0.3/randutils.c
---- libuuid-1.0.3/randutils.c	2016-02-23 19:33:25.204223955 +0000
+--- libuuid-1.0.3/randutils.c	2017-01-10 10:53:03.910009876 +0000
 +++ originals/libuuid-1.0.3/randutils.c	2014-08-12 09:07:18.000000000 +0100
 @@ -13,9 +13,7 @@
  #include <string.h>

@@ -30,7 +30,10 @@ PATH=$BASE_PATH/bin:$PATH
 	--host=$ARCH \
 	--prefix=$PREFIX
 
+cp ../../toolchain/misc/libtool .
+
 make
 make DESTDIR=$PWD/../install install
+find ../install -name uuid.ell -type f -exec chmod -x {} \;
 find ../install -executable -not -name "*.elx" -type f -exec rm {}.elx \;
 find ../install -executable -not -name "*.elx" -type f -exec mv {} {}.elx \;
