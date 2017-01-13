@@ -133,8 +133,7 @@ data/btos/lib/stdc++.ell: ../../../cross/i686-pc-btos/lib/stdc++.ell
 data/btos/lib/libgcc_s.ell: ../../../cross/i686-pc-btos/lib/libgcc_s.ell
 	cp $< $@
 
-#Difference in filenames is intentional
-data/btos/lib/libg.ell: ../../user/libs/newlib/libc/libc.ell
+data/btos/lib/libg.ell: ../../user/libs/newlib/libc/libg.ell
 	cp $< $@
 	
 data/btos/lib/gds.ell: ../../user/libs/libgds/gds.ell

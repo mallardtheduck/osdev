@@ -16,6 +16,7 @@ BUILD-C-OPTIONS := -Wall -Wextra -g -c -I../../../../include -I./sys/btos -I./in
 LINK := i686-pc-btos-gcc
 LINK-FLAGS := -O2 -fPIC -shared -nodefaultlibs -ffreestanding -lm -lgcc_s
 LINK-OPTIONS := -o $(LIBRARY-NAME)
+G-LINK-OPTIONS := -L. -lc -o $(G-LIBRARY-NAME)
 
 FOLDERS := argz ctype errno locale machine reent search signal stdio stdlib string sys syscalls time
 SKIP-FILES := signal/signal.c stdlib/getenv.c syscalls/syslseek.c syscalls/syswait.c syscalls/sysunlink.c syscalls/sysopen.c syscalls/sysgetpid.c syscalls/sysgettod.c syscalls/sysfcntl.c syscalls/sysfork.c syscalls/syskill.c syscalls/syswrite.c syscalls/sysstat.c syscalls/syssbrk.c syscalls/sysisatty.c syscalls/sysexecve.c syscalls/sysclose.c syscalls/syslink.c syscalls/sysread.c syscalls/sysfstat.c syscalls/systimes.c string/memcpy.c string/strlen.c string/memcmp.c string/memmove.c string/memset.c string/memchr.c string/strchr.c sys/btos/crti.S sys/btos/crt0.S sys/btos/crtn.S
@@ -35,18 +36,18 @@ EXTRAOBJS := stdio/vfiprintf.o stdio/svfprintf.o stdio/svfiprintf.o stdio/vfiwpr
 
 CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 
-all: $(LIBRARY-NAME) $(STATIC-NAME) $(STARTUP-OBJS) copy
+all: copy
 
 startfiles: copy-startfiles
 
 -include $(CDEPFILES) $(CPPDEPFILES)
 
-copy:
+copy: $(LIBRARY-NAME) $(STATIC-NAME) $(STARTUP-OBJS) $(G-LIBRARY-NAME)
 	mkdir -p $(DESTINATION)/lib
 	mkdir -p $(DESTINATION)/include
 	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib
 	cp -u $(STATIC-NAME) $(DESTINATION)/lib
-	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib/$(G-LIBRARY-NAME)
+	cp -u $(G-LIBRARY-NAME) $(DESTINATION)/lib/
 	cp -u $(STATIC-NAME) $(DESTINATION)/lib/$(G-STATIC-NAME)
 	for folder in $(INCLUDE-FOLDERS); do \
 		(cd $$folder && find -type f -name "*.h" -exec cp -u --parents {} $(DESTINATION)/include \;); \
@@ -64,6 +65,9 @@ dummy.delete:
 
 $(LIBRARY-NAME): $(ASOBJS) $(COBJS) $(EXTRAOBJS) Makefile
 	$(LINK) $(LINK-FLAGS) $(ASOBJS) $(COBJS) $(EXTRAOBJS) $(LINK-OPTIONS)
+	
+$(G-LIBRARY-NAME): $(LIBRARY-NAME) Makefile
+	$(LINK) $(LINK-FLAGS) $(G-LINK-OPTIONS)
 
 $(STATIC-NAME): $(ASOBJS) $(COBJS) $(EXTRAOBJS) Makefile
 	$(BUILD-AR) $(AR-FLAGS) $(ASOBJS) $(COBJS) $(EXTRAOBJS)
