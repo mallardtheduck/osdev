@@ -1,4 +1,4 @@
-PROGS := libs system tests cmds bin wmapps
+PROGS := wmmenu termwin breakout
 
 all: dummy.file
 	for dir in $(PROGS); do \

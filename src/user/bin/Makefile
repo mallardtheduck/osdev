@@ -1,4 +1,4 @@
-PROGS := libs system tests cmds bin wmapps
+PROGS := debug startwm install
 
 all: dummy.file
 	for dir in $(PROGS); do \

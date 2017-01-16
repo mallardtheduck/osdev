@@ -18,10 +18,10 @@ data/ps2.sys: ../../modules/ps2/ps2.sys
 data/ata.sys: ../../modules/ata/ata.sys
 	cp $< $@
 
-data/spawn.elx: ../../user/spawn/spawn.elx
+data/spawn.elx: ../../user/system/spawn/spawn.elx
 	cp $< $@
 
-data/eloader.elx: ../../user/eloader/eloader.elx
+data/eloader.elx: ../../user/system/eloader/eloader.elx
 	cp $< $@
 
 clean: dummy.file

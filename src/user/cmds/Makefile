@@ -1,4 +1,4 @@
-PROGS := libs system tests cmds bin wmapps
+PROGS := cls cmd format kill load mount sleep tar termctl
 
 all: dummy.file
 	for dir in $(PROGS); do \

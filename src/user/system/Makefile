@@ -1,4 +1,4 @@
-PROGS := libs system tests cmds bin wmapps
+PROGS := eloader spawn switcher gds wm
 
 all: dummy.file
 	for dir in $(PROGS); do \

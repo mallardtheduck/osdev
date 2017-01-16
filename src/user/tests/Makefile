@@ -1,4 +1,4 @@
-PROGS := libs system tests cmds bin wmapps
+PROGS := ctest cpptest crash mousetest msgtest shmtest vgatest fputest elltest
 
 all: dummy.file
 	for dir in $(PROGS); do \
