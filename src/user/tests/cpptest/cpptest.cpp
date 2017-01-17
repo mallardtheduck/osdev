@@ -40,6 +40,7 @@ int main(int argc, char **argv){
     std::cout << "std::cout works" << std::endl;
     std::cerr << "std::cerr works" << std::endl;
     std::string input;
+    std::cout << "Testing exception handling..." << std::endl;
 	try{
 		throw 42;
 	}catch(int ex){
