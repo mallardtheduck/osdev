@@ -15,10 +15,13 @@ LINK-OPTIONS := -lgcc_s -lstdc++ -lm
 ASFILES := $(shell find . -type f -name "*.s")
 CFILES := $(shell find . -type f -name "*.c")
 CPPFILES := $(shell find . -type f -name "*.cpp")
+CCFILES := $(shell find . -type f -name "*.cc")
 
 ASOBJS := $(ASFILES:.s=.o)
 COBJS := $(CFILES:.c=.o)
 CPPOBJS := $(CPPFILES:.cpp=.o)
+CCOBJS := $(CCFILES:.cc=.o)
+CXXOBJS := $(CPPOBJS) $(CCOBJS)
 
 CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
@@ -33,8 +36,8 @@ dummy.delete:
 	-@$(RM) *.o
 	-@$(RM) $(OUTPUT-NAME)
 
-$(OUTPUT-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile
-	$(LINK) $(LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LINK-OPTIONS)
+$(OUTPUT-NAME): $(ASOBJS) $(COBJS) $(CXXOBJS) Makefile
+	$(LINK) $(LINK-FLAGS) $(ASOBJS) $(CXXOBJS) $(COBJS) $(LINK-OPTIONS)
 
 .s.o: %.s Makefile
 	$(BUILD-AS) $< -o $@ $(BUILD-AS-OPTIONS)
@@ -43,4 +46,7 @@ $(OUTPUT-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile
 	$(BUILD-C) -MMD -MP $(BUILD-C-FLAGS) $< -o $@ $(BUILD-C-OPTIONS)
 
 .cpp.o: %.cpp Makefile
+	$(BUILD-CPP) -MMD -MP $(BUILD-CPP-FLAGS) $< -o $@ $(BUILD-CPP-OPTIONS)
+
+.cc.o: %.cc Makefile
 	$(BUILD-CPP) -MMD -MP $(BUILD-CPP-FLAGS) $< -o $@ $(BUILD-CPP-OPTIONS)
