@@ -47,6 +47,8 @@
 #include <assert.h>
 #include "atomic.h"
 
+#include <btos.h>
+
 // Older GCC doesn't define __LITTLE_ENDIAN__
 #ifndef __LITTLE_ENDIAN__
 	// If __BYTE_ORDER__ is defined, use that instead
@@ -158,7 +160,8 @@ extern "C" int __cxa_guard_acquire(volatile guard_t *guard_object)
 		if (INIT_PART(guard_object) != LOCK_PART(guard_object) &&
 		    INITIALISED == *INIT_PART(guard_object))
 			return 0;
-		sched_yield();
+		//sched_yield();
+		bt_yield();
 	}
 }
 
