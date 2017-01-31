@@ -97,7 +97,7 @@ int main(int argc, char **argv){
             bt_debug_event_msg content;
             bt_msg_content(&msg, (void *) &content, sizeof(content));
 			out_event(content);
-			if(content.event == bt_debug_event::Exception){
+			if(content.event == bt_debug_event::Exception || content.event == bt_debug_event::ThreadEnd){
 				context ctx = get_context(content.thread);
 				out_context(ctx);
 				do_stacktrace(content.pid, ctx);
