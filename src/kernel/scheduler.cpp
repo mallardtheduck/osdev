@@ -634,7 +634,8 @@ void sch_update_usercontext(isr_regs *uc, uint64_t ext_id){
 		current_thread->usercontext = uc;
 	}else{
 		hold_lock hl(sch_lock);
-		sch_get(ext_id)->usercontext = uc;
+		sch_thread *thread = sch_get(ext_id);
+		if(thread) thread->usercontext = uc;
 	}
 
 }
@@ -644,7 +645,9 @@ void *sch_get_usercontext(uint64_t ext_id){
 		return current_thread->usercontext;
 	}else{
 		hold_lock hl(sch_lock);
-		return sch_get(ext_id)->usercontext;
+		sch_thread *thread = sch_get(ext_id);
+		if(thread) return thread->usercontext;
+		else return NULL;
 	}
 }
 

@@ -389,6 +389,7 @@ USERAPI_HANDLER(BT_PRIORITIZE){
 USERAPI_HANDLER(BT_EXIT){
 	pid_t pid=proc_current_pid;
 	proc_setreturn(regs->ebx);
+	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadEnd);
 	//proc_switch(0);
 	proc_end(pid);
 	sch_end_thread();
@@ -432,7 +433,7 @@ USERAPI_HANDLER(BT_WAIT_THREAD){
 }
 
 USERAPI_HANDLER(BT_END_THREAD){
-	debug_event_notify(proc_current_pid, 0, bt_debug_event::ThreadEnd);
+	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadEnd);
     sch_end_thread();
 }
 

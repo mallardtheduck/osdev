@@ -41,7 +41,7 @@ void debug_extension_uapi(uint16_t fn, isr_regs *regs) {
 			if(is_safe_ptr(regs->ecx, sizeof(isr_regs))){
 				void *dst = (void*)regs->ecx;
 				void *src = sch_get_usercontext(regs->ebx);
-				memcpy(dst, src, sizeof(isr_regs));
+				if(src) memcpy(dst, src, sizeof(isr_regs));
 			}
 			break;
 		default:
