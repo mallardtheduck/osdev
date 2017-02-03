@@ -18,10 +18,10 @@
   } while(0);
 
 #undef STARTFILE_SPEC
-#define STARTFILE_SPEC "%{!shared: %{!pg:crt0.o%s}} crti.o%s %{!shared:crtbegin.o%s}"
+#define STARTFILE_SPEC "%{!shared: %{!pg:crt0.o%s}} crti.o%s crtbegin.o%s"
 
 #undef ENDFILE_SPEC
-#define ENDFILE_SPEC "%{!shared:crtend.o%s} crtn.o%s"
+#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
 
 #undef LINK_SPEC
 #define LINK_SPEC "\
@@ -31,3 +31,6 @@
       %{rdynamic:-export-dynamic} \
       -dynamic-linker ELOADER.ELX} \
       %{static:-static}}"
+      
+#undef LINK_EH_SPEC
+#define LINK_EH_SPEC ""

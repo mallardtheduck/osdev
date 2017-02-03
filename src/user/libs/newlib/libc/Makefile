@@ -11,7 +11,7 @@ BUILD-AR := i686-pc-btos-ar
 BUILD-AS-OPTIONS := -g -c -fPIC -D_I386MACH_NEED_SOTYPE_FUNCTION
 AR-FLAGS := rcs -o $(STATIC-NAME)
 BUILD-C := i686-pc-btos-gcc
-BUILD-C-FLAGS := -c -fPIC -DINTERNAL_NEWLIB -D_COMPILING_NEWLIB -ffreestanding
+BUILD-C-FLAGS := -c -fPIC -DINTERNAL_NEWLIB -D_COMPILING_NEWLIB -DABORT_MESSAGE -ffreestanding
 BUILD-C-OPTIONS := -Wall -Wextra -g -c -I../../../../include -I./sys/btos -I./include -std=gnu99
 LINK := i686-pc-btos-gcc
 LINK-FLAGS := -O2 -fPIC -shared -nodefaultlibs -ffreestanding -lm -lgcc_s

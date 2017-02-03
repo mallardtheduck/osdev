@@ -200,7 +200,7 @@ static char* get_symbol_name(const loaded_module &module, size_t symbol){
 	return symname;
 }
 
-static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *sym_size=NULL, bool allow_self=true, bool ignore_overrides=false){
+static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *sym_size=NULL, bool allow_self=true, bool ignore_overrides=false, bool warn = false){
 	// puts("get_symbol\n");
 	char *symname = get_symbol_name(module, symbol);
 	intptr_t override = get_symbol_override(symname);
@@ -221,9 +221,11 @@ static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *s
 			return (entry.value + cmod.base);
 		}
 	}
-	puts("ELOADER: Symbol not found: ");
-	puts(symname);
-	puts("\n");
+	if(warn){
+		puts("ELOADER: Symbol not found: ");
+		puts(symname);
+		puts("\n");
+	}
 	return 0;
 }
 
