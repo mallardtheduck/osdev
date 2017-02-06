@@ -5,23 +5,16 @@
 
 const size_t Kernel_Boundary = 1024*1024*1024;
 
-struct loaded_module{
-	uint32_t id;
-	char *name;
-	Elf32_Dyn *dynamic;
-	intptr_t base;
-};
-
 struct symbol_override{
 	const char *name;
 	intptr_t value;
 };
 
-static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const char *name, intptr_t base);
+static uint32_t load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const char *name, intptr_t base, size_t limit, bool is_dynamic = false);
 static void relocate_and_link_module(const loaded_module &module, bool load);
 
-static loaded_module *loaded_modules = NULL;
-static size_t loaded_module_count = 0;
+loaded_module *loaded_modules = NULL;
+size_t loaded_module_count = 0;
 
 static symbol_override *overrides = NULL;
 static size_t override_count = 0;
@@ -31,7 +24,7 @@ void panic(const char *msg){
 	bt_exit(-1);
 }
 
-static loaded_module *add_module(const char *name, Elf32_Dyn *dynsection, intptr_t base){
+static loaded_module *add_module(const char *name, Elf32_Dyn *dynsection, intptr_t base, size_t limit, bool is_dynamic = false){
 	static uint32_t id_counter = 0;
 	++loaded_module_count;
 	if(loaded_module_count==1){
@@ -47,11 +40,13 @@ static loaded_module *add_module(const char *name, Elf32_Dyn *dynsection, intptr
 	module.name = newstring;
 	module.dynamic = dynsection;
 	module.base = base;
+	module.limit = limit;
+	module.is_dynamic = is_dynamic;
 	module.id = ++id_counter;
 	return &module;
 }
 
-static void add_symbol_override(const char *name, intptr_t value){
+void add_symbol_override(const char *name, intptr_t value){
 	++override_count;
 	if(override_count == 1){
 		overrides = (symbol_override*)malloc(sizeof(symbol_override));
@@ -104,7 +99,7 @@ static size_t elf_getsize(bt_handle_t file){
 	return limit-base;
 }
 
-static void load_elf_library(bt_handle_t file, const char *name){
+uint32_t load_elf_library(bt_handle_t file, const char *name, bool is_dynamic){
 	Elf32_Ehdr header=elf_read_header(file);
 	size_t ramsize=elf_getsize(file);
 	size_t pages=ramsize/4096;
@@ -121,12 +116,14 @@ static void load_elf_library(bt_handle_t file, const char *name){
             bt_mmap(file, prog.offset, (char*)mem+prog.vaddr, prog.filesz);
 		}
 	}
-	if(dynsection) load_dynamic(file, header, dynsection, name, (intptr_t)mem);
+	uint32_t ret = 0;
+	if(dynsection) ret = load_dynamic(file, header, dynsection, name, (intptr_t)mem, ramsize, is_dynamic);
+	return ret;
 }
 
-static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const char *name, intptr_t base){
+static uint32_t load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const char *name, intptr_t base, size_t limit, bool is_dynamic){
 	Elf32_Dyn *dynamic = load_dynamic_section(file, header, phnum);
-	loaded_module *module=add_module(name, dynamic, base);
+	loaded_module *module=add_module(name, dynamic, base, limit, is_dynamic);
 	relocate_and_link_module(*module, true);
 	size_t strtabidx = get_dynamic_entry_idx(dynamic, DT_STRTAB);
 	if(strtabidx != (size_t)-1){
@@ -156,6 +153,7 @@ static void load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const c
 			++nidx;
 		}
 	}
+	return module->id;
 }
 
 static Elf32_Sym hash_lookup(const char *symbol, const loaded_module &module){
@@ -200,9 +198,7 @@ static char* get_symbol_name(const loaded_module &module, size_t symbol){
 	return symname;
 }
 
-static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *sym_size=NULL, bool allow_self=true, bool ignore_overrides=false, bool warn = false){
-	// puts("get_symbol\n");
-	char *symname = get_symbol_name(module, symbol);
+intptr_t get_symbol_by_name(const loaded_module &module, const char *symname, size_t *sym_size, bool allow_self, bool ignore_overrides, bool warn){
 	intptr_t override = get_symbol_override(symname);
 	if(override && !ignore_overrides) return override;
 	// puts(symname);
@@ -227,6 +223,12 @@ static intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *s
 		puts("\n");
 	}
 	return 0;
+}
+
+intptr_t get_symbol(const loaded_module &module, size_t symbol, size_t *sym_size = NULL, bool allow_self = true, bool ignore_overrides = false, bool warn = false){
+	// puts("get_symbol\n");
+	char *symname = get_symbol_name(module, symbol);
+	return get_symbol_by_name(module, symname, sym_size, allow_self, ignore_overrides, warn);
 }
 
 static void do_relocation(const loaded_module module, const Elf32_Rela &rela, bool load){
@@ -392,6 +394,7 @@ static void init_modules(){
 
 entrypoint load_elf_proc(bt_handle_t file){
 	Elf32_Ehdr header=elf_read_header(file);
+	size_t limit = 0;
 	int dynsection = 0;
 	for(int i=0; i<header.phnum; ++i){
 		Elf32_Phdr prog=elf_read_progheader(file, header, i);
@@ -409,10 +412,11 @@ entrypoint load_elf_proc(bt_handle_t file){
 			bt_alloc_at(pages, (void*)base);
 			memset((void*)prog.vaddr, 0, prog.memsz);
 			bt_mmap(file, p, (char*)prog.vaddr, prog.filesz);
+			if(prog.vaddr + prog.memsz > limit) limit = prog.vaddr + prog.memsz;
 		}
 	}
 	if(dynsection) {
-		load_dynamic(file, header, dynsection, "MAIN", 0);
+		load_dynamic(file, header, dynsection, "MAIN", 0, limit);
 		relocate_and_link();
 		init_modules();
 	}

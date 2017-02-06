@@ -52,7 +52,7 @@ int main(){
     string termid=get_env("TERMID");
     uint64_t cterm=atoi(termid.c_str());
     bt_fioctl(fh, bt_terminal_ioctl::SetTitle , title.length(), (char*)title.c_str());
-	uint64_t keycode = (KeyFlags::Control | KeyFlags::NonASCII | KeyCodes::Escape);
+	uint64_t keycode = (/*KeyFlags::Control |*/ KeyFlags::NonASCII | KeyCodes::Escape);
 	bt_fioctl(fh, bt_terminal_ioctl::RegisterGlobalShortcut, sizeof(keycode), (char*)&keycode);
 	keycode |= KeyFlags::Right;
 	bt_fioctl(fh, bt_terminal_ioctl::RegisterGlobalShortcut, sizeof(keycode), (char*)&keycode);

@@ -29,6 +29,7 @@ bt_handle_t open_lib(const char *name){
                         }
                         startPoint = i + 1;
                     }
+                    if(libPathStr[i] == '\0') break;
                 }
             }
         }

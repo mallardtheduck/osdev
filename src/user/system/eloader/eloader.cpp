@@ -10,12 +10,15 @@ char program_arg[BT_MAX_PATH];
 char program_path[BT_MAX_PATH];
 bt_handle_t program_file;
 
+extern void init_api();
+
 void puts(const char *str){
 	bt_fwrite(stdout, strlen(str), str);
 	bt_zero(str);
 }
 
 int main(){
+	init_api();
 	bt_getenv("STDOUT", stdout_path, BT_MAX_PATH);
 	stdout=bt_fopen(stdout_path, FS_Write);
 	

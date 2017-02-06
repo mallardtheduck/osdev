@@ -1,4 +1,4 @@
-LIBS := newlib libgds libwm
+LIBS := newlib libgds libwm eloader
 
 all: dummy.file
 	for dir in $(LIBS); do \
