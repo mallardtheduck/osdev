@@ -42,6 +42,7 @@ extern "C"{
 #include "idt.hpp"
 #include "pic.hpp"
 #include "handles.hpp"
+#include "kvars.hpp"
 #include "messaging.hpp"
 #include "process.hpp"
 #include "scheduler.hpp"
@@ -60,11 +61,11 @@ void IDT_init();
 void gdt_set_kernel_stack(void* ptr);
 
 #define KERNEL_VERSION_MAJOR 0
-#define KERNEL_VERSION_MINOR 0
+#define KERNEL_VERSION_MINOR 1
 #define KERNEL_REVISION ""
 #define KERNEL_VERSION_STRING "v0.1" KERNEL_REVISION
 #define KERNEL_OS_NAME "BT/OS"
-#define KERNEL_COPYRIGHT "(c) 2014-2016 Stuart Brockman"
+#define KERNEL_COPYRIGHT "(c) 2014-2017 Stuart Brockman"
 extern char *kernel_buildid;
 
 extern multiboot_info_t *mbt;

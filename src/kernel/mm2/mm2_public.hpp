@@ -9,6 +9,7 @@ namespace MM2{
 	const size_t MM2_Page_Size = 4096;
 	const size_t MM2_Kernel_Boundary=1024*1024*1024;
 	const uint32_t MM2_Boundary_Page = MM2_Kernel_Boundary / MM2_Page_Size;
+	const uint32_t MM2_Address_Mask = 0xFFFFF000;
 
 	namespace MM2_Alloc_Mode{
 		const uint32_t

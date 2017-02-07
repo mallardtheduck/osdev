@@ -242,7 +242,7 @@ void proc_end(pid_t pid) {
 	bool cont = true;
 	while (cont) {
 		cont = false;
-		for (map<handle_t, bt_handle_info>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
+		for (map<handle_t, bt_handle_info>::iterator i = proc->handles.rbegin(); i != proc->handles.rend(); --i) {
 			if (i->second.type == kernel_handle_types::thread) {
  				uint64_t thread_id = *(uint64_t *) i->second.value;
 				if (thread_id != sch_get_id()) {
@@ -376,7 +376,14 @@ void proc_start(void *ptr){
 }
 
 pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
-	file_handle file=fs_open((char*)path.c_str(), FS_Read);
+	file_handle file;
+	if(!is_kvar_set("LOADER")){
+		file=fs_open((char*)path.c_str(), FS_Read);
+	}else{
+		string loader = get_kvar("LOADER");
+		dbgpf("PROC: Using program loader: %s\n", loader.c_str());
+		file=fs_open((char*)loader.c_str(), FS_Read);
+	}
     pid_t ret=proc_new(path, argc, argv, parent, &file);
 	if(!file.valid){
         proc_end(ret);
@@ -408,6 +415,9 @@ uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t 
 handle_t proc_add_handle(bt_handle_info handle, pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return 0;
+    //~ for(auto i = proc->handles.begin(); i!=proc->handles.end(); ++i){
+		//~ if(i->second.value == handle.value) panic("(PROC) Duplicate handle add!");
+	//~ }
     handle_t ret=++proc->handlecounter;
     while(!ret || proc->handles.has_key(ret)) ret=++proc->handlecounter;
     proc->handles[ret] = handle;
@@ -510,7 +520,7 @@ bool proc_wait_blockcheck(void *p){
 }
 
 int proc_wait(pid_t pid){
-	if(proc_get(pid)){
+	while(proc_get(pid)){
 		sch_setblock(&proc_wait_blockcheck, (void*)&pid);
 	}
     {

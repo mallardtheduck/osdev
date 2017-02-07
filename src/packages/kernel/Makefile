@@ -1,4 +1,4 @@
-import-files:=data/btos/boot/btos.bin data/btos/boot/initfs/boot.sys data/btos/boot/initfs/rtc.sys data/btos/boot/initfs/ps2.sys data/btos/boot/initfs/ata.sys data/btos/boot/initfs/spawn.elx data/btos/boot/initfs/fat.sys
+import-files:=data/btos/boot/btos.bin data/btos/boot/initfs/boot.sys data/btos/boot/initfs/rtc.sys data/btos/boot/initfs/ps2.sys data/btos/boot/initfs/ata.sys data/btos/boot/initfs/spawn.elx data/btos/boot/initfs/fat.sys data/btos/boot/initfs/eloader.elx
 pkg-files:= $(shell find pkgfiles -type f)
 
 all: ../kernel.tar
@@ -18,10 +18,13 @@ data/btos/boot/initfs/ps2.sys: ../../modules/ps2/ps2.sys create.directories
 data/btos/boot/initfs/ata.sys: ../../modules/ata/ata.sys create.directories
 	cp $< $@
 
-data/btos/boot/initfs/spawn.elx: ../../user/spawn/spawn.elx create.directories
+data/btos/boot/initfs/spawn.elx: ../../user/system/spawn/spawn.elx create.directories
 	cp $< $@
 
 data/btos/boot/initfs/fat.sys: ../../modules/fat/fat.sys create.directories
+	cp $< $@
+
+data/btos/boot/initfs/eloader.elx: ../../user/system/eloader/eloader.elx create.directories
 	cp $< $@
 
 create.directories:

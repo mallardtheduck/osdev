@@ -128,6 +128,8 @@ struct syscall_table{
 	
 	bt_handle_t (*add_user_handle)(bt_handle_info info, pid_t pid);
 	bt_handle_info (*get_user_handle)(bt_handle_t h, pid_t pid);
+	void (*set_kvar)(const char *name, const char *value);
+	size_t (*get_kvar)(const char *name, char *buffer, size_t size);
 };
 
 #ifndef __cplusplus

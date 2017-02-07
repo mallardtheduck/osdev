@@ -226,13 +226,11 @@ file_handle fs_open(const char *path, fs_mode_flags mode){
 
 bool fs_close(file_handle &file){
 	if(!file.valid) return true;
+	MM2::mm2_close(file);
 	bool ret=file.mount->driver.close(file.filedata);
-	if(ret) {
-        MM2::mm2_close(file);
-        file.valid=false;
-        delete file.mount;
-        dbgout("FS: Closed a file.\n");
-    }
+	file.valid=false;
+	delete file.mount;
+	dbgout("FS: Closed a file.\n");
 	return ret;
 }
 

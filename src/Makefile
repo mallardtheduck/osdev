@@ -56,4 +56,10 @@ packages: dummy.file
 packages-clean: dummy.file
 	make -C packages clean
 
+newlib: dummy.file
+	make -C user/libs/newlib all
+
+newlib-clean: dummy.file
+	make -C user/libs/newlib clean
+
 dummy.file:

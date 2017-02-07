@@ -210,6 +210,7 @@ namespace MM2{
 				}
 			}
 			mmappings->erase(id);
+			if(mmappings->has_key(id)) panic("(MM2) Mapping removal failed!");
 			proc_switch(curpid);
 		}
 	}

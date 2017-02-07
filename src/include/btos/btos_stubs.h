@@ -11,8 +11,18 @@ using namespace btos_api;
 #endif
 
 inline static uint32_t btos_call(uint32_t fn, uint32_t p1, uint32_t p2, uint32_t p3){
-	uint32_t ret=0;
-	asm volatile("int $0x80" : "=a"(ret) : "a"(fn), "b"(p1), "c"(p2), "d"(p3) : );
+	volatile uint32_t ret=0;
+	volatile uint32_t regs[4];
+	regs[0] = fn; regs[1] = p1; regs[2] = p2; regs[3] = p3;
+	asm volatile(
+		"push %%ebx\n"
+		"movl 4(%%eax), %%ebx\n"
+		"movl 8(%%eax), %%ecx\n"
+		"movl 12(%%eax), %%edx\n"
+		"movl (%%eax), %%eax\n"
+		"int $0x80\n"
+		"pop %%ebx" 
+		: "=a"(ret) : "a"(regs) : "ecx", "edx");
 	return ret;
 }
 
@@ -22,6 +32,10 @@ inline static void bt_zero(const char *string){
 
 inline static void *bt_alloc_pages(size_t pages){
 	return (void*)btos_call(BT_ALLOC_PAGES, pages, 0, 0);
+}
+
+inline static void *bt_alloc_at(size_t pages, void *ptr){
+	return (void*)btos_call(BT_ALLOC_AT, pages, (uint32_t)ptr, 0);
 }
 
 inline static void bt_free_pages(void *address, size_t pages){

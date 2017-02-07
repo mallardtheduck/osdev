@@ -1,4 +1,4 @@
-test.iso: ../../kernel/btos.bin
+test.iso: ../../kernel/btos.bin ../../tarinit/test/init.tar
 	mkdir -p isodir
 	mkdir -p isodir/boot
 	cp ../../kernel/btos.bin isodir/boot/btos.bin

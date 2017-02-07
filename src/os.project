@@ -104,6 +104,9 @@
       <File Name="kernel/mm2/mm2_mmap.cpp"/>
       <File Name="kernel/mm2/shm.cpp"/>
     </VirtualDirectory>
+    <File Name="kernel/linker.ld"/>
+    <File Name="kernel/kvars.hpp"/>
+    <File Name="kernel/kvars.cpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="modules">
     <VirtualDirectory Name="rtc">
@@ -400,6 +403,27 @@
     <VirtualDirectory Name="shmtest">
       <File Name="user/shmtest/Makefile"/>
       <File Name="user/shmtest/shmtest.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="elltest">
+      <File Name="user/elltest/elltest.c"/>
+      <File Name="user/elltest/Makefile"/>
+      <File Name="user/elltest/testlib.c"/>
+      <File Name="user/elltest/testlib.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="eloader">
+      <File Name="user/eloader/Makefile"/>
+      <File Name="user/eloader/linker.ld"/>
+      <File Name="user/eloader/elf.cpp"/>
+      <File Name="user/eloader/elf.hpp"/>
+      <File Name="user/eloader/eloader.cpp"/>
+      <File Name="user/eloader/util.cpp"/>
+      <File Name="user/eloader/util.hpp"/>
+      <File Name="user/eloader/el_load_elf.cpp"/>
+      <File Name="user/eloader/el_load_elf.hpp"/>
+      <File Name="user/eloader/el_malloc.cpp"/>
+      <File Name="user/eloader/el_malloc.hpp"/>
+      <File Name="user/eloader/liballoc.c"/>
+      <File Name="user/eloader/liballoc.h"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">

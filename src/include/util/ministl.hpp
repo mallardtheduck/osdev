@@ -7,6 +7,8 @@
 #error "ministl is for kernel-mode only"
 #endif
 
+#include <cstdint>
+
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
 typedef size_t size_type;
@@ -467,6 +469,15 @@ public:
 	const_iterator cend() const
 	{
 		return &data_[size_];
+	}
+
+	iterator rbegin(){
+		return &data_[size_];
+	}
+
+	iterator rend(){
+		intptr_t data_addr = (intptr_t)data_;
+		return (iterator)(data_addr - sizeof(value_type));
 	}
 private:
 	size_type size_, capacity_;

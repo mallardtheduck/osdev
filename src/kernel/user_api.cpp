@@ -73,6 +73,18 @@ USERAPI_HANDLER(BT_ALLOC_PAGES){
 	regs->eax = (uint32_t)MM2::current_pagedir->alloc(regs->ebx, MM2::MM2_Alloc_Mode::Userlow);
 }
 
+USERAPI_HANDLER(BT_ALLOC_AT){
+	size_t pages = regs->ebx;
+	size_t addr = regs->ecx;
+	if(addr != addr % MM2::MM2_Address_Mask) return;
+	if(addr < MM2::MM2_Kernel_Boundary) return;
+	for(size_t i = 0; i < pages; ++i){
+		size_t pageaddr = addr + (i * MM2::MM2_Page_Size);
+		if(pageaddr < MM2::MM2_Kernel_Boundary) return;
+		MM2::current_pagedir->alloc_pages_at(1, (void*)pageaddr);
+	}
+}
+
 USERAPI_HANDLER(BT_FREE_PAGES){
 	if(is_safe_ptr(regs->ebx, 0)){
 		MM2::current_pagedir->free_pages((void*)regs->ebx, regs->ecx);
@@ -83,7 +95,7 @@ USERAPI_HANDLER(BT_CLOSEHANDLE){
     bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
     if(h.open && h.type!=kernel_handle_types::invalid){
         close_handle(h);
-        proc_remove_handle((handle_t)regs->eax);
+        proc_remove_handle((handle_t)regs->ebx);
     }
 }
 
@@ -334,9 +346,9 @@ USERAPI_HANDLER(BT_LOAD_MODULE){
 USERAPI_HANDLER(BT_GETENV){
 	if(is_safe_string(regs->ebx) && is_safe_ptr(regs->ecx, regs->edx)){
 		string value=proc_getenv((char*)regs->ebx, true);
-		if(value != "" && value.length() < regs->edx){
+		if(value != ""){
 			strncpy((char*)regs->ecx, value.c_str(), regs->edx);
-			regs->eax=value.length();
+			regs->eax=value.length() + 1;
 		}else regs->eax=0;
 	}
 }
@@ -377,6 +389,7 @@ USERAPI_HANDLER(BT_PRIORITIZE){
 USERAPI_HANDLER(BT_EXIT){
 	pid_t pid=proc_current_pid;
 	proc_setreturn(regs->ebx);
+	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadEnd);
 	//proc_switch(0);
 	proc_end(pid);
 	sch_end_thread();
@@ -420,7 +433,7 @@ USERAPI_HANDLER(BT_WAIT_THREAD){
 }
 
 USERAPI_HANDLER(BT_END_THREAD){
-	debug_event_notify(proc_current_pid, 0, bt_debug_event::ThreadEnd);
+	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadEnd);
     sch_end_thread();
 }
 
@@ -525,7 +538,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
         //Memory managment
 		USERAPI_HANDLE_CALL(BT_ALLOC_PAGES);
 		USERAPI_HANDLE_CALL(BT_FREE_PAGES);
-        //USERAPI_HANDLE_CALL(BT_ALLOC_AT);
+        USERAPI_HANDLE_CALL(BT_ALLOC_AT);
         //USERAPI_HANDLE_CALL(BT_GUARD_PAGE);
         //USERAPI_HANDLE_CALL(BT_CREATE_REGION);
         USERAPI_HANDLE_CALL(BT_CLOSEHANDLE);
