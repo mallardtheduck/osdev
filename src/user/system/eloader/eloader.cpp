@@ -28,7 +28,7 @@ int main(){
 	btos_path_parse(program_arg, program_path, BT_MAX_PATH);
 	
 	program_file = bt_fopen(program_path, FS_Read);
-	entrypoint e = load_elf_proc(program_file);
+	entrypoint e = load_elf_proc(program_file, program_path);
 	if(e) e();
 
     return 0;

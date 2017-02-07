@@ -1,11 +1,16 @@
-#include "debug.hpp"
-#include "table.hpp"
 #include <fstream>
 #include <cstdlib>
+
+#include "debug.hpp"
+#include "table.hpp"
+#include "commands.hpp"
 
 using namespace std;
 
 uint16_t debug_ext_id;
+
+const size_t thread_stack_size = 16 * 1024;
+char watchthread_stack[thread_stack_size];
 
 bool init_debug(){
     debug_ext_id = bt_query_extension("DEBUG");
@@ -47,6 +52,13 @@ void debug_peek(void *dst, pid_t pid, uint32_t src, size_t size){
 	p.pid = pid;
 	p.size = size;
 	call_debug(bt_debug_function::Peek, (uint32_t)dst, (uint32_t)&p, 0);
+}
+
+void debug_peek_string(char *dst, pid_t pid, uint32_t src, size_t max_size){
+	for(size_t i = 0; i < max_size; ++i){
+		debug_peek(&dst[i], pid, src + i, 1);
+		if(dst[i] == '\0') return;
+	}
 }
 
 void debug_poke(pid_t pid, uint32_t dst, void *src, size_t size){
@@ -91,26 +103,12 @@ int main(int argc, char **argv){
 		return 0;
 	}
 
-    bt_msg_header msg = bt_recv(true);
-    while(true){
-        if(msg.from == 0 && msg.source == debug_ext_id) {
-            bt_debug_event_msg content;
-            bt_msg_content(&msg, (void *) &content, sizeof(content));
-			out_event(content);
-			if(content.event == bt_debug_event::Exception || content.event == bt_debug_event::ThreadEnd){
-				context ctx = get_context(content.thread);
-				out_context(ctx);
-				do_stacktrace(content.pid, ctx);
-			}
-            bt_msg_header reply;
-            reply.to = 0;
-            reply.reply_id = msg.id;
-            reply.flags = bt_msg_flags::Reply;
-            reply.length = 0;
-            bt_send(reply);
-        }
-        bt_next_msg(&msg);
-    }
+	bt_new_thread(&watch_thread, NULL, watchthread_stack + thread_stack_size);
+
+	string cmd;
+	do cmd = input_command();
+	while(do_command(cmd));
+	
 
     return 0;
 }

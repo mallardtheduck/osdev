@@ -3,7 +3,7 @@
 
 static const char *LIBPATH_ENV = "LIBPATH";
 
-bt_handle_t open_lib(const char *name){
+bt_handle_t open_lib(const char *name, char **fullpath){
     bt_handle_t ret = 0;
     if(!btos_path_is_absolute(name)){
         char *libPathStr = NULL;
@@ -20,13 +20,17 @@ bt_handle_t open_lib(const char *name){
                         strncpy(part, &libPathStr[startPoint], partLen);
                         strncpy(part + strlen(part), "/", BT_MAX_PATH - strlen(part));
                         strncpy(part + strlen(part), name, BT_MAX_PATH - strlen(part));
-                        char checkPath[BT_MAX_PATH] = {0};
+                        char* checkPath = (char*)malloc(BT_MAX_PATH);
+						memset(checkPath, 0, BT_MAX_PATH);
                         btos_path_parse(part, checkPath, BT_MAX_PATH);
                         bt_directory_entry ent = bt_stat(checkPath);
                         if(ent.valid && ent.type == FS_File){
                             ret = bt_fopen(checkPath, FS_Read);
+                            if(!fullpath || !ret) free(checkPath);
+							else *fullpath = checkPath;
                             break;
                         }
+                        free(checkPath);
                         startPoint = i + 1;
                     }
                     if(libPathStr[i] == '\0') break;
@@ -40,21 +44,29 @@ bt_handle_t open_lib(const char *name){
             remove_filepart(appPath);
             strncpy(appPath + strlen(appPath), "/", BT_MAX_PATH - strlen(appPath));
             strncpy(appPath + strlen(appPath), name, BT_MAX_PATH - strlen(appPath));
-            char checkPath[BT_MAX_PATH] = {0};
+            char* checkPath = (char*)malloc(BT_MAX_PATH);
+            memset(checkPath, 0, BT_MAX_PATH);
             btos_path_parse(appPath, checkPath, BT_MAX_PATH);
             bt_directory_entry ent = bt_stat(checkPath);
             if(ent.valid && ent.type == FS_File){
                 ret = bt_fopen(checkPath, FS_Read);
             }
+            if(!fullpath || !ret) free(checkPath);
+            else *fullpath = checkPath;
         }
     }else{
         ret = bt_fopen(name, FS_Read);
+        if(ret && fullpath){
+			*fullpath = (char*)malloc(strlen(name) + 1);
+			memset(*fullpath, 0, strlen(name) + 1);
+			strncpy(*fullpath, name, strlen(name) + 1);
+		}
     }
     
     if(!ret && name[strlen(name)-1] == '.'){
 		char *newname = (char*)malloc(strlen(name) + 1);
 		newname[strlen(newname)-1] = '\0';
-		ret = open_lib(newname);
+		ret = open_lib(newname, fullpath);
 		free(newname);
 	}
     return ret;
