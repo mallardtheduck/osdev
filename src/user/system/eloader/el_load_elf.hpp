@@ -3,6 +3,8 @@
 
 #include "elf.hpp"
 
+//BEGIN Data structures shared with the debugger.
+//Any changes made to these structures must also be mirrored in the debugger.
 struct loaded_module{
 	uint32_t id;
 	char *name;
@@ -13,8 +15,10 @@ struct loaded_module{
 	bool is_dynamic;
 };
 
+//These symbols are referenced by name in the debugger.
 extern loaded_module *loaded_modules;
 extern size_t loaded_module_count;
+//END Data structures shared with the debugger.
 
 typedef void (*entrypoint)();
 
