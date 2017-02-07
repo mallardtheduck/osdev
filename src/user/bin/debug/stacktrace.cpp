@@ -3,13 +3,24 @@
 
 using namespace std;
 
+static bt_pid_t curpid = 0;
+static vector<symbol> symbols;
+
+void load_symbols(bt_pid_t pid){
+	symbols = get_symbols(pid);
+	curpid = pid;
+}
+
 void do_stacktrace(bt_pid_t pid, context ctx){
-	vector<symbol> symbols = get_symbols(pid);
+	if(pid != curpid){
+		symbols = get_symbols(pid);
+		curpid = pid;
+	}
 	uint32_t bp = 0;
 	uint32_t stack[2] = {ctx.ebp, ctx.eip};
 	for(int count = 0; count < 100; ++count){
 		symbol sym = get_symbol(symbols, stack[1]);
-		printf("%p : %s\n", (void*)stack[1], sym.name.c_str());
+		printf("%p : %s in %s\n", (void*)stack[1], sym.name.c_str(), sym.file.c_str());
 		if(stack[0] != bp){ 
 			bp = stack[0];
 			debug_peek((void*)stack, pid, bp, sizeof(stack));

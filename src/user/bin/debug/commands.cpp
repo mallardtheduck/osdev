@@ -55,13 +55,33 @@ void watch_command(){
 void proc_command(const vector<string> &args){
 	if(args.size() == 2){
 		if(args[1] != "none"){
-			selected_pid = atoll(args[1].c_str());
+			bt_pid_t newpid = atoll(args[1].c_str());
+			if(newpid != selected_pid) selected_thread = 0;
+			selected_pid = newpid;
 		}else{
 			selected_pid = 0;
 			selected_thread = 0;
 		}
 	}
-	if(selected_pid > 0) cout << "PID " << selected_pid << " selected." << endl;
+	if(selected_pid > 0){
+		cout << "PID " << selected_pid << " selected." << endl;
+		ifstream info("INFO:/THREADS");
+		table tbl = parsecsv(info);
+		uint64_t thread = 0;
+		for(auto row: tbl.rows){
+			if((bt_pid_t)atoll(row["PID"].c_str()) == selected_pid){
+				if(thread == 0) thread = atoll(row["ID"].c_str());
+				else{
+					thread = 0;
+					break;
+				}
+			}
+		}
+		if(thread){
+			selected_thread = thread;
+			cout << "Thread " << selected_thread << " selected." << endl;
+		}
+	}
 	else cout << "No process selected." << endl;
 }
 
@@ -121,7 +141,7 @@ void threads_command(){
 	}
 }
 
-void stack_command(){
+void stat_command(){
 	if(!selected_thread){
 		cout << "No thread selected." << endl;
 		return;
@@ -141,6 +161,16 @@ void modules_command(){
 		cout << m.name << hex << " - Base: " << m.base << " Limit: " << m.limit << " - " << m.path << endl;
 	}
 	cout << dec;
+}
+
+void ldsyms_command(){
+	if(!selected_pid){
+		cout << "No process selected." << endl;
+		return;
+	}
+	cout << "Loading symbols..." << flush;
+	load_symbols(selected_pid);
+	cout << "Done." << endl;
 }
 
 std::string input_command(){
@@ -163,10 +193,12 @@ bool do_command(string cmd){
 			procs_command();
 		}else if(line[0] == "threads"){
 			threads_command();
-		}else if(line[0] == "stack"){
-			stack_command();
+		}else if(line[0] == "stat"){
+			stat_command();
 		}else if(line[0] == "modules"){
 			modules_command();
+		}else if(line[0] == "ldsyms"){
+			ldsyms_command();
 		}else if(line[0] == "quit"){
 			return false;
 		}else{

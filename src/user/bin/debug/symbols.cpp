@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <vector>
 #include <unistd.h>
+#include <cxxabi.h>
 
 using namespace std;
 
@@ -84,6 +85,11 @@ void load_symbols(intptr_t base, const string &file, vector<symbol> &vec){
 				symbol s;
 				gelf_getsym(data, ndx, &sym);
 				s.name = elf_strptr(e, shdr.sh_link, sym.st_name);
+				if(s.name.find("_Z") == 0){
+					int status = -1;
+					char *realname = abi::__cxa_demangle(s.name.c_str(), NULL, NULL, &status);
+					if(status == 0) s.name = realname;
+				}
 				s.address = sym.st_value + base;
 				s.file = file;
 				vec.push_back(s);
@@ -150,6 +156,7 @@ symbol get_symbol(const vector<symbol> &symbols, intptr_t addr){
 	symbol ret;
 	ret.address = 0;
 	ret.name = "(Unknown)";
+	ret.file = "(Unknown)";
 	for(auto sym : symbols){
 		if(ret.address < sym.address && sym.address < addr){
 			ret = sym;
