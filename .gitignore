@@ -28,3 +28,6 @@ src/.codelite/*
 src/kernel/isodir
 src/kernel/isodir/*
 *~
+*.tar.gz
+*.tar.xz
+*.tar

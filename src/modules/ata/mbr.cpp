@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include "ata.hpp"
-#include "module_stubs.h"
-#include "module_cpp.hpp"
+#include <btos_module.h>
 
 struct part_entry{
 	uint8_t boot;
@@ -15,13 +14,13 @@ struct part_entry{
 } __attribute__((packed));
 
 struct mbr_part_instance{
-	uint32_t start, sectors;
+	uint64_t start, sectors;
 	char device[9];
 };
 
 struct mbr_instance{
 	mbr_part_instance *part;
-	uint32_t pos, devpos;
+	bt_filesize_t pos, devpos;
 	void *dh;
 };
 
@@ -64,11 +63,23 @@ size_t mbr_write(void *instance, size_t bytes, char *buf){
 	return 0;
 }
 
-size_t mbr_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t mbr_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	if(instance){
-    	mbr_instance *inst=(mbr_instance*)instance;
-    	size_t r=devseek(inst->dh, pos, flags);
-    	inst->devpos=r; inst->pos=r-(inst->part->start*512);
+		mbr_instance *inst=(mbr_instance*)instance;
+		if(flags == FS_Set){
+			inst->pos = pos;
+		}else if(flags == FS_Relative){
+			inst->pos += pos;
+		}else if(flags == FS_Backwards){
+			inst->pos = (inst->part->sectors * 512) - pos;
+		}else if(flags == (FS_Relative | FS_Backwards)){
+			inst->pos -= pos;
+		}
+		bt_filesize_t devpos = inst->pos + (inst->part->start * 512);
+		if((uint64_t)devpos > (inst->part->start * inst->part->sectors) * 512) devpos = (inst->part->start * inst->part->sectors) * 512;
+		devpos = devseek(inst->dh, devpos, FS_Set);
+		inst->pos = devpos - (inst->part->start * 512);
+		inst->devpos = devpos;
     	return inst->pos;
     }
     return 0;
@@ -96,13 +107,13 @@ void mbr_parse(char *device){
 	memcpy((void*)part_table, (void*)&blockbuf[0x1be], 64);
 	for(size_t i=0; i<4; ++i){
 		part_entry &p=part_table[i];
-		dbgpf("ATA: MBR parition %i: %x, %i,+%i\n", i, (int)p.system, p.start_lba, p.sectors);
+		dbgpf("ATA: MBR parition %i: %x, %i,+%i\n", (int)i, (int)p.system, p.start_lba, (int)p.sectors);
 		if(p.system){
 			mbr_part_instance *pi=new mbr_part_instance();
 			pi->start=p.start_lba; pi->sectors=p.sectors;
 			strncpy(pi->device, device, 9);
 			char devname[9];
-			sprintf(devname, "%sP", device, i);
+			sprintf(devname, "%sP", device);
 			add_device(devname, &mbr_driver, pi);
 		}
 	}

@@ -21,7 +21,7 @@ void init_cpu(){
 	char *idstring=cpu_idstring();
 	uint64_t speed=cpu_get_speed();	
 	char *brandstring=get_brandstring();
-	printf("CPU: %s %s. Speed: %i UMIPS.\n", idstring, brandstring, speed/1000000);
+	printf("CPU: %s %s. Speed: %i UMIPS.\n", idstring, brandstring, (int)(speed/1000000));
 	uint32_t a, b, c, d;
 	cpuid(1, a, b, c, d);
 	if(d & cpu_features::CPUID_FEAT_EDX_FPU) {
@@ -36,7 +36,7 @@ void init_cpu(){
 }
 
 char *cpu_idstring() {
-	static char s[16] = "BogusProces!";
+	static char s[16] = "UNKNOWN CPU.";
 	cpuid_string(0, (int*)(s));
 	return s;
 }
@@ -45,18 +45,22 @@ char *cpu_brandstring(){
 	return get_brandstring();
 }
 
-uint64_t cpu_get_speed(){	
-	outb(0x43,0x34);
-	outb(0x40,0);
-	outb(0x40,0);
-	uint64_t start = rdtsc();
-	for (volatile int i=0x10000;i>0;i--) (void)i;
-	outb(0x43,0x04);
-	uint64_t end=rdtsc();
-	uint8_t lo=inb(0x40);
-	uint8_t hi=inb(0x40);
-	uint32_t ticks=(0x10000 - (hi*256+lo));
-	return (end-start)*1193180 / ticks;
+uint64_t cpu_get_speed(){
+	static uint64_t speed = 0;
+	if(!speed){
+		outb(0x43,0x34);
+		outb(0x40,0);
+		outb(0x40,0);
+		uint64_t start = rdtsc();
+		for (volatile int i=0x10000;i>0;i--) (void)i;
+		outb(0x43,0x04);
+		uint64_t end=rdtsc();
+		uint8_t lo=inb(0x40);
+		uint8_t hi=inb(0x40);
+		uint32_t ticks=(0x10000 - (hi*256+lo));
+		speed = (end-start)*1193180 / ticks;
+	}
+	return speed;
 }
 
 uint32_t cpu_get_umips(){
@@ -69,11 +73,13 @@ void init_fpu_xmm(){
 		asm volatile("mov %%cr0, %0": "=b"(cr0));
 		cr0 &= ~(1 << 2);
 		cr0 |= (1 << 1);
+		cr0 |= (1 << 5);
 		asm volatile("mov %0, %%cr0":: "b"(cr0));
 		reset_fpu();
 		save_fpu_xmm_data(default_fpu_xmm_data);
 		fpu_switch();
 		int_handle(0x07, &fpu_nm_handler);
+		int_handle(0x10, &fpu_nm_handler);
 		if(sse_available){
 			uint32_t cr4;
 			asm volatile("mov %%cr4, %0": "=b"(cr4));
@@ -107,7 +113,7 @@ static uint8_t fpu_xmm_data_region[512] __attribute__((aligned(16)));
 void save_fpu_xmm_data(uint8_t *data){
 	uint32_t cr0;
 	asm volatile("mov %%cr0, %0": "=b"(cr0));
-	if(!(cr0 & (1 << 3))) return;
+	if((cr0 & (1 << 3))) return;
 	if(sse_available){
 		asm volatile("fxsave %0 " : "=m"(fpu_xmm_data_region));
 	}else{
@@ -125,7 +131,7 @@ void restore_fpu_xmm_data(uint8_t *data){
 	}
 }
 
-void fpu_nm_handler(int, isr_regs*){
+void fpu_nm_handler(int, isr_regs *){
 	fpu_ready();
 	restore_fpu_xmm_data(sch_get_fpu_xmm_data());
 }

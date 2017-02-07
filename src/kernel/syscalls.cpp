@@ -68,7 +68,7 @@ size_t fwrite(file_handle *h, size_t bytes, char *buf){
 	return fs_write(*h, bytes, buf);
 }
 
-size_t fseek(file_handle *handle, size_t pos, uint32_t flags){
+bt_filesize_t fseek(file_handle *handle, bt_filesize_t pos, uint32_t flags){
 	return fs_seek(*handle, pos, flags);
 }
 
@@ -137,8 +137,48 @@ void unmask_irq(size_t irqno){
 	IRQ_clear_mask(irqno);
 }
 
-void setpid(pid_t pid){
-    proc_switch(pid);
+bool setpid(pid_t pid){
+	if(proc_get_status(pid) != proc_status::DoesNotExist){
+		proc_switch(pid);
+		if(proc_current_pid != pid) return false;
+		return true;
+	}else{
+		return false;
+	}
+}
+
+uint64_t mod_msg_send(btos_api::bt_msg_header *msg){
+	return msg_send(*msg);
+}
+
+size_t mod_msg_getcontent(btos_api::bt_msg_header *msg, void *buffer, size_t buffersize){
+	return msg_getcontent(*msg, buffer, buffersize);
+}
+
+void mod_msg_acknowledge(btos_api::bt_msg_header *msg, bool set_status){
+	msg_acknowledge(*msg, set_status);
+}
+
+bool mod_msg_recv_reply(btos_api::bt_msg_header *msg, uint64_t msg_id){
+	return msg_recv_reply(*msg, msg_id);
+}
+
+void mod_abortable(bool abortable){
+	sch_abortable(abortable);
+}
+
+uint32_t physical_addr(void *addr){
+	return MM2::current_pagedir->virt2phys(addr);
+}
+
+void mod_set_kvar(const char *name, const char *value){
+	set_kvar(name, value);
+}
+
+size_t mod_get_kvar(const char *name, char *buffer, size_t size){
+	string value = get_kvar(name);
+	strncpy(buffer, value.c_str(), size);
+	return value.length();
 }
 
 module_api::syscall_table MODULE_SYSCALL_TABLE={
@@ -150,7 +190,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&mod_memmove,
 	&mod_strcmp,
 	&mod_strncpy,
-    &vmm_physaddr,
+    &physical_addr,
 
 	&mod_init_lock,
 	&mod_take_lock,
@@ -170,7 +210,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&sch_unblock,
 	&sch_wait,
 	&sch_setblock,
-	&sch_abortable,
+	&mod_abortable,
 	&sch_abort,
 
 	&drv_add_device,
@@ -202,14 +242,12 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&fseek,
 	&fioctl,
     &fflush,
-	NULL,
 
 	diropen,
 	dirclose,
 	dirread,
 	dirwrite,
 	dirseek,
-	NULL,
 	&fs_stat,
 
 	&load_module,
@@ -227,4 +265,17 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
     &add_extension,
     &get_extension,
     &get_extension_id,
+	
+	&mod_msg_send,
+	&mod_msg_getcontent,
+	&mod_msg_acknowledge,
+	&mod_msg_recv_reply,
+	&msg_recv_reply_block,
+	&msg_query_recieved,
+	
+	&proc_add_handle,
+	&proc_get_handle,
+	
+	&mod_set_kvar,
+	&mod_get_kvar,
 };

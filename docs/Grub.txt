@@ -1,0 +1,2 @@
+grubmkim -O i386-pc -d i386-pc --prefix=/boot -o core.img biosdisk msdospart part_msdos fat multiboot
+grubbios -d /boot dev:/ata0

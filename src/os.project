@@ -33,10 +33,7 @@
     <File Name="kernel/serdbg.hpp"/>
     <File Name="kernel/extensions.hpp"/>
     <File Name="kernel/handles.cpp"/>
-    <File Name="kernel/amm.hpp"/>
     <File Name="kernel/handles.hpp"/>
-    <File Name="kernel/amm_flags.hpp"/>
-    <File Name="kernel/amm_page_accounting.hpp"/>
     <File Name="kernel/util.hpp"/>
     <File Name="kernel/drivermgr.hpp"/>
     <File Name="kernel/kernel.cpp"/>
@@ -47,12 +44,9 @@
     <File Name="kernel/console.hpp"/>
     <File Name="kernel/extensions.cpp"/>
     <File Name="kernel/messaging.hpp"/>
-    <File Name="kernel/process_asm.o"/>
     <File Name="kernel/debug_ext.cpp"/>
     <File Name="kernel/scheduler.hpp"/>
-    <File Name="kernel/vmm_pagedir.hpp"/>
     <File Name="kernel/modules.cpp"/>
-    <File Name="kernel/vmm.hpp"/>
     <File Name="kernel/kernel.hpp"/>
     <File Name="kernel/liballoc_hooks.cpp"/>
     <File Name="kernel/list.hpp"/>
@@ -64,7 +58,6 @@
     <File Name="kernel/Makefile"/>
     <File Name="kernel/cpuid.h"/>
     <File Name="kernel/locks.cpp"/>
-    <File Name="kernel/amm_page_accounting.cpp"/>
     <File Name="kernel/cpu.hpp"/>
     <File Name="kernel/devfs.cpp"/>
     <File Name="kernel/io.hpp"/>
@@ -93,16 +86,36 @@
     <File Name="kernel/user_api.cpp"/>
     <File Name="kernel/idt.cpp"/>
     <File Name="kernel/memcpy.c"/>
-    <File Name="kernel/amm.cpp"/>
     <File Name="kernel/scheduler.cpp"/>
-    <File Name="kernel/vmm.cpp"/>
     <File Name="kernel/process.cpp"/>
     <File Name="kernel/liballoc.c"/>
+    <File Name="kernel/initfs.cpp"/>
+    <File Name="kernel/initfs.hpp"/>
+    <File Name="kernel/mm2.cpp"/>
+    <File Name="kernel/mm2.hpp"/>
+    <VirtualDirectory Name="mm2">
+      <File Name="kernel/mm2/physical.cpp"/>
+      <File Name="kernel/mm2/virtual.cpp"/>
+      <File Name="kernel/mm2/mm2_internal.hpp"/>
+      <File Name="kernel/mm2/pagedirectory.hpp"/>
+      <File Name="kernel/mm2/pagedirectory.cpp"/>
+      <File Name="kernel/mm2/mm2_public.hpp"/>
+      <File Name="kernel/mm2/page_faults.cpp"/>
+      <File Name="kernel/mm2/mm2_mmap.cpp"/>
+      <File Name="kernel/mm2/shm.cpp"/>
+    </VirtualDirectory>
+    <File Name="kernel/linker.ld"/>
+    <File Name="kernel/kvars.hpp"/>
+    <File Name="kernel/kvars.cpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="modules">
     <VirtualDirectory Name="rtc">
       <File Name="modules/rtc/Makefile"/>
-      <File Name="modules/rtc/rtc.c"/>
+      <File Name="modules/rtc/rtc.cpp"/>
+      <File Name="modules/rtc/api.cpp"/>
+      <File Name="modules/rtc/rtc.hpp"/>
+      <File Name="modules/rtc/clocktime.cpp"/>
+      <File Name="modules/rtc/timer.cpp"/>
     </VirtualDirectory>
     <File Name="modules/Makefile"/>
     <VirtualDirectory Name="ata">
@@ -113,6 +126,7 @@
       <File Name="modules/ata/dma.cpp"/>
       <File Name="modules/ata/mbr.cpp"/>
       <File Name="modules/ata/queue.cpp"/>
+      <File Name="modules/ata/atapi.cpp"/>
     </VirtualDirectory>
     <VirtualDirectory Name="boot">
       <File Name="modules/boot/Makefile"/>
@@ -166,12 +180,13 @@
       <File Name="modules/terminal/device.cpp"/>
       <File Name="modules/terminal/device.hpp"/>
       <File Name="modules/terminal/graphics_pointer.cpp"/>
-      <File Name="modules/terminal/holdlock.hpp"/>
       <File Name="modules/terminal/terminal.cpp"/>
       <File Name="modules/terminal/terminal.hpp"/>
       <File Name="modules/terminal/vterm.cpp"/>
       <File Name="modules/terminal/vterm.hpp"/>
       <File Name="modules/terminal/Makefile"/>
+      <File Name="modules/terminal/api.hpp"/>
+      <File Name="modules/terminal/api.cpp"/>
     </VirtualDirectory>
     <VirtualDirectory Name="test">
       <File Name="modules/test/Makefile"/>
@@ -190,6 +205,14 @@
       <File Name="modules/vga/vga.cpp"/>
       <File Name="modules/vga/vga.hpp"/>
       <File Name="modules/vga/vga_palette.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="iso9660">
+      <File Name="modules/iso9660/linker.ld"/>
+      <File Name="modules/iso9660/Makefile"/>
+      <File Name="modules/iso9660/iso9660.cpp"/>
+      <File Name="modules/iso9660/lib9660.c"/>
+      <File Name="modules/iso9660/lib9660.h"/>
+      <File Name="modules/iso9660/tb9660.c"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="user">
@@ -253,13 +276,13 @@
     <VirtualDirectory Name="debug">
       <File Name="user/debug/Makefile"/>
       <File Name="user/debug/debug.cpp"/>
-      <File Name="user/debug/symbols.cpp"/>
       <File Name="user/debug/stacktrace.cpp"/>
       <File Name="user/debug/debug.hpp"/>
       <File Name="user/debug/events.cpp"/>
       <File Name="user/debug/table.cpp"/>
       <File Name="user/debug/table.hpp"/>
       <File Name="user/debug/symbols.hpp"/>
+      <File Name="user/debug/symbols.cpp"/>
     </VirtualDirectory>
     <VirtualDirectory Name="msgtest">
       <File Name="user/msgtest/Makefile"/>
@@ -269,35 +292,192 @@
       <File Name="user/termctl/Makefile"/>
       <File Name="user/termctl/termctl.c"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="gds">
+      <File Name="user/gds/cursor.c"/>
+      <File Name="user/gds/drawingop.cpp"/>
+      <File Name="user/gds/drawingop.hpp"/>
+      <File Name="user/gds/gds.cpp"/>
+      <File Name="user/gds/gds.hpp"/>
+      <File Name="user/gds/screen.cpp"/>
+      <File Name="user/gds/screen.hpp"/>
+      <File Name="user/gds/surface.hpp"/>
+      <File Name="user/gds/client.cpp"/>
+      <File Name="user/gds/client.hpp"/>
+      <File Name="user/gds/bitmap_surface.cpp"/>
+      <File Name="user/gds/bitmap_surface.hpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="libgds">
+      <File Name="user/libgds/Makefile"/>
+      <File Name="user/libgds/main.cpp"/>
+      <File Name="user/libgds/protocol.cpp"/>
+      <File Name="user/libgds/util.cpp"/>
+      <File Name="user/libgds/libgds_internal.hpp"/>
+      <File Name="user/libgds/primitives.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="wm">
+      <File Name="user/wm/Makefile"/>
+      <File Name="user/wm/wm.cpp"/>
+      <File Name="user/wm/window.cpp"/>
+      <File Name="user/wm/window.hpp"/>
+      <File Name="user/wm/metrics.hpp"/>
+      <File Name="user/wm/drawing.hpp"/>
+      <File Name="user/wm/windows.hpp"/>
+      <File Name="user/wm/windows.cpp"/>
+      <File Name="user/wm/service.cpp"/>
+      <File Name="user/wm/service.hpp"/>
+      <File Name="user/wm/drawing.cpp"/>
+      <File Name="user/wm/rect.cpp"/>
+      <File Name="user/wm/rect.hpp"/>
+      <File Name="user/wm/client.hpp"/>
+      <File Name="user/wm/client.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="libwm">
+      <File Name="user/libwm/Makefile"/>
+      <File Name="user/libwm/main.cpp"/>
+      <File Name="user/libwm/libwm_internal.hpp"/>
+      <File Name="user/libwm/util.cpp"/>
+      <File Name="user/libwm/protocol.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="wmmenu">
+      <File Name="user/wmmenu/Makefile"/>
+      <File Name="user/wmmenu/wmmenu.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="startwm">
+      <File Name="user/startwm/Makefile"/>
+      <File Name="user/startwm/startwm.cpp"/>
+      <File Name="user/startwm/table.cpp"/>
+      <File Name="user/startwm/table.hpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="switcher">
+      <File Name="user/switcher/utils.cpp"/>
+      <File Name="user/switcher/switcher.hpp"/>
+      <File Name="user/switcher/switcher.cpp"/>
+      <File Name="user/switcher/Makefile"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="termwin">
+      <File Name="user/termwin/Makefile"/>
+      <File Name="user/termwin/termwin.cpp"/>
+      <File Name="user/termwin/table.hpp"/>
+      <File Name="user/termwin/table.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="breakout">
+      <File Name="user/breakout/Makefile"/>
+      <File Name="user/breakout/breakout.cpp"/>
+      <File Name="user/breakout/ball.hpp"/>
+      <File Name="user/breakout/ball.cpp"/>
+      <File Name="user/breakout/block.hpp"/>
+      <File Name="user/breakout/block.cpp"/>
+      <File Name="user/breakout/paddle.hpp"/>
+      <File Name="user/breakout/paddle.cpp"/>
+      <File Name="user/breakout/game.hpp"/>
+      <File Name="user/breakout/game.cpp"/>
+      <File Name="user/breakout/sprite.hpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="sleep">
+      <File Name="user/sleep/Makefile"/>
+      <File Name="user/sleep/sleep.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="tar">
+      <File Name="user/tar/buffer.c"/>
+      <File Name="user/tar/create.c"/>
+      <File Name="user/tar/extract.c"/>
+      <File Name="user/tar/getoldopt.c"/>
+      <File Name="user/tar/Makefile"/>
+      <File Name="user/tar/names.c"/>
+      <File Name="user/tar/port.c"/>
+      <File Name="user/tar/port.h"/>
+      <File Name="user/tar/tar.c"/>
+      <File Name="user/tar/tar.h"/>
+      <File Name="user/tar/list.c"/>
+      <File Name="user/tar/stubs.c"/>
+      <File Name="user/tar/stubs.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="format">
+      <File Name="user/format/format.c"/>
+      <File Name="user/format/Makefile"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="install">
+      <File Name="user/install/install.cpp"/>
+      <File Name="user/install/Makefile"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="shmtest">
+      <File Name="user/shmtest/Makefile"/>
+      <File Name="user/shmtest/shmtest.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="elltest">
+      <File Name="user/elltest/elltest.c"/>
+      <File Name="user/elltest/Makefile"/>
+      <File Name="user/elltest/testlib.c"/>
+      <File Name="user/elltest/testlib.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="eloader">
+      <File Name="user/eloader/Makefile"/>
+      <File Name="user/eloader/linker.ld"/>
+      <File Name="user/eloader/elf.cpp"/>
+      <File Name="user/eloader/elf.hpp"/>
+      <File Name="user/eloader/eloader.cpp"/>
+      <File Name="user/eloader/util.cpp"/>
+      <File Name="user/eloader/util.hpp"/>
+      <File Name="user/eloader/el_load_elf.cpp"/>
+      <File Name="user/eloader/el_load_elf.hpp"/>
+      <File Name="user/eloader/el_malloc.cpp"/>
+      <File Name="user/eloader/el_malloc.hpp"/>
+      <File Name="user/eloader/liballoc.c"/>
+      <File Name="user/eloader/liballoc.h"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="disk">
     <File Name="disk/Makefile"/>
   </VirtualDirectory>
   <VirtualDirectory Name="include">
-    <File Name="include/bt_enum.h"/>
-    <File Name="include/bt_msg.h"/>
-    <File Name="include/btos_api.h"/>
-    <File Name="include/btos_stubs.h"/>
-    <File Name="include/circular_buffer.hpp"/>
     <File Name="include/crt_support.h"/>
-    <File Name="include/debug.h"/>
-    <File Name="include/drivers.h"/>
-    <File Name="include/extension.h"/>
-    <File Name="include/fs_interface.h"/>
-    <File Name="include/handle.h"/>
-    <File Name="include/holdlock.hpp"/>
-    <File Name="include/io.h"/>
-    <File Name="include/ioctl.h"/>
-    <File Name="include/keyboard.h"/>
-    <File Name="include/locktype.h"/>
-    <File Name="include/module_api.h"/>
-    <File Name="include/module_cpp.hpp"/>
-    <File Name="include/module_stubs.h"/>
-    <File Name="include/mouse.h"/>
-    <File Name="include/operation_queue.hpp"/>
-    <File Name="include/pci.h"/>
-    <File Name="include/terminal.h"/>
-    <File Name="include/video_dev.h"/>
+    <VirtualDirectory Name="gds">
+      <File Name="include/gds/gds.h"/>
+      <File Name="include/gds/libgds.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="wm">
+      <File Name="include/wm/wm.h"/>
+      <File Name="include/wm/libwm.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="btos">
+      <File Name="include/btos/bt_msg.h"/>
+      <File Name="include/btos/btos_stubs.h"/>
+      <File Name="include/btos/ioctl.h"/>
+      <File Name="include/btos/fs_interface.h"/>
+      <File Name="include/btos/devices.h"/>
+      <File Name="include/btos/btos_api.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="dev">
+      <File Name="include/dev/terminal.h"/>
+      <File Name="include/dev/video_dev.h"/>
+      <File Name="include/dev/pci.h"/>
+      <File Name="include/dev/mouse.h"/>
+      <File Name="include/dev/keyboard.h"/>
+      <File Name="include/dev/rtc.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="ext">
+      <File Name="include/ext/debug.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="module">
+      <File Name="include/module/module_stubs.h"/>
+      <File Name="include/module/module_api.h"/>
+      <File Name="include/module/handle.h"/>
+      <File Name="include/module/locktype.h"/>
+      <File Name="include/module/module_cpp.hpp"/>
+      <File Name="include/module/io.h"/>
+      <File Name="include/module/extension.h"/>
+      <File Name="include/module/drivers.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="util">
+      <File Name="include/util/operation_queue.hpp"/>
+      <File Name="include/util/holdlock.hpp"/>
+      <File Name="include/util/circular_buffer.hpp"/>
+      <File Name="include/util/bt_enum.h"/>
+      <File Name="include/util/ministl.hpp"/>
+      <File Name="include/util/scoped_ptr.hpp"/>
+    </VirtualDirectory>
+    <File Name="include/btos.h"/>
+    <File Name="include/btos_module.h"/>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>
@@ -394,5 +574,73 @@
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/crti.S"/>
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/crtn.S"/>
     <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/syscalls.c"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/dirent.c"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/Makefile.am"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/getenv.c"/>
+    <VirtualDirectory Name="sys">
+      <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/dirent.h"/>
+      <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/setjmp.h"/>
+      <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/siginfo.h"/>
+      <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/limits.h"/>
+      <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/sys/termios.h"/>
+    </VirtualDirectory>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/signal.c"/>
+    <File Name="toolchain/newlib-2.1.0/newlib/libc/sys/btos/setjmp.c"/>
+  </VirtualDirectory>
+  <VirtualDirectory Name="tarinit">
+    <VirtualDirectory Name="test">
+      <File Name="tarinit/test/Makefile"/>
+      <VirtualDirectory Name="data">
+        <File Name="tarinit/test/data/config.ini"/>
+      </VirtualDirectory>
+    </VirtualDirectory>
+    <File Name="tarinit/Makefile"/>
+    <VirtualDirectory Name="livecd">
+      <File Name="tarinit/livecd/Makefile"/>
+      <VirtualDirectory Name="data">
+        <File Name="tarinit/livecd/data/config.ini"/>
+      </VirtualDirectory>
+    </VirtualDirectory>
+  </VirtualDirectory>
+  <VirtualDirectory Name="iso">
+    <File Name="iso/Makefile"/>
+    <VirtualDirectory Name="test">
+      <File Name="iso/test/Makefile"/>
+      <File Name="iso/test/grub.cfg"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="livecd">
+      <File Name="iso/livecd/Makefile"/>
+      <File Name="iso/livecd/grub.cfg"/>
+    </VirtualDirectory>
+  </VirtualDirectory>
+  <VirtualDirectory Name="packages">
+    <File Name="packages/Makefile"/>
+    <VirtualDirectory Name="base">
+      <File Name="packages/base/Makefile"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="kernel">
+      <File Name="packages/kernel/Makefile"/>
+      <VirtualDirectory Name="pkgfiles">
+        <VirtualDirectory Name="btos">
+          <VirtualDirectory Name="boot">
+            <VirtualDirectory Name="initfs">
+              <File Name="packages/kernel/pkgfiles/btos/boot/initfs/config.ini"/>
+            </VirtualDirectory>
+            <VirtualDirectory Name="grub">
+              <File Name="packages/kernel/pkgfiles/btos/boot/grub/grub.cfg"/>
+              <File Name="packages/kernel/pkgfiles/btos/boot/grub/load_cfg"/>
+            </VirtualDirectory>
+          </VirtualDirectory>
+        </VirtualDirectory>
+      </VirtualDirectory>
+    </VirtualDirectory>
+    <VirtualDirectory Name="install">
+      <VirtualDirectory Name="pkgfiles">
+        <VirtualDirectory Name="btos">
+          <File Name="packages/install/pkgfiles/btos/setup.ini"/>
+        </VirtualDirectory>
+      </VirtualDirectory>
+      <File Name="packages/install/Makefile"/>
+    </VirtualDirectory>
   </VirtualDirectory>
 </CodeLite_Project>

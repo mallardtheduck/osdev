@@ -1,1 +1,0 @@
-../toolchain/newlib-2.1.0/newlib/libc/sys/btos/crt_support.h

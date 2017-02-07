@@ -30,5 +30,6 @@ ac_cv_sizeof_long_long=8 ./configure \
 
 make
 make instroot=$PWD/../install install
+find ../install -name libelf -type f -exec chmod -x {} \;
 find ../install -executable -not -name "*.elx" -type f -exec rm {}.elx \;
 find ../install -executable -not -name "*.elx" -type f -exec mv {} {}.elx \;

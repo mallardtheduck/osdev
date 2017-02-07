@@ -9,7 +9,14 @@ void select_plane(uint8_t plane) {
 	write_graphics(Graphics_Registers::ReadMapSelect, plane);
 }
 
+void wait_for_retrace(){
+	while(inb(VGA_Ports::InputStatus1) & 0x08);
+	while(!(inb(VGA_Ports::InputStatus1) & 0x08));
+}
+
 void load_palette() {
+	//wait_for_retrace();
+	outb(VGA_Ports::DACWriteAddress, 0);
 	for(int i=0; i<256; ++i){
 		vga_palette_entry entry=vga_palette[i];
 		write_dac(i, entry.r, entry.g, entry.b);
@@ -19,29 +26,30 @@ void load_palette() {
 void load_font(){
 	write_graphics(Graphics_Registers::MiscGraphics, 0x04);
 	write_sequencer(Sequencer_Registers::SeqMemoryMode, 0x06);
+	write_graphics(Graphics_Registers::GraphicsMode, 0x00);
 	select_plane(2);
 	for(int i=0; i<256; ++i){
-		int srcidx=i*8;
+		int srcidx=i*16;
 		int dstidx=i*32;
+		//dbgpf("VGA: Copy character from %p to %p.\n", &vga_font[dstidx], &vga_memory[dstidx]);
 		memset((void*)&vga_memory[dstidx], 0, 32);
-		for(int j=0; j<16; ++j){
-			vga_memory[dstidx + (j * 2)]=vga_font[srcidx + j];
-			vga_memory[dstidx + (j * 2) + 1]=vga_font[srcidx + j];
-		}
+		memcpy((void*)&vga_memory[dstidx], &vga_font[srcidx], 16);
 	}
 	select_plane(0);
+	write_graphics(Graphics_Registers::GraphicsMode, 0x10);
 	write_sequencer(Sequencer_Registers::MapMask, 0x03);
 	write_sequencer(Sequencer_Registers::SeqMemoryMode, 0x02);
 	write_graphics(Graphics_Registers::MiscGraphics, 0x0E);
 }
 
 void set_mode_12h() {
+	dbgout("VGA: Setting mode 12h (640x480x4bpp)\n");
 	disable_interrupts();
 	disable_display();
 	unlock_crtc();
 	outb(VGA_Ports::MiscOutputWrite, 0xE3);
 	write_sequencer(Sequencer_Registers::Reset, 0x03);
-	write_sequencer(Sequencer_Registers::ClockingMode, 0x21);
+	write_sequencer(Sequencer_Registers::ClockingMode, 0x01);
 	write_sequencer(Sequencer_Registers::MapMask, 0x08);
 	write_sequencer(Sequencer_Registers::CharMapSelect, 0x00);
 	write_sequencer(Sequencer_Registers::SeqMemoryMode, 0x06);
@@ -146,15 +154,30 @@ uint8_t get_pixel_12h(uint32_t x, uint32_t y){
 	return ret;
 }
 
+static uint8_t smallbuffer[1024];
+
+inline uint8_t *get_copybuffer(size_t size){
+	if(size <= 1024) return smallbuffer;
+	else return (uint8_t*)malloc(size);
+}
+
+inline void free_copybuffer(uint8_t *ptr){
+	if(ptr != smallbuffer) free(ptr);
+}
+
 void write_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 	uint32_t startbyte=startpos / 8;
 	uint8_t sbits=(uint8_t)(startpos-(startbyte * 8));
+	count += sbits;
 	uint32_t bytes=(uint32_t)(count / 8);
 	if(bytes * 8 < count) bytes++;
+	uint8_t xbits = (bytes * 8) - count;
 	for(uint8_t plane=0; plane<4; ++plane) {
 		uint8_t skipbits=sbits;
+		uint8_t goodbits=8 - xbits;
 		select_plane(plane);
 		uint32_t pixpos=startpos;
+		uint8_t *copybuffer = get_copybuffer(bytes);
 		for(size_t byte=startbyte; byte<startbyte+bytes; ++byte){
 			uint8_t cbyte=0;
 			if(byte==startbyte || byte==startbyte+bytes-1) cbyte=vga_memory[byte];
@@ -162,6 +185,10 @@ void write_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 				if(skipbits){
 					skipbits--;
 					continue;
+				}
+				if(byte==startbyte+bytes-1){
+					if(goodbits) goodbits--;
+					else break;
 				}
 				if(pixpos-startpos >= count) break;
 				size_t index=(pixpos-startpos)/2;
@@ -179,18 +206,24 @@ void write_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 				}
 				pixpos++;
 			}
-			vga_memory[byte]=cbyte;
+			//vga_memory[byte]=cbyte;
+			copybuffer[byte - startbyte] = cbyte;
 		}
+		memcpy((void*)(vga_memory + startbyte), copybuffer, bytes);
+		free_copybuffer(copybuffer);
 	}
 }
 
 void read_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 	uint32_t startbyte=startpos / 8;
 	uint8_t sbits=(uint8_t)(startpos-(startbyte * 8));
+	count += sbits;
 	uint32_t bytes=(uint32_t)(count / 8);
 	if(bytes * 8 < count) bytes++;
+	uint8_t xbits = (bytes * 8) - count;
 	for(uint8_t plane=0; plane<4; ++plane) {
 		uint8_t skipbits=sbits;
+		uint8_t goodbits=8 - xbits;
 		select_plane(plane);
 		uint32_t pixpos=startpos;
 		for(size_t byte=startbyte; byte<startbyte+bytes; ++byte){
@@ -199,6 +232,10 @@ void read_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 				if(skipbits){
 					skipbits--;
 					continue;
+				}
+				if(byte==startbyte+bytes-1){
+					if(goodbits) goodbits--;
+					else break;
 				}
 				if(pixpos-startpos >= count) break;
 				size_t index=(pixpos-startpos)/2;
@@ -226,6 +263,7 @@ void read_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 }
 
 void set_mode_03h() {
+	dbgout("VGA: Setting mode 03h (text)\n");
 	disable_interrupts();
 	disable_display();
 	unlock_crtc();
@@ -252,7 +290,7 @@ void set_mode_03h() {
 	write_crtc(CRTC_Registers::CursorLocHigh, 0x00);
 	write_crtc(CRTC_Registers::CursorLocLow, 0x50);
 	write_crtc(CRTC_Registers::StartVrtRetrace, 0x9C);
-	write_crtc(CRTC_Registers::EndVrtRetrace, 0x0E);
+	write_crtc(CRTC_Registers::EndVrtRetrace, 0x8E);
 	write_crtc(CRTC_Registers::EndVrtDisplay, 0x8F);
 	write_crtc(CRTC_Registers::Offset, 0x28);
 	write_crtc(CRTC_Registers::UnderlineLoc, 0x1F);
@@ -292,8 +330,8 @@ void set_mode_03h() {
 	write_attribute(Attribute_Registers::ColourSelect, 0x00);
 	inb(VGA_Ports::InputStatus1);
 	outb(VGA_Ports::AttributeWrite, 0x20);
-	lock_crtc();
 	load_palette();
+	lock_crtc();
 	load_font();
 	enable_display();
 	enable_interrupts();
@@ -301,6 +339,7 @@ void set_mode_03h() {
 }
 
 void set_mode_x() {
+	dbgout("VGA: Setting mode X (320x240x8bpp)\n");
 	disable_interrupts();
 	disable_display();
 	unlock_crtc();
@@ -439,6 +478,7 @@ const size_t vga_mode_count=3;
 vga_mode *current_mode;
 
 void init_modes(){
+	load_palette();
 	current_mode=&mode_03h;
 	set_mode_03h();
 }

@@ -3,12 +3,15 @@
 extern lock sch_lock;
 
 bool lock_blockcheck(void *p){
-	return !((lock*)p)->lockval;
+	lock *l = (lock*)p;
+	l->waiting = true;
+	return !l->lockval;
 }
 
 void init_lock(lock &l){
     l.lockval=0;
     l.count=0;
+	l.waiting=false;
 }
 
 uint64_t get_lock_owner(lock &l){
@@ -17,7 +20,9 @@ uint64_t get_lock_owner(lock &l){
 
 void lock_transfer(lock &l, uint64_t to, uint64_t from){
     if(l.lockval!=from) panic("(LOCK) Attempt to transfer unowned lock!");
+	if(&l != &sch_lock) sch_abortable(true, from);
     l.lockval=to;
+	if(&l != &sch_lock) sch_abortable(false, to);
     if(l.lockval==0) panic("(LOCK) Something bad happened!");
 }
 
@@ -28,17 +33,20 @@ void take_lock_exclusive(lock &l, uint64_t thread){
     while(l.lockval != thread) {
         while (!__sync_bool_compare_and_swap(&l.lockval, 0, thread)) {
             if (&l != &sch_lock && sch_lock.lockval != thread) sch_setblock(&lock_blockcheck, (void *) &l.lockval);
-            else panic("Deadlock - waiting for lock while holding scheduler lock!");
+            else panic("(LOCK) Deadlock - waiting for lock while holding scheduler lock!");
         }
     }
+	l.waiting=false;
     if(l.count != 0) panic("(LOCK) Newly acquired lock with non-zero count!");
     l.count++;
     if(l.lockval==0) panic("(LOCK) Lock value not set!");
+	if(&l != &sch_lock) sch_abortable(false);
 }
 
 void take_lock_recursive(lock &l, uint64_t thread){
     if(!sch_active()) return;
     if(l.lockval==thread && thread!=0){
+		if(&l != &sch_lock) sch_abortable(false);
         l.count++;
         return;
     }
@@ -46,11 +54,13 @@ void take_lock_recursive(lock &l, uint64_t thread){
     while(l.lockval != thread) {
         while (!__sync_bool_compare_and_swap(&l.lockval, 0, thread)) {
             if (&l != &sch_lock && sch_lock.lockval != thread) sch_setblock(&lock_blockcheck, (void *) &l.lockval);
-            else panic("Deadlock detected!");
+            else panic("(LOCK) Deadlock - waiting for lock while holding scheduler lock!");
         }
     }
+	l.waiting=false;
     l.count++;
     if(l.lockval==0) panic("(LOCK) Lock value not set!");
+	if(&l != &sch_lock) sch_abortable(false);
 }
 
 bool try_take_lock_exclusive(lock &l, uint64_t thread){
@@ -60,6 +70,24 @@ bool try_take_lock_exclusive(lock &l, uint64_t thread){
     if(ret) {
         if (l.count != 0) panic("(LOCK) Newly acquired lock with non-zero count!");
         l.count++;
+		if(&l != &sch_lock) sch_abortable(false);
+    }
+    if(l.lockval==0) panic("(LOCK) Lock value not set!");
+    return ret;
+}
+
+bool try_take_lock_recursive(lock &l, uint64_t thread){
+    if(!sch_active()) return true;
+	if(l.lockval==thread && thread!=0){
+        l.count++;
+		if(&l != &sch_lock) sch_abortable(false);
+        return true;
+    }
+    bool ret=__sync_bool_compare_and_swap(&l.lockval, 0, thread);
+    if(ret) {
+        if (l.count != 0) panic("(LOCK) Newly acquired lock with non-zero count!");
+        l.count++;
+		if(&l != &sch_lock) sch_abortable(false);
     }
     if(l.lockval==0) panic("(LOCK) Lock value not set!");
     return ret;
@@ -67,12 +95,21 @@ bool try_take_lock_exclusive(lock &l, uint64_t thread){
 
 void release_lock(lock &l, uint64_t thread){
     if(!sch_active()) return;
-    if(l.lockval!=thread) panic("(LOCK) Attempt to release lock that isn't held!\n");
+    if(l.lockval!=thread){
+		dbgpf("LOCK: %i != %i\n", (int)l.lockval, (int)thread);
+		panic("(LOCK) Attempt to release lock that isn't held!\n");
+	}
     if(l.count==0) panic("(LOCK) Attempt to release lock with zero count!");
     l.count--;
     if(!l.count) {
-        __sync_bool_compare_and_swap(&l.lockval, thread, 0);
-        if (l.lockval != 0) panic("(LOCK) Lock value still set!");
+		bool waiters = l.waiting;
+		{
+			interrupt_lock il;
+			__sync_bool_compare_and_swap(&l.lockval, thread, 0);
+			if (l.lockval != 0) panic("(LOCK) Lock value still set!");
+		}
+		if(waiters) sch_yield();
     }
-    /*if(&l != &sch_lock && sch_can_lock())*/ sch_deferred_yield();
+	if(&l != &sch_lock) sch_abortable(true);
+    sch_deferred_yield();
 }

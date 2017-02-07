@@ -6,9 +6,10 @@ using namespace btos_api;
 
 static vector<bt_msg_header> *msg_q;
 static uint64_t id_counter=0;
-static lock msg_lock;
+lock msg_lock;
 
 bool msg_get(uint64_t id, bt_msg_header &msg);
+void msg_send_receipt(const bt_msg_header &omsg);
 
 typedef map<pid_t, vector<bt_kernel_messages::Enum> > msg_subscribers_list;
 static msg_subscribers_list *msg_subscribers;
@@ -34,11 +35,10 @@ uint64_t msg_send(bt_msg_header &msg){
             return 0;
         }
         if(prev.replied){
-            dbgout("MSG: Second reply to same message!\n");
             return 0;
         }
         {
-            hold_lock hl(msg_lock);
+            hold_lock hl(msg_lock, false);
             for (size_t i = 0; i < msg_q->size(); ++i) {
                 if ((*msg_q)[i].id == prev.id) {
                     (*msg_q)[i].replied = true;
@@ -53,7 +53,7 @@ uint64_t msg_send(bt_msg_header &msg){
         msg.recieved = msg.replied = false;
         msg_q->push_back(msg);
     }
-    dbgpf("MSG: Sent message ID %i.\n", (int)msg.id);
+    //dbgpf("MSG: Sent message ID %i from PID %i.\n", (int)msg.id, (int)msg.from);
     return msg.id;
 }
 
@@ -105,7 +105,7 @@ bt_msg_header msg_recv_block(pid_t pid){
 }
 
 bool msg_get(uint64_t id, bt_msg_header &msg){
-    hold_lock hl(msg_lock);
+    hold_lock hl(msg_lock, false);
     for(size_t i=0; i<msg_q->size(); ++i){
         if((*msg_q)[i].id==id){
             msg=(*msg_q)[i];
@@ -124,20 +124,23 @@ size_t msg_getcontent(bt_msg_header &msg, void *buffer, size_t buffersize){
 }
 
 void msg_acknowledge(bt_msg_header &msg, bool set_status){
-    hold_lock hl(msg_lock, false);
-    for(size_t i=0; i<msg_q->size(); ++i) {
-        bt_msg_header &header=(*msg_q)[i];
-        if(header.id==msg.id){
-            if(header.flags & bt_msg_flags::UserSpace){
-                proc_free_message_buffer(header.to, header.from);
-            }else{
-                free(header.content);
-            }
-            msg_q->erase(i);
-            if(set_status) sch_set_msgstaus(thread_msg_status::Normal);
-            return;
-        }
-    }
+    {
+		hold_lock hl(msg_lock, false);
+		for(size_t i=0; i<msg_q->size(); ++i) {
+			bt_msg_header &header=(*msg_q)[i];
+			if(header.id==msg.id){
+				if(!(header.flags & bt_msg_flags::Reply) && (header.flags & bt_msg_flags::UserSpace)){
+					proc_free_message_buffer(header.to, header.from);
+				}else{
+					free(header.content);
+				}
+				msg_q->erase(i);
+				if(set_status) sch_set_msgstaus(thread_msg_status::Normal);
+				return;
+			}
+		}
+	}
+	msg_send_receipt(msg);
 }
 
 void msg_nextmessage(bt_msg_header &msg){
@@ -186,7 +189,27 @@ void msg_send_event(bt_kernel_messages::Enum message, void *content, size_t size
 			msg.source=0;
 			msg.from=0;
 			msg.flags=0;
+			msg.critical=false;
 			memcpy(msg.content, content, size);
+			msg_send(msg);
+		}
+	}
+}
+
+void msg_send_receipt(const bt_msg_header &omsg){
+	hold_lock hl(msg_lock);
+	for(msg_subscribers_list::iterator i=msg_subscribers->begin(); i!=msg_subscribers->end(); ++i){
+		if(i->first == omsg.from && i->second.find(bt_kernel_messages::MessageReceipt) != i->second.npos){
+			bt_msg_header msg;
+			msg.type=bt_kernel_messages::MessageReceipt;
+			msg.to=i->first;
+			msg.content=malloc(sizeof(omsg));
+			msg.source=0;
+			msg.from=0;
+			msg.flags=0;
+			msg.critical=false;
+			memcpy(msg.content, &omsg, sizeof(omsg));
+			((bt_msg_header*)msg.content)->content=0;
 			msg_send(msg);
 		}
 	}
@@ -237,4 +260,63 @@ bt_msg_header msg_recv_reply_block(uint64_t msg_id){
     }
     sch_set_msgstaus(thread_msg_status::Processing);
     return ret;
+}
+
+bool msg_is_match(bt_msg_header msg, bt_msg_filter filter){
+	if(msg.critical) return true;
+	bool ret = true;
+	if((filter.flags & bt_msg_filter_flags::NonReply) && (msg.flags & bt_msg_flags::Reply)) ret = false;
+	if((filter.flags & bt_msg_filter_flags::From) && msg.from != filter.pid) ret = false;
+	if((filter.flags & bt_msg_filter_flags::Reply) && msg.reply_id != filter.reply_to) ret = false;
+	if((filter.flags & bt_msg_filter_flags::Type) && msg.type != filter.type) ret = false;
+	if((filter.flags & bt_msg_filter_flags::Source) && msg.source != filter.source) ret = false;
+	if((filter.flags & bt_msg_filter_flags::Invert)) ret = !ret;
+	return ret;
+}
+
+struct msg_filter_blockcheck_params{
+	pid_t pid;
+	bt_msg_filter filter;
+};
+
+bool msg_filter_blockcheck(void *p){
+	msg_filter_blockcheck_params &params=*(msg_filter_blockcheck_params*)p;
+	if(get_lock_owner(msg_lock)) return false;
+	for(size_t i=0; i<msg_q->size(); ++i){
+		bt_msg_header &msg=(*msg_q)[i];
+		if(msg.to == params.pid && msg_is_match(msg, params.filter)) return true;
+	}
+	return false;
+}
+
+bt_msg_header msg_recv_filtered(bt_msg_filter filter, pid_t pid){
+	hold_lock hl(msg_lock);
+	while(true){
+		for(size_t i=0; i<msg_q->size(); ++i){
+			bt_msg_header &msg=(*msg_q)[i];
+			if(msg.to == pid && msg_is_match(msg, filter)) {
+				sch_set_msgstaus(thread_msg_status::Processing);
+				return msg;
+			}
+		}
+		release_lock(msg_lock);
+		sch_set_msgstaus(thread_msg_status::Waiting);
+		msg_filter_blockcheck_params p = {pid, filter};
+		sch_setblock(&msg_filter_blockcheck, (void*)&p);
+		take_lock_exclusive(msg_lock);
+	}
+}
+
+void msg_nextmessage_filtered(bt_msg_filter filter, bt_msg_header &msg){
+    msg_acknowledge(msg, false);
+    msg=msg_recv_filtered(filter);
+}
+
+bool msg_query_recieved(uint64_t id){
+	hold_lock hl(msg_lock);
+	for(size_t i=0; i<msg_q->size(); ++i){
+		bt_msg_header &msg=(*msg_q)[i];
+		if(msg.id == id) return false;
+	}
+	return true;
 }

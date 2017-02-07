@@ -1,7 +1,7 @@
-#include "module_stubs.h"
+#include <btos_module.h>
 
-syscall_table *SYSCALL_TABLE;
-char dbgbuf[256];
+USE_SYSCALL_TABLE;
+USE_DEBUG_PRINTF;
 lock lck;
 uint64_t test_thread_id=0;
 
@@ -72,7 +72,7 @@ size_t test_driver_write(void *instance, size_t bytes, char *buf){
 	return 0;
 }
 
-size_t test_driver_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t test_driver_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	return 0;
 }
 

@@ -1,14 +1,22 @@
-#include "module_stubs.h"
-#include "fs_interface.h"
+#include <btos_module.h>
+#include <btos/fs_interface.h>
 #include "terminal.hpp"
 #include "vterm.hpp"
 #include "device.hpp"
 #include "console_backend.hpp"
+#include "api.hpp"
 
-syscall_table *SYSCALL_TABLE;
-char dbgbuf[256];
+USE_SYSCALL_TABLE;
+USE_DEBUG_PRINTF;
 
 uint64_t default_terminal;
+uint16_t terminal_extension_id;
+
+kernel_extension terminal_extension={
+	"TERMINAL",
+	NULL,
+	&terminal_uapi_fn
+};
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -21,15 +29,15 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 }
 
 void init(){
+	terminal_extension_id = add_extension(&terminal_extension);
+	infofs_register("TERMS", &terms_infofs);
     init_device();
     terminals=new vterm_list();
     cons_backend=new console_backend();
-    cons_backend->start_switcher();
     uint64_t id=terminals->create_terminal(cons_backend);
     terminals->get(id)->sync();
-    terminals->switch_terminal(id);
+    cons_backend->switch_terminal(id);
     default_terminal=id;
-    infofs_register("TERMS", &terms_infofs);
 }
 
 extern "C" void __cxa_pure_virtual()

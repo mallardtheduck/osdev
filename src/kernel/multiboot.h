@@ -102,7 +102,7 @@
      {
        unsigned long mod_start;
        unsigned long mod_end;
-       unsigned long string;
+       unsigned long cmdline;
        unsigned long reserved;
      } module_t;
      

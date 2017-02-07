@@ -25,6 +25,7 @@ struct sch_thread{
 	uint32_t magic;
 	void *stackptr;
 	void *stackbase;
+	size_t stackpages;
 	isr_regs *usercontext;
 	sch_start *start;
 	uint32_t priority;
@@ -35,7 +36,6 @@ struct sch_thread{
 	sch_blockcheck blockcheck;
 	void *bc_param;
 	uint32_t eip;
-	bool abortable;
 	int abortlevel;
     bool user_abort;
 	sch_thread *next;
@@ -68,12 +68,12 @@ static uint32_t counter=cstart;
 char *sch_threads_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
-	sprintf(buffer, "# ID, PID, priority, addr, status, alevel\n");
+	sprintf(buffer, "# ID, PID, priority, addr, status, alevel, load\n");
 	{hold_lock hl(sch_lock);
 		for(size_t i=0; i<threads->size(); ++i){
 			sch_thread *t=(*threads)[i];
-			sprintf(&buffer[strlen(buffer)],"%i, %i, %i, %x, %i, %i\n", (int)t->ext_id, (int)t->pid, t->priority, t->eip,
-				(int)t->status, t->abortlevel);
+			sprintf(&buffer[strlen(buffer)],"%i, %i, %i, %x, %i, %i, %i\n", (int)t->ext_id, (int)t->pid, t->priority, t->eip,
+				(int)t->status, t->abortlevel, t->modifier);
 		}
     }
     return buffer;
@@ -82,8 +82,11 @@ char *sch_threads_infofs(){
 void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
-    uint16_t value=0x7FFF;
-    dbgpf("SCH: Value: %i\n", (int)value);
+	uint8_t sch_freq = 50;
+	if(cpu_get_umips() < 1000) sch_freq = 30;
+	if(cpu_get_umips() < 500) sch_freq = 20;
+    uint16_t value=193182 / sch_freq;
+    dbgpf("SCH: Scheduler frequency: %i\n", (int)sch_freq);
 	outb(0x43, 0x36);
 	outb(0x40, value & 0xFF);
 	outb(0x40, (value >> 8) & 0xFF);
@@ -98,8 +101,7 @@ void sch_init(){
 	mainthread->pid=proc_current_pid;
 	mainthread->blockcheck=NULL;
 	mainthread->bc_param=NULL;
-	mainthread->abortlevel=1;
-	mainthread->abortable=false;
+	mainthread->abortlevel=2;
 	mainthread->pid=0;
 	mainthread->sch_cycle=0;
 	mainthread->msgstatus=thread_msg_status::Normal;
@@ -147,7 +149,10 @@ void sch_threadtest(){
 
 void sch_idlethread(void*){
 	sch_set_priority(0xFFFFFFFF);
-	while(true)asm volatile("hlt");
+	while(true){
+		asm volatile("hlt");
+		sch_yield();
+	}
 }
 
 extern "C" void sch_wrapper(){
@@ -158,7 +163,7 @@ extern "C" void sch_wrapper(){
         start = current_thread->start;
         ext_id=(int)current_thread->ext_id;
     }
-	dbgpf("SCH: Starting new thread %x (%i) at %x (param %x) [%x].\n", current_thread, (int)ext_id, start->ptr, start->param, start);
+	dbgpf("SCH: Starting new thread %p (%i) at %p (param %p) [%p].\n", current_thread, (int)ext_id, start->ptr, start->param, start);
     void (*entry)(void*) = start->ptr;
     void *param = start->param;
     free(start);
@@ -171,7 +176,16 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	sch_start *start=(sch_start*)malloc(sizeof(sch_start));
 	start->ptr=ptr;
 	start->param=param;
-	uint32_t stack=(uint32_t)malloc(stack_size);
+	//uint32_t stack=(uint32_t)malloc(stack_size);
+	newthread->stackpages = stack_size / MM2::MM2_Page_Size;
+	if(newthread->stackpages * MM2::MM2_Page_Size < stack_size) ++newthread->stackpages;
+	uint32_t stack = (uint32_t)mm2_virtual_alloc(newthread->stackpages + 1);
+	{
+		interrupt_lock il;
+		mm2_virtual_free((void*)stack, 1);
+		MM2::current_pagedir->guard_page_at((void*)stack);
+	}
+	stack += MM2::MM2_Page_Size;
 	newthread->stackptr=(void*)stack;
 	stack+=stack_size;
 	stack-=4;
@@ -187,8 +201,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread->modifier=0;
 	newthread->blockcheck=NULL;
 	newthread->bc_param=NULL;
-	newthread->abortlevel=1;
-	newthread->abortable=false;
+	newthread->abortlevel=2;
 	newthread->pid=0;
     newthread->user_abort=false;
 	newthread->next=NULL;
@@ -214,13 +227,14 @@ void thread_reaper(void*){
 					sch_thread *ptr=(*threads)[i];
 					uint64_t id=(*threads)[i]->ext_id;
                     void *stackptr=(*threads)[i]->stackptr;
+					size_t stackpages = (*threads)[i]->stackpages;
 					threads->erase(i);
                     release_lock(sch_lock);
-                    free(stackptr);
+                    mm2_virtual_free(stackptr, stackpages);
 					delete ptr;
                     take_lock_exclusive(sch_lock);
 					changed=true;
-					dbgpf("SCH: Reaped %i (%i) [%x].\n", i, (uint32_t)id, stackptr);
+					dbgpf("SCH: Reaped %i (%i) [%p].\n", (int)i, (int)id, stackptr);
 					break;
 				}
 			}
@@ -253,15 +267,16 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 	int nrunnables=0;
 	uint32_t min=0xFFFFFFFF;
 	for(size_t i=0; i<threads->size(); ++i){
+		sch_thread *ithread = (*threads)[i];
 		//Priority 0xFFFFFFFF == "idle", only run when nothing else is available.
-		if(!(*threads)[i]->priority==0xFFFFFFFF) (*threads)[i]->dynpriority=0xFFFFFFFF;
-	    if(lcycle != cycle && (*threads)[i]->status == sch_thread_status::Blocked && (*threads)[i]->blockcheck!=NULL){
-	        if((*threads)[i]->blockcheck((*threads)[i]->bc_param)) (*threads)[i]->status = sch_thread_status::Runnable;
+		if(!ithread->priority==0xFFFFFFFF) ithread->dynpriority=0xFFFFFFFF;
+	    if(lcycle != cycle && ithread->status == sch_thread_status::Blocked && ithread->blockcheck!=NULL){
+	        if(ithread->blockcheck(ithread->bc_param)) ithread->status = sch_thread_status::Runnable;
 	    }
-		if((*threads)[i]->status == sch_thread_status::Runnable){
-			if(!(*threads)[i]->priority) panic("(SCH) Thread priority 0 is not allowed.\n");
+		if(ithread->status == sch_thread_status::Runnable){
+			if(!ithread->priority) panic("(SCH) Thread priority 0 is not allowed.\n");
 			nrunnables++;
-			if((*threads)[i]->dynpriority < min) min=(*threads)[i]->dynpriority;
+			if(ithread->dynpriority < min) min=ithread->dynpriority;
 		}
 	}
 	lcycle=cycle;
@@ -275,14 +290,15 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 	//that isn't the current thread, record it
 	bool foundtorun=false;
 	for(size_t i=0; i<(*threads).size(); ++i){
-		if((*threads)[i]->status == sch_thread_status::Runnable){
-			if((*threads)[i]->dynpriority) (*threads)[i]->dynpriority-=min;
-			if((*threads)[i]!=current_thread && (*threads)[i]->dynpriority==0){
+		sch_thread *ithread = (*threads)[i];
+		if(ithread->status == sch_thread_status::Runnable){
+			if(ithread->dynpriority) ithread->dynpriority-=min;
+			if(ithread!=current_thread && ithread->dynpriority==0){
 				foundtorun=true;
-				torun=(*threads)[i];
+				torun=ithread;
 			}
-			else if((*threads)[i]->modifier) --(*threads)[i]->modifier;
-		}
+			else if(ithread->modifier) --ithread->modifier;
+		}else if(ithread->modifier) --ithread->modifier;
 	}
 	if(foundtorun){
 		if(torun->modifier < modifier_limit) ++torun->modifier;
@@ -362,22 +378,19 @@ const uint64_t &sch_get_id(){
 }
 
 void sch_set_priority(uint32_t pri){
-	hold_lock hl(sch_lock);
 	current_thread->priority=pri;
 }
 
 void sch_block(){
-    take_lock_recursive(sch_lock);
 	current_thread->status=sch_thread_status::Blocked;
-	release_lock(sch_lock);
 	sch_yield();
 }
 
 void sch_unblock(uint64_t ext_id){
 	hold_lock hl(sch_lock);
 	for(size_t i=0; i<threads->size(); ++i){
-		if((*threads)[i]->ext_id==ext_id && (*threads)[i]->status != sch_thread_status::Ending){
-			(*threads)[i]->status=sch_thread_status::Blocked;
+		if((*threads)[i]->ext_id==ext_id){
+			if((*threads)[i]->status == sch_thread_status::Blocked) (*threads)[i]->status=sch_thread_status::Runnable;
 			break;
 		}
 	}
@@ -388,24 +401,25 @@ bool sch_active(){
 }
 
 void sch_setpid(pid_t pid){
-	hold_lock hl(sch_lock, false);
+	if(proc_get_status(pid) == proc_status::DoesNotExist) panic("(SCH) Attempt to associate thread to non existent process!");
 	current_thread->pid=pid;
 }
 
 void sch_setblock(sch_blockcheck check, void *param){
 	if(check(param)) return;
-    { hold_lock hl(sch_lock);
-		current_thread->blockcheck=check;
-		current_thread->bc_param=param;
-    }
-    sch_abortable(true);
+	current_thread->blockcheck=check;
+	current_thread->bc_param=param;
+	bool changeabort = false;
+	if(sch_get_abortlevel()){
+		changeabort = true;
+		sch_abortable(true);
+	}
     sch_block();
     sch_clearblock();
-    sch_abortable(false);
+    if(changeabort) sch_abortable(false);
 }
 
 void sch_clearblock(){
-	hold_lock hl(sch_lock, false);
 	current_thread->blockcheck=NULL;
 	current_thread->bc_param=NULL;
 }
@@ -434,31 +448,28 @@ void sch_wait(uint64_t ext_id){
 }
 
 extern "C" void sch_update_eip(uint32_t eip){
-    hold_lock hl(sch_lock, false);
 	current_thread->eip=eip;
 }
 
 uint32_t sch_get_eip(bool lock){
-    if(lock) take_lock_recursive(sch_lock);
-    uint32_t ret=current_thread->eip;
-    if(lock) release_lock(sch_lock);
-    return ret;
+	return current_thread->eip;
 }
 
-void sch_abortable(bool abortable){
+void sch_abortable(bool abortable, uint64_t ext_id){
+	sch_thread *thread = current_thread;
+	if(ext_id != current_thread_id){;
+		for(size_t i=0; i<threads->size(); ++i){
+			if((*threads)[i]->ext_id==ext_id){
+				thread = (*threads)[i];
+				break;
+			}
+		}
+	}
     int alevel;
-    {
-        hold_lock hl(sch_lock, false);
-		current_thread->abortlevel += abortable ? -1 : 1;
-        alevel = current_thread->abortlevel;
-    }
-	if(alevel<=0){
-        hold_lock hl(sch_lock, false);
-		current_thread->abortlevel=0;
-		current_thread->abortable=true;
-	}else{
-        hold_lock hl(sch_lock, false);
-		current_thread->abortable=false;
+	if(abortable) alevel = atomic_decrement(thread->abortlevel);
+	else alevel = atomic_increment(thread->abortlevel);
+	if(alevel < 0){
+		thread->abortlevel=0;
 	}
 }
 
@@ -466,13 +477,14 @@ bool sch_abort_blockcheck(void *p){
 	uint64_t &ext_id=*(uint64_t*)p;
 	for(size_t i=0; i<threads->size(); ++i){
 		if((*threads)[i]->ext_id==ext_id){
-			return (*threads)[i]->abortable;
+			return (*threads)[i]->abortlevel > 0;
 		}
 	}
 	return true;
 }
 
 void sch_abort(uint64_t ext_id){
+	if(ext_id == sch_get_id()) panic("(SCH) Thread attempting to abort itself!");
 	bool tryagain=true;
 	while(tryagain){
         take_lock_recursive(sch_lock);
@@ -480,7 +492,7 @@ void sch_abort(uint64_t ext_id){
 		for(size_t i=0; i<threads->size(); ++i){
 			if((*threads)[i]->ext_id==ext_id){
 				found=true;
-				if((*threads)[i]->abortable){
+				if(!(*threads)[i]->abortlevel){
 					(*threads)[i]->status=sch_thread_status::Ending;
 					reaper_thread->status=sch_thread_status::Runnable;
 					tryagain=false;
@@ -508,10 +520,7 @@ bool sch_can_lock(){
 }
 
 bool sch_user_abort(){
-    take_lock_recursive(sch_lock);
-    bool ret=current_thread->user_abort;
-    release_lock(sch_lock);
-    return ret;
+    return current_thread->user_abort;
 }
 
 void sch_prescheduler_thread(void*){
@@ -545,11 +554,14 @@ void sch_prescheduler_thread(void*){
 }
 
 static sch_thread *sch_get(uint64_t ext_id){
-	hold_lock hl(sch_lock, false);
-	for(size_t i=0; i<threads->size(); ++i){
-		if((*threads)[i]->ext_id==ext_id) return (*threads)[i];
+	if(ext_id == current_thread->ext_id) return current_thread;
+	{
+		hold_lock hl(sch_lock, false);
+		for(size_t i=0; i<threads->size(); ++i){
+			if((*threads)[i]->ext_id==ext_id) return (*threads)[i];
+		}
+		return NULL;
 	}
-	return NULL;
 }
 
 void sch_set_msgstaus(thread_msg_status::Enum status, uint64_t ext_id){
@@ -579,11 +591,11 @@ uint8_t *sch_get_fpu_xmm_data(){
 	return current_thread->fpu_xmm_data;
 }
 
-size_t sch_get_pid_threadcount(pid_t pid){
+size_t sch_get_pid_threadcount(pid_t pid, bool ignore_current, uint64_t ext_id){
 	take_lock_recursive(sch_lock);
 	size_t ret=0;
 	for(size_t i=0; i<threads->size(); ++i){
-		if((*threads)[i]->pid == pid) ++ret;
+		if((*threads)[i]->pid == pid && (!ignore_current || (*threads)[i]->ext_id != ext_id)) ++ret;
 	}
 	release_lock(sch_lock);
 	return ret;
@@ -622,7 +634,8 @@ void sch_update_usercontext(isr_regs *uc, uint64_t ext_id){
 		current_thread->usercontext = uc;
 	}else{
 		hold_lock hl(sch_lock);
-		sch_get(ext_id)->usercontext = uc;
+		sch_thread *thread = sch_get(ext_id);
+		if(thread) thread->usercontext = uc;
 	}
 
 }
@@ -632,6 +645,12 @@ void *sch_get_usercontext(uint64_t ext_id){
 		return current_thread->usercontext;
 	}else{
 		hold_lock hl(sch_lock);
-		return sch_get(ext_id)->usercontext;
+		sch_thread *thread = sch_get(ext_id);
+		if(thread) return thread->usercontext;
+		else return NULL;
 	}
+}
+
+int sch_get_abortlevel(){
+	return current_thread->abortlevel;
 }
