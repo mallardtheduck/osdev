@@ -56,6 +56,19 @@ void proc_command(const vector<string> &args){
 	if(args.size() == 2){
 		if(args[1] != "none"){
 			bt_pid_t newpid = atoll(args[1].c_str());
+			bool found = false;
+			ifstream info("INFO:/PROCS");
+			table tbl = parsecsv(info);
+			for(auto row: tbl.rows){
+				if((bt_pid_t)atoll(row["PID"].c_str()) == newpid){
+					found = true;
+					break;
+				}
+			}
+			if(!found){
+				cout << "PID not found." << endl;
+				return;
+			}
 			if(newpid != selected_pid){
 				selected_thread = 0;
 				selected_pid = newpid;
@@ -97,7 +110,21 @@ void thread_command(const vector<string> &args){
 	}
 	if(args.size() == 2){
 		if(args[1] != "none"){
-			selected_thread = atoll(args[1].c_str());
+			uint64_t newthread = atoll(args[1].c_str());
+			bool found = false;
+			ifstream info("INFO:/THREADS");
+			table tbl = parsecsv(info);
+			for(auto row: tbl.rows){
+				if((uint64_t)atoll(row["ID"].c_str()) == newthread){
+					found = true;
+					break;
+				}
+			}
+			if(!found){
+				cout << "Thread not found." << endl;
+				return;
+			}
+			selected_thread = newthread;
 		}else{
 			selected_thread = 0;
 		}
