@@ -17,15 +17,15 @@ void debug_extension_uapi(uint16_t fn, isr_regs *regs) {
 			regs->eax = 1;
 			break;
 		case bt_debug_function::StopProcess:
-			if(regs->ebx) sch_debug_stop(regs->ebx);
+			if(regs->ebx && proc_get_status(regs->ebx) != proc_status::DoesNotExist) sch_debug_stop(regs->ebx);
 			break;
 		case bt_debug_function::ContinueProcess:
-			if(regs->ebx) sch_debug_resume(regs->ebx);
+			if(regs->ebx && proc_get_status(regs->ebx) != proc_status::DoesNotExist) sch_debug_resume(regs->ebx);
 			break;
 		case bt_debug_function::Peek:
 			if(is_safe_ptr(regs->ebx, 0) && is_safe_ptr(regs->ecx, sizeof(bt_debug_copy_params))) {
 				bt_debug_copy_params *p = (bt_debug_copy_params*)regs->ecx;
-				if(p->pid && is_safe_ptr((uint32_t)p->addr, p->size, p->pid) && p->size <= DEBUG_COPYLIMT) {
+				if(p->pid && proc_get_status(p->pid) != proc_status::DoesNotExist && is_safe_ptr((uint32_t)p->addr, p->size, p->pid) && p->size <= DEBUG_COPYLIMT) {
 					debug_copymem(p->pid, p->addr, proc_current_pid, (void*)regs->ebx, p->size);
 				}
 			}
@@ -33,7 +33,7 @@ void debug_extension_uapi(uint16_t fn, isr_regs *regs) {
 		case bt_debug_function::Poke:
 			if(is_safe_ptr(regs->ebx, 0) && is_safe_ptr(regs->ecx, sizeof(bt_debug_copy_params))) {
 				bt_debug_copy_params *p = (bt_debug_copy_params*)regs->ecx;
-				if(p->pid && is_safe_ptr((uint32_t)p->addr, p->size, p->pid) && p->size <= DEBUG_COPYLIMT) {
+				if(p->pid && proc_get_status(p->pid) != proc_status::DoesNotExist && is_safe_ptr((uint32_t)p->addr, p->size, p->pid) && p->size <= DEBUG_COPYLIMT) {
 					debug_copymem(proc_current_pid, (void*)regs->ebx, p->pid, p->addr, p->size);
 				}
 			}
