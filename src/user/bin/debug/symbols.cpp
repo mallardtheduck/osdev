@@ -10,7 +10,11 @@
 #include <unistd.h>
 #include <cxxabi.h>
 
+#include "lrucache.hpp"
+
 using namespace std;
+
+cache::lru_cache<string, vector<symbol>> symbol_cache(32);
 
 string get_pid_filename(bt_pid_t pid){
 	ifstream info("INFO:/PROCS");
@@ -69,35 +73,45 @@ void test_symbols(string filename) {
 }
 
 void load_symbols(intptr_t base, const string &file, vector<symbol> &vec){
-	if (elf_version(EV_CURRENT) == EV_NONE) throw string("Init fail.");
-	int fd = open(file.c_str(), O_RDONLY, 0);
-	Elf *e = elf_begin(fd, ELF_C_READ, NULL);
-	if(!e) throw string("Symbol load fail.");
-	Elf_Scn *scn = NULL;
-	GElf_Shdr shdr;
-	while((scn = elf_nextscn(e, scn))){
-		gelf_getshdr(scn, &shdr);
-		if(shdr.sh_type == SHT_SYMTAB){
-			Elf_Data *data = elf_getdata(scn, NULL);
-			size_t count = shdr.sh_size / shdr.sh_entsize;
-			GElf_Sym sym;
-			for(size_t ndx = 0; ndx < count; ++ndx){
-				symbol s;
-				gelf_getsym(data, ndx, &sym);
-				s.name = elf_strptr(e, shdr.sh_link, sym.st_name);
-				if(s.name.find("_Z") == 0){
-					int status = -1;
-					char *realname = abi::__cxa_demangle(s.name.c_str(), NULL, NULL, &status);
-					if(status == 0) s.name = realname;
+	if(!symbol_cache.exists(file)){
+		vector<symbol> symbols;
+		if (elf_version(EV_CURRENT) == EV_NONE) throw string("Init fail.");
+		int fd = open(file.c_str(), O_RDONLY, 0);
+		Elf *e = elf_begin(fd, ELF_C_READ, NULL);
+		if(!e) throw string("Symbol load fail.");
+		Elf_Scn *scn = NULL;
+		GElf_Shdr shdr;
+		while((scn = elf_nextscn(e, scn))){
+			gelf_getshdr(scn, &shdr);
+			if(shdr.sh_type == SHT_SYMTAB){
+				Elf_Data *data = elf_getdata(scn, NULL);
+				size_t count = shdr.sh_size / shdr.sh_entsize;
+				GElf_Sym sym;
+				for(size_t ndx = 0; ndx < count; ++ndx){
+					symbol s;
+					gelf_getsym(data, ndx, &sym);
+					s.name = elf_strptr(e, shdr.sh_link, sym.st_name);
+					if(s.name.find("_Z") == 0){
+						int status = -1;
+						char *realname = abi::__cxa_demangle(s.name.c_str(), NULL, NULL, &status);
+						if(status == 0) s.name = realname;
+					}
+					s.address = 0;
+					s.file_address = sym.st_value;
+					s.file = file;
+					symbols.push_back(s);
 				}
-				s.address = sym.st_value + base;
-				s.file = file;
-				vec.push_back(s);
 			}
 		}
+		elf_end(e);
+		close(fd);
+		symbol_cache.put(file, symbols);
 	}
-	elf_end(e);
-	close(fd);
+	vector<symbol> symbols = symbol_cache.get(file);
+	for(symbol s : symbols){
+		s.address = s.file_address + base;
+		vec.push_back(s);
+	}
 }
 
 vector<module> get_modules(bt_pid_t pid){

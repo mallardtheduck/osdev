@@ -56,8 +56,13 @@ void proc_command(const vector<string> &args){
 	if(args.size() == 2){
 		if(args[1] != "none"){
 			bt_pid_t newpid = atoll(args[1].c_str());
-			if(newpid != selected_pid) selected_thread = 0;
-			selected_pid = newpid;
+			if(newpid != selected_pid){
+				selected_thread = 0;
+				selected_pid = newpid;
+				cout << "Loading symbols..." << flush;
+				load_symbols(selected_pid);
+				cout << "Done." << endl;
+			}
 		}else{
 			selected_pid = 0;
 			selected_thread = 0;
@@ -169,7 +174,7 @@ void ldsyms_command(){
 		return;
 	}
 	cout << "Loading symbols..." << flush;
-	load_symbols(selected_pid);
+	load_symbols(selected_pid, true);
 	cout << "Done." << endl;
 }
 
