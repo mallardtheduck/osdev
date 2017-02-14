@@ -6,7 +6,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
+#include <algorithm>
 
 #include "debug.hpp"
 #include "commands.hpp"
@@ -205,6 +207,64 @@ void ldsyms_command(){
 	cout << "Done." << endl;
 }
 
+static symbol get_best_symbol(const string &name){
+	vector<symbol> proc_symbols = load_symbols(selected_pid);
+	vector<symbol> syms = get_symbols_by_name(proc_symbols, name);
+	remove_if(syms.begin(), syms.end(), [](const symbol &s){ return s.size == 0; });
+	if(syms.size() == 0){
+		return null_symbol;
+	}
+	return syms[0];
+}
+
+void dump_command(const vector<string> &args){
+	if(!selected_pid){
+		cout << "No process selected." << endl;
+		return;
+	}
+	if(args.size() != 2){
+		cout << "No symbol specified." << endl;
+		return;
+	}
+	symbol sym = get_best_symbol(args[1]);
+	if(sym.address == 0){
+		cout << "Symbol not found." << endl;
+		return;
+	}
+	cout << "Symbol: " << sym.name << " At: " << hex << sym.address << " In: " << sym.file << endl;
+	for(size_t i = 0; i < sym.size; ++i){
+		intptr_t addr = sym.address + i;
+		uint8_t c;
+		//uint32_t ival = 0;
+		//(*(char*)&ival) = c;
+		debug_peek(&c, selected_pid, addr, 1);
+		cout << hex << setfill('0') << setw(2) << (unsigned)c << ' ';
+	}
+	cout << endl;
+	cout.copyfmt(ios(NULL));
+}
+
+void info_command(const vector<string> &args){
+	if(!selected_pid){
+		cout << "No process selected." << endl;
+		return;
+	}
+	if(args.size() != 2){
+		cout << "No symbol specified." << endl;
+		return;
+	}
+	symbol sym = get_best_symbol(args[1]);
+	if(sym.address == 0){
+		cout << "Symbol not found." << endl;
+		return;
+	}
+	cout << "Symbol: " << sym.name << endl;
+	cout << "Address: " << hex << sym.address << endl;
+	cout << "Module: " << sym.file << endl;
+	cout << "Size: " << dec << sym.size << endl;
+	cout.copyfmt(ios(NULL));
+}
+
 std::string input_command(){
 	cout << ">";
 	string ret;
@@ -231,6 +291,10 @@ bool do_command(string cmd){
 			modules_command();
 		}else if(line[0] == "ldsyms"){
 			ldsyms_command();
+		}else if(line[0] == "dump"){
+			dump_command(line);
+		}else if(line[0] == "info"){
+			info_command(line);
 		}else if(line[0] == "quit"){
 			return false;
 		}else{

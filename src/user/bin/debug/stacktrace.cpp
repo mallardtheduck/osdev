@@ -6,11 +6,12 @@ using namespace std;
 static bt_pid_t curpid = 0;
 static vector<symbol> symbols;
 
-void load_symbols(bt_pid_t pid, bool force_reload){
+vector<symbol> load_symbols(bt_pid_t pid, bool force_reload){
 	if(force_reload || pid != curpid){
 		symbols = get_symbols(pid);
 		curpid = pid;
 	}
+	return symbols;
 }
 
 void do_stacktrace(bt_pid_t pid, context ctx){

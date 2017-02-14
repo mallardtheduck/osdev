@@ -9,9 +9,14 @@
 struct symbol{
 	std::string file;
 	std::string name;
+	std::string raw_name;
+	std::string short_name;
 	intptr_t address;
 	intptr_t file_address;
+	size_t size;
 };
+
+extern const symbol null_symbol;
 
 struct module{
 	std::string name;
@@ -25,6 +30,6 @@ std::vector<symbol> get_symbols(bt_pid_t pid);
 symbol get_symbol(const std::vector<symbol> &symbols, intptr_t addr);
 symbol get_symbol_by_name(const std::vector<symbol> &symbols, std::string name);
 std::vector<symbol> get_symbols_by_name(const std::vector<symbol> &symbols, std::string name);
-void load_symbols(bt_pid_t pid, bool force_reload = false);
+std::vector<symbol> load_symbols(bt_pid_t pid, bool force_reload = false);
 
 #endif

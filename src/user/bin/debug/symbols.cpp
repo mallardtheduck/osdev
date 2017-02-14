@@ -16,6 +16,16 @@ using namespace std;
 
 cache::lru_cache<string, vector<symbol>> symbol_cache(32);
 
+const symbol null_symbol{
+	.file = "(Unknown)",
+	.name = "(Unkonwn)",
+	.raw_name = "(Unkonwn)",
+	.short_name = "(Unkonwn)",
+	.address = 0,
+	.file_address = 0,
+	.size = 0
+};
+
 string get_pid_filename(bt_pid_t pid){
 	ifstream info("INFO:/PROCS");
 	table tbl = parsecsv(info);
@@ -72,6 +82,26 @@ void test_symbols(string filename) {
 	}
 }
 
+static string demangle(const string &name){
+	if(name.find("_Z") == 0){
+		int status = -1;
+		char *realname = abi::__cxa_demangle(name.c_str(), NULL, NULL, &status);
+		if(status == 0) {
+			string ret = realname;
+			free(realname);
+			return ret;
+		}
+	}
+	return name;
+}
+
+static string short_name(const string &name){
+	if(name.find("(") != string::npos && name.find(")") != string::npos){
+		return name.substr(0, name.find("("));
+	}
+	return name;
+}
+
 void load_symbols(intptr_t base, const string &file, vector<symbol> &vec){
 	if(!symbol_cache.exists(file)){
 		vector<symbol> symbols;
@@ -90,15 +120,14 @@ void load_symbols(intptr_t base, const string &file, vector<symbol> &vec){
 				for(size_t ndx = 0; ndx < count; ++ndx){
 					symbol s;
 					gelf_getsym(data, ndx, &sym);
-					s.name = elf_strptr(e, shdr.sh_link, sym.st_name);
-					if(s.name.find("_Z") == 0){
-						int status = -1;
-						char *realname = abi::__cxa_demangle(s.name.c_str(), NULL, NULL, &status);
-						if(status == 0) s.name = realname;
-					}
+					s.raw_name = elf_strptr(e, shdr.sh_link, sym.st_name);
+					if(s.raw_name == "") continue;
+					s.name = demangle(s.raw_name);
+					s.short_name = short_name(s.name);
 					s.address = 0;
 					s.file_address = sym.st_value;
 					s.file = file;
+					s.size = sym.st_size;
 					symbols.push_back(s);
 				}
 			}
@@ -152,12 +181,14 @@ vector<symbol> get_symbols(bt_pid_t pid){
 	return ret;
 }
 
+static bool symbol_name_match(const symbol &sym, string name){
+	return (name == sym.name || name == sym.raw_name || name == sym.short_name);
+}
+
 symbol get_symbol_by_name(const vector<symbol> &symbols, string name){
-	symbol ret;
-	ret.address = 0;
-	ret.name = "(Unknown)";
+	symbol ret = null_symbol;
 	for(auto sym : symbols){
-		if(sym.name == name){
+		if(symbol_name_match(sym, name)){
 			ret = sym;
 			return ret;
 		}
@@ -167,10 +198,7 @@ symbol get_symbol_by_name(const vector<symbol> &symbols, string name){
 }
 
 symbol get_symbol(const vector<symbol> &symbols, intptr_t addr){
-	symbol ret;
-	ret.address = 0;
-	ret.name = "(Unknown)";
-	ret.file = "(Unknown)";
+	symbol ret = null_symbol;
 	for(auto sym : symbols){
 		if(ret.address < sym.address && sym.address < addr){
 			ret = sym;
@@ -182,7 +210,7 @@ symbol get_symbol(const vector<symbol> &symbols, intptr_t addr){
 vector<symbol> get_symbols_by_name(const vector<symbol> &symbols, string name){
 	vector<symbol> ret;
 	for(auto sym : symbols){
-		if(sym.name == name){
+		if(symbol_name_match(sym, name)){
 			ret.push_back(sym);
 		}
 	}
