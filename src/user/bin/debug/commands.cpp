@@ -10,6 +10,8 @@
 #include <fstream>
 #include <algorithm>
 
+#include <udis86.h>
+
 #include "debug.hpp"
 #include "commands.hpp"
 #include "table.hpp"
@@ -235,8 +237,6 @@ void dump_command(const vector<string> &args){
 	for(size_t i = 0; i < sym.size; ++i){
 		intptr_t addr = sym.address + i;
 		uint8_t c;
-		//uint32_t ival = 0;
-		//(*(char*)&ival) = c;
 		debug_peek(&c, selected_pid, addr, 1);
 		cout << hex << setfill('0') << setw(2) << (unsigned)c << ' ';
 	}
@@ -262,6 +262,45 @@ void info_command(const vector<string> &args){
 	cout << "Address: " << hex << sym.address << endl;
 	cout << "Module: " << sym.file << endl;
 	cout << "Size: " << dec << sym.size << endl;
+	cout.copyfmt(ios(NULL));
+}
+
+void disas_command(const vector<string> &args){
+	if(!selected_pid){
+		cout << "No process selected." << endl;
+		return;
+	}
+	if(args.size() != 2){
+		cout << "No symbol specified." << endl;
+		return;
+	}
+	
+	symbol sym = get_best_symbol(args[1]);
+		if(sym.address == 0){
+		cout << "Symbol not found." << endl;
+		return;
+	}
+	
+	
+	vector<uint8_t> mem;
+	cout << "Symbol: " << sym.name << " At: " << hex << sym.address << " In: " << sym.file << endl;
+	for(size_t i = 0; i < sym.size; ++i){
+		intptr_t addr = sym.address + i;
+		uint8_t c;
+		debug_peek(&c, selected_pid, addr, 1);
+		mem.push_back(c);
+	}
+	
+	ud_t ud_obj;
+	ud_init(&ud_obj);
+	ud_set_mode(&ud_obj, 32);
+	ud_set_pc(&ud_obj, sym.address);
+	ud_set_input_buffer(&ud_obj, mem.data(), mem.size());
+	ud_set_syntax(&ud_obj, UD_SYN_ATT);
+	while(ud_disassemble(&ud_obj)){
+		cout << hex << setfill('0') << setw(8) << ud_insn_off(&ud_obj) << " - " << ud_insn_hex(&ud_obj);
+		cout << " - " << ud_insn_asm(&ud_obj) << endl;
+	}
 	cout.copyfmt(ios(NULL));
 }
 
@@ -295,6 +334,8 @@ bool do_command(string cmd){
 			dump_command(line);
 		}else if(line[0] == "info"){
 			info_command(line);
+		}else if(line[0] == "disas"){
+			disas_command(line);
 		}else if(line[0] == "quit"){
 			return false;
 		}else{

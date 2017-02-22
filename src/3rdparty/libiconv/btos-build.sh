@@ -29,6 +29,8 @@ PATH=$BASE_PATH/bin:$PATH
 	--host=$ARCH \
 	--prefix=$PREFIX
 
+cp ../../toolchain/misc/libtool .
+
 make
 make DESTDIR=$PWD/../install install
 find ../install -executable -not -name "*.elx" -type f -exec rm {}.elx \;
