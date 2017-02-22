@@ -5,3 +5,4 @@ source ../env-os.sh
 ./libiconv.sh
 ./grub.sh
 ./parted.sh
+./udis86.sh
