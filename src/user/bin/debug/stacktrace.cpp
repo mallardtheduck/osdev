@@ -22,6 +22,7 @@ void do_stacktrace(bt_pid_t pid, context ctx){
 	uint32_t bp = 0;
 	uint32_t stack[2] = {ctx.ebp, ctx.eip};
 	for(int count = 0; count < 100; ++count){
+		if(stack[1] == 0) break;
 		symbol sym = get_symbol(symbols, stack[1]);
 		printf("%p : %s in %s\n", (void*)stack[1], sym.name.c_str(), sym.file.c_str());
 		if(stack[0] != bp){ 
