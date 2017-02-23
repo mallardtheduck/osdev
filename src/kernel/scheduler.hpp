@@ -48,5 +48,6 @@ void sch_debug_resume(pid_t pid);
 void sch_update_usercontext(isr_regs *uc, uint64_t ext_id=sch_get_id());
 void *sch_get_usercontext(uint64_t ext_id=sch_get_id());
 int sch_get_abortlevel();
+uint32_t *sch_getdebugstate(uint64_t ext_id = sch_get_id());
 
 #endif

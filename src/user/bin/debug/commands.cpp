@@ -265,6 +265,68 @@ void info_command(const vector<string> &args){
 	cout.copyfmt(ios(NULL));
 }
 
+void setbp_command(const vector<string> &args){
+	if(!selected_thread){
+		cout << "No thread selected." << endl;
+		return;
+	}
+	
+	if(args.size() != 2){
+		cout << "No symbol specified." << endl;
+		return;
+	}
+	symbol sym = get_best_symbol(args[1]);
+	if(sym.address == 0){
+		cout << "Symbol not found." << endl;
+		return;
+	}
+	
+	bool result = debug_setbreakpoint(selected_thread, sym.address);
+	if(!result){
+		cout << "Breakpoint could not be set." << endl;
+	}else{
+		cout << "Breakpoint set at: " << hex << sym.address << endl;
+	}
+	cout.copyfmt(ios(NULL));
+}
+
+void clearbp_command(const vector<string> &args){
+	if(!selected_thread){
+		cout << "No thread selected." << endl;
+		return;
+	}
+	
+	if(args.size() != 2){
+		cout << "No symbol specified." << endl;
+		return;
+	}
+	symbol sym = get_best_symbol(args[1]);
+	if(sym.address == 0){
+		cout << "Symbol not found." << endl;
+		return;
+	}
+	
+	bool result = debug_clearbreakpoint(selected_thread, sym.address);
+	if(!result){
+		cout << "Breakpoint could not be cleared." << endl;
+	}else{
+		cout << "Breakpoint cleared from: " << hex << sym.address << endl;
+	}
+	cout.copyfmt(ios(NULL));
+}
+
+void bpstat_command(){
+	if(!selected_thread){
+		cout << "No thread selected." << endl;
+		return;
+	}
+	
+	uint32_t stat = debug_getbpinfo(selected_thread);
+	
+	cout << "Breakpoint status: " << hex << setfill('0') << setw(8) << stat << endl;
+	cout.copyfmt(ios(NULL));
+}
+
 void disas_command(const vector<string> &args){
 	if(!selected_pid){
 		cout << "No process selected." << endl;
@@ -276,8 +338,12 @@ void disas_command(const vector<string> &args){
 	}
 	
 	symbol sym = get_best_symbol(args[1]);
-		if(sym.address == 0){
+	if(sym.address == 0){
 		cout << "Symbol not found." << endl;
+		return;
+	}
+	if(sym.size == 0){
+		cout << "Symbol size unknown." << endl;
 		return;
 	}
 	
@@ -336,6 +402,12 @@ bool do_command(string cmd){
 			info_command(line);
 		}else if(line[0] == "disas"){
 			disas_command(line);
+		}else if(line[0] == "setbp"){
+			setbp_command(line);
+		}else if(line[0] == "clearbp"){
+			clearbp_command(line);
+		}else if(line[0] == "bpstat"){
+			bpstat_command();
 		}else if(line[0] == "quit"){
 			return false;
 		}else{

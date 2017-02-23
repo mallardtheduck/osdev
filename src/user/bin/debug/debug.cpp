@@ -77,6 +77,18 @@ void debug_continue(pid_t pid){
 	call_debug(bt_debug_function::ContinueProcess, (uint32_t)pid, 0, 0);
 }
 
+bool debug_setbreakpoint(uint64_t thread, intptr_t addr){
+	return !!call_debug(bt_debug_function::SetBreakpoint, (uint32_t)&thread, addr, 0);
+}
+
+bool debug_clearbreakpoint(uint64_t thread, intptr_t addr){
+	return !!call_debug(bt_debug_function::ClearBreakpoint, (uint32_t)&thread, addr, 0);
+}
+
+uint32_t debug_getbpinfo(uint64_t thread){
+	return call_debug(bt_debug_function::GetBPInfo, (uint32_t)&thread, 0, 0);
+}
+
 int main(int argc, char **argv){
 	std::cout << "BT/OS System Debugger" << std::endl;
     if(!init_debug()){

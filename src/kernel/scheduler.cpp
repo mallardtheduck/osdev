@@ -42,6 +42,7 @@ struct sch_thread{
 	uint32_t sch_cycle;
 	thread_msg_status::Enum msgstatus;
 	uint8_t fpu_xmm_data[512];
+	uint32_t debug_state[Debug_DRStateSize];
 };
 
 vector<sch_thread*> *threads;
@@ -208,6 +209,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread->sch_cycle=0;
 	newthread->msgstatus=thread_msg_status::Normal;
 	memcpy(newthread->fpu_xmm_data, default_fpu_xmm_data, 512);
+	memset(newthread->debug_state, 0, Debug_DRStateSize * sizeof(uint32_t));
     take_lock_exclusive(sch_lock);
 	newthread->ext_id=++cur_ext_id;
 	threads->push_back(newthread);
@@ -327,6 +329,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	if(torun && torun->status != sch_thread_status::Runnable) torun=torun->next;
 	//If there is no next, run the prescheduler instead
 	if(!torun) torun=prescheduler_thread;
+	debug_getdrstate(current_thread->debug_state);
 	save_fpu_xmm_data(current_thread->fpu_xmm_data);
 	current_thread=torun;
 	curstack=current_thread->stack;
@@ -336,6 +339,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	proc_switch_sch(current_thread->pid);
 	gdt_set_kernel_stack(current_thread->stackbase);
 	fpu_switch();
+	debug_setdrstate(torun->debug_state);
 	sch_deferred=false;
 	return &curstack;
 }
@@ -653,4 +657,15 @@ void *sch_get_usercontext(uint64_t ext_id){
 
 int sch_get_abortlevel(){
 	return current_thread->abortlevel;
+}
+
+uint32_t *sch_getdebugstate(uint64_t ext_id){
+	if(ext_id == current_thread_id){
+		return current_thread->debug_state;
+	}else{
+		hold_lock hl(sch_lock, false);
+		sch_thread *thread = sch_get(ext_id);
+		if(thread) return thread->debug_state;
+		else return NULL;
+	}
 }

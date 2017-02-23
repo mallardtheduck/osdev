@@ -30,6 +30,10 @@ void out_context(const context ctx);
 void debug_peek(void *dst, pid_t pid, uint32_t src, size_t size);
 void debug_peek_string(char *dst, pid_t pid, uint32_t src, size_t max_size);
 void debug_poke(pid_t pid, uint32_t dst, void *src, size_t size);
+bool debug_setbreakpoint(uint64_t thread, intptr_t addr);
+bool debug_clearbreakpoint(uint64_t thread, intptr_t addr);
+uint32_t debug_getbpinfo(uint64_t thread);
+
 void do_stacktrace(bt_pid_t pid, context ctx);
 void out_event(const bt_debug_event_msg &event);
 void test_symbols(std::string filename);
