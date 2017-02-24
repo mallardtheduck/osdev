@@ -93,31 +93,7 @@ void debug_event_notify(pid_t pid, uint64_t thread, bt_debug_event::Enum event, 
 	}
 }
 
-module_api::kernel_extension debug_extension = {
-	"DEBUG", NULL, &debug_extension_uapi
-};
-
-void init_debug_extension() {
-	uint32_t cr4;
-	asm volatile("mov %%cr4, %0": "=b"(cr4));
-	cr4 |= CR4_DE;
-	asm volatile("mov %0, %%cr4":: "b"(cr4));
-	debug_ext_id = add_extension(&debug_extension);
-}
-
-static void debug_copymem(pid_t fpid, void *faddr, pid_t tpid, void *taddr, size_t size) {
-	void *buffer = malloc(size);
-	if(!buffer) return;
-	pid_t cpid = proc_current_pid;
-	proc_switch(fpid);
-	memcpy(buffer, faddr, size);
-	proc_switch(tpid);
-	memcpy(taddr, buffer, size);
-	proc_switch(cpid);
-	free(buffer);
-}
-
-static void debug_setdr(char dr, uint32_t value){
+static inline void debug_setdr(char dr, uint32_t value){
 	switch(dr){
 		case 0:
 			asm volatile("mov %0, %%dr0":: "b"(value));
@@ -141,7 +117,7 @@ static void debug_setdr(char dr, uint32_t value){
 	};
 }
 
-static uint32_t debug_getdr(char dr){
+static inline uint32_t debug_getdr(char dr){
 	uint32_t ret = 0;
 	switch(dr){
 		case 0:
@@ -167,12 +143,48 @@ static uint32_t debug_getdr(char dr){
 	return ret;
 }
 
+module_api::kernel_extension debug_extension = {
+	"DEBUG", NULL, &debug_extension_uapi
+};
+
+static void debug_isr(int i, isr_regs *r){
+	dbgpf("DEBUG: ISR (%i) from PID: %i.\n", i, (int)proc_current_pid);
+	dbgpf("DEBUG: DR6: %x\n", debug_getdr(6));
+	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Breakpoint);
+	r->eflags |= (1 << 16);
+}
+
+void init_debug_extension() {
+	uint32_t cr4;
+	asm volatile("mov %%cr4, %0": "=b"(cr4));
+	cr4 |= CR4_DE;
+	asm volatile("mov %0, %%cr4":: "b"(cr4));
+	debug_ext_id = add_extension(&debug_extension);
+	int_handle(1, &debug_isr);
+	int_handle(3, &debug_isr);
+	debug_setdr(7, 0xF00);
+}
+
+static void debug_copymem(pid_t fpid, void *faddr, pid_t tpid, void *taddr, size_t size) {
+	void *buffer = malloc(size);
+	if(!buffer) return;
+	pid_t cpid = proc_current_pid;
+	proc_switch(fpid);
+	memcpy(buffer, faddr, size);
+	proc_switch(tpid);
+	memcpy(taddr, buffer, size);
+	proc_switch(cpid);
+	free(buffer);
+}
 
 void debug_setbreaks(bool state){
 	if(state){
-		uint32_t dr7 = 0xFF00;
+		uint32_t dr7 = 0xF00;
 		for(char i = 0; i < 4; ++i){
-			if(debug_getdr(i)) dr7 |= (1 << i);
+			if(debug_getdr(i)){
+				dr7 |= (1 << (i * 2));
+				dr7 |= (1 << ((i * 2) + 1));
+			}
 		}
 		debug_setdr(7, dr7);
 	}else{
@@ -213,7 +225,8 @@ static bool debug_setbreakpoint(uint64_t thread_id, uint32_t addr){
 	for(size_t i = 0; i < 4; ++i){
 		if(state[debug_dridx(i)] == 0){
 			state[debug_dridx(i)] = addr;
-			dr7 |= (1 << i);
+			dr7 |= (1 << (i * 2));
+			dr7 |= (1 << ((i * 2) + 1));
 			ret = true;
 			break;
 		}
@@ -230,7 +243,8 @@ static bool debug_clearbreakpoint(uint64_t thread_id, uint32_t addr){
 	for(size_t i = 0; i < 4; ++i){
 		if(state[debug_dridx(i)] == addr){
 			state[debug_dridx(i)] = 0;
-			dr7 &= ~(1 << i);
+			dr7 &= ~(1 << (i * 2));
+			dr7 &= ~(1 << ((i * 2) + 1));
 			ret = true;
 			break;
 		}
@@ -244,3 +258,4 @@ static uint32_t debug_getbpinfo(uint64_t thread_id){
 	if(!state) return 0;
 	return state[debug_dridx(6)];
 }
+

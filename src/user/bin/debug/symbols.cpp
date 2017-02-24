@@ -200,7 +200,7 @@ symbol get_symbol_by_name(const vector<symbol> &symbols, string name){
 symbol get_symbol(const vector<symbol> &symbols, intptr_t addr){
 	symbol ret = null_symbol;
 	for(auto sym : symbols){
-		if(ret.address < sym.address && sym.address < addr){
+		if(ret.address < sym.address && sym.address <= addr){
 			ret = sym;
 		}
 	}

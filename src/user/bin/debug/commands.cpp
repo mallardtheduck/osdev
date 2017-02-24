@@ -2,6 +2,8 @@
 #include <ext/debug.h>
 #include <dev/terminal.h>
 #include <dev/keyboard.h>
+#include <dev/terminal.h>
+#include <dev/rtc.h>
 #include <crt_support.h>
 #include <cstdio>
 #include <cstdlib>
@@ -9,6 +11,7 @@
 #include <iomanip>
 #include <fstream>
 #include <algorithm>
+#include <unistd.h>
 
 #include <udis86.h>
 
@@ -19,9 +22,24 @@
 
 using namespace std;
 
-volatile bt_pid_t selected_pid;
-volatile uint64_t selected_thread;
-volatile bool watch_enabled;
+static volatile bt_pid_t selected_pid;
+static volatile uint64_t selected_thread;
+static volatile bool watch_enabled;
+
+static uint16_t terminal_ext_id = 0xFFFF;
+
+void start_event_mode(){
+	terminal_ext_id = bt_query_extension("TERMINAL");
+	bt_handle_t th = btos_get_handle(fileno(stdout));
+	bt_fioctl(th, bt_terminal_ioctl::StartEventMode, 0, NULL);
+	bt_terminal_event_mode::Enum mode = bt_terminal_event_mode::Keyboard;
+	bt_fioctl(th, bt_terminal_ioctl::SetEventMode, sizeof(mode), (char*)&mode);
+}
+
+void end_event_mode(){
+	bt_handle_t th = btos_get_handle(fileno(stdout));
+	bt_fioctl(th, bt_terminal_ioctl::EndEventMode, 0, NULL);
+}
 
 void watch_thread(void *){
 	bt_msg_header msg = bt_recv(true);
@@ -31,10 +49,13 @@ void watch_thread(void *){
             bt_msg_content(&msg, (void *) &content, sizeof(content));
             if(watch_enabled && (selected_pid == 0 || content.pid == selected_pid)){
 				out_event(content);
-				if(content.event == bt_debug_event::Exception || content.event == bt_debug_event::ThreadEnd){
+				if(content.event == bt_debug_event::Exception || content.event == bt_debug_event::ThreadEnd || content.event == bt_debug_event::Breakpoint){
 					context ctx = get_context(content.thread);
 					out_context(ctx);
 					do_stacktrace(content.pid, ctx);
+					cout << "Watch paused due to event." << endl;
+					watch_enabled = false;
+					while(!watch_enabled) bt_rtc_sleep(100);
 				}
 			}	
             bt_msg_header reply;
@@ -43,16 +64,27 @@ void watch_thread(void *){
             reply.flags = bt_msg_flags::Reply;
             reply.length = 0;
             bt_send(reply);
+		}else if(msg.from == 0 && msg.source == terminal_ext_id){
+			bt_terminal_event event;
+			bt_msg_content(&msg, (void*)&event, sizeof(event));
+			if(event.type == bt_terminal_event_type::Key && (event.key & KeyFlags::KeyUp) == 0){
+				cout << "Watch ended by keypress." << endl;
+				watch_enabled = false;
+			}
 		}
 		bt_next_msg(&msg);
 	}
 }
 
 void watch_command(){
-	cout << "Watch started. Press <return> to break." << endl;
+	cout << "Watch started. Press any key to break." << endl;
 	watch_enabled=true;
 	string q;
-	getline(cin, q);
+	start_event_mode();
+	while(watch_enabled) {
+		bt_rtc_sleep(100);
+	}
+	end_event_mode();
 	watch_enabled=false;
 }
 
