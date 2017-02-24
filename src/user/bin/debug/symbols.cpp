@@ -9,6 +9,7 @@
 #include <vector>
 #include <unistd.h>
 #include <cxxabi.h>
+#include <cstdlib>
 
 #include "lrucache.hpp"
 
@@ -181,11 +182,30 @@ vector<symbol> get_symbols(bt_pid_t pid){
 	return ret;
 }
 
+static symbol fake_symbol(string name){
+	if(!name.length() || name[0] != '*') return null_symbol;
+	string addrpart = name.substr(1);
+	string sizepart;
+	if(name.find(',') != string::npos) sizepart = name.substr(name.find(',') + 1);
+	intptr_t addr = strtoul(addrpart.c_str(), NULL, 0);
+	size_t size = strtoul(sizepart.c_str(), NULL, 0);
+	symbol ret;
+	ret.file = "(None)";
+	ret.name = name;
+	ret.raw_name = name;
+	ret.short_name = name;
+	ret.address = addr;
+	ret.file_address = addr;
+	ret.size = size;
+	return ret;
+}
+
 static bool symbol_name_match(const symbol &sym, string name){
 	return (name == sym.name || name == sym.raw_name || name == sym.short_name);
 }
 
 symbol get_symbol_by_name(const vector<symbol> &symbols, string name){
+	if(name.length() && name[0] == '*') return fake_symbol(name);
 	symbol ret = null_symbol;
 	for(auto sym : symbols){
 		if(symbol_name_match(sym, name)){
@@ -209,9 +229,13 @@ symbol get_symbol(const vector<symbol> &symbols, intptr_t addr){
 
 vector<symbol> get_symbols_by_name(const vector<symbol> &symbols, string name){
 	vector<symbol> ret;
-	for(auto sym : symbols){
-		if(symbol_name_match(sym, name)){
-			ret.push_back(sym);
+	if(name.length() && name[0] == '*'){
+		ret.push_back(fake_symbol(name));
+	}else{
+		for(auto sym : symbols){
+			if(symbol_name_match(sym, name)){
+				ret.push_back(sym);
+			}
 		}
 	}
 	return ret;
