@@ -226,9 +226,9 @@ void modules_command(){
 	}
 	vector<module> modules = get_modules(selected_pid);
 	for(auto m: modules){
-		cout << m.name << hex << " - Base: " << m.base << " Limit: " << m.limit << " - " << m.path << endl;
+		cout << m.name << hex << " - Base: 0x" << m.base << " Limit: " << dec << m.limit << " - " << m.path << endl;
 	}
-	cout << dec;
+	cout.copyfmt(ios(NULL));
 }
 
 void ldsyms_command(){
@@ -265,7 +265,7 @@ void dump_command(const vector<string> &args){
 		cout << "Symbol not found." << endl;
 		return;
 	}
-	cout << "Symbol: " << sym.name << " At: " << hex << sym.address << " In: " << sym.file << endl;
+	cout << "Symbol: " << sym.name << " At: 0x" << hex << sym.address << " In: " << sym.file << endl;
 	for(size_t i = 0; i < sym.size; ++i){
 		intptr_t addr = sym.address + i;
 		uint8_t c;
@@ -291,7 +291,7 @@ void info_command(const vector<string> &args){
 		return;
 	}
 	cout << "Symbol: " << sym.name << endl;
-	cout << "Address: " << hex << sym.address << endl;
+	cout << "Address: 0x" << hex << sym.address << endl;
 	cout << "Module: " << sym.file << endl;
 	cout << "Size: " << dec << sym.size << endl;
 	cout.copyfmt(ios(NULL));
@@ -317,7 +317,7 @@ void setbp_command(const vector<string> &args){
 	if(!result){
 		cout << "Breakpoint could not be set." << endl;
 	}else{
-		cout << "Breakpoint set at: " << hex << sym.address << endl;
+		cout << "Breakpoint set at: 0x" << hex << sym.address << endl;
 	}
 	cout.copyfmt(ios(NULL));
 }
@@ -342,7 +342,7 @@ void clearbp_command(const vector<string> &args){
 	if(!result){
 		cout << "Breakpoint could not be cleared." << endl;
 	}else{
-		cout << "Breakpoint cleared from: " << hex << sym.address << endl;
+		cout << "Breakpoint cleared from: 0x" << hex << sym.address << endl;
 	}
 	cout.copyfmt(ios(NULL));
 }
@@ -381,7 +381,7 @@ void disas_command(const vector<string> &args){
 	
 	
 	vector<uint8_t> mem;
-	cout << "Symbol: " << sym.name << " At: " << hex << sym.address << " In: " << sym.file << endl;
+	cout << "Symbol: " << sym.name << " At: 0x" << hex << sym.address << " In: " << sym.file << endl;
 	for(size_t i = 0; i < sym.size; ++i){
 		intptr_t addr = sym.address + i;
 		uint8_t c;
@@ -396,9 +396,38 @@ void disas_command(const vector<string> &args){
 	ud_set_input_buffer(&ud_obj, mem.data(), mem.size());
 	ud_set_syntax(&ud_obj, UD_SYN_ATT);
 	while(ud_disassemble(&ud_obj)){
-		cout << hex << setfill('0') << setw(8) << ud_insn_off(&ud_obj) << " - " << ud_insn_hex(&ud_obj);
-		cout << " - " << ud_insn_asm(&ud_obj) << endl;
+		cout << hex << "0x" << setfill('0') << setw(8) << (intptr_t)ud_insn_off(&ud_obj) << " - " << ud_insn_hex(&ud_obj);
+		cout << " - " << ud_insn_asm(&ud_obj);
+		const ud_operand *op = ud_insn_opr(&ud_obj, 0);
+		if(op && op->type == UD_OP_JIMM){ 
+			intptr_t addr = (intptr_t)(ud_insn_off(&ud_obj) + ud_insn_len(&ud_obj) + op->lval.udword);
+			symbol sym = get_symbol(load_symbols(selected_pid), addr);
+			cout << " <" << sym.name << ">";
+		}
+		cout << endl;
 	}
+	cout.copyfmt(ios(NULL));
+}
+
+void symbol_command(const vector<string> &line){
+	if(!selected_pid){
+		cout << "No process selected." << endl;
+		return;
+	}
+	if(line.size() != 2){
+		cout << "No address specified." << endl;
+		return;
+	}
+	intptr_t addr = strtoul(line[1].c_str(), NULL, 0);
+	symbol sym = get_symbol(load_symbols(selected_pid), addr);
+	if(sym.address == 0){
+		cout << "Symbol not found." << endl;
+		return;
+	}
+	cout << "Symbol: " << sym.name << endl;
+	cout << "Address: 0x" << hex << sym.address << endl;
+	cout << "Module: " << sym.file << endl;
+	cout << "Size: " << dec << sym.size << endl;
 	cout.copyfmt(ios(NULL));
 }
 
@@ -432,6 +461,8 @@ bool do_command(string cmd){
 			dump_command(line);
 		}else if(line[0] == "info"){
 			info_command(line);
+		}else if(line[0] == "symbol"){
+			symbol_command(line);
 		}else if(line[0] == "disas"){
 			disas_command(line);
 		}else if(line[0] == "setbp"){
