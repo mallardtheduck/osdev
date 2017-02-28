@@ -32,7 +32,7 @@ inline static void free(void *ptr){
 inline static void *memset(void *ptr, int value, size_t num){
 	return SYSCALL_TABLE->memset(ptr, value, num);
 }
-inline static void memcpy(void *dst, void *src, size_t size){
+inline static void memcpy(void *dst, const void *src, size_t size){
 	SYSCALL_TABLE->memcpy(dst, src, size);
 }
 inline static void memmove(void *dst, void *src, size_t size){
