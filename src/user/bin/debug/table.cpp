@@ -18,7 +18,7 @@ void trim(string& str){
 	}
 }
 
-vector<string> splitcsv(const string &line){
+vector<string> splitline(const string &line, char delim){
 	vector<string> ret;
 	stringstream current;
 	bool quote=false;
@@ -28,7 +28,7 @@ vector<string> splitcsv(const string &line){
 			quote=!quote;
 		}else if(!escape && c=='\\'){
 			escape=true;
-		}else if(!escape && !quote && c==','){
+		}else if(!escape && !quote && c==delim){
 			string curstr=current.str();
 			trim(curstr);
 			ret.push_back(curstr);
@@ -44,6 +44,10 @@ vector<string> splitcsv(const string &line){
 		ret.push_back(curstr);
 	}
 	return ret;
+}
+
+vector<string> splitcsv(const string &line){
+	return splitline(line, ',');
 }
 
 table parsecsv(istream &file){

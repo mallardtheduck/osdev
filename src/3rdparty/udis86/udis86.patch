@@ -1,0 +1,50 @@
+diff -rupN udis86-1.7.2/build/config.sub originals/udis86-1.7.2/build/config.sub
+--- udis86-1.7.2/build/config.sub	2017-02-22 12:36:44.888275000 +0000
++++ originals/udis86-1.7.2/build/config.sub	2013-09-02 05:17:25.000000000 +0100
+@@ -1356,7 +1356,7 @@ case $os in
+ 	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
+ 	      | -sym* | -kopensolaris* \
+ 	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
+-	      | -aos* | -aros* | -btos* \
++	      | -aos* | -aros* \
+ 	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
+ 	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
+ 	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \
+diff -rupN udis86-1.7.2/configure originals/udis86-1.7.2/configure
+--- udis86-1.7.2/configure	2017-02-22 12:36:44.892275000 +0000
++++ originals/udis86-1.7.2/configure	2013-09-02 05:17:21.000000000 +0100
+@@ -10132,16 +10132,6 @@ $as_echo "$lt_cv_irix_exported_symbol" >
+       hardcode_libdir_flag_spec='-L$libdir'
+       hardcode_shlibpath_var=no
+       ;;
+-      
+-    btos*)
+-	  libname_spec='$name'
+-	  shrext_cmds=".ell"
+-	  need_lib_prefix=no
+-	  library_names_spec='$libname${shared_ext}'
+-	  dynamic_linker="$host_os ELOADER"
+-	  shlibpath_var=LIBPATH
+-	  soname_spec='$libname${shared_ext}'
+-	  ;;
+ 
+     *)
+       ld_shlibs=no
+@@ -10876,17 +10866,6 @@ irix5* | irix6* | nonstopux*)
+ linux*oldld* | linux*aout* | linux*coff*)
+   dynamic_linker=no
+   ;;
+-  
+-btos*)
+-  version_type=linux
+-  libname_spec='$name'
+-  shrext_cmds=".ell"
+-  need_lib_prefix=no
+-  library_names_spec='$libname${shared_ext}'
+-  dynamic_linker="$host_os ELOADER"
+-  shlibpath_var=LIBPATH
+-  soname_spec='$libname${shared_ext}'
+-  ;;
+ 
+ # This must be glibc/ELF.
+ linux* | k*bsd*-gnu | kopensolaris*-gnu)

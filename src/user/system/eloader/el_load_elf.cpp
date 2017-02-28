@@ -10,7 +10,7 @@ struct symbol_override{
 	intptr_t value;
 };
 
-static uint32_t load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const char *name, intptr_t base, size_t limit, bool is_dynamic = false);
+static uint32_t load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const char *name, const char *full_path, intptr_t base, size_t limit, bool is_dynamic = false);
 static void relocate_and_link_module(const loaded_module &module, bool load);
 
 loaded_module *loaded_modules = NULL;
@@ -24,7 +24,7 @@ void panic(const char *msg){
 	bt_exit(-1);
 }
 
-static loaded_module *add_module(const char *name, Elf32_Dyn *dynsection, intptr_t base, size_t limit, bool is_dynamic = false){
+static loaded_module *add_module(const char *name, const char *full_path, Elf32_Dyn *dynsection, intptr_t base, size_t limit, bool is_dynamic = false){
 	static uint32_t id_counter = 0;
 	++loaded_module_count;
 	if(loaded_module_count==1){
@@ -38,6 +38,7 @@ static loaded_module *add_module(const char *name, Elf32_Dyn *dynsection, intptr
 	strncpy(newstring, name, strSize);
 	loaded_module &module = loaded_modules[loaded_module_count - 1];
 	module.name = newstring;
+	module.full_path = (char*)full_path;
 	module.dynamic = dynsection;
 	module.base = base;
 	module.limit = limit;
@@ -99,7 +100,7 @@ static size_t elf_getsize(bt_handle_t file){
 	return limit-base;
 }
 
-uint32_t load_elf_library(bt_handle_t file, const char *name, bool is_dynamic){
+uint32_t load_elf_library(bt_handle_t file, const char *name, const char *full_path, bool is_dynamic){
 	Elf32_Ehdr header=elf_read_header(file);
 	size_t ramsize=elf_getsize(file);
 	size_t pages=ramsize/4096;
@@ -117,13 +118,13 @@ uint32_t load_elf_library(bt_handle_t file, const char *name, bool is_dynamic){
 		}
 	}
 	uint32_t ret = 0;
-	if(dynsection) ret = load_dynamic(file, header, dynsection, name, (intptr_t)mem, ramsize, is_dynamic);
+	if(dynsection) ret = load_dynamic(file, header, dynsection, name, full_path, (intptr_t)mem, ramsize, is_dynamic);
 	return ret;
 }
 
-static uint32_t load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const char *name, intptr_t base, size_t limit, bool is_dynamic){
+static uint32_t load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, const char *name, const char *full_path, intptr_t base, size_t limit, bool is_dynamic){
 	Elf32_Dyn *dynamic = load_dynamic_section(file, header, phnum);
-	loaded_module *module=add_module(name, dynamic, base, limit, is_dynamic);
+	loaded_module *module=add_module(name, full_path, dynamic, base, limit, is_dynamic);
 	relocate_and_link_module(*module, true);
 	size_t strtabidx = get_dynamic_entry_idx(dynamic, DT_STRTAB);
 	if(strtabidx != (size_t)-1){
@@ -136,9 +137,10 @@ static uint32_t load_dynamic(bt_handle_t file, Elf32_Ehdr header, int phnum, con
 					char needed[BT_MAX_PATH] = {0};
 					strncpy(needed, (char*)strtaboff + current.un.ptr, BT_MAX_PATH);
 					if(!is_loaded(needed)){
-						bt_handle_t lib = open_lib(needed);
+						char *full_path = NULL;
+						bt_handle_t lib = open_lib(needed, &full_path);
 						if(lib){
-							load_elf_library(lib, needed);
+							load_elf_library(lib, needed, full_path);
 						}else{
 							puts("ELOADER: Library not found: ");
 							puts(needed);
@@ -392,7 +394,7 @@ static void init_modules(){
 	}
 }
 
-entrypoint load_elf_proc(bt_handle_t file){
+entrypoint load_elf_proc(bt_handle_t file, const char *path){
 	Elf32_Ehdr header=elf_read_header(file);
 	size_t limit = 0;
 	int dynsection = 0;
@@ -416,7 +418,7 @@ entrypoint load_elf_proc(bt_handle_t file){
 		}
 	}
 	if(dynsection) {
-		load_dynamic(file, header, dynsection, "MAIN", 0, limit);
+		load_dynamic(file, header, dynsection, "MAIN", path, 0, limit);
 		relocate_and_link();
 		init_modules();
 	}

@@ -27,11 +27,12 @@ export LDFLAGS=""
 PATH=$BASE_PATH/bin:$PATH
 ./configure \
 	--host=$ARCH \
-	--prefix=$PREFIX
-
-cp ../../toolchain/misc/libtool .
+	--prefix=$PREFIX \
+	--enable-shared
 
 make
 make DESTDIR=$PWD/../install install
+find ../install -name "*.ell" -exec chmod -x {} \;
+find ../install -name "*.la" -delete
 find ../install -executable -not -name "*.elx" -type f -exec rm {}.elx \;
 find ../install -executable -not -name "*.elx" -type f -exec mv {} {}.elx \;

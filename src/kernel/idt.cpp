@@ -218,6 +218,7 @@ extern size_t current_thread;
 
 extern "C" void isr_handler(isr_regs *ctx){
     imode++;
+    //debug_setbreaks(false);
     if(sch_can_lock()) {
         sch_update_eip(ctx->eip);
         sch_abortable(false);
@@ -271,6 +272,7 @@ extern "C" void isr_handler(isr_regs *ctx){
         sch_abortable(true);
     }
     imode--;
+    //debug_setbreaks(!imode);
 }
 
 void irq_ack(size_t irq_no) {

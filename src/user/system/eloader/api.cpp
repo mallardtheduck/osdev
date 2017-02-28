@@ -10,9 +10,10 @@ static loaded_module *getmodule(uint32_t id){
 }
 
 uint32_t EL_LoadLibrary(const char *path){
-	bt_handle_t lib = open_lib(path);
+	char *full_path = NULL;
+	bt_handle_t lib = open_lib(path, &full_path);
 	uint32_t ret = 0;
-	if(lib) ret = load_elf_library(lib, path, true);
+	if(lib) ret = load_elf_library(lib, path, full_path, true);
 	return ret;
 }
 

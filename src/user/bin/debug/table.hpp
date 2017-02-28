@@ -16,5 +16,6 @@ struct table{
 
 table parsecsv(std::istream &file);
 void display_table(table tbl, size_t width, std::ostream &output=std::cout);
+std::vector<std::string> splitline(const std::string &line, char delim);
 
 #endif
