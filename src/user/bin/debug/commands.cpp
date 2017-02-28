@@ -23,7 +23,7 @@
 using namespace std;
 
 volatile bt_pid_t selected_pid;
-static volatile uint64_t selected_thread;
+volatile uint64_t selected_thread;
 static volatile bool watch_enabled;
 
 static uint16_t terminal_ext_id = 0xFFFF;

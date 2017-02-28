@@ -1,6 +1,7 @@
 #include "debug.hpp"
 #include "table.hpp"
 #include "symbols.hpp"
+#include "commands.hpp"
 #include <libelf.h>
 #include <gelf.h>
 #include <fcntl.h>
@@ -182,7 +183,7 @@ vector<symbol> get_symbols(bt_pid_t pid){
 	return ret;
 }
 
-static symbol fake_symbol(string name){
+static symbol fake_symbol(const string &name){
 	if(!name.length() || name[0] != '*') return null_symbol;
 	string addrpart = name.substr(1);
 	string sizepart;
@@ -200,12 +201,22 @@ static symbol fake_symbol(string name){
 	return ret;
 }
 
+static symbol stack_symbol(const string &name){
+	if(!selected_thread) return null_symbol;
+	size_t id = strtoul(name.substr(1).c_str(), NULL, 0);
+	context ctx = get_context(selected_thread);
+	vector<symbol> stack = stack_symbols(selected_pid, ctx);
+	if(stack.size() > id) return stack[id];
+	else return null_symbol;
+}
+
 static bool symbol_name_match(const symbol &sym, string name){
 	return (name == sym.name || name == sym.raw_name || name == sym.short_name);
 }
 
 symbol get_symbol_by_name(const vector<symbol> &symbols, string name){
 	if(name.length() && name[0] == '*') return fake_symbol(name);
+	if(name.length() && name[0] == '#') return stack_symbol(name);
 	symbol ret = null_symbol;
 	for(auto sym : symbols){
 		if(symbol_name_match(sym, name)){
@@ -231,6 +242,8 @@ vector<symbol> get_symbols_by_name(const vector<symbol> &symbols, string name){
 	vector<symbol> ret;
 	if(name.length() && name[0] == '*'){
 		ret.push_back(fake_symbol(name));
+	}else if(name.length() && name[0] == '#'){
+		ret.push_back(stack_symbol(name));
 	}else{
 		for(auto sym : symbols){
 			if(symbol_name_match(sym, name)){

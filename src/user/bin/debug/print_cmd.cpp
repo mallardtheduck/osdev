@@ -6,10 +6,9 @@
 
 #include "debug.hpp"
 #include "symbols.hpp"
+#include "commands.hpp"
 
 using namespace std;
-
-extern volatile bt_pid_t selected_pid;
 
 symbol get_best_symbol(const string &name);
 
