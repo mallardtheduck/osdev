@@ -1,13 +1,15 @@
+#include <btos_module.h>
+#include <dev/video_dev.h>
+#include <util/holdlock.hpp>
 #include "vga.hpp"
 #include "modes.hpp"
-#include "drivers.h"
 #include "device.hpp"
 #include "ops.hpp"
-#include "../../include/video_dev.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
 extern vga_palette_entry vga_palette[256];
+lock vga_device_lock;
 
 bt_video_palette_entry get_palette_entry(uint8_t entry){
     bt_video_palette_entry ret;
@@ -35,6 +37,7 @@ bool vga_close(void *instance){
 }
 
 size_t vga_read(void *instance, size_t bytes, char *buf){
+	hold_lock hl(&vga_device_lock);
     vga_instance *inst=(vga_instance*)instance;
     if(current_mode->vidmode.textmode){
         return text_read(inst, bytes, buf);
@@ -44,6 +47,7 @@ size_t vga_read(void *instance, size_t bytes, char *buf){
 }
 
 size_t vga_write(void *instance, size_t bytes, char *buf){
+	hold_lock hl(&vga_device_lock);
     vga_instance *inst=(vga_instance*)instance;
     if(current_mode->vidmode.textmode){
         return text_write(inst, bytes, buf);
@@ -52,7 +56,8 @@ size_t vga_write(void *instance, size_t bytes, char *buf){
     }
 }
 
-size_t vga_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t vga_seek(void *instance, bt_filesize_t pos, uint32_t flags){
+	hold_lock hl(&vga_device_lock);
     vga_instance *inst=(vga_instance*)instance;
     if(current_mode->vidmode.textmode){
         return text_seek(inst, pos, flags);
@@ -62,6 +67,7 @@ size_t vga_seek(void *instance, size_t pos, uint32_t flags){
 }
 
 int vga_ioctl(void *instance, int fn, size_t bytes, char *buf){
+	hold_lock hl(&vga_device_lock);
     vga_instance *inst=(vga_instance*)instance;
     if(fn == bt_vid_ioctl::GetModeCount) {
         return vga_mode_count;
@@ -83,6 +89,7 @@ int vga_ioctl(void *instance, int fn, size_t bytes, char *buf){
         }else return 0;
     }else if(fn==bt_vid_ioctl::SetMode) {
         if(bytes == sizeof(bt_vidmode)) {
+			graphics_end();
             bt_vidmode vidmode = *(bt_vidmode *) buf;
             vga_mode *mode=NULL;
             for(size_t i=0; i<vga_mode_count; ++i){
@@ -124,5 +131,6 @@ char *vga_desc(){
 drv_driver vga_device={&vga_open, &vga_close, &vga_read, &vga_write, &vga_seek, &vga_ioctl, &vga_type, &vga_desc};
 
 void init_device(){
+	init_lock(&vga_device_lock);
     add_device("VGA", &vga_device, NULL);
 }

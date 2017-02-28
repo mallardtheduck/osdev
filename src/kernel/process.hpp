@@ -3,7 +3,7 @@
 
 #include "kernel.hpp"
 #include "string.hpp"
-#include "../include/locktype.h"
+#include <module/locktype.h>
 
 typedef uint64_t pid_t;
 typedef pid_t bt_pid_t;

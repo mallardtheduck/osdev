@@ -1,5 +1,5 @@
 #include "ps2.hpp"
-#include <circular_buffer.hpp>
+#include <util/circular_buffer.hpp>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -30,13 +30,14 @@ static void (*write_device)(uint8_t);
 
 static void keyboard_handler(int irq, isr_regs *regs){
 	uint8_t ps2_byte=ps2_read_data_nocheck();
+	if(ps2_byte == 0xFA) return;
 	pre_buffer.add_item(ps2_byte);
 	input_available = true;
-	if(thread_id() != keyboard_thread_id) {
+	/*if(thread_id() != keyboard_thread_id) {
 		enable_interrupts();
 		yield();
 		disable_interrupts();
-	}
+	}*/
 }
 
 static bool input_blockcheck(void*){
@@ -56,7 +57,7 @@ static void keyboard_thread(void*){
 					keyboard_buffer.add_item(scancode2buffervalue(key));
 					updateflags(keycode);
 				} else {
-					dbgpf("KEYBOARD: Ignored unmapped scancode %x (%x).\n", (int) key, (int) keycode);
+					dbgpf("PS2: KEYBOARD: Ignored unmapped scancode %x (%x).\n", (int) key, (int) keycode);
 				}
 			}
 		}
@@ -189,7 +190,7 @@ size_t keyboard_write(void *instance, size_t bytes, char *buf){
 	return 0;
 }
 
-size_t keyboard_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t keyboard_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	return 0;
 }
 
@@ -216,20 +217,46 @@ void init_keyboard(uint8_t kchannel){
 	numkeys=us_keyboard_numkeys;
 	input_available=false;
 	if(channel==1){
+		dbgout("PS2: Keyboard on channel 1.\n");
 		irq=Port1IRQ;
 		ps2_write_command(PS2_Command::EnablePort1);
 		write_device=&ps2_write_port1;
 
 	}else{
+		dbgout("PS2: Keyboard on channel 2.\n");
 		irq=Port2IRQ;
 		ps2_write_command(PS2_Command::EnablePort2);
 		write_device=&ps2_write_port2;
 	}
+	write_device(Device_Command::Reset);
+	write_device(Device_Command::SetDefaults);
+	write_device(Device_Command::DisableScanning);
 	write_device(Device_Command::GetSetScanCode);
 	ps2_write_data(0x01);
+	write_device(Device_Command::GetSetScanCode);
+	ps2_write_data(0x00);
+	uint8_t byte = 0xFA;
+	while(byte == 0xFA) byte = ps2_read_data();
+	dbgpf("PS2: Scan set: %x\n", byte);
+	if(byte == 0x02 || byte == 0x41){
+		if(channel == 1){
+			dbgpf("PS2: Keyboard does not support scan set 1. Re-enabling translation.\n");
+			dbgout("PS2: Read config\n");
+			ps2_write_command(PS2_Command::ReadRAM);
+			uint8_t config=ps2_read_data();
+			dbgpf("PS2: Config: %x\n", (int)config);
+			config |= (1 << 6);
+			dbgout("PS2: Write config\n");
+			ps2_write_command(PS2_Command::WriteRAM);
+			ps2_write_data(config);
+		}else{
+			panic("(PS2) Keyboard does not support scan set 1 and cannot be translated.");
+		}
+	}
 	write_device(Device_Command::EnableScanning);
 	handle_irq(irq, &keyboard_handler);
 	keyboard_thread_id=new_thread(&keyboard_thread, NULL);
 	add_device("KEYBD", &keyboard_driver, NULL);
 	unmask_irq(irq);
+	ps2_clear_data();
 }

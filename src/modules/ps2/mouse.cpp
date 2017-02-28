@@ -1,5 +1,5 @@
 #include "ps2.hpp"
-#include <circular_buffer.hpp>
+#include <util/circular_buffer.hpp>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -21,11 +21,11 @@ static void mouse_handler(int irq, isr_regs *regs){
 	uint8_t ps2_byte= ps2_read_data_nocheck();
 	pre_buffer.add_item(ps2_byte);
 	input_available = true;
-	if(thread_id()!=mouse_thread_id) {
+	/*if(thread_id()!=mouse_thread_id) {
 		enable_interrupts();
 		yield();
 		disable_interrupts();
-	}
+	}*/
 }
 
 bool input_blockcheck(void*){
@@ -125,7 +125,7 @@ size_t mouse_write(void *instance, size_t bytes, char *cbuf){
 	return 0;
 }
 
-size_t mouse_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t mouse_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	return 0;
 }
 

@@ -3,7 +3,7 @@
 
 #include "kernel.hpp"
 namespace module_api {
-#include "../include/extension.h"
+#include <module/extension.h>
 }
 
 void init_extensions();

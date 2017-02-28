@@ -18,7 +18,7 @@ char *modules_infofs(){
 	memset(buffer, 0, 4096);
 	sprintf(buffer, "# address, path, parameters\n");
 	for(size_t i=0; i<loaded_modules->size(); ++i){
-		sprintf(&buffer[strlen(buffer)], "%x, \"%s\", \"%s\"\n", (*loaded_modules)[i].elf.mem.aligned, (*loaded_modules)[i].filename.c_str(),
+		sprintf(&buffer[strlen(buffer)], "%p, \"%s\", \"%s\"\n", (*loaded_modules)[i].elf.mem.aligned, (*loaded_modules)[i].filename.c_str(),
 			(*loaded_modules)[i].params.c_str());
 	}
 	return buffer;
@@ -50,5 +50,6 @@ void load_module(const char *path, char *params){
 	loaded_modules->push_back(mod);
 	release_lock(mod_lock);
 	//sch_new_thread(&module_thread_start, (void*)mod.elf.entry);
+	//if(!mod.elf.entry) panic("(MOD) Module has no entry point!");
 	mod.elf.entry(&MODULE_SYSCALL_TABLE, params);
 }

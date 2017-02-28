@@ -1,5 +1,5 @@
-#include "module_stubs.h"
-#include "module_cpp.hpp"
+#include <btos_module.h>
+class fatfs_format;
 extern "C" {
     #include "fat_filelib.h"
 }
@@ -100,8 +100,6 @@ void *fat_mount(char *device){
     }
 	sprintf(devicepath, "%s", device);
 	fh=fopen(devicepath, (fs_mode_flags)(FS_Read | FS_Write));
-	fl_init();
-	fl_attach_locks(&take_fat_lock, &release_fat_lock);
 	fl_attach_media(&fat_device_read, &fat_device_write);
 	mounted=true;
     release_fat_lock();
@@ -128,6 +126,7 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		char *modifiers="";
 		fs_path_to_string(path, spath);
 		strncpy(ret->path, spath, BT_MAX_PATH);
+		if(mode & FS_Truncate && mode & FS_AtEnd) mode = (fs_mode_flags)(mode & ~FS_AtEnd);
 		if(mode==FS_Read) modifiers="r";
 		if((mode & ~(FS_Create | FS_Truncate))==FS_Write ) modifiers="w";
 		if(mode==(FS_Write | FS_AtEnd | FS_Create) || mode==(FS_Write | FS_AtEnd)) modifiers="a";
@@ -183,7 +182,7 @@ size_t fat_write(void *filedata, size_t bytes, char *buf){
 	return (ret>=0)?ret:0;
 }
 
-size_t fat_seek(void *filedata, size_t pos, uint32_t flags){
+bt_filesize_t fat_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return 0;
     take_fat_lock();
@@ -268,6 +267,7 @@ directory_entry fat_read_dir(void *dirdata){
 			strncpy(ret.filename, ent.filename, 255);
 			ret.type=(ent.is_dir)?FS_Directory:FS_File;
 			ret.size=ent.size;
+			ret.id=ent.cluster;
             release_fat_lock();
 			return ret;
 		} else {
@@ -292,8 +292,10 @@ directory_entry fat_stat(void *mountdata, fs_path *path){
 		fs_path_to_string(path, spath);
 		fs_item_types type=FS_Invalid;
 		size_t filesize=0;
+		uint64_t id = 0;
 		void *flh=fl_fopen(spath, "r");
 		if(flh){
+			id = ((FL_FILE*)flh)->startcluster;
 			type=FS_File;
 			fl_fseek(flh, 0xFFFFFFFF, SEEK_SET);
 			filesize=fl_ftell(flh);
@@ -311,19 +313,43 @@ directory_entry fat_stat(void *mountdata, fs_path *path){
         strncpy(ret.filename, lastpart->str, BT_MAX_SEGLEN);
         ret.type=type;
         ret.size=filesize;
+		ret.id=id;
         release_fat_lock();
         return ret;
 	}else return invalid_directory_entry;
 }
 
+bool fat_format(char *device, void*){
+    take_fat_lock();
+	if(mounted) {
+		release_fat_lock();
+		return false;
+	}
+	sprintf(devicepath, "%s", device);
+	fh=fopen(devicepath, (fs_mode_flags)(FS_Read | FS_Write));
+	if(!fh){
+		release_fat_lock();
+		return false;
+	}
+	bt_filesize_t fsize = fseek(fh, 0, FS_Backwards);
+	uint32_t sectors = fsize / 512;
+	dbgpf("FAT: Formatting %s, %i blocks (%i bytes).\n", device, sectors, (int)fsize);
+	fl_attach_media(&fat_device_read, &fat_device_write);
+	fl_format(sectors, "BT/OS FAT");
+    release_fat_lock();
+	return true;
+}
+
 fs_driver fat_driver={true, "FAT", true,
 	fat_mount, fat_unmount, fat_open, fat_close, fat_read, fat_write, fat_seek, fat_ioctl, fat_flush,
-	fat_open_dir, fat_close_dir, fat_read_dir, fat_write_dir, fat_dirseek, fat_stat};
+	fat_open_dir, fat_close_dir, fat_read_dir, fat_write_dir, fat_dirseek, fat_stat, fat_format};
 
 extern "C" int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
 	init_lock(&fat_lock);
     init_queue();
+	fl_init();
+	fl_attach_locks(&take_fat_lock, &release_fat_lock);
 	add_filesystem(&fat_driver);
     return 0;
 }

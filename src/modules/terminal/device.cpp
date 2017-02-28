@@ -1,7 +1,6 @@
+#include <btos_module.h>
+#include <util/holdlock.hpp>
 #include "vterm.hpp"
-#include "module_stubs.h"
-#include "drivers.h"
-#include "holdlock.hpp"
 
 lock term_lock;
 
@@ -74,7 +73,7 @@ void *term_open(void */*id*/){
 bool term_close(void *instance){
     if(instance){
         term_instance *inst=(term_instance*)instance;
-        inst->terminal->close();
+        inst->terminal->close(inst->opts);
         delete inst;
         return true;
     }
@@ -97,7 +96,7 @@ size_t term_write(void *instance, size_t bytes, char *buf){
     return 0;
 }
 
-size_t term_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t term_seek(void *instance, bt_filesize_t pos, uint32_t flags){
     if(instance) {
         hold_lock hl(&term_lock);
         term_instance *inst=(term_instance*)instance;
