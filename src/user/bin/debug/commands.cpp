@@ -22,11 +22,23 @@
 
 using namespace std;
 
-static volatile bt_pid_t selected_pid;
+volatile bt_pid_t selected_pid;
 static volatile uint64_t selected_thread;
 static volatile bool watch_enabled;
 
 static uint16_t terminal_ext_id = 0xFFFF;
+
+void print_command(const vector<string> &args);
+
+symbol get_best_symbol(const string &name){
+	vector<symbol> proc_symbols = load_symbols(selected_pid);
+	vector<symbol> syms = get_symbols_by_name(proc_symbols, name);
+	remove_if(syms.begin(), syms.end(), [](const symbol &s){ return s.size == 0; });
+	if(syms.size() == 0){
+		return null_symbol;
+	}
+	return syms[0];
+}
 
 void start_event_mode(){
 	terminal_ext_id = bt_query_extension("TERMINAL");
@@ -239,16 +251,6 @@ void ldsyms_command(){
 	cout << "Loading symbols..." << flush;
 	load_symbols(selected_pid, true);
 	cout << "Done." << endl;
-}
-
-static symbol get_best_symbol(const string &name){
-	vector<symbol> proc_symbols = load_symbols(selected_pid);
-	vector<symbol> syms = get_symbols_by_name(proc_symbols, name);
-	remove_if(syms.begin(), syms.end(), [](const symbol &s){ return s.size == 0; });
-	if(syms.size() == 0){
-		return null_symbol;
-	}
-	return syms[0];
 }
 
 void dump_command(const vector<string> &args){
@@ -471,6 +473,8 @@ bool do_command(string cmd){
 			clearbp_command(line);
 		}else if(line[0] == "bpstat"){
 			bpstat_command();
+		}else if(line[0] == "print"){
+			print_command(line);
 		}else if(line[0] == "quit"){
 			return false;
 		}else{
