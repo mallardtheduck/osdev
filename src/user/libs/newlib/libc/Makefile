@@ -50,7 +50,8 @@ copy: $(LIBRARY-NAME) $(STATIC-NAME) $(STARTUP-OBJS) $(G-LIBRARY-NAME)
 	cp -u $(G-LIBRARY-NAME) $(DESTINATION)/lib/
 	cp -u $(STATIC-NAME) $(DESTINATION)/lib/$(G-STATIC-NAME)
 	for folder in $(INCLUDE-FOLDERS); do \
-		(cd $$folder && find -type f -name "*.h" -exec cp -u --parents {} $(DESTINATION)/include \;); \
+#		rsync --checksum -r $$folder/*.h $(DESTINATION)/include \
+		(cd $$folder && find . -type d -exec rsync -r --include '*/' --include '*.h' --exclude '*' --checksum {}/ $(DESTINATION)/include/{} \;); \
 	done
 
 copy-startfiles: $(STARTUP-OBJS)
