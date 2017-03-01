@@ -1,6 +1,7 @@
 #include "vga.hpp"
 #include "modes.hpp"
 #include "device.hpp"
+#include "vbe.hpp"
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
@@ -14,7 +15,8 @@ void dump_regs();
 
 extern "C" int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
-	dump_regs();
+	//dump_regs();
+	vbe_init();
 	init_modes();
 	init_device();
 	

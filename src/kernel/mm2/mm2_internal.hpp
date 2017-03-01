@@ -76,6 +76,7 @@ namespace MM2{
 	void physical_free(uint32_t addr);
 	void physical_mark_used(uint32_t addr);
 	void physical_infofs_register();
+	physical_page *physical_get_io_page(intptr_t addr);
 	
 	void mm2_invlpg(void *pageaddr);
 	

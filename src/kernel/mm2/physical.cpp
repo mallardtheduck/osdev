@@ -5,6 +5,7 @@
 extern "C" char _start, _end;
 
 namespace MM2{
+	vector<physical_page*> *io_pages = NULL;
 
 	static char *end_of_kernel;
 	static size_t total_pages;
@@ -124,6 +125,11 @@ namespace MM2{
 	}
 	
 	static physical_page *find_page(uint32_t addr){
+		if(io_pages){
+			for(auto page : *io_pages){
+				if(page->address() == addr) return page;
+			}
+		}
 		int min = 0;
 		int max = total_pages - 1;
 		size_t guess = (min + max) / 2;
@@ -161,5 +167,16 @@ namespace MM2{
 	void physical_infofs_register(){
 		infofs_register("TOTALMEM", &totalmem_infofs);
 		infofs_register("FREEMEM", &freemem_infofs);
+	}
+	
+	physical_page *physical_get_io_page(intptr_t addr){
+		addr = addr & MM2_Address_Mask;
+		physical_page *page = find_page(addr);
+		if(!page){
+			if(!io_pages) io_pages = new vector<physical_page*>();
+			page = new physical_page(addr, PageStatus::MMIO);
+			io_pages->push_back(page);
+		}
+		return page;
 	}
 }

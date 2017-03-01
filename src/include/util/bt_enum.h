@@ -2,6 +2,16 @@
 #define _BT_ENUM_H
 
 #ifdef __cplusplus
+#define EXTERN_C_BEGIN extern "C" {
+#define EXTERN_C_END }
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C_BEGIN
+#define EXTERN_C_END
+#define EXTERN_C
+#endif
+
+#ifdef __cplusplus
 #define ENUM_START(x) namespace x { enum Enum {
 #define ENUM_END }; }
 #define ENUM_GET(x, y) x::y

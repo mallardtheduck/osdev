@@ -5,7 +5,7 @@ module_api::thread_id_t thread_id(){
 	return sch_get_id();
 }
 
-void mod_memcpy(void *dst, void *src, size_t size){
+void mod_memcpy(void *dst, const void *src, size_t size){
 	memcpy(dst, src, size);
 }
 
@@ -181,6 +181,14 @@ size_t mod_get_kvar(const char *name, char *buffer, size_t size){
 	return value.length();
 }
 
+void *mod_map_physical(uint32_t addr, size_t pages){
+	return MM2::mm2_map_physical(addr, pages);
+}
+
+void mod_free_pages(void *addr, size_t pages){
+	mm2_virtual_free(addr, pages);
+}
+
 module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&panic,
 	&malloc,
@@ -191,6 +199,8 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&mod_strcmp,
 	&mod_strncpy,
     &physical_addr,
+    &mod_map_physical,
+    &mod_free_pages,
 
 	&mod_init_lock,
 	&mod_take_lock,

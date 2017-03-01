@@ -49,6 +49,14 @@ inline static uint32_t physaddr(void *ptr){
     return SYSCALL_TABLE->physaddr(ptr);
 }
 
+inline static void *map_physical_pages(uint32_t addr, size_t pages){
+	return SYSCALL_TABLE->map_physical_pages(addr, pages);
+}
+
+inline static void free_pages(void *addr, size_t pages){
+	SYSCALL_TABLE->free_pages(addr, pages);
+}
+
 inline static void init_lock(lock *l){
 	SYSCALL_TABLE->init_lock(l);
 }

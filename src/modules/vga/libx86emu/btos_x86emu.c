@@ -1,6 +1,6 @@
 #include "include/btos_x86emu.h"
+#include "include/x86emu.h"
 #include <btos_module.h>
-
 
 void *calloc(size_t n, size_t sz){
 	size_t size = n * sz;

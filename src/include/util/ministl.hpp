@@ -193,7 +193,14 @@ class vector
 			}
 			return npos;
 		}
-		unsigned int begin() const  {return 0;}
+		
+		T *begin(){
+			return data;
+		}
+		
+		T *end(){
+			return data + dataSize;
+		}
 
 
 }; //class vector
