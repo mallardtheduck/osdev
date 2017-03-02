@@ -129,7 +129,7 @@ bt_filesize_t vbe_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 
 int vbe_ioctl(void *instance, int fn, size_t bytes, char *buf){
 	hold_lock hl(&vga_device_lock);
-	dbgpf("VGA: VBE ioctl %i. VBE mode: %i.\n", fn, is_vbe_mode());
+	//dbgpf("VGA: VBE ioctl %i. VBE mode: %i.\n", fn, is_vbe_mode());
 	vbe_instance *inst=(vbe_instance*)instance;
 	if(fn == bt_vid_ioctl::GetModeCount) {
 		size_t vga_mode_count = vga_device.ioctl(inst->vga, fn, bytes, buf);
@@ -215,7 +215,7 @@ int vbe_type(){
 }
 
 char *vbe_desc(){
-    return "VESA VBE video device";
+    return "VGA/VBE video device";
 }
 
 drv_driver vbe_device={&vbe_open, &vbe_close, &vbe_read, &vbe_write, &vbe_seek, &vbe_ioctl, &vbe_type, &vbe_desc};
