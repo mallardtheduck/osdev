@@ -83,9 +83,6 @@ int main(int argc, char **argv){
         bt_vidmode cmode;
         bt_fioctl(fh, bt_terminal_ioctl_QueryScreenMode, sizeof(cmode), (char*)&cmode);
         printf("Current mode: ID: %i %ix%i %ibpp %s.\n", cmode.id, cmode.width, cmode.height, cmode.bpp, cmode.textmode?"text":"graphics");
-        bt_handle_t vgadev = bt_fopen("DEV:/VGA0", FS_Read);
-        bt_fioctl(vgadev, bt_vid_ioctl_QueryMode, sizeof(cmode), (char*)&cmode);
-        printf("Current mode: ID: %i %ix%i %ibpp %s.\n", cmode.id, cmode.width, cmode.height, cmode.bpp, cmode.textmode?"text":"graphics");
     }else if(strcmp(argv[1], "reset")==0){
         size_t modecount= bt_fioctl(fh, bt_terminal_ioctl_GetScreenModeCount, 0, NULL);
         for(size_t i=0; i<modecount; ++i) {
