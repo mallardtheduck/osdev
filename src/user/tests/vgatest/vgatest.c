@@ -91,6 +91,11 @@ void load_btos_bootscreen(uint8_t *buffer){
     }
 }
 
+typedef union{
+	uint32_t v32;
+	char v8[4];
+} pxl32;
+
 int main(){
     bt_filehandle fh=open_device();
     if(!fh) return -1;
@@ -98,7 +103,7 @@ int main(){
     bt_fioctl(fh, bt_vid_ioctl_QueryMode, sizeof(original_mode), (char*)&original_mode);
     size_t modecount=bt_fioctl(fh, bt_vid_ioctl_GetModeCount, 0, NULL);
     bt_vidmode mode;
-    for(size_t i=0; i<modecount; ++i) {
+    /*for(size_t i=0; i<modecount; ++i) {
         mode.id = i;
         bt_fioctl(fh, bt_vid_ioctl_GetMode, sizeof(mode), (char *) &mode);
         if (!mode.textmode) {
@@ -106,16 +111,19 @@ int main(){
             bt_fseek(fh, 0, false);
             size_t buffersize = (mode.width * mode.height);
             if (mode.bpp == 4) buffersize /= 2;
+            else buffersize *= (mode.bpp / 8);
             for (size_t i = 0; i < buffersize; ++i) {
-                uint32_t y=i/mode.width;
-                if(mode.bpp==4) y/=2;
-                uint8_t col = y % (1 << mode.bpp);
-                if(mode.bpp==4) col |= col << 4;
-                bt_fwrite(fh, 1, (char *) &col);
+                //uint32_t y=i/mode.width;
+                //if(mode.bpp==4) y/=2;
+                //uint8_t col = y % (1 << mode.bpp);
+                //if(mode.bpp==4) col |= col << 4;
+                //bt_fwrite(fh, 1, (char *) &col);
+                char q = (char)i;
+                bt_fwrite(fh, 1, &q);
             }
             getchar();
         }
-    }
+    }*/
     for(size_t i=0; i<modecount; ++i) {
         mode.id = i;
         bt_fioctl(fh, bt_vid_ioctl_GetMode, sizeof(mode), (char *) &mode);
@@ -124,6 +132,7 @@ int main(){
             bt_fseek(fh, 0, false);
             size_t buffersize = (mode.width * mode.height);
             if (mode.bpp == 4) buffersize /= 2;
+            else buffersize *= (mode.bpp / 8);
             uint8_t *buffer=malloc(buffersize);
             if(!buffer){
                 bt_fioctl(fh, bt_vid_ioctl_SetMode, sizeof(original_mode), (char*)&original_mode);
@@ -131,12 +140,17 @@ int main(){
                 return 0;
             }
             bt_handle m= bt_mmap(fh, 0, (char*)buffer, buffersize);
+            pxl32 pixel;
+            pixel.v32 = 0;
             for (size_t i = 0; i < buffersize; ++i) {
-                uint32_t y=i/mode.width;
+                /*uint32_t y=i/mode.width;
                 if(mode.bpp==4) y/=2;
                 uint8_t col = y % (1 << mode.bpp);
                 if(mode.bpp==4) col |= col << 4;
-                buffer[i]=col;
+                buffer[i]=col;*/
+                char q = pixel.v8[i % 4];
+                buffer[i] = q;
+                pixel.v32++;
             }
             bt_fflush(fh);
             getchar();

@@ -37,7 +37,7 @@ bool vga_close(void *instance){
 }
 
 size_t vga_read(void *instance, size_t bytes, char *buf){
-	hold_lock hl(&vga_device_lock);
+	hold_lock hl(&vga_device_lock, false);
     vga_instance *inst=(vga_instance*)instance;
     if(current_mode->vidmode.textmode){
         return text_read(inst, bytes, buf);
@@ -47,7 +47,7 @@ size_t vga_read(void *instance, size_t bytes, char *buf){
 }
 
 size_t vga_write(void *instance, size_t bytes, char *buf){
-	hold_lock hl(&vga_device_lock);
+	hold_lock hl(&vga_device_lock, false);
     vga_instance *inst=(vga_instance*)instance;
     if(current_mode->vidmode.textmode){
         return text_write(inst, bytes, buf);
@@ -57,7 +57,7 @@ size_t vga_write(void *instance, size_t bytes, char *buf){
 }
 
 bt_filesize_t vga_seek(void *instance, bt_filesize_t pos, uint32_t flags){
-	hold_lock hl(&vga_device_lock);
+	hold_lock hl(&vga_device_lock, false);
     vga_instance *inst=(vga_instance*)instance;
     if(current_mode->vidmode.textmode){
         return text_seek(inst, pos, flags);
@@ -67,7 +67,7 @@ bt_filesize_t vga_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 }
 
 int vga_ioctl(void *instance, int fn, size_t bytes, char *buf){
-	hold_lock hl(&vga_device_lock);
+	hold_lock hl(&vga_device_lock, false);
     vga_instance *inst=(vga_instance*)instance;
     if(fn == bt_vid_ioctl::GetModeCount) {
         return vga_mode_count;

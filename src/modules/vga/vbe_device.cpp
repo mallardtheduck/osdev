@@ -1,8 +1,11 @@
 #include "vbe.hpp"
 #include "device.hpp"
 #include <util/ministl.hpp>
+#include <util/holdlock.hpp>
 
 extern lock vga_device_lock;
+
+static const size_t Page_Size = 4096;
 
 static uint32_t current_mode = 0xF0003;
 static char *fb = NULL;
@@ -44,14 +47,16 @@ static bt_vidmode make_vidmode_from_index(size_t idx){
 
 static void map_fb(){
 	fb_sz = (modeinfo.BytesPerScanLine * modeinfo.YResolution);
-	size_t pages = fb_sz / 4096;
+	size_t pages = fb_sz / Page_Size;
+	if(pages * Page_Size < fb_sz) ++pages;
 	fb = (char*)map_physical_pages(modeinfo.PhysBasePtr, pages);
 	dbgpf("VGA: Mapped VBE LFB from %x at %p. Size: %i (%i pages).\n", modeinfo.PhysBasePtr, fb, (int)fb_sz, (int)pages);
 }
 
 static void unmap_fb(){
 	if(!fb) return;
-	size_t pages = fb_sz / 4096;
+	size_t pages = fb_sz / Page_Size;
+	if(pages * Page_Size < fb_sz) ++pages;
 	free_pages(fb, pages);
 	fb = NULL;
 	fb_sz = 0;
@@ -74,6 +79,7 @@ bool vbe_close(void *instance){
 }
 
 size_t vbe_read(void *instance, size_t bytes, char *buf){
+	hold_lock hl(&vga_device_lock);
 	vbe_instance *inst=(vbe_instance*)instance;
 	if(is_vbe_mode()){
 		if(inst->pos + bytes > fb_sz) bytes = (fb_sz - inst->pos);
@@ -87,6 +93,7 @@ size_t vbe_read(void *instance, size_t bytes, char *buf){
 }
 
 size_t vbe_write(void *instance, size_t bytes, char *buf){
+	hold_lock hl(&vga_device_lock);
 	vbe_instance *inst=(vbe_instance*)instance;
 	if(is_vbe_mode()){
 		if(inst->pos + bytes > fb_sz) bytes = (fb_sz - inst->pos);
@@ -100,9 +107,10 @@ size_t vbe_write(void *instance, size_t bytes, char *buf){
 }
 
 bt_filesize_t vbe_seek(void *instance, bt_filesize_t pos, uint32_t flags){
+	hold_lock hl(&vga_device_lock);
 	vbe_instance *inst=(vbe_instance*)instance;
 	if(is_vbe_mode()){
-		dbgpf("VGA: VBE Seeking %i (mode %x). Current pos: %i.\n", (int)pos, flags, (int) inst->pos);
+		//dbgpf("VGA: VBE Seeking %i (mode %x). Current pos: %i.\n", (int)pos, flags, (int) inst->pos);
 		if(flags & FS_Relative){
 			inst->pos+=pos;
 		}else if(flags & FS_Backwards){
@@ -120,6 +128,8 @@ bt_filesize_t vbe_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 }
 
 int vbe_ioctl(void *instance, int fn, size_t bytes, char *buf){
+	hold_lock hl(&vga_device_lock);
+	dbgpf("VGA: VBE ioctl %i. VBE mode: %i.\n", fn, is_vbe_mode());
 	vbe_instance *inst=(vbe_instance*)instance;
 	if(fn == bt_vid_ioctl::GetModeCount) {
 		size_t vga_mode_count = vga_device.ioctl(inst->vga, fn, bytes, buf);
@@ -175,7 +185,9 @@ int vbe_ioctl(void *instance, int fn, size_t bytes, char *buf){
 				}
 				vidmode.id -= 0xF0000;
 				dbgpf("VGA: Setting VGA mode %x\n", vidmode.id);
-				return vga_device.ioctl(inst->vga, fn, bytes, buf);
+				size_t ret = vga_device.ioctl(inst->vga, fn, bytes, buf);
+				vidmode.id += 0xF0000;
+				return ret;
 			}
 		}
 		return 0;
