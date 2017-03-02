@@ -1,5 +1,7 @@
 #include "libx86emu/include/x86emu.h"
 #include "libx86emu/include/btos_x86emu.h"
+#include "vbe.hpp"
+#include "vbe_device.hpp"
 #include <module/io.h>
 #include <util/ministl.hpp>
 
@@ -8,59 +10,23 @@ static map<uint32_t, void*> *mapping_cache;
 
 static const uint32_t Page_Address_Mask = 0xFFFFF000;
 
-static const uint16_t VBE_Fn_GetInfo = 0x4F00;
-static const uint16_t VBE_Fn_GetModeInfo = 0x4F01;
+namespace VBE_Fn{
+	static const uint16_t GetInfo = 0x4F00;
+	static const uint16_t GetModeInfo = 0x4F01;
+}
 
-template <typename T> static T *RealPtr(uint16_t ptr[2]){
+template <typename T> static T *RealPtr(Real_Pointer ptr){
 	return (T*)((ptr[1] * 0x10) + ptr[0]);
 }
 
-struct VBE_Info {
-	char Signature[4];
-	uint16_t Version;
-	uint16_t OemStringPtr[2];
-	uint32_t Capabilities;
-	uint16_t VideoModePtr[2];
-	uint16_t TotalMemory;
-	uint32_t OemSoftwareRev;
-	uint16_t OemVendorNamePtr[2];
-	uint16_t OemProductNamePtr[2];
-	uint16_t OemProductRevPtr[2];
-} __attribute__((packed));
-
-struct VBE_ModeInfo {
-	uint16_t attributes;
-	uint8_t winA,winB;
-	uint16_t granularity;
-	uint16_t winsize;
-	uint16_t segmentA, segmentB;
-	uint16_t realFctPtr[2];
-	uint16_t pitch;
-
-	uint16_t Xres, Yres;
-	uint8_t Wchar, Ychar, planes, bpp, banks;
-	uint8_t memory_model, bank_size, image_pages;
-	uint8_t reserved0;
-
-	uint8_t red_mask, red_position;
-	uint8_t green_mask, green_position;
-	uint8_t blue_mask, blue_position;
-	uint8_t rsv_mask, rsv_position;
-	uint8_t directcolor_attributes;
-
-	uint32_t physbase; 
-	uint32_t reserved1;
-	uint16_t reserved2;
-} __attribute__((packed));
-
-static map<uint16_t, VBE_ModeInfo> *vbe_modes;
+map<uint16_t, VBE_ModeInfo> *vbe_modes;
 
 static void flush_log(x86emu_t *emu, char *buf, unsigned size){
 	dbgpf("VGA: x86emu %x:%x ", emu->x86.R_CS, emu->x86.R_IP);
 	dbgout(buf);
 }
 
-void call_int10h(uint16_t ax, uint16_t bx, uint16_t cx, uint16_t es, uint16_t di){
+static void call_int10h(uint16_t ax, uint16_t bx, uint16_t cx, uint16_t es, uint16_t di){
 	page_mappings = new map<uint32_t, void*>();
 	mapping_cache = new map<uint32_t, void*>();
 	x86emu_t* emu = x86emu_new(X86EMU_PERM_RWX, X86EMU_PERM_RWX);
@@ -69,6 +35,7 @@ void call_int10h(uint16_t ax, uint16_t bx, uint16_t cx, uint16_t es, uint16_t di
 	emu->log.trace = X86EMU_TRACE_DEFAULT;
 
 	x86emu_set_seg_register(emu, emu->x86.R_CS_SEL, 0);
+	x86emu_set_seg_register(emu, emu->x86.R_SS_SEL, 0x8000);
 	x86emu_set_seg_register(emu, emu->x86.R_ES_SEL, es);
 	
 	emu->x86.R_IP = 0x7C00;
@@ -83,6 +50,7 @@ void call_int10h(uint16_t ax, uint16_t bx, uint16_t cx, uint16_t es, uint16_t di
 
 	x86emu_run(emu, X86EMU_RUN_LOOP);
 	dbgpf("VGA: INT 10h return AX: %x\n", emu->x86.R_AX);
+	x86emu_done(emu);
 	for(auto m : *page_mappings){
 		free_pages(m.second, 1);
 	}
@@ -90,23 +58,92 @@ void call_int10h(uint16_t ax, uint16_t bx, uint16_t cx, uint16_t es, uint16_t di
 	delete mapping_cache;
 }
 
+void VBE_ResetToVGA(){
+	call_int10h(0x03, 0, 0, 0, 0);
+}
+
 VBE_Info VBE_GetInfo(){
 	VBE_Info *info = (VBE_Info*)0x20000;
 	memset(info, 0, 512);
 	memcpy(info->Signature, "VBE2", 4);
-	call_int10h(VBE_Fn_GetInfo, 0, 0, 0x2000, 0);
+	call_int10h(VBE_Fn::GetInfo, 0, 0, 0x2000, 0);
 	return *info;
 }
 
 VBE_ModeInfo VBE_GetModeInfo(uint16_t mode){
 	VBE_ModeInfo *info = (VBE_ModeInfo*)0x30000;
 	memset(info, 0, 256);
-	call_int10h(VBE_Fn_GetModeInfo, 0, mode, 0x3000, 0);
+	call_int10h(VBE_Fn::GetModeInfo, 0, mode, 0x3000, 0);
 	return *info;
 }
 
-void vbe_test(){
-	//call_int10h(0x4F02, 0x117, 0, 0);
+void VBE_SetMode(uint16_t modeId, bool linear){
+	if(linear) modeId |= (1 << 14);
+	call_int10h(0x4F02, modeId, 0, 0, 0);
+}
+
+static bool is_mode_supported(const VBE_ModeInfo &mode){
+	//Modes not supported by the hardware cannot be used
+	if(!(mode.ModeAttributes & VBE_Attribute::Supported)) return false;
+	//VGA modes supported via ordinary VGA driver code
+	if(!(mode.ModeAttributes & VBE_Attribute::NonVGA)) return false;
+	//Don't support monochrome modes (really only applies to text)
+	if(!(mode.ModeAttributes & VBE_Attribute::Colour)) return false;
+	//Support only 4bpp text modes and 8, 16, 24 and 32bpp graphics modes
+	if(!(mode.ModeAttributes & VBE_Attribute::Graphics) && mode.MemoryModel == VBE_MemoryModel::Text){
+		if(mode.BitsPerPixel != 4) return false;
+		//Disable text modes for now 
+		return false;
+	}else if(mode.BitsPerPixel != 8 && mode.BitsPerPixel != 16 && mode.BitsPerPixel != 24 && mode.BitsPerPixel != 32){
+		return false;
+	}
+	//Only support linear framebuffers for non text modes
+	if(!(mode.ModeAttributes & VBE_Attribute::LinearMode) && mode.MemoryModel != VBE_MemoryModel::Text) return false;
+	//If mode is not text, confirm we have a framebuffer address
+	if(mode.MemoryModel != VBE_MemoryModel::Text && !mode.PhysBasePtr) return false;
+	//Only support Text, Packed (8bpp) and DirectColour memory models
+	if(mode.MemoryModel != VBE_MemoryModel::Text && mode.MemoryModel != VBE_MemoryModel::Packed && mode.MemoryModel != VBE_MemoryModel::DirectColour) return false;
+	return true;
+}
+
+static void dbgoutmode(uint16_t id, const VBE_ModeInfo &modeinfo){
+	dbgpf("VGA: VBE Mode: %x\n", id);
+	dbgpf("  %i x %i %ibpp\n", modeinfo.XResolution, modeinfo.YResolution, modeinfo.BitsPerPixel);
+	dbgpf("  Attributes: %x\n", modeinfo.ModeAttributes);
+	char *memoryModelName = "Unknown";
+	switch(modeinfo.MemoryModel){
+		case VBE_MemoryModel::Text:
+			memoryModelName = "Text";
+			break;
+		case VBE_MemoryModel::CGA:
+			memoryModelName = "CGA";
+			break;
+		case VBE_MemoryModel::Hercules:
+			memoryModelName = "Hercules";
+			break;
+		case VBE_MemoryModel::Planar:
+			memoryModelName = "Planar";
+			break;
+		case VBE_MemoryModel::Packed:
+			memoryModelName = "Packed";
+			break;
+		case VBE_MemoryModel::NonChain:
+			memoryModelName = "NonChain";
+			break;
+		case VBE_MemoryModel::DirectColour:
+			memoryModelName = "DirectColour";
+			break;
+		case VBE_MemoryModel::YUV:
+			memoryModelName = "YUV";
+			break;
+	}
+	dbgpf("  Memory model: %s\n", memoryModelName);
+	if(modeinfo.MemoryModel == VBE_MemoryModel::Text){
+		dbgpf("  Chracter size: %i x %i\n", modeinfo.XCharSize, modeinfo.YCharSize);
+	}
+}
+
+static void vbe_configure(){
 	VBE_Info info = VBE_GetInfo();
 	dbgpf("VGA: VBE signature: %c%c%c%c\n", info.Signature[0], info.Signature[1], info.Signature[2], info.Signature[3]);
 	dbgpf("VGA: VBE version: %x\n", info.Version);
@@ -115,21 +152,25 @@ void vbe_test(){
 	dbgpf("VGA: VBE OEM Vendor name: %s\n", RealPtr<char>(info.OemVendorNamePtr));
 	dbgpf("VGA: VBE OEM Product name: %s\n", RealPtr<char>(info.OemVendorNamePtr));
 	dbgpf("VGA: VBE OEM Product revision: %s\n", RealPtr<char>(info.OemProductRevPtr));
-	vector<uint16_t> modes;
 	uint16_t *modeptr = RealPtr<uint16_t>(info.VideoModePtr);
+	vbe_modes = new map<uint16_t, VBE_ModeInfo>();
 	for(size_t i = 0; modeptr[i] != 0xFFFF; ++i){
-		vbe_modes = new map<uint16_t, VBE_ModeInfo>();
 		VBE_ModeInfo modeinfo = VBE_GetModeInfo(modeptr[i]);
-		(*vbe_modes)[modeptr[i]] = modeinfo;
-		dbgpf("VGA: VBE Mode: %x\n", modeptr[i]);
-		dbgpf("  %i x %i %ibpp\n", modeinfo.Xres, modeinfo.Yres, modeinfo.bpp);
-		dbgpf("  Attributes: %x\n", modeinfo.attributes);
-		dbgpf("  Memory model: %x\n", modeinfo.memory_model);
+		dbgoutmode(modeptr[i], modeinfo);
+		if(is_mode_supported(modeinfo)) {
+			dbgout("  Mode IS supported.\n");
+			(*vbe_modes)[modeptr[i]] = modeinfo;
+		}else{
+			dbgout("  Mode IS NOT supported.\n");
+		}
 	}
-	while(true) disable_interrupts();
+	dbgout("VGA: Supported VBE modes:\n");
+	for(auto m : *vbe_modes){
+		dbgoutmode(m.first, m.second);
+	}
 }
 
-void *map_address(uint32_t addr){
+static void *map_address(uint32_t addr){
 	uint32_t page_addr = addr & Page_Address_Mask;
 	uint32_t page_offset = addr - page_addr;
 	//dbgpf("VGA: Mapping address %x (page %x offset %x).\n", addr, page_addr, page_offset);
@@ -160,7 +201,45 @@ void *map_address(uint32_t addr){
 	return (void*)((uint32_t)vaddr + page_offset);
 }
 
-void vbe_init(){
+static bool verify_vesa_signature(const char sig[4]){
+	return sig[0] == 'V' && sig[1] == 'E' && sig[2] == 'S' && sig[3] == 'A';
+}
+
+static bool is_vbe_usable(){
+	bool ret = false;
+	Real_Pointer *page_zero = (Real_Pointer*)map_physical_pages(0, 1);
+	Real_Pointer &int10hvec = page_zero[0x10];
+	uint32_t int10hlin = (uint32_t)RealPtr<void>(int10hvec);
+	free_pages(page_zero, 1);
+	dbgpf("VGA: Int 10h vector: %x\n", int10hlin);
+	if(int10hlin > 0xC0000 && int10hlin < 0xD0000){
+		VBE_Info info = VBE_GetInfo();
+		if(verify_vesa_signature(info.Signature)){
+			if(RealPtr<uint16_t>(info.VideoModePtr) < (uint16_t*)0xA0000){
+				if(*RealPtr<uint16_t>(info.VideoModePtr) != 0xFFFF){
+					dbgout("VGA: Tests passed. VBE is usable.\n");
+					ret = true;
+				}else{
+					dbgout("VGA: VBE reports no video modes available. VBE unusable.\n");
+				}
+			}else{
+				dbgout("VGA: VBE_Info mode list pointer not valid. VBE unusable.\n");
+			}
+		}else{
+			dbgout("VGA: VBE_Info does not have required signature. VBE unusable.\n");
+		}
+	}else{
+		dbgout("VGA: Int 10h vector is not in VGA BIOS range. VBE unusable.\n");
+	}
+	return ret;
+}
+
+bool vbe_init(){
 	set_map_callback(&map_address);
-	vbe_test();
+	bool vbeok = is_vbe_usable();
+	if(vbeok){
+		vbe_configure();
+		init_vbe_device();
+	}	
+	return vbeok;
 }

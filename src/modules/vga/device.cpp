@@ -125,7 +125,7 @@ int vga_type(){
 }
 
 char *vga_desc(){
-    return "VGA video device.";
+    return "VGA video device";
 }
 
 drv_driver vga_device={&vga_open, &vga_close, &vga_read, &vga_write, &vga_seek, &vga_ioctl, &vga_type, &vga_desc};

@@ -16,9 +16,10 @@ void dump_regs();
 extern "C" int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
 	//dump_regs();
-	vbe_init();
 	init_modes();
-	init_device();
+	if(!vbe_init()){
+		init_device();
+	}
 	
 	return 0;
 }
