@@ -121,7 +121,7 @@ namespace MM2{
 	void physical_free(physical_page *page){
 		hold_lock hl(mm2_pmm_lock, false);
 		if(page->status() == PageStatus::InUse) page->status(PageStatus::Free);
-		++free_pages;
+		if(page->status() != PageStatus::MMIO) ++free_pages;
 	}
 	
 	static physical_page *find_page(uint32_t addr){
