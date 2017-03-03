@@ -5,7 +5,7 @@ BUILD-CPP-FLAGS :=  -c
 BUILD-CPP-OPTIONS := -ffreestanding -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -c -I../../include -DKERNEL_MODULE
 BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
-BUILD-C-OPTIONS := -ffreestanding -Wall -Wextra -Werror -g -c -I../../include -DKERNEL_MODULE
+BUILD-C-OPTIONS := -ffreestanding -Wall -Wextra -Werror -g -c -I../../include -DKERNEL_MODULE -std=gnu99
 LINK := i686-pc-btos-gcc
 LINK-FLAGS := -T linker.ld -o iso9660.sys -ffreestanding -O2 -nostdlib -fPIC -Xlinker -q
 LINK-OPTIONS := -lgcc
