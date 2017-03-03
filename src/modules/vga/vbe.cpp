@@ -79,6 +79,7 @@ VBE_ModeInfo VBE_GetModeInfo(uint16_t mode){
 
 void VBE_SetMode(uint16_t modeId, bool linear){
 	if(linear) modeId |= (1 << 14);
+	modeId |= (1 << 15);
 	call_int10h(0x4F02, modeId, 0, 0, 0, 0);
 }
 

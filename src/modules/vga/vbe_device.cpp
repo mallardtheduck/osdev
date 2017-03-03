@@ -93,6 +93,13 @@ static bt_video_palette_entry get_palette_entry(uint8_t entry){
     return ret;
 }
 
+static void vbe_clear_screen(){
+	size_t rowsize = modeinfo.XResolution * (modeinfo.BitsPerPixel / 8);
+	for(size_t row = 0; row < modeinfo.YResolution; ++row){
+		size_t fb_pos = row * modeinfo.BytesPerScanLine;
+		memset(&fb[fb_pos], 0, rowsize);
+	}
+}
 
 void *vbe_open(void *id){
 	vbe_instance *inst = new vbe_instance();
@@ -210,6 +217,7 @@ int vbe_ioctl(void *instance, int fn, size_t bytes, char *buf){
 				vbe_current_mode = vidmode.id;
 				if(modeinfo.MemoryModel == VBE_MemoryModel::Packed) set_palette();
 				map_fb();
+				vbe_clear_screen();
 			}else{
 				if(is_vbe_mode()){
 					unmap_fb();
