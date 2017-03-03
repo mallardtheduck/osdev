@@ -106,7 +106,10 @@ static bool is_mode_supported(const VBE_ModeInfo &mode){
 	//Modes not supported by the hardware cannot be used
 	if(!(mode.ModeAttributes & VBE_Attribute::Supported)) return false;
 	//VGA modes supported via ordinary VGA driver code
-	if(!(mode.ModeAttributes & VBE_Attribute::NonVGA)) return false;
+	if(!(mode.ModeAttributes & VBE_Attribute::NonVGA)){
+		if(mode.XResolution == 320 && mode.YResolution == 240) return false;
+		if(mode.MemoryModel == VBE_MemoryModel::Text&& mode.XResolution == 80 && mode.YResolution == 25) return false;
+	}
 	//Don't support monochrome modes (really only applies to text)
 	if(!(mode.ModeAttributes & VBE_Attribute::Colour)) return false;
 	//Support only 4bpp text modes and 8, 16, 24 and 32bpp graphics modes
