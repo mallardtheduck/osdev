@@ -19,6 +19,7 @@ private:
 	uint32_t BufferGetPixel(uint32_t x, uint32_t y);
 	size_t GetBytePos(uint32_t x, uint32_t y, bool upper = false);
 	size_t BytesPerPixel();
+	uint32_t ConvertPixel(uint32_t pix);
 
 public:
 	Screen();

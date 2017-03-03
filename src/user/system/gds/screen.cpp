@@ -36,7 +36,12 @@ void Screen::BufferPutPixel(uint32_t x, uint32_t y, uint32_t value) {
 	if(x > current_mode.width || y > current_mode.height) return;
 	if(!buffer) return;
 	size_t pixelpos=(y * current_mode.width) + x;
-	if(current_mode.bpp == 8){
+	if(current_mode.bpp > 8){
+		value = ConvertPixel(value);
+		size_t depth = (current_mode.bpp / 8);
+		size_t bufferpos = pixelpos * depth;
+		memcpy(&buffer[bufferpos], &value, depth);
+	}else if(current_mode.bpp == 8){
 		if(pixelpos >= buffersize) return;
 		buffer[pixelpos]=(uint8_t)value;
 	}else if(current_mode.bpp==4){
@@ -55,7 +60,13 @@ uint32_t Screen::BufferGetPixel(uint32_t x, uint32_t y){
 	if(x > current_mode.width || y > current_mode.height) return 0;
 	if(!buffer) return 0;
 	size_t pixelpos=(y * current_mode.width) + x;
-	if(current_mode.bpp == 8){
+	if(current_mode.bpp > 8){
+		size_t depth = (current_mode.bpp / 8);
+		size_t bufferpos = pixelpos * depth;
+		uint32_t value = 0;
+		memcpy(&value, &buffer[bufferpos], depth);
+		return value;
+	}else if(current_mode.bpp == 8){
 		return buffer[pixelpos];
 	}else if(current_mode.bpp==4){
 		uint8_t c=0;
@@ -71,18 +82,43 @@ uint32_t Screen::BufferGetPixel(uint32_t x, uint32_t y){
 }
 
 size_t Screen::GetBytePos(uint32_t x, uint32_t y, bool upper) {
-	size_t ret=(y * current_mode.width) + x;
-	if(current_mode.bpp >= 8) ret *= (current_mode.bpp / 8);
-	else {
+	if(current_mode.bpp >= 8){
+		size_t depth = (current_mode.bpp / 8);
+		size_t ret=(y * current_mode.bytesPerLine) + (x * depth);
+		return ret;
+	} else {
+		size_t ret=(y * current_mode.width) + x;
 		ret /= (8 / current_mode.bpp);
 		ret += upper ? 1 : 0;
+		return ret;
 	}
-	return ret;
 }
 
 size_t Screen::BytesPerPixel() {
 	if(current_mode.bpp <=8) return 1;
 	else return current_mode.bpp / 8;
+}
+
+static inline uint32_t scale_value(uint8_t value, uint8_t bits){
+	if(bits < 8){
+		uint8_t diff = 8 - bits;
+		value >>= diff;
+	}
+	return value;
+}
+
+uint32_t Screen::ConvertPixel(uint32_t pix){
+	if(image->IsTrueColor()){
+		uint8_t red = gdTrueColorGetRed(pix);
+		uint8_t green = gdTrueColorGetGreen(pix);
+		uint8_t blue = gdTrueColorGetBlue(pix);
+		uint32_t redPart = scale_value(red, current_mode.rBits) << current_mode.rPos;
+		uint32_t greenPart = scale_value(green, current_mode.gBits) << current_mode.gPos;
+		uint32_t bluePart = scale_value(blue, current_mode.bBits) << current_mode.bPos;
+		return (redPart | greenPart | bluePart);
+	}else{
+		return pix;
+	}
 }
 
 bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
@@ -220,12 +256,24 @@ void Screen::SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty) 
 	uint8_t *data=new uint8_t[datasize]();
 	for(uint32_t x=0; x<bmp.w; ++x){
 		for(uint32_t y=0; y<bmp.h; ++y){
-			uint32_t value=img.GetPixel(x, y);
-			if(value != transparent) value=image->ColorClosest(img.Red(value), img.Green(value), img.Blue(value));
+			uint32_t value;
+			if(image->IsTrueColor()){
+				value = img.GetTrueColorPixel(x, y);
+				if(gdTrueColorGetAlpha(value) != 0) value = transparent;
+				else value=ConvertPixel(value);
+			}else{
+				value = img.GetPixel(x, y);
+				if(value != transparent){
+					value=image->ColorClosest(img.Red(value), img.Green(value), img.Blue(value));
+				}
+			}
+			
 			size_t pixelpos=(y * bmp.w) + x;
-			if(bmp.bpp == 8){
-				if(pixelpos >= datasize) continue;
-				data[pixelpos]=(uint8_t)value;
+			if(bmp.bpp >= 8){
+				size_t depth = bmp.bpp / 8;
+				size_t datapos = pixelpos * depth;
+				if(datapos >= datasize) continue;
+				memcpy(&data[datapos], &value, depth);
 			}else if(bmp.bpp==4){
 				uint8_t c=(uint8_t)value;
 				size_t bufpos=pixelpos/2;

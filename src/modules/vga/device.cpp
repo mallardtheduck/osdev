@@ -11,13 +11,13 @@
 extern vga_palette_entry vga_palette[256];
 lock vga_device_lock;
 
-bt_video_palette_entry get_palette_entry(uint8_t entry){
+static bt_video_palette_entry get_palette_entry(uint8_t entry){
     bt_video_palette_entry ret;
     ret.index = entry;
     ret.r = vga_palette[entry].r << 2;
     ret.g = vga_palette[entry].g << 2;
     ret.b = vga_palette[entry].b << 2;
-    ret.a=0xFF;
+    ret.a=0;
     return ret;
 }
 

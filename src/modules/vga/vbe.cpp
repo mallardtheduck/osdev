@@ -26,7 +26,7 @@ static void flush_log(x86emu_t *emu, char *buf, unsigned size){
 	dbgout(buf);
 }
 
-static void call_int10h(uint16_t ax, uint16_t bx, uint16_t cx, uint16_t es, uint16_t di){
+static void call_int10h(uint16_t ax, uint16_t bx, uint16_t cx, uint16_t dx, uint16_t es, uint16_t di){
 	page_mappings = new map<uint32_t, void*>();
 	mapping_cache = new map<uint32_t, void*>();
 	x86emu_t* emu = x86emu_new(X86EMU_PERM_RWX, X86EMU_PERM_RWX);
@@ -59,27 +59,47 @@ static void call_int10h(uint16_t ax, uint16_t bx, uint16_t cx, uint16_t es, uint
 }
 
 void VBE_ResetToVGA(){
-	call_int10h(0x03, 0, 0, 0, 0);
+	call_int10h(0x03, 0, 0, 0, 0, 0);
 }
 
 VBE_Info VBE_GetInfo(){
 	VBE_Info *info = (VBE_Info*)0x20000;
 	memset(info, 0, 512);
 	memcpy(info->Signature, "VBE2", 4);
-	call_int10h(VBE_Fn::GetInfo, 0, 0, 0x2000, 0);
+	call_int10h(VBE_Fn::GetInfo, 0, 0, 0, 0x2000, 0);
 	return *info;
 }
 
 VBE_ModeInfo VBE_GetModeInfo(uint16_t mode){
 	VBE_ModeInfo *info = (VBE_ModeInfo*)0x30000;
 	memset(info, 0, 256);
-	call_int10h(VBE_Fn::GetModeInfo, 0, mode, 0x3000, 0);
+	call_int10h(VBE_Fn::GetModeInfo, 0, mode, 0, 0x3000, 0);
 	return *info;
 }
 
 void VBE_SetMode(uint16_t modeId, bool linear){
 	if(linear) modeId |= (1 << 14);
-	call_int10h(0x4F02, modeId, 0, 0, 0);
+	call_int10h(0x4F02, modeId, 0, 0, 0, 0);
+}
+
+bt_video_palette_entry VBE_GetPaletteEntry(uint8_t index){
+	uint32_t *entry = (uint32_t*)0x40000;
+	*entry = 0;
+	call_int10h(0x4F09, 1, 1, index, 0x4000, 0);
+	dbgpf("VGA: VBE Palette entry %i: %x\n", index, *entry); 
+	bt_video_palette_entry ret;
+	ret.index = index;
+	ret.r = (*entry & 0xFF0000) >> 14;
+	ret.g = (*entry & 0xFF00) >> 6;
+	ret.b = (*entry & 0xFF);
+	ret.a = 0;
+	return ret;
+}
+
+void VBE_SetPalette(void *address){
+	void *rm_address = (void*)0x40000;
+	memcpy(rm_address, address, 1024);
+	call_int10h(0x4F09, 0, 256, 0, 0x4000, 0);
 }
 
 static bool is_mode_supported(const VBE_ModeInfo &mode){

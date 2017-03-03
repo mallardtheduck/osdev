@@ -1,5 +1,6 @@
 #include "vbe.hpp"
 #include "device.hpp"
+#include "modes.hpp"
 #include <util/ministl.hpp>
 #include <util/holdlock.hpp>
 
@@ -7,17 +8,19 @@ extern lock vga_device_lock;
 
 static const size_t Page_Size = 4096;
 
-static uint32_t current_mode = 0xF0003;
+static uint32_t vbe_current_mode = 0xF0003;
 static char *fb = NULL;
 static size_t fb_sz = 0;
 static VBE_ModeInfo modeinfo;
+
+extern vga_palette_entry vga_palette[256];
 
 struct vbe_instance{
     size_t pos;
     vga_instance *vga;
 };
 
-static bool is_vbe_mode(uint32_t mode_id = current_mode){
+static bool is_vbe_mode(uint32_t mode_id = vbe_current_mode){
 	if((mode_id & 0xF0000) == 0xF0000) return false;
 	else return true;
 }
@@ -68,6 +71,28 @@ static void unmap_fb(){
 	fb = NULL;
 	fb_sz = 0;
 }
+
+static void set_palette(){
+	uint32_t *palette = new uint32_t[256];
+	for(int i=0; i<256; ++i){
+		vga_palette_entry entry=vga_palette[i];
+		uint32_t e = (entry.r << 16) | (entry.g << 8) | (entry.b << 0);
+		palette[i] = e;
+	}
+	VBE_SetPalette(palette);
+	delete palette;
+}
+
+static bt_video_palette_entry get_palette_entry(uint8_t entry){
+    bt_video_palette_entry ret;
+    ret.index = entry;
+    ret.r = vga_palette[entry].r << 2;
+    ret.g = vga_palette[entry].g << 2;
+    ret.b = vga_palette[entry].b << 2;
+    ret.a=0;
+    return ret;
+}
+
 
 void *vbe_open(void *id){
 	vbe_instance *inst = new vbe_instance();
@@ -146,7 +171,7 @@ int vbe_ioctl(void *instance, int fn, size_t bytes, char *buf){
 		if(bytes == sizeof(bt_vidmode)) {
 			bt_vidmode &vidmode = *(bt_vidmode *) buf;
 			if(is_vbe_mode()){
-				vidmode = make_vidmode_from_id(current_mode);
+				vidmode = make_vidmode_from_id(vbe_current_mode);
 				return sizeof(vidmode);
 			}else{
 				bt_vidmode vga_mode;
@@ -180,15 +205,16 @@ int vbe_ioctl(void *instance, int fn, size_t bytes, char *buf){
 				dbgpf("VGA: Setting VBE mode %x\n", vidmode.id);
 				unmap_fb();
 				modeinfo = (*vbe_modes)[vidmode.id];
-				if(!modeinfo.PhysBasePtr) panic("(VGA) Bad mode.");
+				if(!modeinfo.PhysBasePtr) return 0;
 				VBE_SetMode(vidmode.id, true);
-				current_mode = vidmode.id;
+				vbe_current_mode = vidmode.id;
+				if(modeinfo.MemoryModel == VBE_MemoryModel::Packed) set_palette();
 				map_fb();
 			}else{
 				if(is_vbe_mode()){
 					unmap_fb();
 					VBE_ResetToVGA();
-					current_mode = 0xF0003;
+					vbe_current_mode = 0xF0003;
 				}
 				vidmode.id -= 0xF0000;
 				dbgpf("VGA: Setting VGA mode %x\n", vidmode.id);
@@ -201,7 +227,11 @@ int vbe_ioctl(void *instance, int fn, size_t bytes, char *buf){
 	}else if(fn==bt_vid_ioctl::GetPaletteEntry) {
 		if(bytes == sizeof(bt_video_palette_entry)){
 			if(is_vbe_mode()){
-				return 0;
+				if(modeinfo.MemoryModel == VBE_MemoryModel::Packed && bytes == sizeof(bt_video_palette_entry)){
+					bt_video_palette_entry &entry=*(bt_video_palette_entry*)buf;
+					entry= get_palette_entry((uint8_t)entry.index);
+					return (int)entry.index;
+				}
 			}else{
 				return vga_device.ioctl(inst->vga, fn, bytes, buf);
 			}

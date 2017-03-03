@@ -3,6 +3,7 @@
 
 #include <btos_module.h>
 #include <util/ministl.hpp>
+#include <dev/video_dev.h>
 
 typedef uint16_t Real_Pointer[2];
 
@@ -75,6 +76,7 @@ void VBE_ResetToVGA();
 VBE_Info VBE_GetInfo();
 VBE_ModeInfo VBE_GetModeInfo(uint16_t mode);
 void VBE_SetMode(uint16_t modeId, bool linear);
-
+bt_video_palette_entry VBE_GetPaletteEntry(uint8_t index);
+void VBE_SetPalette(void *address);
 
 #endif
