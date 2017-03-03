@@ -31,6 +31,13 @@ static bt_vidmode make_vidmode_from_id(uint16_t id){
 	mode.bpp = m.BitsPerPixel;
 	mode.textmode = (m.MemoryModel == VBE_MemoryModel::Text);
 	mode.palette = (m.MemoryModel == VBE_MemoryModel::Packed);
+	mode.bytesPerLine = m.BytesPerScanLine;
+	mode.rBits = m.RedMaskSize;
+	mode.gBits = m.GreenMaskSize;
+	mode.bBits = m.BlueMaskSize;
+	mode.rPos = m.RedFieldPosition;
+	mode.gPos = m.GreenFieldPosition;
+	mode.bPos = m.BlueFieldPosition;
 	return mode;
 }
 
@@ -42,7 +49,7 @@ static bt_vidmode make_vidmode_from_index(size_t idx){
 		}
 		++i;
 	}
-	return {0, 0, 0, 0, false, false};
+	return {0, 0, 0, 0, false, false, 0, 0, 0, 0, 0, 0, 0};
 }
 
 static void map_fb(){

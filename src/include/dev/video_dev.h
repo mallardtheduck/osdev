@@ -17,6 +17,10 @@ struct bt_vidmode{
     uint32_t bpp;
     bool textmode;
     bool palette;
+    uint32_t bytesPerLine;
+    uint8_t rBits, rPos;
+    uint8_t gBits, gPos;
+    uint8_t bBits, bPos;
 };
 
 #ifndef __cplusplus
