@@ -256,15 +256,13 @@ void Screen::SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty) 
 	uint8_t *data=new uint8_t[datasize]();
 	for(uint32_t x=0; x<bmp.w; ++x){
 		for(uint32_t y=0; y<bmp.h; ++y){
-			uint32_t value;
-			if(image->IsTrueColor()){
-				value = img.GetTrueColorPixel(x, y);
-				if(gdTrueColorGetAlpha(value) != 0) value = transparent;
-				else value=ConvertPixel(value);
-			}else{
-				value = img.GetPixel(x, y);
-				if(value != transparent){
-					value=image->ColorClosest(img.Red(value), img.Green(value), img.Blue(value));
+			uint32_t value = img.GetTrueColorPixel(x, y);
+			if(gdTrueColorGetAlpha(value) != 0) value = transparent;
+			if(value != transparent){
+				if(image->IsTrueColor()){
+					value = ConvertPixel(value);
+				}else{
+					value=image->ColorClosest(gdTrueColorGetRed(value), gdTrueColorGetGreen(value), gdTrueColorGetBlue(value));
 				}
 			}
 			
