@@ -58,7 +58,7 @@ int _fork() {
 }
 
 int fork(){
-	return fork();
+	return _fork();
 }
 
 int _fstat(int file, struct stat *st) {
@@ -256,7 +256,7 @@ int _unlink(char *name){
 }
 
 int unlink(char *name){
-	return unlink(name);
+	return _unlink(name);
 }
 
 int _wait(int *status){
@@ -326,7 +326,7 @@ int _mkdir(const char *name, mode_t mode){
 }
 
 int mkdir(const char *name, mode_t mode){
-	return mkdir(name, mode);
+	return _mkdir(name, mode);
 }
 
 int _pipe(int fildes[2]){
@@ -399,7 +399,7 @@ struct group *_getgrgid(gid_t gid){
 }
 
 struct group *getgrgid(gid_t gid){
-	return getgrgid(gid);
+	return _getgrgid(gid);
 }
 
 struct group *_getgrnam(const char *name){
@@ -409,7 +409,7 @@ struct group *_getgrnam(const char *name){
 }
 
 struct group *getgrnam(const char *name){
-	return getgrnam(name);
+	return _getgrnam(name);
 }
 
 int _gettimeofday(struct timeval *__restrict tv, void *__restrict tz){
@@ -482,6 +482,7 @@ int tcsetattr(int fildes, int optional_actions, const struct termios *termios_p)
 
 int _fsync(int fd){
 	bt_fflush(btos_get_handle(fd));
+	return 0;
 }
 
 int fsync(int fd){
