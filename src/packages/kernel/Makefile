@@ -33,7 +33,8 @@ create.directories:
 
 ../kernel.tar: $(import-files) $(pkg-files)
 	-cp -R pkgfiles/* data
-	strip data/btos/boot/initfs/*.elx
+	find data/btos/boot/initfs/ -name \*.elx -not -name eloader.elx -exec strip {} \;
+	strip -K loaded_modules -K loaded_module_count data/btos/boot/initfs/eloader.elx
 	strip -g data/btos/boot/initfs/*.sys
 	tar cf ../kernel.tar -C data .
 
