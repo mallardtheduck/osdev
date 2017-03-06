@@ -57,6 +57,14 @@ inline static void free_pages(void *addr, size_t pages){
 	SYSCALL_TABLE->free_pages(addr, pages);
 }
 
+inline static void lock_low_memory(){
+	SYSCALL_TABLE->lock_low_memory();
+}
+
+inline static void unlock_low_memory(){
+	SYSCALL_TABLE->unlock_low_memory();
+}
+
 inline static void init_lock(lock *l){
 	SYSCALL_TABLE->init_lock(l);
 }

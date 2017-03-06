@@ -27,6 +27,7 @@ static void flush_log(x86emu_t *emu, char *buf, unsigned size){
 }
 
 static void call_int10h(uint16_t ax, uint16_t bx, uint16_t cx, uint16_t dx, uint16_t es, uint16_t di){
+	lock_low_memory();
 	page_mappings = new map<uint32_t, void*>();
 	mapping_cache = new map<uint32_t, void*>();
 	x86emu_t* emu = x86emu_new(X86EMU_PERM_RWX, X86EMU_PERM_RWX);
@@ -56,6 +57,7 @@ static void call_int10h(uint16_t ax, uint16_t bx, uint16_t cx, uint16_t dx, uint
 	}
 	delete page_mappings;
 	delete mapping_cache;
+	unlock_low_memory();
 }
 
 void VBE_ResetToVGA(){

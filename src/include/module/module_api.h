@@ -45,6 +45,8 @@ struct syscall_table{
     uint32_t (*physaddr)(void *ptr);
     void *(*map_physical_pages)(uint32_t addr, size_t pages);
     void (*free_pages)(void *addr, size_t pages);
+    void (*lock_low_memory)();
+    void (*unlock_low_memory)();
 
 	void (*init_lock)(lock *l);
 	void (*take_lock)(lock *l);

@@ -57,6 +57,9 @@ namespace MM2{
 	void shm_close_map(uint64_t id);
 	
 	void *mm2_map_physical(uint32_t addr, size_t pages);
+	
+	void lock_low_memory();
+	void unlock_low_memory();
 }
 
 #endif

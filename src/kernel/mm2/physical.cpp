@@ -14,6 +14,7 @@ namespace MM2{
 	static size_t free_pages;
 	
 	static lock mm2_pmm_lock;
+	static lock mm2_low_memory_lock;
 	
 	static char *totalmem_infofs(){
 		char *ret = (char*)malloc(128);
@@ -97,6 +98,7 @@ namespace MM2{
 		}
 		init_account();
 		init_lock(mm2_pmm_lock);
+		init_lock(mm2_low_memory_lock);
 	}
 
 	physical_page *physical_alloc(size_t max_addr){
@@ -178,5 +180,13 @@ namespace MM2{
 			io_pages->push_back(page);
 		}
 		return page;
+	}
+	
+	void lock_low_memory(){
+		take_lock_exclusive(mm2_low_memory_lock);
+	}
+	
+	void unlock_low_memory(){
+		release_lock(mm2_low_memory_lock);
 	}
 }

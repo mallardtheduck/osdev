@@ -189,6 +189,14 @@ void mod_free_pages(void *addr, size_t pages){
 	mm2_virtual_free(addr, pages);
 }
 
+void mod_lock_low_memory(){
+	MM2::lock_low_memory();
+}
+
+void mod_unlock_low_memory(){
+	MM2::unlock_low_memory();	
+}
+
 module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&panic,
 	&malloc,
@@ -201,6 +209,8 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
     &physical_addr,
     &mod_map_physical,
     &mod_free_pages,
+    &mod_lock_low_memory,
+    &mod_unlock_low_memory,
 
 	&mod_init_lock,
 	&mod_take_lock,
