@@ -70,12 +70,12 @@ static void conio_terminal_thread(void*){
 				c = 5;
 			}else if(!(code & KeyFlags::NonASCII)){
 				c = KB_char(key);
-				if(c == '\n') c = 12;
 			}
 			
 			if(c){
 				bt_lock(keybufferlock);
 				keybuffer.push_back(c);
+				if(c == '\n') keybuffer.push_back(12);
 				if(wait_thread_id) bt_unblock_thread(wait_thread_id);
 				wait_thread_id = 0;
 				bt_unlock(keybufferlock);
