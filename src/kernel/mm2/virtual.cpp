@@ -75,6 +75,18 @@ namespace MM2{
 	void mm2_virtual_free(void *ptr, size_t pages){
 		current_pagedir->free_pages(ptr, pages);
 	}
+	
+	void *mm2_map_physical(uint32_t addr, size_t pages){
+		uint32_t vaddr = (uint32_t)current_pagedir->alloc(pages, MM2_Alloc_Mode::Kernel);
+		for(size_t i = 0; i < pages; ++i){
+			uint32_t phys_addr = addr + (i * MM2_Page_Size);
+			uint32_t virt_addr = vaddr + (i * MM2_Page_Size);
+			physical_page *page = physical_get_io_page(phys_addr);
+			current_pagedir->free_pages((void*)virt_addr, 1);
+			current_pagedir->map_page_at((void*)virt_addr, page, MM2_PageFlags::Present | MM2_PageFlags::Writable | MM2_PageFlags::NoCache);
+		}
+		return (void*)vaddr;
+	}
 
 	void mm2_invlpg(void *pageaddr){
 		asm volatile("invlpg (%0)" ::"r" (pageaddr) : "memory");

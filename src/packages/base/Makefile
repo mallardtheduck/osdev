@@ -190,3 +190,4 @@ clean:
 	-rm -rf data
 	-rm ../base.tar
 	-rm create.directories
+	-rm copy.grub

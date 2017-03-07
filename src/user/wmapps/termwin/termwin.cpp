@@ -19,7 +19,7 @@ const string ProcInfoPath = "info:/procs";
 
 const size_t terminal_width = 80;
 const size_t terminal_height = 25;
-const bt_vidmode terminal_mode = {1, terminal_width, terminal_height, 4, true, false}; 
+const bt_vidmode terminal_mode = {1, terminal_width, terminal_height, 4, true, false, 0, 0, 0, 0, 0, 0, 0}; 
 const uint32_t font_width = 6;
 const uint32_t font_height = 13;
 const gds_TEMPFonts::Enum font = gds_TEMPFonts::Small;

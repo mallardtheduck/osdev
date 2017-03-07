@@ -13,12 +13,19 @@ static const size_t VGA_HEIGHT = 25;
 static const size_t maxchar=VGA_WIDTH * VGA_HEIGHT * 2;
 
 static bt_vidmode mode={
-        .id = 0,
-        .width = 80,
-        .height = 25,
-        .bpp = 4,
-        .textmode = true,
-        .palette = false,
+	.id = 0,
+	.width = 80,
+	.height = 25,
+	.bpp = 4,
+	.textmode = true,
+	.palette = false,
+	.bytesPerLine = 160,
+	.rBits = 0,
+	.rPos = 0,
+	.gBits = 0,
+	.gPos = 0,
+	.bBits = 0,
+	.bPos = 0,
 };
 
 size_t terminal_row;

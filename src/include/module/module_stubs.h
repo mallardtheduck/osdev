@@ -32,7 +32,7 @@ inline static void free(void *ptr){
 inline static void *memset(void *ptr, int value, size_t num){
 	return SYSCALL_TABLE->memset(ptr, value, num);
 }
-inline static void memcpy(void *dst, void *src, size_t size){
+inline static void memcpy(void *dst, const void *src, size_t size){
 	SYSCALL_TABLE->memcpy(dst, src, size);
 }
 inline static void memmove(void *dst, void *src, size_t size){
@@ -47,6 +47,22 @@ inline static void strncpy(char *dst, const char *src, size_t num){
 
 inline static uint32_t physaddr(void *ptr){
     return SYSCALL_TABLE->physaddr(ptr);
+}
+
+inline static void *map_physical_pages(uint32_t addr, size_t pages){
+	return SYSCALL_TABLE->map_physical_pages(addr, pages);
+}
+
+inline static void free_pages(void *addr, size_t pages){
+	SYSCALL_TABLE->free_pages(addr, pages);
+}
+
+inline static void lock_low_memory(){
+	SYSCALL_TABLE->lock_low_memory();
+}
+
+inline static void unlock_low_memory(){
+	SYSCALL_TABLE->unlock_low_memory();
 }
 
 inline static void init_lock(lock *l){

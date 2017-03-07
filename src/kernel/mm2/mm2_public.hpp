@@ -55,6 +55,11 @@ namespace MM2{
 	void shm_close(uint64_t id);
 	uint64_t shm_map(uint64_t id, void *addr, uint32_t offset, size_t pages, uint32_t flags = btos_api::bt_shm_flags::Normal);
 	void shm_close_map(uint64_t id);
+	
+	void *mm2_map_physical(uint32_t addr, size_t pages);
+	
+	void lock_low_memory();
+	void unlock_low_memory();
 }
 
 #endif

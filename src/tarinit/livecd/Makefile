@@ -1,5 +1,6 @@
 init.tar: Makefile data/config.ini data/boot.sys data/rtc.sys data/ps2.sys data/ata.sys data/spawn.elx data/iso9660.sys data/eloader.elx
-	strip data/*.elx
+	find data/ -name \*.elx -not -name eloader.elx -exec strip {} \;
+	strip -K loaded_modules -K loaded_module_count data/eloader.elx
 	strip -g data/*.sys
 	tar -cvf $@ -C data/ `ls data/`
 

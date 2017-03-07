@@ -58,9 +58,9 @@ int main(int argc, char **argv){
 		if(root_pid) {
 			try {
 				bt_vidmode vidmode;
-				vidmode.width = 640;
-				vidmode.height = 480;
-				vidmode.bpp = 4;
+				vidmode.width = 800;
+				vidmode.height = 600;
+				vidmode.bpp = 24;
 				GDS_SetScreenMode(vidmode);
 				InitCursor();
 				DrawWindows();

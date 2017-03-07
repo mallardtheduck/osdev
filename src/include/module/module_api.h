@@ -38,11 +38,15 @@ struct syscall_table{
 	void *(*malloc)(size_t bytes);
 	void (*free)(void *ptr);
 	void *(*memset)(void* ptr, int value, size_t num);
-	void (*memcpy)(void *dst, void *src, size_t size);
+	void (*memcpy)(void *dst, const void *src, size_t size);
 	void (*memmove)(void *dst, void *src, size_t size);
 	int (*strcmp)(char *s1, char *s2);
 	void (*strncpy)(char *dst, char *src, size_t num);
     uint32_t (*physaddr)(void *ptr);
+    void *(*map_physical_pages)(uint32_t addr, size_t pages);
+    void (*free_pages)(void *addr, size_t pages);
+    void (*lock_low_memory)();
+    void (*unlock_low_memory)();
 
 	void (*init_lock)(lock *l);
 	void (*take_lock)(lock *l);
