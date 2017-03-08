@@ -418,7 +418,7 @@ GLOVAR int save_on_quit; /* Save file (or not) when quitting.                 */
 
 LOCAL void paintall P_((void));
 LOCAL void paintrow P_((void));
-
+LOCAL void do_dln P_((void));
 
 /******************************************************************************/
 /*                           MISCELLANEOUS FUNCTIONS                          */
@@ -1355,6 +1355,10 @@ LOCAL void do_dch ()
 {
  int i;
  if (p_curr == p_root) {te_bel(); return;}
+ if(!strlen(p_curr->p_data)){
+	 do_dln();
+	 return;
+ }
 
  /* Delete the current character, shifting to the left. */
  tx_get(p_curr);
@@ -1396,7 +1400,18 @@ LOCAL void do_del P_((void));
 LOCAL void do_del ()
 /* Delete. */
 {
- if (cur_char == 1) {te_bel(); return;}
+ if (cur_char == 1 && cur_line > 1) {
+	 if (p_curr == p_root) {te_bel(); return;}
+	 string cline = strdup(p_curr->p_data);
+	 do_dln();
+	 string newline = calloc(1, strlen(cline) + strlen(p_curr->p_data) + 1);
+	 strcpy(newline, p_curr->p_data);
+	 strcat(newline, cline);
+	 free(p_curr->p_data);
+	 free(cline);
+	 p_curr->p_data = newline;
+	 return;
+ }
  do_clf();
  do_dch();
 }
@@ -1409,8 +1424,8 @@ LOCAL void do_hel ()
 {
  /* Clear the screen and write out a help message. */
  te_clr(); te_flu();
- printf("ROCKEDIT COMMANDS\n");
- printf("=================\n");
+ printf("REDIT COMMANDS\n");
+ printf("==============\n");
  printf("Use the arrow keys to move around. Type to insert.\n");
  printf("\n");
  printf("^A Help.\n");

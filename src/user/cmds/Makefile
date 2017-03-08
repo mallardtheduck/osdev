@@ -1,4 +1,4 @@
-PROGS := cls cmd format kill load mount sleep tar termctl rockedit
+PROGS := cls cmd format kill load mount sleep tar termctl rockedit kilo
 
 all: dummy.file
 	for dir in $(PROGS); do \
