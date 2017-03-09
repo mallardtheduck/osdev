@@ -1,3 +1,5 @@
+#define __LARGE64_FILES
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -8,14 +10,18 @@
 #include <pwd.h>
 #include <grp.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <btos.h>
 #include <dev/rtc.h>
 #include "crt_support.h"
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 USE_BT_RTC_API;
 
 char *__env[1] = { 0 };
-static char **environ = __env;
+//static char **environ = __env;
 
 static bt_pid lastchild=0;
 
@@ -24,11 +30,20 @@ void _exit(){
 }
 
 int _close(int file){
-    bt_handle h=btos_get_handle(file);
-    int ret=bt_fclose(h);
-    if(ret) btos_remove_filenum(file);
-	else errno = EBADF;
-    return ret;
+    virtual_handle *vh=btos_get_handle_virt(file);
+    if(!vh) return -1;
+    if(vh->type == HANDLE_OS){
+		bt_handle_t h = vh->handle;
+		int ret=bt_fclose(h);
+		if(ret) btos_remove_filenum(file);
+		else errno = EBADF;
+		return ret;
+	}else{
+		int ret=vh->virtual.close(vh->virtual.data);
+		if(ret) btos_remove_filenum(file);
+		else errno = EBADF;
+		return ret;
+	}
 }
 
 int close(int file){
@@ -79,11 +94,17 @@ int getpid(){
 }
 
 int _isatty(int file){
-    bt_filehandle fh=btos_get_handle(file);
-    if(fh){
-        size_t type=bt_fioctl(fh, bt_ioctl_DevType, 0, NULL);
-        if(type==TERMINAL) return 1;
-    }
+    virtual_handle *vh=btos_get_handle_virt(file);
+    if(!vh) return -1;
+    if(vh->type == HANDLE_OS){
+		bt_filehandle fh = vh->handle;
+		if(fh){
+			size_t type=bt_fioctl(fh, bt_ioctl_DevType, 0, NULL);
+			if((int)type==TERMINAL) return 1;
+		}
+	}else{
+		return vh->virtual.isatty(vh->virtual.data);
+	}
     return 0;
 }
 
@@ -125,7 +146,15 @@ off_t _lseek(int file, off_t ptr, int dir){
 		}
 	}
 	else if(dir==SEEK_END) flags = FS_Backwards;
-    return bt_fseek(btos_get_handle(file), ptr, flags);
+	
+	virtual_handle *vh=btos_get_handle_virt(file);
+    if(!vh) return -1;
+    if(vh->type == HANDLE_OS){
+		bt_filehandle fh = vh->handle;
+		return bt_fseek(fh, ptr, flags);
+	}else{
+		return vh->virtual.lseek(vh->virtual.data, ptr, dir);
+	}
 }
 
 off_t lseek(int file, off_t ptr, int dir){
@@ -159,7 +188,14 @@ int open(const char *name, int flags, ...){
 }
 
 int _read(int file, char *ptr, int len){
-    return bt_fread(btos_get_handle(file), len, ptr);
+	virtual_handle *vh=btos_get_handle_virt(file);
+    if(!vh) return -1;
+    if(vh->type == HANDLE_OS){
+		bt_filehandle fh = vh->handle;
+		return bt_fread(fh, len, ptr);
+	}else{
+		return vh->virtual.read(vh->virtual.data, ptr, len);
+	}
 }
 
 int read(int file, char *ptr, int len){
@@ -273,7 +309,14 @@ int wait(int *status){
 }
 
 int _write(int file, char *ptr, int len){
-	return bt_fwrite(btos_get_handle(file), len, ptr);
+	virtual_handle *vh=btos_get_handle_virt(file);
+    if(!vh) return -1;
+    if(vh->type == HANDLE_OS){
+		bt_filehandle fh = vh->handle;
+		return bt_fwrite(fh, len, ptr);
+	}else{
+		return vh->virtual.write(vh->virtual.data, ptr, len);
+	}
 }
 
 int write(int file, char *ptr, int len){
@@ -478,10 +521,19 @@ int tcgetattr(int fd, struct termios *termios_p){
 	return 1;
 }
 
-int tcsetattr(int fildes, int optional_actions, const struct termios *termios_p){}
+int tcsetattr(int fildes, int optional_actions, const struct termios *termios_p){
+	return -1;
+}
 
 int _fsync(int fd){
-	bt_fflush(btos_get_handle(fd));
+	virtual_handle *vh=btos_get_handle_virt(fd);
+    if(!vh) return -1;
+    if(vh->type == HANDLE_OS){
+		bt_filehandle fh = vh->handle;
+		bt_fflush(fh);
+	}else{
+		return vh->virtual.fsync(vh->virtual.data);
+	}
 	return 0;
 }
 
