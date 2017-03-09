@@ -22,7 +22,7 @@ struct virtual_handle{
 			int (*read)(void*, char*, int);
 			int (*write)(void*, char*, int);
 			int (*fsync)(void*);
-		}virtual;
+		}virt;
 	};
 };
 

@@ -39,7 +39,7 @@ int _close(int file){
 		else errno = EBADF;
 		return ret;
 	}else{
-		int ret=vh->virtual.close(vh->virtual.data);
+		int ret=vh->virt.close(vh->virt.data);
 		if(ret) btos_remove_filenum(file);
 		else errno = EBADF;
 		return ret;
@@ -103,7 +103,7 @@ int _isatty(int file){
 			if((int)type==TERMINAL) return 1;
 		}
 	}else{
-		return vh->virtual.isatty(vh->virtual.data);
+		return vh->virt.isatty(vh->virt.data);
 	}
     return 0;
 }
@@ -153,7 +153,7 @@ off_t _lseek(int file, off_t ptr, int dir){
 		bt_filehandle fh = vh->handle;
 		return bt_fseek(fh, ptr, flags);
 	}else{
-		return vh->virtual.lseek(vh->virtual.data, ptr, dir);
+		return vh->virt.lseek(vh->virt.data, ptr, dir);
 	}
 }
 
@@ -194,7 +194,7 @@ int _read(int file, char *ptr, int len){
 		bt_filehandle fh = vh->handle;
 		return bt_fread(fh, len, ptr);
 	}else{
-		return vh->virtual.read(vh->virtual.data, ptr, len);
+		return vh->virt.read(vh->virt.data, ptr, len);
 	}
 }
 
@@ -315,7 +315,7 @@ int _write(int file, char *ptr, int len){
 		bt_filehandle fh = vh->handle;
 		return bt_fwrite(fh, len, ptr);
 	}else{
-		return vh->virtual.write(vh->virtual.data, ptr, len);
+		return vh->virt.write(vh->virt.data, ptr, len);
 	}
 }
 
@@ -532,7 +532,7 @@ int _fsync(int fd){
 		bt_filehandle fh = vh->handle;
 		bt_fflush(fh);
 	}else{
-		return vh->virtual.fsync(vh->virtual.data);
+		return vh->virt.fsync(vh->virt.data);
 	}
 	return 0;
 }
