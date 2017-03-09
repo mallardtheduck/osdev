@@ -1,5 +1,7 @@
 #include "ansi.h"
+extern "C" {
 #include "tmt.h"
+}
 #include <btos.h>
 #include <dev/terminal.h>
 #include <dev/video_dev.h>
@@ -10,6 +12,8 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <deque>
+#include <sstream>
+#include <map>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-variable"
@@ -25,12 +29,14 @@ static volatile bool key_thread_ready = false;
 
 static bt_threadhandle key_thread_id = 0;
 static bt_threadhandle wait_thread_id = 0;
+static bool ansi_on = false;
 
 static deque<char> keybuffer;
 static virtual_handle *real_stdout;
 static virtual_handle *real_stdin;
 
 static void ansi_stdin_thread(void*);
+static map<size_t, map<size_t,char>> screen_cache;
 
 static bool getinfoline(){
 	bool ret;
@@ -46,10 +52,14 @@ static bt_vidmode getvidmode(){
 
 void start_event_mode(){
 	terminal_ext_id = bt_query_extension("TERMINAL");
-	bt_handle_t th = btos_get_handle(fileno(stdin));
-	bt_fioctl(th, bt_terminal_ioctl::StartEventMode, 0, NULL);
+	bt_fioctl(real_stdin->handle, bt_terminal_ioctl::StartEventMode, 0, NULL);
 	bt_terminal_event_mode::Enum mode = bt_terminal_event_mode::Keyboard;
-	bt_fioctl(th, bt_terminal_ioctl::SetEventMode, sizeof(mode), (char*)&mode);
+	bt_fioctl(real_stdin->handle, bt_terminal_ioctl::SetEventMode, sizeof(mode), (char*)&mode);
+}
+
+static void set_scrolling(int onoff){
+	bool bonoff = !!onoff;
+	bt_fioctl(real_stdout->handle, bt_terminal_ioctl::SetScrolling, sizeof(bonoff), (char*)&bonoff);
 }
 
 static void ansi_add_input(const char *s, size_t len = 0){
@@ -86,11 +96,10 @@ static char ansi_getchar(){
 static void gotoxy(int c, int r){
 	bt_vidmode mode = getvidmode();
 	if(!mode.textmode) return;
-	if(!getinfoline()) ++r;
+	if(getinfoline()) ++r;
 	
 	size_t pos = (mode.width * r) + c;
-	bt_handle_t h = btos_get_handle(fileno(stdout));
-	bt_fseek(h, pos, FS_Set);
+	bt_fseek(real_stdout->handle, pos, FS_Set);
 }
 
 void clearline(){
@@ -104,6 +113,21 @@ void clearline(){
 	bt_fwrite(h, mode.width, blstr);
 	bt_fseek(h, pos, FS_Set);
 	delete blstr;
+}
+
+static void clearscreen(){
+	bt_fioctl(real_stdout->handle, bt_terminal_ioctl::ClearScreen, 0, NULL);
+}
+
+bool cache_match(size_t row, size_t col, char ch){
+	return (screen_cache.find(row) != screen_cache.end()) && (screen_cache.at(row).find(col) != screen_cache.at(row).end()) && (screen_cache.at(row).at(col) == ch);
+}
+
+void cache_set(size_t row, size_t col, char ch){
+	if(screen_cache.find(row) == screen_cache.end()){
+		screen_cache[row] = map<size_t, char>();
+	}
+	screen_cache[row][col] = ch;
 }
 
 static int ansi_virt_write(void *t, char *buf, int size){
@@ -131,11 +155,16 @@ static int ansi_virt_isatty(void *t){
 }
 
 static int ansi_virt_close(void *t){
-	tmt_close((TMT*)t);
-	btos_set_specific_filenum_virt(fileno(stdout), *real_stdout);
-	btos_set_specific_filenum_virt(fileno(stdin), *real_stdin);
-	free(real_stdout);
-	free(real_stdout);
+	if(ansi_on){
+		tmt_close((TMT*)t);
+		clearscreen();
+		set_scrolling(true);
+		btos_set_specific_filenum_virt(fileno(stdout), *real_stdout);
+		btos_set_specific_filenum_virt(fileno(stdin), *real_stdin);
+		free(real_stdout);
+		free(real_stdout);
+		ansi_on = false;
+	}
 	return 0;
 }
 
@@ -148,24 +177,44 @@ void callback(tmt_msg_t m, TMT *vt, const void *a, void *p){
 		break;
 		
 		case TMT_MSG_UPDATE:{
+			bt_filesize_t pos = bt_fseek(real_stdout->handle, 0, FS_Relative);
 			for(size_t r = 0; r < s->nline; ++r){
+				int changestart = -1;
+				string changestring;
 				if (s->lines[r]->dirty){
 					for (size_t c = 0; c < s->ncol; ++c){
-						gotoxy(c, r);
 						char ch = (char)s->lines[r]->chars[c].c;
-						bt_fwrite(real_stdout->handle, 1, &ch);
+						if(ch == 10 || ch == 13) ch = ' ';
+						if(!cache_match(r, c, ch)){
+							if(changestart == -1) changestart = c;
+							changestring += ch;
+							cache_set(r, c, ch);
+						}else if(changestart != -1){
+							gotoxy(changestart, r);
+							bt_fwrite(real_stdout->handle, changestring.length(), changestring.c_str());
+							changestart = -1;
+							changestring = "";
+						}
 					}
+					if(changestart != -1){
+						gotoxy(changestart, r);
+						bt_fwrite(real_stdout->handle, changestring.length(), changestring.c_str());
+					}
+					s->lines[r]->dirty = 0;
 				}
 			}
+			bt_fseek(real_stdout->handle, pos, FS_Set);
 		}
 		break;
 		
-		case TMT_MSG_ANSWER:
+		case TMT_MSG_ANSWER:{
 			ansi_add_input((const char*)a);
+		}
 		break;
 		
-		case TMT_MSG_MOVED:
+		case TMT_MSG_MOVED:{
 			gotoxy(c->c, c->r);
+		}
 		break;
 		
 		case TMT_MSG_CURSOR:
@@ -214,7 +263,8 @@ static void ansi_stdin_thread(void*){
 				ansi_add_input(TMT_KEY_END);
 			}else if(!(code & KeyFlags::NonASCII)){
 				char c = KB_char(key);
-				ansi_add_input(&c, 1);
+				if(c == 10) ansi_add_input("\r");
+				else if(c) ansi_add_input(&c, 1);
 			}
 		}
 		bt_next_msg_filtered(&msg, filter);
@@ -240,4 +290,6 @@ extern "C" void init_ansi(){
 	ansi_terminal.virt.close = &ansi_virt_close;
 	btos_set_specific_filenum_virt(fileno(stdout), ansi_terminal);
 	btos_set_specific_filenum_virt(fileno(stdin), ansi_terminal);
+	set_scrolling(false);
+	ansi_on = true;
 }
