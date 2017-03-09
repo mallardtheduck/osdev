@@ -50,11 +50,14 @@ static bt_vidmode getvidmode(){
 	return mode;
 }
 
-void start_event_mode(){
-	terminal_ext_id = bt_query_extension("TERMINAL");
+static void start_event_mode(){
 	bt_fioctl(real_stdin->handle, bt_terminal_ioctl::StartEventMode, 0, NULL);
 	bt_terminal_event_mode::Enum mode = bt_terminal_event_mode::Keyboard;
 	bt_fioctl(real_stdin->handle, bt_terminal_ioctl::SetEventMode, sizeof(mode), (char*)&mode);
+}
+
+static void end_event_mode(){
+	bt_fioctl(real_stdin->handle, bt_terminal_ioctl::EndEventMode, 0, NULL);
 }
 
 static void set_scrolling(int onoff){
@@ -102,28 +105,15 @@ static void gotoxy(int c, int r){
 	bt_fseek(real_stdout->handle, pos, FS_Set);
 }
 
-void clearline(){
-	bt_vidmode mode = getvidmode();
-	if(!mode.textmode) return;
-	
-	char *blstr = new char[mode.width]();
-	memset(blstr, ' ', mode.width);
-	bt_handle_t h = btos_get_handle(fileno(stdout));
-	bt_filesize_t pos = bt_fseek(h, 0, FS_Relative);
-	bt_fwrite(h, mode.width, blstr);
-	bt_fseek(h, pos, FS_Set);
-	delete blstr;
-}
-
 static void clearscreen(){
 	bt_fioctl(real_stdout->handle, bt_terminal_ioctl::ClearScreen, 0, NULL);
 }
 
-bool cache_match(size_t row, size_t col, char ch){
+static bool cache_match(size_t row, size_t col, char ch){
 	return (screen_cache.find(row) != screen_cache.end()) && (screen_cache.at(row).find(col) != screen_cache.at(row).end()) && (screen_cache.at(row).at(col) == ch);
 }
 
-void cache_set(size_t row, size_t col, char ch){
+static void cache_set(size_t row, size_t col, char ch){
 	if(screen_cache.find(row) == screen_cache.end()){
 		screen_cache[row] = map<size_t, char>();
 	}
@@ -159,6 +149,7 @@ static int ansi_virt_close(void *t){
 		tmt_close((TMT*)t);
 		clearscreen();
 		set_scrolling(true);
+		end_event_mode();
 		btos_set_specific_filenum_virt(fileno(stdout), *real_stdout);
 		btos_set_specific_filenum_virt(fileno(stdin), *real_stdin);
 		free(real_stdout);
@@ -168,7 +159,7 @@ static int ansi_virt_close(void *t){
 	return 0;
 }
 
-void callback(tmt_msg_t m, TMT *vt, const void *a, void *p){
+static void callback(tmt_msg_t m, TMT *vt, const void *a, void *p){
 	const TMTSCREEN *s = tmt_screen(vt);
 	const TMTPOINT *c = tmt_cursor(vt);
 	
@@ -272,6 +263,7 @@ static void ansi_stdin_thread(void*){
 }
 
 extern "C" void init_ansi(){
+	terminal_ext_id = bt_query_extension("TERMINAL");
 	if(!isatty(fileno(stdout))) return;
 	real_stdout = btos_get_handle_virt(fileno(stdout));
 	real_stdin = btos_get_handle_virt(fileno(stdin));
@@ -292,4 +284,8 @@ extern "C" void init_ansi(){
 	btos_set_specific_filenum_virt(fileno(stdin), ansi_terminal);
 	set_scrolling(false);
 	ansi_on = true;
+}
+
+extern "C" void end_ansi(){
+	if(ansi_on) close(fileno(stdout));
 }

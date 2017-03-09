@@ -5,6 +5,7 @@
 EXTERN_C_BEGIN
 
 void init_ansi();
+void end_ansi();
 
 EXTERN_C_END
 
