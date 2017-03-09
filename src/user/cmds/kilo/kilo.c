@@ -45,19 +45,14 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <sys/types.h>
-#ifdef __btos__
-#include <btos.h>
-#include <dev/terminal.h>
-#include <dev/video_dev.h>
-#include <crt_support.h>
-#include "btos-conio.h"
-#else
-#include <sys/ioctl.h>
-#endif
+//#include <sys/ioctl.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <fcntl.h>
+
+#include <ansi.h>
+#include "getline.h"
 
 /* Syntax highlight types */
 #define HL_NORMAL 0
@@ -245,33 +240,6 @@ fatal:
 /* Read a key from the terminal put in raw mode, trying to handle
  * escape sequences. */
 int editorReadKey(int fd) {
-#ifdef __btos__
-	(void)fd;
-	char c = getch();
-	
-	switch(c){
-		case 30:
-			return ARROW_UP;
-		case 31:
-			return ARROW_DOWN;
-		case 28:
-			return ARROW_LEFT;
-		case 29:
-			return ARROW_RIGHT;
-		case 4:
-			return DEL_KEY;
-		case 2:
-			return PAGE_UP;
-		case 6:
-			return PAGE_DOWN;
-		case 20:
-			return HOME_KEY;
-		case 5:
-			return END_KEY;
-		default:
-			return c;
-	}
-#else
     int nread;
     char c, seq[3];
     while ((nread = read(fd,&c,1)) == 0);
@@ -320,22 +288,12 @@ int editorReadKey(int fd) {
             return c;
         }
     }
-#endif
 }
-int getWindowSize(int ifd, int ofd, int *rows, int *cols);
 
 /* Use the ESC [6n escape sequence to query the horizontal cursor position
  * and return it. On error -1 is returned, on success the position of the
  * cursor is stored at *rows and *cols and 0 is returned. */
 int getCursorPosition(int ifd, int ofd, int *rows, int *cols) {
-#ifdef __btos__
-	int wrows, wcols;
-	getWindowSize(ifd, ofd, &wrows, &wcols);
-	size_t pos = lseek(ofd, 0, SEEK_CUR);
-	*rows = pos / wrows;
-	*cols = pos % wrows;
-	return 0;
-#else
     char buf[32];
     unsigned int i = 0;
 
@@ -354,25 +312,15 @@ int getCursorPosition(int ifd, int ofd, int *rows, int *cols) {
     if (buf[0] != ESC || buf[1] != '[') return -1;
     if (sscanf(buf+2,"%d;%d",rows,cols) != 2) return -1;
     return 0;
-#endif
 }
 
 /* Try to get the number of columns in the current terminal. If the ioctl()
  * call fails the function will try to query the terminal itself.
  * Returns 0 on success, -1 on error. */
 int getWindowSize(int ifd, int ofd, int *rows, int *cols) {
-#ifdef __btos__
-	(void)ifd;
-	bt_vidmode mode;
-	size_t size = bt_fioctl(btos_get_handle(ofd), bt_terminal_ioctl_QueryScreenMode, sizeof(mode), (char*)&mode);
-	*rows = mode.height;
-	*cols = mode.width;
-	if(size == sizeof(mode)) return 0;
-	else return -1;
-#else
-    struct winsize ws;
+//    struct winsize ws;
 
-    if (ioctl(1, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) {
+//    if (ioctl(1, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) {
         /* ioctl() failed. Try to query the terminal itself. */
         int orig_row, orig_col, retval;
 
@@ -383,6 +331,7 @@ int getWindowSize(int ifd, int ofd, int *rows, int *cols) {
         /* Go to right/bottom margin and get position. */
         if (write(ofd,"\x1b[999C\x1b[999B",12) != 12) goto failed;
         retval = getCursorPosition(ifd,ofd,rows,cols);
+        --cols;
         if (retval == -1) goto failed;
 
         /* Restore position. */
@@ -392,14 +341,14 @@ int getWindowSize(int ifd, int ofd, int *rows, int *cols) {
             /* Can't recover... */
         }
         return 0;
-    } else {
+/*    } else {
         *cols = ws.ws_col;
         *rows = ws.ws_row;
         return 0;
-    }
+    }*/
+
 failed:
     return -1;
-#endif
 }
 
 /* ====================== Syntax highlight color scheme  ==================== */
@@ -861,14 +810,9 @@ int editorOpen(char *filename) {
 int editorSave(void) {
     int len;
     char *buf = editorRowsToString(&len);
-    int fd = open(E.filename,O_RDWR|O_CREAT,0644);
+    int fd = open(E.filename,O_WRONLY|O_TRUNC,0644);
     if (fd == -1) goto writeerr;
 
-    /* Use truncate + a single write(2) call in order to make saving
-     * a bit safer, under the limits of what we can do in a small editor. */
-    #ifndef __btos__
-    if (ftruncate(fd,len) == -1) goto writeerr;
-    #endif
     if (write(fd,buf,len) != len) goto writeerr;
 
     close(fd);
@@ -917,26 +861,17 @@ void editorRefreshScreen(void) {
     erow *r;
     char buf[32];
     struct abuf ab = ABUF_INIT;
-#ifdef __btos__
-	(void)buf;
-	gotoxy(1, 1);
-#else
+
     abAppend(&ab,"\x1b[?25l",6); /* Hide cursor. */
     abAppend(&ab,"\x1b[H",3); /* Go home. */
-#endif
     for (y = 0; y < E.screenrows; y++) {
         int filerow = E.rowoff+y;
 
         if (filerow >= E.numrows) {
             if (E.numrows == 0 && y == E.screenrows/3) {
                 char welcome[80];
-                #ifdef __btos__
-				int welcomelen = snprintf(welcome,sizeof(welcome),
-                    "Kilo editor -- verison %s\n", KILO_VERSION);
-                #else
                 int welcomelen = snprintf(welcome,sizeof(welcome),
                     "Kilo editor -- verison %s\x1b[0K\r\n", KILO_VERSION);
-                #endif
                 int padding = (E.screencols-welcomelen)/2;
                 if (padding) {
                     abAppend(&ab,"~",1);
@@ -945,11 +880,7 @@ void editorRefreshScreen(void) {
                 while(padding--) abAppend(&ab," ",1);
                 abAppend(&ab,welcome,welcomelen);
             } else {
-				#ifdef __btos__
-				
-				#else
                 abAppend(&ab,"~\x1b[0K\r\n",7);
-                #endif
             }
             continue;
         }
@@ -966,22 +897,16 @@ void editorRefreshScreen(void) {
             for (j = 0; j < len; j++) {
                 if (hl[j] == HL_NONPRINT) {
                     char sym;
-                    #ifndef __btos__
                     abAppend(&ab,"\x1b[7m",4);
-                    #endif
                     if (c[j] <= 26)
                         sym = '@'+c[j];
                     else
                         sym = '?';
                     abAppend(&ab,&sym,1);
-                    #ifndef __btos__
                     abAppend(&ab,"\x1b[0m",4);
-                    #endif
                 } else if (hl[j] == HL_NORMAL) {
                     if (current_color != -1) {
-						#ifndef __btos__
                         abAppend(&ab,"\x1b[39m",5);
-                        #endif
                         current_color = -1;
                     }
                     abAppend(&ab,c+j,1);
@@ -989,11 +914,7 @@ void editorRefreshScreen(void) {
                     int color = editorSyntaxToColor(hl[j]);
                     if (color != current_color) {
                         char buf[16];
-                        #ifdef __btos__
-                        int clen = 0;
-                        #else
                         int clen = snprintf(buf,sizeof(buf),"\x1b[%dm",color);
-                        #endif
                         current_color = color;
                         abAppend(&ab,buf,clen);
                     }
@@ -1001,21 +922,14 @@ void editorRefreshScreen(void) {
                 }
             }
         }
-        #ifdef __btos__
-        #else
         abAppend(&ab,"\x1b[39m",5);
         abAppend(&ab,"\x1b[0K",4);
         abAppend(&ab,"\r\n",2);
-        #endif
-        abAppend(&ab,"\n",1);     
     }
 
     /* Create a two rows status. First row: */
-    #ifdef __btos__
-    #else
     abAppend(&ab,"\x1b[0K",4);
     abAppend(&ab,"\x1b[7m",4);
-    #endif
     char status[80], rstatus[80];
     int len = snprintf(status, sizeof(status), "%.20s - %d lines %s",
         E.filename, E.numrows, E.dirty ? "(modified)" : "");
@@ -1032,16 +946,10 @@ void editorRefreshScreen(void) {
             len++;
         }
     }
-    #ifdef __btos__
-    #else
     abAppend(&ab,"\x1b[0m\r\n",6);
-    #endif
 
     /* Second row depends on E.statusmsg and the status message update time. */
-    #ifdef __btos__
-    #else
     abAppend(&ab,"\x1b[0K",4);
-    #endif
     int msglen = strlen(E.statusmsg);
     if (msglen && time(NULL)-E.statusmsg_time < 5)
         abAppend(&ab,E.statusmsg,msglen <= E.screencols ? msglen : E.screencols);
@@ -1059,13 +967,9 @@ void editorRefreshScreen(void) {
             cx++;
         }
     }
-    #ifdef __btos__
-    gotoxy(E.cy+1, cx);
-    #else
     snprintf(buf,sizeof(buf),"\x1b[%d;%dH",E.cy+1,cx);
     abAppend(&ab,buf,strlen(buf));
     abAppend(&ab,"\x1b[?25h",6); /* Show cursor. */
-    #endif
     write(STDOUT_FILENO,ab.b,ab.len);
     abFree(&ab);
 }
@@ -1330,12 +1234,6 @@ int editorFileWasModified(void) {
     return E.dirty;
 }
 
-#ifdef __btos__
-void resetscrolling(){
-	set_scrolling(true);
-}
-#endif
-
 void initEditor(void) {
     E.cx = 0;
     E.cy = 0;
@@ -1360,11 +1258,7 @@ int main(int argc, char **argv) {
         fprintf(stderr,"Usage: kilo <filename>\n");
         exit(1);
     }
-#ifdef __btos__
-	set_scrolling(false);
-	atexit(&resetscrolling);
-#endif
-
+    init_ansi();
     initEditor();
     editorSelectSyntaxHighlight(argv[1]);
     editorOpen(argv[1]);

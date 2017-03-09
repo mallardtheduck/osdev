@@ -7,10 +7,10 @@ BUILD-CPP-FLAGS :=  -c
 BUILD-CPP-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -std=gnu++11
 BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
-BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -std=gnu99
+BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -I../../libs/ansi -std=gnu99
 LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME) -O2
-LINK-OPTIONS := -lgcc_s -lstdc++
+LINK-OPTIONS := -lgcc_s -lstdc++ -L../../libs/ansi -lansi
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")
