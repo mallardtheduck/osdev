@@ -78,10 +78,6 @@ static void ansi_add_input(const char *s, size_t len = 0){
 
 static char ansi_getchar(){
 	fflush(stdout);
-	if(!key_thread_id){
-		key_thread_id = bt_new_thread(&ansi_stdin_thread, NULL, keythread_stack + thread_stack_size);
-		while(!key_thread_ready) bt_yield();
-	}
 	char ret;
 	bt_lock(keybufferlock);
 	while(!keybuffer.size()){
@@ -215,7 +211,6 @@ static void callback(tmt_msg_t m, TMT *vt, const void *a, void *p){
 
 static void ansi_stdin_thread(void*){
 	keybufferlock = bt_create_lock();
-	start_event_mode();
 	bt_msg_filter filter;
 	filter.flags = bt_msg_filter_flags::From | bt_msg_filter_flags::Source;
 	filter.pid = 0;
@@ -282,6 +277,11 @@ extern "C" void init_ansi(){
 	ansi_terminal.virt.close = &ansi_virt_close;
 	btos_set_specific_filenum_virt(fileno(stdout), ansi_terminal);
 	btos_set_specific_filenum_virt(fileno(stdin), ansi_terminal);
+	start_event_mode();
+	if(!key_thread_id){
+		key_thread_id = bt_new_thread(&ansi_stdin_thread, NULL, keythread_stack + thread_stack_size);
+		while(!key_thread_ready) bt_yield();
+	}
 	set_scrolling(false);
 	ansi_on = true;
 }
