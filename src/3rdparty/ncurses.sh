@@ -10,7 +10,7 @@ mkdir -p originals
 tar xf ncurses-6.0.tar.gz -C originals
 
 cd ncurses-6.0
-#patch -p1 -R < ../ncurses/ncurses.patch
+patch -p1 -R < ../ncurses/ncurses.patch
 cp ../ncurses/btos-build.sh .
 chmod +x btos-build.sh
 mkdir -p install
