@@ -56,6 +56,8 @@ import-files:=\
  data/btos/lib/ansi.ell \
  data/btos/tests/nctest.elx \
  data/btos/share/terminfo \
+ data/btos/lib/ncurses.ell \
+ data/btos/lib/ncurses++.ell \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -235,6 +237,12 @@ data/btos/tests/nctest.elx: ../../user/tests/nctest/nctest.elx
 
 data/btos/share/terminfo: ../../3rdparty/install/btos/share/terminfo
 	cp -Rv $< $@
+
+data/btos/lib/ncurses.ell: ../../3rdparty/install/btos/lib/ncurses.ell
+	cp $< $@
+
+data/btos/lib/ncurses++.ell: ../../3rdparty/install/btos/lib/ncurses++.ell
+	cp $< $@
 
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx
 	mkdir -p data/btos/boot/grub/
