@@ -6,6 +6,7 @@ extern "C" {
 #include <dev/terminal.h>
 #include <dev/video_dev.h>
 #include <dev/keyboard.h>
+#include <dev/rtc.h>
 #include <crt_support.h>
 #include <cstdio>
 #include <cstring>
@@ -152,7 +153,14 @@ static void callback(tmt_msg_t m, TMT *vt, const void *a, void *p){
 	const TMTPOINT *c = tmt_cursor(vt);
 	
 	switch(m){
-		case TMT_MSG_BELL:
+		case TMT_MSG_BELL:{
+			char curtitle[128];
+			bt_fioctl(real_stdout->handle, bt_terminal_ioctl::GetTitle, 128, curtitle);
+			string belltitle (strlen(curtitle), '*');
+			bt_fioctl(real_stdout->handle, bt_terminal_ioctl::SetTitle, belltitle.length() + 1, (char*)belltitle.c_str());
+			bt_rtc_sleep(200);
+			bt_fioctl(real_stdout->handle, bt_terminal_ioctl::SetTitle, 128, curtitle);
+		}
 		break;
 		
 		case TMT_MSG_UPDATE:{
