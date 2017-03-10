@@ -593,3 +593,10 @@ int access(const char *path, int amode){
 	struct stat st;
 	return _stat(path, &st);
 }
+
+unsigned sleep(unsigned seconds){
+	for(unsigned i = 0; i < seconds; ++i){
+		_usleep(1000000);
+	}
+	return 0;
+}
