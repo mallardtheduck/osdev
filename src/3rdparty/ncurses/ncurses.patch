@@ -246,6 +246,19 @@ diff -rupN ncurses-6.0/include/ncurses_btos.h originals/ncurses-6.0/include/ncur
 -
 -#endif /* _NC_BTOSH */
 -#endif /* __btos__ */
+diff -rupN ncurses-6.0/ncurses/base/lib_endwin.c originals/ncurses-6.0/ncurses/base/lib_endwin.c
+--- ncurses-6.0/ncurses/base/lib_endwin.c	2017-03-10 10:50:24.229785125 +0000
++++ originals/ncurses-6.0/ncurses/base/lib_endwin.c	2014-03-08 20:32:59.000000000 +0000
+@@ -66,9 +66,6 @@ NCURSES_SP_NAME(endwin) (NCURSES_SP_DCL0
+ #endif
+ 	code = NCURSES_SP_NAME(reset_shell_mode) (NCURSES_SP_ARG);
+     }
+-#ifdef __btos__
+-	end_ansi();
+-#endif
+ 
+     returnCode(code);
+ }
 diff -rupN ncurses-6.0/ncurses/base/lib_initscr.c originals/ncurses-6.0/ncurses/base/lib_initscr.c
 --- ncurses-6.0/ncurses/base/lib_initscr.c	2017-03-10 09:15:01.517373172 +0000
 +++ originals/ncurses-6.0/ncurses/base/lib_initscr.c	2014-04-26 19:47:51.000000000 +0100
