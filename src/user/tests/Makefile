@@ -1,4 +1,4 @@
-PROGS := ctest cpptest crash mousetest msgtest shmtest vgatest fputest elltest
+PROGS := ctest cpptest crash mousetest msgtest shmtest vgatest fputest elltest nctest
 
 all: dummy.file
 	for dir in $(PROGS); do \
