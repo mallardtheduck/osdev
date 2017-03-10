@@ -582,4 +582,14 @@ int _stat64(const char *path, struct stat64 *buf){
 
 int stat64(const char *path, struct stat64 *buf){
 	return _stat64(path, buf);
+
+}
+
+long fpathconf(int fildes, int name){
+	return 0;
+}
+
+int access(const char *path, int amode){
+	struct stat st;
+	return _stat(path, &st);
 }
