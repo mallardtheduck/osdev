@@ -258,6 +258,7 @@ static void ansi_stdin_thread(void*){
 }
 
 extern "C" void init_ansi(){
+	if(ansi_on) return;
 	terminal_ext_id = bt_query_extension("TERMINAL");
 	if(!isatty(fileno(stdout))) return;
 	real_stdout = btos_get_handle_virt(fileno(stdout));
