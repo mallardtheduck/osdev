@@ -27,7 +27,11 @@ export LDFLAGS="-L$PWD/../../user/libs/ansi -lansi"
 PATH=$BASE_PATH/bin:$PATH
 DESTDIR=$PWD/../install ac_cv_header_termios_h='no' ./configure \
 	--host=$ARCH \
-	--prefix=$PREFIX
+	--prefix=$PREFIX \
+	--with-shared \
+	--with-cxx-shared
 
 make libs
 make install.libs
+make install.includes
+make install.data
