@@ -30,6 +30,7 @@ static volatile bool key_thread_ready = false;
 static bt_threadhandle key_thread_id = 0;
 static bt_threadhandle wait_thread_id = 0;
 static bool ansi_on = false;
+static bool exit_registered = false;
 
 static deque<char> keybuffer;
 static virtual_handle *real_stdout;
@@ -141,17 +142,8 @@ static int ansi_virt_isatty(void *t){
 }
 
 static int ansi_virt_close(void *t){
-	if(ansi_on){
-		tmt_close((TMT*)t);
-		clearscreen();
-		set_scrolling(true);
-		end_event_mode();
-		btos_set_specific_filenum_virt(fileno(stdout), *real_stdout);
-		btos_set_specific_filenum_virt(fileno(stdin), *real_stdin);
-		free(real_stdout);
-		free(real_stdout);
-		ansi_on = false;
-	}
+	tmt_close((TMT*)t);
+	end_ansi();
 	return 0;
 }
 
@@ -285,8 +277,21 @@ extern "C" void init_ansi(){
 	}
 	set_scrolling(false);
 	ansi_on = true;
+	if(!exit_registered){
+		atexit(&end_ansi);
+		exit_registered = true;
+	}
 }
 
 extern "C" void end_ansi(){
-	if(ansi_on) close(fileno(stdout));
+	if(ansi_on){
+		clearscreen();
+		set_scrolling(true);
+		end_event_mode();
+		btos_set_specific_filenum_virt(fileno(stdout), *real_stdout);
+		btos_set_specific_filenum_virt(fileno(stdin), *real_stdin);
+		free(real_stdout);
+		free(real_stdout);
+		ansi_on = false;
+	}
 }
