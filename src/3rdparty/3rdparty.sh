@@ -6,3 +6,5 @@ source ../env-os.sh
 ./grub.sh
 ./parted.sh
 ./udis86.sh
+./ncurses.sh
+
