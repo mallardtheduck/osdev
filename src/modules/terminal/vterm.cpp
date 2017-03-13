@@ -94,7 +94,7 @@ void vterm::putstring(char *s)
 void vterm::setcolours(uint8_t c)
 {
 	textcolour=c;
-	if(backend) backend->set_text_colours(c);
+	if(backend && backend->is_active(id)) backend->set_text_colours(c);
 }
 
 uint8_t vterm::getcolours()
