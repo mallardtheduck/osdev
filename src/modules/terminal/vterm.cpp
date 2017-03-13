@@ -226,7 +226,7 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf)
 		bufpos += size;
 	}
 	if(!iline_valid) do_infoline();
-	if(backend) backend->refresh();
+	if(backend && backend->is_active(id)) backend->refresh();
 	return size;
 }
 
@@ -264,14 +264,14 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf)
 					uint64_t scount=scrollcount;
 					if(echo){
 						putchar(c);
-						if(backend) backend->refresh();
+						if(backend && backend->is_active(id)) backend->refresh();
 					}
 					if(scount != scrollcount) do_infoline();
 					return i + 1;
 				}
 				if(echo && put) {
 					putchar(c);
-					if(backend) backend->refresh();
+					if(backend && backend->is_active(id)) backend->refresh();
 				}
 			}
 		}
