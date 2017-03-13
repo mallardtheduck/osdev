@@ -15,6 +15,7 @@ extern "C" {
 #include <deque>
 #include <sstream>
 #include <map>
+#include <vector>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-variable"
@@ -38,7 +39,7 @@ static virtual_handle *real_stdout;
 static virtual_handle *real_stdin;
 
 static void ansi_stdin_thread(void*);
-static map<size_t, map<size_t,char>> screen_cache;
+static map<size_t, map<size_t, uint16_t>> screen_cache;
 
 static bool getinfoline(){
 	bool ret;
@@ -104,16 +105,18 @@ static void gotoxy(int c, int r){
 }
 
 static void clearscreen(){
+	char cc = 0x07;
+	bt_fioctl(real_stdout->handle, bt_terminal_ioctl::SetTextColours, sizeof(cc), (char*)&cc);
 	bt_fioctl(real_stdout->handle, bt_terminal_ioctl::ClearScreen, 0, NULL);
 }
 
-static bool cache_match(size_t row, size_t col, char ch){
+static bool cache_match(size_t row, size_t col, uint16_t ch){
 	return (screen_cache.find(row) != screen_cache.end()) && (screen_cache.at(row).find(col) != screen_cache.at(row).end()) && (screen_cache.at(row).at(col) == ch);
 }
 
-static void cache_set(size_t row, size_t col, char ch){
+static void cache_set(size_t row, size_t col, uint16_t ch){
 	if(screen_cache.find(row) == screen_cache.end()){
-		screen_cache[row] = map<size_t, char>();
+		screen_cache[row] = map<size_t, uint16_t>();
 	}
 	screen_cache[row][col] = ch;
 }
@@ -148,6 +151,71 @@ static int ansi_virt_close(void *t){
 	return 0;
 }
 
+static uint8_t getcolour(tmt_color_t c, bool fg){
+	switch(c){
+		case TMT_COLOR_BLACK: return 0;
+		case TMT_COLOR_RED: return 1;
+		case TMT_COLOR_GREEN: return 2;
+		case TMT_COLOR_YELLOW: return 3;
+		case TMT_COLOR_BLUE: return 4;
+		case TMT_COLOR_MAGENTA: return 5;
+		case TMT_COLOR_CYAN: return 6;
+		case TMT_COLOR_WHITE: return 7;
+		case TMT_COLOR_MAX: return 15;
+		case TMT_COLOR_DEFAULT: 
+		default:
+			return fg ? 7 : 0;
+	}
+}
+
+static uint8_t encode_attrs(const TMTATTRS &attrs){
+	uint8_t fg = getcolour(attrs.fg, true);
+	uint8_t bg = getcolour(attrs.bg, false);
+	
+	if(attrs.bold) fg |= (1 << 4);
+	
+	if(attrs.reverse){
+		uint8_t tmp = fg;
+		fg = bg;
+		bg = tmp;
+	}
+	
+	if(attrs.invisible) fg = bg;
+	
+	return (bg << 4) | fg;
+}
+
+static uint16_t encode_value(const TMTCHAR &t){
+	return (encode_attrs(t.a) << 8) | t.c;
+}
+
+static void write_screen(size_t c, size_t r, const vector<uint16_t> &chars){
+	if(chars.empty()) return;
+	uint8_t cc;
+	bt_fioctl(real_stdout->handle, bt_terminal_ioctl::GetTextColours, sizeof(cc), (char*)&cc);
+	
+	uint8_t a = chars[0] >> 8;
+	size_t cstart = 0;
+	for(size_t i = 0; i < chars.size(); ++i){
+		uint8_t ca = chars[i] >> 8;
+		if(ca != a || i == chars.size() - 1){
+			string cs;
+			for(size_t j = cstart; j <= i; ++j){
+				char ch = (char)chars[j];
+				if(ch == 10 || ch == 13) ch = ' ';
+				cs += ch;
+			}
+			gotoxy(c + cstart, r);
+			bt_fioctl(real_stdout->handle, bt_terminal_ioctl::SetTextColours, sizeof(a), (char*)&a);
+			bt_fwrite(real_stdout->handle, cs.length(), cs.c_str());
+			a = ca;
+			cstart = i;
+		}
+	}
+	
+	bt_fioctl(real_stdout->handle, bt_terminal_ioctl::SetTextColours, sizeof(cc), (char*)&cc);
+}
+
 static void callback(tmt_msg_t m, TMT *vt, const void *a, void *p){
 	const TMTSCREEN *s = tmt_screen(vt);
 	const TMTPOINT *c = tmt_cursor(vt);
@@ -167,25 +235,24 @@ static void callback(tmt_msg_t m, TMT *vt, const void *a, void *p){
 			bt_filesize_t pos = bt_fseek(real_stdout->handle, 0, FS_Relative);
 			for(size_t r = 0; r < s->nline; ++r){
 				int changestart = -1;
-				string changestring;
+				vector<uint16_t> changestring;
+				uint8_t a = 0;
 				if (s->lines[r]->dirty){
 					for (size_t c = 0; c < s->ncol; ++c){
-						char ch = (char)s->lines[r]->chars[c].c;
-						if(ch == 10 || ch == 13) ch = ' ';
-						if(!cache_match(r, c, ch)){
+						uint16_t v = encode_value(s->lines[r]->chars[c]);
+						bool draw = false;
+						if(!cache_match(r, c, v)){
 							if(changestart == -1) changestart = c;
-							changestring += ch;
-							cache_set(r, c, ch);
+							changestring.push_back(v);
+							cache_set(r, c, v);
 						}else if(changestart != -1){
-							gotoxy(changestart, r);
-							bt_fwrite(real_stdout->handle, changestring.length(), changestring.c_str());
+							write_screen(changestart, r, changestring);
 							changestart = -1;
-							changestring = "";
+							changestring.clear();
 						}
 					}
 					if(changestart != -1){
-						gotoxy(changestart, r);
-						bt_fwrite(real_stdout->handle, changestring.length(), changestring.c_str());
+						write_screen(changestart, r, changestring);
 					}
 					s->lines[r]->dirty = 0;
 				}
