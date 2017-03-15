@@ -1,4 +1,64 @@
-import-files:= data/btos/tests/ctest.elx data/btos/tests/cpptest.elx data/btos/cmd/cmd.elx data/btos/system/terminal.sys data/btos/cmd/cls.elx data/btos/cmd/termctl.elx data/btos/system/switcher.elx data/btos/cmd/spawn.elx data/btos/cmd/kill.elx data/btos/drivers/pci.sys data/btos/cmd/load.elx data/btos/tests/test.sys data/btos/cmd/mount.elx data/btos/tests/msgtest.elx data/btos/tests/mousetest.elx data/btos/drivers/vga.sys data/btos/tests/vgatest.elx data/btos/tests/fputest.elx data/btos/system/gds.elx data/btos/bin/debug.elx data/btos/tests/crash.elx data/btos/tests/gdstest.elx data/btos/system/wm.elx data/btos/tests/wmtest.elx data/btos/bin/wmmenu.elx data/btos/bin/startwm.elx data/btos/bin/termwin.elx data/btos/bin/breakout.elx data/btos/cmd/sleep.elx data/btos/cmd/tar.elx data/btos/drivers/iso9660.sys data/btos/drivers/fat.sys data/btos/cmd/iconv.elx data/btos/cmd/parted.elx data/btos/cmd/format.elx data/btos/bin/install.elx data/btos/tests/shmtest.elx data/btos/tests/elltest.elx data/btos/tests/testlib.ell data/btos/lib/libc.ell data/btos/lib/libm.ell data/btos/lib/stdc++.ell data/btos/lib/libgcc_s.ell data/btos/lib/libg.ell data/btos/lib/gds.ell data/btos/lib/wm.ell data/btos/lib/libelf.ell data/btos/lib/iconv.ell data/btos/lib/uuid.ell data/btos/lib/parted.ell data/btos/tests/elldtest.elx data/btos/lib/eloader.ell data/btos/lib/udis86.ell
+import-files:=\
+ data/btos/tests/ctest.elx \
+ data/btos/tests/cpptest.elx \
+ data/btos/cmd/cmd.elx \
+ data/btos/system/terminal.sys \
+ data/btos/cmd/cls.elx \
+ data/btos/cmd/termctl.elx \
+ data/btos/system/switcher.elx \
+ data/btos/cmd/spawn.elx \
+ data/btos/cmd/kill.elx \
+ data/btos/drivers/pci.sys \
+ data/btos/cmd/load.elx \
+ data/btos/tests/test.sys \
+ data/btos/cmd/mount.elx \
+ data/btos/tests/msgtest.elx \
+ data/btos/tests/mousetest.elx \
+ data/btos/drivers/vga.sys \
+ data/btos/tests/vgatest.elx \
+ data/btos/tests/fputest.elx \
+ data/btos/system/gds.elx \
+ data/btos/bin/debug.elx \
+ data/btos/tests/crash.elx \
+ data/btos/tests/gdstest.elx \
+ data/btos/system/wm.elx \
+ data/btos/tests/wmtest.elx \
+ data/btos/bin/wmmenu.elx \
+ data/btos/bin/startwm.elx \
+ data/btos/bin/termwin.elx \
+ data/btos/bin/breakout.elx \
+ data/btos/cmd/sleep.elx \
+ data/btos/cmd/tar.elx \
+ data/btos/drivers/iso9660.sys \
+ data/btos/drivers/fat.sys \
+ data/btos/cmd/iconv.elx \
+ data/btos/cmd/parted.elx \
+ data/btos/cmd/format.elx \
+ data/btos/bin/install.elx \
+ data/btos/tests/shmtest.elx \
+ data/btos/tests/elltest.elx \
+ data/btos/tests/testlib.ell \
+ data/btos/lib/libc.ell \
+ data/btos/lib/libm.ell \
+ data/btos/lib/stdc++.ell \
+ data/btos/lib/libgcc_s.ell \
+ data/btos/lib/libg.ell \
+ data/btos/lib/gds.ell \
+ data/btos/lib/wm.ell \
+ data/btos/lib/libelf.ell \
+ data/btos/lib/iconv.ell \
+ data/btos/lib/uuid.ell \
+ data/btos/lib/parted.ell \
+ data/btos/tests/elldtest.elx \
+ data/btos/lib/eloader.ell \
+ data/btos/lib/udis86.ell \
+ data/btos/cmd/kilo.elx \
+ data/btos/lib/ansi.ell \
+ data/btos/tests/nctest.elx \
+ data/btos/share/terminfo \
+ data/btos/lib/ncurses.ell \
+ data/btos/lib/ncurses++.ell \
+ 
 pkg-files:= $(shell find pkgfiles -type f)
 
 
@@ -163,6 +223,27 @@ data/btos/tests/elldtest.elx: ../../user/libs/eloader/elldtest.elx
 data/btos/lib/udis86.ell: ../../3rdparty/install/btos/lib/udis86.ell
 	cp $< $@
 
+data/btos/cmd/redit.elx: ../../user/cmds/rockedit/redit.elx
+	cp $< $@
+
+data/btos/cmd/kilo.elx: ../../user/cmds/kilo/kilo.elx
+	cp $< $@
+
+data/btos/lib/ansi.ell: ../../user/libs/ansi/ansi.ell
+	cp $< $@
+
+data/btos/tests/nctest.elx: ../../user/tests/nctest/nctest.elx
+	cp $< $@
+
+data/btos/share/terminfo: ../../3rdparty/install/btos/share/terminfo
+	cp -Rv $< $@
+
+data/btos/lib/ncurses.ell: ../../3rdparty/install/btos/lib/ncurses.ell
+	cp $< $@
+
+data/btos/lib/ncurses++.ell: ../../3rdparty/install/btos/lib/ncurses++.ell
+	cp $< $@
+
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx
 	mkdir -p data/btos/boot/grub/
 	cp -R ../../3rdparty/install/btos/lib/grub/i386-pc data/btos/boot/grub
@@ -172,7 +253,7 @@ copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/i
 	cp ../../3rdparty/install/btos/bin/grub-mkrelpath.elx data/btos/boot/grub/grubmkrp.elx
 	touch copy.grub
 
-create.directories:
+create.directories: Makefile
 	mkdir -p data/btos/cmd
 	mkdir -p data/btos/temp
 	mkdir -p data/btos/tests
@@ -180,6 +261,7 @@ create.directories:
 	mkdir -p data/btos/system
 	mkdir -p data/btos/drivers
 	mkdir -p data/btos/lib
+	mkdir -p data/btos/share
 	touch create.directories
 
 ../base.tar: $(import-files) $(pkg-files) copy.grub

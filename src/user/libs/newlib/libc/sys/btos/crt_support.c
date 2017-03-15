@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "crt_support.h"
 
 #define ARGS_MAX 4096
@@ -10,10 +11,16 @@
 static char argsbuffer[ARGS_MAX]={0};
 static char *argsptr[ARGC_MAX]={0};
 
-static bt_handle *filehandles=NULL;
+static virtual_handle **filehandles=NULL;
 static size_t fh_count=0;
 
 static bool std_streams_open = false;
+
+static void *memdup(void *ptr, size_t size){
+	void *ret = malloc(size);
+	memcpy(ret, ptr, size);
+	return ret;
+}
 
 void btos_open_std_streams(){
 	if(std_streams_open) return;
@@ -38,39 +45,65 @@ void btos_open_std_streams(){
     std_streams_open = true;
 }
 
-int btos_set_filenum(bt_handle fh){
+int btos_set_filenum_virt(virtual_handle vh){
     size_t i;
     for(i=0; i<fh_count; ++i){
-        if(filehandles[i]==0){
-            filehandles[i]=fh;
+        if(filehandles[i] == NULL){
+            filehandles[i]=memdup(&vh, sizeof(vh));
             return (int)i;
         }
     }
     ++fh_count;
-    filehandles=realloc(filehandles, fh_count * sizeof(bt_handle));
-    filehandles[fh_count-1]=fh;
+    filehandles=realloc(filehandles, fh_count * sizeof(virtual_handle*));
+    filehandles[fh_count-1]=memdup(&vh, sizeof(vh));
     return (int)fh_count-1;
+}
+
+int btos_set_filenum(bt_handle fh){
+	virtual_handle vh;
+	vh.type = HANDLE_OS;
+	vh.handle = fh;
+	return btos_set_filenum_virt(vh);
+}
+
+virtual_handle *btos_get_handle_virt(int fd){
+	btos_open_std_streams();
+    if((size_t)fd < fh_count) return filehandles[fd];
+    else return 0;
 }
 
 bt_handle btos_get_handle(int fd){
 	btos_open_std_streams();
-    if(fd < fh_count) return filehandles[fd];
+    if((size_t)fd < fh_count){
+		if(filehandles[fd] && filehandles[fd]->type == HANDLE_OS) return filehandles[fd]->handle;
+		else return 0;
+	}
     else return 0;
 }
 
-void btos_set_specific_filenum(int fd, bt_handle fh){
-    if(fd < fh_count) filehandles[fd]=fh;
+void btos_set_specific_filenum_virt(int fd, virtual_handle vh){
+    if((size_t)fd < fh_count) filehandles[fd]=memdup(&vh, sizeof(vh));
     else{
         size_t oldsize=fh_count;
         fh_count=fd+1;
-        filehandles=realloc(filehandles, fh_count * sizeof(bt_handle));
-        memset(&filehandles[oldsize], 0, (fh_count-oldsize) * sizeof(bt_handle));
-        filehandles[fd]=fh;
+        filehandles=realloc(filehandles, fh_count * sizeof(virtual_handle*));
+        memset(&filehandles[oldsize], 0, (fh_count-oldsize) * sizeof(virtual_handle*));
+        filehandles[fd]=memdup(&vh, sizeof(vh));
     }
 }
 
+void btos_set_specific_filenum(int fd, bt_handle_t fh){
+	virtual_handle vh;
+	vh.type = HANDLE_OS;
+	vh.handle = fh;
+	btos_set_specific_filenum_virt(fd, vh);
+}
+
 void btos_remove_filenum(int fd){
-    if(fd < fh_count) filehandles[fd]=0;
+    if((size_t)fd < fh_count){
+		free(filehandles[fd]);
+		filehandles[fd] = 0;
+	}
 }
 
 size_t get_argc(){
@@ -93,7 +126,7 @@ char **get_argv(){
 
 bool btos_path_is_absolute(const char *path){
 	if(!path) return false;
-	char *c;
+	const char *c;
 	for(c=path; *c; ++c){
 		if(*c==':') return true;
 		if(*c=='/') return false;

@@ -93,6 +93,8 @@ int main(int argc, char **argv){
                 bt_fioctl(fh, bt_terminal_ioctl_SetScreenMode, sizeof(mode), (char*)&mode);
                 break;
             }
+            bool scroll = true;
+            bt_fioctl(fh, bt_terminal_ioctl_SetScrolling, sizeof(scroll), (char*)&scroll);
         }
     }else{
         printf("Unknown option '%s'\n", argv[1]);

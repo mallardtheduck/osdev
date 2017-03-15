@@ -94,7 +94,7 @@ void vterm::putstring(char *s)
 void vterm::setcolours(uint8_t c)
 {
 	textcolour=c;
-	if(backend) backend->set_text_colours(c);
+	if(backend && backend->is_active(id)) backend->set_text_colours(c);
 }
 
 uint8_t vterm::getcolours()
@@ -106,15 +106,17 @@ void vterm::scroll()
 {
 	int factor=1;
 	if(vidmode.textmode) factor=2;
-	for(size_t y=0; y<vidmode.height; ++y) {
-		for(size_t x=0; x<(vidmode.width*factor); ++x) {
-			const size_t source = y * (vidmode.width*factor) + x;
-			if(y) {
-				const size_t dest = (y-1) * (vidmode.width*factor) + x;
-				buffer[dest]=buffer[source];
+	if(scrolling){
+		for(size_t y=0; y<vidmode.height; ++y) {
+			for(size_t x=0; x<(vidmode.width*factor); ++x) {
+				const size_t source = y * (vidmode.width*factor) + x;
+				if(y) {
+					const size_t dest = (y-1) * (vidmode.width*factor) + x;
+					buffer[dest]=buffer[source];
+				}
+				buffer[source]=0;
+				if(vidmode.textmode && source % 2) buffer[source]=textcolour;
 			}
-			buffer[source]=0;
-			if(vidmode.textmode && source % 2) buffer[source]=textcolour;
 		}
 	}
 	bufpos=((vidmode.height-1)*vidmode.width)*factor;
@@ -224,7 +226,7 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf)
 		bufpos += size;
 	}
 	if(!iline_valid) do_infoline();
-	if(backend) backend->refresh();
+	if(backend && backend->is_active(id)) backend->refresh();
 	return size;
 }
 
@@ -262,14 +264,14 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf)
 					uint64_t scount=scrollcount;
 					if(echo){
 						putchar(c);
-						if(backend) backend->refresh();
+						if(backend && backend->is_active(id)) backend->refresh();
 					}
 					if(scount != scrollcount) do_infoline();
 					return i + 1;
 				}
 				if(echo && put) {
 					putchar(c);
-					if(backend) backend->refresh();
+					if(backend && backend->is_active(id)) backend->refresh();
 				}
 			}
 		}

@@ -40,4 +40,5 @@ void rewinddir (DIR *dirp){
 int closedir (DIR *dirp){
 	bt_dclose(*dirp);
 	free(dirp);
+	return 0;
 }
