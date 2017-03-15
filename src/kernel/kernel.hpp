@@ -60,10 +60,13 @@ void GDT_init();
 void IDT_init();
 void gdt_set_kernel_stack(void* ptr);
 
+#define MACRO_XSTR(a) MACRO_STR(a)
+#define MACRO_STR(a) #a
+
 #define KERNEL_VERSION_MAJOR 0
 #define KERNEL_VERSION_MINOR 1
-#define KERNEL_REVISION ""
-#define KERNEL_VERSION_STRING "v0.1" KERNEL_REVISION
+#define KERNEL_REVISION "A"
+#define KERNEL_VERSION_STRING "v" MACRO_XSTR(KERNEL_VERSION_MAJOR) "." MACRO_XSTR(KERNEL_VERSION_MINOR) KERNEL_REVISION
 #define KERNEL_OS_NAME "BT/OS"
 #define KERNEL_COPYRIGHT "(c) 2014-2017 Stuart Brockman"
 extern char *kernel_buildid;
