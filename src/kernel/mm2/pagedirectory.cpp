@@ -32,6 +32,9 @@ namespace MM2{
 		directory_physical = MM2::current_pagedir->virt2phys(directory);
 		dbgpf("MM2: Creating new page directory at %p.\n", (void*)directory);
 		regions = new vector<region>();
+		for(size_t i = 0; i < entrycache_size; ++i){
+			entrycache[i].entry = 0;
+		}
 	}
 
 	PageDirectory::~PageDirectory(){
@@ -116,15 +119,18 @@ namespace MM2{
 
 	uint32_t PageDirectory::get_table_entry(size_t pageindex){
 		hold_lock hl(*directory_lock, false);
-		uint32_t ret = 0;
-		size_t tableno = pageindex / MM2_Table_Entries;
-		size_t pageno = pageindex % MM2_Table_Entries;
-		
-		{
-			hold_lock hl(table_frame_lock);
-			if((directory[tableno] & MM2_Address_Mask) && map_table(directory[tableno])){
-				ret = table_frame[pageno];
+		uint32_t ret = entrycache_get(pageindex);
+		if(ret == 0){
+			size_t tableno = pageindex / MM2_Table_Entries;
+			size_t pageno = pageindex % MM2_Table_Entries;
+			
+			{
+				hold_lock hl(table_frame_lock);
+				if((directory[tableno] & MM2_Address_Mask) && map_table(directory[tableno])){
+					ret = table_frame[pageno];
+				}
 			}
+			entrycache_set(pageindex, ret);
 		}
 		//dbgpf("MM2: Getting page table entry %i (%x) value: %x.\n", (int)pageindex, (unsigned)(pageindex * MM2_Page_Size), ret);
 		return ret;
@@ -145,6 +151,38 @@ namespace MM2{
 				memset(table_frame, 0, MM2_Page_Size);
 			}
 			table_frame[pageno] = entry;
+		}
+		entrycache_clear(pageindex);
+	}
+	
+	uint32_t PageDirectory::entrycache_get(size_t pageindex){
+		for(size_t i = 0; i < entrycache_size; ++i){
+			if(entrycache[i].index == pageindex){
+				if(entrycache[i].hits < entrycache_maxhits) entrycache[i].hits++;
+				return entrycache[i].entry;
+			}
+		}
+		return 0;
+	}
+	
+	void PageDirectory::entrycache_set(size_t pageindex, uint32_t entry){
+		if(entry == 0) return;
+		size_t pos = 0;
+		for(size_t i = 0; i < entrycache_size; ++i){
+			if(entrycache[i].hits < entrycache[pos].hits) pos = i;
+		}
+		entrycache[pos].index = pageindex;
+		entrycache[pos].entry = entry;
+		entrycache[pos].hits = 0;
+	}
+	
+	void PageDirectory::entrycache_clear(size_t pageindex){
+		for(size_t i = 0; i < entrycache_size; ++i){
+			if(entrycache[i].index == pageindex){
+				entrycache[i].index = 0;
+				entrycache[i].entry = 0;
+				entrycache[i].hits = 0;
+			}
 		}
 	}
 
