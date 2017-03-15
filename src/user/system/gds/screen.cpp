@@ -7,6 +7,38 @@
 
 using namespace std;
 
+static const size_t thread_stack_size = (4 * 1024);
+static char updatethread_stack[thread_stack_size];
+
+void screen_update_thread(void *){
+	Screen *pthis = GetScreen().get();
+	bool quit = false;
+	deque<Screen::update> batch;
+	while(true){
+		bt_wait_atom(pthis->sync_atom, bt_atom_compare::GreaterThan, 0);
+		bt_lock(pthis->update_q_lock);
+		batch.swap(pthis->update_q);
+		bt_modify_atom(pthis->sync_atom, bt_atom_modify::Set, 0);
+		bt_unlock(pthis->update_q_lock);
+		DBG("GDS: Update batch size: " << batch.size());
+		bt_fioctl(pthis->fh, bt_terminal_ioctl::PointerFreeze, 0, NULL);
+		while(!batch.empty()){
+			Screen::update &up = batch.front();
+			if(up.data == NULL){
+				quit = true;
+				break;
+			}
+			if(up.hide_pointer) bt_fioctl(pthis->fh, bt_terminal_ioctl::HidePointer, 0, NULL);
+			bt_fseek(pthis->fh, up.pos, FS_Set);
+			bt_fwrite(pthis->fh, up.size, up.data);
+			if(up.hide_pointer) bt_fioctl(pthis->fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
+			batch.pop_front();
+		}
+		bt_fioctl(pthis->fh, bt_terminal_ioctl::PointerUnfreeze, 0, NULL);
+		if(quit) return;
+	}
+}
+
 Screen::Screen() : BitmapSurface::BitmapSurface(1, 1, true){
 	char stdout_path[BT_MAX_PATH]={0};
 	bt_getenv("STDOUT", stdout_path, BT_MAX_PATH);
@@ -18,6 +50,10 @@ Screen::Screen() : BitmapSurface::BitmapSurface(1, 1, true){
 	buffer=NULL;
 	buffersize=0;
 	original_mode.bpp=0;
+	
+	sync_atom = bt_create_atom(0);
+	update_q_lock = bt_create_lock();
+	update_thread = bt_new_thread(&screen_update_thread, (void*)this, updatethread_stack + thread_stack_size);
 }
 
 Screen::~Screen(){
@@ -32,9 +68,10 @@ void Screen::RestoreMode(){
 	}
 }
 
-void Screen::BufferPutPixel(uint32_t x, uint32_t y, uint32_t value) {
-	if(x > current_mode.width || y > current_mode.height) return;
-	if(!buffer) return;
+bool Screen::BufferPutPixel(uint32_t x, uint32_t y, uint32_t value) {
+	if(x > current_mode.width || y > current_mode.height) return false;
+	if(!buffer) return false;
+	//if(BufferGetPixel(x, y) == value) return false;
 	size_t pixelpos=(y * current_mode.width) + x;
 	if(current_mode.bpp > 8){
 		value = ConvertPixel(value);
@@ -42,18 +79,19 @@ void Screen::BufferPutPixel(uint32_t x, uint32_t y, uint32_t value) {
 		size_t bufferpos = pixelpos * depth;
 		memcpy(&buffer[bufferpos], &value, depth);
 	}else if(current_mode.bpp == 8){
-		if(pixelpos >= buffersize) return;
+		if(pixelpos >= buffersize) return false;
 		buffer[pixelpos]=(uint8_t)value;
 	}else if(current_mode.bpp==4){
 		uint8_t c=(uint8_t)value;
 		size_t bufpos=pixelpos/2;
-		if(bufpos >= buffersize) return;
+		if(bufpos >= buffersize) return false;
 		if(pixelpos % 2){
 			buffer[bufpos] = (uint8_t)((buffer[bufpos] & 0xF0) | (0x0F & c));
 		}else{
 			buffer[bufpos] = (uint8_t)((buffer[bufpos] & 0x0F) | (0xF0 & (c << 4)));
 		}
 	}
+	return true;
 }
 
 uint32_t Screen::BufferGetPixel(uint32_t x, uint32_t y){
@@ -108,6 +146,7 @@ static inline uint32_t scale_value(uint8_t value, uint8_t bits){
 }
 
 uint32_t Screen::ConvertPixel(uint32_t pix){
+	if(!pixel_conversion_required) return pix;
 	if(image->IsTrueColor()){
 		uint8_t red = gdTrueColorGetRed(pix);
 		uint8_t green = gdTrueColorGetGreen(pix);
@@ -121,6 +160,14 @@ uint32_t Screen::ConvertPixel(uint32_t pix){
 	}
 }
 
+void Screen::QueueUpdate(size_t pos, size_t size, char *data, bool hide_pointer){
+	update up = {pos, size, data, hide_pointer};
+	bt_lock(update_q_lock);
+	update_q.push_back(up);
+	bt_modify_atom(sync_atom, bt_atom_modify::Add, 1);
+	bt_unlock(update_q_lock);
+}
+
 bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 	DBG("GDS: Setting mode " << w << "x" << h << " " << (int)bpp << "bpp.");
 	bt_fioctl(fh, bt_terminal_ioctl::QueryScreenMode, sizeof(original_mode), (char*)&original_mode);
@@ -132,7 +179,7 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 		mode.id = i;
 		bt_fioctl(fh, bt_terminal_ioctl::GetScreenMode, sizeof(mode), (char *) &mode);
 		if(mode.textmode) continue;
-		if(mode.width >= w && mode.height >= h && mode.bpp >=bpp){
+		if(mode.width >= w && mode.height >= h && mode.bpp >= bpp){
 			if(bestmode.bpp && mode.width <= bestmode.width && mode.height <= bestmode.height && mode.bpp <= bestmode.bpp){
 				bestmode = mode;
 			}else if(!bestmode.bpp){
@@ -140,6 +187,7 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 			}
 		}
 	}
+	DBG("GDS: Found mode " << bestmode.width << "x" << bestmode.height << " " << (int)bestmode.bpp << "bpp.");
 	if(bestmode.bpp){
 		bt_fioctl(fh, bt_terminal_ioctl::SetScreenMode, sizeof(bestmode), (char *) &bestmode);
 		current_mode=bestmode;
@@ -163,6 +211,18 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 		bt_fread(fh, buffersize, (char*)buffer);
 		bool autohide = false;
 		bt_fioctl(fh, bt_terminal_ioctl::PointerAutoHide, sizeof(autohide), (char*)&autohide);
+		pixel_conversion_required = true;
+		DBG("GDS: bpp: " << bestmode.bpp);
+		if(bestmode.bpp == 24 || bestmode.bpp == 32){
+			DBG("GDS: rBits: " << (int)bestmode.rBits << " gBits: " << (int)bestmode.gBits << " bBits: " << (int)bestmode.bBits);
+			if(bestmode.rBits == 8 && bestmode.gBits == 8 && bestmode.bBits == 8){
+				DBG("GDS: rPos: " << (int)bestmode.rPos << " gPos: " << (int)bestmode.gPos << " bPos: " << (int)bestmode.bPos);
+				if(bestmode.rPos == 16 && bestmode.gPos == 8 && bestmode.bPos == 0) {
+					bt_zero("GDS: No pixel conversion required for this mode.\n");
+					pixel_conversion_required = false;
+				}
+			}
+		}
 		return true;
 	}
 	return false;
@@ -197,36 +257,59 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 	if(x + w > current_mode.width) w = current_mode.width - x;
 	if(y + h > current_mode.height) h = current_mode.height - y;
 	for(uint32_t row=y; row < y+h; ++row){
+		//size_t first = SIZE_MAX;
+		//size_t last = 0;
+		
 		if(row > current_mode.height) break;
 		for(uint32_t col=x; col < x+w; ++col){
 			if(col > current_mode.width) break;
 			uint32_t value;
 			if(image->IsTrueColor()) {
-				value=image->GetTrueColorPixel(col, row);
+				value=image->TrueColorPixel(col, row);
 			}else{
-				value=image->GetPixel(col, row);
+				value=image->PalettePixel(col, row);
 			}
-			BufferPutPixel(col, row, value);
+			//if(
+			BufferPutPixel(col, row, value); //){
+			/*	if(col < first) first = col;
+				if(col > last) last = col;
+			}else if(first < last && last - first > 64){
+				size_t start= GetBytePos(first, row);
+				if(start > buffersize) break;
+				size_t end= GetBytePos(last, row, true) + BytesPerPixel() + 2;
+				if(end > buffersize) end=buffersize;
+				
+				size_t bytes = end - start;
+				QueueUpdate(start, bytes, (char*)&buffer[start], hide_cursor);
+				first = SIZE_MAX;
+				last = 0;
+			}*/
 		}
+		//if(first > last) continue;
+		size_t start= GetBytePos(x, row);
+		if(start > buffersize) break;
+		size_t end= GetBytePos(x+w, row, true) + BytesPerPixel() + 2;
+		if(end > buffersize) end=buffersize;
+		
+		size_t bytes = end - start;
+		QueueUpdate(start, bytes, (char*)&buffer[start], hide_cursor);
 	}
-	bt_fioctl(fh, bt_terminal_ioctl::PointerFreeze, 0, NULL);
-	if(hide_cursor) bt_fioctl(fh, bt_terminal_ioctl::HidePointer, 0, NULL);
+	//bt_fioctl(fh, bt_terminal_ioctl::PointerFreeze, 0, NULL);
+	//if(hide_cursor) bt_fioctl(fh, bt_terminal_ioctl::HidePointer, 0, NULL);
 	if(w == current_mode.width && h == current_mode.height) {
+		bt_lock(update_q_lock);
 		bt_fseek(fh, 0, false);
 		bt_fwrite(fh, buffersize, (char *) buffer);
+		bt_unlock(update_q_lock);
 	}else{
 		for(size_t row=y; row < y+h; ++row){
-			size_t start= GetBytePos(x, row);
-			if(start > buffersize) break;
-			size_t end= GetBytePos(x+w, row, true) + BytesPerPixel() + 2;
-			if(end > buffersize) end=buffersize;
-			size_t bytes = end - start;
-			bt_fseek(fh, start, false);
-			bt_fwrite(fh, bytes, (char*)&buffer[start]);
+
+			//bt_fseek(fh, start, false);
+			//bt_fwrite(fh, bytes, (char*)&buffer[start]);
 		}
 	}
-	if(hide_cursor) bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
-	bt_fioctl(fh, bt_terminal_ioctl::PointerUnfreeze, 0, NULL);
+	//if(hide_cursor) bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
+	//bt_fioctl(fh, bt_terminal_ioctl::PointerUnfreeze, 0, NULL);
 }
 
 void Screen::ShowCursor() {
