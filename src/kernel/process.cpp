@@ -49,13 +49,15 @@ struct proc_process{
 	vector<string> args;
 
     map<pid_t, void*> msg_buffers;
+    
+    btos_api::bt_msg_header *latest_msg;
 
 	proc_process() : pid(++curpid) {
 		init_lock(ulock);
 	}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
 		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(new MM2::PageDirectory),
-		 handlecounter(0), status(proc_status::Running) {
+		 handlecounter(0), status(proc_status::Running), latest_msg(NULL) {
 		init_lock(ulock);
     }
 };
@@ -703,3 +705,26 @@ void proc_message_wait(pid_t pid){
 	release_lock(proc->ulock);
     sch_setblock(&proc_msg_wait_blockcheck, (void *)&pid);
 }
+
+void proc_set_latest_msg(btos_api::bt_msg_header *msg, pid_t pid){
+	proc_process *proc = proc_get_lock(pid);
+	if (!proc) return;
+	proc->latest_msg = msg;
+	release_lock(proc->ulock);
+}
+
+btos_api::bt_msg_header *proc_get_latest_msg(pid_t pid){
+	proc_process *proc = proc_get_lock(pid);
+	if (!proc) return NULL;
+	btos_api::bt_msg_header *msg = proc->latest_msg;
+	release_lock(proc->ulock);
+	return msg;
+}
+
+btos_api::bt_msg_header *proc_get_latest_msg_nolock(pid_t pid){
+	proc_process *proc = proc_get(pid);
+	if (!proc) return NULL;
+	btos_api::bt_msg_header *msg = proc->latest_msg;
+	return msg;
+}
+
