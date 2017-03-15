@@ -3,6 +3,7 @@
 
 #include "btos_api.h"
 #include "bt_msg.h"
+#include "atoms.h"
 
 #ifdef __cplusplus
 using namespace btos_api;
@@ -96,6 +97,31 @@ inline static void bt_unlock(bt_lockhandle lock){
 
 inline static void bt_destroy_lock(bt_lockhandle lock){
 	btos_call(BT_DESTROY_LOCK, lock, 0, 0);
+}
+
+inline static bt_handle_t bt_create_atom(uint64_t ini_val){
+	return (bt_handle_t) btos_call(BT_CREATE_ATOM, (uint32_t)&ini_val, 0, 0);
+}
+
+inline static uint64_t bt_modify_atom(bt_handle_t a, ENUM_NAME(bt_atom_modify) mod, uint64_t val){
+	btos_call(BT_MODIFY_ATOM, (uint32_t)a, (uint32_t)mod, (uint32_t)&val);
+	return val;
+}
+
+inline static uint64_t bt_wait_atom(bt_handle_t a, ENUM_NAME(bt_atom_compare) cmp, uint64_t val){
+	btos_call(BT_WAIT_ATOM, (uint32_t)a, (uint32_t)cmp, (uint32_t)&val);
+	return val;
+}
+
+inline static uint64_t bt_cmpxchg_atom(bt_handle_t a, uint64_t cmp, uint64_t xchg){
+	btos_call(BT_CMPXCHG_ATOM, (uint32_t)a, (uint32_t)&cmp, (uint32_t)&xchg);
+	return xchg;
+}
+
+inline static uint64_t bt_read_atom(bt_handle_t a){
+	uint64_t ret;
+	btos_call(BT_CMPXCHG_ATOM, (uint32_t)a, (uint32_t)&ret, 0);
+	return ret;
 }
 
 inline static bt_threadhandle bt_new_thread(void (*entry)(void*), void *param, void *stack){

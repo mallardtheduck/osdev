@@ -55,6 +55,7 @@ extern "C"{
 #include "user_api.hpp"
 #include "infofs.hpp"
 #include "debug_ext.hpp"
+#include "atoms.hpp"
 
 void GDT_init();
 void IDT_init();

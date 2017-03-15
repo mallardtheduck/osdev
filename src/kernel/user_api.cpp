@@ -191,6 +191,45 @@ USERAPI_HANDLER(BT_DESTROY_LOCK){
     }
 }
 
+USERAPI_HANDLER(BT_CREATE_ATOM){
+	if(is_safe_ptr(regs->ebx, sizeof(uint64_t))){
+		bt_atom *a = atom_create(*(uint64_t*)regs->ebx);
+		bt_handle_info handle = create_handle(kernel_handle_types::atom, (void*)a, (handle_close_fn)&atom_destroy);
+		regs->eax = proc_add_handle(handle);
+	}
+}
+
+USERAPI_HANDLER(BT_MODIFY_ATOM){
+	bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
+	if(h.open && h.type == kernel_handle_types::atom && is_safe_ptr(regs->edx, sizeof(uint64_t))){
+		*(uint64_t*)regs->edx = atom_modify((bt_atom*)h.value, (bt_atom_modify::Enum)regs->ecx, *(uint64_t*)regs->edx);
+		regs->eax = 1;
+	}
+}
+
+USERAPI_HANDLER(BT_WAIT_ATOM){
+	bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
+	if(h.open && h.type == kernel_handle_types::atom && is_safe_ptr(regs->edx, sizeof(uint64_t))){
+		*(uint64_t*)regs->edx = atom_wait((bt_atom*)h.value, (bt_atom_compare::Enum)regs->ecx, *(uint64_t*)regs->edx);
+		regs->eax = 1;
+	}
+}
+
+USERAPI_HANDLER(BT_CMPXCHG_ATOM){
+	bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
+	if(h.open && h.type == kernel_handle_types::atom && is_safe_ptr(regs->ecx, sizeof(uint64_t)) && is_safe_ptr(regs->edx, sizeof(uint64_t))){
+		*(uint64_t*)regs->edx = atom_cmpxchg((bt_atom*)h.value, *(uint64_t*)regs->ecx, *(uint64_t*)regs->edx);
+		regs->eax = 1;
+	}
+}
+
+USERAPI_HANDLER(BT_READ_ATOM){
+	bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
+	if(h.open && h.type == kernel_handle_types::atom && is_safe_ptr(regs->ecx, sizeof(uint64_t))){
+		*(uint64_t*)regs->ecx = atom_read((bt_atom*)h.value);
+	}
+}
+
 USERAPI_HANDLER(BT_MOUNT){
 	if(is_safe_string(regs->ebx) && is_safe_string(regs->ecx) && is_safe_string(regs->edx)){
 		regs->eax=fs_mount((char*)regs->ebx, (char*)regs->ecx, (char*)regs->edx);
@@ -560,6 +599,11 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_TRY_LOCK);
 		USERAPI_HANDLE_CALL(BT_UNLOCK);
 		USERAPI_HANDLE_CALL(BT_DESTROY_LOCK);
+		USERAPI_HANDLE_CALL(BT_CREATE_ATOM);
+		USERAPI_HANDLE_CALL(BT_MODIFY_ATOM);
+		USERAPI_HANDLE_CALL(BT_WAIT_ATOM);
+		USERAPI_HANDLE_CALL(BT_CMPXCHG_ATOM);
+		USERAPI_HANDLE_CALL(BT_READ_ATOM);
 
         //Threading
         USERAPI_HANDLE_CALL(BT_NEW_THREAD);
