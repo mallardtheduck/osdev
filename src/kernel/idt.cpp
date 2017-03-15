@@ -35,6 +35,8 @@ struct idt_ptr idtp;
 extern "C" void idt_flush();
 extern "C" uint32_t get_ss();
 
+extern uint32_t df_selector;
+
 /* Use this function to set an entry in the IDT. Alot simpler
 *  than twiddling with the GDT ;) */
 void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)
@@ -74,7 +76,7 @@ void IDT_init()
 	idt_set_gate(5, (uint32_t)isr5, 0x08, 0x8E);
 	idt_set_gate(6, (uint32_t)isr6, 0x08, 0x8E);
 	idt_set_gate(7, (uint32_t)isr7, 0x08, 0x8E);
-	idt_set_gate(8, (uint32_t)isr8, 0x08, 0x8E);
+	idt_set_gate(8, 0, df_selector * 8, 0x85);
 	idt_set_gate(9, (uint32_t)isr9, 0x08, 0x8E);
 	idt_set_gate(10, (uint32_t)isr10, 0x08, 0x8E);
 	idt_set_gate(11, (uint32_t)isr11, 0x08, 0x8E);
@@ -216,6 +218,7 @@ extern size_t current_thread;
 
 extern "C" void isr_handler(isr_regs *ctx){
     imode++;
+    //debug_setbreaks(false);
     if(sch_can_lock()) {
         sch_update_eip(ctx->eip);
         sch_abortable(false);
@@ -225,20 +228,20 @@ extern "C" void isr_handler(isr_regs *ctx){
     }
 	if(handlers[ctx->interrupt_number]) handlers[ctx->interrupt_number](ctx->interrupt_number, ctx);
 	else if(ctx->interrupt_number==0x06){
-		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
+		dbgpf("\nInterrupt %i at %x!\n", (int)ctx->interrupt_number, (int)ctx->eip);
+		dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
 		out_int_info(*ctx);
-		if(ctx->eip < VMM_USERSPACE_START) panic("Invalid opcode.");
+		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Invalid opcode.");
         else {
             debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::InvalidOpCode);
             proc_terminate();
         }
 	}
 	else if(ctx->interrupt_number==0x0D){
-		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
+		dbgpf("\nInterrupt %i at %x!\n", (int)ctx->interrupt_number, (int)ctx->eip);
+		dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
 		out_int_info(*ctx);
-        if(ctx->eip < VMM_USERSPACE_START) panic("General Protection Fault.");
+        if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("General Protection Fault.");
         else {
             debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::ProtectionFault);
             proc_terminate();
@@ -246,22 +249,22 @@ extern "C" void isr_handler(isr_regs *ctx){
 	}
 	else if(ctx->interrupt_number==0x08){
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
+		dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
 		out_int_info(*ctx);
-        if(ctx->eip < VMM_USERSPACE_START) panic("Double fault.");
+        if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Double fault.");
         else proc_terminate();
 	}else if(ctx->interrupt_number==0x00){
         dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
-        dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
+        dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
         out_int_info(*ctx);
-        if(ctx->eip < VMM_USERSPACE_START) panic("Devide by zero!");
+        if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Devide by zero!");
         else{
             debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::DivideByZero);
             proc_terminate();
         }
     }else{
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%i)\n", current_thread, (uint32_t)sch_get_id());
+		dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
 		out_int_info(*ctx);
 	}
     disable_interrupts();
@@ -269,6 +272,7 @@ extern "C" void isr_handler(isr_regs *ctx){
         sch_abortable(true);
     }
     imode--;
+    //debug_setbreaks(!imode);
 }
 
 void irq_ack(size_t irq_no) {
@@ -294,9 +298,9 @@ extern "C" void irq_handler(irq_regs *r) {
     }
 	//out_regs(*r);
 	int irq=r->int_no-IRQ_BASE;
-	if(handlers[r->int_no]) handlers[r->int_no](r->int_no, (isr_regs*)r);
+	if(handlers[r->int_no]) handlers[r->int_no](r->int_no - 32, (isr_regs*)r);
     irq_ack(irq);
-    disable_interrupts();
+    //disable_interrupts();
     if(sch_can_lock()) {
         sch_abortable(true);
     }

@@ -10,7 +10,7 @@ map<string, fs_driver> *fs_drivers;
 lock fs_lock;
 
 static const fs_driver invalid_fs_driver={false, "", false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL};
+	NULL, NULL, NULL, NULL, NULL, NULL};
 static const fs_mountpoint invalid_mountpoint={false, "", "", invalid_fs_driver, NULL};
 
 char *fs_mounts_infofs(){
@@ -19,6 +19,16 @@ char *fs_mounts_infofs(){
 	sprintf(buffer, "# name, device, filesystem\n");
 	for(map<string, fs_mountpoint>::iterator i=fs_mounts->begin(); i!=fs_mounts->end(); ++i){
 		sprintf(&buffer[strlen(buffer)], "%s, %s, %s\n", i->first.c_str(), i->second.device, i->second.driver.name);
+	}
+	return buffer;
+}
+
+char *fs_registered_infofs(){
+	char *buffer=(char*)malloc(4096);
+	memset(buffer, 0, 4096);
+	sprintf(buffer, "# name, addr\n");
+	for(map<string, fs_driver>::iterator i=fs_drivers->begin(); i!=fs_drivers->end(); ++i){
+		sprintf(&buffer[strlen(buffer)], "%s, %p\n", i->first.c_str(), &i->second);
 	}
 	return buffer;
 }
@@ -36,15 +46,16 @@ void fs_init(){
 	fs_mount("DEV", NULL, "DEVFS");
 	directory_entry root=fs_stat("INIT:");
 	if(!root.valid) panic("(FS) Cannot stat root of INIT:!\n");
-	dbgpf("FS: Root size: %i, type: 0x%x.\n", root.size, root.type);
+	dbgpf("FS: Root size: %i, type: 0x%x.\n", (int)root.size, root.type);
 	dir_handle dir=fs_open_dir("INIT:", FS_Read);
 	while(true){
 		directory_entry entry=fs_read_dir(dir);
 		if(!entry.valid) break;
-		dbgpf("FS: %s %i 0x%x\n", entry.filename, entry.size, entry.type);
+		dbgpf("FS: %s %i 0x%x\n", entry.filename, (int)entry.size, entry.type);
 	}
 	fs_close_dir(dir);
 	infofs_register("MOUNTS", &fs_mounts_infofs);
+	infofs_register("FILESYSTEMS", &fs_registered_infofs);
 }
 
 fs_path *new_fs_path(const string &path, bool toupper=true){
@@ -98,14 +109,16 @@ fs_path *new_fs_path(const string &path, bool toupper=true){
 }
 
 void delete_fs_path(fs_path *p){
+	if(!p) return;
 	if(p->next) delete_fs_path(p->next);
 	delete[] p->str;
 	delete p;
 }
 
-fs_driver &getfs(const char *name){
+const fs_driver &getfs(const char *name){
 	hold_lock hl(fs_lock);
-	return (*fs_drivers)[name];
+	if(fs_drivers->has_key(name)) return (*fs_drivers)[name];
+	else return invalid_fs_driver;
 }
 
 fs_mountpoint &getmount(const char *name){
@@ -213,13 +226,11 @@ file_handle fs_open(const char *path, fs_mode_flags mode){
 
 bool fs_close(file_handle &file){
 	if(!file.valid) return true;
+	MM2::mm2_close(file);
 	bool ret=file.mount->driver.close(file.filedata);
-	if(ret) {
-        amm_close(file);
-        file.valid=false;
-        delete file.mount;
-        dbgout("FS: Closed a file.\n");
-    }
+	file.valid=false;
+	delete file.mount;
+	dbgout("FS: Closed a file.\n");
 	return ret;
 }
 
@@ -233,7 +244,7 @@ size_t fs_write(file_handle &file, size_t bytes, char *buf){
 	return file.mount->driver.write(file.filedata, bytes, buf);
 }
 
-size_t fs_seek(file_handle &file, size_t pos, uint32_t flags){
+bt_filesize_t fs_seek(file_handle &file, bt_filesize_t pos, uint32_t flags){
 	return file.mount->driver.seek(file.filedata, pos, flags);
 }
 
@@ -311,11 +322,19 @@ directory_entry fs_stat(const char *path){
 	fs_path *ppath=new_fs_path(fspath);
 	ret=mount.driver.stat(mount.mountdata, ppath);
 	delete_fs_path(ppath);
+	dbgpf("FS: stat '%s', type: %i\n", path, ret.type);
 	return ret;
 }
 
 void fs_flush(file_handle &file){
     if(!file.valid) return;
-    amm_flush(file);
+    MM2::mm2_flush(file);
     file.mount->driver.flush(file.filedata);
+}
+
+bool fs_format(const char *fs, const char *device, void *options){
+	dbgpf("FS: Format %s with %s.\n", device, fs);
+	fs_driver driver=getfs(fs);
+	if(!driver.valid) return false;
+	return driver.format((char*)device, options);
 }

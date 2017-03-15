@@ -1,9 +1,7 @@
 #ifndef	_VGA_HPP
 #define _VGA_HPP
 
-#include "module_stubs.h"
-#include "module_cpp.hpp"
-#include "io.h"
+#include <btos_module.h>
 
 extern volatile uint8_t * const vga_memory;
 extern volatile uint8_t * const text_memory;
@@ -17,8 +15,8 @@ namespace VGA_Ports{
 	static const uint16_t AttributeRead		=0x3C1;
 	static const uint16_t CRTCAddress		=0x3D4;
 	static const uint16_t CRTCData			=0x3D5;
-	static const uint16_t DACReadAddress	=0x3C8;
-	static const uint16_t DACWriteAddress	=0x3C7;
+	static const uint16_t DACReadAddress	=0x3C7;
+	static const uint16_t DACWriteAddress	=0x3C8;
 	static const uint16_t DACData			=0x3C9;
 	static const uint16_t DACState			=0x3C7;
 	static const uint16_t MiscOutputRead	=0x3CC;
@@ -118,5 +116,6 @@ void unlock_crtc();
 void lock_crtc();
 void disable_display();
 void enable_display();
+void dump_regs();
 
 #endif

@@ -1,11 +1,9 @@
 #ifndef _PS2_HPP
 #define _PS2_HPP
 
-#include "module_stubs.h"
-#include "module_cpp.hpp"
-#include "keyboard.h"
-#include "mouse.h"
-#include "io.h"
+#include <btos_module.h>
+#include <dev/keyboard.h>
+#include <dev/mouse.h>
 
 uint8_t ps2_read_data();
 uint8_t ps2_read_data_nocheck();

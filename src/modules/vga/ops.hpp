@@ -16,5 +16,6 @@ void init_text();
 size_t graphics_read(vga_instance *inst, size_t bytes, char *buf);
 size_t graphics_write(vga_instance *inst, size_t bytes, char *buf);
 size_t graphics_seek(vga_instance *inst, size_t pos, uint32_t flags);
+void graphics_end();
 
 #endif

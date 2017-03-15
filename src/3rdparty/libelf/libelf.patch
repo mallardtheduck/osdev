@@ -1,5 +1,35 @@
+diff -rupN libelf-0.8.9/config.sub originals/libelf-0.8.9/config.sub
+--- libelf-0.8.9/config.sub	2017-01-12 09:50:31.691494410 +0000
++++ originals/libelf-0.8.9/config.sub	2005-05-21 16:28:37.000000000 +0100
+@@ -1167,7 +1167,7 @@ case $os in
+ 	      | -storm-chaos* | -tops10* | -tenex* | -tops20* | -its* \
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+-	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* | -btos*)
++	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+diff -rupN libelf-0.8.9/configure originals/libelf-0.8.9/configure
+--- libelf-0.8.9/configure	2017-01-12 10:00:12.305651568 +0000
++++ originals/libelf-0.8.9/configure	2006-04-21 18:17:51.000000000 +0100
+@@ -3354,14 +3354,6 @@ echo "$ac_t""$mr_cv_target_elf" 1>&6
+ 	LINK_SHLIB='$(LD) -G -z text -h $(SONAME)'
+ 	INSTALL_SHLIB='$(INSTALL_PROGRAM)'
+ 	;;
+-	  i686-pc-btos*)
+-	PICFLAGS='-fPIC -DPIC'
+-	SHLINK_SFX='.ell'
+-	SONAME_SFX='.ell'
+-	LINK_SHLIB='$(CC) -shared -Wl,-soname,$(SONAME)'
+-	INSTALL_SHLIB='$(INSTALL_PROGRAM)'
+-	DEPSHLIBS='-lc'
+-	;;
+       *)
+ 	echo "configure: warning: shared libraries not supported for $host" 1>&2
+ 	mr_enable_shared=no
 diff -rupN libelf-0.8.9/lib/elf_repl.h originals/libelf-0.8.9/lib/elf_repl.h
---- libelf-0.8.9/lib/elf_repl.h	2015-06-08 11:45:04.837295717 +0100
+--- libelf-0.8.9/lib/elf_repl.h	2017-01-10 10:52:33.314009876 +0000
 +++ originals/libelf-0.8.9/lib/elf_repl.h	2006-07-07 23:16:15.000000000 +0100
 @@ -973,8 +973,6 @@ typedef struct {
      } c_un;
@@ -19,3 +49,4 @@ diff -rupN libelf-0.8.9/lib/elf_repl.h originals/libelf-0.8.9/lib/elf_repl.h
  #define CA_SUNW_NULL	0	/* c_un ignored */
  #define CA_SUNW_HW_1	1	/* c_un.c_val */
  #define CA_SUNW_SF_1	2	/* c_un.c_val */
+ 

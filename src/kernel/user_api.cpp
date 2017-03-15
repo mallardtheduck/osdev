@@ -1,5 +1,5 @@
 #include "user_api.hpp"
-#include "../include/btos_api.h"
+#include <btos/btos_api.h>
 #include "locks.hpp"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -27,18 +27,25 @@ void userapi_handler(int, isr_regs *regs){
 		userapi_syscall(fn, regs);
 	}else{
 		user_call_extension(ext, fn, regs);
-		return;
 	}
+	if(sch_get_abortlevel() != 1){
+		dbgpf("UAPI: Abortlevel: %i, ext: %i fn: %x\n", sch_get_abortlevel(), (int)ext, (int)fn);
+		panic("(UAPI) Non-zero abortlevel on return to userspace!\n");
+	}
+    if(sch_user_abort()) sch_end_thread();
 }
 
 bool is_safe_ptr(uint32_t ptr, size_t size, pid_t pid){
-	if(ptr >= VMM_USERSPACE_START){
+	if(ptr >= MM2::MM2_Kernel_Boundary){
 		pid_t cur_pid = proc_current_pid;
 		proc_switch(pid);
-		for(size_t i=0; i<size; ++i){
-			if(!amm_resolve_addr((char*)ptr + i)){ 
+		size_t i = 0;
+		while(i<size){
+			size_t res = MM2::current_pagedir->resolve_addr((char*)ptr + i);
+			i += res;
+			if(!res){ 
 				proc_switch(cur_pid);
-				dbgpf("UAPI: Verification of pointer %x (%i) for %i failed.\n", ptr, size, pid);
+				dbgpf("UAPI: Verification of pointer %x (%i) for %i failed.\n", ptr, (int)size, (int)pid);
 				return false;
 			}
 		}
@@ -63,12 +70,24 @@ USERAPI_HANDLER(zero){
 }
 
 USERAPI_HANDLER(BT_ALLOC_PAGES){
-	regs->eax = (uint32_t)vmm_alloc(regs->ebx, vmm_allocmode::Userlow);
+	regs->eax = (uint32_t)MM2::current_pagedir->alloc(regs->ebx, MM2::MM2_Alloc_Mode::Userlow);
+}
+
+USERAPI_HANDLER(BT_ALLOC_AT){
+	size_t pages = regs->ebx;
+	size_t addr = regs->ecx;
+	if(addr != addr % MM2::MM2_Address_Mask) return;
+	if(addr < MM2::MM2_Kernel_Boundary) return;
+	for(size_t i = 0; i < pages; ++i){
+		size_t pageaddr = addr + (i * MM2::MM2_Page_Size);
+		if(pageaddr < MM2::MM2_Kernel_Boundary) return;
+		MM2::current_pagedir->alloc_pages_at(1, (void*)pageaddr);
+	}
 }
 
 USERAPI_HANDLER(BT_FREE_PAGES){
 	if(is_safe_ptr(regs->ebx, 0)){
-		vmm_free((void*)regs->ebx, regs->ecx);
+		MM2::current_pagedir->free_pages((void*)regs->ebx, regs->ecx);
 	}
 }
 
@@ -76,8 +95,53 @@ USERAPI_HANDLER(BT_CLOSEHANDLE){
     bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
     if(h.open && h.type!=kernel_handle_types::invalid){
         close_handle(h);
-        proc_remove_handle((handle_t)regs->eax);
+        proc_remove_handle((handle_t)regs->ebx);
     }
+}
+
+USERAPI_HANDLER(BT_QUERYHANDLE){
+	bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
+	if(h.open && h.type!=kernel_handle_types::invalid){
+		regs->eax = 1;
+	}else{
+		regs->eax = 0;
+	}
+}
+
+static void close_shm_space_handle(void *f){
+    MM2::shm_close(*(uint64_t*)f);
+    delete (uint64_t*)f;
+}
+
+USERAPI_HANDLER(BT_CREATE_SHM){
+	uint64_t *id = new uint64_t(MM2::shm_create(regs->ebx));
+	bt_handle_info handle=create_handle(kernel_handle_types::shm_space, id, &close_shm_space_handle);
+	regs->eax = proc_add_handle(handle);
+}
+
+USERAPI_HANDLER(BT_SHM_ID){
+	bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
+	if(is_safe_ptr(regs->ecx, sizeof(uint64_t*))){
+		if(h.open && h.type == kernel_handle_types::shm_space){
+			*(uint64_t*)regs->ecx = *(uint64_t*)h.value;
+		}
+	}
+}
+
+static void close_shm_map_handle(void *f){
+    MM2::shm_close_map(*(uint64_t*)f);
+    delete (uint64_t*)f;
+}
+
+USERAPI_HANDLER(BT_SHM_MAP){
+	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_shm_mapping*))){
+		btos_api::bt_shm_mapping *mapping = (btos_api::bt_shm_mapping*)regs->ebx;
+		if(is_safe_ptr((uint32_t)mapping->addr, mapping->pages * MM2::MM2_Page_Size)){
+			uint64_t *id = new uint64_t(MM2::shm_map(mapping->id, mapping->addr, mapping->offset, mapping->pages, mapping->flags));
+			bt_handle_info handle=create_handle(kernel_handle_types::shm_mapping, id, &close_shm_map_handle);
+			regs->eax = proc_add_handle(handle);
+		}
+	}	
 }
 
 USERAPI_HANDLER(BT_GET_ARGC){
@@ -97,17 +161,26 @@ USERAPI_HANDLER(BT_CREATE_LOCK){
 
 USERAPI_HANDLER(BT_LOCK){
     lock *l=proc_get_lock(regs->ebx);
-    if(l) take_lock_exclusive(*l);
+    if(l) {
+		take_lock_exclusive(*l);
+		sch_abortable(true);
+	}
 }
 
 USERAPI_HANDLER(BT_TRY_LOCK){
     lock *l=proc_get_lock(regs->ebx);
-    if(l) regs->eax=try_take_lock_exclusive(*l);
+    if(l && try_take_lock_exclusive(*l)){
+		regs->eax = 1;
+		sch_abortable(true);
+	}else regs->eax = 0;
 }
 
 USERAPI_HANDLER(BT_UNLOCK){
     lock *l=proc_get_lock(regs->ebx);
-	if(l) release_lock(*l);
+	if(l){
+		release_lock(*l);
+		sch_abortable(false);
+	}
 }
 
 USERAPI_HANDLER(BT_DESTROY_LOCK){
@@ -177,8 +250,10 @@ USERAPI_HANDLER(BT_FIOCTL){
 
 USERAPI_HANDLER(BT_FSEEK){
     file_handle *file=proc_get_file(regs->ebx);
-    if(file){
-        regs->eax=fs_seek(*file, regs->ecx, regs->edx);
+    if(file && is_safe_ptr(regs->ecx, sizeof(bt_filesize_t))){
+		bt_filesize_t *pos = (bt_filesize_t*)regs->ecx;
+        *pos=fs_seek(*file, *pos, regs->edx);
+		regs->eax = 0; 
     }
 }
 
@@ -190,7 +265,7 @@ USERAPI_HANDLER(BT_FFLUSH){
 }
 
 static void close_filemap_handle(void *f){
-    amm_closemap(*(uint64_t*)f);
+    MM2::mm2_closemap(*(uint64_t*)f);
     delete (uint64_t*)f;
 }
 
@@ -199,7 +274,7 @@ USERAPI_HANDLER(BT_MMAP){
     if(file && is_safe_ptr(regs->edx, sizeof(btos_api::bt_mmap_buffer))){
         btos_api::bt_mmap_buffer *buffer=(btos_api::bt_mmap_buffer*)regs->edx;
         if(!is_safe_ptr((uint32_t)buffer->buffer, buffer->size)) return;
-        uint64_t *id=new uint64_t(amm_mmap(buffer->buffer, *file, regs->ecx, buffer->size));
+        uint64_t *id=new uint64_t(MM2::mm2_mmap(buffer->buffer, *file, regs->ecx, buffer->size));
         bt_handle_info handle=create_handle(kernel_handle_types::memory_mapping, id, &close_filemap_handle);
         regs->eax= proc_add_handle(handle);
 		return;
@@ -259,6 +334,12 @@ USERAPI_HANDLER(BT_STAT){
 	}
 }
 
+USERAPI_HANDLER(BT_FORMAT){
+	if(is_safe_string(regs->ebx) && is_safe_string(regs->ecx) && (!regs->edx || is_safe_ptr(regs->edx, 1))){
+		regs->eax = fs_format((const char*)regs->ebx, (const char*)regs->ecx, (void*)regs->edx);
+	}
+}
+
 USERAPI_HANDLER(BT_LOAD_MODULE){
 	if(is_safe_string(regs->ebx)){
         char *params=is_safe_string(regs->ecx)?(char*)regs->ecx:NULL;
@@ -269,9 +350,9 @@ USERAPI_HANDLER(BT_LOAD_MODULE){
 USERAPI_HANDLER(BT_GETENV){
 	if(is_safe_string(regs->ebx) && is_safe_ptr(regs->ecx, regs->edx)){
 		string value=proc_getenv((char*)regs->ebx, true);
-		if(value != "" && value.length() < regs->edx){
+		if(value != ""){
 			strncpy((char*)regs->ecx, value.c_str(), regs->edx);
-			regs->eax=value.length();
+			regs->eax=value.length() + 1;
 		}else regs->eax=0;
 	}
 }
@@ -312,7 +393,8 @@ USERAPI_HANDLER(BT_PRIORITIZE){
 USERAPI_HANDLER(BT_EXIT){
 	pid_t pid=proc_current_pid;
 	proc_setreturn(regs->ebx);
-	proc_switch(0);
+	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadEnd);
+	//proc_switch(0);
 	proc_end(pid);
 	sch_end_thread();
 }
@@ -355,7 +437,7 @@ USERAPI_HANDLER(BT_WAIT_THREAD){
 }
 
 USERAPI_HANDLER(BT_END_THREAD){
-	debug_event_notify(proc_current_pid, 0, bt_debug_event::ThreadEnd);
+	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadEnd);
     sch_end_thread();
 }
 
@@ -377,6 +459,7 @@ USERAPI_HANDLER(BT_SEND){
 		uint64_t &ret=*(uint64_t*)regs->ecx;
 		header.flags=header.flags | btos_api::bt_msg_flags::UserSpace;
 		header.from=proc_current_pid;
+		header.critical=false;
 		if(header.length > btos_api::BT_MSG_MAX) return;
 		ret=proc_send_message(header);
 	}
@@ -417,6 +500,14 @@ USERAPI_HANDLER(BT_MSGWAIT){
 	proc_message_wait();
 }
 
+USERAPI_HANDLER(BT_SUBSCRIBE){
+	msg_subscribe((btos_api::bt_kernel_messages::Enum)regs->ebx);
+}
+
+USERAPI_HANDLER(BT_UNSUBSCRIBE){
+	msg_unsubscribe((btos_api::bt_kernel_messages::Enum)regs->ebx);
+}
+
 USERAPI_HANDLER(BT_RECVFILTERED){
 	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_msg_filter)) && is_safe_ptr(regs->ecx, sizeof(btos_api::bt_msg_header))){
 		(*(btos_api::bt_msg_header*)regs->ecx) = msg_recv_filtered(*(btos_api::bt_msg_filter*)regs->ebx);
@@ -430,12 +521,10 @@ USERAPI_HANDLER(BT_NEXTMSGFILTERED){
 	}
 }
 
-USERAPI_HANDLER(BT_SUBSCRIBE){
-	msg_subscribe((btos_api::bt_kernel_messages::Enum)regs->ebx);
-}
-
-USERAPI_HANDLER(BT_UNSUBSCRIBE){
-	msg_unsubscribe((btos_api::bt_kernel_messages::Enum)regs->ebx);
+USERAPI_HANDLER(BT_MSGQUERY){
+	if(is_safe_ptr(regs->ebx, sizeof(uint64_t))){
+		regs->eax = msg_query_recieved(*(uint64_t*)regs->ebx);
+	}
 }
 
 USERAPI_HANDLER(BT_QUERY_EXT){
@@ -453,10 +542,14 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
         //Memory managment
 		USERAPI_HANDLE_CALL(BT_ALLOC_PAGES);
 		USERAPI_HANDLE_CALL(BT_FREE_PAGES);
-        //USERAPI_HANDLE_CALL(BT_ALLOC_AT);
+        USERAPI_HANDLE_CALL(BT_ALLOC_AT);
         //USERAPI_HANDLE_CALL(BT_GUARD_PAGE);
-        //USERAPI_HANDLE_CALL(BT_PF_HANDLE);
+        //USERAPI_HANDLE_CALL(BT_CREATE_REGION);
         USERAPI_HANDLE_CALL(BT_CLOSEHANDLE);
+		USERAPI_HANDLE_CALL(BT_QUERYHANDLE);
+		USERAPI_HANDLE_CALL(BT_CREATE_SHM);
+		USERAPI_HANDLE_CALL(BT_SHM_ID);
+		USERAPI_HANDLE_CALL(BT_SHM_MAP);
 
 		USERAPI_HANDLE_CALL(BT_GET_ARGC);
 		USERAPI_HANDLE_CALL(BT_GET_ARG);
@@ -499,6 +592,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_DREAD);
 		USERAPI_HANDLE_CALL(BT_DSEEK);
 		USERAPI_HANDLE_CALL(BT_STAT);
+		USERAPI_HANDLE_CALL(BT_FORMAT);
 
 		//Modules
 		USERAPI_HANDLE_CALL(BT_LOAD_MODULE);
@@ -526,6 +620,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_UNSUBSCRIBE);
 		USERAPI_HANDLE_CALL(BT_RECVFILTERED);
 		USERAPI_HANDLE_CALL(BT_NEXTMSGFILTERED);
+		USERAPI_HANDLE_CALL(BT_MSGQUERY);
 
 		//Extensions
 		USERAPI_HANDLE_CALL(BT_QUERY_EXT);
@@ -534,6 +629,5 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 			regs->eax=-1;
 			break;
 	}
-    if(sch_user_abort()) sch_end_thread();
 }
 

@@ -1,8 +1,11 @@
 #include "kernel.hpp"
 #include "locks.hpp"
 
+multiboot_info_t *mbt;
+
 extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 {
+	mbt = mbd;
 	if(are_interrupts_enabled()){
 		panic("Interrupts not disabled at kernel load!\n");
 	}
@@ -12,10 +15,11 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	GDT_init();
 	IDT_init();
 	init_cpu();
-	vmm_init(mbd);
+	mm2_init(mbt);
 	disable_pic();
 	PIC_init();
 	enable_interrupts();
+	init_kvars();
 	proc_init();
 	sch_init();
 	sch_yield();

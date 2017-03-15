@@ -1,5 +1,5 @@
 #include "kernel.hpp"
-#include "../include/video_dev.h"
+#include <dev/video_dev.h>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -13,12 +13,19 @@ static const size_t VGA_HEIGHT = 25;
 static const size_t maxchar=VGA_WIDTH * VGA_HEIGHT * 2;
 
 static bt_vidmode mode={
-        .id = 0,
-        .width = 80,
-        .height = 25,
-        .bpp = 4,
-        .textmode = true,
-        .palette = false,
+	.id = 0,
+	.width = 80,
+	.height = 25,
+	.bpp = 4,
+	.textmode = true,
+	.palette = false,
+	.bytesPerLine = 160,
+	.rBits = 0,
+	.rPos = 0,
+	.gBits = 0,
+	.gPos = 0,
+	.bBits = 0,
+	.bPos = 0,
 };
 
 size_t terminal_row;
@@ -78,7 +85,7 @@ size_t terminal_write(void *instance, size_t bytes, char *buf){
 	}
 }
 
-size_t terminal_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t terminal_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	terminal_instance *inst=(terminal_instance*)instance;
 	size_t ret=0;
     if(inst->mode==bt_vid_text_access_mode::Raw){
@@ -102,7 +109,7 @@ size_t terminal_seek(void *instance, size_t pos, uint32_t flags){
             cpos=pos;
         }
         if(cpos > VGA_HEIGHT * VGA_WIDTH){
-            dbgpf("KTEXT: Bad seek: %i\n", cpos);
+            dbgpf("KTEXT: Bad seek: %i\n", (int)cpos);
             cpos=VGA_HEIGHT * VGA_WIDTH;
         }
         terminal_row=cpos/VGA_WIDTH;

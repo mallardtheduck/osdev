@@ -16,25 +16,26 @@ then
 fi
 tar xvfj gcc-4.8.1.tar.bz2
 
-rm -rf newlib-2.1.0
-if [ ! -f newlib-2.1.0.tar.gz ];
-then
-	wget ftp://sourceware.org/pub/newlib/newlib-2.1.0.tar.gz
-fi
-tar xvfz newlib-2.1.0.tar.gz
+# rm -rf newlib-2.1.0
+# if [ ! -f newlib-2.1.0.tar.gz ];
+# then
+# 	wget ftp://sourceware.org/pub/newlib/newlib-2.1.0.tar.gz
+# fi
+# tar xvfz newlib-2.1.0.tar.gz
 
-cp -Rv toolchain/* .  && \
+cp -Rv toolchain/binutils-2.23/* ./binutils-2.23  && \
+cp -Rv toolchain/gcc-4.8.1/* ./gcc-4.8.1  && \
 \
 pushd gcc-4.8.1/libstdc++-v3 && \
 autoconf2.64 && \
 popd && \
 \
-pushd newlib-2.1.0/newlib/libc/sys && \
-autoconf && \
-cd btos && \
-autoreconf && \
-popd && \
-\
+# pushd newlib-2.1.0/newlib/libc/sys && \
+# autoconf && \
+# cd btos && \
+# autoreconf && \
+# popd && \
+# \
 cd $HOME/Projects/os/src
 rm -rf build-binutils
 mkdir build-binutils && \
@@ -43,30 +44,26 @@ cd build-binutils && \
 make && \
 make install && \
 \
-cd $HOME/Projects/os/src
+rm -rf "$PREFIX/lib/gcc/i686-pc-btos/4.8.1" && \
+cd $HOME/Projects/os/src && \
 rm -rf build-gcc
 mkdir build-gcc && \
 cd build-gcc && \
-../gcc-4.8.1/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers && \
+../gcc-4.8.1/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers --with-newlib --disable-multilib --enable-shared=libgcc,libstdc++ --enable-initfini-array && \
 make all-gcc && \
-make all-target-libgcc && \
+make all-target-libgcc
+cp i686-pc-btos/libgcc/libgcc.a "$PREFIX/i686-pc-btos/lib"
+SHLIB_LINK="i686-pc-btos-gcc -O2 -fPIC -shared @shlib_objs@ -o @shlib_base_name@.ell" make all-target-libgcc && \
 make install-gcc && \
 make install-target-libgcc && \
+find i686-pc-btos/libgcc -name \*.ell -exec cp {} ../../cross/i686-pc-btos/lib \; && \
 \
-cd $HOME/Projects/os/src
-pushd newlib-2.1.0/newlib/libc/sys/btos && \
-i686-pc-btos-as crti.S -o crti.o && \
-i686-pc-btos-as crtn.S -o crtn.o && \
-cp crti.o $PREFIX/$TARGET/lib/ && \
-cp crtn.o $PREFIX/$TARGET/lib/ && \
-popd
-rm -rf build-newlib
-mkdir build-newlib && \
-cd build-newlib && \
-../newlib-2.1.0/configure --target=$TARGET --prefix=$PREFIX && \
-make && \
-make install && \ 
+cd .. && \
+make newlib && \
+cd build-gcc && \
 \
 cd $HOME/Projects/os/src/build-gcc && \
+mkdir -p i686-pc-btos/libstdc++-v3 && \
+cp ../toolchain/misc/libtool i686-pc-btos/libstdc++-v3 && \
 make && \
 make install
