@@ -73,7 +73,7 @@ uint64_t DrawTitleBar(uint32_t w, string title, bool active, WindowArea pressed)
 	GDS_Box(0, 0, w, GetMetric(TitleBarSize), GetColour(SeperatorColour), active?GetColour(TitleBarColour):GetColour(InactiveTitleColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	DrawMenuButton(GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::MenuButton));
 	uint32_t font = active ? gds_TEMPFonts::MediumBold : gds_TEMPFonts::Small;
-	GDS_Text(55, 3, title.c_str(), font, 0, GetColour(TitleTextColour), 0);
+	GDS_Text(GetMetric(MenuButtonWidth) + GetMetric(TitleTextMargin), 3, title.c_str(), font, 0, GetColour(TitleTextColour), 0);
 	DrawMaxButton(w - GetMetric(ButtonSize) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::ExpandButton));
 	DrawMinButton(w - (GetMetric(ButtonSize) * 2) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::HideButton));
 	DrawCloseButton(w - (GetMetric(ButtonSize) * 3) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::CloseButton));

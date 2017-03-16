@@ -2,9 +2,10 @@
 #define METRICS_HPP
 
 static const int32_t TitleBarSize = 20;
+static const int32_t TitleTextMargin = 5;
 static const int32_t BorderWidth = 1;
 static const int32_t ButtonSize = TitleBarSize - 2;
-static const int32_t MenuButtonWidth = 50;
+static const int32_t MenuButtonWidth = (TitleBarSize + TitleTextMargin) * 2;
 static const int32_t FullWindowDrag = 1;
 
 #define GetMetric(x) x
