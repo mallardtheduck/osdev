@@ -50,14 +50,14 @@ struct proc_process{
 
     map<pid_t, void*> msg_buffers;
     
-    btos_api::bt_msg_header *latest_msg;
+    vector<btos_api::bt_msg_header*> msg_q;
 
 	proc_process() : pid(++curpid) {
 		init_lock(ulock);
 	}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
 		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(new MM2::PageDirectory),
-		 handlecounter(0), status(proc_status::Running), latest_msg(NULL) {
+		 handlecounter(0), status(proc_status::Running) {
 		init_lock(ulock);
     }
 };
@@ -706,25 +706,56 @@ void proc_message_wait(pid_t pid){
     sch_setblock(&proc_msg_wait_blockcheck, (void *)&pid);
 }
 
-void proc_set_latest_msg(btos_api::bt_msg_header *msg, pid_t pid){
-	proc_process *proc = proc_get_lock(pid);
+void proc_add_msg(btos_api::bt_msg_header *msg){
+	proc_process *proc = proc_get_lock(msg->to);
 	if (!proc) return;
-	proc->latest_msg = msg;
+	proc->msg_q.push_back(msg);
 	release_lock(proc->ulock);
 }
 
-btos_api::bt_msg_header *proc_get_latest_msg(pid_t pid){
+void proc_remove_msg(btos_api::bt_msg_header *msg){
+	proc_process *proc = proc_get_lock(msg->to);
+	if (!proc) return;
+	for(size_t i = 0; i < proc->msg_q.size(); ++i){
+		if(proc->msg_q[i] == msg){
+			proc->msg_q.erase(i);
+			break;
+		}
+	}
+	release_lock(proc->ulock);
+}
+
+btos_api::bt_msg_header *proc_get_msg(size_t index, pid_t pid){
 	proc_process *proc = proc_get_lock(pid);
 	if (!proc) return NULL;
-	btos_api::bt_msg_header *msg = proc->latest_msg;
+	btos_api::bt_msg_header *msg;
+	if(index >= proc->msg_q.size()) msg = NULL;
+	else msg = proc->msg_q[index];
 	release_lock(proc->ulock);
 	return msg;
 }
 
-btos_api::bt_msg_header *proc_get_latest_msg_nolock(pid_t pid){
+btos_api::bt_msg_header *proc_get_msg_nolock(size_t index, pid_t pid){
 	proc_process *proc = proc_get(pid);
 	if (!proc) return NULL;
-	btos_api::bt_msg_header *msg = proc->latest_msg;
+	btos_api::bt_msg_header *msg;
+	if(index >= proc->msg_q.size()) msg = NULL;
+	else msg = proc->msg_q[index];
 	return msg;
 }
 
+btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id){
+	//dbgout("PROC: p_g_m_b_i.\n");
+	hold_lock hl(proc_lock);
+	btos_api::bt_msg_header *ret = NULL;
+	for(size_t i = 0; i < proc_processes->size(); ++i){
+		proc_process *cproc = (*proc_processes)[i];
+		for(size_t j = 0; j < cproc->msg_q.size(); ++j){
+			if(cproc->msg_q[j]->id == id){
+				ret = cproc->msg_q[j];
+				break;
+			}
+		}
+	}
+	return ret;
+}

@@ -84,8 +84,10 @@ void proc_free_message_buffer(pid_t topid, pid_t pid);
 uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid=proc_current_pid);
 void proc_message_wait(pid_t pid=proc_current_pid);
 
-void proc_set_latest_msg(btos_api::bt_msg_header *msg, pid_t pid=proc_current_pid);
-btos_api::bt_msg_header *proc_get_latest_msg(pid_t pid=proc_current_pid);
-btos_api::bt_msg_header *proc_get_latest_msg_nolock(pid_t pid=proc_current_pid);
+void proc_add_msg(btos_api::bt_msg_header *msg);
+void proc_remove_msg(btos_api::bt_msg_header *msg);
+btos_api::bt_msg_header *proc_get_msg(size_t index, pid_t pid=proc_current_pid);
+btos_api::bt_msg_header *proc_get_msg_nolock(size_t index, pid_t pid=proc_current_pid);
+btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id);
 
 #endif
