@@ -43,6 +43,7 @@ void screen_update_thread(void *){
 				callcount = 0;
 			}
 		}
+		if(quit) bt_end_thread();
 		if(callcount){
 			if(hide_pointer) bt_fioctl(pthis->fh, bt_terminal_ioctl::HidePointer, 0, NULL);
 			bt_multi_call(syscall_items, callcount);
@@ -52,7 +53,6 @@ void screen_update_thread(void *){
 		batch.clear();
 		bt_unlock(pthis->update_q_lock);
 		bt_fioctl(pthis->fh, bt_terminal_ioctl::PointerUnfreeze, 0, NULL);
-		if(quit) return;
 		bt_rtc_sleep(15);
 	}
 }
@@ -75,6 +75,8 @@ Screen::Screen() : BitmapSurface::BitmapSurface(1, 1, true){
 }
 
 Screen::~Screen(){
+	QueueUpdate(0, 0, 0, false);
+	bt_wait_thread(update_thread);
 	RestoreMode();
 	bt_fclose(fh);
 	if(buffer) delete buffer;
@@ -207,6 +209,12 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 	}
 	DBG("GDS: Found mode " << bestmode.width << "x" << bestmode.height << " " << (int)bestmode.bpp << "bpp.");
 	if(bestmode.bpp){
+		bt_zero("A\n");
+		QueueUpdate(0, 0, 0, false);
+		bt_zero("B\n");
+		bt_wait_thread(update_thread);
+		bt_zero("C\n");
+		
 		bt_fioctl(fh, bt_terminal_ioctl::SetScreenMode, sizeof(bestmode), (char *) &bestmode);
 		current_mode=bestmode;
 		if(current_mode.bpp >= 16){
@@ -241,6 +249,7 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 				}
 			}
 		}
+		update_thread = bt_new_thread(&screen_update_thread, (void*)this, updatethread_stack + thread_stack_size);
 		return true;
 	}
 	return false;
