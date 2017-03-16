@@ -324,4 +324,8 @@ inline static uint16_t bt_query_extension(const char *name){
 	return btos_call(BT_QUERY_EXT, (uint32_t)name, 0, 0);
 }
 
+inline static void bt_multi_call(bt_syscall_item *items, size_t count){
+	btos_call(BT_MULTI_CALL, (uint32_t)items, (uint32_t)count, 0);
+}
+
 #endif

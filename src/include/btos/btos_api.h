@@ -110,6 +110,8 @@ enum{
 	BT_MSGQUERY			= 0x090B,
 
 	BT_QUERY_EXT		= 0x0F01,
+	
+	BT_MULTI_CALL		= 0x1001,
 };
 
 struct bt_buffer{
@@ -125,11 +127,17 @@ struct bt_shm_mapping{
 	uint32_t flags;
 };
 
+struct bt_syscall_item{
+	uint32_t call_id;
+	uint32_t p1, p2, p3;
+};
+
 #ifndef __cplusplus
 typedef struct bt_buffer bt_fioctl_buffer;
 typedef struct bt_buffer bt_mmap_buffer;
 typedef struct bt_buffer bt_buffer;
 typedef struct bt_shm_mapping bt_shm_mapping;
+typedef struct bt_syscall_item bt_syscall_item;
 #else
 typedef bt_buffer bt_fioctl_buffer;
 typedef bt_buffer bt_mmap_buffer;

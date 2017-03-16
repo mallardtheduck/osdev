@@ -572,6 +572,23 @@ USERAPI_HANDLER(BT_QUERY_EXT){
 	}
 }
 
+USERAPI_HANDLER(BT_MULTI_CALL){
+	if(is_safe_ptr(regs->ebx, regs->ecx * sizeof(btos_api::bt_syscall_item))){
+		//dbgpf("UAPI: BT_MULTI_CALL: %i calls.\n", (int)regs->ecx);
+		btos_api::bt_syscall_item *items = (btos_api::bt_syscall_item*)regs->ebx;
+		isr_regs fake_regs;
+		for(size_t i = 0; i < regs->ecx; ++i){
+			//dbgpf("UAPI: BT_MULTI_CALL %i - %x\n", (int)i, items[i].call_id);
+			fake_regs.eax = items[i].call_id;
+			fake_regs.ebx = items[i].p1;
+			fake_regs.ecx = items[i].p2;
+			fake_regs.edx = items[i].p3;
+			userapi_handler(0x80, &fake_regs);
+			items[i].call_id = fake_regs.eax;
+		}
+	}
+}
+
 void userapi_syscall(uint16_t fn, isr_regs *regs){
 	switch(fn){
 		case 0:
@@ -668,6 +685,9 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 
 		//Extensions
 		USERAPI_HANDLE_CALL(BT_QUERY_EXT);
+		
+		//Magic
+		USERAPI_HANDLE_CALL(BT_MULTI_CALL);
 
 		default:
 			regs->eax=-1;
