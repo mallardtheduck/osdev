@@ -10,6 +10,9 @@ using namespace std;
 static const size_t thread_stack_size = (4 * 1024);
 static char updatethread_stack[thread_stack_size];
 
+static size_t max_syscall_items = 256;
+static bt_syscall_item syscall_items[256];
+
 void screen_update_thread(void *){
 	Screen *pthis = GetScreen().get();
 	bool quit = false;
@@ -20,20 +23,33 @@ void screen_update_thread(void *){
 		batch.swap(pthis->update_q);
 		bt_modify_atom(pthis->sync_atom, bt_atom_modify::Set, 0);
 		bt_unlock(pthis->update_q_lock);
-		DBG("GDS: Update batch size: " << batch.size());
+		//DBG("GDS: Update batch size: " << batch.size());
 		bt_fioctl(pthis->fh, bt_terminal_ioctl::PointerFreeze, 0, NULL);
-		while(!batch.empty()){
-			Screen::update &up = batch.front();
+		bool hide_pointer = false;
+		size_t callcount = 0;
+		for(const auto &up : batch){
 			if(up.data == NULL){
 				quit = true;
 				break;
 			}
-			if(up.hide_pointer) bt_fioctl(pthis->fh, bt_terminal_ioctl::HidePointer, 0, NULL);
-			bt_fseek(pthis->fh, up.pos, FS_Set);
-			bt_fwrite(pthis->fh, up.size, up.data);
-			if(up.hide_pointer) bt_fioctl(pthis->fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
-			batch.pop_front();
+			if(up.hide_pointer) hide_pointer = true;
+			syscall_items[callcount++] = {BT_FSEEK, pthis->fh, (uint32_t)&up.pos, FS_Set};
+			syscall_items[callcount++] = {BT_FWRITE, pthis->fh, up.size, (uint32_t)up.data};
+			if(callcount == max_syscall_items){
+				if(hide_pointer) bt_fioctl(pthis->fh, bt_terminal_ioctl::HidePointer, 0, NULL);
+				bt_multi_call(syscall_items, callcount);
+				if(hide_pointer) bt_fioctl(pthis->fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
+				callcount = 0;
+			}
 		}
+		if(callcount){
+			if(hide_pointer) bt_fioctl(pthis->fh, bt_terminal_ioctl::HidePointer, 0, NULL);
+			bt_multi_call(syscall_items, callcount);
+			if(hide_pointer) bt_fioctl(pthis->fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
+		}
+		bt_lock(pthis->update_q_lock);
+		batch.clear();
+		bt_unlock(pthis->update_q_lock);
 		bt_fioctl(pthis->fh, bt_terminal_ioctl::PointerUnfreeze, 0, NULL);
 		if(quit) return;
 	}
@@ -74,7 +90,7 @@ bool Screen::BufferPutPixel(uint32_t x, uint32_t y, uint32_t value) {
 	//if(BufferGetPixel(x, y) == value) return false;
 	size_t pixelpos=(y * current_mode.width) + x;
 	if(current_mode.bpp > 8){
-		value = ConvertPixel(value);
+		if(pixel_conversion_required) value = ConvertPixel(value);
 		size_t depth = (current_mode.bpp / 8);
 		size_t bufferpos = pixelpos * depth;
 		memcpy(&buffer[bufferpos], &value, depth);
@@ -257,9 +273,6 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 	if(x + w > current_mode.width) w = current_mode.width - x;
 	if(y + h > current_mode.height) h = current_mode.height - y;
 	for(uint32_t row=y; row < y+h; ++row){
-		//size_t first = SIZE_MAX;
-		//size_t last = 0;
-		
 		if(row > current_mode.height) break;
 		for(uint32_t col=x; col < x+w; ++col){
 			if(col > current_mode.width) break;
@@ -269,47 +282,22 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 			}else{
 				value=image->PalettePixel(col, row);
 			}
-			//if(
-			BufferPutPixel(col, row, value); //){
-			/*	if(col < first) first = col;
-				if(col > last) last = col;
-			}else if(first < last && last - first > 64){
-				size_t start= GetBytePos(first, row);
-				if(start > buffersize) break;
-				size_t end= GetBytePos(last, row, true) + BytesPerPixel() + 2;
-				if(end > buffersize) end=buffersize;
-				
-				size_t bytes = end - start;
-				QueueUpdate(start, bytes, (char*)&buffer[start], hide_cursor);
-				first = SIZE_MAX;
-				last = 0;
-			}*/
+			BufferPutPixel(col, row, value);
 		}
-		//if(first > last) continue;
 		size_t start= GetBytePos(x, row);
 		if(start > buffersize) break;
 		size_t end= GetBytePos(x+w, row, true) + BytesPerPixel() + 2;
 		if(end > buffersize) end=buffersize;
 		
 		size_t bytes = end - start;
-		QueueUpdate(start, bytes, (char*)&buffer[start], hide_cursor);
+		if(w != current_mode.width || h != current_mode.height) QueueUpdate(start, bytes, (char*)&buffer[start], hide_cursor);
 	}
-	//bt_fioctl(fh, bt_terminal_ioctl::PointerFreeze, 0, NULL);
-	//if(hide_cursor) bt_fioctl(fh, bt_terminal_ioctl::HidePointer, 0, NULL);
 	if(w == current_mode.width && h == current_mode.height) {
 		bt_lock(update_q_lock);
 		bt_fseek(fh, 0, false);
 		bt_fwrite(fh, buffersize, (char *) buffer);
 		bt_unlock(update_q_lock);
-	}else{
-		for(size_t row=y; row < y+h; ++row){
-
-			//bt_fseek(fh, start, false);
-			//bt_fwrite(fh, bytes, (char*)&buffer[start]);
-		}
 	}
-	//if(hide_cursor) bt_fioctl(fh, bt_terminal_ioctl::ShowPointer, 0, NULL);
-	//bt_fioctl(fh, bt_terminal_ioctl::PointerUnfreeze, 0, NULL);
 }
 
 void Screen::ShowCursor() {
@@ -343,7 +331,7 @@ void Screen::SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty) 
 			if(gdTrueColorGetAlpha(value) != 0) value = transparent;
 			if(value != transparent){
 				if(image->IsTrueColor()){
-					value = ConvertPixel(value);
+					if(pixel_conversion_required) value = ConvertPixel(value);
 				}else{
 					value=image->ColorClosest(gdTrueColorGetRed(value), gdTrueColorGetGreen(value), gdTrueColorGetBlue(value));
 				}

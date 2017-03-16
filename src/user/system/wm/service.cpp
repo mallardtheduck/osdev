@@ -29,6 +29,9 @@ void Service(bt_pid_t root_pid){
 	bt_subscribe(bt_kernel_messages::MessageReceipt);
 	bt_msg_header msg = bt_recv(true);
 	while(true) {
+		/*stringstream dss;
+		dss << "WM: Message ID " << msg.id << " from: " << msg.from << " source: " << msg.source << " type: " << msg.type << endl;
+		bt_zero(dss.str().c_str());*/
 		if(msg.from == 0 && msg.source == 0 && msg.type == bt_kernel_messages::ProcessEnd) {
 			bt_pid_t pid = 0;
 			bt_msg_content(&msg, (void*)&pid, sizeof(pid));

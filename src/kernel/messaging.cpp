@@ -13,10 +13,49 @@ static void msg_send_receipt(const bt_msg_header &omsg);
 typedef map<pid_t, vector<bt_kernel_messages::Enum> > msg_subscribers_list;
 static msg_subscribers_list *msg_subscribers;
 
+static const size_t pool_min = 16;
+static const size_t pool_max = pool_min * 2;
+//static vector<void*> buffer_pool;
+static vector<bt_msg_header*> *header_pool;
+
+static bt_msg_header *copy_msg_header(const bt_msg_header &h){
+	if(!header_pool->size()){
+		for(size_t i = 0; i < pool_min; ++i){
+			header_pool->push_back((bt_msg_header*)malloc(sizeof(bt_msg_header)));
+		}
+	}
+	
+	size_t backindex = header_pool->size() - 1;
+	bt_msg_header *ret = (*header_pool)[backindex];
+	header_pool->erase(backindex);
+	*ret = h;
+	return ret;
+}
+
+static void release_msg_header(bt_msg_header *h){
+	if(header_pool->size() >= pool_max){
+		free(h);
+		for(size_t i = header_pool->size() - 1; i > pool_min; --i){
+			free((*header_pool)[i]);
+			header_pool->erase(i);
+		}
+		return;
+	}
+	header_pool->push_back(h);
+}
+
 void msg_init(){
     dbgout("MSG: Init messaging...\n");
     init_lock(msg_lock);
 	msg_subscribers=new msg_subscribers_list();
+	
+	//buffer_pool	= new vector<void*>();
+	header_pool = new vector<bt_msg_header*>();
+	
+	for(size_t i = 0; i < pool_min; ++i){
+		//buffer_pool.push_back(malloc(BT_MSG_MAX));
+		header_pool->push_back((bt_msg_header*)malloc(sizeof(bt_msg_header)));
+	}
 }
 
 uint64_t msg_send(bt_msg_header &msg){
@@ -52,7 +91,7 @@ uint64_t msg_send(bt_msg_header &msg){
         msg.id = ++id_counter;
         msg.valid = true;
         msg.recieved = msg.replied = false;
-        bt_msg_header *ptr = new btos_api::bt_msg_header(msg);
+        bt_msg_header *ptr = copy_msg_header(msg);
         proc_add_msg(ptr);
     }
     //dbgpf("MSG: Sent message ID %i from PID %i to PID %i.\n", (int)msg.id, (int)msg.from, (int)msg.to);
@@ -138,7 +177,7 @@ void msg_acknowledge(bt_msg_header &msg, bool set_status){
 					free(header.content);
 				}
 				proc_remove_msg(cmsg);
-				delete cmsg;
+				release_msg_header(cmsg);
 				if(set_status) sch_set_msgstaus(thread_msg_status::Normal);
 				found = true;
 				break;

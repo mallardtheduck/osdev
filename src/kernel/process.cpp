@@ -683,6 +683,7 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 		release_lock(proc->ulock);
 		release_lock(to->ulock);
 		release_lock(msg_lock);
+		sch_yield();
 		return ret;
 	} while(again);
 	return 0;

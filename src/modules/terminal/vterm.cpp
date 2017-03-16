@@ -107,10 +107,11 @@ void vterm::scroll()
 	int factor=1;
 	if(vidmode.textmode) factor=2;
 	if(scrolling){
-		for(size_t y=0; y<vidmode.height; ++y) {
+		size_t start = infoline ? 1 : 0;
+		for(size_t y = start + 1; y<vidmode.height; ++y) {
 			for(size_t x=0; x<(vidmode.width*factor); ++x) {
 				const size_t source = y * (vidmode.width*factor) + x;
-				if(y) {
+				if(y > start) {
 					const size_t dest = (y-1) * (vidmode.width*factor) + x;
 					buffer[dest]=buffer[source];
 				}
@@ -128,22 +129,22 @@ void vterm::do_infoline()
 	vterm_options opts;
 	if(backend && backend->is_active(id) && infoline && vidmode.textmode) {
 		size_t pos=seek(opts, 0, true);
+		char *infoline_text = (char*)malloc(vidmode.width + 1);
+		memset(infoline_text, 0, vidmode.width + 1);
+		sprintf(infoline_text, "[%i] %s", (int)id, title);
+		for(size_t i = 0; i < vidmode.width; ++i){
+			if(infoline_text[i] == 0) infoline_text[i] = ' ';
+		}
 		seek(opts, 0, false);
 		uint16_t linecol=0x1F;
 		uint8_t colour=backend->get_text_colours();
 		setcolours(linecol);
-		for(size_t i=0; i<vidmode.width; ++i) {
-			putchar(' ');
-		}
-		seek(opts, 0, false);
-		char buf[8];
-		sprintf(buf, "[%i] ", (int)id);
-		putstring(buf);
-		putstring(title);
+		putstring(infoline_text);
 		setcolours(colour);
 		seek(opts, pos, false);
 		if(pos < vidmode.width) putchar('\n');
-		backend->refresh();
+		free(infoline_text);
+		//backend->refresh();
 	}
 }
 
@@ -317,6 +318,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 				memset(title, 0, titlemax);
 				memcpy(title, buf, size);
 				do_infoline();
+				if(backend && backend->is_active(id)) backend->refresh();
 			}
 			break;
 		}
@@ -335,6 +337,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			if(infoline) {
 				putchar('\n');
 				do_infoline();
+				if(backend && backend->is_active(id)) backend->refresh();
 			}
 			break;
 		}
@@ -393,6 +396,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 				if(vidmode.textmode && infoline) {
 					putchar('\n');
 					do_infoline();
+					if(backend && backend->is_active(id)) backend->refresh();
 				}
 			}
 			break;
@@ -718,7 +722,8 @@ char vterm::get_char()
 
 void vterm::update_current_pid()
 {
-	pid_t pid = getpid();
+	curpid = getpid();
+	/*pid_t pid = getpid();
 	if(pid) {
 		uint64_t termid=0;
 		if(getenv(terminal_var, pid)) {
@@ -728,7 +733,7 @@ void vterm::update_current_pid()
 			//dbgpf("TERM: %i updating curpid from %i to %i\n", (int)id, (int)curpid, (int)id);
 			curpid = pid;
 		}
-	}
+	}*/
 }
 
 i_backend *vterm::get_backend(){

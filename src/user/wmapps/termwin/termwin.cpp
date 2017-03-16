@@ -129,12 +129,35 @@ bool compare_chars(char a, char b){
 	else return a == b;
 }
 
+static void AddRect(wm_Rect &r, const wm_Rect &a){
+	uint32_t rx1 = r.x;
+	uint32_t ry1 = r.y;
+	uint32_t rx2 = r.x + r.w;
+	uint32_t ry2 = r.y + r.h;
+	
+	uint32_t ax1 = a.x;
+	uint32_t ay1 = a.y;
+	uint32_t ax2 = a.x + a.w;
+	uint32_t ay2 = a.y + a.h;
+	
+	if(ax1 < rx1) rx1 = ax1;
+	if(ay1 < ry1) ry1 = ay1;
+	if(ax2 > rx2) rx2 = ax2;
+	if(ay2 > ry2) ry2 = ay2;
+	
+	r.x = rx1;
+	r.y = ry1;
+	r.w = rx2 - rx1;
+	r.h = ry2 - ry1;
+}
+
 void render_terminal_thread(){
 	if(!terminal_handle) return;
 	uint64_t render_counted = 0;
 	while(true){
 		render_counted = bt_wait_atom(render_counter, bt_atom_compare::NotEqual, render_counted);
 		if(endrender) return;
+		bt_terminal_read_buffer(terminal_handle, buffer_size, tempbuffer);
 		static char ltitle[WM_TITLE_MAX] = {0};
 		char title[WM_TITLE_MAX];
 		bt_terminal_get_title(terminal_handle, WM_TITLE_MAX, title);
@@ -143,6 +166,7 @@ void render_terminal_thread(){
 			strncpy(ltitle, title, WM_TITLE_MAX);
 		}
 		static size_t lpos = SIZE_MAX;
+		wm_Rect updateRect = {0, 0, 0, 0};
 		for(size_t line = 0; line < terminal_mode.height; ++line){
 			vector<pair<size_t, uint16_t>> line_changes;
 			bt_lock(bufferlock);
@@ -205,10 +229,16 @@ void render_terminal_thread(){
 					GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 					GDS_Text(start * font_width, line * font_height, text.str().c_str(), font, 0, getcolour(fgcol));
 				}
-				WM_UpdateRect(firststart * font_width, line * font_height, (overallend - firststart + 1) * font_width, font_height);
+				AddRect(updateRect, {
+					(int32_t)(firststart * font_width), 
+					(int32_t)(line * font_height), 
+					(overallend - firststart + 1) * font_width, 
+					font_height
+				});
 			}
 		}
 		lpos = curpos;
+		WM_UpdateRect(updateRect);
 	}
 }
 
@@ -222,7 +252,6 @@ void render_terminal(){
 	if(!renderthread) renderthread = bt_new_thread(&renderthread_start, NULL, renderthread_stack + thread_stack_size);
 	bt_lock(bufferlock);
 	curpos = bt_terminal_get_pos(terminal_handle);
-	bt_terminal_read_buffer(terminal_handle, buffer_size, tempbuffer);
 	bt_modify_atom(render_counter, bt_atom_modify::Add, 1);
 	bt_unlock(bufferlock);
 }
