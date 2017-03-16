@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <sstream>
+#include <dev/rtc.h>
 
 #define DBG(x) do{std::stringstream dbgss; dbgss << x << endl; bt_zero(dbgss.str().c_str());}while(0)
 
@@ -52,6 +53,7 @@ void screen_update_thread(void *){
 		bt_unlock(pthis->update_q_lock);
 		bt_fioctl(pthis->fh, bt_terminal_ioctl::PointerUnfreeze, 0, NULL);
 		if(quit) return;
+		bt_rtc_sleep(15);
 	}
 }
 
