@@ -190,7 +190,7 @@ void render_terminal_thread(){
 							uint8_t fgcol = col & 0x0F;
 							uint32_t width = text.str().length() * font_width;
 							GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-							GDS_Text(start * font_width, line * font_height, text.str().c_str(), font, 16, getcolour(fgcol));
+							GDS_Text(start * font_width, (line * font_height) + 16, text.str().c_str(), font, 16, getcolour(fgcol));
 							//WM_UpdateRect(start * font_width, line * font_height, width, font_height);
 						}
 						text.str("");
