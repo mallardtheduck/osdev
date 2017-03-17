@@ -165,26 +165,29 @@ size_t msg_getcontent(bt_msg_header &msg, void *buffer, size_t buffersize){
 }
 
 void msg_acknowledge(bt_msg_header &msg, bool set_status){
-	bool found = false;
+	void *found = NULL;
     {
 		hold_lock hl(msg_lock, false);
 		for(size_t i = 0; bt_msg_header *cmsg = proc_get_msg(i, msg.to); ++i){
 			bt_msg_header &header = *cmsg;
 			if(header.id==msg.id){
-				if(!(header.flags & bt_msg_flags::Reply) && (header.flags & bt_msg_flags::UserSpace)){
-					proc_free_message_buffer(header.to, header.from);
-				}else{
-					free(header.content);
-				}
+				msg = header;
+				found = header.content;
 				proc_remove_msg(cmsg);
 				release_msg_header(cmsg);
-				if(set_status) sch_set_msgstaus(thread_msg_status::Normal);
-				found = true;
 				break;
 			}
 		}
 	}
-	if(found) msg_send_receipt(msg);
+	if(found){
+		if(!(msg.flags & bt_msg_flags::Reply) && (msg.flags & bt_msg_flags::UserSpace)){
+			proc_free_message_buffer(msg.to, msg.from);
+		}else{
+			free(found);
+		}
+		if(set_status) sch_set_msgstaus(thread_msg_status::Normal);
+		msg_send_receipt(msg);
+	}
 	else dbgpf("MSG: Attempt to acknowlegde non-existent message %i\n", (int)msg.id);
 }
 
