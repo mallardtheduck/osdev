@@ -27,7 +27,11 @@ export LDFLAGS=""
 PATH=$BASE_PATH/bin:$PATH
 DESTDIR=$PWD/../install ./configure \
 	--host=$ARCH \
-	--prefix=$PREFIX
+	--prefix=$PREFIX \
+	--with-zlib=no \
+	--with-bzip2=no \
+	--with-png=no \
+	--with-harfbuzz=no
 
 make
 make DESTDIR=$PWD/../install install
