@@ -26,6 +26,7 @@ ENUM_START(gds_MsgType)
 	ENUM_SET(gds_MsgType, GetColour, 		9),
 	ENUM_SET(gds_MsgType, SetOpParameters,	10),
 	ENUM_SET(gds_MsgType, GetOpParameters,	11),
+	ENUM_SET(gds_MsgType, GetFontID,		12),
 		
 	ENUM_SET(gds_MsgType, SelectScreen,		100),
 	ENUM_SET(gds_MsgType, UpdateScreen, 	101),
@@ -57,9 +58,10 @@ ENUM_END
 ENUM_TYPE(gds_ColourType);
 
 ENUM_START(gds_FontStyle)
-	ENUM_SET(gds_FontStyle, Normal, 0),
-	ENUM_SET(gds_FontStyle, Bold, 	1 << 0),
-	ENUM_SET(gds_FontStyle, Italic, 1 << 1),
+	ENUM_SET(gds_FontStyle, Normal, 	0),
+	ENUM_SET(gds_FontStyle, Bold, 		1),
+	ENUM_SET(gds_FontStyle, Italic, 	2),
+	ENUM_SET(gds_FontStyle, BoldItalic, 3),
 ENUM_END
 ENUM_TYPE(gds_FontStyle);
 
@@ -122,7 +124,6 @@ struct gds_DrawingOp {
 			int32_t x, y;
 			uint32_t fontID;
 			uint32_t size;
-			uint8_t style;
 		} Text;
 		struct{
 			uint64_t src;
@@ -212,14 +213,5 @@ struct gds_OpParameters{
 #ifndef __cplusplus
 typedef struct gds_OpParameters gds_OpParameters;
 #endif
-
-ENUM_START(gds_TEMPFonts)
-	ENUM_SET(gds_TEMPFonts, Small, 		0),
-	ENUM_SET(gds_TEMPFonts, Large, 		1),
-	ENUM_SET(gds_TEMPFonts, MediumBold,	2),
-	ENUM_SET(gds_TEMPFonts, Giant, 		3),
-	ENUM_SET(gds_TEMPFonts, Tiny, 		4),
-ENUM_END
-ENUM_TYPE(gds_TEMPFonts);
 
 #endif

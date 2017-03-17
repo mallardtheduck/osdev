@@ -30,6 +30,7 @@ void GDS_UpdateScreen(uint32_t x GDS_DEFAULT(0), uint32_t y GDS_DEFAULT(0), uint
 void GDS_SetScreenMode(bt_vidmode mode);
 void GDS_SetCursor(uint64_t surfaceID, uint32_t hotx, uint32_t hoty);
 void GDS_CursorVisibility(bool visible);
+uint32_t GDS_GetFontID(const char *name, ENUM_NAME(gds_FontStyle) style);
 
 void GDS_Dot(int32_t x, int32_t y, uint32_t colour, uint8_t size GDS_DEFAULT(1));
 void GDS_Line(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t colour, uint8_t width GDS_DEFAULT(1), uint32_t style GDS_DEFAULT(ENUM_GET(gds_LineStyle, Solid)));

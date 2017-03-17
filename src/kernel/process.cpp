@@ -366,7 +366,7 @@ void proc_start(void *ptr){
     void *stackptr = ((proc_info*)ptr)->stackptr;
 	delete (proc_info*)ptr;
 	if(!proc_switch(pid)) return;
-	if(!stackptr) stackptr=proc_alloc_stack(4*MM2::MM2_Page_Size);
+	if(!stackptr) stackptr=proc_alloc_stack(16 * MM2::MM2_Page_Size);
     sch_set_priority(default_userspace_priority);
 	//Yes, there are supposed to be two of these calls.
 	sch_abortable(true);

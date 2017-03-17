@@ -1,5 +1,5 @@
 diff -rupN libgd-2.1.0/config/config.sub originals/libgd-2.1.0/config/config.sub
---- libgd-2.1.0/config/config.sub	2017-02-22 10:11:15.427232000 +0000
+--- libgd-2.1.0/config/config.sub	2017-03-17 11:54:34.434039000 +0000
 +++ originals/libgd-2.1.0/config/config.sub	2013-06-25 10:58:55.000000000 +0100
 @@ -1354,7 +1354,7 @@ case $os in
  	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
@@ -11,7 +11,7 @@ diff -rupN libgd-2.1.0/config/config.sub originals/libgd-2.1.0/config/config.sub
  	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
  	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \
 diff -rupN libgd-2.1.0/configure originals/libgd-2.1.0/configure
---- libgd-2.1.0/configure	2017-03-17 11:46:32.994039000 +0000
+--- libgd-2.1.0/configure	2017-03-17 11:54:34.438039000 +0000
 +++ originals/libgd-2.1.0/configure	2013-06-25 14:53:41.000000000 +0100
 @@ -5587,10 +5587,6 @@ sysv4 | sysv4.3*)
  tpf*)
@@ -43,7 +43,7 @@ diff -rupN libgd-2.1.0/configure originals/libgd-2.1.0/configure
  *)
    dynamic_linker=no
 diff -rupN libgd-2.1.0/src/gd.c originals/libgd-2.1.0/src/gd.c
---- libgd-2.1.0/src/gd.c	2017-03-17 09:21:22.908188993 +0000
+--- libgd-2.1.0/src/gd.c	2017-03-17 11:54:34.438039000 +0000
 +++ originals/libgd-2.1.0/src/gd.c	2013-06-25 10:58:23.000000000 +0100
 @@ -561,14 +561,6 @@ BGD_DECLARE(int) gdImageColorResolve (gd
  
@@ -87,8 +87,30 @@ diff -rupN libgd-2.1.0/src/gd.c originals/libgd-2.1.0/src/gd.c
  			             fill_color);
  		}
  	}
+diff -rupN libgd-2.1.0/src/gdcache.c originals/libgd-2.1.0/src/gdcache.c
+--- libgd-2.1.0/src/gdcache.c	2017-03-17 16:48:12.804706263 +0000
++++ originals/libgd-2.1.0/src/gdcache.c	2013-06-25 10:58:23.000000000 +0100
+@@ -5,8 +5,6 @@
+ #include "gd.h"
+ #include "gdhelpers.h"
+ 
+-#include <btos.h>
+-
+ #ifdef HAVE_LIBTTF
+ #	define NEED_CACHE 1
+ #else
+@@ -140,9 +138,6 @@ void * gdCacheGet(gdCache_head_t *head,
+ 	} else {
+ 		/* cache full - replace least-recently-used */
+ 		/* preveprev becomes new end of list */
+-		char q[128] = {0};
+-		sprintf(q, "libgd: %p\n", prevprev);
+-		//bt_zero(q);
+ 		prevprev->next = NULL;
+ 		elem = prev;
+ 		(*(head->gdCacheRelease))(elem->userdata);
 diff -rupN libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
---- libgd-2.1.0/src/gd_errors.h	2017-02-22 10:11:15.427232000 +0000
+--- libgd-2.1.0/src/gd_errors.h	2017-03-17 11:54:34.438039000 +0000
 +++ originals/libgd-2.1.0/src/gd_errors.h	2013-06-25 10:58:23.000000000 +0100
 @@ -1,7 +1,7 @@
  #ifndef GD_ERRORS_H
@@ -99,8 +121,30 @@ diff -rupN libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
  # include <syslog.h>
  #else
  /*
+diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
+--- libgd-2.1.0/src/gdft.c	2017-03-17 16:46:23.444706263 +0000
++++ originals/libgd-2.1.0/src/gdft.c	2013-06-25 10:58:23.000000000 +0100
+@@ -5,7 +5,6 @@
+ /* John Ellson   ellson@graphviz.org        */
+ /********************************************/
+ 
+-#include <btos.h>
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -505,10 +504,6 @@ fontFetch (char **error, void *key)
+ 
+ 		return NULL;
+ 	}
+-	
+-	char q[128] = {0};
+-	sprintf(q, "libgd: %p %p\n", a, a->fontpath);
+-	//bt_zero(q);
+ 
+ 	err = FT_New_Face(*b->library, a->fontpath, 0, &a->face);
+ 
 diff -rupN libgd-2.1.0/src/gdpp.h originals/libgd-2.1.0/src/gdpp.h
---- libgd-2.1.0/src/gdpp.h	2017-02-22 10:11:15.427232000 +0000
+--- libgd-2.1.0/src/gdpp.h	2017-03-17 11:54:34.438039000 +0000
 +++ originals/libgd-2.1.0/src/gdpp.h	2013-06-25 10:58:23.000000000 +0100
 @@ -1476,7 +1476,7 @@ public:
  		return gdImageTrueColorPixel(im, x, y);
@@ -112,7 +156,7 @@ diff -rupN libgd-2.1.0/src/gdpp.h originals/libgd-2.1.0/src/gdpp.h
  	}
  
 diff -rupN libgd-2.1.0/src/Makefile.in originals/libgd-2.1.0/src/Makefile.in
---- libgd-2.1.0/src/Makefile.in	2017-02-22 10:11:15.427232000 +0000
+--- libgd-2.1.0/src/Makefile.in	2017-03-17 11:54:34.438039000 +0000
 +++ originals/libgd-2.1.0/src/Makefile.in	2013-06-25 14:53:39.000000000 +0100
 @@ -393,7 +393,7 @@ top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@

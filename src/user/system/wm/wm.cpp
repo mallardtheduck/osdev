@@ -6,6 +6,7 @@
 #include "windows.hpp"
 #include "window.hpp"
 #include "service.hpp"
+#include "drawing.hpp"
 
 using namespace std;
 
@@ -61,6 +62,7 @@ int main(int argc, char **argv){
 				vidmode.width = 800;
 				vidmode.height = 600;
 				vidmode.bpp = 24;
+				InitDrawing();
 				GDS_SetScreenMode(vidmode);
 				InitCursor();
 				DrawWindows();

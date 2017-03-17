@@ -16,7 +16,7 @@ export STRIP=$ARCH-strip
 export OBJCOPY=$ARCH-objcopy
 export LN_S="ln -s"
 
-export CFLAGS="-g -O2"
+export CFLAGS="-g -O2 -I$PWD/../../include"
 export CPPFLAGS=""
 export CXXFLAGS=""
 

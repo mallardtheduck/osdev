@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include "libgds_internal.hpp"
+#include <cstring>
 
 using namespace std;
 
@@ -143,4 +144,12 @@ extern "C" void GDS_SetCursor(uint64_t surfaceID, uint32_t hotx, uint32_t hoty){
 
 extern "C" void GDS_CursorVisibility(bool visible){
 	SendMessage(gds_MsgType::CursorVisibility, sizeof(visible), (void*)&visible, false);
+}
+
+extern "C" uint32_t GDS_GetFontID(const char *name, gds_FontStyle::Enum style){
+	gds_FontInfo i;
+	strncpy(i.name, name, FONT_NAME_MAX);
+	i.fontStyle = style;
+	bt_msg_header reply = SendMessage(gds_MsgType::GetFontID, sizeof(i), (void*)&i, true);
+	return GetContent<uint32_t>(&reply);
 }

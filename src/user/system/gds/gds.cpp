@@ -1,6 +1,7 @@
 #include "gds.hpp"
 #include "screen.hpp"
 #include "drawingop.hpp"
+#include "fonts.hpp"
 #include <iostream>
 
 using namespace std;
@@ -13,6 +14,7 @@ void set_env(const string &name, const string &value) {
 
 int main(int argc, char **argv) {
 	cout << "BT/OS GDS" << endl;
+	GetFontManager();
 	bt_pid pid = bt_getpid();
 	char pid_str[64] = {0};
 	snprintf(pid_str, 64, "%i", pid);

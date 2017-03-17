@@ -3,6 +3,7 @@
 #include "screen.hpp"
 #include <algorithm>
 #include <sstream>
+#include "fonts.hpp"
 
 using namespace std;
 
@@ -176,6 +177,17 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			bt_msg_content(&msg, (void*)&cur_visible, sizeof(cur_visible));
 			if(cur_visible) GetScreen()->ShowCursor();
 			else GetScreen()->HideCursor();
+			break;
+		case gds_MsgType::GetFontID:{
+				gds_FontInfo finfo;
+				bt_msg_content(&msg, (void*)&finfo, sizeof(finfo));
+				shared_ptr<gds_FontInfo> f = GetFontManager()->GetFont(finfo.name, (gds_FontStyle::Enum)finfo.fontStyle);
+				if(f){
+					SendReply(msg, f->fontID);
+				}else{
+					SendReply(msg, (uint32_t)0);
+				}
+			}
 			break;
 	}
 }

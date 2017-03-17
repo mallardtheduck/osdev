@@ -17,6 +17,7 @@ vector<shared_ptr<Sprite>> sprites;
 queue<wm_Rect> drawQ;
 bool redrawScreen = false;
 uint32_t curblocks = 0;
+uint32_t font;
 
 bool operator==(const wm_Rect &a, const wm_Rect &b){
 	return (a.x == b.x) && (a.y == b.y) && (a.w == b.w) && (a.h == b.h);
@@ -47,16 +48,16 @@ void RemoveSprite(shared_ptr<Sprite> s){
 
 void DrawTitle(){
 	uint32_t red = GDS_GetColour(255, 127, 127);
-	GDS_Text(100, 20, "Breakout!", gds_TEMPFonts::Giant, 0, red);
+	GDS_Text(100, 20, "Breakout!", font, 24, red);
 	uint32_t green = GDS_GetColour(127, 255, 127);
-	GDS_Text(65, 40, "Press any key to start.", gds_TEMPFonts::Large, 0, green);
-	GDS_Text(15, 200, "Controls:", gds_TEMPFonts::MediumBold, 0, green);
-	GDS_Text(15, 215, "Left/Right to move, Space to launch ball", gds_TEMPFonts::MediumBold, 0, green);
+	GDS_Text(65, 40, "Press any key to start.", font, 16, green);
+	GDS_Text(15, 200, "Controls:", font, 12, green);
+	GDS_Text(15, 215, "Left/Right to move, Space to launch ball", font, 12, green);
 }
 
 void DrawEndScreen(){
 	uint32_t red = GDS_GetColour(255, 127, 127);
-	GDS_Text(110, 40, "You win!", gds_TEMPFonts::Giant, 0, red);
+	GDS_Text(110, 40, "You win!", font, 24, red);
 }
 
 void InitBlocks(){
@@ -122,6 +123,7 @@ void GameDraw(){
 }
 
 void InitGame(){
+	font = GDS_GetFontID("DejaVu Sans", gds_FontStyle::Bold);
 	DrawBackground();
 	ball.reset(new Ball());
 	sprites.push_back(ball);

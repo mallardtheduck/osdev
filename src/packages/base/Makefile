@@ -60,9 +60,11 @@ import-files:=\
  data/btos/lib/ncurses++.ell \
  data/btos/lib/gd.ell \
  data/btos/lib/freetype.ell \
+ data/btos/fonts \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
+.SUFFIXES:
 
 all: ../base.tar
 
@@ -251,6 +253,9 @@ data/btos/lib/gd.ell: ../../3rdparty/install/btos/lib/gd.ell
 
 data/btos/lib/freetype.ell: ../../3rdparty/install/btos/lib/freetype.ell
 	cp $< $@
+
+data/btos/fonts: ../../user/system/gds/fonts
+	cp -Rv $< $@
 
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx
 	mkdir -p data/btos/boot/grub/
