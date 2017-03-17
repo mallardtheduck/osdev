@@ -1,10 +1,7 @@
 #include "screen.hpp"
 #include <cstring>
 #include <cstdlib>
-#include <sstream>
 #include <dev/rtc.h>
-
-#define DBG(x) do{std::stringstream dbgss; dbgss << x << endl; bt_zero(dbgss.str().c_str());}while(0)
 
 using namespace std;
 
@@ -20,6 +17,7 @@ void screen_update_thread(void *){
 	deque<Screen::update> batch;
 	while(true){
 		bt_wait_atom(pthis->sync_atom, bt_atom_compare::GreaterThan, 0);
+		//uint64_t batch_start = bt_rtc_millis();
 		bt_lock(pthis->update_q_lock);
 		batch.swap(pthis->update_q);
 		bt_modify_atom(pthis->sync_atom, bt_atom_modify::Set, 0);
@@ -53,6 +51,8 @@ void screen_update_thread(void *){
 		batch.clear();
 		bt_unlock(pthis->update_q_lock);
 		bt_fioctl(pthis->fh, bt_terminal_ioctl::PointerUnfreeze, 0, NULL);
+		//uint64_t batch_end = bt_rtc_millis();
+		//DBG("GDS: Batch took " << (batch_end - batch_start) << "ms");
 		bt_rtc_sleep(15);
 	}
 }
@@ -84,6 +84,8 @@ Screen::~Screen(){
 
 void Screen::RestoreMode(){
 	if(original_mode.bpp){
+		QueueUpdate(0, 0, 0, false);
+		bt_wait_thread(update_thread);
 		bt_fioctl(fh, bt_terminal_ioctl::SetScreenMode, sizeof(original_mode), (char*)&original_mode);
 	}
 }
@@ -209,11 +211,8 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 	}
 	DBG("GDS: Found mode " << bestmode.width << "x" << bestmode.height << " " << (int)bestmode.bpp << "bpp.");
 	if(bestmode.bpp){
-		bt_zero("A\n");
 		QueueUpdate(0, 0, 0, false);
-		bt_zero("B\n");
 		bt_wait_thread(update_thread);
-		bt_zero("C\n");
 		
 		bt_fioctl(fh, bt_terminal_ioctl::SetScreenMode, sizeof(bestmode), (char *) &bestmode);
 		current_mode=bestmode;
@@ -256,6 +255,7 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 }
 
 void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
+	//uint64_t update_start = bt_rtc_millis();
 	bool hide_cursor = false;	
 	if (!x && !y && !w && !h) {
 		w = current_mode.width;
@@ -309,6 +309,8 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 		bt_fwrite(fh, buffersize, (char *) buffer);
 		bt_unlock(update_q_lock);
 	}
+	//int64_t update_end = bt_rtc_millis();
+	//DBG("GDS: Update took " << (update_end - update_start) << "ms");
 }
 
 void Screen::ShowCursor() {

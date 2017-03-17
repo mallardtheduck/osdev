@@ -7,6 +7,8 @@
 #include <gdfontg.h>
 #include <gdfontl.h>
 
+#include <dev/rtc.h>
+
 using namespace std;
 
 BitmapSurface::BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale) {
@@ -18,6 +20,7 @@ BitmapSurface::BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale) {
 }
 
 size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
+	//uint64_t op_start = bt_rtc_millis();
 	image->SetThickness(op.Common.lineWidth);
 	switch(op.type) {
 		case gds_DrawingOpType::Dot:
@@ -64,7 +67,11 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 				auto srcSurface = allSurfaces[op.Blit.src].lock();
 				if(srcSurface) {
 					auto srcImage = srcSurface->Render(op.Blit.scale);
-					image->CopyResized(srcImage->GetPtr(), op.Blit.dstX, op.Blit.dstY, op.Blit.srcX, op.Blit.srcY, op.Blit.dstW, op.Blit.dstH, op.Blit.srcW, op.Blit.srcH);
+					if(op.Blit.srcW == op.Blit.dstW && op.Blit.srcH == op.Blit.srcW){
+						image->Copy(srcImage->GetPtr(), op.Blit.dstX, op.Blit.dstY, op.Blit.srcX, op.Blit.srcY, op.Blit.dstW, op.Blit.dstH);
+					}else{
+						image->CopyResized(srcImage->GetPtr(), op.Blit.dstX, op.Blit.dstY, op.Blit.srcX, op.Blit.srcY, op.Blit.dstW, op.Blit.dstH, op.Blit.srcW, op.Blit.srcH);
+					}
 				}
 			}
 			break;
@@ -78,6 +85,8 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 			break;
 
 	}
+	//uint64_t op_end = bt_rtc_millis();
+	//DBG("GDS: Operation " << op.type << " took " << (op_end - op_start) << "ms");
 	return 0;
 }
 
