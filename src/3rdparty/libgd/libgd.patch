@@ -1,118 +1,125 @@
-diff -rupN originals/libgd-2.1.0/btos-build.sh libgd-2.1.0/btos-build.sh
---- originals/libgd-2.1.0/btos-build.sh	1970-01-01 01:00:00.000000000 +0100
-+++ libgd-2.1.0/btos-build.sh	2015-08-10 23:32:17.767908628 +0100
-@@ -0,0 +1,39 @@
-+#!/bin/bash
-+
-+# architecture prefix
-+ARCH="i686-pc-btos"
-+
-+# cumulative toolchain prefix
-+PREFIX=/btos
-+
-+export CC=$ARCH-gcc
-+export CXX=$ARCH-g++
-+export LD=$ARCH-ld
-+export NM="$ARCH-nm -B"
-+export AR=$ARCH-ar
-+export RANLIB=$ARCH-ranlib
-+export STRIP=$ARCH-strip
-+export OBJCOPY=$ARCH-objcopy
-+export LN_S="ln -s"
-+
-+export CFLAGS="-g -O2"
-+export CPPFLAGS=""
-+export CXXFLAGS=""
-+
-+export LDFLAGS=""
-+
-+PATH=$BASE_PATH/bin:$PATH
-+./configure \
-+	--host=$ARCH \
-+	--prefix=$PREFIX \
-+	--with-png=no \
-+	--with-jpeg=no \
-+	--with-freetype=no \
-+	--with-fontconfig=no \
-+	--with-xpm=no
-+
-+make
-+make DESTDIR=$PWD/../install install
-+rm ../install/btos/lib/libgd.la
-+find ../install -executable -not -name "*.elx" -type f -exec rm {}.elx \;
-+find ../install -executable -not -name "*.elx" -type f -exec mv {} {}.elx \;
-diff -rupN originals/libgd-2.1.0/config/config.sub libgd-2.1.0/config/config.sub
---- originals/libgd-2.1.0/config/config.sub	2013-06-25 10:58:55.000000000 +0100
-+++ libgd-2.1.0/config/config.sub	2015-08-20 22:01:57.318219151 +0100
+diff -rupN libgd-2.1.0/config/config.sub originals/libgd-2.1.0/config/config.sub
+--- libgd-2.1.0/config/config.sub	2017-02-22 10:11:15.427232000 +0000
++++ originals/libgd-2.1.0/config/config.sub	2013-06-25 10:58:55.000000000 +0100
 @@ -1354,7 +1354,7 @@ case $os in
  	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
  	      | -sym* | -kopensolaris* | -plan9* \
  	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
--	      | -aos* | -aros* \
-+	      | -aos* | -aros* | -btos* \
+-	      | -aos* | -aros* | -btos* \
++	      | -aos* | -aros* \
  	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
  	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
  	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \
-diff -rupN originals/libgd-2.1.0/src/gd.c libgd-2.1.0/src/gd.c
---- originals/libgd-2.1.0/src/gd.c	2013-06-25 10:58:23.000000000 +0100
-+++ libgd-2.1.0/src/gd.c	2015-08-20 23:14:04.366130854 +0100
-@@ -561,6 +561,14 @@ BGD_DECLARE(int) gdImageColorResolve (gd
+diff -rupN libgd-2.1.0/configure originals/libgd-2.1.0/configure
+--- libgd-2.1.0/configure	2017-03-17 11:46:32.994039000 +0000
++++ originals/libgd-2.1.0/configure	2013-06-25 14:53:41.000000000 +0100
+@@ -5587,10 +5587,6 @@ sysv4 | sysv4.3*)
+ tpf*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+-  
+-btos*)
+-  lt_cv_deplibs_check_method=pass_all
+-  ;;
+ esac
+ 
+ fi
+@@ -10230,17 +10226,6 @@ uts4*)
+   soname_spec='${libname}${release}${shared_ext}$major'
+   shlibpath_var=LD_LIBRARY_PATH
+   ;;
+-  
+-btos*)
+-  version_type=linux
+-  libname_spec='$name'
+-  shrext_cmds=".ell"
+-  need_lib_prefix=no
+-  library_names_spec='$libname${shared_ext}'
+-  dynamic_linker="$host_os ELOADER"
+-  shlibpath_var=LIBPATH
+-  soname_spec='$libname${shared_ext}'
+-  ;;
+ 
+ *)
+   dynamic_linker=no
+diff -rupN libgd-2.1.0/src/gd.c originals/libgd-2.1.0/src/gd.c
+--- libgd-2.1.0/src/gd.c	2017-03-17 09:21:22.908188993 +0000
++++ originals/libgd-2.1.0/src/gd.c	2013-06-25 10:58:23.000000000 +0100
+@@ -561,14 +561,6 @@ BGD_DECLARE(int) gdImageColorResolve (gd
  
  BGD_DECLARE(int) gdImageColorResolveAlpha (gdImagePtr im, int r, int g, int b, int a)
  {
-+	if(a >= gdAlphaTransparent){
-+		int ret = gdImageGetTransparent(im);
-+		if(ret == -1){ 
-+			ret = gdImageColorAllocate(im, 255, 0, 255);
-+			gdImageColorTransparent(im, ret);
-+		}
-+		return ret;
-+	}
+-	if(a >= gdAlphaTransparent){
+-		int ret = gdImageGetTransparent(im);
+-		if(ret == -1){ 
+-			ret = gdImageColorAllocate(im, 255, 0, 255);
+-			gdImageColorTransparent(im, ret);
+-		}
+-		return ret;
+-	}
  	int c;
  	int ct = -1;
  	int op = -1;
-@@ -3025,7 +3033,7 @@ BGD_DECLARE(void) gdImageFilledPolygon (
+@@ -2379,7 +2371,7 @@ BGD_DECLARE(void) gdImageCopy (gdImagePt
+ 		if (src->trueColor) {
+ 			for (y = 0; (y < h); y++) {
+ 				for (x = 0; (x < w); x++) {
+-					int c = gdImageTrueColorPixel (src, srcX + x, srcY + y);
++					int c = gdImageGetTrueColorPixel (src, srcX + x, srcY + y);
+ 					if (c != src->transparent) {
+ 						gdImageSetPixel (dst, dstX + x, dstY + y, c);
+ 					}
+@@ -2389,7 +2381,7 @@ BGD_DECLARE(void) gdImageCopy (gdImagePt
+ 			/* source is palette based */
+ 			for (y = 0; (y < h); y++) {
+ 				for (x = 0; (x < w); x++) {
+-					int c = gdImagePalettePixel (src, srcX + x, srcY + y);
++					int c = gdImageGetPixel (src, srcX + x, srcY + y);
+ 					if (c != src->transparent) {
+ 						gdImageSetPixel(dst, dstX + x, dstY + y, gdTrueColorAlpha(src->red[c], src->green[c], src->blue[c], src->alpha[c]));
+ 					}
+@@ -3033,7 +3025,7 @@ BGD_DECLARE(void) gdImageFilledPolygon (
  		for (i = 0; (i < (ints-1)); i += 2) {
  			/* 2.0.29: back to gdImageLine to prevent segfaults when
  			  performing a pattern fill */
--			gdImageLine (im, im->polyInts[i], y, im->polyInts[i + 1], y,
-+			gdImageLine (im, im->polyInts[i], y, im->polyInts[i + 1] - ((im->polyInts[i + 1] != im->polyInts[i])? 1 : 0), y,
+-			gdImageLine (im, im->polyInts[i], y, im->polyInts[i + 1] - ((im->polyInts[i + 1] != im->polyInts[i])? 1 : 0), y,
++			gdImageLine (im, im->polyInts[i], y, im->polyInts[i + 1], y,
  			             fill_color);
  		}
  	}
-diff -rupN originals/libgd-2.1.0/src/gd_errors.h libgd-2.1.0/src/gd_errors.h
---- originals/libgd-2.1.0/src/gd_errors.h	2013-06-25 10:58:23.000000000 +0100
-+++ libgd-2.1.0/src/gd_errors.h	2015-08-20 22:01:57.318219151 +0100
+diff -rupN libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
+--- libgd-2.1.0/src/gd_errors.h	2017-02-22 10:11:15.427232000 +0000
++++ originals/libgd-2.1.0/src/gd_errors.h	2013-06-25 10:58:23.000000000 +0100
 @@ -1,7 +1,7 @@
  #ifndef GD_ERRORS_H
  #define GD_ERRORS_H
  
--#ifndef _WIN32
-+#if !defined(_WIN32) && !defined(__btos__)
+-#if !defined(_WIN32) && !defined(__btos__)
++#ifndef _WIN32
  # include <syslog.h>
  #else
  /*
-diff -rupN originals/libgd-2.1.0/src/gdpp.h libgd-2.1.0/src/gdpp.h
---- originals/libgd-2.1.0/src/gdpp.h	2013-06-25 10:58:23.000000000 +0100
-+++ libgd-2.1.0/src/gdpp.h	2015-08-20 22:01:57.318219151 +0100
+diff -rupN libgd-2.1.0/src/gdpp.h originals/libgd-2.1.0/src/gdpp.h
+--- libgd-2.1.0/src/gdpp.h	2017-02-22 10:11:15.427232000 +0000
++++ originals/libgd-2.1.0/src/gdpp.h	2013-06-25 10:58:23.000000000 +0100
 @@ -1476,7 +1476,7 @@ public:
  		return gdImageTrueColorPixel(im, x, y);
  	}
  
--	const gdImagePtr GetPtr() const {
-+	gdImagePtr GetPtr() const {
+-	gdImagePtr GetPtr() const {
++	const gdImagePtr GetPtr() const {
  		return im;
  	}
  
-diff -rupN originals/libgd-2.1.0/src/Makefile.in libgd-2.1.0/src/Makefile.in
---- originals/libgd-2.1.0/src/Makefile.in	2013-06-25 14:53:39.000000000 +0100
-+++ libgd-2.1.0/src/Makefile.in	2015-08-20 22:01:57.318219151 +0100
+diff -rupN libgd-2.1.0/src/Makefile.in originals/libgd-2.1.0/src/Makefile.in
+--- libgd-2.1.0/src/Makefile.in	2017-02-22 10:11:15.427232000 +0000
++++ originals/libgd-2.1.0/src/Makefile.in	2013-06-25 14:53:39.000000000 +0100
 @@ -393,7 +393,7 @@ top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
  bin_SCRIPTS = bdftogd
  EXTRA_DIST = bdftogd demoin.png entities.html entities.tcl CMakeLists.txt config.h.cmake gd_io_stream.cxx gdpp.cxx msinttypes/inttypes.h msinttypes/stdint.h
--include_HEADERS = gd.h gdfx.h gd_io.h gdcache.h gdfontg.h gdfontl.h gdfontmb.h gdfonts.h gdfontt.h entities.h gd_color_map.h gd_errors.h gdpp.h
-+include_HEADERS = gd.h gdfx.h gd_io.h gdcache.h gdfontg.h gdfontl.h gdfontmb.h gdfonts.h gdfontt.h entities.h gd_color_map.h gd_errors.h gdpp.h gd_io_stream.h
+-include_HEADERS = gd.h gdfx.h gd_io.h gdcache.h gdfontg.h gdfontl.h gdfontmb.h gdfonts.h gdfontt.h entities.h gd_color_map.h gd_errors.h gdpp.h gd_io_stream.h
++include_HEADERS = gd.h gdfx.h gd_io.h gdcache.h gdfontg.h gdfontl.h gdfontmb.h gdfonts.h gdfontt.h entities.h gd_color_map.h gd_errors.h gdpp.h
  lib_LTLIBRARIES = libgd.la
  libgd_la_SOURCES = gd.c gd_color.c gd_color_map.c gd_transform.c gdfx.c gd_security.c gd_gd.c gd_gd2.c gd_io.c gd_io_dp.c gd_gif_in.c    \
                     gd_gif_out.c gd_io_file.c gd_io_ss.c gd_jpeg.c gd_png.c gd_ss.c gd_topal.c gd_wbmp.c gdcache.c gdfontg.c gdfontl.c    \

@@ -20,6 +20,9 @@ export CFLAGS="-g -O2"
 export CPPFLAGS=""
 export CXXFLAGS=""
 
+export LIBFREETYPE_CFLAGS="-I$PWD/../install/btos/include/freetype2"
+export LIBFREETYPE_LIBS="-L$PWD/../install/btos/lib -lfreetype"
+
 export LDFLAGS=""
 
 PATH=$BASE_PATH/bin:$PATH
@@ -28,12 +31,13 @@ PATH=$BASE_PATH/bin:$PATH
 	--prefix=$PREFIX \
 	--with-png=no \
 	--with-jpeg=no \
-	--with-freetype=no \
+	--with-freetype=yes \
 	--with-fontconfig=no \
 	--with-xpm=no
 
 make
 make DESTDIR=$PWD/../install install
-rm ../install/btos/lib/libgd.la
+find ../install -name "*.ell" -exec chmod -x {} \;
+find ../install -name "*.la" -delete
 find ../install -executable -not -name "*.elx" -type f -exec rm {}.elx \;
 find ../install -executable -not -name "*.elx" -type f -exec mv {} {}.elx \;

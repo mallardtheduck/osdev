@@ -31,3 +31,6 @@ DESTDIR=$PWD/../install ./configure \
 
 make
 make DESTDIR=$PWD/../install install
+
+find ../install -name "*.ell" -exec chmod -x {} \;
+find ../install -name "*.la" -delete
