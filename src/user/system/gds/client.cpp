@@ -12,7 +12,7 @@ static uint64_t surfaceCounter = 0;
 
 static map<bt_pid_t, shared_ptr<Client>> allClients;
 
-template<typename T> static void SendReply(bt_msg_header msg, const T &content) {
+template<typename T> static void SendReply(const bt_msg_header &msg, const T &content) {
 	bt_msg_header reply;
 	reply.to = msg.from;
 	reply.reply_id = msg.id;
@@ -179,14 +179,32 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			else GetScreen()->HideCursor();
 			break;
 		case gds_MsgType::GetFontID:{
-				gds_FontInfo finfo;
-				bt_msg_content(&msg, (void*)&finfo, sizeof(finfo));
-				shared_ptr<gds_FontInfo> f = GetFontManager()->GetFont(finfo.name, (gds_FontStyle::Enum)finfo.fontStyle);
+				gds_FontRequest req;
+				bt_msg_content(&msg, (void*)&req, sizeof(req));
+				shared_ptr<gds_FontInfo> f = GetFontManager()->GetFont(req.name, (gds_FontStyle::Enum)req.fontStyle);
 				if(f){
 					SendReply(msg, f->fontID);
 				}else{
 					SendReply(msg, (uint32_t)0);
 				}
+			}
+			break;
+		case gds_MsgType::GetFontInfo:{
+				uint32_t fontID;
+				bt_msg_content(&msg, (void*)&fontID, sizeof(fontID));
+				shared_ptr<gds_FontInfo> f = GetFontManager()->GetFont(fontID);
+				if(f){
+					SendReply(msg, *f);
+				}else{
+					SendReply(msg, gds_FontInfo());
+				}
+			}
+			break;
+		case gds_MsgType::GetGlyphInfo:{
+				gds_GlyphInfo_Request req;
+				bt_msg_content(&msg, (void*)&req, sizeof(req));
+				gds_GlyphInfo info = GetFontManager()->GetGlyphInfo(req.fontID, req.size, req.ch);
+				SendReply(msg, info);
 			}
 			break;
 	}

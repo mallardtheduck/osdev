@@ -45,7 +45,7 @@ size_t RenderMenu(uint64_t surf, uint32_t ypos = UINT32_MAX, bool down = true){
 		}
 		GDS_Box(0, pos, info.w, LineHeight, 0, itemColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		GDS_Line(0, pos, info.w, pos, GDS_GetColour(128, 128, 128));
-		GDS_Text(5, pos + LineHeight - 3, o.first.c_str(), textFont, 10, GDS_GetColour(0, 0, 0));
+		GDS_Text(5, pos + LineHeight - 3, o.first.c_str(), textFont, 12, GDS_GetColour(0, 0, 0));
 		pos += LineHeight;
 	}
 	return ret;

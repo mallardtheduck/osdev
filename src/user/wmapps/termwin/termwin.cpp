@@ -16,27 +16,29 @@ USE_BT_TERMINAL_API;
 
 using namespace std;
 
-const string ProcInfoPath = "info:/procs";
+static const string ProcInfoPath = "info:/procs";
+static const string fontName = "unscii";
+static const size_t fontSize = 12;
 
 const size_t terminal_width = 80;
 const size_t terminal_height = 25;
 const bt_vidmode terminal_mode = {1, terminal_width, terminal_height, 4, true, false, 0, 0, 0, 0, 0, 0, 0}; 
-const uint32_t font_width = 8;
-const uint32_t font_height = 16;
+static uint32_t font_width = 0;
+static uint32_t font_height = 0;
 static uint32_t font;
 const size_t buffer_size = (terminal_width * terminal_height * 2);
-uint8_t buffer[buffer_size];
-uint8_t tempbuffer[buffer_size];
-const size_t thread_stack_size = 16 * 1024;
-char mainthread_stack[thread_stack_size];
-char renderthread_stack[thread_stack_size];
-bt_handle_t terminal_handle = 0;
-volatile bool ready = false;
-bt_handle_t render_counter;
-bt_handle_t renderthread = 0;
-volatile bool endrender = false;
-bt_handle_t bufferlock = 0;
-size_t curpos;
+static uint8_t buffer[buffer_size];
+static uint8_t tempbuffer[buffer_size];
+static const size_t thread_stack_size = 16 * 1024;
+static char mainthread_stack[thread_stack_size];
+static char renderthread_stack[thread_stack_size];
+static bt_handle_t terminal_handle = 0;
+static volatile bool ready = false;
+static bt_handle_t render_counter;
+static bt_handle_t renderthread = 0;
+static volatile bool endrender = false;
+static bt_handle_t bufferlock = 0;
+static size_t curpos;
 
 string get_env(const string &name){
 	char value[128];
@@ -190,7 +192,12 @@ void render_terminal_thread(){
 							uint8_t fgcol = col & 0x0F;
 							uint32_t width = text.str().length() * font_width;
 							GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-							GDS_Text(start * font_width, (line * font_height) + 16, text.str().c_str(), font, 16, getcolour(fgcol));
+							string str = text.str();
+							for(size_t i = 0; i < str.length(); ++i){
+								if(str[i] == ' ') continue;
+								GDS_TextChar((start + i) * font_width, ((line + 1) * font_height) - (font_height / 5), str[i], font, fontSize, getcolour(fgcol));
+							}
+							//GDS_Text(start * font_width, (line * font_height) + 14, text.str().c_str(), font, 14, getcolour(fgcol));
 							//WM_UpdateRect(start * font_width, line * font_height, width, font_height);
 						}
 						text.str("");
@@ -205,7 +212,12 @@ void render_terminal_thread(){
 					uint8_t fgcol = col & 0x0F;
 					uint32_t width = (end * font_width) - (start * font_width);
 					GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-					GDS_Text(start * font_width, line * font_height, text.str().c_str(), font, 0, getcolour(fgcol));
+					string str = text.str();
+					for(size_t i = 0; i < str.length(); ++i){
+						if(str[i] == ' ') continue;
+						GDS_TextChar((start + i) * font_width, ((line + 1) * font_height) - (font_height / 5), str[i], font, fontSize, getcolour(fgcol));
+					}
+					//GDS_Text(start * font_width, line * font_height, text.str().c_str(), font, 0, getcolour(fgcol));
 				}
 				WM_UpdateRect((int32_t)(firststart * font_width), (int32_t)(line * font_height), (overallend - firststart + 1) * font_width, font_height);
 			}
@@ -360,7 +372,15 @@ void mainthread(void*){
 }
 
 int main(){
-	font = GDS_GetFontID("unscii-16", gds_FontStyle::Normal);
+	font = GDS_GetFontID(fontName.c_str(), gds_FontStyle::Normal);
+	gds_FontInfo info = GDS_GetFontInfo(font);
+	font_width = (info.maxW * fontSize) / info.scale;
+	font_height = (info.maxH * fontSize) / info.scale;
+	{
+		stringstream ss;
+		ss << "TW: Scale:  " << info.scale << " width: " << info.maxW << " size: " << fontSize << endl;
+		bt_zero(ss.str().c_str());
+	}
 	bt_terminial_init();
 	bufferlock = bt_create_lock();
 	render_counter = bt_create_atom(0);

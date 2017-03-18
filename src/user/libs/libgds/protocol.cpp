@@ -147,9 +147,20 @@ extern "C" void GDS_CursorVisibility(bool visible){
 }
 
 extern "C" uint32_t GDS_GetFontID(const char *name, gds_FontStyle::Enum style){
-	gds_FontInfo i;
+	gds_FontRequest i;
 	strncpy(i.name, name, FONT_NAME_MAX);
 	i.fontStyle = style;
 	bt_msg_header reply = SendMessage(gds_MsgType::GetFontID, sizeof(i), (void*)&i, true);
 	return GetContent<uint32_t>(&reply);
+}
+
+extern "C" gds_FontInfo GDS_GetFontInfo(uint32_t fontID){
+	bt_msg_header reply = SendMessage(gds_MsgType::GetFontInfo, sizeof(fontID), (void*)&fontID, true);
+	return GetContent<gds_FontInfo>(&reply);
+}
+
+extern "C" gds_GlyphInfo GDS_GetGlyphInfo(uint32_t fontID, size_t size, char ch){
+	gds_GlyphInfo_Request req = {fontID, size, ch};
+	bt_msg_header reply = SendMessage(gds_MsgType::GetGlyphInfo, sizeof(req), (void*)&req, true);
+	return GetContent<gds_GlyphInfo>(&reply);
 }

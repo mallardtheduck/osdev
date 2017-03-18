@@ -102,6 +102,19 @@ extern "C" void GDS_Text(int32_t x, int32_t y, const char *text, uint32_t fontID
 	delete params;
 }
 
+extern "C" void GDS_TextChar(int32_t x, int32_t y, char c, uint32_t fontID, uint32_t size, uint32_t colour, uint8_t style){
+	gds_DrawingOp op;
+	op.type = gds_DrawingOpType::TextChar;
+	op.TextChar.x = x;
+	op.TextChar.y = y;
+	op.TextChar.fontID = fontID;
+	op.TextChar.size = size;
+	op.TextChar.c = c;
+	op.Common.lineColour = colour;
+	op.Common.lineStyle = style;
+	GDS_AddDrawingOp(op);
+}
+
 extern "C" void GDS_Blit(uint64_t src, uint32_t srcX, uint32_t srcY, uint32_t srcW, uint32_t srcH, int32_t dstX, int32_t dstY, uint32_t dstW, uint32_t dstH, uint32_t scale, uint32_t flags){
 	gds_DrawingOp op;
 	op.type = gds_DrawingOpType::Blit;

@@ -10,6 +10,9 @@
 
 #include <dev/rtc.h>
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 using namespace std;
 
 BitmapSurface::BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale) {
@@ -74,6 +77,16 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 						image->CopyResized(srcImage->GetPtr(), op.Blit.dstX, op.Blit.dstY, op.Blit.srcX, op.Blit.srcY, op.Blit.dstW, op.Blit.dstH, op.Blit.srcW, op.Blit.srcH);
 					}
 				}
+			}
+			break;
+		case gds_DrawingOpType::TextChar:{
+				gdFTStringExtra ftex;
+				ftex.flags = gdFTEX_RESOLUTION;
+				ftex.vdpi = 72;
+				ftex.hdpi = 72;
+				string fontfile = GetFontManager()->GetFontFile(op.TextChar.fontID);
+				char chstr[] = {op.TextChar.c, 0};
+				if(fontfile != "" && op.TextChar.size) image->StringFT(NULL, op.Common.lineColour, (char*)fontfile.c_str(), op.TextChar.size, 0, op.TextChar.x, op.TextChar.y, chstr, &ftex);
 			}
 			break;
 		case gds_DrawingOpType::Text:
@@ -143,8 +156,12 @@ void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
 		switch(pending_op.type){
 			//Temporary font code. Replace once FreeType is supported.
 			case gds_DrawingOpType::Text:{
+					gdFTStringExtra ftex;
+					ftex.flags = gdFTEX_RESOLUTION;
+					ftex.vdpi = 72;
+					ftex.hdpi = 72;
 					string fontfile = GetFontManager()->GetFontFile(pending_op.Text.fontID);
-					if(fontfile != "" && pending_op.Text.size) image->StringFT(NULL, pending_op.Common.lineColour, (char*)fontfile.c_str(), pending_op.Text.size, 0, pending_op.Text.x, pending_op.Text.y, params->data);
+					if(fontfile != "" && pending_op.Text.size) image->StringFT(NULL, pending_op.Common.lineColour, (char*)fontfile.c_str(), pending_op.Text.size, 0, pending_op.Text.x, pending_op.Text.y, params->data, &ftex);
 				}
 				break;
 			case gds_DrawingOpType::Polygon:
