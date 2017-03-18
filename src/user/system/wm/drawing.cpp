@@ -9,9 +9,9 @@ uint32_t titleInactiveFont;
 uint32_t menuButtonFont;
 
 void InitDrawing(){
-	titleActiveFont = GDS_GetFontID("Resagnicto", gds_FontStyle::Bold);
-	titleInactiveFont = GDS_GetFontID("Resagnicto", gds_FontStyle::Normal);
-	menuButtonFont = GDS_GetFontID("Resamitz", gds_FontStyle::Bold);
+	titleActiveFont = GDS_GetFontID(GetSetting(TitleFontName).c_str(), gds_FontStyle::Bold);
+	titleInactiveFont = GDS_GetFontID(GetSetting(TitleFontName).c_str(), gds_FontStyle::Normal);
+	menuButtonFont = GDS_GetFontID(GetSetting(MenuButtonFontName).c_str(), gds_FontStyle::Normal);
 }
 
 void DrawButtonUp(uint32_t x, uint32_t y, uint32_t w, uint32_t h, bool active){
@@ -83,7 +83,7 @@ uint64_t DrawTitleBar(uint32_t w, string title, bool active, WindowArea pressed)
 	GDS_Box(0, 0, w, GetMetric(TitleBarSize), GetColour(SeperatorColour), active?GetColour(TitleBarColour):GetColour(InactiveTitleColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	DrawMenuButton(GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::MenuButton));
 	uint32_t font = active ? titleActiveFont : titleInactiveFont;
-	GDS_Text(GetMetric(MenuButtonWidth) + GetMetric(TitleTextMargin), GetMetric(TitleBarSize) - 4, title.c_str(), font, 11, GetColour(TitleTextColour), 0);
+	GDS_Text(GetMetric(MenuButtonWidth) + GetMetric(TitleTextMargin), GetMetric(TitleBarSize) - GetMetric(TitleTextBaseline), title.c_str(), font, GetMetric(TitleFontSize), GetColour(TitleTextColour), 0);
 	DrawMaxButton(w - GetMetric(ButtonSize) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::ExpandButton));
 	DrawMinButton(w - (GetMetric(ButtonSize) * 2) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::HideButton));
 	DrawCloseButton(w - (GetMetric(ButtonSize) * 3) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::CloseButton));

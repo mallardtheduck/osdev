@@ -7,6 +7,8 @@ static const int32_t BorderWidth = 1;
 static const int32_t ButtonSize = TitleBarSize - 2;
 static const int32_t MenuButtonWidth = (TitleBarSize + TitleTextMargin) * 2;
 static const int32_t FullWindowDrag = 1;
+static const int32_t TitleFontSize = 16;
+static const int32_t TitleTextBaseline = 5;
 
 #define GetMetric(x) x
 
@@ -23,5 +25,10 @@ static const int32_t FullWindowDrag = 1;
 #define BackgroundColour GDS_GetColour(0, 170, 170)
 
 #define GetColour(x) x
+
+static const std::string TitleFontName = "Resagokr";
+static const std::string MenuButtonFontName = "DejaVu Sans";
+
+#define GetSetting(x) x
 
 #endif

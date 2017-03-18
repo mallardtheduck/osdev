@@ -8,6 +8,7 @@
 
 extern std::shared_ptr<Ball> ball;
 extern std::shared_ptr<Paddle> paddle;
+extern uint32_t font;
 
 bool Overlaps(const wm_Rect &r1, const wm_Rect &r2);
 

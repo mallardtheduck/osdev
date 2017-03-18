@@ -240,7 +240,8 @@ data/btos/tests/nctest.elx: ../../user/tests/nctest/nctest.elx
 	cp $< $@
 
 data/btos/share/terminfo: ../../3rdparty/install/btos/share/terminfo
-	cp -Rv $< $@
+	mkdir -p $@
+	cp -Rv $</* $@
 
 data/btos/lib/ncurses.ell: ../../3rdparty/install/btos/lib/ncurses.ell
 	cp $< $@
@@ -255,7 +256,8 @@ data/btos/lib/freetype.ell: ../../3rdparty/install/btos/lib/freetype.ell
 	cp $< $@
 
 data/btos/fonts: ../../user/system/gds/fonts
-	cp -Rv $< $@
+	mkdir -p $@
+	cp -Rv $</* $@
 
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx
 	mkdir -p data/btos/boot/grub/

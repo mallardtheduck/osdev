@@ -48,11 +48,11 @@ void RemoveSprite(shared_ptr<Sprite> s){
 
 void DrawTitle(){
 	uint32_t red = GDS_GetColour(255, 127, 127);
-	GDS_Text(100, 20, "Breakout!", font, 24, red);
+	GDS_Text(80, 30, "Breakout!", font, 24, red);
 	uint32_t green = GDS_GetColour(127, 255, 127);
-	GDS_Text(65, 40, "Press any key to start.", font, 16, green);
-	GDS_Text(15, 200, "Controls:", font, 12, green);
-	GDS_Text(15, 215, "Left/Right to move, Space to launch ball", font, 12, green);
+	GDS_Text(60, 50, "Press any key to start.", font, 16, green);
+	GDS_Text(15, 210, "Controls:", font, 12, green);
+	GDS_Text(15, 225, "Left/Right to move, Space to launch ball", font, 12, green);
 }
 
 void DrawEndScreen(){
@@ -123,7 +123,6 @@ void GameDraw(){
 }
 
 void InitGame(){
-	font = GDS_GetFontID("DejaVu Sans", gds_FontStyle::Bold);
 	DrawBackground();
 	ball.reset(new Ball());
 	sprites.push_back(ball);

@@ -45,7 +45,7 @@ size_t RenderMenu(uint64_t surf, uint32_t ypos = UINT32_MAX, bool down = true){
 		}
 		GDS_Box(0, pos, info.w, LineHeight, 0, itemColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		GDS_Line(0, pos, info.w, pos, GDS_GetColour(128, 128, 128));
-		GDS_Text(5, pos + LineHeight - 3, o.first.c_str(), textFont, 12, GDS_GetColour(0, 0, 0));
+		GDS_Text(5, pos + LineHeight - 4, o.first.c_str(), textFont, 11, GDS_GetColour(0, 0, 0));
 		pos += LineHeight;
 	}
 	return ret;
@@ -53,7 +53,7 @@ size_t RenderMenu(uint64_t surf, uint32_t ypos = UINT32_MAX, bool down = true){
 
 int main(){
 	string systemdrive = get_env("SYSTEMDRIVE");
-	textFont = GDS_GetFontID("DejaVu Sans", gds_FontStyle::Normal);
+	textFont = GDS_GetFontID("Resagnicto", gds_FontStyle::Normal);
 	uint64_t surf = GDS_NewSurface(gds_SurfaceType::Bitmap, 200, LineHeight * options.size());
 	/*uint64_t win =*/ WM_NewWindow(5, 5, wm_WindowOptions::Default, wm_EventType::PointerButtonDown | wm_EventType::PointerButtonUp | wm_EventType::Close, surf, "WM Menu");
 	RenderMenu(surf);

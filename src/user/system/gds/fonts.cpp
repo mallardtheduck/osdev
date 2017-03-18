@@ -19,7 +19,7 @@ static bool ends_with (const string &fullString, const string &ending) {
 
 
 static bool is_font_file(const string &name){
-	return ends_with(name, ".ttf");	
+	return ends_with(name, ".ttf") || ends_with(name, ".otf");	
 }
 
 FontManager::FontManager(){
@@ -70,6 +70,7 @@ FontManager::FontManager(){
 }
 
 shared_ptr<gds_FontInfo> FontManager::GetFont(std::string family, gds_FontStyle::Enum style){
+	if(aliases.find(family) != aliases.end()) family = aliases[family];
 	for(auto &f : fonts){
 		if(family == f.second->info->name && style == f.second->info->fontStyle){
 			return f.second->info;
@@ -109,6 +110,15 @@ gds_GlyphInfo FontManager::GetGlyphInfo(uint32_t fontID, size_t size, char c){
 	ret.w = (brect[2] - brect[6]) / 2;
 	ret.h = (brect[3] - brect[7]) / 2;
 	return ret;
+}
+
+void FontManager::AddAlias(const string &name, const string &alias){
+	if(aliases.find(alias) != aliases.end()) return;
+	for(auto &f : fonts){
+		if(name == f.second->info->name){
+			aliases[alias] = name;
+		}
+	}
 }
 
 std::shared_ptr<FontManager> GetFontManager(){
