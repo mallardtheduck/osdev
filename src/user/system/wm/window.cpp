@@ -71,7 +71,8 @@ void Window::SetPosition(Point p){
 	pos = p;
 	Rect newrect = GetBoundingRect();
 	if(GetVisible()){
-		DrawAndRefreshWindows(TileRects(newrect, oldrect));
+		DrawAndRefreshWindows(oldrect);
+		DrawAndRefreshWindows(newrect, id);
 	}
 	stringstream ss;
 	ss << "WM: Window '" << title << "' moved to (" << p.x << ", " << p.y << ")."<< endl;
@@ -158,20 +159,20 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 		if(pevent.type == bt_terminal_pointer_event_type::ButtonUp){
 			UnGrab();
 			dragging = false;
+			SetPosition(newpos);
 			if(GetMetric(FullWindowDrag)){
 				if(gds_drag_id){
 					GDS_SelectSurface(gds_drag_id);
 					GDS_DeleteSurface();
 				}
 				gds_drag_id = 0;
-				SetVisible(true, false);
+				SetVisible(true, true);
 			}else{
 				Rect winRect = {last_drag_pos.x, last_drag_pos.y, gds_info.w + (2 * GetMetric(BorderWidth)) + 10, gds_info.h + GetMetric(TitleBarSize)};
 				DrawWindows(winRect);
 				GDS_SelectScreen();
 				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
 			}
-			SetPosition(newpos);
 		}else{
 			if(GetMetric(FullWindowDrag)){
 				if(!gds_drag_id){
@@ -181,11 +182,12 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 				}
 				if(newpos.x == pos.x && newpos.y == pos.y) return;
 				GDS_SelectScreen();
-				GDS_Blit(gds_drag_id, 0, 0, gds_info.w, gds_info.h + GetMetric(TitleBarSize), newpos.x, newpos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize));
 				Rect oldrect = GetBoundingRect();
+				DrawWindows(oldrect);
+				GDS_Blit(gds_drag_id, 0, 0, gds_info.w, gds_info.h + GetMetric(TitleBarSize), newpos.x, newpos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize));
 				pos = newpos;
 				Rect newrect = GetBoundingRect();
-				DrawAndRefreshWindows(TileRects(newrect, oldrect));
+				RefreshScreen(TileRects(oldrect, newrect));
 			}else{
 				if(newpos.x == pos.x && newpos.y == pos.y) return;
 				GDS_SelectScreen();
@@ -279,7 +281,8 @@ void Window::SetVisible(bool v, bool update){
 	if(v) options |= wm_WindowOptions::Visible;
 	else options &= ~wm_WindowOptions::Visible;
 	if(oldvisible != GetVisible() && update){
-		DrawWindows();
+		if(v) DrawWindows(GetBoundingRect(), id);
+		else DrawWindows(GetBoundingRect());
 		RefreshScreen(GetBoundingRect());
 	}
 }

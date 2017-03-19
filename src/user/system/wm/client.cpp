@@ -113,7 +113,7 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 				Rect rect = {r.x, r.y, r.w, r.h};
 				Point p = currentWindow->GetContentPosition();
 				rect = Reoriginate(rect, {-p.x, -p.y});
-				DrawAndRefreshWindows(rect);
+				DrawAndRefreshWindows(rect, currentWindow->id);
 			}
 			break;
 		}

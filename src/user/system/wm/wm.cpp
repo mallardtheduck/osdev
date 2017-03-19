@@ -64,6 +64,7 @@ int main(int argc, char **argv){
 				vidmode.bpp = 24;
 				InitDrawing();
 				GDS_SetScreenMode(vidmode);
+				InitWindws();
 				InitCursor();
 				DrawWindows();
 				RefreshScreen();

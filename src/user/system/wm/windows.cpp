@@ -10,14 +10,22 @@
 #include <gds/libgds.h>
 #include <btos.h>
 
+#include <dev/rtc.h>
+
 using namespace std;
 
-map<uint64_t, shared_ptr<Window>> windows;
-weak_ptr<Window> activeWindow;
-weak_ptr<Window> pointerWindow;
-weak_ptr<Window> grabbedWindow;
-uint64_t id_counter;
-vector<weak_ptr<Window>> sortedWindows;
+static map<uint64_t, shared_ptr<Window>> windows;
+static weak_ptr<Window> activeWindow;
+static weak_ptr<Window> pointerWindow;
+static weak_ptr<Window> grabbedWindow;
+static uint64_t id_counter;
+static vector<weak_ptr<Window>> sortedWindows;
+static uint32_t backgroundColour;
+
+void InitWindws(){
+	GDS_SelectScreen();
+	backgroundColour = GetColour(BackgroundColour);
+}
 
 template <typename M, typename V> 
 void MapToVec( const  M & m, V & v ) {
@@ -63,41 +71,66 @@ vector<shared_ptr<Window>> SortWindows(){
 	return wins;
 }
 
-void DrawWindows(const Rect &r){
+void DrawWindows(const Rect &r, uint64_t above){
+	stringstream ss;
+	uint64_t start = bt_rtc_millis();
 	bool rect = (r.x != 0 || r.y != 0 || r.w != 0 || r.h != 0);
 	vector<shared_ptr<Window>> wins = SortWindows();
 	GDS_SelectScreen();
-	if(rect) GDS_Box(r.x, r.y, r.w, r.h, GetColour(BackgroundColour), GetColour(BackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	else{
-		gds_SurfaceInfo info = GDS_SurfaceInfo();
-		GDS_Box(0, 0, info.w, info.h, GetColour(BackgroundColour), GetColour(BackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	}
 	shared_ptr<Window> lastWin;
 	bool drawing = true;
-	if(rect){
+	if(rect && !above){
 		for(auto i = wins.rbegin(); i != wins.rend(); ++i){
 			if(Contains((*i)->GetBoundingRect(), r)) {
+				ss << "WM: Update rect entirely within window: " << (*i)->id << endl;
 				lastWin = *i;
+				drawing = false;
+				break;
+			}else{
+				Rect brect = (*i)->GetBoundingRect();
+				ss << "WM: (" << r.x << ", " << r.y << " : " << r.w << " x " << r.h << ") is not in (" << brect.x << ", " << brect.y << " : " << brect.w << " x " << brect.h << ")" << endl;
+			}
+		}
+	}else if(above){
+		for(auto w : wins){
+			if(w->id == above){
+				lastWin = w;
 				drawing = false;
 				break;
 			}
 		}
 	}
+	uint64_t stage1 = bt_rtc_millis();
+	if(drawing){
+		if(rect) GDS_Box(r.x, r.y, r.w, r.h, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		else{
+			gds_SurfaceInfo info = GDS_SurfaceInfo();
+			GDS_Box(0, 0, info.w, info.h, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		}
+	}
+	uint64_t stage2 = bt_rtc_millis();
 	shared_ptr<Window> awin = activeWindow.lock();
 	for(auto w: wins){
 		if(!w->GetVisible()) continue;
-		if(rect && w == lastWin) drawing = true;
+		if((rect || above) && w == lastWin) drawing = true;
 		if(drawing){
-			if(rect && Overlaps(r, w->GetBoundingRect())) w->Draw(w == awin, r);
+			if(rect && Overlaps(r, w->GetBoundingRect())){
+				uint64_t wdstart = bt_rtc_millis();
+				w->Draw(w == awin, r); 
+				ss << "WM: Drew window: " << w->id << " in " << bt_rtc_millis() - wdstart << "ms" << endl;
+			}
 			else if(!rect) w->Draw(w == awin);
 		}
 	}
+	uint64_t finish = bt_rtc_millis();
+	ss << "WM: Draw: stage1: " << stage1 - start << "ms stage2: " << stage2 - stage1 << "ms stage3: " << finish - stage2 << "ms" << endl;
+	bt_zero(ss.str().c_str());
 }
 
 void DrawWindows(const vector<Rect> &v){
 	vector<shared_ptr<Window>> wins = SortWindows();
 	GDS_SelectScreen();
-	for(auto r: v) GDS_Box(r.x, r.y, r.w, r.h, GetColour(BackgroundColour), GetColour(BackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	for(auto r: v) GDS_Box(r.x, r.y, r.w, r.h, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	shared_ptr<Window> awin = activeWindow.lock();
 	for(auto w: wins){
 		for(auto r: v) if(Overlaps(r, w->GetBoundingRect())){
@@ -200,9 +233,15 @@ void UnGrab(){
 	grabbedWindow.reset();
 }
 
-void DrawAndRefreshWindows(const Rect &r){
-	DrawWindows(r);
+void DrawAndRefreshWindows(const Rect &r, uint64_t above){
+	uint64_t start = bt_rtc_millis();
+	DrawWindows(r, above);
+	uint64_t stage1 = bt_rtc_millis();
 	RefreshScreen(r);
+	uint64_t finish = bt_rtc_millis();
+	stringstream ss;
+	ss << "WM: Draw and refresh: stage1: " << stage1 - start << "ms stage2: " << finish - stage1 << "ms" << endl;
+	bt_zero(ss.str().c_str());
 }
 
 void DrawAndRefreshWindows(const vector<Rect> &v){
