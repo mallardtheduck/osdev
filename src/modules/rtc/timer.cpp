@@ -65,8 +65,8 @@ void timer_thread(void*){
 			msg.content = malloc(sizeof(bt_handle_t));
 			timer_info *timer = (*timers)[next_event->timer_id];
 			*(bt_handle_t*)msg.content = timer->handle_id;
-			msg_send(&msg);
 			timer->active = false;
+			msg_send(&msg);
 		}
 		events->erase(events->find(next_event));
 		timer_event *last_event = next_event;
