@@ -394,8 +394,11 @@ void mainthread(void*){
 		bt_next_msg_filtered(&msg, filter);
 	}
 	delete op;
-	endrender = true;
-	bt_modify_atom(render_counter, bt_atom_modify::Add, 1);
+	if(renderthread){
+		endrender = true;
+		bt_modify_atom(render_counter, bt_atom_modify::Add, 1);
+		bt_wait_thread(renderthread);
+	}
 	kill_children();
 	bt_end_thread();
 }
