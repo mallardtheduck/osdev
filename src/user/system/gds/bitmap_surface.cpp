@@ -13,6 +13,8 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include "graphics.hpp"
+
 using namespace std;
 
 BitmapSurface::BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale) {
@@ -42,7 +44,8 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 
 		case gds_DrawingOpType::Box:
 			if(op.Common.fillStyle > 0) {
-				image->FilledRectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.fillColour);
+				//image->FilledRectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.fillColour);
+				FastBox(*image, op.Box.x, op.Box.y, op.Box.w, op.Box.h, op.Common.fillColour);
 			}
 			if(op.Common.lineWidth > 0){ 
 				image->Rectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.lineColour);
@@ -71,8 +74,8 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 				auto srcSurface = allSurfaces[op.Blit.src].lock();
 				if(srcSurface) {
 					auto srcImage = srcSurface->Render(op.Blit.scale);
-					if(op.Blit.srcW == op.Blit.dstW && op.Blit.srcH == op.Blit.srcW){
-						image->Copy(srcImage->GetPtr(), op.Blit.dstX, op.Blit.dstY, op.Blit.srcX, op.Blit.srcY, op.Blit.dstW, op.Blit.dstH);
+					if(op.Blit.srcW == op.Blit.dstW && op.Blit.srcH == op.Blit.dstH){
+						FastBlit(*srcImage, *image, op.Blit.srcX, op.Blit.srcY, op.Blit.dstX, op.Blit.dstY, op.Blit.dstW, op.Blit.dstH);
 					}else{
 						image->CopyResized(srcImage->GetPtr(), op.Blit.dstX, op.Blit.dstY, op.Blit.srcX, op.Blit.srcY, op.Blit.dstW, op.Blit.dstH, op.Blit.srcW, op.Blit.srcH);
 					}

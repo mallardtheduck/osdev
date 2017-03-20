@@ -26,9 +26,11 @@ FontManager::FontManager(){
 	FT_Library &library = *gdGetFTLibrary();
 	FT_Bool warping = 1;
 	FT_Property_Set( library, "autofitter", "warping", &warping );
-	FT_Int darken_params[8] = {  500, 1000,   // x1, y1
-								1000, 8000,   // x2, y2
-								1500, 400,   // x3, y3
+	FT_Bool no_darkening = 0;
+	FT_Property_Set( library, "autofitter", "no-stem-darkening", &no_darkening );
+	FT_Int darken_params[8] = { 1000, 1000,   // x1, y1
+								1500, 500,   // x2, y2
+								1750, 250,   // x3, y3
 								2000,   0 }; // x4, y4
 	FT_Property_Set( library, "autofitter", "darkening-parameters", darken_params );
 	FT_Library_SetLcdFilter(library, FT_LCD_FILTER_LEGACY);

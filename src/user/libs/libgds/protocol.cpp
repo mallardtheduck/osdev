@@ -10,6 +10,9 @@
 using namespace std;
 
 static bt_pid_t gds_pid = 0;
+static uint64_t current_surface = 0;
+static bool current_known = false;
+static bool current_screen = false;
 
 static bool Init(){
 	if(!gds_pid){
@@ -74,15 +77,26 @@ extern "C" uint64_t GDS_NewSurface(gds_SurfaceType::Enum type, uint32_t w, uint3
 	info.scale = scale;
 	info.colourType = colourType;
 	bt_msg_header reply = SendMessage(gds_MsgType::NewSurface, sizeof(info), (void*)&info, true);
-	return GetContent<uint64_t>(&reply);
+	uint64_t ret = GetContent<uint64_t>(&reply);
+	current_known = true;
+	current_screen = false;
+	current_surface = ret;
+	return ret;
 }
 
 extern "C" void GDS_DeleteSurface(){
+	current_known = false;
+	current_screen = false;
 	SendMessage(gds_MsgType::DeleteSurface, 0, NULL, false);
 }
 
 extern "C" uint64_t GDS_SelectSurface(uint64_t id){
+	if(current_known && id == current_surface) return current_surface;
 	bt_msg_header reply = SendMessage(gds_MsgType::SelectSurface, sizeof(id), (void*)&id, true);
+	uint64_t ret = GetContent<uint64_t>(&reply);
+	current_known = true;
+	current_screen = false;
+	current_surface = ret;
 	return GetContent<uint64_t>(&reply);
 }
 
@@ -121,6 +135,9 @@ extern "C" void GDS_SetOpParameters(const gds_OpParameters *params){
 }
 
 extern "C" void GDS_SelectScreen(){
+	if(current_screen && !current_known) return;
+	current_known = false;
+	current_screen = true;
 	SendMessage(gds_MsgType::SelectScreen, 0, NULL, false);
 }
 
@@ -131,6 +148,8 @@ extern "C" void GDS_UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 }
 
 extern "C" void GDS_SetScreenMode(bt_vidmode mode){
+	current_known = false;
+	current_screen = false;
 	SendMessage(gds_MsgType::SetScreenMode, sizeof(mode), (void*)&mode, false);
 }
 
