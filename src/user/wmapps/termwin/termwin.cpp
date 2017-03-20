@@ -129,7 +129,7 @@ uint32_t getcolour(uint8_t id){
 }
 
 bool compare_chars(char a, char b){
-	if(a < 32 && b < 32) return true;
+	if(a <= 32 && b <= 32) return true;
 	else return a == b;
 }
 
@@ -170,12 +170,18 @@ void render_terminal_thread(){
 		for(size_t line = 0; line < terminal_mode.height; ++line){
 			if(!has_line_changed(line)) continue;
 			if(size_t sline = detect_line_scroll(line)){
+				uint64_t start = bt_rtc_millis();
 				GDS_Blit(surf, 0, sline * font_height, terminal_mode.width * font_width, font_height, 0, line * font_height, terminal_mode.width * font_width, font_height);
 				WM_UpdateRect(0, (int32_t)(line * font_height), terminal_mode.width * font_width, font_height);
 				size_t l0addr = (line * terminal_mode.width) * 2;
 				size_t l1addr = (sline * terminal_mode.width) * 2;
 				memcpy(&buffer[l0addr], &buffer[l1addr], terminal_mode.width * 2);
+				uint64_t end = bt_rtc_millis();
+				stringstream ss;
+				ss << "TW: Scroll: " << end - start << "ms" << endl;
+				bt_zero(ss.str().c_str());
 			}else{
+				uint64_t start = bt_rtc_millis();
 				vector<pair<size_t, uint16_t>> line_changes;
 				for(size_t col = 0; col < terminal_mode.width; ++col){
 					size_t bufaddr = ((line * terminal_mode.width) + col) * 2;
@@ -190,7 +196,9 @@ void render_terminal_thread(){
 						line_changes.push_back(make_pair(col, change));
 					}
 				}
+				uint64_t stage1 = bt_rtc_millis();
 				if(line_changes.size()){
+					uint64_t s2start = bt_rtc_millis();
 					size_t firststart = UINT32_MAX;
 					size_t overallend = 0;
 					size_t start = UINT32_MAX;
@@ -216,6 +224,8 @@ void render_terminal_thread(){
 							draw = true;
 						}
 						if(draw){
+							uint64_t drawstart = bt_rtc_millis();
+							size_t dchars = 0;
 							if(text.str().length()){
 								uint8_t bgcol = col >> 4;
 								uint8_t fgcol = col & 0x0F;
@@ -223,8 +233,9 @@ void render_terminal_thread(){
 								GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 								string str = text.str();
 								for(size_t i = 0; i < str.length(); ++i){
-									if(str[i] == ' ') continue;
+									if(str[i] <= 32) continue;
 									GDS_TextChar((start + i) * font_width, ((line + 1) * font_height) - (font_height / 5), str[i], font, fontSize, getcolour(fgcol));
+									++dchars;
 								}
 								//GDS_Text(start * font_width, (line * font_height) + 14, text.str().c_str(), font, 14, getcolour(fgcol));
 								//WM_UpdateRect(start * font_width, line * font_height, width, font_height);
@@ -234,25 +245,46 @@ void render_terminal_thread(){
 							start = change.first;
 							end = change.first + 1;
 							col = ncol;
+							uint64_t drawend = bt_rtc_millis();
+							stringstream dss;
+							dss << "TW: Draw: " << drawend - drawstart << "ms (" << dchars << " chars)" << endl;
+							bt_zero(dss.str().c_str());
 						}
 					}
+					uint64_t s2s1 = bt_rtc_millis();
 					if(start != UINT32_MAX){
+						uint64_t drawstart = bt_rtc_millis();
+						size_t dchars = 0;
 						uint8_t bgcol = col >> 4;
 						uint8_t fgcol = col & 0x0F;
 						uint32_t width = (end * font_width) - (start * font_width);
 						GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 						string str = text.str();
 						for(size_t i = 0; i < str.length(); ++i){
-							if(str[i] == ' ') continue;
+							if(str[i] <= 32) continue;
 							GDS_TextChar((start + i) * font_width, ((line + 1) * font_height) - (font_height / 5), str[i], font, fontSize, getcolour(fgcol));
+							++dchars;
 						}
 						//GDS_Text(start * font_width, line * font_height, text.str().c_str(), font, 0, getcolour(fgcol));
+						uint64_t drawend = bt_rtc_millis();
+						stringstream dss;
+						dss << "TW: Draw: " << drawend - drawstart << "ms (" << dchars << " chars)" << endl;
+						bt_zero(dss.str().c_str());
 					}
+					uint64_t s2s2 = bt_rtc_millis();
 					WM_UpdateRect((int32_t)(firststart * font_width), (int32_t)(line * font_height), (overallend - firststart + 1) * font_width, font_height);
+					uint64_t s2end = bt_rtc_millis();
+					stringstream s2ss;
+					s2ss << "TW: Stage2 1: " << s2s1 - s2start << "ms 2: " << s2s2 - s2s1 << "ms 3: " << s2end - s2s2 << "ms" << endl;
+					bt_zero(s2ss.str().c_str());
 				}
+				uint64_t end = bt_rtc_millis();
+				stringstream ss;
+				ss << "TW: stage1: " << stage1 - start << "ms stage2: " << end - stage1 << "ms" << endl;
+				bt_zero(ss.str().c_str());
 			}
 		}
-		bt_rtc_sleep(50);
+		bt_rtc_sleep(100);
 	}
 }
 
