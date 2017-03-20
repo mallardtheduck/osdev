@@ -9,6 +9,9 @@ static const int32_t MenuButtonWidth = (TitleBarSize + TitleTextMargin) * 2;
 static const int32_t FullWindowDrag = 1;
 static const int32_t TitleFontSize = 16;
 static const int32_t TitleTextBaseline = 5;
+static const int32_t ScreenWidth = 800;
+static const int32_t ScreenHeight = 600;
+static const int32_t ScreenBpp = 24;
 
 #define GetMetric(x) x
 

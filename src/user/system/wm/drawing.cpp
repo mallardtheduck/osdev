@@ -11,7 +11,7 @@ uint32_t menuButtonFont;
 void InitDrawing(){
 	titleActiveFont = GDS_GetFontID(GetSetting(TitleFontName).c_str(), gds_FontStyle::Bold);
 	titleInactiveFont = GDS_GetFontID(GetSetting(TitleFontName).c_str(), gds_FontStyle::Normal);
-	menuButtonFont = GDS_GetFontID(GetSetting(MenuButtonFontName).c_str(), gds_FontStyle::Normal);
+	menuButtonFont = GDS_GetFontID(GetSetting(MenuButtonFontName).c_str(), gds_FontStyle::Bold);
 }
 
 static uint32_t buttonHighlightColour, buttonFaceColour, buttonShadowColour, borderColour, lineColour, titleBarColour, inactiveTitleColour;

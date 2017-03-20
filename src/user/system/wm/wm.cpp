@@ -7,6 +7,7 @@
 #include "window.hpp"
 #include "service.hpp"
 #include "drawing.hpp"
+#include "metrics.hpp"
 
 using namespace std;
 
@@ -59,9 +60,9 @@ int main(int argc, char **argv){
 		if(root_pid) {
 			try {
 				bt_vidmode vidmode;
-				vidmode.width = 800;
-				vidmode.height = 600;
-				vidmode.bpp = 24;
+				vidmode.width = GetMetric(ScreenWidth);
+				vidmode.height = GetMetric(ScreenHeight);
+				vidmode.bpp = GetMetric(ScreenBpp);
 				InitDrawing();
 				GDS_SetScreenMode(vidmode);
 				InitWindws();

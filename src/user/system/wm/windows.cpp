@@ -81,6 +81,7 @@ void DrawWindows(const Rect &r, uint64_t above){
 	bool drawing = true;
 	if(rect && !above){
 		for(auto i = wins.rbegin(); i != wins.rend(); ++i){
+			if(!(*i)->GetVisible()) continue;
 			if(Contains((*i)->GetBoundingRect(), r)) {
 				ss << "WM: Update rect entirely within window: " << (*i)->id << endl;
 				lastWin = *i;
@@ -133,6 +134,7 @@ void DrawWindows(const vector<Rect> &v){
 	for(auto r: v) GDS_Box(r.x, r.y, r.w, r.h, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	shared_ptr<Window> awin = activeWindow.lock();
 	for(auto w: wins){
+		if(!w->GetVisible()) continue;
 		for(auto r: v) if(Overlaps(r, w->GetBoundingRect())){
 			w->Draw(w==awin, r);
 		}

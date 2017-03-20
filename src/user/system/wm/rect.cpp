@@ -30,7 +30,7 @@ bool InRect(const Point &p, const Rect &r){
 }
 
 bool Overlaps(const Rect &r1, const Rect &r2){
-	return !(r1.x + (int32_t)r1.w - 1 <= r2.x || r1.y + (int32_t)r1.h - 1 <= r2.y || r1.x >= r2.x + (int32_t)r2.w - 1 || r1.y >= r2.y + (int32_t)r2.h - 1);
+	return !(r1.x + (int32_t)r1.w - 1 < r2.x || r1.y + (int32_t)r1.h - 1 < r2.y || r1.x > r2.x + (int32_t)r2.w - 1 || r1.y > r2.y + (int32_t)r2.h - 1);
 }
 
 bool Contains(const Rect &r1, const Rect &r2){

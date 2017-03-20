@@ -175,16 +175,18 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			}
 		}else{
 			if(GetMetric(FullWindowDrag)){
+				bool firstFrame = false;
 				if(!gds_drag_id){
-					gds_drag_id = GDS_NewSurface(gds_SurfaceType::Bitmap, gds_info.w, gds_info.h + GetMetric(TitleBarSize));
+					gds_drag_id = GDS_NewSurface(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h);
 					Draw(active, true, gds_drag_id);
 					SetVisible(false, false);
+					firstFrame = true;
 				}
-				if(newpos.x == pos.x && newpos.y == pos.y) return;
+				if(!firstFrame && newpos.x == pos.x && newpos.y == pos.y) return;
 				GDS_SelectScreen();
 				Rect oldrect = GetBoundingRect();
 				DrawWindows(oldrect);
-				GDS_Blit(gds_drag_id, 0, 0, gds_info.w, gds_info.h + GetMetric(TitleBarSize), newpos.x, newpos.y, gds_info.w, gds_info.h + GetMetric(TitleBarSize));
+				GDS_Blit(gds_drag_id, 0, 0, oldrect.w, oldrect.h + GetMetric(TitleBarSize), newpos.x, newpos.y, oldrect.w, oldrect.h + GetMetric(TitleBarSize));
 				pos = newpos;
 				Rect newrect = GetBoundingRect();
 				RefreshScreen(TileRects(oldrect, newrect));
