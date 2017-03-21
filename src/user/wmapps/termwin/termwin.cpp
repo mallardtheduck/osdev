@@ -175,8 +175,7 @@ static bool has_line_changed(size_t line){
 }
 
 static size_t detect_line_scroll(size_t line){
-	if(line  + 1 >= terminal_mode.height) return 0;
-	for(size_t sline = line + 1; sline < terminal_mode.height; ++sline){
+	for(size_t sline = 0; sline < terminal_mode.height; ++sline){
 		size_t l0addr = (line * terminal_mode.width) * 2;
 		size_t l1addr = (sline * terminal_mode.width) * 2;
 		if(memcmp(&tempbuffer[l0addr], &buffer[l1addr], terminal_mode.width * 2) == 0) return sline;
