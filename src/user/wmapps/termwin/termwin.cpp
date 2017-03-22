@@ -235,6 +235,7 @@ void render_terminal_thread(){
 				ss << "TW: Scroll: " << end - start << "ms" << endl;
 				bt_zero(ss.str().c_str());
 			}else{
+				vector<gds_DrawingOp> drawingOps;
 				uint64_t start = bt_rtc_millis();
 				size_t ch = 0;
 				for(size_t col = 0; col < terminal_mode.width; ++col){
@@ -247,11 +248,12 @@ void render_terminal_thread(){
 						}
 						else buffer[bufaddr + 1] = tempbuffer[bufaddr + 1];
 						uint64_t glyph = get_glyph(buffer[bufaddr + 1], buffer[bufaddr]);
-						GDS_Blit(glyph, 0, 0, font_width, font_height, col * font_width, line * font_height, font_width, font_height);
+						drawingOps.push_back(GDS_Blit_Op(glyph, 0, 0, font_width, font_height, col * font_width, line * font_height, font_width, font_height));
 						addRect(updateRect, {(int32_t)(col * font_width), (int32_t)(line * font_height), font_width, font_height});
 						++ch;
 					}
 				}
+				if(drawingOps.size()) GDS_MultiDrawingOps(drawingOps.size(), &drawingOps[0], NULL);
 				uint64_t end = bt_rtc_millis();
 				stringstream ss;
 				ss << "TW: line drawn in " << end - start << "ms (" << ch << " changes)" << endl;

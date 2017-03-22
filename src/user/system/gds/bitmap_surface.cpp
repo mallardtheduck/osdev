@@ -157,7 +157,6 @@ std::shared_ptr<GD::Image> BitmapSurface::Render(uint32_t scale) {
 void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
 	if(pending_op.type != gds_DrawingOpType::None && pending_op.type == params->type){
 		switch(pending_op.type){
-			//Temporary font code. Replace once FreeType is supported.
 			case gds_DrawingOpType::Text:{
 					gdFTStringExtra ftex;
 					ftex.flags = gdFTEX_RESOLUTION;

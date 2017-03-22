@@ -207,6 +207,28 @@ void Client::ProcessMessage(bt_msg_header msg) {
 				SendReply(msg, info);
 			}
 			break;
+		case gds_MsgType::MultiDrawingOps:{
+			if(currentSurface){
+				gds_MultiOps *mops = (gds_MultiOps *)malloc(msg.length);
+				bt_msg_content(&msg, (void*)mops, msg.length);
+				if(mops->count <= (BT_MSG_MAX - sizeof(gds_MultiOps)) / sizeof(gds_DrawingOp)){
+					uint32_t *ids = new uint32_t[mops->count];
+					for(size_t i = 0; i < mops->count; ++i){
+						ids[i] = currentSurface->AddOperation(mops->ops[i]);
+					}
+					bt_msg_header reply;
+					reply.to = msg.from;
+					reply.reply_id = msg.id;
+					reply.flags = bt_msg_flags::Reply;
+					reply.length = mops->count * sizeof(uint32_t);
+					reply.content = (void*)ids;
+					bt_send(reply);
+					delete ids;
+				}
+				free(mops);
+			}
+			break;
+		}
 	}
 }
 

@@ -29,6 +29,8 @@ ENUM_START(gds_MsgType)
 	ENUM_SET(gds_MsgType, GetFontID,		12),
 	ENUM_SET(gds_MsgType, GetFontInfo,		13),
 	ENUM_SET(gds_MsgType, GetGlyphInfo, 	14),
+	
+	ENUM_SET(gds_MsgType, MultiDrawingOps, 	20),
 		
 	ENUM_SET(gds_MsgType, SelectScreen,		100),
 	ENUM_SET(gds_MsgType, UpdateScreen, 	101),
@@ -250,6 +252,14 @@ struct gds_OpParameters{
 };
 #ifndef __cplusplus
 typedef struct gds_OpParameters gds_OpParameters;
+#endif
+
+struct gds_MultiOps{
+	size_t count;
+	gds_DrawingOp ops[];
+};
+#ifndef __cplusplus
+typedef struct gds_MultiOps gds_MultiOps;
 #endif
 
 #endif

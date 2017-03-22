@@ -183,3 +183,17 @@ extern "C" gds_GlyphInfo GDS_GetGlyphInfo(uint32_t fontID, size_t size, char ch)
 	bt_msg_header reply = SendMessage(gds_MsgType::GetGlyphInfo, sizeof(req), (void*)&req, true);
 	return GetContent<gds_GlyphInfo>(&reply);
 }
+
+extern "C" void GDS_MultiDrawingOps(size_t count, gds_DrawingOp *ops, uint32_t *ids){
+	size_t ops_per_req = (BT_MSG_MAX - sizeof(gds_MultiOps)) / sizeof(gds_DrawingOp);
+	gds_MultiOps *mops = (gds_MultiOps*)malloc(BT_MSG_MAX);
+	for(size_t i = 0; i < count; i += ops_per_req){
+		size_t op_count = min(ops_per_req, count - i);
+		mops->count = op_count;
+		memcpy(mops->ops, &ops[i], op_count * sizeof(gds_DrawingOp));
+		bt_msg_header reply = SendMessage(gds_MsgType::MultiDrawingOps, BT_MSG_MAX, (void*)mops, true);
+		if(ids) bt_msg_content(&reply, &ids[i], sizeof(uint32_t) * op_count);
+		bt_msg_ack(&reply);
+	}
+	free(mops);
+}
