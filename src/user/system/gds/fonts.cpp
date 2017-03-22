@@ -4,6 +4,7 @@
 #include FT_FREETYPE_H
 #include FT_MODULE_H
 #include FT_LCD_FILTER_H
+#include FT_CFF_DRIVER_H
 
 using namespace std;
 
@@ -22,17 +23,21 @@ static bool is_font_file(const string &name){
 	return ends_with(name, ".ttf") || ends_with(name, ".otf");	
 }
 
-FontManager::FontManager(){
+FontManager::FontManager(){ 
 	FT_Library &library = *gdGetFTLibrary();
 	FT_Bool warping = 1;
 	FT_Property_Set( library, "autofitter", "warping", &warping );
-	FT_Bool no_darkening = 0;
-	FT_Property_Set( library, "autofitter", "no-stem-darkening", &no_darkening );
-	FT_Int darken_params[8] = { 1000, 1000,   // x1, y1
-								1500, 500,   // x2, y2
-								1750, 250,   // x3, y3
+	FT_UInt hinting_engine = FT_CFF_HINTING_ADOBE;
+	FT_Property_Set( library, "cff", "hinting-engine", &hinting_engine );
+	FT_Bool no_darkening = 1;
+	//FT_Property_Set( library, "autofitter", "no-stem-darkening", &no_darkening );
+	FT_Property_Set( library, "cff", "no-stem-darkening", &no_darkening );
+	FT_Int darken_params[8] = { 1000, 500,   // x1, y1
+								1500, 332,   // x2, y2
+								1750, 166,   // x3, y3
 								2000,   0 }; // x4, y4
-	FT_Property_Set( library, "autofitter", "darkening-parameters", darken_params );
+	//FT_Property_Set( library, "autofitter", "darkening-parameters", darken_params );
+	FT_Property_Set( library, "cff", "darkening-parameters", darken_params );
 	FT_Library_SetLcdFilter(library, FT_LCD_FILTER_LEGACY);
 	DIR *fontdir = opendir(FontPath.c_str());
 	while(dirent *fontent = readdir(fontdir)){

@@ -8,6 +8,7 @@ static const int32_t ButtonSize = TitleBarSize - 2;
 static const int32_t MenuButtonWidth = (TitleBarSize + TitleTextMargin) * 2;
 static const int32_t FullWindowDrag = 1;
 static const int32_t TitleFontSize = 16;
+static const int32_t MenuButtonFontSize = 11;
 static const int32_t TitleTextBaseline = 5;
 static const int32_t ScreenWidth = 800;
 static const int32_t ScreenHeight = 600;
@@ -30,7 +31,7 @@ static const int32_t ScreenBpp = 24;
 #define GetColour(x) x
 
 static const std::string TitleFontName = "Resagokr";
-static const std::string MenuButtonFontName = "DejaVu Sans";
+static const std::string MenuButtonFontName = "Resagokr";
 
 #define GetSetting(x) x
 

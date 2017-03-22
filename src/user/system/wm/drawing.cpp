@@ -78,7 +78,7 @@ static void DrawMenuButton(uint32_t x, uint32_t y, bool active, bool down = fals
 	GDS_Line(x + borderWidth, y + borderWidth, x + symLength, y + borderWidth, symbolColour, 2);
 	GDS_Line(x + borderWidth, y + (buttonHeight / 2), x + symLength, y + (buttonHeight / 2), symbolColour, 2);
 	GDS_Line(x + borderWidth, y + buttonHeight - borderWidth, x + symLength, y + buttonHeight - borderWidth, symbolColour, 2);
-	GDS_Text(x + symLength + 5, y + buttonHeight - 5, "Menu", menuButtonFont, 9, symbolColour);
+	GDS_Text(x + symLength + 5, y + buttonHeight - 5, "Menu", menuButtonFont, GetMetric(MenuButtonFontSize), symbolColour);
 }
 
 uint64_t DrawTitleBar(uint32_t w, string title, bool active, WindowArea pressed){
