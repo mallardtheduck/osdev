@@ -79,7 +79,7 @@ void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, 
 					uint8_t srcPxl = gdImagePalettePixel(srcPtr, srcX + x, srcY + y);
 					if(srcPxl == srcTransparent) continue;
 					if((!y && !x) || srcCol != srcPxl){
-						if(palette[srcPxl] != 0xFFFFFF){
+						if(palette[srcPxl] != 0xFFFFFFFF){
 							dstCol = palette[srcPxl];
 							srcCol = srcPxl;
 						}else{
