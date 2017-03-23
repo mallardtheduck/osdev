@@ -213,7 +213,7 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 				RefreshTitleBar(true);
 				Rect r = GetBoundingRect();
 				r.h = GetMetric(TitleBarSize);
-				DrawAndRefreshWindows(r);
+				DrawAndRefreshWindows(r, id);
 			}
 		}
 	}
