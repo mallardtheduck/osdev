@@ -18,25 +18,29 @@ static uint32_t buttonHighlightColour, buttonFaceColour, buttonShadowColour, bor
 static uint32_t seperatorColour, titleTextColour, symbolColour;
 
 static void DrawButtonUp(uint32_t x, uint32_t y, uint32_t w, uint32_t h, bool active){
-	GDS_Box(x+1, y+1, w-1, h-1, buttonHighlightColour, buttonFaceColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	GDS_Line(x+1, y+h-2, x+w-2, y+h-2, buttonShadowColour, 1);
-	GDS_Line(x+w-2, y+h-1, x+w-2, y+2, buttonShadowColour, 1);
-	GDS_Box(x, y, w, h, lineColour, borderColour, 1);
-	GDS_Dot(x, y, active?titleBarColour:inactiveTitleColour, 1);
-	GDS_Dot(x+w-1, y, active?titleBarColour:inactiveTitleColour, 1);
-	GDS_Dot(x, y+h-1, active?titleBarColour:inactiveTitleColour, 1);
-	GDS_Dot(x+w-1, y+h-1, active?titleBarColour:inactiveTitleColour, 1);
+	vector<gds_DrawingOp> ops;
+	ops.push_back(GDS_Box_Op(x+1, y+1, w-1, h-1, buttonHighlightColour, buttonFaceColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled));
+	ops.push_back(GDS_Line_Op(x+1, y+h-2, x+w-2, y+h-2, buttonShadowColour, 1));
+	ops.push_back(GDS_Line_Op(x+w-2, y+h-1, x+w-2, y+2, buttonShadowColour, 1));
+	ops.push_back(GDS_Box_Op(x, y, w, h, lineColour, borderColour, 1));
+	ops.push_back(GDS_Dot_Op(x, y, active?titleBarColour:inactiveTitleColour, 1));
+	ops.push_back(GDS_Dot_Op(x+w-1, y, active?titleBarColour:inactiveTitleColour, 1));
+	ops.push_back(GDS_Dot_Op(x, y+h-1, active?titleBarColour:inactiveTitleColour, 1));
+	ops.push_back(GDS_Dot_Op(x+w-1, y+h-1, active?titleBarColour:inactiveTitleColour, 1));
+	GDS_MultiDrawingOps(ops.size(), &ops[0], NULL);
 }
 
 static void DrawButtonDown(uint32_t x, uint32_t y, uint32_t w, uint32_t h, bool active){
-	GDS_Box(x+1, y+1, w-1, h-1, buttonShadowColour, buttonFaceColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	GDS_Line(x+1, y+h-2, x+w-2, y+h-2, buttonHighlightColour, 1);
-	GDS_Line(x+w-2, y+h-1, x+w-2, y+2, buttonHighlightColour, 1);
-	GDS_Box(x, y, w, h, lineColour, borderColour, 1);
-	GDS_Dot(x, y, active?titleBarColour:inactiveTitleColour, 1);
-	GDS_Dot(x+w-1, y, active?titleBarColour:inactiveTitleColour, 1);
-	GDS_Dot(x, y+h-1, active?titleBarColour:inactiveTitleColour, 1);
-	GDS_Dot(x+w-1, y+h-1, active?titleBarColour:inactiveTitleColour, 1);
+	vector<gds_DrawingOp> ops;
+	ops.push_back(GDS_Box_Op(x+1, y+1, w-1, h-1, buttonShadowColour, buttonFaceColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled));
+	ops.push_back(GDS_Line_Op(x+1, y+h-2, x+w-2, y+h-2, buttonHighlightColour, 1));
+	ops.push_back(GDS_Line_Op(x+w-2, y+h-1, x+w-2, y+2, buttonHighlightColour, 1));
+	ops.push_back(GDS_Box_Op(x, y, w, h, lineColour, borderColour, 1));
+	ops.push_back(GDS_Dot_Op(x, y, active?titleBarColour:inactiveTitleColour, 1));
+	ops.push_back(GDS_Dot_Op(x+w-1, y, active?titleBarColour:inactiveTitleColour, 1));
+	ops.push_back(GDS_Dot_Op(x, y+h-1, active?titleBarColour:inactiveTitleColour, 1));
+	ops.push_back(GDS_Dot_Op(x+w-1, y+h-1, active?titleBarColour:inactiveTitleColour, 1));
+	GDS_MultiDrawingOps(ops.size(), &ops[0], NULL);
 }
 
 static void DrawMaxButton(uint32_t x, uint32_t y, bool active, bool down = false){
@@ -62,10 +66,12 @@ static void DrawCloseButton(uint32_t x, uint32_t y, bool active, bool down = fal
 	else DrawButtonUp(x, y, buttonSize, buttonSize, active);
 	uint32_t half = buttonSize / 2;
 	uint32_t quarter = buttonSize / 4;
-	GDS_Line(x + quarter, y + quarter, x + half, y + half, symbolColour, 2);
-	GDS_Line(x + (buttonSize - quarter) - 1, y + quarter, x + half - 1, y + half, symbolColour, 2);
-	GDS_Line(x + quarter, y + (buttonSize - quarter) - 1, x + half, y + half - 1, symbolColour, 2);
-	GDS_Line(x + (buttonSize - quarter) - 1, y + (buttonSize - quarter) - 1, x + half - 1, y + half - 1, symbolColour, 2);
+	vector<gds_DrawingOp> ops;
+	ops.push_back(GDS_Line_Op(x + quarter, y + quarter, x + half, y + half, symbolColour, 2));
+	ops.push_back(GDS_Line_Op(x + (buttonSize - quarter) - 1, y + quarter, x + half - 1, y + half, symbolColour, 2));
+	ops.push_back(GDS_Line_Op(x + quarter, y + (buttonSize - quarter) - 1, x + half, y + half - 1, symbolColour, 2));
+	ops.push_back(GDS_Line_Op(x + (buttonSize - quarter) - 1, y + (buttonSize - quarter) - 1, x + half - 1, y + half - 1, symbolColour, 2));
+	GDS_MultiDrawingOps(ops.size(), &ops[0], NULL);
 }
 
 static void DrawMenuButton(uint32_t x, uint32_t y, bool active, bool down = false){
@@ -75,9 +81,11 @@ static void DrawMenuButton(uint32_t x, uint32_t y, bool active, bool down = fals
 	else DrawButtonUp(x, y, buttonWidth, buttonHeight, active);
 	uint32_t borderWidth = buttonHeight / 4;
 	uint32_t symLength = buttonHeight - borderWidth;
-	GDS_Line(x + borderWidth, y + borderWidth, x + symLength, y + borderWidth, symbolColour, 2);
-	GDS_Line(x + borderWidth, y + (buttonHeight / 2), x + symLength, y + (buttonHeight / 2), symbolColour, 2);
-	GDS_Line(x + borderWidth, y + buttonHeight - borderWidth, x + symLength, y + buttonHeight - borderWidth, symbolColour, 2);
+	vector<gds_DrawingOp> ops;
+	ops.push_back(GDS_Line_Op(x + borderWidth, y + borderWidth, x + symLength, y + borderWidth, symbolColour, 2));
+	ops.push_back(GDS_Line_Op(x + borderWidth, y + (buttonHeight / 2), x + symLength, y + (buttonHeight / 2), symbolColour, 2));
+	ops.push_back(GDS_Line_Op(x + borderWidth, y + buttonHeight - borderWidth, x + symLength, y + buttonHeight - borderWidth, symbolColour, 2));
+	GDS_MultiDrawingOps(ops.size(), &ops[0], NULL);
 	GDS_Text(x + symLength + 5, y + buttonHeight - 5, "Menu", menuButtonFont, GetMetric(MenuButtonFontSize), symbolColour);
 }
 
