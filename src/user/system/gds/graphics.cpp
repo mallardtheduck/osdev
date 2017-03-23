@@ -72,13 +72,21 @@ void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, 
 		if(dst.IsTrueColor()){
 			uint8_t srcCol;
 			uint32_t dstCol;
+			uint32_t palette[256];
+			memset(palette, 0xFF, 256 * sizeof(uint32_t));
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
 					uint8_t srcPxl = gdImagePalettePixel(srcPtr, srcX + x, srcY + y);
 					if(srcPxl == srcTransparent) continue;
 					if((!y && !x) || srcCol != srcPxl){
-						dstCol = gdTrueColorAlpha(srcPtr->red[srcPxl], srcPtr->green[srcPxl], srcPtr->blue[srcPxl], srcPtr->alpha[srcPxl]);
-						srcCol = srcPxl;
+						if(palette[srcPxl] != 0xFFFFFF){
+							dstCol = palette[srcPxl];
+							srcCol = srcPxl;
+						}else{
+							dstCol = gdTrueColorAlpha(srcPtr->red[srcPxl], srcPtr->green[srcPxl], srcPtr->blue[srcPxl], srcPtr->alpha[srcPxl]);
+							palette[srcPxl] = dstCol;
+							srcCol = srcPxl;
+						}
 					}
 					gdImageTrueColorPixel(dstPtr, dstX + x, dstY + y) = dstCol;
 				}
@@ -86,14 +94,22 @@ void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, 
 		}else{
 			uint8_t srcCol;
 			uint8_t dstCol;
+			uint8_t palette[256];
+			memset(palette, 0xFF, 256 * sizeof(uint8_t));
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
 					uint8_t srcPxl = gdImagePalettePixel(srcPtr, srcX + x, srcY + y);
 					if(srcPxl == srcTransparent) continue;
 					if(srcPtr == dstPtr) dstCol = srcPxl;
 					else if ((!y && !x) || srcPxl != srcCol){
-						dstCol = gdImageColorResolveAlpha(dstPtr, srcPtr->red[srcPxl], srcPtr->green[srcPxl], srcPtr->blue[srcPxl], srcPtr->alpha[srcPxl]);
-						srcCol = srcPxl;
+						if(palette[srcPxl] != 0xFF){
+							dstCol = palette[srcPxl];
+							srcCol = srcPxl;
+						}else{
+							dstCol = gdImageColorResolveAlpha(dstPtr, srcPtr->red[srcPxl], srcPtr->green[srcPxl], srcPtr->blue[srcPxl], srcPtr->alpha[srcPxl]);
+							palette[srcPxl] = dstCol;
+							srcCol = srcPxl;
+						}
 					}
 					gdImagePalettePixel(dstPtr, dstX + x, dstY + y) = dstCol;
 				}
