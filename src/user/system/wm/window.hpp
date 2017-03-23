@@ -38,7 +38,7 @@ private:
 	bool dragging = false;
 	Point dragoffset;
 	Point last_drag_pos = {0, 0};
-	int64_t gds_drag_id;
+	int64_t gds_drag_id = 0;
 	WindowArea pressed = WindowArea::None;
 	uint32_t event_subs = 0;
 	uint32_t options = wm_WindowOptions::Default;
