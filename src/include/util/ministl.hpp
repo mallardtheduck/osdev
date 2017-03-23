@@ -479,7 +479,7 @@ public:
 	}
 
 	iterator rbegin(){
-		return &data_[size_];
+		return &data_[size_ - 1];
 	}
 
 	iterator rend(){
