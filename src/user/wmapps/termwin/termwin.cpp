@@ -184,6 +184,10 @@ static size_t detect_line_scroll(size_t line){
 }
 
 static void addRect(wm_Rect &a, const wm_Rect &b){
+	if(a.x == 0 && a.y == 0 && a.w == 0 && a.h == 0){
+		a = b;
+		return;
+	}
 	int32_t ax1 = a.x;
 	int32_t ay1 = a.y;
 	int32_t ax2 = a.x + a.w;
@@ -218,11 +222,12 @@ void render_terminal_thread(){
 		}
 		wm_Rect updateRect = {0, 0, 0, 0};
 		uint64_t prepStart = bt_rtc_millis();
+		vector<gds_DrawingOp> drawingOps;
 		for(size_t line = 0; line < terminal_mode.height; ++line){
 			if(!has_line_changed(line)) continue;
 			if(size_t sline = detect_line_scroll(line)){
 				uint64_t start = bt_rtc_millis();
-				GDS_Blit(surf, 0, sline * font_height, terminal_mode.width * font_width, font_height, 0, line * font_height, terminal_mode.width * font_width, font_height);
+				drawingOps.push_back(GDS_Blit_Op(surf, 0, sline * font_height, terminal_mode.width * font_width, font_height, 0, line * font_height, terminal_mode.width * font_width, font_height));
 				addRect(updateRect, {0, (int32_t)(line * font_height), (terminal_mode.width * font_width), font_height});
 				size_t l0addr = (line * terminal_mode.width) * 2;
 				size_t l1addr = (sline * terminal_mode.width) * 2;
@@ -235,7 +240,6 @@ void render_terminal_thread(){
 				ss << "TW: Scroll: " << end - start << "ms" << endl;
 				bt_zero(ss.str().c_str());
 			}else{
-				vector<gds_DrawingOp> drawingOps;
 				uint64_t start = bt_rtc_millis();
 				size_t ch = 0;
 				for(size_t col = 0; col < terminal_mode.width; ++col){
@@ -253,7 +257,6 @@ void render_terminal_thread(){
 						++ch;
 					}
 				}
-				if(drawingOps.size()) GDS_MultiDrawingOps(drawingOps.size(), &drawingOps[0], NULL);
 				uint64_t end = bt_rtc_millis();
 				stringstream ss;
 				ss << "TW: line drawn in " << end - start << "ms (" << ch << " changes)" << endl;
@@ -261,6 +264,7 @@ void render_terminal_thread(){
 			}
 		}
 		uint64_t updateStart = bt_rtc_millis();
+		if(drawingOps.size()) GDS_MultiDrawingOps(drawingOps.size(), &drawingOps[0], NULL);
 		WM_UpdateRect(updateRect);
 		uint64_t updateEnd = bt_rtc_millis();
 		stringstream uss;
