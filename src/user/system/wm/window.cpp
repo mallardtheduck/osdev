@@ -177,7 +177,7 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			if(GetMetric(FullWindowDrag)){
 				bool firstFrame = false;
 				if(!gds_drag_id){
-					gds_drag_id = GDS_NewSurface(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h);
+					gds_drag_id = GDS_NewSurface(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h, 100, gds_info.colourType);
 					Draw(active, true, gds_drag_id);
 					SetVisible(false, false);
 					firstFrame = true;

@@ -24,11 +24,28 @@ int main(){
 	info.subscriptions = wm_EventType::Close | wm_EventType::PointerButtonDown | wm_EventType::PointerButtonUp | wm_EventType::PointerMove;
 	strcpy(info.title, "WM Test Application");
 	uint64_t id = WM_CreateWindow(info);
+	uint64_t vsid = GDS_NewSurface(gds_SurfaceType::Vector, 200, 100, 100, gds_ColourType::True);
+	for(size_t i = 0; i < 100; ++i){
+		GDS_Line(0, i, 199, i, GDS_GetColour(0, 0, i * 2));
+	}
+	//GDS_Box(0, 0, 199, 99, GDS_GetColour(255, 255, 255), GDS_GetColour(255, 255, 255), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	GDS_Line(0, 0, 199, 99, GDS_GetColour(255, 0, 255));
+	GDS_Line(0, 99, 199, 0, GDS_GetColour(0, 255, 255));
+	uint32_t font2 = GDS_GetFontID("DejaVu Sans", gds_FontStyle::Bold);
+	GDS_Text(5, 50, "TrueColour Vector!", font2, 16, GDS_GetColour(255, 255, 0));
+	wm_WindowInfo vinfo;
+	vinfo.x = 100;
+	vinfo.y = 100;
+	vinfo.gds_id = vsid;
+	vinfo.subscriptions = wm_EventType::Close;
+	strcpy(vinfo.title, "WM Vector Test");
+	uint64_t vid = WM_CreateWindow(vinfo);
+	GDS_SelectSurface(sid);
 	bool draw = false;
 	uint32_t x, y;
 	while(true){
 		wm_Event e = WM_GetEvent();
-		if(e.window_id == id){
+		if(e.window_id == id || e.window_id == vid){
 			if(e.type == wm_EventType::Close) break;
 			if(e.type == wm_EventType::PointerButtonDown){
 				draw = true;

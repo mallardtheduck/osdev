@@ -1,5 +1,6 @@
 #include "gds.hpp"
 #include "bitmap_surface.hpp"
+#include "vector_surface.hpp"
 #include "screen.hpp"
 #include <algorithm>
 #include <sstream>
@@ -48,6 +49,9 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			switch(s_info.type) {
 				case gds_SurfaceType::Bitmap:
 					newsurf = new BitmapSurface(s_info.w, s_info.h, (s_info.colourType == gds_ColourType::Indexed), s_info.scale);
+					break;
+				case gds_SurfaceType::Vector:
+					newsurf = new VectorSurface(s_info.w, s_info.h, (s_info.colourType == gds_ColourType::Indexed), s_info.scale);
 					break;
 				default:
 					break;

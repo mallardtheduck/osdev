@@ -18,9 +18,7 @@
 using namespace std;
 
 BitmapSurface::BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale) {
-	if(indexed) {
-		image.reset(new GD::Image((int)w, (int)h, !indexed));
-	}
+	image.reset(new GD::Image((int)w, (int)h, !indexed));
 	this->scale = scale;
 	pending_op.type = gds_DrawingOpType::None;
 }
@@ -74,10 +72,12 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 				auto srcSurface = allSurfaces[op.Blit.src].lock();
 				if(srcSurface) {
 					auto srcImage = srcSurface->Render(op.Blit.scale);
-					if(op.Blit.srcW == op.Blit.dstW && op.Blit.srcH == op.Blit.dstH){
-						FastBlit(*srcImage, *image, op.Blit.srcX, op.Blit.srcY, op.Blit.dstX, op.Blit.dstY, op.Blit.dstW, op.Blit.dstH);
-					}else{
-						image->CopyResized(srcImage->GetPtr(), op.Blit.dstX, op.Blit.dstY, op.Blit.srcX, op.Blit.srcY, op.Blit.dstW, op.Blit.dstH, op.Blit.srcW, op.Blit.srcH);
+					if(srcImage){
+						if(op.Blit.srcW == op.Blit.dstW && op.Blit.srcH == op.Blit.dstH){
+							FastBlit(*srcImage, *image, op.Blit.srcX, op.Blit.srcY, op.Blit.dstX, op.Blit.dstY, op.Blit.dstW, op.Blit.dstH);
+						}else{
+							image->CopyResized(srcImage->GetPtr(), op.Blit.dstX, op.Blit.dstY, op.Blit.srcX, op.Blit.srcY, op.Blit.dstW, op.Blit.dstH, op.Blit.srcW, op.Blit.srcH);
+						}
 					}
 				}
 			}
@@ -190,7 +190,10 @@ void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
 }
 
 std::shared_ptr<gds_OpParameters> BitmapSurface::GetOpParameters(uint32_t){
-	return std::shared_ptr<gds_OpParameters>();
+	auto ret = make_shared<gds_OpParameters>();
+	ret->op_id = 0;
+	ret->size = 0;
+	return ret;
 }
 
 BitmapSurface::~BitmapSurface() {
