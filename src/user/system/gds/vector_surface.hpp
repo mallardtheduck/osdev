@@ -7,15 +7,20 @@
 
 class VectorSurface : public Surface{
 private:
-	std::map<uint32_t, gds_DrawingOp> ops;
-	std::map<uint32_t, std::shared_ptr<gds_OpParameters>> params;
+	struct VectorOp{
+		size_t zOrder;
+		gds_DrawingOp op;
+		std::shared_ptr<gds_OpParameters> params;
+	};
+	std::map<uint32_t, VectorOp> ops;
 	uint32_t opCounter = 0;
 	uint32_t width;
 	uint32_t height;
 	bool indexed;
 	
 	std::shared_ptr<GD::Image> cache;
-
+	
+	void OrderOps();
 public:
 	VectorSurface(size_t w, size_t h, bool indexed, uint32_t scale = 100);
 
@@ -32,6 +37,7 @@ public:
 	virtual std::shared_ptr<GD::Image> Render(uint32_t scale);
 	virtual void SetOpParameters(std::shared_ptr<gds_OpParameters>);
 	virtual std::shared_ptr<gds_OpParameters> GetOpParameters(uint32_t op);
+	virtual void ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum mode);
 	
 	virtual void Resize(size_t w, size_t h, bool indexed);
 

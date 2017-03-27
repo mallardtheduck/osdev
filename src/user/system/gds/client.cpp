@@ -232,6 +232,14 @@ void Client::ProcessMessage(bt_msg_header msg) {
 				free(mops);
 			}
 			break;
+		case gds_MsgType::ReorderOp:{
+				if(currentSurface){
+					gds_ReorderOp rop;
+					bt_msg_content(&msg, (void*)&rop, sizeof(rop));
+					currentSurface->ReorderOp(rop.op, rop.ref, rop.mode);
+				}			
+			}
+			break;
 		}
 	}
 }

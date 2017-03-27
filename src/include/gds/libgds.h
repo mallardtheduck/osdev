@@ -34,6 +34,7 @@ uint32_t GDS_GetFontID(const char *name, ENUM_NAME(gds_FontStyle) style);
 gds_FontInfo GDS_GetFontInfo(uint32_t fontID);
 gds_GlyphInfo GDS_GetGlyphInfo(uint32_t fontID, size_t size, char ch);
 void GDS_MultiDrawingOps(size_t count, gds_DrawingOp *ops, uint32_t *ids);
+void GDS_ReorderOp(uint32_t op, uint32_t ref, ENUM_NAME(gds_ReorderMode) mode);
 
 gds_DrawingOp GDS_Dot_Op(int32_t x, int32_t y, uint32_t colour, uint8_t size GDS_DEFAULT(1));
 uint32_t GDS_Dot(int32_t x, int32_t y, uint32_t colour, uint8_t size GDS_DEFAULT(1));

@@ -197,3 +197,8 @@ extern "C" void GDS_MultiDrawingOps(size_t count, gds_DrawingOp *ops, uint32_t *
 	}
 	free(mops);
 }
+
+extern "C" void GDS_ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum mode){
+	gds_ReorderOp rop = {op, ref, mode};
+	SendMessage(gds_MsgType::ReorderOp, sizeof(rop), (void*)&rop, false);
+}

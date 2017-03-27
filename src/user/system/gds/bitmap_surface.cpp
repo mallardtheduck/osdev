@@ -196,5 +196,8 @@ std::shared_ptr<gds_OpParameters> BitmapSurface::GetOpParameters(uint32_t){
 	return ret;
 }
 
+void BitmapSurface::ReorderOp(uint32_t /*op*/, uint32_t /*ref*/, gds_ReorderMode::Enum /*mode*/){
+}
+
 BitmapSurface::~BitmapSurface() {
 }

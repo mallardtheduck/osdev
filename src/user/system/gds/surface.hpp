@@ -21,6 +21,7 @@ public:
 	virtual std::shared_ptr<GD::Image> Render(uint32_t scale) = 0;
 	virtual void SetOpParameters(std::shared_ptr<gds_OpParameters> params) = 0;
 	virtual std::shared_ptr<gds_OpParameters> GetOpParameters(uint32_t op) = 0;
+	virtual void ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum mode) = 0;
 	
 	virtual ~Surface() {};
 };

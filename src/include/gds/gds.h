@@ -26,11 +26,13 @@ ENUM_START(gds_MsgType)
 	ENUM_SET(gds_MsgType, GetColour, 		9),
 	ENUM_SET(gds_MsgType, SetOpParameters,	10),
 	ENUM_SET(gds_MsgType, GetOpParameters,	11),
-	ENUM_SET(gds_MsgType, GetFontID,		12),
-	ENUM_SET(gds_MsgType, GetFontInfo,		13),
-	ENUM_SET(gds_MsgType, GetGlyphInfo, 	14),
+	ENUM_SET(gds_MsgType, ReorderOp,		12),
 	
-	ENUM_SET(gds_MsgType, MultiDrawingOps, 	20),
+	ENUM_SET(gds_MsgType, GetFontID,		20),
+	ENUM_SET(gds_MsgType, GetFontInfo,		21),
+	ENUM_SET(gds_MsgType, GetGlyphInfo, 	22),
+	
+	ENUM_SET(gds_MsgType, MultiDrawingOps, 	30),
 		
 	ENUM_SET(gds_MsgType, SelectScreen,		100),
 	ENUM_SET(gds_MsgType, UpdateScreen, 	101),
@@ -97,6 +99,15 @@ ENUM_START(gds_FillStyle)
 	ENUM_SET(gds_FillStyle, Filled, 1),
 ENUM_END
 ENUM_TYPE(gds_FillStyle);
+
+ENUM_START(gds_ReorderMode)
+	ENUM_SET(gds_ReorderMode, Front, 0),
+	ENUM_SET(gds_ReorderMode, Back, 1),
+	ENUM_SET(gds_ReorderMode, Swap, 2),
+	ENUM_SET(gds_ReorderMode, Above, 3),
+	ENUM_SET(gds_ReorderMode, Below, 4),
+ENUM_END
+ENUM_TYPE(gds_ReorderMode);
 
 struct gds_DrawingOp {
 	ENUM_NAME(gds_DrawingOpType) type;
@@ -260,6 +271,15 @@ struct gds_MultiOps{
 };
 #ifndef __cplusplus
 typedef struct gds_MultiOps gds_MultiOps;
+#endif
+
+struct gds_ReorderOp{
+	uint32_t op;
+	uint32_t ref;
+	ENUM_NAME(gds_ReorderMode) mode;
+};
+#ifndef __cplusplus
+typedef struct gds_ReorderOp gds_ReorderOp;
 #endif
 
 #endif
