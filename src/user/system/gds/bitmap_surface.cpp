@@ -37,7 +37,13 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 				swap(op.Line.x1, op.Line.x2);
 				swap(op.Line.y1, op.Line.y2);
 			}
-			image->Line(op.Line.x1, op.Line.y1, op.Line.x2, op.Line.y2, op.Common.lineColour);
+			if(op.Line.x1 == op.Line.x2){
+				FastBox(*image, op.Line.x1, op.Line.y1, op.Common.lineWidth, max(op.Line.y1, op.Line.y2) - min(op.Line.y1, op.Line.y2), op.Common.lineColour);
+			}else if(op.Line.y1 == op.Line.y2){
+				FastBox(*image, op.Line.x1, op.Line.y1, max(op.Line.x1, op.Line.x2) - min(op.Line.x1, op.Line.x2), op.Common.lineWidth, op.Common.lineColour);
+			}else{
+				image->Line(op.Line.x1, op.Line.y1, op.Line.x2, op.Line.y2, op.Common.lineColour);
+			}
 			break;
 
 		case gds_DrawingOpType::Box:
