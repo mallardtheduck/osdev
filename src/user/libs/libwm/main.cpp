@@ -28,6 +28,7 @@ int main(){
 	for(size_t i = 0; i < 100; ++i){
 		GDS_Line(0, i, 199, i, GDS_GetColour(0, 0, i * 2));
 	}
+	GDS_Line(0, 0, 199, 0, GDS_GetColour(255, 255, 255));
 	//GDS_Box(0, 0, 199, 99, GDS_GetColour(255, 255, 255), GDS_GetColour(255, 255, 255), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	GDS_Line(0, 0, 199, 99, GDS_GetColour(255, 0, 255));
 	GDS_Line(0, 99, 199, 0, GDS_GetColour(0, 255, 255));

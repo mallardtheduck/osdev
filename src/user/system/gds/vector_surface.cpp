@@ -1,5 +1,6 @@
 #include "vector_surface.hpp"
 #include "bitmap_surface.hpp"
+#include "graphics.hpp"
 #include <gd.h>
 #include <dev/rtc.h>
 
@@ -119,6 +120,11 @@ std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
 		bt_zero(ss.str().c_str());
 	}
 	return cache;
+}
+
+void VectorSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h){
+	std::shared_ptr<GD::Image> src = Render(100);
+	FastBlit(*src, *dst, srcX, srcY, dstX, dstY, w, h);
 }
 
 void VectorSurface::OrderOps(){

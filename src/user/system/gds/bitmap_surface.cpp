@@ -37,13 +37,13 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 				swap(op.Line.x1, op.Line.x2);
 				swap(op.Line.y1, op.Line.y2);
 			}
-			if(op.Line.x1 == op.Line.x2){
+			/*if(p.Line.x1 == op.Line.x2){
 				FastBox(*image, op.Line.x1, op.Line.y1, op.Common.lineWidth, max(op.Line.y1, op.Line.y2) - min(op.Line.y1, op.Line.y2), op.Common.lineColour);
 			}else if(op.Line.y1 == op.Line.y2){
 				FastBox(*image, op.Line.x1, op.Line.y1, max(op.Line.x1, op.Line.x2) - min(op.Line.x1, op.Line.x2), op.Common.lineWidth, op.Common.lineColour);
-			}else{
+			}else{*/
 				image->Line(op.Line.x1, op.Line.y1, op.Line.x2, op.Line.y2, op.Common.lineColour);
-			}
+			//}
 			break;
 
 		case gds_DrawingOpType::Box:
@@ -77,11 +77,12 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 		case gds_DrawingOpType::Blit: {
 				auto srcSurface = allSurfaces[op.Blit.src].lock();
 				if(srcSurface) {
-					auto srcImage = srcSurface->Render(op.Blit.scale);
-					if(srcImage){
-						if(op.Blit.srcW == op.Blit.dstW && op.Blit.srcH == op.Blit.dstH){
-							FastBlit(*srcImage, *image, op.Blit.srcX, op.Blit.srcY, op.Blit.dstX, op.Blit.dstY, op.Blit.dstW, op.Blit.dstH);
-						}else{
+					if(op.Blit.srcW == op.Blit.dstW && op.Blit.srcH == op.Blit.dstH){
+						//FastBlit(*srcImage, *image, op.Blit.srcX, op.Blit.srcY, op.Blit.dstX, op.Blit.dstY, op.Blit.dstW, op.Blit.dstH);
+						srcSurface->RenderTo(image, op.Blit.srcX, op.Blit.srcY, op.Blit.dstX, op.Blit.dstY, op.Blit.dstW, op.Blit.dstH);
+					}else{
+						auto srcImage = srcSurface->Render(op.Blit.scale);
+						if(srcImage){
 							image->CopyResized(srcImage->GetPtr(), op.Blit.dstX, op.Blit.dstY, op.Blit.srcX, op.Blit.srcY, op.Blit.dstW, op.Blit.dstH, op.Blit.srcW, op.Blit.srcH);
 						}
 					}
@@ -203,6 +204,10 @@ std::shared_ptr<gds_OpParameters> BitmapSurface::GetOpParameters(uint32_t){
 }
 
 void BitmapSurface::ReorderOp(uint32_t /*op*/, uint32_t /*ref*/, gds_ReorderMode::Enum /*mode*/){
+}
+
+void BitmapSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h){
+	FastBlit(*image, *dst, srcX, srcY, dstX, dstY, w, h);
 }
 
 BitmapSurface::~BitmapSurface() {
