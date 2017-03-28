@@ -11,7 +11,7 @@ BUILD-AR := i686-pc-btos-ar
 BUILD-AS-OPTIONS := -g -c -fPIC -D_I386MACH_NEED_SOTYPE_FUNCTION
 AR-FLAGS := rcs -o $(STATIC-NAME)
 BUILD-C := i686-pc-btos-gcc
-BUILD-C-FLAGS := -c -fPIC -DINTERNAL_NEWLIB -D_COMPILING_NEWLIB -DABORT_MESSAGE -ffreestanding
+BUILD-C-FLAGS := -c -fPIC -DINTERNAL_NEWLIB -D_COMPILING_NEWLIB -DABORT_MESSAGE -DMALLOC_PROVIDED -ffreestanding
 BUILD-C-OPTIONS := -Wall -Wextra -g -c -I../../../../include -I./sys/btos -I./include -std=gnu99
 LINK := i686-pc-btos-gcc
 LINK-FLAGS := -O2 -fPIC -shared -nodefaultlibs -ffreestanding -lm -lgcc_s
@@ -19,7 +19,11 @@ LINK-OPTIONS := -o $(LIBRARY-NAME)
 G-LINK-OPTIONS := -L. -lc -o $(G-LIBRARY-NAME)
 
 FOLDERS := argz ctype errno locale machine reent search signal stdio stdlib string sys syscalls time
-SKIP-FILES := signal/signal.c stdlib/getenv.c syscalls/syslseek.c syscalls/syswait.c syscalls/sysunlink.c syscalls/sysopen.c syscalls/sysgetpid.c syscalls/sysgettod.c syscalls/sysfcntl.c syscalls/sysfork.c syscalls/syskill.c syscalls/syswrite.c syscalls/sysstat.c syscalls/syssbrk.c syscalls/sysisatty.c syscalls/sysexecve.c syscalls/sysclose.c syscalls/syslink.c syscalls/sysread.c syscalls/sysfstat.c syscalls/systimes.c string/memcpy.c string/strlen.c string/memcmp.c string/memmove.c string/memset.c string/memchr.c string/strchr.c sys/btos/crti.S sys/btos/crt0.S sys/btos/crtn.S
+SKIP-FILES := signal/signal.c stdlib/getenv.c syscalls/syslseek.c syscalls/syswait.c syscalls/sysunlink.c syscalls/sysopen.c \
+	syscalls/sysgetpid.c syscalls/sysgettod.c syscalls/sysfcntl.c syscalls/sysfork.c syscalls/syskill.c syscalls/syswrite.c \
+	syscalls/sysstat.c syscalls/syssbrk.c syscalls/sysisatty.c syscalls/sysexecve.c syscalls/sysclose.c syscalls/syslink.c \
+	syscalls/sysread.c syscalls/sysfstat.c syscalls/systimes.c string/memcpy.c string/strlen.c string/memcmp.c string/memmove.c \
+	string/memset.c string/memchr.c string/strchr.c sys/btos/crti.S sys/btos/crt0.S sys/btos/crtn.S reent/sbrkr.c
 SKIP-SPEC := $(shell printf "! -wholename %s " $(SKIP-FILES))
 
 ASFILES := $(shell find $(FOLDERS) -type f -name "*.s" -or -name "*.S" $(SKIP-SPEC))

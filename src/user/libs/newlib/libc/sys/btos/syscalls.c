@@ -202,7 +202,7 @@ int read(int file, char *ptr, int len){
 	return _read(file, ptr, len);
 }
 
-caddr_t _sbrk(int incr){
+/*caddr_t _sbrk(int incr){
 	static void *base=0;
 	static size_t limit=0, alloc=0;
 
@@ -227,7 +227,7 @@ caddr_t _sbrk(int incr){
 
 caddr_t sbrk(int incr){
 	return _sbrk(incr);
-}
+}*/
 
 int _stat(const char *file, struct stat *st){
 	char path[BT_MAX_PATH]={0};
