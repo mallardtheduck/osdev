@@ -19,7 +19,7 @@ private:
 	size_t buffersize;
 	bool cursor_on;
 	bt_terminal_pointer_bitmap cursor_bmp_info;
-	bt_handle_t update_thread;
+	bt_handle_t update_thread = 0;
 	bt_handle_t sync_atom;
 	bt_handle_t update_q_lock;
 	std::deque<update> update_q;

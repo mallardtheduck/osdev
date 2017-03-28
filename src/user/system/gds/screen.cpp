@@ -71,7 +71,6 @@ Screen::Screen() : BitmapSurface::BitmapSurface(1, 1, true){
 	
 	sync_atom = bt_create_atom(0);
 	update_q_lock = bt_create_lock();
-	update_thread = bt_new_thread(&screen_update_thread, (void*)this, updatethread_stack + thread_stack_size);
 }
 
 Screen::~Screen(){
@@ -84,8 +83,10 @@ Screen::~Screen(){
 
 void Screen::RestoreMode(){
 	if(original_mode.bpp){
-		QueueUpdate(0, 0, 0, false);
-		bt_wait_thread(update_thread);
+		if(update_thread){
+			QueueUpdate(0, 0, 0, false);
+			bt_wait_thread(update_thread);
+		}
 		bt_fioctl(fh, bt_terminal_ioctl::SetScreenMode, sizeof(original_mode), (char*)&original_mode);
 	}
 }
@@ -211,8 +212,10 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 	}
 	DBG("GDS: Found mode " << bestmode.width << "x" << bestmode.height << " " << (int)bestmode.bpp << "bpp.");
 	if(bestmode.bpp){
-		QueueUpdate(0, 0, 0, false);
-		bt_wait_thread(update_thread);
+		if(update_thread){
+			QueueUpdate(0, 0, 0, false);
+			bt_wait_thread(update_thread);
+		}
 		
 		bt_fioctl(fh, bt_terminal_ioctl::SetScreenMode, sizeof(bestmode), (char *) &bestmode);
 		current_mode=bestmode;
