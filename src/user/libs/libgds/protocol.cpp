@@ -70,12 +70,14 @@ extern "C" gds_Info GDS_Info(){
 	return GetContent<gds_Info>(&reply);
 }
 
-extern "C" uint64_t GDS_NewSurface(gds_SurfaceType::Enum type, uint32_t w, uint32_t h, uint32_t scale, gds_ColourType::Enum colourType){
+extern "C" uint64_t GDS_NewSurface(gds_SurfaceType::Enum type, uint32_t w, uint32_t h, uint32_t scale, gds_ColourType::Enum colourType, uint64_t shmRegion, size_t shmOffset){
 	gds_SurfaceInfo info;
 	info.type = type;
 	info.w = w; info.h = h;
 	info.scale = scale;
 	info.colourType = colourType;
+	info.shmRegion = shmRegion;
+	info.shmOffset = shmOffset;
 	bt_msg_header reply = SendMessage(gds_MsgType::NewSurface, sizeof(info), (void*)&info, true);
 	uint64_t ret = GetContent<uint64_t>(&reply);
 	current_known = true;

@@ -119,7 +119,7 @@ void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, 
 }
 
 void FastBox(GD::Image &im, int32_t x, int32_t y, uint32_t w, uint32_t h, uint32_t col){
-	DBG("GDS: FastBox: (" << x << ", " << y << " : " << w << " x " << h << ")");
+	//DBG("GDS: FastBox: (" << x << ", " << y << " : " << w << " x " << h << ")");
 	
 	if(x < 0){
 		if(w < (uint32_t)-x) return;

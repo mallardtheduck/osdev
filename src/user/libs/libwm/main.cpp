@@ -5,8 +5,28 @@
 #include <cstring>
 #include <sstream>
 #include <cstdlib>
+#include <malloc.h>
 
 using namespace std;
+
+uint32_t create_shm_surface(){
+	bt_handle_t shm_region_handle = bt_create_shm(bt_shm_flags::Normal);
+	uint64_t shmRegion = bt_shm_id(shm_region_handle);
+	uint32_t rows = 200;
+	uint32_t cols = 200;
+	size_t size = rows * cols * 4;
+	size_t pages = size / 4096;
+	if(pages < size) ++pages;
+	uint32_t *data = (uint32_t*)memalign(4096, pages * 4096);
+	bt_shm_map(shmRegion, (void*)data, 0, pages, bt_shm_flags::Normal);
+	for(size_t y = 0; y < rows; ++y){
+		uint32_t col = GDS_GetColour(y, 0, 0);
+		for(size_t x = 0; x < cols; ++x){
+			data[(y * rows) + x] = col;
+		}
+	}
+	return GDS_NewSurface(gds_SurfaceType::Memory, rows, cols, 100, gds_ColourType::True, shmRegion, 0);
+}
 
 int main(){
 	uint32_t font = GDS_GetFontID("DejaVu Sans", gds_FontStyle::Normal);
@@ -41,12 +61,20 @@ int main(){
 	vinfo.subscriptions = wm_EventType::Close;
 	strcpy(vinfo.title, "WM Vector Test");
 	uint64_t vid = WM_CreateWindow(vinfo);
+	uint32_t shmsurf = create_shm_surface();
+	wm_WindowInfo shminfo;
+	shminfo.x = 200;
+	shminfo.y = 200;
+	shminfo.gds_id = shmsurf;
+	shminfo.subscriptions = wm_EventType::Close;
+	strcpy(shminfo.title, "SHM Test");
+	uint64_t shmwin = WM_CreateWindow(shminfo);
 	GDS_SelectSurface(sid);
 	bool draw = false;
 	uint32_t x, y;
 	while(true){
 		wm_Event e = WM_GetEvent();
-		if(e.window_id == id || e.window_id == vid){
+		if(e.window_id == id || e.window_id == vid || e.window_id == shmwin){
 			if(e.type == wm_EventType::Close) break;
 			if(e.type == wm_EventType::PointerButtonDown){
 				draw = true;

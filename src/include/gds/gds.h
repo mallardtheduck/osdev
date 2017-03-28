@@ -212,6 +212,8 @@ struct gds_SurfaceInfo{
 	ENUM_NAME(gds_SurfaceType) type;
 	uint32_t w, h, scale;
 	ENUM_NAME(gds_ColourType) colourType;
+	uint64_t shmRegion;
+	size_t shmOffset;
 };
 #ifndef __cplusplus
 typedef struct gds_SurfaceInfo gds_SurfaceInfo;
