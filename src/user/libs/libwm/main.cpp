@@ -70,6 +70,7 @@ int main(){
 	strcpy(shminfo.title, "SHM Test");
 	uint64_t shmwin = WM_CreateWindow(shminfo);
 	GDS_SelectSurface(sid);
+	WM_SelectWindow(id);
 	bool draw = false;
 	uint32_t x, y;
 	while(true){
