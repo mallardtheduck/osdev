@@ -1,6 +1,7 @@
 #include <gds/libgds.h>
 #include "drawing.hpp"
 #include "metrics.hpp"
+#include <utility>
 
 using namespace std;
 
@@ -113,26 +114,32 @@ uint64_t DrawTitleBar(uint32_t w, string title, bool active, WindowArea pressed)
 	return ret;
 }
 
-static void DrawBorderHorzLine(int32_t x1, int32_t y, int32_t x2, const Rect &bounds){
-	if((x1 < bounds.x && x2 < bounds.x) || (x1 >= bounds.x + (int32_t)bounds.w && x2 >= bounds.x + (int32_t)bounds.w) || y < bounds.y || y > bounds.y + (int32_t)bounds.h) return;
+static pair<bool, gds_DrawingOp> DrawBorderHorzLine(int32_t x1, int32_t y, int32_t x2, const Rect &bounds){
+	if((x1 < bounds.x && x2 < bounds.x) || (x1 >= bounds.x + (int32_t)bounds.w && x2 >= bounds.x + (int32_t)bounds.w) || y < bounds.y || y > bounds.y + (int32_t)bounds.h) return {false, gds_DrawingOp()};
 	if(x1 > x2) swap(x1, x2);
 	if(x1 < bounds.x) x1 = bounds.x;
 	if(x2 > bounds.x + (int32_t)bounds.w) x2 = bounds.x + bounds.w;
-	GDS_Line(x1, y, x2, y, borderColour, 1);
+	return {true, GDS_Line_Op(x1, y, x2, y, borderColour, 1)};
 }
 
-static void DrawBorderVertLine(int32_t x, int32_t y1, int32_t y2, const Rect &bounds){
-	if((y1 < bounds.y && y2 < (int32_t)bounds.y) || (y1 >= bounds.y + (int32_t)bounds.h && y2 >= bounds.y + (int32_t)bounds.h) || x < bounds.x || x > bounds.x + (int32_t)bounds.w) return;
+static pair<bool, gds_DrawingOp> DrawBorderVertLine(int32_t x, int32_t y1, int32_t y2, const Rect &bounds){
+	if((y1 < bounds.y && y2 < (int32_t)bounds.y) || (y1 >= bounds.y + (int32_t)bounds.h && y2 >= bounds.y + (int32_t)bounds.h) || x < bounds.x || x > bounds.x + (int32_t)bounds.w) return {false, gds_DrawingOp()};
 	if(y1 > y2) swap(y1, y2);
 	if(y1 < bounds.y) y1 = bounds.y;
 	if(y2 > bounds.y + (int32_t)bounds.h) y2 = bounds.y + bounds.h;
-	GDS_Line(x, y1, x, y2, borderColour, 1);
+	return {true, GDS_Line_Op(x, y1, x, y2, borderColour, 1)};
 }
 
 void DrawBorder(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const Rect &bounds){
 	borderColour = GetColour(BorderColour);
-	DrawBorderHorzLine(x, y, x + w - 1, bounds);
-	DrawBorderHorzLine(x, y + h - 1, x + w - 1, bounds);
-	DrawBorderVertLine(x, y, y + h - 1, bounds);
-	DrawBorderVertLine(x + w - 1, y, y + h - 1, bounds);
+	vector<gds_DrawingOp> ops;
+	auto l1 = DrawBorderHorzLine(x, y, x + w - 1, bounds);
+	if(l1.first) ops.push_back(l1.second);
+	auto l2 = DrawBorderHorzLine(x, y + h - 1, x + w - 1, bounds);
+	if(l2.first) ops.push_back(l2.second);
+	auto l3 = DrawBorderVertLine(x, y, y + h - 1, bounds);
+	if(l3.first) ops.push_back(l3.second);
+	auto l4 = DrawBorderVertLine(x + w - 1, y, y + h - 1, bounds);
+	if(l4.first) ops.push_back(l4.second);
+	GDS_MultiDrawingOps(ops.size(), &ops[0], NULL);
 }
