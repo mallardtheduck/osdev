@@ -31,6 +31,8 @@ private:
 	uint64_t gds_id;
 	gds_SurfaceInfo gds_info;
 	uint64_t gds_title_id = 0;
+	uint64_t gds_active_title = 0;
+	uint64_t gds_inactive_title = 0;
 	gds_SurfaceInfo gds_titleinfo;
 	std::string title;
 	bool active = false;

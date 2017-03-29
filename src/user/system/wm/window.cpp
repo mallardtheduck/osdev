@@ -2,12 +2,15 @@
 #include <sstream>
 #include <gds/libgds.h>
 #include <wm/wm.h>
+#include <dev/rtc.h>
 #include "window.hpp"
 #include "metrics.hpp"
 #include "drawing.hpp"
 #include "windows.hpp"
 
 using namespace std;
+
+#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
 
 Window::Window(uint64_t surface_id) : gds_id(surface_id){
 	GDS_SelectSurface(gds_id);
@@ -35,6 +38,7 @@ void Window::Draw(bool active, bool content, uint64_t target){
 }
 
 void Window::Draw(bool active, const Rect &r){
+	uint64_t draw_start = bt_rtc_millis();
 	this->active = active;
 	GDS_SelectScreen();
 	Point cpos = GetContentPosition();
@@ -45,7 +49,9 @@ void Window::Draw(bool active, const Rect &r){
 		GDS_Blit(gds_id, contentSrc.x, contentSrc.y, contentSrc.w, contentSrc.h, contentDst.x, contentDst.y, contentDst.w, contentDst.h);
 		drew = true;
 	}
+	uint64_t draw_s1 = bt_rtc_millis();
 	RefreshTitleBar();
+	uint64_t draw_s2 = bt_rtc_millis();
 	if(Overlaps(r, {pos.x, pos.y, gds_titleinfo.w, gds_titleinfo.h})){
 		Rect titleDst = {max(r.x, pos.x), max(r.y, pos.y), min((pos.x + gds_titleinfo.w), (r.x + r.w)) - max(r.x, pos.x), min((pos.y + gds_titleinfo.h), (r.y + r.h)) - max(r.y, pos.y)};
 		Rect titleSrc = Reoriginate(titleDst, {pos.x, pos. y});
@@ -54,6 +60,8 @@ void Window::Draw(bool active, const Rect &r){
 	}
 	DrawBorder(pos.x, pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize) + GetMetric(BorderWidth), r);
 	last_active = active;
+	uint64_t draw_end = bt_rtc_millis();
+	DBG("WM Window " << id << " draw s1: " << draw_s1 - draw_start << "ms s2: " << draw_s2 - draw_s1 << "ms s3: " << draw_end - draw_s2 << "ms");
 	if(!drew){
 		stringstream ss;
 		ss << "WM: Draw with no overlap!" << endl;
@@ -228,7 +236,7 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 		RefreshTitleBar(true);
 		Rect r = GetBoundingRect();
 		r.h = GetMetric(TitleBarSize);
-		DrawAndRefreshWindows(r);
+		DrawAndRefreshWindows(r, id);
 	}
 	if(over == WindowArea::Content){
 		wm_Event e;
@@ -324,13 +332,29 @@ void Window::RefreshTitleBar(bool force){
 }
 
 bool Window::UpdateTitleBar(bool force){
-	if(!gds_title_id || active != last_active || force){
-		if(gds_title_id){
-			GDS_SelectSurface(gds_title_id);
+	if(force){
+		if(active && gds_active_title){
+			GDS_SelectSurface(gds_active_title);
 			GDS_DeleteSurface();
-			gds_title_id = 0;
+			gds_active_title = 0;
 		}
-		gds_title_id = DrawTitleBar(gds_info.w + (2 * GetMetric(BorderWidth)), title, active, pressed);
+		if(!active && gds_inactive_title){
+			GDS_SelectSurface(gds_inactive_title);
+			GDS_DeleteSurface();
+			gds_inactive_title = 0;
+		}
+		gds_title_id = 0;
+	}
+	if(!gds_title_id || active != last_active){
+		if(active && gds_active_title){
+			gds_title_id = gds_active_title;
+		}else if (!active && gds_inactive_title){
+			gds_title_id = gds_inactive_title;
+		}else{
+			gds_title_id = DrawTitleBar(gds_info.w + (2 * GetMetric(BorderWidth)), title, active, pressed);
+			if(active) gds_active_title = gds_title_id;
+			else gds_inactive_title = gds_title_id;
+		}
 		GDS_SelectSurface(gds_title_id);
 		gds_titleinfo = GDS_SurfaceInfo();
 		return true;

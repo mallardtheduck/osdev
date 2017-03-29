@@ -2,6 +2,8 @@
 #include "metrics.hpp"
 #include "service.hpp"
 
+#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
+
 #include <map>
 #include <vector>
 #include <algorithm>
@@ -87,10 +89,10 @@ void DrawWindows(const Rect &r, uint64_t above){
 				lastWin = *i;
 				drawing = false;
 				break;
-			}else{
+			}/*else{
 				Rect brect = (*i)->GetBoundingRect();
 				ss << "WM: (" << r.x << ", " << r.y << " : " << r.w << " x " << r.h << ") is not in (" << brect.x << ", " << brect.y << " : " << brect.w << " x " << brect.h << ")" << endl;
-			}
+			}*/
 		}
 	}else if(above){
 		for(auto w : wins){
@@ -203,6 +205,7 @@ void HandleInput(const bt_terminal_event &event){
 	shared_ptr<Window> awin = activeWindow.lock();
 	if(event.type == bt_terminal_event_type::Key && awin) awin->KeyInput(event.key);
 	else if(event.type ==  bt_terminal_event_type::Pointer){
+		uint64_t pointer_start = bt_rtc_millis();
 		if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == (uint32_t)curpos.x && event.pointer.y == (uint32_t)curpos.y) return;
 		curpos.x = event.pointer.x; curpos.y = event.pointer.y;
 		shared_ptr<Window> win = GetWindowAt(event.pointer.x, event.pointer.y);
@@ -213,17 +216,24 @@ void HandleInput(const bt_terminal_event &event){
 			pointerWindow = win;
 		}
 		if(!win) return;
+		uint64_t pointer_s1 = bt_rtc_millis();
 		if(event.pointer.type == bt_terminal_pointer_event_type::ButtonDown && win != activeWindow.lock()){
+			uint64_t activate_start = bt_rtc_millis();
 			shared_ptr<Window> old = awin;
 			activeWindow = win;
 			BringToFront(win);
 			if(old){
-				DrawAndRefreshWindows(TileRects(win->GetBoundingRect(), old->GetBoundingRect()));
+				DrawAndRefreshWindows(win->GetBoundingRect(), win->id);
+				DrawAndRefreshWindows(old->GetBoundingRect(), old->id);
 			}else{
-				DrawAndRefreshWindows(win->GetBoundingRect());
+				DrawAndRefreshWindows(win->GetBoundingRect(), win->id);
 			}
+			uint64_t activate_end = bt_rtc_millis();
+			DBG("WM Activate: " << activate_end - activate_start << "ms");
 		}
 		win->PointerInput(event.pointer);
+		uint64_t pointer_end = bt_rtc_millis();
+		DBG("WM: Pointer input stage1: " << pointer_s1 - pointer_start << "ms stage2: " << pointer_end - pointer_s1 << "ms");
 	}
 }
 
