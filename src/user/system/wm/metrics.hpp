@@ -8,7 +8,7 @@ template<typename T> struct Metric{
 	bool present = false;
 	T value;
 	
-	Metric<T>(std::string n) : name(n) {}
+	constexpr Metric<T>(const std::string &n) : name(n) {}
 };
 
 struct ColourValue{
