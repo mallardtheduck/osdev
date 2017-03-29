@@ -1,38 +1,40 @@
 #ifndef METRICS_HPP
 #define METRICS_HPP
 
-static const int32_t TitleBarSize = 20;
-static const int32_t TitleTextMargin = 5;
-static const int32_t BorderWidth = 1;
-static const int32_t ButtonSize = TitleBarSize - 2;
-static const int32_t MenuButtonWidth = (TitleBarSize + TitleTextMargin) * 2;
-static const int32_t FullWindowDrag = 1;
-static const int32_t TitleFontSize = 16;
-static const int32_t MenuButtonFontSize = 11;
-static const int32_t TitleTextBaseline = 5;
-static const int32_t ScreenWidth = 800;
-static const int32_t ScreenHeight = 600;
-static const int32_t ScreenBpp = 24;
+#include <string>
 
-#define GetMetric(x) x
+#define TitleBarSize "TitleBarSize"
+#define TitleTextMargin "TitleTextMargin"
+#define BorderWidth "BorderWidth"
+#define ButtonSize "ButtonSize"
+#define MenuButtonWidth "MenuButtonWidth"
+#define FullWindowDrag "FullWindowDrag"
+#define TitleFontSize "TitleFontSize"
+#define MenuButtonFontSize "MenuButtonFontSize"
+#define TitleTextBaseline "TitleTextBaseline"
+#define ScreenWidth "ScreenWidth"
+#define ScreenHeight "ScreenHeight"
+#define ScreenBpp "ScreenBpp"
 
-#define TitleBarColour GDS_GetColour(0, 0, 255)
-#define ButtonFaceColour GDS_GetColour(128, 128, 128)
-#define ButtonHighlightColour GDS_GetColour(255, 255, 255)
-#define ButtonShadowColour GDS_GetColour(64, 64, 64)
-#define LineColour GDS_GetColour(0, 0, 0)
-#define BorderColour GDS_GetColour(170, 0, 170)
-#define SeperatorColour GDS_GetColour(64, 64, 64)
-#define TitleTextColour GDS_GetColour(255, 255, 255)
-#define InactiveTitleColour GDS_GetColour(64, 64, 64)
-#define SymbolColour GDS_GetColour(0, 0, 0) 
-#define BackgroundColour GDS_GetColour(0, 170, 170)
+int32_t GetMetric(const std::string &name);
 
-#define GetColour(x) x
+#define TitleBarColour "TitleBarColour"
+#define ButtonFaceColour "ButtonFaceColour"
+#define ButtonHighlightColour "ButtonHighlightColour"
+#define ButtonShadowColour "ButtonShadowColour"
+#define LineColour "LineColour"
+#define BorderColour "BorderColour"
+#define SeperatorColour "SeperatorColour"
+#define TitleTextColour "TitleTextColour"
+#define InactiveTitleColour "InactiveTitleColour"
+#define SymbolColour "SymbolColour" 
+#define BackgroundColour "BackgroundColour"
 
-static const std::string TitleFontName = "Resagokr";
-static const std::string MenuButtonFontName = "Resagokr";
+uint32_t GetColour(const std::string &name);
 
-#define GetSetting(x) x
+#define TitleFontName "TitleFontName"
+#define MenuButtonFontName "MenuButtonFontName"
+
+std::string GetSetting(const std::string &name);
 
 #endif

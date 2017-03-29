@@ -8,6 +8,7 @@
 #include "service.hpp"
 #include "drawing.hpp"
 #include "metrics.hpp"
+#include "config.hpp"
 
 using namespace std;
 
@@ -42,6 +43,7 @@ shared_ptr<Window> CreateTestWin(string title, uint32_t x, uint32_t y, uint32_t 
 
 int main(int argc, char **argv){
     cout << "BT/OS WM" << endl;
+    ParseConfig(ConfigFilePath);
 	bt_pid pid = bt_getpid();
 	char pid_str[64] = {0};
 	snprintf(pid_str, 64, "%i", pid);

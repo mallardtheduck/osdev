@@ -61,6 +61,7 @@ import-files:=\
  data/btos/lib/gd.ell \
  data/btos/lib/freetype.ell \
  data/btos/fonts \
+ data/btos/config/wm.ini \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -259,6 +260,9 @@ data/btos/fonts: ../../user/system/gds/fonts
 	mkdir -p $@
 	cp -Rv $</* $@
 
+data/btos/config/wm.ini: ../../user/system/wm/wm.ini
+	cp $< $@
+
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx
 	mkdir -p data/btos/boot/grub/
 	cp -R ../../3rdparty/install/btos/lib/grub/i386-pc data/btos/boot/grub
@@ -277,6 +281,7 @@ create.directories: Makefile
 	mkdir -p data/btos/drivers
 	mkdir -p data/btos/lib
 	mkdir -p data/btos/share
+	mkdir -p data/btos/config
 	touch create.directories
 
 ../base.tar: $(import-files) $(pkg-files) copy.grub
