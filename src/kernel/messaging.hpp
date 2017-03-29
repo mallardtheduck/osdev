@@ -1,7 +1,7 @@
 #ifndef _MESSAGING_HPP
 #define _MESSAGING_HPP
 
-#include "bt_msg.h"
+#include <btos/bt_msg.h>
 #include "process.hpp"
 
 namespace thread_msg_status{

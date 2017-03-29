@@ -86,7 +86,7 @@ size_t drv_write(void *instance, size_t bytes, char *buf){
 	return inst->driver.write(inst->instance, bytes, buf);
 }
 
-size_t drv_seek(void *instance, size_t pos, uint32_t flags){
+bt_filesize_t drv_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 	drv_instance *inst=(drv_instance*)instance;
 	return inst->driver.seek(inst->instance, pos, flags);
 }

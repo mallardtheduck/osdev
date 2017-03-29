@@ -1,7 +1,7 @@
 #ifndef _GDS_H
 #define _GDS_H
 
-#include "../bt_enum.h"
+#include <util/bt_enum.h>
 
 #ifdef __cplusplus
 	#include <cstdint>
@@ -26,6 +26,13 @@ ENUM_START(gds_MsgType)
 	ENUM_SET(gds_MsgType, GetColour, 		9),
 	ENUM_SET(gds_MsgType, SetOpParameters,	10),
 	ENUM_SET(gds_MsgType, GetOpParameters,	11),
+	ENUM_SET(gds_MsgType, ReorderOp,		12),
+	
+	ENUM_SET(gds_MsgType, GetFontID,		20),
+	ENUM_SET(gds_MsgType, GetFontInfo,		21),
+	ENUM_SET(gds_MsgType, GetGlyphInfo, 	22),
+	
+	ENUM_SET(gds_MsgType, MultiDrawingOps, 	30),
 		
 	ENUM_SET(gds_MsgType, SelectScreen,		100),
 	ENUM_SET(gds_MsgType, UpdateScreen, 	101),
@@ -44,7 +51,8 @@ ENUM_START(gds_DrawingOpType)
 	ENUM_SET(gds_DrawingOpType, Polygon, 	5),
 	//ENUM_SET(gds_DrawingOpType, Spline, 	6),
 	ENUM_SET(gds_DrawingOpType, Text, 		10),
-	ENUM_SET(gds_DrawingOpType, Blit,		11),
+	ENUM_SET(gds_DrawingOpType, TextChar,	11),
+	ENUM_SET(gds_DrawingOpType, Blit,		12),
 	
 	ENUM_SET(gds_DrawingOpType, None, 		-1),
 ENUM_END
@@ -57,9 +65,10 @@ ENUM_END
 ENUM_TYPE(gds_ColourType);
 
 ENUM_START(gds_FontStyle)
-	ENUM_SET(gds_FontStyle, Normal, 0),
-	ENUM_SET(gds_FontStyle, Bold, 	1 << 0),
-	ENUM_SET(gds_FontStyle, Italic, 1 << 1),
+	ENUM_SET(gds_FontStyle, Normal, 	0),
+	ENUM_SET(gds_FontStyle, Bold, 		1),
+	ENUM_SET(gds_FontStyle, Italic, 	2),
+	ENUM_SET(gds_FontStyle, BoldItalic, 3),
 ENUM_END
 ENUM_TYPE(gds_FontStyle);
 
@@ -90,6 +99,15 @@ ENUM_START(gds_FillStyle)
 	ENUM_SET(gds_FillStyle, Filled, 1),
 ENUM_END
 ENUM_TYPE(gds_FillStyle);
+
+ENUM_START(gds_ReorderMode)
+	ENUM_SET(gds_ReorderMode, Front, 0),
+	ENUM_SET(gds_ReorderMode, Back, 1),
+	ENUM_SET(gds_ReorderMode, Swap, 2),
+	ENUM_SET(gds_ReorderMode, Above, 3),
+	ENUM_SET(gds_ReorderMode, Below, 4),
+ENUM_END
+ENUM_TYPE(gds_ReorderMode);
 
 struct gds_DrawingOp {
 	ENUM_NAME(gds_DrawingOpType) type;
@@ -122,8 +140,13 @@ struct gds_DrawingOp {
 			int32_t x, y;
 			uint32_t fontID;
 			uint32_t size;
-			uint8_t style;
 		} Text;
+		struct{
+			int32_t x, y;
+			uint32_t fontID;
+			uint32_t size;
+			char c;
+		} TextChar;
 		struct{
 			uint64_t src;
 			uint32_t srcX, srcY;
@@ -146,13 +169,42 @@ struct gds_DrawingOp {
 typedef struct gds_DrawingOp gds_DrawingOp;
 #endif
 
-struct gds_FontInfo{
-	uint32_t fontID;
+struct gds_FontRequest{
 	char name[FONT_NAME_MAX];
 	uint8_t fontStyle;
 };
 #ifndef __cplusplus
+typedef struct gds_FontRequest gds_FontRequest;
+#endif
+
+struct gds_FontInfo{
+	uint32_t fontID;
+	char name[FONT_NAME_MAX];
+	uint8_t fontStyle;
+	size_t scale;
+	size_t maxW, maxH;
+};
+#ifndef __cplusplus
 typedef struct gds_FontInfo gds_FontInfo;
+#endif
+
+struct gds_GlyphInfo{
+	uint32_t fontID;
+	size_t size;
+	char ch;
+	size_t w, h;
+};
+#ifndef __cplusplus
+typedef struct gds_GlyphInfo gds_GlyphInfo;
+#endif
+
+struct gds_GlyphInfo_Request{
+	uint32_t fontID;
+	size_t size;
+	char ch;
+};
+#ifndef __cplusplus
+typedef struct gds_GlyphInfo_Request gds_GlyphInfo_Request;
 #endif
 
 struct gds_SurfaceInfo{
@@ -160,6 +212,8 @@ struct gds_SurfaceInfo{
 	ENUM_NAME(gds_SurfaceType) type;
 	uint32_t w, h, scale;
 	ENUM_NAME(gds_ColourType) colourType;
+	uint64_t shmRegion;
+	size_t shmOffset;
 };
 #ifndef __cplusplus
 typedef struct gds_SurfaceInfo gds_SurfaceInfo;
@@ -213,13 +267,21 @@ struct gds_OpParameters{
 typedef struct gds_OpParameters gds_OpParameters;
 #endif
 
-ENUM_START(gds_TEMPFonts)
-	ENUM_SET(gds_TEMPFonts, Small, 		0),
-	ENUM_SET(gds_TEMPFonts, Large, 		1),
-	ENUM_SET(gds_TEMPFonts, MediumBold,	2),
-	ENUM_SET(gds_TEMPFonts, Giant, 		3),
-	ENUM_SET(gds_TEMPFonts, Tiny, 		4),
-ENUM_END
-ENUM_TYPE(gds_TEMPFonts);
+struct gds_MultiOps{
+	size_t count;
+	gds_DrawingOp ops[];
+};
+#ifndef __cplusplus
+typedef struct gds_MultiOps gds_MultiOps;
+#endif
+
+struct gds_ReorderOp{
+	uint32_t op;
+	uint32_t ref;
+	ENUM_NAME(gds_ReorderMode) mode;
+};
+#ifndef __cplusplus
+typedef struct gds_ReorderOp gds_ReorderOp;
+#endif
 
 #endif

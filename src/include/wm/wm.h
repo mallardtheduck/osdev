@@ -1,7 +1,7 @@
 #ifndef _WM_H
 #define _WM_H
 
-#include "../bt_enum.h"
+#include <util/bt_enum.h>
 
 #ifdef __cplusplus
 	#include <cstdint>
@@ -27,6 +27,7 @@ ENUM_END
 ENUM_TYPE(wm_WindowOptions)
 
 ENUM_START(wm_EventType)
+	ENUM_SET(wm_EventType, None,				0),
 	ENUM_SET(wm_EventType, PointerMove, 		1 << 0),
 	ENUM_SET(wm_EventType, PointerButtonDown, 	1 << 1),
 	ENUM_SET(wm_EventType, PointerButtonUp,		1 << 2),
@@ -88,6 +89,7 @@ ENUM_START(wm_RequestType)
 	ENUM_SET(wm_RequestType, MoveWindow, 		9),
 	ENUM_SET(wm_RequestType, ChangeOptions,		10),
 	ENUM_SET(wm_RequestType, SetTitle,			11),
+	ENUM_SET(wm_RequestType, Sync,				12),
 ENUM_END
 ENUM_TYPE(wm_RequestType)
 

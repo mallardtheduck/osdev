@@ -3,8 +3,19 @@
 
 static map<uint16_t, module_api::kernel_extension*> *extensions;
 
+char *extensions_infofs(){
+	char *buffer=(char*)malloc(4096);
+	memset(buffer, 0, 4096);
+	sprintf(buffer, "# id, name\n");
+	for(map<uint16_t, module_api::kernel_extension*>::iterator i=extensions->begin(); i!=extensions->end(); ++i){
+		sprintf(&buffer[strlen(buffer)], "%i, %s\n", (int)i->first, i->second->name);
+	}
+	return buffer;
+}
+
 void init_extensions(){
     extensions=new map<uint16_t, module_api::kernel_extension*>();
+	infofs_register("EXTENSIONS", &extensions_infofs);
 }
 
 uint16_t add_extension(module_api::kernel_extension *ext){
@@ -30,6 +41,7 @@ void user_call_extension(uint16_t ext_id, uint16_t fn, isr_regs *regs){
     if(extensions->has_key(ext_id) && (*extensions)[ext_id]->uapi_handler){
         (*extensions)[ext_id]->uapi_handler(fn, regs);
     }else{
+		dbgpf("EXT: Unknown API extension: %i (PID: %i, EIP:%x)!\n", (int)ext_id, (int)proc_current_pid, regs->eip);
         regs->eax=(uint32_t)-1;
     }
 }

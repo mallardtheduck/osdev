@@ -3,7 +3,7 @@
 
 #include "kernel.hpp"
 #include "string.hpp"
-#include "../include/locktype.h"
+#include <module/locktype.h>
 
 typedef uint64_t pid_t;
 typedef pid_t bt_pid_t;
@@ -83,5 +83,11 @@ proc_status::Enum proc_get_status(pid_t pid=proc_current_pid);
 void proc_free_message_buffer(pid_t topid, pid_t pid);
 uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid=proc_current_pid);
 void proc_message_wait(pid_t pid=proc_current_pid);
+
+void proc_add_msg(btos_api::bt_msg_header *msg);
+void proc_remove_msg(btos_api::bt_msg_header *msg);
+btos_api::bt_msg_header *proc_get_msg(size_t index, pid_t pid=proc_current_pid);
+btos_api::bt_msg_header *proc_get_msg_nolock(size_t index, pid_t pid=proc_current_pid);
+btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id);
 
 #endif

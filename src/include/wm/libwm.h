@@ -2,6 +2,7 @@
 #define _LIBWM_H
 
 #include <wm/wm.h>
+#include <btos.h>
 
 #ifdef __cplusplus
 #include <string>
@@ -21,6 +22,9 @@ void WM_MoveWindow(int32_t x, int32_t y);
 void WM_ChangeOptions(uint32_t opts);
 void WM_SetTitle(const char *title);
 wm_Event WM_GetEvent();
+BTOS_API_NS bt_msg_filter WM_GetEventFilter();
+wm_Event WM_ParseMessage(BTOS_API_NS bt_msg_header *msg);
+void WM_Sync();
 
 #ifdef __cplusplus
 }

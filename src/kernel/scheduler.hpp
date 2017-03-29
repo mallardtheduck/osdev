@@ -33,7 +33,7 @@ void sch_setpid(pid_t pid);
 void sch_setblock(sch_blockcheck check, void *param);
 void sch_clearblock();
 void sch_wait(uint64_t ext_id);
-void sch_abortable(bool abortable);
+void sch_abortable(bool abortable, uint64_t ext_id=sch_get_id());
 void sch_abort(uint64_t ext_id);
 uint32_t sch_get_eip(bool lock=true);
 bool sch_can_lock();
@@ -42,10 +42,12 @@ void sch_set_msgstaus(thread_msg_status::Enum status, uint64_t ext_id=sch_get_id
 thread_msg_status::Enum sch_get_msgstatus(uint64_t ext_id=sch_get_id());
 void sch_deferred_yield();
 uint8_t *sch_get_fpu_xmm_data();
-size_t sch_get_pid_threadcount(pid_t pid);
+size_t sch_get_pid_threadcount(pid_t pid, bool ignore_current = false, uint64_t ext_id = sch_get_id());
 void sch_debug_stop(pid_t pid);
 void sch_debug_resume(pid_t pid);
 void sch_update_usercontext(isr_regs *uc, uint64_t ext_id=sch_get_id());
 void *sch_get_usercontext(uint64_t ext_id=sch_get_id());
+int sch_get_abortlevel();
+uint32_t *sch_getdebugstate(uint64_t ext_id = sch_get_id());
 
 #endif

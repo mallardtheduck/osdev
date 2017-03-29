@@ -1,7 +1,7 @@
-#include "module_stubs.h"
+#include <btos_module.h>
 
-syscall_table *SYSCALL_TABLE;
-char dbgbuf[256];
+USE_SYSCALL_TABLE;
+USE_DEBUG_PRINTF;
 char *current_section="default";
 
 #include "ini.h"
@@ -111,7 +111,14 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
             free(set);
             free(varname);
         }
-    }
+    }else if(strcmp(section, current_section) == 0 && starts_with("kset ", name)){
+        char *set, *varname;
+        if(split(name, ' ', &set, &varname)){
+            set_kvar(varname, (char*)value);
+            free(set);
+            free(varname);
+        }
+	}
 	return 1;
 }
 

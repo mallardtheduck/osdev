@@ -1,7 +1,7 @@
+#include <dev/video_dev.h>
 #include "ops.hpp"
 #include "device.hpp"
 #include "modes.hpp"
-#include "video_dev.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -76,7 +76,7 @@ size_t text_seek(vga_instance *inst, size_t pos, uint32_t flags){
             cpos=pos;
         }
         if(cpos > current_mode->vidmode.height * current_mode->vidmode.width){
-            dbgpf("VGA: Bad text seek: %i\n", cpos);
+            dbgpf("VGA: Bad text seek: %i\n", (int)cpos);
             cpos=current_mode->vidmode.height * current_mode->vidmode.width;
         }
         text_row=cpos/current_mode->vidmode.width;

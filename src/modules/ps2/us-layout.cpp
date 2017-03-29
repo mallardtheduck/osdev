@@ -1,4 +1,4 @@
-#include "keyboard.h"
+#include <dev/keyboard.h>
 
 key_info us_keyboard_layout[128]={
 	{0},
@@ -9,7 +9,7 @@ key_info us_keyboard_layout[128]={
 	{'4', '$'},
 	{'5', '%'},
 	{'6', '^'},
-	{'7', '|'},
+	{'7', '&'},
 	{'8', '*'},
 	{'9', '('},
 	{'0', ')'},

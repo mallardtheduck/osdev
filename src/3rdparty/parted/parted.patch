@@ -1,0 +1,570 @@
+diff -rupN parted-3.2/aclocal.m4 originals/parted-3.2/aclocal.m4
+--- parted-3.2/aclocal.m4	2017-01-12 09:40:56.448011999 +0000
++++ originals/parted-3.2/aclocal.m4	2014-07-29 04:02:51.000000000 +0100
+@@ -318,9 +318,10 @@ _AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCON
+ # configured tree to be moved without reconfiguration.
+ 
+ AC_DEFUN([AM_AUX_DIR_EXPAND],
+-[AC_REQUIRE([AC_CONFIG_AUX_DIR_DEFAULT])dnl
+-# Expand $ac_aux_dir to an absolute path.
+-am_aux_dir=`cd "$ac_aux_dir" && pwd`
++[dnl Rely on autoconf to set up CDPATH properly.
++AC_PREREQ([2.50])dnl
++# expand $ac_aux_dir to an absolute path
++am_aux_dir=`cd $ac_aux_dir && pwd`
+ ])
+ 
+ # AM_CONDITIONAL                                            -*- Autoconf -*-
+@@ -787,8 +788,7 @@ to "yes", and re-run configure.
+ END
+     AC_MSG_ERROR([Your 'rm' program is bad, sorry.])
+   fi
+-fi
+-])
++fi])
+ 
+ dnl Hook into '_AC_COMPILER_EXEEXT' early to learn its expansion.  Do not
+ dnl add the conditional right here, as _AC_COMPILER_EXEEXT may be further
+diff -rupN parted-3.2/build-aux/config.sub originals/parted-3.2/build-aux/config.sub
+--- parted-3.2/build-aux/config.sub	2017-01-12 09:40:34.485035999 +0000
++++ originals/parted-3.2/build-aux/config.sub	2014-05-26 22:51:01.000000000 +0100
+@@ -1380,7 +1380,7 @@ case $os in
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+-	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -tirtos* | -btos*)
++	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -tirtos*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+diff -rupN parted-3.2/configure originals/parted-3.2/configure
+--- parted-3.2/configure	2017-01-12 10:46:37.665142712 +0000
++++ originals/parted-3.2/configure	2014-07-29 04:04:04.000000000 +0100
+@@ -3659,8 +3659,8 @@ test "$program_suffix" != NONE &&
+ ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
+ program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
+ 
+-# Expand $ac_aux_dir to an absolute path.
+-am_aux_dir=`cd "$ac_aux_dir" && pwd`
++# expand $ac_aux_dir to an absolute path
++am_aux_dir=`cd $ac_aux_dir && pwd`
+ 
+ if test x"${MISSING+set}" != xset; then
+   case $am_aux_dir in
+@@ -4065,7 +4065,6 @@ END
+     as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
+   fi
+ fi
+-
+ # Check whether --enable-silent-rules was given.
+ if test "${enable_silent_rules+set}" = set; then :
+   enableval=$enable_silent_rules;
+@@ -4181,8 +4180,7 @@ case "$host_os" in
+ 	linux*) OS=linux ;;
+ 	gnu*)	OS=gnu ;;
+ 	beos*)	OS=beos ;;
+-	btos*)  OS=btos ;;
+-	*)	as_fn_error $? "Unknown or unsupported OS \"$host_os\".  Only \"linux\", \"gnu\", \"beos\" and \"btos\" are supported in this version of GNU Parted." "$LINENO" 5 ;;
++	*)	as_fn_error $? "Unknown or unsupported OS \"$host_os\".  Only \"linux\", \"gnu\" and \"beos\" are supported in this version of GNU Parted." "$LINENO" 5 ;;
+ esac
+ 
+ 
+@@ -34434,16 +34432,6 @@ uts4*)
+   soname_spec='${libname}${release}${shared_ext}$major'
+   shlibpath_var=LD_LIBRARY_PATH
+   ;;
+-  
+-btos*)
+-  libname_spec='$name'
+-  shrext_cmds=".ell"
+-  need_lib_prefix=no
+-  library_names_spec='$libname${shared_ext}'
+-  dynamic_linker="$host_os ELOADER"
+-  shlibpath_var=LIBPATH
+-  soname_spec='$libname${shared_ext}'
+-  ;;
+ 
+ *)
+   dynamic_linker=no
+diff -rupN parted-3.2/configure.ac originals/parted-3.2/configure.ac
+--- parted-3.2/configure.ac	2017-01-12 09:40:34.489038000 +0000
++++ originals/parted-3.2/configure.ac	2014-06-15 19:17:43.000000000 +0100
+@@ -61,8 +61,7 @@ case "$host_os" in
+ 	linux*) OS=linux ;;
+ 	gnu*)	OS=gnu ;;
+ 	beos*)	OS=beos ;;
+-	btos*)  OS=btos ;;
+-	*)	AC_MSG_ERROR([Unknown or unsupported OS "$host_os".  Only "linux", "gnu", "beos" and "btos" are supported in this version of GNU Parted.]) ;;
++	*)	AC_MSG_ERROR([Unknown or unsupported OS "$host_os".  Only "linux", "gnu" and "beos" are supported in this version of GNU Parted.]) ;;
+ esac
+ AC_SUBST([OS])
+ 
+diff -rupN parted-3.2/lib/error.c originals/parted-3.2/lib/error.c
+--- parted-3.2/lib/error.c	2017-01-12 09:40:34.493040000 +0000
++++ originals/parted-3.2/lib/error.c	2014-05-26 22:51:01.000000000 +0100
+@@ -49,10 +49,6 @@
+ # define _(String) String
+ #endif
+ 
+-#ifdef __btos__
+-#include <btos.h>
+-#endif
+-
+ /* If NULL, error will flush stdout, then print on stderr the program
+    name, a colon and a space.  Otherwise, error will call this
+    function without parameters instead.  */
+@@ -134,8 +130,6 @@ is_open (int fd)
+      There is no fcntl, and the gnulib replacement fcntl does not support
+      F_GETFL.  */
+   return (HANDLE) _get_osfhandle (fd) != INVALID_HANDLE_VALUE;
+-# elif defined(__btos__)
+-  return bt_queryhandle(btos_get_handle(fd));
+ # else
+ #  ifndef F_GETFL
+ #   error Please port fcntl to your platform
+diff -rupN parted-3.2/lib/fsync.c originals/parted-3.2/lib/fsync.c
+--- parted-3.2/lib/fsync.c	2017-01-12 09:40:34.493040000 +0000
++++ originals/parted-3.2/lib/fsync.c	2014-07-29 03:57:48.000000000 +0100
+@@ -76,12 +76,6 @@ fsync (int fd)
+   return 0;
+ }
+ 
+-#elif defined(__btos__)
+-
+-int fsync (int fd){
+-	return 0;
+-}
+-
+ #else /* !Windows */
+ 
+ # error "This platform lacks fsync function, and Gnulib doesn't provide a replacement. This is a bug in Gnulib."
+diff -rupN parted-3.2/lib/sleep.c originals/parted-3.2/lib/sleep.c
+--- parted-3.2/lib/sleep.c	2017-01-12 09:40:34.493040000 +0000
++++ originals/parted-3.2/lib/sleep.c	2014-05-26 22:51:01.000000000 +0100
+@@ -69,17 +69,6 @@ rpl_sleep (unsigned int seconds)
+   return sleep (seconds);
+ }
+ 
+-#elif defined(__btos__)
+-
+-#include <btos.h>
+-#include <dev/rtc.h>
+-
+-unsigned int sleep (unsigned int seconds){
+-	uint32_t msec = seconds * 1000;
+-	bt_rtc_sleep(msec);
+-	return 0;
+-}
+-
+ #else /* !HAVE_SLEEP */
+ 
+  #error "Please port gnulib sleep.c to your platform, possibly using usleep() or select(), then report this to bug-gnulib."
+diff -rupN parted-3.2/libparted/arch/btos.c originals/parted-3.2/libparted/arch/btos.c
+--- parted-3.2/libparted/arch/btos.c	2017-01-12 09:40:34.493040000 +0000
++++ originals/parted-3.2/libparted/arch/btos.c	1970-01-01 01:00:00.000000000 +0100
+@@ -1,232 +0,0 @@
+-#include <config.h>
+-
+-#include <parted/parted.h>
+-#include <parted/debug.h>
+-
+-#include <btos.h>
+-
+-#include "../architecture.h"
+-
+-#define BTOS_SPECIFIC(dev)	((BTOSSpecific*) (dev)->arch_specific)
+-
+-typedef	struct _BTOSSpecific BTOSSpecific;
+-
+-struct _BTOSSpecific {
+-	bt_handle_t fh;
+-};
+-
+-static int _device_init_dev(PedDevice* dev){
+-	const size_t sector_size = 512;
+-
+-	bt_handle_t fh = bt_fopen(dev->path, FS_Read);
+-	long long size = bt_fseek(fh, 0, FS_Backwards);
+-	bt_fclose(fh);
+-
+-	dev->sector_size = sector_size;
+-
+-	dev->length = size / sector_size;
+-
+-	dev->bios_geom.cylinders = dev->length / (4 * 32);
+-	dev->bios_geom.heads = 4;
+-	dev->bios_geom.sectors = 32;
+-	dev->hw_geom = dev->bios_geom;
+-	dev->model = strdup("Physical Disk");
+-
+-	return PED_DEVICE_IDE;
+-}
+-
+-static int _device_init_file(PedDevice* dev, bt_directory_entry *ent){
+-	if (!ent->size) return 0;
+-
+-	dev->sector_size = dev->phys_sector_size = PED_SECTOR_SIZE_DEFAULT;
+-	
+-	dev->length = ent->size / PED_SECTOR_SIZE_DEFAULT;
+-
+-	dev->bios_geom.cylinders = dev->length / (4 * 32);
+-	dev->bios_geom.heads = 4;
+-	dev->bios_geom.sectors = 32;
+-	dev->hw_geom = dev->bios_geom;
+-
+-	dev->model = strdup("Disk Image");
+-
+-	return PED_DEVICE_FILE;
+-}
+-
+-static int _device_init(PedDevice* dev){
+-	int type = 0;
+-	bt_directory_entry ent = bt_stat(dev->path);
+-	if(!ent.valid) return 0;
+-	if(ent.type == FS_File) type = _device_init_file(dev, &ent);
+-	else if(ent.type == FS_Device) type = _device_init_dev(dev);
+-	return type;
+-}
+-
+-static PedDevice* btos_new (const char* path){
+-	PED_ASSERT(path != NULL);
+-	PedDevice* dev = (PedDevice*) ped_malloc (sizeof (PedDevice));
+-	if(!dev) goto error;
+-	
+-	dev->path = strdup(path);
+-	if(!dev->path) goto error_free_dev;
+-
+-	dev->arch_specific = (BTOSSpecific*) ped_malloc(sizeof(BTOSSpecific));
+-	if (!dev->arch_specific) goto error_free_path;
+-
+-	dev->open_count = 0;
+-	dev->read_only = 0;
+-	dev->external_mode = 0;
+-	dev->dirty = 0;
+-	dev->boot_dirty = 0;
+-
+-	if ((dev->type=_device_init(dev)) <= 0) goto error_free_arch_specific;
+-	
+-	return dev;
+-
+-error_free_arch_specific:
+-	free (dev->arch_specific);
+-
+-error_free_path:
+-	free (dev->path);
+-
+-error_free_dev:
+-	free (dev);
+-
+-error:
+-	return NULL;
+-}
+-
+-static void btos_destroy (PedDevice* dev){
+-	free (dev->arch_specific);
+-	free (dev->path);
+-	free (dev->model);
+-	free (dev);
+-}
+-
+-static int btos_is_busy (PedDevice* dev){
+-	return 1;
+-}
+-
+-static int btos_open (PedDevice* dev){
+-	BTOSSpecific* arch_specific = BTOS_SPECIFIC(dev);
+-	arch_specific->fh = bt_fopen(dev->path, FS_Read | FS_Write);
+-	if(!arch_specific->fh){
+-		arch_specific->fh = bt_fopen(dev->path, FS_Read);
+-		if(arch_specific->fh){
+-			ped_exception_throw (
+-					PED_EXCEPTION_WARNING,
+-					PED_EXCEPTION_OK,
+-					"Unable to open %s read-write.  %s has been opened read-only.",
+-					dev->path, dev->path);
+-			dev->read_only = 1;
+-			return 1;
+-		}else{
+-			return 0;
+-		}
+-	}else{
+-		dev->read_only = 0;
+-		return 1;
+-	}
+-}
+-
+-static int btos_refresh_open (PedDevice* dev){
+-	return 1;
+-}
+-
+-static int btos_close (PedDevice* dev){
+-	BTOSSpecific* arch_specific = BTOS_SPECIFIC(dev);
+-	bt_fclose(arch_specific->fh);
+-	return 1;
+-}
+-
+-static int btos_refresh_close (PedDevice* dev){
+-	return 1;
+-}
+-
+-static int btos_read (const PedDevice* dev, void* buffer, PedSector start, PedSector count){
+-	BTOSSpecific* arch_specific = BTOS_SPECIFIC(dev);
+-	size_t read_length = count * dev->sector_size;
+-	size_t start_pos = start * dev->sector_size;
+-	bt_fseek(arch_specific->fh, start_pos, FS_Set);
+-	size_t read = bt_fread(arch_specific->fh, read_length, buffer);
+-	if(read != read_length) return 0;
+-	else return 1;
+-}
+-
+-static int btos_write (PedDevice* dev, const void* buffer, PedSector start, PedSector count){
+-	BTOSSpecific* arch_specific = BTOS_SPECIFIC(dev);
+-	size_t write_length = count * dev->sector_size;
+-	size_t start_pos = start * dev->sector_size;
+-	bt_fseek(arch_specific->fh, start_pos, FS_Set);
+-	size_t written = bt_fwrite(arch_specific->fh, write_length, buffer);
+-	if(written != write_length) return 0;
+-	else return 1;
+-}
+-
+-static PedSector btos_check (PedDevice* dev, void* buffer, PedSector start, PedSector count){
+-	return count;
+-}
+-
+-static int btos_sync (PedDevice* dev){
+-	return 1;
+-}
+-
+-static int btos_sync_fast (PedDevice* dev){
+-	return 1;
+-}
+-
+-static void btos_probe_all (){
+-	bt_handle_t dh = bt_dopen("DEV:/", FS_Read);
+-	bt_directory_entry ent = bt_dread(dh);
+-	char pathbuf[BT_MAX_PATH] = {0};
+-	while(ent.valid){
+-		if(ent.type == FS_Device){
+-			strcpy(pathbuf, "DEV:/");
+-			strcat(pathbuf, ent.filename);
+-			bt_handle fh = bt_fopen(pathbuf, FS_Read);
+-			size_t type = bt_fioctl(fh, bt_ioctl_DevType, 0, NULL);
+-			if(type == STR_HDD) _ped_device_probe(pathbuf);
+-			bt_fclose(fh);
+-		}
+-		ent = bt_dread(dh);
+-	}
+-	bt_dclose(dh);
+-}
+-
+-static char* btos_partition_get_path (const PedPartition* part){
+-	return NULL;
+-}
+-
+-static int btos_partition_is_busy (const PedPartition* part){
+-	return 0;
+-}
+-
+-static int btos_disk_commit (PedDisk* disk){
+-	return 0;
+-}
+-
+-static PedDeviceArchOps btos_dev_ops = {
+-        _new:           btos_new,
+-        destroy:        btos_destroy,
+-        is_busy:        btos_is_busy,
+-        open:           btos_open,
+-        refresh_open:   btos_refresh_open,
+-        close:          btos_close,
+-        refresh_close:  btos_refresh_close,
+-        read:           btos_read,
+-        write:          btos_write,
+-        check:          btos_check,
+-        sync:           btos_sync,
+-        sync_fast:      btos_sync_fast,
+-        probe_all:      btos_probe_all
+-};
+-
+-static PedDiskArchOps btos_disk_ops =  {
+-        partition_get_path:     btos_partition_get_path,
+-        partition_is_busy:      btos_partition_is_busy,
+-        disk_commit:            btos_disk_commit
+-};
+-
+-PedArchitecture ped_btos_arch = {
+-        dev_ops:        &btos_dev_ops,
+-        disk_ops:       &btos_disk_ops
+-};
+diff -rupN parted-3.2/libparted/architecture.c originals/parted-3.2/libparted/architecture.c
+--- parted-3.2/libparted/architecture.c	2017-01-12 09:40:34.493040000 +0000
++++ originals/parted-3.2/libparted/architecture.c	2014-06-15 19:17:43.000000000 +0100
+@@ -34,9 +34,6 @@ ped_set_architecture ()
+ #elif defined(__BEOS__)
+ 	extern PedArchitecture ped_beos_arch;
+ 	const PedArchitecture* arch = &ped_beos_arch;
+-#elif defined (__btos__)
+-	extern PedArchitecture ped_btos_arch;
+-	const PedArchitecture* arch = &ped_btos_arch;
+ #else
+ 	extern PedArchitecture ped_gnu_arch;
+ 	const PedArchitecture* arch = &ped_gnu_arch;
+diff -rupN parted-3.2/libparted/fs/ext2/ext2.h originals/parted-3.2/libparted/fs/ext2/ext2.h
+--- parted-3.2/libparted/fs/ext2/ext2.h	2017-01-12 09:40:34.493040000 +0000
++++ originals/parted-3.2/libparted/fs/ext2/ext2.h	2014-06-15 19:17:43.000000000 +0100
+@@ -32,12 +32,6 @@
+ #  define _(String) (String)
+ #endif /* ENABLE_NLS */
+ 
+-#ifdef __btos__
+-typedef uint32_t u_int32_t;
+-typedef uint16_t u_int16_t;
+-typedef uint8_t u_int8_t;
+-#endif
+-
+ typedef u_int32_t blk_t;
+ 
+ #ifdef HAVE_LINUX_EXT2_FS_H__FAILS_TO_COMPILE
+diff -rupN parted-3.2/libparted/fs/xfs/platform_defs.h originals/parted-3.2/libparted/fs/xfs/platform_defs.h
+--- parted-3.2/libparted/fs/xfs/platform_defs.h	2017-01-12 09:40:34.493040000 +0000
++++ originals/parted-3.2/libparted/fs/xfs/platform_defs.h	2014-06-15 19:17:43.000000000 +0100
+@@ -37,9 +37,7 @@
+ #include <stdio.h>
+ #include <stdarg.h>
+ #include <assert.h>
+-#ifndef __btos__
+ #include <endian.h>
+-#endif
+ #include <stddef.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -47,10 +45,6 @@
+ #include <sys/param.h>
+ #include <sys/types.h>
+ 
+-#ifdef __btos__
+-typedef uint64_t loff_t;
+-#endif
+-
+ #if (__GLIBC__ <= 2) && (__GLIBC_MINOR__ <= 1)
+ # define constpp	const char * const *
+ #else
+diff -rupN parted-3.2/libparted/labels/gpt.c originals/parted-3.2/libparted/labels/gpt.c
+--- parted-3.2/libparted/labels/gpt.c	2017-01-12 09:40:34.497042000 +0000
++++ originals/parted-3.2/libparted/labels/gpt.c	2014-06-15 19:25:53.000000000 +0100
+@@ -33,9 +33,7 @@
+ #include <inttypes.h>
+ #include <stdio.h>
+ #include <sys/types.h>
+-#ifndef __btos__
+-	#include <sys/ioctl.h>
+-#endif
++#include <sys/ioctl.h>
+ #include <fcntl.h>
+ #include <unistd.h>
+ #include <uuid/uuid.h>
+diff -rupN parted-3.2/libparted/labels/sun.c originals/parted-3.2/libparted/labels/sun.c
+--- parted-3.2/libparted/labels/sun.c	2017-01-12 09:40:34.497042000 +0000
++++ originals/parted-3.2/libparted/labels/sun.c	2014-06-15 19:17:43.000000000 +0100
+@@ -26,12 +26,6 @@
+ #include <parted/endian.h>
+ #include <stdbool.h>
+ 
+-#ifdef __btos__
+-typedef uint32_t u_int32_t;
+-typedef uint16_t u_int16_t;
+-typedef uint8_t u_int8_t;
+-#endif
+-
+ #if ENABLE_NLS
+ #  include <libintl.h>
+ #  define _(String) dgettext (PACKAGE, String)
+diff -rupN parted-3.2/libparted/Makefile.am originals/parted-3.2/libparted/Makefile.am
+--- parted-3.2/libparted/Makefile.am	2017-01-12 09:40:34.497042000 +0000
++++ originals/parted-3.2/libparted/Makefile.am	2014-07-28 03:29:16.000000000 +0100
+@@ -47,8 +47,7 @@ libparted_la_SOURCES  = debug.c			\
+ EXTRA_libparted_la_SOURCES    = arch/linux.c	\
+ 				arch/linux.h	\
+ 				arch/gnu.c	\
+-				arch/beos.c	\
+-				arch/btos.c
++				arch/beos.c
+ 
+ libparted_la_LIBADD =	\
+   fs/libfs.la		\
+diff -rupN parted-3.2/libparted/Makefile.in originals/parted-3.2/libparted/Makefile.in
+--- parted-3.2/libparted/Makefile.in	2017-01-12 09:40:58.645110000 +0000
++++ originals/parted-3.2/libparted/Makefile.in	2014-07-29 04:02:56.000000000 +0100
+@@ -1205,8 +1205,7 @@ libparted_la_SOURCES = debug.c			\
+ EXTRA_libparted_la_SOURCES = arch/linux.c	\
+ 				arch/linux.h	\
+ 				arch/gnu.c	\
+-				arch/beos.c	\
+-				arch/btos.c
++				arch/beos.c
+ 
+ libparted_la_LIBADD = \
+   fs/libfs.la		\
+@@ -1309,7 +1308,6 @@ arch/$(OS).lo: arch/$(am__dirstamp) arch
+ arch/linux.lo: arch/$(am__dirstamp) arch/$(DEPDIR)/$(am__dirstamp)
+ arch/gnu.lo: arch/$(am__dirstamp) arch/$(DEPDIR)/$(am__dirstamp)
+ arch/beos.lo: arch/$(am__dirstamp) arch/$(DEPDIR)/$(am__dirstamp)
+-arch/btos.lo: arch/$(am__dirstamp) arch/$(DEPDIR)/$(am__dirstamp)
+ 
+ libparted.la: $(libparted_la_OBJECTS) $(libparted_la_DEPENDENCIES) $(EXTRA_libparted_la_DEPENDENCIES) 
+ 	$(AM_V_CCLD)$(libparted_la_LINK) -rpath $(libdir) $(libparted_la_OBJECTS) $(libparted_la_LIBADD) $(LIBS)
+@@ -1335,7 +1333,6 @@ distclean-compile:
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unit.Plo@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@arch/$(DEPDIR)/$(OS).Plo@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@arch/$(DEPDIR)/beos.Plo@am__quote@
+-@AMDEP_TRUE@@am__include@ @am__quote@arch/$(DEPDIR)/btos.Plo@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@arch/$(DEPDIR)/gnu.Plo@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@arch/$(DEPDIR)/linux.Plo@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@cs/$(DEPDIR)/constraint.Plo@am__quote@
+diff -rupN parted-3.2/libparted/unit.c originals/parted-3.2/libparted/unit.c
+--- parted-3.2/libparted/unit.c	2017-01-12 09:40:34.497042000 +0000
++++ originals/parted-3.2/libparted/unit.c	2014-06-15 19:17:43.000000000 +0100
+@@ -247,7 +247,7 @@ ped_unit_format_custom_byte (const PedDe
+ 	    (w < 100.) ? 1 :
+ 			 0 ;
+ 
+-#if defined(__BEOS__) || defined(__btos__)
++#ifdef __BEOS__
+ 	snprintf (buf, 100, "%.*f%s", p, d, ped_unit_get_name(unit));
+ #else
+ 	snprintf (buf, 100, "%1$.*2$f%3$s", d, p, ped_unit_get_name (unit));
+diff -rupN parted-3.2/parted/ui.c originals/parted-3.2/parted/ui.c
+--- parted-3.2/parted/ui.c	2017-01-12 09:40:34.497042000 +0000
++++ originals/parted-3.2/parted/ui.c	2014-06-15 19:17:43.000000000 +0100
+@@ -30,11 +30,6 @@
+ #include <setjmp.h>
+ #include <assert.h>
+ 
+-#ifdef __btos__
+-#include <sys/setjmp.h>
+-#include <sys/siginfo.h>
+-#endif
+-
+ #include "command.h"
+ #include "strlist.h"
+ #include "ui.h"
+@@ -70,7 +65,7 @@ extern int tgetnum (char* key);
+ 
+ #endif /* HAVE_LIBREADLINE */
+ 
+-#if !defined(SA_SIGINFO) && !defined(__btos__)
++#ifndef SA_SIGINFO
+ #  ifndef HAVE_SIGACTION
+ 
+ struct sigaction {
+@@ -245,11 +240,9 @@ wipe_line ()
+         if (opt_script_mode)
+                 return;
+ 
+-	#ifndef __btos__
+         /* yuck */
+         fputs ("\r                                     "
+                "                                     \r", stdout);
+-	#endif
+ }
+ 
+ #ifdef HAVE_LIBREADLINE
