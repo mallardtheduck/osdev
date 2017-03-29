@@ -151,7 +151,7 @@ void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t 
 		if(dst->IsTrueColor()){
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
-					uint32_t srcPxl = getPixelTrueColour(ptr, w, srcX + x, srcY + y);
+					uint32_t srcPxl = getPixelTrueColour(ptr, width, srcX + x, srcY + y);
 					if(gdTrueColorGetAlpha(srcPxl) != gdAlphaOpaque){
 						uint32_t dstPxl = gdImageTrueColorPixel(dstPtr, dstX + x, dstY + y);
 						srcPxl = gdAlphaBlend(dstPxl, srcPxl);
@@ -164,7 +164,7 @@ void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t 
 			uint8_t dstCol;
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
-					uint32_t srcPxl = getPixelTrueColour(ptr, w, srcX + x, srcY + y);
+					uint32_t srcPxl = getPixelTrueColour(ptr, width, srcX + x, srcY + y);
 					if((!y && !x) || srcCol != srcPxl){
 						dstCol = gdImageColorResolveAlpha(dstPtr, gdTrueColorGetRed(srcPxl), gdTrueColorGetGreen(srcPxl), gdTrueColorGetBlue(srcPxl), gdTrueColorGetAlpha(srcPxl));
 						srcCol = srcPxl;
@@ -179,7 +179,7 @@ void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t 
 			uint32_t dstCol;
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
-					uint8_t srcPxl = getPixelIndexed(ptr, w, srcX + x, srcY + y);
+					uint8_t srcPxl = getPixelIndexed(ptr, width, srcX + x, srcY + y);
 					if((!y && !x) || srcCol != srcPxl){
 						dstCol = palette[srcPxl];
 						srcCol = srcPxl;
@@ -192,7 +192,7 @@ void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t 
 			uint8_t dstCol;
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
-					uint8_t srcPxl = getPixelIndexed(ptr, w, srcX + x, srcY + y);
+					uint8_t srcPxl = getPixelIndexed(ptr, width, srcX + x, srcY + y);
 					if ((!y && !x) || srcPxl != srcCol){
 						dstCol = palette[srcPxl];
 						srcCol = srcPxl;
