@@ -38,8 +38,15 @@ namespace MM2{
 	void shm_close(uint64_t id){
 		hold_lock hl(shm_lock);
 		shm_space *space = (*spaces)[id];
-		for(auto i = mappings->begin(); i != mappings->end(); ++i){
-			if(i->second->space == space) shm_close_map(i->first);
+		bool cont = true;
+		while(cont){
+			for(auto i = mappings->begin(); i != mappings->end(); ++i){
+				if(i->second->space == space) {
+					shm_close_map(i->first);
+					break;
+				}
+			}
+			cont = false;
 		}
 		for(auto i = space->pages.begin(); i != space->pages.end(); ++i){
 			physical_free(i->second);
