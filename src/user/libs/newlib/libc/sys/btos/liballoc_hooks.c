@@ -73,16 +73,15 @@ static void init_mapping(){
 	static bool done = false;
 	if(!done){
 		pm_lock = bt_create_lock();
+		mappings = calloc(1, sizeof(ptr_mapping));
+		mappings_sz = 1;
+		done = true;
 	}
 }
 
 static void add_mapping(void *from, void *to){
 	init_mapping();
 	bt_lock(pm_lock);
-	if(!mappings){
-		mappings = calloc(1, sizeof(ptr_mapping));
-		mappings_sz = 1;
-	}
 	for(size_t i = 0; i < mappings_sz; ++i){
 		if(!mappings[i].inuse){
 			mappings[i].inuse = true;
@@ -93,8 +92,10 @@ static void add_mapping(void *from, void *to){
 		}
 	}
 	++mappings_sz;
+	bt_unlock(pm_lock);
 	mappings = realloc(mappings, sizeof(ptr_mapping) * mappings_sz);
-	mappings[mappings_sz - 1] .inuse = true;
+	bt_lock(pm_lock);
+	mappings[mappings_sz - 1].inuse = true;
 	mappings[mappings_sz - 1].from = from;
 	mappings[mappings_sz - 1].to = to;
 	bt_unlock(pm_lock);
@@ -104,20 +105,21 @@ static void *get_mapping(void *to){
 	init_mapping();
 	bt_lock(pm_lock);
 	for(size_t i = 0; i < mappings_sz; ++i){
-		if(!mappings[i].inuse && mappings[i].to == to){
+		if(mappings[i].inuse && mappings[i].to == to){
+			void *ret = mappings[i].from;
 			bt_unlock(pm_lock);
-			return mappings[i].from;
+			return ret;
 		}
 	}
-	return NULL;
 	bt_unlock(pm_lock);
+	return NULL;
 }
 
 static void clear_mapping(void *from){
 	init_mapping();
 	bt_lock(pm_lock);
 	for(size_t i = 0; i < mappings_sz; ++i){
-		if(!mappings[i].inuse && mappings[i].from == from){
+		if(mappings[i].inuse && mappings[i].from == from){
 			mappings[i].inuse = false;
 			bt_unlock(pm_lock);
 			return;
