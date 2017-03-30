@@ -18,6 +18,8 @@ USE_BT_TERMINAL_API;
 
 using namespace std;
 
+#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
+
 static const string ProcInfoPath = "info:/procs";
 static const string fontName = "unscii";
 static const size_t fontSize = 12;
@@ -42,6 +44,8 @@ static volatile bool endrender = false;
 static size_t curpos;
 static uint64_t surf;
 static size_t lpos = SIZE_MAX;
+static volatile uint64_t dtime = 0;
+
 struct glyph_holder{
 	uint64_t gds_id;
 	glyph_holder(uint64_t id): gds_id(id) {}
@@ -212,6 +216,18 @@ void render_terminal_thread(){
 	while(true){
 		render_counted = bt_wait_atom(render_counter, bt_atom_compare::NotEqual, render_counted);
 		if(endrender) return;
+		DBG("TW: render_counted: " << render_counted);
+		uint64_t ctime = bt_rtc_millis();
+		uint64_t nframe = bt_rtc_millis() + 100;
+		DBG("TW: ctime: " << ctime << " dtime: " << dtime);
+		while(ctime < dtime && ctime < nframe){
+			DBG("TW: Sleeping " << dtime - ctime << "ms");
+			bt_rtc_sleep(dtime - ctime);
+			ctime = bt_rtc_millis();
+		}
+		DBG("TW: ctime: " << ctime << " dtime: " << dtime);
+		render_counted = bt_read_atom(render_counter);
+		DBG("TW: render_counted: " << render_counted);
 		bt_terminal_read_buffer(terminal_handle, buffer_size, tempbuffer);
 		static char ltitle[WM_TITLE_MAX] = {0};
 		char title[WM_TITLE_MAX];
@@ -271,7 +287,7 @@ void render_terminal_thread(){
 		uss << "TW: Prep: " << updateStart - prepStart << "ms Update: " << updateEnd - updateStart << "ms" << endl;
 		bt_zero(uss.str().c_str());
 		updateRect = {0, 0, 0, 0};
-		bt_rtc_sleep(50);
+		//bt_rtc_sleep(50);
 	}
 }
 
@@ -284,6 +300,8 @@ void render_terminal(){
 	if(!terminal_handle) return;
 	if(!renderthread) renderthread = bt_new_thread(&renderthread_start, NULL, renderthread_stack + thread_stack_size);
 	curpos = bt_terminal_get_pos(terminal_handle);
+	dtime = bt_rtc_millis() + 20;
+	DBG("TW: rt!");
 	bt_modify_atom(render_counter, bt_atom_modify::Add, 1);
 }
 
