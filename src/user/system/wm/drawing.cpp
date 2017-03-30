@@ -90,28 +90,76 @@ static void DrawMenuButton(uint32_t x, uint32_t y, bool active, bool down = fals
 	GDS_Text(x + symLength + 5, y + buttonHeight - 5, "Menu", menuButtonFont, GetMetric(MenuButtonFontSize), symbolColour);
 }
 
-uint64_t DrawTitleBar(uint32_t w, string title, bool active, WindowArea pressed){
-	uint64_t ret = GDS_NewSurface(gds_SurfaceType::Bitmap, w, GetMetric(TitleBarSize));
+uint64_t TitleBar::Draw(uint32_t w, const string &t, bool active, WindowArea p){
+	uint64_t ret;
+	bool drawAll = false;
+	if(w != width){
+		if(gds_active_title){
+			GDS_SelectSurface(gds_active_title);
+			GDS_DeleteSurface();
+		}
+		if(gds_inactive_title){
+			GDS_SelectSurface(gds_inactive_title);
+			GDS_DeleteSurface();
+		}
+	}
+	if((active && !gds_active_title) || (!active && !gds_inactive_title)){
+		ret = GDS_NewSurface(gds_SurfaceType::Bitmap, w, GetMetric(TitleBarSize));
+		drawAll = true;
+	}else{
+		if(active) ret = gds_active_title;
+		else ret = gds_inactive_title;
+		GDS_SelectSurface(ret);
+	}
+	if(t != title) drawAll = true;
 	
-	buttonHighlightColour = GetColour(ButtonHighlightColour);
-	buttonFaceColour = GetColour(ButtonFaceColour);
-	buttonShadowColour = GetColour(ButtonShadowColour);
-	borderColour = GetColour(BorderColour); 
-	lineColour = GetColour(LineColour); 
-	titleBarColour = GetColour(TitleBarColour);
-	inactiveTitleColour = GetColour(InactiveTitleColour);
-	seperatorColour = GetColour(SeperatorColour);
-	titleTextColour = GetColour(TitleTextColour);
-	symbolColour = GetColour(SymbolColour);
+	if(drawAll || p != pressed){
+		buttonHighlightColour = GetColour(ButtonHighlightColour);
+		buttonFaceColour = GetColour(ButtonFaceColour);
+		buttonShadowColour = GetColour(ButtonShadowColour);
+		borderColour = GetColour(BorderColour); 
+		lineColour = GetColour(LineColour); 
+		titleBarColour = GetColour(TitleBarColour);
+		inactiveTitleColour = GetColour(InactiveTitleColour);
+		seperatorColour = GetColour(SeperatorColour);
+		titleTextColour = GetColour(TitleTextColour);
+		symbolColour = GetColour(SymbolColour);
+	}
 	
-	GDS_Box(0, 0, w, GetMetric(TitleBarSize), seperatorColour, active?titleBarColour:inactiveTitleColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	DrawMenuButton(GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::MenuButton));
-	uint32_t font = active ? titleActiveFont : titleInactiveFont;
-	GDS_Text(GetMetric(MenuButtonWidth) + GetMetric(TitleTextMargin), GetMetric(TitleBarSize) - GetMetric(TitleTextBaseline), title.c_str(), font, GetMetric(TitleFontSize), titleTextColour, 0);
-	DrawMaxButton(w - GetMetric(ButtonSize) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::ExpandButton));
-	DrawMinButton(w - (GetMetric(ButtonSize) * 2) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::HideButton));
-	DrawCloseButton(w - (GetMetric(ButtonSize) * 3) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (pressed == WindowArea::CloseButton));
+	if(drawAll) GDS_Box(0, 0, w, GetMetric(TitleBarSize), seperatorColour, active?titleBarColour:inactiveTitleColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	if(drawAll || (p != pressed && (p == WindowArea::MenuButton || pressed == WindowArea::MenuButton))){
+		DrawMenuButton(GetMetric(BorderWidth), GetMetric(BorderWidth), active, (p == WindowArea::MenuButton));
+	}
+	if(drawAll){
+		uint32_t font = active ? titleActiveFont : titleInactiveFont;
+		GDS_Text(GetMetric(MenuButtonWidth) + GetMetric(TitleTextMargin), GetMetric(TitleBarSize) - GetMetric(TitleTextBaseline), t.c_str(), font, GetMetric(TitleFontSize), titleTextColour, 0);
+	}
+	if(drawAll || (p != pressed && (p == WindowArea::ExpandButton || pressed == WindowArea::ExpandButton))){
+		DrawMaxButton(w - GetMetric(ButtonSize) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (p == WindowArea::ExpandButton));
+	}
+	if(drawAll || (p != pressed && (p == WindowArea::HideButton || pressed == WindowArea::HideButton))){
+		DrawMinButton(w - (GetMetric(ButtonSize) * 2) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (p == WindowArea::HideButton));
+	}
+	if(drawAll || (p != pressed && (p == WindowArea::CloseButton || pressed == WindowArea::CloseButton))){
+		DrawCloseButton(w - (GetMetric(ButtonSize) * 3) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (p == WindowArea::CloseButton));
+	}
+	width = w;
+	title = t;
+	pressed = p;
+	if(active) gds_active_title = ret;
+	else gds_inactive_title = ret;
 	return ret;
+}
+
+TitleBar::~TitleBar(){
+	if(gds_active_title){
+		GDS_SelectSurface(gds_active_title);
+		GDS_DeleteSurface();
+	}
+	if(gds_inactive_title){
+		GDS_SelectSurface(gds_inactive_title);
+		GDS_DeleteSurface();
+	}
 }
 
 static pair<bool, gds_DrawingOp> DrawBorderHorzLine(int32_t x1, int32_t y, int32_t x2, const Rect &bounds){

@@ -332,29 +332,8 @@ void Window::RefreshTitleBar(bool force){
 }
 
 bool Window::UpdateTitleBar(bool force){
-	if(force){
-		if(active && gds_active_title){
-			GDS_SelectSurface(gds_active_title);
-			GDS_DeleteSurface();
-			gds_active_title = 0;
-		}
-		if(!active && gds_inactive_title){
-			GDS_SelectSurface(gds_inactive_title);
-			GDS_DeleteSurface();
-			gds_inactive_title = 0;
-		}
-		gds_title_id = 0;
-	}
-	if(!gds_title_id || active != last_active){
-		if(active && gds_active_title){
-			gds_title_id = gds_active_title;
-		}else if (!active && gds_inactive_title){
-			gds_title_id = gds_inactive_title;
-		}else{
-			gds_title_id = DrawTitleBar(gds_info.w + (2 * GetMetric(BorderWidth)), title, active, pressed);
-			if(active) gds_active_title = gds_title_id;
-			else gds_inactive_title = gds_title_id;
-		}
+	if(force || active != last_active){
+		gds_title_id = titlebar.Draw(gds_info.w + (2 * GetMetric(BorderWidth)), title, active, pressed);
 		GDS_SelectSurface(gds_title_id);
 		gds_titleinfo = GDS_SurfaceInfo();
 		return true;

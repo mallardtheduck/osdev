@@ -9,19 +9,10 @@
 
 #include "rect.hpp"
 #include "client.hpp"
+#include "drawing.hpp"
 
 class Client;
-
-enum class WindowArea{
-	Content,
-	Title,
-	MenuButton,
-	CloseButton,
-	HideButton,
-	ExpandButton,
-	Border,
-	None
-};
+class TitleBar;
 
 class Window{
 private:
@@ -30,9 +21,8 @@ private:
 	uint32_t z = 0;
 	uint64_t gds_id;
 	gds_SurfaceInfo gds_info;
+	TitleBar titlebar;
 	uint64_t gds_title_id = 0;
-	uint64_t gds_active_title = 0;
-	uint64_t gds_inactive_title = 0;
 	gds_SurfaceInfo gds_titleinfo;
 	std::string title;
 	bool active = false;
