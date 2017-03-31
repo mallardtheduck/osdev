@@ -95,7 +95,7 @@ uint64_t msg_send(bt_msg_header &msg){
         proc_add_msg(ptr);
     }
     //dbgpf("MSG: Sent message ID %i from PID %i to PID %i.\n", (int)msg.id, (int)msg.from, (int)msg.to);
-    sch_yield();
+    sch_yield_to(msg.to);
     return msg.id;
 }
 

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <dev/video_dev.h>
 #include <crt_support.h>
+#include <dev/rtc.h>
 
 __attribute__ ((constructor)) void cons_test(void)
 {
@@ -49,5 +50,9 @@ int main(int argc, char **argv){
     bt_mmap(file, 0, memory, (80*25));
     strcpy(memory+40, "Hello world!");
     bt_fflush(file);*/
+    uint64_t start = bt_rtc_millis();
+    for(size_t i = 0; i < 1000; ++i) bt_yield();
+    uint64_t end = bt_rtc_millis();
+    printf("Schedulter benchmark: %i\n", (int)(end - start));
 	return 42;
 }

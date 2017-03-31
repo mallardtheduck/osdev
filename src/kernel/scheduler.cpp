@@ -3,8 +3,8 @@
 #include "locks.hpp"
 
 extern char _start, _end;
-const uint32_t default_priority=10;
-const uint32_t modifier_limit=128;
+static const uint32_t default_priority=10;
+static const uint32_t modifier_limit=128;
 void *sch_stack;
 
 struct sch_start{
@@ -45,15 +45,15 @@ struct sch_thread{
 	uint32_t debug_state[Debug_DRStateSize];
 };
 
-vector<sch_thread*> *threads;
+static vector<sch_thread*> *threads;
 sch_thread *current_thread;
-uint64_t current_thread_id;
-sch_thread *reaper_thread;
-sch_thread *prescheduler_thread;
-uint64_t cur_ext_id;
-sch_thread *idle_thread;
-uint64_t sch_zero=0;
-bool sch_deferred=false;
+static uint64_t current_thread_id;
+static sch_thread *reaper_thread;
+static sch_thread *prescheduler_thread;
+static uint64_t cur_ext_id;
+static sch_thread *idle_thread;
+static uint64_t sch_zero=0;
+static bool sch_deferred=false;
 
 void thread_reaper(void*);
 void sch_threadtest();
@@ -65,6 +65,9 @@ lock sch_lock;
 bool sch_inited=false;
 static const uint32_t cstart=5;
 static uint32_t counter=cstart;
+
+static pid_t preferred_next_pid = 0;
+static pid_t preferred_return_pid = 0;
 
 char *sch_threads_infofs(){
 	char *buffer=(char*)malloc(4096);
@@ -83,9 +86,9 @@ char *sch_threads_infofs(){
 void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
-	uint8_t sch_freq = 50;
-	if(cpu_get_umips() < 1000) sch_freq = 30;
-	if(cpu_get_umips() < 500) sch_freq = 20;
+	uint8_t sch_freq = 100;
+	if(cpu_get_umips() < 1000) sch_freq = 50;
+	if(cpu_get_umips() < 500) sch_freq = 30;
     uint16_t value=193182 / sch_freq;
     dbgpf("SCH: Scheduler frequency: %i\n", (int)sch_freq);
 	outb(0x43, 0x36);
@@ -291,16 +294,29 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 	//Subtract minimum dynamic priority from all threads. If there is now a thread with dynamic priority 0
 	//that isn't the current thread, record it
 	bool foundtorun=false;
-	for(size_t i=0; i<(*threads).size(); ++i){
-		sch_thread *ithread = (*threads)[i];
-		if(ithread->status == sch_thread_status::Runnable){
-			if(ithread->dynpriority) ithread->dynpriority-=min;
-			if(ithread!=current_thread && ithread->dynpriority==0){
+	if(preferred_next_pid){
+		for(size_t i=0; i<(*threads).size(); ++i){
+			sch_thread *ithread = (*threads)[i];
+			if(ithread->status == sch_thread_status::Runnable && ithread->pid == preferred_next_pid){
 				foundtorun=true;
 				torun=ithread;
+				preferred_next_pid = preferred_return_pid;
+				preferred_return_pid = 0;
 			}
-			else if(ithread->modifier) --ithread->modifier;
-		}else if(ithread->modifier) --ithread->modifier;
+		}
+	}
+	if(!foundtorun){
+		for(size_t i=0; i<(*threads).size(); ++i){
+			sch_thread *ithread = (*threads)[i];
+			if(ithread->status == sch_thread_status::Runnable){
+				if(ithread->dynpriority) ithread->dynpriority-=min;
+				if(ithread!=current_thread && ithread->dynpriority==0){
+					foundtorun=true;
+					torun=ithread;
+				}
+				else if(ithread->modifier) --ithread->modifier;
+			}else if(ithread->modifier) --ithread->modifier;
+		}
 	}
 	if(foundtorun){
 		if(torun->modifier < modifier_limit) ++torun->modifier;
@@ -668,4 +684,12 @@ uint32_t *sch_getdebugstate(uint64_t ext_id){
 		if(thread) return thread->debug_state;
 		else return NULL;
 	}
+}
+
+void sch_yield_to(pid_t pid){
+	if(pid){
+		preferred_next_pid = pid;
+		preferred_return_pid = proc_current_pid;
+	}
+	sch_yield();
 }
