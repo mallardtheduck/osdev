@@ -18,7 +18,12 @@ USE_BT_TERMINAL_API;
 
 using namespace std;
 
+#ifdef DEBUG
 #define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
+#else
+#define DBG(x)
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
 
 static const string ProcInfoPath = "info:/procs";
 static const string fontName = "unscii";
@@ -44,7 +49,6 @@ static volatile bool endrender = false;
 static size_t curpos;
 static uint64_t surf;
 static size_t lpos = SIZE_MAX;
-static volatile uint64_t dtime = 0;
 
 struct glyph_holder{
 	uint64_t gds_id;
@@ -97,10 +101,8 @@ template<typename T> T get_content(bt_msg_header &msg){
 		bt_msg_content(&msg, &ret, sizeof(ret));
 		return ret;
 	}else{
-		stringstream ss;
-		ss << "TW: Message length mismatch. Expected " << sizeof(T) << " got " << msg.length << "." << endl;
-		ss << "TW: Message type: " << msg.type << " from: " << msg.from << " (source: " << msg.source << ")" << endl;
-		bt_zero(ss.str().c_str());
+		DBG("TW: Message length mismatch. Expected " << sizeof(T) << " got " << msg.length << ".");
+		DBG("TW: Message type: " << msg.type << " from: " << msg.from << " (source: " << msg.source << ")");
 		return T();
 	}
 }
@@ -216,18 +218,6 @@ void render_terminal_thread(){
 	while(true){
 		render_counted = bt_wait_atom(render_counter, bt_atom_compare::NotEqual, render_counted);
 		if(endrender) return;
-		DBG("TW: render_counted: " << render_counted);
-		uint64_t ctime = bt_rtc_millis();
-		uint64_t nframe = bt_rtc_millis() + 100;
-		DBG("TW: ctime: " << ctime << " dtime: " << dtime);
-		while(ctime < dtime && ctime < nframe){
-			DBG("TW: Sleeping " << dtime - ctime << "ms");
-			bt_rtc_sleep(dtime - ctime);
-			ctime = bt_rtc_millis();
-		}
-		DBG("TW: ctime: " << ctime << " dtime: " << dtime);
-		render_counted = bt_read_atom(render_counter);
-		DBG("TW: render_counted: " << render_counted);
 		bt_terminal_read_buffer(terminal_handle, buffer_size, tempbuffer);
 		static char ltitle[WM_TITLE_MAX] = {0};
 		char title[WM_TITLE_MAX];
@@ -247,14 +237,10 @@ void render_terminal_thread(){
 				addRect(updateRect, {0, (int32_t)(line * font_height), (terminal_mode.width * font_width), font_height});
 				size_t l0addr = (line * terminal_mode.width) * 2;
 				size_t l1addr = (sline * terminal_mode.width) * 2;
-				stringstream qss;
-				qss << "TW: l0addr: " << l0addr << " l1addr " << l1addr << endl;
-				bt_zero(qss.str().c_str());
+				DBG("TW: l0addr: " << l0addr << " l1addr " << l1addr);
 				memcpy(&buffer[l0addr], &buffer[l1addr], terminal_mode.width * 2);
 				uint64_t end = bt_rtc_millis();
-				stringstream ss;
-				ss << "TW: Scroll: " << end - start << "ms" << endl;
-				bt_zero(ss.str().c_str());
+				DBG("TW: Scroll: " << end - start << "ms");
 			}else{
 				uint64_t start = bt_rtc_millis();
 				size_t ch = 0;
@@ -274,20 +260,16 @@ void render_terminal_thread(){
 					}
 				}
 				uint64_t end = bt_rtc_millis();
-				stringstream ss;
-				ss << "TW: line drawn in " << end - start << "ms (" << ch << " changes)" << endl;
-				bt_zero(ss.str().c_str());
+				DBG("TW: line drawn in " << end - start << "ms (" << ch << " changes)");
 			}
 		}
 		uint64_t updateStart = bt_rtc_millis();
 		if(drawingOps.size()) GDS_MultiDrawingOps(drawingOps.size(), &drawingOps[0], NULL);
 		WM_UpdateRect(updateRect);
 		uint64_t updateEnd = bt_rtc_millis();
-		stringstream uss;
-		uss << "TW: Prep: " << updateStart - prepStart << "ms Update: " << updateEnd - updateStart << "ms" << endl;
-		bt_zero(uss.str().c_str());
+		DBG("TW: Prep: " << updateStart - prepStart << "ms Update: " << updateEnd - updateStart << "ms");
 		updateRect = {0, 0, 0, 0};
-		//bt_rtc_sleep(50);
+		bt_rtc_sleep(50);
 	}
 }
 
@@ -300,7 +282,6 @@ void render_terminal(){
 	if(!terminal_handle) return;
 	if(!renderthread) renderthread = bt_new_thread(&renderthread_start, NULL, renderthread_stack + thread_stack_size);
 	curpos = bt_terminal_get_pos(terminal_handle);
-	dtime = bt_rtc_millis() + 20;
 	DBG("TW: rt!");
 	bt_modify_atom(render_counter, bt_atom_modify::Add, 1);
 }
@@ -411,9 +392,7 @@ void mainthread(void*){
 					break;
 				}
 				default:{
-					stringstream ss;
-					ss << "TW: Unhandled backend operation: " << op->type << endl;
-					bt_zero(ss.str().c_str());
+					DBG("TW: Unhandled backend operation: " << op->type);
 				}
 			}
 		}else{
@@ -445,11 +424,7 @@ int main(){
 	gds_FontInfo info = GDS_GetFontInfo(font);
 	font_width = (info.maxW * fontSize) / info.scale;
 	font_height = (info.maxH * fontSize) / info.scale;
-	{
-		stringstream ss;
-		ss << "TW: Scale: " << info.scale << " width: " << info.maxW << " size: " << fontSize << endl;
-		bt_zero(ss.str().c_str());
-	}
+	DBG("TW: Scale: " << info.scale << " width: " << info.maxW << " size: " << fontSize);
 	bt_terminial_init();
 	render_counter = bt_create_atom(0);
 	bt_handle_t backend_handle = bt_terminal_create_backend();
