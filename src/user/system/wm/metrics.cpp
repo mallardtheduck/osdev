@@ -22,6 +22,9 @@ METRIC(int32_t, TitleTextBaseline);
 METRIC(int32_t, ScreenWidth);
 METRIC(int32_t, ScreenHeight);
 METRIC(int32_t, ScreenBpp);
+METRIC(int32_t, MenuFontSize);
+METRIC(int32_t, MenuItemMargin);
+METRIC(int32_t, MenuItemHeight);
 
 METRIC(ColourValue, TitleBarColour);
 METRIC(ColourValue, ButtonFaceColour);
@@ -34,9 +37,13 @@ METRIC(ColourValue, TitleTextColour);
 METRIC(ColourValue, InactiveTitleColour);
 METRIC(ColourValue, SymbolColour);
 METRIC(ColourValue, BackgroundColour);
+METRIC(ColourValue, MenuBackgroundColour);
+METRIC(ColourValue, MenuForegroundColour);
+METRIC(ColourValue, MenuSelectionColour);
 
 METRIC(std::string, TitleFontName);
 METRIC(std::string, MenuButtonFontName);
+METRIC(std::string, MenuFontName);
 
 static const string colourPrefix = "Colour(";
 static const string colourEnding = ")";

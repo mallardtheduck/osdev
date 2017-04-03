@@ -7,10 +7,12 @@
 	#include <cstdint>
 	#include <cstddef>
 	static const size_t WM_TITLE_MAX = 255;
+	static const size_t WM_MENUTEXT_MAX = 255;
 #else
 	#include <stdint.h>
 	#include <stddef.h>
-	#define WM_TITLE_MAX 255;
+	#define WM_TITLE_MAX 255
+	#define WM_MENUTEXT_MAX 255
 #endif
 
 ENUM_START(wm_WindowOptions)
@@ -108,5 +110,24 @@ ENUM_START(wm_MessageType)
 	ENUM_SET(wm_MessageType, Event,				1),
 ENUM_END
 ENUM_TYPE(wm_MessageType)
+
+ENUM_START(wm_MenuItemFlags)
+	ENUM_SET(wm_MenuItemFlags, Default, 	0),
+	ENUM_SET(wm_MenuItemFlags, Seperator, 	(1 << 0)),
+	ENUM_SET(wm_MenuItemFlags, Disabled, 	(1 << 1)),
+	ENUM_SET(wm_MenuItemFlags, ChildMenu, 	(1 << 2)),
+	ENUM_SET(wm_MenuItemFlags, ImageRight, 	(1 << 3)),
+	ENUM_SET(wm_MenuItemFlags, ImageOnly, 	(1 << 4)),
+ENUM_END
+ENUM_TYPE(wm_MenuItemFlags)
+
+struct wm_MenuItem{
+	uint32_t actionID;
+	char text[WM_MENUTEXT_MAX+1];
+	uint32_t flags;
+	uint64_t image;
+	uint64_t childMenu;
+};
+BT_STRUCT_TYPE(wm_MenuItem);
 
 #endif

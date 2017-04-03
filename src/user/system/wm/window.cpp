@@ -7,6 +7,7 @@
 #include "metrics.hpp"
 #include "drawing.hpp"
 #include "windows.hpp"
+#include "menus.hpp"
 
 using namespace std;
 
@@ -345,6 +346,15 @@ void Window::OpenMenu(){
 	stringstream ss;
 	ss << "WM: Window '" << title << "' open menu."<< endl;
 	bt_zero(ss.str().c_str());
+	Menu m;
+	m.AddMenuItem(make_shared<MenuItem>("One", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
+	m.AddMenuItem(make_shared<MenuItem>("Two", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
+	m.AddMenuItem(make_shared<MenuItem>("Three", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
+	m.AddMenuItem(make_shared<MenuItem>("", wm_MenuItemFlags::Seperator, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
+	m.AddMenuItem(make_shared<MenuItem>("Four", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
+	m.AddMenuItem(make_shared<MenuItem>("Five", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
+	m.Draw(pos.x, pos.y + GetMetric(TitleBarSize));
+	GDS_UpdateScreen();
 }
 
 void Window::Close(){

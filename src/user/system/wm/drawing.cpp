@@ -2,17 +2,20 @@
 #include "drawing.hpp"
 #include "metrics.hpp"
 #include <utility>
+#include <wm/wm.h>
 
 using namespace std;
 
-uint32_t titleActiveFont;
-uint32_t titleInactiveFont;
-uint32_t menuButtonFont;
+static uint32_t titleActiveFont;
+static uint32_t titleInactiveFont;
+static uint32_t menuButtonFont;
+static uint32_t menuFont;
 
 void InitDrawing(){
 	titleActiveFont = GDS_GetFontID(GetSetting(TitleFontName).c_str(), gds_FontStyle::Bold);
 	titleInactiveFont = GDS_GetFontID(GetSetting(TitleFontName).c_str(), gds_FontStyle::Normal);
 	menuButtonFont = GDS_GetFontID(GetSetting(MenuButtonFontName).c_str(), gds_FontStyle::Bold);
+	menuFont = GDS_GetFontID(GetSetting(MenuFontName).c_str(), gds_FontStyle::Normal);
 }
 
 static uint32_t buttonHighlightColour, buttonFaceColour, buttonShadowColour, borderColour, lineColour, titleBarColour, inactiveTitleColour;
@@ -190,4 +193,27 @@ void DrawBorder(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const Rect &boun
 	auto l4 = DrawBorderVertLine(x + w - 1, y, y + h - 1, bounds);
 	if(l4.first) ops.push_back(l4.second);
 	GDS_MultiDrawingOps(ops.size(), &ops[0], NULL);
+}
+
+uint64_t DrawMenuItem(std::string text, uint32_t flags, uint64_t image, uint32_t width, bool selected){
+	uint64_t ret = GDS_NewSurface(gds_SurfaceType::Bitmap, width, GetMetric(MenuItemHeight));
+	uint32_t fgcol = GetColour(MenuForegroundColour);
+	if(!(flags & wm_MenuItemFlags::Seperator)){
+		uint32_t lpos = GetMetric(MenuItemMargin);
+		if(selected) GDS_Box(0, 0, width, GetMetric(MenuItemHeight), GetColour(MenuSelectionColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		else GDS_Box(0, 0, width, GetMetric(MenuItemHeight), GetColour(MenuBackgroundColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		if(image){
+			GDS_SelectSurface(image);
+			gds_SurfaceInfo image_info = GDS_SurfaceInfo();
+			GDS_SelectSurface(ret);
+			GDS_Blit(image, 0, 0, image_info.w, image_info.h, lpos, GetMetric(MenuItemMargin), image_info.w, image_info.h);
+			lpos += image_info.w;
+			lpos += GetMetric(MenuItemMargin);
+		}
+		GDS_Text(lpos, GetMetric(MenuItemHeight) - GetMetric(MenuItemMargin), text.c_str(), menuFont, GetMetric(MenuFontSize), fgcol);
+	}else{
+		GDS_Box(0, 0, width, GetMetric(MenuItemHeight), GetColour(MenuBackgroundColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		GDS_Line(GetMetric(MenuItemMargin), GetMetric(MenuItemHeight) / 2, width - GetMetric(MenuItemMargin), GetMetric(MenuItemHeight) / 2, fgcol, 1);
+	}
+	return ret;
 }

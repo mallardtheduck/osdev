@@ -29,6 +29,9 @@ METRIC(int32_t, TitleTextBaseline);
 METRIC(int32_t, ScreenWidth);
 METRIC(int32_t, ScreenHeight);
 METRIC(int32_t, ScreenBpp);
+METRIC(int32_t, MenuFontSize);
+METRIC(int32_t, MenuItemMargin);
+METRIC(int32_t, MenuItemHeight);
 
 int32_t GetMetric(Metric<int32_t> &metric);
 
@@ -43,11 +46,15 @@ METRIC(ColourValue, TitleTextColour);
 METRIC(ColourValue, InactiveTitleColour);
 METRIC(ColourValue, SymbolColour);
 METRIC(ColourValue, BackgroundColour);
+METRIC(ColourValue, MenuBackgroundColour);
+METRIC(ColourValue, MenuForegroundColour);
+METRIC(ColourValue, MenuSelectionColour);
 
 uint32_t GetColour(Metric<ColourValue> &metric);
 
 METRIC(std::string, TitleFontName);
 METRIC(std::string, MenuButtonFontName);
+METRIC(std::string, MenuFontName);
 
 std::string GetSetting(Metric<std::string> &metric);
 
