@@ -22,6 +22,17 @@ template<typename T> void print_symbol(const symbol &sym){
 	cout << endl;
 }
 
+template<typename T> void print_symbol_as_int(const symbol &sym){
+	size_t vsize = sizeof(T);
+	for(size_t i = 0; i < sym.size; i+=vsize){
+		T v;
+		debug_peek((void*)&v, selected_pid, sym.address + i, vsize);
+		cout << (int)v << ' ';
+	}
+	cout << endl;
+}
+
+
 void print_command(const vector<string> &args){
 	if(!selected_pid){
 		cout << "No process selected." << endl;
@@ -54,6 +65,8 @@ void print_command(const vector<string> &args){
 		{ "pointer", &print_symbol<void*> },
 		{ "ptr", &print_symbol<void*> },
 		{ "char", &print_symbol<char> },
+		{ "int8", &print_symbol_as_int<int8_t> },
+		{ "uint8", &print_symbol_as_int<uint8_t> },
 	};
 		
 	if(printers.find(args[1]) != printers.end()){
