@@ -114,8 +114,8 @@ gds_GlyphInfo FontManager::GetGlyphInfo(uint32_t fontID, size_t size, char c){
 	ret.fontID = fontID;
 	ret.size = size;
 	ret.ch = c;
-	ret.w = (brect[2] - brect[6]) / 2;
-	ret.h = (brect[3] - brect[7]) / 2;
+	ret.w = (brect[2] - brect[6]);// / 2;
+	ret.h = (brect[3] - brect[7]);// / 2;
 	return ret;
 }
 
