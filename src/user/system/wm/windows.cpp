@@ -181,11 +181,7 @@ void BringToFront(shared_ptr<Window> win){
 }
 
 void HandleInput(const bt_terminal_event &event){
-	pair<Rect, bool> upd;
-	if(event.type == bt_terminal_event_type::Pointer && (upd = MenuPointerInput(event.pointer)).first){
-		RefreshScreen(upd.first);
-		if(upd.second) return;
-	}
+	if(event.type == bt_terminal_event_type::Pointer && MenuPointerInput(event.pointer)) return;
 	static Point curpos = {INT32_MAX, INT32_MAX};
 	if(auto gwin = grabbedWindow.lock()){
 		if(event.type == bt_terminal_event_type::Key) gwin->KeyInput(event.key);

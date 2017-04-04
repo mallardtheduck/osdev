@@ -84,13 +84,13 @@ uint32_t MenuItem::GetCustomAction(){
 	return customID;
 }
 
-void Menu::Draw(int32_t x, int32_t y, const Point &cursor, bool force){
+bool Menu::Draw(int32_t x, int32_t y, const Point &cursor, bool force){
 	if(!x && !y){
 		x = lx;
 		y = ly;
 	}
 	uint32_t nsel = GetSelected(cursor);
-	if(!force && lsel == nsel) return;
+	if(!force && lsel == nsel) return false;
 	DBG("WM: Drawing menu at (" << x << ", " << y << ")");
 	int32_t cy = y;
 	uint32_t width = 0;
@@ -114,6 +114,7 @@ void Menu::Draw(int32_t x, int32_t y, const Point &cursor, bool force){
 	lx = x;
 	ly = y;
 	lsel = nsel;
+	return true;
 }
 
 uint32_t Menu::AddMenuItem(std::shared_ptr<MenuItem> i){
@@ -145,14 +146,14 @@ uint32_t Menu::GetSelected(const Point &cursor){
 	return 0;
 }
 
-pair<Rect, bool> MenuPointerInput(const bt_terminal_pointer_event &pevent){
+bool MenuPointerInput(const bt_terminal_pointer_event &pevent){
 	vector<Rect> updates;
 	bool handled = false;
 	if(pevent.type == bt_terminal_pointer_event_type::Move){
 		for(auto &menu : currentMenus){
 			if(InRect(pevent.x, pevent.y, menu->GetBoundingRect())){
-				menu->Draw(0, 0, {(int32_t)pevent.x, (int32_t)pevent.y});
-				return { menu->GetBoundingRect(), true };
+				if(menu->Draw(0, 0, {(int32_t)pevent.x, (int32_t)pevent.y})) updates.push_back(menu->GetBoundingRect());
+				handled = true;
 			}
 		}
 	}else if(pevent.type == bt_terminal_pointer_event_type::ButtonDown){
@@ -179,7 +180,7 @@ pair<Rect, bool> MenuPointerInput(const bt_terminal_pointer_event &pevent){
 		}
 	}
 	RefreshScreen(updates);
-	return {{0, 0, 0, 0}, handled};
+	return handled;
 }
 
 void OpenMenu(std::shared_ptr<Menu> menu, uint32_t x, uint32_t y){

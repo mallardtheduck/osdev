@@ -58,7 +58,7 @@ private:
 	uint32_t lsel = 0;
 	
 public:
-	void Draw(int32_t x, int32_t y, const Point &cursor = {0, 0}, bool force = false);
+	bool Draw(int32_t x, int32_t y, const Point &cursor = {0, 0}, bool force = false);
 	Rect GetBoundingRect();
 	//void KeyInput(uint32_t key);
 	//void PointerInput(const bt_terminal_pointer_event &pevent);
@@ -69,7 +69,7 @@ public:
 };
 
 std::shared_ptr<Menu> GetMenu(uint64_t id);
-std::pair<Rect, bool> MenuPointerInput(const bt_terminal_pointer_event &pevent);
+bool MenuPointerInput(const bt_terminal_pointer_event &pevent);
 void OpenMenu(std::shared_ptr<Menu> menu, uint32_t x, uint32_t y);
 
 #endif
