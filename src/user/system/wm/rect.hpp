@@ -9,6 +9,8 @@ struct Rect{
 	uint32_t w, h;
 	Rect(): x(0), y(0), w(0), h(0) {};
 	Rect(int32_t _x, int32_t _y, uint32_t _w, uint32_t _h) : x(_x), y(_y), w(_w), h(_h) {} 
+	
+	operator bool() const{return x != 0 || y != 0 || w != 0 || h != 0;}
 };
 
 bool operator==(const Rect &r1, const Rect &r2);
@@ -18,6 +20,8 @@ struct Point{
 	int32_t x, y;
 	Point(): x(0), y(0) {}
 	Point(int32_t _x, int32_t _y): x(_x), y(_y) {}
+	
+	operator bool() const{return x != 0 || y != 0;}
 };
 
 bool InRect(int32_t x, int32_t y, const Rect &r);

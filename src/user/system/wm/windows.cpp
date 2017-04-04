@@ -1,6 +1,7 @@
 #include "windows.hpp"
 #include "metrics.hpp"
 #include "service.hpp"
+#include "menus.hpp"
 
 #define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
 
@@ -180,10 +181,15 @@ void BringToFront(shared_ptr<Window> win){
 }
 
 void HandleInput(const bt_terminal_event &event){
+	pair<Rect, bool> upd;
+	if(event.type == bt_terminal_event_type::Pointer && (upd = MenuPointerInput(event.pointer)).first){
+		RefreshScreen(upd.first);
+		if(upd.second) return;
+	}
 	static Point curpos = {INT32_MAX, INT32_MAX};
 	if(auto gwin = grabbedWindow.lock()){
 		if(event.type == bt_terminal_event_type::Key) gwin->KeyInput(event.key);
-		else if(event.type ==  bt_terminal_event_type::Pointer) {
+		else if(event.type == bt_terminal_event_type::Pointer) {
 			if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == (uint32_t)curpos.x && event.pointer.y == (uint32_t)curpos.y) return;
 			gwin->PointerInput(event.pointer);
 			curpos.x = event.pointer.x; curpos.y = event.pointer.y;
@@ -204,7 +210,7 @@ void HandleInput(const bt_terminal_event &event){
 	}
 	shared_ptr<Window> awin = activeWindow.lock();
 	if(event.type == bt_terminal_event_type::Key && awin) awin->KeyInput(event.key);
-	else if(event.type ==  bt_terminal_event_type::Pointer){
+	else if(event.type == bt_terminal_event_type::Pointer){
 		uint64_t pointer_start = bt_rtc_millis();
 		if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == (uint32_t)curpos.x && event.pointer.y == (uint32_t)curpos.y) return;
 		curpos.x = event.pointer.x; curpos.y = event.pointer.y;
