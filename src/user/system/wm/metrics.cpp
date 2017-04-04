@@ -5,8 +5,12 @@
 #include <cstdlib>
 #include <vector>
 #include <unordered_map>
+#include <sstream>
+#include <btos.h>
 
 using namespace std;
+
+#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
 
 #define METRIC(type, name) Metric<type> name { #name }
 
@@ -103,6 +107,7 @@ uint32_t GetColour(Metric<ColourValue> &metric){
 		uint8_t b = strtol(bstr.c_str(), NULL, 0);
 		metric.value = {r, g, b};
 		metric.present = true;
+		DBG("WM: Colour: " << metric.name << " Colour(" << (int)r << ", " << (int)g << ", " << (int)b << ")");
 	}
 	return GDS_GetColour(metric.value.r, metric.value.g, metric.value.b);
 }

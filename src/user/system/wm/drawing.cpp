@@ -3,6 +3,10 @@
 #include "metrics.hpp"
 #include <utility>
 #include <wm/wm.h>
+#include <sstream>
+#include <btos.h>
+
+#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
 
 using namespace std;
 
@@ -195,13 +199,14 @@ void DrawBorder(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const Rect &boun
 	GDS_MultiDrawingOps(ops.size(), &ops[0], NULL);
 }
 
-uint64_t DrawMenuItem(std::string text, uint32_t flags, uint64_t image, uint32_t width, bool selected){
-	uint64_t ret = GDS_NewSurface(gds_SurfaceType::Bitmap, width, GetMetric(MenuItemHeight));
-	uint32_t fgcol = GetColour(MenuForegroundColour);
+uint64_t DrawMenuItem(const string &text, uint32_t flags, uint64_t image, uint32_t width, bool selected){
+	DBG("WM DrawMenuItem: \"" << text << "\", " << flags << ", " << image << ", " << width << ", " << selected); 
+	uint64_t ret = 0;
 	if(!(flags & wm_MenuItemFlags::Seperator)){
-		uint32_t lpos = GetMetric(MenuItemMargin);
+		ret = GDS_NewSurface(gds_SurfaceType::Bitmap, width, GetMetric(MenuItemHeight));
 		if(selected) GDS_Box(0, 0, width, GetMetric(MenuItemHeight), GetColour(MenuSelectionColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		else GDS_Box(0, 0, width, GetMetric(MenuItemHeight), GetColour(MenuBackgroundColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		uint32_t lpos = GetMetric(MenuItemMargin);
 		if(image){
 			GDS_SelectSurface(image);
 			gds_SurfaceInfo image_info = GDS_SurfaceInfo();
@@ -210,10 +215,11 @@ uint64_t DrawMenuItem(std::string text, uint32_t flags, uint64_t image, uint32_t
 			lpos += image_info.w;
 			lpos += GetMetric(MenuItemMargin);
 		}
-		GDS_Text(lpos, GetMetric(MenuItemHeight) - GetMetric(MenuItemMargin), text.c_str(), menuFont, GetMetric(MenuFontSize), fgcol);
+		GDS_Text(lpos, GetMetric(MenuItemHeight) - GetMetric(MenuItemMargin), text.c_str(), menuFont, GetMetric(MenuFontSize), GetColour(MenuForegroundColour));
 	}else{
+		ret = GDS_NewSurface(gds_SurfaceType::Bitmap, width, (GetMetric(MenuItemMargin) * 2) + 1);
 		GDS_Box(0, 0, width, GetMetric(MenuItemHeight), GetColour(MenuBackgroundColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		GDS_Line(GetMetric(MenuItemMargin), GetMetric(MenuItemHeight) / 2, width - GetMetric(MenuItemMargin), GetMetric(MenuItemHeight) / 2, fgcol, 1);
+		GDS_Line(GetMetric(MenuItemMargin), GetMetric(MenuItemMargin), width - GetMetric(MenuItemMargin), GetMetric(MenuItemMargin), GetColour(MenuForegroundColour), 1);
 	}
 	return ret;
 }

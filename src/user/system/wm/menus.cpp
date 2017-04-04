@@ -39,32 +39,38 @@ uint64_t MenuItem::Draw(uint32_t width, bool selected){
 		if(!cacheSelected) cacheSelected = DrawMenuItem(text, flags, image, width, true);
 		return cacheSelected;
 	}else{
-		if(!cacheNormal) cacheSelected = DrawMenuItem(text, flags, image, width, false);
+		if(!cacheNormal) cacheNormal = DrawMenuItem(text, flags, image, width, false);
 		return cacheNormal;
 	}
 }
 
 uint32_t MenuItem::GetHeight(){
-	return GetMetric(MenuItemHeight);
+	if((flags & wm_MenuItemFlags::Seperator)) return (GetMetric(MenuItemMargin) * 2) + 1;
+	else return GetMetric(MenuItemHeight);
 }
 
 uint32_t MenuItem::GetMinWidth(){
-	if(flags & wm_MenuItemFlags::Seperator){
-		return (2 * GetMetric(MenuItemMargin)) + 1;
-	}else{
-		uint32_t ret = (2 * GetMetric(MenuItemMargin));
-		if(image){
-			GDS_SelectSurface(image);
-			gds_SurfaceInfo image_info = GDS_SurfaceInfo();
-			ret += image_info.w;
-			ret += GetMetric(MenuItemMargin);
+	uint32_t ret = minWidth;
+	if(!ret){
+		if((flags & wm_MenuItemFlags::Seperator)){
+			ret = (2 * GetMetric(MenuItemMargin)) + 1;
+		}else{
+			ret = (2 * GetMetric(MenuItemMargin));
+			if(image){
+				GDS_SelectSurface(image);
+				gds_SurfaceInfo image_info = GDS_SurfaceInfo();
+				ret += image_info.w;
+				ret += GetMetric(MenuItemMargin);
+			}
+			uint32_t font = GDS_GetFontID(GetSetting(MenuFontName).c_str(), gds_FontStyle::Normal);
+			for(const char c : text){
+				gds_GlyphInfo ginfo = GDS_GetGlyphInfo(font, GetMetric(MenuFontSize), c);
+				ret += ginfo.w;
+			}
 		}
-		uint32_t font = GDS_GetFontID(GetSetting(MenuFontName).c_str(), gds_FontStyle::Normal);
-		gds_FontInfo finfo = GDS_GetFontInfo(font);
-		uint32_t font_width = (finfo.maxW * GetMetric(MenuFontSize)) / finfo.scale;
-		ret += font_width * text.length();
-		return ret;
+		minWidth = ret;
 	}
+	return ret;
 }
 
 MenuActionType MenuItem::GetAction(){
@@ -80,7 +86,7 @@ shared_ptr<Menu> GetMenu(uint64_t /*id*/){
 }
 
 void Menu::Draw(int32_t x, int32_t y){
-	DBG("WM: Drawing menu.");
+	DBG("WM: Drawing menu at (" << x << ", " << y << ")");
 	int32_t cy = y;
 	uint32_t width = 0;
 	for(auto &i : items){
@@ -89,13 +95,15 @@ void Menu::Draw(int32_t x, int32_t y){
 	}
 	DBG("WM: Menu width: " << width);
 	for(auto &i : items){
-		DBG("WM: Drawing menu item " << i.first);
+		DBG("WM: Drawing menu item " << i.first << " at (" << x << ", " << cy << ")");
 		uint64_t surf = i.second->Draw(width, false);
 		GDS_SelectScreen();
 		uint32_t height = i.second->GetHeight();
+		DBG("WM: Menu item GDS id: " << surf);
 		GDS_Blit(surf, 0, 0, width, height, x, cy, width, height);
 		cy += height;
 	}
+	DrawBorder(x, y, width, cy - y);
 }
 
 uint32_t Menu::AddMenuItem(std::shared_ptr<MenuItem> i){

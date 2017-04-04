@@ -29,6 +29,7 @@ private:
 	uint64_t cacheSelected = 0;
 	uint32_t cacheWidth = 0;
 	uint64_t image;
+	uint32_t minWidth = 0;
 	
 	MenuActionType actionType;
 	uint32_t customID;
