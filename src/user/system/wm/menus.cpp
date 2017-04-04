@@ -185,6 +185,7 @@ pair<Rect, bool> MenuPointerInput(const bt_terminal_pointer_event &pevent){
 void OpenMenu(std::shared_ptr<Menu> menu, uint32_t x, uint32_t y){
 	currentMenus.push_back(menu);
 	menu->Draw(x, y, {0, 0}, true);
+	RefreshScreen(menu->GetBoundingRect());
 }
 
 shared_ptr<Menu> GetMenu(uint64_t /*id*/){

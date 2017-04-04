@@ -354,7 +354,6 @@ void Window::OpenMenu(){
 	m->AddMenuItem(make_shared<MenuItem>("Four Lemon Cheesecakes", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
 	m->AddMenuItem(make_shared<MenuItem>("Five Gold Rings", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
 	::OpenMenu(m, pos.x, pos.y + GetMetric(TitleBarSize));
-	GDS_UpdateScreen();
 }
 
 void Window::Close(){
