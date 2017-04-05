@@ -346,13 +346,7 @@ void Window::OpenMenu(){
 	stringstream ss;
 	ss << "WM: Window '" << title << "' open menu."<< endl;
 	bt_zero(ss.str().c_str());
-	auto m = make_shared<Menu>();
-	m->AddMenuItem(make_shared<MenuItem>("One Apple", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
-	m->AddMenuItem(make_shared<MenuItem>("Two Potatoes", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
-	m->AddMenuItem(make_shared<MenuItem>("Three Chickens", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
-	m->AddMenuItem(make_shared<MenuItem>("", wm_MenuItemFlags::Seperator, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
-	m->AddMenuItem(make_shared<MenuItem>("Four Lemon Cheesecakes", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
-	m->AddMenuItem(make_shared<MenuItem>("Five Gold Rings", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
+	auto m = GetTestMenu();
 	::OpenMenu(m, pos.x, pos.y + GetMetric(TitleBarSize));
 }
 

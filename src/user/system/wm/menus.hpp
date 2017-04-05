@@ -45,6 +45,7 @@ public:
 	
 	MenuActionType GetAction();
 	uint32_t GetCustomAction();
+	std::shared_ptr<Menu> GetChildMenu();
 	
 	~MenuItem();
 };
@@ -56,20 +57,28 @@ private:
 	int32_t lx = 0;
 	int32_t ly = 0;
 	uint32_t lsel = 0;
+	std::shared_ptr<Menu> childMenu;
+	bool open = false;
 	
 public:
 	bool Draw(int32_t x, int32_t y, const Point &cursor = {0, 0}, bool force = false);
+	void Redraw();
 	Rect GetBoundingRect();
-	//void KeyInput(uint32_t key);
-	//void PointerInput(const bt_terminal_pointer_event &pevent);
+	void PointerInput(const bt_terminal_pointer_event &pevent);
 	
 	uint32_t AddMenuItem(std::shared_ptr<MenuItem> i);
 	void RemoveMenuItem(uint32_t item);
 	uint32_t GetSelected(const Point &cursor);
+	std::shared_ptr<MenuItem> GetItem(uint32_t id);
+	void Reset();
+	bool IsOpen();
 };
 
 std::shared_ptr<Menu> GetMenu(uint64_t id);
 bool MenuPointerInput(const bt_terminal_pointer_event &pevent);
 void OpenMenu(std::shared_ptr<Menu> menu, uint32_t x, uint32_t y);
+void CloseMenu(std::shared_ptr<Menu> menu);
+
+std::shared_ptr<Menu> GetTestMenu();
 
 #endif

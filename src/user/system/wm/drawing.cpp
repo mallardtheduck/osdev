@@ -215,11 +215,23 @@ uint64_t DrawMenuItem(const string &text, uint32_t flags, uint64_t image, uint32
 			lpos += image_info.w;
 			lpos += GetMetric(MenuItemMargin);
 		}
-		GDS_Text(lpos, GetMetric(MenuItemHeight) - GetMetric(MenuItemMargin), text.c_str(), menuFont, GetMetric(MenuFontSize), GetColour(MenuForegroundColour));
+		if(!(flags & wm_MenuItemFlags::ImageOnly)){
+			GDS_Text(lpos, GetMetric(MenuItemHeight) - GetMetric(MenuItemMargin), text.c_str(), menuFont, GetMetric(MenuFontSize), GetColour(MenuForegroundColour));
+		}
+		if((flags & wm_MenuItemFlags::ChildMenu)){
+			gds_Point points[] = { 
+				{ (int32_t)width - GetMetric(MenuItemHeight) + GetMetric(MenuItemMargin), (GetMetric(MenuItemMargin) * 2) },
+				{ (int32_t)width - GetMetric(MenuItemHeight) + GetMetric(MenuItemMargin), GetMetric(MenuItemHeight) - (GetMetric(MenuItemMargin) * 2) },
+				{ (int32_t)width - (GetMetric(MenuItemMargin) * 2), GetMetric(MenuItemHeight) / 2}
+			};
+			uint32_t col = GetColour(MenuForegroundColour);
+			GDS_Polygon(3, points, true, col, col, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		}
 	}else{
-		ret = GDS_NewSurface(gds_SurfaceType::Bitmap, width, (GetMetric(MenuItemMargin) * 2) + 1);
+		uint32_t height = (GetMetric(MenuItemMargin) * 2) + 1;
+		ret = GDS_NewSurface(gds_SurfaceType::Bitmap, width, height);
 		GDS_Box(0, 0, width, GetMetric(MenuItemHeight), GetColour(MenuBackgroundColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		GDS_Line(GetMetric(MenuItemMargin), GetMetric(MenuItemMargin), width - GetMetric(MenuItemMargin), GetMetric(MenuItemMargin), GetColour(MenuForegroundColour), 1);
+		GDS_Line(GetMetric(MenuItemMargin), height / 2, width - GetMetric(MenuItemMargin), height / 2, GetColour(MenuForegroundColour), 1);
 	}
 	return ret;
 }
