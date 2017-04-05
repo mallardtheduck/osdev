@@ -59,6 +59,7 @@ private:
 	uint32_t lsel = 0;
 	std::shared_ptr<Menu> childMenu;
 	bool open = false;
+	uint32_t menuParent = 0;
 	
 public:
 	bool Draw(int32_t x, int32_t y, const Point &cursor = {0, 0}, bool force = false);
@@ -69,6 +70,7 @@ public:
 	uint32_t AddMenuItem(std::shared_ptr<MenuItem> i);
 	void RemoveMenuItem(uint32_t item);
 	uint32_t GetSelected(const Point &cursor);
+	int32_t GetTop(uint32_t item);
 	std::shared_ptr<MenuItem> GetItem(uint32_t id);
 	void Reset();
 	bool IsOpen();

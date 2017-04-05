@@ -180,15 +180,15 @@ bool Menu::IsOpen(){
 }
 
 void Menu::PointerInput(const bt_terminal_pointer_event &pevent){
+	Rect brect = GetBoundingRect();
 	if(pevent.type == bt_terminal_pointer_event_type::Move){
-		uint32_t selId = GetSelected({(int32_t)pevent.x, (int32_t)pevent.y});
-		if(Draw(0, 0, {(int32_t)pevent.x, (int32_t)pevent.y})) RefreshScreen(GetBoundingRect());
-		if(selId){
-			if(selId != lsel && childMenu && childMenu->IsOpen()){
-				DBG("WM: Closing child menu.");
-				CloseMenu(childMenu);
-				childMenu.reset();
-			}
+		if(Draw(0, 0, {(int32_t)pevent.x, (int32_t)pevent.y})) RefreshScreen(brect);
+		DBG("WM: menuParent: " << menuParent << " lsel: " << lsel << " childMenu: " << childMenu << " IsOpen: " << (childMenu ? (int)childMenu->IsOpen() : -1));
+		if(lsel != menuParent && childMenu && childMenu->IsOpen()){
+			DBG("WM: Closing child menu.");
+			CloseMenu(childMenu);
+			childMenu.reset();
+			menuParent = 0;
 		}
 	}else if(pevent.type == bt_terminal_pointer_event_type::ButtonDown){
 		uint32_t selId = GetSelected({(int32_t)pevent.x, (int32_t)pevent.y});
@@ -199,10 +199,12 @@ void Menu::PointerInput(const bt_terminal_pointer_event &pevent){
 					DBG("WM: Closing child menu.");
 					CloseMenu(childMenu);
 					childMenu.reset();
+					menuParent = 0;
 				}
 				DBG("WM: Opening child menu.");
-				OpenMenu(item->GetChildMenu(), pevent.x, pevent.y);
+				OpenMenu(item->GetChildMenu(), brect.x + brect.w, GetTop(selId));
 				childMenu = item->GetChildMenu();
+				menuParent = selId;
 			}
 		}
 	}else if(pevent.type == bt_terminal_pointer_event_type::ButtonUp){
@@ -216,6 +218,16 @@ void Menu::PointerInput(const bt_terminal_pointer_event &pevent){
 			CloseMenu(NULL);
 		}
 	}
+}
+
+int32_t Menu::GetTop(uint32_t item){
+	int32_t cy = ly;
+	for(auto &i : items){
+		uint32_t height = i.second->GetHeight();
+		if(i.first == item) return cy;
+		cy += height;
+	}
+	return 0;
 }
 
 bool MenuPointerInput(const bt_terminal_pointer_event &pevent){
@@ -275,6 +287,7 @@ shared_ptr<Menu> GetTestMenu(){
 		auto testChildMenu = make_shared<Menu>();
 		testChildMenu->AddMenuItem(make_shared<MenuItem>("Child Menu Item 1", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
 		testChildMenu->AddMenuItem(make_shared<MenuItem>("Child Menu Item 2", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
+		//testChildMenu->AddMenuItem(make_shared<MenuItem>("Recusion?", wm_MenuItemFlags::ChildMenu, testChildMenu, 0, MenuActionType::ChildMenu, 0));
 		testMenu->AddMenuItem(make_shared<MenuItem>("Five Gold Rings", wm_MenuItemFlags::ChildMenu, testChildMenu, 0, MenuActionType::ChildMenu, 0));
 	}
 	return testMenu;
