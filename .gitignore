@@ -31,3 +31,5 @@ src/kernel/isodir/*
 *.tar.gz
 *.tar.xz
 *.tar
+qemu-launch-opts.txt
+
