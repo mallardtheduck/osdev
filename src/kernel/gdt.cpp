@@ -128,6 +128,10 @@ static void gdt_set_df_tss(int32_t num){
 	df_tss.esp = (uint32_t)&df_stack[1024];
 }
 
+void gdt_set_df_cr3(uint32_t cr3){
+	df_tss.cr3 = cr3;
+}
+
 void gdt_set_kernel_stack(void* ptr){
 	tss.ss0 = 0x10;
 	tss.esp0 = (uint32_t)ptr;

@@ -303,6 +303,7 @@ namespace MM2{
 	}
 	
 	void PageDirectory::activate(){
+		if(!directory_physical) panic("(MM2) Page directory is NULL!");
 		asm volatile("mov %0, %%cr3":: "b"(directory_physical));
 	}
 	
