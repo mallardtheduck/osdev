@@ -113,7 +113,7 @@ void sch_init(){
 	current_thread_id=mainthread->ext_id=++cur_ext_id;
 	threads->push_back(mainthread);
 	current_thread=(*threads)[threads->size()-1];
-	uint64_t idle_thread_id=sch_new_thread(&sch_idlethread, NULL, 1024);
+	uint64_t idle_thread_id=sch_new_thread(&sch_idlethread, NULL, 4096);
 	idle_thread=sch_get(idle_thread_id);
 	uint64_t reaper_thread_id=sch_new_thread(&thread_reaper, NULL, 4096);
 	reaper_thread=sch_get(reaper_thread_id);

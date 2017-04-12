@@ -111,6 +111,10 @@ static void gdt_set_tss(int32_t num){
 }
 
 static void df_handler(){
+	dbgout("GDT: Double fault. TSS state:\n");
+	dbgpf("GDT: ESP0: %x EIP: %x EFLAGS: %x\n", tss.esp0, tss.eip, tss.eflags);
+	dbgpf("GDT: EAX: %x EBX: %x ECX: %x EDX: %x\n", tss.eax, tss.ebx, tss.ecx, tss.edx);
+	
 	panic("(GDT) Double fault!");
 }
 
