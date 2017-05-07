@@ -14,7 +14,7 @@
 class Client;
 class TitleBar;
 
-class Window{
+class Window : public std::enable_shared_from_this<Window>{
 private:
 	std::weak_ptr<Client> owner;
 	Point pos;
@@ -66,6 +66,7 @@ public:
 	void Close();
 	void Hide();
 	void Expand();
+	void MenuAction(uint32_t action);
 	
 	void SetVisible(bool v, bool update = true);
 	bool GetVisible();

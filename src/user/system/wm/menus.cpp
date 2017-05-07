@@ -173,6 +173,7 @@ void Menu::Reset(){
 	lsel = 0;
 	open = false;
 	childMenu.reset();
+	window.reset();
 }
 
 bool Menu::IsOpen(){
@@ -202,7 +203,7 @@ void Menu::PointerInput(const bt_terminal_pointer_event &pevent){
 					menuParent = 0;
 				}
 				DBG("WM: Opening child menu.");
-				OpenMenu(item->GetChildMenu(), brect.x + brect.w, GetTop(selId));
+				OpenMenu(item->GetChildMenu(), window, brect.x + brect.w, GetTop(selId));
 				childMenu = item->GetChildMenu();
 				menuParent = selId;
 			}
@@ -211,7 +212,22 @@ void Menu::PointerInput(const bt_terminal_pointer_event &pevent){
 		uint32_t selId = GetSelected({(int32_t)pevent.x, (int32_t)pevent.y});
 		if(selId){
 			auto item = GetItem(selId);
-			if(item->GetAction() != MenuActionType::ChildMenu){
+			auto action = item->GetAction();
+			switch(action){
+				case MenuActionType::Close:
+					window->Close();
+					break;
+				case MenuActionType::Hide:
+					window->Hide();
+					break;
+				case MenuActionType::Expand:
+					window->Expand();
+					break;
+				case MenuActionType::Custom:
+					window->MenuAction(item->GetCustomAction());
+				default: break;
+			}
+			if(action != MenuActionType::ChildMenu){
 				CloseMenu(NULL);
 			}
 		}else{
@@ -228,6 +244,10 @@ int32_t Menu::GetTop(uint32_t item){
 		cy += height;
 	}
 	return 0;
+}
+
+void Menu::SetWindow(shared_ptr<Window> win){
+	window = win;
 }
 
 bool MenuPointerInput(const bt_terminal_pointer_event &pevent){
@@ -249,8 +269,9 @@ bool MenuPointerInput(const bt_terminal_pointer_event &pevent){
 	return handled;
 }
 
-void OpenMenu(std::shared_ptr<Menu> menu, uint32_t x, uint32_t y){
+void OpenMenu(std::shared_ptr<Menu> menu, std::shared_ptr<Window> win, uint32_t x, uint32_t y){
 	currentMenus.push_back(menu);
+	menu->SetWindow(win);
 	menu->Draw(x, y, {0, 0}, true);
 	RefreshScreen(menu->GetBoundingRect());
 }
@@ -275,7 +296,7 @@ shared_ptr<Menu> GetMenu(uint64_t /*id*/){
 	return NULL;
 }
 
-shared_ptr<Menu> GetTestMenu(){
+/*shared_ptr<Menu> GetTestMenu(){
 	static shared_ptr<Menu> testMenu;
 	if(!testMenu){
 		testMenu = make_shared<Menu>();
@@ -291,4 +312,15 @@ shared_ptr<Menu> GetTestMenu(){
 		testMenu->AddMenuItem(make_shared<MenuItem>("Five Gold Rings", wm_MenuItemFlags::ChildMenu, testChildMenu, 0, MenuActionType::ChildMenu, 0));
 	}
 	return testMenu;
+}*/
+
+shared_ptr<Menu> GetDefaultWindowMenu(){
+	static shared_ptr<Menu> winMenu;
+	if(!winMenu){
+		winMenu = make_shared<Menu>();
+		winMenu->AddMenuItem(make_shared<MenuItem>("Expand", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::Expand, 0));
+		winMenu->AddMenuItem(make_shared<MenuItem>("Hide", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::Hide, 0));
+		winMenu->AddMenuItem(make_shared<MenuItem>("Close", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::Close, 0));
+	}
+	return winMenu;
 }

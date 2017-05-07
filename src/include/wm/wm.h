@@ -75,7 +75,7 @@ struct wm_Event{
 			uint32_t code;
 		} Key;
 		struct{
-			uint64_t id;
+			uint32_t id;
 		} Menu;
 	};
 };

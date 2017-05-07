@@ -8,6 +8,7 @@
 #include <dev/terminal.h>
 
 #include "rect.hpp"
+#include "windows.hpp"
 
 enum class MenuActionType{
 	Close,
@@ -58,6 +59,7 @@ private:
 	int32_t ly = 0;
 	uint32_t lsel = 0;
 	std::shared_ptr<Menu> childMenu;
+	std::shared_ptr<Window> window;
 	bool open = false;
 	uint32_t menuParent = 0;
 	
@@ -74,13 +76,14 @@ public:
 	std::shared_ptr<MenuItem> GetItem(uint32_t id);
 	void Reset();
 	bool IsOpen();
+	void SetWindow(std::shared_ptr<Window> win);
 };
 
 std::shared_ptr<Menu> GetMenu(uint64_t id);
 bool MenuPointerInput(const bt_terminal_pointer_event &pevent);
-void OpenMenu(std::shared_ptr<Menu> menu, uint32_t x, uint32_t y);
+void OpenMenu(std::shared_ptr<Menu> menu, std::shared_ptr<Window> win, uint32_t x, uint32_t y);
 void CloseMenu(std::shared_ptr<Menu> menu);
 
-std::shared_ptr<Menu> GetTestMenu();
+std::shared_ptr<Menu> GetDefaultWindowMenu();
 
 #endif

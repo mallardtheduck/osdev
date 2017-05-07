@@ -346,8 +346,8 @@ void Window::OpenMenu(){
 	stringstream ss;
 	ss << "WM: Window '" << title << "' open menu."<< endl;
 	bt_zero(ss.str().c_str());
-	auto m = GetTestMenu();
-	::OpenMenu(m, pos.x, pos.y + GetMetric(TitleBarSize));
+	auto m = GetDefaultWindowMenu();
+	::OpenMenu(m, shared_from_this(), pos.x, pos.y + GetMetric(TitleBarSize));
 }
 
 void Window::Close(){
@@ -384,6 +384,20 @@ void Window::Expand(){
 		wm_Event e;
 		e.window_id = id;
 		e.type = wm_EventType::Expand;
+		client->SendEvent(e);
+	}
+}
+
+void Window::MenuAction(uint32_t action){
+	stringstream ss;
+	ss << "WM: Window '" << title << "' menu action: " << action << endl;
+	bt_zero(ss.str().c_str());
+	shared_ptr<Client> client = owner.lock();
+	if(client && (event_subs & wm_EventType::MenuSelection)){
+		wm_Event e;
+		e.window_id = id;
+		e.type = wm_EventType::MenuSelection;
+		e.Menu.id = action;
 		client->SendEvent(e);
 	}
 }
