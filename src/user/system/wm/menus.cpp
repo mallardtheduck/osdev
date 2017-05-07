@@ -225,6 +225,7 @@ void Menu::PointerInput(const bt_terminal_pointer_event &pevent){
 					break;
 				case MenuActionType::Custom:
 					window->MenuAction(item->GetCustomAction());
+					break;
 				default: break;
 			}
 			if(action != MenuActionType::ChildMenu){
