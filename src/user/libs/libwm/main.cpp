@@ -58,7 +58,7 @@ int main(){
 	vinfo.x = 100;
 	vinfo.y = 100;
 	vinfo.gds_id = vsid;
-	vinfo.subscriptions = wm_EventType::Close;
+	vinfo.subscriptions = wm_EventType::Close | wm_EventType::PointerButtonUp;
 	strcpy(vinfo.title, "WM Vector Test");
 	uint64_t vid = WM_CreateWindow(vinfo);
 	uint32_t shmsurf = create_shm_surface();
@@ -77,15 +77,19 @@ int main(){
 		wm_Event e = WM_GetEvent();
 		if(e.window_id == id || e.window_id == vid || e.window_id == shmwin){
 			if(e.type == wm_EventType::Close) break;
-			if(e.type == wm_EventType::PointerButtonDown){
+			if(e.type == wm_EventType::PointerButtonDown && e.window_id == id){
 				draw = true;
 				x = e.Pointer.x;
 				y = e.Pointer.y;
 			}
 			if(e.type == wm_EventType::PointerButtonUp){
-				GDS_Line(x, y, e.Pointer.x, e.Pointer.y, GDS_GetColour(255, 255, 255));
-				draw = false;
-				WM_Update();
+				if(e.window_id == id){
+					GDS_Line(x, y, e.Pointer.x, e.Pointer.y, GDS_GetColour(255, 255, 255));
+					draw = false;
+					WM_Update();
+				}else{
+					
+				}
 			}
 			if(e.type == wm_EventType::PointerMove && draw){
 				GDS_Line(x, y, e.Pointer.x, e.Pointer.y, GDS_GetColour(255, 255, 255));
