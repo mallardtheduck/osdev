@@ -5,6 +5,8 @@
 #include <dev/terminal.h>
 #include <memory>
 
+class Window;
+
 void InitWindws();
 
 uint64_t AddWindow(std::shared_ptr<Window> win);

@@ -75,7 +75,8 @@ struct wm_Event{
 			uint32_t code;
 		} Key;
 		struct{
-			uint32_t id;
+			uint64_t menu_id;
+			uint32_t action;
 		} Menu;
 	};
 };
@@ -99,10 +100,12 @@ ENUM_START(wm_RequestType)
 	ENUM_SET(wm_RequestType, DestroyMenu,		22),
 	ENUM_SET(wm_RequestType, AddMenuItem,		23),
 	ENUM_SET(wm_RequestType, RemoveMenuItem,	24),
-	ENUM_SET(wm_RequestType, MenuInfo,			25),
-	ENUM_SET(wm_RequestType, ShowMenu,			26),
-	ENUM_SET(wm_RequestType, SelectWindowMenu,	27),
-	ENUM_SET(wm_RequestType, SetWindowMenu,		28),
+	ENUM_SET(wm_RequestType, ReOrderMenu,		25),
+	ENUM_SET(wm_RequestType, MenuInfo,			26),
+	ENUM_SET(wm_RequestType, ShowMenu,			27),
+	ENUM_SET(wm_RequestType, SelectWindowMenu,	28),
+	ENUM_SET(wm_RequestType, SetWindowMenu,		29),
+	ENUM_SET(wm_RequestType, UnSetWindowMenu,	30),
 ENUM_END
 ENUM_TYPE(wm_RequestType)
 

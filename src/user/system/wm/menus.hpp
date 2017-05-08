@@ -19,6 +19,7 @@ enum class MenuActionType{
 	None,
 };
 
+class Window;
 class Menu;
 
 class MenuItem{
@@ -64,6 +65,9 @@ private:
 	uint32_t menuParent = 0;
 	
 public:
+	uint64_t id = UINT64_MAX;
+	
+	Menu(uint64_t i) : id(i) {}
 	bool Draw(int32_t x, int32_t y, const Point &cursor = {0, 0}, bool force = false);
 	void Redraw();
 	Rect GetBoundingRect();
@@ -85,5 +89,6 @@ void OpenMenu(std::shared_ptr<Menu> menu, std::shared_ptr<Window> win, uint32_t 
 void CloseMenu(std::shared_ptr<Menu> menu);
 
 std::shared_ptr<Menu> GetDefaultWindowMenu();
+std::shared_ptr<Menu> CreateMenu();
 
 #endif

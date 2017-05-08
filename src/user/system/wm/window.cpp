@@ -388,7 +388,7 @@ void Window::Expand(){
 	}
 }
 
-void Window::MenuAction(uint32_t action){
+void Window::MenuAction(uint64_t menu, uint32_t action){
 	stringstream ss;
 	ss << "WM: Window '" << title << "' menu action: " << action << endl;
 	bt_zero(ss.str().c_str());
@@ -397,7 +397,8 @@ void Window::MenuAction(uint32_t action){
 		wm_Event e;
 		e.window_id = id;
 		e.type = wm_EventType::MenuSelection;
-		e.Menu.id = action;
+		e.Menu.menu_id = menu;
+		e.Menu.action = action;
 		client->SendEvent(e);
 	}
 }

@@ -145,6 +145,60 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 		case wm_RequestType::Sync:{
 			SendReply(msg, true);
 		}
+		case wm_RequestType::SelectMenu:{
+			uint64_t id = GetContent<uint64_t>(msg);
+			if(menus.find(id) != menus.end()){
+				currentMenu = menus[id];
+				SendReply(msg, id);
+			}
+			break;	
+		}
+		case wm_RequestType::CreateMenu:{
+			auto menu = CreateMenu();
+			menus[menu->id] = menu;
+			currentMenu = menu;
+			SendReply(msg, menu->id);
+			break;
+		}
+		case wm_RequestType::DestroyMenu:{
+			uint64_t id = GetContent<uint64_t>(msg);
+			if(menus.find(id) != menus.end()){
+				if(menus[id] == currentMenu) currentMenu.reset();
+				menus.erase(id);
+			}
+			break;
+		}
+		case wm_RequestType::AddMenuItem:{
+			if(currentMenu){
+				wm_MenuItem item = GetContent<wm_MenuItem>(msg);
+				uint32_t itemId = currentMenu->AddMenuItem(make_shared<MenuItem>(item));
+				SendReply(msg, itemId);
+			}
+			break;
+		}
+		case wm_RequestType::RemoveMenuItem:{
+			if(currentMenu){
+				uint32_t itemId = GetContent<uint32_t>(msg);
+				currentMenu->RemoveMenuItem(itemId);
+			}
+			break;
+		}
+		case wm_RequestType::ReOrderMenu:{
+			//TODO: Implement
+			break;
+		}
+		case wm_RequestType::MenuInfo:{
+			//TODO: Implement
+			break;
+		}
+		case wm_RequestType::ShowMenu:{
+			if(currentWindow && currentMenu){
+				gds_Point menuPoint = GetContent<gds_Point>(msg);
+				Point winPoint = currentWindow->GetContentPosition();
+				OpenMenu(currentMenu, currentWindow, winPoint.x + menuPoint.x, winPoint.y + menuPoint.y);
+			}
+			break;
+		}
 	}
 }
 

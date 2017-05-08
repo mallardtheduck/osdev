@@ -137,6 +137,12 @@ uint32_t Menu::AddMenuItem(std::shared_ptr<MenuItem> i){
 	return ret;
 }
 
+void Menu::RemoveMenuItem(uint32_t itemId){
+	if(items.find(itemId) != items.end()){
+		items.erase(itemId);
+	}
+}
+
 Rect Menu::GetBoundingRect(){
 	uint32_t width = 0;
 	uint32_t height = 0;
@@ -224,7 +230,7 @@ void Menu::PointerInput(const bt_terminal_pointer_event &pevent){
 					window->Expand();
 					break;
 				case MenuActionType::Custom:
-					window->MenuAction(item->GetCustomAction());
+					window->MenuAction(id, item->GetCustomAction());
 					break;
 				default: break;
 			}
@@ -297,31 +303,18 @@ shared_ptr<Menu> GetMenu(uint64_t /*id*/){
 	return NULL;
 }
 
-/*shared_ptr<Menu> GetTestMenu(){
-	static shared_ptr<Menu> testMenu;
-	if(!testMenu){
-		testMenu = make_shared<Menu>();
-		testMenu->AddMenuItem(make_shared<MenuItem>("One Apple", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
-		testMenu->AddMenuItem(make_shared<MenuItem>("Two Potatoes", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
-		testMenu->AddMenuItem(make_shared<MenuItem>("Three Chickens", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
-		testMenu->AddMenuItem(make_shared<MenuItem>("", wm_MenuItemFlags::Seperator, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
-		testMenu->AddMenuItem(make_shared<MenuItem>("Four Lemon Cheesecakes", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
-		auto testChildMenu = make_shared<Menu>();
-		testChildMenu->AddMenuItem(make_shared<MenuItem>("Child Menu Item 1", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
-		testChildMenu->AddMenuItem(make_shared<MenuItem>("Child Menu Item 2", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::None, 0));
-		//testChildMenu->AddMenuItem(make_shared<MenuItem>("Recusion?", wm_MenuItemFlags::ChildMenu, testChildMenu, 0, MenuActionType::ChildMenu, 0));
-		testMenu->AddMenuItem(make_shared<MenuItem>("Five Gold Rings", wm_MenuItemFlags::ChildMenu, testChildMenu, 0, MenuActionType::ChildMenu, 0));
-	}
-	return testMenu;
-}*/
-
 shared_ptr<Menu> GetDefaultWindowMenu(){
 	static shared_ptr<Menu> winMenu;
 	if(!winMenu){
-		winMenu = make_shared<Menu>();
+		winMenu = CreateMenu();
 		winMenu->AddMenuItem(make_shared<MenuItem>("Expand", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::Expand, 0));
 		winMenu->AddMenuItem(make_shared<MenuItem>("Hide", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::Hide, 0));
 		winMenu->AddMenuItem(make_shared<MenuItem>("Close", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::Close, 0));
 	}
 	return winMenu;
+}
+
+shared_ptr<Menu> CreateMenu(){
+	static uint64_t id_counter = 0;
+	return make_shared<Menu>(++id_counter);
 }
