@@ -62,6 +62,8 @@ int main(){
 	strcpy(vinfo.title, "WM Vector Test");
 	uint64_t vid = WM_CreateWindow(vinfo);
 	uint32_t shmsurf = create_shm_surface();
+	/*uint64_t menu =*/ WM_CreateMenu();
+	WM_AddMenuItem(wm_MenuItem {1, "Hello menus!", wm_MenuItemFlags::Default, 0, 0});
 	wm_WindowInfo shminfo;
 	shminfo.x = 200;
 	shminfo.y = 200;
@@ -88,7 +90,9 @@ int main(){
 					draw = false;
 					WM_Update();
 				}else{
-					
+					WM_SelectWindow(vid);
+					WM_ShowMenu(wm_Rect{(int32_t)e.Pointer.x, (int32_t)e.Pointer.y, 0, 0});
+					WM_SelectWindow(id);
 				}
 			}
 			if(e.type == wm_EventType::PointerMove && draw){

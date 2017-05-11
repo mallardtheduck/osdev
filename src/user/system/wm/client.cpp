@@ -145,6 +145,7 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 		case wm_RequestType::Sync:{
 			SendReply(msg, true);
 		}
+		break;
 		case wm_RequestType::SelectMenu:{
 			uint64_t id = GetContent<uint64_t>(msg);
 			if(menus.find(id) != menus.end()){
@@ -193,7 +194,7 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 		}
 		case wm_RequestType::ShowMenu:{
 			if(currentWindow && currentMenu){
-				gds_Point menuPoint = GetContent<gds_Point>(msg);
+				wm_Rect menuPoint = GetContent<wm_Rect>(msg);
 				Point winPoint = currentWindow->GetContentPosition();
 				OpenMenu(currentMenu, currentWindow, winPoint.x + menuPoint.x, winPoint.y + menuPoint.y);
 			}
