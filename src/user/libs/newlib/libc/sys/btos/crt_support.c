@@ -143,7 +143,8 @@ size_t btos_get_drive_end(const char *path){
 }
 
 bool btos_path_parse(const char *opath, char *buffer, size_t size){
-	char path[BT_MAX_PATH]={0};
+	char *path = calloc(BT_MAX_PATH, 1);
+	if(!path) return false;
 	if(btos_path_is_absolute(opath)){
 		strncpy(path, opath, BT_MAX_PATH);
 	}else{
@@ -172,6 +173,7 @@ bool btos_path_parse(const char *opath, char *buffer, size_t size){
 				cstart=bpos;
 				has_drive=true;
 			}else{
+				free(path);
 				return false;
 			}
 		}else if(*c=='/' || *c=='\n' || *c=='\0'){
@@ -196,5 +198,6 @@ bool btos_path_parse(const char *opath, char *buffer, size_t size){
 		}else buffer[bpos++]=*c;
 	}
 	if(bpos > 1 && buffer[bpos-1]=='/' && buffer[bpos-2] != ':') buffer[bpos-1]='\0';
+	free(path);
 	return true;
 }
