@@ -1,5 +1,5 @@
 diff -rupN libgd-2.1.0/config/config.sub originals/libgd-2.1.0/config/config.sub
---- libgd-2.1.0/config/config.sub	2017-03-17 18:51:09.145457535 +0000
+--- libgd-2.1.0/config/config.sub	2017-04-07 20:42:52.679150114 +0100
 +++ originals/libgd-2.1.0/config/config.sub	2013-06-25 10:58:55.000000000 +0100
 @@ -1354,7 +1354,7 @@ case $os in
  	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
@@ -11,7 +11,7 @@ diff -rupN libgd-2.1.0/config/config.sub originals/libgd-2.1.0/config/config.sub
  	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
  	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \
 diff -rupN libgd-2.1.0/configure originals/libgd-2.1.0/configure
---- libgd-2.1.0/configure	2017-03-17 18:51:09.149457389 +0000
+--- libgd-2.1.0/configure	2017-04-07 20:42:52.687150114 +0100
 +++ originals/libgd-2.1.0/configure	2013-06-25 14:53:41.000000000 +0100
 @@ -5587,10 +5587,6 @@ sysv4 | sysv4.3*)
  tpf*)
@@ -43,7 +43,7 @@ diff -rupN libgd-2.1.0/configure originals/libgd-2.1.0/configure
  *)
    dynamic_linker=no
 diff -rupN libgd-2.1.0/src/gd.c originals/libgd-2.1.0/src/gd.c
---- libgd-2.1.0/src/gd.c	2017-03-17 18:51:09.149457389 +0000
+--- libgd-2.1.0/src/gd.c	2017-04-07 20:42:52.691150114 +0100
 +++ originals/libgd-2.1.0/src/gd.c	2013-06-25 10:58:23.000000000 +0100
 @@ -561,14 +561,6 @@ BGD_DECLARE(int) gdImageColorResolve (gd
  
@@ -88,7 +88,7 @@ diff -rupN libgd-2.1.0/src/gd.c originals/libgd-2.1.0/src/gd.c
  		}
  	}
 diff -rupN libgd-2.1.0/src/gdcache.c originals/libgd-2.1.0/src/gdcache.c
---- libgd-2.1.0/src/gdcache.c	2017-03-17 18:51:09.149457389 +0000
+--- libgd-2.1.0/src/gdcache.c	2017-05-21 00:02:35.984913173 +0100
 +++ originals/libgd-2.1.0/src/gdcache.c	2013-06-25 10:58:23.000000000 +0100
 @@ -5,8 +5,6 @@
  #include "gd.h"
@@ -99,18 +99,8 @@ diff -rupN libgd-2.1.0/src/gdcache.c originals/libgd-2.1.0/src/gdcache.c
  #ifdef HAVE_LIBTTF
  #	define NEED_CACHE 1
  #else
-@@ -140,9 +138,6 @@ void * gdCacheGet(gdCache_head_t *head,
- 	} else {
- 		/* cache full - replace least-recently-used */
- 		/* preveprev becomes new end of list */
--		char q[128] = {0};
--		sprintf(q, "libgd: %p\n", prevprev);
--		//bt_zero(q);
- 		prevprev->next = NULL;
- 		elem = prev;
- 		(*(head->gdCacheRelease))(elem->userdata);
 diff -rupN libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
---- libgd-2.1.0/src/gd_errors.h	2017-03-17 18:51:09.149457389 +0000
+--- libgd-2.1.0/src/gd_errors.h	2017-04-07 20:42:52.691150114 +0100
 +++ originals/libgd-2.1.0/src/gd_errors.h	2013-06-25 10:58:23.000000000 +0100
 @@ -1,7 +1,7 @@
  #ifndef GD_ERRORS_H
@@ -122,7 +112,7 @@ diff -rupN libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
  #else
  /*
 diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
---- libgd-2.1.0/src/gdft.c	2017-03-17 20:17:08.754041395 +0000
+--- libgd-2.1.0/src/gdft.c	2017-05-21 00:03:18.220915543 +0100
 +++ originals/libgd-2.1.0/src/gdft.c	2013-06-25 10:58:23.000000000 +0100
 @@ -5,7 +5,6 @@
  /* John Ellson   ellson@graphviz.org        */
@@ -132,17 +122,42 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  
  #include <stdio.h>
  #include <stdlib.h>
-@@ -505,10 +504,6 @@ fontFetch (char **error, void *key)
+@@ -73,8 +72,6 @@ static char *font_path(char **fontpath,
+ #    define DEFAULT_FONTPATH "C:\\WINDOWS\\FONTS;C:\\WINNT\\FONTS"
+ #  elif defined(__APPLE__) || (defined(__MWERKS__) && defined(macintosh))
+ #    define DEFAULT_FONTPATH "/usr/share/fonts/truetype:/System/Library/Fonts:/Library/Fonts"
+-#  elif defined(__btos__)
+-#    define DEFAULT_FONTPATH "HDD:/BTOS/FONTS"
+ #  else
+    /* default fontpath for unix systems  - whatever happened to standards ! */
+ #    define DEFAULT_FONTPATH "/usr/X11R6/lib/X11/fonts/TrueType:/usr/X11R6/lib/X11/fonts/truetype:/usr/X11R6/lib/X11/fonts/TTF:/usr/share/fonts/TrueType:/usr/share/fonts/truetype:/usr/openwin/lib/X11/fonts/TrueType:/usr/X11R6/lib/X11/fonts/Type1:/usr/lib/X11/fonts/Type1:/usr/openwin/lib/X11/fonts/Type1"
+@@ -82,7 +79,7 @@ static char *font_path(char **fontpath,
+ #endif
+ 
+ #ifndef PATHSEPARATOR
+-#  if defined(NETWARE) || defined(_WIN32) || defined(__btos__)
++#  if defined(NETWARE) || defined(_WIN32)
+ #    define PATHSEPARATOR ";"
+ #  else
+ #    define PATHSEPARATOR ":"
+@@ -507,7 +504,7 @@ fontFetch (char **error, void *key)
  
  		return NULL;
  	}
 -	
--	char q[128] = {0};
--	sprintf(q, "libgd: %p %p\n", a, a->fontpath);
--	//bt_zero(q);
- 
++
  	err = FT_New_Face(*b->library, a->fontpath, 0, &a->face);
  
+ 	/* Read kerning metrics for Postscript fonts. */
+@@ -931,8 +928,6 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 
+ 			strex->fontpath = (char *) gdMalloc(fontpath_len + 1);
+ 			if (strex->fontpath == NULL) {
+-				gdCacheDelete (tc_cache);
+-				gdMutexUnlock (gdFontCacheMutex);
+ 				return "could not alloc full list of fonts";
+ 			}
+ 			strncpy(strex->fontpath, font->fontpath, fontpath_len);
 @@ -1332,11 +1327,6 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  	return (char *) NULL;
  }
@@ -155,8 +170,17 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  #endif /* HAVE_LIBFREETYPE */
  
  #ifdef HAVE_LIBFONTCONFIG
+@@ -1553,7 +1543,7 @@ static char * font_path(char **fontpath,
+ 			return "could not alloc full path of font";
+ 		}
+ 		/* if name is an absolute or relative pathname then test directly */
+-#if defined(NETWARE) || defined(__btos__)
++#ifdef NETWARE
+ 		/* netware uses the format "volume:/path" or the standard "/path" */
+ 		if (name[0] != 0 && (strstr(name, ":/") || name[0] == '/'))
+ #else
 diff -rupN libgd-2.1.0/src/gdpp.h originals/libgd-2.1.0/src/gdpp.h
---- libgd-2.1.0/src/gdpp.h	2017-03-17 18:51:09.149457389 +0000
+--- libgd-2.1.0/src/gdpp.h	2017-04-07 20:42:52.695150114 +0100
 +++ originals/libgd-2.1.0/src/gdpp.h	2013-06-25 10:58:23.000000000 +0100
 @@ -1476,7 +1476,7 @@ public:
  		return gdImageTrueColorPixel(im, x, y);
@@ -168,7 +192,7 @@ diff -rupN libgd-2.1.0/src/gdpp.h originals/libgd-2.1.0/src/gdpp.h
  	}
  
 diff -rupN libgd-2.1.0/src/Makefile.in originals/libgd-2.1.0/src/Makefile.in
---- libgd-2.1.0/src/Makefile.in	2017-03-17 18:51:09.149457389 +0000
+--- libgd-2.1.0/src/Makefile.in	2017-04-07 20:42:52.699150115 +0100
 +++ originals/libgd-2.1.0/src/Makefile.in	2013-06-25 14:53:39.000000000 +0100
 @@ -393,7 +393,7 @@ top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
