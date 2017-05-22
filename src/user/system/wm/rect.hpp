@@ -36,5 +36,6 @@ Rect Reoriginate(const Rect &r, const Point &p);
 Point Reoriginate(const Point &pr, const Point &po);
 std::vector<Rect> TileRects(const Rect &r1, const Rect &r2);
 Rect Constrain(Rect r, const Rect &bounds);
+Rect Intersection(const Rect &r1, const Rect &r2);
 
 #endif

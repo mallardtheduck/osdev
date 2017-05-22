@@ -255,13 +255,14 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 void Window::DrawGrabbed(const Rect &r){
 	if(!Overlaps(r, GetBoundingRect())) return;
 	if(GetMetric(FullWindowDrag)){
-		Rect dstRect = Constrain(r, GetBoundingRect());
+		Rect dstRect = Intersection(r, GetBoundingRect());
 		Rect srcRect = Reoriginate(dstRect, pos);
 		DBG("WM: dstRect: (" << dstRect.x << ", " << dstRect.y << ") " << dstRect.w << " x " << dstRect.h);
 		DBG("WM: srcRect: (" << srcRect.x << ", " << srcRect.y << ") " << srcRect.w << " x " << srcRect.h);
 		if(!gds_drag_id){
 			gds_drag_id = GDS_NewSurface(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h, 100, gds_info.colourType);
 			Draw(active, true, gds_drag_id);
+			SetVisible(false, false);
 		}
 		GDS_SelectScreen();
 		GDS_Blit(gds_drag_id, srcRect.x, srcRect.y, srcRect.w, srcRect.h, dstRect.x, dstRect.y, dstRect.w, dstRect.h);

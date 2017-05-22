@@ -111,3 +111,8 @@ Rect Constrain(Rect r, const Rect &bounds){
 	if(r.y + r.h >= bounds.h) r.h = bounds.h - r.y;
 	return r;
 }
+
+Rect Intersection(const Rect &r1, const Rect &r2){
+	if(!Overlaps(r1, r2)) return { 0, 0, 0, 0 };
+	return { max(r1.x, r2.x), max(r1.y, r2.y), min(r1.x + r1.w, r2.x + r2.w), min(r1.y + r1.h, r2.y + r2.h) };
+}
