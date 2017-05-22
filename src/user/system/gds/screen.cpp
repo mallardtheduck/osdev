@@ -17,7 +17,6 @@ void screen_update_thread(void *){
 	deque<Screen::update> batch;
 	while(true){
 		bt_wait_atom(pthis->sync_atom, bt_atom_compare::GreaterThan, 0);
-		uint64_t batch_start = bt_rtc_millis();
 		bt_lock(pthis->update_q_lock);
 		batch.swap(pthis->update_q);
 		bt_modify_atom(pthis->sync_atom, bt_atom_modify::Set, 0);
@@ -51,8 +50,6 @@ void screen_update_thread(void *){
 		batch.clear();
 		bt_unlock(pthis->update_q_lock);
 		bt_fioctl(pthis->fh, bt_terminal_ioctl::PointerUnfreeze, 0, NULL);
-		uint64_t batch_end = bt_rtc_millis();
-		DBG("GDS: Batch took " << (batch_end - batch_start) << "ms");
 		bt_rtc_sleep(15);
 	}
 }

@@ -39,7 +39,6 @@ void Window::Draw(bool active, bool content, uint64_t target){
 }
 
 void Window::Draw(bool active, const Rect &r){
-	uint64_t draw_start = bt_rtc_millis();
 	this->active = active;
 	GDS_SelectScreen();
 	Point cpos = GetContentPosition();
@@ -50,9 +49,7 @@ void Window::Draw(bool active, const Rect &r){
 		GDS_Blit(gds_id, contentSrc.x, contentSrc.y, contentSrc.w, contentSrc.h, contentDst.x, contentDst.y, contentDst.w, contentDst.h);
 		drew = true;
 	}
-	uint64_t draw_s1 = bt_rtc_millis();
 	RefreshTitleBar();
-	uint64_t draw_s2 = bt_rtc_millis();
 	if(Overlaps(r, {pos.x, pos.y, gds_titleinfo.w, gds_titleinfo.h})){
 		Rect titleDst = {max(r.x, pos.x), max(r.y, pos.y), min((pos.x + gds_titleinfo.w), (r.x + r.w)) - max(r.x, pos.x), min((pos.y + gds_titleinfo.h), (r.y + r.h)) - max(r.y, pos.y)};
 		Rect titleSrc = Reoriginate(titleDst, {pos.x, pos. y});
@@ -61,8 +58,6 @@ void Window::Draw(bool active, const Rect &r){
 	}
 	DrawBorder(pos.x, pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize) + GetMetric(BorderWidth), r);
 	last_active = active;
-	uint64_t draw_end = bt_rtc_millis();
-	DBG("WM Window " << id << " draw s1: " << draw_s1 - draw_start << "ms s2: " << draw_s2 - draw_s1 << "ms s3: " << draw_end - draw_s2 << "ms");
 	if(!drew){
 		stringstream ss;
 		ss << "WM: Draw with no overlap!" << endl;
@@ -194,7 +189,7 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 				if(!firstFrame && newpos.x == pos.x && newpos.y == pos.y) return;
 				GDS_SelectScreen();
 				Rect oldrect = GetBoundingRect();
-				DrawWindows(oldrect);
+				DrawWindows(oldrect, 0, true);
 				GDS_Blit(gds_drag_id, 0, 0, oldrect.w, oldrect.h + GetMetric(TitleBarSize), newpos.x, newpos.y, oldrect.w, oldrect.h + GetMetric(TitleBarSize));
 				pos = newpos;
 				Rect newrect = GetBoundingRect();
@@ -254,6 +249,27 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			e.Pointer.button = pevent.button;
 			client->SendEvent(e);
 		}
+	}
+}
+
+void Window::DrawGrabbed(const Rect &r){
+	if(!Overlaps(r, GetBoundingRect())) return;
+	if(GetMetric(FullWindowDrag)){
+		Rect dstRect = Constrain(r, GetBoundingRect());
+		Rect srcRect = Reoriginate(dstRect, pos);
+		DBG("WM: dstRect: (" << dstRect.x << ", " << dstRect.y << ") " << dstRect.w << " x " << dstRect.h);
+		DBG("WM: srcRect: (" << srcRect.x << ", " << srcRect.y << ") " << srcRect.w << " x " << srcRect.h);
+		if(!gds_drag_id){
+			gds_drag_id = GDS_NewSurface(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h, 100, gds_info.colourType);
+			Draw(active, true, gds_drag_id);
+		}
+		GDS_SelectScreen();
+		GDS_Blit(gds_drag_id, srcRect.x, srcRect.y, srcRect.w, srcRect.h, dstRect.x, dstRect.y, dstRect.w, dstRect.h);
+		RefreshScreen(r);
+	}else{
+		GDS_SelectScreen();
+		DrawBorder(pos.x, pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize));
+		RefreshRectEdges(pos.x, pos.y, gds_info.w + (2 * GetMetric(BorderWidth)), gds_info.h + GetMetric(TitleBarSize), GetMetric(BorderWidth));
 	}
 }
 

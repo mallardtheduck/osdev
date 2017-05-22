@@ -46,6 +46,7 @@ public:
 	
 	void Draw(bool active, bool content = true, uint64_t target = 0);
 	void Draw(bool active, const Rect &r);
+	void DrawGrabbed(const Rect &r);
 	void SetPosition(Point p);
 	Point GetPosition();
 	Point GetContentPosition();

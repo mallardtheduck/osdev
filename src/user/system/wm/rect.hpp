@@ -16,6 +16,10 @@ struct Rect{
 bool operator==(const Rect &r1, const Rect &r2);
 bool operator<(const Rect &r1, const Rect &r2);
 
+inline bool operator!=(const Rect &r1, const Rect &r2){
+	return !(r1 == r2);
+}
+
 struct Point{
 	int32_t x, y;
 	Point(): x(0), y(0) {}

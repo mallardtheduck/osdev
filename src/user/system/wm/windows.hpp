@@ -13,7 +13,7 @@ uint64_t AddWindow(std::shared_ptr<Window> win);
 void RemoveWindow(uint64_t id);
 std::shared_ptr<Window> GetWindow(uint64_t id);
 std::shared_ptr<Window> GetActiveWindow();
-void DrawWindows(const Rect &r = Rect(), uint64_t above = 0);
+void DrawWindows(const Rect &r = Rect(), uint64_t above = 0, bool ignoreGrab = false);
 void DrawWindows(const std::vector<Rect> &v);
 void HandleInput(const bt_terminal_event &event);
 void RefreshScreen(Rect r = Rect());
