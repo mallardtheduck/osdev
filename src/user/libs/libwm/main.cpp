@@ -41,7 +41,7 @@ int main(){
 	info.x = 10;
 	info.y = 10;
 	info.gds_id = sid;
-	info.options = wm_WindowOptions::NoExpand | wm_WindowOptions::NoHide | wm_WindowOptions::NoClose | wm_WindowOptions::NoMenu;
+	info.options = wm_WindowOptions::Visible | wm_WindowOptions::NoExpand | wm_WindowOptions::NoHide | wm_WindowOptions::NoClose;// | wm_WindowOptions::NoMenu;
 	info.subscriptions = wm_EventType::Close | wm_EventType::PointerButtonDown | wm_EventType::PointerButtonUp | wm_EventType::PointerMove;
 	strcpy(info.title, "WM Test Application");
 	uint64_t id = WM_CreateWindow(info);
@@ -59,6 +59,7 @@ int main(){
 	vinfo.x = 100;
 	vinfo.y = 100;
 	vinfo.gds_id = vsid;
+	vinfo.options = wm_WindowOptions::Default;
 	vinfo.subscriptions = wm_EventType::Close | wm_EventType::PointerButtonUp;
 	strcpy(vinfo.title, "WM Vector Test");
 	uint64_t vid = WM_CreateWindow(vinfo);
@@ -69,6 +70,7 @@ int main(){
 	shminfo.x = 200;
 	shminfo.y = 200;
 	shminfo.gds_id = shmsurf;
+	shminfo.options = wm_WindowOptions::Default;
 	shminfo.subscriptions = wm_EventType::Close;
 	strcpy(shminfo.title, "SHM Test");
 	uint64_t shmwin = WM_CreateWindow(shminfo);

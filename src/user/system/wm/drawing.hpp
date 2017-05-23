@@ -24,6 +24,7 @@ private:
 	std::string title = "";
 	uint32_t width = 0;
 	WindowArea pressed = WindowArea::None;
+	uint32_t window_options = 0;
 	
 public:
 	uint64_t Draw(uint32_t w, const std::string &t, bool active, uint32_t options, WindowArea p = WindowArea::None);

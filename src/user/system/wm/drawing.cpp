@@ -123,6 +123,7 @@ uint64_t TitleBar::Draw(uint32_t w, const string &t, bool active, uint32_t optio
 		GDS_SelectSurface(ret);
 	}
 	if(t != title) drawAll = true;
+	if(options != window_options) drawAll = true;
 	
 	if(drawAll || p != pressed){
 		buttonHighlightColour = GetColour(ButtonHighlightColour);
@@ -162,6 +163,7 @@ uint64_t TitleBar::Draw(uint32_t w, const string &t, bool active, uint32_t optio
 	width = w;
 	title = t;
 	pressed = p;
+	window_options = options;
 	if(active) gds_active_title = ret;
 	else gds_inactive_title = ret;
 	return ret;
@@ -208,8 +210,7 @@ void DrawBorder(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const Rect &boun
 	GDS_MultiDrawingOps(ops.size(), &ops[0], NULL);
 }
 
-uint64_t DrawMenuItem(const string &text, uint32_t flags, uint64_t image, uint32_t width, bool selected){
-	DBG("WM DrawMenuItem: \"" << text << "\", " << flags << ", " << image << ", " << width << ", " << selected); 
+uint64_t DrawMenuItem(const string &text, uint32_t flags, uint64_t image, uint32_t width, bool selected){ 
 	uint64_t ret = 0;
 	if(!(flags & wm_MenuItemFlags::Seperator)){
 		ret = GDS_NewSurface(gds_SurfaceType::Bitmap, width, GetMetric(MenuItemHeight));
@@ -225,7 +226,8 @@ uint64_t DrawMenuItem(const string &text, uint32_t flags, uint64_t image, uint32
 			lpos += GetMetric(MenuItemMargin);
 		}
 		if(!(flags & wm_MenuItemFlags::ImageOnly)){
-			GDS_Text(lpos, GetMetric(MenuItemHeight) - GetMetric(MenuItemMargin), text.c_str(), menuFont, GetMetric(MenuFontSize), GetColour(MenuForegroundColour));
+			uint32_t fgCol = (flags & wm_MenuItemFlags::Disabled) ? GetColour(MenuForegroundDisabledColour) : GetColour(MenuForegroundColour);
+			GDS_Text(lpos, GetMetric(MenuItemHeight) - GetMetric(MenuItemMargin), text.c_str(), menuFont, GetMetric(MenuFontSize), fgCol);
 		}
 		if((flags & wm_MenuItemFlags::ChildMenu)){
 			gds_Point points[] = { 

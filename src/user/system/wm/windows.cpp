@@ -157,6 +157,7 @@ shared_ptr<Window> GetWindowAt(uint32_t x, uint32_t y){
 	for(auto w = sortedWindows.rbegin(); w != sortedWindows.rend(); ++w){
 		shared_ptr<Window> win = w->lock();
 		if(!win) continue;
+		if(!win->GetVisible()) continue;
 		Rect wrect = win->GetBoundingRect();
 		if(InRect(x, y, wrect)) return win;
 	}
@@ -199,7 +200,6 @@ void HandleInput(const bt_terminal_event &event){
 	shared_ptr<Window> awin = activeWindow.lock();
 	if(event.type == bt_terminal_event_type::Key && awin) awin->KeyInput(event.key);
 	else if(event.type == bt_terminal_event_type::Pointer){
-		uint64_t pointer_start = bt_rtc_millis();
 		if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == (uint32_t)curpos.x && event.pointer.y == (uint32_t)curpos.y) return;
 		curpos.x = event.pointer.x; curpos.y = event.pointer.y;
 		shared_ptr<Window> win = GetWindowAt(event.pointer.x, event.pointer.y);
@@ -210,9 +210,7 @@ void HandleInput(const bt_terminal_event &event){
 			pointerWindow = win;
 		}
 		if(!win) return;
-		uint64_t pointer_s1 = bt_rtc_millis();
 		if(event.pointer.type == bt_terminal_pointer_event_type::ButtonDown && win != activeWindow.lock()){
-			uint64_t activate_start = bt_rtc_millis();
 			shared_ptr<Window> old = awin;
 			activeWindow = win;
 			BringToFront(win);
@@ -222,12 +220,8 @@ void HandleInput(const bt_terminal_event &event){
 			}else{
 				DrawAndRefreshWindows(win->GetBoundingRect(), win->id);
 			}
-			uint64_t activate_end = bt_rtc_millis();
-			DBG("WM Activate: " << activate_end - activate_start << "ms");
 		}
 		win->PointerInput(event.pointer);
-		uint64_t pointer_end = bt_rtc_millis();
-		DBG("WM: Pointer input stage1: " << pointer_s1 - pointer_start << "ms stage2: " << pointer_end - pointer_s1 << "ms");
 	}
 }
 

@@ -26,6 +26,7 @@ class MenuItem{
 private:
 	std::string text;
 	uint32_t flags;
+	uint32_t cacheFlags = 0;
 	std::shared_ptr<Menu> childMenu;
 	uint64_t cacheNormal = 0;
 	uint64_t cacheSelected = 0;
@@ -41,13 +42,14 @@ public:
 	MenuItem(const wm_MenuItem &i);
 	MenuItem(const std::string text, uint32_t flags, std::shared_ptr<Menu> childMenu, uint64_t image, MenuActionType action, uint32_t customId);
 	
-	uint64_t Draw(uint32_t width, bool selected);
+	uint64_t Draw(uint32_t width, bool selected, uint32_t dflags = 0);
 	uint32_t GetHeight();
 	uint32_t GetMinWidth();
 	
 	MenuActionType GetAction();
 	uint32_t GetCustomAction();
 	std::shared_ptr<Menu> GetChildMenu();
+	uint32_t GetFlags();
 	
 	~MenuItem();
 };
@@ -63,6 +65,8 @@ private:
 	std::shared_ptr<Window> window;
 	bool open = false;
 	uint32_t menuParent = 0;
+	
+	uint32_t EffectiveFlags(uint32_t menuFlags, MenuActionType action);
 	
 public:
 	uint64_t id = UINT64_MAX;

@@ -223,10 +223,10 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 	}
 	if(pevent.type == bt_terminal_pointer_event_type::ButtonUp && pevent.button == 1 && pressed != WindowArea::None){
 		if(pressed == over){
-			if(pressed == WindowArea::MenuButton) OpenMenu();
-			if(pressed == WindowArea::CloseButton) Close();
-			if(pressed == WindowArea::HideButton) Hide();
-			if(pressed == WindowArea::ExpandButton) Expand();
+			if(pressed == WindowArea::MenuButton && !(options & wm_WindowOptions::NoMenu)) OpenMenu();
+			if(pressed == WindowArea::CloseButton && !(options & wm_WindowOptions::NoClose)) Close();
+			if(pressed == WindowArea::HideButton && !(options & wm_WindowOptions::NoHide)) Hide();
+			if(pressed == WindowArea::ExpandButton && !(options & wm_WindowOptions::NoExpand)) Expand();
 		}
 		pressed = WindowArea::None;
 		RefreshTitleBar(true);

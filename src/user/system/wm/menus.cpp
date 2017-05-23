@@ -20,7 +20,6 @@ MenuItem::MenuItem(const std::string t, uint32_t f, std::shared_ptr<Menu> cM, ui
 MenuItem::~MenuItem(){
 	DropCache();
 }
-
 void MenuItem::DropCache(){
 	if(cacheNormal){
 		GDS_SelectSurface(cacheNormal);
@@ -35,14 +34,16 @@ void MenuItem::DropCache(){
 	cacheWidth = 0;
 }
 
-uint64_t MenuItem::Draw(uint32_t width, bool selected){
-	if(width != cacheWidth) DropCache();
+uint64_t MenuItem::Draw(uint32_t width, bool selected, uint32_t dflags){
+	if(dflags == 0) dflags = flags;
+	if(width != cacheWidth || dflags != cacheFlags) DropCache();
 	cacheWidth = width;
+	cacheFlags = dflags;
 	if(selected){
-		if(!cacheSelected) cacheSelected = DrawMenuItem(text, flags, image, width, true);
+		if(!cacheSelected) cacheSelected = DrawMenuItem(text, dflags, image, width, true);
 		return cacheSelected;
 	}else{
-		if(!cacheNormal) cacheNormal = DrawMenuItem(text, flags, image, width, false);
+		if(!cacheNormal) cacheNormal = DrawMenuItem(text, dflags, image, width, false);
 		return cacheNormal;
 	}
 }
@@ -93,6 +94,19 @@ shared_ptr<Menu> MenuItem::GetChildMenu(){
 	return childMenu;
 }
 
+uint32_t MenuItem::GetFlags(){
+	return flags;
+}
+
+uint32_t Menu::EffectiveFlags(uint32_t menuFlags, MenuActionType action){
+	if(!window || action == MenuActionType::Custom || action == MenuActionType::ChildMenu || action == MenuActionType::None) return menuFlags;
+	uint32_t windowOptions = window->GetOptions();
+	if(action == MenuActionType::Close && (windowOptions & wm_WindowOptions::NoClose)) return menuFlags | wm_MenuItemFlags::Disabled;
+	if(action == MenuActionType::Expand && (windowOptions & wm_WindowOptions::NoExpand)) return menuFlags | wm_MenuItemFlags::Disabled;
+	if(action == MenuActionType::Hide && (windowOptions & wm_WindowOptions::NoHide)) return menuFlags | wm_MenuItemFlags::Disabled;
+	return menuFlags;
+}
+
 bool Menu::Draw(int32_t x, int32_t y, const Point &cursor, bool force){
 	if(!x && !y){
 		x = lx;
@@ -114,7 +128,7 @@ bool Menu::Draw(int32_t x, int32_t y, const Point &cursor, bool force){
 		bool selected = false;
 		uint32_t height = i.second->GetHeight();
 		if(i.first == nsel) selected = true;
-		uint64_t surf = i.second->Draw(width, selected);
+		uint64_t surf = i.second->Draw(width, selected, EffectiveFlags(i.second->GetFlags(), i.second->GetAction()));
 		GDS_SelectScreen();
 		GDS_Blit(surf, 0, 0, width, height, x, cy, width, height);
 		cy += height;
@@ -160,6 +174,7 @@ uint32_t Menu::GetSelected(const Point &cursor){
 	int32_t cy = ly;
 	for(auto &i : items){
 		uint32_t height = i.second->GetHeight();
+		if((EffectiveFlags(i.second->GetFlags(), i.second->GetAction()) & wm_MenuItemFlags::Disabled)) continue;
 		if(InRect(cursor, {lx, cy, brect.w, height})) return i.first;
 		cy += height;
 	}

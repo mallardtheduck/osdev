@@ -56,9 +56,9 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 			wm_WindowInfo info = GetContent<wm_WindowInfo>(msg);
 			shared_ptr<Window> win(new Window(info.gds_id));
 			win->SetPosition({info.x, info.y});
+			win->SetOptions(info.options);
 			win->SetTitle(info.title);
 			win->Subscribe(info.subscriptions);
-			win->SetOptions(info.options);
 			win->SetOwner(shared_from_this());
 			uint64_t id = AddWindow(win);
 			windows.insert({id, win});
