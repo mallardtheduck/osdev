@@ -41,6 +41,7 @@ int main(){
 	info.x = 10;
 	info.y = 10;
 	info.gds_id = sid;
+	info.options = wm_WindowOptions::NoExpand | wm_WindowOptions::NoHide | wm_WindowOptions::NoClose | wm_WindowOptions::NoMenu;
 	info.subscriptions = wm_EventType::Close | wm_EventType::PointerButtonDown | wm_EventType::PointerButtonUp | wm_EventType::PointerMove;
 	strcpy(info.title, "WM Test Application");
 	uint64_t id = WM_CreateWindow(info);

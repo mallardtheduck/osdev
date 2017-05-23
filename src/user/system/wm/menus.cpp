@@ -314,7 +314,6 @@ shared_ptr<Menu> GetDefaultWindowMenu(){
 		winMenu->AddMenuItem(make_shared<MenuItem>("Expand", wm_MenuItemFlags::Default, nullptr, 0, MenuActionType::Expand, 0));
 		winMenu->AddMenuItem(make_shared<MenuItem>("Hide", wm_MenuItemFlags::Default, nullptr, 0, MenuActionType::Hide, 0));
 		winMenu->AddMenuItem(make_shared<MenuItem>("Close", wm_MenuItemFlags::Default, nullptr, 0, MenuActionType::Close, 0));
-		winMenu->AddMenuItem(make_shared<MenuItem>("A nice long menu item for testing purposes. 1234567890!", wm_MenuItemFlags::Default, nullptr, 0, MenuActionType::None, 0));
 	}
 	return winMenu;
 }

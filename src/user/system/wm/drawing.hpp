@@ -26,7 +26,7 @@ private:
 	WindowArea pressed = WindowArea::None;
 	
 public:
-	uint64_t Draw(uint32_t w, const std::string &t, bool active, WindowArea p = WindowArea::None);
+	uint64_t Draw(uint32_t w, const std::string &t, bool active, uint32_t options, WindowArea p = WindowArea::None);
 	
 	~TitleBar();
 };

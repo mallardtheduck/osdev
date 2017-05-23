@@ -40,9 +40,11 @@ METRIC(ColourValue, SeperatorColour);
 METRIC(ColourValue, TitleTextColour);
 METRIC(ColourValue, InactiveTitleColour);
 METRIC(ColourValue, SymbolColour);
+METRIC(ColourValue, DisabledSymbolColour);
 METRIC(ColourValue, BackgroundColour);
 METRIC(ColourValue, MenuBackgroundColour);
 METRIC(ColourValue, MenuForegroundColour);
+METRIC(ColourValue, MenuForegroundDisabledColour);
 METRIC(ColourValue, MenuSelectionColour);
 
 METRIC(std::string, TitleFontName);

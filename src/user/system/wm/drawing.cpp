@@ -23,7 +23,7 @@ void InitDrawing(){
 }
 
 static uint32_t buttonHighlightColour, buttonFaceColour, buttonShadowColour, borderColour, lineColour, titleBarColour, inactiveTitleColour;
-static uint32_t seperatorColour, titleTextColour, symbolColour;
+static uint32_t seperatorColour, titleTextColour, symbolColour, disabledSymbolColour;
 
 static void DrawButtonUp(uint32_t x, uint32_t y, uint32_t w, uint32_t h, bool active){
 	vector<gds_DrawingOp> ops;
@@ -51,53 +51,57 @@ static void DrawButtonDown(uint32_t x, uint32_t y, uint32_t w, uint32_t h, bool 
 	GDS_MultiDrawingOps(ops.size(), &ops[0], NULL);
 }
 
-static void DrawMaxButton(uint32_t x, uint32_t y, bool active, bool down = false){
+static void DrawMaxButton(uint32_t x, uint32_t y, bool active, bool down = false, bool enabled = true){
 	uint32_t buttonSize = GetMetric(TitleBarSize)-2;
 	if(down) DrawButtonDown(x, y, buttonSize, buttonSize, active);
 	else DrawButtonUp(x, y, buttonSize, buttonSize, active);
 	uint32_t borderWidth = buttonSize / 4;
-	GDS_Box(x + borderWidth, y + borderWidth, buttonSize - (2*borderWidth), buttonSize - (2*borderWidth), symbolColour, 0, 2);
+	uint32_t fgCol = enabled ? symbolColour : disabledSymbolColour;
+	GDS_Box(x + borderWidth, y + borderWidth, buttonSize - (2*borderWidth), buttonSize - (2*borderWidth), fgCol, 0, 2);
 }
 
-static void DrawMinButton(uint32_t x, uint32_t y, bool active, bool down = false){
+static void DrawMinButton(uint32_t x, uint32_t y, bool active, bool down = false, bool enabled = true){
 	uint32_t buttonSize = GetMetric(ButtonSize);
 	if(down) DrawButtonDown(x, y, buttonSize, buttonSize, active);
 	else DrawButtonUp(x, y, buttonSize, buttonSize, active);
 	uint32_t symbolSize = buttonSize / 4;
 	uint32_t borderWidth = (buttonSize - symbolSize) / 2;
-	GDS_Box(x + borderWidth, y + borderWidth, buttonSize - (2*borderWidth), buttonSize - (2*borderWidth), 0, symbolColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	uint32_t fgCol = enabled ? symbolColour : disabledSymbolColour;
+	GDS_Box(x + borderWidth, y + borderWidth, buttonSize - (2*borderWidth), buttonSize - (2*borderWidth), 0, fgCol, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 }
 
-static void DrawCloseButton(uint32_t x, uint32_t y, bool active, bool down = false){
+static void DrawCloseButton(uint32_t x, uint32_t y, bool active, bool down = false, bool enabled = true){
 	uint32_t buttonSize = GetMetric(ButtonSize);
 	if(down) DrawButtonDown(x, y, buttonSize, buttonSize, active);
 	else DrawButtonUp(x, y, buttonSize, buttonSize, active);
 	uint32_t half = buttonSize / 2;
 	uint32_t quarter = buttonSize / 4;
+	uint32_t fgCol = enabled ? symbolColour : disabledSymbolColour;
 	vector<gds_DrawingOp> ops;
-	ops.push_back(GDS_Line_Op(x + quarter, y + quarter, x + half, y + half, symbolColour, 2));
-	ops.push_back(GDS_Line_Op(x + (buttonSize - quarter) - 1, y + quarter, x + half - 1, y + half, symbolColour, 2));
-	ops.push_back(GDS_Line_Op(x + quarter, y + (buttonSize - quarter) - 1, x + half, y + half - 1, symbolColour, 2));
-	ops.push_back(GDS_Line_Op(x + (buttonSize - quarter) - 1, y + (buttonSize - quarter) - 1, x + half - 1, y + half - 1, symbolColour, 2));
+	ops.push_back(GDS_Line_Op(x + quarter, y + quarter, x + half, y + half, fgCol, 2));
+	ops.push_back(GDS_Line_Op(x + (buttonSize - quarter) - 1, y + quarter, x + half - 1, y + half, fgCol, 2));
+	ops.push_back(GDS_Line_Op(x + quarter, y + (buttonSize - quarter) - 1, x + half, y + half - 1, fgCol, 2));
+	ops.push_back(GDS_Line_Op(x + (buttonSize - quarter) - 1, y + (buttonSize - quarter) - 1, x + half - 1, y + half - 1, fgCol, 2));
 	GDS_MultiDrawingOps(ops.size(), &ops[0], NULL);
 }
 
-static void DrawMenuButton(uint32_t x, uint32_t y, bool active, bool down = false){
+static void DrawMenuButton(uint32_t x, uint32_t y, bool active, bool down = false, bool enabled = true){
 	uint32_t buttonHeight = GetMetric(ButtonSize);
 	uint32_t buttonWidth = GetMetric(MenuButtonWidth);
 	if(down) DrawButtonDown(x, y, buttonWidth, buttonHeight, active);
 	else DrawButtonUp(x, y, buttonWidth, buttonHeight, active);
 	uint32_t borderWidth = buttonHeight / 4;
 	uint32_t symLength = buttonHeight - borderWidth;
+	uint32_t fgCol = enabled ? symbolColour : disabledSymbolColour;
 	vector<gds_DrawingOp> ops;
-	ops.push_back(GDS_Line_Op(x + borderWidth, y + borderWidth, x + symLength, y + borderWidth, symbolColour, 2));
-	ops.push_back(GDS_Line_Op(x + borderWidth, y + (buttonHeight / 2), x + symLength, y + (buttonHeight / 2), symbolColour, 2));
-	ops.push_back(GDS_Line_Op(x + borderWidth, y + buttonHeight - borderWidth, x + symLength, y + buttonHeight - borderWidth, symbolColour, 2));
+	ops.push_back(GDS_Line_Op(x + borderWidth, y + borderWidth, x + symLength, y + borderWidth, fgCol, 2));
+	ops.push_back(GDS_Line_Op(x + borderWidth, y + (buttonHeight / 2), x + symLength, y + (buttonHeight / 2), fgCol, 2));
+	ops.push_back(GDS_Line_Op(x + borderWidth, y + buttonHeight - borderWidth, x + symLength, y + buttonHeight - borderWidth, fgCol, 2));
 	GDS_MultiDrawingOps(ops.size(), &ops[0], NULL);
-	GDS_Text(x + symLength + 5, y + buttonHeight - 5, "Menu", menuButtonFont, GetMetric(MenuButtonFontSize), symbolColour);
+	GDS_Text(x + symLength + 5, y + buttonHeight - 5, "Menu", menuButtonFont, GetMetric(MenuButtonFontSize), fgCol);
 }
 
-uint64_t TitleBar::Draw(uint32_t w, const string &t, bool active, WindowArea p){
+uint64_t TitleBar::Draw(uint32_t w, const string &t, bool active, uint32_t options, WindowArea p){
 	uint64_t ret;
 	bool drawAll = false;
 	if(w != width){
@@ -131,24 +135,29 @@ uint64_t TitleBar::Draw(uint32_t w, const string &t, bool active, WindowArea p){
 		seperatorColour = GetColour(SeperatorColour);
 		titleTextColour = GetColour(TitleTextColour);
 		symbolColour = GetColour(SymbolColour);
+		disabledSymbolColour = GetColour(DisabledSymbolColour);
 	}
 	
 	if(drawAll) GDS_Box(0, 0, w, GetMetric(TitleBarSize), seperatorColour, active?titleBarColour:inactiveTitleColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	if(drawAll || (p != pressed && (p == WindowArea::MenuButton || pressed == WindowArea::MenuButton))){
-		DrawMenuButton(GetMetric(BorderWidth), GetMetric(BorderWidth), active, (p == WindowArea::MenuButton));
+		bool enabled = !(options & wm_WindowOptions::NoMenu);
+		DrawMenuButton(GetMetric(BorderWidth), GetMetric(BorderWidth), active, (enabled && p == WindowArea::MenuButton), enabled);
 	}
 	if(drawAll){
 		uint32_t font = active ? titleActiveFont : titleInactiveFont;
 		GDS_Text(GetMetric(MenuButtonWidth) + GetMetric(TitleTextMargin), GetMetric(TitleBarSize) - GetMetric(TitleTextBaseline), t.c_str(), font, GetMetric(TitleFontSize), titleTextColour, 0);
 	}
 	if(drawAll || (p != pressed && (p == WindowArea::ExpandButton || pressed == WindowArea::ExpandButton))){
-		DrawMaxButton(w - GetMetric(ButtonSize) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (p == WindowArea::ExpandButton));
+		bool enabled = !(options & wm_WindowOptions::NoExpand);
+		DrawMaxButton(w - GetMetric(ButtonSize) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (enabled && p == WindowArea::ExpandButton), enabled);
 	}
 	if(drawAll || (p != pressed && (p == WindowArea::HideButton || pressed == WindowArea::HideButton))){
-		DrawMinButton(w - (GetMetric(ButtonSize) * 2) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (p == WindowArea::HideButton));
+		bool enabled = !(options & wm_WindowOptions::NoHide);
+		DrawMinButton(w - (GetMetric(ButtonSize) * 2) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (enabled && p == WindowArea::HideButton), enabled);
 	}
 	if(drawAll || (p != pressed && (p == WindowArea::CloseButton || pressed == WindowArea::CloseButton))){
-		DrawCloseButton(w - (GetMetric(ButtonSize) * 3) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (p == WindowArea::CloseButton));
+		bool enabled = !(options & wm_WindowOptions::NoClose);
+		DrawCloseButton(w - (GetMetric(ButtonSize) * 3) - GetMetric(BorderWidth), GetMetric(BorderWidth), active, (enabled && p == WindowArea::CloseButton), enabled);
 	}
 	width = w;
 	title = t;

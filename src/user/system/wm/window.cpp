@@ -351,7 +351,7 @@ void Window::RefreshTitleBar(bool force){
 
 bool Window::UpdateTitleBar(bool force){
 	if(force || active != last_active){
-		gds_title_id = titlebar.Draw(gds_info.w + (2 * GetMetric(BorderWidth)), title, active, pressed);
+		gds_title_id = titlebar.Draw(gds_info.w + (2 * GetMetric(BorderWidth)), title, active, options, pressed);
 		GDS_SelectSurface(gds_title_id);
 		gds_titleinfo = GDS_SurfaceInfo();
 		return true;
