@@ -257,6 +257,10 @@ void Menu::SetWindow(shared_ptr<Window> win){
 	window = win;
 }
 
+Point Menu::GetPosition(){
+	return {lx, ly};
+}
+
 bool MenuPointerInput(const bt_terminal_pointer_event &pevent){
 	bool handled = false;
 	vector<shared_ptr<Menu>> toBeClosed;
@@ -307,9 +311,10 @@ shared_ptr<Menu> GetDefaultWindowMenu(){
 	static shared_ptr<Menu> winMenu;
 	if(!winMenu){
 		winMenu = CreateMenu();
-		winMenu->AddMenuItem(make_shared<MenuItem>("Expand", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::Expand, 0));
-		winMenu->AddMenuItem(make_shared<MenuItem>("Hide", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::Hide, 0));
-		winMenu->AddMenuItem(make_shared<MenuItem>("Close", wm_MenuItemFlags::Default, shared_ptr<Menu>(), 0, MenuActionType::Close, 0));
+		winMenu->AddMenuItem(make_shared<MenuItem>("Expand", wm_MenuItemFlags::Default, nullptr, 0, MenuActionType::Expand, 0));
+		winMenu->AddMenuItem(make_shared<MenuItem>("Hide", wm_MenuItemFlags::Default, nullptr, 0, MenuActionType::Hide, 0));
+		winMenu->AddMenuItem(make_shared<MenuItem>("Close", wm_MenuItemFlags::Default, nullptr, 0, MenuActionType::Close, 0));
+		winMenu->AddMenuItem(make_shared<MenuItem>("A nice long menu item for testing purposes. 1234567890!", wm_MenuItemFlags::Default, nullptr, 0, MenuActionType::None, 0));
 	}
 	return winMenu;
 }
@@ -317,4 +322,12 @@ shared_ptr<Menu> GetDefaultWindowMenu(){
 shared_ptr<Menu> CreateMenu(){
 	static uint64_t id_counter = 0;
 	return make_shared<Menu>(++id_counter);
+}
+
+void RedrawMenus(const Rect &r){
+	for(auto m : currentMenus){
+		if(Overlaps(m->GetBoundingRect(), r)){
+			m->Redraw();
+		}
+	}
 }

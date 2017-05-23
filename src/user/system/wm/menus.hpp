@@ -81,12 +81,14 @@ public:
 	void Reset();
 	bool IsOpen();
 	void SetWindow(std::shared_ptr<Window> win);
+	Point GetPosition();
 };
 
 std::shared_ptr<Menu> GetMenu(uint64_t id);
 bool MenuPointerInput(const bt_terminal_pointer_event &pevent);
 void OpenMenu(std::shared_ptr<Menu> menu, std::shared_ptr<Window> win, uint32_t x, uint32_t y);
 void CloseMenu(std::shared_ptr<Menu> menu);
+void RedrawMenus(const Rect &r);
 
 std::shared_ptr<Menu> GetDefaultWindowMenu();
 std::shared_ptr<Menu> CreateMenu();

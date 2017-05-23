@@ -120,6 +120,7 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 	if(!ignoreGrab){
 		if(auto gwin = grabbedWindow.lock())gwin->DrawGrabbed(r);
 	}
+	RedrawMenus(r);
 }
 
 void DrawWindows(const vector<Rect> &v){
