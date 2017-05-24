@@ -201,11 +201,23 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 			}
 			break;
 		}
+		case wm_RequestType::SelectWindowMenu:{
+			if(currentWindow) currentMenu = currentWindow->GetWindowMenu();
+			break;
+		}
+		case wm_RequestType::SetWindowMenu:{
+			if(currentWindow && currentMenu) currentWindow->SetWindowMenu(currentMenu);
+			break;
+		}
+		case wm_RequestType::UnSetWindowMenu:{
+			if(currentWindow) currentWindow->SetWindowMenu(nullptr);
+			break;
+		}
 	}
 }
 
 void Client::SendEvent(const wm_Event &e){
-	if(e.type == wm_EventType::PointerMove && msgPending){
+	if(msgPending && e.type == wm_EventType::PointerMove){
 		auto i = find_if(eventQ.begin(), eventQ.end(), [](const wm_Event &e){return e.type == wm_EventType::PointerMove;});
 		if(i != eventQ.end()) eventQ.erase(i);
 	}

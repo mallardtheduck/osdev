@@ -198,3 +198,15 @@ extern "C" void WM_RemoveMenuItem(uint32_t id){
 extern "C" void WM_ShowMenu(wm_Rect pos){
 	SendMessage(wm_RequestType::ShowMenu, pos, false);
 }
+
+extern "C" void WM_SelectWindowMenu(){
+	SendMessage(wm_RequestType::SelectWindowMenu, 0, NULL, false);
+}
+
+extern "C" void WM_SetWindowMenu(){
+	SendMessage(wm_RequestType::SetWindowMenu, 0, NULL, false);
+}
+
+extern "C" void WM_UnSetWindowMenu(){
+	SendMessage(wm_RequestType::UnSetWindowMenu, 0, NULL, false);
+}

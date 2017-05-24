@@ -363,8 +363,14 @@ void Window::OpenMenu(){
 	stringstream ss;
 	ss << "WM: Window '" << title << "' open menu."<< endl;
 	bt_zero(ss.str().c_str());
-	auto m = GetDefaultWindowMenu();
-	::OpenMenu(m, shared_from_this(), pos.x, pos.y + GetMetric(TitleBarSize));
+	if(windowMenu){
+		auto t = GetWindowMenuTemplate();
+		auto m = MergeMenus(t, windowMenu);
+		::OpenMenu(m, shared_from_this(), pos.x, pos.y + GetMetric(TitleBarSize));
+	}else{
+		auto m = GetDefaultWindowMenu();
+		::OpenMenu(m, shared_from_this(), pos.x, pos.y + GetMetric(TitleBarSize));
+	}	
 }
 
 void Window::Close(){
@@ -438,4 +444,12 @@ void Window::SetOptions(uint32_t opts){
 
 uint32_t Window::GetOptions(){
 	return options;
+}
+
+void Window::SetWindowMenu(shared_ptr<Menu> menu){
+	windowMenu = menu;
+}
+
+shared_ptr<Menu> Window::GetWindowMenu(){
+	return windowMenu;
 }

@@ -210,7 +210,7 @@ void HandleInput(const bt_terminal_event &event){
 			pointerWindow = win;
 		}
 		if(!win) return;
-		if(event.pointer.type == bt_terminal_pointer_event_type::ButtonDown && win != activeWindow.lock()){
+		if(event.pointer.type == bt_terminal_pointer_event_type::ButtonDown && win != awin){
 			shared_ptr<Window> old = awin;
 			activeWindow = win;
 			BringToFront(win);

@@ -86,6 +86,8 @@ public:
 	bool IsOpen();
 	void SetWindow(std::shared_ptr<Window> win);
 	Point GetPosition();
+	
+	std::map<uint32_t, std::shared_ptr<MenuItem>> GetItems();
 };
 
 std::shared_ptr<Menu> GetMenu(uint64_t id);
@@ -95,6 +97,9 @@ void CloseMenu(std::shared_ptr<Menu> menu);
 void RedrawMenus(const Rect &r);
 
 std::shared_ptr<Menu> GetDefaultWindowMenu();
+std::shared_ptr<Menu> GetWindowMenuTemplate();
+
 std::shared_ptr<Menu> CreateMenu();
+std::shared_ptr<Menu> MergeMenus(std::shared_ptr<Menu> m1, std::shared_ptr<Menu> m2);
 
 #endif

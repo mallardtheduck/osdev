@@ -13,6 +13,7 @@
 
 class Client;
 class TitleBar;
+class Menu;
 
 class Window : public std::enable_shared_from_this<Window>{
 private:
@@ -34,6 +35,7 @@ private:
 	WindowArea pressed = WindowArea::None;
 	uint32_t event_subs = 0;
 	uint32_t options = wm_WindowOptions::Default;
+	std::shared_ptr<Menu> windowMenu;
 	
 	WindowArea GetWindowArea(Point p);
 	void RefreshTitleBar(bool force = false);
@@ -76,6 +78,8 @@ public:
 	uint32_t Subscribe();
 	void SetOptions(uint32_t opts);
 	uint32_t GetOptions();
+	void SetWindowMenu(std::shared_ptr<Menu> menu);
+	std::shared_ptr<Menu> GetWindowMenu();
 };
 
 #endif // WINDOW_HPP

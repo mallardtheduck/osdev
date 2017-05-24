@@ -276,6 +276,10 @@ Point Menu::GetPosition(){
 	return {lx, ly};
 }
 
+map<uint32_t, shared_ptr<MenuItem>> Menu::GetItems(){
+	return items;
+}
+
 bool MenuPointerInput(const bt_terminal_pointer_event &pevent){
 	bool handled = false;
 	vector<shared_ptr<Menu>> toBeClosed;
@@ -333,6 +337,16 @@ shared_ptr<Menu> GetDefaultWindowMenu(){
 	return winMenu;
 }
 
+shared_ptr<Menu> GetWindowMenuTemplate(){
+	static shared_ptr<Menu> templateMenu;
+	if(!templateMenu){
+		templateMenu = CreateMenu();
+		templateMenu->AddMenuItem(make_shared<MenuItem>("Window", wm_MenuItemFlags::ChildMenu, GetDefaultWindowMenu(), 0, MenuActionType::ChildMenu, 0));
+		templateMenu->AddMenuItem(make_shared<MenuItem>("", wm_MenuItemFlags::Seperator, nullptr, 0, MenuActionType::None, 0));
+	}
+	return templateMenu;
+}
+
 shared_ptr<Menu> CreateMenu(){
 	static uint64_t id_counter = 0;
 	return make_shared<Menu>(++id_counter);
@@ -344,4 +358,18 @@ void RedrawMenus(const Rect &r){
 			m->Redraw();
 		}
 	}
+}
+
+shared_ptr<Menu> MergeMenus(shared_ptr<Menu> m1, shared_ptr<Menu> m2){
+	auto ret = CreateMenu();
+	auto m1items = m1->GetItems();
+	auto m2items = m2->GetItems();
+	
+	for(auto item : m1items){
+		ret->AddMenuItem(item.second);
+	}
+	for(auto item : m2items){
+		ret->AddMenuItem(item.second);
+	}
+	return ret;
 }

@@ -66,6 +66,7 @@ int main(){
 	uint32_t shmsurf = create_shm_surface();
 	/*uint64_t menu =*/ WM_CreateMenu();
 	WM_AddMenuItem(wm_MenuItem {1, "Hello menus!", wm_MenuItemFlags::Default, 0, 0});
+	WM_SetWindowMenu();
 	wm_WindowInfo shminfo;
 	shminfo.x = 200;
 	shminfo.y = 200;

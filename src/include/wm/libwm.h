@@ -32,6 +32,9 @@ void WM_DestroyMenu(uint64_t id);
 uint32_t WM_AddMenuItem(wm_MenuItem i);
 void WM_RemoveMenuItem(uint32_t id);
 void WM_ShowMenu(wm_Rect pos);
+void WM_SelectWindowMenu();
+void WM_SetWindowMenu();
+void WM_UnSetWindowMenu();
 
 #ifdef __cplusplus
 }
