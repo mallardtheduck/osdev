@@ -62,7 +62,7 @@ private:
 	int32_t ly = 0;
 	uint32_t lsel = 0;
 	std::shared_ptr<Menu> childMenu;
-	std::shared_ptr<Window> window;
+	std::weak_ptr<Window> window;
 	bool open = false;
 	uint32_t menuParent = 0;
 	
@@ -84,7 +84,7 @@ public:
 	std::shared_ptr<MenuItem> GetItem(uint32_t id);
 	void Reset();
 	bool IsOpen();
-	void SetWindow(std::shared_ptr<Window> win);
+	void SetWindow(std::weak_ptr<Window> win);
 	Point GetPosition();
 	
 	std::map<uint32_t, std::shared_ptr<MenuItem>> GetItems();
@@ -92,7 +92,7 @@ public:
 
 std::shared_ptr<Menu> GetMenu(uint64_t id);
 bool MenuPointerInput(const bt_terminal_pointer_event &pevent);
-void OpenMenu(std::shared_ptr<Menu> menu, std::shared_ptr<Window> win, uint32_t x, uint32_t y);
+void OpenMenu(std::shared_ptr<Menu> menu, std::weak_ptr<Window> win, uint32_t x, uint32_t y);
 void CloseMenu(std::shared_ptr<Menu> menu);
 void RedrawMenus(const Rect &r);
 

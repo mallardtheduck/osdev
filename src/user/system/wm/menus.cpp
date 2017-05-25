@@ -99,8 +99,9 @@ uint32_t MenuItem::GetFlags(){
 }
 
 uint32_t Menu::EffectiveFlags(uint32_t menuFlags, MenuActionType action){
-	if(!window || action == MenuActionType::Custom || action == MenuActionType::ChildMenu || action == MenuActionType::None) return menuFlags;
-	uint32_t windowOptions = window->GetOptions();
+	auto win = window.lock();
+	if(!win || action == MenuActionType::Custom || action == MenuActionType::ChildMenu || action == MenuActionType::None) return menuFlags;
+	uint32_t windowOptions = win->GetOptions();
 	if(action == MenuActionType::Close && (windowOptions & wm_WindowOptions::NoClose)) return menuFlags | wm_MenuItemFlags::Disabled;
 	if(action == MenuActionType::Expand && (windowOptions & wm_WindowOptions::NoExpand)) return menuFlags | wm_MenuItemFlags::Disabled;
 	if(action == MenuActionType::Hide && (windowOptions & wm_WindowOptions::NoHide)) return menuFlags | wm_MenuItemFlags::Disabled;
@@ -234,23 +235,24 @@ void Menu::PointerInput(const bt_terminal_pointer_event &pevent){
 		if(selId){
 			auto item = GetItem(selId);
 			auto action = item->GetAction();
-			switch(action){
-				case MenuActionType::Close:
-					window->Close();
-					break;
-				case MenuActionType::Hide:
-					window->Hide();
-					break;
-				case MenuActionType::Expand:
-					window->Expand();
-					break;
-				case MenuActionType::Custom:
-					window->MenuAction(id, item->GetCustomAction());
-					break;
-				default: break;
-			}
+			auto win = window.lock();
 			if(action != MenuActionType::ChildMenu){
 				CloseMenu(NULL);
+			}
+			switch(action){
+				case MenuActionType::Close:
+					win->Close();
+					break;
+				case MenuActionType::Hide:
+					win->Hide();
+					break;
+				case MenuActionType::Expand:
+					win->Expand();
+					break;
+				case MenuActionType::Custom:
+					win->MenuAction(id, item->GetCustomAction());
+					break;
+				default: break;
 			}
 		}else{
 			CloseMenu(NULL);
@@ -268,7 +270,7 @@ int32_t Menu::GetTop(uint32_t item){
 	return 0;
 }
 
-void Menu::SetWindow(shared_ptr<Window> win){
+void Menu::SetWindow(weak_ptr<Window> win){
 	window = win;
 }
 
@@ -299,7 +301,7 @@ bool MenuPointerInput(const bt_terminal_pointer_event &pevent){
 	return handled;
 }
 
-void OpenMenu(std::shared_ptr<Menu> menu, std::shared_ptr<Window> win, uint32_t x, uint32_t y){
+void OpenMenu(std::shared_ptr<Menu> menu, std::weak_ptr<Window> win, uint32_t x, uint32_t y){
 	currentMenus.push_back(menu);
 	menu->SetWindow(win);
 	menu->Draw(x, y, {0, 0}, true);

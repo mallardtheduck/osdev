@@ -3,6 +3,7 @@
 #include <gds/libgds.h>
 #include <cstdio>
 #include <crt_support.h>
+#include <sstream>
 #include "windows.hpp"
 #include "window.hpp"
 #include "service.hpp"
@@ -79,7 +80,11 @@ int main(int argc, char **argv){
 				win3->SetZOrder(30);*/
 				Service(root_pid);
 			} catch(exception &e) {
-				cout << "Exception:" << e.what() << endl;
+				cout << "Exception: " << e.what() << endl;
+				stringstream ss;
+				ss << "WM: Exception: " << e.what() << endl;
+				bt_zero(ss.str().c_str());
+				
 			}
 		} else {
 			cout << "Could not load " << argv[1] << endl;
