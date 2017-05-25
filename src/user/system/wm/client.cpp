@@ -5,6 +5,8 @@
 #include <sstream>
 #include <algorithm>
 
+#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
+
 using namespace std;
 
 template<typename T> static T GetContent(const bt_msg_header &msg){
