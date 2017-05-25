@@ -311,7 +311,7 @@ void OpenMenu(std::shared_ptr<Menu> menu, std::weak_ptr<Window> win, uint32_t x,
 void CloseMenu(std::shared_ptr<Menu> menu){
 	vector<Rect> refreshList;
 	while(currentMenus.size()){
-		auto &cmenu = currentMenus.back();
+		auto cmenu = currentMenus.back();
 		currentMenus.pop_back();
 		DrawWindows(cmenu->GetBoundingRect());
 		refreshList.push_back(cmenu->GetBoundingRect());
