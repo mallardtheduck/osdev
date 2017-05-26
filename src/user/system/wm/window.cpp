@@ -19,6 +19,8 @@ Window::Window(uint64_t surface_id) : gds_id(surface_id){
 }
 
 Window::~Window(){
+	GDS_SelectSurface(gds_id);
+	GDS_DeleteSurface();
 }
 
 void Window::Draw(bool active, bool content, uint64_t target){
