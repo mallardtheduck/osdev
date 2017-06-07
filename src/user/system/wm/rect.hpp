@@ -28,6 +28,8 @@ struct Point{
 	operator bool() const{return x != 0 || y != 0;}
 };
 
+Point operator+(const Point &p1, const Point &p2);
+
 bool InRect(int32_t x, int32_t y, const Rect &r);
 bool InRect(const Point &p, const Rect &r);
 bool Overlaps(const Rect &r1, const Rect &r2);

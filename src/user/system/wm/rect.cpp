@@ -20,6 +20,10 @@ bool operator<(const Rect &r1, const Rect &r2){
 	else return false;
 }
 
+Point operator+(const Point &p1, const Point &p2){
+	return {p1.x + p2.x, p1.y + p2.y};
+}
+
 bool InRect(int32_t x, int32_t y, const Rect &r){
 	if(x >= r.x && x < (r.x + (int32_t)r.w - 1) && y > r.y && y < (r.y + (int32_t)r.h) - 1) return true;
 	else return false;

@@ -71,7 +71,7 @@ int main(){
 	shminfo.x = 200;
 	shminfo.y = 200;
 	shminfo.gds_id = shmsurf;
-	shminfo.options = wm_WindowOptions::Default;
+	shminfo.options = wm_WindowOptions::NoFrame | wm_WindowOptions::Visible;
 	shminfo.subscriptions = wm_EventType::Close;
 	strcpy(shminfo.title, "SHM Test");
 	uint64_t shmwin = WM_CreateWindow(shminfo);

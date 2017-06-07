@@ -17,14 +17,15 @@
 
 ENUM_START(wm_WindowOptions)
 	ENUM_SET(wm_WindowOptions, Visible, 			1 << 0),
-	ENUM_SET(wm_WindowOptions, NoFrame, 			1 << 1),
-	ENUM_SET(wm_WindowOptions, NoMenu, 				1 << 2),
-	ENUM_SET(wm_WindowOptions, NoExpand, 			1 << 3),
-	ENUM_SET(wm_WindowOptions, NoHide,				1 << 4),
-	ENUM_SET(wm_WindowOptions, NoClose, 			1 << 5),
-	ENUM_SET(wm_WindowOptions, Resizable, 			1 << 6),
-	ENUM_SET(wm_WindowOptions, ToolWindow, 			1 << 7),
-	ENUM_SET(wm_WindowOptions, EnableTransparency, 	1 << 8),
+	ENUM_SET(wm_WindowOptions, NoTitle, 			1 << 1),
+	ENUM_SET(wm_WindowOptions, NoFrame,	(1 << 1) | (1 << 2)),
+	ENUM_SET(wm_WindowOptions, NoMenu, 				1 << 3),
+	ENUM_SET(wm_WindowOptions, NoExpand, 			1 << 4),
+	ENUM_SET(wm_WindowOptions, NoHide,				1 << 5),
+	ENUM_SET(wm_WindowOptions, NoClose, 			1 << 6),
+	ENUM_SET(wm_WindowOptions, Resizable, 			1 << 7),
+	ENUM_SET(wm_WindowOptions, ToolWindow, 			1 << 8),
+	ENUM_SET(wm_WindowOptions, EnableTransparency, 	1 << 9),
 	ENUM_SET(wm_WindowOptions, Default,				(1 << 0)),
 ENUM_END
 ENUM_TYPE(wm_WindowOptions)

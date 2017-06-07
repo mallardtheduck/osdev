@@ -60,6 +60,12 @@ public:
 	uint32_t GetZOrder();
 	
 	Rect GetBoundingRect();
+	uint32_t GetWidth();
+	uint32_t GetHeight();
+	Point GetContentOffset();
+	
+	bool HasTitleBar();
+	bool HasBorder();
 	
 	void KeyInput(uint32_t key);
 	void PointerInput(const bt_terminal_pointer_event &pevent);
