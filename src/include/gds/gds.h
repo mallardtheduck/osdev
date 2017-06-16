@@ -31,6 +31,7 @@ ENUM_START(gds_MsgType)
 	ENUM_SET(gds_MsgType, GetFontID,		20),
 	ENUM_SET(gds_MsgType, GetFontInfo,		21),
 	ENUM_SET(gds_MsgType, GetGlyphInfo, 	22),
+	ENUM_SET(gds_MsgType, GetMaxFontID,		23),
 	
 	ENUM_SET(gds_MsgType, MultiDrawingOps, 	30),
 		

@@ -186,6 +186,11 @@ extern "C" gds_GlyphInfo GDS_GetGlyphInfo(uint32_t fontID, size_t size, char ch)
 	return GetContent<gds_GlyphInfo>(&reply);
 }
 
+extern "C" uint32_t GDS_GetMaxFontID(){
+	bt_msg_header reply = SendMessage(gds_MsgType::GetMaxFontID, 0, NULL, true);
+	return GetContent<uint32_t>(&reply);
+}
+
 extern "C" void GDS_MultiDrawingOps(size_t count, gds_DrawingOp *ops, uint32_t *ids){
 	size_t ops_per_req = (BT_MSG_MAX - sizeof(gds_MultiOps)) / sizeof(gds_DrawingOp);
 	gds_MultiOps *mops = (gds_MultiOps*)malloc(BT_MSG_MAX);

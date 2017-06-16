@@ -27,6 +27,7 @@ public:
 	void AddAlias(const std::string &name, const std::string &alias);
 	
 	gds_GlyphInfo GetGlyphInfo(uint32_t fontID, size_t size, char c);
+	uint32_t GetMaxFontID();
 };
 
 std::shared_ptr<FontManager> GetFontManager();

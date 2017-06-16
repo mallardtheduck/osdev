@@ -128,6 +128,10 @@ void FontManager::AddAlias(const string &name, const string &alias){
 	}
 }
 
+uint32_t FontManager::GetMaxFontID(){
+	return counter - 1;
+}
+
 std::shared_ptr<FontManager> GetFontManager(){
 	static shared_ptr<FontManager> fmgr;
 	if(!fmgr) fmgr.reset(new FontManager());

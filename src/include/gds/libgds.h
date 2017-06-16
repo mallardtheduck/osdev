@@ -33,6 +33,7 @@ void GDS_CursorVisibility(bool visible);
 uint32_t GDS_GetFontID(const char *name, ENUM_NAME(gds_FontStyle) style);
 gds_FontInfo GDS_GetFontInfo(uint32_t fontID);
 gds_GlyphInfo GDS_GetGlyphInfo(uint32_t fontID, size_t size, char ch);
+uint32_t GDS_GetMaxFontID();
 void GDS_MultiDrawingOps(size_t count, gds_DrawingOp *ops, uint32_t *ids);
 void GDS_ReorderOp(uint32_t op, uint32_t ref, ENUM_NAME(gds_ReorderMode) mode);
 

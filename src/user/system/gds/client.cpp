@@ -215,6 +215,11 @@ void Client::ProcessMessage(bt_msg_header msg) {
 				SendReply(msg, info);
 			}
 			break;
+		case gds_MsgType::GetMaxFontID:{
+				uint32_t maxFontId = GetFontManager()->GetMaxFontID();
+				SendReply(msg, maxFontId);
+			}
+			break;
 		case gds_MsgType::MultiDrawingOps:{
 			if(currentSurface){
 				gds_MultiOps *mops = (gds_MultiOps *)malloc(msg.length);
