@@ -3,7 +3,7 @@
 rm -rf freetype-2.7.1
 if [ ! -f freetype-2.7.1.tar.gz ];
 then
-	wget http://download.savannah.gnu.org/releases/freetype/freetype-2.7.1.tar.gz
+	wget http://mirrors.fe.up.pt/pub/nongnu/freetype/freetype-2.7.1.tar.gz
 fi
 tar xf freetype-2.7.1.tar.gz
 mkdir -p originals

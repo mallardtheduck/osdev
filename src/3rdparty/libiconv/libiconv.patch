@@ -1,5 +1,5 @@
 diff -rupN libiconv-1.14/build-aux/config.sub originals/libiconv-1.14/build-aux/config.sub
---- libiconv-1.14/build-aux/config.sub	2017-01-10 10:51:06.846009876 +0000
+--- libiconv-1.14/build-aux/config.sub	2017-06-15 22:50:21.020993430 +0100
 +++ originals/libiconv-1.14/build-aux/config.sub	2009-06-21 12:17:33.000000000 +0100
 @@ -1282,7 +1282,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
@@ -11,7 +11,7 @@ diff -rupN libiconv-1.14/build-aux/config.sub originals/libiconv-1.14/build-aux/
  		;;
  	-qnx*)
 diff -rupN libiconv-1.14/configure originals/libiconv-1.14/configure
---- libiconv-1.14/configure	2017-01-12 10:33:02.965142712 +0000
+--- libiconv-1.14/configure	2017-06-15 22:50:21.032993418 +0100
 +++ originals/libiconv-1.14/configure	2011-08-07 18:49:02.000000000 +0100
 @@ -12455,16 +12455,6 @@ uts4*)
    soname_spec='${libname}${release}${shared_ext}$major'
@@ -30,8 +30,20 @@ diff -rupN libiconv-1.14/configure originals/libiconv-1.14/configure
  
  *)
    dynamic_linker=no
+diff -rupN libiconv-1.14/lib/Makefile.in originals/libiconv-1.14/lib/Makefile.in
+--- libiconv-1.14/lib/Makefile.in	2017-06-15 23:07:27.140086101 +0100
++++ originals/libiconv-1.14/lib/Makefile.in	2011-08-07 18:48:03.000000000 +0100
+@@ -25,7 +25,7 @@ DEFS = -DLIBDIR=\"$(libdir)\" -DBUILDING
+ -DENABLE_RELOCATABLE=1 -DIN_LIBRARY -DINSTALLDIR=\"$(libdir)\" -DNO_XMALLOC \
+ -Dset_relocation_prefix=libiconv_set_relocation_prefix \
+ -Drelocate=libiconv_relocate @DEFS@
+-LIBTOOL = @LIBTOOL@ --tag=CC
++LIBTOOL = @LIBTOOL@
+ LIBTOOL_COMPILE = $(LIBTOOL) --mode=compile
+ LIBTOOL_LINK = $(LIBTOOL) --mode=link
+ LIBTOOL_INSTALL = $(LIBTOOL) --mode=install
 diff -rupN libiconv-1.14/libcharset/build-aux/config.sub originals/libiconv-1.14/libcharset/build-aux/config.sub
---- libiconv-1.14/libcharset/build-aux/config.sub	2017-01-10 10:51:06.846009876 +0000
+--- libiconv-1.14/libcharset/build-aux/config.sub	2017-06-15 22:50:21.036993415 +0100
 +++ originals/libiconv-1.14/libcharset/build-aux/config.sub	2009-06-21 12:17:33.000000000 +0100
 @@ -1214,7 +1214,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
@@ -42,8 +54,20 @@ diff -rupN libiconv-1.14/libcharset/build-aux/config.sub originals/libiconv-1.14
  	# Remember, each alternative MUST END IN *, to match a version number.
  		;;
  	-qnx*)
+diff -rupN libiconv-1.14/src/Makefile.in originals/libiconv-1.14/src/Makefile.in
+--- libiconv-1.14/src/Makefile.in	2017-06-15 23:09:26.671986827 +0100
++++ originals/libiconv-1.14/src/Makefile.in	2011-06-04 18:05:58.000000000 +0100
+@@ -22,7 +22,7 @@ CFLAGS = @CFLAGS@
+ CPPFLAGS = @CPPFLAGS@
+ LDFLAGS = @LDFLAGS@
+ INCLUDES = -I. -I$(srcdir) -I.. -I../include -I$(srcdir)/../include -I../srclib -I$(srcdir)/../srclib
+-LIBTOOL = @LIBTOOL@ --tag=CC
++LIBTOOL = @LIBTOOL@
+ LIBTOOL_COMPILE = $(LIBTOOL) --mode=compile
+ LIBTOOL_LINK = $(LIBTOOL) --mode=link
+ LIBTOOL_INSTALL = $(LIBTOOL) --mode=install
 diff -rupN libiconv-1.14/srclib/error.c originals/libiconv-1.14/srclib/error.c
---- libiconv-1.14/srclib/error.c	2017-01-10 10:51:06.846009876 +0000
+--- libiconv-1.14/srclib/error.c	2017-06-15 22:50:21.040993412 +0100
 +++ originals/libiconv-1.14/srclib/error.c	2011-08-07 14:42:06.000000000 +0100
 @@ -49,10 +49,6 @@
  # define _(String) String
