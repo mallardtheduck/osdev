@@ -279,6 +279,18 @@ void irq_ack(size_t irq_no) {
     PIC_sendEOI(irq_no);
 }
 
+void irq_ack_if_needed(size_t irqno){
+	uint16_t cmbisr = pic_get_isr();
+	uint8_t isr = 0;
+	if(irqno < 8) isr = (uint8_t)cmbisr;
+	else{
+		if((isr & 0x4) == 0) return;
+		isr = (uint8_t)(cmbisr >> 8);
+	}
+	
+	if((isr & (1 << irqno))) irq_ack(irqno);
+}
+
 inline void out_regs(const irq_regs ctx){
 	dbgpf("INTERRUPT %x\n", ctx.int_no);
 	dbgpf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);

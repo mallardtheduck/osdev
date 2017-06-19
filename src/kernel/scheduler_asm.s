@@ -2,8 +2,17 @@
 .extern sch_stack
 .extern sch_new_stack
 .extern sch_update_eip
+.extern sch_isr_c
 
 .global sch_yield
+.global sch_isr_asm
+
+sch_isr_asm:
+	pusha
+	call sch_isr_c
+	popa
+	iret
+
 sch_yield:
 	pusha
 	mov $0x0, %eax

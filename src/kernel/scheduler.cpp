@@ -6,6 +6,7 @@ extern char _start, _end;
 static const uint32_t default_priority=10;
 static const uint32_t modifier_limit=128;
 void *sch_stack;
+extern char sch_isr_asm;
 
 struct sch_start{
 	void (*ptr)(void*);
@@ -121,7 +122,8 @@ void sch_init(){
 	prescheduler_thread=sch_get(prescheduler_id);
 	current_thread->next=prescheduler_thread;
 	//sch_threadtest();
-	irq_handle(0, &sch_isr);
+	//irq_handle(0, &sch_isr);
+	irq_handle_raw(0, (void*)&sch_isr_asm);
 	sch_inited=true;
 	IRQ_clear_mask(0);
 	dbgout("SCH: Init complete.\n");
@@ -373,23 +375,25 @@ extern "C" void sch_unlock(){
 	release_lock(sch_lock);
 }
 
-void sch_isr(int irq, isr_regs *regs){
-    irq_ack(irq);
+extern "C" void sch_isr_c(){
+    //irq_ack(irq);
 	if(try_take_lock_exclusive(sch_lock)){
         counter--;
         if(!counter) {
             counter=cstart;
-            sch_abortable(true);
-			current_thread->eip = regs->eip;
+            sch_abortable(false);
+			//current_thread->eip = eip;
             release_lock(sch_lock);
             enable_interrupts();
+            irq_ack_if_needed(0);
             sch_yield();
             disable_interrupts();
-            sch_abortable(false);
+            sch_abortable(true);
         }else{
             release_lock(sch_lock);
         }
 	}
+	irq_ack_if_needed(0);
 }
 
 const uint64_t &sch_get_id(){

@@ -151,6 +151,7 @@ struct irq_regs {
 } __attribute__((packed));
 
 void irq_ack(size_t);
+void irq_ack_if_needed(size_t irqno);
 
 irq_regs isr_regs2irq_regs(const isr_regs &r);
 

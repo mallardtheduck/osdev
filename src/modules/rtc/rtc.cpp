@@ -16,6 +16,7 @@ uint32_t int_counter42 = 0;
 uint32_t int_counter1000 = 0;
 volatile uint32_t tick_counter = 0;
 uint64_t last_resync = 0;
+uint32_t resync_flag = 0;
 
 extern char rtc_irq_handler;
 
@@ -129,6 +130,7 @@ extern "C" void resync_clock(){
 		msec_counter += diff;
 	}
 	last_resync = msec_counter;
+	resync_flag = 0;
 	set_update_int(false);
 }
 
@@ -139,7 +141,10 @@ extern "C" void update_msec_counter(){
 	tick_counter -= diff1000;
 	msec_counter += tick_counter;
 	tick_counter = 0;
-	if(msec_counter - last_resync > ResyncRate) set_update_int(true);
+	if(msec_counter - last_resync > ResyncRate){
+		resync_flag = 1;
+		set_update_int(true);
+	}
 }
 
 uint64_t get_msecs(){
