@@ -158,5 +158,7 @@ void int_handle(size_t intno, int_handler handler);
 void irq_handle(size_t irqno, int_handler handler);
 bool is_imode();
 void out_int_info(const isr_regs ctx);
+void int_handle_raw(size_t intno, void *handler);
+void irq_handle_raw(size_t irqno, void *handler); 
 
 #endif

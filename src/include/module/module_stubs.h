@@ -200,6 +200,14 @@ inline static void irq_ack(size_t irq){
 	SYSCALL_TABLE->irq_ack(irq);
 }
 
+inline static void handle_int_raw(size_t intno, void *handler){
+	SYSCALL_TABLE->handle_int_raw(intno, handler);
+}
+
+inline static void handle_irq_raw(size_t irqno, void *handler){
+	SYSCALL_TABLE->handle_irq_raw(irqno, handler);
+}
+
 inline static void add_filesystem(fs_driver *fs){
 	SYSCALL_TABLE->add_filesystem(fs);
 }
