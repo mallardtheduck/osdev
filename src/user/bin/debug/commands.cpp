@@ -14,10 +14,10 @@
 #include <unistd.h>
 
 #include <udis86.h>
+#include <btos/table.hpp>
 
 #include "debug.hpp"
 #include "commands.hpp"
-#include "table.hpp"
 #include "symbols.hpp"
 
 using namespace std;

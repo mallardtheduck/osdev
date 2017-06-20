@@ -10,7 +10,7 @@
 #include <fstream>
 #include <cstring>
 #include <memory>
-#include "table.hpp"
+#include <btos/table.hpp>
 #include "dev/rtc.h"
 #include "lrucache.hpp"
 

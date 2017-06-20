@@ -1,5 +1,4 @@
 #include "debug.hpp"
-#include "table.hpp"
 #include "symbols.hpp"
 #include "commands.hpp"
 #include <libelf.h>
@@ -11,6 +10,7 @@
 #include <unistd.h>
 #include <cxxabi.h>
 #include <cstdlib>
+#include <btos/table.hpp>
 
 #include "lrucache.hpp"
 

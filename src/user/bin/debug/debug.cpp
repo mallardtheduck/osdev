@@ -1,8 +1,8 @@
 #include <fstream>
 #include <cstdlib>
+#include <btos/table.hpp>
 
 #include "debug.hpp"
-#include "table.hpp"
 #include "commands.hpp"
 
 using namespace std;

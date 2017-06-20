@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <crt_support.h>
 #include <dev/terminal.h>
-#include "table.hpp"
+#include <btos/table.hpp>
 
 using namespace std;
 
