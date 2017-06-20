@@ -14,8 +14,6 @@
 #include "dev/rtc.h"
 #include "lrucache.hpp"
 
-USE_BT_TERMINAL_API;
-
 using namespace std;
 
 #ifdef DEBUG
