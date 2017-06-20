@@ -62,6 +62,7 @@ import-files:=\
  data/btos/lib/freetype.ell \
  data/btos/fonts \
  data/btos/config/wm.ini \
+ data/btos/lib/btos.ell \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -261,6 +262,9 @@ data/btos/fonts: ../../user/system/gds/fonts
 	cp -Rv $</* $@
 
 data/btos/config/wm.ini: ../../user/system/wm/wm.ini
+	cp $< $@
+
+data/btos/lib/btos.ell: ../../user/libs/btoslib/btos.ell
 	cp $< $@
 
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx

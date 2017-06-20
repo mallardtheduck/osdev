@@ -7,7 +7,11 @@
 #include "btos/bt_msg.h"
 #include "btos/fs_interface.h"
 #include "btos/ioctl.h"
-#include "btos/btos_stubs.h"
+#include "btos/kernel_calls.h"
 #include "btos/devices.h"
+
+#if defined(__cplusplus) && !defined(BTOS_NO_USING)
+using namespace btos_api;
+#endif
 
 #endif
