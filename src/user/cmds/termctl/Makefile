@@ -3,14 +3,14 @@ OUTPUT-NAME := termctl.elx
 BUILD-AS := i686-pc-btos-as
 BUILD-AS-OPTIONS := -g -fPIC -c
 BUILD-CPP := i686-pc-btos-g++
-BUILD-CPP-FLAGS :=  -c
+BUILD-CPP-FLAGS :=  -c -std=gnu++11
 BUILD-CPP-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include
 BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -std=gnu99
 LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME) -O2
-LINK-OPTIONS := -lgcc_s
+LINK-OPTIONS := -lgcc_s -lstdc++
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")

@@ -40,6 +40,7 @@ private:
 	bool pointer_autohide;
     bt_terminal_pointer_bitmap *pointer_bitmap;
 	uint64_t last_move_message;
+	uint32_t pointer_speed;
 
     circular_buffer<uint32_t, 128> keyboard_buffer;
     circular_buffer<bt_terminal_pointer_event, 512> pointer_buffer{zero_event};

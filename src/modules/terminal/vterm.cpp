@@ -44,6 +44,7 @@ vterm::vterm(uint64_t nid, i_backend *back)
 	event_mode = bt_terminal_event_mode::None;
 	event_mode_enabled = false;
 	last_move_message = 0;
+	pointer_speed = back->get_pointer_speed();
 	if(backend) backend->open(nid);
 }
 
@@ -189,6 +190,7 @@ void vterm::activate()
 			backend->hide_pointer();
 		}
 		backend->set_pointer_autohide(pointer_autohide);
+		backend->set_pointer_speed(pointer_speed);
 		backend->refresh();
 	}
 }
@@ -509,6 +511,19 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 		}
 		case bt_terminal_ioctl::PointerUnfreeze: {
 			if(backend && backend->is_active(id)) backend->unfreeze_pointer();
+			break;
+		}
+		case bt_terminal_ioctl::GetPointerSpeed: {
+			if(size == sizeof(uint32_t)){
+				*(uint32_t*)buf = pointer_speed;
+			}
+			break;
+		}
+		case bt_terminal_ioctl::SetPointerSpeed: {
+			if(size == sizeof(uint32_t)){
+				pointer_speed = *(uint32_t*)buf;
+				if(backend && backend->is_active(id)) backend->set_pointer_speed(pointer_speed);
+			}
 			break;
 		}
 		case bt_terminal_ioctl::RegisterGlobalShortcut:{ 

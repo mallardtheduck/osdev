@@ -11,8 +11,6 @@ const char* video_device_name="DISPLAY_DEVICE";
 const char* input_device_name="INPUT_DEVICE";
 const char* pointer_device_name="POINTER_DEVICE";
 
-const uint32_t pointer_speed=300000;
-
 uint32_t abs32(int32_t i){
     if(i>0) return i;
     else return -i;
@@ -66,11 +64,11 @@ void console_backend_pointer_thread(void *p){
             packet.x_motion*= msb32(abs32(packet.x_motion));
             packet.y_motion*= msb32(abs32(packet.y_motion));
             uint32_t oldx=backend->pointer_info.x;
-            backend->pointer_info.x+=(packet.x_motion * pointer_speed);
+            backend->pointer_info.x += (packet.x_motion * backend->pointer_speed);
             if(packet.x_motion > 0 && backend->pointer_info.x < oldx) backend->pointer_info.x=0xFFFFFFFF;
             if(packet.x_motion < 0 && backend->pointer_info.x > oldx) backend->pointer_info.x=0;
             uint32_t oldy=backend->pointer_info.y;
-            backend->pointer_info.y+=(packet.y_motion * pointer_speed);
+            backend->pointer_info.y += (packet.y_motion * backend->pointer_speed);
             if(packet.y_motion > 0 && backend->pointer_info.y < oldy) backend->pointer_info.y=0xFFFFFFFF;
             if(packet.y_motion < 0 && backend->pointer_info.y > oldy) backend->pointer_info.y=0;
             uint16_t oldflags=backend->pointer_info.flags;
@@ -427,4 +425,12 @@ bool console_backend::can_create(){
 }
 
 void console_backend::refresh(){
+}
+
+uint32_t console_backend::get_pointer_speed(){
+	return pointer_speed;
+}
+
+void console_backend::set_pointer_speed(uint32_t speed){
+	pointer_speed = speed;
 }

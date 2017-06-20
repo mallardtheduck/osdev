@@ -329,3 +329,10 @@ bool user_backend::can_create(){
 void user_backend::refresh(){
 	send_request(pid, handle_id, bt_terminal_backend_operation_type::Refresh);
 }
+
+uint32_t user_backend::get_pointer_speed(){
+	return 0;
+}
+
+void user_backend::set_pointer_speed(uint32_t /*speed*/){
+}
