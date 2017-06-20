@@ -9,33 +9,57 @@
 #include <algorithm>
 #include <fstream>
 #include <cstring>
+#include <memory>
 #include "table.hpp"
+#include "dev/rtc.h"
+#include "lrucache.hpp"
 
 USE_BT_TERMINAL_API;
 
 using namespace std;
 
-const string ProcInfoPath = "info:/procs";
+#ifdef DEBUG
+#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
+#else
+#define DBG(x)
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
+
+static const string ProcInfoPath = "info:/procs";
+static const string fontName = "unscii";
+static const size_t fontSize = 12;
 
 const size_t terminal_width = 80;
 const size_t terminal_height = 25;
 const bt_vidmode terminal_mode = {1, terminal_width, terminal_height, 4, true, false, 0, 0, 0, 0, 0, 0, 0}; 
-const uint32_t font_width = 6;
-const uint32_t font_height = 13;
-const gds_TEMPFonts::Enum font = gds_TEMPFonts::Small;
+static uint32_t font_width = 0;
+static uint32_t font_height = 0;
+static uint32_t font;
 const size_t buffer_size = (terminal_width * terminal_height * 2);
-uint8_t buffer[buffer_size];
-uint8_t tempbuffer[buffer_size];
-const size_t thread_stack_size = 16 * 1024;
-char mainthread_stack[thread_stack_size];
-char renderthread_stack[thread_stack_size];
-bt_handle_t terminal_handle = 0;
-volatile bool ready = false;
-volatile int render_counter = 0;
-bt_handle_t renderthread = 0;
-volatile bool endrender = false;
-bt_handle_t bufferlock = 0;
-size_t curpos;
+static uint8_t buffer[buffer_size];
+static uint8_t tempbuffer[buffer_size];
+static const size_t thread_stack_size = 16 * 1024;
+static char mainthread_stack[thread_stack_size];
+static char renderthread_stack[thread_stack_size];
+static bt_handle_t terminal_handle = 0;
+static volatile bool ready = false;
+static bt_handle_t render_counter;
+static bt_handle_t renderthread = 0;
+static volatile bool endrender = false;
+static size_t curpos;
+static uint64_t surf;
+static size_t lpos = SIZE_MAX;
+
+struct glyph_holder{
+	uint64_t gds_id;
+	glyph_holder(uint64_t id): gds_id(id) {}
+	~glyph_holder(){
+		GDS_SelectSurface(gds_id);
+		GDS_DeleteSurface();
+		GDS_SelectSurface(surf);
+	}
+};
+static cache::lru_cache<uint16_t, shared_ptr<glyph_holder>> glyphcache(1024);
 
 string get_env(const string &name){
 	char value[128];
@@ -77,10 +101,8 @@ template<typename T> T get_content(bt_msg_header &msg){
 		bt_msg_content(&msg, &ret, sizeof(ret));
 		return ret;
 	}else{
-		stringstream ss;
-		ss << "TW: Message length mismatch. Expected " << sizeof(T) << " got " << msg.length << "." << endl;
-		ss << "TW: Message type: " << msg.type << " from: " << msg.from << " (source: " << msg.source << ")" << endl;
-		bt_zero(ss.str().c_str());
+		DBG("TW: Message length mismatch. Expected " << sizeof(T) << " got " << msg.length << ".");
+		DBG("TW: Message type: " << msg.type << " from: " << msg.from << " (source: " << msg.source << ")");
 		return T();
 	}
 }
@@ -100,118 +122,154 @@ void kill_children(){
 	}
 }
 
-uint32_t getcolour(uint8_t id){
+uint32_t getcolour(uint8_t id, bool cache = true){
 	static uint32_t colours[16] = {0};
-	if(id < 16 && colours[id]) return colours[id];
+	if(cache && id < 16 && colours[id]) return colours[id] - 1;
+	uint32_t ret;
 	switch(id){
-		case 0: return colours[0] = GDS_GetColour(0, 0, 0);
-		case 1: return colours[1] = GDS_GetColour(0, 0, 0xaa);
-		case 2: return colours[2] = GDS_GetColour(0, 0xaa, 0);
-		case 3: return colours[3] = GDS_GetColour(0, 0xaa, 0xaa);
-		case 4: return colours[4] = GDS_GetColour(0xaa, 0, 0);
-		case 5: return colours[5] = GDS_GetColour(0xaa, 0, 0xaa);
-		case 6: return colours[6] = GDS_GetColour(0xaa, 0x55, 0);
-		case 7: return colours[7] = GDS_GetColour(0xaa, 0xaa, 0xaa);
-		case 8: return colours[8] = GDS_GetColour(0x55, 0x55, 0x55);
-		case 9: return colours[9] = GDS_GetColour(0x55, 0x55, 0xff);
-		case 10: return colours[10] = GDS_GetColour(0x55, 0xff, 0x55);
-		case 11: return colours[11] = GDS_GetColour(0x55, 0xff, 0xff);
-		case 12: return colours[12] = GDS_GetColour(0xff, 0x55, 0x55);
-		case 13: return colours[13] = GDS_GetColour(0xff, 0x55, 0xff);
-		case 14: return colours[14] = GDS_GetColour(0xff, 0xff, 0x55);
-		case 15: return colours[15] = GDS_GetColour(0xff, 0xff, 0xff);
-		default: return colours[0] = GDS_GetColour(0, 0, 0);
+		case 0: ret = GDS_GetColour(0, 0, 0); break;
+		case 1: ret = GDS_GetColour(0, 0, 0xaa); break;
+		case 2: ret = GDS_GetColour(0, 0xaa, 0); break;
+		case 3: ret = GDS_GetColour(0, 0xaa, 0xaa); break;
+		case 4: ret = GDS_GetColour(0xaa, 0, 0); break;
+		case 5: ret = GDS_GetColour(0xaa, 0, 0xaa); break;
+		case 6: ret = GDS_GetColour(0xaa, 0x55, 0); break;
+		case 7: ret = GDS_GetColour(0xaa, 0xaa, 0xaa); break;
+		case 8: ret = GDS_GetColour(0x55, 0x55, 0x55); break;
+		case 9: ret = GDS_GetColour(0x55, 0x55, 0xff); break;
+		case 10: ret = GDS_GetColour(0x55, 0xff, 0x55); break;
+		case 11: ret = GDS_GetColour(0x55, 0xff, 0xff); break;
+		case 12: ret = GDS_GetColour(0xff, 0x55, 0x55); break;
+		case 13: ret = GDS_GetColour(0xff, 0x55, 0xff); break;
+		case 14: ret = GDS_GetColour(0xff, 0xff, 0x55); break;
+		case 15: ret = GDS_GetColour(0xff, 0xff, 0xff); break;
+		default: ret = GDS_GetColour(0, 0, 0); break;
 	}
+	if(cache && id < 16) colours[id] = ret + 1;
+	return ret;
+}
+
+uint64_t get_glyph(uint8_t attr, uint8_t ch){
+	if(ch < 32) ch = ' ';
+	uint16_t key = (attr << 8) | ch;
+	if(glyphcache.exists(key)) return glyphcache.get(key)->gds_id;
+	uint64_t id = GDS_NewSurface(gds_SurfaceType::Bitmap, font_width, font_height);
+	uint8_t bgcol = attr >> 4;
+	uint8_t fgcol = attr & 0x0F;
+	uint32_t bg = getcolour(bgcol, false);
+	uint32_t fg = getcolour(fgcol, false);
+	GDS_Box(0, 0, font_width, font_height, bg, bg, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	GDS_TextChar(0, font_height - (font_height / 5), ch, font, fontSize, fg);
+	glyphcache.put(key, make_shared<glyph_holder>(id));
+	GDS_SelectSurface(surf);
+	return id;
 }
 
 bool compare_chars(char a, char b){
-	if(a < 32 && b < 32) return true;
+	if(a <= 32 && b <= 32) return true;
 	else return a == b;
+}
+
+static bool has_line_changed(size_t line){
+	size_t laddr = (line * terminal_mode.width) * 2;
+	if(memcmp(&tempbuffer[laddr], &buffer[laddr], terminal_mode.width * 2)) return true;
+	if(lpos != curpos){
+		if(lpos >= laddr && lpos < laddr + (terminal_mode.width * 2)) return true;
+		if(curpos > laddr && curpos < laddr + (terminal_mode.width * 2)) return true;
+	}
+	return false;
+}
+
+static size_t detect_line_scroll(size_t line){
+	for(size_t sline = 0; sline < terminal_mode.height; ++sline){
+		size_t l0addr = (line * terminal_mode.width) * 2;
+		size_t l1addr = (sline * terminal_mode.width) * 2;
+		if(memcmp(&tempbuffer[l0addr], &buffer[l1addr], terminal_mode.width * 2) == 0) return sline;
+	}
+	return 0;
+}
+
+static void addRect(wm_Rect &a, const wm_Rect &b){
+	if(a.x == 0 && a.y == 0 && a.w == 0 && a.h == 0){
+		a = b;
+		return;
+	}
+	int32_t ax1 = a.x;
+	int32_t ay1 = a.y;
+	int32_t ax2 = a.x + a.w;
+	int32_t ay2 = a.y + a.h;
+	int32_t bx1 = b.x;
+	int32_t by1 = b.y;
+	int32_t bx2 = b.x + b.w;
+	int32_t by2 = b.y + b.h;
+	if(bx1 < ax1) ax1 = bx1;
+	if(by1 < ay1) ay1 = by1;
+	if(bx2 > ax2) ax2 = bx2;
+	if(by2 > ay2) ay2 = by2;
+	a.x = ax1;
+	a.y = ay1;
+	a.w = (ax2 - ax1);
+	a.h = (ay2 - ay1);	
 }
 
 void render_terminal_thread(){
 	if(!terminal_handle) return;
-	int render_counted = 0;
+	uint64_t render_counted = 0;
 	while(true){
-		while(render_counter != render_counted){
-			render_counted = render_counter;
-			static char ltitle[WM_TITLE_MAX] = {0};
-			char title[WM_TITLE_MAX];
-			bt_terminal_get_title(terminal_handle, WM_TITLE_MAX, title);
-			if(strncmp(ltitle, title, WM_TITLE_MAX)) {
-				WM_SetTitle(title);
-				strncpy(ltitle, title, WM_TITLE_MAX);
-			}
-			static size_t lpos = SIZE_MAX;
-			for(size_t line = 0; line < terminal_mode.height; ++line){
-				vector<pair<size_t, uint16_t>> line_changes;
-				bt_lock(bufferlock);
+		render_counted = bt_wait_atom(render_counter, bt_atom_compare::NotEqual, render_counted);
+		if(endrender) return;
+		bt_terminal_read_buffer(terminal_handle, buffer_size, tempbuffer);
+		static char ltitle[WM_TITLE_MAX] = {0};
+		char title[WM_TITLE_MAX];
+		bt_terminal_get_title(terminal_handle, WM_TITLE_MAX, title);
+		if(strncmp(ltitle, title, WM_TITLE_MAX)) {
+			WM_SetTitle(title);
+			strncpy(ltitle, title, WM_TITLE_MAX);
+		}
+		wm_Rect updateRect = {0, 0, 0, 0};
+		uint64_t prepStart = bt_rtc_millis();
+		vector<gds_DrawingOp> drawingOps;
+		for(size_t line = 0; line < terminal_mode.height; ++line){
+			if(!has_line_changed(line)) continue;
+			if(size_t sline = detect_line_scroll(line)){
+				uint64_t start = bt_rtc_millis();
+				drawingOps.push_back(GDS_Blit_Op(surf, 0, sline * font_height, terminal_mode.width * font_width, font_height, 0, line * font_height, terminal_mode.width * font_width, font_height));
+				addRect(updateRect, {0, (int32_t)(line * font_height), (terminal_mode.width * font_width), font_height});
+				size_t l0addr = (line * terminal_mode.width) * 2;
+				size_t l1addr = (sline * terminal_mode.width) * 2;
+				DBG("TW: l0addr: " << l0addr << " l1addr " << l1addr);
+				memcpy(&buffer[l0addr], &buffer[l1addr], terminal_mode.width * 2);
+				uint64_t end = bt_rtc_millis();
+				DBG("TW: Scroll: " << end - start << "ms");
+			}else{
+				uint64_t start = bt_rtc_millis();
+				size_t ch = 0;
 				for(size_t col = 0; col < terminal_mode.width; ++col){
 					size_t bufaddr = ((line * terminal_mode.width) + col) * 2;
 					if(!compare_chars(tempbuffer[bufaddr], buffer[bufaddr]) || tempbuffer[bufaddr + 1] != buffer[bufaddr + 1] || bufaddr == curpos || bufaddr == lpos){
 						buffer[bufaddr] = tempbuffer[bufaddr];
-						if(bufaddr == curpos) buffer[bufaddr + 1] = ((tempbuffer[bufaddr + 1] & 0x0f) << 4) | ((tempbuffer[bufaddr + 1] & 0xf0) >> 4);
+						if(bufaddr == curpos){
+							buffer[bufaddr + 1] = ((tempbuffer[bufaddr + 1] & 0x0f) << 4) | ((tempbuffer[bufaddr + 1] & 0xf0) >> 4);
+							lpos = curpos;
+						}
 						else buffer[bufaddr + 1] = tempbuffer[bufaddr + 1];
-						uint16_t change = (buffer[bufaddr] > 32 ? buffer[bufaddr] : ' ') | buffer[bufaddr + 1] << 8;
-						line_changes.push_back(make_pair(col, change));
+						uint64_t glyph = get_glyph(buffer[bufaddr + 1], buffer[bufaddr]);
+						drawingOps.push_back(GDS_Blit_Op(glyph, 0, 0, font_width, font_height, col * font_width, line * font_height, font_width, font_height));
+						addRect(updateRect, {(int32_t)(col * font_width), (int32_t)(line * font_height), font_width, font_height});
+						++ch;
 					}
 				}
-				bt_unlock(bufferlock);
-				if(line_changes.size()){
-					size_t firststart = UINT32_MAX;
-					size_t overallend = 0;
-					size_t start = UINT32_MAX;
-					size_t end = 0;
-					stringstream text;
-					uint8_t col = 0, ncol = 0;
-					for(auto change : line_changes){
-						bool draw = false;
-						if(start == UINT32_MAX) start = end = change.first;
-						if(firststart == UINT32_MAX) firststart = change.first;
-						overallend = change.first;
-						if(change.first == end){
-							++end;
-							char c = change.second & 0xFF;
-							uint8_t ccol = (change.second & 0xFF00) >> 8;
-							if(ccol == col){
-								text << c;
-							}else{
-								ncol = ccol;
-								draw = true;
-							}
-						}else{
-							draw = true;
-						}
-						if(draw){
-							if(text.str().length()){
-								uint8_t bgcol = col >> 4;
-								uint8_t fgcol = col & 0x0F;
-								uint32_t width = text.str().length() * font_width;
-								GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-								GDS_Text(start * font_width, line * font_height, text.str().c_str(), font, 0, getcolour(fgcol));
-								//WM_UpdateRect(start * font_width, line * font_height, width, font_height);
-							}
-							text.str("");
-							text << (char)(change.second & 0xFF);
-							start = change.first;
-							end = change.first + 1;
-							col = ncol;
-						}
-					}
-					if(start != UINT32_MAX){
-						uint8_t bgcol = col >> 4;
-						uint8_t fgcol = col & 0x0F;
-						uint32_t width = (end * font_width) - (start * font_width);
-						GDS_Box(start * font_width, line * font_height, width , font_height, getcolour(bgcol), getcolour(bgcol), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-						GDS_Text(start * font_width, line * font_height, text.str().c_str(), font, 0, getcolour(fgcol));
-					}
-					WM_UpdateRect(firststart * font_width, line * font_height, (overallend - firststart + 1) * font_width, font_height);
-				}
+				uint64_t end = bt_rtc_millis();
+				DBG("TW: line drawn in " << end - start << "ms (" << ch << " changes)");
 			}
-			lpos = curpos;
 		}
-		bt_block_thread();
-		if(endrender) bt_end_thread();
+		uint64_t updateStart = bt_rtc_millis();
+		if(drawingOps.size()) GDS_MultiDrawingOps(drawingOps.size(), &drawingOps[0], NULL);
+		WM_UpdateRect(updateRect);
+		uint64_t updateEnd = bt_rtc_millis();
+		DBG("TW: Prep: " << updateStart - prepStart << "ms Update: " << updateEnd - updateStart << "ms");
+		updateRect = {0, 0, 0, 0};
+		bt_rtc_sleep(50);
 	}
 }
 
@@ -223,28 +281,31 @@ void renderthread_start(void *){
 void render_terminal(){
 	if(!terminal_handle) return;
 	if(!renderthread) renderthread = bt_new_thread(&renderthread_start, NULL, renderthread_stack + thread_stack_size);
-	bt_lock(bufferlock);
 	curpos = bt_terminal_get_pos(terminal_handle);
-	bt_terminal_read_buffer(terminal_handle, buffer_size, tempbuffer);
-	++render_counter;
-	bt_unlock(bufferlock);
-	bt_unblock_thread(renderthread);
+	DBG("TW: rt!");
+	bt_modify_atom(render_counter, bt_atom_modify::Add, 1);
 }
 
 void mainthread(void*){
 	size_t cpos  = 0;
 	size_t refcount = 0;
 	uint8_t textcolours = 0x07; 
-	uint64_t surf = GDS_NewSurface(gds_SurfaceType::Bitmap, terminal_mode.width * font_width, terminal_mode.height * font_height);
+	surf = GDS_NewSurface(gds_SurfaceType::Bitmap, terminal_mode.width * font_width, terminal_mode.height * font_height);
 	/*uint64_t win =*/ WM_NewWindow(50, 50, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close, surf, "Terminal Window");
 	ready = true;
 	bt_msg_filter filter;
 	filter.flags = bt_msg_filter_flags::NonReply;
 	bt_msg_header msg = bt_recv_filtered(filter);
+	size_t maxlen = 0;
+	bt_terminal_backend_operation *op = (bt_terminal_backend_operation*)new uint8_t[1];
 	bool loop = true;
 	while(loop){
 		if(msg.from == 0 && msg.source == bt_terminal_ext_id && msg.type == bt_terminal_message_type::BackendOperation){
-			bt_terminal_backend_operation *op = (bt_terminal_backend_operation*)new uint8_t[msg.length];
+			if(msg.length > maxlen){
+				delete op;
+				maxlen = msg.length;
+				op = (bt_terminal_backend_operation*)new uint8_t[maxlen];
+			}
 			bt_msg_content(&msg, op, msg.length);
 			switch(op->type){
 				case bt_terminal_backend_operation_type::CanCreate:{
@@ -331,12 +392,9 @@ void mainthread(void*){
 					break;
 				}
 				default:{
-					stringstream ss;
-					ss << "TW: Unhandled backend operation: " << op->type << endl;
-					bt_zero(ss.str().c_str());
+					DBG("TW: Unhandled backend operation: " << op->type);
 				}
 			}
-			delete op;
 		}else{
 			wm_Event e = WM_ParseMessage(&msg);
 			if(e.type == wm_EventType::Close) break;
@@ -351,15 +409,24 @@ void mainthread(void*){
 		}
 		bt_next_msg_filtered(&msg, filter);
 	}
-	endrender = true;
-	bt_unblock_thread(renderthread);
+	delete op;
+	if(renderthread){
+		endrender = true;
+		bt_modify_atom(render_counter, bt_atom_modify::Add, 1);
+		bt_wait_thread(renderthread);
+	}
 	kill_children();
 	bt_end_thread();
 }
 
 int main(){
+	font = GDS_GetFontID(fontName.c_str(), gds_FontStyle::Normal);
+	gds_FontInfo info = GDS_GetFontInfo(font);
+	font_width = (info.maxW * fontSize) / info.scale;
+	font_height = (info.maxH * fontSize) / info.scale;
+	DBG("TW: Scale: " << info.scale << " width: " << info.maxW << " size: " << fontSize);
 	bt_terminial_init();
-	bufferlock = bt_create_lock();
+	render_counter = bt_create_atom(0);
 	bt_handle_t backend_handle = bt_terminal_create_backend();
 	bt_threadhandle thread = bt_new_thread(&mainthread, NULL, mainthread_stack + thread_stack_size);
 	while(!ready) bt_yield();

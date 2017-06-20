@@ -35,3 +35,6 @@ make libs
 make install.libs
 make install.includes
 make install.data
+
+find ../install -name "*.ell" -exec chmod -x {} \;
+find ../install -name "*.la" -delete

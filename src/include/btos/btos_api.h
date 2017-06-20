@@ -49,6 +49,11 @@ enum{
 	BT_TRY_LOCK			= 0x0203,
 	BT_UNLOCK			= 0x0204,
 	BT_DESTROY_LOCK		= 0x0205,
+	BT_CREATE_ATOM		= 0x0206,
+	BT_MODIFY_ATOM		= 0x0207,
+	BT_WAIT_ATOM		= 0x0208,
+	BT_CMPXCHG_ATOM		= 0x0209,
+	BT_READ_ATOM		= 0x020A,
 
 	BT_NEW_THREAD		= 0x0301,
 	BT_WAIT_THREAD		= 0x0302,
@@ -105,6 +110,8 @@ enum{
 	BT_MSGQUERY			= 0x090B,
 
 	BT_QUERY_EXT		= 0x0F01,
+	
+	BT_MULTI_CALL		= 0x1001,
 };
 
 struct bt_buffer{
@@ -120,11 +127,17 @@ struct bt_shm_mapping{
 	uint32_t flags;
 };
 
+struct bt_syscall_item{
+	uint32_t call_id;
+	uint32_t p1, p2, p3;
+};
+
 #ifndef __cplusplus
 typedef struct bt_buffer bt_fioctl_buffer;
 typedef struct bt_buffer bt_mmap_buffer;
 typedef struct bt_buffer bt_buffer;
 typedef struct bt_shm_mapping bt_shm_mapping;
+typedef struct bt_syscall_item bt_syscall_item;
 #else
 typedef bt_buffer bt_fioctl_buffer;
 typedef bt_buffer bt_mmap_buffer;

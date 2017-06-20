@@ -27,11 +27,25 @@ namespace MM2{
 		size_t ulowfree = MM2_Boundary_Page;
 		static size_t kpages;
 		size_t upages = 0;
+		static const size_t entrycache_size = 64;
+		static const size_t entrycache_maxhits = 1024;
+		struct entrycache_entry{
+			size_t index;
+			uint32_t entry;
+			uint32_t hits;
+		};
+		
+		entrycache_entry entrycache[entrycache_size];
 		
 		bool map_table(uint32_t tableaddr);
 		void create_table(size_t tableno);
+
 		uint32_t get_table_entry(size_t pageno);
 		void set_table_entry(size_t pageno, uint32_t entry);
+		
+		uint32_t entrycache_get(size_t pageindex);
+		void entrycache_set(size_t pageindex, uint32_t entry);
+		void entrycache_clear(size_t pageindex);
 	public:
 		PageDirectory();
 		PageDirectory(uint32_t *a);

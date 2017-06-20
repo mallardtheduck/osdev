@@ -18,7 +18,6 @@ namespace sch_thread_status {
 	};
 }
 
-void sch_isr(int,isr_regs*);
 void sch_init();
 uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size=default_stack_size);
 void sch_end_thread();
@@ -49,5 +48,6 @@ void sch_update_usercontext(isr_regs *uc, uint64_t ext_id=sch_get_id());
 void *sch_get_usercontext(uint64_t ext_id=sch_get_id());
 int sch_get_abortlevel();
 uint32_t *sch_getdebugstate(uint64_t ext_id = sch_get_id());
+void sch_yield_to(pid_t pid);
 
 #endif

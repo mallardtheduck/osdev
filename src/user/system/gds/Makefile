@@ -4,13 +4,13 @@ BUILD-AS := i686-pc-btos-as
 BUILD-AS-OPTIONS := -g -fPIC -c
 BUILD-CPP := i686-pc-btos-g++
 BUILD-CPP-FLAGS :=  -c
-BUILD-CPP-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -I../../../3rdparty/install/btos/include -std=gnu++11
+BUILD-CPP-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -I../../../3rdparty/install/btos/include -I../../../3rdparty/install/btos/include/freetype2 -std=gnu++11
 BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
-BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -I../../../3rdparty/install/btos/include -std=gnu99
+BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -I../../../3rdparty/install/btos/include -I../../../3rdparty/install/btos/include/freetype2 -std=gnu99
 LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME) -O2
-LINK-OPTIONS := -L../../../3rdparty/install/btos/lib -lgcc_s -lgd -lstdc++ -lm
+LINK-OPTIONS := -L../../../3rdparty/install/btos/lib -Wl,-rpath-link,../../../3rdparty/install/btos/lib -lgcc_s -lgd -lstdc++ -lm -lgd -lfreetype
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")

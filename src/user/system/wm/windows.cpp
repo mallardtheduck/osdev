@@ -1,6 +1,9 @@
 #include "windows.hpp"
 #include "metrics.hpp"
 #include "service.hpp"
+#include "menus.hpp"
+
+#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
 
 #include <map>
 #include <vector>
@@ -10,14 +13,22 @@
 #include <gds/libgds.h>
 #include <btos.h>
 
+#include <dev/rtc.h>
+
 using namespace std;
 
-map<uint64_t, shared_ptr<Window>> windows;
-weak_ptr<Window> activeWindow;
-weak_ptr<Window> pointerWindow;
-weak_ptr<Window> grabbedWindow;
-uint64_t id_counter;
-vector<weak_ptr<Window>> sortedWindows;
+static map<uint64_t, shared_ptr<Window>> windows;
+static weak_ptr<Window> activeWindow;
+static weak_ptr<Window> pointerWindow;
+static weak_ptr<Window> grabbedWindow;
+static uint64_t id_counter;
+static vector<weak_ptr<Window>> sortedWindows;
+static uint32_t backgroundColour;
+
+void InitWindws(){
+	GDS_SelectScreen();
+	backgroundColour = GetColour(BackgroundColour);
+}
 
 template <typename M, typename V> 
 void MapToVec( const  M & m, V & v ) {
@@ -63,43 +74,62 @@ vector<shared_ptr<Window>> SortWindows(){
 	return wins;
 }
 
-void DrawWindows(const Rect &r){
+void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 	bool rect = (r.x != 0 || r.y != 0 || r.w != 0 || r.h != 0);
 	vector<shared_ptr<Window>> wins = SortWindows();
 	GDS_SelectScreen();
-	if(rect) GDS_Box(r.x, r.y, r.w, r.h, GetColour(BackgroundColour), GetColour(BackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	else{
-		gds_SurfaceInfo info = GDS_SurfaceInfo();
-		GDS_Box(0, 0, info.w, info.h, GetColour(BackgroundColour), GetColour(BackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	}
 	shared_ptr<Window> lastWin;
 	bool drawing = true;
-	if(rect){
+	if(rect && !above){
 		for(auto i = wins.rbegin(); i != wins.rend(); ++i){
+			if(!(*i)->GetVisible()) continue;
 			if(Contains((*i)->GetBoundingRect(), r)) {
 				lastWin = *i;
 				drawing = false;
 				break;
 			}
 		}
+	}else if(above){
+		for(auto w : wins){
+			if(w->id == above){
+				lastWin = w;
+				drawing = false;
+				break;
+			}
+		}
+	}
+	if(drawing){
+		if(rect) GDS_Box(r.x, r.y, r.w, r.h, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		else{
+			gds_SurfaceInfo info = GDS_SurfaceInfo();
+			GDS_Box(0, 0, info.w, info.h, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		}
 	}
 	shared_ptr<Window> awin = activeWindow.lock();
 	for(auto w: wins){
 		if(!w->GetVisible()) continue;
-		if(rect && w == lastWin) drawing = true;
+		if((rect || above) && w == lastWin) drawing = true;
 		if(drawing){
-			if(rect && Overlaps(r, w->GetBoundingRect())) w->Draw(w == awin, r);
+			if(rect && Overlaps(r, w->GetBoundingRect())){
+				w->Draw(w == awin, r); 
+
+			}
 			else if(!rect) w->Draw(w == awin);
 		}
 	}
+	if(!ignoreGrab){
+		if(auto gwin = grabbedWindow.lock())gwin->DrawGrabbed(r);
+	}
+	RedrawMenus(r);
 }
 
 void DrawWindows(const vector<Rect> &v){
 	vector<shared_ptr<Window>> wins = SortWindows();
 	GDS_SelectScreen();
-	for(auto r: v) GDS_Box(r.x, r.y, r.w, r.h, GetColour(BackgroundColour), GetColour(BackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	for(auto r: v) GDS_Box(r.x, r.y, r.w, r.h, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	shared_ptr<Window> awin = activeWindow.lock();
 	for(auto w: wins){
+		if(!w->GetVisible()) continue;
 		for(auto r: v) if(Overlaps(r, w->GetBoundingRect())){
 			w->Draw(w==awin, r);
 		}
@@ -127,6 +157,7 @@ shared_ptr<Window> GetWindowAt(uint32_t x, uint32_t y){
 	for(auto w = sortedWindows.rbegin(); w != sortedWindows.rend(); ++w){
 		shared_ptr<Window> win = w->lock();
 		if(!win) continue;
+		if(!win->GetVisible()) continue;
 		Rect wrect = win->GetBoundingRect();
 		if(InRect(x, y, wrect)) return win;
 	}
@@ -143,10 +174,11 @@ void BringToFront(shared_ptr<Window> win){
 }
 
 void HandleInput(const bt_terminal_event &event){
+	if(event.type == bt_terminal_event_type::Pointer && MenuPointerInput(event.pointer)) return;
 	static Point curpos = {INT32_MAX, INT32_MAX};
 	if(auto gwin = grabbedWindow.lock()){
 		if(event.type == bt_terminal_event_type::Key) gwin->KeyInput(event.key);
-		else if(event.type ==  bt_terminal_event_type::Pointer) {
+		else if(event.type == bt_terminal_event_type::Pointer) {
 			if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == (uint32_t)curpos.x && event.pointer.y == (uint32_t)curpos.y) return;
 			gwin->PointerInput(event.pointer);
 			curpos.x = event.pointer.x; curpos.y = event.pointer.y;
@@ -167,7 +199,7 @@ void HandleInput(const bt_terminal_event &event){
 	}
 	shared_ptr<Window> awin = activeWindow.lock();
 	if(event.type == bt_terminal_event_type::Key && awin) awin->KeyInput(event.key);
-	else if(event.type ==  bt_terminal_event_type::Pointer){
+	else if(event.type == bt_terminal_event_type::Pointer){
 		if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == (uint32_t)curpos.x && event.pointer.y == (uint32_t)curpos.y) return;
 		curpos.x = event.pointer.x; curpos.y = event.pointer.y;
 		shared_ptr<Window> win = GetWindowAt(event.pointer.x, event.pointer.y);
@@ -178,14 +210,15 @@ void HandleInput(const bt_terminal_event &event){
 			pointerWindow = win;
 		}
 		if(!win) return;
-		if(event.pointer.type == bt_terminal_pointer_event_type::ButtonDown && win != activeWindow.lock()){
+		if(event.pointer.type == bt_terminal_pointer_event_type::ButtonDown && win != awin){
 			shared_ptr<Window> old = awin;
 			activeWindow = win;
 			BringToFront(win);
 			if(old){
-				DrawAndRefreshWindows(TileRects(win->GetBoundingRect(), old->GetBoundingRect()));
+				DrawAndRefreshWindows(win->GetBoundingRect(), win->id);
+				DrawAndRefreshWindows(old->GetBoundingRect(), old->id);
 			}else{
-				DrawAndRefreshWindows(win->GetBoundingRect());
+				DrawAndRefreshWindows(win->GetBoundingRect(), win->id);
 			}
 		}
 		win->PointerInput(event.pointer);
@@ -200,8 +233,8 @@ void UnGrab(){
 	grabbedWindow.reset();
 }
 
-void DrawAndRefreshWindows(const Rect &r){
-	DrawWindows(r);
+void DrawAndRefreshWindows(const Rect &r, uint64_t above){
+	DrawWindows(r, above);
 	RefreshScreen(r);
 }
 

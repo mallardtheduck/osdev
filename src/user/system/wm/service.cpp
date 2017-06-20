@@ -29,6 +29,9 @@ void Service(bt_pid_t root_pid){
 	bt_subscribe(bt_kernel_messages::MessageReceipt);
 	bt_msg_header msg = bt_recv(true);
 	while(true) {
+		/*stringstream dss;
+		dss << "WM: Message ID " << msg.id << " from: " << msg.from << " source: " << msg.source << " type: " << msg.type << endl;
+		bt_zero(dss.str().c_str());*/
 		if(msg.from == 0 && msg.source == 0 && msg.type == bt_kernel_messages::ProcessEnd) {
 			bt_pid_t pid = 0;
 			bt_msg_content(&msg, (void*)&pid, sizeof(pid));
@@ -40,7 +43,7 @@ void Service(bt_pid_t root_pid){
 		}else if(msg.from == 0 && msg.source == 0 && msg.type == bt_kernel_messages::MessageReceipt) {
 			bt_msg_header omsg;
 			bt_msg_content(&msg, (void*)&omsg, sizeof(omsg));
-			if(clients.find(omsg.to) != clients.end()){
+			if(!(omsg.flags & bt_msg_flags::Reply) && clients.find(omsg.to) != clients.end()){
 				clients.at(omsg.to)->SendNextEvent();
 			}
 		}else if(msg.from == 0 && msg.source == terminal_ext_id && msg.type == bt_terminal_message_type::InputEvent) {

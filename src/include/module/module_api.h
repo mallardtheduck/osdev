@@ -86,6 +86,8 @@ struct syscall_table{
 	void (*mask_irq)(size_t irqno);
 	void (*unmask_irq)(size_t irqno);
 	void (*irq_ack)(size_t irq_no);
+	void (*handle_int_raw)(size_t intno, void *handler);
+	void (*handle_irq_raw)(size_t irqno, void *handler);
 
 	void (*add_filesystem)(fs_driver *fs);
 	bool (*mount)(const char *name, const char *device, const char *fs);

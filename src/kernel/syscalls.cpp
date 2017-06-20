@@ -250,6 +250,8 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&mask_irq,
 	&unmask_irq,
 	&irq_ack,
+	&int_handle_raw,
+	&irq_handle_raw,
 
 	&add_filesystem,
 	&fs_mount,

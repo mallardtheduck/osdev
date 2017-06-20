@@ -20,6 +20,10 @@ bool operator<(const Rect &r1, const Rect &r2){
 	else return false;
 }
 
+Point operator+(const Point &p1, const Point &p2){
+	return {p1.x + p2.x, p1.y + p2.y};
+}
+
 bool InRect(int32_t x, int32_t y, const Rect &r){
 	if(x >= r.x && x < (r.x + (int32_t)r.w - 1) && y > r.y && y < (r.y + (int32_t)r.h) - 1) return true;
 	else return false;
@@ -34,6 +38,7 @@ bool Overlaps(const Rect &r1, const Rect &r2){
 }
 
 bool Contains(const Rect &r1, const Rect &r2){
+	if(r1 == r2) return true;
 	return (InRect(r2.x, r2.y, r1) && InRect(r2.x + r2.w, r2.y + r2.h, r1));
 }
 
@@ -109,4 +114,9 @@ Rect Constrain(Rect r, const Rect &bounds){
 	if(r.x + r.w >= bounds.w) r.w = bounds.w - r.x;
 	if(r.y + r.h >= bounds.h) r.h = bounds.h - r.y;
 	return r;
+}
+
+Rect Intersection(const Rect &r1, const Rect &r2){
+	if(!Overlaps(r1, r2)) return { 0, 0, 0, 0 };
+	return { max(r1.x, r2.x), max(r1.y, r2.y), min(r1.x + r1.w, r2.x + r2.w), min(r1.y + r1.h, r2.y + r2.h) };
 }

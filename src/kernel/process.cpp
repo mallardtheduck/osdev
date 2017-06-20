@@ -49,6 +49,8 @@ struct proc_process{
 	vector<string> args;
 
     map<pid_t, void*> msg_buffers;
+    
+    vector<btos_api::bt_msg_header*> msg_q;
 
 	proc_process() : pid(++curpid) {
 		init_lock(ulock);
@@ -364,7 +366,7 @@ void proc_start(void *ptr){
     void *stackptr = ((proc_info*)ptr)->stackptr;
 	delete (proc_info*)ptr;
 	if(!proc_switch(pid)) return;
-	if(!stackptr) stackptr=proc_alloc_stack(4*MM2::MM2_Page_Size);
+	if(!stackptr) stackptr=proc_alloc_stack(16 * MM2::MM2_Page_Size);
     sch_set_priority(default_userspace_priority);
 	//Yes, there are supposed to be two of these calls.
 	sch_abortable(true);
@@ -681,6 +683,7 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 		release_lock(proc->ulock);
 		release_lock(to->ulock);
 		release_lock(msg_lock);
+		sch_yield();
 		return ret;
 	} while(again);
 	return 0;
@@ -702,4 +705,58 @@ void proc_message_wait(pid_t pid){
 	}
 	release_lock(proc->ulock);
     sch_setblock(&proc_msg_wait_blockcheck, (void *)&pid);
+}
+
+void proc_add_msg(btos_api::bt_msg_header *msg){
+	proc_process *proc = proc_get_lock(msg->to);
+	if (!proc) return;
+	proc->msg_q.push_back(msg);
+	release_lock(proc->ulock);
+}
+
+void proc_remove_msg(btos_api::bt_msg_header *msg){
+	proc_process *proc = proc_get_lock(msg->to);
+	if (!proc) return;
+	for(size_t i = 0; i < proc->msg_q.size(); ++i){
+		if(proc->msg_q[i] == msg){
+			proc->msg_q.erase(i);
+			break;
+		}
+	}
+	release_lock(proc->ulock);
+}
+
+btos_api::bt_msg_header *proc_get_msg(size_t index, pid_t pid){
+	proc_process *proc = proc_get_lock(pid);
+	if (!proc) return NULL;
+	btos_api::bt_msg_header *msg;
+	if(index >= proc->msg_q.size()) msg = NULL;
+	else msg = proc->msg_q[index];
+	release_lock(proc->ulock);
+	return msg;
+}
+
+btos_api::bt_msg_header *proc_get_msg_nolock(size_t index, pid_t pid){
+	proc_process *proc = proc_get(pid);
+	if (!proc) return NULL;
+	btos_api::bt_msg_header *msg;
+	if(index >= proc->msg_q.size()) msg = NULL;
+	else msg = proc->msg_q[index];
+	return msg;
+}
+
+btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id){
+	//dbgout("PROC: p_g_m_b_i.\n");
+	hold_lock hl(proc_lock);
+	btos_api::bt_msg_header *ret = NULL;
+	for(size_t i = 0; i < proc_processes->size(); ++i){
+		proc_process *cproc = (*proc_processes)[i];
+		for(size_t j = 0; j < cproc->msg_q.size(); ++j){
+			if(cproc->msg_q[j]->id == id){
+				ret = cproc->msg_q[j];
+				break;
+			}
+		}
+	}
+	return ret;
 }

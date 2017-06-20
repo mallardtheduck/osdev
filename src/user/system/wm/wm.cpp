@@ -3,9 +3,13 @@
 #include <gds/libgds.h>
 #include <cstdio>
 #include <crt_support.h>
+#include <sstream>
 #include "windows.hpp"
 #include "window.hpp"
 #include "service.hpp"
+#include "drawing.hpp"
+#include "metrics.hpp"
+#include "config.hpp"
 
 using namespace std;
 
@@ -40,6 +44,7 @@ shared_ptr<Window> CreateTestWin(string title, uint32_t x, uint32_t y, uint32_t 
 
 int main(int argc, char **argv){
     cout << "BT/OS WM" << endl;
+    ParseConfig(ConfigFilePath);
 	bt_pid pid = bt_getpid();
 	char pid_str[64] = {0};
 	snprintf(pid_str, 64, "%i", pid);
@@ -58,10 +63,12 @@ int main(int argc, char **argv){
 		if(root_pid) {
 			try {
 				bt_vidmode vidmode;
-				vidmode.width = 800;
-				vidmode.height = 600;
-				vidmode.bpp = 24;
+				vidmode.width = GetMetric(ScreenWidth);
+				vidmode.height = GetMetric(ScreenHeight);
+				vidmode.bpp = GetMetric(ScreenBpp);
+				InitDrawing();
 				GDS_SetScreenMode(vidmode);
+				InitWindws();
 				InitCursor();
 				DrawWindows();
 				RefreshScreen();
@@ -73,7 +80,11 @@ int main(int argc, char **argv){
 				win3->SetZOrder(30);*/
 				Service(root_pid);
 			} catch(exception &e) {
-				cout << "Exception:" << e.what() << endl;
+				cout << "Exception: " << e.what() << endl;
+				stringstream ss;
+				ss << "WM: Exception: " << e.what() << endl;
+				bt_zero(ss.str().c_str());
+				
 			}
 		} else {
 			cout << "Could not load " << argv[1] << endl;

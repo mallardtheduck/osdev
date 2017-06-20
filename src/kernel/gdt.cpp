@@ -111,6 +111,10 @@ static void gdt_set_tss(int32_t num){
 }
 
 static void df_handler(){
+	dbgout("GDT: Double fault. TSS state:\n");
+	dbgpf("GDT: ESP0: %x EIP: %x EFLAGS: %x\n", tss.esp0, tss.eip, tss.eflags);
+	dbgpf("GDT: EAX: %x EBX: %x ECX: %x EDX: %x\n", tss.eax, tss.ebx, tss.ecx, tss.edx);
+	
 	panic("(GDT) Double fault!");
 }
 
@@ -124,8 +128,15 @@ static void gdt_set_df_tss(int32_t num){
 	df_tss.cs = 0x08;
 	df_tss.eip = (uint32_t)&df_handler;
 	df_tss.ds = 0x10;
+	df_tss.es = 0x10;
+	df_tss.fs = 0x10;
+	df_tss.gs = 0x10;
 	df_tss.ss = 0x10;
 	df_tss.esp = (uint32_t)&df_stack[1024];
+}
+
+void gdt_set_df_cr3(uint32_t cr3){
+	df_tss.cr3 = cr3;
 }
 
 void gdt_set_kernel_stack(void* ptr){

@@ -3,23 +3,36 @@
 
 #include "gds.hpp"
 #include "bitmap_surface.hpp"
+#include <deque>
 
 class Screen : public BitmapSurface{
 private:
+	struct update{
+		size_t pos;
+		size_t size;
+		char *data;
+		bool hide_pointer;
+	};
 	bt_vidmode original_mode, current_mode;
 	bt_filehandle fh;
 	uint8_t *buffer;
 	size_t buffersize;
 	bool cursor_on;
 	bt_terminal_pointer_bitmap cursor_bmp_info;
+	bt_handle_t update_thread = 0;
+	bt_handle_t sync_atom;
+	bt_handle_t update_q_lock;
+	std::deque<update> update_q;
+	bool pixel_conversion_required;
 
-private:
+	friend void screen_update_thread(void*);
 
-	void BufferPutPixel(uint32_t x, uint32_t y, uint32_t value);
+	bool BufferPutPixel(uint32_t x, uint32_t y, uint32_t value);
 	uint32_t BufferGetPixel(uint32_t x, uint32_t y);
 	size_t GetBytePos(uint32_t x, uint32_t y, bool upper = false);
 	size_t BytesPerPixel();
 	uint32_t ConvertPixel(uint32_t pix);
+	void QueueUpdate(size_t pos, size_t size, char *data, bool hide_pointer);
 
 public:
 	Screen();

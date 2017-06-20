@@ -11,9 +11,14 @@ const uint8_t RTC_IRQ = 0x08;
 const int RTC_Rate = 6;
 const uint64_t ResyncRate = 5000;
 
-volatile uint64_t msec_counter = 0;
-volatile uint32_t int_counter42 = 0;
-volatile uint32_t int_counter1000 = 0;
+uint64_t msec_counter = 0;
+uint32_t int_counter42 = 0;
+uint32_t int_counter1000 = 0;
+volatile uint32_t tick_counter = 0;
+uint64_t last_resync = 0;
+uint32_t resync_flag = 0;
+
+extern char rtc_irq_handler;
 
 size_t strlen(const char* str){
 	size_t ret = 0;
@@ -97,9 +102,9 @@ void ui64toa(uint64_t n, char s[]){
 }
 
 char *msec_infofs(){
-	dbgpf("RTC: %i\n", (int)msec_counter);
+	dbgpf("RTC: %i\n", (int)get_msecs());
 	char *buf=(char*)malloc(128);
-	ui64toa(msec_counter, buf);
+	ui64toa(get_msecs(), buf);
 	sprintf(&buf[strlen(buf)], "\n");
 	return buf;
 }
@@ -112,43 +117,48 @@ void set_update_int(bool value){
 	outb(RTC_Data, regB);
 }
 
-void rtc_interrupt(int, isr_regs*){
-	uint8_t regC = read_cmos(0x0C);
-	if(regC & (1 << 6)){
-		++msec_counter;
-		++int_counter42;
-		++int_counter1000;
-		if(int_counter42 == 42){
-			--msec_counter;
-			int_counter42 = 0;
-		}
-		if(int_counter1000 == 1000){
-			--msec_counter;
-			int_counter42 = 0;
-			int_counter1000 = 0;
-		}
-		if(msec_counter % ResyncRate == 0){
-			set_update_int(true);
-		}
+extern "C" void resync_clock(){
+	datetime rtc_time = get_rtc_time();
+	uint64_t rtc_epoch = datetime2epoch(rtc_time);
+	uint64_t ass_epoch = datetime2epoch(current_datetime());
+	if(ass_epoch > rtc_epoch){
+		uint64_t diff = ass_epoch - rtc_epoch;
+		if(msec_counter > diff) msec_counter -= diff;
+		else msec_counter = 0;
+	}else{
+		uint64_t diff = rtc_epoch - ass_epoch;
+		msec_counter += diff;
 	}
-	if(regC & (1 << 4)){
-		datetime rtc_time = get_rtc_time();
-		uint64_t rtc_epoch = datetime2epoch(rtc_time);
-		uint64_t ass_epoch = datetime2epoch(current_datetime());
-		if(ass_epoch > rtc_epoch){
-			uint64_t diff = ass_epoch - rtc_epoch;
-			if(msec_counter > diff) msec_counter -= diff;
-			else msec_counter = 0;
-		}else{
-			uint64_t diff = rtc_epoch - ass_epoch;
-			msec_counter += diff;
-		}
-		set_update_int(false);
+	last_resync = msec_counter;
+	resync_flag = 0;
+	set_update_int(false);
+}
+
+extern "C" void update_msec_counter(){
+	int diff42 = tick_counter / 42;
+	tick_counter -= diff42;
+	int diff1000 = tick_counter / 1000;
+	tick_counter -= diff1000;
+	msec_counter += tick_counter;
+	tick_counter = 0;
+	if(msec_counter - last_resync > ResyncRate){
+		resync_flag = 1;
+		set_update_int(true);
 	}
 }
 
+uint64_t get_msecs(){
+	if(tick_counter){
+		disable_interrupts();
+		update_msec_counter();
+		enable_interrupts();
+	}
+	return msec_counter;
+}
+
 void init_interrupt(){
-	handle_irq(RTC_IRQ, &rtc_interrupt);
+	//handle_irq(RTC_IRQ, &rtc_interrupt);
+	handle_irq_raw(RTC_IRQ, (void*)&rtc_irq_handler);
 	disable_interrupts();
 	uint8_t regA = read_cmos(0x8A);
 	regA = (regA & 0xF0) | RTC_Rate;

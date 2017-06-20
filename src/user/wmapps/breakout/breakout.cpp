@@ -16,6 +16,7 @@ enum class gamestate{
 int main(){
     uint64_t surface = GDS_NewSurface(gds_SurfaceType::Bitmap, 320, 240);
 	/*uint64_t win =*/ WM_NewWindow(100, 100, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close, surface, "Breakout");
+	font = GDS_GetFontID("DejaVu Sans", gds_FontStyle::Bold);
 	DrawBackground();
 	DrawTitle();
 	WM_Update();

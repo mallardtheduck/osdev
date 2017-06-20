@@ -5,6 +5,8 @@
 #include <sstream>
 #include <algorithm>
 
+#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
+
 using namespace std;
 
 template<typename T> static T GetContent(const bt_msg_header &msg){
@@ -56,6 +58,7 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 			wm_WindowInfo info = GetContent<wm_WindowInfo>(msg);
 			shared_ptr<Window> win(new Window(info.gds_id));
 			win->SetPosition({info.x, info.y});
+			win->SetOptions(info.options);
 			win->SetTitle(info.title);
 			win->Subscribe(info.subscriptions);
 			win->SetOwner(shared_from_this());
@@ -113,7 +116,7 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 				Rect rect = {r.x, r.y, r.w, r.h};
 				Point p = currentWindow->GetContentPosition();
 				rect = Reoriginate(rect, {-p.x, -p.y});
-				DrawAndRefreshWindows(rect);
+				DrawAndRefreshWindows(rect, currentWindow->id);
 			}
 			break;
 		}
@@ -145,11 +148,78 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 		case wm_RequestType::Sync:{
 			SendReply(msg, true);
 		}
+		break;
+		case wm_RequestType::SelectMenu:{
+			uint64_t id = GetContent<uint64_t>(msg);
+			if(menus.find(id) != menus.end()){
+				currentMenu = menus[id];
+				SendReply(msg, id);
+			}
+			break;	
+		}
+		case wm_RequestType::CreateMenu:{
+			auto menu = CreateMenu();
+			menus[menu->id] = menu;
+			currentMenu = menu;
+			SendReply(msg, menu->id);
+			break;
+		}
+		case wm_RequestType::DestroyMenu:{
+			uint64_t id = GetContent<uint64_t>(msg);
+			if(menus.find(id) != menus.end()){
+				if(menus[id] == currentMenu) currentMenu.reset();
+				menus.erase(id);
+			}
+			break;
+		}
+		case wm_RequestType::AddMenuItem:{
+			if(currentMenu){
+				wm_MenuItem item = GetContent<wm_MenuItem>(msg);
+				uint32_t itemId = currentMenu->AddMenuItem(make_shared<MenuItem>(item));
+				SendReply(msg, itemId);
+			}
+			break;
+		}
+		case wm_RequestType::RemoveMenuItem:{
+			if(currentMenu){
+				uint32_t itemId = GetContent<uint32_t>(msg);
+				currentMenu->RemoveMenuItem(itemId);
+			}
+			break;
+		}
+		case wm_RequestType::ReOrderMenu:{
+			//TODO: Implement
+			break;
+		}
+		case wm_RequestType::MenuInfo:{
+			//TODO: Implement
+			break;
+		}
+		case wm_RequestType::ShowMenu:{
+			if(currentWindow && currentMenu){
+				wm_Rect menuPoint = GetContent<wm_Rect>(msg);
+				Point winPoint = currentWindow->GetContentPosition();
+				OpenMenu(currentMenu, currentWindow, winPoint.x + menuPoint.x, winPoint.y + menuPoint.y);
+			}
+			break;
+		}
+		case wm_RequestType::SelectWindowMenu:{
+			if(currentWindow) currentMenu = currentWindow->GetWindowMenu();
+			break;
+		}
+		case wm_RequestType::SetWindowMenu:{
+			if(currentWindow && currentMenu) currentWindow->SetWindowMenu(currentMenu);
+			break;
+		}
+		case wm_RequestType::UnSetWindowMenu:{
+			if(currentWindow) currentWindow->SetWindowMenu(nullptr);
+			break;
+		}
 	}
 }
 
 void Client::SendEvent(const wm_Event &e){
-	if(e.type == wm_EventType::PointerMove && msgPending){
+	if(msgPending && e.type == wm_EventType::PointerMove){
 		auto i = find_if(eventQ.begin(), eventQ.end(), [](const wm_Event &e){return e.type == wm_EventType::PointerMove;});
 		if(i != eventQ.end()) eventQ.erase(i);
 	}

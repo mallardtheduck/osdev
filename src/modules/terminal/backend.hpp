@@ -20,6 +20,9 @@ public:
 	virtual void set_pointer_autohide(bool val) = 0;
 	virtual void freeze_pointer()=0;
 	virtual void unfreeze_pointer()=0;
+	virtual uint32_t get_pointer_speed()=0;
+	virtual void set_pointer_speed(uint32_t speed)=0;
+	
 	
 	virtual void set_text_colours(uint8_t c) = 0;
 	virtual uint8_t get_text_colours() = 0;

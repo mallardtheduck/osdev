@@ -12,58 +12,69 @@ namespace MM2{
 	};
 	
 	struct shm_mapping{
-		uint64_t space;
+		shm_space *space;
 		void *addr;
 		uint32_t offset;
 		size_t pages;
 		uint32_t flags;
 	};
 	
-	static map<uint64_t, shm_space> *spaces;
-	static map<uint64_t, shm_mapping> *mappings;
+	static map<uint64_t, shm_space* > *spaces;
+	static map<uint64_t, shm_mapping* > *mappings;
 	static uint64_t space_id_counter = 0;
 	static uint64_t mapping_id_counter = 0;
 	
 	uint64_t shm_create(uint32_t flags){
 		hold_lock hl(shm_lock);
 		uint64_t id = ++space_id_counter;
-		(*spaces)[id] = shm_space();
-		(*spaces)[id].flags = flags;
-		(*spaces)[id].owner = proc_current_pid;
+		shm_space *space = new shm_space();
+		space->flags = flags;
+		space->owner = proc_current_pid;
+		(*spaces)[id] = space;
 		dbgpf("MM2: Created SHM space %i\n", (int)id);
 		return id;
 	}
 	
 	void shm_close(uint64_t id){
 		hold_lock hl(shm_lock);
-		for(auto i = mappings->begin(); i != mappings->end(); ++i){
-			if(i->second.space == id) shm_close_map(i->first);
+		shm_space *space = (*spaces)[id];
+		bool cont = true;
+		while(cont){
+			for(auto i = mappings->begin(); i != mappings->end(); ++i){
+				if(i->second->space == space) {
+					shm_close_map(i->first);
+					break;
+				}
+			}
+			cont = false;
 		}
-		shm_space &space = (*spaces)[id];
-		for(auto i = space.pages.begin(); i != space.pages.end(); ++i){
+		for(auto i = space->pages.begin(); i != space->pages.end(); ++i){
 			physical_free(i->second);
 		}
+		delete (*spaces)[id];
 		spaces->erase(id);
 	}
 	
 	static void shm_pf_handler(uint64_t id, void *addr){
+		dbgpf("MM2: SHM mapping %i PF at %p.\n", (int)id, addr);
 		hold_lock hl(shm_lock);
 		
-		shm_mapping &mapping = (*mappings)[id];
-		uint32_t space_addr = (uint32_t)addr + mapping.offset;
+		if(!mappings->has_key(id)) panic("(MM2) Invalid mapping!");
+		shm_mapping *mapping = (*mappings)[id];
+		uint32_t space_addr = ((uint32_t)addr - (uint32_t)mapping->addr) + mapping->offset;
 		uint32_t page_addr = space_addr & MM2_Address_Mask;
-		shm_space &space = (*spaces)[mapping.space];
-		physical_page *page;
-		if(space.pages.has_key(page_addr)){
-			page = space.pages[page_addr];
+		shm_space *space = mapping->space;
+		physical_page *page = (physical_page*)0xBADF00D;
+		if(space->pages.has_key(page_addr)){
+			page = space->pages[page_addr];
 		}else{
 			page = physical_alloc();
-			space.pages[page_addr] = page;
+			space->pages[page_addr] = page;
 		}
 		void *addr_page = (void*)((uint32_t)addr & MM2_Address_Mask);
-		dbgpf("MM2: Mapping shared page %p from SHM mapping %i at address %p.\n", (void*)page, (int)id, addr_page);
+		dbgpf("MM2: Mapping shared page %p from SHM mapping %i at address %p.\n", (void*)page->address(), (int)id, addr_page);
 		uint32_t pageflags = MM2_PageFlags::Present | MM2_PageFlags::Usermode;
-		if((space.owner == proc_current_pid || !(space.flags & btos_api::bt_shm_flags::ReadOnly)) && !(mapping.flags & btos_api::bt_shm_flags::ReadOnly)){
+		if((space->owner == proc_current_pid || !(space->flags & btos_api::bt_shm_flags::ReadOnly)) && !(mapping->flags & btos_api::bt_shm_flags::ReadOnly)){
 			pageflags |= MM2_PageFlags::Writable;
 		}
 		current_pagedir->map_page_at(addr_page, page, MM2_PageFlags::Present | MM2_PageFlags::Writable | MM2_PageFlags::Usermode);
@@ -92,11 +103,11 @@ namespace MM2{
 			current_pagedir->guard_page_at((void*)i);
 		}
 		current_pagedir->add_region(addr, pages * MM2_Page_Size, &shm_pf_handler, ret);
-		shm_mapping mapping;
-		mapping.space = id;
-		mapping.addr = addr;
-		mapping.offset = offset;
-		mapping.pages = pages;
+		shm_mapping *mapping = new shm_mapping();
+		mapping->space = (*spaces)[id];
+		mapping->addr = addr;
+		mapping->offset = offset;
+		mapping->pages = pages;
 		(*mappings)[ret] = mapping;
 		dbgpf("MM2: Mapped %i pages from SHM space %i offset %x to address %p as mapping ID: %i\n", (int)pages, (int)id, (unsigned)offset, addr, (int)ret);
 		return ret;
@@ -106,19 +117,20 @@ namespace MM2{
 		hold_lock(shm_lock, false);
 		
 		if(mappings->has_key(id)){
-			shm_mapping &mapping = (*mappings)[id];
-			current_pagedir->remove_region(mapping.addr);
-			void *addr = mapping.addr;
-			for(uint32_t i = (uint32_t)addr; i < (uint32_t)addr + (mapping.pages * MM2_Page_Size); i += MM2_Page_Size){
+			shm_mapping *mapping = (*mappings)[id];
+			current_pagedir->remove_region(mapping->addr);
+			void *addr = mapping->addr;
+			for(uint32_t i = (uint32_t)addr; i < (uint32_t)addr + (mapping->pages * MM2_Page_Size); i += MM2_Page_Size){
 				current_pagedir->map_page_at((void*)i, MM2_PageFlags::Present | MM2_PageFlags::Writable | MM2_PageFlags::Usermode);
 			}
+			delete mapping;
 			mappings->erase(id);
 		}
 	}
 	
 	void init_shm(){
-		spaces = new map<uint64_t, shm_space>();
-		mappings = new map<uint64_t, shm_mapping>();
+		spaces = new map<uint64_t, shm_space*>();
+		mappings = new map<uint64_t, shm_mapping*>();
 		init_lock(shm_lock);
 	}
 }

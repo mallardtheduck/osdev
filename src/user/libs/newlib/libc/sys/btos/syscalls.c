@@ -202,7 +202,7 @@ int read(int file, char *ptr, int len){
 	return _read(file, ptr, len);
 }
 
-caddr_t _sbrk(int incr){
+/*caddr_t _sbrk(int incr){
 	static void *base=0;
 	static size_t limit=0, alloc=0;
 
@@ -227,12 +227,14 @@ caddr_t _sbrk(int incr){
 
 caddr_t sbrk(int incr){
 	return _sbrk(incr);
-}
+}*/
 
 int _stat(const char *file, struct stat *st){
-	char path[BT_MAX_PATH]={0};
+	char *path = calloc(BT_MAX_PATH, 1);
+	if(!path) return ENOMEM;
 	if(btos_path_parse(file, path, BT_MAX_PATH)){
 		bt_directory_entry e = bt_stat(path);
+		free(path);
 		if(e.valid){
 			st->st_dev = 0;
 			st->st_ino = e.id;
@@ -268,6 +270,7 @@ int _stat(const char *file, struct stat *st){
 			return -1;
 		}
 	}else{
+		free(path);
 		errno = EINVAL;
 		return -1;
 	}
@@ -543,12 +546,14 @@ int fsync(int fd){
 
 char *realpath(const char *path, char *resolved_path){
 	if(!resolved_path) resolved_path = malloc(BT_MAX_PATH);
+	if(!resolved_path) return NULL;
 	btos_path_parse(path, resolved_path, BT_MAX_PATH);
 	return resolved_path;
 }
 
 char *_getcwd(char *buf, size_t size){
 	if(!buf) buf = malloc(BT_MAX_PATH);
+	if(!buf) return NULL;
 	bt_getenv("CWD", buf, BT_MAX_PATH);
 	return buf;
 }

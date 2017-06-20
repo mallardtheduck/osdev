@@ -84,5 +84,5 @@ void init_clock(const datetime bootTime){
 }
 
 datetime current_datetime(){
-	return epoch2datetime(boot_msec + msec_counter);
+	return epoch2datetime(boot_msec + get_msecs());
 }

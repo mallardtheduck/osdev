@@ -1,5 +1,6 @@
 #include "bitmap_surface.hpp"
 #include "drawingop.hpp"
+#include "fonts.hpp"
 
 #include <sstream>
 #include <gdfontmb.h>
@@ -7,17 +8,23 @@
 #include <gdfontg.h>
 #include <gdfontl.h>
 
+#include <dev/rtc.h>
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+#include "graphics.hpp"
+
 using namespace std;
 
 BitmapSurface::BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale) {
-	if(indexed) {
-		image.reset(new GD::Image((int)w, (int)h, !indexed));
-	}
+	image.reset(new GD::Image((int)w, (int)h, !indexed));
 	this->scale = scale;
 	pending_op.type = gds_DrawingOpType::None;
 }
 
 size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
+	//uint64_t op_start = bt_rtc_millis();
 	image->SetThickness(op.Common.lineWidth);
 	switch(op.type) {
 		case gds_DrawingOpType::Dot:
@@ -30,12 +37,19 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 				swap(op.Line.x1, op.Line.x2);
 				swap(op.Line.y1, op.Line.y2);
 			}
-			image->Line(op.Line.x1, op.Line.y1, op.Line.x2, op.Line.y2, op.Common.lineColour);
+			/*if(p.Line.x1 == op.Line.x2){
+				FastBox(*image, op.Line.x1, op.Line.y1, op.Common.lineWidth, max(op.Line.y1, op.Line.y2) - min(op.Line.y1, op.Line.y2), op.Common.lineColour);
+			}else if(op.Line.y1 == op.Line.y2){
+				FastBox(*image, op.Line.x1, op.Line.y1, max(op.Line.x1, op.Line.x2) - min(op.Line.x1, op.Line.x2), op.Common.lineWidth, op.Common.lineColour);
+			}else{*/
+				image->Line(op.Line.x1, op.Line.y1, op.Line.x2, op.Line.y2, op.Common.lineColour);
+			//}
 			break;
 
 		case gds_DrawingOpType::Box:
 			if(op.Common.fillStyle > 0) {
-				image->FilledRectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.fillColour);
+				//image->FilledRectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.fillColour);
+				FastBox(*image, op.Box.x, op.Box.y, op.Box.w, op.Box.h, op.Common.fillColour);
 			}
 			if(op.Common.lineWidth > 0){ 
 				image->Rectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.lineColour);
@@ -63,9 +77,26 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 		case gds_DrawingOpType::Blit: {
 				auto srcSurface = allSurfaces[op.Blit.src].lock();
 				if(srcSurface) {
-					auto srcImage = srcSurface->Render(op.Blit.scale);
-					image->CopyResized(srcImage->GetPtr(), op.Blit.dstX, op.Blit.dstY, op.Blit.srcX, op.Blit.srcY, op.Blit.dstW, op.Blit.dstH, op.Blit.srcW, op.Blit.srcH);
+					if(op.Blit.srcW == op.Blit.dstW && op.Blit.srcH == op.Blit.dstH){
+						//FastBlit(*srcImage, *image, op.Blit.srcX, op.Blit.srcY, op.Blit.dstX, op.Blit.dstY, op.Blit.dstW, op.Blit.dstH);
+						srcSurface->RenderTo(image, op.Blit.srcX, op.Blit.srcY, op.Blit.dstX, op.Blit.dstY, op.Blit.dstW, op.Blit.dstH);
+					}else{
+						auto srcImage = srcSurface->Render(op.Blit.scale);
+						if(srcImage){
+							image->CopyResized(srcImage->GetPtr(), op.Blit.dstX, op.Blit.dstY, op.Blit.srcX, op.Blit.srcY, op.Blit.dstW, op.Blit.dstH, op.Blit.srcW, op.Blit.srcH);
+						}
+					}
 				}
+			}
+			break;
+		case gds_DrawingOpType::TextChar:{
+				gdFTStringExtra ftex;
+				ftex.flags = gdFTEX_RESOLUTION;
+				ftex.vdpi = 72;
+				ftex.hdpi = 72;
+				string fontfile = GetFontManager()->GetFontFile(op.TextChar.fontID);
+				char chstr[] = {op.TextChar.c, 0};
+				if(fontfile != "" && op.TextChar.size) image->StringFT(NULL, op.Common.lineColour, (char*)fontfile.c_str(), op.TextChar.size, 0, op.TextChar.x, op.TextChar.y, chstr, &ftex);
 			}
 			break;
 		case gds_DrawingOpType::Text:
@@ -78,6 +109,8 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 			break;
 
 	}
+	//uint64_t op_end = bt_rtc_millis();
+	//DBG("GDS: Operation " << op.type << " took " << (op_end - op_start) << "ms");
 	return 0;
 }
 
@@ -131,29 +164,14 @@ std::shared_ptr<GD::Image> BitmapSurface::Render(uint32_t scale) {
 void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
 	if(pending_op.type != gds_DrawingOpType::None && pending_op.type == params->type){
 		switch(pending_op.type){
-			//Temporary font code. Replace once FreeType is supported.
-			case gds_DrawingOpType::Text:
-				gdFontPtr font;
-				switch(pending_op.Text.fontID){
-					case gds_TEMPFonts::Small:
-						font = gdFontGetSmall();
-						break;
-					case gds_TEMPFonts::Large:
-						font = gdFontGetLarge();
-						break;
-					case gds_TEMPFonts::MediumBold:
-						font = gdFontGetMediumBold();
-						break;
-					case gds_TEMPFonts::Giant:
-						font = gdFontGetGiant();
-						break;
-					case gds_TEMPFonts::Tiny:
-						font = gdFontGetTiny();
-						break;
-					default:
-						font = gdFontGetSmall();
+			case gds_DrawingOpType::Text:{
+					gdFTStringExtra ftex;
+					ftex.flags = gdFTEX_RESOLUTION;
+					ftex.vdpi = 72;
+					ftex.hdpi = 72;
+					string fontfile = GetFontManager()->GetFontFile(pending_op.Text.fontID);
+					if(fontfile != "" && pending_op.Text.size) image->StringFT(NULL, pending_op.Common.lineColour, (char*)fontfile.c_str(), pending_op.Text.size, 0, pending_op.Text.x, pending_op.Text.y, params->data, &ftex);
 				}
-				image->String(font, pending_op.Text.x, pending_op.Text.y, params->data, pending_op.Common.lineColour);
 				break;
 			case gds_DrawingOpType::Polygon:
 				{
@@ -179,7 +197,17 @@ void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
 }
 
 std::shared_ptr<gds_OpParameters> BitmapSurface::GetOpParameters(uint32_t){
-	return std::shared_ptr<gds_OpParameters>();
+	auto ret = make_shared<gds_OpParameters>();
+	ret->op_id = 0;
+	ret->size = 0;
+	return ret;
+}
+
+void BitmapSurface::ReorderOp(uint32_t /*op*/, uint32_t /*ref*/, gds_ReorderMode::Enum /*mode*/){
+}
+
+void BitmapSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h){
+	FastBlit(*image, *dst, srcX, srcY, dstX, dstY, w, h);
 }
 
 BitmapSurface::~BitmapSurface() {

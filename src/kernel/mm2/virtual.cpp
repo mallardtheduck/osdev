@@ -2,6 +2,8 @@
 #include "mm2_internal.hpp"
 #include "pagedirectory.hpp"
 
+extern void gdt_set_df_cr3(uint32_t cr3);
+
 namespace MM2{
 	static lock virtual_lock;
 
@@ -60,6 +62,7 @@ namespace MM2{
 		cr0 |= CR0_Paging_Enabled;
 		asm volatile("mov %0, %%cr0":: "b"(cr0));
 		dbgout("Done.\n");
+		gdt_set_df_cr3((uint32_t)init_kernel_pagedir);
 		
 		int_handle(0x0e, &page_fault_handler);
 		current_pagedir = kernel_pagedir = new(&kpd_place) PageDirectory(init_kernel_pagedir);

@@ -27,6 +27,8 @@ public:
 	void set_pointer_autohide(bool val);
 	void freeze_pointer();
 	void unfreeze_pointer();
+	uint32_t get_pointer_speed();
+	void set_pointer_speed(uint32_t speed);
 	
 	void set_text_colours(uint8_t c);
 	uint8_t get_text_colours();

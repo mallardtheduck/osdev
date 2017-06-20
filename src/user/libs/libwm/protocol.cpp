@@ -171,3 +171,42 @@ extern "C" wm_Event WM_GetEvent(){
 extern "C" void WM_Sync(){
 	SendMessage(wm_RequestType::Sync, 0, NULL, true);
 }
+
+extern "C" uint64_t WM_SelectMenu(uint64_t id){
+	bt_msg_header reply = SendMessage(wm_RequestType::SelectMenu, id, true);
+	return GetContent<uint64_t>(reply);
+}
+
+extern "C" uint64_t WM_CreateMenu(){
+	bt_msg_header reply = SendMessage(wm_RequestType::CreateMenu, 0, NULL, true);
+	return GetContent<uint64_t>(reply);
+}
+
+extern "C" void WM_DestroyMenu(uint64_t id){
+	SendMessage(wm_RequestType::DestroyMenu, id, false);
+}
+
+extern "C" uint32_t WM_AddMenuItem(wm_MenuItem i){
+	bt_msg_header reply = SendMessage(wm_RequestType::AddMenuItem, i, true);
+	return GetContent<uint32_t>(reply);
+}
+
+extern "C" void WM_RemoveMenuItem(uint32_t id){
+	SendMessage(wm_RequestType::RemoveMenuItem, id, false);
+}
+
+extern "C" void WM_ShowMenu(wm_Rect pos){
+	SendMessage(wm_RequestType::ShowMenu, pos, false);
+}
+
+extern "C" void WM_SelectWindowMenu(){
+	SendMessage(wm_RequestType::SelectWindowMenu, 0, NULL, false);
+}
+
+extern "C" void WM_SetWindowMenu(){
+	SendMessage(wm_RequestType::SetWindowMenu, 0, NULL, false);
+}
+
+extern "C" void WM_UnSetWindowMenu(){
+	SendMessage(wm_RequestType::UnSetWindowMenu, 0, NULL, false);
+}

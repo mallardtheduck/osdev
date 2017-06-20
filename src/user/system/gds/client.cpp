@@ -1,8 +1,11 @@
 #include "gds.hpp"
 #include "bitmap_surface.hpp"
+#include "vector_surface.hpp"
+#include "shm_surface.hpp"
 #include "screen.hpp"
 #include <algorithm>
 #include <sstream>
+#include "fonts.hpp"
 
 using namespace std;
 
@@ -11,7 +14,7 @@ static uint64_t surfaceCounter = 0;
 
 static map<bt_pid_t, shared_ptr<Client>> allClients;
 
-template<typename T> static void SendReply(bt_msg_header msg, const T &content) {
+template<typename T> static void SendReply(const bt_msg_header &msg, const T &content) {
 	bt_msg_header reply;
 	reply.to = msg.from;
 	reply.reply_id = msg.id;
@@ -47,6 +50,12 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			switch(s_info.type) {
 				case gds_SurfaceType::Bitmap:
 					newsurf = new BitmapSurface(s_info.w, s_info.h, (s_info.colourType == gds_ColourType::Indexed), s_info.scale);
+					break;
+				case gds_SurfaceType::Vector:
+					newsurf = new VectorSurface(s_info.w, s_info.h, (s_info.colourType == gds_ColourType::Indexed), s_info.scale);
+					break;
+				case gds_SurfaceType::Memory:
+					newsurf = new SHMSurface(s_info.w, s_info.h, (s_info.colourType == gds_ColourType::Indexed), s_info.scale, s_info.shmRegion, s_info.shmOffset);
 					break;
 				default:
 					break;
@@ -177,6 +186,70 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			if(cur_visible) GetScreen()->ShowCursor();
 			else GetScreen()->HideCursor();
 			break;
+		case gds_MsgType::GetFontID:{
+				gds_FontRequest req;
+				bt_msg_content(&msg, (void*)&req, sizeof(req));
+				shared_ptr<gds_FontInfo> f = GetFontManager()->GetFont(req.name, (gds_FontStyle::Enum)req.fontStyle);
+				if(f){
+					SendReply(msg, f->fontID);
+				}else{
+					SendReply(msg, (uint32_t)0);
+				}
+			}
+			break;
+		case gds_MsgType::GetFontInfo:{
+				uint32_t fontID;
+				bt_msg_content(&msg, (void*)&fontID, sizeof(fontID));
+				shared_ptr<gds_FontInfo> f = GetFontManager()->GetFont(fontID);
+				if(f){
+					SendReply(msg, *f);
+				}else{
+					SendReply(msg, gds_FontInfo());
+				}
+			}
+			break;
+		case gds_MsgType::GetGlyphInfo:{
+				gds_GlyphInfo_Request req;
+				bt_msg_content(&msg, (void*)&req, sizeof(req));
+				gds_GlyphInfo info = GetFontManager()->GetGlyphInfo(req.fontID, req.size, req.ch);
+				SendReply(msg, info);
+			}
+			break;
+		case gds_MsgType::GetMaxFontID:{
+				uint32_t maxFontId = GetFontManager()->GetMaxFontID();
+				SendReply(msg, maxFontId);
+			}
+			break;
+		case gds_MsgType::MultiDrawingOps:{
+			if(currentSurface){
+				gds_MultiOps *mops = (gds_MultiOps *)malloc(msg.length);
+				bt_msg_content(&msg, (void*)mops, msg.length);
+				if(mops->count <= (BT_MSG_MAX - sizeof(gds_MultiOps)) / sizeof(gds_DrawingOp)){
+					uint32_t *ids = new uint32_t[mops->count];
+					for(size_t i = 0; i < mops->count; ++i){
+						ids[i] = currentSurface->AddOperation(mops->ops[i]);
+					}
+					bt_msg_header reply;
+					reply.to = msg.from;
+					reply.reply_id = msg.id;
+					reply.flags = bt_msg_flags::Reply;
+					reply.length = mops->count * sizeof(uint32_t);
+					reply.content = (void*)ids;
+					bt_send(reply);
+					delete ids;
+				}
+				free(mops);
+			}
+			break;
+		case gds_MsgType::ReorderOp:{
+				if(currentSurface){
+					gds_ReorderOp rop;
+					bt_msg_content(&msg, (void*)&rop, sizeof(rop));
+					currentSurface->ReorderOp(rop.op, rop.ref, rop.mode);
+				}			
+			}
+			break;
+		}
 	}
 }
 

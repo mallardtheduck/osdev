@@ -279,6 +279,18 @@ void irq_ack(size_t irq_no) {
     PIC_sendEOI(irq_no);
 }
 
+void irq_ack_if_needed(size_t irqno){
+	uint16_t cmbisr = pic_get_isr();
+	uint8_t isr = 0;
+	if(irqno < 8) isr = (uint8_t)cmbisr;
+	else{
+		if((isr & 0x4) == 0) return;
+		isr = (uint8_t)(cmbisr >> 8);
+	}
+	
+	if((isr & (1 << irqno))) irq_ack(irqno);
+}
+
 inline void out_regs(const irq_regs ctx){
 	dbgpf("INTERRUPT %x\n", ctx.int_no);
 	dbgpf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
@@ -299,11 +311,11 @@ extern "C" void irq_handler(irq_regs *r) {
 	//out_regs(*r);
 	int irq=r->int_no-IRQ_BASE;
 	if(handlers[r->int_no]) handlers[r->int_no](r->int_no - 32, (isr_regs*)r);
-    irq_ack(irq);
-    //disable_interrupts();
+    disable_interrupts();
     if(sch_can_lock()) {
         sch_abortable(true);
     }
+    irq_ack(irq);
     imode--;
 }
 
@@ -322,6 +334,14 @@ void int_handle(size_t intno, int_handler handler){
 
 void irq_handle(size_t irqno, int_handler handler){
 	handlers[irqno+IRQ_BASE]=handler;
+}
+
+void int_handle_raw(size_t intno, void *handler){
+	idt_set_gate(intno, (uint32_t)handler, 0x08, 0x8E);
+}
+
+void irq_handle_raw(size_t irqno, void *handler){
+	int_handle_raw(irqno + IRQ_BASE, handler);
 }
 
 bool is_imode(){

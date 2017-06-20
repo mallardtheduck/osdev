@@ -5,10 +5,14 @@
 #include <sstream>
 #include <iostream>
 #include "libgds_internal.hpp"
+#include <cstring>
 
 using namespace std;
 
 static bt_pid_t gds_pid = 0;
+static uint64_t current_surface = 0;
+static bool current_known = false;
+static bool current_screen = false;
 
 static bool Init(){
 	if(!gds_pid){
@@ -66,22 +70,35 @@ extern "C" gds_Info GDS_Info(){
 	return GetContent<gds_Info>(&reply);
 }
 
-extern "C" uint64_t GDS_NewSurface(gds_SurfaceType::Enum type, uint32_t w, uint32_t h, uint32_t scale, gds_ColourType::Enum colourType){
+extern "C" uint64_t GDS_NewSurface(gds_SurfaceType::Enum type, uint32_t w, uint32_t h, uint32_t scale, gds_ColourType::Enum colourType, uint64_t shmRegion, size_t shmOffset){
 	gds_SurfaceInfo info;
 	info.type = type;
 	info.w = w; info.h = h;
 	info.scale = scale;
 	info.colourType = colourType;
+	info.shmRegion = shmRegion;
+	info.shmOffset = shmOffset;
 	bt_msg_header reply = SendMessage(gds_MsgType::NewSurface, sizeof(info), (void*)&info, true);
-	return GetContent<uint64_t>(&reply);
+	uint64_t ret = GetContent<uint64_t>(&reply);
+	current_known = true;
+	current_screen = false;
+	current_surface = ret;
+	return ret;
 }
 
 extern "C" void GDS_DeleteSurface(){
+	current_known = false;
+	current_screen = false;
 	SendMessage(gds_MsgType::DeleteSurface, 0, NULL, false);
 }
 
 extern "C" uint64_t GDS_SelectSurface(uint64_t id){
+	if(current_known && id == current_surface) return current_surface;
 	bt_msg_header reply = SendMessage(gds_MsgType::SelectSurface, sizeof(id), (void*)&id, true);
+	uint64_t ret = GetContent<uint64_t>(&reply);
+	current_known = true;
+	current_screen = false;
+	current_surface = ret;
 	return GetContent<uint64_t>(&reply);
 }
 
@@ -120,6 +137,9 @@ extern "C" void GDS_SetOpParameters(const gds_OpParameters *params){
 }
 
 extern "C" void GDS_SelectScreen(){
+	if(current_screen && !current_known) return;
+	current_known = false;
+	current_screen = true;
 	SendMessage(gds_MsgType::SelectScreen, 0, NULL, false);
 }
 
@@ -130,6 +150,8 @@ extern "C" void GDS_UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 }
 
 extern "C" void GDS_SetScreenMode(bt_vidmode mode){
+	current_known = false;
+	current_screen = false;
 	SendMessage(gds_MsgType::SetScreenMode, sizeof(mode), (void*)&mode, false);
 }
 
@@ -143,4 +165,47 @@ extern "C" void GDS_SetCursor(uint64_t surfaceID, uint32_t hotx, uint32_t hoty){
 
 extern "C" void GDS_CursorVisibility(bool visible){
 	SendMessage(gds_MsgType::CursorVisibility, sizeof(visible), (void*)&visible, false);
+}
+
+extern "C" uint32_t GDS_GetFontID(const char *name, gds_FontStyle::Enum style){
+	gds_FontRequest i;
+	strncpy(i.name, name, FONT_NAME_MAX);
+	i.fontStyle = style;
+	bt_msg_header reply = SendMessage(gds_MsgType::GetFontID, sizeof(i), (void*)&i, true);
+	return GetContent<uint32_t>(&reply);
+}
+
+extern "C" gds_FontInfo GDS_GetFontInfo(uint32_t fontID){
+	bt_msg_header reply = SendMessage(gds_MsgType::GetFontInfo, sizeof(fontID), (void*)&fontID, true);
+	return GetContent<gds_FontInfo>(&reply);
+}
+
+extern "C" gds_GlyphInfo GDS_GetGlyphInfo(uint32_t fontID, size_t size, char ch){
+	gds_GlyphInfo_Request req = {fontID, size, ch};
+	bt_msg_header reply = SendMessage(gds_MsgType::GetGlyphInfo, sizeof(req), (void*)&req, true);
+	return GetContent<gds_GlyphInfo>(&reply);
+}
+
+extern "C" uint32_t GDS_GetMaxFontID(){
+	bt_msg_header reply = SendMessage(gds_MsgType::GetMaxFontID, 0, NULL, true);
+	return GetContent<uint32_t>(&reply);
+}
+
+extern "C" void GDS_MultiDrawingOps(size_t count, gds_DrawingOp *ops, uint32_t *ids){
+	size_t ops_per_req = (BT_MSG_MAX - sizeof(gds_MultiOps)) / sizeof(gds_DrawingOp);
+	gds_MultiOps *mops = (gds_MultiOps*)malloc(BT_MSG_MAX);
+	for(size_t i = 0; i < count; i += ops_per_req){
+		size_t op_count = min(ops_per_req, count - i);
+		mops->count = op_count;
+		memcpy(mops->ops, &ops[i], op_count * sizeof(gds_DrawingOp));
+		bt_msg_header reply = SendMessage(gds_MsgType::MultiDrawingOps, BT_MSG_MAX, (void*)mops, true);
+		if(ids) bt_msg_content(&reply, &ids[i], sizeof(uint32_t) * op_count);
+		bt_msg_ack(&reply);
+	}
+	free(mops);
+}
+
+extern "C" void GDS_ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum mode){
+	gds_ReorderOp rop = {op, ref, mode};
+	SendMessage(gds_MsgType::ReorderOp, sizeof(rop), (void*)&rop, false);
 }

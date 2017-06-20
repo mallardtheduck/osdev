@@ -151,6 +151,7 @@ struct irq_regs {
 } __attribute__((packed));
 
 void irq_ack(size_t);
+void irq_ack_if_needed(size_t irqno);
 
 irq_regs isr_regs2irq_regs(const isr_regs &r);
 
@@ -158,5 +159,7 @@ void int_handle(size_t intno, int_handler handler);
 void irq_handle(size_t irqno, int_handler handler);
 bool is_imode();
 void out_int_info(const isr_regs ctx);
+void int_handle_raw(size_t intno, void *handler);
+void irq_handle_raw(size_t irqno, void *handler); 
 
 #endif

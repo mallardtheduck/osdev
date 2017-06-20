@@ -9,27 +9,20 @@
 
 #include "rect.hpp"
 #include "client.hpp"
+#include "drawing.hpp"
 
 class Client;
+class TitleBar;
+class Menu;
 
-enum class WindowArea{
-	Content,
-	Title,
-	MenuButton,
-	CloseButton,
-	HideButton,
-	ExpandButton,
-	Border,
-	None
-};
-
-class Window{
+class Window : public std::enable_shared_from_this<Window>{
 private:
 	std::weak_ptr<Client> owner;
 	Point pos;
 	uint32_t z = 0;
 	uint64_t gds_id;
 	gds_SurfaceInfo gds_info;
+	TitleBar titlebar;
 	uint64_t gds_title_id = 0;
 	gds_SurfaceInfo gds_titleinfo;
 	std::string title;
@@ -38,10 +31,11 @@ private:
 	bool dragging = false;
 	Point dragoffset;
 	Point last_drag_pos = {0, 0};
-	int64_t gds_drag_id;
+	int64_t gds_drag_id = 0;
 	WindowArea pressed = WindowArea::None;
 	uint32_t event_subs = 0;
 	uint32_t options = wm_WindowOptions::Default;
+	std::shared_ptr<Menu> windowMenu;
 	
 	WindowArea GetWindowArea(Point p);
 	void RefreshTitleBar(bool force = false);
@@ -54,6 +48,7 @@ public:
 	
 	void Draw(bool active, bool content = true, uint64_t target = 0);
 	void Draw(bool active, const Rect &r);
+	void DrawGrabbed(const Rect &r);
 	void SetPosition(Point p);
 	Point GetPosition();
 	Point GetContentPosition();
@@ -65,6 +60,12 @@ public:
 	uint32_t GetZOrder();
 	
 	Rect GetBoundingRect();
+	uint32_t GetWidth();
+	uint32_t GetHeight();
+	Point GetContentOffset();
+	
+	bool HasTitleBar();
+	bool HasBorder();
 	
 	void KeyInput(uint32_t key);
 	void PointerInput(const bt_terminal_pointer_event &pevent);
@@ -74,6 +75,7 @@ public:
 	void Close();
 	void Hide();
 	void Expand();
+	void MenuAction(uint64_t menu, uint32_t action);
 	
 	void SetVisible(bool v, bool update = true);
 	bool GetVisible();
@@ -82,6 +84,8 @@ public:
 	uint32_t Subscribe();
 	void SetOptions(uint32_t opts);
 	uint32_t GetOptions();
+	void SetWindowMenu(std::shared_ptr<Menu> menu);
+	std::shared_ptr<Menu> GetWindowMenu();
 };
 
 #endif // WINDOW_HPP
