@@ -22,7 +22,7 @@ export CFLAGS="-g -O2 -I$HOME/Projects/os/src/include"
 export CPPFLAGS=""
 export CXXFLAGS=""
 
-export LDFLAGS=""
+export LDFLAGS="-lbtos"
 
 PATH=$BASE_PATH/bin:$PATH
 ./configure \

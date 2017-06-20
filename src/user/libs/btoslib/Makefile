@@ -18,7 +18,7 @@ LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L.
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
 AR-FLAGS := rcs -o $(STATIC-LIBRARY-NAME)
 LINK-OPTIONS := -lgcc_s -lc
-LIB-LINK-OPTIONS := -lgcc_s -lc
+LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lc
 
 STATIC-FILES := kernel_calls.c
 BOOTFILE := boot.o

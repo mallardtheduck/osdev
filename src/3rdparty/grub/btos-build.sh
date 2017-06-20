@@ -22,7 +22,7 @@ export CFLAGS="-g -O2 -I$HOME/Projects/os/src/include"
 export CPPFLAGS="-I$HOME/Projects/os/src/include"
 export CXXFLAGS="-I$HOME/Projects/os/src/include"
 
-export LDFLAGS=""
+export LIBS="-lbtosk"
 
 autoconf
 PATH=$BASE_PATH/bin:$PATH
