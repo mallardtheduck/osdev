@@ -199,9 +199,34 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 	if(dragging){
 		Point curpos = Point(pevent.x, pevent.y);
 		Point newpos = {curpos.x - dragoffset.x, curpos.y - dragoffset.y};
+		if(GetMetric(FullWindowDrag)){
+			bool firstFrame = false;
+			if(!gds_drag_id){
+				gds_drag_id = GDS_NewSurface(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h, 100, gds_info.colourType);
+				Draw(active, true, gds_drag_id);
+				SetVisible(false, true);
+				firstFrame = true;
+			}
+			if(!firstFrame && newpos.x == pos.x && newpos.y == pos.y) return;
+			GDS_SelectScreen();
+			Rect oldrect = GetBoundingRect();
+			DrawWindows(oldrect, 0, true);
+			GDS_Blit(gds_drag_id, 0, 0, oldrect.w, oldrect.h + GetMetric(TitleBarSize), newpos.x, newpos.y, oldrect.w, oldrect.h + GetMetric(TitleBarSize));
+			pos = newpos;
+			Rect newrect = GetBoundingRect();
+			RefreshScreen(TileRects(oldrect, newrect));
+		}else{
+			if(newpos.x == pos.x && newpos.y == pos.y) return;
+			GDS_SelectScreen();
+			DrawAndRefreshRectEdges(last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight(), GetMetric(BorderWidth));
+			if(HasBorder()) DrawBorder(newpos.x, newpos.y, GetWidth(), GetHeight());
+			last_drag_pos = newpos;
+			RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight(), GetMetric(BorderWidth));
+		}
 		if(pevent.type == bt_terminal_pointer_event_type::ButtonUp){
 			UnGrab();
 			dragging = false;
+			auto oldpos = pos;
 			SetPosition(newpos);
 			if(GetMetric(FullWindowDrag)){
 				if(gds_drag_id){
@@ -209,36 +234,12 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 					GDS_DeleteSurface();
 				}
 				gds_drag_id = 0;
-				SetVisible(true, true);
+				SetVisible(true, false);
+				DrawAndRefreshWindows(TileRects({oldpos.x, oldpos.y, GetWidth(), GetHeight()}, GetBoundingRect()));
 			}else{
 				Rect winRect = {last_drag_pos.x, last_drag_pos.y, GetWidth() + 10, GetHeight()};
 				DrawWindows(winRect);
 				GDS_SelectScreen();
-				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight(), GetMetric(BorderWidth));
-			}
-		}else{
-			if(GetMetric(FullWindowDrag)){
-				bool firstFrame = false;
-				if(!gds_drag_id){
-					gds_drag_id = GDS_NewSurface(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h, 100, gds_info.colourType);
-					Draw(active, true, gds_drag_id);
-					SetVisible(false, false);
-					firstFrame = true;
-				}
-				if(!firstFrame && newpos.x == pos.x && newpos.y == pos.y) return;
-				GDS_SelectScreen();
-				Rect oldrect = GetBoundingRect();
-				DrawWindows(oldrect, 0, true);
-				GDS_Blit(gds_drag_id, 0, 0, oldrect.w, oldrect.h + GetMetric(TitleBarSize), newpos.x, newpos.y, oldrect.w, oldrect.h + GetMetric(TitleBarSize));
-				pos = newpos;
-				Rect newrect = GetBoundingRect();
-				RefreshScreen(TileRects(oldrect, newrect));
-			}else{
-				if(newpos.x == pos.x && newpos.y == pos.y) return;
-				GDS_SelectScreen();
-				DrawAndRefreshRectEdges(last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight(), GetMetric(BorderWidth));
-				if(HasBorder()) DrawBorder(newpos.x, newpos.y, GetWidth(), GetHeight());
-				last_drag_pos = newpos;
 				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight(), GetMetric(BorderWidth));
 			}
 		}
