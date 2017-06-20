@@ -18,8 +18,6 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-USE_BT_RTC_API;
-
 char *__env[1] = { 0 };
 //static char **environ = __env;
 
