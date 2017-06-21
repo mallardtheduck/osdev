@@ -50,7 +50,7 @@ inline static uint64_t rtc_millis(){
 
 #include <btos.h>
 
-//In btoslib
+//In btoscore
 
 extern uint16_t bt_rtc_ext_id;
 

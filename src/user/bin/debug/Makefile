@@ -10,7 +10,7 @@ BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -I../../../3rdparty/install/btos/include -std=gnu99
 LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME) -O2
-LINK-OPTIONS := -L../../../3rdparty/install/btos/lib -lgcc_s -lstdc++ -lelf -lm -ludis86 -lbtos
+LINK-OPTIONS := -L../../../3rdparty/install/btos/lib -lgcc_s -lstdc++ -lelf -lm -ludis86 -lbtoscore -lbtoslib
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")

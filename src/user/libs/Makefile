@@ -1,4 +1,4 @@
-LIBS := btoslib newlib libgds libwm eloader ansi
+LIBS := btoscore newlib libgds libwm eloader ansi btoslib
 
 all: dummy.file
 	for dir in $(LIBS); do \

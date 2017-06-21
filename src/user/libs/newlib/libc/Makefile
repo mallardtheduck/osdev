@@ -14,7 +14,7 @@ BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c -fPIC -DINTERNAL_NEWLIB -D_COMPILING_NEWLIB -DABORT_MESSAGE -DMALLOC_PROVIDED -ffreestanding
 BUILD-C-OPTIONS := -Wall -Wextra -g -c -I../../../../include -I./sys/btos -I./include -std=gnu99
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -O2 -fPIC -shared -nodefaultlibs -ffreestanding -lm -lgcc_s -lbtos
+LINK-FLAGS := -O2 -fPIC -shared -nodefaultlibs -ffreestanding -lm -lgcc_s -lbtoscore
 LINK-OPTIONS := -o $(LIBRARY-NAME)
 G-LINK-OPTIONS := -L. -lc -o $(G-LIBRARY-NAME)
 

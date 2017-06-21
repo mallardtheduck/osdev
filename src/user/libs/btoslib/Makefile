@@ -1,5 +1,4 @@
-LIBRARY-NAME := btos.ell
-STATIC-LIBRARY-NAME := libbtosk.a
+LIBRARY-NAME := btoslib.ell
 
 DESTINATION := $(HOME)/Projects/os/cross/i686-pc-btos
 
@@ -12,15 +11,13 @@ BUILD-CPP-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -std=gnu++11
 BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -std=gnu99
-STATIC-C-OPTIONS := -nostdlib -Wall -Wextra -Werror -g -c -I../../../include -std=gnu99
 LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L.
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
 AR-FLAGS := rcs -o $(STATIC-LIBRARY-NAME)
 LINK-OPTIONS := -lgcc_s -lc
-LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lc
+LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lc -lbtoscore
 
-STATIC-FILES := kernel_calls.c
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")
 CFILES := $(shell find . -type f -name "*.c")
@@ -53,9 +50,6 @@ dummy.delete:
 
 $(LIBRARY-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile
 	$(LINK) $(LIB-LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LIB-LINK-OPTIONS)
-	
-$(STATIC-LIBRARY-NAME): $(STATIC-COBJS) Makefile
-	$(BUILD-AR) $(AR-FLAGS) $(STATIC-COBJS)
 
 .s.o: %.s Makefile
 	$(BUILD-AS) $< -o $@ $(BUILD-AS-OPTIONS)
