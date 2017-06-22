@@ -6,7 +6,6 @@
 using namespace std;
 
 static const size_t thread_stack_size = (4 * 1024);
-static char updatethread_stack[thread_stack_size];
 
 static size_t max_syscall_items = 256;
 static bt_syscall_item syscall_items[256];
@@ -40,7 +39,7 @@ void screen_update_thread(void *){
 				callcount = 0;
 			}
 		}
-		if(quit) bt_end_thread();
+		if(quit) return;
 		if(callcount){
 			if(hide_pointer) bt_fioctl(pthis->fh, bt_terminal_ioctl::HidePointer, 0, NULL);
 			bt_multi_call(syscall_items, callcount);
@@ -248,7 +247,7 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 				}
 			}
 		}
-		update_thread = bt_new_thread(&screen_update_thread, (void*)this, updatethread_stack + thread_stack_size);
+		update_thread = btos_create_thread(&screen_update_thread, (void*)this, thread_stack_size);
 		return true;
 	}
 	return false;

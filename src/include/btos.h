@@ -9,6 +9,7 @@
 #include "btos/ioctl.h"
 #include "btos/kernel_calls.h"
 #include "btos/devices.h"
+#include "btos/core.h"
 
 #if defined(__cplusplus) && !defined(BTOS_NO_USING)
 using namespace btos_api;

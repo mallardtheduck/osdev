@@ -37,8 +37,6 @@ const size_t buffer_size = (terminal_width * terminal_height * 2);
 static uint8_t buffer[buffer_size];
 static uint8_t tempbuffer[buffer_size];
 static const size_t thread_stack_size = 16 * 1024;
-static char mainthread_stack[thread_stack_size];
-static char renderthread_stack[thread_stack_size];
 static bt_handle_t terminal_handle = 0;
 static volatile bool ready = false;
 static bt_handle_t render_counter;
@@ -278,7 +276,7 @@ void renderthread_start(void *){
 
 void render_terminal(){
 	if(!terminal_handle) return;
-	if(!renderthread) renderthread = bt_new_thread(&renderthread_start, NULL, renderthread_stack + thread_stack_size);
+	if(!renderthread) renderthread = btos_create_thread(&renderthread_start, NULL, thread_stack_size);
 	curpos = bt_terminal_get_pos(terminal_handle);
 	DBG("TW: rt!");
 	bt_modify_atom(render_counter, bt_atom_modify::Add, 1);
@@ -414,7 +412,6 @@ void mainthread(void*){
 		bt_wait_thread(renderthread);
 	}
 	kill_children();
-	bt_end_thread();
 }
 
 int main(){
@@ -426,7 +423,7 @@ int main(){
 	bt_terminial_init();
 	render_counter = bt_create_atom(0);
 	bt_handle_t backend_handle = bt_terminal_create_backend();
-	bt_threadhandle thread = bt_new_thread(&mainthread, NULL, mainthread_stack + thread_stack_size);
+	bt_threadhandle thread = btos_create_thread(&mainthread, NULL, thread_stack_size);
 	while(!ready) bt_yield();
 	terminal_handle = bt_terminal_create_terminal(backend_handle);
 	string shell = get_env("SHELL");
