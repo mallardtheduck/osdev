@@ -16,8 +16,8 @@ LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L.
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
 AR-FLAGS := rcs -o $(STATIC-LIBRARY-NAME)
-LINK-OPTIONS := -lgcc_s -lc
-LIB-LINK-OPTIONS := -lgcc_s -lc
+LINK-OPTIONS := -lgcc_s 
+LIB-LINK-OPTIONS := -lgcc_s 
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")
