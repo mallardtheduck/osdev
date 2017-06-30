@@ -14,6 +14,7 @@
 #include <btos.h>
 
 #include <dev/rtc.h>
+#include <dev/terminal_ioctl.h>
 
 using namespace std;
 
@@ -182,8 +183,7 @@ void HandleInput(const bt_terminal_event &event){
 			if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == (uint32_t)curpos.x && event.pointer.y == (uint32_t)curpos.y) return;
 			gwin->PointerInput(event.pointer);
 			curpos.x = event.pointer.x; curpos.y = event.pointer.y;
-			bt_terminal_pointer_info info;
-			bt_fioctl(stdin_handle, bt_terminal_ioctl::GetPointerInfo, sizeof(info), (char*)&info);
+			bt_terminal_pointer_info info = bt_term_GetPointerInfo();
 			while((info.x != (uint32_t)curpos.x || info.y != (uint32_t)curpos.y) && (info.flags & 1 << event.pointer.button)){
 				bt_terminal_pointer_event e;
 				e.type = bt_terminal_pointer_event_type::Move;
@@ -192,7 +192,7 @@ void HandleInput(const bt_terminal_event &event){
 				gwin->PointerInput(e);
 				curpos.x = info.x;
 				curpos.y = info.y;
-				bt_fioctl(stdin_handle, bt_terminal_ioctl::GetPointerInfo, sizeof(info), (char*)&info);
+				info = bt_term_GetPointerInfo();
 			}
 		}
 		return;

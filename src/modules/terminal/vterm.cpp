@@ -328,7 +328,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			if(buf){
 				strncpy(buf, title, MIN(size, titlemax));
 			}
-			return strlen(title) + 
+			return strlen(title) + 1;
 			break;
 		}
 		case bt_terminal_ioctl::ClearScreen: {
@@ -372,7 +372,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			create_terminal(buf);
 			break;
 		}
-		case bt_terminal_ioctl::SwtichTerminal: {
+		case bt_terminal_ioctl::SwitchTerminal: {
 			uint64_t sw_id=*(uint64_t*)buf;
 			if(backend) backend->switch_terminal(sw_id);
 			break;

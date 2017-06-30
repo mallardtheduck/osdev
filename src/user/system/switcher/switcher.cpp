@@ -6,6 +6,7 @@
 #include <dev/video_dev.h>
 #include <dev/keyboard.h>
 #include <dev/terminal.h>
+#include <dev/terminal_ioctl.h>
 #include <crt_support.h>
 #include "switcher.hpp"
 
@@ -48,16 +49,16 @@ vector<term> get_term_list(){
 
 int main(){
     string title="SWITCHER";
-    btos_api::bt_filehandle fh=btos_get_handle(fileno(stdout));
+    bt_term_stdout();
     string termid=get_env("TERMID");
     uint64_t cterm=atoi(termid.c_str());
-    bt_fioctl(fh, bt_terminal_ioctl::SetTitle , title.length(), (char*)title.c_str());
+	bt_term_SetTitle(title.c_str());
 	uint64_t keycode = (/*KeyFlags::Control |*/ KeyFlags::NonASCII | KeyCodes::Escape);
-	bt_fioctl(fh, bt_terminal_ioctl::RegisterGlobalShortcut, sizeof(keycode), (char*)&keycode);
+	bt_term_RegisterGlobalShortcut(keycode);
 	keycode |= KeyFlags::Right;
-	bt_fioctl(fh, bt_terminal_ioctl::RegisterGlobalShortcut, sizeof(keycode), (char*)&keycode);
+	bt_term_RegisterGlobalShortcut(keycode);
     while(true) {
-        bt_fioctl(fh, bt_terminal_ioctl::ClearScreen, 0, NULL);
+        bt_term_ClearScreen();
         vector<term> terms = get_term_list();
         for (const term &t : terms) {
             if (t.id != cterm) cout << t.id << " : " << t.title << endl;
@@ -68,10 +69,10 @@ int main(){
         getline(cin, input);
         if (input == "n") {
             string shell = get_env("SHELL");
-            bt_fioctl(fh, bt_terminal_ioctl::NewTerminal, shell.length(), (char *) shell.c_str());
+			bt_term_NewTerminal(shell.c_str());
         } else {
             uint64_t new_id = atoi(input.c_str());
-            bt_fioctl(fh, bt_terminal_ioctl::SwtichTerminal, sizeof(new_id), (char *) &new_id);
+			bt_term_SwitchTerminal(new_id);
         }
     }
 }

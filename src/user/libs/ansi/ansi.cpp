@@ -4,6 +4,7 @@ extern "C" {
 }
 #include <btos.h>
 #include <dev/terminal.h>
+#include <dev/terminal_ioctl.h>
 #include <dev/video_dev.h>
 #include <dev/keyboard.h>
 #include <dev/rtc.h>
@@ -41,31 +42,9 @@ static virtual_handle *real_stdin;
 static void ansi_stdin_thread(void*);
 static map<size_t, map<size_t, uint16_t>> screen_cache;
 
-static bool getinfoline(){
-	bool ret;
-	bt_fioctl(real_stdout->handle, bt_terminal_ioctl::GetInfoLine, sizeof(ret), (char*)&ret);
-	return ret;
-}
-
-static bt_vidmode getvidmode(){
-	bt_vidmode mode;
-	bt_fioctl(real_stdout->handle, bt_terminal_ioctl::QueryScreenMode, sizeof(mode), (char*)&mode);
-	return mode;
-}
-
 static void start_event_mode(){
-	bt_fioctl(real_stdin->handle, bt_terminal_ioctl::StartEventMode, 0, NULL);
-	bt_terminal_event_mode::Enum mode = bt_terminal_event_mode::Keyboard;
-	bt_fioctl(real_stdin->handle, bt_terminal_ioctl::SetEventMode, sizeof(mode), (char*)&mode);
-}
-
-static void end_event_mode(){
-	bt_fioctl(real_stdin->handle, bt_terminal_ioctl::EndEventMode, 0, NULL);
-}
-
-static void set_scrolling(int onoff){
-	bool bonoff = !!onoff;
-	bt_fioctl(real_stdout->handle, bt_terminal_ioctl::SetScrolling, sizeof(bonoff), (char*)&bonoff);
+	bt_term_StartEventMode();
+	bt_term_SetEventMode(bt_terminal_event_mode::Keyboard);
 }
 
 static void ansi_add_input(const char *s, size_t len = 0){
@@ -96,9 +75,9 @@ static char ansi_getchar(){
 }
 
 static void gotoxy(int c, int r){
-	bt_vidmode mode = getvidmode();
+	bt_vidmode mode = bt_term_QueryScreenMode();
 	if(!mode.textmode) return;
-	if(getinfoline()) ++r;
+	if(bt_term_GetInfoLine()) ++r;
 	
 	size_t pos = (mode.width * r) + c;
 	bt_fseek(real_stdout->handle, pos, FS_Set);
@@ -106,8 +85,8 @@ static void gotoxy(int c, int r){
 
 static void clearscreen(){
 	char cc = 0x07;
-	bt_fioctl(real_stdout->handle, bt_terminal_ioctl::SetTextColours, sizeof(cc), (char*)&cc);
-	bt_fioctl(real_stdout->handle, bt_terminal_ioctl::ClearScreen, 0, NULL);
+	bt_term_SetTextColours(0x07);
+	bt_term_ClearScreen();
 }
 
 static bool cache_match(size_t row, size_t col, uint16_t ch){
@@ -191,8 +170,7 @@ static uint16_t encode_value(const TMTCHAR &t){
 
 static void write_screen(size_t c, size_t r, const vector<uint16_t> &chars){
 	if(chars.empty()) return;
-	uint8_t cc;
-	bt_fioctl(real_stdout->handle, bt_terminal_ioctl::GetTextColours, sizeof(cc), (char*)&cc);
+	uint8_t cc = bt_term_GetTextColours();
 	
 	uint8_t a = chars[0] >> 8;
 	size_t cstart = 0;
@@ -206,14 +184,14 @@ static void write_screen(size_t c, size_t r, const vector<uint16_t> &chars){
 				cs += ch;
 			}
 			gotoxy(c + cstart, r);
-			bt_fioctl(real_stdout->handle, bt_terminal_ioctl::SetTextColours, sizeof(a), (char*)&a);
+			bt_term_SetTextColours(a);
 			bt_fwrite(real_stdout->handle, cs.length(), cs.c_str());
 			a = ca;
 			cstart = i;
 		}
 	}
 	
-	bt_fioctl(real_stdout->handle, bt_terminal_ioctl::SetTextColours, sizeof(cc), (char*)&cc);
+	bt_term_SetTextColours(cc);
 }
 
 static void callback(tmt_msg_t m, TMT *vt, const void *a, void *p){
@@ -223,11 +201,12 @@ static void callback(tmt_msg_t m, TMT *vt, const void *a, void *p){
 	switch(m){
 		case TMT_MSG_BELL:{
 			char curtitle[128];
-			bt_fioctl(real_stdout->handle, bt_terminal_ioctl::GetTitle, 128, curtitle);
+			bt_term_GetTitle(curtitle, 128);
 			string belltitle (strlen(curtitle), '*');
-			bt_fioctl(real_stdout->handle, bt_terminal_ioctl::SetTitle, belltitle.length() + 1, (char*)belltitle.c_str());
+			bt_term_SetTitle(belltitle.c_str());
 			bt_rtc_sleep(200);
-			bt_fioctl(real_stdout->handle, bt_terminal_ioctl::SetTitle, 128, curtitle);
+			bt_term_SetTitle(curtitle);
+
 		}
 		break;
 		
@@ -330,9 +309,10 @@ extern "C" void init_ansi(){
 	if(!isatty(fileno(stdout))) return;
 	real_stdout = btos_get_handle_virt(fileno(stdout));
 	real_stdin = btos_get_handle_virt(fileno(stdin));
-	bt_vidmode mode = getvidmode();
+	bt_term_stdout();
+	bt_vidmode mode = bt_term_QueryScreenMode();
 	if(!mode.textmode) return;
-	if(getinfoline()) --mode.height;
+	if(bt_term_GetInfoLine()) --mode.height;
 	TMT *tmt = tmt_open(mode.height + 1, mode.width + 1, &callback, NULL, NULL);
 	virtual_handle ansi_terminal;
 	ansi_terminal.type = HANDLE_VIRT;
@@ -350,7 +330,7 @@ extern "C" void init_ansi(){
 		key_thread_id = bt_new_thread(&ansi_stdin_thread, NULL, keythread_stack + thread_stack_size);
 		while(!key_thread_ready) bt_yield();
 	}
-	set_scrolling(false);
+	bt_term_SetScrolling(false);
 	ansi_on = true;
 	if(!exit_registered){
 		atexit(&end_ansi);
@@ -361,8 +341,8 @@ extern "C" void init_ansi(){
 extern "C" void end_ansi(){
 	if(ansi_on){
 		clearscreen();
-		set_scrolling(true);
-		end_event_mode();
+		bt_term_SetScrolling(true);
+		bt_term_EndEventMode();
 		btos_set_specific_filenum_virt(fileno(stdout), *real_stdout);
 		btos_set_specific_filenum_virt(fileno(stdin), *real_stdin);
 		free(real_stdout);

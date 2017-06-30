@@ -36,7 +36,7 @@ bool bt_term_GetInfoLine(){
 }
 
 void bt_term_SetTitle(const char *title){
-	bt_fioctl(th, bt_terminal_ioctl_SetTitle, strlen(title), (char*)title);
+	bt_fioctl(th, bt_terminal_ioctl_SetTitle, strlen(title) + 1, (char*)title);
 }
 
 size_t bt_term_GetTitle(char *title, size_t size){
@@ -113,11 +113,11 @@ void bt_term_SetPointerSpeed(uint32_t speed){
 }
 
 void bt_term_NewTerminal(const char *cmd){
-	bt_fioctl(th, bt_terminal_ioctl_NewTerminal, strlen(cmd), (char*)cmd);
+	bt_fioctl(th, bt_terminal_ioctl_NewTerminal, strlen(cmd) + 1, (char*)cmd);
 }
 
-void bt_term_SwtichTerminal(uint32_t id){
-	bt_fioctl(th, bt_terminal_ioctl_SwtichTerminal, sizeof(id), (char*)&id);
+void bt_term_SwitchTerminal(uint32_t id){
+	bt_fioctl(th, bt_terminal_ioctl_SwitchTerminal, sizeof(id), (char*)&id);
 }
 
 void bt_term_RegisterGlobalShortcut(uint16_t keycode){

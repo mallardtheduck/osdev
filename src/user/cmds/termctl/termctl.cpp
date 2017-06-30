@@ -63,7 +63,7 @@ int main(int argc, char **argv){
     }
     if(cmd == "switch" && args.size() == 3){
         uint64_t id = strtoull(args[2].c_str(), NULL, 0);
-		bt_term_SwtichTerminal(id);
+		bt_term_SwitchTerminal(id);
         return 0;
     }
     

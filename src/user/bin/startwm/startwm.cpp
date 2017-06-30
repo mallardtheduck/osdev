@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <crt_support.h>
 #include <dev/terminal.h>
+#include <dev/terminal_ioctl.h>
 #include <btos/table.hpp>
 
 using namespace std;
@@ -38,9 +39,9 @@ int main(){
 	const char *args[2] = {WMPath.c_str(), ShellPath.c_str()};
 	bt_pid_t pid = bt_spawn(GDSPath.c_str(), 2, (char**)args);
 	bt_wait(pid);
-	bt_fioctl(btos_get_handle(fileno(stdout)), bt_terminal_ioctl::HidePointer, 0, NULL);
-	bool ph = true;
-	bt_fioctl(btos_get_handle(fileno(stdout)), bt_terminal_ioctl::PointerAutoHide, sizeof(ph), (char*)ph);
+	bt_term_stdout();
+	bt_term_HidePointer();
+	bt_term_PointerAutoHide(true);
 	cout << "Ending remaining GUI processes...";
 	cout.flush();
 	bool found = true;

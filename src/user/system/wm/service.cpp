@@ -3,6 +3,7 @@
 #include "client.hpp"
 
 #include <dev/terminal.h>
+#include <dev/terminal_ioctl.h>
 
 #include <map>
 #include <sstream>
@@ -19,9 +20,9 @@ void Service(bt_pid_t root_pid){
 
 	bt_handle fh=bt_fopen(stdout_path, FS_Read | FS_Write);
 	stdin_handle = fh;
-	bt_fioctl(fh, bt_terminal_ioctl::StartEventMode, 0, NULL);
-	bt_terminal_event_mode::Enum event_mode = bt_terminal_event_mode::Both;
-	bt_fioctl(fh, bt_terminal_ioctl::SetEventMode, sizeof(event_mode), (char*)&event_mode);
+	bt_term_stdout();
+	bt_term_StartEventMode();
+	bt_term_SetEventMode(bt_terminal_event_mode::Both);
 	
 	uint16_t terminal_ext_id = bt_query_extension("TERMINAL");
 	

@@ -43,7 +43,7 @@ ENUM_START(bt_terminal_ioctl)
 	ENUM_SET(bt_terminal_ioctl, SetPointerSpeed, 282),
 
     ENUM_SET(bt_terminal_ioctl, NewTerminal, 291),
-    ENUM_SET(bt_terminal_ioctl, SwtichTerminal, 293),
+    ENUM_SET(bt_terminal_ioctl, SwitchTerminal, 293),
 	ENUM_SET(bt_terminal_ioctl, RegisterGlobalShortcut, 294),
 	
 	ENUM_SET(bt_terminal_ioctl, ClearScreen, 501),

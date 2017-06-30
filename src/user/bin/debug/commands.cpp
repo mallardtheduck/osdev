@@ -3,6 +3,7 @@
 #include <dev/terminal.h>
 #include <dev/keyboard.h>
 #include <dev/terminal.h>
+#include <dev/terminal_ioctl.h>
 #include <dev/rtc.h>
 #include <crt_support.h>
 #include <cstdio>
@@ -42,15 +43,14 @@ symbol get_best_symbol(const string &name){
 
 void start_event_mode(){
 	terminal_ext_id = bt_query_extension("TERMINAL");
-	bt_handle_t th = btos_get_handle(fileno(stdout));
-	bt_fioctl(th, bt_terminal_ioctl::StartEventMode, 0, NULL);
-	bt_terminal_event_mode::Enum mode = bt_terminal_event_mode::Keyboard;
-	bt_fioctl(th, bt_terminal_ioctl::SetEventMode, sizeof(mode), (char*)&mode);
+	bt_term_stdout();
+	bt_term_StartEventMode();
+	bt_term_SetEventMode(bt_terminal_event_mode::Keyboard);
 }
 
 void end_event_mode(){
-	bt_handle_t th = btos_get_handle(fileno(stdout));
-	bt_fioctl(th, bt_terminal_ioctl::EndEventMode, 0, NULL);
+	bt_term_stdout();
+	bt_term_EndEventMode();
 }
 
 void watch_thread(void *){
