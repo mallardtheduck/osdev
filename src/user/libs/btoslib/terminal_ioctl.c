@@ -121,7 +121,7 @@ void bt_term_SwtichTerminal(uint32_t id){
 }
 
 void bt_term_RegisterGlobalShortcut(uint16_t keycode){
-	bt_fioctl(th, bt_terminal_ioclt_RegisterGlobalShortcut, sizeof(keycode), (char*)&keycode);
+	bt_fioctl(th, bt_terminal_ioctl_RegisterGlobalShortcut, sizeof(keycode), (char*)&keycode);
 }
 
 void bt_term_ClearScreen(){
@@ -135,28 +135,29 @@ size_t bt_term_GetScreenModeCount(){
 bt_vidmode bt_term_GetScreenMode(size_t id){
 	bt_vidmode ret;
 	ret.id = id;
-	bt_fioctl(th, bt_terminal_ioclt_GetScreenMode, sizeof(ret), (char*)&ret);
+	bt_fioctl(th, bt_terminal_ioctl_GetScreenMode, sizeof(ret), (char*)&ret);
 	return ret;
 }
 
 void bt_term_SetScreenMode(bt_vidmode mode){
-	bt_fioctl(th, bt_terminal_ioclt_SetScreenMode, sizeof(mode), (char*)&mode);
+	bt_fioctl(th, bt_terminal_ioctl_SetScreenMode, sizeof(mode), (char*)&mode);
 }
 
 bt_vidmode bt_term_QueryScreenMode(){
 	bt_vidmode ret;
-	bt_fioctl(th, bt_terminal_ioclt_QueryScreenMode, sizeof(ret), (char*)&ret);
+	bt_fioctl(th, bt_terminal_ioctl_QueryScreenMode, sizeof(ret), (char*)&ret);
 	return ret;
 }
 
 bt_video_palette_entry bt_term_GetPaletteEntry(size_t idx){
 	bt_video_palette_entry ret;
-	bt_fioctl(th, bt_terminal_ioclt_GetPaletteEntry, sizeof(ret), (char*)&ret);
+	ret.index = idx;
+	bt_fioctl(th, bt_terminal_ioctl_GetPaletteEntry, sizeof(ret), (char*)&ret);
 	return ret;
 }
 
 void bt_term_SetTextColours(uint8_t c){
-	bt_fioctl(th, bt_terminal_ioclt_SetTextColours, sizeof(c), (char*)&c);
+	bt_fioctl(th, bt_terminal_ioctl_SetTextColours, sizeof(c), (char*)&c);
 }
 
 uint8_t bt_term_GetTextColours(){
@@ -168,6 +169,6 @@ bool bt_term_GetScrolling(){
 }
 
 void bt_term_SetScrolling(bool s){
-	bt_fioctl(th, bt_terminal_ioclt_SetScrolling, sizeof(s), (char*)&s);
+	bt_fioctl(th, bt_terminal_ioctl_SetScrolling, sizeof(s), (char*)&s);
 }
 
