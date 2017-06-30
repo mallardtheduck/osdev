@@ -2,10 +2,14 @@
 #define _BT_ENUM_H
 
 #ifdef __cplusplus
+#define NS_BEGIN(x) namespace x{
+#define NS_END }
 #define EXTERN_C_BEGIN extern "C" {
 #define EXTERN_C_END }
 #define EXTERN_C extern "C"
 #else
+#define NS_BEGIN(x)
+#define NS_END
 #define EXTERN_C_BEGIN
 #define EXTERN_C_END
 #define EXTERN_C

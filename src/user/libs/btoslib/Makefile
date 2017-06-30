@@ -37,7 +37,6 @@ all: copy
 copy: $(LIBRARY-NAME) $(STATIC-LIBRARY-NAME)
 	mkdir -p $(DESTINATION)/lib
 	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib
-	cp -u $(STATIC-LIBRARY-NAME) $(DESTINATION)/lib
 
 -include $(CDEPFILES) $(CPPDEPFILES)
 
