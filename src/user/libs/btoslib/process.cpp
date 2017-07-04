@@ -35,4 +35,8 @@ namespace btos_api{
 		return bt_prioritize(pid, priority);
 	}
 
+	bt_pid_t Process::GetPID(){
+		return pid;
+	}
+
 }

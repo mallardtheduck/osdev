@@ -21,6 +21,7 @@ namespace btos_api{
 		int Wait();
 		bool Kill();
 		bt_priority Prioritize(bt_priority priority);
+		bt_pid_t GetPID();
 	};
 
 }
