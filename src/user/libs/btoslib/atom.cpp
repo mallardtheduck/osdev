@@ -8,7 +8,7 @@ namespace btos_api{
 		return bt_modify_atom(handle, mod, val);
 	}
 	
-	uint64_t Atom::Wait(bt_atom_compare::Enum cmp, uint64_t val){
+	uint64_t Atom::Wait(bt_atom_compare::Enum cmp, uint64_t val) const{
 		return bt_wait_atom(handle, cmp, val);
 	}
 
@@ -16,7 +16,7 @@ namespace btos_api{
 		return bt_cmpxchg_atom(handle, cmp, xchg);
 	}
 
-	uint64_t Atom::Read(){
+	uint64_t Atom::Read() const{
 		return bt_read_atom(handle);
 	}
 

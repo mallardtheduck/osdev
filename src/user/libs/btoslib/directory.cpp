@@ -8,7 +8,7 @@ namespace btos_api{
 		return bt_dwrite(handle, entry);
 	}
 
-	bt_directory_entry Directory::Read(){
+	bt_directory_entry Directory::Read() const{
 		return bt_dread(handle);
 	}
 
@@ -16,7 +16,7 @@ namespace btos_api{
 		return bt_dseek(handle, bytes, flags);
 	}
 
-	size_t Directory::Tell(){
+	size_t Directory::Tell() const{
 		return bt_dseek(handle, 0, FS_Relative);
 	}
 

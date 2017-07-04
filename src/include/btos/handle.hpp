@@ -18,8 +18,8 @@ namespace btos_api{
 		Handle(Handle &&h);
 		virtual ~Handle();
 
-		bool Query();
-		bt_handle_t GetHandle();
+		bool Query() const;
+		bt_handle_t GetHandle() const;
 	};
 
 }

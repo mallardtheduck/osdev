@@ -12,7 +12,7 @@ namespace btos_api{
 		Thread(void (*entry)(void*), void *param = NULL, size_t stacksize = 16 * 1024);
 		static Thread Current();
 
-		void Wait();
+		void Wait() const;
 		void UnBlock();
 		void Abort();
 	};

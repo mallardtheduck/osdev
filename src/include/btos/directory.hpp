@@ -11,9 +11,9 @@ namespace btos_api{
 		Directory(const char *path, uint32_t flags);
 
 		bool Write(const bt_directory_entry &entry);
-		bt_directory_entry Read();
+		bt_directory_entry Read() const;
 		size_t Seek(size_t bytes, uint32_t flags);
-		size_t Tell();
+		size_t Tell() const;
 	};
 
 }

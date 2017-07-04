@@ -10,7 +10,7 @@ namespace btos_api{
 		return Thread(bt_get_thread());
 	}
 
-	void Thread::Wait(){
+	void Thread::Wait() const{
 		bt_wait_thread(handle);
 	}
 

@@ -18,10 +18,10 @@ namespace btos_api{
 		static Process Current();
 
 		Process(bt_pid_t p);
-		int Wait();
+		int Wait() const;
 		bool Kill();
 		bt_priority Prioritize(bt_priority priority);
-		bt_pid_t GetPID();
+		bt_pid_t GetPID() const;
 	};
 
 }

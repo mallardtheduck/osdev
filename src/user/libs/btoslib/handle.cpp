@@ -17,11 +17,11 @@ namespace btos_api{
 		if(owned && handle) bt_closehandle(handle);
 	}
 
-	bool Handle::Query(){
+	bool Handle::Query() const{
 		return bt_queryhandle(handle);
 	}
 
-	bt_handle_t Handle::GetHandle(){
+	bt_handle_t Handle::GetHandle() const{
 		return handle;
 	}
 }

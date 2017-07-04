@@ -23,7 +23,7 @@ namespace btos_api{
 
 	Process::Process(bt_pid_t p) : pid(p) {}
 
-	int Process::Wait(){
+	int Process::Wait() const{
 		return bt_wait(pid);
 	}
 
@@ -35,7 +35,7 @@ namespace btos_api{
 		return bt_prioritize(pid, priority);
 	}
 
-	bt_pid_t Process::GetPID(){
+	bt_pid_t Process::GetPID() const{
 		return pid;
 	}
 

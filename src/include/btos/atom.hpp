@@ -11,9 +11,9 @@ namespace btos_api{
 	public:
 		Atom(uint64_t i);
 		uint64_t Modify(bt_atom_modify::Enum mod, uint64_t val = 0);
-		uint64_t Wait(bt_atom_compare::Enum cmp, uint64_t val = 0);
+		uint64_t Wait(bt_atom_compare::Enum cmp, uint64_t val = 0) const;
 		uint64_t CompareExchange(uint64_t cmp, uint64_t xchg);
-		uint64_t Read();
+		uint64_t Read() const;
 	};
 
 }
