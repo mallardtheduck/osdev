@@ -5,6 +5,7 @@
 #include "screen.hpp"
 #include <algorithm>
 #include <sstream>
+#include <btos/message.hpp>
 #include "fonts.hpp"
 
 using namespace std;
@@ -14,14 +15,8 @@ static uint64_t surfaceCounter = 0;
 
 static map<bt_pid_t, shared_ptr<Client>> allClients;
 
-template<typename T> static void SendReply(const bt_msg_header &msg, const T &content) {
-	bt_msg_header reply;
-	reply.to = msg.from;
-	reply.reply_id = msg.id;
-	reply.flags = bt_msg_flags::Reply;
-	reply.length = sizeof(content);
-	reply.content = (void*)&content;
-	bt_send(reply);
+template<typename T> static void SendReply(const Message &msg, const T &content) {
+	msg.SendReply(content);
 }
 
 Client::Client() {
@@ -30,11 +25,11 @@ Client::Client() {
 Client::~Client() {
 }
 
-void Client::ProcessMessage(bt_msg_header msg) {
+void Client::ProcessMessage(const Message &msg) {
 	/*stringstream d;
 	d << "GDS: Message type: " << msg.type << " from: " << msg.from << endl;
 	bt_zero(d.str().c_str());*/
-	switch(msg.type) {
+	switch(msg.Type()) {
 		case gds_MsgType::Info:
 			gds_Info info;
 			info.clientCount = 0;
@@ -42,9 +37,8 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			info.version = 0;
 			SendReply(msg, info);
 			break;
-		case gds_MsgType::NewSurface:
-			gds_SurfaceInfo s_info;
-			bt_msg_content(&msg, (void*)&s_info, sizeof(s_info));
+		case gds_MsgType::NewSurface:{
+			gds_SurfaceInfo s_info = msg.Content<gds_SurfaceInfo>();
 			Surface *newsurf;
 			newsurf = NULL;
 			switch(s_info.type) {
@@ -70,15 +64,16 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			}
 			SendReply(msg, s_info);
 			break;
-		case gds_MsgType::DeleteSurface:
+		}
+		case gds_MsgType::DeleteSurface:{
 			if(currentSurface) {
 				surfaces.erase(currentSurface);
 				currentSurface.reset();
 			}
 			break;
-		case gds_MsgType::SelectSurface:
-			uint64_t select_id;
-			bt_msg_content(&msg, (void*)&select_id, sizeof(select_id));
+		}
+		case gds_MsgType::SelectSurface:{
+			uint64_t select_id = msg.Content<uint64_t>();
 			try {
 				currentSurface = allSurfaces.at(select_id).lock();
 				if(!currentSurface) allSurfaces.erase(select_id);
@@ -93,34 +88,34 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			}
 			SendReply(msg, select_id);
 			break;
-		case gds_MsgType::AddDrawingOp:
+		}
+		case gds_MsgType::AddDrawingOp:{
 			if(currentSurface) {
-				gds_DrawingOp op;
-				bt_msg_content(&msg, (void*)&op, sizeof(op));
+				gds_DrawingOp op = msg.Content<gds_DrawingOp>();
 				size_t op_id = currentSurface->AddOperation(op);
 				SendReply(msg, op_id);
 			} else {
 				SendReply(msg, (size_t)0);
 			}
 			break;
+		}
 		case gds_MsgType::RemoveDrawingOp:
 			if(currentSurface) {
-				size_t op_id = 0;
-				bt_msg_content(&msg, (void*)op_id, sizeof(op_id));
+				size_t op_id = msg.Content<size_t>();
 				currentSurface->RemoveOperation(op_id);
 			}
 			break;
-		case gds_MsgType::GetDrawingOp:
+		case gds_MsgType::GetDrawingOp:{
 			gds_DrawingOp ret_op;
 			ret_op.type = gds_DrawingOpType::None;
 			if(currentSurface) {
-				size_t op_id = 0;
-				bt_msg_content(&msg, (void*)op_id, sizeof(op_id));
+				size_t op_id = msg.Content<size_t>();
 				ret_op = currentSurface->GetOperation(op_id);
 			}
 			SendReply(msg, ret_op);
 			break;
-		case gds_MsgType::SurfaceInfo:
+		}
+		case gds_MsgType::SurfaceInfo:{
 			gds_SurfaceInfo ret_s_info;
 			ret_s_info.type = gds_SurfaceType::None;
 			if(currentSurface) {
@@ -133,62 +128,64 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			}
 			SendReply(msg, ret_s_info);
 			break;
-		case gds_MsgType::SetScale:
+		}
+		case gds_MsgType::SetScale:{
 			if(currentSurface) {
-				uint32_t newscale;
-				bt_msg_content(&msg, (void*)&newscale, sizeof(newscale));
+				uint32_t newscale = msg.Content<uint32_t>();
 				currentSurface->SetScale(newscale);
 			}
 			break;
-		case gds_MsgType::GetColour:
+		}
+		case gds_MsgType::GetColour:{
 			if(currentSurface) {
-				gds_TrueColour truecol;
-				bt_msg_content(&msg, (void*)&truecol, sizeof(truecol));
+				gds_TrueColour truecol = msg.Content<gds_TrueColour>();
 				uint32_t col = currentSurface->GetColour(truecol.r, truecol.g, truecol.b, truecol.a);
 				SendReply(msg, col);
 			} else {
 				SendReply(msg, (uint32_t)0);
 			}
 			break;
-		case gds_MsgType::SetOpParameters:
+		}
+		case gds_MsgType::SetOpParameters:{
 			if(currentSurface){
-				shared_ptr<gds_OpParameters> params((gds_OpParameters*)new char[msg.length+1]());
-				((char*)(params.get()))[msg.length] = '\0';
-				bt_msg_content(&msg, (void*)params.get(), msg.length);
+				shared_ptr<gds_OpParameters> params((gds_OpParameters*)new char[msg.Length()+1]());
+				((char*)(params.get()))[msg.Length()] = '\0';
+				bt_msg_header head = msg.Header();
+				bt_msg_content(&head, (void*)params.get(), msg.Length());
 				currentSurface->SetOpParameters(params);
 			}
 			break;
-		case gds_MsgType::SelectScreen:
+		}
+		case gds_MsgType::SelectScreen:{
 			currentSurface = GetScreen();
 			break;
-		case gds_MsgType::UpdateScreen:
-			gds_ScreenUpdateRect screen_rect;
-			bt_msg_content(&msg, (void*)&screen_rect, sizeof(screen_rect));
+		}
+		case gds_MsgType::UpdateScreen:{
+			gds_ScreenUpdateRect screen_rect = msg.Content<gds_ScreenUpdateRect>();
 			GetScreen()->UpdateScreen(screen_rect.x, screen_rect.y, screen_rect.w, screen_rect.h);
 			break;
-		case gds_MsgType::SetScreenMode:
-			bt_vidmode mode;
-			bt_msg_content(&msg, (void*)&mode, sizeof(mode));
+		}
+		case gds_MsgType::SetScreenMode:{
+			bt_vidmode mode = msg.Content<bt_vidmode>();
 			GetScreen()->SetMode(mode.width, mode.height, mode.bpp);
 			break;
-		case gds_MsgType::SetCursor: {
-				gds_CursorInfo cinfo;
-				bt_msg_content(&msg, (void*)&cinfo, sizeof(cinfo));
+		}
+		case gds_MsgType::SetCursor:{
+				gds_CursorInfo cinfo = msg.Content<gds_CursorInfo>();
 				shared_ptr<Surface> cur_surface = allSurfaces[cinfo.surfaceId].lock();
 				if(cur_surface) {
 					GetScreen()->SetCursorImage(*cur_surface->Render(GetScreen()->GetScale()), cinfo.hotx, cinfo.hoty);
 				}
 			}
 			break;
-		case gds_MsgType::CursorVisibility:
-			bool cur_visible;
-			bt_msg_content(&msg, (void*)&cur_visible, sizeof(cur_visible));
+		case gds_MsgType::CursorVisibility:{
+			bool cur_visible = msg.Content<bool>();
 			if(cur_visible) GetScreen()->ShowCursor();
 			else GetScreen()->HideCursor();
 			break;
+		}
 		case gds_MsgType::GetFontID:{
-				gds_FontRequest req;
-				bt_msg_content(&msg, (void*)&req, sizeof(req));
+				gds_FontRequest req = msg.Content<gds_FontRequest>();
 				shared_ptr<gds_FontInfo> f = GetFontManager()->GetFont(req.name, (gds_FontStyle::Enum)req.fontStyle);
 				if(f){
 					SendReply(msg, f->fontID);
@@ -198,8 +195,7 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			}
 			break;
 		case gds_MsgType::GetFontInfo:{
-				uint32_t fontID;
-				bt_msg_content(&msg, (void*)&fontID, sizeof(fontID));
+				uint32_t fontID = msg.Content<uint32_t>();
 				shared_ptr<gds_FontInfo> f = GetFontManager()->GetFont(fontID);
 				if(f){
 					SendReply(msg, *f);
@@ -209,8 +205,7 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			}
 			break;
 		case gds_MsgType::GetGlyphInfo:{
-				gds_GlyphInfo_Request req;
-				bt_msg_content(&msg, (void*)&req, sizeof(req));
+				gds_GlyphInfo_Request req = msg.Content<gds_GlyphInfo_Request>();
 				gds_GlyphInfo info = GetFontManager()->GetGlyphInfo(req.fontID, req.size, req.ch);
 				SendReply(msg, info);
 			}
@@ -222,16 +217,17 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			break;
 		case gds_MsgType::MultiDrawingOps:{
 			if(currentSurface){
-				gds_MultiOps *mops = (gds_MultiOps *)malloc(msg.length);
-				bt_msg_content(&msg, (void*)mops, msg.length);
+				gds_MultiOps *mops = (gds_MultiOps *)malloc(msg.Length());
+				bt_msg_header head = msg.Header();
+				bt_msg_content(&head, (void*)mops, msg.Length());
 				if(mops->count <= (BT_MSG_MAX - sizeof(gds_MultiOps)) / sizeof(gds_DrawingOp)){
 					uint32_t *ids = new uint32_t[mops->count];
 					for(size_t i = 0; i < mops->count; ++i){
 						ids[i] = currentSurface->AddOperation(mops->ops[i]);
 					}
 					bt_msg_header reply;
-					reply.to = msg.from;
-					reply.reply_id = msg.id;
+					reply.to = msg.From();
+					reply.reply_id = msg.ID();
 					reply.flags = bt_msg_flags::Reply;
 					reply.length = mops->count * sizeof(uint32_t);
 					reply.content = (void*)ids;
@@ -243,8 +239,7 @@ void Client::ProcessMessage(bt_msg_header msg) {
 			break;
 		case gds_MsgType::ReorderOp:{
 				if(currentSurface){
-					gds_ReorderOp rop;
-					bt_msg_content(&msg, (void*)&rop, sizeof(rop));
+					gds_ReorderOp rop = msg.Content<gds_ReorderOp>();
 					currentSurface->ReorderOp(rop.op, rop.ref, rop.mode);
 				}			
 			}
@@ -256,28 +251,27 @@ void Client::ProcessMessage(bt_msg_header msg) {
 
 void Service(bt_pid_t root_pid) {
 	bt_subscribe(bt_kernel_messages::ProcessEnd);
-	bt_msg_header msg = bt_recv(true);
+	Message msg = Message::Recieve();
 	while(true) {
-		if(msg.from == 0 && msg.source == 0 && msg.type == bt_kernel_messages::ProcessEnd) {
-			bt_pid_t pid = 0;
-			bt_msg_content(&msg, (void*)&pid, sizeof(pid));
+		if(msg.From() == 0 && msg.Source() == 0 && msg.Type() == bt_kernel_messages::ProcessEnd) {
+			bt_pid_t pid = msg.Content<bt_pid_t>();
 			stringstream ss;
 			ss << "GDS: PID: " << pid << " terminated." << endl;
 			bt_zero(ss.str().c_str());
 			allClients.erase(pid);
 			if(pid == root_pid) return;
 		} else {
-			if(allClients.find(msg.from) == allClients.end()) {
+			if(allClients.find(msg.From()) == allClients.end()) {
 				Client *newclient = new Client();
 				if(newclient) {
 					shared_ptr<Client> ptr(newclient);
-					allClients.insert(pair<bt_pid_t, shared_ptr<Client>>(msg.from, ptr));
+					allClients.insert(pair<bt_pid_t, shared_ptr<Client>>(msg.From(), ptr));
 				}
 			}
 			try {
-				allClients.at(msg.from)->ProcessMessage(msg);
+				allClients.at(msg.From())->ProcessMessage(msg);
 			} catch(out_of_range&) {}
 		}
-		bt_next_msg(&msg);
+		msg.Next();
 	}
 }

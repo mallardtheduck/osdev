@@ -9,6 +9,10 @@
 
 extern std::map<uint64_t, std::weak_ptr<Surface>> allSurfaces;
 
+namespace btos_api{
+	class Message;
+}
+
 class Client {
 private:
 	std::set<std::shared_ptr<Surface>> surfaces;
@@ -17,7 +21,7 @@ public:
 	Client();
 	~Client();
 	
-	void ProcessMessage(bt_msg_header msg);
+	void ProcessMessage(const Message &msg);
 };
 
 void Service(bt_pid_t root_pid);

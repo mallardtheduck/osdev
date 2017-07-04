@@ -59,8 +59,8 @@ Screen::Screen() : BitmapSurface::BitmapSurface(1, 1, true){
 	bt_getenv("STDOUT", stdout_path, BT_MAX_PATH);
 
 	fh=bt_fopen(stdout_path, FS_Read | FS_Write);
+	bt_term_handle(fh);
 	bt_term_SetTerminalMode(bt_terminal_mode::Video);
-	bt_term_stdout();
 
 	buffer=NULL;
 	buffersize=0;

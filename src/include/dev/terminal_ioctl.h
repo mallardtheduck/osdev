@@ -33,7 +33,7 @@ EXTERN_C uint32_t bt_term_GetPointerSpeed();
 EXTERN_C void bt_term_SetPointerSpeed(uint32_t speed);
 
 EXTERN_C void bt_term_NewTerminal(const char *cmd);
-EXTERN_C void bt_term_SwitchTerminal(uint32_t id);
+EXTERN_C void bt_term_SwitchTerminal(uint64_t id);
 EXTERN_C void bt_term_RegisterGlobalShortcut(uint16_t keycode);
 
 EXTERN_C void bt_term_ClearScreen();

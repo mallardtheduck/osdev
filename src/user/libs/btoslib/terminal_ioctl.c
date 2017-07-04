@@ -116,7 +116,7 @@ void bt_term_NewTerminal(const char *cmd){
 	bt_fioctl(th, bt_terminal_ioctl_NewTerminal, strlen(cmd) + 1, (char*)cmd);
 }
 
-void bt_term_SwitchTerminal(uint32_t id){
+void bt_term_SwitchTerminal(uint64_t id){
 	bt_fioctl(th, bt_terminal_ioctl_SwitchTerminal, sizeof(id), (char*)&id);
 }
 
