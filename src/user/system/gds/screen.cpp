@@ -71,7 +71,7 @@ Screen::Screen() : BitmapSurface::BitmapSurface(1, 1, true){
 
 Screen::~Screen(){
 	QueueUpdate(0, 0, 0, false);
-	bt_wait_thread(update_thread);
+	update_thread->Wait();
 	RestoreMode();
 	bt_fclose(fh);
 	if(buffer) delete buffer;
@@ -81,7 +81,7 @@ void Screen::RestoreMode(){
 	if(original_mode.bpp){
 		if(update_thread){
 			QueueUpdate(0, 0, 0, false);
-			bt_wait_thread(update_thread);
+			update_thread->Wait();
 		}
 		bt_term_SetScreenMode(original_mode);
 	}
@@ -209,7 +209,7 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 	if(bestmode.bpp){
 		if(update_thread){
 			QueueUpdate(0, 0, 0, false);
-			bt_wait_thread(update_thread);
+			update_thread->Wait();
 		}
 		
 		bt_term_SetScreenMode(bestmode);
@@ -243,7 +243,7 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 				}
 			}
 		}
-		update_thread = btos_create_thread(&screen_update_thread, (void*)this, thread_stack_size);
+		update_thread.reset(new Thread(&screen_update_thread, (void*)this, thread_stack_size));
 		return true;
 	}
 	return false;
