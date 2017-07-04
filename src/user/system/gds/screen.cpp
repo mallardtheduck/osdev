@@ -11,8 +11,8 @@ static const size_t thread_stack_size = (4 * 1024);
 static size_t max_syscall_items = 256;
 static bt_syscall_item syscall_items[256];
 
-void screen_update_thread(void *){
-	Screen *pthis = GetScreen().get();
+void screen_update_thread(void *p){
+	Screen *pthis = (Screen*)p;
 	bool quit = false;
 	deque<Screen::update> batch;
 	while(true){
