@@ -11,6 +11,7 @@
 #include <cstring>
 #include <memory>
 #include <btos/table.hpp>
+#include <btos/message.hpp>
 #include "dev/rtc.h"
 #include "lrucache.hpp"
 
@@ -71,36 +72,12 @@ string get_env(const string &name){
 	else return "";
 }
 
-template<typename T> void send_reply(const bt_msg_header &msg, const T &content){
-	bt_msg_header reply;
-	reply.to = msg.from;
-	reply.reply_id = msg.id;
-	reply.flags = bt_msg_flags::Reply;
-	reply.length = sizeof(content);
-	reply.content = (void*)&content;
-	bt_send(reply);
+template<typename T> void send_reply(const Message &msg, const T &content){
+	msg.SendReply(content);
 }
 
-template<typename T> void send_reply(const bt_msg_header &msg, const T *content, size_t size){
-	bt_msg_header reply;
-	reply.to = msg.from;
-	reply.reply_id = msg.id;
-	reply.flags = bt_msg_flags::Reply;
-	reply.length = size;
-	reply.content = (void*)content;
-	bt_send(reply);
-}
-
-template<typename T> T get_content(bt_msg_header &msg){
-	if(msg.length == sizeof(T)){
-		T ret;
-		bt_msg_content(&msg, &ret, sizeof(ret));
-		return ret;
-	}else{
-		DBG("TW: Message length mismatch. Expected " << sizeof(T) << " got " << msg.length << ".");
-		DBG("TW: Message type: " << msg.type << " from: " << msg.from << " (source: " << msg.source << ")");
-		return T();
-	}
+template<typename T> void send_reply(const Message &msg, const T *content, size_t size){
+	msg.SendReply((void*)content, size);
 }
 
 void kill_children(){
@@ -291,18 +268,12 @@ void mainthread(void*){
 	ready = true;
 	bt_msg_filter filter;
 	filter.flags = bt_msg_filter_flags::NonReply;
-	bt_msg_header msg = bt_recv_filtered(filter);
+	Message msg = Message::RecieveFiltered(filter);
 	size_t maxlen = 0;
-	bt_terminal_backend_operation *op = (bt_terminal_backend_operation*)new uint8_t[1];
 	bool loop = true;
 	while(loop){
-		if(msg.from == 0 && msg.source == bt_terminal_ext_id && msg.type == bt_terminal_message_type::BackendOperation){
-			if(msg.length > maxlen){
-				delete op;
-				maxlen = msg.length;
-				op = (bt_terminal_backend_operation*)new uint8_t[maxlen];
-			}
-			bt_msg_content(&msg, op, msg.length);
+		if(msg.From() == 0 && msg.Source() == bt_terminal_ext_id && msg.Type() == bt_terminal_message_type::BackendOperation){
+			bt_terminal_backend_operation *op = (bt_terminal_backend_operation*)msg.Content();
 			switch(op->type){
 				case bt_terminal_backend_operation_type::CanCreate:{
 					send_reply(msg, (bool)(refcount == 0));
@@ -335,8 +306,8 @@ void mainthread(void*){
 					break;
 				}
 				case bt_terminal_backend_operation_type::DisplayWrite:{
-					cpos += msg.length;
-					send_reply(msg, msg.length);
+					cpos += msg.Length();
+					send_reply(msg, msg.Length());
 					break;
 				}
 				case bt_terminal_backend_operation_type::IsActive:{
@@ -392,7 +363,8 @@ void mainthread(void*){
 				}
 			}
 		}else{
-			wm_Event e = WM_ParseMessage(&msg);
+			bt_msg_header head = msg.Header();
+			wm_Event e = WM_ParseMessage(&head);
 			if(e.type == wm_EventType::Close) break;
 			else if(e.type == wm_EventType::Keyboard){
 				if(terminal_handle){
@@ -403,9 +375,8 @@ void mainthread(void*){
 				}
 			}
 		}
-		bt_next_msg_filtered(&msg, filter);
+		msg.Next();
 	}
-	delete op;
 	if(renderthread){
 		endrender = true;
 		bt_modify_atom(render_counter, bt_atom_modify::Add, 1);

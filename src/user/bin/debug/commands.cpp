@@ -5,6 +5,7 @@
 #include <dev/terminal.h>
 #include <dev/terminal_ioctl.h>
 #include <dev/rtc.h>
+#include <btos/message.hpp>
 #include <crt_support.h>
 #include <cstdio>
 #include <cstdlib>
@@ -54,11 +55,10 @@ void end_event_mode(){
 }
 
 void watch_thread(void *){
-	bt_msg_header msg = bt_recv(true);
+	Message msg = Message::Recieve();
     while(true){
-        if(msg.from == 0 && msg.source == debug_ext_id) {
-            bt_debug_event_msg content;
-            bt_msg_content(&msg, (void *) &content, sizeof(content));
+        if(msg.From() == 0 && msg.Source() == debug_ext_id) {
+            bt_debug_event_msg content = msg.Content<bt_debug_event_msg>();
             if(watch_enabled && (selected_pid == 0 || content.pid == selected_pid)){
 				out_event(content);
 				if(content.event == bt_debug_event::Exception || content.event == bt_debug_event::ThreadEnd || content.event == bt_debug_event::Breakpoint){
@@ -70,21 +70,15 @@ void watch_thread(void *){
 					while(!watch_enabled) bt_rtc_sleep(100);
 				}
 			}	
-            bt_msg_header reply;
-            reply.to = 0;
-            reply.reply_id = msg.id;
-            reply.flags = bt_msg_flags::Reply;
-            reply.length = 0;
-            bt_send(reply);
-		}else if(msg.from == 0 && msg.source == terminal_ext_id){
-			bt_terminal_event event;
-			bt_msg_content(&msg, (void*)&event, sizeof(event));
+			msg.SendReply();
+		}else if(msg.From() == 0 && msg.Source() == terminal_ext_id){
+			bt_terminal_event event = msg.Content<bt_terminal_event>();
 			if(event.type == bt_terminal_event_type::Key && (event.key & KeyFlags::KeyUp) == 0){
 				cout << "Watch ended by keypress." << endl;
 				watch_enabled = false;
 			}
 		}
-		bt_next_msg(&msg);
+		msg.Next();
 	}
 }
 

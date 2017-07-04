@@ -13,6 +13,10 @@
 class Window;
 class Menu;
 
+namespace btos_api{
+	class Message;
+}
+
 class Client: public std::enable_shared_from_this<Client>{
 private:
 	bool msgPending = false;
@@ -27,7 +31,7 @@ public:
 	Client(bt_pid_t pid);
 	~Client();
 	
-	void ProcessMessage(const bt_msg_header &msg);
+	void ProcessMessage(const Message &msg);
 	void SendEvent(const wm_Event &e);
 	void SendNextEvent();
 };

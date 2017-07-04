@@ -1,4 +1,5 @@
 #include <wm/wm.h>
+#include <btos/message.hpp>
 #include "client.hpp"
 #include "windows.hpp"
 
@@ -9,20 +10,8 @@
 
 using namespace std;
 
-template<typename T> static T GetContent(const bt_msg_header &msg){
-	T ret;
-	bt_msg_content((bt_msg_header*)&msg, (void*)&ret, sizeof(ret));
-	return ret;
-}
-
-template<typename T> static void SendReply(const bt_msg_header &msg, const T &content) {
-	bt_msg_header reply;
-	reply.to = msg.from;
-	reply.reply_id = msg.id;
-	reply.flags = bt_msg_flags::Reply;
-	reply.length = sizeof(content);
-	reply.content = (void*)&content;
-	bt_send(reply);
+template<typename T> static void SendReply(const Message &msg, const T &content) {
+	msg.SendReply(content);
 }
 
 template<typename T> static void SendMessage(bt_pid_t to, wm_MessageType::Enum type, const T &content) {
@@ -44,10 +33,10 @@ Client::~Client(){
 	}
 }
 
-void Client::ProcessMessage(const bt_msg_header &msg){
-	switch(msg.type){
+void Client::ProcessMessage(const Message &msg){
+	switch(msg.Type()){
 		case wm_RequestType::SelectWindow:{
-			uint64_t id = GetContent<uint64_t>(msg);
+			uint64_t id = msg.Content<uint64_t>();
 			if(windows.find(id) != windows.end()){
 				currentWindow = windows[id];
 				SendReply(msg, id);
@@ -55,7 +44,7 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 			break;
 		}
 		case wm_RequestType::CreateWindow:{
-			wm_WindowInfo info = GetContent<wm_WindowInfo>(msg);
+			wm_WindowInfo info = msg.Content<wm_WindowInfo>();
 			shared_ptr<Window> win(new Window(info.gds_id));
 			win->SetPosition({info.x, info.y});
 			win->SetOptions(info.options);
@@ -71,7 +60,7 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 			break;
 		}
 		case wm_RequestType::DestroyWindow:{
-			uint64_t id = GetContent<uint64_t>(msg);
+			uint64_t id = msg.Content<uint64_t>();
 			if(windows.find(id) != windows.end()){
 				RemoveWindow(id);
 				if(windows[id] == currentWindow) currentWindow.reset();
@@ -99,7 +88,7 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 		}
 		case wm_RequestType::Subscribe:{
 			if(currentWindow){
-				wm_WindowInfo info = GetContent<wm_WindowInfo>(msg);
+				wm_WindowInfo info = msg.Content<wm_WindowInfo>();
 				currentWindow->Subscribe(info.subscriptions);
 			}
 			break;
@@ -112,7 +101,7 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 		}
 		case wm_RequestType::UpdateRect:{
 			if(currentWindow){
-				wm_Rect r = GetContent<wm_Rect>(msg);
+				wm_Rect r = msg.Content<wm_Rect>();
 				Rect rect = {r.x, r.y, r.w, r.h};
 				Point p = currentWindow->GetContentPosition();
 				rect = Reoriginate(rect, {-p.x, -p.y});
@@ -126,21 +115,21 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 		}
 		case wm_RequestType::MoveWindow:{
 			if(currentWindow){
-				wm_WindowInfo info = GetContent<wm_WindowInfo>(msg);
+				wm_WindowInfo info = msg.Content<wm_WindowInfo>();
 				currentWindow->SetPosition({info.x, info.y});
 			}
 			break;
 		}
 		case wm_RequestType::ChangeOptions:{
 			if(currentWindow){
-				wm_WindowInfo info = GetContent<wm_WindowInfo>(msg);
+				wm_WindowInfo info = msg.Content<wm_WindowInfo>();
 				currentWindow->SetOptions(info.options);
 			}
 			break;
 		}
 		case wm_RequestType::SetTitle:{
 			if(currentWindow){
-				wm_WindowInfo info = GetContent<wm_WindowInfo>(msg);
+				wm_WindowInfo info = msg.Content<wm_WindowInfo>();
 				currentWindow->SetTitle(info.title);
 			}
 			break;
@@ -150,7 +139,7 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 		}
 		break;
 		case wm_RequestType::SelectMenu:{
-			uint64_t id = GetContent<uint64_t>(msg);
+			uint64_t id = msg.Content<uint64_t>();
 			if(menus.find(id) != menus.end()){
 				currentMenu = menus[id];
 				SendReply(msg, id);
@@ -165,7 +154,7 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 			break;
 		}
 		case wm_RequestType::DestroyMenu:{
-			uint64_t id = GetContent<uint64_t>(msg);
+			uint64_t id = msg.Content<uint64_t>();
 			if(menus.find(id) != menus.end()){
 				if(menus[id] == currentMenu) currentMenu.reset();
 				menus.erase(id);
@@ -174,7 +163,7 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 		}
 		case wm_RequestType::AddMenuItem:{
 			if(currentMenu){
-				wm_MenuItem item = GetContent<wm_MenuItem>(msg);
+				wm_MenuItem item = msg.Content<wm_MenuItem>();
 				uint32_t itemId = currentMenu->AddMenuItem(make_shared<MenuItem>(item));
 				SendReply(msg, itemId);
 			}
@@ -182,7 +171,7 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 		}
 		case wm_RequestType::RemoveMenuItem:{
 			if(currentMenu){
-				uint32_t itemId = GetContent<uint32_t>(msg);
+				uint32_t itemId = msg.Content<uint32_t>();
 				currentMenu->RemoveMenuItem(itemId);
 			}
 			break;
@@ -197,7 +186,7 @@ void Client::ProcessMessage(const bt_msg_header &msg){
 		}
 		case wm_RequestType::ShowMenu:{
 			if(currentWindow && currentMenu){
-				wm_Rect menuPoint = GetContent<wm_Rect>(msg);
+				wm_Rect menuPoint = msg.Content<wm_Rect>();
 				Point winPoint = currentWindow->GetContentPosition();
 				OpenMenu(currentMenu, currentWindow, winPoint.x + menuPoint.x, winPoint.y + menuPoint.y);
 			}

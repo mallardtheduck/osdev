@@ -99,6 +99,10 @@ namespace btos_api{
 		bt_send(reply);
 	}
 
+	void Message::SendReply() const{
+		Message::SendReply(nullptr, 0);
+	}
+
 	void Message::Acknowledge(){
 		bt_msg_ack(&header);
 	}

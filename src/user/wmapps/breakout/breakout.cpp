@@ -2,6 +2,7 @@
 #include <wm/libwm.h>
 #include <dev/rtc.h>
 #include <iostream>
+#include <btos/message.hpp>
 #include "game.hpp"
 
 using namespace std;
@@ -22,9 +23,10 @@ int main(){
 	WM_Update();
 	bt_handle_t timer = bt_rtc_create_timer(100);
 	gamestate state = gamestate::Title;
+	Message msg = Message::Recieve();
 	while(true){
-		btos_api::bt_msg_header msg = bt_recv(true);
-		wm_Event e = WM_ParseMessage(&msg);
+		bt_msg_header head = msg.Header();
+		wm_Event e = WM_ParseMessage(&head);
 		if(e.type == wm_EventType::Close) break;
 		switch(state){
 			case gamestate::Title:{
@@ -38,7 +40,7 @@ int main(){
 				break;
 			}
 			case gamestate::GamePlay:{
-				if(msg.from == 0 && msg.source == bt_rtc_ext_id){
+				if(msg.From() == 0 && msg.Source() == bt_rtc_ext_id){
 					bt_rtc_reset_timer(timer);
 					bool end = GameStep();
 					GameDraw();
@@ -61,7 +63,7 @@ int main(){
 				break;
 			}
 		}
-		bt_msg_ack(&msg);
+		msg.Next();
 	}
     return 0;
 }

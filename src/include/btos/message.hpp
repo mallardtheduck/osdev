@@ -43,6 +43,7 @@ namespace btos_api{
 		}
 
 		void SendReply(void *c, size_t size) const;
+		void SendReply() const;
 		
 		template<typename T> void SendReply(T c) const{
 			SendReply(reinterpret_cast<void*>(&c), sizeof(c));
