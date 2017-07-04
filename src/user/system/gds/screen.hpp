@@ -4,6 +4,7 @@
 #include "gds.hpp"
 #include "bitmap_surface.hpp"
 #include <deque>
+#include <btos/atom.hpp>
 
 class Screen : public BitmapSurface{
 private:
@@ -20,7 +21,7 @@ private:
 	bool cursor_on;
 	bt_terminal_pointer_bitmap cursor_bmp_info;
 	bt_handle_t update_thread = 0;
-	bt_handle_t sync_atom;
+	Atom sync_atom = 0;
 	bt_handle_t update_q_lock;
 	std::deque<update> update_q;
 	bool pixel_conversion_required;

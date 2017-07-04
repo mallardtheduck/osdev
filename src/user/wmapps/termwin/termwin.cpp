@@ -12,6 +12,7 @@
 #include <memory>
 #include <btos/table.hpp>
 #include <btos/message.hpp>
+#include <btos/atom.hpp>
 #include "dev/rtc.h"
 #include "lrucache.hpp"
 
@@ -40,12 +41,13 @@ static uint8_t tempbuffer[buffer_size];
 static const size_t thread_stack_size = 16 * 1024;
 static bt_handle_t terminal_handle = 0;
 static volatile bool ready = false;
-static bt_handle_t render_counter;
 static bt_handle_t renderthread = 0;
 static volatile bool endrender = false;
 static size_t curpos;
 static uint64_t surf;
 static size_t lpos = SIZE_MAX;
+
+Atom render_counter = 0;
 
 struct glyph_holder{
 	uint64_t gds_id;
@@ -189,7 +191,7 @@ void render_terminal_thread(){
 	if(!terminal_handle) return;
 	uint64_t render_counted = 0;
 	while(true){
-		render_counted = bt_wait_atom(render_counter, bt_atom_compare::NotEqual, render_counted);
+		render_counted = render_counter.Wait(bt_atom_compare::NotEqual, render_counted);
 		if(endrender) return;
 		bt_terminal_read_buffer(terminal_handle, buffer_size, tempbuffer);
 		static char ltitle[WM_TITLE_MAX] = {0};
@@ -256,7 +258,7 @@ void render_terminal(){
 	if(!renderthread) renderthread = btos_create_thread(&renderthread_start, NULL, thread_stack_size);
 	curpos = bt_terminal_get_pos(terminal_handle);
 	DBG("TW: rt!");
-	bt_modify_atom(render_counter, bt_atom_modify::Add, 1);
+	render_counter.Modify(bt_atom_modify::Add, 1);
 }
 
 void mainthread(void*){
@@ -379,7 +381,7 @@ void mainthread(void*){
 	}
 	if(renderthread){
 		endrender = true;
-		bt_modify_atom(render_counter, bt_atom_modify::Add, 1);
+		render_counter.Modify(bt_atom_modify::Add, 1);
 		bt_wait_thread(renderthread);
 	}
 	kill_children();
@@ -392,7 +394,6 @@ int main(){
 	font_height = (info.maxH * fontSize) / info.scale;
 	DBG("TW: Scale: " << info.scale << " width: " << info.maxW << " size: " << fontSize);
 	bt_terminial_init();
-	render_counter = bt_create_atom(0);
 	bt_handle_t backend_handle = bt_terminal_create_backend();
 	bt_threadhandle thread = btos_create_thread(&mainthread, NULL, thread_stack_size);
 	while(!ready) bt_yield();
