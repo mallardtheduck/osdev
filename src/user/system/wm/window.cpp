@@ -207,16 +207,16 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 				SetVisible(false, true);
 				firstFrame = true;
 			}
-			if(!firstFrame && newpos.x == pos.x && newpos.y == pos.y) return;
-			GDS_SelectScreen();
-			Rect oldrect = GetBoundingRect();
-			DrawWindows(oldrect, 0, true);
-			GDS_Blit(gds_drag_id, 0, 0, oldrect.w, oldrect.h + GetMetric(TitleBarSize), newpos.x, newpos.y, oldrect.w, oldrect.h + GetMetric(TitleBarSize));
-			pos = newpos;
-			Rect newrect = GetBoundingRect();
-			RefreshScreen(TileRects(oldrect, newrect));
-		}else{
-			if(newpos.x == pos.x && newpos.y == pos.y) return;
+			if(firstFrame || newpos.x != pos.x || newpos.y != pos.y){
+				GDS_SelectScreen();
+				Rect oldrect = GetBoundingRect();
+				DrawWindows(oldrect, 0, true);
+				GDS_Blit(gds_drag_id, 0, 0, oldrect.w, oldrect.h + GetMetric(TitleBarSize), newpos.x, newpos.y, oldrect.w, oldrect.h + GetMetric(TitleBarSize));
+				pos = newpos;
+				Rect newrect = GetBoundingRect();
+				RefreshScreen(TileRects(oldrect, newrect));
+			}
+		}else if(newpos.x != pos.x || newpos.y != pos.y){
 			GDS_SelectScreen();
 			DrawAndRefreshRectEdges(last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight(), GetMetric(BorderWidth));
 			if(HasBorder()) DrawBorder(newpos.x, newpos.y, GetWidth(), GetHeight());

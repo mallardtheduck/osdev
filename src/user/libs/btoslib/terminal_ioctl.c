@@ -74,7 +74,7 @@ void bt_term_SetPointerBitmap(bt_terminal_pointer_bitmap *bitmap){
 
 bt_terminal_pointer_info bt_term_GetPointerInfo(){
 	bt_terminal_pointer_info ret;
-	bt_fioctl(th, bt_terminal_ioctl_GetEcho, sizeof(ret), (char*)&ret);
+	bt_fioctl(th, bt_terminal_ioctl_GetPointerInfo, sizeof(ret), (char*)&ret);
 	return ret;
 }
 
