@@ -191,7 +191,7 @@ void render_terminal_thread(){
 	if(!terminal_handle) return;
 	uint64_t render_counted = 0;
 	while(true){
-		render_counted = render_counter.Wait(bt_atom_compare::NotEqual, render_counted);
+		render_counted = render_counter.WaitFor(AtomValue != render_counted);
 		if(endrender) return;
 		bt_terminal_read_buffer(terminal_handle, buffer_size, tempbuffer);
 		static char ltitle[WM_TITLE_MAX] = {0};
@@ -258,7 +258,7 @@ void render_terminal(){
 	if(!renderthread) renderthread = btos_create_thread(&renderthread_start, NULL, thread_stack_size);
 	curpos = bt_terminal_get_pos(terminal_handle);
 	DBG("TW: rt!");
-	render_counter.Modify(bt_atom_modify::Add, 1);
+	render_counter.Modify(AtomValue++);
 }
 
 void mainthread(void*){
@@ -381,7 +381,7 @@ void mainthread(void*){
 	}
 	if(renderthread){
 		endrender = true;
-		render_counter.Modify(bt_atom_modify::Add, 1);
+		render_counter.Modify(AtomValue++);
 		bt_wait_thread(renderthread);
 	}
 	kill_children();

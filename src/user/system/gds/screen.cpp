@@ -16,10 +16,10 @@ void screen_update_thread(void *p){
 	bool quit = false;
 	deque<Screen::update> batch;
 	while(true){
-		pthis->sync_atom.Wait(bt_atom_compare::GreaterThan, 0);
+		pthis->sync_atom.WaitFor(AtomValue > 0);
 		bt_lock(pthis->update_q_lock);
 		batch.swap(pthis->update_q);
-		pthis->sync_atom.Modify(bt_atom_modify::Set, 0);
+		pthis->sync_atom.Modify(AtomValue = 0);
 		bt_unlock(pthis->update_q_lock);
 		//DBG("GDS: Update batch size: " << batch.size());
 		bt_term_PointerFreeze();
@@ -183,7 +183,7 @@ void Screen::QueueUpdate(size_t pos, size_t size, char *data, bool hide_pointer)
 	update up = {pos, size, data, hide_pointer};
 	bt_lock(update_q_lock);
 	update_q.push_back(up);
-	sync_atom.Modify(bt_atom_modify::Add, 1);
+	sync_atom.Modify(AtomValue++);
 	bt_unlock(update_q_lock);
 }
 
