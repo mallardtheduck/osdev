@@ -4,6 +4,7 @@
 #include <vector>
 #include <fstream>
 #include <dev/terminal.h>
+#include <btos/directory.hpp>
 
 extern "C" bt_handle btos_get_handle(int fd);
 
@@ -49,5 +50,10 @@ int main(int argc, char **argv){
     std::cout << "Enter some text: ";
     getline(std::cin, input);
     std::cout << "You entered: " << input << std::endl;
+
+	Directory dir("info:/", FS_Read);
+	for(auto d : dir){
+		std::cout << "File: " << d.filename << std::endl;
+	}
 	return 0;
 }

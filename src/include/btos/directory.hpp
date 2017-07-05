@@ -14,6 +14,22 @@ namespace btos_api{
 		bt_directory_entry Read() const;
 		size_t Seek(size_t bytes, uint32_t flags);
 		size_t Tell() const;
+
+		class iterator{
+		private:
+			friend class Directory;
+			Directory *dir;
+			bt_directory_entry ent;
+		public:
+			void operator++();
+			bt_directory_entry operator*();
+
+			bool operator==(const iterator &i);
+			bool operator!=(const iterator &i);
+		};
+
+		iterator begin();
+		iterator end();
 	};
 
 }
