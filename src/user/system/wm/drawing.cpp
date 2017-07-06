@@ -204,8 +204,8 @@ void DrawBorder(Surface &surf, const Rect &r, const Rect &bounds){
 Surface DrawMenuItem(const string &text, uint32_t flags, const Surface *image, uint32_t width, bool selected){ 
 	if(!(flags & wm_MenuItemFlags::Seperator)){
 		Surface ret(gds_SurfaceType::Bitmap, width, GetMetric(MenuItemHeight));
-		if(selected) ret.Box({0, 0, width, (uint32_t)GetMetric(MenuItemHeight)}, Colour(), GetColour(ret, MenuSelectionColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		else ret.Box({0, 0, width, (uint32_t)GetMetric(MenuItemHeight)}, Colour(), GetColour(ret, MenuBackgroundColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		if(selected) ret.Box({0, 0, width, (uint32_t)GetMetric(MenuItemHeight)}, Colour(), GetColour(ret, MenuSelectionColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		else ret.Box({0, 0, width, (uint32_t)GetMetric(MenuItemHeight)}, Colour(), GetColour(ret, MenuBackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		int32_t lpos = GetMetric(MenuItemMargin);
 		if(image){
 			gds_SurfaceInfo image_info = image->Info();

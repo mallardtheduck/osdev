@@ -28,7 +28,7 @@ void Window::Draw(bool active, bool drawContent, shared_ptr<Surface> target){
 		pos.x = 0; pos.y = 0;
 	}
 	this->active = active;
-	shared_ptr<Surface> surf = target ? target : make_shared<Surface>(Screen::Get());
+	Surface *surf = target ? target.get() : &Screen;
 	if(drawContent) surf->Blit(*content, {0, 0, gds_info.w, gds_info.h}, {pos.x + GetContentOffset().x, pos.y + GetContentOffset().y, gds_info.w, gds_info.h});
 	RefreshTitleBar();
 	if(HasTitleBar()) surf->Blit(*titleImage, {0, 0, gds_titleinfo.w, gds_titleinfo.h}, {pos.x, pos.y, gds_titleinfo.w, gds_titleinfo.h});
@@ -38,23 +38,22 @@ void Window::Draw(bool active, bool drawContent, shared_ptr<Surface> target){
 
 void Window::Draw(bool active, const Rect &r){
 	this->active = active;
-	Screen screen = Screen::Get();
 	Point cpos = GetContentPosition();
 	bool drew = false;
 	if(Overlaps(r, {cpos.x, cpos.y, gds_info.w, gds_info.h})){
 		Rect contentDst = {max(r.x, cpos.x), max(r.y, cpos.y), min((cpos.x + gds_info.w), (r.x + r.w)) - max(r.x, cpos.x), min((cpos.y + gds_info.h), (r.y + r.h)) - max(r.y, cpos.y)};
 		Rect contentSrc = Reoriginate(contentDst, {cpos.x, cpos.y});
-		screen.Blit(*content, contentSrc, contentDst);
+		Screen.Blit(*content, contentSrc, contentDst);
 		drew = true;
 	}
 	RefreshTitleBar();
 	if(Overlaps(r, {pos.x, pos.y, gds_titleinfo.w, gds_titleinfo.h})){
 		Rect titleDst = {max(r.x, pos.x), max(r.y, pos.y), min((pos.x + gds_titleinfo.w), (r.x + r.w)) - max(r.x, pos.x), min((pos.y + gds_titleinfo.h), (r.y + r.h)) - max(r.y, pos.y)};
 		Rect titleSrc = Reoriginate(titleDst, {pos.x, pos. y});
-		if(HasTitleBar()) screen.Blit(*titleImage, titleSrc, titleDst);
+		if(HasTitleBar()) Screen.Blit(*titleImage, titleSrc, titleDst);
 		drew = true;
 	}
-	if(HasBorder()) DrawBorder(screen, {pos, GetWidth(), GetHeight()}, r);
+	if(HasBorder()) DrawBorder(Screen, {pos, GetWidth(), GetHeight()}, r);
 	last_active = active;
 	if(!drew){
 		stringstream ss;
@@ -193,7 +192,6 @@ void RefreshRectEdges(const Rect &r, uint32_t lineWidth){
 
 void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 	if(dragging){
-		Screen screen = Screen::Get();
 		Point curpos = Point(pevent.x, pevent.y);
 		Point newpos = {curpos.x - dragoffset.x, curpos.y - dragoffset.y};
 		if(GetMetric(FullWindowDrag)){
@@ -207,14 +205,14 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			if(firstFrame || newpos.x != pos.x || newpos.y != pos.y){
 				Rect oldrect = GetBoundingRect();
 				DrawWindows(oldrect, 0, true);
-				screen.Blit(*dragImage, {0, 0, oldrect.w, oldrect.h + GetMetric(TitleBarSize)}, {newpos.x, newpos.y, oldrect.w, oldrect.h + GetMetric(TitleBarSize)});
+				Screen.Blit(*dragImage, {0, 0, oldrect.w, oldrect.h + GetMetric(TitleBarSize)}, {newpos.x, newpos.y, oldrect.w, oldrect.h + GetMetric(TitleBarSize)});
 				pos = newpos;
 				Rect newrect = GetBoundingRect();
 				RefreshScreen(TileRects(oldrect, newrect));
 			}
 		}else if(newpos.x != pos.x || newpos.y != pos.y){
 			DrawAndRefreshRectEdges({last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight()}, GetMetric(BorderWidth));
-			if(HasBorder()) DrawBorder(screen, {newpos.x, newpos.y, GetWidth(), GetHeight()});
+			if(HasBorder()) DrawBorder(Screen, {newpos.x, newpos.y, GetWidth(), GetHeight()});
 			last_drag_pos = newpos;
 			RefreshRectEdges({last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight()}, GetMetric(BorderWidth));
 		}
@@ -286,7 +284,6 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 
 void Window::DrawGrabbed(const Rect &r){
 	if(!Overlaps(r, GetBoundingRect())) return;
-	Screen screen = Screen::Get();
 	if(GetMetric(FullWindowDrag)){
 		Rect dstRect = Intersection(r, GetBoundingRect());
 		Rect srcRect = Reoriginate(dstRect, pos);
@@ -297,10 +294,10 @@ void Window::DrawGrabbed(const Rect &r){
 			Draw(active, true, dragImage);
 			SetVisible(false, false);
 		}
-		screen.Blit(*dragImage, {srcRect.x, srcRect.y, srcRect.w, srcRect.h}, {dstRect.x, dstRect.y, dstRect.w, dstRect.h});
+		Screen.Blit(*dragImage, {srcRect.x, srcRect.y, srcRect.w, srcRect.h}, {dstRect.x, dstRect.y, dstRect.w, dstRect.h});
 		RefreshScreen(r);
 	}else{
-		DrawBorder(screen, {pos.x, pos.y, gds_info.w + GetWidth(), GetHeight()});
+		DrawBorder(Screen, {pos.x, pos.y, gds_info.w + GetWidth(), GetHeight()});
 		RefreshRectEdges({pos.x, pos.y, GetWidth(), GetHeight()}, GetMetric(BorderWidth));
 	}
 }
@@ -375,8 +372,7 @@ void Window::RefreshTitleBar(bool force){
 	if(UpdateTitleBar(force)){
 		Rect r = GetBoundingRect();
 		r.h = GetMetric(TitleBarSize);
-		Screen screen = Screen::Get();
-		DrawBorder(screen, {pos, GetWidth(), GetHeight()}, r);
+		DrawBorder(Screen, {pos, GetWidth(), GetHeight()}, r);
 	}
 }
 

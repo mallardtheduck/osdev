@@ -27,10 +27,9 @@ static weak_ptr<Window> grabbedWindow;
 static uint64_t id_counter;
 static vector<weak_ptr<Window>> sortedWindows;
 static Colour backgroundColour;
-static Screen screen = Screen::Get();
 
 void InitWindws(){
-	backgroundColour = GetColour(screen, BackgroundColour);
+	backgroundColour = GetColour(Screen, BackgroundColour);
 }
 
 template <typename M, typename V> 

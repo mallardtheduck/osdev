@@ -102,7 +102,7 @@ uint32_t Menu::EffectiveFlags(uint32_t menuFlags, MenuActionType action){
 }
 
 bool Menu::Draw(Point p, const Point &cursor, bool force){
-	if(!p.x && !p.y){
+	if(!p){
 		p = lp;
 	}
 	uint32_t nsel = lsel;
@@ -111,7 +111,6 @@ bool Menu::Draw(Point p, const Point &cursor, bool force){
 		if(!force && lsel == nsel) return false;
 	}
 	DBG("WM: Drawing menu at (" << p.x << ", " << p.y << ")");
-	Screen screen = Screen::Get();
 	int32_t cy = p.y;
 	uint32_t width = 0;
 	for(auto &i : items){
@@ -119,14 +118,13 @@ bool Menu::Draw(Point p, const Point &cursor, bool force){
 		if(w > width) width = w;
 	}
 	for(auto &i : items){
-		bool selected = false;
+		bool selected = (i.first == nsel);
 		uint32_t height = i.second->GetHeight();
-		if(i.first == nsel) selected = true;
 		auto surf = i.second->Draw(width, selected, EffectiveFlags(i.second->GetFlags(), i.second->GetAction()));
-		screen.Blit(*surf, {0, 0, width, height}, {p.x, cy, width, height});
+		Screen.Blit(*surf, {0, 0, width, height}, {p.x, cy, width, height});
 		cy += height;
 	}
-	DrawBorder(screen, {p.x, p.y, width, (uint32_t)cy - p.y});
+	DrawBorder(Screen, {p.x, p.y, width, (uint32_t)cy - p.y});
 	lp = p;
 	lsel = nsel;
 	open = true;

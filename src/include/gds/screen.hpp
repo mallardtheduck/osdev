@@ -8,12 +8,12 @@
 namespace btos_api{
 namespace gds{
 
-	class Screen : public Surface{
+	class ScreenClass : public Surface{
 	private:
-		Screen() {}
+		ScreenClass() {}
 	public:
-		static Screen Get();
-		void Select();
+		static ScreenClass Get();
+		void Select() const override;
 
 		void Update();
 		void Update(const Rect &r);
@@ -23,6 +23,8 @@ namespace gds{
 		void SetCursorVisibility(bool state);
 		bool GetCursorVisibility();
 	};
+	
+	extern ScreenClass Screen;
 
 }
 }
