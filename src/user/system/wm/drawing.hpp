@@ -2,6 +2,8 @@
 #define DRAWING_HPP
 
 #include <string>
+#include <gds/surface.hpp>
+#include <memory>
 #include "rect.hpp"
 
 void InitDrawing();
@@ -19,20 +21,20 @@ enum class WindowArea{
 
 class TitleBar{
 private:
-	uint64_t gds_inactive_title = 0;
-	uint64_t gds_active_title = 0;
+	std::shared_ptr<gds::Surface> gds_inactive_title;
+	std::shared_ptr<gds::Surface> gds_active_title = 0;
 	std::string title = "";
 	uint32_t width = 0;
 	WindowArea pressed = WindowArea::None;
 	uint32_t window_options = 0;
 	
 public:
-	uint64_t Draw(uint32_t w, const std::string &t, bool active, uint32_t options, WindowArea p = WindowArea::None);
+	std::shared_ptr<gds::Surface> Draw(uint32_t w, const std::string &t, bool active, uint32_t options, WindowArea p = WindowArea::None);
 	
 	~TitleBar();
 };
 
-void DrawBorder(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const Rect &bounds = {0, 0, INT32_MAX, INT32_MAX});
-uint64_t DrawMenuItem(const std::string &text, uint32_t flags, uint64_t image, uint32_t width, bool selected);
+void DrawBorder(gds::Surface &surf, const gds::Rect &r, const gds::Rect &bounds = {0, 0, INT32_MAX, INT32_MAX});
+gds::Surface DrawMenuItem(const std::string &text, uint32_t flags, const gds::Surface *image, uint32_t width, bool selected);
 
 #endif

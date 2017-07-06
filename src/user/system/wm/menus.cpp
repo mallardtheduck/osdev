@@ -4,46 +4,40 @@
 #include "windows.hpp"
 #include <gds/libgds.h>
 #include <sstream>
+#include <gds/screen.hpp>
 
 #define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
 
 using namespace std;
+using namespace gds;
 
 static vector<shared_ptr<Menu>> currentMenus;
 
 MenuItem::MenuItem(const wm_MenuItem &i) :
-	MenuItem(i.text, i.flags, GetMenu(i.childMenu), i.image, ((i.flags & wm_MenuItemFlags::ChildMenu) ? MenuActionType::ChildMenu : ((i.flags & wm_MenuItemFlags::Seperator) ? MenuActionType::None : MenuActionType::Custom)), i.actionID) {}
+	MenuItem(i.text, i.flags, GetMenu(i.childMenu), make_shared<Surface>(Surface::Wrap(i.image, false)), ((i.flags & wm_MenuItemFlags::ChildMenu) ? MenuActionType::ChildMenu : ((i.flags & wm_MenuItemFlags::Seperator) ? MenuActionType::None : MenuActionType::Custom)), i.actionID) {}
 
-MenuItem::MenuItem(const std::string t, uint32_t f, std::shared_ptr<Menu> cM, uint64_t i, MenuActionType a, uint32_t cID) :
+MenuItem::MenuItem(const std::string t, uint32_t f, std::shared_ptr<Menu> cM, shared_ptr<Surface> i, MenuActionType a, uint32_t cID) :
 	text(t), flags(f), childMenu(cM), image(i), actionType(a), customID(cID) {}
 	
 MenuItem::~MenuItem(){
 	DropCache();
 }
 void MenuItem::DropCache(){
-	if(cacheNormal){
-		GDS_SelectSurface(cacheNormal);
-		GDS_DeleteSurface();
-		cacheNormal = 0;
-	}
-	if(cacheSelected){
-		GDS_SelectSurface(cacheSelected);
-		GDS_DeleteSurface();
-		cacheSelected = 0;
-	}
+	cacheNormal.reset();
+	cacheSelected.reset();
 	cacheWidth = 0;
 }
 
-uint64_t MenuItem::Draw(uint32_t width, bool selected, uint32_t dflags){
+shared_ptr<Surface> MenuItem::Draw(uint32_t width, bool selected, uint32_t dflags){
 	if(dflags == 0) dflags = flags;
 	if(width != cacheWidth || dflags != cacheFlags) DropCache();
 	cacheWidth = width;
 	cacheFlags = dflags;
 	if(selected){
-		if(!cacheSelected) cacheSelected = DrawMenuItem(text, dflags, image, width, true);
+		if(!cacheSelected) cacheSelected = make_shared<Surface>(DrawMenuItem(text, dflags, image.get(), width, true));
 		return cacheSelected;
 	}else{
-		if(!cacheNormal) cacheNormal = DrawMenuItem(text, dflags, image, width, false);
+		if(!cacheNormal) cacheNormal = make_shared<Surface>(DrawMenuItem(text, dflags, image.get(), width, false));
 		return cacheNormal;
 	}
 }
@@ -61,8 +55,7 @@ uint32_t MenuItem::GetMinWidth(){
 		}else{
 			ret = (2 * GetMetric(MenuItemMargin));
 			if(image){
-				GDS_SelectSurface(image);
-				gds_SurfaceInfo image_info = GDS_SurfaceInfo();
+				gds_SurfaceInfo image_info = image->Info();
 				ret += image_info.w;
 				ret += GetMetric(MenuItemMargin);
 			}
@@ -108,18 +101,18 @@ uint32_t Menu::EffectiveFlags(uint32_t menuFlags, MenuActionType action){
 	return menuFlags;
 }
 
-bool Menu::Draw(int32_t x, int32_t y, const Point &cursor, bool force){
-	if(!x && !y){
-		x = lx;
-		y = ly;
+bool Menu::Draw(Point p, const Point &cursor, bool force){
+	if(!p.x && !p.y){
+		p = lp;
 	}
 	uint32_t nsel = lsel;
 	if(cursor){
 		nsel = GetSelected(cursor);
 		if(!force && lsel == nsel) return false;
 	}
-	DBG("WM: Drawing menu at (" << x << ", " << y << ")");
-	int32_t cy = y;
+	DBG("WM: Drawing menu at (" << p.x << ", " << p.y << ")");
+	Screen screen = Screen::Get();
+	int32_t cy = p.y;
 	uint32_t width = 0;
 	for(auto &i : items){
 		uint32_t w = i.second->GetMinWidth();
@@ -129,21 +122,19 @@ bool Menu::Draw(int32_t x, int32_t y, const Point &cursor, bool force){
 		bool selected = false;
 		uint32_t height = i.second->GetHeight();
 		if(i.first == nsel) selected = true;
-		uint64_t surf = i.second->Draw(width, selected, EffectiveFlags(i.second->GetFlags(), i.second->GetAction()));
-		GDS_SelectScreen();
-		GDS_Blit(surf, 0, 0, width, height, x, cy, width, height);
+		auto surf = i.second->Draw(width, selected, EffectiveFlags(i.second->GetFlags(), i.second->GetAction()));
+		screen.Blit(*surf, {0, 0, width, height}, {p.x, cy, width, height});
 		cy += height;
 	}
-	DrawBorder(x, y, width, cy - y);
-	lx = x;
-	ly = y;
+	DrawBorder(screen, {p.x, p.y, width, (uint32_t)cy - p.y});
+	lp = p;
 	lsel = nsel;
 	open = true;
 	return true;
 }
 
 void Menu::Redraw(){
-	Draw(0, 0, {0, 0}, true);
+	Draw({0, 0}, {0, 0}, true);
 }
 
 uint32_t Menu::AddMenuItem(std::shared_ptr<MenuItem> i){
@@ -166,17 +157,17 @@ Rect Menu::GetBoundingRect(){
 		if(w > width) width = w;
 		height += i.second->GetHeight();
 	}
-	return {lx, ly, width, height};
+	return {lp, width, height};
 }
 
 uint32_t Menu::GetSelected(const Point &cursor){
 	Rect brect = GetBoundingRect();
 	if(!InRect(cursor, brect)) return 0;
-	int32_t cy = ly;
+	int32_t cy = lp.y;
 	for(auto &i : items){
 		uint32_t height = i.second->GetHeight();
 		if((EffectiveFlags(i.second->GetFlags(), i.second->GetAction()) & wm_MenuItemFlags::Disabled)) continue;
-		if(InRect(cursor, {lx, cy, brect.w, height})) return i.first;
+		if(InRect(cursor, {lp.x, cy, brect.w, height})) return i.first;
 		cy += height;
 	}
 	return 0;
@@ -190,8 +181,7 @@ shared_ptr<MenuItem> Menu::GetItem(uint32_t id){
 }
 
 void Menu::Reset(){
-	lx = 0;
-	ly = 0;
+	lp = {0, 0};
 	lsel = 0;
 	open = false;
 	childMenu.reset();
@@ -205,7 +195,7 @@ bool Menu::IsOpen(){
 void Menu::PointerInput(const bt_terminal_pointer_event &pevent){
 	Rect brect = GetBoundingRect();
 	if(pevent.type == bt_terminal_pointer_event_type::Move){
-		if(Draw(0, 0, {(int32_t)pevent.x, (int32_t)pevent.y})) RefreshScreen(brect);
+		if(Draw({0, 0}, {(int32_t)pevent.x, (int32_t)pevent.y})) RefreshScreen(brect);
 		DBG("WM: menuParent: " << menuParent << " lsel: " << lsel << " childMenu: " << childMenu << " IsOpen: " << (childMenu ? (int)childMenu->IsOpen() : -1));
 		if(lsel != menuParent && childMenu && childMenu->IsOpen()){
 			DBG("WM: Closing child menu.");
@@ -225,7 +215,7 @@ void Menu::PointerInput(const bt_terminal_pointer_event &pevent){
 					menuParent = 0;
 				}
 				DBG("WM: Opening child menu.");
-				OpenMenu(item->GetChildMenu(), window, brect.x + brect.w, GetTop(selId));
+				OpenMenu(item->GetChildMenu(), window, {(int32_t)(brect.x + brect.w), GetTop(selId)});
 				childMenu = item->GetChildMenu();
 				menuParent = selId;
 			}
@@ -261,7 +251,7 @@ void Menu::PointerInput(const bt_terminal_pointer_event &pevent){
 }
 
 int32_t Menu::GetTop(uint32_t item){
-	int32_t cy = ly;
+	int32_t cy = lp.y;
 	for(auto &i : items){
 		uint32_t height = i.second->GetHeight();
 		if(i.first == item) return cy;
@@ -275,7 +265,7 @@ void Menu::SetWindow(weak_ptr<Window> win){
 }
 
 Point Menu::GetPosition(){
-	return {lx, ly};
+	return lp;
 }
 
 map<uint32_t, shared_ptr<MenuItem>> Menu::GetItems(){
@@ -301,10 +291,10 @@ bool MenuPointerInput(const bt_terminal_pointer_event &pevent){
 	return handled;
 }
 
-void OpenMenu(std::shared_ptr<Menu> menu, std::weak_ptr<Window> win, uint32_t x, uint32_t y){
+void OpenMenu(std::shared_ptr<Menu> menu, std::weak_ptr<Window> win, const Point &p){
 	currentMenus.push_back(menu);
 	menu->SetWindow(win);
-	menu->Draw(x, y, {0, 0}, true);
+	menu->Draw(p, {0, 0}, true);
 	RefreshScreen(menu->GetBoundingRect());
 }
 
@@ -332,9 +322,9 @@ shared_ptr<Menu> GetDefaultWindowMenu(){
 	static shared_ptr<Menu> winMenu;
 	if(!winMenu){
 		winMenu = CreateMenu();
-		winMenu->AddMenuItem(make_shared<MenuItem>("Expand", wm_MenuItemFlags::Default, nullptr, 0, MenuActionType::Expand, 0));
-		winMenu->AddMenuItem(make_shared<MenuItem>("Hide", wm_MenuItemFlags::Default, nullptr, 0, MenuActionType::Hide, 0));
-		winMenu->AddMenuItem(make_shared<MenuItem>("Close", wm_MenuItemFlags::Default, nullptr, 0, MenuActionType::Close, 0));
+		winMenu->AddMenuItem(make_shared<MenuItem>("Expand", wm_MenuItemFlags::Default, nullptr, nullptr, MenuActionType::Expand, 0));
+		winMenu->AddMenuItem(make_shared<MenuItem>("Hide", wm_MenuItemFlags::Default, nullptr, nullptr, MenuActionType::Hide, 0));
+		winMenu->AddMenuItem(make_shared<MenuItem>("Close", wm_MenuItemFlags::Default, nullptr, nullptr, MenuActionType::Close, 0));
 	}
 	return winMenu;
 }
@@ -343,8 +333,8 @@ shared_ptr<Menu> GetWindowMenuTemplate(){
 	static shared_ptr<Menu> templateMenu;
 	if(!templateMenu){
 		templateMenu = CreateMenu();
-		templateMenu->AddMenuItem(make_shared<MenuItem>("Window", wm_MenuItemFlags::ChildMenu, GetDefaultWindowMenu(), 0, MenuActionType::ChildMenu, 0));
-		templateMenu->AddMenuItem(make_shared<MenuItem>("", wm_MenuItemFlags::Seperator, nullptr, 0, MenuActionType::None, 0));
+		templateMenu->AddMenuItem(make_shared<MenuItem>("Window", wm_MenuItemFlags::ChildMenu, GetDefaultWindowMenu(), nullptr, MenuActionType::ChildMenu, 0));
+		templateMenu->AddMenuItem(make_shared<MenuItem>("", wm_MenuItemFlags::Seperator, nullptr, nullptr, MenuActionType::None, 0));
 	}
 	return templateMenu;
 }

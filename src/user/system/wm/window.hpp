@@ -18,51 +18,51 @@ class Menu;
 class Window : public std::enable_shared_from_this<Window>{
 private:
 	std::weak_ptr<Client> owner;
-	Point pos;
+	gds::Point pos;
 	uint32_t z = 0;
-	uint64_t gds_id;
+	std::shared_ptr<gds::Surface> content;
 	gds_SurfaceInfo gds_info;
 	TitleBar titlebar;
-	uint64_t gds_title_id = 0;
+	std::shared_ptr<gds::Surface> titleImage;
 	gds_SurfaceInfo gds_titleinfo;
 	std::string title;
 	bool active = false;
 	bool last_active = false;
 	bool dragging = false;
-	Point dragoffset;
-	Point last_drag_pos = {0, 0};
-	int64_t gds_drag_id = 0;
+	gds::Point dragoffset;
+	gds::Point last_drag_pos = {0, 0};
+	std::shared_ptr<gds::Surface> dragImage;
 	WindowArea pressed = WindowArea::None;
 	uint32_t event_subs = 0;
 	uint32_t options = wm_WindowOptions::Default;
 	std::shared_ptr<Menu> windowMenu;
 	
-	WindowArea GetWindowArea(Point p);
+	WindowArea GetWindowArea(gds::Point p);
 	void RefreshTitleBar(bool force = false);
 	bool UpdateTitleBar(bool force = false);
 public:
 	uint64_t id = UINT64_MAX;
 	
-	Window(uint64_t surface_id);
+	Window(std::shared_ptr<gds::Surface> surf);
 	~Window();
 	
-	void Draw(bool active, bool content = true, uint64_t target = 0);
-	void Draw(bool active, const Rect &r);
-	void DrawGrabbed(const Rect &r);
-	void SetPosition(Point p);
-	Point GetPosition();
-	Point GetContentPosition();
+	void Draw(bool active, bool content = true, std::shared_ptr<gds::Surface> = nullptr);
+	void Draw(bool active, const gds::Rect &r);
+	void DrawGrabbed(const gds::Rect &r);
+	void SetPosition(gds::Point p);
+	gds::Point GetPosition();
+	gds::Point GetContentPosition();
 	void SetTitle(std::string title);
 	std::string GetTitle();
-	uint64_t GetSurface();
+	std::shared_ptr<gds::Surface> GetSurface();
 	
 	void SetZOrder(uint32_t zorder, bool update = true);
 	uint32_t GetZOrder();
 	
-	Rect GetBoundingRect();
+	gds::Rect GetBoundingRect();
 	uint32_t GetWidth();
 	uint32_t GetHeight();
-	Point GetContentOffset();
+	gds::Point GetContentOffset();
 	
 	bool HasTitleBar();
 	bool HasBorder();

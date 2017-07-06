@@ -3,6 +3,7 @@
 #include <gds/libgds.h>
 #include <wm/wm.h>
 #include <dev/rtc.h>
+#include <gds/screen.hpp>
 #include "window.hpp"
 #include "metrics.hpp"
 #include "drawing.hpp"
@@ -10,55 +11,50 @@
 #include "menus.hpp"
 
 using namespace std;
+using namespace gds;
 
 #define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
 
-Window::Window(uint64_t surface_id) : gds_id(surface_id){
-	GDS_SelectSurface(gds_id);
-	gds_info = GDS_SurfaceInfo();
+Window::Window(shared_ptr<Surface> c) : content(c){
+	gds_info = content->Info();
 }
 
 Window::~Window(){
-	GDS_SelectSurface(gds_id);
-	GDS_DeleteSurface();
 }
 
-void Window::Draw(bool active, bool content, uint64_t target){
+void Window::Draw(bool active, bool drawContent, shared_ptr<Surface> target){
 	Point pos = this->pos;
 	if(target){
 		pos.x = 0; pos.y = 0;
 	}
 	this->active = active;
-	if(!target) GDS_SelectScreen();
-	else GDS_SelectSurface(target);
-	if(content) GDS_Blit(gds_id, 0, 0, gds_info.w, gds_info.h, pos.x + GetContentOffset().x, pos.y + GetContentOffset().y, gds_info.w, gds_info.h);
+	shared_ptr<Surface> surf = target ? target : make_shared<Surface>(Screen::Get());
+	if(drawContent) surf->Blit(*content, {0, 0, gds_info.w, gds_info.h}, {pos.x + GetContentOffset().x, pos.y + GetContentOffset().y, gds_info.w, gds_info.h});
 	RefreshTitleBar();
-	if(!target) GDS_SelectScreen();
-	else GDS_SelectSurface(target);
-	if(HasTitleBar()) GDS_Blit(gds_title_id, 0, 0, gds_titleinfo.w, gds_titleinfo.h, pos.x, pos.y, gds_titleinfo.w, gds_titleinfo.h);
-	if(HasBorder()) DrawBorder(pos.x, pos.y, GetWidth(), GetHeight());
+	if(HasTitleBar()) surf->Blit(*titleImage, {0, 0, gds_titleinfo.w, gds_titleinfo.h}, {pos.x, pos.y, gds_titleinfo.w, gds_titleinfo.h});
+	if(HasBorder()) DrawBorder(*surf, {pos.x, pos.y, GetWidth(), GetHeight()});
 	last_active = active;
 }
 
 void Window::Draw(bool active, const Rect &r){
 	this->active = active;
-	GDS_SelectScreen();
+	Screen screen = Screen::Get();
 	Point cpos = GetContentPosition();
 	bool drew = false;
 	if(Overlaps(r, {cpos.x, cpos.y, gds_info.w, gds_info.h})){
 		Rect contentDst = {max(r.x, cpos.x), max(r.y, cpos.y), min((cpos.x + gds_info.w), (r.x + r.w)) - max(r.x, cpos.x), min((cpos.y + gds_info.h), (r.y + r.h)) - max(r.y, cpos.y)};
 		Rect contentSrc = Reoriginate(contentDst, {cpos.x, cpos.y});
-		GDS_Blit(gds_id, contentSrc.x, contentSrc.y, contentSrc.w, contentSrc.h, contentDst.x, contentDst.y, contentDst.w, contentDst.h);
+		screen.Blit(*content, contentSrc, contentDst);
 		drew = true;
 	}
 	RefreshTitleBar();
 	if(Overlaps(r, {pos.x, pos.y, gds_titleinfo.w, gds_titleinfo.h})){
 		Rect titleDst = {max(r.x, pos.x), max(r.y, pos.y), min((pos.x + gds_titleinfo.w), (r.x + r.w)) - max(r.x, pos.x), min((pos.y + gds_titleinfo.h), (r.y + r.h)) - max(r.y, pos.y)};
 		Rect titleSrc = Reoriginate(titleDst, {pos.x, pos. y});
-		if(HasTitleBar()) GDS_Blit(gds_title_id, titleSrc.x, titleSrc.y, titleSrc.w, titleSrc.h, titleDst.x, titleDst.y, titleDst.w, titleDst.h);
+		if(HasTitleBar()) screen.Blit(*titleImage, titleSrc, titleDst);
 		drew = true;
 	}
-	if(HasBorder()) DrawBorder(pos.x, pos.y, GetWidth(), GetHeight(), r);
+	if(HasBorder()) DrawBorder(screen, {pos, GetWidth(), GetHeight()}, r);
 	last_active = active;
 	if(!drew){
 		stringstream ss;
@@ -105,8 +101,8 @@ std::string Window::GetTitle(){
 	return title;
 }
 
-uint64_t Window::GetSurface(){
-	return gds_id;
+shared_ptr<Surface> Window::GetSurface(){
+	return content;
 }
 
 void Window::SetZOrder(uint32_t zorder, bool update){
@@ -181,47 +177,46 @@ void Window::KeyInput(uint32_t key){
 	}
 }
 
-void DrawAndRefreshRectEdges(int32_t x, int32_t y, uint32_t w, uint32_t h, uint32_t lineWidth){
-	if(x >= 0) DrawAndRefreshWindows({x, y, lineWidth, h});
-	if(y >= 0) DrawAndRefreshWindows({x, y, w, lineWidth});
-	DrawAndRefreshWindows({x + (int32_t)w - 1, y, lineWidth, h});
-	DrawAndRefreshWindows({x, y + (int32_t)h - 1, w, lineWidth});
+void DrawAndRefreshRectEdges(const Rect &r, uint32_t lineWidth){
+	if(r.x >= 0) DrawAndRefreshWindows({r.x, r.y, lineWidth, r.h});
+	if(r.y >= 0) DrawAndRefreshWindows({r.x, r.y, r.w, lineWidth});
+	DrawAndRefreshWindows({r.x + (int32_t)r.w - 1, r.y, lineWidth, r.h});
+	DrawAndRefreshWindows({r.x, r.y + (int32_t)r.h - 1, r.w, lineWidth});
 }
 
-void RefreshRectEdges(int32_t x, int32_t y, uint32_t w, uint32_t h, uint32_t lineWidth){
-	if(x >= 0) RefreshScreen({x, y, lineWidth, h});
-	if(y >= 0) RefreshScreen({x, y, w, lineWidth});
-	RefreshScreen({x + (int32_t)w - 1, y, lineWidth, h});
-	RefreshScreen({x, y + (int32_t)h - 1, w, lineWidth});
+void RefreshRectEdges(const Rect &r, uint32_t lineWidth){
+	if(r.x >= 0) RefreshScreen({r.x, r.y, lineWidth, r.h});
+	if(r.y >= 0) RefreshScreen({r.x, r.y, r.w, lineWidth});
+	RefreshScreen({r.x + (int32_t)r.w - 1, r.y, lineWidth, r.h});
+	RefreshScreen({r.x, r.y + (int32_t)r.h - 1, r.w, lineWidth});
 }
 
 void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 	if(dragging){
+		Screen screen = Screen::Get();
 		Point curpos = Point(pevent.x, pevent.y);
 		Point newpos = {curpos.x - dragoffset.x, curpos.y - dragoffset.y};
 		if(GetMetric(FullWindowDrag)){
 			bool firstFrame = false;
-			if(!gds_drag_id){
-				gds_drag_id = GDS_NewSurface(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h, 100, gds_info.colourType);
-				Draw(active, true, gds_drag_id);
+			if(!dragImage){
+				dragImage = make_shared<Surface>(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h, 100, gds_info.colourType);
+				Draw(active, true, dragImage);
 				SetVisible(false, true);
 				firstFrame = true;
 			}
 			if(firstFrame || newpos.x != pos.x || newpos.y != pos.y){
-				GDS_SelectScreen();
 				Rect oldrect = GetBoundingRect();
 				DrawWindows(oldrect, 0, true);
-				GDS_Blit(gds_drag_id, 0, 0, oldrect.w, oldrect.h + GetMetric(TitleBarSize), newpos.x, newpos.y, oldrect.w, oldrect.h + GetMetric(TitleBarSize));
+				screen.Blit(*dragImage, {0, 0, oldrect.w, oldrect.h + GetMetric(TitleBarSize)}, {newpos.x, newpos.y, oldrect.w, oldrect.h + GetMetric(TitleBarSize)});
 				pos = newpos;
 				Rect newrect = GetBoundingRect();
 				RefreshScreen(TileRects(oldrect, newrect));
 			}
 		}else if(newpos.x != pos.x || newpos.y != pos.y){
-			GDS_SelectScreen();
-			DrawAndRefreshRectEdges(last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight(), GetMetric(BorderWidth));
-			if(HasBorder()) DrawBorder(newpos.x, newpos.y, GetWidth(), GetHeight());
+			DrawAndRefreshRectEdges({last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight()}, GetMetric(BorderWidth));
+			if(HasBorder()) DrawBorder(screen, {newpos.x, newpos.y, GetWidth(), GetHeight()});
 			last_drag_pos = newpos;
-			RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight(), GetMetric(BorderWidth));
+			RefreshRectEdges({last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight()}, GetMetric(BorderWidth));
 		}
 		if(pevent.type == bt_terminal_pointer_event_type::ButtonUp){
 			UnGrab();
@@ -229,18 +224,15 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			auto oldpos = pos;
 			SetPosition(newpos);
 			if(GetMetric(FullWindowDrag)){
-				if(gds_drag_id){
-					GDS_SelectSurface(gds_drag_id);
-					GDS_DeleteSurface();
+				if(dragImage){
+					dragImage.reset();
 				}
-				gds_drag_id = 0;
 				SetVisible(true, false);
 				DrawAndRefreshWindows(TileRects({oldpos.x, oldpos.y, GetWidth(), GetHeight()}, GetBoundingRect()));
 			}else{
 				Rect winRect = {last_drag_pos.x, last_drag_pos.y, GetWidth() + 10, GetHeight()};
 				DrawWindows(winRect);
-				GDS_SelectScreen();
-				RefreshRectEdges(last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight(), GetMetric(BorderWidth));
+				RefreshRectEdges({last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight()}, GetMetric(BorderWidth));
 			}
 		}
 	}
@@ -294,23 +286,22 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 
 void Window::DrawGrabbed(const Rect &r){
 	if(!Overlaps(r, GetBoundingRect())) return;
+	Screen screen = Screen::Get();
 	if(GetMetric(FullWindowDrag)){
 		Rect dstRect = Intersection(r, GetBoundingRect());
 		Rect srcRect = Reoriginate(dstRect, pos);
 		DBG("WM: dstRect: (" << dstRect.x << ", " << dstRect.y << ") " << dstRect.w << " x " << dstRect.h);
 		DBG("WM: srcRect: (" << srcRect.x << ", " << srcRect.y << ") " << srcRect.w << " x " << srcRect.h);
-		if(!gds_drag_id){
-			gds_drag_id = GDS_NewSurface(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h, 100, gds_info.colourType);
-			Draw(active, true, gds_drag_id);
+		if(!dragImage){
+			dragImage = make_shared<Surface>(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h, 100, gds_info.colourType);
+			Draw(active, true, dragImage);
 			SetVisible(false, false);
 		}
-		GDS_SelectScreen();
-		GDS_Blit(gds_drag_id, srcRect.x, srcRect.y, srcRect.w, srcRect.h, dstRect.x, dstRect.y, dstRect.w, dstRect.h);
+		screen.Blit(*dragImage, {srcRect.x, srcRect.y, srcRect.w, srcRect.h}, {dstRect.x, dstRect.y, dstRect.w, dstRect.h});
 		RefreshScreen(r);
 	}else{
-		GDS_SelectScreen();
-		DrawBorder(pos.x, pos.y, gds_info.w + GetWidth(), GetHeight());
-		RefreshRectEdges(pos.x, pos.y, GetWidth(), GetHeight(), GetMetric(BorderWidth));
+		DrawBorder(screen, {pos.x, pos.y, gds_info.w + GetWidth(), GetHeight()});
+		RefreshRectEdges({pos.x, pos.y, GetWidth(), GetHeight()}, GetMetric(BorderWidth));
 	}
 }
 
@@ -361,8 +352,7 @@ bool Window::GetVisible(){
 
 WindowArea Window::GetWindowArea(Point p){
 	if(!HasBorder()) return WindowArea::Content;
-	GDS_SelectSurface(gds_id);
-	gds_SurfaceInfo info = GDS_SurfaceInfo();
+	gds_SurfaceInfo info = content->Info();
 	if(p.x >= GetMetric(BorderWidth) && p.x < GetMetric(BorderWidth) + (int32_t)info.w){
 		if(p.y >= GetMetric(BorderWidth)){
 			if(p.y >= GetMetric(TitleBarSize) || !HasTitleBar()){
@@ -383,19 +373,18 @@ WindowArea Window::GetWindowArea(Point p){
 
 void Window::RefreshTitleBar(bool force){
 	if(UpdateTitleBar(force)){
-		GDS_SelectScreen();
 		Rect r = GetBoundingRect();
 		r.h = GetMetric(TitleBarSize);
-		DrawBorder(pos.x, pos.y, GetWidth(), GetHeight(), r);
+		Screen screen = Screen::Get();
+		DrawBorder(screen, {pos, GetWidth(), GetHeight()}, r);
 	}
 }
 
 bool Window::UpdateTitleBar(bool force){
 	if(!HasTitleBar()) return false;
 	if(force || active != last_active){
-		gds_title_id = titlebar.Draw(GetWidth(), title, active, options, pressed);
-		GDS_SelectSurface(gds_title_id);
-		gds_titleinfo = GDS_SurfaceInfo();
+		titleImage = titlebar.Draw(GetWidth(), title, active, options, pressed);
+		gds_titleinfo = titleImage->Info();
 		return true;
 	}
 	return false;
@@ -408,10 +397,10 @@ void Window::OpenMenu(){
 	if(windowMenu){
 		auto t = GetWindowMenuTemplate();
 		auto m = MergeMenus(t, windowMenu);
-		::OpenMenu(m, shared_from_this(), pos.x, pos.y + GetMetric(TitleBarSize));
+		::OpenMenu(m, shared_from_this(), {pos.x, pos.y + GetMetric(TitleBarSize)});
 	}else{
 		auto m = GetDefaultWindowMenu();
-		::OpenMenu(m, shared_from_this(), pos.x, pos.y + GetMetric(TitleBarSize));
+		::OpenMenu(m, shared_from_this(), {pos.x, pos.y + GetMetric(TitleBarSize)});
 	}	
 }
 

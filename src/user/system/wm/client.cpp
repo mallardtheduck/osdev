@@ -9,6 +9,7 @@
 #define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
 
 using namespace std;
+using namespace gds;
 
 template<typename T> static void SendReply(const Message &msg, const T &content) {
 	msg.SendReply(content);
@@ -45,7 +46,7 @@ void Client::ProcessMessage(const Message &msg){
 		}
 		case wm_RequestType::CreateWindow:{
 			wm_WindowInfo info = msg.Content<wm_WindowInfo>();
-			shared_ptr<Window> win(new Window(info.gds_id));
+			shared_ptr<Window> win = make_shared<Window>(make_shared<Surface>(Surface::Wrap(info.gds_id, true)));
 			win->SetPosition({info.x, info.y});
 			win->SetOptions(info.options);
 			win->SetTitle(info.title);
@@ -75,7 +76,7 @@ void Client::ProcessMessage(const Message &msg){
 				info.y = p.y;
 				info.options = wm_WindowOptions::Visible;
 				info.subscriptions = currentWindow->Subscribe();
-				info.gds_id = currentWindow->GetSurface();
+				info.gds_id = currentWindow->GetSurface()->GetID();
 			}else{
 				info.x = 0;
 				info.y = 0;
@@ -188,7 +189,7 @@ void Client::ProcessMessage(const Message &msg){
 			if(currentWindow && currentMenu){
 				wm_Rect menuPoint = msg.Content<wm_Rect>();
 				Point winPoint = currentWindow->GetContentPosition();
-				OpenMenu(currentMenu, currentWindow, winPoint.x + menuPoint.x, winPoint.y + menuPoint.y);
+				OpenMenu(currentMenu, currentWindow, {winPoint.x + menuPoint.x, winPoint.y + menuPoint.y});
 			}
 			break;
 		}

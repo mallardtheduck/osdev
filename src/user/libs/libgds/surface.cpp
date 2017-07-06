@@ -8,16 +8,26 @@ namespace gds{
 
 	Surface::Surface(gds_SurfaceType::Enum type, uint32_t w, uint32_t h, uint32_t scale, gds_ColourType::Enum colourType, uint64_t shmRegion, size_t shmOffset){
 		gds_id = GDS_NewSurface(type, w, h, scale, colourType, shmRegion, shmOffset);
+		owned = true;
 	}
 	
 	Surface::Surface(Surface &&s){
 		gds_id = s.gds_id;
+		owned = s.owned;
 		s.gds_id = 0;
+		s.owned = false;
 	}
 
 	Surface::~Surface(){
 		Select();
-		if(gds_id) GDS_DeleteSurface();
+		if(gds_id && owned) GDS_DeleteSurface();
+	}
+
+	Surface Surface::Wrap(uint64_t id, bool own){
+		Surface ret;
+		ret.gds_id = id;
+		ret.owned = own;
+		return ret;
 	}
 
 	void Surface::Select() const{
@@ -70,7 +80,7 @@ namespace gds{
 		return Info().scale;
 	}
 
-	Colour Surface::GetColour(uint8_t r, uint8_t g, uint8_t b, uint8_t a){
+	Colour Surface::GetColour(uint8_t r, uint8_t g, uint8_t b, uint8_t a) const{
 		Select();
 		return {GDS_GetColour(r, g, b, a), r, g, b, a};
 	}

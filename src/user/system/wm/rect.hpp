@@ -3,41 +3,18 @@
 
 #include <cstdint>
 #include <vector>
+#include <gds/geom.hpp>
 
-struct Rect{
-	int32_t x, y;
-	uint32_t w, h;
-	Rect(): x(0), y(0), w(0), h(0) {};
-	Rect(int32_t _x, int32_t _y, uint32_t _w, uint32_t _h) : x(_x), y(_y), w(_w), h(_h) {} 
-	
-	operator bool() const{return x != 0 || y != 0 || w != 0 || h != 0;}
-};
+using namespace btos_api;
 
-bool operator==(const Rect &r1, const Rect &r2);
-bool operator<(const Rect &r1, const Rect &r2);
-
-inline bool operator!=(const Rect &r1, const Rect &r2){
-	return !(r1 == r2);
-}
-
-struct Point{
-	int32_t x, y;
-	Point(): x(0), y(0) {}
-	Point(int32_t _x, int32_t _y): x(_x), y(_y) {}
-	
-	operator bool() const{return x != 0 || y != 0;}
-};
-
-Point operator+(const Point &p1, const Point &p2);
-
-bool InRect(int32_t x, int32_t y, const Rect &r);
-bool InRect(const Point &p, const Rect &r);
-bool Overlaps(const Rect &r1, const Rect &r2);
-bool Contains(const Rect &r1, const Rect &r2);
-Rect Reoriginate(const Rect &r, const Point &p);
-Point Reoriginate(const Point &pr, const Point &po);
-std::vector<Rect> TileRects(const Rect &r1, const Rect &r2);
-Rect Constrain(Rect r, const Rect &bounds);
-Rect Intersection(const Rect &r1, const Rect &r2);
+bool InRect(int32_t x, int32_t y, const gds::Rect &r);
+bool InRect(const gds::Point &p, const gds::Rect &r);
+bool Overlaps(const gds::Rect &r1, const gds::Rect &r2);
+bool Contains(const gds::Rect &r1, const gds::Rect &r2);
+gds::Rect Reoriginate(const gds::Rect &r, const gds::Point &p);
+gds::Point Reoriginate(const gds::Point &pr, const gds::Point &po);
+std::vector<gds::Rect> TileRects(const gds::Rect &r1, const gds::Rect &r2);
+gds::Rect Constrain(gds::Rect r, const gds::Rect &bounds);
+gds::Rect Intersection(const gds::Rect &r1, const gds::Rect &r2);
 
 #endif

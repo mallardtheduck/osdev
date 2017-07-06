@@ -2,6 +2,10 @@
 #define METRICS_HPP
 
 #include <string>
+#include <gds/geom.hpp>
+#include <gds/surface.hpp>
+
+using namespace btos_api;
 
 template<typename T> struct Metric{
 	std::string name;
@@ -52,7 +56,7 @@ METRIC(ColourValue, MenuForegroundColour);
 METRIC(ColourValue, MenuForegroundDisabledColour);
 METRIC(ColourValue, MenuSelectionColour);
 
-uint32_t GetColour(Metric<ColourValue> &metric);
+gds::Colour GetColour(const gds::Surface &surf, Metric<ColourValue> &metric);
 
 METRIC(std::string, TitleFontName);
 METRIC(std::string, MenuButtonFontName);

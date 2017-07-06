@@ -29,7 +29,7 @@ void InitCursor(){
 	GDS_CursorVisibility(true);
 }
 
-shared_ptr<Window> CreateTestWin(string title, uint32_t x, uint32_t y, uint32_t w, uint32_t h){
+/*shared_ptr<Window> CreateTestWin(string title, uint32_t x, uint32_t y, uint32_t w, uint32_t h){
 	uint64_t surface = GDS_NewSurface(gds_SurfaceType::Bitmap, w, h);
 	GDS_Box(0, 0, w, h, GDS_GetColour(0, 0, 0), GDS_GetColour(255, 255, 255), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	GDS_Line(0, 0, w, h, GDS_GetColour(0, 0, 0));
@@ -40,7 +40,7 @@ shared_ptr<Window> CreateTestWin(string title, uint32_t x, uint32_t y, uint32_t 
 	AddWindow(win);
 	win->SetVisible(true);
 	return win;
-}
+}*/
 
 int main(int argc, char **argv){
     cout << "BT/OS WM" << endl;

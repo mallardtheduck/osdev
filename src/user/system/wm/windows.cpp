@@ -15,8 +15,10 @@
 
 #include <dev/rtc.h>
 #include <dev/terminal_ioctl.h>
+#include <gds/screen.hpp>
 
 using namespace std;
+using namespace gds;
 
 static map<uint64_t, shared_ptr<Window>> windows;
 static weak_ptr<Window> activeWindow;
@@ -24,11 +26,11 @@ static weak_ptr<Window> pointerWindow;
 static weak_ptr<Window> grabbedWindow;
 static uint64_t id_counter;
 static vector<weak_ptr<Window>> sortedWindows;
-static uint32_t backgroundColour;
+static Colour backgroundColour;
+static Screen screen = Screen::Get();
 
 void InitWindws(){
-	GDS_SelectScreen();
-	backgroundColour = GetColour(BackgroundColour);
+	backgroundColour = GetColour(screen, BackgroundColour);
 }
 
 template <typename M, typename V> 
