@@ -63,6 +63,7 @@ namespace gds{
 		std::string GetName();
 		gds_FontStyle::Enum GetStyle();
 		gds_FontInfo Info();
+		gds_GlyphInfo GetGlyphInfo(uint32_t size, char c);
 		static Font Get(const std::string &name, gds_FontStyle::Enum style = gds_FontStyle::Normal);
 	};
 

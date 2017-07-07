@@ -79,7 +79,6 @@ vector<shared_ptr<Window>> SortWindows(){
 void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 	bool rect = (r.x != 0 || r.y != 0 || r.w != 0 || r.h != 0);
 	vector<shared_ptr<Window>> wins = SortWindows();
-	GDS_SelectScreen();
 	shared_ptr<Window> lastWin;
 	bool drawing = true;
 	if(rect && !above){
@@ -101,10 +100,10 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 		}
 	}
 	if(drawing){
-		if(rect) GDS_Box(r.x, r.y, r.w, r.h, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		if(rect) Screen.Box(r, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		else{
-			gds_SurfaceInfo info = GDS_SurfaceInfo();
-			GDS_Box(0, 0, info.w, info.h, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+			gds_SurfaceInfo info = Screen.Info();
+			Screen.Box({0, 0, info.w, info.h}, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		}
 	}
 	shared_ptr<Window> awin = activeWindow.lock();
@@ -127,8 +126,7 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 
 void DrawWindows(const vector<Rect> &v){
 	vector<shared_ptr<Window>> wins = SortWindows();
-	GDS_SelectScreen();
-	for(auto r: v) GDS_Box(r.x, r.y, r.w, r.h, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	for(auto r: v) Screen.Box(r, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	shared_ptr<Window> awin = activeWindow.lock();
 	for(auto w: wins){
 		if(!w->GetVisible()) continue;
@@ -147,7 +145,7 @@ void RefreshScreen(Rect r){
 		r.h += r.y;
 		r.y = 0;
 	}
-	GDS_UpdateScreen(r.x, r.y, r.w, r.h);
+	Screen.Update(r);
 }
 
 void RefreshScreen(const vector<Rect> &v){

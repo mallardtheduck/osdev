@@ -60,9 +60,9 @@ uint32_t MenuItem::GetMinWidth(){
 				ret += GetMetric(MenuItemMargin);
 			}
 			if(!(flags & wm_MenuItemFlags::ImageOnly)){
-				uint32_t font = GDS_GetFontID(GetSetting(MenuFontName).c_str(), gds_FontStyle::Normal);
+				Font font = Font::Get(GetSetting(MenuFontName), gds_FontStyle::Normal);
 				for(const char c : text){
-					gds_GlyphInfo ginfo = GDS_GetGlyphInfo(font, GetMetric(MenuFontSize), c);
+					gds_GlyphInfo ginfo = font.GetGlyphInfo(GetMetric(MenuFontSize), c);
 					ret += ginfo.w;
 				}
 			}

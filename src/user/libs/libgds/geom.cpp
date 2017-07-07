@@ -16,6 +16,10 @@ namespace gds{
 		return GDS_GetFontInfo(id);
 	}
 
+	gds_GlyphInfo Font::GetGlyphInfo(uint32_t size, char c){
+		return GDS_GetGlyphInfo(id, size, c);
+	}
+
 	Font Font::Get(const std::string &name, gds_FontStyle::Enum style){
 		Font ret;
 		ret.id = GDS_GetFontID(name.c_str(), style);
