@@ -14,7 +14,7 @@ using namespace gds;
 static vector<shared_ptr<Menu>> currentMenus;
 
 MenuItem::MenuItem(const wm_MenuItem &i) :
-	MenuItem(i.text, i.flags, GetMenu(i.childMenu), make_shared<Surface>(Surface::Wrap(i.image, false)), ((i.flags & wm_MenuItemFlags::ChildMenu) ? MenuActionType::ChildMenu : ((i.flags & wm_MenuItemFlags::Seperator) ? MenuActionType::None : MenuActionType::Custom)), i.actionID) {}
+	MenuItem(i.text, i.flags, GetMenu(i.childMenu), i.image ? make_shared<Surface>(Surface::Wrap(i.image, true)) : nullptr, ((i.flags & wm_MenuItemFlags::ChildMenu) ? MenuActionType::ChildMenu : ((i.flags & wm_MenuItemFlags::Seperator) ? MenuActionType::None : MenuActionType::Custom)), i.actionID) {}
 
 MenuItem::MenuItem(const std::string t, uint32_t f, std::shared_ptr<Menu> cM, shared_ptr<Surface> i, MenuActionType a, uint32_t cID) :
 	text(t), flags(f), childMenu(cM), image(i), actionType(a), customID(cID) {}
