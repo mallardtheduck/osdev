@@ -1,5 +1,6 @@
 #include <wm/window.hpp>
 #include <wm/libwm.h>
+#include <gds/geom.hpp>
 
 using namespace std;
 
@@ -31,14 +32,14 @@ namespace wm{
 		return ret;
 	}
 
-	void Window::Select(){
+	void Window::Select() const{
 		WM_SelectWindow(id);
 	}
-	uint64_t Window::GetID(){
+	uint64_t Window::GetID() const{
 		return id;
 	}
 	
-	wm_WindowInfo Window::Info(){
+	wm_WindowInfo Window::Info() const{
 		Select();
 		return WM_WindowInfo();
 	}
@@ -58,14 +59,14 @@ namespace wm{
 		Select();
 		WM_ReplaceSurface(surf.GetID());
 	}
-	gds::Surface Window::GetSurface(){
+	gds::Surface Window::GetSurface() const{
 		return gds::Surface::Wrap(Info().gds_id, false);
 	}
 	void Window::SetPosition(const gds::Point &p){
 		Select();
 		WM_MoveWindow(p.x, p.y);
 	}
-	gds::Point Window::GetPosition(){
+	gds::Point Window::GetPosition() const{
 		auto info = Info();
 		return {info.x, info.y};
 	}
@@ -73,15 +74,31 @@ namespace wm{
 		Select();
 		WM_ChangeOptions(options);
 	}
-	uint32_t Window::GetOptions(){
+	uint32_t Window::GetOptions() const{
 		return Info().options;
 	}
 	void Window::SetTitle(const std::string &title){
 		Select();
 		WM_SetTitle(title.c_str());
 	}
-	std::string Window::GetTitle(){
+	std::string Window::GetTitle() const{
 		return Info().title;
+	}
+
+	void Window::SetMenu(const Menu &m){
+		Select();
+		m.Select();
+		WM_SetWindowMenu();
+	}
+	void Window::ResetMenu(){
+		Select();
+		WM_UnSetWindowMenu();
+	}
+
+	void Window::ShowMenu(const Menu &m, const gds::Point &p){
+		Select();
+		m.Select();
+		WM_ShowMenu({p.x, p.y, 0, 0});
 	}
 
 }

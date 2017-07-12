@@ -5,6 +5,8 @@
 #include <wm/wm.h>
 #include <string>
 
+#include "menu.hpp"
+
 namespace btos_api{
 namespace wm{
 
@@ -26,22 +28,26 @@ namespace wm{
 
 		static Window Wrap(uint64_t id, bool own);
 
-		void Select();
-		uint64_t GetID();
+		void Select() const;
+		uint64_t GetID() const;
 
-		wm_WindowInfo Info();
+		wm_WindowInfo Info() const;
 		void SetSubscribed(uint32_t events);
 		void Update();
 		void Update(const gds::Rect &r);
 		void SetSurface(const gds::Surface &surf);
-		gds::Surface GetSurface();
+		gds::Surface GetSurface() const;
 		void SetPosition(const gds::Point &p);
-		gds::Point GetPosition();
+		gds::Point GetPosition() const;
 		void SetOptions(uint32_t options);
-		uint32_t GetOptions();
+		uint32_t GetOptions() const;
 		void SetTitle(const std::string &title);
-		std::string GetTitle();
-		
+		std::string GetTitle() const;
+
+		void SetMenu(const Menu &m);
+		void ResetMenu();
+
+		void ShowMenu(const Menu &m, const gds::Point &p);
 	};
 
 }
