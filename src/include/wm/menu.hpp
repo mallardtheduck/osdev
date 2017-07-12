@@ -20,7 +20,7 @@ namespace wm{
 	class MenuItem : public wm_MenuItem{
 	private:
 	public:
-		MenuItem(uint32_t actionID, const std::string &text, const gds::Surface *image = nullptr, const Menu *childMenu = nullptr);
+		MenuItem(uint32_t actionID, const std::string &text, uint32_t flags = wm_MenuItemFlags::Default, const gds::Surface *image = nullptr, const Menu *childMenu = nullptr);
 	};
 
 	class Menu{

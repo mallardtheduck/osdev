@@ -8,10 +8,11 @@ using namespace std;
 namespace btos_api{
 namespace wm{
 
-	MenuItem::MenuItem(uint32_t aID, const string &t, const gds::Surface *i, const Menu *c)
+	MenuItem::MenuItem(uint32_t aID, const string &t, uint32_t f, const gds::Surface *i, const Menu *c)
 	{
 		actionID = aID;
 		memcpy(text, t.c_str(), min(t.length() + 1, WM_MENUTEXT_MAX));
+		flags = f;
 		image = i ? i->GetID() : 0;
 		childMenu = c ? c->GetID() : 0;
 	}

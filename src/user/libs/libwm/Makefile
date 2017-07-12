@@ -14,7 +14,7 @@ LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L. -L../libgds
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L. -L../libgds
 AR-FLAGS := rcs -o $(LIBRARY-NAME)
-LINK-OPTIONS := -lgds -lwm -lgcc_s -lstdc++ -lbtoscore -lm
+LINK-OPTIONS := -lgds -lwm -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib
 LIB-LINK-OPTIONS := -lgds -lgcc_s -lstdc++ -lbtoscore -lm
 
 BOOTFILE := boot.o
