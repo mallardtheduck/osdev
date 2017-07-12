@@ -22,13 +22,14 @@ Surface create_shm_surface(){
 	if(pages < size) ++pages;
 	uint32_t *data = (uint32_t*)memalign(4096, pages * 4096);
 	/*HMMapping *mapping =*/ new SHMMapping(shmRegion, (void*)data, 0, pages, bt_shm_flags::Normal);
+	Surface surf(gds_SurfaceType::Memory, rows, cols, 100, gds_ColourType::True, shmRegion, 0);
 	for(size_t y = 0; y < rows; ++y){
-		uint32_t col = (y << 24);//  GDS_GetColour(y, 0, 0);
+		uint32_t col = surf.GetColour(y, 0, 0);
 		for(size_t x = 0; x < cols; ++x){
 			data[(y * rows) + x] = col;
 		}
 	}
-	return Surface(gds_SurfaceType::Memory, rows, cols, 100, gds_ColourType::True, shmRegion, 0);
+	return surf;
 }
 
 int main(){
