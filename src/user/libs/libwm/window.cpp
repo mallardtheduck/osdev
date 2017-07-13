@@ -101,5 +101,16 @@ namespace wm{
 		WM_ShowMenu({p.x, p.y, 0, 0});
 	}
 
+	void Window::SetEventHandler(std::function<bool(const wm_Event&)> fn){
+		handler = fn;
+	}
+	std::function<bool(const wm_Event&)> Window::GetEventHandler() const{
+		return handler;
+	}
+	bool Window::Event(const wm_Event& evt){
+		if(handler) return handler(evt);
+		else return true;
+	}
+
 }
 }

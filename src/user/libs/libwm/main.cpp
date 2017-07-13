@@ -2,6 +2,7 @@
 #include <wm/window.hpp>
 #include <btos/shm.hpp>
 #include <wm/libwm.h>
+#include <wm/eventloop.hpp>
 
 #include <cstring>
 #include <sstream>
@@ -48,7 +49,7 @@ int main(){
 	info.options = wm_WindowOptions::Visible | wm_WindowOptions::NoExpand | wm_WindowOptions::NoHide | wm_WindowOptions::NoClose;// | wm_WindowOptions::NoMenu;
 	info.subscriptions = wm_EventType::Close | wm_EventType::PointerButtonDown | wm_EventType::PointerButtonUp | wm_EventType::PointerMove;
 	strcpy(info.title, "WM Test Application");
-	Window w1(info);
+	auto w1 = make_shared<Window>(info);
 	Surface s2(gds_SurfaceType::Vector, 200, 100, 100, gds_ColourType::True);
 	for(size_t i = 0; i < 100; ++i){
 		s2.Line({0, (int32_t)i}, {199, (int32_t)i}, s2.GetColour(0, 0, i * 2));
@@ -66,11 +67,11 @@ int main(){
 	vinfo.options = wm_WindowOptions::Default;
 	vinfo.subscriptions = wm_EventType::Close | wm_EventType::PointerButtonUp;
 	strcpy(vinfo.title, "WM Vector Test");
-	Window w2(vinfo);
+	auto w2 = make_shared<Window>(vinfo);
 	Surface shmsurf = create_shm_surface();
-	Menu menu;
-	menu.AddItem({1, "Hello menus!", wm_MenuItemFlags::Default, 0, 0});
-	w2.SetMenu(menu);
+	auto menu = make_shared<Menu>();
+	menu->AddItem({1, "Hello menus!", wm_MenuItemFlags::Default, 0, 0});
+	w2->SetMenu(*menu);
 	wm_WindowInfo shminfo;
 	shminfo.x = 200;
 	shminfo.y = 200;
@@ -78,34 +79,43 @@ int main(){
 	shminfo.options = wm_WindowOptions::NoFrame | wm_WindowOptions::Visible;
 	shminfo.subscriptions = wm_EventType::Close;
 	strcpy(shminfo.title, "SHM Test");
-	Window w3(shminfo);
+	auto w3 = make_shared<Window>(shminfo);
 	bool draw = false;
 	int32_t x, y;
-	while(true){
-		wm_Event e = WM_GetEvent();
-		if(e.window_id == w1.GetID() || e.window_id == w2.GetID() || e.window_id == w3.GetID()){
-			if(e.type == wm_EventType::Close) break;
-			if(e.type == wm_EventType::PointerButtonDown && e.window_id == w1.GetID()){
+	function<bool(const wm_Event)> h = [&](const wm_Event &e) -> bool{
+		if(e.window_id == w1->GetID() || e.window_id == w2->GetID() || e.window_id == w3->GetID()){
+			if(e.type == wm_EventType::Close) return false;
+			if(e.type == wm_EventType::PointerButtonDown && e.window_id == w1->GetID()){
 				draw = true;
 				x = e.Pointer.x;
 				y = e.Pointer.y;
 			}
 			if(e.type == wm_EventType::PointerButtonUp){
-				if(e.window_id == w1.GetID()){
+				if(e.window_id == w1->GetID()){
 					s1.Line({x, y}, {(int32_t)e.Pointer.x, (int32_t)e.Pointer.y}, s1.GetColour(255, 255, 255));
 					draw = false;
-					w1.Update();
+					w1->Update();
 				}else{
-					w2.ShowMenu(menu, {(int32_t)e.Pointer.x, (int32_t)e.Pointer.y});
+					w2->ShowMenu(*menu, {(int32_t)e.Pointer.x, (int32_t)e.Pointer.y});
 				}
 			}
 			if(e.type == wm_EventType::PointerMove && draw){
 				s1.Line({x, y}, {(int32_t)e.Pointer.x, (int32_t)e.Pointer.y}, s1.GetColour(255, 255, 255));
-				w1.Update({min<int32_t>(x, e.Pointer.x), min<int32_t>(y, e.Pointer.y), (uint32_t)abs((int32_t)e.Pointer.x - (int32_t)x) + 1, (uint32_t)abs((int32_t)e.Pointer.y - (int32_t)y) + 1});
+				w1->Update({min<int32_t>(x, e.Pointer.x), min<int32_t>(y, e.Pointer.y), (uint32_t)abs((int32_t)e.Pointer.x - (int32_t)x) + 1, (uint32_t)abs((int32_t)e.Pointer.y - (int32_t)y) + 1});
 				x = e.Pointer.x;
 				y = e.Pointer.y;
 			}
 		}
-	}
+		return true;
+	};
+
+	EventLoop el;
+	w1->SetEventHandler(h);
+	el.AddWindow(w1);
+	w2->SetEventHandler(h);
+	el.AddWindow(w2);
+	w3->SetEventHandler(h);
+	el.AddWindow(w3);
+	el.RunLoop();
 	return 0;
 }

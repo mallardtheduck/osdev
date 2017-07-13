@@ -4,6 +4,7 @@
 #include <gds/surface.hpp>
 #include <wm/wm.h>
 #include <string>
+#include <functional>
 
 #include "menu.hpp"
 
@@ -14,6 +15,7 @@ namespace wm{
 	private:
 		uint64_t id;
 		bool owned;
+		std::function<bool(const wm_Event&)> handler;
 
 		Window(const Window&) = delete;
 		Window operator=(const Window&) = delete;
@@ -48,6 +50,10 @@ namespace wm{
 		void ResetMenu();
 
 		void ShowMenu(const Menu &m, const gds::Point &p);
+
+		void SetEventHandler(std::function<bool(const wm_Event&)> fn);
+		std::function<bool(const wm_Event&)> GetEventHandler() const;
+		virtual bool Event(const wm_Event& evt);
 	};
 
 }

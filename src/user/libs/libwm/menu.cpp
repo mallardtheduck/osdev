@@ -55,5 +55,16 @@ namespace wm{
 		Select();
 		WM_RemoveMenuItem(idx);
 	}
+
+	void Menu::SetEventHandler(std::function<bool(int)> fn){
+		handler = fn;
+	}
+	std::function<bool(int)> Menu::GetEventHandler() const{
+		return handler;
+	}
+	bool Menu::Event(int action){
+		if(handler) return handler(action);
+		else return true;
+	}
 }
 }

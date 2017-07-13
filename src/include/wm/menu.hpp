@@ -4,16 +4,10 @@
 #include <wm/wm.h>
 #include <gds/surface.hpp>
 #include <string>
+#include <functional>
 
 namespace btos_api{
 namespace wm{
-
-/*
-	uint32_t actionID;
-	char text[WM_MENUTEXT_MAX+1];
-	uint32_t flags;
-	uint64_t image;
-	uint64_t childMenu;*/
 
 	class Menu;
 
@@ -27,6 +21,7 @@ namespace wm{
 	private:
 		uint64_t id;
 		bool owned;
+		std::function<bool(int)> handler;
 
 		Menu(const Menu&) = delete;
 		Menu operator=(const Menu&) = delete;
@@ -44,6 +39,10 @@ namespace wm{
 
 		uint32_t AddItem(const MenuItem &i);
 		void RemoveItem(uint32_t idx);
+
+		void SetEventHandler(std::function<bool(int)> fn);
+		std::function<bool(int)> GetEventHandler() const;
+		virtual bool Event(int action);
 	};
 
 }
