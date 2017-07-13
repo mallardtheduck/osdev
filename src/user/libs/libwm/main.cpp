@@ -56,7 +56,7 @@ int main(){
 	}
 	s2.Line({0, 0}, {199, 0}, s2.GetColour(255, 255, 255));
 	//GDS_Box(0, 0, 199, 99, GDS_GetColour(255, 255, 255), GDS_GetColour(255, 255, 255), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	s2.Line({0, 0}, {199, 99}, s2.GetColour(255, 0, 255));
+	s2.Line({0, 0}, {199, 99}, s2.GetColour(255, 0, 254));
 	s2.Line({0, 99}, {199, 0}, s2.GetColour(0, 255, 255));
 	Font font2 = Font::Get("DejaVu Sans", gds_FontStyle::Bold);
 	s2.Text({5, 50}, "TrueColour Vector!", font2, 16, s2.GetColour(255, 255, 0));

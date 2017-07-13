@@ -230,8 +230,8 @@ Surface DrawMenuItem(const string &text, uint32_t flags, const Surface *image, u
 	}else{
 		int32_t height = (GetMetric(MenuItemMargin) * 2) + 1;
 		Surface ret(gds_SurfaceType::Bitmap, width, height);
-		ret.Box({0, 0, width, (uint32_t)GetMetric(MenuItemHeight)}, Colour(), GetColour(ret, MenuBackgroundColour), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		ret.Line({GetMetric(MenuItemMargin), height / 2}, {(int32_t)(width - GetMetric(MenuItemMargin)), height / 2}, Colour(), GetColour(ret, MenuForegroundColour), 1);
+		ret.Box({0, 0, width, (uint32_t)GetMetric(MenuItemHeight)}, Colour(), GetColour(ret, MenuBackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		ret.Line({GetMetric(MenuItemMargin), height / 2}, {(int32_t)(width - GetMetric(MenuItemMargin)), height / 2}, GetColour(ret, MenuForegroundColour));
 		return ret;
 	}
 }
