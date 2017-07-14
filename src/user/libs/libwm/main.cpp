@@ -25,7 +25,7 @@ Surface create_shm_surface(){
 	/*HMMapping *mapping =*/ new SHMMapping(shmRegion, (void*)data, 0, pages, bt_shm_flags::Normal);
 	Surface surf(gds_SurfaceType::Memory, rows, cols, 100, gds_ColourType::True, shmRegion, 0);
 	for(size_t y = 0; y < rows; ++y){
-		uint32_t col = surf.GetColour(y, 0, 0);
+		uint32_t col = surf.GetColour(y, 0, 0).id;
 		for(size_t x = 0; x < cols; ++x){
 			data[(y * rows) + x] = col;
 		}

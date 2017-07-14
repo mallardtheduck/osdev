@@ -29,27 +29,27 @@ static Colour seperatorColour, titleTextColour, symbolColour, disabledSymbolColo
 
 static void DrawButtonUp(Surface &surf, const Rect &r, bool active){
 	vector<gds_DrawingOp> ops;
-	ops.push_back(GDS_Box_Op(r.x+1, r.y+1, r.w-1, r.h-1, buttonHighlightColour, buttonFaceColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled));
-	ops.push_back(GDS_Line_Op(r.x+1, r.y+r.h-2, r.x+r.w-2, r.y+r.h-2, buttonShadowColour, 1));
-	ops.push_back(GDS_Line_Op(r.x+r.w-2, r.y+r.h-1, r.x+r.w-2, r.y+2, buttonShadowColour, 1));
-	ops.push_back(GDS_Box_Op(r.x, r.y, r.w, r.h, lineColour, borderColour, 1));
-	ops.push_back(GDS_Dot_Op(r.x, r.y, active?titleBarColour:inactiveTitleColour, 1));
-	ops.push_back(GDS_Dot_Op(r.x+r.w-1, r.y, active?titleBarColour:inactiveTitleColour, 1));
-	ops.push_back(GDS_Dot_Op(r.x, r.y+r.h-1, active?titleBarColour:inactiveTitleColour, 1));
-	ops.push_back(GDS_Dot_Op(r.x+r.w-1, r.y+r.h-1, active?titleBarColour:inactiveTitleColour, 1));
+	ops.push_back(GDS_Box_Op(r.x+1, r.y+1, r.w-1, r.h-1, buttonHighlightColour.id, buttonFaceColour.id, 1, gds_LineStyle::Solid, gds_FillStyle::Filled));
+	ops.push_back(GDS_Line_Op(r.x+1, r.y+r.h-2, r.x+r.w-2, r.y+r.h-2, buttonShadowColour.id, 1));
+	ops.push_back(GDS_Line_Op(r.x+r.w-2, r.y+r.h-1, r.x+r.w-2, r.y+2, buttonShadowColour.id, 1));
+	ops.push_back(GDS_Box_Op(r.x, r.y, r.w, r.h, lineColour.id, borderColour.id, 1));
+	ops.push_back(GDS_Dot_Op(r.x, r.y, active?titleBarColour.id:inactiveTitleColour.id, 1));
+	ops.push_back(GDS_Dot_Op(r.x+r.w-1, r.y, active?titleBarColour.id:inactiveTitleColour.id, 1));
+	ops.push_back(GDS_Dot_Op(r.x, r.y+r.h-1, active?titleBarColour.id:inactiveTitleColour.id, 1));
+	ops.push_back(GDS_Dot_Op(r.x+r.w-1, r.y+r.h-1, active?titleBarColour.id:inactiveTitleColour.id, 1));
 	surf.AddDrawingOps(ops);
 }
 
 static void DrawButtonDown(Surface &surf, const Rect &r, bool active){
 	vector<gds_DrawingOp> ops;
-	ops.push_back(GDS_Box_Op(r.x+1, r.y+1, r.w-1, r.h-1, buttonShadowColour, buttonFaceColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled));
-	ops.push_back(GDS_Line_Op(r.x+1, r.y+r.h-2, r.x+r.w-2, r.y+r.h-2, buttonHighlightColour, 1));
-	ops.push_back(GDS_Line_Op(r.x+r.w-2, r.y+r.h-1, r.x+r.w-2, r.y+2, buttonHighlightColour, 1));
-	ops.push_back(GDS_Box_Op(r.x, r.y, r.w, r.h, lineColour, borderColour, 1));
-	ops.push_back(GDS_Dot_Op(r.x, r.y, active?titleBarColour:inactiveTitleColour, 1));
-	ops.push_back(GDS_Dot_Op(r.x+r.w-1, r.y, active?titleBarColour:inactiveTitleColour, 1));
-	ops.push_back(GDS_Dot_Op(r.x, r.y+r.h-1, active?titleBarColour:inactiveTitleColour, 1));
-	ops.push_back(GDS_Dot_Op(r.x+r.w-1, r.y+r.h-1, active?titleBarColour:inactiveTitleColour, 1));
+	ops.push_back(GDS_Box_Op(r.x+1, r.y+1, r.w-1, r.h-1, buttonShadowColour.id, buttonFaceColour.id, 1, gds_LineStyle::Solid, gds_FillStyle::Filled));
+	ops.push_back(GDS_Line_Op(r.x+1, r.y+r.h-2, r.x+r.w-2, r.y+r.h-2, buttonHighlightColour.id, 1));
+	ops.push_back(GDS_Line_Op(r.x+r.w-2, r.y+r.h-1, r.x+r.w-2, r.y+2, buttonHighlightColour.id, 1));
+	ops.push_back(GDS_Box_Op(r.x, r.y, r.w, r.h, lineColour.id, borderColour.id, 1));
+	ops.push_back(GDS_Dot_Op(r.x, r.y, active?titleBarColour.id:inactiveTitleColour.id, 1));
+	ops.push_back(GDS_Dot_Op(r.x+r.w-1, r.y, active?titleBarColour.id:inactiveTitleColour.id, 1));
+	ops.push_back(GDS_Dot_Op(r.x, r.y+r.h-1, active?titleBarColour.id:inactiveTitleColour.id, 1));
+	ops.push_back(GDS_Dot_Op(r.x+r.w-1, r.y+r.h-1, active?titleBarColour.id:inactiveTitleColour.id, 1));
 	surf.AddDrawingOps(ops);
 }
 
@@ -80,10 +80,10 @@ static void DrawCloseButton(Surface &surf, const Point &p, bool active, bool dow
 	uint32_t quarter = buttonSize / 4;
 	Colour fgCol = enabled ? symbolColour : disabledSymbolColour;
 	vector<gds_DrawingOp> ops;
-	ops.push_back(GDS_Line_Op(p.x + quarter, p.y + quarter, p.x + half, p.y + half, fgCol, 2));
-	ops.push_back(GDS_Line_Op(p.x + (buttonSize - quarter) - 1, p.y + quarter, p.x + half - 1, p.y + half, fgCol, 2));
-	ops.push_back(GDS_Line_Op(p.x + quarter, p.y + (buttonSize - quarter) - 1, p.x + half, p.y + half - 1, fgCol, 2));
-	ops.push_back(GDS_Line_Op(p.x + (buttonSize - quarter) - 1, p.y + (buttonSize - quarter) - 1, p.x + half - 1, p.y + half - 1, fgCol, 2));
+	ops.push_back(GDS_Line_Op(p.x + quarter, p.y + quarter, p.x + half, p.y + half, fgCol.id, 2));
+	ops.push_back(GDS_Line_Op(p.x + (buttonSize - quarter) - 1, p.y + quarter, p.x + half - 1, p.y + half, fgCol.id, 2));
+	ops.push_back(GDS_Line_Op(p.x + quarter, p.y + (buttonSize - quarter) - 1, p.x + half, p.y + half - 1, fgCol.id, 2));
+	ops.push_back(GDS_Line_Op(p.x + (buttonSize - quarter) - 1, p.y + (buttonSize - quarter) - 1, p.x + half - 1, p.y + half - 1, fgCol.id, 2));
 	surf.AddDrawingOps(ops);
 }
 
@@ -96,9 +96,9 @@ static void DrawMenuButton(Surface &surf, const Point &p, bool active, bool down
 	uint32_t symLength = buttonHeight - borderWidth;
 	Colour fgCol = enabled ? symbolColour : disabledSymbolColour;
 	vector<gds_DrawingOp> ops;
-	ops.push_back(GDS_Line_Op(p.x + borderWidth, p.y + borderWidth, p.x + symLength, p.y + borderWidth, fgCol, 2));
-	ops.push_back(GDS_Line_Op(p.x + borderWidth, p.y + (buttonHeight / 2), p.x + symLength, p.y + (buttonHeight / 2), fgCol, 2));
-	ops.push_back(GDS_Line_Op(p.x + borderWidth, p.y + buttonHeight - borderWidth, p.x + symLength, p.y + buttonHeight - borderWidth, fgCol, 2));
+	ops.push_back(GDS_Line_Op(p.x + borderWidth, p.y + borderWidth, p.x + symLength, p.y + borderWidth, fgCol.id, 2));
+	ops.push_back(GDS_Line_Op(p.x + borderWidth, p.y + (buttonHeight / 2), p.x + symLength, p.y + (buttonHeight / 2), fgCol.id, 2));
+	ops.push_back(GDS_Line_Op(p.x + borderWidth, p.y + buttonHeight - borderWidth, p.x + symLength, p.y + buttonHeight - borderWidth, fgCol.id, 2));
 	surf.AddDrawingOps(ops);
 	surf.Text({(int32_t)(p.x + symLength + 5), (int32_t)(p.y + buttonHeight - 5)}, "Menu", menuButtonFont, GetMetric(MenuButtonFontSize), fgCol);
 }
@@ -176,7 +176,7 @@ static pair<bool, gds_DrawingOp> DrawBorderHorzLine(int32_t x1, int32_t y, int32
 	if(x1 > x2) swap(x1, x2);
 	if(x1 < bounds.x) x1 = bounds.x;
 	if(x2 > bounds.x + (int32_t)bounds.w) x2 = bounds.x + bounds.w;
-	return {true, GDS_Line_Op(x1, y, x2, y, borderColour, 1)};
+	return {true, GDS_Line_Op(x1, y, x2, y, borderColour.id, 1)};
 }
 
 static pair<bool, gds_DrawingOp> DrawBorderVertLine(int32_t x, int32_t y1, int32_t y2, const Rect &bounds){
@@ -184,7 +184,7 @@ static pair<bool, gds_DrawingOp> DrawBorderVertLine(int32_t x, int32_t y1, int32
 	if(y1 > y2) swap(y1, y2);
 	if(y1 < bounds.y) y1 = bounds.y;
 	if(y2 > bounds.y + (int32_t)bounds.h) y2 = bounds.y + bounds.h;
-	return {true, GDS_Line_Op(x, y1, x, y2, borderColour, 1)};
+	return {true, GDS_Line_Op(x, y1, x, y2, borderColour.id, 1)};
 }
 
 void DrawBorder(Surface &surf, const Rect &r, const Rect &bounds){
