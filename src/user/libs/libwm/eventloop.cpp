@@ -13,13 +13,6 @@ namespace wm{
 		return previewer;
 	}
 
-	void EventLoop::SetOtherHandler(std::function<bool(const bt_msg_header &)> fn){
-		otherHandler = fn;
-	}
-	std::function<bool(const bt_msg_header &)> EventLoop::GetOtherHandler(){
-		return otherHandler;
-	}
-
 	void EventLoop::AddWindow(shared_ptr<Window> win){
 		windows[win->GetID()] = win;
 	}
@@ -39,12 +32,11 @@ namespace wm{
 			if(!HandleEvent(e)) return;
 		}
 	}
-	bool EventLoop::HandleMessage(const bt_msg_header &msg){
-		wm_Event e = WM_ParseMessage(&const_cast<bt_msg_header&>(msg));
+	bool EventLoop::HandleMessage(const Message &msg){
+		auto header = msg.Header();
+		wm_Event e = WM_ParseMessage(&header);
 		if(e.window_id){
 			return HandleEvent(e);
-		}else{
-			return otherHandler(msg);
 		}
 		return true;
 	}
