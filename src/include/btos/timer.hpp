@@ -16,7 +16,7 @@ namespace btos_api{
 		void Reset();
 
 		void SetHandler(std::function<bool(Timer&)> fn);
-		std::function<bool(Timer&)> GetHandler();
+		std::function<bool(Timer&)> GetHandler() const;
 
 		bool HandleMessage(const Message &msg) override;
 	};

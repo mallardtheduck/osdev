@@ -12,7 +12,7 @@ void Timer::Reset(){
 void Timer::SetHandler(std::function<bool(Timer&)> fn){
 	handler = fn;
 }
-std::function<bool(Timer&)> Timer::GetHandler(){
+std::function<bool(Timer&)> Timer::GetHandler() const{
 	return handler;
 }
 
