@@ -10,30 +10,24 @@
 #include "sprite.hpp"
 
 using namespace std;
+using namespace gds;
+using namespace wm;
 
 std::shared_ptr<Ball> ball;
 std::shared_ptr<Paddle> paddle;
 vector<shared_ptr<Sprite>> sprites;
-queue<wm_Rect> drawQ;
+queue<Rect> drawQ;
 bool redrawScreen = false;
 uint32_t curblocks = 0;
-uint32_t font;
+Font font;
 
-bool operator==(const wm_Rect &a, const wm_Rect &b){
-	return (a.x == b.x) && (a.y == b.y) && (a.w == b.w) && (a.h == b.h);
-}
-
-bool operator!=(const wm_Rect &a, const wm_Rect &b){
-	return !(a == b);
-}
-
-bool Overlaps(const wm_Rect &r1, const wm_Rect &r2){
+bool Overlaps(const Rect &r1, const Rect &r2){
 	return !(r1.x + (int32_t)r1.w - 1 < r2.x || r1.y + (int32_t)r1.h - 1 < r2.y || r1.x > r2.x + (int32_t)r2.w - 1 || r1.y > r2.y + (int32_t)r2.h - 1);
 }
 
-void DrawBackground(){
-	uint32_t col = GDS_GetColour(0, 0, 255);
-	GDS_Box(0, 0, 320, 240, col, col, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+void DrawBackground(shared_ptr<Surface> s){
+	Colour col = s->GetColour(0, 0, 255);
+	s->Box({0, 0, 320, 240}, col, col, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 }
 
 void AddSprite(Sprite *s){
@@ -46,27 +40,27 @@ void RemoveSprite(shared_ptr<Sprite> s){
 	sprites.erase(find(sprites.begin(), sprites.end(), s));
 }
 
-void DrawTitle(){
-	uint32_t red = GDS_GetColour(255, 127, 127);
-	GDS_Text(80, 30, "Breakout!", font, 24, red);
-	uint32_t green = GDS_GetColour(127, 255, 127);
-	GDS_Text(60, 50, "Press any key to start.", font, 16, green);
-	GDS_Text(15, 210, "Controls:", font, 12, green);
-	GDS_Text(15, 225, "Left/Right to move, Space to launch ball", font, 12, green);
+void DrawTitle(shared_ptr<Surface> s){
+	Colour red = s->GetColour(255, 127, 127);
+	s->Text({80, 30}, "Breakout!", font, 24, red);
+	Colour green = s->GetColour(127, 255, 127);
+	s->Text({60, 50}, "Press any key to start.", font, 16, green);
+	s->Text({15, 210}, "Controls:", font, 12, green);
+	s->Text({15, 225}, "Left/Right to move, Space to launch ball", font, 12, green);
 }
 
-void DrawEndScreen(){
-	uint32_t red = GDS_GetColour(255, 127, 127);
-	GDS_Text(110, 40, "You win!", font, 24, red);
+void DrawEndScreen(shared_ptr<Surface> s){
+	Colour red = s->GetColour(255, 127, 127);
+	s->Text({110, 40}, "You win!", font, 24, red);
 }
 
-void InitBlocks(){
-	uint32_t colours[] = {GDS_GetColour(255, 0, 255), GDS_GetColour(0, 255, 255), GDS_GetColour(255, 255, 0)};
-	size_t ncolours = sizeof(colours) / sizeof(uint32_t);
+void InitBlocks(shared_ptr<Surface> s){
+	vector<Colour> colours = {s->GetColour(255, 0, 255), s->GetColour(0, 255, 255), s->GetColour(255, 255, 0)};
+	size_t ncolours = colours.size();
 	size_t colidx = 0;
 	for(size_t y = 0; y < 100; y+=Block::height){
 		for(size_t x = 0; x < 320; x+=Block::width){
-			AddSprite(new Block(x, y, colours[colidx]));
+			AddSprite(new Block(s, {(int32_t)x, (int32_t)y}, colours[colidx]));
 			++curblocks;
 			++colidx;
 			if(colidx == ncolours) colidx = 0;
@@ -84,13 +78,13 @@ void GameEvent(const wm_Event &e){
 	}
 }
 
-bool GameStep(){
-	DrawBackground();
+bool GameStep(std::shared_ptr<gds::Surface> surf){
+	DrawBackground(surf);
 	vector<shared_ptr<Sprite>> currentSprites(sprites);
 	for(auto s : currentSprites){
-		wm_Rect preRect = s->GetBoundingRect();
+		auto preRect = s->GetBoundingRect();
 		if(s->Step()){
-			wm_Rect postRect = s->GetBoundingRect();
+			auto postRect = s->GetBoundingRect();
 			if(preRect != postRect) drawQ.push(preRect);
 			drawQ.push(postRect);
 		}
@@ -105,32 +99,32 @@ bool ZOrderSort(shared_ptr<Sprite> a, shared_ptr<Sprite> b){
 	return a->GetZOrder() < b->GetZOrder();
 }
 
-void GameDraw(){
+void GameDraw(shared_ptr<Window> win){
 	sort(begin(sprites), end(sprites), &ZOrderSort);
 	for(auto s : sprites){
 		s->Draw();
 	}
 	if(!redrawScreen){
 		while(!drawQ.empty()){
-			WM_UpdateRect(drawQ.front());
+			win->Update(drawQ.front());
 			drawQ.pop();
 		}
 		WM_Sync();
 	}else{
-		WM_Update();
+		win->Update();
 		redrawScreen = false;
 	}
 }
 
-void InitGame(){
-	DrawBackground();
-	ball.reset(new Ball());
+void InitGame(shared_ptr<Surface> s, shared_ptr<Window> win){
+	DrawBackground(s);
+	ball.reset(new Ball(s));
 	sprites.push_back(ball);
-	paddle.reset(new Paddle());
+	paddle.reset(new Paddle(s));
 	sprites.push_back(paddle);
-	InitBlocks();
+	InitBlocks(s);
 	redrawScreen = true;
-	GameDraw();
+	GameDraw(win);
 }
 
 void EndGame(){

@@ -9,6 +9,8 @@ namespace btos_api{
 	class IMessageHandler{
 	public:
 		virtual bool HandleMessage(const Message &msg) = 0;
+
+		virtual ~IMessageHandler() {}
 	};
 
 }

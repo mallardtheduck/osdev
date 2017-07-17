@@ -4,7 +4,9 @@ namespace btos_api{
 
 	Message Message::Recieve(){
 		bt_msg_header h = bt_recv(true);
-		return h;
+		Message ret{h};
+		ret.filter.flags = 0;
+		return ret;
 	}
 
 	Message Message::RecieveFiltered(const bt_msg_filter &filter){

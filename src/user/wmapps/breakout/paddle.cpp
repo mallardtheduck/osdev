@@ -4,9 +4,11 @@
 #include "paddle.hpp"
 #include "game.hpp"
 
+using namespace gds;
+
 void Paddle::Draw(){
-	uint32_t colour = GDS_GetColour(128, 128, 128);
-	GDS_Box(x, y, width, height, colour, colour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	Colour colour = surf->GetColour(128, 128, 128);
+	surf->Box({(int32_t)x, (int32_t)y, width, height}, colour, colour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 }
 
 void Paddle::Left(){
@@ -18,8 +20,8 @@ void Paddle::Right(){
 }
 
 bool Paddle::Step(){
-	wm_Rect ballRect = ball->GetBoundingRect();
-	wm_Rect paddleRect = GetBoundingRect();
+	auto ballRect = ball->GetBoundingRect();
+	auto paddleRect = GetBoundingRect();
 	if(Overlaps(ballRect, paddleRect)){
 		int32_t paddleCentre = paddleRect.x + (paddleRect.w / 2);
 		int32_t ballCentre = ballRect.x + (ballRect.w / 2);
@@ -49,8 +51,8 @@ void Paddle::Input(const wm_Event &e){
 	}
 }
 
-wm_Rect Paddle::GetBoundingRect(){
-	return wm_Rect {(int32_t)x, (int32_t)y, width, height};
+Rect Paddle::GetBoundingRect(){
+	return {(int32_t)x, (int32_t)y, width, height};
 }
 
 uint32_t Paddle::GetZOrder(){

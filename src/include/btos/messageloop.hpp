@@ -13,17 +13,17 @@ namespace btos_api{
 	class MessageLoop : public IMessageHandler{
 	private:
 		std::vector<std::shared_ptr<IMessageHandler>> handlers;
-		std::function<bool(Message&)> criticalHandler;
-		std::function<bool(Message&)> previewer;
+		std::function<bool(const Message&)> criticalHandler;
+		std::function<bool(const Message&)> previewer;
 	public:
 		void AddHandler(std::shared_ptr<IMessageHandler> h);
 		void RemoveHandler(std::shared_ptr<IMessageHandler> h);
 
-		void SetCriticalHandler(std::function<bool(Message&)> fn);
-		std::function<bool(Message&)> GetCriticalHandler();
+		void SetCriticalHandler(std::function<bool(const Message&)> fn);
+		std::function<bool(const Message&)> GetCriticalHandler();
 
-		void SetPreviewer(std::function<bool(Message&)> fn);
-		std::function<bool(Message&)> GetPreviewer();
+		void SetPreviewer(std::function<bool(const Message&)> fn);
+		std::function<bool(const Message&)> GetPreviewer();
 
 		void RunLoop();
 		bool HandleMessage(const Message &msg) override;

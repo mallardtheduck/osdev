@@ -16,32 +16,38 @@ namespace btos_api{
 		}
 	}
 
-	void MessageLoop::SetCriticalHandler(function<bool(Message&)> fn){
+	void MessageLoop::SetCriticalHandler(function<bool(const Message&)> fn){
 		criticalHandler = fn;
 	}
-	function<bool(Message&)> MessageLoop::GetCriticalHandler(){
+	function<bool(const Message&)> MessageLoop::GetCriticalHandler(){
 		return criticalHandler;
 	}
 
-	void MessageLoop::SetPreviewer(function<bool(Message&)> fn){
+	void MessageLoop::SetPreviewer(function<bool(const Message&)> fn){
 		previewer = fn;
 	}
-	function<bool(Message&)> MessageLoop::GetPreviewer(){
+	function<bool(const Message&)> MessageLoop::GetPreviewer(){
 		return previewer;
 	}
 
 	void MessageLoop::RunLoop(){
 		auto msg = Message::Recieve();
 		while(true){
-			if(msg.IsCritical()){
-				if(criticalHandler) criticalHandler(msg);
-				else return;
-			}
-			if(previewer) previewer(msg);
-			for(auto h : handlers){
-				if(!h->HandleMessage(msg)) return;
-			}
+			if(!HandleMessage(msg)) return;
+			msg.Next();
 		}
+	}
+
+	bool MessageLoop::HandleMessage(const Message &msg){
+		if(msg.IsCritical()){
+			if(criticalHandler) criticalHandler(msg);
+			else return false;
+		}
+		if(previewer) previewer(msg);
+		for(auto h : handlers){
+			if(!h->HandleMessage(msg)) return false;
+		}
+		return true;
 	}
 	
 }
