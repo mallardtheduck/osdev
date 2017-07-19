@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <sstream>
 #include <btos/message.hpp>
+#include <btos/messageloop.hpp>
 #include "fonts.hpp"
 
 using namespace std;
@@ -19,13 +20,14 @@ template<typename T> static void SendReply(const Message &msg, const T &content)
 	msg.SendReply(content);
 }
 
-Client::Client() {
+Client::Client(bt_pid_t p) : pid(p) {
 }
 
 Client::~Client() {
 }
 
-void Client::ProcessMessage(const Message &msg) {
+bool Client::HandleMessage(const Message &msg) {
+	if(msg.From() != pid) return true;
 	/*stringstream d;
 	d << "GDS: Message type: " << msg.type << " from: " << msg.from << endl;
 	bt_zero(d.str().c_str());*/
@@ -246,32 +248,33 @@ void Client::ProcessMessage(const Message &msg) {
 			break;
 		}
 	}
+	return true;
 }
 
 
 void Service(bt_pid_t root_pid) {
 	bt_subscribe(bt_kernel_messages::ProcessEnd);
 	Message msg = Message::Recieve();
-	while(true) {
+	MessageLoop msgLoop;
+	msgLoop.SetPreviewer([&](const Message &msg) -> bool{
 		if(msg.From() == 0 && msg.Source() == 0 && msg.Type() == bt_kernel_messages::ProcessEnd) {
 			bt_pid_t pid = msg.Content<bt_pid_t>();
 			stringstream ss;
 			ss << "GDS: PID: " << pid << " terminated." << endl;
 			bt_zero(ss.str().c_str());
+			msgLoop.RemoveHandler(allClients[pid]);
 			allClients.erase(pid);
-			if(pid == root_pid) return;
+			if(pid == root_pid) return false;
 		} else {
 			if(allClients.find(msg.From()) == allClients.end()) {
-				Client *newclient = new Client();
+				auto newclient = make_shared<Client>(msg.From());
 				if(newclient) {
-					shared_ptr<Client> ptr(newclient);
-					allClients.insert(pair<bt_pid_t, shared_ptr<Client>>(msg.From(), ptr));
+					allClients.insert(pair<bt_pid_t, shared_ptr<Client>>(msg.From(), newclient));
+					msgLoop.AddHandler(newclient);
 				}
 			}
-			try {
-				allClients.at(msg.From())->ProcessMessage(msg);
-			} catch(out_of_range&) {}
 		}
-		msg.Next();
-	}
+		return true;
+	});
+	msgLoop.RunLoop();
 }

@@ -31,7 +31,9 @@ namespace btos_api{
 	}
 
 	void MessageLoop::RunLoop(){
-		auto msg = Message::Recieve();
+		bt_msg_filter filter;
+		filter.flags = bt_msg_filter_flags::NonReply;
+		auto msg = Message::RecieveFiltered(filter);
 		while(true){
 			if(!HandleMessage(msg)) return;
 			msg.Next();
