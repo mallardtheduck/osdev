@@ -40,8 +40,7 @@ namespace btos_api{
 
 	bool MessageLoop::HandleMessage(const Message &msg){
 		if(msg.IsCritical()){
-			if(criticalHandler) criticalHandler(msg);
-			else return false;
+			if(!criticalHandler || !criticalHandler(msg)) return false;
 		}
 		if(previewer) previewer(msg);
 		for(auto h : handlers){
