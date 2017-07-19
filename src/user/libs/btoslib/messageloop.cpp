@@ -44,7 +44,7 @@ namespace btos_api{
 		if(msg.IsCritical()){
 			if(!criticalHandler || !criticalHandler(msg)) return false;
 		}
-		if(previewer) previewer(msg);
+		if(previewer && !previewer(msg)) return false;
 		for(auto h : handlers){
 			if(!h->HandleMessage(msg)) return false;
 		}

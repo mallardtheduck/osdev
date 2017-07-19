@@ -3,6 +3,7 @@
 
 #include <btos.h>
 #include <memory>
+#include <type_traits>
 
 namespace btos_api{
 
@@ -34,9 +35,10 @@ namespace btos_api{
 		void *Content() const;
 
 		template<typename T> T Content() const{
-			void *c = Content();
-			if(c && header.length >= sizeof(T)){
-				return *reinterpret_cast<T*>(c);
+			static_assert(std::is_pod<T>::value, "Message content must be a POD!");
+			if(header.length >= sizeof(T)){
+				auto c = std::unique_ptr<T>(reinterpret_cast<T*>(Content()));
+				return T(*c);
 			}else{
 				return T();
 			}
@@ -46,6 +48,7 @@ namespace btos_api{
 		void SendReply() const;
 		
 		template<typename T> void SendReply(T c) const{
+			static_assert(std::is_pod<T>::value, "Message content must be a POD!");
 			SendReply(reinterpret_cast<void*>(&c), sizeof(c));
 		}
 

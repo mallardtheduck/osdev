@@ -5,6 +5,7 @@
 #include <dev/terminal.h>
 #include <dev/terminal_ioctl.h>
 #include <btos/message.hpp>
+#include <btos/messageloop.hpp>
 
 #include <map>
 #include <sstream>
@@ -29,8 +30,9 @@ void Service(bt_pid_t root_pid){
 	
 	bt_subscribe(bt_kernel_messages::ProcessEnd);
 	bt_subscribe(bt_kernel_messages::MessageReceipt);
-	Message msg = Message::Recieve();
-	while(true) {
+
+	MessageLoop msgLoop;
+	msgLoop.SetPreviewer([&](const Message &msg) -> bool {
 		/*stringstream dss;
 		dss << "WM: Message ID " << msg.id << " from: " << msg.from << " source: " << msg.source << " type: " << msg.type << endl;
 		bt_zero(dss.str().c_str());*/
@@ -39,8 +41,11 @@ void Service(bt_pid_t root_pid){
 			stringstream ss;
 			ss << "WM: PID: " << pid << " terminated." << endl;
 			bt_zero(ss.str().c_str());
-			clients.erase(pid);
-			if(pid == root_pid) return;
+			if(clients.find(pid) != clients.end()){
+				msgLoop.RemoveHandler(clients[pid]);
+				clients.erase(pid);
+			}
+			if(pid == root_pid) return false;
 		}else if(msg.From() == 0 && msg.Source() == 0 && msg.Type() == bt_kernel_messages::MessageReceipt) {
 			bt_msg_header omsg = msg.Content<bt_msg_header>();
 			if(!(omsg.flags & bt_msg_flags::Reply) && clients.find(omsg.to) != clients.end()){
@@ -51,16 +56,14 @@ void Service(bt_pid_t root_pid){
 			HandleInput(event);
 		}else {
 			if(clients.find(msg.From()) == clients.end()) {
-				Client *newclient = new Client(msg.From());
+				auto newclient = make_shared<Client>(msg.From());
 				if(newclient) {
-					shared_ptr<Client> ptr(newclient);
-					clients.insert(pair<bt_pid_t, shared_ptr<Client>>(msg.From(), ptr));
+					clients.insert(pair<bt_pid_t, shared_ptr<Client>>(msg.From(), newclient));
+					msgLoop.AddHandler(newclient);
 				}
 			}
-			try {
-				clients.at(msg.From())->ProcessMessage(msg);
-			} catch(out_of_range&) {}
 		}
-		msg.Next();
-	}
+		return true;
+	});
+	msgLoop.RunLoop();
 }

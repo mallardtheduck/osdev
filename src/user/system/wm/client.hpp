@@ -9,6 +9,7 @@
 #include <memory>
 #include <deque>
 #include <wm/wm.h>
+#include <btos/imessagehandler.hpp>
 
 class Window;
 class Menu;
@@ -17,7 +18,7 @@ namespace btos_api{
 	class Message;
 }
 
-class Client: public std::enable_shared_from_this<Client>{
+class Client: public std::enable_shared_from_this<Client>, public btos_api::IMessageHandler{
 private:
 	bool msgPending = false;
 	bt_pid_t pid;
@@ -31,7 +32,7 @@ public:
 	Client(bt_pid_t pid);
 	~Client();
 	
-	void ProcessMessage(const Message &msg);
+	bool HandleMessage(const Message &msg) override;
 	void SendEvent(const wm_Event &e);
 	void SendNextEvent();
 };

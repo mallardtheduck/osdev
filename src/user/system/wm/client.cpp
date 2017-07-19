@@ -34,7 +34,8 @@ Client::~Client(){
 	}
 }
 
-void Client::ProcessMessage(const Message &msg){
+bool Client::HandleMessage(const Message &msg){
+	if(msg.From() != pid) return true;
 	switch(msg.Type()){
 		case wm_RequestType::SelectWindow:{
 			uint64_t id = msg.Content<uint64_t>();
@@ -206,6 +207,7 @@ void Client::ProcessMessage(const Message &msg){
 			break;
 		}
 	}
+	return true;
 }
 
 void Client::SendEvent(const wm_Event &e){

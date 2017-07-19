@@ -141,6 +141,8 @@ bool Client::HandleMessage(const Message &msg) {
 		case gds_MsgType::GetColour:{
 			if(currentSurface) {
 				gds_TrueColour truecol = msg.Content<gds_TrueColour>();
+				DBG("currentSurface: " << currentSurface.get() << " truecol: " << &truecol);
+				DBG("currentSurface->GetColour: " << &currentSurface->GetColour);
 				uint32_t col = currentSurface->GetColour(truecol.r, truecol.g, truecol.b, truecol.a);
 				SendReply(msg, col);
 			} else {
@@ -262,8 +264,10 @@ void Service(bt_pid_t root_pid) {
 			stringstream ss;
 			ss << "GDS: PID: " << pid << " terminated." << endl;
 			bt_zero(ss.str().c_str());
-			msgLoop.RemoveHandler(allClients[pid]);
-			allClients.erase(pid);
+			if(allClients.find(pid) != allClients.end()){
+				msgLoop.RemoveHandler(allClients[pid]);
+				allClients.erase(pid);
+			}
 			if(pid == root_pid) return false;
 		} else {
 			if(allClients.find(msg.From()) == allClients.end()) {
