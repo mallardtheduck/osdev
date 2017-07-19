@@ -36,9 +36,9 @@ namespace btos_api{
 
 		template<typename T> T Content() const{
 			static_assert(std::is_pod<T>::value, "Message content must be a POD!");
-			if(header.length >= sizeof(T)){
-				auto c = std::unique_ptr<T>(reinterpret_cast<T*>(Content()));
-				return T(*c);
+			void *c = Content();
+			if(c && header.length >= sizeof(T)){
+				return *reinterpret_cast<T*>(c);
 			}else{
 				return T();
 			}

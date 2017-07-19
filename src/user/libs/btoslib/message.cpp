@@ -85,7 +85,7 @@ namespace btos_api{
 
 	void *Message::Content() const{
 		if(!content && header.length){
-			content.reset((void*)new char[header.length]);
+			content.reset((void*)new char[header.length + 1]);
 			bt_msg_content(const_cast<bt_msg_header*>(&header), content.get(), header.length);
 		}
 		return content.get();
@@ -110,12 +110,12 @@ namespace btos_api{
 	}
 
 	void Message::Next(){
+		content.reset();
 		if(filter.flags){
 			bt_next_msg_filtered(&header, filter);
 		}else{
 			bt_next_msg(&header);
 		}
-		content.reset();
 	}
 
 }

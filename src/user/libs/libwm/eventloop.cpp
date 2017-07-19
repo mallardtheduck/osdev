@@ -14,13 +14,13 @@ namespace wm{
 	}
 
 	void EventLoop::AddWindow(shared_ptr<Window> win){
-		windows[win->GetID()] = win;
+		windows.insert(make_pair(win->GetID(), win));
 	}
 	void EventLoop::RemoveWindow(uint64_t id){
 		windows.erase(id);
 	}
 	void EventLoop::AddMenu(shared_ptr<Menu> m){
-		menus[m->GetID()] = m;
+		menus.insert(make_pair(m->GetID(), m));
 	}
 	void EventLoop::RemoveMenu(uint64_t id){
 		menus.erase(id);

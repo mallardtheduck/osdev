@@ -34,10 +34,7 @@ namespace btos_api{
 		bt_msg_filter filter;
 		filter.flags = bt_msg_filter_flags::NonReply;
 		auto msg = Message::RecieveFiltered(filter);
-		while(true){
-			if(!HandleMessage(msg)) return;
-			msg.Next();
-		}
+		while(HandleMessage(msg)) msg.Next();
 	}
 
 	bool MessageLoop::HandleMessage(const Message &msg){

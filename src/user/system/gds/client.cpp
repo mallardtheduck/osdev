@@ -141,8 +141,6 @@ bool Client::HandleMessage(const Message &msg) {
 		case gds_MsgType::GetColour:{
 			if(currentSurface) {
 				gds_TrueColour truecol = msg.Content<gds_TrueColour>();
-				DBG("currentSurface: " << currentSurface.get() << " truecol: " << &truecol);
-				DBG("currentSurface->GetColour: " << &currentSurface->GetColour);
 				uint32_t col = currentSurface->GetColour(truecol.r, truecol.g, truecol.b, truecol.a);
 				SendReply(msg, col);
 			} else {
