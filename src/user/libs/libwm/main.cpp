@@ -109,13 +109,10 @@ int main(){
 		return true;
 	};
 
-	EventLoop el;
 	w1->SetEventHandler(h);
-	el.AddWindow(w1);
 	w2->SetEventHandler(h);
-	el.AddWindow(w2);
 	w3->SetEventHandler(h);
-	el.AddWindow(w3);
+	EventLoop el{{w1, w2, w3}};
 	el.RunLoop();
 	return 0;
 }

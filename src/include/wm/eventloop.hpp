@@ -6,6 +6,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <vector>
 
 #include <btos/imessagehandler.hpp>
 
@@ -22,6 +23,9 @@ namespace wm{
 		std::map<uint64_t, std::shared_ptr<Menu>> menus;
 
 	public:
+		EventLoop() = default;
+		EventLoop(const std::vector<std::shared_ptr<Window>> &windows, const std::vector<std::shared_ptr<Menu>> &menus = std::vector<std::shared_ptr<Menu>>());
+
 		void SetPreviewer(std::function<bool(const wm_Event&)> &fn);
 		std::function<bool(const wm_Event&)> GetPreviewer();
 

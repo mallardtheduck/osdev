@@ -9,7 +9,7 @@ namespace btos_api{
 	}
 	void MessageLoop::RemoveHandler(shared_ptr<IMessageHandler> h){
 		for(auto i = handlers.begin(); i != handlers.end(); ++i){
-			if(*i = h){
+			if(*i == h){
 				handlers.erase(i);
 				return;
 			}

@@ -237,6 +237,8 @@ bool Client::HandleMessage(const Message &msg) {
 					delete ids;
 				}
 				free(mops);
+			}else{
+				SendReply(msg, (uint32_t)0);
 			}
 			break;
 		case gds_MsgType::ReorderOp:{
@@ -254,7 +256,6 @@ bool Client::HandleMessage(const Message &msg) {
 
 void Service(bt_pid_t root_pid) {
 	bt_subscribe(bt_kernel_messages::ProcessEnd);
-	Message msg = Message::Recieve();
 	MessageLoop msgLoop;
 	msgLoop.SetPreviewer([&](const Message &msg) -> bool{
 		if(msg.From() == 0 && msg.Source() == 0 && msg.Type() == bt_kernel_messages::ProcessEnd) {
@@ -271,7 +272,7 @@ void Service(bt_pid_t root_pid) {
 			if(allClients.find(msg.From()) == allClients.end()) {
 				auto newclient = make_shared<Client>(msg.From());
 				if(newclient) {
-					allClients.insert(pair<bt_pid_t, shared_ptr<Client>>(msg.From(), newclient));
+					allClients.insert(make_pair(msg.From(), newclient));
 					msgLoop.AddHandler(newclient);
 				}
 			}

@@ -16,6 +16,7 @@ namespace btos_api{
 		std::function<bool(const Message&)> criticalHandler;
 		std::function<bool(const Message&)> previewer;
 	public:
+		MessageLoop() = default;
 		void AddHandler(std::shared_ptr<IMessageHandler> h);
 		void RemoveHandler(std::shared_ptr<IMessageHandler> h);
 

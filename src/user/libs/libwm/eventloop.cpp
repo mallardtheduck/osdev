@@ -6,6 +6,15 @@ using namespace std;
 namespace btos_api{
 namespace wm{
 
+	EventLoop::EventLoop(const vector<shared_ptr<Window>> &wins, const vector<shared_ptr<Menu>> &ms){
+		for(auto w : wins){
+			AddWindow(w);
+		}
+		for(auto m : ms){
+			AddMenu(m);
+		}
+	}
+
 	void EventLoop::SetPreviewer(std::function<bool(const wm_Event&)> &fn){
 		previewer = fn;
 	}
