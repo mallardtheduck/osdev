@@ -272,13 +272,13 @@ void Service(bt_pid_t root_pid) {
 			if(allClients.find(from) == allClients.end()) {
 				auto newclient = make_shared<Client>(msg.From());
 				if(newclient) {
-					allClients.insert(make_pair(from, newclient));;
+					allClients.insert(make_pair(from, newclient));
 				}
 			}
 		}
 		return true;
 	});
-	auto gdsHandler = make_shared<CustomHandler>( [&](const Message &msg) -> bool{
+	auto gdsHandler = make_shared<CustomHandler>([&](const Message &msg) -> bool{
 		auto from = msg.From();
 		if(allClients.find(from) != allClients.end()){
 			return allClients.at(from)->HandleMessage(msg);
