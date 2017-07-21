@@ -42,7 +42,6 @@ void Service(bt_pid_t root_pid){
 			ss << "WM: PID: " << pid << " terminated." << endl;
 			bt_zero(ss.str().c_str());
 			if(clients.find(pid) != clients.end()){
-				msgLoop.RemoveHandler(clients[pid]);
 				clients.erase(pid);
 			}
 			if(pid == root_pid) return false;
@@ -58,12 +57,18 @@ void Service(bt_pid_t root_pid){
 			if(clients.find(msg.From()) == clients.end()) {
 				auto newclient = make_shared<Client>(msg.From());
 				if(newclient) {
-					clients.insert(pair<bt_pid_t, shared_ptr<Client>>(msg.From(), newclient));
-					msgLoop.AddHandler(newclient);
+					clients.insert(make_pair(msg.From(), newclient));
 				}
 			}
 		}
 		return true;
 	});
+	auto wmHandler = make_shared<CustomHandler>([&](const Message &msg) -> bool{
+		auto from = msg.From();
+		if(clients.find(from) != clients.end()){
+			return clients.at(from)->HandleMessage(msg);
+		}else return true;
+	});
+	msgLoop.AddHandler(wmHandler);
 	msgLoop.RunLoop();
 }

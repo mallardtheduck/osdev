@@ -264,20 +264,26 @@ void Service(bt_pid_t root_pid) {
 			ss << "GDS: PID: " << pid << " terminated." << endl;
 			bt_zero(ss.str().c_str());
 			if(allClients.find(pid) != allClients.end()){
-				msgLoop.RemoveHandler(allClients[pid]);
 				allClients.erase(pid);
 			}
 			if(pid == root_pid) return false;
 		} else {
-			if(allClients.find(msg.From()) == allClients.end()) {
+			auto from = msg.From();
+			if(allClients.find(from) == allClients.end()) {
 				auto newclient = make_shared<Client>(msg.From());
 				if(newclient) {
-					allClients.insert(make_pair(msg.From(), newclient));
-					msgLoop.AddHandler(newclient);
+					allClients.insert(make_pair(from, newclient));;
 				}
 			}
 		}
 		return true;
 	});
+	auto gdsHandler = make_shared<CustomHandler>( [&](const Message &msg) -> bool{
+		auto from = msg.From();
+		if(allClients.find(from) != allClients.end()){
+			return allClients.at(from)->HandleMessage(msg);
+		}else return true;
+	});
+	msgLoop.AddHandler(gdsHandler);
 	msgLoop.RunLoop();
 }
