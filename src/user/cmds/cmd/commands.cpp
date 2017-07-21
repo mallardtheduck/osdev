@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <sstream>
 #include <dev/rtc.h>
+#include <btos/process.hpp>
 
 using namespace std;
 
@@ -375,22 +376,16 @@ bool run_program(const command &cmd) {
         if (ent.valid && ent.type == FS_File) {
             vector<string> args=commandline;
             args.erase(args.begin());
-            char **argv = new char *[args.size()];
-            size_t i = 0;
-            for (const string &s : args) {
-                argv[i] = (char *) s.c_str();
-                ++i;
-            }
             string std_in=get_env("STDIN");
             string std_out=get_env("STDOUT");
             set_env("STDIN", cmd.input_path);
             set_env("STDOUT", cmd.output_path);
-            bt_pid pid = bt_spawn(p.c_str(), args.size(), argv);
+			Process proc = Process::Spawn(p, args);
             set_env("STDIN", std_in);
             set_env("STDOUT", std_out);
-            delete[] argv;
             int ret = 0;
-            if (pid) ret = bt_wait(pid);
+            if (proc.GetPID()) ret = proc.Wait();
+			else cout << "Could not launch " << p << endl;
             if (ret == -1) cout << p << " crashed." << endl;
             return true;
 

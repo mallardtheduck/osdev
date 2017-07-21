@@ -29,7 +29,7 @@ extern rtc_calltable *RTC_CALL_TABLE;
 
 #define USE_RTC rtc_calltable *RTC_CALL_TABLE
 
-inline static bool rtc_init(){
+bool rtc_init(){
 	uint16_t extid = get_extension_id(RTC_EXTENSION_NAME);
 	if(!extid) return false;
 	RTC_CALL_TABLE = (rtc_calltable*) get_extension(extid)->calltable;
@@ -50,44 +50,25 @@ inline static uint64_t rtc_millis(){
 
 #include <btos.h>
 
-#define USE_BT_RTC_API uint16_t bt_rtc_ext_id = 0
+//In btoscore
+
 extern uint16_t bt_rtc_ext_id;
 
-inline static void bt_rtc_init(){
-	if(bt_rtc_ext_id == 0) bt_rtc_ext_id = bt_query_extension(RTC_EXTENSION_NAME);
-}
+#ifdef __cplusplus
+namespace btos_api{
+#endif
 
-inline static uint32_t bt_rtc_api_call(uint16_t fn, uint32_t b, uint32_t c, uint32_t d){
-	bt_rtc_init();
-	uint32_t a = (bt_rtc_ext_id << 16) + fn;
-	return btos_call(a, b, c, d);
-}
+EXTERN_C void bt_rtc_init();
+EXTERN_C uint32_t bt_rtc_api_call(uint16_t fn, uint32_t b, uint32_t c, uint32_t d);
+EXTERN_C void bt_rtc_sleep(uint32_t msec);
+EXTERN_C uint64_t bt_rtc_millis();
+EXTERN_C bt_handle_t bt_rtc_create_timer(uint32_t duration);
+EXTERN_C void bt_rtc_reset_timer(bt_handle_t timer);
+EXTERN_C uint64_t bt_rtc_get_time();
 
-inline static void bt_rtc_sleep(uint32_t msec){
-	bt_rtc_api_call(ENUM_GET(bt_rtc_api, Sleep), msec, 0, 0);
+#ifdef __cplusplus
 }
-
-inline static uint64_t bt_rtc_millis(){
-	uint64_t ret;
-	bt_rtc_api_call(ENUM_GET(bt_rtc_api, Millis), (uint32_t)&ret, 0, 0);
-	return ret;
-}
-
-inline static bt_handle_t bt_rtc_create_timer(uint32_t duration){
-	bt_handle_t ret = 0;
-	bt_rtc_api_call(ENUM_GET(bt_rtc_api, CreateTimer), duration, (uint32_t)&ret, 0);
-	return ret;
-}
-
-inline static void bt_rtc_reset_timer(bt_handle_t timer){
-	bt_rtc_api_call(ENUM_GET(bt_rtc_api, ResetTimer), (uint32_t)timer, 0, 0);
-}
-
-inline static uint64_t bt_rtc_get_time(){
-	uint64_t ret;
-	bt_rtc_api_call(ENUM_GET(bt_rtc_api, GetTime), (uint32_t)&ret, 0, 0);
-	return ret;
-}
+#endif
 
 #endif
 

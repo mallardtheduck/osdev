@@ -5,7 +5,9 @@
 #include <cstdlib>
 #include <crt_support.h>
 #include <dev/terminal.h>
-#include "table.hpp"
+#include <dev/terminal.hpp>
+#include <btos/table.hpp>
+#include <btos/process.hpp>
 
 using namespace std;
 
@@ -35,12 +37,11 @@ int main(){
 	GDSPath = systemdrive + GDSPath;
 	WMPath = systemdrive + WMPath;
 	ShellPath = systemdrive + ShellPath;
-	const char *args[2] = {WMPath.c_str(), ShellPath.c_str()};
-	bt_pid_t pid = bt_spawn(GDSPath.c_str(), 2, (char**)args);
-	bt_wait(pid);
-	bt_fioctl(btos_get_handle(fileno(stdout)), bt_terminal_ioctl::HidePointer, 0, NULL);
-	bool ph = true;
-	bt_fioctl(btos_get_handle(fileno(stdout)), bt_terminal_ioctl::PointerAutoHide, sizeof(ph), (char*)ph);
+	Process proc = Process::Spawn(GDSPath, {WMPath, ShellPath});
+	proc.Wait();
+	Terminal term;
+	term.SetPointerVisibility(false);
+	term.SetPointerAutohide(true);
 	cout << "Ending remaining GUI processes...";
 	cout.flush();
 	bool found = true;

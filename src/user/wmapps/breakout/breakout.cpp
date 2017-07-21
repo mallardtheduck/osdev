@@ -1,10 +1,18 @@
-#include <gds/libgds.h>
-#include <wm/libwm.h>
 #include <dev/rtc.h>
 #include <iostream>
+#include <btos/message.hpp>
+#include <gds/surface.hpp>
+#include <gds/geom.hpp>
+#include <wm/window.hpp>
+#include <btos/timer.hpp>
+#include <btos/messageloop.hpp>
+#include <wm/eventloop.hpp>
+#include <memory>
 #include "game.hpp"
 
 using namespace std;
+using namespace gds;
+using namespace wm;
 
 enum class gamestate{
 	Title,
@@ -14,54 +22,65 @@ enum class gamestate{
 };
 
 int main(){
-    uint64_t surface = GDS_NewSurface(gds_SurfaceType::Bitmap, 320, 240);
-	/*uint64_t win =*/ WM_NewWindow(100, 100, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close, surface, "Breakout");
-	font = GDS_GetFontID("DejaVu Sans", gds_FontStyle::Bold);
-	DrawBackground();
-	DrawTitle();
-	WM_Update();
-	bt_handle_t timer = bt_rtc_create_timer(100);
+    auto surface = make_shared<Surface>(gds_SurfaceType::Bitmap, 320, 240);
+	auto win = make_shared<Window>(Point{100, 100}, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close, *surface, "Breakout");
+	font = Font::Get("DejaVu Sans", gds_FontStyle::Bold);
+	DrawBackground(surface);
+	DrawTitle(surface);
+	win->Update();
+	auto timer = make_shared<Timer>(100);
 	gamestate state = gamestate::Title;
-	while(true){
-		btos_api::bt_msg_header msg = bt_recv(true);
-		wm_Event e = WM_ParseMessage(&msg);
-		if(e.type == wm_EventType::Close) break;
+	win->SetEventHandler([&](const wm_Event &e)->bool{
+		if(e.type == wm_EventType::Close) return false;
 		switch(state){
 			case gamestate::Title:{
 				if(e.type == wm_EventType::Keyboard) state = gamestate::GameStart;
 				break;
 			}
 			case gamestate::GameStart:{
-				InitGame();
+				InitGame(surface, win);
 				state = gamestate::GamePlay;
-				bt_rtc_reset_timer(timer);
+				timer->Reset();
 				break;
 			}
 			case gamestate::GamePlay:{
-				if(msg.from == 0 && msg.source == bt_rtc_ext_id){
-					bt_rtc_reset_timer(timer);
-					bool end = GameStep();
-					GameDraw();
-					if(end) state = gamestate::Finish;
-				}else{
-					GameEvent(e);
-				}
+				GameEvent(e);
+				break;
+			}
+			default: break;
+		}
+		return true;
+	});
+	timer->SetHandler([&](Timer &t)->bool{
+		switch(state){
+			case gamestate::GamePlay:{
+				t.Reset();
+				bool end = GameStep(surface);
+				GameDraw(win);
+				if(end) state = gamestate::Finish;
 				break;
 			}
 			case gamestate::Finish:{
 				EndGame();
-				DrawBackground();
-				DrawEndScreen();
-				WM_Update();
+				DrawBackground(surface);
+				DrawEndScreen(surface);
+				win->Update();
 				bt_rtc_sleep(2000);
-				DrawBackground();
-				DrawTitle();
-				WM_Update();
+				DrawBackground(surface);
+				DrawTitle(surface);
+				win->Update();
 				state = gamestate::Title;
 				break;
 			}
+			default: break;
 		}
-		bt_msg_ack(&msg);
-	}
+		return true;
+	});
+	auto eventLoop = make_shared<EventLoop>();
+	eventLoop->AddWindow(win);
+	MessageLoop msgLoop;
+	msgLoop.AddHandler(eventLoop);
+	msgLoop.AddHandler(timer);
+	msgLoop.RunLoop();
     return 0;
 }

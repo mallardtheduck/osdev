@@ -1,8 +1,8 @@
 #include <fstream>
 #include <cstdlib>
+#include <btos/table.hpp>
 
 #include "debug.hpp"
-#include "table.hpp"
 #include "commands.hpp"
 
 using namespace std;
@@ -10,7 +10,6 @@ using namespace std;
 uint16_t debug_ext_id;
 
 const size_t thread_stack_size = 16 * 1024;
-char watchthread_stack[thread_stack_size];
 
 bool init_debug(){
     debug_ext_id = bt_query_extension("DEBUG");
@@ -115,7 +114,7 @@ int main(int argc, char **argv){
 		return 0;
 	}
 
-	bt_new_thread(&watch_thread, NULL, watchthread_stack + thread_stack_size);
+	btos_create_thread(&watch_thread, NULL, thread_stack_size);
 
 	string cmd;
 	do cmd = input_command();

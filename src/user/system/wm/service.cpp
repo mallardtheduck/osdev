@@ -3,6 +3,9 @@
 #include "client.hpp"
 
 #include <dev/terminal.h>
+#include <dev/terminal_ioctl.h>
+#include <btos/message.hpp>
+#include <btos/messageloop.hpp>
 
 #include <map>
 #include <sstream>
@@ -19,49 +22,53 @@ void Service(bt_pid_t root_pid){
 
 	bt_handle fh=bt_fopen(stdout_path, FS_Read | FS_Write);
 	stdin_handle = fh;
-	bt_fioctl(fh, bt_terminal_ioctl::StartEventMode, 0, NULL);
-	bt_terminal_event_mode::Enum event_mode = bt_terminal_event_mode::Both;
-	bt_fioctl(fh, bt_terminal_ioctl::SetEventMode, sizeof(event_mode), (char*)&event_mode);
+	bt_term_stdout();
+	bt_term_StartEventMode();
+	bt_term_SetEventMode(bt_terminal_event_mode::Both);
 	
 	uint16_t terminal_ext_id = bt_query_extension("TERMINAL");
 	
 	bt_subscribe(bt_kernel_messages::ProcessEnd);
 	bt_subscribe(bt_kernel_messages::MessageReceipt);
-	bt_msg_header msg = bt_recv(true);
-	while(true) {
+
+	MessageLoop msgLoop;
+	msgLoop.SetPreviewer([&](const Message &msg) -> bool {
 		/*stringstream dss;
 		dss << "WM: Message ID " << msg.id << " from: " << msg.from << " source: " << msg.source << " type: " << msg.type << endl;
 		bt_zero(dss.str().c_str());*/
-		if(msg.from == 0 && msg.source == 0 && msg.type == bt_kernel_messages::ProcessEnd) {
-			bt_pid_t pid = 0;
-			bt_msg_content(&msg, (void*)&pid, sizeof(pid));
+		if(msg.From() == 0 && msg.Source() == 0 && msg.Type() == bt_kernel_messages::ProcessEnd) {
+			bt_pid_t pid = msg.Content<bt_pid_t>();
 			stringstream ss;
 			ss << "WM: PID: " << pid << " terminated." << endl;
 			bt_zero(ss.str().c_str());
-			clients.erase(pid);
-			if(pid == root_pid) return;
-		}else if(msg.from == 0 && msg.source == 0 && msg.type == bt_kernel_messages::MessageReceipt) {
-			bt_msg_header omsg;
-			bt_msg_content(&msg, (void*)&omsg, sizeof(omsg));
+			if(clients.find(pid) != clients.end()){
+				clients.erase(pid);
+			}
+			if(pid == root_pid) return false;
+		}else if(msg.From() == 0 && msg.Source() == 0 && msg.Type() == bt_kernel_messages::MessageReceipt) {
+			bt_msg_header omsg = msg.Content<bt_msg_header>();
 			if(!(omsg.flags & bt_msg_flags::Reply) && clients.find(omsg.to) != clients.end()){
 				clients.at(omsg.to)->SendNextEvent();
 			}
-		}else if(msg.from == 0 && msg.source == terminal_ext_id && msg.type == bt_terminal_message_type::InputEvent) {
-			bt_terminal_event event;
-			bt_msg_content(&msg, (void*)&event, sizeof(event));
+		}else if(msg.From() == 0 && msg.Source() == terminal_ext_id && msg.Type() == bt_terminal_message_type::InputEvent) {
+			bt_terminal_event event = msg.Content<bt_terminal_event>();
 			HandleInput(event);
 		}else {
-			if(clients.find(msg.from) == clients.end()) {
-				Client *newclient = new Client(msg.from);
+			if(clients.find(msg.From()) == clients.end()) {
+				auto newclient = make_shared<Client>(msg.From());
 				if(newclient) {
-					shared_ptr<Client> ptr(newclient);
-					clients.insert(pair<bt_pid_t, shared_ptr<Client>>(msg.from, ptr));
+					clients.insert(make_pair(msg.From(), newclient));
 				}
 			}
-			try {
-				clients.at(msg.from)->ProcessMessage(msg);
-			} catch(out_of_range&) {}
 		}
-		bt_next_msg(&msg);
-	}
+		return true;
+	});
+	auto wmHandler = make_shared<CustomHandler>([&](const Message &msg) -> bool{
+		auto from = msg.From();
+		if(clients.find(from) != clients.end()){
+			return clients.at(from)->HandleMessage(msg);
+		}else return true;
+	});
+	msgLoop.AddHandler(wmHandler);
+	msgLoop.RunLoop();
 }

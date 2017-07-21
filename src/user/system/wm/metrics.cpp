@@ -9,6 +9,7 @@
 #include <btos.h>
 
 using namespace std;
+using namespace gds;
 
 #define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
 
@@ -90,14 +91,14 @@ int32_t GetMetric(Metric<int32_t> &metric){
 	return metric.value;
 }
 
-uint32_t GetColour(Metric<ColourValue> &metric){
+Colour GetColour(const Surface &surf, Metric<ColourValue> &metric){
 	if(!metric.present){
 		string val = GetConfigValue(metric.name);
-		if(!starts_with(val, colourPrefix)) return 0;
-		if(!ends_with(val, colourEnding)) return 0;
+		if(!starts_with(val, colourPrefix)) return Colour();
+		if(!ends_with(val, colourEnding)) return Colour();
 		val = val.substr(colourPrefix.length(), val.length() - (colourPrefix.length() + colourEnding.length()));
 		auto parts = split(val, ',');
-		if(parts.size() != 3) return 0;
+		if(parts.size() != 3) return Colour();
 		string rstr = parts[0];
 		trim(rstr);
 		string gstr = parts[1];
@@ -111,7 +112,7 @@ uint32_t GetColour(Metric<ColourValue> &metric){
 		metric.present = true;
 		DBG("WM: Colour: " << metric.name << " Colour(" << (int)r << ", " << (int)g << ", " << (int)b << ")");
 	}
-	return GDS_GetColour(metric.value.r, metric.value.g, metric.value.b);
+	return surf.GetColour(metric.value.r, metric.value.g, metric.value.b);
 }
 
 string GetSetting(Metric<string> &metric){

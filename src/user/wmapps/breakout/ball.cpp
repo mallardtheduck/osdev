@@ -4,6 +4,8 @@
 #include "ball.hpp"
 #include <cmath>
 
+using namespace gds;
+
 void Ball::Launch(){
 	if(!launched){
 		xvel = 10;
@@ -19,8 +21,8 @@ void Ball::Reset(){
 }
 
 void Ball::Draw(){
-	uint32_t green = GDS_GetColour(0, 255, 0);
-	GDS_Ellipse(x, y, size, size, green, green, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	Colour green = surf->GetColour(0, 255, 0);
+	surf->Ellipse({x, y, size, size}, green, green, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 }
 
 void Ball::BounceSide(){
@@ -80,8 +82,8 @@ void Ball::Input(const wm_Event &e){
 	}
 }
 
-wm_Rect Ball::GetBoundingRect(){
-	return wm_Rect{x - (int32_t)size/2 - 1, y - (int32_t)size/2 - 1, size + 2, size + 2};
+Rect Ball::GetBoundingRect(){
+	return Rect{x - (int32_t)size/2 - 1, y - (int32_t)size/2 - 1, size + 2, size + 2};
 }
 
 uint32_t Ball::GetZOrder(){

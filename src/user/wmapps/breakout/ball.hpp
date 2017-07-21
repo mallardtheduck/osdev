@@ -15,14 +15,14 @@ private:
 public:
 	static const uint32_t size = 20;
 	
-	Ball(): x(170), y(120), xvel(0), yvel(0) {}
+	Ball(std::shared_ptr<gds::Surface> s): Sprite(s), x(170), y(120), xvel(0), yvel(0) {}
 	~Ball(){}
 	
 	void Launch();
 	void Draw();
 	bool Step();
 	void Input(const wm_Event &e);
-	wm_Rect GetBoundingRect();
+	gds::Rect GetBoundingRect();
 	uint32_t GetZOrder();
 	
 	void Reset();

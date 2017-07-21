@@ -1,6 +1,8 @@
 #include <btos.h>
 #include <iostream>
 #include <gds/libgds.h>
+#include <gds/surface.hpp>
+#include <gds/screen.hpp>
 #include <cstdio>
 #include <crt_support.h>
 #include <sstream>
@@ -12,24 +14,25 @@
 #include "config.hpp"
 
 using namespace std;
+using namespace gds;
 
 static void set_env(const string &name, const string &value) {
 	bt_setenv(name.c_str(), value.c_str(), 0);
 }
 
 void InitCursor(){
-	uint32_t cursor = GDS_NewSurface(gds_SurfaceType::Bitmap, 12, 21);
-	uint32_t cur_black = GDS_GetColour(0, 0, 0);
-	uint32_t cur_transp = GDS_GetColour(0, 0, 0, 255);
-	uint32_t cur_white = GDS_GetColour(255, 255, 255);
-	gds_Point cur_points[] = {{0, 0}, {0, 13}, {3, 10}, {6, 15}, {8, 15}, {8, 14}, {6, 9}, {10, 9}, {1, 0}};
-	GDS_Box(0, 0, 12, 21, cur_transp, cur_transp, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	GDS_Polygon(9, cur_points, true, cur_black, cur_white, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	GDS_SetCursor(cursor, 1, 1);
-	GDS_CursorVisibility(true);
+	Surface cursor(gds_SurfaceType::Bitmap, 12, 21);
+	Colour cur_black = cursor.GetColour(0, 0, 0);
+	Colour cur_transp = cursor.GetColour(0, 0, 0, 255);
+	Colour cur_white = cursor.GetColour(255, 255, 255);
+	vector<Point> cur_points = {{0, 0}, {0, 13}, {3, 10}, {6, 15}, {8, 15}, {8, 14}, {6, 9}, {10, 9}, {1, 0}};
+	cursor.Box({0, 0, 12, 21}, cur_transp, cur_transp, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	cursor.Polygon(cur_points, true, cur_black, cur_white, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	Screen.SetCursor(cursor, {1, 1});
+	Screen.SetCursorVisibility(true);
 }
 
-shared_ptr<Window> CreateTestWin(string title, uint32_t x, uint32_t y, uint32_t w, uint32_t h){
+/*shared_ptr<Window> CreateTestWin(string title, uint32_t x, uint32_t y, uint32_t w, uint32_t h){
 	uint64_t surface = GDS_NewSurface(gds_SurfaceType::Bitmap, w, h);
 	GDS_Box(0, 0, w, h, GDS_GetColour(0, 0, 0), GDS_GetColour(255, 255, 255), 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	GDS_Line(0, 0, w, h, GDS_GetColour(0, 0, 0));
@@ -40,7 +43,7 @@ shared_ptr<Window> CreateTestWin(string title, uint32_t x, uint32_t y, uint32_t 
 	AddWindow(win);
 	win->SetVisible(true);
 	return win;
-}
+}*/
 
 int main(int argc, char **argv){
     cout << "BT/OS WM" << endl;

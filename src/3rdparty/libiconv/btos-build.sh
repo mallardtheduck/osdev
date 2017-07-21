@@ -22,14 +22,12 @@ export CFLAGS="-g -O2 -I$HOME/Projects/os/src/include"
 export CPPFLAGS=""
 export CXXFLAGS=""
 
-export LDFLAGS=""
+export LDFLAGS="-lbtoscore"
 
 PATH=$BASE_PATH/bin:$PATH
 ./configure \
 	--host=$ARCH \
 	--prefix=$PREFIX
-
-cp ../../toolchain/misc/libtool .
 
 make
 make DESTDIR=$PWD/../install install

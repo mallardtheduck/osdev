@@ -57,6 +57,7 @@ packages-clean: dummy.file
 	make -C packages clean
 
 newlib: dummy.file
+	make -C user/libs/btoscore all
 	make -C user/libs/newlib all
 
 newlib-clean: dummy.file

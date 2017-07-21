@@ -22,7 +22,7 @@ export CFLAGS="-g -O2 -I$HOME/Projects/os/src/include"
 export CPPFLAGS="-I$HOME/Projects/os/src/include"
 export CXXFLAGS="-I$HOME/Projects/os/src/include"
 
-export LDFLAGS=""
+export LIBS="-lbtoscore"
 
 autoconf
 PATH=$BASE_PATH/bin:$PATH
@@ -34,5 +34,7 @@ PATH=$BASE_PATH/bin:$PATH
 make
 make DESTDIR=$PWD/../install install
 find ../install/btos/lib/grub -type f -exec chmod -x {} \;
-#find ../install -path ../install/btos/lib/grub -prune -o -executable -not -name "*.elx" -type f -exec rm {}.elx \;
-#find ../install -path ../install/btos/lib/grub -prune -o -executable -not -name "*.elx" -type f -exec mv {} {}.elx \;
+find ../install/btos/bin -executable -not -name "*.elx" -type f -exec rm {}.elx \;
+find ../install/btos/bin -executable -not -name "*.elx" -type f -exec mv {} {}.elx \;
+find ../install/btos/sbin -executable -not -name "*.elx" -type f -exec rm {}.elx \;
+find ../install/btos/sbin -executable -not -name "*.elx" -type f -exec mv {} {}.elx \;

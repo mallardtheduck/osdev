@@ -14,7 +14,7 @@ BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c -fPIC -DINTERNAL_NEWLIB -D_COMPILING_NEWLIB -DABORT_MESSAGE -DMALLOC_PROVIDED -ffreestanding
 BUILD-C-OPTIONS := -Wall -Wextra -g -c -I../../../../include -I./sys/btos -I./include -std=gnu99
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -O2 -fPIC -shared -nodefaultlibs -ffreestanding -lm -lgcc_s
+LINK-FLAGS := -O2 -fPIC -shared -nodefaultlibs -ffreestanding -lm -lgcc_s -lbtoscore
 LINK-OPTIONS := -o $(LIBRARY-NAME)
 G-LINK-OPTIONS := -L. -lc -o $(G-LIBRARY-NAME)
 
@@ -44,19 +44,21 @@ all: copy
 
 startfiles: copy-startfiles
 
--include $(CDEPFILES) $(CPPDEPFILES)
-
-copy: $(LIBRARY-NAME) $(STATIC-NAME) $(STARTUP-OBJS) $(G-LIBRARY-NAME)
-	mkdir -p $(DESTINATION)/lib
+copy-includes: 
 	mkdir -p $(DESTINATION)/include
-	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib
-	cp -u $(STATIC-NAME) $(DESTINATION)/lib
-	cp -u $(G-LIBRARY-NAME) $(DESTINATION)/lib/
-	cp -u $(STATIC-NAME) $(DESTINATION)/lib/$(G-STATIC-NAME)
 	for folder in $(INCLUDE-FOLDERS); do \
 #		rsync --checksum -r $$folder/*.h $(DESTINATION)/include \
 		(cd $$folder && find . -type d -exec rsync -r --include '*/' --include '*.h' --exclude '*' --checksum {}/ $(DESTINATION)/include/{} \;); \
 	done
+
+-include $(CDEPFILES) $(CPPDEPFILES)
+
+copy: $(LIBRARY-NAME) $(STATIC-NAME) $(STARTUP-OBJS) $(G-LIBRARY-NAME) copy-includes
+	mkdir -p $(DESTINATION)/lib
+	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib
+	cp -u $(STATIC-NAME) $(DESTINATION)/lib
+	cp -u $(G-LIBRARY-NAME) $(DESTINATION)/lib/
+	cp -u $(STATIC-NAME) $(DESTINATION)/lib/$(G-STATIC-NAME)
 
 copy-startfiles: $(STARTUP-OBJS)
 	for file in $(STARTUP-OBJS); do cp $$file $(DESTINATION)/lib; done

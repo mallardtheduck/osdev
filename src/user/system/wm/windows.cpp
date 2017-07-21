@@ -14,8 +14,11 @@
 #include <btos.h>
 
 #include <dev/rtc.h>
+#include <dev/terminal_ioctl.h>
+#include <gds/screen.hpp>
 
 using namespace std;
+using namespace gds;
 
 static map<uint64_t, shared_ptr<Window>> windows;
 static weak_ptr<Window> activeWindow;
@@ -23,11 +26,10 @@ static weak_ptr<Window> pointerWindow;
 static weak_ptr<Window> grabbedWindow;
 static uint64_t id_counter;
 static vector<weak_ptr<Window>> sortedWindows;
-static uint32_t backgroundColour;
+static Colour backgroundColour;
 
 void InitWindws(){
-	GDS_SelectScreen();
-	backgroundColour = GetColour(BackgroundColour);
+	backgroundColour = GetColour(Screen, BackgroundColour);
 }
 
 template <typename M, typename V> 
@@ -77,7 +79,6 @@ vector<shared_ptr<Window>> SortWindows(){
 void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 	bool rect = (r.x != 0 || r.y != 0 || r.w != 0 || r.h != 0);
 	vector<shared_ptr<Window>> wins = SortWindows();
-	GDS_SelectScreen();
 	shared_ptr<Window> lastWin;
 	bool drawing = true;
 	if(rect && !above){
@@ -99,10 +100,10 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 		}
 	}
 	if(drawing){
-		if(rect) GDS_Box(r.x, r.y, r.w, r.h, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		if(rect) Screen.Box(r, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		else{
-			gds_SurfaceInfo info = GDS_SurfaceInfo();
-			GDS_Box(0, 0, info.w, info.h, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+			gds_SurfaceInfo info = Screen.Info();
+			Screen.Box({0, 0, info.w, info.h}, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		}
 	}
 	shared_ptr<Window> awin = activeWindow.lock();
@@ -125,8 +126,7 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 
 void DrawWindows(const vector<Rect> &v){
 	vector<shared_ptr<Window>> wins = SortWindows();
-	GDS_SelectScreen();
-	for(auto r: v) GDS_Box(r.x, r.y, r.w, r.h, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	for(auto r: v) Screen.Box(r, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	shared_ptr<Window> awin = activeWindow.lock();
 	for(auto w: wins){
 		if(!w->GetVisible()) continue;
@@ -145,7 +145,7 @@ void RefreshScreen(Rect r){
 		r.h += r.y;
 		r.y = 0;
 	}
-	GDS_UpdateScreen(r.x, r.y, r.w, r.h);
+	Screen.Update(r);
 }
 
 void RefreshScreen(const vector<Rect> &v){
@@ -182,8 +182,7 @@ void HandleInput(const bt_terminal_event &event){
 			if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == (uint32_t)curpos.x && event.pointer.y == (uint32_t)curpos.y) return;
 			gwin->PointerInput(event.pointer);
 			curpos.x = event.pointer.x; curpos.y = event.pointer.y;
-			bt_terminal_pointer_info info;
-			bt_fioctl(stdin_handle, bt_terminal_ioctl::GetPointerInfo, sizeof(info), (char*)&info);
+			bt_terminal_pointer_info info = bt_term_GetPointerInfo();
 			while((info.x != (uint32_t)curpos.x || info.y != (uint32_t)curpos.y) && (info.flags & 1 << event.pointer.button)){
 				bt_terminal_pointer_event e;
 				e.type = bt_terminal_pointer_event_type::Move;
@@ -192,7 +191,7 @@ void HandleInput(const bt_terminal_event &event){
 				gwin->PointerInput(e);
 				curpos.x = info.x;
 				curpos.y = info.y;
-				bt_fioctl(stdin_handle, bt_terminal_ioctl::GetPointerInfo, sizeof(info), (char*)&info);
+				info = bt_term_GetPointerInfo();
 			}
 		}
 		return;
