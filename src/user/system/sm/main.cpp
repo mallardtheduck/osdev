@@ -28,6 +28,8 @@ int main(int argc, char **argv){
 	if(sessionType.first){
 		auto p = sessionType.second.Start();
 		p.Wait();
+		cout << "SM: Ending session..." << flush;
+		cout << "Done." << endl;
 	}else{
 		cerr << "SM: Session type \"" << args[1] << "\" not found." << endl;
 	}

@@ -1,4 +1,5 @@
 #include "sessions.hpp"
+#include "to_string.hpp"
 #include <btos/envvars.hpp>
 #include <btos/ini.hpp>
 #include <btos.h>
@@ -28,6 +29,7 @@ void SessionType::SetLeadElx(const string &l){
 }
 
 Process SessionType::Start(){
+	SetEnv("SM_PID", to_string(bt_getpid()));
 	return Process::Spawn(leadElx);
 }
 
