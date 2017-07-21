@@ -64,6 +64,7 @@ import-files:=\
  data/btos/config/wm.ini \
  data/btos/lib/btoscore.ell \
  data/btos/lib/btoslib.ell \
+ data/btos/system/session.elx \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -269,6 +270,9 @@ data/btos/lib/btoscore.ell: ../../user/libs/btoscore/btoscore.ell
 	cp $< $@
 
 data/btos/lib/btoslib.ell: ../../user/libs/btoslib/btoslib.ell
+	cp $< $@
+
+data/btos/system/session.elx: ../../user/system/sm/session.elx
 	cp $< $@
 
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx

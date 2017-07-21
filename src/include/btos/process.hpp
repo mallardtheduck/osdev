@@ -13,8 +13,8 @@ namespace btos_api{
 
 		Process() = delete;
 	public:
-		static Process Spawn(const char *path, size_t argc, const char **argv);
-		static Process Spawn(const std::string &path, std::vector<std::string> args);
+		static Process Spawn(const char *path, size_t argc = 0, const char **argv = nullptr);
+		static Process Spawn(const std::string &path, std::vector<std::string> args = std::vector<std::string>());
 		static Process Current();
 
 		Process(bt_pid_t p);
