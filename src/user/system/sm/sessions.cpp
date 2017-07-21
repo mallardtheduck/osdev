@@ -1,10 +1,12 @@
 #include "sessions.hpp"
 #include <btos/envvars.hpp>
+#include <btos/ini.hpp>
+#include <btos.h>
 
 using namespace std;
 using namespace btos_api;
 
-static const string SessionsPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/SESSIONS");
+static const string SessionsPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/SESSIONS/");
 
 SessionType::SessionType(const std::string &n, const std::string &l) : name(n), leadElx(l)
 {}
@@ -29,3 +31,15 @@ Process SessionType::Start(){
 	return Process::Spawn(leadElx);
 }
 
+std::pair<bool, SessionType> GetSessionType(string &name){
+	auto sessionFilePath = SessionsPath + name + ".ini";
+	auto entry = bt_stat(sessionFilePath.c_str());
+	if(entry.valid && entry.type == FS_File){
+		auto file = ReadIniFile(sessionFilePath);
+		auto section = file["session"];
+		auto name = section["name"];
+		auto leadElx = EnvInterpolate(section["lead"]);
+		return {true, SessionType{name, leadElx}};
+	}
+	return {false, {}};
+}

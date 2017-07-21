@@ -3,6 +3,7 @@
 
 #include <string>
 #include <btos/process.hpp>
+#include <utility>
 
 class SessionType{
 private:
@@ -20,5 +21,7 @@ public:
 
 	btos_api::Process Start();
 };
+
+std::pair<bool, SessionType> GetSessionType(std::string &name);
 
 #endif

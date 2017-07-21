@@ -1,10 +1,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <btos/envvars.hpp>
+#include <tuple>
+#include "sessions.hpp"
 
 using namespace std;
-using namespace btos_api;
 
 vector<string> argv_to_vec(int argc, char **argv){
 	vector<string> ret;
@@ -18,12 +18,19 @@ int main(int argc, char **argv){
 	auto args = argv_to_vec(argc, argv);
 	cout << "BT/OS Session Manager" << endl;
 
-	cout << EnvInterpolate("$systemdrive$:/BTOS/CONFIG/SESSIONS") << endl;
-
 	if(args.size() < 2){
 		cerr << "SM: No session type specified." << endl;
+		return 0;
 	}
 
+	auto sessionType = GetSessionType(args[1]);
+
+	if(sessionType.first){
+		auto p = sessionType.second.Start();
+		p.Wait();
+	}else{
+		cerr << "SM: Session type \"" << args[1] << "\" not found." << endl;
+	}
 	
 	return 0;
 }
