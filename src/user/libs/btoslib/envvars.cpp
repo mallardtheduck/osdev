@@ -26,7 +26,7 @@ void SetEnv(const string &var, const string &val){
 	bt_setenv(var.c_str(), val.c_str(), 0);
 }
 
-string EnvInterpolate(const string &tmpl){
+string Interpolate(const string &tmpl, function<string(const string&)> lookup){
 	const char delim = '$';
 	stringstream out;
 	stringstream varname;
@@ -37,7 +37,7 @@ string EnvInterpolate(const string &tmpl){
 			if(c != delim) varname << c;
 			else{
 				invar = false;
-				out << GetEnv(varname.str());
+				out << lookup(varname.str());
 				varname.str("");
 			}
 		}else{
@@ -46,6 +46,10 @@ string EnvInterpolate(const string &tmpl){
 		}
 	}
 	return out.str();
+}
+
+string EnvInterpolate(const string &tmpl){
+	return Interpolate(tmpl, &GetEnv);
 }
 
 }
