@@ -2,6 +2,9 @@
 #include <string>
 #include <vector>
 #include <tuple>
+
+#include <btos/processlist.hpp>
+
 #include "sessions.hpp"
 
 using namespace std;
@@ -12,6 +15,23 @@ vector<string> argv_to_vec(int argc, char **argv){
 		ret.push_back(argv[i]);
 	}
 	return ret;
+}
+
+void kill_children(){
+	auto pid = bt_getpid();
+	bool found = true;
+
+	while(found){
+		found = false;
+		ProcessList procs;
+		for(auto proc : procs){
+			if(proc.Parent() == pid){
+				found = true;
+				auto p = proc.GetProcess();
+				p.Kill();
+			}
+		}
+	}
 }
 
 int main(int argc, char **argv){
@@ -29,6 +49,7 @@ int main(int argc, char **argv){
 		auto p = sessionType.second.Start();
 		p.Wait();
 		cout << "SM: Ending session..." << flush;
+		kill_children();
 		cout << "Done." << endl;
 	}else{
 		cerr << "SM: Session type \"" << args[1] << "\" not found." << endl;
