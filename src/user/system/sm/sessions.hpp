@@ -5,6 +5,19 @@
 #include <btos/process.hpp>
 #include <utility>
 
+class Session{
+private:
+	Process lead;
+	std::vector<Process> procs;
+	
+	Session(const Session&) = delete;
+public:
+	Session(const Process &p);
+	Session(Session&&) = default;
+	void Run();
+	void End();
+};
+
 class SessionType{
 private:
 	std::string name;
@@ -19,7 +32,7 @@ public:
 	std::string GetLeadElx();
 	void SetLeadElx(const std::string &l);
 
-	btos_api::Process Start();
+	Session Start();
 };
 
 std::pair<bool, SessionType> GetSessionType(std::string &name);

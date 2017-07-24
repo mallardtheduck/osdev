@@ -46,8 +46,8 @@ int main(int argc, char **argv){
 	auto sessionType = GetSessionType(args[1]);
 
 	if(sessionType.first){
-		auto p = sessionType.second.Start();
-		p.Wait();
+		auto s = sessionType.second.Start();
+		s.Run();
 		cout << "SM: Ending session..." << flush;
 		kill_children();
 		cout << "Done." << endl;
