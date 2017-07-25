@@ -4,18 +4,22 @@
 #include <string>
 #include <map>
 #include <utility>
+#include <vector>
 
 #include <btos/process.hpp>
+
+namespace btos_api{
+namespace sm{
 
 class Service{
 private:
 	std::string name;
 	std::string path;
+	
+	std::vector<bt_pid_t> refs;
 
-	Service(const std::string &n, const std::string &p) : name(n), path(p) {}
-
-	friend std::pair<bool, Service> GetService(std::string name);
 public:
+	Service(const std::string &n, const std::string &p) : name(n), path(p) {}
 	Service() = default;
 
 	Process Start();
@@ -23,5 +27,8 @@ public:
 	std::string Name();
 	std::string Path();
 };
+
+}
+}
 
 #endif

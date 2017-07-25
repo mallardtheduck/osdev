@@ -9,10 +9,10 @@
 NS_BEGIN(btos_api)
 NS_BEGIN(sm)
 
-ENUM_START(bt_sm_msgs)
-	ENUM_SET(bt_sm_msgs, GetService, 1),
+ENUM_START(sm_RequestType)
+	ENUM_SET(sm_RequestType, GetService, 1),
 ENUM_END
-ENUM_TYPE(bt_sm_msgs);
+ENUM_TYPE(sm_RequestType);
 
 EXTERN_C bt_pid_t SM_GetService(const char *name);
 CPP_ONLY(bt_pid_t SM_GetService(const std::string &name);)
