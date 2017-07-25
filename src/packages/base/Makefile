@@ -66,6 +66,7 @@ import-files:=\
  data/btos/lib/btoslib.ell \
  data/btos/system/session.elx \
  data/btos/config/sessions \
+ data/btos/lib/sm.ell \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -279,6 +280,9 @@ data/btos/system/session.elx: ../../user/system/sm/session.elx
 data/btos/config/sessions: ../../user/system/sm/sessions
 	mkdir -p $@
 	cp -Rv $</* $@
+
+data/btos/lib/sm.ell : ../../user/libs/sm/sm.ell
+	cp $< $@
 
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx
 	mkdir -p data/btos/boot/grub/
