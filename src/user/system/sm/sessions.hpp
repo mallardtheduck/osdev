@@ -2,13 +2,16 @@
 #define _SESSIONS_HPP
 
 #include <string>
-#include <btos/process.hpp>
 #include <utility>
+#include <map>
+
+#include <btos/process.hpp>
 
 class Session{
 private:
 	Process lead;
 	std::vector<Process> procs;
+	std::map<std::string, Process> services;
 	
 	Session(const Session&) = delete;
 public:

@@ -7,12 +7,14 @@
 #define EXTERN_C_BEGIN extern "C" {
 #define EXTERN_C_END }
 #define EXTERN_C extern "C"
+#define CPP_ONLY(x) x
 #else
 #define NS_BEGIN(x)
 #define NS_END
 #define EXTERN_C_BEGIN
 #define EXTERN_C_END
 #define EXTERN_C
+#define CPP_ONLY(x)
 #endif
 
 #ifdef __cplusplus
