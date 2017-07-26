@@ -11,8 +11,8 @@ BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c -fPIC
 BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -std=gnu99
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L. -L../libgds
-LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L. -L../libgds
+LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L.
+LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared
 AR-FLAGS := rcs -o $(LIBRARY-NAME)
 LINK-OPTIONS := -lsm -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib
 LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lbtoscore -lm

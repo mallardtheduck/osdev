@@ -69,5 +69,23 @@ extern "C" bt_pid_t SM_GetService(const char *name){
 	return SM_GetService(string(name));
 }
 
+bt_pid_t SM_StartService(const string &name){
+	Message m = SendMessage(sm_RequestType::StartService, name.length(), (void*)name.c_str(), true);
+	return m.Content<bt_pid_t>();
+}
+
+extern "C" bt_pid_t SM_StartService(const char *name){
+	return SM_StartService(string(name));
+}
+
+void SM_StopService(const std::string &name, bool force){
+	sm_RequestType::Enum rt = force ? sm_RequestType::ForceStopService : sm_RequestType::StopService;
+	SendMessage(rt, name.length(), (void*)name.c_str(), false);
+}
+
+extern "C" void SM_StopService(const char *name, bool force){
+	return SM_StopService(string(name), force);
+}
+
 }
 }

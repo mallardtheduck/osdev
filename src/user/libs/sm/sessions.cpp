@@ -52,19 +52,18 @@ void Session::Run(){
 				if(pid == lead.GetPID()){
 					for(auto p : procs) p.Kill();
 					procs.clear();
-					for(auto s : services) s.second.proc.Kill();
+					for(auto s : services) s.second.Stop();
 					services.clear();
 					return false;
 				} else if(has_element(procs, pid)){
 					for(auto s : services){
-						if(s.second.refs.find(pid) != s.second.refs.end()){
-							s.second.refs.erase(pid);
-							if(s.second.refs.size() == 0) s.second.proc.Kill();
-						}
+						s.second.RemoveRef(pid);
 					}
 					for(auto i = services.begin(); i != services.end(); ){
-						if(i->second.refs.size() == 0) i = services.erase(i);
-						else ++i;
+						if(i->second.GetRefCount() == 0) {
+							i->second.Stop();
+							i = services.erase(i);
+						}else ++i;
 					}
 					remove(procs.begin(), procs.end(), pid);
 				}
@@ -77,17 +76,16 @@ void Session::Run(){
 					bt_pid_t servicePid = 0;
 					if(services.find(name) != services.end()){
 						auto &i = services.at(name);
-						i.refs.insert(msg.From());
-						servicePid = i.proc.GetPID();
+						i.AddRef(msg.From());
+						servicePid = i.GetProcess().GetPID();
 					}else if(serviceResolver){
 						auto r = serviceResolver(name);
 						if(r.first){
 							auto s = r.second;
-							auto p = s.Start();
-							ServiceInstance i {p, s};
-							i.refs.insert(msg.From());
+							auto i = s.Start();
+							i.AddRef(msg.From());
 							services.insert(make_pair(name, i));
-							servicePid = p.GetPID();
+							servicePid = i.GetProcess().GetPID();
 						}
 					}
 					msg.SendReply(servicePid);

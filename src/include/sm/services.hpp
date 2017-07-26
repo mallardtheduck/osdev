@@ -5,11 +5,14 @@
 #include <map>
 #include <utility>
 #include <vector>
+#include <set>
 
 #include <btos/process.hpp>
 
 namespace btos_api{
 namespace sm{
+
+class ServiceInstance;
 
 class Service{
 private:
@@ -22,10 +25,33 @@ public:
 	Service(const std::string &n, const std::string &p) : name(n), path(p) {}
 	Service() = default;
 
-	Process Start();
+	ServiceInstance Start();
 
 	std::string Name();
 	std::string Path();
+};
+
+class ServiceInstance{
+private:
+	Process proc;
+	Service service;
+	std::set<bt_pid_t> refs;
+	bool sticky;
+public:
+	ServiceInstance(Process p, Service s, bool st = false);
+
+	Process GetProcess();
+	Service GetService();
+	
+	void AddRef(bt_pid_t pid);
+	void RemoveRef(bt_pid_t pid);
+	bool HasRef(bt_pid_t pid);
+	size_t GetRefCount();
+
+	void Stop();
+
+	void SetSticky(bool s);
+	bool IsSticky();
 };
 
 }

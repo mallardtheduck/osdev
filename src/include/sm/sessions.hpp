@@ -16,14 +16,6 @@ namespace sm{
 
 class Session{
 private:
-	struct ServiceInstance{
-		Process proc;
-		Service service;
-		std::set<bt_pid_t> refs;
-		
-		ServiceInstance(Process p, Service s) : proc(p), service(s) {}
-	};
-
 	Process lead;
 	std::vector<Process> procs;
 	std::map<std::string, ServiceInstance> services;
