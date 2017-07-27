@@ -47,7 +47,10 @@ void Session::CleanUpServices(){
 		if(!i->second->IsSticky() && i->second->GetRefCount() == 0) {
 			i->second->Stop();
 			i = services.erase(i);
-		}else ++i;
+		}else if(i->second->GetProcess().GetStatus() == bt_proc_status::Ended){
+			i = services.erase(i);
+		}
+		else ++i;
 	}
 }
 

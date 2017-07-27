@@ -260,6 +260,10 @@ bt_pid bt_getpid(){
 	return btos_call(BT_GETPID, 0, 0, 0);
 }
 
+bt_proc_status bt_get_proc_status(bt_pid pid){
+	return (bt_proc_status)btos_call(BT_PROCSTATUS, (uint32_t)&pid, 0, 0);
+}
+
 uint64_t bt_send(bt_msg_header msg){
 	volatile uint64_t ret;
 	btos_call(BT_SEND, (uint32_t)&msg, (uint32_t)&ret, 0);

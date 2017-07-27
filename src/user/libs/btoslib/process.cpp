@@ -39,4 +39,8 @@ namespace btos_api{
 		return pid;
 	}
 
+	bt_proc_status::Enum Process::GetStatus() const{
+		return bt_get_proc_status(pid);
+	}
+
 }

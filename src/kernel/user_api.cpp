@@ -442,6 +442,12 @@ USERAPI_HANDLER(BT_GETPID){
 	regs->eax=(uint32_t)proc_current_pid;
 }
 
+USERAPI_HANDLER(BT_PROCSTATUS){
+	if(is_safe_ptr(regs->ebx, sizeof(pid_t))){
+		regs->eax = proc_get_status(*(pid_t*)regs->ebx);
+	}
+}
+
 USERAPI_HANDLER(BT_NEW_THREAD){
     if(proc_get_status()==proc_status::Ending){
         regs->eax=0;
@@ -669,6 +675,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_PRIORITIZE);
 		USERAPI_HANDLE_CALL(BT_EXIT);
 		USERAPI_HANDLE_CALL(BT_GETPID);
+		USERAPI_HANDLE_CALL(BT_PROCSTATUS);
 
 		//Messaging
 		USERAPI_HANDLE_CALL(BT_SEND);

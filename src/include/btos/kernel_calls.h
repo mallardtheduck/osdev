@@ -80,6 +80,7 @@ EXTERN_C bool bt_kill(bt_pid pid);
 EXTERN_C bt_priority bt_prioritize(bt_pid pid, bt_priority priority);
 EXTERN_C void bt_exit(int retval);
 EXTERN_C bt_pid bt_getpid();
+EXTERN_C ENUM_NAME(bt_proc_status) bt_get_proc_status(bt_pid pid);
 
 EXTERN_C uint64_t bt_send(bt_msg_header msg);
 EXTERN_C bt_msg_header bt_recv(bool block);
