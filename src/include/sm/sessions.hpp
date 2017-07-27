@@ -5,8 +5,8 @@
 #include <utility>
 #include <map>
 #include <functional>
-#include <vector>
 #include <set>
+#include <memory>
 
 #include <btos/process.hpp>
 #include <sm/services.hpp>
@@ -17,8 +17,8 @@ namespace sm{
 class Session{
 private:
 	Process lead;
-	std::vector<Process> procs;
-	std::map<std::string, ServiceInstance> services;
+	std::set<Process> procs;
+	std::map<std::string, std::shared_ptr<ServiceInstance>> services;
 	std::function<std::pair<bool, Service>(const std::string&)> serviceResolver;
 	
 	Session(const Session&) = delete;
@@ -31,6 +31,14 @@ public:
 	
 	void Run();
 	void End();
+
+	void AddProcess(bt_pid_t pid);
+	void RemoveProcess(bt_pid_t pid);
+	void CleanUpServices();
+	std::pair<bool, std::shared_ptr<ServiceInstance>> GetService(const std::string &name);
+	std::pair<bool, std::shared_ptr<ServiceInstance>> StartService(const std::string &name, bool sticky = false);
+	void ReleaseService(const std::string &name, bt_pid_t pid);
+	void StopService(const std::string &name);
 };
 
 class SessionType{

@@ -25,6 +25,7 @@ namespace btos_api{
 		
 		bool operator==(const Process &p) const { return pid == p.pid; }
 		bool operator!=(const Process &p) const { return !(*this == p); }
+		bool operator<(const Process &p) const { return pid < p.pid; }
 	};
 
 }

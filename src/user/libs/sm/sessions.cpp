@@ -15,12 +15,6 @@
 using namespace std;
 namespace btos_api{
 namespace sm{
-	
-template<typename T> bool has_element(T container, typename T::value_type element){
-	static_assert(is_same<decltype(declval<T>().begin()), decltype(declval<T>().end())>::value, "container must have valid iterators!");
-	
-	return find(container.begin(), container.end(), element) != container.end();
-}
 
 Session::Session(const Process &p) : lead(p), procs{ lead } {}
 
@@ -32,6 +26,67 @@ function<pair<bool, Service>(const string&)> Session::GetServiceResolver(){
 	return serviceResolver;
 }
 
+void Session::AddProcess(bt_pid_t pid){
+	ProcessList lst;
+	for(auto p : lst){
+		if(p.PID() == pid && procs.find(p.Parent()) != procs.end()){
+			procs.insert(p.GetProcess());
+		}
+	}
+}
+
+void Session::RemoveProcess(bt_pid_t pid){
+	for(auto s : services){
+		s.second->RemoveRef(pid);
+	}
+	procs.erase(pid);
+}
+
+void Session::CleanUpServices(){
+	for(auto i = services.begin(); i != services.end(); ){
+		if(!i->second->IsSticky() && i->second->GetRefCount() == 0) {
+			i->second->Stop();
+			i = services.erase(i);
+		}else ++i;
+	}
+}
+
+pair<bool, shared_ptr<ServiceInstance>> Session::GetService(const string &name){
+	if(services.find(name) != services.end()){
+		return {true, services.at(name)};
+	}else return StartService(name);
+}
+
+pair<bool, shared_ptr<ServiceInstance>> Session::StartService(const string &name, bool sticky){
+	if(services.find(name) != services.end()){
+		return {true, services.at(name)};
+	}
+	if(serviceResolver){
+		auto r = serviceResolver(name);
+		if(r.first){
+			auto s = r.second;
+			auto i = make_shared<ServiceInstance>(s.Start());
+			i->SetSticky(sticky);
+			services.insert(make_pair(name, i));
+			return {true, i};
+		}
+	}
+	return {false, nullptr};
+}
+
+void Session::ReleaseService(const string &name, bt_pid_t pid){
+	if(services.find(name) != services.end()){
+		services.at(name)->RemoveRef(pid);
+	}
+}
+
+void Session::StopService(const string &name){
+	if(services.find(name) != services.end()){
+		services.at(name)->Stop();
+		services.erase(name);
+	}
+}
+
 void Session::Run(){
 	bt_subscribe(bt_kernel_messages::ProcessStart);
 	bt_subscribe(bt_kernel_messages::ProcessEnd);
@@ -41,54 +96,50 @@ void Session::Run(){
 		if(msg.From() == 0 && msg.Source() == 0){
 			if(msg.Type() == bt_kernel_messages::ProcessStart){
 				auto pid = msg.Content<bt_pid_t>();
-				ProcessList lst;
-				for(auto p : lst){
-					if(p.PID() == pid && has_element(procs, p.Parent())){
-						procs.push_back(p.GetProcess());
-					}
-				}
+				AddProcess(pid);
 			} else if(msg.Type() == bt_kernel_messages::ProcessEnd){
 				auto pid = msg.Content<bt_pid_t>();
 				if(pid == lead.GetPID()){
-					for(auto p : procs) p.Kill();
-					procs.clear();
-					for(auto s : services) s.second.Stop();
-					services.clear();
+					End();
 					return false;
-				} else if(has_element(procs, pid)){
-					for(auto s : services){
-						s.second.RemoveRef(pid);
-					}
-					for(auto i = services.begin(); i != services.end(); ){
-						if(i->second.GetRefCount() == 0) {
-							i->second.Stop();
-							i = services.erase(i);
-						}else ++i;
-					}
-					remove(procs.begin(), procs.end(), pid);
+				} else if(procs.find(pid) != procs.end()){
+					RemoveProcess(pid);
+					CleanUpServices();
 				}
 			}
 		}
-		if(has_element(procs, msg.From())){
+		if(procs.find(msg.From()) != procs.end()){
 			switch(msg.Type()){
 				case sm_RequestType::GetService:{
 					string name = (char*)msg.Content();
 					bt_pid_t servicePid = 0;
-					if(services.find(name) != services.end()){
-						auto &i = services.at(name);
-						i.AddRef(msg.From());
-						servicePid = i.GetProcess().GetPID();
-					}else if(serviceResolver){
-						auto r = serviceResolver(name);
-						if(r.first){
-							auto s = r.second;
-							auto i = s.Start();
-							i.AddRef(msg.From());
-							services.insert(make_pair(name, i));
-							servicePid = i.GetProcess().GetPID();
-						}
+					auto i = GetService(name);
+					if(i.first){
+						i.second->AddRef(msg.From());
+						servicePid = i.second->GetProcess().GetPID();
+						procs.insert(servicePid);
 					}
 					msg.SendReply(servicePid);
+				}break;
+				case sm_RequestType::StartService:{
+					string name = (char*)msg.Content();
+					bt_pid_t servicePid = 0;
+					auto i = StartService(name, true);
+					if(i.first){
+						i.second->AddRef(msg.From());
+						servicePid = i.second->GetProcess().GetPID();
+						procs.insert(servicePid);
+					}
+					msg.SendReply(servicePid);
+				}break;
+				case sm_RequestType::ReleaseService:{
+					string name = (char*)msg.Content();
+					ReleaseService(name, msg.From());
+					CleanUpServices();
+				}break;
+				case sm_RequestType::StopService:{
+					string name = (char*)msg.Content();
+					StopService(name);
 				}break;
 			}
 		}
@@ -98,6 +149,10 @@ void Session::Run(){
 }
 
 void Session::End(){
+	for(auto s : services) s.second->Stop();
+	services.clear();
+	for(auto p : procs) p.Kill();
+	procs.clear();
 }
 
 SessionType::SessionType(const std::string &n, const std::string &l) : name(n), leadElx(l)

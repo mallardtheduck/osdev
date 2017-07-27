@@ -37,8 +37,10 @@ private:
 	Service service;
 	std::set<bt_pid_t> refs;
 	bool sticky;
+	ServiceInstance(const ServiceInstance&) = delete;
 public:
 	ServiceInstance(Process p, Service s, bool st = false);
+	ServiceInstance(ServiceInstance&&) = default;
 
 	Process GetProcess();
 	Service GetService();
