@@ -18,11 +18,11 @@ namespace sm{
 
 Session::Session(const Process &p) : lead(p), procs{ lead } {}
 
-void Session::SetServiceResolver(function<pair<bool, Service>(const string&)> fn){
-	serviceResolver = fn;
+void Session::SetServiceResolver(shared_ptr<IServiceResolver> sr){
+	serviceResolver = sr;
 }
 
-function<pair<bool, Service>(const string&)> Session::GetServiceResolver(){
+shared_ptr<IServiceResolver> Session::GetServiceResolver(){
 	return serviceResolver;
 }
 
@@ -65,7 +65,7 @@ pair<bool, shared_ptr<ServiceInstance>> Session::StartService(const string &name
 		return {true, services.at(name)};
 	}
 	if(serviceResolver){
-		auto r = serviceResolver(name);
+		auto r = serviceResolver->GetService(name);
 		if(r.first){
 			auto s = r.second;
 			auto i = make_shared<ServiceInstance>(s.Start());

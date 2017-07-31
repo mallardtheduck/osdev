@@ -10,6 +10,7 @@
 
 #include <btos/process.hpp>
 #include <sm/services.hpp>
+#include <sm/iserviceresolver.hpp>
 
 namespace btos_api{
 namespace sm{
@@ -19,15 +20,15 @@ private:
 	Process lead;
 	std::set<Process> procs;
 	std::map<std::string, std::shared_ptr<ServiceInstance>> services;
-	std::function<std::pair<bool, Service>(const std::string&)> serviceResolver;
+	std::shared_ptr<IServiceResolver> serviceResolver;
 	
 	Session(const Session&) = delete;
 public:
 	Session(const Process &p);
 	Session(Session&&) = default;
 	
-	void SetServiceResolver(std::function<std::pair<bool, Service>(const std::string&)> fn);
-	std::function<std::pair<bool, Service>(const std::string&)> GetServiceResolver();
+	void SetServiceResolver(std::shared_ptr<IServiceResolver> sr);
+	std::shared_ptr<IServiceResolver> GetServiceResolver();
 	
 	void Run();
 	void End();
