@@ -111,6 +111,7 @@ void proc_init(){
 	curpid--;
 	kproc->parent=0;
 	kproc->pagedir=MM2::current_pagedir;
+	kproc->status=proc_status::Running;
 	proc_processes->push_back(kproc);
 	proc_current_process=proc_get(0);
 	proc_current_pid=0;

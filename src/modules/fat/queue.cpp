@@ -37,23 +37,28 @@ struct fat_operation{
 
 bool fat_queue_proc(fat_operation *op){
     pid_t pid=getpid();
-    if(!setpid(op->pid)) return false;
-    if(op->type==fat_operation_types::Read){
-        op->size=fl_fread(op->buf, op->size, 1, op->flh);
-        op->status=fat_operation_status::Complete;
-    }else if(op->type==fat_operation_types::Write) {
-        op->size = fl_fwrite(op->buf, op->size, 1, op->flh);
-        op->status = fat_operation_status::Complete;
-    }else if(op->type==fat_operation_types::Seek){
-        fl_fseek(op->flh, op->pos, op->origin);
-        op->pos=fl_ftell(op->flh);
-        op->status=fat_operation_status::Complete;
-    }else if(op->type==fat_operation_types::Sync){
-        op->status=fat_operation_status::Complete;
-    }else{
-        return false;
-    }
-    setpid(pid);
+    if(setpid(op->pid)){
+		if(op->type==fat_operation_types::Read){
+		    op->size=fl_fread(op->buf, op->size, 1, op->flh);
+		    op->status=fat_operation_status::Complete;
+		}else if(op->type==fat_operation_types::Write) {
+		    op->size = fl_fwrite(op->buf, op->size, 1, op->flh);
+		    op->status = fat_operation_status::Complete;
+		}else if(op->type==fat_operation_types::Seek){
+		    fl_fseek(op->flh, op->pos, op->origin);
+		    op->pos=fl_ftell(op->flh);
+		    op->status=fat_operation_status::Complete;
+		}else if(op->type==fat_operation_types::Sync){
+		    op->status=fat_operation_status::Complete;
+		}else{
+		    dbgpf("FAT: Invalid operation: %i\n", op->type);
+		    op->status=fat_operation_status::Error;
+		}
+		setpid(pid);
+	}else{
+		dbgpf("FAT: Could not set pid to: %i (current pid: %i)\n", (int)op->pid, (int)pid);
+		op->status=fat_operation_status::Error;
+	}
     return true;
 }
 
