@@ -144,6 +144,26 @@ void Session::Run(){
 					string name = (char*)msg.Content();
 					StopService(name);
 				}break;
+				case sm_RequestType::GetServiceCount:{
+					if(serviceResolver){
+						msg.SendReply(serviceResolver->GetServices().size());
+					}else{
+						msg.SendReply(size_t(0));
+					}
+				}break;
+				case sm_RequestType::GetServiceInfo:{
+					if(serviceResolver){
+						auto index = msg.Content<size_t>();
+						auto svcs = serviceResolver->GetServices();
+						if(svcs.size() > index){
+							msg.SendReply(svcs[index].Info());
+						}else{
+							msg.SendReply(sm_ServiceInfo());
+						}
+					}else{
+						msg.SendReply(sm_ServiceInfo());
+					}
+				}break;
 			}
 		}
 		return true;

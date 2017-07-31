@@ -8,6 +8,7 @@
 #include <set>
 
 #include <btos/process.hpp>
+#include <sm/sm.h>
 
 namespace btos_api{
 namespace sm{
@@ -29,6 +30,8 @@ public:
 
 	std::string Name();
 	std::string Path();
+	
+	sm_ServiceInfo Info();
 };
 
 class ServiceInstance{

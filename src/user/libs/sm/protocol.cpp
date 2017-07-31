@@ -59,7 +59,11 @@ static bt_msg_header SendMessage(sm_RequestType::Enum type, size_t size, void* c
 template<typename T> static bt_msg_header SendMessage(sm_RequestType::Enum type, const T& content, bool waitreply){
 	return SendMessage(type, sizeof(T), (void*)&content, waitreply);
 }
-	
+
+extern "C"  void SM_SetServerPID(bt_pid_t pid){
+	sm_pid = pid;
+}
+
 bt_pid_t SM_GetService(const string &name){
 	Message m = SendMessage(sm_RequestType::GetService, name.length(), (void*)name.c_str(), true);
 	return m.Content<bt_pid_t>();
@@ -92,6 +96,16 @@ void SM_StopService(const string &name){
 
 extern "C" void SM_StopService(const char *name){
 	return SM_StopService(string(name));
+}
+
+extern "C" size_t SM_GetServiceCount(){
+	Message m = SendMessage(sm_RequestType::GetServiceCount, nullptr, true);
+	return m.Content<size_t>();
+}
+
+extern "C" sm_ServiceInfo SM_GetServiceInfo(size_t index){
+	Message m = SendMessage(sm_RequestType::GetServiceCount, index, true);
+	return m.Content<sm_ServiceInfo>();
 }
 
 }

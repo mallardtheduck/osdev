@@ -1,5 +1,6 @@
 #include <sm/services.hpp>
 #include <btos/ini.hpp>
+#include <cstring>
 
 using namespace std;
 
@@ -49,6 +50,12 @@ string Service::Name(){
 
 string Service::Path(){
 	return path;
+}
+
+sm_ServiceInfo Service::Info(){
+	sm_ServiceInfo ret;
+	strncpy(ret.name, name.c_str(), BT_MAX_SEGLEN);
+	return ret;
 }
 
 }
