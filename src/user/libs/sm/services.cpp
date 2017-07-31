@@ -54,7 +54,7 @@ string Service::Path(){
 
 sm_ServiceInfo Service::Info(){
 	sm_ServiceInfo ret;
-	strncpy(ret.name, name.c_str(), BT_MAX_SEGLEN);
+	strncpy(ret.name, name.c_str(), BT_MAX_SEGLEN-1);
 	return ret;
 }
 

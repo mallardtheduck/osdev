@@ -4,6 +4,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace sm;
 
 vector<string> argv_to_vec(int argc, char **argv){
 	vector<string> ret;
@@ -22,10 +23,18 @@ int main(int argc, char **argv){
 
 	if(args[1] == "listservices"){
 		size_t svccount = SM_GetServiceCount();
+		cout << svccount << " services available:" << endl;
 		for(size_t i = 0; i< svccount; ++i){
 			auto info = SM_GetServiceInfo(i);
 			cout << info.name << endl;
 		}
+	}else if(args[1] == "startservice"){
+		if(args.size() < 3){
+			cerr << "Service name needed." << endl;
+			return 0; 
+		}
+		auto pid = SM_StartService(args[2]);
+		cout << "Service \"" << args[2] << "\" started as PID: " << pid << endl;
 	}else{
 		cout << "Unknown command \"" << args[1] << "\"." << endl;
 	}

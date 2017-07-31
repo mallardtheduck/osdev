@@ -104,7 +104,7 @@ extern "C" size_t SM_GetServiceCount(){
 }
 
 extern "C" sm_ServiceInfo SM_GetServiceInfo(size_t index){
-	Message m = SendMessage(sm_RequestType::GetServiceCount, index, true);
+	Message m = SendMessage(sm_RequestType::GetServiceInfo, index, true);
 	return m.Content<sm_ServiceInfo>();
 }
 

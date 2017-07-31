@@ -156,7 +156,8 @@ void Session::Run(){
 						auto index = msg.Content<size_t>();
 						auto svcs = serviceResolver->GetServices();
 						if(svcs.size() > index){
-							msg.SendReply(svcs[index].Info());
+							auto info = svcs[index].Info();						
+							msg.SendReply(info);
 						}else{
 							msg.SendReply(sm_ServiceInfo());
 						}
