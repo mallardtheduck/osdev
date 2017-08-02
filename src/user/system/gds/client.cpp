@@ -281,6 +281,7 @@ void Service(bt_pid_t root_pid) {
 	auto gdsHandler = make_shared<CustomHandler>([&](const Message &msg) -> bool{
 		auto from = msg.From();
 		if(allClients.find(from) != allClients.end()){
+			if(msg.Type() == gds_MsgType::SelectScreen && root_pid == 0) root_pid = msg.From();
 			return allClients.at(from)->HandleMessage(msg);
 		}else return true;
 	});

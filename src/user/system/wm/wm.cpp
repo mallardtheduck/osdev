@@ -16,10 +16,6 @@
 using namespace std;
 using namespace gds;
 
-static void set_env(const string &name, const string &value) {
-	bt_setenv(name.c_str(), value.c_str(), 0);
-}
-
 void InitCursor(){
 	Surface cursor(gds_SurfaceType::Bitmap, 12, 21);
 	Colour cur_black = cursor.GetColour(0, 0, 0);
@@ -48,10 +44,7 @@ void InitCursor(){
 int main(int argc, char **argv){
     cout << "BT/OS WM" << endl;
     ParseConfig(ConfigFilePath);
-	bt_pid pid = bt_getpid();
-	char pid_str[64] = {0};
-	snprintf(pid_str, 64, "%i", pid);
-	set_env("WM_PID", pid_str);
+	bt_pid_t root_pid = 0;
 	if(argc > 1) {
 		int s_argc = 0;
 		char **s_argv = NULL;
@@ -61,39 +54,35 @@ int main(int argc, char **argv){
 		}
 		char elxpath[BT_MAX_PATH];
 		btos_path_parse(argv[1], elxpath, BT_MAX_PATH);
-		bt_pid_t root_pid = 0;
 		root_pid = bt_spawn(elxpath, s_argc, s_argv);
-		if(root_pid) {
-			try {
-				bt_vidmode vidmode;
-				vidmode.width = GetMetric(ScreenWidth);
-				vidmode.height = GetMetric(ScreenHeight);
-				vidmode.bpp = GetMetric(ScreenBpp);
-				InitDrawing();
-				GDS_SetScreenMode(vidmode);
-				InitWindws();
-				InitCursor();
-				DrawWindows();
-				RefreshScreen();
-				/*shared_ptr<Window> win1 = CreateTestWin("Window 1", 50, 50, 200, 100);
-				win1->SetZOrder(10);
-				shared_ptr<Window> win2 = CreateTestWin("Window 2", 100, 100, 250, 150);
-				win2->SetZOrder(20);
-				shared_ptr<Window> win3 = CreateTestWin("Window 3", 300, 200, 300, 250);
-				win3->SetZOrder(30);*/
-				Service(root_pid);
-			} catch(exception &e) {
-				cout << "Exception: " << e.what() << endl;
-				stringstream ss;
-				ss << "WM: Exception: " << e.what() << endl;
-				bt_zero(ss.str().c_str());
-				
-			}
-		} else {
+		if(!root_pid){
 			cout << "Could not load " << argv[1] << endl;
 		}
-	} else {
-		cout << "Usage: " << argv[0] << " command-line." << endl;
+	}
+	try {
+		bt_vidmode vidmode;
+		vidmode.width = GetMetric(ScreenWidth);
+		vidmode.height = GetMetric(ScreenHeight);
+		vidmode.bpp = GetMetric(ScreenBpp);
+		InitDrawing();
+		GDS_SetScreenMode(vidmode);
+		InitWindws();
+		InitCursor();
+		DrawWindows();
+		RefreshScreen();
+		/*shared_ptr<Window> win1 = CreateTestWin("Window 1", 50, 50, 200, 100);
+		win1->SetZOrder(10);
+		shared_ptr<Window> win2 = CreateTestWin("Window 2", 100, 100, 250, 150);
+		win2->SetZOrder(20);
+		shared_ptr<Window> win3 = CreateTestWin("Window 3", 300, 200, 300, 250);
+		win3->SetZOrder(30);*/
+		Service(root_pid);
+	} catch(exception &e) {
+		cout << "Exception: " << e.what() << endl;
+		stringstream ss;
+		ss << "WM: Exception: " << e.what() << endl;
+		bt_zero(ss.str().c_str());
+		
 	}
     return 0;
 }

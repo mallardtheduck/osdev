@@ -62,6 +62,7 @@ pair<bool, shared_ptr<ServiceInstance>> Session::GetService(const string &name){
 
 pair<bool, shared_ptr<ServiceInstance>> Session::StartService(const string &name, bool sticky){
 	if(services.find(name) != services.end()){
+		if(sticky) services.at(name)->SetSticky(true);
 		return {true, services.at(name)};
 	}
 	if(serviceResolver){

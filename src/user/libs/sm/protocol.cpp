@@ -5,13 +5,14 @@
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
+#include <cstring>
 
 using namespace std;
 
 namespace btos_api{
 namespace sm{
 	
-static bt_pid_t sm_pid;
+static bt_pid_t sm_pid = 0;
 
 static bool Init(){
 	if(!sm_pid){
@@ -60,12 +61,18 @@ template<typename T> static bt_msg_header SendMessage(sm_RequestType::Enum type,
 	return SendMessage(type, sizeof(T), (void*)&content, waitreply);
 }
 
+static bt_msg_header SendMessage(sm_RequestType::Enum type, const string &content, bool waitreply){
+	unique_ptr<char> buffer {new char[content.length() + 1]};
+	strncpy(buffer.get(), content.c_str(), content.length() + 1);
+	return SendMessage(type, content.length() + 1, buffer.get(), waitreply);
+}
+
 extern "C"  void SM_SetServerPID(bt_pid_t pid){
 	sm_pid = pid;
 }
 
 bt_pid_t SM_GetService(const string &name){
-	Message m = SendMessage(sm_RequestType::GetService, name.length(), (void*)name.c_str(), true);
+	Message m = SendMessage(sm_RequestType::GetService, name, true);
 	return m.Content<bt_pid_t>();
 }
 
@@ -74,7 +81,7 @@ extern "C" bt_pid_t SM_GetService(const char *name){
 }
 
 bt_pid_t SM_StartService(const string &name){
-	Message m = SendMessage(sm_RequestType::StartService, name.length(), (void*)name.c_str(), true);
+	Message m = SendMessage(sm_RequestType::StartService, name, true);
 	return m.Content<bt_pid_t>();
 }
 
@@ -83,7 +90,7 @@ extern "C" bt_pid_t SM_StartService(const char *name){
 }
 
 void SM_ReleaseService(const string &name){
-	SendMessage(sm_RequestType::ReleaseService, name.length(), (void*)name.c_str(), false);
+	SendMessage(sm_RequestType::ReleaseService, name, false);
 }
 
 extern "C" void SM_ReleaseService(const char *name){
@@ -91,7 +98,7 @@ extern "C" void SM_ReleaseService(const char *name){
 }
 
 void SM_StopService(const string &name){
-	SendMessage(sm_RequestType::StopService, name.length(), (void*)name.c_str(), false);
+	SendMessage(sm_RequestType::StopService, name, false);
 }
 
 extern "C" void SM_StopService(const char *name){

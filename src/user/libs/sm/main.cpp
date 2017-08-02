@@ -35,6 +35,13 @@ int main(int argc, char **argv){
 		}
 		auto pid = SM_StartService(args[2]);
 		cout << "Service \"" << args[2] << "\" started as PID: " << pid << endl;
+	}else if(args[1] == "stopservice"){
+		if(args.size() < 3){
+			cerr << "Service name needed." << endl;
+			return 0; 
+		}
+		SM_StopService(args[2]);
+		cout << "Service \"" << args[2] << "\" stopped." << endl;
 	}else{
 		cout << "Unknown command \"" << args[1] << "\"." << endl;
 	}

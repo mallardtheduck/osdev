@@ -1,6 +1,8 @@
 OUTPUT-NAME := elldtest.elx
 LIBRARY-NAME := eloader.ell
 
+DESTINATION := $(HOME)/Projects/os/cross/i686-pc-btos
+
 BUILD-AS := i686-pc-btos-as
 BUILD-AR := i686-pc-btos-ar
 BUILD-AS-OPTIONS := -g -fPIC -c
@@ -30,7 +32,12 @@ MAINOBJ := $(TESTMAIN:.cpp=.o)
 CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
 
-all: $(OUTPUT-NAME) $(LIBRARY-NAME)
+all: $(OUTPUT-NAME) copy
+
+copy: $(LIBRARY-NAME)
+	mkdir -p $(DESTINATION)/lib
+	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib
+
 
 -include $(CDEPFILES) $(CPPDEPFILES)
 

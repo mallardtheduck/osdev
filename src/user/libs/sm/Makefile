@@ -1,6 +1,8 @@
 OUTPUT-NAME := smutil.elx
 LIBRARY-NAME := sm.ell
 
+DESTINATION := $(HOME)/Projects/os/cross/i686-pc-btos
+
 BUILD-AS := i686-pc-btos-as
 BUILD-AR := i686-pc-btos-ar
 BUILD-AS-OPTIONS := -g -fPIC -c
@@ -14,8 +16,8 @@ LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L.
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared
 AR-FLAGS := rcs -o $(LIBRARY-NAME)
-LINK-OPTIONS := -lsm -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib
-LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lbtoscore -lm
+LINK-OPTIONS := -lsm -lgcc_s -lstdc++ -lbtoscore -lm 
+LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")
@@ -31,9 +33,13 @@ MAINOBJ := $(MAINCPP:.cpp=.o)
 CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
 
-all: $(OUTPUT-NAME) $(LIBRARY-NAME)
+all: $(OUTPUT-NAME) copy
 
 -include $(CDEPFILES) $(CPPDEPFILES)
+
+copy: $(LIBRARY-NAME)
+	mkdir -p $(DESTINATION)/lib
+	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib
 
 clean: dummy.delete
 

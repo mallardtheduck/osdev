@@ -1,5 +1,7 @@
 LIBRARY-NAME := ansi.ell
 
+DESTINATION := $(HOME)/Projects/os/cross/i686-pc-btos
+
 BUILD-AS := i686-pc-btos-as
 BUILD-AR := i686-pc-btos-ar
 BUILD-AS-OPTIONS := -g -fPIC -c
@@ -29,11 +31,15 @@ MAINOBJ := $(MAINCPP:.cpp=.o)
 CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
 
-all: $(LIBRARY-NAME)
+all: copy
 
 -include $(CDEPFILES) $(CPPDEPFILES)
 
 clean: dummy.delete
+
+copy: $(LIBRARY-NAME)
+	mkdir -p $(DESTINATION)/lib
+	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib
 
 dummy.delete:
 	-@$(RM) *.o

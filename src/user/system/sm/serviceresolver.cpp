@@ -29,6 +29,7 @@ pair<bool, Service> SessionServiceResolver::GetService(const std::string &name){
 	if(serviceCache.find(name) != serviceCache.end()){
 		return {true, serviceCache.at(name)};
 	}else{
+		cout << "Service \"" << name << "\" not found!" << endl;
 		return {false, {}};
 	}
 }
