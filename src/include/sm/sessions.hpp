@@ -40,6 +40,7 @@ public:
 	std::pair<bool, std::shared_ptr<ServiceInstance>> StartService(const std::string &name, bool sticky = false);
 	void ReleaseService(const std::string &name, bt_pid_t pid);
 	void StopService(const std::string &name);
+	sm_ServiceInfo ServiceInfo(const std::string &name);
 };
 
 class SessionType{

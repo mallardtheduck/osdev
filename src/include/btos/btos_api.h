@@ -23,11 +23,11 @@ typedef bt_handle bt_filehandle;
 typedef bt_handle bt_dirhandle;
 typedef bt_handle bt_threadhandle;
 
-typedef uint32_t bt_pid;
 typedef uint32_t bt_priority;
 
+typedef uint64_t bt_pid;
 typedef uint64_t bt_thread_id_t;
-typedef uint64_t bt_pid_t;
+typedef bt_pid bt_pid_t;
 
 enum{
 	BT_ALLOC_PAGES		= 0x0101,
@@ -154,6 +154,7 @@ ENUM_TYPE(bt_shm_flags);
 ENUM_START(bt_proc_status)
 	ENUM_SET(bt_proc_status, Running, 1),
 	ENUM_SET(bt_proc_status, Ending, 2),
+	ENUM_SET(bt_proc_status, Starting, 3),
 	ENUM_SET(bt_proc_status, Ended, 0),
 	ENUM_SET(bt_proc_status, DoesNotExist, 0),
 ENUM_END

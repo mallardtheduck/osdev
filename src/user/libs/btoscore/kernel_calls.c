@@ -2,6 +2,8 @@
 #include <btos/bt_msg.h>
 #include <btos/atoms.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 uint32_t btos_call(uint32_t fn, uint32_t p1, uint32_t p2, uint32_t p3){
 	volatile uint32_t ret=0;

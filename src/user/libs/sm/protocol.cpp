@@ -67,8 +67,12 @@ static bt_msg_header SendMessage(sm_RequestType::Enum type, const string &conten
 	return SendMessage(type, content.length() + 1, buffer.get(), waitreply);
 }
 
-extern "C"  void SM_SetServerPID(bt_pid_t pid){
+extern "C" void SM_SetServerPID(bt_pid_t pid){
 	sm_pid = pid;
+}
+
+extern "C" bt_pid_t SM_GetServerPID(){
+	return sm_pid;
 }
 
 bt_pid_t SM_GetService(const string &name){

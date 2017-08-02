@@ -57,7 +57,7 @@ struct proc_process{
 	}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
 		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(new MM2::PageDirectory),
-		 handlecounter(0), status(proc_status::Running) {
+		 handlecounter(0), status(proc_status::Starting) {
 		init_lock(ulock);
     }
 };
@@ -133,6 +133,7 @@ proc_process *proc_get(pid_t pid){
 			proc_process *cur=(*proc_processes)[i];
 			if(cur->pid==pid) return cur;
 		}
+		dbgpf("PROC: PID %i not found!\n", (int)pid);
 		return NULL;
 	}
 }
@@ -212,6 +213,7 @@ static bool proc_threads_blockcheck(void *p){
 
 void proc_end(pid_t pid) {
     if(pid==0) return;
+	if(proc_get_status(pid) == proc_status::Ended) return;
 	//This is not in the "right" place, but cannot be done once we have the lock.
 	debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
 	take_lock_exclusive(proc_lock);
@@ -375,6 +377,7 @@ void proc_start(void *ptr){
 	proc_add_thread(sch_get_id());
     debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);
 	if(sch_get_abortlevel()) panic("(PROC) Entering userspace with non-zero abortlevel.");
+	proc_set_status(proc_status::Running);
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 
@@ -621,7 +624,7 @@ void proc_set_status(proc_status::Enum status, pid_t pid){
 }
 proc_status::Enum proc_get_status(pid_t pid){
     proc_process *proc=proc_get_lock(pid);
-    if(!proc) return proc_status::DoesNotExist;	
+    if(!proc) return proc_status::DoesNotExist;
     proc_status::Enum ret = proc->status;
     release_lock(proc->ulock);
 	return ret;

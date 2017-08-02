@@ -11,6 +11,9 @@ NS_BEGIN(sm)
 
 struct sm_ServiceInfo{
 	char name[BT_MAX_SEGLEN];
+	bool running;
+	int users;
+	bt_pid_t pid;
 };
 
 ENUM_START(sm_RequestType)
@@ -23,7 +26,13 @@ ENUM_START(sm_RequestType)
 ENUM_END
 ENUM_TYPE(sm_RequestType);
 
+ENUM_START(sm_ServiceRequest)
+	ENUM_SET(sm_RequestType, StopService, 1),
+ENUM_END
+ENUM_TYPE(sm_ServiceRequest);
+
 EXTERN_C void SM_SetServerPID(bt_pid_t pid);
+EXTERN_C bt_pid_t SM_GetServerPID();
 
 EXTERN_C bt_pid_t SM_GetService(const char *name);
 CPP_ONLY(bt_pid_t SM_GetService(const std::string &name);)

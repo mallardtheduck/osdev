@@ -26,7 +26,13 @@ int main(int argc, char **argv){
 		cout << svccount << " services available:" << endl;
 		for(size_t i = 0; i< svccount; ++i){
 			auto info = SM_GetServiceInfo(i);
-			cout << info.name << endl;
+			cout << info.name;
+			if(info.running){
+				cout << " running (PID: " << info.pid << "), " << info.users << " users.";
+			}else{
+				cout << " not running.";
+			}
+			cout << endl;
 		}
 	}else if(args[1] == "startservice"){
 		if(args.size() < 3){

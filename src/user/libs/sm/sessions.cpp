@@ -12,6 +12,11 @@
 #include <algorithm>
 #include <type_traits>
 
+#include <sstream>
+
+#define dbgpf(...) do{snprintf(dbgbuf, 128, __VA_ARGS__); bt_zero(dbgbuf);}while(false)
+#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
+
 using namespace std;
 namespace btos_api{
 namespace sm{
@@ -29,7 +34,7 @@ shared_ptr<IServiceResolver> Session::GetServiceResolver(){
 void Session::AddProcess(bt_pid_t pid){
 	ProcessList lst;
 	for(auto p : lst){
-		if(p.PID() == pid && procs.find(p.Parent()) != procs.end()){
+		if(p.PID() == pid && (procs.find(p.Parent()) != procs.end() || p.Parent() == bt_getpid())){
 			procs.insert(p.GetProcess());
 		}
 	}
@@ -44,10 +49,14 @@ void Session::RemoveProcess(bt_pid_t pid){
 
 void Session::CleanUpServices(){
 	for(auto i = services.begin(); i != services.end(); ){
+		DBG("SM: Service: " << i->second->GetService().Name() << " users: " << i->second->GetRefCount() <<  " sticky: " << i->second->IsSticky());
 		if(!i->second->IsSticky() && i->second->GetRefCount() == 0) {
+			DBG("SM: Cleaning up service " << i->second->GetService().Name() << " (no users).");
 			i->second->Stop();
 			i = services.erase(i);
 		}else if(i->second->GetProcess().GetStatus() == bt_proc_status::Ended){
+			DBG("SM: Cleaning up service " << i->second->GetService().Name() << " (process " << i->second->GetProcess().GetPID() << " dead).");
+			DBG("SM: Status: " << i->second->GetProcess().GetStatus());
 			i = services.erase(i);
 		}
 		else ++i;
@@ -91,6 +100,22 @@ void Session::StopService(const string &name){
 	}
 }
 
+sm_ServiceInfo Session::ServiceInfo(const string &name){
+	sm_ServiceInfo ret;
+	if(serviceResolver){
+		auto service = serviceResolver->GetService(name);
+		if(service.first){
+			ret = service.second.Info();
+			if(services.find(name) != services.end()){
+				ret.running = true;
+				ret.pid = services.at(name)->GetProcess().GetPID();
+				ret.users = services.at(name)->GetRefCount();
+			}
+		}
+	}
+	return ret;
+}
+
 void Session::Run(){
 	bt_subscribe(bt_kernel_messages::ProcessStart);
 	bt_subscribe(bt_kernel_messages::ProcessEnd);
@@ -103,16 +128,19 @@ void Session::Run(){
 				AddProcess(pid);
 			} else if(msg.Type() == bt_kernel_messages::ProcessEnd){
 				auto pid = msg.Content<bt_pid_t>();
+				DBG("SM: Process " << pid << " ending.");
 				if(pid == lead.GetPID()){
 					End();
 					return false;
 				} else if(procs.find(pid) != procs.end()){
 					RemoveProcess(pid);
 					CleanUpServices();
+				}else{
+					DBG("SM: Process " << pid << " not part of session.");
 				}
 			}
-		}
-		if(procs.find(msg.From()) != procs.end()){
+		} else {
+		//if(procs.find(msg.From()) != procs.end()){
 			switch(msg.Type()){
 				case sm_RequestType::GetService:{
 					string name = (char*)msg.Content();
@@ -157,7 +185,7 @@ void Session::Run(){
 						auto index = msg.Content<size_t>();
 						auto svcs = serviceResolver->GetServices();
 						if(svcs.size() > index){
-							auto info = svcs[index].Info();						
+							auto info = ServiceInfo(svcs[index].Name());					
 							msg.SendReply(info);
 						}else{
 							msg.SendReply(sm_ServiceInfo());
