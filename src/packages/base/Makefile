@@ -58,6 +58,9 @@ import-files:=\
  data/btos/share/terminfo \
  data/btos/lib/ncurses.ell \
  data/btos/lib/ncurses++.ell \
+ data/btos/lib/form.ell \
+ data/btos/lib/panel.ell \
+ data/btos/lib/menu.ell \
  data/btos/lib/gd.ell \
  data/btos/lib/freetype.ell \
  data/btos/fonts \
@@ -254,6 +257,15 @@ data/btos/lib/ncurses.ell: ../../3rdparty/install/btos/lib/ncurses.ell
 	cp $< $@
 
 data/btos/lib/ncurses++.ell: ../../3rdparty/install/btos/lib/ncurses++.ell
+	cp $< $@
+
+data/btos/lib/form.ell: ../../3rdparty/install/btos/lib/form.ell
+	cp $< $@
+
+data/btos/lib/panel.ell: ../../3rdparty/install/btos/lib/panel.ell
+	cp $< $@
+
+data/btos/lib/menu.ell: ../../3rdparty/install/btos/lib/menu.ell
 	cp $< $@
 
 data/btos/lib/gd.ell: ../../3rdparty/install/btos/lib/gd.ell

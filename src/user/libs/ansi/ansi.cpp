@@ -313,7 +313,7 @@ extern "C" void init_ansi(){
 	bt_vidmode mode = bt_term_QueryScreenMode();
 	if(!mode.textmode) return;
 	if(bt_term_GetInfoLine()) --mode.height;
-	TMT *tmt = tmt_open(mode.height + 1, mode.width + 1, &callback, NULL, NULL);
+	TMT *tmt = tmt_open(mode.height + 1, mode.width, &callback, NULL, NULL);
 	virtual_handle ansi_terminal;
 	ansi_terminal.type = HANDLE_VIRT;
 	ansi_terminal.virt.data = (void*)tmt;

@@ -5,6 +5,12 @@
 #include <vector>
 
 std::vector<std::string> split(const std::string &str, char delim);
-std::string get_env(const std::string &name);
+
+struct term{
+    uint64_t id;
+    std::string title;
+};
+
+std::vector<term> get_term_list();
 
 #endif

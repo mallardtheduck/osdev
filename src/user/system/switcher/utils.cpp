@@ -28,17 +28,3 @@ vector<string> split(const string &str, char delim) {
     }
     return elems;
 }
-
-string get_env(const string &name){
-    char value[128];
-    string ret;
-    size_t size=bt_getenv(name.c_str(), value, 128);
-    ret=value;
-    if(size>128){
-        char *buf=new char[size];
-        bt_getenv(name.c_str(), value, size);
-        ret=buf;
-    }
-    if(size) return ret;
-    else return "";
-}
