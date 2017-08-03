@@ -18,6 +18,9 @@ extern "C" {
 #include <map>
 #include <vector>
 
+#include <btos/envvars.hpp>
+#include <btos/atom.hpp>
+
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
@@ -31,7 +34,7 @@ static volatile bt_handle_t keybufferlock = 0;
 static volatile bool key_thread_ready = false;
 
 static bt_threadhandle key_thread_id = 0;
-static bt_threadhandle wait_thread_id = 0;
+static Atom input_atom {0};
 static bool ansi_on = false;
 static bool exit_registered = false;
 
@@ -53,23 +56,18 @@ static void ansi_add_input(const char *s, size_t len = 0){
 	for(size_t i = 0; i < len; ++i){
 		keybuffer.push_back(s[i]);
 	}
-	if(wait_thread_id) bt_unblock_thread(wait_thread_id);
-	wait_thread_id = 0;
+	input_atom.Modify(AtomValue += len);
 	bt_unlock(keybufferlock);
 }
 
 static char ansi_getchar(){
 	fflush(stdout);
 	char ret;
+	input_atom.WaitFor(AtomValue > 0);
 	bt_lock(keybufferlock);
-	while(!keybuffer.size()){
-		wait_thread_id = bt_get_thread();
-		bt_unlock(keybufferlock);
-		bt_block_thread();
-		bt_lock(keybufferlock);
-	}
 	ret = keybuffer.front();
 	keybuffer.pop_front();
+	input_atom.Modify(--AtomValue);
 	bt_unlock(keybufferlock);
 	return ret;
 }
@@ -113,6 +111,9 @@ static int ansi_virt_read(void *t, char *buf, int size){
 }
 
 static off_t ansi_virt_lseek(void *t, off_t o, int mode){
+	if(mode == SEEK_END){
+		return input_atom.Read();
+	}
 	return 0;
 }
 
@@ -332,6 +333,7 @@ extern "C" void init_ansi(){
 	}
 	bt_term_SetScrolling(false);
 	ansi_on = true;
+	SetEnv("TERM", "pcansi");
 	if(!exit_registered){
 		atexit(&end_ansi);
 		exit_registered = true;
@@ -348,5 +350,6 @@ extern "C" void end_ansi(){
 		free(real_stdout);
 		free(real_stdout);
 		ansi_on = false;
+		SetEnv("TERM", "");
 	}
 }

@@ -98,41 +98,6 @@ public:
         }
     }
 
-//  virtual void On_Menu_Init()
-//  {
-//    NCursesWindow W(::stdscr);
-//   	panel->move(0, 0);
-//    panel->clrtoeol();
-//    for(int i=1; i<=count(); i++)
-//      panel->addch('0' + i);
-//    panel->bkgd(W.getbkgd());
-//    refresh();
-//  }
-
-//  virtual void On_Menu_Termination()
-//  {
-//    panel->move(0, 0);
-//    panel->clrtoeol();
-//    refresh();
-//  }
-
-//  virtual void On_Item_Init(NCursesMenuItem& item)
-//  {
-//    panel->move(0, item.index());
-//    panel->attron(A_REVERSE);
-//    panel->printw("%1d", 1+item.index());
-//    panel->attroff(A_REVERSE);
-//    refresh();
-//  }
-
-//  virtual void On_Item_Termination(NCursesMenuItem& item)
-//  {
-//    panel->move(0, item.index());
-//    panel->attroff(A_REVERSE);
-//    panel->printw("%1d", 1+item.index());
-//    refresh();
-//  }
-
 private:
     bool accepted;
     const std::vector<std::string> items;
