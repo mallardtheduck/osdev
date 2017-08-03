@@ -19,17 +19,19 @@ class Service{
 private:
 	std::string name;
 	std::string path;
+	std::string cleanupCmd;
 	
 	std::vector<bt_pid_t> refs;
 
 public:
-	Service(const std::string &n, const std::string &p) : name(n), path(p) {}
+	Service(const std::string &n, const std::string &p, const std::string &c);
 	Service() = default;
 
 	ServiceInstance Start();
 
 	std::string Name();
 	std::string Path();
+	std::string CleanupCmd();
 	
 	sm_ServiceInfo Info();
 };

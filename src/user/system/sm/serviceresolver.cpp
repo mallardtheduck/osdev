@@ -20,7 +20,11 @@ void SessionServiceResolver::UpdateCache(){
 			auto section = file["service"];
 			auto name = section["name"];
 			auto path = EnvInterpolate(section["path"]);
-			serviceCache.insert(make_pair(name, Service{name, path}));
+			string cleanup;
+			if(section.find("cleanup") != section.end()){
+				cleanup = EnvInterpolate(section["cleanup"]);
+			}
+			serviceCache.insert(make_pair(name, Service{name, path, cleanup}));
 		}
 	}
 }

@@ -444,9 +444,7 @@ USERAPI_HANDLER(BT_GETPID){
 
 USERAPI_HANDLER(BT_PROCSTATUS){
 	if(is_safe_ptr(regs->ebx, sizeof(pid_t))){
-		dbgpf("UAPI: Request for PID %i status.\n", (int)*(pid_t*)regs->ebx);
 		regs->eax = proc_get_status(*(pid_t*)regs->ebx);
-		dbgpf("UAPI: Status: %i\n", regs->eax);
 	}
 }
 

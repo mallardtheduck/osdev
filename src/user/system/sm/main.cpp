@@ -49,7 +49,14 @@ std::pair<bool, SessionType> GetSessionType(string &name){
 		auto section = file["session"];
 		auto name = section["name"];
 		auto leadElx = EnvInterpolate(section["lead"]);
-		return {true, SessionType{name, leadElx}};
+		vector<string> svcs;
+		if(file.find("services") != file.end()){
+			auto services = file["services"];
+			for(auto s : services){
+				svcs.push_back(s.second);
+			}
+		}
+		return {true, SessionType{name, leadElx, svcs}};
 	}
 	return {false, {}};
 }

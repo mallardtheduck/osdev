@@ -4,6 +4,7 @@
 #include <btos.h>
 #include <vector>
 #include <string>
+#include <utility>
 
 namespace btos_api{
 
@@ -28,6 +29,8 @@ namespace btos_api{
 		bool operator!=(const Process &p) const { return !(*this == p); }
 		bool operator<(const Process &p) const { return pid < p.pid; }
 	};
+
+	std::pair<std::string, std::vector<std::string>> ParseCmd(const std::string &cmd);
 
 }
 

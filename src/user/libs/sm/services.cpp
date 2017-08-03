@@ -53,14 +53,24 @@ void ServiceInstance::Stop(){
 	msg.id = bt_send(msg);
 	for(size_t i = 0; i < 10; ++i){
 		bt_rtc_sleep(100);
-		if(proc.GetStatus() != bt_proc_status::Running) return;
+		if(proc.GetStatus() != bt_proc_status::Running) break;
 	}
-	DBG("SM: Killing service.");
-	proc.Kill();
+	if(proc.GetStatus() == bt_proc_status::Running){
+		DBG("SM: Killing service.");
+		proc.Kill();
+	}
+	auto c = ParseCmd(service.CleanupCmd());
+	DBG("SM: Cleanup cmd: " << service.CleanupCmd());
+	DBG("SM: Executing cleanup: " << c.first << " - " << c.second.size() << " args.");
+	auto cleanup = Process::Spawn(c.first, c.second);
+	cleanup.Wait();
 }
 
+Service::Service(const string &n, const string &p, const string &c) : name(n), path(p), cleanupCmd(c) {}
+
 ServiceInstance Service::Start(){
-	return {Process::Spawn(path), *this};
+	auto c = ParseCmd(path);
+	return {Process::Spawn(c.first, c.second), *this};
 }
 
 string Service::Name(){
@@ -69,6 +79,10 @@ string Service::Name(){
 
 string Service::Path(){
 	return path;
+}
+
+string Service::CleanupCmd(){
+	return cleanupCmd;
 }
 
 sm_ServiceInfo Service::Info(){

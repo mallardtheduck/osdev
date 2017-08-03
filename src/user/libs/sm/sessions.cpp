@@ -208,7 +208,7 @@ void Session::End(){
 	procs.clear();
 }
 
-SessionType::SessionType(const std::string &n, const std::string &l) : name(n), leadElx(l)
+SessionType::SessionType(const string &n, const string &l, const vector<string> &s) : name(n), leadElx(l), autoServices(s)
 {}
 
 string SessionType::GetName(){
@@ -229,7 +229,22 @@ void SessionType::SetLeadElx(const string &l){
 
 Session SessionType::Start(){
 	SetEnv("SM_PID", to_string(bt_getpid()));
-	return Process::Spawn(leadElx);
+	auto c = ParseCmd(leadElx);
+	Session ret {Process::Spawn(c.first, c.second)};
+	for(auto s : autoServices){
+		ret.StartService(s, true);
+	}
+	return ret;
+}
+
+void SessionType::AddAutoService(const string &name){
+	autoServices.push_back(name);
+}
+void SessionType::SetAutoServices(const vector<string> &svcs){
+	autoServices = svcs;
+}
+vector<string> SessionType::GetAutoServices(){
+	return autoServices;
 }
 
 }
