@@ -1,6 +1,7 @@
 #include "switcherapp.hpp"
 #include "switcher.hpp"
 #include <vector>
+#include <sstream>
 
 #include <dev/terminal_ioctl.h>
 #include <dev/keyboard.h>
@@ -15,27 +16,33 @@ static const string SessionManager = EnvInterpolate("$systemdrive$:/BTOS/SYSTEM/
 
 void NewSession();
 
-SwitcherApp::SwitcherApp() : NCursesApplication(false)
-{}
+SwitcherApp::SwitcherApp() : NCursesApplication(true){
+}
 
 int SwitcherApp::run(){
 	bt_term_SetTitle("SWITCHER");
 	uint64_t keycode = (/*KeyFlags::Control |*/ KeyFlags::NonASCII | KeyCodes::Escape);
 	bt_term_RegisterGlobalShortcut(keycode);
+	Root_Window->setpalette(COLOR_WHITE, COLOR_BLACK);
+	init_pair(1, COLOR_WHITE, COLOR_RED);
+    init_pair(2, COLOR_WHITE, COLOR_BLUE);
 
 	while(true){
 		vector<pair<string, size_t>> items;
 		auto terms = get_term_list();
 		for(auto t : terms){
-			items.push_back({t.title, t.id});
+			stringstream titlestr;
+			titlestr << "[" << t.id << "] " << t.title;
+			items.push_back({titlestr.str(), t.id});
 		}
 		items.push_back({"New session...", 0});
-		Menu m(items);
+		Menu m = make_menu("Switcher", items);
 		m();
 
 		auto id = m.getSelection();
 		if(id){
 			bt_term_SwitchTerminal(id);
+			bt_term_WaitActive();
 		}else{
 			NewSession();
 		}
@@ -96,7 +103,7 @@ void NewSession(){
 	}
 
 	items.push_back({"Cancel", 0xFFFFFFFF});
-	Menu m(items);
+	Menu m = make_menu("New", items);
 	m();
 
 	auto idx = m.getSelection();
@@ -105,6 +112,7 @@ void NewSession(){
 		string cmd = SessionManager + " " + entry.id;
 		bt_term_NewTerminal(cmd.c_str());
 	}
+	bt_term_WaitActive();
 }
 
 

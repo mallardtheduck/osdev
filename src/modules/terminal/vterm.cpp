@@ -10,7 +10,13 @@
 //vterm *current_vterm=NULL;
 vterm_list *terminals=NULL;
 
+struct active_blockcheck_params{
+	vterm *term;
+	uint32_t lactive;
+};
+
 bool event_blockcheck(void *p);
+bool active_blockcheck(void *p);
 
 size_t strlen(const char *str){
 	size_t len;
@@ -192,6 +198,7 @@ void vterm::activate()
 		backend->set_pointer_autohide(pointer_autohide);
 		backend->set_pointer_speed(pointer_speed);
 		backend->refresh();
+		++activecounter;
 	}
 }
 
@@ -532,6 +539,15 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 				uint16_t keycode = *(uint16_t*)buf;
 				if(backend) backend->register_global_shortcut(keycode, id);
 			}
+		}case bt_terminal_ioctl::WaitActive:{
+			if(!backend || !backend->is_active(id)){
+				active_blockcheck_params p;
+				p.term = this;
+				p.lactive = activecounter;
+				release_lock(&term_lock);
+				thread_setblock(&active_blockcheck, (void*)&p);
+				take_lock(&term_lock);
+			}
 		}
 	}
 	if(backend && backend->is_active(id)) backend->refresh();
@@ -690,7 +706,7 @@ void vterm::sync(bool content)
 	} else {
 		clear_buffer();
 	}
-	this->scrolling = backend->get_screen_scroll();
+	//this->scrolling = backend->get_screen_scroll();
 }
 
 void vterm::clear_buffer()
@@ -786,6 +802,12 @@ bool pointer_blockcheck(void *p)
 bool event_blockcheck(void *p)
 {
 	return input_blockcheck(p) || pointer_blockcheck(p);
+}
+
+bool active_blockcheck(void *p)
+{
+	auto *pa = (active_blockcheck_params*)p;
+	return pa->term->activecounter != pa->lactive;
 }
 
 bt_terminal_pointer_event vterm::get_pointer()

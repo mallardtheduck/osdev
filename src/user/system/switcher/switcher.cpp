@@ -40,6 +40,7 @@ vector<term> get_term_list(){
 
 int main(int argc, char *argv[])
 {
+	bt_term_stdout();
     setlocale(LC_ALL, "");
 	bt_term_SetInfoLine(false);
 

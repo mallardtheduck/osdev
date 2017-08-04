@@ -18,12 +18,16 @@ protected:
 class Menu : private MenuItems, public NCursesMenu{
 private:
     const std::vector<std::pair<std::string, size_t>> items;
+    Menu(int y, int x, int h, int w, const std::string &title, const std::vector<std::pair<std::string, size_t>> &in);
+    
+    friend Menu make_menu(const std::string &title, const std::vector<std::pair<std::string, size_t>> &in);
 public:
-    explicit Menu(const std::vector<std::pair<std::string, size_t>> &in);
-
     size_t getSelection();
 
     int virtualize(int c) override;
+    void On_Menu_Init() override;
 };
+
+Menu make_menu(const std::string &title, const std::vector<std::pair<std::string, size_t>> &in);
 
 #endif

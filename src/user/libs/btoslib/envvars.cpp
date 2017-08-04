@@ -22,8 +22,8 @@ string GetEnv(const string &var){
 	else return "";
 }
 
-void SetEnv(const string &var, const string &val){
-	bt_setenv(var.c_str(), val.c_str(), 0);
+void SetEnv(const string &var, const string &val, uint32_t flags){
+	bt_setenv(var.c_str(), val.c_str(), flags);
 }
 
 string Interpolate(const string &tmpl, function<string(const string&)> lookup){

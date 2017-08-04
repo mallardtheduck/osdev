@@ -21,7 +21,9 @@ using namespace std;
 namespace btos_api{
 namespace sm{
 
-Session::Session(const Process &p) : lead(p), procs{ lead } {}
+Session::Session(const Process &p) : lead(p), procs{ lead } {
+	procs.insert(lead);
+}
 
 void Session::SetServiceResolver(shared_ptr<IServiceResolver> sr){
 	serviceResolver = sr;

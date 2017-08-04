@@ -114,6 +114,8 @@ namespace btos_api{
 		void SetScrolling(bool mode);
 		bool GetScrolling();
 		
+		void WaitActive();
+		
 	};	
 
 }

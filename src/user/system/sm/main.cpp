@@ -6,7 +6,7 @@
 #include <btos/processlist.hpp>
 #include <btos/envvars.hpp>
 #include <btos/ini.hpp>
-#include <dev/terminal_ioctl.h>
+#include <dev/terminal.hpp>
 
 #include <sm/sessions.hpp>
 
@@ -75,7 +75,7 @@ int main(int argc, char **argv){
 	auto sessionType = GetSessionType(args[1]);
 
 	if(sessionType.first){
-		bt_term_SetTitle(sessionType.second.GetName().c_str());
+		Terminal().SetTitle(sessionType.second.GetName());
 		auto s = sessionType.second.Start();
 		s.SetServiceResolver(make_shared<SessionServiceResolver>());
 		s.Run();

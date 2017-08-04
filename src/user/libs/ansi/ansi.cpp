@@ -134,12 +134,12 @@ static int ansi_virt_close(void *t){
 static uint8_t getcolour(tmt_color_t c, bool fg){
 	switch(c){
 		case TMT_COLOR_BLACK: return 0;
-		case TMT_COLOR_RED: return 1;
+		case TMT_COLOR_BLUE: return 1;
 		case TMT_COLOR_GREEN: return 2;
-		case TMT_COLOR_YELLOW: return 3;
-		case TMT_COLOR_BLUE: return 4;
+		case TMT_COLOR_CYAN: return 3;
+		case TMT_COLOR_RED: return 4;
 		case TMT_COLOR_MAGENTA: return 5;
-		case TMT_COLOR_CYAN: return 6;
+		case TMT_COLOR_YELLOW: return 6;
 		case TMT_COLOR_WHITE: return 7;
 		case TMT_COLOR_MAX: return 15;
 		case TMT_COLOR_DEFAULT: 
@@ -333,7 +333,7 @@ extern "C" void init_ansi(){
 	}
 	bt_term_SetScrolling(false);
 	ansi_on = true;
-	SetEnv("TERM", "pcansi");
+	SetEnv("TERM", "pcansi", (1 << 3));
 	if(!exit_registered){
 		atexit(&end_ansi);
 		exit_registered = true;
@@ -350,6 +350,6 @@ extern "C" void end_ansi(){
 		free(real_stdout);
 		free(real_stdout);
 		ansi_on = false;
-		SetEnv("TERM", "");
+		SetEnv("TERM", "", (1 << 3));
 	}
 }

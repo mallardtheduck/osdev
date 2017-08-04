@@ -236,4 +236,7 @@ namespace btos_api{
 		return (bool)IOCtl(bt_terminal_ioctl::GetScrolling, 0, NULL);
 	}
 
+	void Terminal::WaitActive(){
+		IOCtl(bt_terminal_ioctl::WaitActive, 0, NULL);
+	}
 }

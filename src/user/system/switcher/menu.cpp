@@ -18,7 +18,22 @@ MenuItems::~MenuItems(){
     }
 }
 
-Menu::Menu(const vector<pair<string, size_t>> &in) : NCursesMenu(lines(), cols()), items(in){
+Menu make_menu(const string &title, const vector<pair<string, size_t>> &in){
+	int h = in.size() + 2;
+	int w = [&]()->int{
+		int ret = title.length() + 3;
+		for(auto i : in){
+			if((int)i.first.length() > ret) ret = i.first.length() + 3;
+		}
+		return ret;
+	}();
+	int y = (LINES - h) / 2;
+	int x = (COLS - w) / 2;
+	
+	return Menu(y, x, h, w, title, in);
+}
+
+Menu::Menu(int y, int x, int h, int w, const string &title, const vector<pair<string, size_t>> &in) : NCursesMenu(h, w, y, x), items(in){
     set_format(lines() - 1, 1); // Make menu large.
 
     // Compose list of menu items.
@@ -30,8 +45,7 @@ Menu::Menu(const vector<pair<string, size_t>> &in) : NCursesMenu(lines(), cols()
 
     // Initialize NCursesMenu.
     InitMenu(&itemList[0], true, false);
-
-	setpalette(COLOR_WHITE, COLOR_BLUE);
+    frame(title.c_str());
 }
 
 size_t Menu::getSelection(){
@@ -62,4 +76,7 @@ int Menu::virtualize(int c){
         // Pass the rest of the keys to predefined handler.
         default: return NCursesMenu::virtualize(c);
     }
+}
+
+void Menu::On_Menu_Init(){
 }
