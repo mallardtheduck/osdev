@@ -538,6 +538,73 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 	return 0;
 }
 
+struct cmdLine{
+	char *cmd;
+	size_t argc;
+	char **argv;
+};
+
+cmdLine parse_cmd(const char *c){
+	cmdLine cl = {nullptr, 0, nullptr};
+	char* buf = (char*)malloc(BT_MAX_PATH);
+	memset(buf, 0, BT_MAX_PATH);
+	size_t i = 0;
+	bool escape = false;
+	bool quote = false;
+	while(c && *c){
+		if(escape) buf[i] = *c;
+		else if(quote && *c != '"') buf[i] = *c;
+		else if(*c == '\\') escape = true;
+		else if(*c == '"') quote = !quote;
+		else if((*c == ' ' && i) || i == BT_MAX_PATH - 1){
+			if(!cl.cmd) cl.cmd = buf;
+			else{
+				char **nargv = (char**)malloc((cl.argc + 1) * sizeof(char*));
+				for(size_t j = 0; j < cl.argc; ++j){
+					nargv[j] = cl.argv[j];
+				}
+				nargv[cl.argc] = buf;
+				if(cl.argv) free(cl.argv);
+				cl.argv = nargv;
+				++cl.argc;
+			}
+			buf = (char*)malloc(BT_MAX_PATH);
+			memset(buf, 0, BT_MAX_PATH);
+			i = -1;
+			escape=quote=false;
+		}else{
+			buf[i] = *c;
+		}
+		++i; ++c;
+	}
+	if(i){
+		char **nargv = (char**)malloc((cl.argc + 1) * sizeof(char*));
+		for(size_t j = 0; j < cl.argc; ++j){
+			nargv[j] = cl.argv[j];
+		}
+		nargv[cl.argc] = buf;
+		if(cl.argv) free(cl.argv);
+		cl.argv = nargv;
+		++cl.argc;
+	}else{
+		free(buf);
+	}
+	dbgpf("CL: %i args: %s - ", (int)cl.argc, cl.cmd);
+	for(size_t i = 0; i < cl.argc; ++i){
+		dbgpf(" (%p) %s - ", cl.argv[i], cl.argv[i]);
+	}
+	dbgout("\n");
+	return cl;
+};
+
+void free_cmd(cmdLine c){
+	if(c.cmd) free(c.cmd);
+	for(size_t i = 0; i < c.argc; ++i){
+		free(c.argv[i]);
+	}
+	free(c.argv);
+}
+
 void vterm::create_terminal(char *command)
 {
 	uint64_t new_id=terminals->create_terminal(backend);
@@ -551,7 +618,9 @@ void vterm::create_terminal(char *command)
 			char new_terminal_id[128]= {0};
 			i64toa(new_id, new_terminal_id, 10);
 			setenv(terminal_var, new_terminal_id, 0, getpid());
-			pid_t pid=spawn(command, 0, NULL);
+			cmdLine cmd = parse_cmd(command);
+			pid_t pid=spawn(cmd.cmd, cmd.argc, cmd.argv);
+			free_cmd(cmd);
 			setenv(terminal_var, old_terminal_id, 0, getpid());
 			vterm_options opts;
 			if(!pid) terminals->get(new_id)->close(opts);
