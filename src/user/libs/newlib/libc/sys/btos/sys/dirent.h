@@ -1,11 +1,11 @@
 #ifndef _SYS_DIRENT_H
 #define _SYS_DIRENT_H
 
-#include <btos.h>
+#include <stdint.h>
 
-typedef bt_handle_t DIR;
+typedef uint64_t DIR;
 
-#define MAXNAMLEN BT_MAX_SEGLEN
+#define MAXNAMLEN 256
 
 struct dirent {
 	unsigned long	d_ino;

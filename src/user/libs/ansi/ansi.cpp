@@ -294,6 +294,26 @@ static void ansi_stdin_thread(void*){
 				ansi_add_input(TMT_KEY_HOME);
 			}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
 				ansi_add_input(TMT_KEY_END);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F1)){
+				ansi_add_input(TMT_KEY_F1);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F2)){
+				ansi_add_input(TMT_KEY_F2);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F3)){
+				ansi_add_input(TMT_KEY_F3);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F4)){
+				ansi_add_input(TMT_KEY_F4);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F5)){
+				ansi_add_input(TMT_KEY_F5);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F6)){
+				ansi_add_input(TMT_KEY_F6);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F7)){
+				ansi_add_input(TMT_KEY_F7);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F8)){
+				ansi_add_input(TMT_KEY_F8);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F9)){
+				ansi_add_input(TMT_KEY_F9);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F10)){
+				ansi_add_input(TMT_KEY_F10);
 			}else if(!(code & KeyFlags::NonASCII)){
 				char c = KB_char(key);
 				if(c == 10) ansi_add_input("\r");
@@ -333,7 +353,7 @@ extern "C" void init_ansi(){
 	}
 	bt_term_SetScrolling(false);
 	ansi_on = true;
-	SetEnv("TERM", "pcansi", (1 << 3));
+	SetEnv("TERM", "btosansi", (1 << 3));
 	if(!exit_registered){
 		atexit(&end_ansi);
 		exit_registered = true;

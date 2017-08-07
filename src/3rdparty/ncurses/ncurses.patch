@@ -1,5 +1,5 @@
 diff -rupN ncurses-6.0/config.sub originals/ncurses-6.0/config.sub
---- ncurses-6.0/config.sub	2017-08-03 21:23:57.290928262 +0100
+--- ncurses-6.0/config.sub	2017-08-04 12:30:49.070740200 +0100
 +++ originals/ncurses-6.0/config.sub	2015-05-02 12:52:04.000000000 +0100
 @@ -1396,8 +1396,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
@@ -12,7 +12,7 @@ diff -rupN ncurses-6.0/config.sub originals/ncurses-6.0/config.sub
  		;;
  	-qnx*)
 diff -rupN ncurses-6.0/configure originals/ncurses-6.0/configure
---- ncurses-6.0/configure	2017-08-03 21:23:57.302928263 +0100
+--- ncurses-6.0/configure	2017-08-04 12:30:49.087288000 +0100
 +++ originals/ncurses-6.0/configure	2015-08-05 10:20:32.000000000 +0100
 @@ -5117,7 +5117,7 @@ if test $with_lib_prefix = auto
  then
@@ -78,7 +78,7 @@ diff -rupN ncurses-6.0/configure originals/ncurses-6.0/configure
  			cf_suffix='.so'
  			cf_depsuf=$cf_suffix
 diff -rupN ncurses-6.0/include/MKterm.h.awk.in originals/ncurses-6.0/include/MKterm.h.awk.in
---- ncurses-6.0/include/MKterm.h.awk.in	2017-08-03 21:23:57.302928263 +0100
+--- ncurses-6.0/include/MKterm.h.awk.in	2017-08-04 12:30:49.089795100 +0100
 +++ originals/ncurses-6.0/include/MKterm.h.awk.in	2013-08-17 20:21:56.000000000 +0100
 @@ -104,9 +104,6 @@ BEGIN		{
  		    print  "#if __MINGW32__"
@@ -91,8 +91,8 @@ diff -rupN ncurses-6.0/include/MKterm.h.awk.in originals/ncurses-6.0/include/MKt
  		    print  "#undef TERMIOS"
  		    print  "#include <sgtty.h>"
 diff -rupN ncurses-6.0/include/ncurses_btos.h originals/ncurses-6.0/include/ncurses_btos.h
---- ncurses-6.0/include/ncurses_btos.h	2017-08-03 21:23:57.302928263 +0100
-+++ originals/ncurses-6.0/include/ncurses_btos.h	1970-01-01 01:00:00.000000000 +0100
+--- ncurses-6.0/include/ncurses_btos.h	2017-08-04 12:30:49.091299100 +0100
++++ originals/ncurses-6.0/include/ncurses_btos.h	1970-01-01 00:00:00.000000000 +0000
 @@ -1,152 +0,0 @@
 -
 -/****************************************************************************
@@ -246,8 +246,25 @@ diff -rupN ncurses-6.0/include/ncurses_btos.h originals/ncurses-6.0/include/ncur
 -
 -#endif /* _NC_BTOSH */
 -#endif /* __btos__ */
+diff -rupN ncurses-6.0/misc/terminfo.src originals/ncurses-6.0/misc/terminfo.src
+--- ncurses-6.0/misc/terminfo.src	2017-08-07 11:56:31.933069200 +0100
++++ originals/ncurses-6.0/misc/terminfo.src	2015-07-25 20:27:20.000000000 +0100
+@@ -698,13 +698,6 @@ nansi.sysk|nansisysk|PC-DOS Public Domai
+ 	is2=U4 PC-DOS Public Domain NANSI.SYS with keypad redefined for vi 9-29-86\n\E[;75;8p,
+ 	use=ansi.sysk,
+ 
+-#
+-# BT/OS "ansi.ell" emulated console (ansi + function keys):
+-btosansi|BT/OS "ansi.ell" emulated console,
+-	kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS, kf5=\EOT, kf6=\EOU, kf7=\EOV, kf8=\EOW, kf9=\EOX, kf10=\EOY,
+-	kend=\E[Y,
+-	use=pcansi,
+-
+ #### Atari ST terminals
+ 
+ # From Guido Flohr <gufl0000@stud.uni-sb.de>.
 diff -rupN ncurses-6.0/ncurses/base/lib_endwin.c originals/ncurses-6.0/ncurses/base/lib_endwin.c
---- ncurses-6.0/ncurses/base/lib_endwin.c	2017-08-03 21:23:57.302928263 +0100
+--- ncurses-6.0/ncurses/base/lib_endwin.c	2017-08-04 12:30:49.093309200 +0100
 +++ originals/ncurses-6.0/ncurses/base/lib_endwin.c	2014-03-08 20:32:59.000000000 +0000
 @@ -66,9 +66,6 @@ NCURSES_SP_NAME(endwin) (NCURSES_SP_DCL0
  #endif
@@ -260,7 +277,7 @@ diff -rupN ncurses-6.0/ncurses/base/lib_endwin.c originals/ncurses-6.0/ncurses/b
      returnCode(code);
  }
 diff -rupN ncurses-6.0/ncurses/base/lib_initscr.c originals/ncurses-6.0/ncurses/base/lib_initscr.c
---- ncurses-6.0/ncurses/base/lib_initscr.c	2017-08-03 21:23:57.306928263 +0100
+--- ncurses-6.0/ncurses/base/lib_initscr.c	2017-08-04 12:30:49.095821000 +0100
 +++ originals/ncurses-6.0/ncurses/base/lib_initscr.c	2014-04-26 19:47:51.000000000 +0100
 @@ -63,16 +63,10 @@ initscr(void)
      /* Portable applications must not call initscr() more than once */
@@ -281,7 +298,7 @@ diff -rupN ncurses-6.0/ncurses/base/lib_initscr.c originals/ncurses-6.0/ncurses/
  	/*
  	 * 2002/9/21
 diff -rupN ncurses-6.0/ncurses/tty/lib_twait.c originals/ncurses-6.0/ncurses/tty/lib_twait.c
---- ncurses-6.0/ncurses/tty/lib_twait.c	2017-08-03 23:15:22.091303385 +0100
+--- ncurses-6.0/ncurses/tty/lib_twait.c	2017-08-04 12:30:49.098326900 +0100
 +++ originals/ncurses-6.0/ncurses/tty/lib_twait.c	2015-07-04 22:01:02.000000000 +0100
 @@ -53,11 +53,6 @@
  #include <OS.h>
