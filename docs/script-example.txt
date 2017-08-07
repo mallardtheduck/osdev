@@ -8,7 +8,7 @@ CALL say_hello Fred
 GOTO end_of_file
 
 FUNCTION write_n text n
-	LOOP $(IS "$n > 0")$
+	LOOP $(IS "$n$ > 0")$
 		ECHO $text$
 		LOCAL n $(EVAL "$n$ - 1")$
 	END LOOP

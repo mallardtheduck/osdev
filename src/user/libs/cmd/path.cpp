@@ -1,8 +1,13 @@
-#include "cmd.hpp"
+#include <btos.h>
+#include <cmd/path.hpp>
+#include <cmd/utils.hpp>
 #include <sstream>
 #include <iostream>
 
 using namespace std;
+
+namespace btos_api{
+namespace cmd{
 
 bool is_absolute(const string &path){
 	for(const char &c : path){
@@ -106,4 +111,7 @@ string path_path(const string &fullpath){
 bool is_dir(const string &path){
 	bt_directory_entry entry=bt_stat(parse_path(path).c_str());
 	return entry.type==FS_Directory;
+}
+
+}
 }

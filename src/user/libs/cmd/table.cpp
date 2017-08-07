@@ -1,4 +1,5 @@
-#include "cmd.hpp"
+#include <cmd/commands.hpp>
+#include <cmd/globbing.hpp>
 #include <map>
 #include <vector>
 #include <string>
@@ -9,6 +10,9 @@
 #include <btos/table.hpp>
 
 using namespace std;
+
+namespace btos_api{
+namespace cmd{
 
 bool is_number(const std::string& s)
 {
@@ -105,4 +109,7 @@ void display_table(const string &input, ostream &output){
 	if(tbl.rows.size()){
 		display_table(tbl, 80, output);
 	}
+}
+
+}
 }

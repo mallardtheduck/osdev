@@ -1,4 +1,7 @@
-#include "cmd.hpp"
+#include <cmd/commands.hpp>
+#include <cmd/utils.hpp>
+#include <cmd/globbing.hpp>
+#include <cmd/path.hpp>
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
@@ -7,6 +10,9 @@
 #include <btos/process.hpp>
 
 using namespace std;
+
+namespace btos_api{
+namespace cmd{
 
 typedef void (*command_fn)(const command &);
 
@@ -440,4 +446,7 @@ void command::closeio(){
     output->flush();
     input_ptr.reset();
     output_ptr.reset();
+}
+
+}
 }

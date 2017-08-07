@@ -1,11 +1,19 @@
-#include "cmd.hpp"
+#include <btos.h>
+#include <cmd/utils.hpp>
+#include <cmd/path.hpp>
+#include <cmd/commands.hpp>
 #include <algorithm>
 #include <sstream>
 #include <btos/envvars.hpp>
 
+#include <fstream>
+
 using namespace std;
 
-const string default_prompt="[$p]";
+namespace btos_api{
+namespace cmd{
+
+const string default_prompt="[$cwd$]";
 const string prompt_var="PROMPT";
 const string cwd_var="CWD";
 const string default_cwd="INIT:/";
@@ -30,7 +38,7 @@ void set_env(const string &name, const string &value){
 }
 
 string get_prompt(){
-	return get_env(prompt_var, default_prompt);
+	return EnvInterpolate(get_env(prompt_var, default_prompt));
 }
 
 string get_cwd(){
@@ -99,4 +107,48 @@ string tempfile(){
         fclose(fh);
     }
     return path;
+}
+
+enum class cmd_token{
+    arg,
+    input,
+    output,
+};
+
+vector<command> getcommands(vector<string> parsed){
+    vector<command> ret;
+    command current;
+    cmd_token next=cmd_token::arg;
+    for(const string &p : parsed){
+        if(next==cmd_token::arg) {
+            if (p == "|") {
+                string file = tempfile();
+                current.set_output(file);
+                ret.push_back(current);
+                current = command();
+                current.set_input(file);
+            } else if (p == ">") {
+                next = cmd_token::output;
+            } else if (p == "<") {
+                next = cmd_token::input;
+            }else{
+                current.args.push_back(p);
+            }
+        }else if(next==cmd_token::input){
+            string file=parse_path(p);
+            current.set_input(file);
+            next=cmd_token::arg;
+        }else if(next==cmd_token::output){
+            string file=parse_path(p);
+            current.set_output(file);
+            ofstream f(file);
+            f.close();
+            next=cmd_token::arg;
+        }
+    }
+    ret.push_back(current);
+    return ret;
+}
+
+}
 }

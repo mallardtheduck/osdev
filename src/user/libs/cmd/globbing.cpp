@@ -1,7 +1,13 @@
-#include "cmd.hpp"
+#include <btos.h>
+#include <cmd/globbing.hpp>
+#include <cmd/utils.hpp>
+#include <cmd/path.hpp>
 #include <sstream>
 
 using namespace std;
+
+namespace btos_api{
+namespace cmd{
 
 bool is_match(const string &opattern, const string &ofilename){
     if(ofilename=="." || ofilename=="..") return false;
@@ -81,4 +87,7 @@ vector<string> glob(const string &str){
 		}
 	}while(again==true);
 	return ret;
+}
+
+}
 }
