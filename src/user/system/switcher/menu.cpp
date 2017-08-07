@@ -21,11 +21,11 @@ MenuItems::~MenuItems(){
 Menu make_menu(const string &title, const vector<pair<string, size_t>> &in){
 	int h = in.size() + 2;
 	int w = [&]()->int{
-		int ret = title.length() + 3;
+		int ret = title.length();
 		for(auto i : in){
-			if((int)i.first.length() > ret) ret = i.first.length() + 3;
+			if((int)i.first.length() > ret) ret = i.first.length();
 		}
-		return ret;
+		return ret + 3;
 	}();
 	int y = (LINES - h) / 2;
 	int x = (COLS - w) / 2;
