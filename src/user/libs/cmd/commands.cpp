@@ -409,13 +409,17 @@ bool run_command(const command &cmd){
 	return true;
 }
 
-command::command(){
+command::command(const string &default_input, const string &default_output){
     this->input=&cin;
     this->output=&cout;
-    input_path=get_env("STDIN");
-    output_path=get_env("STDOUT");
-    redir_input=false;
-    redir_output=false;
+    if(default_input != ""){
+		input_path=default_input;
+		redir_input=true;
+	}
+	if(default_output != ""){
+		output_path=default_output;
+		redir_output=true;
+	}
 }
 
 command::~command(){

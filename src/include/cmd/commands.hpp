@@ -5,6 +5,7 @@
 #include <memory>
 #include <iostream>
 #include <vector>
+#include <btos/envvars.hpp>
 
 namespace btos_api{
 namespace cmd{
@@ -13,7 +14,8 @@ class command{
 private:
     std::shared_ptr<std::istream> input_ptr;
     std::shared_ptr<std::ostream> output_ptr;
-    bool redir_input, redir_output;
+    bool redir_input = false;
+    bool redir_output = false;
 public:
     std::vector<std::string> args;
     std::istream *input;
@@ -26,10 +28,10 @@ public:
     void openio();
     void closeio();
 
-    command();
+    command(const std::string &default_input, const std::string &default_output);
     ~command();
 };
-std::vector<command> getcommands(std::vector<std::string> parsed);
+std::vector<command> getcommands(const std::vector<std::string> &parsed, const std::string &default_output = "", const std::string &default_input = "");
 bool run_command(const command &cmd);
 void table_command(const command &cmd);
 void display_table(const std::string &input, std::ostream &output=std::cout);

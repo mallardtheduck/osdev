@@ -115,9 +115,9 @@ enum class cmd_token{
     output,
 };
 
-vector<command> getcommands(vector<string> parsed){
+vector<command> getcommands(const vector<string> &parsed, const string &default_output, const string &default_input){
     vector<command> ret;
-    command current;
+    command current { default_input, default_output };
     cmd_token next=cmd_token::arg;
     for(const string &p : parsed){
         if(next==cmd_token::arg) {
@@ -125,8 +125,7 @@ vector<command> getcommands(vector<string> parsed){
                 string file = tempfile();
                 current.set_output(file);
                 ret.push_back(current);
-                current = command();
-                current.set_input(file);
+                current = command(file, default_output);
             } else if (p == ">") {
                 next = cmd_token::output;
             } else if (p == "<") {

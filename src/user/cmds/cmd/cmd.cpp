@@ -19,9 +19,7 @@ bool run_command(const string &input){
 }
 
 void run_interactive(){
-	command vercmd;
-    vercmd.args={"ver"};
-	run_command(vercmd);
+ 	run_command("ver");
 	while(true){
 		string input=get_input();
         if(!run_command(input)) break;
