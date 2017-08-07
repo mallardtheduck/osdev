@@ -58,12 +58,19 @@ import-files:=\
  data/btos/share/terminfo \
  data/btos/lib/ncurses.ell \
  data/btos/lib/ncurses++.ell \
+ data/btos/lib/form.ell \
+ data/btos/lib/panel.ell \
+ data/btos/lib/menu.ell \
  data/btos/lib/gd.ell \
  data/btos/lib/freetype.ell \
  data/btos/fonts \
  data/btos/config/wm.ini \
  data/btos/lib/btoscore.ell \
  data/btos/lib/btoslib.ell \
+ data/btos/system/session.elx \
+ data/btos/config/sessions \
+ data/btos/lib/sm.ell \
+ data/btos/cmd/smutil.elx \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -252,6 +259,15 @@ data/btos/lib/ncurses.ell: ../../3rdparty/install/btos/lib/ncurses.ell
 data/btos/lib/ncurses++.ell: ../../3rdparty/install/btos/lib/ncurses++.ell
 	cp $< $@
 
+data/btos/lib/form.ell: ../../3rdparty/install/btos/lib/form.ell
+	cp $< $@
+
+data/btos/lib/panel.ell: ../../3rdparty/install/btos/lib/panel.ell
+	cp $< $@
+
+data/btos/lib/menu.ell: ../../3rdparty/install/btos/lib/menu.ell
+	cp $< $@
+
 data/btos/lib/gd.ell: ../../3rdparty/install/btos/lib/gd.ell
 	cp $< $@
 
@@ -269,6 +285,19 @@ data/btos/lib/btoscore.ell: ../../user/libs/btoscore/btoscore.ell
 	cp $< $@
 
 data/btos/lib/btoslib.ell: ../../user/libs/btoslib/btoslib.ell
+	cp $< $@
+
+data/btos/system/session.elx: ../../user/system/sm/session.elx
+	cp $< $@
+
+data/btos/config/sessions: ../../user/system/sm/sessions
+	mkdir -p $@
+	cp -Rv $</* $@
+
+data/btos/lib/sm.ell : ../../user/libs/sm/sm.ell
+	cp $< $@
+
+data/btos/cmd/smutil.elx : ../../user/libs/sm/smutil.elx
 	cp $< $@
 
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx

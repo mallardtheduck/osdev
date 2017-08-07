@@ -1,6 +1,8 @@
 OUTPUT-NAME := gdstest.elx
 LIBRARY-NAME := gds.ell
 
+DESTINATION := $(HOME)/Projects/os/cross/i686-pc-btos
+
 BUILD-AS := i686-pc-btos-as
 BUILD-AR := i686-pc-btos-ar
 BUILD-AS-OPTIONS := -g -fPIC -c
@@ -15,7 +17,7 @@ LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L.
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
 AR-FLAGS := rcs -o $(LIBRARY-NAME)
 LINK-OPTIONS := -lgds -lgcc_s -lstdc++ -lm
-LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lm
+LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lm -lsm
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")
@@ -31,9 +33,13 @@ MAINOBJ := $(MAINCPP:.cpp=.o)
 CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
 
-all: $(OUTPUT-NAME)
+all: $(OUTPUT-NAME) copy
 
 -include $(CDEPFILES) $(CPPDEPFILES)
+
+copy: $(LIBRARY-NAME)
+	mkdir -p $(DESTINATION)/lib
+	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib
 
 clean: dummy.delete
 

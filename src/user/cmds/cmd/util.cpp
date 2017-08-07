@@ -1,6 +1,7 @@
 #include "cmd.hpp"
 #include <algorithm>
 #include <sstream>
+#include <btos/envvars.hpp>
 
 using namespace std;
 
@@ -12,17 +13,7 @@ const string default_cwd="INIT:/";
 uint64_t tempcounter=0;
 
 string get_env(const string &name){
-	char value[128];
-	string ret;
-	size_t size=bt_getenv(name.c_str(), value, 128);
-	ret=value;
-	if(size>128){
-		char *buf=new char[size];
-		bt_getenv(name.c_str(), value, size);
-		ret=buf;
-	}
-	if(size) return ret;
-	else return "";
+	return GetEnv(name);
 }
 
 string get_env(const string &name, const string &def_value){

@@ -1,4 +1,4 @@
-#ifndef _DEVICES_H
+#if !defined(_DEVICES_H) && !defined(BTOS_NO_DEVICES)
 #define _DEVICES_H
 
 #ifdef __cplusplus

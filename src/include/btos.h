@@ -8,7 +8,9 @@
 #include "btos/fs_interface.h"
 #include "btos/ioctl.h"
 #include "btos/kernel_calls.h"
+#ifndef BTOS_NO_DEVICES
 #include "btos/devices.h"
+#endif
 #include "btos/core.h"
 
 #if defined(__cplusplus) && !defined(BTOS_NO_USING)

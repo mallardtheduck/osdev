@@ -10,7 +10,13 @@
 //vterm *current_vterm=NULL;
 vterm_list *terminals=NULL;
 
+struct active_blockcheck_params{
+	vterm *term;
+	uint32_t lactive;
+};
+
 bool event_blockcheck(void *p);
+bool active_blockcheck(void *p);
 
 size_t strlen(const char *str){
 	size_t len;
@@ -192,6 +198,7 @@ void vterm::activate()
 		backend->set_pointer_autohide(pointer_autohide);
 		backend->set_pointer_speed(pointer_speed);
 		backend->refresh();
+		++activecounter;
 	}
 }
 
@@ -532,10 +539,86 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 				uint16_t keycode = *(uint16_t*)buf;
 				if(backend) backend->register_global_shortcut(keycode, id);
 			}
+		}case bt_terminal_ioctl::WaitActive:{
+			if(!backend || !backend->is_active(id)){
+				active_blockcheck_params p;
+				p.term = this;
+				p.lactive = activecounter;
+				release_lock(&term_lock);
+				thread_setblock(&active_blockcheck, (void*)&p);
+				take_lock(&term_lock);
+			}
 		}
 	}
 	if(backend && backend->is_active(id)) backend->refresh();
 	return 0;
+}
+
+struct cmdLine{
+	char *cmd;
+	size_t argc;
+	char **argv;
+};
+
+cmdLine parse_cmd(const char *c){
+	cmdLine cl = {nullptr, 0, nullptr};
+	char* buf = (char*)malloc(BT_MAX_PATH);
+	memset(buf, 0, BT_MAX_PATH);
+	size_t i = 0;
+	bool escape = false;
+	bool quote = false;
+	while(c && *c){
+		if(escape) buf[i] = *c;
+		else if(quote && *c != '"') buf[i] = *c;
+		else if(*c == '\\') escape = true;
+		else if(*c == '"') quote = !quote;
+		else if((*c == ' ' && i) || i == BT_MAX_PATH - 1){
+			if(!cl.cmd) cl.cmd = buf;
+			else{
+				char **nargv = (char**)malloc((cl.argc + 1) * sizeof(char*));
+				for(size_t j = 0; j < cl.argc; ++j){
+					nargv[j] = cl.argv[j];
+				}
+				nargv[cl.argc] = buf;
+				if(cl.argv) free(cl.argv);
+				cl.argv = nargv;
+				++cl.argc;
+			}
+			buf = (char*)malloc(BT_MAX_PATH);
+			memset(buf, 0, BT_MAX_PATH);
+			i = -1;
+			escape=quote=false;
+		}else{
+			buf[i] = *c;
+		}
+		++i; ++c;
+	}
+	if(i){
+		char **nargv = (char**)malloc((cl.argc + 1) * sizeof(char*));
+		for(size_t j = 0; j < cl.argc; ++j){
+			nargv[j] = cl.argv[j];
+		}
+		nargv[cl.argc] = buf;
+		if(cl.argv) free(cl.argv);
+		cl.argv = nargv;
+		++cl.argc;
+	}else{
+		free(buf);
+	}
+	dbgpf("CL: %i args: %s - ", (int)cl.argc, cl.cmd);
+	for(size_t i = 0; i < cl.argc; ++i){
+		dbgpf(" (%p) %s - ", cl.argv[i], cl.argv[i]);
+	}
+	dbgout("\n");
+	return cl;
+};
+
+void free_cmd(cmdLine c){
+	if(c.cmd) free(c.cmd);
+	for(size_t i = 0; i < c.argc; ++i){
+		free(c.argv[i]);
+	}
+	free(c.argv);
 }
 
 void vterm::create_terminal(char *command)
@@ -551,7 +634,9 @@ void vterm::create_terminal(char *command)
 			char new_terminal_id[128]= {0};
 			i64toa(new_id, new_terminal_id, 10);
 			setenv(terminal_var, new_terminal_id, 0, getpid());
-			pid_t pid=spawn(command, 0, NULL);
+			cmdLine cmd = parse_cmd(command);
+			pid_t pid=spawn(cmd.cmd, cmd.argc, cmd.argv);
+			free_cmd(cmd);
 			setenv(terminal_var, old_terminal_id, 0, getpid());
 			vterm_options opts;
 			if(!pid) terminals->get(new_id)->close(opts);
@@ -621,7 +706,7 @@ void vterm::sync(bool content)
 	} else {
 		clear_buffer();
 	}
-	this->scrolling = backend->get_screen_scroll();
+	//this->scrolling = backend->get_screen_scroll();
 }
 
 void vterm::clear_buffer()
@@ -717,6 +802,12 @@ bool pointer_blockcheck(void *p)
 bool event_blockcheck(void *p)
 {
 	return input_blockcheck(p) || pointer_blockcheck(p);
+}
+
+bool active_blockcheck(void *p)
+{
+	auto *pa = (active_blockcheck_params*)p;
+	return pa->term->activecounter != pa->lactive;
 }
 
 bt_terminal_pointer_event vterm::get_pointer()

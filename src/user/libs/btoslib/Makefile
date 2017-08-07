@@ -14,7 +14,6 @@ BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -std=gnu99
 LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L.
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
-AR-FLAGS := rcs -o $(STATIC-LIBRARY-NAME)
 LINK-OPTIONS := -lgcc_s -lc
 LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lc -lbtoscore
 
@@ -27,14 +26,13 @@ ASOBJS := $(ASFILES:.s=.o)
 COBJS := $(CFILES:.c=.o)
 CPPOBJS := $(CPPFILES:.cpp=.o)
 MAINOBJ := $(MAINCPP:.cpp=.o)
-STATIC-COBJS := $(STATIC-FILES:.c=.o)
 
 CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
 
 all: copy
 
-copy: $(LIBRARY-NAME) $(STATIC-LIBRARY-NAME)
+copy: $(LIBRARY-NAME)
 	mkdir -p $(DESTINATION)/lib
 	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib
 

@@ -6,6 +6,7 @@
 #include <dev/terminal_ioctl.h>
 #include <btos/message.hpp>
 #include <btos/messageloop.hpp>
+#include <sm/sm.h>
 
 #include <map>
 #include <sstream>
@@ -53,6 +54,8 @@ void Service(bt_pid_t root_pid){
 		}else if(msg.From() == 0 && msg.Source() == terminal_ext_id && msg.Type() == bt_terminal_message_type::InputEvent) {
 			bt_terminal_event event = msg.Content<bt_terminal_event>();
 			HandleInput(event);
+		}else if(msg.From() == sm::SM_GetServerPID()) {
+			if(msg.Type() == sm::sm_ServiceRequest::StopService) return false;
 		}else {
 			if(clients.find(msg.From()) == clients.end()) {
 				auto newclient = make_shared<Client>(msg.From());

@@ -26,6 +26,8 @@ int main(){
 	if(argc < 1) return -1;
 	bt_get_arg(0, program_arg, BT_MAX_PATH);
 	btos_path_parse(program_arg, program_path, BT_MAX_PATH);
+	auto stat = bt_stat(program_path);
+	if(stat.type != FS_File) return -1;
 	
 	program_file = bt_fopen(program_path, FS_Read);
 	entrypoint e = load_elf_proc(program_file, program_path);

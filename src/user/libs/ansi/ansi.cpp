@@ -18,6 +18,9 @@ extern "C" {
 #include <map>
 #include <vector>
 
+#include <btos/envvars.hpp>
+#include <btos/atom.hpp>
+
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
@@ -31,7 +34,7 @@ static volatile bt_handle_t keybufferlock = 0;
 static volatile bool key_thread_ready = false;
 
 static bt_threadhandle key_thread_id = 0;
-static bt_threadhandle wait_thread_id = 0;
+static Atom input_atom {0};
 static bool ansi_on = false;
 static bool exit_registered = false;
 
@@ -53,23 +56,18 @@ static void ansi_add_input(const char *s, size_t len = 0){
 	for(size_t i = 0; i < len; ++i){
 		keybuffer.push_back(s[i]);
 	}
-	if(wait_thread_id) bt_unblock_thread(wait_thread_id);
-	wait_thread_id = 0;
+	input_atom.Modify(AtomValue += len);
 	bt_unlock(keybufferlock);
 }
 
 static char ansi_getchar(){
 	fflush(stdout);
 	char ret;
+	input_atom.WaitFor(AtomValue > 0);
 	bt_lock(keybufferlock);
-	while(!keybuffer.size()){
-		wait_thread_id = bt_get_thread();
-		bt_unlock(keybufferlock);
-		bt_block_thread();
-		bt_lock(keybufferlock);
-	}
 	ret = keybuffer.front();
 	keybuffer.pop_front();
+	input_atom.Modify(--AtomValue);
 	bt_unlock(keybufferlock);
 	return ret;
 }
@@ -113,6 +111,9 @@ static int ansi_virt_read(void *t, char *buf, int size){
 }
 
 static off_t ansi_virt_lseek(void *t, off_t o, int mode){
+	if(mode == SEEK_END){
+		return input_atom.Read();
+	}
 	return 0;
 }
 
@@ -133,12 +134,12 @@ static int ansi_virt_close(void *t){
 static uint8_t getcolour(tmt_color_t c, bool fg){
 	switch(c){
 		case TMT_COLOR_BLACK: return 0;
-		case TMT_COLOR_RED: return 1;
+		case TMT_COLOR_BLUE: return 1;
 		case TMT_COLOR_GREEN: return 2;
-		case TMT_COLOR_YELLOW: return 3;
-		case TMT_COLOR_BLUE: return 4;
+		case TMT_COLOR_CYAN: return 3;
+		case TMT_COLOR_RED: return 4;
 		case TMT_COLOR_MAGENTA: return 5;
-		case TMT_COLOR_CYAN: return 6;
+		case TMT_COLOR_YELLOW: return 6;
 		case TMT_COLOR_WHITE: return 7;
 		case TMT_COLOR_MAX: return 15;
 		case TMT_COLOR_DEFAULT: 
@@ -293,6 +294,26 @@ static void ansi_stdin_thread(void*){
 				ansi_add_input(TMT_KEY_HOME);
 			}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
 				ansi_add_input(TMT_KEY_END);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F1)){
+				ansi_add_input(TMT_KEY_F1);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F2)){
+				ansi_add_input(TMT_KEY_F2);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F3)){
+				ansi_add_input(TMT_KEY_F3);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F4)){
+				ansi_add_input(TMT_KEY_F4);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F5)){
+				ansi_add_input(TMT_KEY_F5);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F6)){
+				ansi_add_input(TMT_KEY_F6);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F7)){
+				ansi_add_input(TMT_KEY_F7);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F8)){
+				ansi_add_input(TMT_KEY_F8);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F9)){
+				ansi_add_input(TMT_KEY_F9);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::F10)){
+				ansi_add_input(TMT_KEY_F10);
 			}else if(!(code & KeyFlags::NonASCII)){
 				char c = KB_char(key);
 				if(c == 10) ansi_add_input("\r");
@@ -313,7 +334,7 @@ extern "C" void init_ansi(){
 	bt_vidmode mode = bt_term_QueryScreenMode();
 	if(!mode.textmode) return;
 	if(bt_term_GetInfoLine()) --mode.height;
-	TMT *tmt = tmt_open(mode.height + 1, mode.width + 1, &callback, NULL, NULL);
+	TMT *tmt = tmt_open(mode.height + 1, mode.width, &callback, NULL, NULL);
 	virtual_handle ansi_terminal;
 	ansi_terminal.type = HANDLE_VIRT;
 	ansi_terminal.virt.data = (void*)tmt;
@@ -332,6 +353,7 @@ extern "C" void init_ansi(){
 	}
 	bt_term_SetScrolling(false);
 	ansi_on = true;
+	SetEnv("TERM", "btosansi", (1 << 3));
 	if(!exit_registered){
 		atexit(&end_ansi);
 		exit_registered = true;
@@ -348,5 +370,6 @@ extern "C" void end_ansi(){
 		free(real_stdout);
 		free(real_stdout);
 		ansi_on = false;
+		SetEnv("TERM", "", (1 << 3));
 	}
 }

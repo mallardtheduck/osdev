@@ -86,6 +86,7 @@ namespace btos_api{
 	void *Message::Content() const{
 		if(!content && header.length){
 			content.reset((void*)new char[header.length + 1]);
+			((char*)content.get())[header.length] = 0;
 			bt_msg_content(const_cast<bt_msg_header*>(&header), content.get(), header.length);
 		}
 		return content.get();

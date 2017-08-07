@@ -41,6 +41,8 @@ private:
     bt_terminal_pointer_bitmap *pointer_bitmap;
 	uint64_t last_move_message;
 	uint32_t pointer_speed;
+	
+	uint32_t activecounter = 0;
 
     circular_buffer<uint32_t, 128> keyboard_buffer;
     circular_buffer<bt_terminal_pointer_event, 512> pointer_buffer{zero_event};
@@ -66,6 +68,7 @@ private:
     friend bool input_blockcheck(void *p);
     friend bool pointer_blockcheck(void *p);
     friend bool event_blockcheck(void *p);
+    friend bool active_blockcheck(void *p);
 
     static const size_t titlemax=256;
     char title[titlemax];

@@ -6,6 +6,7 @@
 #include <iostream>
 #include "libgds_internal.hpp"
 #include <cstring>
+#include <sm/sm.h>
 
 using namespace std;
 
@@ -16,8 +17,7 @@ static bool current_screen = false;
 
 static bool Init(){
 	if(!gds_pid){
-		string pid_str = get_env("GDS_PID");
-		gds_pid = strtoull(pid_str.c_str(), NULL, 10);
+		gds_pid = sm::SM_GetService("gds");
 		if(!gds_pid){
 			cout << "ERROR: Could not communicate with GDS." << endl;
 			return false;

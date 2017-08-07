@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iostream>
 #include <cstring>
+#include <sm/sm.h>
 
 using namespace std;
 
@@ -13,8 +14,7 @@ static bt_pid_t wm_pid = 0;
 
 static bool Init(){
 	if(!wm_pid){
-		string pid_str = get_env("WM_PID");
-		wm_pid = strtoull(pid_str.c_str(), NULL, 10);
+		wm_pid = sm::SM_GetService("wm");
 		if(!wm_pid){
 			cout << "ERROR: Could not communicate with WM." << endl;
 			return false;

@@ -2,6 +2,8 @@
 #include <btos/bt_msg.h>
 #include <btos/atoms.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 uint32_t btos_call(uint32_t fn, uint32_t p1, uint32_t p2, uint32_t p3){
 	volatile uint32_t ret=0;
@@ -258,6 +260,10 @@ void bt_exit(int retval){
 
 bt_pid bt_getpid(){
 	return btos_call(BT_GETPID, 0, 0, 0);
+}
+
+bt_proc_status bt_get_proc_status(bt_pid pid){
+	return (bt_proc_status)btos_call(BT_PROCSTATUS, (uint32_t)&pid, 0, 0);
 }
 
 uint64_t bt_send(bt_msg_header msg){

@@ -1,6 +1,7 @@
 #include <sys/dirent.h>
 #include <stdlib.h>
 #include <string.h>
+#include <btos.h>
 #include "crt_support.h"
 
 DIR *opendir (const char *name){

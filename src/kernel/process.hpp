@@ -18,14 +18,7 @@ namespace proc_env_flags{
 	};
 }
 
-namespace proc_status{
-    enum Enum{
-        Running,
-        Ending,
-		Ended,
-		DoesNotExist=Ended,
-    };
-};
+#define proc_status btos_api::bt_proc_status
 
 struct proc_process;
 class string;

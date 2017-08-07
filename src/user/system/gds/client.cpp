@@ -7,6 +7,7 @@
 #include <sstream>
 #include <btos/message.hpp>
 #include <btos/messageloop.hpp>
+#include <sm/sm.h>
 #include "fonts.hpp"
 
 using namespace std;
@@ -267,6 +268,8 @@ void Service(bt_pid_t root_pid) {
 				allClients.erase(pid);
 			}
 			if(pid == root_pid) return false;
+		} else if(msg.From() == sm::SM_GetServerPID()) {
+			if(msg.Type() == sm::sm_ServiceRequest::StopService) return false;
 		} else {
 			auto from = msg.From();
 			if(allClients.find(from) == allClients.end()) {
@@ -281,6 +284,7 @@ void Service(bt_pid_t root_pid) {
 	auto gdsHandler = make_shared<CustomHandler>([&](const Message &msg) -> bool{
 		auto from = msg.From();
 		if(allClients.find(from) != allClients.end()){
+			if(msg.Type() == gds_MsgType::SelectScreen && root_pid == 0) root_pid = msg.From();
 			return allClients.at(from)->HandleMessage(msg);
 		}else return true;
 	});

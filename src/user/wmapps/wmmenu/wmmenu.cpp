@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <btos/envvars.hpp>
 
 using namespace std;
 
@@ -11,9 +12,9 @@ const uint32_t LineHeight = 20;
 static uint32_t textFont;
 
 vector<pair<string, string>> options = {
-	{"Test application", ":/btos/tests/wmtest.elx"},
-	{"Terminal window", ":/btos/bin/termwin.elx"},
-	{"Breakout", ":/btos/bin/breakout.elx"},
+	{"Test application", "$SYSTEMDRIVE$:/btos/tests/wmtest.elx"},
+	{"Terminal window", "$SYSTEMDRIVE$:/btos/bin/termwin.elx"},
+	{"Breakout", "$SYSTEMDRIVE$:/btos/bin/breakout.elx"},
 	{"Quit", "QUIT"},
 };
 
@@ -52,7 +53,6 @@ size_t RenderMenu(uint64_t surf, uint32_t ypos = UINT32_MAX, bool down = true){
 }
 
 int main(){
-	string systemdrive = get_env("SYSTEMDRIVE");
 	textFont = GDS_GetFontID("Resagnicto", gds_FontStyle::Normal);
 	uint64_t surf = GDS_NewSurface(gds_SurfaceType::Bitmap, 200, LineHeight * options.size());
 	/*uint64_t win =*/ WM_NewWindow(5, 5, wm_WindowOptions::Default, wm_EventType::PointerButtonDown | wm_EventType::PointerButtonUp | wm_EventType::Close, surf, "WM Menu");
@@ -71,7 +71,7 @@ int main(){
 				auto &o = options[buttonIndex];
 				if(o.second == "QUIT") break;
 				else{
-					string path = systemdrive + o.second;
+					string path = EnvInterpolate(o.second);
 					bt_spawn(path.c_str(), 0, NULL);
 				}
 			}
