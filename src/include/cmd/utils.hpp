@@ -20,6 +20,7 @@ void set_cwd(const std::string &value);
 std::string get_env(const std::string &name);
 std::string get_env(const std::string &name, const std::string &def_value);
 void set_env(const std::string &name, const std::string &value);
+std::vector<std::string> parse_command(const std::string &input);
 
 }
 }

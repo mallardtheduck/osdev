@@ -15,6 +15,5 @@ using namespace btos_api::cmd;
 
 void print_os_version();
 std::string get_input();
-std::vector<std::string> parse_input(const std::string &input);
 
 #endif

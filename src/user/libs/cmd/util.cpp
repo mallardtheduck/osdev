@@ -150,5 +150,34 @@ vector<command> getcommands(vector<string> parsed){
     return ret;
 }
 
+vector<string> parse_command(const string &input){
+	vector<string> ret;
+	stringstream current;
+	bool quoted=false, escape=false, list=false;
+	for(const char &c : input){
+		if(!escape && !quoted && !list && isspace(c)){
+			string cstr=current.str();
+			if(cstr.length()) ret.push_back(cstr);
+			current.str("");
+		}else if(!escape && !list && c=='"'){
+			quoted=!quoted;
+		}else if(!quoted && !list && c=='['){
+			current << '[';
+			list=true;
+		}else if(!quoted && list && c==']'){
+			current << ']';
+			list=false;
+		}else if(!escape && c=='\\'){
+			escape=true;
+		}else if(escape){
+			if(c=='n') current << '\n';
+			else current << c;
+			escape=false;
+		}else current << c;
+	}
+	if(current.str().length()) ret.push_back(current.str());
+	return ret;
+}
+
 }
 }
