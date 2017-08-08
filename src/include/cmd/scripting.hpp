@@ -57,6 +57,7 @@ private:
 	std::function<std::string(const std::string&)> getVar;
 
 	ScriptScope globalScope;
+	bool debugOutput = false;
 public:
 	ScriptContext(std::istream &is, const std::function<std::string(const std::vector<std::string>&, bool)> run = &RunCMDCommand, std::function<std::string(const std::string&)> = &GetEnv);
 	ScriptContext(const std::vector<std::string> script, const std::function<std::string(const std::vector<std::string>&, bool)> run = &RunCMDCommand, std::function<std::string(const std::string&)> = &GetEnv);
@@ -64,6 +65,9 @@ public:
 	std::string Run(const std::vector<std::string> args);
 	std::string RunCommand(const std::vector<std::string> &args, bool);
 	std::string GetVar(const std::string &name);
+	
+	void SetDebugOutput(bool value);
+	bool IsDebugOutput();
 };
 	
 }

@@ -146,6 +146,10 @@ string ScriptScope::RunLine(const vector<string> &line){
 			});
 			interpolated.push_back(li);
 		}
+		if(context && context->IsDebugOutput()){
+			cout << "Running: ";
+			OutLine(interpolated);
+		}
 		auto s = to_lower(interpolated[0]);
 		if(s == Call){
 			auto c = ParseFunctionCall(interpolated);
@@ -154,9 +158,9 @@ string ScriptScope::RunLine(const vector<string> &line){
 				return fn.second.Run(*this, c.second);
 			}
 		}else if(s == Var){
-			if(line.size() == 3){
-				auto name = line[1];
-				auto value = line[2];
+			if(interpolated.size() == 3){
+				auto name = interpolated[1];
+				auto value = interpolated[2];
 				AddVar(name, value);
 			}
 		}else{
@@ -220,12 +224,16 @@ string ScriptScope::Run(){
 	stack<size_t> loopStack;
 	function<bool(const vector<string>&)> resume;
 	int resumeCounter = 0;
-	bool ignoreElse = false;
+	bool ignoreLine = false;
 	for(size_t i = 0; i < lines.size(); ++i){
 		auto &line = lines[i];
 		if(resume){
 			if(resume(line)) resume = nullptr;
 			else continue;
+		}
+		if(context && context->IsDebugOutput()){
+			cout << "Processing: ";
+			OutLine(line);
 		}
 		if(!line.empty()){
 			auto s = to_lower(line[0]);
@@ -241,7 +249,7 @@ string ScriptScope::Run(){
 					resumeCounter = 1;
 					resume = [&](const vector<string> &l) -> bool{
 						if(resumeCounter == 1 && IsExact(Else, l)){
-							ignoreElse = true;
+							ignoreLine = true;
 							return true;
 						}
 						else if(IsStart(If, l)) ++resumeCounter;
@@ -251,7 +259,7 @@ string ScriptScope::Run(){
 					};
 				}	
 			}else if(s == Else){
-				if(!ignoreElse){
+				if(!ignoreLine){
 					resumeCounter = 1;
 					resume = [&](const vector<string> &l) -> bool{
 						if(IsStart(If, l)) ++resumeCounter;
@@ -271,6 +279,7 @@ string ScriptScope::Run(){
 						if(IsStart(Loop, l)) ++resumeCounter;
 						else if(IsEnd(Loop, l)) --resumeCounter;
 						if(resumeCounter) return false;
+						ignoreLine = true;
 						return true;
 					};
 				}
@@ -279,8 +288,10 @@ string ScriptScope::Run(){
 					auto b = to_lower(line[1]);
 					if(b == Function) break;
 					else if(b == Loop){
-						i = loopStack.top() - 1;
-						loopStack.pop();
+						if(!ignoreLine){
+							i = loopStack.top() - 1;
+							loopStack.pop();
+						}
 					}else if(b == If){
 						//ignore
 					}
@@ -288,14 +299,14 @@ string ScriptScope::Run(){
 			}else{
 				output << RunLine(line) << endl;
 			}
-			ignoreElse = false;
+			ignoreLine = false;
 		}
 	}
 	return output.str();
 }
 	
 void ScriptScope::AddVar(const string &name, const string &value){
-	if(value != "") locals.insert({name, value});
+	if(value != "")	locals[name] = value;
 	else locals.erase(name);
 }
 string ScriptScope::GetVar(const string &name){
@@ -348,6 +359,13 @@ string ScriptContext::RunCommand(const vector<string> &args, bool capture){
 string ScriptContext::GetVar(const string &name){
 	if(getVar) return getVar(name);
 	else return "";
+}
+
+void ScriptContext::SetDebugOutput(bool value){
+	debugOutput = value;
+}
+bool ScriptContext::IsDebugOutput(){
+	return debugOutput;
 }
 
 }
