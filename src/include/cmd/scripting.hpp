@@ -19,10 +19,11 @@ class ScriptFunction{
 private:
 	std::vector<std::vector<std::string>> content;
 	std::vector<std::string> params;
+
 public:
 	ScriptFunction() = default;
 	ScriptFunction(const std::vector<std::vector<std::string>> &content, const std::vector<std::string> &params);
-	std::string Run(ScriptScope &scope, std::vector<std::string> args);
+	std::string Run(ScriptScope &parent, std::vector<std::string> args);
 };
 
 class ScriptScope{
@@ -33,13 +34,13 @@ private:
 	std::map<std::string, std::string> locals;
 	
 	ScriptScope *parent = nullptr;
-	
 	std::string RunLine(const std::vector<std::string> &line);
 public:
 	ScriptScope() = default;
 	ScriptScope(ScriptScope *p);
 	
 	void Parse(const std::vector<std::string> &content);
+	void Parse(const std::vector<std::vector<std::string>> &lines);
 	std::string Run();
 	
 	void AddVar(const std::string &name, const std::string &value);

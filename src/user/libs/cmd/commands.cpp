@@ -384,8 +384,8 @@ bool run_program(const command &cmd) {
             args.erase(args.begin());
             string std_in=get_env("STDIN");
             string std_out=get_env("STDOUT");
-            set_env("STDIN", cmd.input_path);
-            set_env("STDOUT", cmd.output_path);
+            if(cmd.input_path != "") set_env("STDIN", cmd.input_path);
+            if(cmd.output_path != "") set_env("STDOUT", cmd.output_path);
 			Process proc = Process::Spawn(p, args);
             set_env("STDIN", std_in);
             set_env("STDOUT", std_out);

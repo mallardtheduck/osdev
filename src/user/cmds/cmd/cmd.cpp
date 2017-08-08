@@ -1,5 +1,7 @@
 #include "cmd.hpp"
+#include <cmd/scripting.hpp>
 #include <iostream>
+#include <fstream>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -27,6 +29,9 @@ void run_interactive(){
 }
 
 void run_script(const string &file, vector<string> args){
+	ifstream script {file};
+	ScriptContext context {script};
+	context.Run(args);
 }
 
 int main(int argc, char **argv){

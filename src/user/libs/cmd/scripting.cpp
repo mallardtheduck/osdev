@@ -80,6 +80,19 @@ string RunCMDCommand(const vector<string> &tokens){
 	return ret;
 }
 
+ScriptFunction::ScriptFunction(const vector<vector<string>> &c, const vector<string> &p) : content(c), params(p)
+{}
+std::string ScriptFunction::Run(ScriptScope &parent, vector<string> args){
+	ScriptScope scope {&parent};
+	for(size_t i = 0; i < params.size(); ++i){
+		if(args.size() > i){
+			scope.AddVar(params[i], args[i]);
+		}else break;
+	}
+	scope.Parse(content);
+	return scope.Run();
+}
+
 string ScriptScope::RunLine(const vector<string> &line){
 	if(!line.empty()){
 		auto s = to_lower(line[0]);
@@ -97,12 +110,11 @@ string ScriptScope::RunLine(const vector<string> &line){
 
 ScriptScope::ScriptScope(ScriptScope *p) : parent(p)
 {}
-	
-void ScriptScope::Parse(const vector<string> &content){
+
+void ScriptScope::Parse(const vector<vector<string>> &clines){
 	unique_ptr<pair<string, vector<string>>> pending_fn;
 	vector<vector<string>> fn_lines;
-	for(auto c : content){
-		auto p = parse_command(c);
+	for(auto p : clines){
 		if(!p.empty()){
 			auto s = to_lower(p[0]);
 			if(!pending_fn){
@@ -127,6 +139,14 @@ void ScriptScope::Parse(const vector<string> &content){
 			}
 		}
 	}
+}
+	
+void ScriptScope::Parse(const vector<string> &content){
+	vector<vector<string>> lines;
+	for(auto c : content){
+		lines.push_back(parse_command(c));
+	}
+	Parse(lines);
 }
 string ScriptScope::Run(){
 	stringstream output;
