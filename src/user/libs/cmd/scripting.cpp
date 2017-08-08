@@ -53,6 +53,18 @@ static bool IsTruthy(const string &q){
 	else return true;
 }
 
+static bool IsStart(const string &block, const vector<string> &line){
+	return (!line.empty() && to_lower(line[0]) == block);
+}
+
+static bool IsEnd(const string &block, const vector<string> &line){
+	return (line.size() == 2 && to_lower(line[0]) == End && to_lower(line[1]) == block);
+}
+
+static bool IsExact(const string &block, const vector<string> &line){
+	return (line.size() == 1 && to_lower(line[0]) == block);
+}
+
 string RunCMDCommand(const vector<string> &tokens){
 	auto outputfile = tempfile();
 	auto commands = getcommands(tokens, outputfile);
@@ -105,7 +117,7 @@ void ScriptScope::Parse(const vector<string> &content){
 					lines.push_back(p);
 				}
 			}else{
-				if(p.size() == 2 && s == End && to_lower(p[1]) == Function){
+				if(IsEnd(Function , p)){
 					functions.insert({pending_fn->first, {fn_lines, pending_fn->second}});
 					pending_fn.reset();
 					fn_lines.clear();
@@ -141,9 +153,9 @@ string ScriptScope::Run(){
 				if(!IsTruthy(result)){
 					resumeCounter = 1;
 					resume = [&](const vector<string> &l) -> bool{
-						if(resumeCounter == 1 && l.size() == 1 && to_lower(l[0]) == Else) return true;
-						else if(l.size() == 2 && to_lower(l[0]) == End && to_lower(l[1]) == If) --resumeCounter;
-						else if(!l.empty() && to_lower(l[0]) == If) ++resumeCounter;
+						if(resumeCounter == 1 && IsExact(Else, l)) return true;
+						else if(IsStart(If, l)) ++resumeCounter;
+						else if(IsEnd(If, l)) --resumeCounter;
 						if(resumeCounter) return false;
 						return true;
 					};
@@ -151,8 +163,8 @@ string ScriptScope::Run(){
 			}else if(s == Else){
 				resumeCounter = 1;
 				resume = [&](const vector<string> &l) -> bool{
-					if(l.size() == 2 && to_lower(l[0]) == End && to_lower(l[1]) == If) --resumeCounter;
-					else if(!l.empty() && to_lower(l[0]) == If) ++resumeCounter;
+					if(IsStart(If, l)) ++resumeCounter;
+					else if(IsEnd(If, l)) --resumeCounter;
 					if(resumeCounter) return false;
 					return true;
 				};
@@ -165,8 +177,8 @@ string ScriptScope::Run(){
 				}else{
 					resumeCounter = 1;
 					resume = [&](const vector<string> &l) -> bool{
-						if(l.size() == 2 && to_lower(l[0]) == End && to_lower(l[1]) == Loop) --resumeCounter;
-						else if(!l.empty() && to_lower(l[0]) == Loop) ++resumeCounter;
+						if(IsStart(Loop, l)) ++resumeCounter;
+						else if(IsEnd(Loop, l)) --resumeCounter;
 						if(resumeCounter) return false;
 						return true;
 					};
