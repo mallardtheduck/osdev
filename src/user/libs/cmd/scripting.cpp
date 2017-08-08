@@ -58,6 +58,7 @@ static pair<string, vector<string>> ParseFunctionCall(const vector<string> line)
 
 static bool IsTruthy(const string &q){
 	auto ql = to_lower(q);
+	trim(ql);
 	if(ql == "" || ql == "false" || ql == "no" || ql == "0"){
 		return false;
 	}else{
