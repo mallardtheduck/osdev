@@ -7,13 +7,15 @@
 #include <functional>
 #include <iostream>
 #include <utility>
+#include <btos/envvars.hpp>
 
 namespace btos_api{
 namespace cmd{
 
-class ScriptScope;	
+class ScriptScope;
+class ScriptContext;
 
-std::string RunCMDCommand(const std::vector<std::string> &tokens);
+std::string RunCMDCommand(const std::vector<std::string> &tokens, bool capture);
 
 class ScriptFunction{
 private:
@@ -34,9 +36,10 @@ private:
 	std::map<std::string, std::string> locals;
 	
 	ScriptScope *parent = nullptr;
+	ScriptContext *context = nullptr;
 	std::string RunLine(const std::vector<std::string> &line);
 public:
-	ScriptScope() = default;
+	ScriptScope(ScriptContext *c);
 	ScriptScope(ScriptScope *p);
 	
 	void Parse(const std::vector<std::string> &content);
@@ -50,13 +53,17 @@ public:
 
 class ScriptContext{
 private:
+	std::function<std::string(const std::vector<std::string>&, bool)> runCommand;
+	std::function<std::string(const std::string&)> getVar;
+
 	ScriptScope globalScope;
-	std::function<std::string(const std::vector<std::string>&)> runCommand;
 public:
-	ScriptContext(std::istream &is, const std::function<std::string(const std::vector<std::string>&)> run = &RunCMDCommand);
-	ScriptContext(const std::vector<std::string> script, const std::function<std::string(const std::vector<std::string>&)> run = &RunCMDCommand);
+	ScriptContext(std::istream &is, const std::function<std::string(const std::vector<std::string>&, bool)> run = &RunCMDCommand, std::function<std::string(const std::string&)> = &GetEnv);
+	ScriptContext(const std::vector<std::string> script, const std::function<std::string(const std::vector<std::string>&, bool)> run = &RunCMDCommand, std::function<std::string(const std::string&)> = &GetEnv);
 	
 	std::string Run(const std::vector<std::string> args);
+	std::string RunCommand(const std::vector<std::string> &args, bool);
+	std::string GetVar(const std::string &name);
 };
 	
 }

@@ -87,8 +87,16 @@ vector<string> get_paths(){
     return ret;
 }
 
+bool starts_with(const string &str, const string &start){
+	if(str.length() >= start.length()){
+		return str.substr(0, start.length()) == start;
+	}else{
+		return false;
+	}
+}
+
 bool ends_with(const string &str, const string &end){
-    if (str.length() >= str.length()) {
+    if (str.length() >= end.length()) {
         return (0 == str.compare(str.length() - end.length(), end.length(), end));
     } else {
         return false;

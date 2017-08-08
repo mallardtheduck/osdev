@@ -102,7 +102,6 @@ static void cache_set(size_t row, size_t col, uint16_t ch){
 }
 
 static int ansi_virt_write(void *t, char *buf, int size){
-	DBG("ANSI: write: " << t << " " << (void*)buf << " "<< size);
 	tmt_write((TMT*)t, buf, size);
 	return size;
 }
