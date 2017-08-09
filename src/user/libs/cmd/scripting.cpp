@@ -24,6 +24,7 @@ static const string If = "if";
 static const string Else = "else";
 static const string Out = "out";
 static const string Var = "var";
+static const string Let = "let";
 static const string Comment = "#";
 
 template<typename T> static unique_ptr<T> unique_copy(const T &v){
@@ -161,6 +162,16 @@ string ScriptScope::RunLine(const vector<string> &line){
 			if(interpolated.size() == 3){
 				auto name = interpolated[1];
 				auto value = interpolated[2];
+				AddVar(name, value);
+			}else if(interpolated.size() == 2){
+				auto name = interpolated[1];
+				AddVar(name, "");
+			}
+		}else if(s == Let){
+			if(interpolated.size() >= 3){
+				auto name = interpolated[1];
+				vector<string> rest = getrest(interpolated, 2);
+				auto value = RunLine(rest);
 				AddVar(name, value);
 			}
 		}else{

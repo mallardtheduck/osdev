@@ -46,11 +46,12 @@ template<typename T> static size_t get_index(const vector<T> &v, const T &a){
 
 void int_command(const command &cmd){
 	ostream &out=*cmd.output;
-	vector<string> ops = { "^", "/", "*", "+", "-" };
+	vector<string> ops = { "^", "/", "%", "*", "+", "-", "gt", "lt", "==", "=", "!=", "and", "or" };
 	deque<string> output;
 	stack<string> opstack;
 	bool first = true;
-	for(auto &t : cmd.args){
+	for(auto &a : cmd.args){
+		auto t = to_lower(a);
 		if(first){
 			first = false;
 			continue;
@@ -116,12 +117,32 @@ void int_command(const command &cmd){
 				r = pow(b, a);
 			}else if(t == "/"){
 				r = b / a;
+			}else if(t == "%"){
+				r = b % a;
 			}else if(t == "*"){
 				r = b * a;
 			}else if(t == "+"){
 				r = b + a;
 			}else if(t == "-"){
 				r = b - a;
+			}else if (t == "gt"){
+				if(b > a) r = 1;
+				else r = 0;
+			}else if (t == "lt"){
+				if(b < a) r = 1;
+				else r = 0;
+			}else if (t == "==" || t == "="){
+				if(b == a) r = 1;
+				else r = 0;
+			}else if (t == "!="){
+				if(b != a) r = 1;
+				else r = 0;
+			}else if(t == "and"){
+				if(b && a) r = 1;
+				else r = 0;
+			}else if(t == "or"){
+				if(b || a) r = 1;
+				else r = 0;
 			}
 			evalstack.push(r);
 		}
