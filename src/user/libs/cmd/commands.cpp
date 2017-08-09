@@ -386,6 +386,7 @@ bool run_program(const command &cmd) {
             string std_out=get_env("STDOUT");
             if(cmd.input_path != "") set_env("STDIN", cmd.input_path);
             if(cmd.output_path != "") set_env("STDOUT", cmd.output_path);
+			cmd.closeio();
 			Process proc = Process::Spawn(p, args);
             set_env("STDIN", std_in);
             set_env("STDOUT", std_out);
@@ -393,6 +394,7 @@ bool run_program(const command &cmd) {
             if (proc.GetPID()) ret = proc.Wait();
 			else cout << "Could not launch " << p << endl;
             if (ret == -1) cout << p << " crashed." << endl;
+			cmd.openio();
             return true;
 
         }
@@ -435,7 +437,7 @@ void command::set_output(string path) {
     redir_output=true;
 }
 
-void command::openio(){
+void command::openio() const{
     if(redir_input){
         input=new ifstream(input_path);
         input_ptr.reset(input);
@@ -446,7 +448,7 @@ void command::openio(){
     }
 }
 
-void command::closeio(){
+void command::closeio() const{
     output->flush();
     input_ptr.reset();
     output_ptr.reset();

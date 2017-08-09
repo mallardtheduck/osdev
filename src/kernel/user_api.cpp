@@ -20,6 +20,7 @@ void userapi_init(){
 
 void userapi_handler(int, isr_regs *regs){
 	enable_interrupts();
+	if(proc_get_status() == proc_status::Ending) sch_end_thread();
 	uint16_t *id=(uint16_t*)(&regs->eax);
 	uint16_t ext=id[1], fn=id[0];
 	//dbgpf("UAPI: Extension: %x, Function: %x\n", (int)ext, (int)fn);
@@ -32,7 +33,7 @@ void userapi_handler(int, isr_regs *regs){
 		dbgpf("UAPI: Abortlevel: %i, ext: %i fn: %x\n", sch_get_abortlevel(), (int)ext, (int)fn);
 		panic("(UAPI) Non-zero abortlevel on return to userspace!\n");
 	}
-    if(sch_user_abort()) sch_end_thread();
+    if(sch_user_abort() || proc_get_status() == proc_status::Ending) sch_end_thread();
 }
 
 bool is_safe_ptr(uint32_t ptr, size_t size, pid_t pid){

@@ -306,8 +306,17 @@ string ScriptScope::Run(){
 }
 	
 void ScriptScope::AddVar(const string &name, const string &value){
-	if(value != "")	locals[name] = value;
-	else locals.erase(name);
+	if(!SetVar(name, value)){
+		if(value != "")	locals[name] = value;
+		else locals.erase(name);
+	}
+}
+bool ScriptScope::SetVar(const string &name, const string &value){
+	if(locals.find(name) != locals.end()){
+		locals[name] = value;
+		return true;
+	}else if(parent) return parent->SetVar(name, value);
+	else return false;
 }
 string ScriptScope::GetVar(const string &name){
 	if(locals.find(name) != locals.end()) return locals.at(name);

@@ -12,21 +12,21 @@ namespace cmd{
 
 class command{
 private:
-    std::shared_ptr<std::istream> input_ptr;
-    std::shared_ptr<std::ostream> output_ptr;
+    mutable std::shared_ptr<std::istream> input_ptr;
+    mutable std::shared_ptr<std::ostream> output_ptr;
     bool redir_input = false;
     bool redir_output = false;
 public:
     std::vector<std::string> args;
-    std::istream *input;
-    std::ostream *output;
+    mutable std::istream *input;
+    mutable std::ostream *output;
     std::string input_path;
     std::string output_path;
 
     void set_input(std::string path);
     void set_output(std::string path);
-    void openio();
-    void closeio();
+    void openio() const;
+    void closeio() const;
 
     command(const std::string &default_input, const std::string &default_output);
     ~command();

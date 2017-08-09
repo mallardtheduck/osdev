@@ -47,6 +47,7 @@ public:
 	std::string Run();
 	
 	void AddVar(const std::string &name, const std::string &value);
+	bool SetVar(const std::string &name, const std::string &value);
 	std::string GetVar(const std::string &name);
 	std::pair<bool, ScriptFunction> GetFunction(const std::string &name);
 };
