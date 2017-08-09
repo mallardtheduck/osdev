@@ -186,5 +186,11 @@ vector<string> parse_command(const string &input){
 	return ret;
 }
 
+bool is_integer(const string &s){
+	return !s.empty() && 
+		(s.find_first_not_of("0123456789") == string::npos 
+		|| (s.length() >  1 &&s[0] == '-' && s.substr(1).find_first_not_of("0123456789") == string::npos));
+}
+
 }
 }

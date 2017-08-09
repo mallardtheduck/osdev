@@ -1,4 +1,5 @@
 #include <cmd/commands.hpp>
+#include <cmd/script_commands.hpp>
 #include <cmd/utils.hpp>
 #include <cmd/globbing.hpp>
 #include <cmd/path.hpp>
@@ -28,7 +29,7 @@ void display_file(const string &path, ostream &output){
     }
 }
 
-void list_files(string path, ostream &out=cout, char sep='\t'){
+void list_files(string path, ostream &out, char sep){
 	if(is_dir(path)) path+="/*";
 	vector<string> files=glob(path);
 	for(const string &file : files){
@@ -115,29 +116,6 @@ void touch_command(const command &cmd){
 				else cout << "Error opening file." << endl;
 			}else cout << "Invalid path." << endl;
 		}
-	}
-}
-
-void echo_command(const command &cmd){
-    const vector<string> &commandline=cmd.args;
-    ostream &output=*cmd.output;
-	if(commandline.size() < 2 || (commandline[1]=="-f" && commandline.size() < 3)){
-		cout << "Usage:" << endl;
-		cout << commandline[0] << " [-f filename] text" << endl;
-	}else{
-		ostream *out=&output;
-		ofstream file;
-		size_t skip=1;
-		if(commandline[1]=="-f"){
-			file.open(commandline[2]);
-			out=&file;
-			skip+=2;
-		}
-		for(const string &s : commandline){
-			if(skip) skip--;
-			else *out << s << ' ';
-		}
-		*out << endl;
 	}
 }
 
@@ -346,6 +324,7 @@ unordered_map<string, command_fn> builtin_commands={
 	{"setenv", &setenv_command},
 	{"set", &setenv_command},
 	{"time", &time_command},
+	{"int", &int_command},
 };
 
 bool run_builtin(const command &cmd){
