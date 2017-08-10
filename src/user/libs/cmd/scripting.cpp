@@ -17,7 +17,6 @@ static const string Label = "label";
 static const string Function = "function";
 static const string Loop = "loop";
 static const string End = "end";
-static const string Local = "local";
 static const string Call = "call";
 static const string Goto = "goto";
 static const string If = "if";
@@ -133,18 +132,22 @@ std::string ScriptFunction::Run(ScriptScope &parent, vector<string> args){
 	return ret;
 }
 
+string ScriptScope::ScriptInterpolate(const string &s){
+	return Interpolate(s, [&](const string &v) -> string{
+		if(starts_with(v, "(") && ends_with(v, ")")){
+			string cmd = v.substr(1, v.length() - 2);
+			return RunLine(parse_command(cmd));
+		}else{
+			return GetVar(v);
+		}
+	});
+}
+
 string ScriptScope::RunLine(const vector<string> &line){
 	if(!line.empty()){
 		vector<string> interpolated;
 		for(auto &l : line){
-			auto li = Interpolate(l, [&](const string &v) -> string{
-				if(starts_with(v, "(") && ends_with(v, ")")){
-					string cmd = v.substr(1, v.length() - 2);
-					return RunLine(parse_command(cmd));
-				}else{
-					return GetVar(v);
-				}
-			});
+			auto li = ScriptInterpolate(l);
 			interpolated.push_back(li);
 		}
 		if(context && context->IsDebugOutput()){
@@ -250,7 +253,7 @@ string ScriptScope::Run(){
 			auto s = to_lower(line[0]);
 			if(s == Goto){
 				if(line.size() == 2){
-					auto label = to_lower(line[1]);
+					auto label = ScriptInterpolate(to_lower(line[1]));
 					if(labels.find(label) != labels.end() && labels.at(label) < lines.size()) i = labels.at(label) - 1;
 				}
 			}else if(s == If){

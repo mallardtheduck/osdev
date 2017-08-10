@@ -37,6 +37,7 @@ private:
 	
 	ScriptScope *parent = nullptr;
 	ScriptContext *context = nullptr;
+	std::string ScriptInterpolate(const std::string &s);
 	std::string RunLine(const std::vector<std::string> &line);
 public:
 	ScriptScope(ScriptContext *c);
