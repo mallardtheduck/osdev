@@ -55,16 +55,21 @@ string to_lower(const string &str){
 	return ret;
 }
 
-void trim(string& str){
-	string::size_type pos = str.find_last_not_of(' ');
+static void trimchar(string &str, char c){
+	string::size_type pos = str.find_last_not_of(c);
 	if(pos != string::npos) {
 		str.erase(pos + 1);
-		pos = str.find_first_not_of(' ');
+		pos = str.find_first_not_of(c);
 		if(pos != string::npos) str.erase(0, pos);
 	}
 	else{
 		str.erase(str.begin(), str.end());
 	}
+}
+
+void trim(string& str){
+	trimchar(str, '\n');
+	trimchar(str, ' ');
 }
 
 vector<string> split(const string &str, char delim) {

@@ -104,15 +104,8 @@ string RunCMDCommand(const vector<string> &tokens, bool capture){
 		c.OutputStream();
 	}
 	if(capture){
-		/*ifstream t(outputfile);
-		string ret((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
-		t.close();
-		remove(outputfile.c_str());
-		if(ends_with(ret, "\n")) ret.pop_back();
-		trim(ret);
-		return ret;*/
 		auto ret = capstream->str();
-		if(ret[ret.length() - 1] == '\n') ret = ret.substr(0, ret.length() - 1);
+		trim(ret);
 		return ret;
 	}else{
 		return "";
@@ -262,6 +255,9 @@ string ScriptScope::Run(){
 			}else if(s == If){
 				vector<string> rest = getrest(line, 1);
 				auto result = RunLine(rest);
+				if(context && context->IsDebugOutput()){
+					cout << "Result: '" << result << "'" << " is " << (IsTruthy(result) ? "truthy" : "falsey") << endl;
+				}
 				if(!IsTruthy(result)){
 					resumeCounter = 1;
 					resume = [&](const vector<string> &l) -> bool{
@@ -288,6 +284,9 @@ string ScriptScope::Run(){
 			}else if(s == Loop){
 				vector<string> rest = getrest(line, 1);
 				auto result = RunLine(rest);
+				if(context && context->IsDebugOutput()){
+					cout << "Result: '" << result << "'" << " is " << (IsTruthy(result) ? "truthy" : "falsey") << endl;
+				}
 				if(IsTruthy(result)){
 					loopStack.push(i);
 				}else{
