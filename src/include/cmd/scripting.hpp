@@ -39,16 +39,18 @@ private:
 	ScriptContext *context = nullptr;
 	std::string ScriptInterpolate(const std::string &s);
 	std::string RunLine(const std::vector<std::string> &line);
+
+	bool sealed = true;
 public:
-	ScriptScope(ScriptContext *c);
-	ScriptScope(ScriptScope *p);
+	ScriptScope(ScriptContext *c, bool sealed = false);
+	ScriptScope(ScriptScope *p, bool sealed = true);
 	
 	void Parse(const std::vector<std::string> &content);
 	void Parse(const std::vector<std::vector<std::string>> &lines);
 	std::string Run();
 	
 	void AddVar(const std::string &name, const std::string &value);
-	bool SetVar(const std::string &name, const std::string &value);
+	bool SetVar(const std::string &name, const std::string &value, bool local);
 	std::string GetVar(const std::string &name);
 	std::pair<bool, ScriptFunction> GetFunction(const std::string &name);
 };

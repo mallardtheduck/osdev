@@ -189,10 +189,10 @@ string ScriptScope::RunLine(const vector<string> &line){
 	return "";
 }
 
-ScriptScope::ScriptScope(ScriptContext *c) : context(c)
+ScriptScope::ScriptScope(ScriptContext *c, bool s) : context(c), sealed(s)
 {}
 
-ScriptScope::ScriptScope(ScriptScope *p) : parent(p), context(p->context)
+ScriptScope::ScriptScope(ScriptScope *p, bool s) : parent(p), context(p->context), sealed(s)
 {}
 
 void ScriptScope::Parse(const vector<vector<string>> &clines){
@@ -320,16 +320,16 @@ string ScriptScope::Run(){
 }
 	
 void ScriptScope::AddVar(const string &name, const string &value){
-	if(!SetVar(name, value)){
+	if(!SetVar(name, value, true)){
 		if(value != "")	locals[name] = value;
 		else locals.erase(name);
 	}
 }
-bool ScriptScope::SetVar(const string &name, const string &value){
-	if(locals.find(name) != locals.end()){
+bool ScriptScope::SetVar(const string &name, const string &value, bool local){
+	if((local || !sealed) && locals.find(name) != locals.end()){
 		locals[name] = value;
 		return true;
-	}else if(parent) return parent->SetVar(name, value);
+	}else if(parent) return parent->SetVar(name, value, false);
 	else return false;
 }
 string ScriptScope::GetVar(const string &name){
