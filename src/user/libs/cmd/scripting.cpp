@@ -99,9 +99,7 @@ string RunCMDCommand(const vector<string> &tokens, bool capture){
 		commands = getcommands(tokens);
 	}
 	for(auto c : commands) {
-		c.openio();
 		run_command(c);
-		c.closeio();
 	}
 	if(capture){
 		ifstream t(outputfile);

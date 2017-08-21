@@ -11,11 +11,9 @@ bool run_command(const string &input){
 	vector<string> p=parse_command(input);
     vector<command> cmds=getcommands(p);
     for(command &c : cmds) {
-        c.openio();
         if(!run_command(c)) {
             return false;
         }
-        c.closeio();
     }
 	return true;
 }

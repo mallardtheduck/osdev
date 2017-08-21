@@ -11,24 +11,43 @@ namespace btos_api{
 namespace cmd{
 
 class command{
+public:
+	enum class IOMode{
+		Standard,
+		Path,
+		Temp
+	};
+
 private:
+	IOMode input_mode = IOMode::Standard;
+	IOMode output_mode = IOMode::Standard;
+	
     mutable std::shared_ptr<std::istream> input_ptr;
     mutable std::shared_ptr<std::ostream> output_ptr;
-    bool redir_input = false;
-    bool redir_output = false;
+
+    mutable std::istream *input = nullptr;
+    mutable std::ostream *output = nullptr;
+    mutable std::string input_path;
+    mutable std::string output_path;
 public:
     std::vector<std::string> args;
-    mutable std::istream *input;
-    mutable std::ostream *output;
-    std::string input_path;
-    std::string output_path;
+	
+	std::istream &InputStream() const;
+	std::ostream &OutputStream() const;
+    void CloseStreams() const;
 
-    void set_input(std::string path);
-    void set_output(std::string path);
-    void openio() const;
-    void closeio() const;
+	std::string InputPath() const;
+	std::string OutputPath() const;
 
-    command(const std::string &default_input, const std::string &default_output);
+    void SetInputPath(const std::string &path);
+	void SetInputTemp();
+    void SetOutputPath(const std::string &path);
+	void SetOutputTemp();
+
+	IOMode GetInputMode();
+	IOMode GetOutputMode();
+
+    command(const std::vector<std::string> &tokens);
     ~command();
 };
 std::vector<command> getcommands(const std::vector<std::string> &parsed, const std::string &default_output = "", const std::string &default_input = "");

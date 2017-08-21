@@ -48,7 +48,7 @@ void list_files(string path, ostream &out, char sep){
 
 void display_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
-    ostream &output=*cmd.output;
+    ostream &output=cmd.OutputStream();
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
@@ -60,13 +60,13 @@ void display_command(const command &cmd){
         }
     }else{
         string line;
-        while(getline(*cmd.input, line)) output << line << endl;
+        while(getline(cmd.InputStream(), line)) output << line << endl;
     }
 }
 
 void ls_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
-    ostream &output=*cmd.output;
+    ostream &output=cmd.OutputStream();
 	string path;
 	if(commandline.size() < 2){
 		path=get_cwd();
@@ -243,14 +243,14 @@ void move_command(const command &cmd){
 }
 
 void ver_command(const command &cmd){
-    ostream &output=*cmd.output;
+    ostream &output=cmd.OutputStream();
 	output << "BT/OS CMD" << endl;
 	print_os_version(output);
 }
 
 void list_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
-    ostream &output=*cmd.output;
+    ostream &output=cmd.OutputStream();
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " pattern" << endl;
@@ -280,7 +280,7 @@ void time_command(const command &cmd){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " command" << endl;
 	}else{
-		ostream &output=*cmd.output;
+		ostream &output=cmd.OutputStream();
 		commandline.erase(commandline.begin());
 		command ncmd = cmd;
 		ncmd.args = commandline;
@@ -363,9 +363,9 @@ bool run_program(const command &cmd) {
             args.erase(args.begin());
             string std_in=get_env("STDIN");
             string std_out=get_env("STDOUT");
-            if(cmd.input_path != "") set_env("STDIN", cmd.input_path);
-            if(cmd.output_path != "") set_env("STDOUT", cmd.output_path);
-			cmd.closeio();
+			cmd.CloseStreams();
+            set_env("STDIN", cmd.InputPath());
+            set_env("STDOUT", cmd.OutputPath());
 			Process proc = Process::Spawn(p, args);
             set_env("STDIN", std_in);
             set_env("STDOUT", std_out);
@@ -373,7 +373,6 @@ bool run_program(const command &cmd) {
             if (proc.GetPID()) ret = proc.Wait();
 			else cout << "Could not launch " << p << endl;
             if (ret == -1) cout << p << " crashed." << endl;
-			cmd.openio();
             return true;
 
         }
@@ -390,47 +389,143 @@ bool run_command(const command &cmd){
 	return true;
 }
 
-command::command(const string &default_input, const string &default_output){
-    this->input=&cin;
-    this->output=&cout;
-    if(default_input != ""){
-		input_path=default_input;
-		redir_input=true;
-	}
-	if(default_output != ""){
-		output_path=default_output;
-		redir_output=true;
-	}
-}
+command::command(const vector<string> &tokens) : args(tokens)
+{}
 
 command::~command(){
 }
 
-void command::set_input(string path) {
+void command::SetInputPath(const string &path) {
     input_path=path;
-    redir_input=true;
+    input_mode = IOMode::Path;
 }
 
-void command::set_output(string path) {
+void command::SetInputTemp(){
+	input_mode = IOMode::Temp;
+}
+
+void command::SetOutputPath(const string &path) {
     output_path=path;
-    redir_output=true;
+    output_mode = IOMode::Path;
 }
 
-void command::openio() const{
-    if(redir_input){
-        input=new ifstream(input_path);
-        input_ptr.reset(input);
-    }
-    if(redir_output){
-        output=new ofstream(output_path, ios_base::app);
-        output_ptr.reset(output);
-    }
+void command::SetOutputTemp(){
+	output_mode = IOMode::Temp;
 }
 
-void command::closeio() const{
-    output->flush();
+istream &command::InputStream() const{
+	if(!input){
+		if(input_mode == IOMode::Path){
+		    input=new ifstream(input_path);
+		    input_ptr.reset(input);
+		}else if(input_mode == IOMode::Temp){
+			if(input_path != ""){
+				auto input_stm = new stringstream();
+				input = input_stm;
+				input_ptr.reset(input);
+				ifstream file(input_path);
+				if(file){
+					file.seekg(0, ios::end);
+					auto length = file.tellg();
+					file.seekg(0, ios::beg);
+					vector<char> buffer(length);
+					file.read(buffer.data(), length);
+					input_stm->write(buffer.data(), length);
+					file.close();
+				}
+				remove(input_path.c_str());
+				input_path = "";
+			}
+		}else{
+			input = &cin;
+		}
+	}
+	return *input;
+}
+ostream &command::OutputStream() const{
+	if(!output){
+		if(output_mode == IOMode::Path){
+		    output=new ofstream(output_path, ios_base::app);
+		    output_ptr.reset(output);
+		}else if(output_mode == IOMode::Temp){
+			if(output_path != ""){
+				auto output_stm = new stringstream();
+				output = output_stm;
+				output_ptr.reset(output);
+				ifstream file(output_path);
+				if(file){
+					file.seekg(0, ios::end);
+					auto length = file.tellg();
+					file.seekg(0, ios::beg);
+					vector<char> buffer(length);
+					file.read(buffer.data(), length);
+					output_stm->write(buffer.data(), length);
+					file.close();
+				}
+				remove(output_path.c_str());
+				output_path = "";
+			}
+		}else{
+			output = &cout;
+		}
+	}
+	return *output;
+}
+
+string command::InputPath() const{
+	if(input_path == "" && input_mode == IOMode::Temp){
+		input_path = tempfile();
+	}
+	if(input && input_mode == IOMode::Temp){
+		ofstream file(input_path);
+		if(file){
+			file << input->rdbuf();
+		}
+	}
+	if(input && (input_mode == IOMode::Path || input_mode == IOMode::Temp)){
+		input_ptr.reset();
+		input = nullptr;
+	}
+	if(input_mode == IOMode::Standard){
+		return get_env("STDIN");
+	}else{
+		return input_path;
+	}
+}
+string command::OutputPath() const{
+	if(output_path == "" && output_mode == IOMode::Temp){
+		output_path = tempfile();
+	}
+	if(output && output_mode == IOMode::Temp){
+		ofstream file(output_path);
+		if(file){
+			file << output->rdbuf();
+		}
+	}
+	if(output && (output_mode == IOMode::Path || output_mode == IOMode::Temp)){
+		output_ptr.reset();
+		output = nullptr;
+	}
+	if(output_mode == IOMode::Standard){
+		return get_env("STDOUT");
+	}else{
+		return output_path;
+	}
+}
+
+command::IOMode command::GetInputMode(){
+	return input_mode;
+}
+command::IOMode command::GetOutputMode(){
+	return output_mode;
+}
+
+void command::CloseStreams() const{
+    if(output) output->flush();
     input_ptr.reset();
+	input = nullptr;
     output_ptr.reset();
+	output = nullptr;
 }
 
 }

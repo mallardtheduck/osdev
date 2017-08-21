@@ -125,15 +125,25 @@ enum class cmd_token{
 
 vector<command> getcommands(const vector<string> &parsed, const string &default_output, const string &default_input){
     vector<command> ret;
-    command current { default_input, default_output };
+    command current { {} };
+	if(default_output != ""){
+		current.SetOutputPath(default_output);
+	}
+	if(default_input != ""){
+		current.SetInputPath(default_input);
+	}
     cmd_token next=cmd_token::arg;
     for(const string &p : parsed){
         if(next==cmd_token::arg) {
             if (p == "|") {
                 string file = tempfile();
-                current.set_output(file);
+                current.SetOutputPath(file);
                 ret.push_back(current);
-                current = command(file, default_output);
+                current = command { {} };
+				current.SetInputPath(file);
+				if(default_output != ""){
+					current.SetOutputPath(default_output);
+				}
             } else if (p == ">") {
                 next = cmd_token::output;
             } else if (p == "<") {
@@ -143,11 +153,11 @@ vector<command> getcommands(const vector<string> &parsed, const string &default_
             }
         }else if(next==cmd_token::input){
             string file=parse_path(p);
-            current.set_input(file);
+            current.SetInputPath(file);
             next=cmd_token::arg;
         }else if(next==cmd_token::output){
             string file=parse_path(p);
-            current.set_output(file);
+            current.SetOutputPath(file);
             ofstream f(file);
             f.close();
             next=cmd_token::arg;

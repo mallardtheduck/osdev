@@ -16,7 +16,7 @@ namespace cmd{
 
 void echo_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
-    ostream &output=*cmd.output;
+    ostream &output=cmd.OutputStream();
 	if(commandline.size() < 2 || (commandline[1]=="-f" && commandline.size() < 3)){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " [-f filename] text" << endl;
@@ -45,7 +45,7 @@ template<typename T> static size_t get_index(const vector<T> &v, const T &a){
 }
 
 void int_command(const command &cmd){
-	ostream &out=*cmd.output;
+	ostream &out=cmd.OutputStream();
 	vector<string> ops = { "^", "/", "%", "*", "+", "-", "gt", "lt", "==", "=", "!=", "and", "or" };
 	deque<string> output;
 	stack<string> opstack;
