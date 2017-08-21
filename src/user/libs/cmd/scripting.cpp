@@ -90,24 +90,29 @@ static bool IsExact(const string &block, const vector<string> &line){
 }
 
 string RunCMDCommand(const vector<string> &tokens, bool capture){
-	string outputfile;
-	vector<command> commands;
+	auto capstream = make_shared<stringstream>();
+	vector<command> commands = getcommands(tokens);
 	if(capture){
-		outputfile = tempfile();
-		commands = getcommands(tokens, outputfile);
-	}else{
-		commands = getcommands(tokens);
+		for(auto &c : commands){
+			if(c.GetOutputMode() == command::IOMode::Standard){
+				c.SetOutputTemp(capstream);
+			}
+		}
 	}
 	for(auto c : commands) {
 		run_command(c);
+		c.OutputStream();
 	}
 	if(capture){
-		ifstream t(outputfile);
+		/*ifstream t(outputfile);
 		string ret((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
 		t.close();
 		remove(outputfile.c_str());
 		if(ends_with(ret, "\n")) ret.pop_back();
 		trim(ret);
+		return ret;*/
+		auto ret = capstream->str();
+		if(ret[ret.length() - 1] == '\n') ret = ret.substr(0, ret.length() - 1);
 		return ret;
 	}else{
 		return "";

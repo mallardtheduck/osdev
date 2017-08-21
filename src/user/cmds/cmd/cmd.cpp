@@ -28,9 +28,13 @@ void run_interactive(){
 
 void run_script(const string &file, vector<string> args, bool debug){
 	ifstream script {file};
-	ScriptContext context {script};
-	context.SetDebugOutput(debug);
-	context.Run(args);
+	if(script){
+		ScriptContext context {script};
+		context.SetDebugOutput(debug);
+		context.Run(args);
+	}else{
+		cerr << "Script could not be run." << endl;
+	}
 }
 
 int main(int argc, char **argv){

@@ -21,6 +21,9 @@ public:
 private:
 	IOMode input_mode = IOMode::Standard;
 	IOMode output_mode = IOMode::Standard;
+
+	std::shared_ptr<std::istream> temp_input_stream;
+	std::shared_ptr<std::ostream> temp_output_stream;
 	
     mutable std::shared_ptr<std::istream> input_ptr;
     mutable std::shared_ptr<std::ostream> output_ptr;
@@ -40,9 +43,9 @@ public:
 	std::string OutputPath() const;
 
     void SetInputPath(const std::string &path);
-	void SetInputTemp();
+	void SetInputTemp(std::shared_ptr<std::istream> stream);
     void SetOutputPath(const std::string &path);
-	void SetOutputTemp();
+	void SetOutputTemp(std::shared_ptr<std::ostream> stream);
 
 	IOMode GetInputMode();
 	IOMode GetOutputMode();

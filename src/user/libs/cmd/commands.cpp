@@ -400,8 +400,9 @@ void command::SetInputPath(const string &path) {
     input_mode = IOMode::Path;
 }
 
-void command::SetInputTemp(){
+void command::SetInputTemp(shared_ptr<istream> stream){
 	input_mode = IOMode::Temp;
+	temp_input_stream = stream;
 }
 
 void command::SetOutputPath(const string &path) {
@@ -409,8 +410,9 @@ void command::SetOutputPath(const string &path) {
     output_mode = IOMode::Path;
 }
 
-void command::SetOutputTemp(){
+void command::SetOutputTemp(shared_ptr<ostream> stream){
 	output_mode = IOMode::Temp;
+	temp_output_stream = stream;
 }
 
 istream &command::InputStream() const{
@@ -419,20 +421,9 @@ istream &command::InputStream() const{
 		    input=new ifstream(input_path);
 		    input_ptr.reset(input);
 		}else if(input_mode == IOMode::Temp){
+			input = temp_input_stream.get();
+			input_ptr = temp_input_stream;
 			if(input_path != ""){
-				auto input_stm = new stringstream();
-				input = input_stm;
-				input_ptr.reset(input);
-				ifstream file(input_path);
-				if(file){
-					file.seekg(0, ios::end);
-					auto length = file.tellg();
-					file.seekg(0, ios::beg);
-					vector<char> buffer(length);
-					file.read(buffer.data(), length);
-					input_stm->write(buffer.data(), length);
-					file.close();
-				}
 				remove(input_path.c_str());
 				input_path = "";
 			}
@@ -448,10 +439,9 @@ ostream &command::OutputStream() const{
 		    output=new ofstream(output_path, ios_base::app);
 		    output_ptr.reset(output);
 		}else if(output_mode == IOMode::Temp){
+			output = temp_output_stream.get();
+			output_ptr = temp_output_stream;
 			if(output_path != ""){
-				auto output_stm = new stringstream();
-				output = output_stm;
-				output_ptr.reset(output);
 				ifstream file(output_path);
 				if(file){
 					file.seekg(0, ios::end);
@@ -459,7 +449,7 @@ ostream &command::OutputStream() const{
 					file.seekg(0, ios::beg);
 					vector<char> buffer(length);
 					file.read(buffer.data(), length);
-					output_stm->write(buffer.data(), length);
+					temp_output_stream->write(buffer.data(), length);
 					file.close();
 				}
 				remove(output_path.c_str());
