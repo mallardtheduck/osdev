@@ -325,6 +325,7 @@ unordered_map<string, command_fn> builtin_commands={
 	{"set", &setenv_command},
 	{"time", &time_command},
 	{"int", &int_command},
+	{"str", &str_command},
 };
 
 bool run_builtin(const command &cmd){

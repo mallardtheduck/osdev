@@ -155,5 +155,35 @@ void int_command(const command &cmd){
 	out << evalstack.top() << endl;
 }
 
+void str_command(const command &cmd){
+	ostream &out=cmd.OutputStream();
+	if(cmd.args.size() < 3) return;
+	auto req = to_lower(cmd.args[1]);
+	
+	if(req == "len"){
+		out << cmd.args[2].length() << endl;
+	}else if(req == "eq"){
+		if(cmd.args.size() < 4) return;
+		int r = (cmd.args[2] == cmd.args[3])? 1 : 0;
+		out << r << endl;
+	}else if(req == "find"){
+		if(cmd.args.size() < 4) return;
+		auto r = cmd.args[3].find(cmd.args[2]);
+		if(r == string::npos) out << -1 << endl;
+		else out << r << endl;
+	}else if(req == "sub"){
+		if(cmd.args.size() < 5) return;
+		auto posstr = cmd.args[2];
+		auto countstr = cmd.args[3];
+		auto source = cmd.args[4];
+		if(!is_integer(posstr) || !is_integer(countstr)) return;
+		size_t pos = strtoul(posstr.c_str(), NULL, 10);
+		size_t count = strtoul(countstr.c_str(), NULL, 10);
+		if(count == 0) count = string::npos;
+		if(pos > source.length()) return;
+		out << source.substr(pos, count) << endl;
+	}
+}
+
 }
 }
