@@ -185,5 +185,75 @@ void str_command(const command &cmd){
 	}
 }
 
+static vector<string> parse_array(const string &str){
+	vector<string> ret;
+	if(str.front()=='[' && str.back()==']'){
+		string cut=str.substr(1, str.length()-2);
+		ret=split(cut, ',');
+		for(auto &r : ret) {
+			trim(r);
+			trimchar(r, '"');
+		}
+	}
+	return ret;
+}
+
+static void deparse_array(const vector<string> &arr, ostream &out){
+	out << "[";
+	bool first = true;
+	for(const auto &a : arr){
+		if(!first) out << ",";
+		first = false;
+		out << '"' << a << '"';
+	}
+	out << "]";
+}
+
+void arr_command(const command &cmd){
+	ostream &out=cmd.OutputStream();
+	if(cmd.args.size() < 3) return;
+	auto req = to_lower(cmd.args[1]);
+
+	if(req == "size"){
+		out << parse_array(cmd.args[2]).size() << endl;
+	}else if(req == "get"){
+		if(cmd.args.size() < 4) return;
+		auto idxstr = cmd.args[2];
+		auto array = parse_array(cmd.args[3]);
+		if(!is_integer(idxstr)) return;
+		size_t idx = strtoul(idxstr.c_str(), NULL, 10);
+		if(idx >= array.size()) return;
+		out << array[idx] << endl;
+	}else if(req == "add" || req == "push"){
+		if(cmd.args.size() < 4) return;
+		auto newval = cmd.args[2];
+		auto array = parse_array(cmd.args[3]);
+		array.push_back(newval);
+		deparse_array(array, out);
+		out << endl;
+	}else if(req == "set"){
+		if(cmd.args.size() < 5) return;
+		auto idxstr = cmd.args[2];
+		auto newval = cmd.args[3];
+		auto array = parse_array(cmd.args[4]);
+		if(!is_integer(idxstr)) return;
+		size_t idx = strtoul(idxstr.c_str(), NULL, 10);
+		if(idx >= array.size()) array.resize(idx + 1);
+		array[idx] = newval;
+		deparse_array(array, out);
+		out << endl;
+	}else if(req == "pop"){
+		auto array = parse_array(cmd.args[2]);
+		if(array.empty()) return;
+		array.pop_back();
+		deparse_array(array, out);
+		out << endl;
+	}else if(req == "back"){
+		auto array = parse_array(cmd.args[2]);
+		if(array.empty()) return;
+		out << array.back() << endl;
+	}
+}
+
 }
 }

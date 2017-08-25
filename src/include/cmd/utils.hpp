@@ -11,6 +11,7 @@ bool is_dir(const std::string &path);
 std::string to_lower(const std::string &str);
 std::vector<std::string> split(const std::string &str, char delim);
 void trim(std::string& str);
+void trimchar(std::string &str, char c);
 bool starts_with(const std::string &str, const std::string &start);
 bool ends_with(const std::string &str, const std::string &end);
 std::string tempfile();

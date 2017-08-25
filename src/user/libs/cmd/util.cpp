@@ -55,7 +55,7 @@ string to_lower(const string &str){
 	return ret;
 }
 
-static void trimchar(string &str, char c){
+void trimchar(string &str, char c){
 	string::size_type pos = str.find_last_not_of(c);
 	if(pos != string::npos) {
 		str.erase(pos + 1);
