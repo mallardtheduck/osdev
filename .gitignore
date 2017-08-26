@@ -47,3 +47,4 @@ src/disk/data
 src/iso/livecd/isodir
 src/iso/test/isodir
 src/packages/base/data
+src/.vscode

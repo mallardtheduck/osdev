@@ -56,10 +56,12 @@ make all-target-libgcc
 cp i686-pc-btos/libgcc/libgcc.a "$PREFIX/i686-pc-btos/lib"
 SHLIB_LINK="i686-pc-btos-gcc -O2 -fPIC -shared @shlib_objs@ -o @shlib_base_name@.ell" make all-target-libgcc && \
 #make install-gcc && \
+make -C ../user/libs/newlib/libc startfiles && \
 make install-target-libgcc && \
 find i686-pc-btos/libgcc -name \*.ell -exec cp {} ../../cross/i686-pc-btos/lib \; && \
 \
 cd .. && \
+make -C ../user/libs/newlib/libc copy-includes && \
 make newlib && \
 cd build-gcc && \
 \
