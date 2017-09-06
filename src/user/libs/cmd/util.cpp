@@ -208,28 +208,19 @@ bool is_integer(const string &s){
 }
 
 string replace(const string &input, const string &target, const string &replacement){
-	string ret;
-	size_t tindex = 0;
-	string tbuf;
-	for(size_t i; i < ret.length(); ++i){
-		if(input[i] == target[tindex]){
-			++tindex;
-			tbuf += input[i];
-			if(tbuf == target){
-				ret += replacement;
-				tindex = 0;
-				tbuf = "";
-			}
-		}else{
-			if(!tbuf.empty()){
-				ret += tbuf;
-				tindex = 0;
-				tbuf = "";
-			}
-			ret += input[i];
-		}
+	stringstream out;
+	size_t tlen = target.length();
+	string postPart = input;
+	auto pos = postPart.find(target);
+	while(!postPart.empty() && pos != string::npos){
+		string prePart = postPart.substr(0, pos);
+		size_t tend = pos + tlen;
+		postPart = postPart.length() >= tend ? postPart.substr(tend) : "";
+		out << prePart << replacement;
+		pos = postPart.find(target);
 	}
-	return ret;
+	out << postPart;
+	return out.str();
 }
 
 }

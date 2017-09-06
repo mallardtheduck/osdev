@@ -190,16 +190,21 @@ static vector<string> parse_array(const string &str){
 	if(str.front()=='[' && str.back()==']'){
 		string cut=str.substr(1, str.length()-2);
 		bool inQuotes = false;
-		bool escaped = false;
+		bool justQuote = false;
 		string cur;
 		for(const auto c : cut){
-			if(escaped){
-				escaped = false;
-				cur += c;
-			}
-			else if(c == '\\') escaped = true;
-			else if(c == '"') inQuotes = !inQuotes;
-			else if(inQuotes || c != ',') cur += c;
+			if(c == '"'){
+				inQuotes = !inQuotes;
+				if(justQuote){
+					cur += c;
+					justQuote = false;
+				}else{
+					justQuote = true;
+				}
+				continue;
+			}else justQuote = false;
+			
+			if(inQuotes || c != ',') cur += c;
 			else{
 				trim(cur);
 				ret.push_back(cur);
@@ -218,7 +223,7 @@ static void deparse_array(const vector<string> &arr, ostream &out){
 	for(const auto &a : arr){
 		if(!first) out << ",";
 		first = false;
-		auto e = replace(a, "\"", "\\\"");
+		auto e = replace(a, "\"", "\"\"");
 		out << '"' << e << '"';
 	}
 	out << "]";
