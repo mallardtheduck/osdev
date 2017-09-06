@@ -186,14 +186,28 @@ void str_command(const command &cmd){
 }
 
 static vector<string> parse_array(const string &str){
-	vector<string> ret;
+	vector<string> ret;	
 	if(str.front()=='[' && str.back()==']'){
 		string cut=str.substr(1, str.length()-2);
-		ret=split(cut, ',');
-		for(auto &r : ret) {
-			trim(r);
-			trimchar(r, '"');
+		bool inQuotes = false;
+		bool escaped = false;
+		string cur;
+		for(const auto c : cut){
+			if(escaped){
+				escaped = false;
+				cur += c;
+			}
+			else if(c == '\\') escaped = true;
+			else if(c == '"') inQuotes = !inQuotes;
+			else if(inQuotes || c != ',') cur += c;
+			else{
+				trim(cur);
+				ret.push_back(cur);
+				cur = "";
+			}
 		}
+		trim(cur);
+		if(!cur.empty()) ret.push_back(cur);
 	}
 	return ret;
 }
@@ -204,7 +218,8 @@ static void deparse_array(const vector<string> &arr, ostream &out){
 	for(const auto &a : arr){
 		if(!first) out << ",";
 		first = false;
-		out << '"' << a << '"';
+		auto e = replace(a, "\"", "\\\"");
+		out << '"' << e << '"';
 	}
 	out << "]";
 }
