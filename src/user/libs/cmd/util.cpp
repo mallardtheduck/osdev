@@ -8,10 +8,13 @@
 
 #include <fstream>
 
-using namespace std;
-
 namespace btos_api{
 namespace cmd{
+
+using std::stringstream;
+using std::string;
+using std::vector;
+using std::ofstream;
 
 const string default_prompt="[$cwd$]";
 const string prompt_var="PROMPT";

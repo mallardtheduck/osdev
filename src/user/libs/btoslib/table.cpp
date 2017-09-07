@@ -72,7 +72,12 @@ namespace btos_api{
 			}
 			ret.rows.push_back(row);
 		}
-		return ret;
+		return ret; 
+	}
+
+	table parsecsv(const string &str){
+		stringstream ss{str};
+		return parsecsv(ss);
 	}
 	
 }

@@ -327,6 +327,7 @@ unordered_map<string, command_fn> builtin_commands={
 	{"int", &int_command},
 	{"str", &str_command},
 	{"arr", &arr_command},
+	{"tab", &tab_command},
 };
 
 bool run_builtin(const command &cmd){

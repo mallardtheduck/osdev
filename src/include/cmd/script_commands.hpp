@@ -10,6 +10,7 @@ void echo_command(const command &cmd);
 void int_command(const command &cmd);
 void str_command(const command &cmd);
 void arr_command(const command &cmd);
+void tab_command(const command &cmd);
 
 }
 }

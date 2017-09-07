@@ -1,5 +1,6 @@
 #include <cmd/script_commands.hpp>
 #include <cmd/utils.hpp>
+#include <btos/table.hpp>
 
 #include <vector>
 #include <iostream>
@@ -9,10 +10,17 @@
 #include <cmath>
 #include <cstdlib>
 
-using namespace std;
-
 namespace btos_api{
 namespace cmd{
+
+using std::vector;
+using std::ostream;
+using std::string;
+using std::cout;
+using std::endl;
+using std::deque;
+using std::stack;
+using std::find;
 
 void echo_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
@@ -272,6 +280,43 @@ void arr_command(const command &cmd){
 		auto array = parse_array(cmd.args[2]);
 		if(array.empty()) return;
 		out << array.back() << endl;
+	}
+}
+
+void tab_command(const command &cmd){
+	ostream &out=cmd.OutputStream();
+	if(cmd.args.size() < 3) return;
+	auto req = to_lower(cmd.args[1]);
+	
+	if(req == "rows"){
+		auto tbl = parsecsv(cmd.args[2]);
+		out << tbl.rows.size() << endl;
+	}else if(req == "head"){
+		auto tbl = parsecsv(cmd.args[2]);
+		deparse_array(tbl.headers, out);
+		out << endl;
+	}else if(req == "row"){
+		if(cmd.args.size() < 4) return;
+		auto rowstr = cmd.args[2];
+		if(!is_integer(rowstr)) return;
+		size_t rowno = strtoul(rowstr.c_str(), nullptr, 10);
+		auto tbl = parsecsv(cmd.args[3]);
+		if(rowno >= tbl.rows.size()) return;
+		vector<string> rowvals;
+		for(const auto &cell : tbl.rows[rowno]) rowvals.push_back(cell.second);
+		deparse_array(rowvals, out);
+		out << endl;
+	}else if(req == "cell"){
+		if(cmd.args.size() < 5){
+			auto rowstr = cmd.args[2];
+			auto colstr = cmd.args[3];
+			if(!is_integer(rowstr)) return;
+			auto tbl = parsecsv(cmd.args[4]);
+			size_t row = strtoul(rowstr.c_str(), nullptr, 10);
+			if(row >= tbl.rows.size()) return;
+			if(tbl.rows[row].find(colstr) == tbl.rows[row].end()) return;
+			out << tbl.rows[row][colstr] << endl;
+		}
 	}
 }
 

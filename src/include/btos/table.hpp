@@ -17,6 +17,7 @@ namespace btos_api{
 	std::vector<std::string> splitline(const std::string &line, char delim);
 	std::vector<std::string> splitcsv(const std::string &line);
 	table parsecsv(std::istream &file);
+	table parsecsv(const std::string &str);
 	void trim(std::string &str);
 }
 
