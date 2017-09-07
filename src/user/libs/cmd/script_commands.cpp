@@ -307,16 +307,15 @@ void tab_command(const command &cmd){
 		deparse_array(rowvals, out);
 		out << endl;
 	}else if(req == "cell"){
-		if(cmd.args.size() < 5){
-			auto rowstr = cmd.args[2];
-			auto colstr = cmd.args[3];
-			if(!is_integer(rowstr)) return;
-			auto tbl = parsecsv(cmd.args[4]);
-			size_t row = strtoul(rowstr.c_str(), nullptr, 10);
-			if(row >= tbl.rows.size()) return;
-			if(tbl.rows[row].find(colstr) == tbl.rows[row].end()) return;
-			out << tbl.rows[row][colstr] << endl;
-		}
+		if(cmd.args.size() < 5) return;
+		auto rowstr = cmd.args[2];
+		auto colstr = cmd.args[3];
+		if(!is_integer(rowstr)) return;
+		auto tbl = parsecsv(cmd.args[4]);
+		size_t row = strtoul(rowstr.c_str(), nullptr, 10);
+		if(row >= tbl.rows.size()) return;
+		if(tbl.rows[row].find(colstr) == tbl.rows[row].end()) return;
+		out << tbl.rows[row][colstr] << endl;
 	}
 }
 
