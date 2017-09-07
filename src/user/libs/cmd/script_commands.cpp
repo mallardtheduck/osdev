@@ -190,6 +190,8 @@ void str_command(const command &cmd){
 		if(count == 0) count = string::npos;
 		if(pos > source.length()) return;
 		out << source.substr(pos, count) << endl;
+	}else if(req == "lower"){
+		out << to_lower(cmd.args[2]) << endl;
 	}
 }
 
