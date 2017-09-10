@@ -4,10 +4,12 @@
 #include <cmd/path.hpp>
 #include <sstream>
 
-using namespace std;
-
 namespace btos_api{
 namespace cmd{
+
+using std::string;
+using std::stringstream;
+using std::vector;
 
 bool is_match(const string &opattern, const string &ofilename){
     if(ofilename=="." || ofilename=="..") return false;

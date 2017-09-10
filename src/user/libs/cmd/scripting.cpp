@@ -8,11 +8,22 @@
 #include <sstream>
 #include <stack>
 
-using namespace std;
-
 namespace btos_api{
 namespace cmd{
-	
+
+using std::string;
+using std::fstream;
+using std::stringstream;
+using std::vector;
+using std::stack;
+using std::pair;
+using std::make_shared;
+using std::unique_ptr;
+using std::cout;
+using std::endl;
+using std::function;
+using std::istream;
+
 static const string Label = "label";
 static const string Function = "function";
 static const string Loop = "loop";

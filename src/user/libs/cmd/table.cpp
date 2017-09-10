@@ -9,10 +9,20 @@
 #include <sstream>
 #include <btos/table.hpp>
 
-using namespace std;
-
 namespace btos_api{
 namespace cmd{
+
+using std::string;
+using std::stringstream;
+using std::map;
+using std::vector;
+using std::istream;
+using std::find_if;
+using std::cout;
+using std::ostream;
+using std::ifstream;
+using std::endl;
+using std::pair;
 
 bool is_number(const std::string& s)
 {

@@ -10,10 +10,27 @@
 #include <dev/rtc.h>
 #include <btos/process.hpp>
 
-using namespace std;
-
 namespace btos_api{
 namespace cmd{
+
+using std::ostream;
+using std::istream;
+using std::ofstream;
+using std::ifstream;
+using std::ios;
+using std::ios_base;
+using std::streampos;
+using std::streamsize;
+
+using std::string;
+using std::stringstream;
+using std::cout;
+using std::cin;
+using std::endl;
+using std::vector;
+using std::unordered_map;
+
+using std::shared_ptr;
 
 typedef void (*command_fn)(const command &);
 

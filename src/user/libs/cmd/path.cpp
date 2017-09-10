@@ -4,10 +4,12 @@
 #include <sstream>
 #include <iostream>
 
-using namespace std;
-
 namespace btos_api{
 namespace cmd{
+
+using std::string;
+using std::vector;
+using std::stringstream;
 
 bool is_absolute(const string &path){
 	for(const char &c : path){
