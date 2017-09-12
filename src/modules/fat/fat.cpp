@@ -202,6 +202,15 @@ bt_filesize_t fat_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
     return ret;
 }
 
+bool fat_setsize(void *filedata, bt_filesize_t size){
+	fat_file_handle *fd=(fat_file_handle*)filedata;
+	if(!fd) return 0;
+	take_fat_lock();
+	//Do something?
+	release_fat_lock();
+	return true;
+}
+
 int fat_ioctl(void *filedata, int fn, size_t bytes, char *buf){
 	return 0;
 }
@@ -341,7 +350,7 @@ bool fat_format(char *device, void*){
 }
 
 fs_driver fat_driver={true, "FAT", true,
-	fat_mount, fat_unmount, fat_open, fat_close, fat_read, fat_write, fat_seek, fat_ioctl, fat_flush,
+	fat_mount, fat_unmount, fat_open, fat_close, fat_read, fat_write, fat_seek, fat_setsize, fat_ioctl, fat_flush,
 	fat_open_dir, fat_close_dir, fat_read_dir, fat_write_dir, fat_dirseek, fat_stat, fat_format};
 
 extern "C" int module_main(syscall_table *systbl, char *params){

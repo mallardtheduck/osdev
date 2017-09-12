@@ -240,6 +240,10 @@ inline static size_t fseek(file_handle *handle, size_t pos, uint32_t flags){
 	return SYSCALL_TABLE->fseek(handle, pos, flags);
 }
 
+inline static bool fsetsize(file_handle *handle, bt_filesize_t size){
+	return SYSCALL_TABLE->fsetsize(handle, size);
+}
+
 inline static int fioctl(file_handle *handle, int fn, size_t bytes, char *buf){
 	return SYSCALL_TABLE->fioctl(handle, fn, bytes, buf);
 }

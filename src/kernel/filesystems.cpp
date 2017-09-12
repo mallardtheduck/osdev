@@ -9,7 +9,7 @@ map<string, fs_driver> *fs_drivers;
 
 lock fs_lock;
 
-static const fs_driver invalid_fs_driver={false, "", false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+static const fs_driver invalid_fs_driver={false, "", false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL};
 static const fs_mountpoint invalid_mountpoint={false, "", "", invalid_fs_driver, NULL};
 
@@ -246,6 +246,10 @@ size_t fs_write(file_handle &file, size_t bytes, char *buf){
 
 bt_filesize_t fs_seek(file_handle &file, bt_filesize_t pos, uint32_t flags){
 	return file.mount->driver.seek(file.filedata, pos, flags);
+}
+
+bool fs_setsize(file_handle &file, bt_filesize_t size){
+	return file.mount->driver.setsize(file.filedata, size);
 }
 
 int fs_ioctl(file_handle &file, int fn, size_t bytes, char *buf){

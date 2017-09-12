@@ -297,6 +297,14 @@ USERAPI_HANDLER(BT_FSEEK){
     }
 }
 
+USERAPI_HANDLER(BT_FSETSIZE){
+	file_handle *file=proc_get_file(regs->ebx);
+    if(file && is_safe_ptr(regs->ecx, sizeof(bt_filesize_t))){
+		bt_filesize_t *size = (bt_filesize_t*)regs->ecx;
+		regs->eax = fs_setsize(*file, *size);
+	}
+}
+
 USERAPI_HANDLER(BT_FFLUSH){
     file_handle *file=proc_get_file(regs->ebx);
     if(file){
@@ -652,6 +660,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_FREAD);
 		USERAPI_HANDLE_CALL(BT_FIOCTL);
 		USERAPI_HANDLE_CALL(BT_FSEEK);
+		USERAPI_HANDLE_CALL(BT_FSETSIZE);
         USERAPI_HANDLE_CALL(BT_FFLUSH);
         USERAPI_HANDLE_CALL(BT_MMAP);
 		USERAPI_HANDLE_CALL(BT_DOPEN);

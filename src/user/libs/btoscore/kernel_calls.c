@@ -185,6 +185,10 @@ bt_filesize_t bt_fseek(bt_filehandle file, bt_filesize_t bytes, uint32_t flags){
 	return ret;
 }
 
+bool bt_fsetsize(bt_filehandle file, bt_filesize_t size){
+	return !!btos_call(BT_FSETSIZE, file, (uint32_t)&size, 0);
+}
+
 bool bt_format(const char *fs, const char *device, void *options){
 	return !!btos_call(BT_FORMAT, (uint32_t)fs, (uint32_t)device, (uint32_t)options);
 }

@@ -43,6 +43,7 @@ src/3rdparty/originals
 src/3rdparty/parted-3.2
 src/3rdparty/udis86-1.7.2
 src/3rdparty/grub-2.00
+src/3rdparty/sqlite-amalgamation-3200100.zip
 src/disk/data
 src/iso/livecd/isodir
 src/iso/test/isodir

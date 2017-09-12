@@ -59,6 +59,7 @@ EXTERN_C size_t bt_fwrite(bt_filehandle file, size_t bytes, const char *buffer);
 EXTERN_C size_t bt_fread(bt_filehandle file, size_t bytes, char *buffer);
 EXTERN_C size_t bt_fioctl(bt_filehandle file, int function, size_t bytes, char *buffer);
 EXTERN_C bt_filesize_t bt_fseek(bt_filehandle file, bt_filesize_t bytes, uint32_t flags);
+EXTERN_C bool bt_fsetsize(bt_filehandle file, bt_filesize_t size);
 EXTERN_C bool bt_format(const char *fs, const char *device, void *options);
 EXTERN_C void bt_fflush(bt_filehandle file);
 EXTERN_C bt_handle bt_mmap(bt_filehandle file, size_t offset, char *ptr, size_t size);

@@ -571,6 +571,11 @@ int chdir(const char *path){
 	return _chdir(path);
 }
 
+int rmdir(const char *path){
+	bt_filehandle dh=bt_dopen(path, FS_Read | FS_Delete);
+	if(dh) bt_dclose(dh);
+}
+
 int _lstat(const char *path, struct stat *buf){
 	return _stat(path, buf);
 }
@@ -603,3 +608,33 @@ unsigned sleep(unsigned seconds){
 	}
 	return 0;
 }
+
+int geteuid(){
+	return 0;
+}
+
+int fchmod(int fd, mode_t mode){
+	(void)fd; (void)mode;
+	return 0;
+}
+
+int fchown(int fd, uid_t owner, gid_t group){
+	(void)fd; (void)owner; (void)group;
+	return 0;
+}
+
+int utimes(const char *path, const struct timeval times[2]){
+	(void)path; (void)times;
+	return 0;
+}
+
+int ftruncate(int fd, off_t length){
+	virtual_handle *vh=btos_get_handle_virt(fd);
+    if(!vh) return -1;
+    if(vh->type == HANDLE_OS){
+		bt_filehandle fh = vh->handle;
+		bt_fsetsize(fh, length);
+		return 0;
+	}else return -1;
+}
+
