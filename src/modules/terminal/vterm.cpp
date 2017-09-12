@@ -563,6 +563,7 @@ struct cmdLine{
 cmdLine parse_cmd(const char *c){
 	cmdLine cl = {nullptr, 0, nullptr};
 	char* buf = (char*)malloc(BT_MAX_PATH);
+	if(!buf) panic("(TERM) Allocation failed!");
 	memset(buf, 0, BT_MAX_PATH);
 	size_t i = 0;
 	bool escape = false;
@@ -576,15 +577,15 @@ cmdLine parse_cmd(const char *c){
 			if(!cl.cmd) cl.cmd = buf;
 			else{
 				char **nargv = (char**)malloc((cl.argc + 1) * sizeof(char*));
-				for(size_t j = 0; j < cl.argc; ++j){
-					nargv[j] = cl.argv[j];
-				}
+				if(!nargv) panic("(TERM) Allocation failed!");
+				memcpy(nargv, cl.argv, sizeof(char*) * cl.argc);
 				nargv[cl.argc] = buf;
 				if(cl.argv) free(cl.argv);
 				cl.argv = nargv;
 				++cl.argc;
 			}
 			buf = (char*)malloc(BT_MAX_PATH);
+			if(!buf) panic("(TERM) Allocation failed!");
 			memset(buf, 0, BT_MAX_PATH);
 			i = -1;
 			escape=quote=false;
@@ -595,9 +596,8 @@ cmdLine parse_cmd(const char *c){
 	}
 	if(i){
 		char **nargv = (char**)malloc((cl.argc + 1) * sizeof(char*));
-		for(size_t j = 0; j < cl.argc; ++j){
-			nargv[j] = cl.argv[j];
-		}
+		if(!nargv) panic("(TERM) Allocation failed!");
+		memcpy(nargv, cl.argv, sizeof(char*) * cl.argc);
 		nargv[cl.argc] = buf;
 		if(cl.argv) free(cl.argv);
 		cl.argv = nargv;
@@ -605,11 +605,6 @@ cmdLine parse_cmd(const char *c){
 	}else{
 		free(buf);
 	}
-	dbgpf("CL: %i args: %s - ", (int)cl.argc, cl.cmd);
-	for(size_t i = 0; i < cl.argc; ++i){
-		dbgpf(" (%p) %s - ", cl.argv[i], cl.argv[i]);
-	}
-	dbgout("\n");
 	return cl;
 };
 
@@ -618,7 +613,7 @@ void free_cmd(cmdLine c){
 	for(size_t i = 0; i < c.argc; ++i){
 		free(c.argv[i]);
 	}
-	free(c.argv);
+	if(c.argv) free(c.argv);
 }
 
 void vterm::create_terminal(char *command)

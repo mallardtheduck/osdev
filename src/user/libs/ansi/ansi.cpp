@@ -17,12 +17,15 @@ extern "C" {
 #include <sstream>
 #include <map>
 #include <vector>
+#include <iostream>
 
 #include <btos/envvars.hpp>
 #include <btos/atom.hpp>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-variable"
+
+#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
 
 using namespace std;
 
@@ -330,11 +333,16 @@ extern "C" void init_ansi(){
 	if(!isatty(fileno(stdout))) return;
 	real_stdout = btos_get_handle_virt(fileno(stdout));
 	real_stdin = btos_get_handle_virt(fileno(stdin));
-	bt_term_stdout();
+	bt_term_handle(real_stdout->handle);
 	bt_vidmode mode = bt_term_QueryScreenMode();
 	if(!mode.textmode) return;
 	if(bt_term_GetInfoLine()) --mode.height;
 	TMT *tmt = tmt_open(mode.height + 1, mode.width, &callback, NULL, NULL);
+	if(!tmt){
+		DBG("ANSI: FAIL! " << mode.height << " " << mode.width << " " << (void*)&callback);
+		cerr << "Failed to initialize ANSI!" << endl;
+		exit(-1);
+	}
 	virtual_handle ansi_terminal;
 	ansi_terminal.type = HANDLE_VIRT;
 	ansi_terminal.virt.data = (void*)tmt;

@@ -1,4 +1,5 @@
-#include "cmd.hpp"
+#include <cmd/commands.hpp>
+#include <cmd/globbing.hpp>
 #include <map>
 #include <vector>
 #include <string>
@@ -8,7 +9,20 @@
 #include <sstream>
 #include <btos/table.hpp>
 
-using namespace std;
+namespace btos_api{
+namespace cmd{
+
+using std::string;
+using std::stringstream;
+using std::map;
+using std::vector;
+using std::istream;
+using std::find_if;
+using std::cout;
+using std::ostream;
+using std::ifstream;
+using std::endl;
+using std::pair;
 
 bool is_number(const std::string& s)
 {
@@ -81,7 +95,7 @@ void display_table(table tbl, size_t width, ostream &output=cout){
 
 void table_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
-    ostream &output=*cmd.output;
+    ostream &output=cmd.OutputStream();
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
@@ -105,4 +119,7 @@ void display_table(const string &input, ostream &output){
 	if(tbl.rows.size()){
 		display_table(tbl, 80, output);
 	}
+}
+
+}
 }

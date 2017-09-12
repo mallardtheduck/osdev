@@ -28,20 +28,32 @@ void SetEnv(const string &var, const string &val, uint32_t flags){
 
 string Interpolate(const string &tmpl, function<string(const string&)> lookup){
 	const char delim = '$';
+	const char esc = '\\';
 	stringstream out;
 	stringstream varname;
 	bool invar = false;
+	bool inesc = false;
 
 	for(char c : tmpl){
 		if(invar){
-			if(c != delim) varname << c;
+			if(inesc){
+				varname << c;
+				inesc = false;
+			}else if(c == esc){
+				inesc = true;
+			}else if(c != delim) varname << c;
 			else{
 				invar = false;
 				out << lookup(varname.str());
 				varname.str("");
 			}
 		}else{
-			if(c != delim) out << c;
+			if(inesc){
+				out << c;
+				inesc = false;
+			}else if(c == esc){
+				inesc = true;
+			}if(c != delim) out << c;
 			else invar = true;
 		}
 	}
