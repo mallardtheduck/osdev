@@ -262,6 +262,9 @@ void proc_end(pid_t pid) {
 				}
 			}
 		}
+		release_lock(proc->ulock);
+		sch_yield();
+		take_lock_exclusive(proc->ulock);
 	}
 	if(sch_get_pid_threadcount(pid, true) > 0){
 		proc_threads_blockcheck_params params = {pid, sch_get_id()};
@@ -271,7 +274,9 @@ void proc_end(pid_t pid) {
 	while (cont) {
 		cont = false;
 		for (map<handle_t, bt_handle_info>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
+			release_lock(proc->ulock);
 			close_handle(i->second);
+			take_lock_exclusive(proc->ulock);
 			proc_remove_handle(i->first, pid);
 			cont = true;
 			break;

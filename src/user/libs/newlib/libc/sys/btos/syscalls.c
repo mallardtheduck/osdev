@@ -284,7 +284,7 @@ clock_t _times(struct tms *buf){
 }
 
 int _unlink(char *name){
-	bt_handle_t fh = bt_fopen(name, FS_Delete);
+	bt_handle_t fh = bt_fopen(name, FS_Delete | FS_Write);
 	if(!fh){
 		errno = ENOENT;
 		return -1;

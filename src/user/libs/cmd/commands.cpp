@@ -1,4 +1,8 @@
-#include "cmd.hpp"
+#include <cmd/commands.hpp>
+#include <cmd/script_commands.hpp>
+#include <cmd/utils.hpp>
+#include <cmd/globbing.hpp>
+#include <cmd/path.hpp>
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
@@ -6,7 +10,27 @@
 #include <dev/rtc.h>
 #include <btos/process.hpp>
 
-using namespace std;
+namespace btos_api{
+namespace cmd{
+
+using std::ostream;
+using std::istream;
+using std::ofstream;
+using std::ifstream;
+using std::ios;
+using std::ios_base;
+using std::streampos;
+using std::streamsize;
+
+using std::string;
+using std::stringstream;
+using std::cout;
+using std::cin;
+using std::endl;
+using std::vector;
+using std::unordered_map;
+
+using std::shared_ptr;
 
 typedef void (*command_fn)(const command &);
 
@@ -22,7 +46,7 @@ void display_file(const string &path, ostream &output){
     }
 }
 
-void list_files(string path, ostream &out=cout, char sep='\t'){
+void list_files(string path, ostream &out, char sep){
 	if(is_dir(path)) path+="/*";
 	vector<string> files=glob(path);
 	for(const string &file : files){
@@ -41,7 +65,7 @@ void list_files(string path, ostream &out=cout, char sep='\t'){
 
 void display_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
-    ostream &output=*cmd.output;
+    ostream &output=cmd.OutputStream();
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
@@ -53,13 +77,13 @@ void display_command(const command &cmd){
         }
     }else{
         string line;
-        while(getline(*cmd.input, line)) output << line << endl;
+        while(getline(cmd.InputStream(), line)) output << line << endl;
     }
 }
 
 void ls_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
-    ostream &output=*cmd.output;
+    ostream &output=cmd.OutputStream();
 	string path;
 	if(commandline.size() < 2){
 		path=get_cwd();
@@ -109,29 +133,6 @@ void touch_command(const command &cmd){
 				else cout << "Error opening file." << endl;
 			}else cout << "Invalid path." << endl;
 		}
-	}
-}
-
-void echo_command(const command &cmd){
-    const vector<string> &commandline=cmd.args;
-    ostream &output=*cmd.output;
-	if(commandline.size() < 2 || (commandline[1]=="-f" && commandline.size() < 3)){
-		cout << "Usage:" << endl;
-		cout << commandline[0] << " [-f filename] text" << endl;
-	}else{
-		ostream *out=&output;
-		ofstream file;
-		size_t skip=1;
-		if(commandline[1]=="-f"){
-			file.open(commandline[2]);
-			out=&file;
-			skip+=2;
-		}
-		for(const string &s : commandline){
-			if(skip) skip--;
-			else *out << s << ' ';
-		}
-		*out << endl;
 	}
 }
 
@@ -259,14 +260,14 @@ void move_command(const command &cmd){
 }
 
 void ver_command(const command &cmd){
-    ostream &output=*cmd.output;
+    ostream &output=cmd.OutputStream();
 	output << "BT/OS CMD" << endl;
 	print_os_version(output);
 }
 
 void list_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
-    ostream &output=*cmd.output;
+    ostream &output=cmd.OutputStream();
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " pattern" << endl;
@@ -296,7 +297,7 @@ void time_command(const command &cmd){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " command" << endl;
 	}else{
-		ostream &output=*cmd.output;
+		ostream &output=cmd.OutputStream();
 		commandline.erase(commandline.begin());
 		command ncmd = cmd;
 		ncmd.args = commandline;
@@ -340,6 +341,10 @@ unordered_map<string, command_fn> builtin_commands={
 	{"setenv", &setenv_command},
 	{"set", &setenv_command},
 	{"time", &time_command},
+	{"int", &int_command},
+	{"str", &str_command},
+	{"arr", &arr_command},
+	{"tab", &tab_command},
 };
 
 bool run_builtin(const command &cmd){
@@ -378,8 +383,9 @@ bool run_program(const command &cmd) {
             args.erase(args.begin());
             string std_in=get_env("STDIN");
             string std_out=get_env("STDOUT");
-            set_env("STDIN", cmd.input_path);
-            set_env("STDOUT", cmd.output_path);
+			cmd.CloseStreams();
+            set_env("STDIN", cmd.InputPath());
+            set_env("STDOUT", cmd.OutputPath());
 			Process proc = Process::Spawn(p, args);
             set_env("STDIN", std_in);
             set_env("STDOUT", std_out);
@@ -403,41 +409,134 @@ bool run_command(const command &cmd){
 	return true;
 }
 
-command::command(){
-    this->input=&cin;
-    this->output=&cout;
-    input_path=get_env("STDIN");
-    output_path=get_env("STDOUT");
-    redir_input=false;
-    redir_output=false;
-}
+command::command(const vector<string> &tokens) : args(tokens)
+{}
 
 command::~command(){
 }
 
-void command::set_input(string path) {
+void command::SetInputPath(const string &path) {
     input_path=path;
-    redir_input=true;
+    input_mode = IOMode::Path;
 }
 
-void command::set_output(string path) {
+void command::SetInputTemp(shared_ptr<istream> stream){
+	input_mode = IOMode::Temp;
+	temp_input_stream = stream;
+}
+
+void command::SetOutputPath(const string &path) {
     output_path=path;
-    redir_output=true;
+    output_mode = IOMode::Path;
 }
 
-void command::openio(){
-    if(redir_input){
-        input=new ifstream(input_path);
-        input_ptr.reset(input);
-    }
-    if(redir_output){
-        output=new ofstream(output_path, ios_base::app);
-        output_ptr.reset(output);
-    }
+void command::SetOutputTemp(shared_ptr<ostream> stream){
+	output_mode = IOMode::Temp;
+	temp_output_stream = stream;
 }
 
-void command::closeio(){
-    output->flush();
+istream &command::InputStream() const{
+	if(!input){
+		if(input_mode == IOMode::Path){
+		    input=new ifstream(input_path);
+		    input_ptr.reset(input);
+		}else if(input_mode == IOMode::Temp){
+			input = temp_input_stream.get();
+			input_ptr = temp_input_stream;
+			if(input_path != ""){
+				remove(input_path.c_str());
+				input_path = "";
+			}
+		}else{
+			input = &cin;
+		}
+	}
+	return *input;
+}
+ostream &command::OutputStream() const{
+	if(!output){
+		if(output_mode == IOMode::Path){
+		    output=new ofstream(output_path, ios_base::app);
+		    output_ptr.reset(output);
+		}else if(output_mode == IOMode::Temp){
+			output = temp_output_stream.get();
+			output_ptr = temp_output_stream;
+			if(output_path != ""){
+				ifstream file(output_path);
+				if(file){
+					file.seekg(0, ios::end);
+					auto length = file.tellg();
+					file.seekg(0, ios::beg);
+					vector<char> buffer(length);
+					file.read(buffer.data(), length);
+					temp_output_stream->write(buffer.data(), length);
+					file.close();
+				}
+				remove(output_path.c_str());
+				output_path = "";
+			}
+		}else{
+			output = &cout;
+		}
+	}
+	return *output;
+}
+
+string command::InputPath() const{
+	if(input_path == "" && input_mode == IOMode::Temp){
+		input_path = tempfile();
+	}
+	if(input && input_mode == IOMode::Temp){
+		ofstream file(input_path);
+		if(file){
+			file << input->rdbuf();
+		}
+	}
+	if(input && (input_mode == IOMode::Path || input_mode == IOMode::Temp)){
+		input_ptr.reset();
+		input = nullptr;
+	}
+	if(input_mode == IOMode::Standard){
+		return get_env("STDIN");
+	}else{
+		return input_path;
+	}
+}
+string command::OutputPath() const{
+	if(output_path == "" && output_mode == IOMode::Temp){
+		output_path = tempfile();
+	}
+	if(output && output_mode == IOMode::Temp){
+		ofstream file(output_path);
+		if(file){
+			file << output->rdbuf();
+		}
+	}
+	if(output && (output_mode == IOMode::Path || output_mode == IOMode::Temp)){
+		output_ptr.reset();
+		output = nullptr;
+	}
+	if(output_mode == IOMode::Standard){
+		return get_env("STDOUT");
+	}else{
+		return output_path;
+	}
+}
+
+command::IOMode command::GetInputMode(){
+	return input_mode;
+}
+command::IOMode command::GetOutputMode(){
+	return output_mode;
+}
+
+void command::CloseStreams() const{
+    if(output) output->flush();
     input_ptr.reset();
+	input = nullptr;
     output_ptr.reset();
+	output = nullptr;
+}
+
+}
 }

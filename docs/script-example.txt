@@ -1,0 +1,29 @@
+FUNCTION say_hello name
+	ECHO "Hello $name$!"
+END FUNCTION
+
+CALL say_hello Fred
+;Hello Fred!
+
+GOTO end_of_file
+
+FUNCTION write_n text n
+	LOOP $(IS "$n$ > 0")$
+		ECHO $text$
+		LOCAL n $(EVAL "$n$ - 1")$
+	END LOOP
+END FUNCTION
+
+CALL write_n Hello 5
+;HelloHelloHelloHelloHello
+
+FUNCTION nth_file n
+	LOCAL files $(LS)$
+	LOCAL col $(TABLE_COL $files$ filename)$
+	LOCAL row $(TABLE_ROW $files$ $n$)$
+	ECHO $(ARRAY_GET $row$ $col$)$
+END FUNCTION
+
+ECHO "The 3rd file is: $(CALL nth_file 3)$"
+
+LABEL end_of_file
