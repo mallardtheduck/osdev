@@ -85,15 +85,22 @@ void ls_command(const command &cmd){
     const vector<string> &commandline=cmd.args;
     ostream &output=cmd.OutputStream();
 	string path;
-	if(commandline.size() < 2){
-		path=get_cwd();
+	bool tabmode = false;
+	size_t pathIdx = 1;
+	if(commandline.size() > 1 && commandline[1] == "-t"){
+		tabmode = true;
+		pathIdx = 2;
+	}
+	if(commandline.size() > pathIdx){
+		path=commandline[pathIdx];
 	}else{
-		path=commandline[1];
+		path=get_cwd();
 	}
 	stringstream ls;
 	ls << "# name, size" << endl;
 	list_files(path, ls, ',');
-	display_table(ls.str(), output);
+	if(tabmode) output << ls.str();
+	else display_table(ls.str(), output);
 }
 
 void cd_command(const command &cmd){

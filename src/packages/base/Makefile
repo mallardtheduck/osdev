@@ -72,6 +72,7 @@ import-files:=\
  data/btos/lib/sm.ell \
  data/btos/cmd/smutil.elx \
  data/btos/lib/cmd.ell \
+ data/btos/cmd/ini.elx \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -302,6 +303,9 @@ data/btos/cmd/smutil.elx : ../../user/libs/sm/smutil.elx
 	cp $< $@
 
 data/btos/lib/cmd.ell: ../../user/libs/cmd/cmd.ell
+	cp $< $@
+
+data/btos/cmd/ini.elx: ../../user/cmds/ini/ini.elx
 	cp $< $@
 
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx
