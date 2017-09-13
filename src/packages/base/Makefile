@@ -74,7 +74,8 @@ import-files:=\
  data/btos/lib/cmd.ell \
  data/btos/lib/sqlite3.ell \
  data/btos/bin/sqlite.elx \
-
+ data/btos/cmd/ini.elx \
+ 
 pkg-files:= $(shell find pkgfiles -type f)
 
 .SUFFIXES:
@@ -310,6 +311,9 @@ data/btos/lib/sqlite3.ell: ../../3rdparty/install/btos/lib/sqlite3.ell
 	cp $< $@
 
 data/btos/bin/sqlite.elx: ../../3rdparty/install/btos/bin/sqlite.elx
+	cp $< $@
+
+data/btos/cmd/ini.elx: ../../user/cmds/ini/ini.elx
 	cp $< $@
 
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx
