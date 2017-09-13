@@ -133,10 +133,13 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		if(mode==(FS_Read | FS_Write)) modifiers="r+";
 		if(mode==(FS_Write | FS_Read | FS_Truncate | FS_Create)) modifiers="w+";
 		if(mode==(FS_Write | FS_Read | FS_AtEnd | FS_Create)) modifiers="a+";
+		if(mode==(FS_Read | FS_Write | FS_Create)) modifiers = "a+";
 		dbgpf("FAT: Encoded flags: %s\n", modifiers);
 		void *flh=fl_fopen(spath, modifiers);
-		if(flh)	ret->flh=flh;
-		else{
+		if(flh){
+			ret->flh=flh;
+			if(mode==(FS_Read | FS_Write | FS_Create)) fl_fseek(flh, 0, SEEK_SET);
+		}else{
 			free(ret);
             release_fat_lock();
 			return NULL;
@@ -206,6 +209,7 @@ bool fat_setsize(void *filedata, bt_filesize_t size){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return 0;
 	take_fat_lock();
+	dbgpf("FAT: SETSIZE @ %i\n", (int)size);
 	//Do something?
 	release_fat_lock();
 	return true;
