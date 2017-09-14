@@ -75,7 +75,20 @@ int fork(){
 }
 
 int _fstat(int file, struct stat *st) {
-    st->st_mode = S_IFCHR;
+    virtual_handle *vh=btos_get_handle_virt(file);
+    if(!vh) return -1;
+	if(vh->type == HANDLE_OS){
+		bt_filehandle fh = vh->handle;
+		if(fh){	
+		    st->st_mode = S_IFREG;
+			bt_filesize_t pos = bt_fseek(fh, 0, FS_Relative);
+			bt_filesize_t size = bt_fseek(fh, 0, FS_Backwards);
+			bt_fseek(fh, pos, FS_Set);
+			st->st_size = size;
+		}else return -1;
+	}else{
+	    st->st_mode = S_IFCHR;
+	}
     return 0;
 }
 

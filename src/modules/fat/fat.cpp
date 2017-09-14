@@ -144,7 +144,7 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
             release_fat_lock();
 			return NULL;
 		}
-		dbgpf("FAT: Opened %s.\n", ((FL_FILE*)flh)->filename);
+		dbgpf("FAT: Opened %s (%p).\n", ((FL_FILE*)flh)->filename, ret);
         release_fat_lock();
 		return ret;
 	} else return NULL;
@@ -158,6 +158,7 @@ bool fat_close(void *filedata){
 	if(fd->mode & FS_Delete){
 		fl_remove(fd->path);
 	}
+	dbgpf("FAT: Closed (%p).\n", fd);
 	delete fd;
     release_fat_lock();
 	return true;
@@ -171,6 +172,7 @@ size_t fat_read(void *filedata, size_t bytes, char *buf){
     release_fat_lock();
     /*size_t ret=fat_queued_read(fd->flh, (uint8_t*)buf, bytes);
     return ret;*/
+	//dbgpf("FAT: Read from (%p): got %i, %i requested.\n", fd, (int)ret, (int)bytes);
 	return (ret>=0)?ret:0;
 }
 
@@ -182,6 +184,7 @@ size_t fat_write(void *filedata, size_t bytes, char *buf){
     release_fat_lock();
     /*size_t ret= fat_queued_write(fd->flh, (uint8_t*)buf, bytes);
     return ret;*/
+	dbgpf("FAT: Write to (%p): put %i, %i requested.\n", fd, (int)ret, (int)bytes);
 	return (ret>=0)?ret:0;
 }
 
