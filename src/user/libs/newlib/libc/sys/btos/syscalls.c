@@ -31,7 +31,7 @@ int _close(int file){
     virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
     if(vh->type == HANDLE_OS){
-		bt_handle_t h = vh->handle;
+		bt_handle_t h = vh->os.handle;
 		int ret=bt_fclose(h);
 		if(ret) btos_remove_filenum(file);
 		else errno = EBADF;
@@ -78,14 +78,7 @@ int _fstat(int file, struct stat *st) {
     virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
 	if(vh->type == HANDLE_OS){
-		bt_filehandle fh = vh->handle;
-		if(fh){	
-		    st->st_mode = S_IFREG;
-			bt_filesize_t pos = bt_fseek(fh, 0, FS_Relative);
-			bt_filesize_t size = bt_fseek(fh, 0, FS_Backwards);
-			bt_fseek(fh, pos, FS_Set);
-			st->st_size = size;
-		}else return -1;
+		return _stat(vh->os.path, st);
 	}else{
 	    st->st_mode = S_IFCHR;
 	}
@@ -108,7 +101,7 @@ int _isatty(int file){
     virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
     if(vh->type == HANDLE_OS){
-		bt_filehandle fh = vh->handle;
+		bt_filehandle fh = vh->os.handle;
 		if(fh){
 			size_t type=bt_fioctl(fh, bt_ioctl_DevType, 0, NULL);
 			if((int)type==TERMINAL) return 1;
@@ -161,7 +154,7 @@ off_t _lseek(int file, off_t ptr, int dir){
 	virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
     if(vh->type == HANDLE_OS){
-		bt_filehandle fh = vh->handle;
+		bt_filehandle fh = vh->os.handle;
 		return bt_fseek(fh, ptr, flags);
 	}else{
 		return vh->virt.lseek(vh->virt.data, ptr, dir);
@@ -183,7 +176,7 @@ int _open(const char *name, int flags, ...){
 	char path[BT_MAX_PATH]={0};
 	if(btos_path_parse(name, path, BT_MAX_PATH)){
 		bt_filehandle fh=bt_fopen(path, mode);
-		if(fh) return btos_set_filenum(fh);
+		if(fh) return btos_set_filenum(fh, path);
 		else{
 			errno = ENOENT;
 			return -1;
@@ -202,7 +195,7 @@ int _read(int file, char *ptr, int len){
 	virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
     if(vh->type == HANDLE_OS){
-		bt_filehandle fh = vh->handle;
+		bt_filehandle fh = vh->os.handle;
 		return bt_fread(fh, len, ptr);
 	}else{
 		return vh->virt.read(vh->virt.data, ptr, len);
@@ -326,7 +319,7 @@ int _write(int file, char *ptr, int len){
 	virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
     if(vh->type == HANDLE_OS){
-		bt_filehandle fh = vh->handle;
+		bt_filehandle fh = vh->os.handle;
 		return bt_fwrite(fh, len, ptr);
 	}else{
 		return vh->virt.write(vh->virt.data, ptr, len);
@@ -543,7 +536,7 @@ int _fsync(int fd){
 	virtual_handle *vh=btos_get_handle_virt(fd);
     if(!vh) return -1;
     if(vh->type == HANDLE_OS){
-		bt_filehandle fh = vh->handle;
+		bt_filehandle fh = vh->os.handle;
 		bt_fflush(fh);
 	}else{
 		return vh->virt.fsync(vh->virt.data);
@@ -586,7 +579,11 @@ int chdir(const char *path){
 
 int rmdir(const char *path){
 	bt_filehandle dh=bt_dopen(path, FS_Read | FS_Delete);
-	if(dh) bt_dclose(dh);
+	if(dh){
+		bt_dclose(dh);
+		return 0;
+	}
+	return -1;
 }
 
 int _lstat(const char *path, struct stat *buf){
@@ -645,7 +642,7 @@ int ftruncate(int fd, off_t length){
 	virtual_handle *vh=btos_get_handle_virt(fd);
     if(!vh) return -1;
     if(vh->type == HANDLE_OS){
-		bt_filehandle fh = vh->handle;
+		bt_filehandle fh = vh->os.handle;
 		bt_fsetsize(fh, length);
 		return 0;
 	}else return -1;

@@ -211,7 +211,7 @@ void out_int_info(const isr_regs ctx){
 	dbgpf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
 	dbgpf("EDI: %x ESI: %x EBP: %x ESP: %x\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
 	dbgpf("EIP: %x CS: %x SS*: %x\n", ctx.eip, ctx.cs, get_ss());
-	dbgpf("EFLAGS: %x\n", ctx.eflags);
+	dbgpf("EFLAGS: %x UESP: %x\n", ctx.eflags, ctx.useresp);
 }
 
 extern size_t current_thread;
