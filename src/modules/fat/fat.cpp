@@ -136,9 +136,12 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		if(mode==(FS_Read | FS_Write | FS_Create)) modifiers = "a+";
 		dbgpf("FAT: Encoded flags: %s\n", modifiers);
 		void *flh=fl_fopen(spath, modifiers);
+		if(flh && mode==(FS_Read | FS_Write | FS_Create)){
+			fl_fclose(flh);
+			flh = fl_fopen(spath, "r+");
+		}
 		if(flh){
 			ret->flh=flh;
-			if(mode==(FS_Read | FS_Write | FS_Create)) fl_fseek(flh, 0, SEEK_SET);
 		}else{
 			free(ret);
             release_fat_lock();
@@ -179,12 +182,13 @@ size_t fat_read(void *filedata, size_t bytes, char *buf){
 size_t fat_write(void *filedata, size_t bytes, char *buf){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return 0;
-    take_fat_lock();
+	take_fat_lock();
+	//size_t pos=fl_ftell(fd->flh);
 	int ret=fl_fwrite(buf, bytes, 1, fd->flh);
     release_fat_lock();
     /*size_t ret= fat_queued_write(fd->flh, (uint8_t*)buf, bytes);
     return ret;*/
-	dbgpf("FAT: Write to (%p): put %i, %i requested.\n", fd, (int)ret, (int)bytes);
+	//dbgpf("FAT: Write to (%p): put %i, %i requested at %i.\n", fd, (int)ret, (int)bytes, (int)pos);
 	return (ret>=0)?ret:0;
 }
 
