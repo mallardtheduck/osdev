@@ -19,6 +19,7 @@ struct fat_file_handle{
 	void *flh;
 	fs_mode_flags mode;
 	char path[BT_MAX_PATH];
+	bool debug;
 };
 
 typedef struct fat_file_handle fat_file_handle;
@@ -120,6 +121,7 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 	if(mounted && mountdata==fatmagic){
         take_fat_lock();
 		fat_file_handle *ret=new fat_file_handle();
+		ret->debug = false;
 		ret->mode=mode;
 		mode=(fs_mode_flags)(mode & ~(FS_Delete | FS_Exclude));
 		char spath[BT_MAX_PATH]={0};
@@ -170,12 +172,13 @@ bool fat_close(void *filedata){
 size_t fat_read(void *filedata, size_t bytes, char *buf){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return 0;
-    take_fat_lock();
+	take_fat_lock();
+	size_t pos=fl_ftell(fd->flh);
 	int ret=fl_fread(buf, bytes, 1, fd->flh);
     release_fat_lock();
     /*size_t ret=fat_queued_read(fd->flh, (uint8_t*)buf, bytes);
     return ret;*/
-	//dbgpf("FAT: Read from (%p): got %i, %i requested.\n", fd, (int)ret, (int)bytes);
+	if(fd->debug) dbgpf("FAT: Read from (%p): got %i, %i requested at %i.\n", fd, (int)ret, (int)bytes, (int)pos);
 	return (ret>=0)?ret:0;
 }
 
@@ -183,12 +186,12 @@ size_t fat_write(void *filedata, size_t bytes, char *buf){
 	fat_file_handle *fd=(fat_file_handle*)filedata;
 	if(!fd) return 0;
 	take_fat_lock();
-	//size_t pos=fl_ftell(fd->flh);
+	size_t pos=fl_ftell(fd->flh);
 	int ret=fl_fwrite(buf, bytes, 1, fd->flh);
     release_fat_lock();
     /*size_t ret= fat_queued_write(fd->flh, (uint8_t*)buf, bytes);
     return ret;*/
-	//dbgpf("FAT: Write to (%p): put %i, %i requested at %i.\n", fd, (int)ret, (int)bytes, (int)pos);
+	if(fd->debug) dbgpf("FAT: Write to (%p): put %i, %i requested at %i.\n", fd, (int)ret, (int)bytes, (int)pos);
 	return (ret>=0)?ret:0;
 }
 
@@ -207,7 +210,8 @@ bt_filesize_t fat_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
 	}
 	fl_fseek(fd->flh, pos, origin);
 	size_t ret=fl_ftell(fd->flh);
-    release_fat_lock();
+	release_fat_lock();
+	if(fd->debug) dbgpf("FAT: Seek in (%p): pos: %i flags: %x ret: %i.\n", fd, (int)pos, (int)flags, (int)ret);
     //size_t ret= fat_queued_seek(fd->flh, offset, origin);
     return ret;
 }
@@ -317,13 +321,14 @@ directory_entry fat_stat(void *mountdata, fs_path *path){
 		if(flh){
 			id = ((FL_FILE*)flh)->startcluster;
 			type=FS_File;
-			fl_fseek(flh, 0xFFFFFFFF, SEEK_SET);
+			fl_fseek(flh, 0, SEEK_END);
 			filesize=fl_ftell(flh);
 			fl_fclose(flh);
 		}else if(fl_is_dir(spath)){
 			type=FS_Directory;
 		}else {
-            release_fat_lock();
+			release_fat_lock();
+			dbgpf("FAT: Could not stat '%s'\n", spath);
             return invalid_directory_entry;
         }
 

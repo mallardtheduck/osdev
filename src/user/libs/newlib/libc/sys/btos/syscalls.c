@@ -78,7 +78,16 @@ int _fstat(int file, struct stat *st) {
     virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
 	if(vh->type == HANDLE_OS){
-		return _stat(vh->os.path, st);
+		int ret = _stat(vh->os.path, st);
+		if((st->st_mode & S_IFREG) == S_IFREG){
+			//Some filesystems report different "on-disk" sizes to the actual file size
+			//since we have the file open, we can use seek for a more accurate figure.
+			bt_filesize_t pos = bt_fseek(vh->os.handle, 0, FS_Relative);
+			bt_filesize_t size = bt_fseek(vh->os.handle, 0, FS_Backwards);
+			bt_fseek(vh->os.handle, pos, FS_Set);
+			st->st_size = (long)size;
+		}
+		return ret;
 	}else{
 	    st->st_mode = S_IFCHR;
 	}
