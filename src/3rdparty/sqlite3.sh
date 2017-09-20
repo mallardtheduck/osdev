@@ -13,4 +13,5 @@ unzip -o sqlite-amalgamation-3200100.zip -d originals
 cd sqlite-amalgamation-3200100
 cp ../sqlite3/btos-build.sh .
 cp ../sqlite3/config.h .
+cp ../sqlite3/sqlitepp.hpp .
 ./btos-build.sh
