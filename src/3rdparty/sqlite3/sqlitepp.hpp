@@ -226,12 +226,12 @@ public:
   }
 
 private:
-  db& operator=(const db&) { }    // no assignment
+  db& operator=(const db&) = delete;    // no assignment
 
 private:
-  ::sqlite3*        db_;    // associated db
   const std::string name_;  // db filename
   bool              open_;  // db open status
+  ::sqlite3*        db_;    // associated db
 };
 
 
@@ -408,9 +408,9 @@ private:
   std::stringstream query_; // query
 
   typedef struct struct_bind_type {
-    const void* ptr_;
+	int         param_num_;
     const char* param_str_;
-    int         param_num_;
+    const void* ptr_;
     int         type_;
     struct_bind_type(int param, const std::vector<std::uint8_t>* blob) : param_num_(param), param_str_(nullptr), ptr_(blob), type_(SQLITE_BLOB) { };
     struct_bind_type(int param, const std::string* text) : param_num_(param), param_str_(nullptr), ptr_(text), type_(SQLITE_TEXT) { };
@@ -467,7 +467,7 @@ public:
   }
 
 private:
-  transaction& operator=(const transaction&) { }    // no assignment
+  transaction& operator=(const transaction&) = delete;    // no assignment
 
 private:
   const db& db_;
