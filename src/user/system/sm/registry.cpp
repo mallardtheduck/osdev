@@ -1,4 +1,4 @@
-#include <sqlitepp.hpp>
+#include "sqlentity.hpp"
 #include <btos.h>
 #include <btos/envvars.hpp>
 
@@ -7,6 +7,50 @@ using std::string;
 static const string dbPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/REGISTRY.DB");
 
 sqlitepp::db db(dbPath, false);
+
+struct Package : public BoundEntity{
+	int64_t id = -1;
+	string name;
+	string path;
+	string descr;
+	string ver;
+
+	void Bind(){
+		binder.SetTable("package");
+		binder.SetKey("id");
+		binder.BindVar("id", id);
+		binder.BindVar("name", name);
+		binder.BindVar("path", path);
+		binder.BindVar("desr", descr);
+		binder.BindVar("ver", ver);
+	}
+};
+
+struct Feature : public BoundEntity{
+	int64_t id = -1;
+	int64_t package_id;
+	string type;
+	string name;
+	string ver;
+	string descr;
+	string path;
+	string file;
+	int64_t flags;
+
+	void Bind(){
+		binder.SetTable("feature");
+		binder.SetKey("id");
+		binder.BindVar("id", id);
+		binder.BindVar("pkgid", package_id);
+		binder.BindVar("type", type);
+		binder.BindVar("name", name);
+		binder.BindVar("ver", ver);
+		binder.BindVar("descr", descr);
+		binder.BindVar("path", path);
+		binder.BindVar("file", file);
+		binder.BindVar("flags", flags);
+	}
+};
 
 static void InitDB(){
 	if(db.is_open()) return;
@@ -83,3 +127,4 @@ string GetAssociation(const string &path){
 	}
 	return "";
 }
+
