@@ -144,7 +144,19 @@ private:
 	void Bound(){
 		if(!bound) Bind();
 		bound = true;
-	}
+    }
+    
+    void MakeSelect(std::stringstream &ss){
+        ss << "SELECT ";
+        auto fields = binder.GetFieldList();
+		bool firstField = true;
+		for(auto &f : fields){
+			if(!firstField)	ss << ", ";
+			else firstField = false;
+			ss << f;
+        }
+        ss << " FROM " << binder.GetTable();
+    }
 public:
 	TableBind binder;
 
@@ -216,15 +228,7 @@ public:
     virtual void GetByKey(sqlitepp::db &db, uint64_t id){
         Bound();
         std::stringstream ss;
-        ss << "SELECT ";
-        auto fields = binder.GetFieldList();
-		bool firstField = true;
-		for(auto &f : fields){
-			if(!firstField)	ss << ", ";
-			else firstField = false;
-			ss << f;
-        }
-        ss << " FROM " << binder.GetTable();
+        MakeSelect(ss);
         auto keyField = binder.GetKey();
         ss << " WHERE " << keyField << " = @" << keyField;
 
@@ -238,6 +242,36 @@ public:
             binder.DBRead(row);
         }
     }
+
+    virtual void ReadRow(sqlitepp::row &row){
+        Bound();
+        binder.DBRead(row);
+    }
+
+    virtual void GetWhere(sqlitepp::db &db, const std::string &where, 
+        std::map<std::string, std::string> vars = std::map<std::string, std::string>()
+    ){
+        Bound();
+        std::stringstream ss;
+        MakeSelect(ss);
+        ss << " WHERE " << where << " ";
+
+        sqlitepp::query selectQ(db, ss.str());
+
+        std::vector<std::shared_ptr<char>> atvars;
+        for(auto &v : vars){
+            std::shared_ptr<char> atKey(strdup(("@" + v.first).c_str()));
+            selectQ.bind(atKey.get(), v.second);
+            atvars.push_back(atKey);
+        }
+
+        auto res = selectQ.store();
+        if(res.size() > 0){
+            auto &row = res.front();
+            binder.DBRead(row);
+        }
+    }
+
 };
 
 #endif
