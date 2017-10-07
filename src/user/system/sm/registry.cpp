@@ -12,7 +12,7 @@ struct Package : public BoundEntity{
 	int64_t id = -1;
 	string name;
 	string path;
-	string descr;
+	string description;
 	string ver;
 
 	void Bind(){
@@ -21,7 +21,7 @@ struct Package : public BoundEntity{
 		binder.BindVar("id", id);
 		binder.BindVar("name", name);
 		binder.BindVar("path", path);
-		binder.BindVar("desr", descr);
+		binder.BindVar("desr", description);
 		binder.BindVar("ver", ver);
 	}
 };
@@ -32,7 +32,7 @@ struct Feature : public BoundEntity{
 	string type;
 	string name;
 	string ver;
-	string descr;
+	string description;
 	string path;
 	string file;
 	int64_t flags;
@@ -45,10 +45,72 @@ struct Feature : public BoundEntity{
 		binder.BindVar("type", type);
 		binder.BindVar("name", name);
 		binder.BindVar("ver", ver);
-		binder.BindVar("descr", descr);
+		binder.BindVar("descr", description);
 		binder.BindVar("path", path);
 		binder.BindVar("file", file);
 		binder.BindVar("flags", flags);
+	}
+};
+
+struct FeatureRequirement : public BoundEntity{
+	int64_t id = -1;
+	int64_t feature_id;
+	int64_t requires_id;
+
+	void Bind(){
+		binder.SetTable("feature_req");
+		binder.SetKey("id");
+		binder.BindVar("id", id);
+		binder.BindVar("featid", feature_id);
+		binder.BindVar("reqid", requires_id);
+	}
+};
+
+struct FileType : public BoundEntity{
+	int64_t id = -1;
+	int64_t package_id;
+	string extension;
+	string mimeType;
+
+	void Bind(){
+		binder.SetTable("ext");
+		binder.SetKey("id");
+		binder.BindVar("id", id);
+		binder.BindVar("pkgid", package_id);
+		binder.BindVar("ext", extension);
+		binder.BindVar("mimeType", mimeType);
+	}
+};
+
+struct Association : public BoundEntity{
+	int64_t id = -1;
+	int64_t package_id;
+	int64_t feature_id;
+	string description;
+	string cmdTemplate;
+
+	void Bind(){
+		binder.SetTable("assoc");
+		binder.SetKey("id");
+		binder.BindVar("id", id);
+		binder.BindVar("pkgid", package_id);
+		binder.BindVar("featid", feature_id);
+		binder.BindVar("descr", description);
+		binder.BindVar("template", cmdTemplate);
+	}
+};
+
+struct DefaultAssociation : public BoundEntity{
+	int64_t id = -1;
+	int64_t fileType_id;
+	int64_t association_id;
+
+	void Bind(){
+		binder.SetTable("default_assoc");
+		binder.SetKey("id");
+		binder.BindVar("id", id);
+		binder.BindVar("extid", fileType_id);
+		binder.BindVar("associd", association_id);
 	}
 };
 
@@ -57,10 +119,10 @@ static void InitDB(){
 	db.open();
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS package(id INTEGER PRIMARY KEY, path TEXT, name TEXT, descr TEXT, ver TEXT").exec();
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS feature(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), type TEXT, name TEXT, ver TEXT, descr TEXT, path TEXT, file TEXT, flags INTEGER)").exec();
-	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS feature_reqs(featid INTEGER REFERENCES feature(id), reqid INTEGER REFERENCES feature(id))").exec();
+	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS feature_req(id INTEGER PRIMARY KEY, featid INTEGER REFERENCES feature(id), reqid INTEGER REFERENCES feature(id))").exec();
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS ext(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), ext TEXT, mimeType TEXT)").exec();
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS assoc(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), featid INTEGER REFERENCES feature(id), descr TEXT, template TEXT)").exec();
-	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS default_assoc(extid INTEGER REFERENCES ext(id), associd INTEGER REFERENCES assoc(id))").exec();
+	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS default_assoc(id INTEGER PRIMARY KEY, extid INTEGER REFERENCES ext(id), associd INTEGER REFERENCES assoc(id))").exec();
 }
 
 static size_t suffixMatch(const string &a, const string &b){
@@ -76,53 +138,31 @@ static size_t suffixMatch(const string &a, const string &b){
 
 string GetAssociation(const string &path){
 	InitDB();
-	static sqlitepp::query extQ(db, "SELECT id, ext FROM ext");
-	auto exts = extQ.store();
-	string extid;
+	auto exts = GetAll<FileType>(db);
+	int64_t extid = -1;
 	size_t len = 0;
 	for(const auto &e : exts){
-		string ext = e["ext"];
-		auto c = suffixMatch(path, ext);
+		auto c = suffixMatch(path, e.extension);
 		if(c > len){
 			len = c;
-			extid = string(e["id"]);
+			extid = e.id;
 		}
 	}
 	
-	if(!extid.empty()){
-		static sqlitepp::query defaultQ(db, "SELECT associd FROM default_assoc WHERE extid = @ext LIMIT 1");
-		defaultQ.bind("@ext", extid);
-		string associd;
-		auto defaultRes = defaultQ.store();
-		if(!defaultRes.empty()) associd = string(defaultRes[0]["associd"]);
+	if(extid > 0){
+		int64_t associd = -1;
+		auto defaultAssoc = GetWhere<DefaultAssociation>(db, "extid = @ext", {{"ext", to_string(extid)}});
+		if(defaultAssoc.id > 0) associd = defaultAssoc.association_id;
 		else{
-			static sqlitepp::query firstQ(db, "SELECT id FROM assoc WHERE extid = @ext LIMIT 1");
-			defaultQ.bind("@ext", extid);
-			auto firstRes = firstQ.store();
-			if(!firstRes.empty()) associd = string(firstRes[0]["id"]);
+			auto assoc = GetWhere<Association>(db, "extid = @ext", {{"ext", to_string(extid)}});
+			if(assoc.id > 0) associd = assoc.id;
 		}
 		
-		if(!associd.empty()){
-			static sqlitepp::query featureQ(db, 
-				"SELECT f.type AS ftype, f.path AS fpath, f.file AS ffile, p.path AS ppath \
-				FROM assoc a \
-				INNER JOIN feature f ON a.featid = f.id \
-				INNER JOIN package p ON a.pkgid = p.id \
-				WHERE \
-				a.associd = @assoc \
-				LIMIT 1");
-			featureQ.bind("@assoc", associd);
-			auto featureRes = featureQ.store();
-			if(!featureRes.empty()){
-				auto &frow = featureRes[0];
-				string ftype = frow["ftype"];
-				if(ftype == "app" || ftype == "cmd"){
-					string fpath = frow["fpath"];
-					string ffile = frow["ffile"];
-					string ppath = frow["ppath"];
-					return ppath + fpath + ffile;
-				}
-			}
+		if(associd > 0){
+			auto assoc = GetByKey<Association>(db, associd);
+			auto feature = GetByKey<Feature>(db, assoc.feature_id);
+			auto package = GetByKey<Package>(db, feature.package_id);
+			return package.path + feature.path + feature.file;
 		}
 	}
 	return "";

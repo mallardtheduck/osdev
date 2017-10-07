@@ -7,6 +7,7 @@
 #include <memory>
 #include <cstring>
 #include <sstream>
+#include <type_traits>
 
 template<typename T> std::string to_string(const T &n){
 	std::ostringstream stm;
@@ -172,9 +173,9 @@ public:
 
 	virtual void Bind() = 0;
 
-	virtual void Insert(sqlitepp::db &db){
-		Bound();
-		std::stringstream ss;
+    virtual std::string InsertSQL(){
+        Bound();
+        std::stringstream ss;
 		ss << "INSERT INTO " << binder.GetTable() << " (";
 		auto fields = binder.GetFieldList();
 		bool firstField = true;
@@ -192,15 +193,20 @@ public:
 			else firstField = false;
 			ss << "@" << f;
 		}
-		ss << ")";
-		sqlitepp::query insertQ(db, ss.str());
+        ss << ")";
+        return ss.str();
+    }
+
+	virtual void Insert(sqlitepp::db &db){
+		Bound();
+		sqlitepp::query insertQ(db, InsertSQL());
 		binder.DBBind(insertQ);
 		insertQ.exec();
 		auto id = insertQ.insert_id();
 		binder.AssignKey(id);
     }
 
-    virtual void Update(sqlitepp::db &db){
+    virtual std::string UpdateSQL(){
         Bound();
         std::stringstream ss;
         ss << "UPDATE " << binder.GetTable() << " ";
@@ -214,7 +220,12 @@ public:
             ss << f << "= @" << f;
         }
         ss << " WHERE " << binder.GetKey() << " = @" << binder.GetKey();
-        sqlitepp::query updateQ(db, ss.str());
+        return ss.str();
+    }
+
+    virtual void Update(sqlitepp::db &db){
+        Bound();
+        sqlitepp::query updateQ(db, UpdateSQL());
         binder.DBBind(updateQ, true);
         updateQ.exec();
     }
@@ -225,14 +236,20 @@ public:
         else Insert(db);
     }
 
-    virtual void GetByKey(sqlitepp::db &db, uint64_t id){
+    virtual std::string GetByKeySQL(){
         Bound();
         std::stringstream ss;
         MakeSelect(ss);
         auto keyField = binder.GetKey();
         ss << " WHERE " << keyField << " = @" << keyField;
+        ss << " LIMIT 1";
+        return ss.str();
+    }
 
-        sqlitepp::query selectQ(db, ss.str());
+    virtual void GetByKey(sqlitepp::db &db, uint64_t id){
+        Bound();
+        sqlitepp::query selectQ(db, GetByKeySQL());
+        auto keyField = binder.GetKey();
         std::unique_ptr<char> atKey(strdup(("@" + keyField).c_str()));
         selectQ.bind(atKey.get(), to_string(id));
 
@@ -248,15 +265,19 @@ public:
         binder.DBRead(row);
     }
 
-    virtual void GetWhere(sqlitepp::db &db, const std::string &where, 
-        std::map<std::string, std::string> vars = std::map<std::string, std::string>()
-    ){
+    virtual std::string GetWhereSQL(const std::string &where){
         Bound();
         std::stringstream ss;
         MakeSelect(ss);
         ss << " WHERE " << where << " ";
+        return ss.str();
+    }
 
-        sqlitepp::query selectQ(db, ss.str());
+    virtual void GetWhere(sqlitepp::db &db, const std::string &where, 
+        std::map<std::string, std::string> vars = std::map<std::string, std::string>()
+    ){
+        Bound();
+        sqlitepp::query selectQ(db, GetWhereSQL(where));
 
         std::vector<std::shared_ptr<char>> atvars;
         for(auto &v : vars){
@@ -264,14 +285,60 @@ public:
             selectQ.bind(atKey.get(), v.second);
             atvars.push_back(atKey);
         }
-
-        auto res = selectQ.store();
-        if(res.size() > 0){
-            auto &row = res.front();
-            binder.DBRead(row);
-        }
+        
+        auto row = selectQ.use();
+        binder.DBRead(row);
+        selectQ.use_abort();
     }
 
 };
+
+template<typename T> T GetByKey(sqlitepp::db &db, int64_t key){
+    static_assert(std::is_base_of<BoundEntity, T>::value, "Type is not a BoundEntity!");
+    static_assert(std::is_default_constructible<T>::value, "Type not default constructible!");
+    T ret;
+    ret.GetByKey(db, key);
+    return ret;
+}
+
+template<typename T> T GetWhere(sqlitepp::db &db, const std::string &where,
+    std::map<std::string, std::string> vars = std::map<std::string, std::string>()
+){
+    static_assert(std::is_base_of<BoundEntity, T>::value, "Type is not a BoundEntity!");
+    static_assert(std::is_default_constructible<T>::value, "Type not default constructible!");
+    T ret;
+    ret.GetWhere(db, where, vars);
+    return ret;
+}
+
+template<typename T> std::vector<T> GetAllWhere(sqlitepp::db &db, const std::string &where,
+    std::map<std::string, std::string> vars = std::map<std::string, std::string>()
+){
+    static_assert(std::is_base_of<BoundEntity, T>::value, "Type is not a BoundEntity!");
+    static_assert(std::is_default_constructible<T>::value, "Type not default constructible!");
+
+    T sug;
+    sqlitepp::query selectQ(db, sug.GetWhereSQL(where));
+    
+    std::vector<std::shared_ptr<char>> atvars;
+    for(auto &v : vars){
+        std::shared_ptr<char> atKey(strdup(("@" + v.first).c_str()));
+        selectQ.bind(atKey.get(), v.second);
+        atvars.push_back(atKey);
+    }
+    
+    std::vector<T> ret;
+    auto row = selectQ.use();
+    while(!row.empty()){
+        T t;
+        t.ReadRow(row);
+        row = selectQ.use_next();
+    }
+    return ret;
+}
+
+template<typename T> std::vector<T> GetAll(sqlitepp::db &db){
+    return GetAllWhere<T>(db, "1 = 1");
+}
 
 #endif
