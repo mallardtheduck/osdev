@@ -1,4 +1,4 @@
-OUTPUT-NAME := session.elx
+OUTPUT-NAME := registry.elx
 
 BUILD-AS := i686-pc-btos-as
 BUILD-AS-OPTIONS := -g -fPIC -c
@@ -9,10 +9,9 @@ BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -std=gnu99
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -o $(OUTPUT-NAME) -O2
-LINK-OPTIONS := -L../../libs/sm -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib -lsm
+LINK-FLAGS := -o $(OUTPUT-NAME)
+LINK-OPTIONS := -lgcc_s -lstdc++ -lm -lbtoscore -lbtoslib -L../../../3rdparty/install/btos/lib -lsqlite3
 
-BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")
 CFILES := $(shell find . -type f -name "*.c")
 CPPFILES := $(shell find . -type f -name "*.cpp")

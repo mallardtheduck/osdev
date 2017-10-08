@@ -75,6 +75,7 @@ import-files:=\
  data/btos/lib/sqlite3.ell \
  data/btos/bin/sqlite.elx \
  data/btos/cmd/ini.elx \
+ data/btos/system/registry.elx \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -314,6 +315,9 @@ data/btos/bin/sqlite.elx: ../../3rdparty/install/btos/bin/sqlite.elx
 	cp $< $@
 
 data/btos/cmd/ini.elx: ../../user/cmds/ini/ini.elx
+	cp $< $@
+
+data/btos/system/registry.elx: ../../user/system/registry/registry.elx
 	cp $< $@
 
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx

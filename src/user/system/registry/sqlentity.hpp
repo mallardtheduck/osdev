@@ -289,6 +289,7 @@ public:
         auto row = selectQ.use();
         binder.DBRead(row);
         selectQ.use_abort();
+        atvars.clear();
     }
 
 };

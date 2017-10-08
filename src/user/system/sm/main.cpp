@@ -75,7 +75,6 @@ int main(int argc, char **argv){
 	}
 
 	auto sessionType = GetSessionType(args[1]);
-	RegTest();
 
 	if(sessionType.first){
 		Terminal().SetTitle(sessionType.second.GetName());

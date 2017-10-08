@@ -89,6 +89,7 @@ struct Association : public BoundEntity{
 	int64_t id = -1;
 	int64_t package_id;
 	int64_t feature_id;
+	int64_t fileType_id;
 	string description;
 	string cmdTemplate;
 
@@ -98,6 +99,7 @@ struct Association : public BoundEntity{
 		binder.BindVar("id", id);
 		binder.BindVar("pkgid", package_id);
 		binder.BindVar("featid", feature_id);
+		binder.BindVar("extid", fileType_id);
 		binder.BindVar("descr", description);
 		binder.BindVar("template", cmdTemplate);
 	}
@@ -123,11 +125,11 @@ static void InitDB(){
 	if(!db.is_open()){
 		cout << "Could not open " << dbPath << endl;
 	}
-	cout << sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS package(id INTEGER PRIMARY KEY, path TEXT, name TEXT, descr TEXT, ver TEXT)").exec() << endl;
-	cout << sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS feature(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), type TEXT, name TEXT, ver TEXT, descr TEXT, path TEXT, file TEXT, flags INTEGER)").exec() << endl;
+	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS package(id INTEGER PRIMARY KEY, path TEXT, name TEXT, descr TEXT, ver TEXT)").exec();
+	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS feature(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), type TEXT, name TEXT, ver TEXT, descr TEXT, path TEXT, file TEXT, flags INTEGER)").exec();
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS feature_req(id INTEGER PRIMARY KEY, featid INTEGER REFERENCES feature(id), reqid INTEGER REFERENCES feature(id))").exec();
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS ext(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), ext TEXT, mimeType TEXT)").exec();
-	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS assoc(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), featid INTEGER REFERENCES feature(id), descr TEXT, template TEXT)").exec();
+	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS assoc(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), featid INTEGER REFERENCES feature(id), extid INTEGER REFERENCES ext(id), descr TEXT, template TEXT)").exec();
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS default_assoc(id INTEGER PRIMARY KEY, extid INTEGER REFERENCES ext(id), associd INTEGER REFERENCES assoc(id))").exec();
 }
 
@@ -175,5 +177,44 @@ string GetAssociation(const string &path){
 }
 
 void RegTest(){
+	InitDB();
+	auto pkg = GetWhere<Package>(db, "name = 'test'");
+	if(pkg.id == -1){
+		pkg.name = "test";
+		pkg.description = "Test Package";
+		pkg.path = "HDD:/TEST";
+		pkg.Save(db);
+	}
+	auto feat = GetWhere<Feature>(db, "name = 'test'");
+	if(feat.id == -1){
+		feat.name = "test";
+		feat.package_id = pkg.id;
+		feat.description = "Test Feature";
+		feat.path = "/";
+		feat.type = "cmd";
+		feat.file = "test.elx";
+		feat.Save(db);
+	}
+	auto ext = GetWhere<FileType>(db, "mimeType = 'test/test'");
+	if(ext.id == -1){
+		ext.extension = ".txt";
+		ext.mimeType = "test/test";
+		ext.package_id = pkg.id;
+		ext.Save(db);
+	}
+	auto assoc = GetWhere<Association>(db, "featid = @featid", {{"featid", to_string(feat.id)}});
+	if(assoc.id == -1){
+		assoc.feature_id = feat.id;
+		assoc.package_id = pkg.id;
+		assoc.fileType_id = ext.id;
+		assoc.description = "Test Association";
+		assoc.cmdTemplate = "$";
+		assoc.Save(db);
+	}
 	cout << ".txt : " << GetAssociation("file.txt") << endl;
+}
+
+int main(){
+	RegTest();
+	return 0;
 }

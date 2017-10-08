@@ -1,4 +1,4 @@
-PROGS := eloader spawn switcher gds wm sm
+PROGS := eloader spawn switcher gds wm sm registry
 
 all: dummy.file
 	for dir in $(PROGS); do \
