@@ -17,6 +17,8 @@ using namespace btos_api::sm;
 
 static const string SessionsPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/SESSIONS/");
 
+extern void RegTest();
+
 vector<string> argv_to_vec(int argc, char **argv){
 	vector<string> ret;
 	for(int i = 0; i < argc; ++i){
@@ -73,6 +75,7 @@ int main(int argc, char **argv){
 	}
 
 	auto sessionType = GetSessionType(args[1]);
+	RegTest();
 
 	if(sessionType.first){
 		Terminal().SetTitle(sessionType.second.GetName());

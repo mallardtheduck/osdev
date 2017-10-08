@@ -1,8 +1,11 @@
 #include "sqlentity.hpp"
 #include <btos.h>
 #include <btos/envvars.hpp>
+#include <iostream>
 
 using std::string;
+using std::cout;
+using std::endl;
 
 static const string dbPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/REGISTRY.DB");
 
@@ -117,8 +120,11 @@ struct DefaultAssociation : public BoundEntity{
 static void InitDB(){
 	if(db.is_open()) return;
 	db.open();
-	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS package(id INTEGER PRIMARY KEY, path TEXT, name TEXT, descr TEXT, ver TEXT").exec();
-	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS feature(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), type TEXT, name TEXT, ver TEXT, descr TEXT, path TEXT, file TEXT, flags INTEGER)").exec();
+	if(!db.is_open()){
+		cout << "Could not open " << dbPath << endl;
+	}
+	cout << sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS package(id INTEGER PRIMARY KEY, path TEXT, name TEXT, descr TEXT, ver TEXT)").exec() << endl;
+	cout << sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS feature(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), type TEXT, name TEXT, ver TEXT, descr TEXT, path TEXT, file TEXT, flags INTEGER)").exec() << endl;
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS feature_req(id INTEGER PRIMARY KEY, featid INTEGER REFERENCES feature(id), reqid INTEGER REFERENCES feature(id))").exec();
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS ext(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), ext TEXT, mimeType TEXT)").exec();
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS assoc(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), featid INTEGER REFERENCES feature(id), descr TEXT, template TEXT)").exec();
@@ -168,3 +174,6 @@ string GetAssociation(const string &path){
 	return "";
 }
 
+void RegTest(){
+	cout << ".txt : " << GetAssociation("file.txt") << endl;
+}

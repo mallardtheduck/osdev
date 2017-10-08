@@ -11,6 +11,7 @@ mkdir -p originals
 unzip -o sqlite-amalgamation-3200100.zip -d originals
 
 cd sqlite-amalgamation-3200100
+patch -p1 -R < ../sqlite3/sqlite3.c.patch
 cp ../sqlite3/btos-build.sh .
 cp ../sqlite3/config.h .
 cp ../sqlite3/sqlitepp.hpp .

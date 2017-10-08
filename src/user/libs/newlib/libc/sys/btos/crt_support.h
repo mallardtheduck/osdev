@@ -1,6 +1,8 @@
 #ifndef _CRT_SUPPORT_H
 #define _CRT_SUPPORT_H
 
+#include <btos.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
