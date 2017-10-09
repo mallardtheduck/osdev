@@ -287,8 +287,10 @@ public:
         }
         
         auto row = selectQ.use();
-        binder.DBRead(row);
-        selectQ.use_abort();
+        if(!row.empty()){
+            binder.DBRead(row);
+            selectQ.use_abort();
+        }
         atvars.clear();
     }
 
