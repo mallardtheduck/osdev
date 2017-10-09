@@ -8,6 +8,7 @@
 #include <cstring>
 #include <sstream>
 #include <type_traits>
+#include <iostream>
 
 template<typename T> std::string to_string(const T &n){
 	std::ostringstream stm;
@@ -31,13 +32,16 @@ public:
 template<typename T> class VarBind : public IVarBind{
 private:
 	T *var;
-	std::unique_ptr<char> atname;
+    std::unique_ptr<char> atname;
+    std::string value;
 public:
 	VarBind(T& v) : var(&v) {};
 
 	void DBBind(sqlitepp::query &q, const std::string &name){
-		atname.reset(strdup(("@" + name).c_str()));
-		q.bind(atname.get(), to_string(*var));
+        atname.reset(strdup(("@" + name).c_str()));
+        value = to_string(*var);
+        q.bind(atname.get(), value);
+        std::cout << atname.get() << " = '" << value << "'" << std::endl;
 	}
 
 	void DBRead(sqlitepp::field_type &f){
@@ -102,7 +106,7 @@ public:
 
 	void DBBind(sqlitepp::query &q, bool includeKey = false){
 		for(auto &f : fields){
-			if(!includeKey || f.first != key) f.second->DBBind(q, f.first);
+			if(includeKey || f.first != key) f.second->DBBind(q, f.first);
 		}
     }
 
@@ -194,6 +198,7 @@ public:
 			ss << "@" << f;
 		}
         ss << ")";
+        std::cout << ss.str() << std::endl;
         return ss.str();
     }
 
@@ -201,7 +206,7 @@ public:
 		Bound();
 		sqlitepp::query insertQ(db, InsertSQL());
 		binder.DBBind(insertQ);
-		insertQ.exec();
+		std::cout << insertQ.exec() << std::endl;
 		auto id = insertQ.insert_id();
 		binder.AssignKey(id);
     }
@@ -220,6 +225,7 @@ public:
             ss << f << "= @" << f;
         }
         ss << " WHERE " << binder.GetKey() << " = @" << binder.GetKey();
+        std::cout << ss.str() << std::endl;
         return ss.str();
     }
 
@@ -243,6 +249,7 @@ public:
         auto keyField = binder.GetKey();
         ss << " WHERE " << keyField << " = @" << keyField;
         ss << " LIMIT 1";
+        std::cout << ss.str() << std::endl;
         return ss.str();
     }
 
@@ -270,6 +277,7 @@ public:
         std::stringstream ss;
         MakeSelect(ss);
         ss << " WHERE " << where << " ";
+        std::cout << ss.str() << std::endl;
         return ss.str();
     }
 
