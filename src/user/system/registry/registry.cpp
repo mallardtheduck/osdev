@@ -24,7 +24,7 @@ struct Package : public BoundEntity{
 		binder.BindVar("id", id);
 		binder.BindVar("name", name);
 		binder.BindVar("path", path);
-		binder.BindVar("desr", description);
+		binder.BindVar("descr", description);
 		binder.BindVar("ver", ver);
 	}
 };
@@ -136,7 +136,7 @@ static void InitDB(){
 static size_t suffixMatch(const string &a, const string &b){
 	size_t ret = 0;
 	if(a.length() && b.length()){
-		for(size_t ai = a.length() - 1, bi = b.length() - 1; ai > 0 && bi > 0; --ai, --bi){
+		for(ptrdiff_t ai = a.length() - 1, bi = b.length() - 1; ai >= 0 && bi >= 0; --ai, --bi){
 			if(a[ai] == b[bi]) ++ret;
 			else break;
 		}
@@ -151,7 +151,7 @@ string GetAssociation(const string &path){
 	size_t len = 0;
 	for(const auto &e : exts){
 		auto c = suffixMatch(path, e.extension);
-		if(c > len){
+		if(c == e.extension.length() && c > len){
 			len = c;
 			extid = e.id;
 		}

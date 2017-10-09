@@ -41,7 +41,6 @@ public:
         atname.reset(strdup(("@" + name).c_str()));
         value = to_string(*var);
         q.bind(atname.get(), value);
-        std::cout << atname.get() << " = '" << value << "'" << std::endl;
 	}
 
 	void DBRead(sqlitepp::field_type &f){
@@ -198,7 +197,6 @@ public:
 			ss << "@" << f;
 		}
         ss << ")";
-        std::cout << ss.str() << std::endl;
         return ss.str();
     }
 
@@ -206,7 +204,6 @@ public:
 		Bound();
 		sqlitepp::query insertQ(db, InsertSQL());
 		binder.DBBind(insertQ);
-		std::cout << insertQ.exec() << std::endl;
 		auto id = insertQ.insert_id();
 		binder.AssignKey(id);
     }
@@ -225,7 +222,6 @@ public:
             ss << f << "= @" << f;
         }
         ss << " WHERE " << binder.GetKey() << " = @" << binder.GetKey();
-        std::cout << ss.str() << std::endl;
         return ss.str();
     }
 
@@ -249,7 +245,6 @@ public:
         auto keyField = binder.GetKey();
         ss << " WHERE " << keyField << " = @" << keyField;
         ss << " LIMIT 1";
-        std::cout << ss.str() << std::endl;
         return ss.str();
     }
 
@@ -277,7 +272,6 @@ public:
         std::stringstream ss;
         MakeSelect(ss);
         ss << " WHERE " << where << " ";
-        std::cout << ss.str() << std::endl;
         return ss.str();
     }
 
@@ -343,6 +337,7 @@ template<typename T> std::vector<T> GetAllWhere(sqlitepp::db &db, const std::str
     while(!row.empty()){
         T t;
         t.ReadRow(row);
+        ret.push_back(t);
         row = selectQ.use_next();
     }
     return ret;
