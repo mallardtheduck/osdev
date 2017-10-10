@@ -1,11 +1,13 @@
+#include <iostream>
 #include "sqlentity.hpp"
 #include <btos.h>
 #include <btos/envvars.hpp>
-#include <iostream>
 
 using std::string;
 using std::cout;
 using std::endl;
+
+using namespace sqlentity;
 
 static const string dbPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/REGISTRY.DB");
 
@@ -31,7 +33,7 @@ struct Package : public BoundEntity{
 
 struct Feature : public BoundEntity{
 	int64_t id = -1;
-	int64_t package_id;
+	Reference<Package> package;
 	string type;
 	string name;
 	string ver;
@@ -44,7 +46,7 @@ struct Feature : public BoundEntity{
 		binder.SetTable("feature");
 		binder.SetKey("id");
 		binder.BindVar("id", id);
-		binder.BindVar("pkgid", package_id);
+		binder.BindVar("pkgid", package);
 		binder.BindVar("type", type);
 		binder.BindVar("name", name);
 		binder.BindVar("ver", ver);
@@ -57,21 +59,21 @@ struct Feature : public BoundEntity{
 
 struct FeatureRequirement : public BoundEntity{
 	int64_t id = -1;
-	int64_t feature_id;
-	int64_t requires_id;
+	Reference<Feature> feature;
+	Reference<Feature> requires;
 
 	void Bind(){
 		binder.SetTable("feature_req");
 		binder.SetKey("id");
 		binder.BindVar("id", id);
-		binder.BindVar("featid", feature_id);
-		binder.BindVar("reqid", requires_id);
+		binder.BindVar("featid", feature);
+		binder.BindVar("reqid", requires);
 	}
 };
 
 struct FileType : public BoundEntity{
 	int64_t id = -1;
-	int64_t package_id;
+	Reference<Package> package;
 	string extension;
 	string mimeType;
 
@@ -79,7 +81,7 @@ struct FileType : public BoundEntity{
 		binder.SetTable("ext");
 		binder.SetKey("id");
 		binder.BindVar("id", id);
-		binder.BindVar("pkgid", package_id);
+		binder.BindVar("pkgid", package);
 		binder.BindVar("ext", extension);
 		binder.BindVar("mimeType", mimeType);
 	}
@@ -87,9 +89,9 @@ struct FileType : public BoundEntity{
 
 struct Association : public BoundEntity{
 	int64_t id = -1;
-	int64_t package_id;
-	int64_t feature_id;
-	int64_t fileType_id;
+	Reference<Package> package;
+	Reference<Feature> feature;
+	Reference<FileType> fileType;
 	string description;
 	string cmdTemplate;
 
@@ -97,9 +99,9 @@ struct Association : public BoundEntity{
 		binder.SetTable("assoc");
 		binder.SetKey("id");
 		binder.BindVar("id", id);
-		binder.BindVar("pkgid", package_id);
-		binder.BindVar("featid", feature_id);
-		binder.BindVar("extid", fileType_id);
+		binder.BindVar("pkgid", package);
+		binder.BindVar("featid", feature);
+		binder.BindVar("extid", fileType);
 		binder.BindVar("descr", description);
 		binder.BindVar("template", cmdTemplate);
 	}
@@ -107,15 +109,15 @@ struct Association : public BoundEntity{
 
 struct DefaultAssociation : public BoundEntity{
 	int64_t id = -1;
-	int64_t fileType_id;
-	int64_t association_id;
+	Reference<FileType> fileType;
+	Reference<Association> association;
 
 	void Bind(){
 		binder.SetTable("default_assoc");
 		binder.SetKey("id");
 		binder.BindVar("id", id);
-		binder.BindVar("extid", fileType_id);
-		binder.BindVar("associd", association_id);
+		binder.BindVar("extid", fileType);
+		binder.BindVar("associd", association);
 	}
 };
 
@@ -158,18 +160,16 @@ string GetAssociation(const string &path){
 	}
 	
 	if(extid > 0){
-		int64_t associd = -1;
+		Association assoc;
 		auto defaultAssoc = GetWhere<DefaultAssociation>(db, "extid = @ext", {{"ext", to_string(extid)}});
-		if(defaultAssoc.id > 0) associd = defaultAssoc.association_id;
+		if(defaultAssoc.id > 0) assoc = defaultAssoc.association.Get(db);
 		else{
-			auto assoc = GetWhere<Association>(db, "extid = @ext", {{"ext", to_string(extid)}});
-			if(assoc.id > 0) associd = assoc.id;
+			assoc = GetWhere<Association>(db, "extid = @ext", {{"ext", to_string(extid)}});
 		}
 		
-		if(associd > 0){
-			auto assoc = GetByKey<Association>(db, associd);
-			auto feature = GetByKey<Feature>(db, assoc.feature_id);
-			auto package = GetByKey<Package>(db, feature.package_id);
+		if(assoc.id > 0){
+			auto feature = assoc.feature.Get(db);
+			auto package = feature.package.Get(db);
 			return package.path + feature.path + feature.file;
 		}
 	}
@@ -188,7 +188,7 @@ void RegTest(){
 	auto feat = GetWhere<Feature>(db, "name = 'test'");
 	if(feat.id == -1){
 		feat.name = "test";
-		feat.package_id = pkg.id;
+		feat.package = pkg;
 		feat.description = "Test Feature";
 		feat.path = "/";
 		feat.type = "cmd";
@@ -197,21 +197,21 @@ void RegTest(){
 	}
 	auto ext = GetWhere<FileType>(db, "mimeType = 'test/test'");
 	if(ext.id == -1){
-		ext.extension = ".txt";
+		ext.extension = ".test";
 		ext.mimeType = "test/test";
-		ext.package_id = pkg.id;
+		ext.package = pkg;
 		ext.Save(db);
 	}
 	auto assoc = GetWhere<Association>(db, "featid = @featid", {{"featid", to_string(feat.id)}});
 	if(assoc.id == -1){
-		assoc.feature_id = feat.id;
-		assoc.package_id = pkg.id;
-		assoc.fileType_id = ext.id;
+		assoc.feature = feat;
+		assoc.package = pkg;
+		assoc.fileType = ext;
 		assoc.description = "Test Association";
 		assoc.cmdTemplate = "$";
 		assoc.Save(db);
 	}
-	cout << ".txt : " << GetAssociation("file.txt") << endl;
+	cout << ".test : " << GetAssociation("file.test") << endl;
 }
 
 int main(){

@@ -10,6 +10,8 @@
 #include <type_traits>
 #include <iostream>
 
+namespace sqlentity{
+
 template<typename T> std::string to_string(const T &n){
 	std::ostringstream stm;
 	stm << n;
@@ -19,6 +21,22 @@ template<typename T> std::string to_string(const T &n){
 template<> std::string to_string<>(const std::string &s){
 	return s;
 }
+
+template<typename T> T GetByKey(sqlitepp::db &db, int64_t key);
+
+template<typename T> class Reference{
+public:
+    int64_t key = -1;
+
+    Reference<T> &operator=(const T &other){
+        key = other.binder.GetKeyValue();
+        return *this;
+    }
+
+    T Get(sqlitepp::db &db) const{
+        return GetByKey<T>(db, key);
+    }
+};
 
 class IVarBind{
 public:
@@ -95,7 +113,11 @@ public:
 	template<typename T> void BindVar(const std::string &name, T &var){
 		std::shared_ptr<IVarBind> p = std::make_shared<VarBind<T>>(var);
 		fields.insert(std::make_pair(name, p));
-	}
+    }
+    
+    template<typename T> void BindVar(const std::string name, Reference<T> &var){
+        BindVar(name, var.key);
+    }
 
 	std::vector<std::string> GetFieldList(){
 		std::vector<std::string> ret;
@@ -162,7 +184,7 @@ private:
         ss << " FROM " << binder.GetTable();
     }
 public:
-	TableBind binder;
+	mutable TableBind binder;
 
     BoundEntity() = default;
     BoundEntity(const BoundEntity &){
@@ -172,6 +194,22 @@ public:
     BoundEntity(const BoundEntity &&){
         binder.Clear();
         bound = false;
+    }
+
+    BoundEntity &operator=(const BoundEntity &other){
+        if(this != &other){
+            binder.Clear();
+            bound = false;
+        }
+        return *this;
+    }
+
+    BoundEntity &operator=(const BoundEntity &&other){
+        if(this != &other){
+            binder.Clear();
+            bound = false;
+        }
+        return *this;
     }
 
 	virtual void Bind() = 0;
@@ -203,7 +241,8 @@ public:
 	virtual void Insert(sqlitepp::db &db){
 		Bound();
 		sqlitepp::query insertQ(db, InsertSQL());
-		binder.DBBind(insertQ);
+        binder.DBBind(insertQ);
+        insertQ.exec();
 		auto id = insertQ.insert_id();
 		binder.AssignKey(id);
     }
@@ -238,6 +277,25 @@ public:
         else Insert(db);
     }
 
+    virtual std::string DeleteSQL(){
+        Bound();
+        std::stringstream ss;
+        ss << "DELETE FROM " << binder.GetTable();
+        ss << " WHERE " << binder.GetKey() << " = @" << binder.GetKey();
+        return ss.str();
+    }
+
+    virtual void Delete(sqlitepp::db &db){
+        Bound();
+        sqlitepp::query deleteQ(db, DeleteSQL());
+        auto keyField = binder.GetKey();
+        std::unique_ptr<char> atKey(strdup(("@" + keyField).c_str()));
+        auto idstr = to_string(binder.GetKeyValue());
+        deleteQ.bind(atKey.get(), idstr);
+        deleteQ.exec();
+        binder.AssignKey(-1);
+    }
+
     virtual std::string GetByKeySQL(){
         Bound();
         std::stringstream ss;
@@ -253,12 +311,13 @@ public:
         sqlitepp::query selectQ(db, GetByKeySQL());
         auto keyField = binder.GetKey();
         std::unique_ptr<char> atKey(strdup(("@" + keyField).c_str()));
-        selectQ.bind(atKey.get(), to_string(id));
+        auto idstr = to_string(id);
+        selectQ.bind(atKey.get(), idstr);
 
-        auto res = selectQ.store();
-        if(res.size() > 0){
-            auto &row = res.front();
+        auto row = selectQ.use();
+        if(!row.empty()){
             binder.DBRead(row);
+            selectQ.use_abort();
         }
     }
 
@@ -347,4 +406,5 @@ template<typename T> std::vector<T> GetAll(sqlitepp::db &db){
     return GetAllWhere<T>(db, "1 = 1");
 }
 
+}
 #endif
