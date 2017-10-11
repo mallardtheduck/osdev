@@ -21,6 +21,11 @@ struct Association;
 struct DefaultAssociation;
 
 struct Package : public BoundEntity{
+private:
+	Child<Feature> features{"pkgid"};
+	Child<FileType> fileTypes{"pkgid"};
+	Child<Association> associations{"pkgid"};
+public:
 	int64_t id = -1;
 	string name;
 	string path;
@@ -35,17 +40,21 @@ struct Package : public BoundEntity{
 		binder.BindVar("path", path);
 		binder.BindVar("descr", description);
 		binder.BindVar("ver", ver);
-		binder.BindChild<Feature>("features", "pkgid");
-		binder.BindChild<FileType>("fileTypes", "pkgid");
-		binder.BindChild<Association>("associations", "pkgid");
+		binder.BindChild(features);
+		binder.BindChild(fileTypes);
+		binder.BindChild(associations);
 	}
 
-	vector<Feature> Features(sqlitepp::db &db) { return GetChildren<Feature>(db, "features"); }
-	vector<FileType> FileTypes(sqlitepp::db &db) { return GetChildren<FileType>(db, "fileTypes"); }
-	vector<Association> Associations(sqlitepp::db &db) { return GetChildren<Association>(db, "associations"); }
+	vector<Feature> Features(sqlitepp::db &db) { return GetChildren(db, features); }
+	vector<FileType> FileTypes(sqlitepp::db &db) { return GetChildren(db, fileTypes); }
+	vector<Association> Associations(sqlitepp::db &db) { return GetChildren(db, associations); }
 };
 
 struct Feature : public BoundEntity{
+private:
+	Child<FeatureRequirement> requirements{"featid"};
+	Child<FeatureRequirement> requiredBy{"reqid"};
+public:
 	int64_t id = -1;
 	Reference<Package> package;
 	string type;
@@ -68,12 +77,12 @@ struct Feature : public BoundEntity{
 		binder.BindVar("path", path);
 		binder.BindVar("file", file);
 		binder.BindVar("flags", flags);
-		binder.BindChild<FeatureRequirement>("requirements", "featid");
-		binder.BindChild<FeatureRequirement>("requiredBy", "reqid");
+		binder.BindChild(requirements);
+		binder.BindChild(requiredBy);
 	}
 
-	vector<FeatureRequirement> Requirements(sqlitepp::db &db) { return GetChildren<FeatureRequirement>(db, "requirements"); }
-	vector<FeatureRequirement> RequiredBy(sqlitepp::db &db) { return GetChildren<FeatureRequirement>(db, "requiredBy"); }
+	vector<FeatureRequirement> Requirements(sqlitepp::db &db) { return GetChildren(db, requirements); }
+	vector<FeatureRequirement> RequiredBy(sqlitepp::db &db) { return GetChildren(db, requiredBy); }
 };
 
 struct FeatureRequirement : public BoundEntity{
@@ -91,6 +100,10 @@ struct FeatureRequirement : public BoundEntity{
 };
 
 struct FileType : public BoundEntity{
+private:
+	Child<Association> associations{"extid"};
+	Child<DefaultAssociation> defaults{"extid"};
+public:
 	int64_t id = -1;
 	Reference<Package> package;
 	string extension;
@@ -103,12 +116,12 @@ struct FileType : public BoundEntity{
 		binder.BindVar("pkgid", package);
 		binder.BindVar("ext", extension);
 		binder.BindVar("mimeType", mimeType);
-		binder.BindChild<Association>("associations", "extid");
-		binder.BindChild<DefaultAssociation>("defaults", "extid");
+		binder.BindChild(associations);
+		binder.BindChild(defaults);
 	}
 
-	vector<Association> Associations(sqlitepp::db &db) { return GetChildren<Association>(db, "associations"); }
-	vector<DefaultAssociation> Defaults(sqlitepp::db &db) { return GetChildren<DefaultAssociation>(db, "defaults"); }
+	vector<Association> Associations(sqlitepp::db &db) { return GetChildren(db, associations); }
+	vector<DefaultAssociation> Defaults(sqlitepp::db &db) { return GetChildren(db, defaults); }
 };
 
 struct Association : public BoundEntity{

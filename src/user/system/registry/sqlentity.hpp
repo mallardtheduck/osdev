@@ -41,6 +41,13 @@ public:
     }
 };
 
+template<typename T> class Child{
+public:
+	std::string field;
+
+	explicit Child(const std::string &f) : field(f) {}
+};
+
 class IVarBind{
 public:
 	virtual void DBBind(sqlitepp::query &q, const std::string &name) = 0;
@@ -149,9 +156,9 @@ public:
         BindVar(name, var.key);
     }
 
-	template<typename T> void BindChild(const std::string &name, const std::string &field){
-		std::shared_ptr<IChildBind> p = std::make_shared<ChildBind<T>>(field);
-		children.insert(std::make_pair(name, p));
+	template<typename T> void BindChild(const Child<T> &child){
+		std::shared_ptr<IChildBind> p = std::make_shared<ChildBind<T>>(child.field);
+		children.insert(std::make_pair(to_string(&child), p));
 	}
 
 	std::vector<std::string> GetFieldList(){
@@ -395,14 +402,14 @@ public:
         atvars.clear();
     }
 
-	template<typename T> std::vector<T> GetChildren(sqlitepp::db &db, const std::string &name){
+	template<typename T> std::vector<T> GetChildren(sqlitepp::db &db, const Child<T> &child){
 		Bound();
-		auto childBind = binder.GetChildBind(name);
+		auto iChildBind = binder.GetChildBind(to_string(&child));
+		if(!iChildBind) return {};
+		auto childBind = dynamic_cast<ChildBind<T>*>(iChildBind.get());
 		if(!childBind) return {};
-		auto child = dynamic_cast<ChildBind<T>*>(childBind.get());
-		if(!child) return {};
 		
-		return child->Get(db, binder.GetKeyValue());
+		return childBind->Get(db, binder.GetKeyValue());
 	}
 };
 
