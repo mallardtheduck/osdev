@@ -20,7 +20,7 @@ struct FileType;
 struct Association;
 struct DefaultAssociation;
 
-struct Package : public BoundEntity{
+class Package : public BoundEntity{
 private:
 	Child<Feature> features{"pkgid"};
 	Child<FileType> fileTypes{"pkgid"};
@@ -45,12 +45,12 @@ public:
 		binder.BindChild(associations);
 	}
 
-	vector<Feature> Features(sqlitepp::db &db) { return GetChildren(db, features); }
-	vector<FileType> FileTypes(sqlitepp::db &db) { return GetChildren(db, fileTypes); }
-	vector<Association> Associations(sqlitepp::db &db) { return GetChildren(db, associations); }
+	auto Features(sqlitepp::db &db) { return GetChildren(db, features); }
+	auto FileTypes(sqlitepp::db &db) { return GetChildren(db, fileTypes); }
+	auto Associations(sqlitepp::db &db) { return GetChildren(db, associations); }
 };
 
-struct Feature : public BoundEntity{
+class Feature : public BoundEntity{
 private:
 	Child<FeatureRequirement> requirements{"featid"};
 	Child<FeatureRequirement> requiredBy{"reqid"};
@@ -81,8 +81,8 @@ public:
 		binder.BindChild(requiredBy);
 	}
 
-	vector<FeatureRequirement> Requirements(sqlitepp::db &db) { return GetChildren(db, requirements); }
-	vector<FeatureRequirement> RequiredBy(sqlitepp::db &db) { return GetChildren(db, requiredBy); }
+	auto Requirements(sqlitepp::db &db) { return GetChildren(db, requirements); }
+	auto RequiredBy(sqlitepp::db &db) { return GetChildren(db, requiredBy); }
 };
 
 struct FeatureRequirement : public BoundEntity{
@@ -99,7 +99,7 @@ struct FeatureRequirement : public BoundEntity{
 	}
 };
 
-struct FileType : public BoundEntity{
+class FileType : public BoundEntity{
 private:
 	Child<Association> associations{"extid"};
 	Child<DefaultAssociation> defaults{"extid"};
@@ -120,8 +120,8 @@ public:
 		binder.BindChild(defaults);
 	}
 
-	vector<Association> Associations(sqlitepp::db &db) { return GetChildren(db, associations); }
-	vector<DefaultAssociation> Defaults(sqlitepp::db &db) { return GetChildren(db, defaults); }
+	auto Associations(sqlitepp::db &db) { return GetChildren(db, associations); }
+	auto Defaults(sqlitepp::db &db) { return GetChildren(db, defaults); }
 };
 
 struct Association : public BoundEntity{
