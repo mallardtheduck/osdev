@@ -2,6 +2,7 @@
 #include "sqlentity.hpp"
 #include <btos.h>
 #include <btos/envvars.hpp>
+#include "rpc.hpp"
 
 using std::string;
 using std::cout;
@@ -250,6 +251,7 @@ void RegTest(){
 		assoc.Save(db);
 	}
 	cout << ".test : " << GetAssociation("file.test") << endl;
+	rpc::MakeProcServer<0>(rpc::make_function(&GetAssociation));
 }
 
 int main(){
