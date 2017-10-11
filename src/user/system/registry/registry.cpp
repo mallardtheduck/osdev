@@ -6,12 +6,19 @@
 using std::string;
 using std::cout;
 using std::endl;
+using std::vector;
 
 using namespace sqlentity;
 
 static const string dbPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/REGISTRY.DB");
 
 sqlitepp::db db(dbPath, false);
+
+struct Feature;
+struct FeatureRequirement;
+struct FileType;
+struct Association;
+struct DefaultAssociation;
 
 struct Package : public BoundEntity{
 	int64_t id = -1;
@@ -28,7 +35,14 @@ struct Package : public BoundEntity{
 		binder.BindVar("path", path);
 		binder.BindVar("descr", description);
 		binder.BindVar("ver", ver);
+		binder.BindChild<Feature>("features", "pkgid");
+		binder.BindChild<FileType>("fileTypes", "pkgid");
+		binder.BindChild<Association>("associations", "pkgid");
 	}
+
+	vector<Feature> Features(sqlitepp::db &db) { return GetChildren<Feature>(db, "features"); }
+	vector<FileType> FileTypes(sqlitepp::db &db) { return GetChildren<FileType>(db, "fileTypes"); }
+	vector<Association> Associations(sqlitepp::db &db) { return GetChildren<Association>(db, "associations"); }
 };
 
 struct Feature : public BoundEntity{
@@ -54,7 +68,12 @@ struct Feature : public BoundEntity{
 		binder.BindVar("path", path);
 		binder.BindVar("file", file);
 		binder.BindVar("flags", flags);
+		binder.BindChild<FeatureRequirement>("requirements", "featid");
+		binder.BindChild<FeatureRequirement>("requiredBy", "reqid");
 	}
+
+	vector<FeatureRequirement> Requirements(sqlitepp::db &db) { return GetChildren<FeatureRequirement>(db, "requirements"); }
+	vector<FeatureRequirement> RequiredBy(sqlitepp::db &db) { return GetChildren<FeatureRequirement>(db, "requiredBy"); }
 };
 
 struct FeatureRequirement : public BoundEntity{
@@ -84,7 +103,12 @@ struct FileType : public BoundEntity{
 		binder.BindVar("pkgid", package);
 		binder.BindVar("ext", extension);
 		binder.BindVar("mimeType", mimeType);
+		binder.BindChild<Association>("associations", "extid");
+		binder.BindChild<DefaultAssociation>("defaults", "extid");
 	}
+
+	vector<Association> Associations(sqlitepp::db &db) { return GetChildren<Association>(db, "associations"); }
+	vector<DefaultAssociation> Defaults(sqlitepp::db &db) { return GetChildren<DefaultAssociation>(db, "defaults"); }
 };
 
 struct Association : public BoundEntity{
@@ -149,22 +173,23 @@ static size_t suffixMatch(const string &a, const string &b){
 string GetAssociation(const string &path){
 	InitDB();
 	auto exts = GetAll<FileType>(db);
-	int64_t extid = -1;
+	FileType ext;
 	size_t len = 0;
 	for(const auto &e : exts){
 		auto c = suffixMatch(path, e.extension);
 		if(c == e.extension.length() && c > len){
 			len = c;
-			extid = e.id;
+			ext = e;
 		}
 	}
 	
-	if(extid > 0){
+	if(ext.id > 0){
 		Association assoc;
-		auto defaultAssoc = GetWhere<DefaultAssociation>(db, "extid = @ext", {{"ext", to_string(extid)}});
-		if(defaultAssoc.id > 0) assoc = defaultAssoc.association.Get(db);
+		auto defaults = ext.Defaults(db);
+		if(!defaults.empty()) assoc = defaults.front().association.Get(db);
 		else{
-			assoc = GetWhere<Association>(db, "extid = @ext", {{"ext", to_string(extid)}});
+			auto assocs = ext.Associations(db);
+			if(!assocs.empty()) assoc = assocs.front();
 		}
 		
 		if(assoc.id > 0){

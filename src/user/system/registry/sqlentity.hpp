@@ -23,6 +23,9 @@ template<> std::string to_string<>(const std::string &s){
 }
 
 template<typename T> T GetByKey(sqlitepp::db &db, int64_t key);
+template<typename T> std::vector<T> GetAllWhere(sqlitepp::db &db, const std::string &where,
+    std::map<std::string, std::string> vars = std::map<std::string, std::string>()
+);
 
 template<typename T> class Reference{
 public:
@@ -44,6 +47,7 @@ public:
     virtual void DBRead(sqlitepp::field_type &f) = 0;
     virtual void AssignKey(int64_t id) = 0;
     virtual int64_t KeyValue() = 0;
+	virtual void *GetPtr() = 0;
 	virtual ~IVarBind() {} 
 };
 
@@ -52,6 +56,8 @@ private:
 	T *var;
     std::unique_ptr<char> atname;
     std::string value;
+
+	friend class TableBind;
 public:
 	VarBind(T& v) : var(&v) {};
 
@@ -64,6 +70,10 @@ public:
 	void DBRead(sqlitepp::field_type &f){
 		*var = static_cast<T>(f);
     }
+
+	void *GetPtr(){
+		return var;
+	}
     
     void AssignKey(int64_t id);
     int64_t KeyValue();
@@ -84,11 +94,31 @@ template<> int64_t VarBind<int64_t>::KeyValue(){
     return *var;
 }
 
+class IChildBind{
+public:
+	virtual ~IChildBind() {}
+};
+
+template<typename T> class ChildBind : public IChildBind{
+private:
+	std::string field;
+public:
+	ChildBind(const std::string &f) : field(f) {}
+	
+	std::vector<T> Get(sqlitepp::db &db, int64_t key){
+		std::stringstream ss;
+		ss << field << " = @" << field;
+		auto where = ss.str();
+		return GetAllWhere<T>(db, where, {{field, to_string(key)}});
+	}
+};
+
 class TableBind{
 private:
 	std::string table;
 	std::string key;
 	std::map<std::string, std::shared_ptr<IVarBind>> fields;
+	std::map<std::string, std::shared_ptr<IChildBind>> children;
 
 public:
 	void SetTable(const std::string &t){
@@ -118,6 +148,11 @@ public:
     template<typename T> void BindVar(const std::string name, Reference<T> &var){
         BindVar(name, var.key);
     }
+
+	template<typename T> void BindChild(const std::string &name, const std::string &field){
+		std::shared_ptr<IChildBind> p = std::make_shared<ChildBind<T>>(field);
+		children.insert(std::make_pair(name, p));
+	}
 
 	std::vector<std::string> GetFieldList(){
 		std::vector<std::string> ret;
@@ -161,6 +196,11 @@ public:
         key.clear();
         fields.clear();
     }
+
+	std::shared_ptr<IChildBind> GetChildBind(std::string name){
+		if(children.find(name) == children.end()) return {};
+		return children[name];
+	}
 };
 
 class BoundEntity{
@@ -355,6 +395,15 @@ public:
         atvars.clear();
     }
 
+	template<typename T> std::vector<T> GetChildren(sqlitepp::db &db, const std::string &name){
+		Bound();
+		auto childBind = binder.GetChildBind(name);
+		if(!childBind) return {};
+		auto child = dynamic_cast<ChildBind<T>*>(childBind.get());
+		if(!child) return {};
+		
+		return child->Get(db, binder.GetKeyValue());
+	}
 };
 
 template<typename T> T GetByKey(sqlitepp::db &db, int64_t key){
