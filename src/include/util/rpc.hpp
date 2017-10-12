@@ -32,7 +32,7 @@ namespace rpc{
         static_assert(std::is_fundamental<T>::value, "Non-fundamental types need custom deserialization!");
         is.read((char*)&val, sizeof(val));
     }
-    template<> void deserialize(std::istream &is, std::string &val){
+    void deserialize(std::istream &is, std::string &val){
         size_t size;
         deserialize(is, size);
         val = "";
@@ -88,14 +88,16 @@ namespace rpc{
         }
     };
 
-    template<typename T, typename ...Ts> std::tuple<T, Ts...> deserializeAll(std::istream &is){
-        typename std::remove_reference<T>::type v;
+    template<typename T> auto deserializeAll(std::istream &is){
+		typename std::remove_cv<typename std::remove_reference<T>::type>::type v;
         deserialize(is, v);
-        return std::tuple_cat(std::make_tuple(v), deserializeAll<Ts...>(is));
+        return std::make_tuple(v);
     }
 
-    std::tuple<> deserializeAll(std::istream &){
-        return std::make_tuple();
+    template<typename T, typename Ta, typename ...Ts> auto deserializeAll(std::istream &is){
+        typename std::remove_cv<typename std::remove_reference<T>::type>::type v;
+        deserialize(is, v);
+        return std::tuple_cat(std::make_tuple(v), deserializeAll<Ta, Ts...>(is));
     }
 
     namespace TupleCall_detail{
@@ -127,6 +129,7 @@ namespace rpc{
             if(msg.Type() == msgtype){
                 std::stringstream pss;
                 pss.write((const char*)msg.Content(), msg.Length());
+				pss.seekg(0);
                 auto ps = deserializeAll<Ps...>(pss);
                 R r = TupleCall(fn, ps);
                 std::stringstream rss;

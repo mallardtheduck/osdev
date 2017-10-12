@@ -1,8 +1,8 @@
 #include <iostream>
-#include "sqlentity.hpp"
 #include <btos.h>
 #include <btos/envvars.hpp>
-#include "rpc.hpp"
+#include <util/sqlentity.hpp>
+#include <util/rpc.hpp>
 
 using std::string;
 using std::cout;
@@ -252,6 +252,7 @@ void RegTest(){
 	}
 	cout << ".test : " << GetAssociation("file.test") << endl;
 	rpc::MakeProcServer<0>(rpc::make_function(&GetAssociation));
+	rpc::ProcClient<0, std::string, std::string> client(0);
 }
 
 int main(){
