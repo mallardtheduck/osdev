@@ -1,4 +1,5 @@
 #include "tables.hpp"
+#include "api_types.hpp"
 #include <util/rpc.hpp>
 #include <btos/imessagehandler.hpp>
 
@@ -11,14 +12,6 @@ using std::vector;
 using std::string;
 using std::shared_ptr;
 
-struct PackageInfo{
-	int64_t id;
-	string name;
-	string description;
-	string path;
-	string ver;
-};
-
 PackageInfo ToInfo(const Package &pkg){
 	PackageInfo ret;
 	ret.id = pkg.id;
@@ -28,20 +21,18 @@ PackageInfo ToInfo(const Package &pkg){
 	return ret;
 }
 
-void serialize(std::ostream &os, const PackageInfo &pi){
-	rpc::serialize(os, pi.id);
-	rpc::serialize(os, pi.name);
-	rpc::serialize(os, pi.description);
-	rpc::serialize(os, pi.path);
-	rpc::serialize(os, pi.ver);
-}
-
-void deserialize(std::istream &is, PackageInfo &pi){
-	rpc::deserialize(is, pi.id);
-	rpc::deserialize(is, pi.name);
-	rpc::deserialize(is, pi.description);
-	rpc::deserialize(is, pi.path);
-	rpc::deserialize(is, pi.ver);
+FeatureInfo ToInfo(const Feature &feat){
+	FeatureInfo fi;
+	fi.id = feat.id;
+	fi.package = feat.package.key;
+	fi.name = feat.name;
+	fi.description = feat.description;
+	fi.type = feat.type;
+	fi.ver = feat.ver;
+	fi.path = feat.path;
+	fi.file = feat.file;
+	fi.flags = feat.flags;
+	return fi;
 }
 
 vector<string> GetAllPackages(){
@@ -63,14 +54,37 @@ PackageInfo GetPackageByName(const string &name){
 	return ToInfo(pkg);
 }
 
+vector<FeatureInfo> GetFeatures(int64_t pkgid){
+	auto pkg = sqlentity::GetByKey<Package>(db, pkgid);
+	auto feats = pkg.Features(db);
+	vector<FeatureInfo> ret;
+	for(auto &f : feats){
+		ret.push_back(ToInfo(f));
+	}
+	return ret;
+}
+
 int64_t InstallPackage(const PackageInfo &info){
 	Package pkg;
-	pkg.id = info.id;
 	pkg.name = info.name;
 	pkg.description = info.description;
 	pkg.ver = info.ver;
 	pkg.Save(db);
 	return pkg.id;
+}
+
+int64_t InstallFeature(const FeatureInfo &info){
+	Feature feat;
+	feat.package.key = info.package;
+	feat.name = info.name;
+	feat.description = info.description;
+	feat.type = info.type;
+	feat.ver = info.ver;
+	feat.path = info.path;
+	feat.file = info.file;
+	feat.flags = info.flags;
+	feat.Save(db);
+	return feat.id;
 }
 
 template<uint32_t id, typename F> void AddAPI(vector<shared_ptr<IMessageHandler>> &vec, F fn){
@@ -83,5 +97,8 @@ vector<shared_ptr<IMessageHandler>> InitAPI(){
 	AddAPI<1>(ret, &GetAllPackages);
 	AddAPI<2>(ret, &GetPackageById);
 	AddAPI<3>(ret, &GetPackageByName);
+	AddAPI<4>(ret, &GetFeatures);
+	AddAPI<100>(ret, &InstallPackage);
+	AddAPI<101>(ret, &InstallFeature);
 	return ret;
 }
