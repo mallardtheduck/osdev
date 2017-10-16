@@ -4,6 +4,8 @@
 #include <util/sqlentity.hpp>
 #include <util/rpc.hpp>
 
+#include "tables.hpp"
+
 using std::string;
 using std::cout;
 using std::endl;
@@ -14,150 +16,6 @@ using namespace sqlentity;
 static const string dbPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/REGISTRY.DB");
 
 sqlitepp::db db(dbPath, false);
-
-struct Feature;
-struct FeatureRequirement;
-struct FileType;
-struct Association;
-struct DefaultAssociation;
-
-class Package : public BoundEntity{
-private:
-	Child<Feature> features{"pkgid"};
-	Child<FileType> fileTypes{"pkgid"};
-	Child<Association> associations{"pkgid"};
-public:
-	int64_t id = -1;
-	string name;
-	string path;
-	string description;
-	string ver;
-
-	void Bind(){
-		binder.SetTable("package");
-		binder.SetKey("id");
-		binder.BindVar("id", id);
-		binder.BindVar("name", name);
-		binder.BindVar("path", path);
-		binder.BindVar("descr", description);
-		binder.BindVar("ver", ver);
-		binder.BindChild(features);
-		binder.BindChild(fileTypes);
-		binder.BindChild(associations);
-	}
-
-	auto Features(sqlitepp::db &db) { return GetChildren(db, features); }
-	auto FileTypes(sqlitepp::db &db) { return GetChildren(db, fileTypes); }
-	auto Associations(sqlitepp::db &db) { return GetChildren(db, associations); }
-};
-
-class Feature : public BoundEntity{
-private:
-	Child<FeatureRequirement> requirements{"featid"};
-	Child<FeatureRequirement> requiredBy{"reqid"};
-public:
-	int64_t id = -1;
-	Reference<Package> package;
-	string type;
-	string name;
-	string ver;
-	string description;
-	string path;
-	string file;
-	int64_t flags;
-
-	void Bind(){
-		binder.SetTable("feature");
-		binder.SetKey("id");
-		binder.BindVar("id", id);
-		binder.BindVar("pkgid", package);
-		binder.BindVar("type", type);
-		binder.BindVar("name", name);
-		binder.BindVar("ver", ver);
-		binder.BindVar("descr", description);
-		binder.BindVar("path", path);
-		binder.BindVar("file", file);
-		binder.BindVar("flags", flags);
-		binder.BindChild(requirements);
-		binder.BindChild(requiredBy);
-	}
-
-	auto Requirements(sqlitepp::db &db) { return GetChildren(db, requirements); }
-	auto RequiredBy(sqlitepp::db &db) { return GetChildren(db, requiredBy); }
-};
-
-struct FeatureRequirement : public BoundEntity{
-	int64_t id = -1;
-	Reference<Feature> feature;
-	Reference<Feature> requires;
-
-	void Bind(){
-		binder.SetTable("feature_req");
-		binder.SetKey("id");
-		binder.BindVar("id", id);
-		binder.BindVar("featid", feature);
-		binder.BindVar("reqid", requires);
-	}
-};
-
-class FileType : public BoundEntity{
-private:
-	Child<Association> associations{"extid"};
-	Child<DefaultAssociation> defaults{"extid"};
-public:
-	int64_t id = -1;
-	Reference<Package> package;
-	string extension;
-	string mimeType;
-
-	void Bind(){
-		binder.SetTable("ext");
-		binder.SetKey("id");
-		binder.BindVar("id", id);
-		binder.BindVar("pkgid", package);
-		binder.BindVar("ext", extension);
-		binder.BindVar("mimeType", mimeType);
-		binder.BindChild(associations);
-		binder.BindChild(defaults);
-	}
-
-	auto Associations(sqlitepp::db &db) { return GetChildren(db, associations); }
-	auto Defaults(sqlitepp::db &db) { return GetChildren(db, defaults); }
-};
-
-struct Association : public BoundEntity{
-	int64_t id = -1;
-	Reference<Package> package;
-	Reference<Feature> feature;
-	Reference<FileType> fileType;
-	string description;
-	string cmdTemplate;
-
-	void Bind(){
-		binder.SetTable("assoc");
-		binder.SetKey("id");
-		binder.BindVar("id", id);
-		binder.BindVar("pkgid", package);
-		binder.BindVar("featid", feature);
-		binder.BindVar("extid", fileType);
-		binder.BindVar("descr", description);
-		binder.BindVar("template", cmdTemplate);
-	}
-};
-
-struct DefaultAssociation : public BoundEntity{
-	int64_t id = -1;
-	Reference<FileType> fileType;
-	Reference<Association> association;
-
-	void Bind(){
-		binder.SetTable("default_assoc");
-		binder.SetKey("id");
-		binder.BindVar("id", id);
-		binder.BindVar("extid", fileType);
-		binder.BindVar("associd", association);
-	}
-};
 
 static void InitDB(){
 	if(db.is_open()) return;
@@ -251,7 +109,7 @@ void RegTest(){
 		assoc.Save(db);
 	}
 	cout << ".test : " << GetAssociation("file.test") << endl;
-	rpc::MakeProcServer<0>(rpc::make_function(&GetAssociation));
+	delete rpc::NewProcServer<0>(rpc::make_function(&GetAssociation));
 	rpc::ProcClient<0, std::string, std::string> client(0);
 }
 

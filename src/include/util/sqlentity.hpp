@@ -18,7 +18,7 @@ template<typename T> std::string to_string(const T &n){
 	return stm.str();
 }
 
-template<> std::string to_string<>(const std::string &s){
+template<> inline std::string to_string<>(const std::string &s){
 	return s;
 }
 
@@ -89,7 +89,7 @@ public:
 template<typename T> void VarBind<T>::AssignKey(int64_t) {
     //Key must be int64_t
 }
-template<> void VarBind<int64_t>::AssignKey(int64_t id){
+template<> inline void VarBind<int64_t>::AssignKey(int64_t id){
     *var = id;
 }
 
@@ -97,7 +97,7 @@ template<typename T> int64_t VarBind<T>::KeyValue() {
     //Key must be int64_t
     return -1;
 }
-template<> int64_t VarBind<int64_t>::KeyValue(){
+template<> inline int64_t VarBind<int64_t>::KeyValue(){
     return *var;
 }
 

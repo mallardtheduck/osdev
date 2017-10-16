@@ -9,39 +9,9 @@
 #include <functional>
 #include <tuple>
 
+#include "rpc_serialization.hpp"
+
 namespace rpc{
-    template<typename T> void serialize(std::ostream &os, const T &val){
-        static_assert(std::is_fundamental<T>::value, "Non-fundamental types need custom serialization!");
-        os.write((const char*)&val, sizeof(val));
-    }
-    template<> void serialize(std::ostream &os, const std::string &str){
-        serialize(os, str.size());
-        for(auto c : str){
-            serialize(os, c);
-        }
-    }
-
-    void serialize(std::ostream &){}
-
-    template<typename T, typename ...Ts> void serialize(std::ostream &os, T v, Ts... vs){
-        serialize(os, v);
-        serialize(os, vs...);
-    }
-
-    template<typename T> void deserialize(std::istream &is, T &val){
-        static_assert(std::is_fundamental<T>::value, "Non-fundamental types need custom deserialization!");
-        is.read((char*)&val, sizeof(val));
-    }
-    void deserialize(std::istream &is, std::string &val){
-        size_t size;
-        deserialize(is, size);
-        val = "";
-        for(size_t i = 0; i < size; ++i){
-            char c;
-            deserialize(is, c);
-            val += c;
-        }
-    }
 
     template<uint32_t msgtype, typename R, typename ...Ps> class ProcClient{
     private:
@@ -88,18 +58,6 @@ namespace rpc{
         }
     };
 
-    template<typename T> auto deserializeAll(std::istream &is){
-		typename std::remove_cv<typename std::remove_reference<T>::type>::type v;
-        deserialize(is, v);
-        return std::make_tuple(v);
-    }
-
-    template<typename T, typename Ta, typename ...Ts> auto deserializeAll(std::istream &is){
-        typename std::remove_cv<typename std::remove_reference<T>::type>::type v;
-        deserialize(is, v);
-        return std::tuple_cat(std::make_tuple(v), deserializeAll<Ta, Ts...>(is));
-    }
-
     namespace TupleCall_detail{
         template <typename F, typename Tuple, bool Done, int Total, int... N> struct call_impl{
             template<typename E = void> static auto call(F f, Tuple && t ){
@@ -142,8 +100,27 @@ namespace rpc{
         }
     };
 
-    template<uint32_t msgtype, typename R, typename ...Ps> auto MakeProcServer(std::function<R(Ps...)> fn){
-        return ProcServer<msgtype, R, Ps...>(fn);
+	template<uint32_t msgtype, typename R> class ProcServer<msgtype, R> : public btos_api::IMessageHandler{
+    private:
+        std::function<R()> fn;
+    public:
+        ProcServer(std::function<R()> f) : fn(f) {}
+
+        bool HandleMessage(const btos_api::Message &msg){
+            if(msg.Type() == msgtype){
+                R r = TupleCall(fn, std::make_tuple());
+                std::stringstream rss;
+                serialize(rss, r);
+                auto rdata = rss.str();
+                msg.SendReply((void*)rdata.c_str(), rdata.size());
+                return false;
+            }
+            return true;
+        }
+    };
+
+    template<uint32_t msgtype, typename R, typename ...Ps> auto NewProcServer(std::function<R(Ps...)> fn){
+        return new ProcServer<msgtype, R, Ps...>(fn);
     }
 
     template<typename R, typename ...Ps> std::function<R(Ps...)> make_function(R(*fn)(Ps...)){
