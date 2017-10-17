@@ -12,6 +12,9 @@ using std::vector;
 using std::string;
 using std::shared_ptr;
 
+namespace btos_api{
+namespace registry{
+
 PackageInfo ToInfo(const Package &pkg){
 	PackageInfo ret;
 	ret.id = pkg.id;
@@ -54,12 +57,12 @@ PackageInfo GetPackageByName(const string &name){
 	return ToInfo(pkg);
 }
 
-vector<FeatureInfo> GetFeatures(int64_t pkgid){
+vector<string> GetFeatures(int64_t pkgid){
 	auto pkg = sqlentity::GetByKey<Package>(db, pkgid);
 	auto feats = pkg.Features(db);
-	vector<FeatureInfo> ret;
+	vector<string> ret;
 	for(auto &f : feats){
-		ret.push_back(ToInfo(f));
+		ret.push_back(f.name);
 	}
 	return ret;
 }
@@ -87,6 +90,16 @@ int64_t InstallFeature(const FeatureInfo &info){
 	return feat.id;
 }
 
+FeatureInfo GetFeatureById(int64_t id){
+	auto feat = sqlentity::GetByKey<Feature>(db, id);
+	return ToInfo(feat);
+}
+
+FeatureInfo GetFeatureByName(const std::string &name){
+	auto feat = sqlentity::GetWhere<Feature>(db, "name = @name", {{"name", name}});
+	return ToInfo(feat);
+}
+
 template<uint32_t id, typename F> void AddAPI(vector<shared_ptr<IMessageHandler>> &vec, F fn){
 	shared_ptr<IMessageHandler> ptr { rpc::NewProcServer<id>(rpc::make_function(fn)) };
 	vec.push_back(ptr);
@@ -94,11 +107,17 @@ template<uint32_t id, typename F> void AddAPI(vector<shared_ptr<IMessageHandler>
 
 vector<shared_ptr<IMessageHandler>> InitAPI(){
 	vector<shared_ptr<IMessageHandler>> ret;
-	AddAPI<1>(ret, &GetAllPackages);
-	AddAPI<2>(ret, &GetPackageById);
-	AddAPI<3>(ret, &GetPackageByName);
-	AddAPI<4>(ret, &GetFeatures);
-	AddAPI<100>(ret, &InstallPackage);
-	AddAPI<101>(ret, &InstallFeature);
+	AddAPI<RPCID::GetAllPackages>(ret, &GetAllPackages);
+	AddAPI<RPCID::GetPackageById>(ret, &GetPackageById);
+	AddAPI<RPCID::GetPackageByName>(ret, &GetPackageByName);
+	AddAPI<RPCID::GetFeatures>(ret, &GetFeatures);
+	AddAPI<RPCID::GetFeatureById>(ret, &GetFeatureById);
+	AddAPI<RPCID::GetFeatureByName>(ret, &GetFeatureByName);
+
+	AddAPI<RPCID::InstallPackage>(ret, &InstallPackage);
+	AddAPI<RPCID::InstallFeature>(ret, &InstallFeature);
 	return ret;
+}
+
+}
 }

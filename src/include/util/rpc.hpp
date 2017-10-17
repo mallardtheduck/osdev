@@ -28,7 +28,7 @@ namespace rpc{
             msg.type = msgtype;
             msg.to = pid;
             msg.length = data.size();
-            msg.content = data.c_str();
+            msg.content = (void*)data.c_str();
             msg.id = bt_send(msg);
 
             bt_msg_header reply;
@@ -47,7 +47,7 @@ namespace rpc{
                 bt_next_msg_filtered(&reply, filter);
             }
             
-            std::vector<char> replyData{ reply.length };
+            std::vector<char> replyData(reply.length);
             bt_msg_content(&reply, &replyData[0], reply.length);
             std::stringstream rss;
             rss.write(&replyData[0], replyData.size());
@@ -57,6 +57,11 @@ namespace rpc{
             return ret;
         }
     };
+
+    template<uint32_t msgtype, typename R, typename ...Ps>
+    ProcClient<msgtype, R, Ps...> MakeClient(bt_pid_t pid, R(*)(Ps...)){
+        return ProcClient<msgtype, R, Ps...>(pid);
+    }
 
     namespace TupleCall_detail{
         template <typename F, typename Tuple, bool Done, int Total, int... N> struct call_impl{

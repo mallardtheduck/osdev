@@ -1,13 +1,8 @@
-#include "tables.hpp"
 #include <util/rpc.hpp>
+#include <btos/registry.hpp>
 
-struct PackageInfo{
-	int64_t id;
-	std::string name;
-	std::string description;
-	std::string path;
-	std::string ver;
-};
+namespace btos_api{
+namespace registry{
 
 inline void serialize(std::ostream &os, const PackageInfo &pi){
 	rpc::serialize(os, pi.id);
@@ -24,18 +19,6 @@ inline void deserialize(std::istream &is, PackageInfo &pi){
 	rpc::deserialize(is, pi.path);
 	rpc::deserialize(is, pi.ver);
 }
-
-struct FeatureInfo{
-    int64_t id;
-    int64_t package;
-    std::string name;
-    std::string description;
-    std::string type;
-    std::string ver;
-    std::string path;
-    std::string file;
-    int64_t flags;
-};
 
 inline void serialize(std::ostream &os, const FeatureInfo &fi){
     rpc::serialize(os, fi.id);
@@ -59,4 +42,7 @@ inline void deserialize(std::istream &is, FeatureInfo &fi){
     rpc::deserialize(is, fi.path);
     rpc::deserialize(is, fi.file);
     rpc::deserialize(is, fi.flags);
+}
+
+}
 }
