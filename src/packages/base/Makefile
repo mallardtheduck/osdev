@@ -76,6 +76,8 @@ import-files:=\
  data/btos/bin/sqlite.elx \
  data/btos/cmd/ini.elx \
  data/btos/system/registry.elx \
+ data/btos/lib/registry.ell \
+ data/btos/cmd/reg.elx \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -318,6 +320,12 @@ data/btos/cmd/ini.elx: ../../user/cmds/ini/ini.elx
 	cp $< $@
 
 data/btos/system/registry.elx: ../../user/system/registry/registry.elx
+	cp $< $@
+
+data/btos/lib/registry.ell: ../../user/libs/registry/registry.ell
+	cp $< $@
+
+data/btos/cmd/reg.elx: ../../user/libs/registry/reg.elx
 	cp $< $@
 
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx

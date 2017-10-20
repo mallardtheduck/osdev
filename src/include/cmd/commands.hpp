@@ -74,9 +74,10 @@ void ver_command(const command &cmd);
 void list_command(const command &cmd);
 void setenv_command(const command &cmd);
 void time_command(const command &cmd);
+void bg_command(const command &cmd);
 
 bool run_builtin(const command &cmd);
-bool run_program(const command &cmd);
+bool run_program(const command &cmd, bool bg = false);
 
 }
 }

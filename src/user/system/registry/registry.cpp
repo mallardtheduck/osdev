@@ -1,6 +1,7 @@
 #include <iostream>
 #include <btos.h>
 #include <btos/envvars.hpp>
+#include <btos/messageloop.hpp>
 #include <util/sqlentity.hpp>
 #include <util/rpc.hpp>
 
@@ -10,8 +11,17 @@ using std::string;
 using std::cout;
 using std::endl;
 using std::vector;
+using std::shared_ptr;
 
 using namespace sqlentity;
+
+namespace btos_api{
+namespace registry{
+
+extern vector<shared_ptr<IMessageHandler>> InitAPI();
+
+}
+}
 
 static const string dbPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/REGISTRY.DB");
 
@@ -115,5 +125,11 @@ void RegTest(){
 
 int main(){
 	RegTest();
+	auto api = btos_api::registry::InitAPI();
+	MessageLoop msgloop;
+	for(auto &a : api){
+		msgloop.AddHandler(a);
+	}
+	msgloop.RunLoop();
 	return 0;
 }
