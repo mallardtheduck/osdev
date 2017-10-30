@@ -19,6 +19,12 @@ int main(int argc, char **argv){
             for(auto &p : pkgs){
                 cout << p << endl;
             }
+        }else if(args[1] == "features" && args.size() == 3){
+            auto pkg = reg::GetPackageByName(args[2]);
+            auto feats = reg::GetFeatures(pkg.id);
+            for(auto &f : feats){
+                cout << f << endl;
+            }
         }else{
             cout << "Unknown command: " << args[1] << endl;
         }

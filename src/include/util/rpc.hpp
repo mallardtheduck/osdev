@@ -99,7 +99,6 @@ namespace rpc{
                 serialize(rss, r);
                 auto rdata = rss.str();
                 msg.SendReply((void*)rdata.c_str(), rdata.size());
-                return false;
             }
             return true;
         }
@@ -118,7 +117,6 @@ namespace rpc{
                 serialize(rss, r);
                 auto rdata = rss.str();
                 msg.SendReply((void*)rdata.c_str(), rdata.size());
-                return false;
             }
             return true;
         }

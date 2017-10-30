@@ -39,6 +39,13 @@ namespace btos_api{
 		filter.flags = 0;
 	}
 
+	Message &Message::operator=(const Message &other){
+		header = other.header;
+		filter = other.filter;
+		content.reset();
+		return *this;
+	}
+
 	bt_msg_header Message::Header() const{
 		return header;
 	}

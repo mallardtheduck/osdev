@@ -6,6 +6,7 @@
 #include <util/rpc.hpp>
 
 #include "tables.hpp"
+#include "registry.hpp"
 
 using std::string;
 using std::cout;
@@ -15,13 +16,7 @@ using std::shared_ptr;
 
 using namespace sqlentity;
 
-namespace btos_api{
-namespace registry{
-
-extern vector<shared_ptr<IMessageHandler>> InitAPI();
-
-}
-}
+MessageLoop msgloop;
 
 static const string dbPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/REGISTRY.DB");
 
@@ -126,7 +121,6 @@ void RegTest(){
 int main(){
 	RegTest();
 	auto api = btos_api::registry::InitAPI();
-	MessageLoop msgloop;
 	for(auto &a : api){
 		msgloop.AddHandler(a);
 	}

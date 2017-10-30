@@ -19,6 +19,8 @@ namespace btos_api{
 		static Message RecieveReply(const Message &msg);
 
 		Message(const bt_msg_header &h);
+		Message(const Message &other) : Message(other.header){}
+		Message &operator=(const Message &other);
 
 		bt_msg_header Header() const;
 		bool IsValid() const;

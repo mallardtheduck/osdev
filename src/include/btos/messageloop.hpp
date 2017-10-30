@@ -12,6 +12,7 @@ namespace btos_api{
 	
 	class MessageLoop : public IMessageHandler{
 	private:
+		std::unique_ptr<Message> current;
 		std::vector<std::shared_ptr<IMessageHandler>> handlers;
 		std::function<bool(const Message&)> criticalHandler;
 		std::function<bool(const Message&)> previewer;
@@ -28,6 +29,7 @@ namespace btos_api{
 
 		void RunLoop();
 		bool HandleMessage(const Message &msg) override;
+		const Message &GetCurrent() const;
 	};
 	
 }
