@@ -20,6 +20,7 @@ PackageInfo ToInfo(const Package &pkg){
 	ret.id = pkg.id;
 	ret.name = pkg.name;
 	ret.description = pkg.description;
+	ret.path = pkg.path;
 	ret.ver = pkg.ver;
 	return ret;
 }
@@ -71,6 +72,7 @@ int64_t InstallPackage(const PackageInfo &info){
 	Package pkg;
 	pkg.name = info.name;
 	pkg.description = info.description;
+	pkg.path = info.path;
 	pkg.ver = info.ver;
 	pkg.Save(db);
 	return pkg.id;

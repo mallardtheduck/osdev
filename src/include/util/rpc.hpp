@@ -70,6 +70,7 @@ namespace rpc{
                     msg.to = pid;
                     msg.length = 0;
                     msg.content = nullptr;
+                    msg.id = bt_send(msg);
                     more_data = true;
                 }else{
                     more_data = false;
