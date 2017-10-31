@@ -510,6 +510,7 @@ USERAPI_HANDLER(BT_THREAD_ABORT){
 USERAPI_HANDLER(BT_SEND){
 	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_msg_header)) && is_safe_ptr(regs->ecx, sizeof(uint64_t))){
 		btos_api::bt_msg_header header=*(btos_api::bt_msg_header*)regs->ebx;
+		if(header.length && !is_safe_ptr((uint32_t)header.content, header.length)) return;
 		uint64_t &ret=*(uint64_t*)regs->ecx;
 		header.flags=header.flags | btos_api::bt_msg_flags::UserSpace;
 		header.from=proc_current_pid;

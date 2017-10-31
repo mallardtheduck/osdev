@@ -1,5 +1,5 @@
 #ifndef _MESSAGELOOP_HPP
-#define _MESSAGELOPP_HPP
+#define _MESSAGELOOP_HPP
 
 #include <btos.h>
 #include "imessagehandler.hpp"

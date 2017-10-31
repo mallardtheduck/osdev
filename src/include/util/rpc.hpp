@@ -8,6 +8,7 @@
 #include <vector>
 #include <functional>
 #include <tuple>
+#include <map>
 
 #include "rpc_serialization.hpp"
 
@@ -23,13 +24,19 @@ namespace rpc{
             std::stringstream pss;
             serialize(pss, ps...);
             auto data = pss.str();
+            int msgno = data.size() / BT_MSG_MAX;
             bt_msg_header msg;
-            msg.flags = 0;
-            msg.type = msgtype;
-            msg.to = pid;
-            msg.length = data.size();
-            msg.content = (void*)data.c_str();
-            msg.id = bt_send(msg);
+            while(msgno >= 0){
+                size_t len = std::min(BT_MSG_MAX, data.size());
+                msg.flags = 0;
+                msg.type = msgtype;
+                msg.to = pid;
+                msg.length = len;
+                msg.source = msgno--;
+                msg.content = (void*)data.c_str();
+                msg.id = bt_send(msg);
+                if(msgno >= 0) data = data.substr(len);
+            }
 
             bt_msg_header reply;
             bt_msg_filter filter;
@@ -85,20 +92,24 @@ namespace rpc{
     template<uint32_t msgtype, typename R, typename ...Ps> class ProcServer : public btos_api::IMessageHandler{
     private:
         std::function<R(Ps...)> fn;
+        std::map<bt_pid_t, std::stringstream> buffers;
     public:
         ProcServer(std::function<R(Ps...)> f) : fn(f) {}
 
         bool HandleMessage(const btos_api::Message &msg){
             if(msg.Type() == msgtype){
-                std::stringstream pss;
+                std::stringstream &pss = buffers[msg.From()];
                 pss.write((const char*)msg.Content(), msg.Length());
-				pss.seekg(0);
-                auto ps = deserializeAll<Ps...>(pss);
-                R r = TupleCall(fn, ps);
-                std::stringstream rss;
-                serialize(rss, r);
-                auto rdata = rss.str();
-                msg.SendReply((void*)rdata.c_str(), rdata.size());
+                if(msg.Source() == 0){
+                    pss.seekg(0);
+                    auto ps = deserializeAll<Ps...>(pss);
+                    buffers.erase(msg.From());
+                    R r = TupleCall(fn, ps);
+                    std::stringstream rss;
+                    serialize(rss, r);
+                    auto rdata = rss.str();
+                    msg.SendReply((void*)rdata.c_str(), rdata.size());
+                }
             }
             return true;
         }

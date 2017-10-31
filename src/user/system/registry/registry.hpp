@@ -1,6 +1,8 @@
 #ifndef _REGISTRY_HPP
 #define _REGISTRY_HPP
 
+#include <btos/messageloop.hpp>
+
 #include <vector>
 #include <memory>
 
