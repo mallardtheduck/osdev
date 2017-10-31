@@ -46,12 +46,12 @@ namespace btos_api{
 			}
 		}
 
-		void SendReply(void *c, size_t size) const;
-		void SendReply() const;
+		uint64_t SendReply(void *c, size_t size, uint32_t type = 0) const;
+		uint64_t SendReply(uint32_t type = 0) const;
 		
-		template<typename T> void SendReply(T c) const{
+		template<typename T> uint64_t SendReply(T c, uint32_t type = 0) const{
 			static_assert(std::is_pod<T>::value, "Message content must be a POD!");
-			SendReply(reinterpret_cast<void*>(&c), sizeof(c));
+			return SendReply(reinterpret_cast<void*>(&c), sizeof(c), type);
 		}
 
 		void Acknowledge();

@@ -14,6 +14,8 @@
 
 namespace rpc{
 
+    const uint32_t MessageType_Continue = 0xFFFFFFFF;
+
     template<uint32_t msgtype, typename R, typename ...Ps> class ProcClient{
     private:
         bt_pid_t pid;
@@ -40,24 +42,39 @@ namespace rpc{
 
             bt_msg_header reply;
             bt_msg_filter filter;
-            filter.flags = bt_msg_filter_flags::Reply;
-            filter.reply_to = msg.id;
-            reply = bt_recv_filtered(filter);
-            while(reply.reply_id != msg.id){
-                std::stringstream ss;
-                ss << "RPC: Spurious message!" << std::endl;
-                ss << "Message id: " << reply.id << std::endl;
-                ss << "From : " << reply.from << std::endl;
-                ss << "Flags : " << reply.flags << std::endl;
-                ss << "Reply ID: " << reply.reply_id << " (Waiting for: " << msg.id << ")" << std::endl;
-                bt_zero(ss.str().c_str());
-                bt_next_msg_filtered(&reply, filter);
-            }
-            
-            std::vector<char> replyData(reply.length);
-            bt_msg_content(&reply, &replyData[0], reply.length);
             std::stringstream rss;
-            rss.write(&replyData[0], replyData.size());
+            bool more_data = true;
+            while(more_data){
+                filter.flags = bt_msg_filter_flags::Reply;
+                filter.reply_to = msg.id;
+                reply = bt_recv_filtered(filter);
+                
+                while(reply.reply_id != msg.id){
+                    std::stringstream ss;
+                    ss << "RPC: Spurious message!" << std::endl;
+                    ss << "Message id: " << reply.id << std::endl;
+                    ss << "From : " << reply.from << std::endl;
+                    ss << "Flags : " << reply.flags << std::endl;
+                    ss << "Reply ID: " << reply.reply_id << " (Waiting for: " << msg.id << ")" << std::endl;
+                    bt_zero(ss.str().c_str());
+                    bt_next_msg_filtered(&reply, filter);
+                }
+                
+                std::vector<char> replyData(reply.length);
+                bt_msg_content(&reply, &replyData[0], reply.length);
+                rss.write(&replyData[0], replyData.size());
+                if(reply.type == MessageType_Continue){
+                    msg.flags = bt_msg_flags::Reply;
+                    msg.reply_id = reply.id;
+                    msg.type = MessageType_Continue;
+                    msg.to = pid;
+                    msg.length = 0;
+                    msg.content = nullptr;
+                    more_data = true;
+                }else{
+                    more_data = false;
+                }
+            }
             rss.seekg(0);
             R ret;
             deserialize(rss, ret);
@@ -93,6 +110,7 @@ namespace rpc{
     private:
         std::function<R(Ps...)> fn;
         std::map<bt_pid_t, std::stringstream> buffers;
+        std::map<uint64_t, std::string> return_buffers;
     public:
         ProcServer(std::function<R(Ps...)> f) : fn(f) {}
 
@@ -108,6 +126,24 @@ namespace rpc{
                     std::stringstream rss;
                     serialize(rss, r);
                     auto rdata = rss.str();
+                    if(rdata.size() > BT_MSG_MAX){
+                        auto cur = rdata.substr(0, BT_MSG_MAX);
+                        auto rest = rdata.substr(BT_MSG_MAX);
+                        auto id = msg.SendReply((void*)cur.c_str(), cur.size(), MessageType_Continue);
+                        return_buffers[id] = rest;
+                    }else{
+                        msg.SendReply((void*)rdata.c_str(), rdata.size());
+                    }
+                }
+            }else if(msg.Type() == MessageType_Continue && return_buffers.find(msg.ReplyTo()) != return_buffers.end()){
+                auto rdata = return_buffers[msg.ReplyTo()];
+                return_buffers.erase(msg.ReplyTo());
+                if(rdata.size() > BT_MSG_MAX){
+                    auto cur = rdata.substr(0, BT_MSG_MAX);
+                    auto rest = rdata.substr(BT_MSG_MAX);
+                    auto id = msg.SendReply((void*)cur.c_str(), cur.size(), MessageType_Continue);
+                    return_buffers[id] = rest;
+                }else{
                     msg.SendReply((void*)rdata.c_str(), rdata.size());
                 }
             }
@@ -118,6 +154,7 @@ namespace rpc{
 	template<uint32_t msgtype, typename R> class ProcServer<msgtype, R> : public btos_api::IMessageHandler{
     private:
         std::function<R()> fn;
+        std::map<uint64_t, std::string> return_buffers;
     public:
         ProcServer(std::function<R()> f) : fn(f) {}
 
@@ -127,7 +164,25 @@ namespace rpc{
                 std::stringstream rss;
                 serialize(rss, r);
                 auto rdata = rss.str();
-                msg.SendReply((void*)rdata.c_str(), rdata.size());
+                if(rdata.size() > BT_MSG_MAX){
+                    auto cur = rdata.substr(0, BT_MSG_MAX);
+                    auto rest = rdata.substr(BT_MSG_MAX);
+                    auto id = msg.SendReply((void*)cur.c_str(), cur.size(), MessageType_Continue);
+                    return_buffers[id] = rest;
+                }else{
+                    msg.SendReply((void*)rdata.c_str(), rdata.size());
+                }
+            }else if(msg.Type() == MessageType_Continue && return_buffers.find(msg.ReplyTo()) != return_buffers.end()){
+                auto rdata = return_buffers[msg.ReplyTo()];
+                return_buffers.erase(msg.ReplyTo());
+                if(rdata.size() > BT_MSG_MAX){
+                    auto cur = rdata.substr(0, BT_MSG_MAX);
+                    auto rest = rdata.substr(BT_MSG_MAX);
+                    auto id = msg.SendReply((void*)cur.c_str(), cur.size(), MessageType_Continue);
+                    return_buffers[id] = rest;
+                }else{
+                    msg.SendReply((void*)rdata.c_str(), rdata.size());
+                }
             }
             return true;
         }
