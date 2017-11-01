@@ -47,7 +47,7 @@ static size_t suffixMatch(const string &a, const string &b){
 	return ret;
 }
 
-string GetAssociation(const string &path){
+Feature GetAssociation(const string &path){
 	InitDB();
 	auto exts = GetAll<FileType>(db);
 	FileType ext;
@@ -71,11 +71,10 @@ string GetAssociation(const string &path){
 		
 		if(assoc.id > 0){
 			auto feature = assoc.feature.Get(db);
-			auto package = feature.package.Get(db);
-			return package.path + feature.path + feature.file;
+			return feature;
 		}
 	}
-	return "";
+	return {};
 }
 
 void RegTest(){
@@ -113,9 +112,9 @@ void RegTest(){
 		assoc.cmdTemplate = "$";
 		assoc.Save(db);
 	}
-	cout << ".test : " << GetAssociation("file.test") << endl;
-	delete rpc::NewProcServer<0>(rpc::make_function(&GetAssociation));
-	rpc::ProcClient<0, std::string, std::string> client(0);
+	// cout << ".test : " << GetAssociation("file.test") << endl;
+	// delete rpc::NewProcServer<0>(rpc::make_function(&GetAssociation));
+	// rpc::ProcClient<0, std::string, std::string> client(0);
 }
 
 int main(){

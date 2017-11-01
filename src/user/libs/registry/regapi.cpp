@@ -51,6 +51,21 @@ FeatureInfo GetFeatureByName(const string &name){
     return rpc::MakeClient<RPCID::GetFeatureByName>(pid, GetFeatureByName)(name);
 }
 
+vector<string> GetFeaturesByType(const string &type){
+    SetPID();
+    return rpc::MakeClient<RPCID::GetFeaturesByType>(pid, GetFeaturesByType)(type);
+}
+
+string GetFeatureAssociation(const string &path){
+    SetPID();
+    return rpc::MakeClient<RPCID::GetFeatureAssociation>(pid, GetFeatureAssociation)(path);
+}
+
+string GetPathAssociation(const string &path){
+    SetPID();
+    return rpc::MakeClient<RPCID::GetPathAssociation>(pid, GetPathAssociation)(path);
+}
+
 int64_t InstallPackage(const PackageInfo &info){
     SetPID();
     return rpc::MakeClient<RPCID::InstallPackage>(pid, InstallPackage)(info);
@@ -59,6 +74,11 @@ int64_t InstallPackage(const PackageInfo &info){
 int64_t InstallFeature(const FeatureInfo &info){
     SetPID();
     return rpc::MakeClient<RPCID::InstallFeature>(pid, InstallFeature)(info);
+}
+
+vector<int> RunScript(const vector<string> &sql){
+    SetPID();
+    return rpc::MakeClient<RPCID::RunScript>(pid, RunScript)(sql);
 }
 
 

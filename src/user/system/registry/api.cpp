@@ -1,5 +1,3 @@
-#include "tables.hpp"
-#include "api_types.hpp"
 #include <util/rpc.hpp>
 #include <btos/imessagehandler.hpp>
 
@@ -7,6 +5,10 @@
 #include <string>
 #include <iostream>
 #include <memory>
+
+#include "tables.hpp"
+#include "api_types.hpp"
+#include "registry.hpp"
 
 using std::vector;
 using std::string;
@@ -97,9 +99,44 @@ FeatureInfo GetFeatureById(int64_t id){
 	return ToInfo(feat);
 }
 
-FeatureInfo GetFeatureByName(const std::string &name){
+FeatureInfo GetFeatureByName(const string &name){
 	auto feat = sqlentity::GetWhere<Feature>(db, "name = @name", {{"name", name}});
 	return ToInfo(feat);
+}
+
+vector<string> GetFeaturesByType(const string &type){
+	vector<string> ret;
+	auto feats = sqlentity::GetAllWhere<Feature>(db, "type = @type", {{"type", type}});
+	for(auto &f : feats){
+		ret.push_back(f.name);
+	}
+	return ret;
+}
+
+string GetFeatureAssociation(const string &path){
+	auto feat = GetAssociation(path);
+	return feat.name;
+}
+
+string GetPathAssociation(const string &path){
+	auto feat = GetAssociation(path);
+	if(feat.id > 0){
+		auto pkg = feat.package.Get(db);
+		if(pkg.id > 0){
+			return pkg.path + feat.path + feat.file;
+		}
+	}
+	return "";
+}
+
+vector<int> RunScript(const vector<string> &sql){
+	vector<int> ret;
+	for(auto &s : sql){
+		if(s == "") ret.push_back(0);
+		else ret.push_back(sqlitepp::query(db, s).exec());
+		if(ret.back() == 100) ret.back() = 0;
+	}
+	return ret;
 }
 
 template<uint32_t id, typename F> void AddAPI(vector<shared_ptr<IMessageHandler>> &vec, F fn){
@@ -115,9 +152,14 @@ vector<shared_ptr<IMessageHandler>> InitAPI(){
 	AddAPI<RPCID::GetFeatures>(ret, &GetFeatures);
 	AddAPI<RPCID::GetFeatureById>(ret, &GetFeatureById);
 	AddAPI<RPCID::GetFeatureByName>(ret, &GetFeatureByName);
+	AddAPI<RPCID::GetFeaturesByType>(ret, &GetFeaturesByType);
+	AddAPI<RPCID::GetFeatureAssociation>(ret, &GetFeatureAssociation);
+	AddAPI<RPCID::GetPathAssociation>(ret, &GetPathAssociation);
 
 	AddAPI<RPCID::InstallPackage>(ret, &InstallPackage);
 	AddAPI<RPCID::InstallFeature>(ret, &InstallFeature);
+
+	AddAPI<RPCID::RunScript>(ret, &RunScript);
 	return ret;
 }
 

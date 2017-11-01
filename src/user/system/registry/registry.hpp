@@ -1,12 +1,16 @@
-#ifndef _REGISTRY_HPP
-#define _REGISTRY_HPP
+#ifndef _REGISTRY_INTERNAL_HPP
+#define _REGISTRY_INTERNAL_HPP
 
 #include <btos/messageloop.hpp>
 
 #include <vector>
 #include <memory>
 
+#include "tables.hpp"
+
 extern MessageLoop msgloop;
+
+Feature GetAssociation(const std::string &path);
 
 namespace btos_api{
 namespace registry{

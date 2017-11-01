@@ -1,6 +1,7 @@
 #ifndef _RPC_HPP
 #define _RPC_HPP
 
+#include <btos.h>
 #include <btos/imessagehandler.hpp>
 #include <sstream>
 #include <type_traits>

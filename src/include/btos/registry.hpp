@@ -35,9 +35,14 @@ namespace RPCID{
     const uint32_t GetFeatures = 4;
     const uint32_t GetFeatureById = 5;
     const uint32_t GetFeatureByName = 6;
+    const uint32_t GetFeaturesByType = 7;
+    const uint32_t GetFeatureAssociation = 8;
+    const uint32_t GetPathAssociation = 9;
 
     const uint32_t InstallPackage = 101;
     const uint32_t InstallFeature = 102;
+
+    const uint32_t RunScript = 900;
 };
 
 std::vector<std::string> GetAllPackages();
@@ -46,9 +51,14 @@ PackageInfo GetPackageByName(const std::string &name);
 std::vector<std::string> GetFeatures(int64_t pkgid);
 FeatureInfo GetFeatureById(int64_t id);
 FeatureInfo GetFeatureByName(const std::string &name);
+std::vector<std::string> GetFeaturesByType(const std::string &type);
+std::string GetFeatureAssociation(const std::string &path);
+std::string GetPathAssociation(const std::string &path);
 
 int64_t InstallPackage(const PackageInfo &info);
 int64_t InstallFeature(const FeatureInfo &info);
+
+std::vector<int> RunScript(const std::vector<std::string> &sql);
 
 }
 }
