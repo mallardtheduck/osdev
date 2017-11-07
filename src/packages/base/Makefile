@@ -78,6 +78,7 @@ import-files:=\
  data/btos/system/registry.elx \
  data/btos/lib/registry.ell \
  data/btos/cmd/reg.elx \
+ data/btos/cmd/package.elx \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -328,6 +329,9 @@ data/btos/lib/registry.ell: ../../user/libs/registry/registry.ell
 data/btos/cmd/reg.elx: ../../user/libs/registry/reg.elx
 	cp $< $@
 
+data/btos/cmd/package.elx: ../../user/cmds/package/package.elx
+	cp $< $@
+
 copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx
 	mkdir -p data/btos/boot/grub/
 	cp -R ../../3rdparty/install/btos/lib/grub/i386-pc data/btos/boot/grub
@@ -350,7 +354,7 @@ create.directories: Makefile
 	touch create.directories
 
 ../base.tar: $(import-files) $(pkg-files) copy.grub
-	#cp -R pkgfiles/* data
+	cp -Rv pkgfiles/* data
 	tar cf ../base.tar -C data .
 
 clean:

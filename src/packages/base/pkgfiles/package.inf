@@ -1,0 +1,82 @@
+[package]
+
+name = base
+description = The BT/OS base operating system.
+version = 0.1B
+
+[feature-libpath]
+
+name = base.libpath
+desription = LIBPATH for base OS libraries
+path = /lib
+type = libpath
+
+[feature-cmdpath]
+
+name = base.cmdpath
+description = PATH for base command-line utilities
+path = /cmd
+type = path
+
+[feature-binpath]
+
+name = base.binpath
+description = PATH for base misc. utilities
+path = /bin
+type = path
+
+[feature-svc-gds]
+
+name = base.svc.gds
+description = GDS session service
+path = /config/sessions/services
+file = gds.ini
+type = sm.svc
+
+[feature-svc-wm]
+
+name = base.svc.wm
+description = WM session service
+path = /config/sessions/services
+file = wm.ini
+type = sm.svc
+
+[feature-ses-cmd]
+
+name = base.ses.cmd
+description = Command line session type
+path = /config/sessions
+file = cmd.ini
+type = sm.ses
+
+[feature-ses-debug]
+
+name = base.ses.debug
+description = Debugger session type
+path = /config/sessions
+file = debug.ini
+type = sm.ses
+
+[feature-ses-wmmenu]
+
+name = base.ses.wmmenu
+description = GUI (Menu) session type
+path = /config/sessions
+file = wmmenu.ini
+type = sm.ses
+
+[feature-app-termwin]
+
+name = base.app.termwin
+description = Terminal Window application
+path = /bin
+file = termwin.elx
+type = app
+
+[feature-app-breakout]
+
+name = base.app.breakout
+description = Breakout application
+path = /bin
+file = breakout.elx
+type = app

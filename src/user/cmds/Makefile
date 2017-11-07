@@ -1,4 +1,4 @@
-PROGS := cls cmd format kill load mount sleep tar termctl kilo ini
+PROGS := cls cmd format kill load mount sleep tar termctl kilo ini package
 
 all: dummy.file
 	for dir in $(PROGS); do \
