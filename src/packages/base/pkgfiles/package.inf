@@ -7,7 +7,7 @@ version = 0.1B
 [feature-libpath]
 
 name = base.libpath
-desription = LIBPATH for base OS libraries
+description = LIBPATH for base OS libraries
 path = /lib
 type = libpath
 
