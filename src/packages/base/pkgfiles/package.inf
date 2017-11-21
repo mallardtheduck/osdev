@@ -8,28 +8,28 @@ version = 0.1B
 
 name = base.libpath
 description = LIBPATH for base OS libraries
-path = /lib
+path = /lib/
 type = libpath
 
 [feature-cmdpath]
 
 name = base.cmdpath
 description = PATH for base command-line utilities
-path = /cmd
+path = /cmd/
 type = path
 
 [feature-binpath]
 
 name = base.binpath
 description = PATH for base misc. utilities
-path = /bin
+path = /bin/
 type = path
 
 [feature-svc-gds]
 
 name = base.svc.gds
 description = GDS session service
-path = /config/sessions/services
+path = /config/sessions/services/
 file = gds.ini
 type = sm.svc
 
@@ -37,7 +37,7 @@ type = sm.svc
 
 name = base.svc.wm
 description = WM session service
-path = /config/sessions/services
+path = /config/sessions/services/
 file = wm.ini
 type = sm.svc
 
@@ -45,7 +45,7 @@ type = sm.svc
 
 name = base.ses.cmd
 description = Command line session type
-path = /config/sessions
+path = /config/sessions/
 file = cmd.ini
 type = sm.ses
 
@@ -53,7 +53,7 @@ type = sm.ses
 
 name = base.ses.debug
 description = Debugger session type
-path = /config/sessions
+path = /config/sessions/
 file = debug.ini
 type = sm.ses
 
@@ -61,7 +61,7 @@ type = sm.ses
 
 name = base.ses.wmmenu
 description = GUI (Menu) session type
-path = /config/sessions
+path = /config/sessions/
 file = wmmenu.ini
 type = sm.ses
 
@@ -69,7 +69,7 @@ type = sm.ses
 
 name = base.app.termwin
 description = Terminal Window application
-path = /bin
+path = /bin/
 file = termwin.elx
 type = app
 
@@ -77,6 +77,6 @@ type = app
 
 name = base.app.breakout
 description = Breakout application
-path = /bin
+path = /bin/
 file = breakout.elx
 type = app

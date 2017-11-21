@@ -76,6 +76,15 @@ int64_t InstallFeature(const FeatureInfo &info){
     return rpc::MakeClient<RPCID::InstallFeature>(pid, InstallFeature)(info);
 }
 
+void UpdatePackage(const PackageInfo &info){
+    SetPID();
+    rpc::MakeClient<RPCID::UpdatePackage>(pid, UpdatePackage)(info);
+}
+
+void UpdateFeature(const FeatureInfo &info){
+    rpc::MakeClient<RPCID::UpdateFeature>(pid, UpdateFeature)(info);
+}
+
 vector<int> RunScript(const vector<string> &sql){
     SetPID();
     return rpc::MakeClient<RPCID::RunScript>(pid, RunScript)(sql);

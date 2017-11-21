@@ -8,8 +8,10 @@
 #include <btos/envvars.hpp>
 #include <btos/directory.hpp>
 #include <btos/ini.hpp>
+#include <btos/registry.hpp>
 
 using namespace std;
+namespace reg = btos_api::registry;
 
 static const string SessionsPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/SESSIONS/");
 static const string SessionManager = EnvInterpolate("$systemdrive$:/BTOS/SYSTEM/SESSION.ELX");
@@ -84,6 +86,21 @@ static vector<SessionEntry> GetSessionEntries(){
 	for(auto f : d){
 		string fname = f.filename;
 		if(f.type == FS_File && hasEnding(to_lower(fname), ".ini")){
+			auto ini = ReadIniFile(SessionsPath + fname);
+			SessionEntry e;
+			e.id = fname.substr(0, fname.length() - 4);
+			auto section = ini["session"];
+			e.name = section["name"];
+			ret.push_back(e);
+		}
+	}
+	auto feats = reg::GetFeaturesByType("sm.ses");
+	for(auto &f : feats){
+		auto feat = reg::GetFeatureByName(f);
+		auto pkg = reg::GetPackageById(feat.package);
+		string fname = pkg.path + feat.path + feat.file;
+		auto info = bt_stat(fname.c_str());
+		if(info.type == FS_File){
 			auto ini = ReadIniFile(SessionsPath + fname);
 			SessionEntry e;
 			e.id = fname.substr(0, fname.length() - 4);

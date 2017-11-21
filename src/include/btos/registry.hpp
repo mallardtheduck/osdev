@@ -42,6 +42,9 @@ namespace RPCID{
     const uint32_t InstallPackage = 101;
     const uint32_t InstallFeature = 102;
 
+    const uint32_t UpdatePackage = 201;
+    const uint32_t UpdateFeature = 201;
+
     const uint32_t RunScript = 900;
 };
 
@@ -57,6 +60,9 @@ std::string GetPathAssociation(const std::string &path);
 
 int64_t InstallPackage(const PackageInfo &info);
 int64_t InstallFeature(const FeatureInfo &info);
+
+void UpdatePackage(const PackageInfo &info);
+void UpdateFeature(const FeatureInfo &info);
 
 std::vector<int> RunScript(const std::vector<std::string> &sql);
 

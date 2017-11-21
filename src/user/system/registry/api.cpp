@@ -94,6 +94,28 @@ int64_t InstallFeature(const FeatureInfo &info){
 	return feat.id;
 }
 
+void UpdatePackage(const PackageInfo &info){
+	auto pkg = sqlentity::GetByKey<Package>(db, info.id);
+	pkg.name = info.name;
+	pkg.description = info.description;
+	pkg.path = info.path;
+	pkg.ver = info.ver;
+	pkg.Save(db);
+}
+
+void UpdateFeature(const FeatureInfo &info){
+	auto feat = sqlentity::GetByKey<Feature>(db, info.id);
+	feat.package.key = info.package;
+	feat.name = info.name;
+	feat.description = info.description;
+	feat.type = info.type;
+	feat.ver = info.ver;
+	feat.path = info.path;
+	feat.file = info.file;
+	feat.flags = info.flags;
+	feat.Save(db);
+}
+
 FeatureInfo GetFeatureById(int64_t id){
 	auto feat = sqlentity::GetByKey<Feature>(db, id);
 	return ToInfo(feat);
@@ -158,6 +180,9 @@ vector<shared_ptr<IMessageHandler>> InitAPI(){
 
 	AddAPI<RPCID::InstallPackage>(ret, &InstallPackage);
 	AddAPI<RPCID::InstallFeature>(ret, &InstallFeature);
+
+	AddAPI<RPCID::UpdatePackage>(ret, &UpdatePackage);
+	AddAPI<RPCID::UpdateFeature>(ret, &UpdateFeature);
 
 	AddAPI<RPCID::RunScript>(ret, &RunScript);
 	return ret;
