@@ -96,14 +96,15 @@ static vector<SessionEntry> GetSessionEntries(){
 	}
 	auto feats = reg::GetFeaturesByType("sm.ses");
 	for(auto &f : feats){
+		std::stringstream ss;
 		auto feat = reg::GetFeatureByName(f);
 		auto pkg = reg::GetPackageById(feat.package);
 		string fname = pkg.path + feat.path + feat.file;
 		auto info = bt_stat(fname.c_str());
 		if(info.type == FS_File){
-			auto ini = ReadIniFile(SessionsPath + fname);
+			auto ini = ReadIniFile(fname);
 			SessionEntry e;
-			e.id = fname.substr(0, fname.length() - 4);
+			e.id = f;
 			auto section = ini["session"];
 			e.name = section["name"];
 			ret.push_back(e);
