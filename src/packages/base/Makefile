@@ -332,15 +332,6 @@ data/btos/cmd/reg.elx: ../../user/libs/registry/reg.elx
 data/btos/cmd/package.elx: ../../user/cmds/package/package.elx
 	cp $< $@
 
-copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx
-	mkdir -p data/btos/boot/grub/
-	cp -R ../../3rdparty/install/btos/lib/grub/i386-pc data/btos/boot/grub
-	cp ../../3rdparty/install/btos/sbin/grub-bios-setup.elx data/btos/boot/grub/grubbios.elx
-	cp ../../3rdparty/install/btos/bin/grub-mkimage.elx data/btos/boot/grub/grubmkim.elx
-	cp ../../3rdparty/install/btos/bin/grub-mklayout.elx data/btos/boot/grub/grubmkla.elx
-	cp ../../3rdparty/install/btos/bin/grub-mkrelpath.elx data/btos/boot/grub/grubmkrp.elx
-	touch copy.grub
-
 create.directories: Makefile
 	mkdir -p data/btos/cmd
 	mkdir -p data/btos/temp
@@ -353,7 +344,7 @@ create.directories: Makefile
 	mkdir -p data/btos/config
 	touch create.directories
 
-../base.tar: $(import-files) $(pkg-files) copy.grub
+../base.tar: $(import-files) $(pkg-files)
 	cp -Rv pkgfiles/* data
 	tar cf ../base.tar -C data .
 

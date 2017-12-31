@@ -49,4 +49,6 @@ src/disk/data
 src/iso/livecd/isodir
 src/iso/test/isodir
 src/packages/base/data
+src/packages/kernel/data/btos/boot/grub/i386-pc
 src/.vscode
+src/packages/kernel/copy.grub
