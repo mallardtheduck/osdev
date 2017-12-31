@@ -66,6 +66,8 @@ void UpdateFeature(const FeatureInfo &info);
 
 std::vector<int> RunScript(const std::vector<std::string> &sql);
 
+std::string GetFeaturePath(uint64_t id);
+
 }
 }
 

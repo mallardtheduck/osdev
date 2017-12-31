@@ -98,8 +98,7 @@ static vector<SessionEntry> GetSessionEntries(){
 	for(auto &f : feats){
 		std::stringstream ss;
 		auto feat = reg::GetFeatureByName(f);
-		auto pkg = reg::GetPackageById(feat.package);
-		string fname = pkg.path + feat.path + feat.file;
+		auto fname = reg::GetFeaturePath(feat.id);
 		auto info = bt_stat(fname.c_str());
 		if(info.type == FS_File){
 			auto ini = ReadIniFile(fname);
