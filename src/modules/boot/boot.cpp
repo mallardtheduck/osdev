@@ -5,6 +5,7 @@ USE_DEBUG_PRINTF;
 char *current_section="default";
 
 #include "ini.h"
+#include "cmdline.hpp"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -85,7 +86,9 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 		}else module_load((char*)value, NULL);
 
 	}else if(MATCH(current_section, "run")){
-		wait(spawn((char*)value, 0, NULL));
+		cmdLine cmd = parse_cmd(value);
+		wait(spawn(cmd.cmd, cmd.argc, cmd.argv));
+		free_cmd(cmd);
     }else if(MATCH(current_section, "spawn")){
 		spawn("INIT:/SPAWN.ELX", 1, (char**)&value);
 	}else if(MATCH(current_section, "service")){
