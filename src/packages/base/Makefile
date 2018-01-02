@@ -68,7 +68,7 @@ import-files:=\
  data/btos/lib/btoscore.ell \
  data/btos/lib/btoslib.ell \
  data/btos/system/session.elx \
- data/btos/config/sessions \
+ data/btos/system/sessions \
  data/btos/lib/sm.ell \
  data/btos/cmd/smutil.elx \
  data/btos/lib/cmd.ell \
@@ -298,7 +298,7 @@ data/btos/lib/btoslib.ell: ../../user/libs/btoslib/btoslib.ell
 data/btos/system/session.elx: ../../user/system/sm/session.elx
 	cp $< $@
 
-data/btos/config/sessions: ../../user/system/sm/sessions
+data/btos/system/sessions: ../../user/system/sm/sessions
 	mkdir -p $@
 	cp -Rv $</* $@
 

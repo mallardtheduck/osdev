@@ -96,7 +96,6 @@ static vector<SessionEntry> GetSessionEntries(){
 	}
 	auto feats = reg::GetFeaturesByType("sm.ses");
 	for(auto &f : feats){
-		std::stringstream ss;
 		auto feat = reg::GetFeatureByName(f);
 		auto fname = reg::GetFeaturePath(feat.id);
 		auto info = bt_stat(fname.c_str());

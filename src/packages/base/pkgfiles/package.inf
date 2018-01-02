@@ -30,7 +30,7 @@ type = path
 
 name = base.svc.gds
 description = GDS session service
-path = /config/sessions/services/
+path = /system/sessions/services/
 file = gds.ini
 type = sm.svc
 
@@ -38,7 +38,7 @@ type = sm.svc
 
 name = base.svc.wm
 description = WM session service
-path = /config/sessions/services/
+path = /system/sessions/services/
 file = wm.ini
 type = sm.svc
 
@@ -46,7 +46,7 @@ type = sm.svc
 
 name = base.ses.cmd
 description = Command line session type
-path = /config/sessions/
+path = /system/sessions/
 file = cmd.ini
 type = sm.ses
 
@@ -54,7 +54,7 @@ type = sm.ses
 
 name = base.ses.debug
 description = Debugger session type
-path = /config/sessions/
+path = /system/sessions/
 file = debug.ini
 type = sm.ses
 
@@ -62,7 +62,7 @@ type = sm.ses
 
 name = base.ses.wmmenu
 description = GUI (Menu) session type
-path = /config/sessions/
+path = /system/sessions/
 file = wmmenu.ini
 type = sm.ses
 
