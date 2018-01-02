@@ -30,7 +30,7 @@ static void InitDB(){
 	}
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS package(id INTEGER PRIMARY KEY, path TEXT, name TEXT, descr TEXT, ver TEXT)").exec();
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS feature(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), type TEXT, name TEXT, ver TEXT, descr TEXT, path TEXT, file TEXT, flags INTEGER)").exec();
-	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS feature_req(id INTEGER PRIMARY KEY, featid INTEGER REFERENCES feature(id), reqid INTEGER REFERENCES feature(id))").exec();
+	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS feature_req(id INTEGER PRIMARY KEY, featid INTEGER REFERENCES feature(id), reqid INTEGER REFERENCES feature(id), minVersion TEXT)").exec();
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS ext(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), ext TEXT, mimeType TEXT)").exec();
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS assoc(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), featid INTEGER REFERENCES feature(id), extid INTEGER REFERENCES ext(id), descr TEXT, template TEXT)").exec();
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS default_assoc(id INTEGER PRIMARY KEY, extid INTEGER REFERENCES ext(id), associd INTEGER REFERENCES assoc(id))").exec();
@@ -77,48 +77,8 @@ Feature GetAssociation(const string &path){
 	return {};
 }
 
-void RegTest(){
-	InitDB();
-	auto pkg = GetWhere<Package>(db, "name = 'test'");
-	if(pkg.id == -1){
-		pkg.name = "test";
-		pkg.description = "Test Package";
-		pkg.path = "HDD:/TEST";
-		pkg.Save(db);
-	}
-	auto feat = GetWhere<Feature>(db, "name = 'test'");
-	if(feat.id == -1){
-		feat.name = "test";
-		feat.package = pkg;
-		feat.description = "Test Feature";
-		feat.path = "/";
-		feat.type = "cmd";
-		feat.file = "test.elx";
-		feat.Save(db);
-	}
-	auto ext = GetWhere<FileType>(db, "mimeType = 'test/test'");
-	if(ext.id == -1){
-		ext.extension = ".test";
-		ext.mimeType = "test/test";
-		ext.package = pkg;
-		ext.Save(db);
-	}
-	auto assoc = GetWhere<Association>(db, "featid = @featid", {{"featid", to_string(feat.id)}});
-	if(assoc.id == -1){
-		assoc.feature = feat;
-		assoc.package = pkg;
-		assoc.fileType = ext;
-		assoc.description = "Test Association";
-		assoc.cmdTemplate = "$";
-		assoc.Save(db);
-	}
-	// cout << ".test : " << GetAssociation("file.test") << endl;
-	// delete rpc::NewProcServer<0>(rpc::make_function(&GetAssociation));
-	// rpc::ProcClient<0, std::string, std::string> client(0);
-}
-
 int main(){
-	RegTest();
+	InitDB();
 	auto api = btos_api::registry::InitAPI();
 	for(auto &a : api){
 		msgloop.AddHandler(a);

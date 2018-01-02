@@ -80,6 +80,7 @@ struct FeatureRequirement : public sqlentity::BoundEntity{
 	int64_t id = -1;
 	sqlentity::Reference<Feature> feature;
 	sqlentity::Reference<Feature> requires;
+	std::string minVersion;
 
 	void Bind(){
 		binder.SetTable("feature_req");
@@ -87,6 +88,7 @@ struct FeatureRequirement : public sqlentity::BoundEntity{
 		binder.BindVar("id", id);
 		binder.BindVar("featid", feature);
 		binder.BindVar("reqid", requires);
+		binder.BindVar("minVersion", minVersion);
 	}
 };
 
