@@ -4,19 +4,27 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include <btos/envvars.hpp>
+#include <btos/registry.hpp>
 
 using namespace std;
+
+namespace reg = btos_api::registry;
 
 const uint32_t LineHeight = 20;
 static uint32_t textFont;
 
-vector<pair<string, string>> options = {
-	{"Test application", "$SYSTEMDRIVE$:/btos/tests/wmtest.elx"},
-	{"Terminal window", "$SYSTEMDRIVE$:/btos/bin/termwin.elx"},
-	{"Breakout", "$SYSTEMDRIVE$:/btos/bin/breakout.elx"},
-	{"Quit", "QUIT"},
-};
+vector<pair<string, string>> options;
+
+void LoadOptions(){
+	options.clear();
+	auto feats = reg::GetFeaturesByType("app");
+	for(auto &f : feats){
+		auto feat = reg::GetFeatureByName(f);
+		auto option = make_pair(feat.description, reg::GetFeaturePath(feat.id));
+		options.push_back(option);
+	}
+	options.push_back({"Quit", "QUIT"});
+}
 
 string get_env(const string &name){
 	char value[128];
@@ -53,6 +61,7 @@ size_t RenderMenu(uint64_t surf, uint32_t ypos = UINT32_MAX, bool down = true){
 }
 
 int main(){
+	LoadOptions();
 	textFont = GDS_GetFontID("Resagnicto", gds_FontStyle::Normal);
 	uint64_t surf = GDS_NewSurface(gds_SurfaceType::Bitmap, 200, LineHeight * options.size());
 	/*uint64_t win =*/ WM_NewWindow(5, 5, wm_WindowOptions::Default, wm_EventType::PointerButtonDown | wm_EventType::PointerButtonUp | wm_EventType::Close, surf, "WM Menu");
@@ -71,7 +80,7 @@ int main(){
 				auto &o = options[buttonIndex];
 				if(o.second == "QUIT") break;
 				else{
-					string path = EnvInterpolate(o.second);
+					string path = o.second;
 					bt_spawn(path.c_str(), 0, NULL);
 				}
 			}
