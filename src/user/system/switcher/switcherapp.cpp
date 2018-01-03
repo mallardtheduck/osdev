@@ -82,31 +82,29 @@ static bool hasEnding (const string &fullString, const string &ending) {
 
 static vector<SessionEntry> GetSessionEntries(){
 	vector<SessionEntry> ret;
+	auto addSession = [&](const string &fname, const string &id){
+		auto info = bt_stat(fname.c_str());
+		if(info.type == FS_File){
+			auto ini = ReadIniFile(fname);
+			SessionEntry e;
+			e.id = id;
+			auto section = ini["session"];
+			e.name = section["name"];
+			ret.push_back(e);
+		}
+	};
 	Directory d {SessionsPath.c_str(), FS_Read};
 	for(auto f : d){
 		string fname = f.filename;
 		if(f.type == FS_File && hasEnding(to_lower(fname), ".ini")){
-			auto ini = ReadIniFile(SessionsPath + fname);
-			SessionEntry e;
-			e.id = fname.substr(0, fname.length() - 4);
-			auto section = ini["session"];
-			e.name = section["name"];
-			ret.push_back(e);
+			addSession(SessionsPath + fname, fname.substr(0, fname.length() - 4));
 		}
 	}
 	auto feats = reg::GetFeaturesByType("sm.ses");
 	for(auto &f : feats){
 		auto feat = reg::GetFeatureByName(f);
 		auto fname = reg::GetFeaturePath(feat.id);
-		auto info = bt_stat(fname.c_str());
-		if(info.type == FS_File){
-			auto ini = ReadIniFile(fname);
-			SessionEntry e;
-			e.id = f;
-			auto section = ini["session"];
-			e.name = section["name"];
-			ret.push_back(e);
-		}
+		addSession(fname, f);
 	}
 	return ret;
 }

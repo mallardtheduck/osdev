@@ -17,24 +17,7 @@ SessionServiceResolver::SessionServiceResolver(){
 }
 
 void SessionServiceResolver::UpdateCache(){
-	Directory dir{ServicesPath.c_str(), FS_Read};
-	for(auto f : dir){
-		if(f.type == FS_File){
-			auto file = ReadIniFile(ServicesPath + f.filename);
-			auto section = file["service"];
-			auto name = section["name"];
-			auto path = EnvInterpolate(section["path"]);
-			string cleanup;
-			if(section.find("cleanup") != section.end()){
-				cleanup = EnvInterpolate(section["cleanup"]);
-			}
-			serviceCache.insert(make_pair(name, Service{name, path, cleanup}));
-		}
-	}
-	auto feats = reg::GetFeaturesByType("sm.svc");
-	for(auto &f : feats){
-		auto feat = reg::GetFeatureByName(f);
-		auto fname = reg::GetFeaturePath(feat.id);
+	auto addService = [&](const string &fname){
 		auto info = bt_stat(fname.c_str());
 		if(info.type == FS_File){
 			auto file = ReadIniFile(fname);
@@ -47,6 +30,16 @@ void SessionServiceResolver::UpdateCache(){
 			}
 			serviceCache.insert(make_pair(name, Service{name, path, cleanup}));
 		}
+	};
+	Directory dir{ServicesPath.c_str(), FS_Read};
+	for(auto f : dir){
+		addService(ServicesPath + f.filename);
+	}
+	auto feats = reg::GetFeaturesByType("sm.svc");
+	for(auto &f : feats){
+		auto feat = reg::GetFeatureByName(f);
+		auto fname = reg::GetFeaturePath(feat.id);
+		addService(fname);
 	}
 }
 
