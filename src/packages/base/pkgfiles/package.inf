@@ -81,3 +81,11 @@ description = Breakout
 path = /bin/
 file = breakout.elx
 type = app
+
+[feature-base-fonts]
+
+name = base.fonts
+description = Basic system fonts
+path = /fonts/
+type = fontpath
+
