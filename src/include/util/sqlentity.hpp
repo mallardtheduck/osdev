@@ -75,7 +75,8 @@ public:
 	}
 
 	void DBRead(sqlitepp::field_type &f){
-		*var = static_cast<T>(f);
+		if(!f.is_null()) *var = static_cast<T>(f);
+		else *var = T();
     }
 
 	void *GetPtr(){
