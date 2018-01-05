@@ -38,7 +38,7 @@ int main(int argc, char **argv){
 				break;
 		}
 	}else{
-		std::cout << usage_lines(cli, argv[0]) << std::endl;
+		std::cerr << usage_lines(cli, argv[0]) << std::endl;
 	}
 	
     return 0;
