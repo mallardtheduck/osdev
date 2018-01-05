@@ -89,6 +89,5 @@ int main(int argc, char **argv){
 	}else{
 		cerr << c::usage_lines(cli, argv[0]) << endl;
 	}
-	
 	return 0;
 }
