@@ -105,3 +105,15 @@ void PackageFileList(const string &filePath){
 		cout << padRight(f.path, maxNameLen) << " " << std::setw(maxSizeLen) << std::dec << f.size << " bytes @0x" << std::hex << f.offset << endl;
 	}
 }
+
+void InstallPackage(const string &filePath, const string &path){
+	PackageFile pkgFile(filePath);
+	auto res = pkgFile.Install(path);
+	if(res.success) cout << "Install sucessful." << endl;
+	else{
+		cout << "Install failed:" << endl;
+		for(const auto &m : res.messages){
+			cout << m << endl;
+		}
+	}
+}

@@ -3,6 +3,9 @@
 #include <btos/ini.hpp>
 #include <memory>
 #include <sstream>
+#include <cctype>
+#include <cstdlib>
+#include <algorithm>
 
 #include <btos.h>
 
@@ -14,6 +17,37 @@ using std::vector;
 namespace reg = btos_api::registry;
 
 const size_t MaxInfSize = 1 * 1024 * 1024;
+
+vector<int> parse_version(const string &str){
+	vector<int> ret;
+	string cur;
+	bool first = true;
+	for(auto c : str){
+		if(first && tolower(c) == 'v') continue;
+		first = false;
+		
+		if(isdigit(c)) cur += c;
+		else{
+			if(!cur.empty()){
+				ret.push_back(atoi(cur.c_str()));
+				cur.clear();
+			}
+			if(c == '.' || c == '-') continue;
+			ret.push_back((tolower(c) - 'a') + 1);
+		}
+	}
+	if(!cur.empty()) ret.push_back(atoi(cur.c_str()));
+	return ret;
+}
+
+bool compare_versions(vector<int> old, vector<int> tst){
+	for(size_t i = 0; i < std::min(old.size(), tst.size()); ++i){
+		if(tst[i] > old[i]) return true;
+		if(tst[i] < old[i]) return false;
+	}
+	if(tst.size() > old.size()) return true;
+	return false;
+}
 
 static string filter_filename(const string &name){
 	if(starts_with(name, "./")){
@@ -112,7 +146,15 @@ vector<PackageFile::ContentFile> PackageFile::GetContent(){
 	return content;
 }
 
-uint64_t PackageFile::Install(const string &/*path*/){
-	return -1;
+PackageFile::InstallStatus PackageFile::Install(const string &/*path*/){
+	auto curPkg = reg::GetPackageByName(packageInfo.name);
+	if(!curPkg.ver.empty()){
+		auto curVer = parse_version(curPkg.ver);
+		auto newVer = parse_version(packageInfo.ver);
+		if(!compare_versions(curVer, newVer)){
+			return {false, 0, {"The currently installed package version is the same or newer."}};
+		}
+	}
+	return {false, 0, {"Not implemented."}};
 }
 

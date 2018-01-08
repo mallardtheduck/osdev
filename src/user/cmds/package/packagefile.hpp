@@ -14,6 +14,12 @@ public:
 		uint64_t offset;
 		uint64_t size;
 	};
+	struct InstallStatus{
+		bool success;
+		uint64_t package_id;
+		std::vector<std::string> messages;
+	};
+	
 private:
 	std::ifstream stream;
 	btos_api::registry::PackageInfo packageInfo;
@@ -30,7 +36,7 @@ public:
 	std::vector<btos_api::registry::FeatureInfo> GetFeatures();
 	std::vector<ContentFile> GetContent();
 	
-	uint64_t Install(const std::string &path);
+	InstallStatus Install(const std::string &path);
 };
 
 #endif

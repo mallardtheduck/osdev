@@ -14,7 +14,8 @@ enum class Command{
 	Help,
 	Import,
 	Info,
-	Files
+	Files,
+	Install
 };
 
 int main(int argc, char **argv){
@@ -38,7 +39,13 @@ int main(int argc, char **argv){
 		value("package-file").set(file) % "Package file"
 	);
 	
-	auto cli = (command("help").set(cmd, Command::Help) | importCmd | infoCmd | filesCmd);
+	auto installCmd = (
+		command("install").set(cmd, Command::Install) % "Install a package",
+		value("package-file").set(file) % "Package file",
+		value("install-path").set(path) % "Path to package install location"
+	);
+	
+	auto cli = (command("help").set(cmd, Command::Help) | installCmd | importCmd | infoCmd | filesCmd);
 	
 	if(parse(argc, argv, cli)){
 		switch(cmd){
@@ -55,6 +62,9 @@ int main(int argc, char **argv){
 				break;
 			case Command::Files:
 				PackageFileList(file);
+				break;
+			case Command::Install:
+				InstallPackage(file, path);
 				break;
 		}
 	}else{
