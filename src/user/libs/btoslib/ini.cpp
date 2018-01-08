@@ -89,14 +89,13 @@ IniSection ReadIniSection(std::istream &file){
 // ReadIniFile ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
 // Reads and parses a .INI file
-IniFile ReadIniFile(const std::string &filename){
+IniFile ReadIniFile(std::istream &file){
 	//Parameters:
-	// filename - the name of the file to read/parse
+	// file - the file to read/parse
 	//Returns: The parsed .INI file as an IniFile (std::map)
 	//-------------------------------------------------------------------------
 
 	IniFile ret;
-	std::ifstream file(filename.c_str());
 	char c;
 
 	while(!file.eof()){
@@ -119,6 +118,11 @@ IniFile ReadIniFile(const std::string &filename){
 		}
 	}
 	return ret;
+}
+
+IniFile ReadIniFile(const std::string &filename){
+	std::ifstream file(filename.c_str());
+	return ReadIniFile(file);
 }
 
 }
