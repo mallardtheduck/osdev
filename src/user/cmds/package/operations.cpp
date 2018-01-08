@@ -5,6 +5,8 @@
 #include <string>
 #include <map>
 #include <iostream>
+#include <iomanip>
+#include <cmath>
 
 #include "package.hpp"
 #include "packagefile.hpp"
@@ -80,5 +82,26 @@ void PackageFileInfo(const string &filePath){
 		cout << "Description: " << f.description << endl;
 		cout << "Type: " << f.type << endl;
 		cout << "Version: " << f.ver << endl;
+	}
+}
+
+static string padRight(const string &str, size_t len, char pad = ' '){
+	if(str.length() < len){
+		return str + string(len - str.length(), pad);
+	}else return str;
+}
+
+void PackageFileList(const string &filePath){
+	PackageFile pkgFile(filePath);
+	auto fileList = pkgFile.GetContent();
+	size_t maxNameLen = 0;
+	size_t maxSizeLen = 0;
+	for(auto &f : fileList){
+		if(f.path.length() > maxNameLen) maxNameLen = f.path.length();
+		auto sizeLen = ceil(log10(f.size + 1));
+		if(sizeLen > maxSizeLen) maxSizeLen = sizeLen;
+	}
+	for(auto &f : fileList){
+		cout << padRight(f.path, maxNameLen) << " " << std::setw(maxSizeLen) << std::dec << f.size << " bytes @0x" << std::hex << f.offset << endl;
 	}
 }

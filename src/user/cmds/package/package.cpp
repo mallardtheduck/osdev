@@ -13,7 +13,8 @@ using namespace clipp;
 enum class Command{
 	Help,
 	Import,
-	Info
+	Info,
+	Files
 };
 
 int main(int argc, char **argv){
@@ -32,7 +33,12 @@ int main(int argc, char **argv){
 		value("package-file").set(file) % "Package file"
 	);
 	
-	auto cli = (command("help").set(cmd, Command::Help) | importCmd | infoCmd);
+	auto filesCmd = (
+		command("files").set(cmd, Command::Files) % "Display list of files in a package",
+		value("package-file").set(file) % "Package file"
+	);
+	
+	auto cli = (command("help").set(cmd, Command::Help) | importCmd | infoCmd | filesCmd);
 	
 	if(parse(argc, argv, cli)){
 		switch(cmd){
@@ -46,6 +52,9 @@ int main(int argc, char **argv){
 				break;
 			case Command::Info:
 				PackageFileInfo(file);
+				break;
+			case Command::Files:
+				PackageFileList(file);
 				break;
 		}
 	}else{
