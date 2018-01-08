@@ -30,7 +30,7 @@ SOFTWARE.
 #include <ctime>    // for time
 #include <cassert>
 
-#define ENABLE_LOGGING
+#undef ENABLE_LOGGING
 
 #ifdef ENABLE_LOGGING
 #  define LOG printf
