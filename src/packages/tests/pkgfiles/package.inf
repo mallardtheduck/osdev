@@ -1,0 +1,21 @@
+[package]
+
+name = tests
+description = Various test/example programs
+version = 0.1B
+contentPath = tests
+
+[feature-binpath]
+
+name = tests.binpath
+description = PATH for test/example programs
+path = /
+type = path
+
+[feature-app-wmtest]
+
+name = tests.app.wmtest
+description = WM Test
+path = /
+file = wmtest.elx
+type = app

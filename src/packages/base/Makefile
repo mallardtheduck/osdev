@@ -1,6 +1,4 @@
 import-files:=\
- data/btos/tests/ctest.elx \
- data/btos/tests/cpptest.elx \
  data/btos/cmd/cmd.elx \
  data/btos/system/terminal.sys \
  data/btos/cmd/cls.elx \
@@ -10,19 +8,11 @@ import-files:=\
  data/btos/cmd/kill.elx \
  data/btos/drivers/pci.sys \
  data/btos/cmd/load.elx \
- data/btos/tests/test.sys \
  data/btos/cmd/mount.elx \
- data/btos/tests/msgtest.elx \
- data/btos/tests/mousetest.elx \
  data/btos/drivers/vga.sys \
- data/btos/tests/vgatest.elx \
- data/btos/tests/fputest.elx \
  data/btos/system/gds.elx \
  data/btos/bin/debug.elx \
- data/btos/tests/crash.elx \
- data/btos/tests/gdstest.elx \
  data/btos/system/wm.elx \
- data/btos/tests/wmtest.elx \
  data/btos/bin/wmmenu.elx \
  data/btos/bin/startwm.elx \
  data/btos/bin/termwin.elx \
@@ -35,9 +25,6 @@ import-files:=\
  data/btos/cmd/parted.elx \
  data/btos/cmd/format.elx \
  data/btos/bin/install.elx \
- data/btos/tests/shmtest.elx \
- data/btos/tests/elltest.elx \
- data/btos/tests/testlib.ell \
  data/btos/lib/libc.ell \
  data/btos/lib/libm.ell \
  data/btos/lib/stdc++.ell \
@@ -49,12 +36,10 @@ import-files:=\
  data/btos/lib/iconv.ell \
  data/btos/lib/uuid.ell \
  data/btos/lib/parted.ell \
- data/btos/tests/elldtest.elx \
  data/btos/lib/eloader.ell \
  data/btos/lib/udis86.ell \
  data/btos/cmd/kilo.elx \
  data/btos/lib/ansi.ell \
- data/btos/tests/nctest.elx \
  data/btos/share/terminfo \
  data/btos/lib/ncurses.ell \
  data/btos/lib/ncurses++.ell \
@@ -86,12 +71,6 @@ pkg-files:= $(shell find pkgfiles -type f)
 
 all: ../base.tar
 
-data/btos/tests/ctest.elx: ../../user/tests/ctest/ctest.elx create.directories
-	cp $< $@
-
-data/btos/tests/cpptest.elx: ../../user/tests/cpptest/cpptest.elx create.directories
-	cp $< $@
-
 data/btos/cmd/cmd.elx: ../../user/cmds/cmd/cmd.elx create.directories
 	cp $< $@
 
@@ -119,45 +98,21 @@ data/btos/drivers/pci.sys: ../../modules/pci/pci.sys create.directories
 data/btos/cmd/load.elx: ../../user/cmds/load/load.elx create.directories
 	cp $< $@
 
-data/btos/tests/test.sys: ../../modules/test/test.sys create.directories
-	cp $< $@
-
 data/btos/cmd/mount.elx: ../../user/cmds/mount/mount.elx create.directories
-	cp $< $@
-
-data/btos/tests/msgtest.elx: ../../user/tests/msgtest/msgtest.elx create.directories
-	cp $< $@
-
-data/btos/tests/mousetest.elx: ../../user/tests/mousetest/mousetest.elx create.directories
 	cp $< $@
 
 data/btos/drivers/vga.sys: ../../modules/vga/vga.sys create.directories
 	cp $< $@
 
-data/btos/tests/vgatest.elx: ../../user/tests/vgatest/vgatest.elx create.directories
-	cp $< $@
-
 data/btos/bin/debug.elx: ../../user/bin/debug/debug.elx create.directories
-	cp $< $@
-
-data/btos/tests/crash.elx: ../../user/tests/crash/crash.elx create.directories
 	cp $< $@
 
 data/btos/system/gds.elx: ../../user/system/gds/gds.elx create.directories
 	cp $< $@
 	
-data/btos/tests/gdstest.elx: ../../user/libs/libgds/gdstest.elx create.directories
-	cp $< $@
-
-data/btos/tests/fputest.elx: ../../user/tests/fputest/fputest.elx create.directories
-	cp $< $@
-	
 data/btos/system/wm.elx: ../../user/system/wm/wm.elx create.directories
 	cp $< $@
-	
-data/btos/tests/wmtest.elx: ../../user/libs/libwm/wmtest.elx create.directories
-	cp $< $@
-	
+
 data/btos/bin/wmmenu.elx: ../../user/wmapps/wmmenu/wmmenu.elx create.directories
 	cp $< $@
 
@@ -192,15 +147,6 @@ data/btos/cmd/format.elx: ../../user/cmds/format/format.elx create.directories
 	cp $< $@
 	
 data/btos/bin/install.elx: ../../user/bin/install/install.elx create.directories
-	cp $< $@
-	
-data/btos/tests/shmtest.elx: ../../user/tests/shmtest/shmtest.elx create.directories
-	cp $< $@
-
-data/btos/tests/elltest.elx: ../../user/tests/elltest/elltest.elx create.directories
-	cp $< $@
-
-data/btos/tests/testlib.ell: ../../user/tests/elltest/testlib.ell create.directories
 	cp $< $@
 
 data/btos/lib/libc.ell: ../../user/libs/newlib/libc/libc.ell
@@ -239,9 +185,6 @@ data/btos/lib/parted.ell: ../../3rdparty/install/btos/lib/parted.ell
 data/btos/lib/eloader.ell: ../../user/libs/eloader/eloader.ell
 	cp $< $@
 
-data/btos/tests/elldtest.elx: ../../user/libs/eloader/elldtest.elx
-	cp $< $@
-
 data/btos/lib/udis86.ell: ../../3rdparty/install/btos/lib/udis86.ell
 	cp $< $@
 
@@ -252,9 +195,6 @@ data/btos/cmd/kilo.elx: ../../user/cmds/kilo/kilo.elx
 	cp $< $@
 
 data/btos/lib/ansi.ell: ../../user/libs/ansi/ansi.ell
-	cp $< $@
-
-data/btos/tests/nctest.elx: ../../user/tests/nctest/nctest.elx
 	cp $< $@
 
 data/btos/share/terminfo: ../../3rdparty/install/btos/share/terminfo
@@ -335,7 +275,6 @@ data/btos/cmd/package.elx: ../../user/cmds/package/package.elx
 create.directories: Makefile
 	mkdir -p data/btos/cmd
 	mkdir -p data/btos/temp
-	mkdir -p data/btos/tests
 	mkdir -p data/btos/bin
 	mkdir -p data/btos/system
 	mkdir -p data/btos/drivers
