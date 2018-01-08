@@ -286,6 +286,11 @@ namespace tar
                 _cache_header();
                 return _cached_header_data.file_size;
         }
+        
+        file_size_t reader::get_next_file_offset()
+        {
+        		return _inp.tellg();
+        }
 
         void reader::read_next_file(char * const data)
         {

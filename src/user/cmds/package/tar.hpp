@@ -87,6 +87,9 @@ namespace tar
                 // Returns file size of next file in |inp|. Use to allocate
                 // memory for the |read_next_file()| call.
                 file_size_t get_next_file_size();
+                
+                //Returns offset in .tar archive where next file starts
+                file_size_t get_next_file_offset();
 
                 // Read next file in |inp| to |data|.
                 void read_next_file(char * const data);
