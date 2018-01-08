@@ -4,12 +4,16 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <iostream>
 
 #include "package.hpp"
+#include "packagefile.hpp"
 
 using std::vector;
 using std::string;
 using std::map;
+using std::cout;
+using std::endl;
 
 namespace reg = btos_api::registry;
 
@@ -60,4 +64,21 @@ void ImportPackage(const string &infpath, const string &path){
             }
         }
     }
+}
+
+void PackageFileInfo(const string &filePath){
+	PackageFile pkgFile(filePath);
+	auto pkgInfo = pkgFile.GetInfo();
+	cout << "Package name: " << pkgInfo.name << endl;
+	cout << "Description: " << pkgInfo.description << endl;
+	cout << "Version: " << pkgInfo.ver << endl;
+	cout << endl << "Features:" << endl;
+	
+	auto feats = pkgFile.GetFeatures();
+	for(auto &f : feats){
+		cout << endl << "Feature name: " << f.name << endl;
+		cout << "Description: " << f.description << endl;
+		cout << "Type: " << f.type << endl;
+		cout << "Version: " << f.ver << endl;
+	}
 }

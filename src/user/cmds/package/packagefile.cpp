@@ -13,10 +13,16 @@ namespace reg = btos_api::registry;
 
 const size_t MaxInfSize = 1 * 1024 * 1024;
 
+static string filter_filename(const string &name){
+	if(starts_with(name, "./")){
+		return name.substr(2);
+	}else return name;
+}
+
 void PackageFile::Parse(){
 	tar::reader rdr(stream);
 	while(rdr.contains_another_file()){
-		if(rdr.get_next_file_size() <= MaxInfSize && rdr.get_next_file_name() == "package.inf"){
+		if(rdr.get_next_file_size() <= MaxInfSize && filter_filename(rdr.get_next_file_name()) == "package.inf"){
 			stringstream infStream;
 			{
 				auto size = rdr.get_next_file_size();
