@@ -208,7 +208,7 @@ bt_filesize_t fat_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
 		origin=SEEK_CUR;
 		offset=-offset;
 	}
-	fl_fseek(fd->flh, pos, origin);
+	fl_fseek(fd->flh, offset, origin);
 	size_t ret=fl_ftell(fd->flh);
 	release_fat_lock();
 	if(fd->debug) dbgpf("FAT: Seek in (%p): pos: %i flags: %x ret: %i.\n", fd, (int)pos, (int)flags, (int)ret);
