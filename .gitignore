@@ -52,3 +52,6 @@ src/packages/base/data
 src/packages/kernel/data/btos/boot/grub/i386-pc
 src/.vscode
 src/packages/kernel/copy.grub
+*.pkf
+create.directories
+src/packages/*/data
