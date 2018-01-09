@@ -12,4 +12,6 @@ void InstallPackage(const std::string &filePath, const std::string &path);
 std::string get_or_blank(const std::map<std::string, std::string> &section, const std::string &key);
 bool starts_with(const std::string &str, const std::string &start);
 
+std::string ParsePath(const std::string &path);
+
 #endif

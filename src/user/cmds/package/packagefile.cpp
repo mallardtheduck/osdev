@@ -6,17 +6,21 @@
 #include <cctype>
 #include <cstdlib>
 #include <algorithm>
+#include <sys/stat.h>
 
 #include <btos.h>
+#include <btos/directory.hpp>
 
 using std::string;
 using std::unique_ptr;
 using std::stringstream;
 using std::vector;
+using std::ofstream;
 
 namespace reg = btos_api::registry;
 
 const size_t MaxInfSize = 1 * 1024 * 1024;
+const size_t ReadBufferSize = 4096;
 
 vector<int> parse_version(const string &str){
 	vector<int> ret;
@@ -121,7 +125,8 @@ void PackageFile::ParseContent(){
 			auto installPath = get_install_path(contentPath, rdr.get_next_file_name());
 			auto offset = rdr.get_next_file_offset();
 			auto size = rdr.get_next_file_size();
-			content.push_back({installPath, offset, size});
+			auto type = rdr.get_next_file_size() == 0 ? FS_Directory : FS_File;
+			content.push_back({installPath, offset, size, type});
 		}
 		rdr.skip_next_file();
 	}
@@ -146,15 +151,124 @@ vector<PackageFile::ContentFile> PackageFile::GetContent(){
 	return content;
 }
 
-PackageFile::InstallStatus PackageFile::Install(const string &/*path*/){
+PackageFile::InstallStatus PackageFile::Install(const string &path){
+	InstallStatus status = {false, 0, {}};
+	if(!CheckVersion(status)) return status;
+	if(!CheckPathConflicts(status, path)) return status;
+	if(!CheckFeatureConflicts(status)) return status;
+	if(!ExtractFiles(status, path)) return status;
+	status.messages.push_back("Not implemented!");
+	return status;
+}
+
+bool PackageFile::CheckVersion(PackageFile::InstallStatus &status){
 	auto curPkg = reg::GetPackageByName(packageInfo.name);
 	if(!curPkg.ver.empty()){
 		auto curVer = parse_version(curPkg.ver);
 		auto newVer = parse_version(packageInfo.ver);
 		if(!compare_versions(curVer, newVer)){
-			return {false, 0, {"The currently installed package version is the same or newer."}};
+			stringstream ss;
+			ss << "The currently installed package version (" << curPkg.ver;
+			ss << ") is the same or newer than the package version (" << packageInfo.ver << ").";
+			status.messages.push_back(ss.str());
+			return false;
 		}
 	}
-	return {false, 0, {"Not implemented."}};
+	return true;
+}
+
+bool PackageFile::CheckPathConflicts(PackageFile::InstallStatus &status, const string &path){
+	auto curPkg = reg::GetPackageByName(packageInfo.name);
+	if(!curPkg.path.empty()){
+		if(path != curPkg.path){
+			stringstream ss;
+			ss << "A version of this package is already installed at \"" << curPkg.path << "\".";
+			status.messages.push_back(ss.str());
+			return false;
+		}
+	}else{
+		auto stat = bt_stat(path.c_str());
+		if(stat.type == FS_Directory){
+			Directory dir(path.c_str(), FS_Read);
+			if(dir.begin() != dir.end()){
+				stringstream ss;
+				ss << "\"" << path << "\" exists and is not empty.";
+				status.messages.push_back(ss.str());
+				return false;
+			}
+		}else if(stat.type != FS_Invalid){
+			stringstream ss;
+			ss << "\"" << path << "\" exists and is not a directory.";
+			status.messages.push_back(ss.str());
+			return false;
+		}
+	}
+	return true;
+}
+
+bool PackageFile::CheckFeatureConflicts(PackageFile::InstallStatus &status){
+	auto curPkg = reg::GetPackageByName(packageInfo.name);
+	bool ok = true;
+	for(auto &f : features){
+		auto feat = reg::GetFeatureByName(f.name);
+		if(f.package && f.package != curPkg.id){
+			stringstream ss;
+			ss << "Feature \"" << f.name << "\" is already installed as part of another package (\"";
+			auto pkg = reg::GetPackageById(f.package);
+			ss << pkg.name << "\").";
+			status.messages.push_back(ss.str());
+			ok = false;
+		}
+	}
+	return ok;
+}
+
+bool PackageFile::ExtractFiles(PackageFile::InstallStatus &status, const string &path){
+	auto stat = bt_stat(path.c_str());
+	if(stat.type != FS_Directory){
+		auto res = mkdir(path.c_str(), 777);
+		if(res){
+			stringstream ss;
+			ss << "Could not create directory \"" << path << "\".";
+			status.messages.push_back(ss.str());
+			return false;
+		}
+	}
+	ParseContent();
+	for(auto &c : content){
+		string finalPath = ParsePath(path + "/" + c.path);
+		if(!starts_with(finalPath, path)){
+			stringstream ss;
+			ss << "Invalid path: \"" << c.path <<"\".";
+			status.messages.push_back(ss.str());
+			return false;
+		}
+		if(c.type == FS_Directory){
+			auto res = mkdir(finalPath.c_str(), 777);
+			if(res){
+				stringstream ss;
+				ss << "Could not create directory \"" << finalPath << "\".";
+				status.messages.push_back(ss.str());
+				return false;
+			}
+		}else if(c.type == FS_File){
+			ofstream file(finalPath);
+			if(!file){
+				stringstream ss;
+				ss << "Could not create file \"" << finalPath << "\".";
+				status.messages.push_back(ss.str());
+				return false;
+			}
+			unique_ptr<char[]> buffer { new char[ReadBufferSize] };
+			for(uint64_t p = 0; p < c.size; p += ReadBufferSize){
+				uint64_t rdsz = std::min(c.size - p, (uint64_t)ReadBufferSize);
+				stream.seekg(c.offset + p);
+				stream.read(buffer.get(), rdsz);
+				file.write(buffer.get(), rdsz);
+			}
+			stream.seekg(0);
+		}
+	}
+	return true;
 }
 

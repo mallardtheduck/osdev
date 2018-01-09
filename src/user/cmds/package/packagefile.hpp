@@ -13,6 +13,7 @@ public:
 		std::string path;
 		uint64_t offset;
 		uint64_t size;
+		uint32_t type;
 	};
 	struct InstallStatus{
 		bool success;
@@ -37,6 +38,11 @@ public:
 	std::vector<ContentFile> GetContent();
 	
 	InstallStatus Install(const std::string &path);
+	bool CheckVersion(InstallStatus &status);
+	bool CheckPathConflicts(InstallStatus &status, const std::string &path);
+	bool CheckFeatureConflicts(InstallStatus &status);
+	
+	bool ExtractFiles(InstallStatus &status, const std::string &path);
 };
 
 #endif

@@ -1,12 +1,15 @@
 #include <btos/ini.hpp>
 #include <btos/registry.hpp>
 
+#include <crt_support.h>
+
 #include <vector>
 #include <string>
 #include <map>
 #include <iostream>
 #include <iomanip>
 #include <cmath>
+#include <memory>
 
 #include "package.hpp"
 #include "packagefile.hpp"
@@ -27,6 +30,14 @@ bool starts_with(const string &str, const string &start){
 string get_or_blank(const map<string, string> &section, const string &key){
     if(section.find(key) != section.end()) return section.at(key);
     else return "";
+}
+
+string ParsePath(const string &path){
+	std::unique_ptr<char[]> buffer {new char[BT_MAX_PATH]};
+	if(btos_path_parse(path.c_str(), buffer.get(), BT_MAX_PATH)){
+		return {buffer.get()};
+	}
+	return {};
 }
 
 void ImportPackage(const string &infpath, const string &path){
@@ -78,10 +89,10 @@ void PackageFileInfo(const string &filePath){
 	
 	auto feats = pkgFile.GetFeatures();
 	for(auto &f : feats){
-		cout << endl << "Feature name: " << f.name << endl;
-		cout << "Description: " << f.description << endl;
-		cout << "Type: " << f.type << endl;
-		cout << "Version: " << f.ver << endl;
+		cout << "  Feature name: " << f.name << endl;
+		cout << "  Description: " << f.description << endl;
+		cout << "  Type: " << f.type << endl;
+		cout << "  Version: " << f.ver << endl << endl;
 	}
 }
 
@@ -107,13 +118,16 @@ void PackageFileList(const string &filePath){
 }
 
 void InstallPackage(const string &filePath, const string &path){
+	auto installPath = ParsePath(path);
+	if(installPath.back() == '/') installPath = installPath.substr(0, installPath.length() - 1);
 	PackageFile pkgFile(filePath);
-	auto res = pkgFile.Install(path);
+	cout << "Installing package \"" << pkgFile.GetInfo().name << "\" to \"" << installPath << "\"..." << endl;
+	auto res = pkgFile.Install(installPath);
 	if(res.success) cout << "Install sucessful." << endl;
 	else{
 		cout << "Install failed:" << endl;
 		for(const auto &m : res.messages){
-			cout << m << endl;
+			cout << "  " << m << endl;
 		}
 	}
 }
