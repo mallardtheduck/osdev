@@ -269,7 +269,7 @@ namespace rpc{
                     auto ps = deserializeAll<Ps...>(pss);
                     buffers.erase(msg.From());
                     TupleCall(fn, ps);
-                    msg.SendReply(nullptr, 0);
+                    msg.SendReply();
                 }
             }
             return true;

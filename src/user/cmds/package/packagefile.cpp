@@ -157,7 +157,8 @@ PackageFile::InstallStatus PackageFile::Install(const string &path){
 	if(!CheckPathConflicts(status, path)) return status;
 	if(!CheckFeatureConflicts(status)) return status;
 	if(!ExtractFiles(status, path)) return status;
-	status.messages.push_back("Not implemented!");
+	if(!ImportInfo(status, path)) return status;
+	status.success = true;
 	return status;
 }
 
@@ -272,3 +273,21 @@ bool PackageFile::ExtractFiles(PackageFile::InstallStatus &status, const string 
 	return true;
 }
 
+bool PackageFile::ImportInfo(PackageFile::InstallStatus &/*status*/, const string &path){
+	auto curPkg = reg::GetPackageByName(packageInfo.name);
+	if(curPkg.id > 0){
+		auto feats = reg::GetFeatures(curPkg.id);
+		for(auto &f : feats){
+			auto feat = reg::GetFeatureByName(f);
+			reg::DeleteFeature(feat.id);
+		}
+		reg::DeletePackage(curPkg.id);
+	}
+	packageInfo.path = path;
+	packageInfo.id = reg::InstallPackage(packageInfo);
+	for(auto & f : features){
+		f.package = packageInfo.id;
+		reg::InstallFeature(f);
+	}
+	return true;
+}

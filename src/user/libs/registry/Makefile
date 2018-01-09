@@ -17,7 +17,7 @@ LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L. -L../libgds
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
 AR-FLAGS := rcs -o $(LIBRARY-NAME)
 LINK-OPTIONS := -lregistry -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib
-LIB-LINK-OPTIONS := -lgds -lgcc_s -lstdc++ -lbtoscore -lm
+LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lbtoscore -lm
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")

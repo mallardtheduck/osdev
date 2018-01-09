@@ -44,6 +44,9 @@ namespace RPCID{
 
     const uint32_t UpdatePackage = 201;
     const uint32_t UpdateFeature = 201;
+    
+    const uint32_t DeletePackage = 301;
+    const uint32_t DeleteFeature = 302;
 
     const uint32_t RunScript = 900;
 };
@@ -63,6 +66,9 @@ int64_t InstallFeature(const FeatureInfo &info);
 
 void UpdatePackage(const PackageInfo &info);
 void UpdateFeature(const FeatureInfo &info);
+
+void DeletePackage(int64_t pkgid);
+void DeleteFeature(int64_t featid);
 
 std::vector<int> RunScript(const std::vector<std::string> &sql);
 

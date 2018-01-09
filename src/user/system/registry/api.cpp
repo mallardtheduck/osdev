@@ -151,6 +151,16 @@ string GetPathAssociation(const string &path){
 	return "";
 }
 
+void DeletePackage(uint64_t pkgid){
+	auto pkg = sqlentity::GetByKey<Package>(db, pkgid);
+	pkg.Delete(db);
+}
+
+void DeleteFeature(uint64_t pkgid){
+	auto feat = sqlentity::GetByKey<Feature>(db, pkgid);
+	feat.Delete(db);
+}
+
 vector<int> RunScript(const vector<string> &sql){
 	vector<int> ret;
 	for(auto &s : sql){

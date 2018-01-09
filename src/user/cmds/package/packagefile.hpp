@@ -43,6 +43,7 @@ public:
 	bool CheckFeatureConflicts(InstallStatus &status);
 	
 	bool ExtractFiles(InstallStatus &status, const std::string &path);
+	bool ImportInfo(InstallStatus &status, const std::string &path);
 };
 
 #endif

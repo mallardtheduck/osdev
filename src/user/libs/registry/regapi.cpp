@@ -90,6 +90,16 @@ vector<int> RunScript(const vector<string> &sql){
     return rpc::MakeClient<RPCID::RunScript>(pid, RunScript)(sql);
 }
 
+void DeletePackage(int64_t pkgid){
+	SetPID();
+	rpc::MakeClient<RPCID::DeletePackage>(pid, DeletePackage)(pkgid);
+}
+
+void DeleteFeature(int64_t featid){
+	SetPID();
+	rpc::MakeClient<RPCID::DeleteFeature>(pid, DeleteFeature)(featid);
+}
+
 
 }
 }
