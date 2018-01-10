@@ -1,5 +1,6 @@
 #include <btos/ini.hpp>
 #include <btos/registry.hpp>
+#include <btos/directory.hpp>
 
 #include <crt_support.h>
 
@@ -10,6 +11,7 @@
 #include <iomanip>
 #include <cmath>
 #include <memory>
+#include <cstdio>
 
 #include "package.hpp"
 #include "packagefile.hpp"
@@ -131,3 +133,68 @@ void InstallPackage(const string &filePath, const string &path){
 		}
 	}
 }
+
+static void DeleteDirectory(const string &path){
+	btos_api::Directory dir(path.c_str(), FS_Read);
+	for(const auto &i : dir){
+		auto fullPath = ParsePath(path + '/' + i.filename);
+		if(i.type == FS_Directory){
+			DeleteDirectory(fullPath);
+		}else{
+			remove(fullPath.c_str());
+		}
+		if(bt_stat(fullPath.c_str()).type != FS_Invalid){
+			cout << "Failed to delete \"" << fullPath << "\"" << endl;
+		}
+	}
+	remove(path.c_str());
+	if(bt_stat(path.c_str()).type != FS_Invalid){
+		cout << "Failed to remove directory \"" << path << "\"" << endl;
+	}
+}
+
+void UninstallPackage(const string &name, const string &path, bool keepFiles){
+	reg::PackageInfo info;
+	if(!path.empty()){
+		auto fullPath = ParsePath(path);
+		if(fullPath.back() == '/') fullPath = fullPath.substr(0, fullPath.length() - 1);
+		info = reg::GetPackageByPath(fullPath);
+		if(info.name.empty()){
+			cout << "Package not found at path \"" << path << "\"." << endl;
+			return;
+		}
+	}else{
+		info = reg::GetPackageByName(name);
+		if(info.name.empty()){
+			cout << "Package \"" << name << "\" is not installed." << endl;
+			return;
+		}
+	}
+	
+	if(!keepFiles){
+		auto subs = reg::GetSubPackages(info.id);
+		if(!subs.empty()){
+			cout << "Package has sub-packages installed. Cannot delete packages files (use -k to uninstall without deleting)." << endl;
+			cout << "Sub-packages:" << endl;
+			for(auto &s : subs){
+				cout << "  " << s << endl;
+			}
+			return;
+		}
+	}
+	
+	cout << "Uninistalling package \"" << info.name << "\" from \"" << info.path << "\"";
+	if(!keepFiles) cout << " and deleting all files";
+	cout << "..." << endl;
+	
+	auto features = reg::GetFeatures(info.id);
+	for(auto &f : features){
+		auto feat = reg::GetFeatureByName(f);
+		reg::DeleteFeature(feat.id);
+	}
+	reg::DeletePackage(info.id);
+	
+	if(!keepFiles) DeleteDirectory(info.path);
+	cout << "Uninstall complete." << endl;
+}
+

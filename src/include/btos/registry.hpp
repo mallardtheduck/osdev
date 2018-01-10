@@ -38,6 +38,8 @@ namespace RPCID{
     const uint32_t GetFeaturesByType = 7;
     const uint32_t GetFeatureAssociation = 8;
     const uint32_t GetPathAssociation = 9;
+    const uint32_t GetPackageByPath = 10;
+    const uint32_t GetSubPackages = 11;
 
     const uint32_t InstallPackage = 101;
     const uint32_t InstallFeature = 102;
@@ -60,6 +62,8 @@ FeatureInfo GetFeatureByName(const std::string &name);
 std::vector<std::string> GetFeaturesByType(const std::string &type);
 std::string GetFeatureAssociation(const std::string &path);
 std::string GetPathAssociation(const std::string &path);
+PackageInfo GetPackageByPath(const std::string &path);
+std::vector<std::string> GetSubPackages(int64_t pkgid);
 
 int64_t InstallPackage(const PackageInfo &info);
 int64_t InstallFeature(const FeatureInfo &info);

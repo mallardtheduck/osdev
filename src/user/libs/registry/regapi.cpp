@@ -66,6 +66,16 @@ string GetPathAssociation(const string &path){
     return rpc::MakeClient<RPCID::GetPathAssociation>(pid, GetPathAssociation)(path);
 }
 
+PackageInfo GetPackageByPath(const string &path){
+	SetPID();
+	return rpc::MakeClient<RPCID::GetPackageByPath>(pid, GetPackageByPath)(path);
+}
+
+vector<string> GetSubPackages(int64_t pkgid){
+	SetPID();
+	return rpc::MakeClient<RPCID::GetSubPackages>(pid, GetSubPackages)(pkgid);
+}
+
 int64_t InstallPackage(const PackageInfo &info){
     SetPID();
     return rpc::MakeClient<RPCID::InstallPackage>(pid, InstallPackage)(info);

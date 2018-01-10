@@ -151,12 +151,28 @@ string GetPathAssociation(const string &path){
 	return "";
 }
 
-void DeletePackage(uint64_t pkgid){
+PackageInfo GetPackageByPath(const string &path){
+	auto pkg = sqlentity::GetWhere<Package>(db, "path LIKE @path", {{"path", path}});
+	return ToInfo(pkg);
+}
+
+vector<string> GetSubPackages(int64_t pkgid){
+	auto pkg = sqlentity::GetByKey<Package>(db, pkgid);
+	string pattern = pkg.path + "/%";
+	auto pkgs = sqlentity::GetAllWhere<Package>(db, "path LIKE @path", {{"path", pattern}});
+	vector<string> ret;
+	for(auto &p : pkgs){
+		ret.push_back(p.name);
+	}
+	return ret;
+}
+
+void DeletePackage(int64_t pkgid){
 	auto pkg = sqlentity::GetByKey<Package>(db, pkgid);
 	pkg.Delete(db);
 }
 
-void DeleteFeature(uint64_t pkgid){
+void DeleteFeature(int64_t pkgid){
 	auto feat = sqlentity::GetByKey<Feature>(db, pkgid);
 	feat.Delete(db);
 }
@@ -187,12 +203,17 @@ vector<shared_ptr<IMessageHandler>> InitAPI(){
 	AddAPI<RPCID::GetFeaturesByType>(ret, &GetFeaturesByType);
 	AddAPI<RPCID::GetFeatureAssociation>(ret, &GetFeatureAssociation);
 	AddAPI<RPCID::GetPathAssociation>(ret, &GetPathAssociation);
+	AddAPI<RPCID::GetPackageByPath>(ret, &GetPackageByPath);
+	AddAPI<RPCID::GetSubPackages>(ret, &GetSubPackages);
 
 	AddAPI<RPCID::InstallPackage>(ret, &InstallPackage);
 	AddAPI<RPCID::InstallFeature>(ret, &InstallFeature);
 
 	AddAPI<RPCID::UpdatePackage>(ret, &UpdatePackage);
 	AddAPI<RPCID::UpdateFeature>(ret, &UpdateFeature);
+	
+	AddAPI<RPCID::DeletePackage>(ret, &DeletePackage);
+	AddAPI<RPCID::DeleteFeature>(ret, &DeleteFeature);
 
 	AddAPI<RPCID::RunScript>(ret, &RunScript);
 	return ret;

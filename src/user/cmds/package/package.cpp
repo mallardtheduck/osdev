@@ -15,13 +15,15 @@ enum class Command{
 	Import,
 	Info,
 	Files,
-	Install
+	Install,
+	Uninstall
 };
 
 int main(int argc, char **argv){
 	Command cmd = Command::Help;
 	string file;
 	string path;
+	bool keep = false;
 	
 	auto importCmd = (
 		command("import").set(cmd, Command::Import) % "Import package.inf file into registry",
@@ -36,16 +38,25 @@ int main(int argc, char **argv){
 	
 	auto filesCmd = (
 		command("files").set(cmd, Command::Files) % "Display list of files in a package",
-		value("package-file").set(file) % "Package file"
+		value("package-file").set(file) 
 	);
 	
 	auto installCmd = (
 		command("install").set(cmd, Command::Install) % "Install a package",
-		value("package-file").set(file) % "Package file",
-		value("install-path").set(path) % "Path to package install location"
+		value("package-file").set(file),
+		value("install-path").set(path)
 	);
 	
-	auto cli = (command("help").set(cmd, Command::Help) | installCmd | importCmd | infoCmd | filesCmd);
+	auto uninstallCmd = (
+		command("uninstall", "remove").set(cmd, Command::Uninstall) % "Uninstall a package", (
+			value("package-name").set(file) % "Package name" | (
+				command("-p", "--path") & value("install-path").set(path)
+			)
+		),
+		option("-k", "--keep-files").set(keep) % "Do not delete installed package files"
+	);
+	
+	auto cli = (command("help").set(cmd, Command::Help) | installCmd | importCmd | infoCmd | filesCmd | uninstallCmd);
 	
 	if(parse(argc, argv, cli)){
 		switch(cmd){
@@ -65,6 +76,9 @@ int main(int argc, char **argv){
 				break;
 			case Command::Install:
 				InstallPackage(file, path);
+				break;
+			case Command::Uninstall:
+				UninstallPackage(file, path, keep);
 				break;
 		}
 	}else{
