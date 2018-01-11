@@ -10,6 +10,7 @@
 
 #include <btos.h>
 #include <btos/directory.hpp>
+#include <cmd/scripting.hpp>
 
 using std::string;
 using std::unique_ptr;
@@ -108,6 +109,9 @@ void PackageFile::Parse(){
 						if(featinfo.name == "") continue;
 						if(featinfo.ver == "") featinfo.ver = packageInfo.ver;
 						features.push_back(featinfo);
+					}
+					if(s.first == "hooks"){
+						hooks = s.second;
 					}
 				}
 			}
@@ -295,6 +299,30 @@ bool PackageFile::ImportInfo(PackageFile::InstallStatus &/*status*/, const strin
 	for(auto & f : features){
 		f.package = packageInfo.id;
 		reg::InstallFeature(f);
+	}
+	return true;
+}
+
+bool PackageFile::RunHook(const string &hook){
+	if(hooks.find(hook) != hooks.end()){
+			tar::reader rdr(stream);
+			while(rdr.contains_another_file()){
+				if(filter_filename(rdr.get_next_file_name()) == hooks[hook]){
+					stringstream scriptStream;
+					{
+						auto size = rdr.get_next_file_size();
+						unique_ptr<char[]> buffer{new char[size]};
+						rdr.read_next_file(buffer.get());
+						scriptStream.write(buffer.get(), size);
+						scriptStream.seekg(0);
+					}
+					cmd::ScriptContext context {scriptStream};
+					context.Run({});
+					break;
+				}
+				rdr.skip_next_file();
+			}
+			stream.seekg(0);
 	}
 	return true;
 }

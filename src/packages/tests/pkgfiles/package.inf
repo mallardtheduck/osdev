@@ -5,6 +5,10 @@ description = Various test/example programs
 version = 0.1B
 contentPath = tests
 
+[hooks]
+pre-install := pre.pkc
+post-install := post.pkc
+
 [feature-binpath]
 
 name = tests.binpath

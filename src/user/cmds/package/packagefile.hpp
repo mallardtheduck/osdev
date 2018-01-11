@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <fstream>
 #include <btos/registry.hpp>
 #include "tar.hpp"
@@ -27,6 +28,7 @@ private:
 	std::vector<btos_api::registry::FeatureInfo> features;
 	std::string contentPath;
 	std::vector<ContentFile> content;
+	std::map<std::string, std::string> hooks;
 	
 	void Parse();
 	void ParseContent();
@@ -44,6 +46,8 @@ public:
 	
 	bool ExtractFiles(InstallStatus &status, const std::string &path);
 	bool ImportInfo(InstallStatus &status, const std::string &path);
+	
+	bool RunHook(const std::string &hook);
 };
 
 #endif
