@@ -61,7 +61,7 @@ int main(int argc, char **argv){
 	if(parse(argc, argv, cli)){
 		switch(cmd){
 			case Command::Help:{
-					auto fmt = doc_formatting{}.start_column(2).alternatives_min_split_size(1);
+					auto fmt = doc_formatting{}.start_column(2).alternatives_min_split_size(3);
 					std::cout << make_man_page(cli, argv[0], fmt);
 				}
 				break;
@@ -82,7 +82,9 @@ int main(int argc, char **argv){
 				break;
 		}
 	}else{
-		std::cerr << usage_lines(cli, argv[0]) << std::endl;
+		std::cerr << "Usage: " << std::endl;
+		auto fmt = doc_formatting{}.start_column(2).alternatives_min_split_size(3);
+		std::cerr << usage_lines(cli, argv[0], fmt) << std::endl;
 	}
 	
     return 0;
