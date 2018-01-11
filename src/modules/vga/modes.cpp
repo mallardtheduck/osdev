@@ -15,7 +15,7 @@ void wait_for_retrace(){
 }
 
 void load_palette() {
-	wait_for_retrace();
+	//wait_for_retrace();
 	outb(VGA_Ports::DACWriteAddress, 0);
 	for(int i=0; i<256; ++i){
 		vga_palette_entry entry=vga_palette[i];
@@ -43,7 +43,7 @@ void load_font(){
 }
 
 void set_mode_12h() {
-	disable_interrupts();
+	dbgout("VGA: Setting mode 12h (640x480x4bpp)\n");
 	disable_display();
 	unlock_crtc();
 	outb(VGA_Ports::MiscOutputWrite, 0xE3);
@@ -116,7 +116,6 @@ void set_mode_12h() {
 		memset((void*)vga_memory, 0x00, 64*1024);
 	}
 	enable_display();
-	enable_interrupts();
 }
 
 void put_pixel_12h(uint32_t x, uint32_t y, uint8_t value){
@@ -262,7 +261,7 @@ void read_pixels_12h(uint32_t startpos, size_t count, uint8_t *data){
 }
 
 void set_mode_03h() {
-	disable_interrupts();
+	dbgout("VGA: Setting mode 03h (text)\n");
 	disable_display();
 	unlock_crtc();
 	outb(VGA_Ports::MiscOutputWrite, 0x67);
@@ -332,12 +331,11 @@ void set_mode_03h() {
 	lock_crtc();
 	load_font();
 	enable_display();
-	enable_interrupts();
 	init_text();
 }
 
 void set_mode_x() {
-	disable_interrupts();
+	dbgout("VGA: Setting mode X (320x240x8bpp)\n");
 	disable_display();
 	unlock_crtc();
 	outb(VGA_Ports::MiscOutputWrite, 0xE3);
@@ -410,7 +408,6 @@ void set_mode_x() {
 		memset((void*)vga_memory, 0x00, 64*1024);
 	}
 	enable_display();
-	enable_interrupts();
 }
 
 void put_pixel_x(uint32_t x, uint32_t y, uint8_t value){
@@ -429,15 +426,11 @@ uint8_t get_pixel_x(uint32_t x, uint32_t y){
 
 void write_pixels_x(uint32_t startpos, size_t count, uint8_t *data){
 	uint32_t rstartpos=startpos & ~0x03;
-	uint32_t skip=startpos-rstartpos;
 	for(uint8_t plane=0; plane<4; ++plane) {
-		if(skip){
-			skip--;
-			continue;
-		}
-		size_t pstartpos=rstartpos+plane;
+		size_t pstartpos=rstartpos + plane;
 		select_plane(plane);
 		for (size_t i = pstartpos; i < startpos + count; i+=4) {
+			if(i < startpos) continue;
 			uint32_t y = (uint32_t) (i / 320);
 			uint32_t x = (uint32_t) (i - (320 * y));
 			uint16_t byte=((y * 320) + x) / 4;
@@ -448,15 +441,11 @@ void write_pixels_x(uint32_t startpos, size_t count, uint8_t *data){
 
 void read_pixels_x(uint32_t startpos, size_t count, uint8_t *data){
 	uint32_t rstartpos=startpos & ~0x03;
-	uint32_t skip=startpos-rstartpos;
 	for(size_t plane=0; plane<4; ++plane) {
-		if(skip){
-			skip--;
-			continue;
-		}
 		size_t pstartpos=rstartpos+plane;
 		select_plane(plane);
 		for (size_t i = pstartpos; i < startpos + count; i+=4) {
+			if(i < startpos) continue;
 			uint32_t y = (uint32_t) (i / 320);
 			uint32_t x = (uint32_t) (i - (320 * y));
 			uint16_t byte=((y * 320) + x) / 4;
@@ -465,9 +454,9 @@ void read_pixels_x(uint32_t startpos, size_t count, uint8_t *data){
 	}
 }
 
-vga_mode mode_12h={{0x12, 640, 480, 4, false, false}, &set_mode_12h, &put_pixel_12h, &get_pixel_12h, &write_pixels_12h, &read_pixels_12h};
-vga_mode mode_x={{0x58, 320, 240, 8, false, false}, &set_mode_x, &put_pixel_x, &get_pixel_x, &write_pixels_x, &read_pixels_x};
-vga_mode mode_03h={{0x03, 80, 25, 4, true, false}, &set_mode_03h, NULL, NULL, NULL, NULL};
+vga_mode mode_12h={{0x12, 640, 480, 4, false, true, 320, 0, 0, 0, 0, 0, 0}, &set_mode_12h, &put_pixel_12h, &get_pixel_12h, &write_pixels_12h, &read_pixels_12h};
+vga_mode mode_x={{0x58, 320, 240, 8, false, true, 320, 0, 0, 0, 0, 0, 0}, &set_mode_x, &put_pixel_x, &get_pixel_x, &write_pixels_x, &read_pixels_x};
+vga_mode mode_03h={{0x03, 80, 25, 4, true, true, 160, 0, 0, 0, 0, 0, 0}, &set_mode_03h, NULL, NULL, NULL, NULL};
 
 vga_mode *vga_modes[]= {&mode_03h, &mode_12h, &mode_x};
 const size_t vga_mode_count=3;

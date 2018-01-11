@@ -1,0 +1,345 @@
+diff -rupN ncurses-6.0/config.sub originals/ncurses-6.0/config.sub
+--- ncurses-6.0/config.sub	2017-08-04 12:30:49.070740200 +0100
++++ originals/ncurses-6.0/config.sub	2015-05-02 12:52:04.000000000 +0100
+@@ -1396,8 +1396,7 @@ case $os in
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+-	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -tirtos* \
+-	      | -btos* )
++	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -tirtos*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+diff -rupN ncurses-6.0/configure originals/ncurses-6.0/configure
+--- ncurses-6.0/configure	2017-08-04 12:30:49.087288000 +0100
++++ originals/ncurses-6.0/configure	2015-08-05 10:20:32.000000000 +0100
+@@ -5117,7 +5117,7 @@ if test $with_lib_prefix = auto
+ then
+ 
+ 	case $cf_cv_system_name in
+-	(OS/2*|os2*|btos*)
++	(OS/2*|os2*)
+ 		LIB_PREFIX=''
+ 		;;
+ 	(*)	LIB_PREFIX='lib'
+@@ -6407,9 +6407,6 @@ rm -f conftest.$ac_objext conftest.$ac_e
+ 		fi
+ 		MK_SHARED_LIB='${LD} -d y -G -o $@'
+ 		;;
+-	(btos*)
+-		MK_SHARED_LIB='${CC} ${CFLAGS} -shared -o $@ -Xlinker -soname=`basename $@`'
+-		;;
+ 	(*)
+ 		CC_SHARED_OPTS='unknown'
+ 		MK_SHARED_LIB='echo unknown'
+@@ -21440,10 +21437,6 @@ echo $ECHO_N "checking default library-d
+ 				;;
+ 			esac
+ 			;;
+-		(btos*)
+-			DFT_LIB_SUFFIX='.ell'
+-			DFT_DEP_SUFFIX=$DFT_LIB_SUFFIX
+-			;;
+ 		(*)
+ 			DFT_LIB_SUFFIX='.so'
+ 			DFT_DEP_SUFFIX=$DFT_LIB_SUFFIX
+@@ -21533,10 +21526,6 @@ else
+ 				;;
+ 			esac
+ 			;;
+-		(btos*)
+-			DFT_LIB_SUFFIX='.ell'
+-			DFT_DEP_SUFFIX=$DFT_LIB_SUFFIX
+-			;;
+ 		(*)
+ 			CXX_LIB_SUFFIX='.so'
+ 			CXX_DEP_SUFFIX=$CXX_LIB_SUFFIX
+@@ -23559,10 +23548,6 @@ CF_EOF
+ 				;;
+ 			esac
+ 			;;
+-		(btos*)
+-			cf_suffix='.ell'
+-			cf_depsuf=$cf_suffix
+-			;;
+ 		(*)
+ 			cf_suffix='.so'
+ 			cf_depsuf=$cf_suffix
+@@ -23784,10 +23769,6 @@ echo "${as_me:-configure}:23723: testing
+ 				;;
+ 			esac
+ 			;;
+-		(btos*)
+-			cf_suffix='.ell'
+-			cf_depsuf=$cf_suffix
+-			;;
+ 		(*)
+ 			cf_suffix='.so'
+ 			cf_depsuf=$cf_suffix
+diff -rupN ncurses-6.0/include/MKterm.h.awk.in originals/ncurses-6.0/include/MKterm.h.awk.in
+--- ncurses-6.0/include/MKterm.h.awk.in	2017-08-04 12:30:49.089795100 +0100
++++ originals/ncurses-6.0/include/MKterm.h.awk.in	2013-08-17 20:21:56.000000000 +0100
+@@ -104,9 +104,6 @@ BEGIN		{
+ 		    print  "#if __MINGW32__"
+ 		    print  "#  include <ncurses_mingw.h>"
+ 		    print  "#  define TTY struct termios"
+-		    print  "#elif __btos__"
+-		    print  "#  include <ncurses_btos.h>"
+-		    print  "#  define TTY struct termios"
+ 		    print  "#else"
+ 		    print  "#undef TERMIOS"
+ 		    print  "#include <sgtty.h>"
+diff -rupN ncurses-6.0/include/ncurses_btos.h originals/ncurses-6.0/include/ncurses_btos.h
+--- ncurses-6.0/include/ncurses_btos.h	2017-08-04 12:30:49.091299100 +0100
++++ originals/ncurses-6.0/include/ncurses_btos.h	1970-01-01 00:00:00.000000000 +0000
+@@ -1,152 +0,0 @@
+-
+-/****************************************************************************
+- * Copyright (c) 1998-2011,2014 Free Software Foundation, Inc.              *
+- *                                                                          *
+- * Permission is hereby granted, free of charge, to any person obtaining a  *
+- * copy of this software and associated documentation files (the            *
+- * "Software"), to deal in the Software without restriction, including      *
+- * without limitation the rights to use, copy, modify, merge, publish,      *
+- * distribute, distribute with modifications, sublicense, and/or sell       *
+- * copies of the Software, and to permit persons to whom the Software is    *
+- * furnished to do so, subject to the following conditions:                 *
+- *                                                                          *
+- * The above copyright notice and this permission notice shall be included  *
+- * in all copies or substantial portions of the Software.                   *
+- *                                                                          *
+- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+- * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+- * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+- *                                                                          *
+- * Except as contained in this notice, the name(s) of the above copyright   *
+- * holders shall not be used in advertising or otherwise to promote the     *
+- * sale, use or other dealings in this Software without prior written       *
+- * authorization.                                                           *
+- ****************************************************************************/
+-
+-/****************************************************************************
+- * Author: Juergen Pfeifer, 2008-on                                         * 
+- *                                                                          *
+- ****************************************************************************/
+-
+-/* $Id: ncurses_mingw.h,v 1.3 2014/05/03 19:40:19 juergen Exp $ */
+-
+-
+-#if __btos__
+-#ifndef _NC_BTOSH
+-#define _NC_BTOSH
+-
+-#include <sys/time.h>
+-#include <ansi.h>
+-
+-#define USE_CONSOLE_DRIVER 1
+-
+-#undef  TERMIOS
+-#define TERMIOS 1
+-
+-typedef unsigned char cc_t;
+-typedef unsigned int  tcflag_t;
+-typedef unsigned int  speed_t;
+-typedef unsigned short otcflag_t;
+-typedef unsigned char ospeed_t;
+-
+-#define NCCS 18
+-struct termios
+-{
+-  tcflag_t	c_iflag;
+-  tcflag_t	c_oflag;
+-  tcflag_t	c_cflag;
+-  tcflag_t	c_lflag;
+-  char		c_line;
+-  cc_t		c_cc[NCCS];
+-  speed_t	c_ispeed;
+-  speed_t	c_ospeed;
+-};
+-
+-/* lflag bits */
+-#define ISIG	0x0001
+-#define ICANON	0x0002
+-#define ECHO	0x0004
+-#define ECHOE	0x0008
+-#define ECHOK	0x0010
+-#define ECHONL	0x0020
+-#define NOFLSH	0x0040
+-#define IEXTEN	0x0100
+-
+-#define VEOF	     4
+-#define VERASE	     5
+-#define VINTR	     6
+-#define VKILL	     7
+-#define VMIN	     9
+-#define VQUIT	    10
+-#define VTIME	    16
+-
+-/* iflag bits */
+-#define IGNBRK	0x00001
+-#define BRKINT	0x00002
+-#define IGNPAR	0x00004
+-#define INPCK	0x00010
+-#define ISTRIP	0x00020
+-#define INLCR	0x00040
+-#define IGNCR	0x00080
+-#define ICRNL	0x00100
+-#define IXON	0x00400
+-#define IXOFF	0x01000
+-#define PARMRK	0x10000
+-
+-/* oflag bits */
+-#define OPOST	0x00001
+-
+-/* cflag bits */
+-#define CBAUD	 0x0100f
+-#define B0	 0x00000
+-#define B50	 0x00001
+-#define B75	 0x00002
+-#define B110	 0x00003
+-#define B134	 0x00004
+-#define B150	 0x00005
+-#define B200	 0x00006
+-#define B300	 0x00007
+-#define B600	 0x00008
+-#define B1200	 0x00009
+-#define B1800	 0x0000a
+-#define B2400	 0x0000b
+-#define B4800	 0x0000c
+-#define B9600	 0x0000d
+-
+-#define CSIZE	 0x00030
+-#define CS8	 0x00030
+-#define CSTOPB	 0x00040
+-#define CREAD	 0x00080
+-#define PARENB	 0x00100
+-#define PARODD	 0x00200
+-#define HUPCL	 0x00400
+-#define CLOCAL	 0x00800
+-
+-#define TCIFLUSH	0
+-#define TCSADRAIN	3
+-
+-#ifndef cfgetospeed
+-#define cfgetospeed(t) ((t)->c_cflag & CBAUD)
+-#endif
+-
+-#ifndef tcsetattr
+-#define tcsetattr(fd, opt, arg) 0//_nc_mingw_tcsetattr(fd, opt, arg)
+-#endif
+-
+-#ifndef tcgetattr
+-#define tcgetattr(fd, arg) 0//_nc_mingw_tcgetattr(fd, arg)
+-#endif
+-
+-#ifndef tcflush
+-#define tcflush(fd, queue) 0//_nc_mingw_tcflush(fd, queue)
+-#endif
+-
+-#undef  ttyname
+-#define ttyname(fd) NULL
+-
+-#endif /* _NC_BTOSH */
+-#endif /* __btos__ */
+diff -rupN ncurses-6.0/misc/terminfo.src originals/ncurses-6.0/misc/terminfo.src
+--- ncurses-6.0/misc/terminfo.src	2017-08-07 11:56:31.933069200 +0100
++++ originals/ncurses-6.0/misc/terminfo.src	2015-07-25 20:27:20.000000000 +0100
+@@ -698,13 +698,6 @@ nansi.sysk|nansisysk|PC-DOS Public Domai
+ 	is2=U4 PC-DOS Public Domain NANSI.SYS with keypad redefined for vi 9-29-86\n\E[;75;8p,
+ 	use=ansi.sysk,
+ 
+-#
+-# BT/OS "ansi.ell" emulated console (ansi + function keys):
+-btosansi|BT/OS "ansi.ell" emulated console,
+-	kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS, kf5=\EOT, kf6=\EOU, kf7=\EOV, kf8=\EOW, kf9=\EOX, kf10=\EOY,
+-	kend=\E[Y,
+-	use=pcansi,
+-
+ #### Atari ST terminals
+ 
+ # From Guido Flohr <gufl0000@stud.uni-sb.de>.
+diff -rupN ncurses-6.0/ncurses/base/lib_endwin.c originals/ncurses-6.0/ncurses/base/lib_endwin.c
+--- ncurses-6.0/ncurses/base/lib_endwin.c	2017-08-04 12:30:49.093309200 +0100
++++ originals/ncurses-6.0/ncurses/base/lib_endwin.c	2014-03-08 20:32:59.000000000 +0000
+@@ -66,9 +66,6 @@ NCURSES_SP_NAME(endwin) (NCURSES_SP_DCL0
+ #endif
+ 	code = NCURSES_SP_NAME(reset_shell_mode) (NCURSES_SP_ARG);
+     }
+-#ifdef __btos__
+-	end_ansi();
+-#endif
+ 
+     returnCode(code);
+ }
+diff -rupN ncurses-6.0/ncurses/base/lib_initscr.c originals/ncurses-6.0/ncurses/base/lib_initscr.c
+--- ncurses-6.0/ncurses/base/lib_initscr.c	2017-08-04 12:30:49.095821000 +0100
++++ originals/ncurses-6.0/ncurses/base/lib_initscr.c	2014-04-26 19:47:51.000000000 +0100
+@@ -63,16 +63,10 @@ initscr(void)
+     /* Portable applications must not call initscr() more than once */
+     if (!_nc_globals.init_screen) {
+ 	_nc_globals.init_screen = TRUE;
+-	
+-#ifdef __btos__
+-	init_ansi();
+-	//name = "ansi";
+-#endif
++
+ 	if ((name = getenv("TERM")) == 0
+ 	    || *name == '\0')
+ 	    name = "unknown";
+-//#endif   
+-	 
+ #ifdef __CYGWIN__
+ 	/*
+ 	 * 2002/9/21
+diff -rupN ncurses-6.0/ncurses/tty/lib_twait.c originals/ncurses-6.0/ncurses/tty/lib_twait.c
+--- ncurses-6.0/ncurses/tty/lib_twait.c	2017-08-04 12:30:49.098326900 +0100
++++ originals/ncurses-6.0/ncurses/tty/lib_twait.c	2015-07-04 22:01:02.000000000 +0100
+@@ -53,11 +53,6 @@
+ #include <OS.h>
+ #endif
+ 
+-#ifdef __btos__
+-#define BTOS_NO_DEVICES
+-#include <btos.h>
+-#endif
+-
+ #if USE_KLIBC_KBD
+ #define INCL_KBD
+ #include <os2.h>
+@@ -339,21 +334,6 @@ _nc_timed_wait(SCREEN *sp MAYBE_UNUSED,
+ 	snooze(milliseconds * 1000);
+ 	milliseconds = 0;
+     }
+-#elif defined(__btos__)
+-	result = TW_NONE;
+-	if (mode & TW_INPUT) {
+-		int i;
+-		for(i = 0; i < milliseconds; i+=100){
+-			if(lseek(0, 0, SEEK_END) > 0){
+-				result = 1;
+-				break;
+-			}
+-			bt_rtc_sleep(100);
+-		}
+-		
+-	} else {
+-		bt_rtc_sleep(milliseconds);
+-	}
+ #elif HAVE_SELECT
+     /*
+      * select() modifies the fd_set arguments; do this in the
+@@ -503,7 +483,7 @@ _nc_timed_wait(SCREEN *sp MAYBE_UNUSED,
+ 		    result |= (1 << count);
+ 		}
+ 	    }
+-#elif defined(__BEOS__) || defined(__btos__)
++#elif defined(__BEOS__)
+ 	    result = TW_INPUT;	/* redundant, but simple */
+ #elif HAVE_SELECT
+ 	    if ((mode & TW_MOUSE)

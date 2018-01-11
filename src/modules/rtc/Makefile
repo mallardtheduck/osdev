@@ -1,5 +1,5 @@
 BUILD-AS := i686-pc-btos-as
-BUILD-AS-OPTIONS := -g -fPIC -c
+BUILD-AS-OPTIONS := -g -c
 BUILD-CPP := i686-pc-btos-g++
 BUILD-CPP-FLAGS :=  -c
 BUILD-CPP-OPTIONS := -ffreestanding -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -c -I../../include -DKERNEL_MODULE -std=gnu++11

@@ -13,6 +13,12 @@ drv_driver ata_driver;
 
 lock ata_lock, ata_drv_lock;
 
+void out_bytes(char *bytes, size_t count){
+	for(size_t i=0; i<count; ++i){
+		dbgpf("%2x", bytes[i]);
+	}
+	dbgout("\n");
+}
 
 void ata_io_wait(struct ata_device * dev) {
 	inb(dev->control);
@@ -72,8 +78,8 @@ static bool ata_device_init(struct ata_device * dev) {
 	int status = inb(dev->io_base + ATA_REG_COMMAND);
 	dbgpf("ATA: Device status: %d\n", status);
 
-	if(status == 0) {
-		dbgpf("ATA: Device does not exist.\n");
+	if(status == 0 || (status & ATA_SR_ERR)) {
+		dbgpf("ATA: Device does not exist or not ATA.\n");
 		return false;
 	}
 
@@ -91,13 +97,15 @@ static bool ata_device_init(struct ata_device * dev) {
 		ptr[i+1] = ptr[i];
 		ptr[i] = tmp;
 	}
-
+	ptr[39] = '\0';
+	
 	dbgpf("ATA: Device Name:  %s\n", dev->identity.model);
 	dbgpf("ATA: Sectors (48): %d\n", (uint32_t)dev->identity.sectors_48);
 	dbgpf("ATA: Sectors (28): %d\n", dev->identity.sectors_28);
 	if(dev->identity.sectors_48 != 0) dev->length = dev->identity.sectors_48;
 	else dev->length = dev->identity.sectors_28;
 	dbgpf("ATA: Length: %i\n", (int)dev->length);
+	if(dev->length == (uint64_t)-1) return false;
 
 	outb(dev->control, 0);
 	return true;
@@ -116,24 +124,18 @@ static int ata_device_detect(struct ata_device * dev) {
 		/* Nothing here */
 		dbgout("ATA: No device.\n");
 		return 0;
-	}
-	if (cl == 0x00 && ch == 0x00) {
-		/* Parallel ATA device */
+	}else{
 		if(ata_device_init(dev)){
 			char devicename[9]="ATA";
 			add_device(devicename, &ata_driver, (void*)dev);
 			mbr_parse(devicename);
+			return 1;
+		}else if(atapi_device_init(dev)){
+			char devicename[9]="ATAPI";
+			add_device(devicename, &atapi_driver, (void*)dev);
+			return 1;
 		}
-		return 1;
 	}
-	if (cl == 0x14 && ch == 0xEB) {
-		atapi_device_init(dev);
-		char devicename[9]="ATAPI";
-		add_device(devicename, &atapi_driver, (void*)dev);
-		return 1;
-	}
-
-	/* TODO: ATAPI, SATA, SATAPI */
 	return 0;
 }
 

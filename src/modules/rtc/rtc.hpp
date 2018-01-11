@@ -6,7 +6,6 @@
 //ISO-8061-ish format. Using 'T' as a delimeter instead of space (as ISO dictates) is bad for reaability, so is not used.
 #define FORMAT "%02i-%02i-%02i %02i:%02i:%02i"
 
-extern volatile uint64_t msec_counter;
 extern uint16_t extension_id;
 extern uint64_t boot_msec;
 
@@ -23,3 +22,4 @@ uint64_t datetime2epoch(const datetime &dt);
 void init_timer();
 void create_timer(isr_regs *regs);
 void reset_timer(isr_regs *regs);
+uint64_t get_msecs();

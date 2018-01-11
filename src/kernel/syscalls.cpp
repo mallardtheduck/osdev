@@ -5,7 +5,7 @@ module_api::thread_id_t thread_id(){
 	return sch_get_id();
 }
 
-void mod_memcpy(void *dst, void *src, size_t size){
+void mod_memcpy(void *dst, const void *src, size_t size){
 	memcpy(dst, src, size);
 }
 
@@ -70,6 +70,10 @@ size_t fwrite(file_handle *h, size_t bytes, char *buf){
 
 bt_filesize_t fseek(file_handle *handle, bt_filesize_t pos, uint32_t flags){
 	return fs_seek(*handle, pos, flags);
+}
+
+bool fsetsize(file_handle *handle, bt_filesize_t size){
+	return fs_setsize(*handle, size);
 }
 
 int fioctl(file_handle *handle, int fn, size_t bytes, char *buf){
@@ -167,6 +171,36 @@ void mod_abortable(bool abortable){
 	sch_abortable(abortable);
 }
 
+uint32_t physical_addr(void *addr){
+	return MM2::current_pagedir->virt2phys(addr);
+}
+
+void mod_set_kvar(const char *name, const char *value){
+	set_kvar(name, value);
+}
+
+size_t mod_get_kvar(const char *name, char *buffer, size_t size){
+	string value = get_kvar(name);
+	strncpy(buffer, value.c_str(), size);
+	return value.length();
+}
+
+void *mod_map_physical(uint32_t addr, size_t pages){
+	return MM2::mm2_map_physical(addr, pages);
+}
+
+void mod_free_pages(void *addr, size_t pages){
+	mm2_virtual_free(addr, pages);
+}
+
+void mod_lock_low_memory(){
+	MM2::lock_low_memory();
+}
+
+void mod_unlock_low_memory(){
+	MM2::unlock_low_memory();	
+}
+
 module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&panic,
 	&malloc,
@@ -176,7 +210,11 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&mod_memmove,
 	&mod_strcmp,
 	&mod_strncpy,
-    &vmm_physaddr,
+    &physical_addr,
+    &mod_map_physical,
+    &mod_free_pages,
+    &mod_lock_low_memory,
+    &mod_unlock_low_memory,
 
 	&mod_init_lock,
 	&mod_take_lock,
@@ -216,6 +254,8 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&mask_irq,
 	&unmask_irq,
 	&irq_ack,
+	&int_handle_raw,
+	&irq_handle_raw,
 
 	&add_filesystem,
 	&fs_mount,
@@ -226,6 +266,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&fread,
 	&fwrite,
 	&fseek,
+	&fsetsize,
 	&fioctl,
     &fflush,
 
@@ -261,4 +302,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	
 	&proc_add_handle,
 	&proc_get_handle,
+	
+	&mod_set_kvar,
+	&mod_get_kvar,
 };

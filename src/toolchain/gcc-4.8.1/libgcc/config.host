@@ -1115,7 +1115,7 @@ mep*-*-*)
 	;;
 i[3-7]86-*-btos*)
      extra_parts="crtbegin.o crtend.o"
-     tmake_file="$tmake_file i386/t-crtstuff"
+     tmake_file="$tmake_file i386/t-crtstuff i386/t-btos"
      ;;
 *)
 	echo "*** Configuration ${host} not supported" 1>&2

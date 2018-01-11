@@ -1,5 +1,8 @@
 #include "liballoc.h"
 
+#define dbgout serial_writestring
+#define dbgpf(...) do{sprintf(dbgbuf, __VA_ARGS__); dbgout(dbgbuf);}while(0)
+
 /**  Durand's Amazing Super Duper Memory functions.  */
 
 #define VERSION 	"1.1"
@@ -505,7 +508,7 @@ void *PREFIX(malloc)(size_t req_size)
 					{
 						// yay......
 						new_min = (struct liballoc_minor*)((uintptr_t)min + sizeof( struct liballoc_minor ) + min->size);
-
+						
 						new_min->magic = LIBALLOC_MAGIC;
 						new_min->next = min->next;
 						new_min->prev = min;

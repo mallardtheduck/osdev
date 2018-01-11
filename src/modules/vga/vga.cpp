@@ -1,6 +1,7 @@
 #include "vga.hpp"
 #include "modes.hpp"
 #include "device.hpp"
+#include "vbe.hpp"
 
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
@@ -12,58 +13,74 @@ volatile uint8_t * const text_memory=(uint8_t*)0xB8000;
 
 void dump_regs();
 
+struct int_lock{
+	int_lock() { disable_interrupts(); }
+	~int_lock() { enable_interrupts(); }
+};
+
 extern "C" int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
-	dump_regs();
+	//dump_regs();
 	init_modes();
-	init_device();
+	if(!vbe_init()){
+		init_device();
+	}
 	
 	return 0;
 }
 
 uint8_t read_graphics(uint8_t index){
+	int_lock il;
 	outb(VGA_Ports::GraphicsAddress, index);
 	return inb(VGA_Ports::GraphicsData);
 }
 
 void write_graphics(uint8_t index, uint8_t byte){
+	int_lock il;
 	outb(VGA_Ports::GraphicsAddress, index);
 	outb(VGA_Ports::GraphicsData, byte);
 }
 
 uint8_t read_sequencer(uint8_t index){
+	int_lock il;
 	outb(VGA_Ports::SequencerAddress, index);
 	return inb(VGA_Ports::SequencerData);
 }
 
 void write_sequencer(uint8_t index, uint8_t byte){
+	int_lock il;
 	outb(VGA_Ports::SequencerAddress, index);
 	outb(VGA_Ports::SequencerData, byte);
 }
 
 uint8_t read_crtc(uint8_t index){
+	int_lock il;
 	outb(VGA_Ports::CRTCAddress, index);
 	return inb(VGA_Ports::CRTCData);
 }
 
 void write_crtc(uint8_t index, uint8_t byte){
+	int_lock il;
 	outb(VGA_Ports::CRTCAddress, index);
 	outb(VGA_Ports::CRTCData, byte);
 }
 
 uint8_t read_attribute(uint8_t index){
+	int_lock il;
 	inb(VGA_Ports::InputStatus1);
 	outb(VGA_Ports::AttributeWrite, index);
 	return inb(VGA_Ports::AttributeRead);
 }
 
 void write_attribute(uint8_t index, uint8_t byte){
+	int_lock il;
 	inb(VGA_Ports::InputStatus1);
 	outb(VGA_Ports::AttributeWrite, index);
 	outb(VGA_Ports::AttributeWrite, byte);
 }
 
 void write_dac(uint8_t index, uint8_t r, uint8_t g, uint8_t b){
+	int_lock il;
 	if((r & 0x3F) != r) dbgpf("VGA: Bad red value: %x\n", r);
 	if((g & 0x3F) != g) dbgpf("VGA: Bad green value: %x\n", g);
 	if((b & 0x3F) != b) dbgpf("VGA: Bad blue value: %x\n", b);
@@ -74,6 +91,7 @@ void write_dac(uint8_t index, uint8_t r, uint8_t g, uint8_t b){
 }
 
 void read_dac(uint8_t index, uint8_t &r, uint8_t &g, uint8_t &b){
+	int_lock il;
 	outb(VGA_Ports::DACReadAddress, index);
 	r=inb(VGA_Ports::DACData);
 	g=inb(VGA_Ports::DACData);
@@ -81,30 +99,31 @@ void read_dac(uint8_t index, uint8_t &r, uint8_t &g, uint8_t &b){
 }
 
 void unlock_crtc(){
+	int_lock il;
 	uint8_t reg= read_crtc(CRTC_Registers::EndVrtRetrace);
-	reg |= (1 << 7);
+	reg &= ~(1 << 7);
 	write_crtc(CRTC_Registers::EndVrtRetrace, reg);
 	reg= read_crtc(CRTC_Registers::EndHrzBlanking);
-	reg &= ~(1 << 7);
+	reg |= (1 << 7);
 	write_crtc(CRTC_Registers::EndHrzBlanking, reg);
 }
 
 void lock_crtc(){
+	int_lock il;
 	uint8_t reg= read_crtc(CRTC_Registers::EndVrtRetrace);
-	reg &= ~(1 << 7);
+	reg |= (1 << 7);
 	write_crtc(CRTC_Registers::EndVrtRetrace, reg);
-	reg= read_crtc(CRTC_Registers::EndHrzBlanking);
-	reg &= ~(1 << 7);
-	write_crtc(CRTC_Registers::EndHrzBlanking, reg);
 }
 
 void disable_display(){
+	int_lock il;
 	uint8_t reg = read_sequencer(Sequencer_Registers::ClockingMode);
 	reg |= (1 << 5);
 	write_sequencer(Sequencer_Registers::ClockingMode, reg);
 }
 
 void enable_display(){
+	int_lock il;
 	uint8_t reg = read_sequencer(Sequencer_Registers::ClockingMode);
 	reg &= ~(1 << 5);
 	write_sequencer(Sequencer_Registers::ClockingMode, reg);
@@ -142,7 +161,7 @@ void dump_regs(){
 	dbgpf("VGA: S %x\n", (int)read_crtc(CRTC_Registers::CRTCModeControl));
 	dbgpf("VGA: T %x\n", (int)read_crtc(CRTC_Registers::LineCompare));
 	dbgpf("VGA: U %x\n", (int)read_graphics(Graphics_Registers::SetReset));
-	dbgpf("VGA: V %x\n", (int)read_graphics(Graphics_Registers::EnableSetReset));;
+	dbgpf("VGA: V %x\n", (int)read_graphics(Graphics_Registers::EnableSetReset));
 	dbgpf("VGA: W %x\n", (int)read_graphics(Graphics_Registers::ColourCompare));
 	dbgpf("VGA: X %x\n", (int)read_graphics(Graphics_Registers::DataRotate));
 	dbgpf("VGA: Y %x\n", (int)read_graphics(Graphics_Registers::ReadMapSelect));

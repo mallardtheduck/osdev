@@ -11,13 +11,13 @@
 extern vga_palette_entry vga_palette[256];
 lock vga_device_lock;
 
-bt_video_palette_entry get_palette_entry(uint8_t entry){
+static bt_video_palette_entry get_palette_entry(uint8_t entry){
     bt_video_palette_entry ret;
     ret.index = entry;
     ret.r = vga_palette[entry].r << 2;
     ret.g = vga_palette[entry].g << 2;
     ret.b = vga_palette[entry].b << 2;
-    ret.a=0xFF;
+    ret.a=0;
     return ret;
 }
 
@@ -37,7 +37,7 @@ bool vga_close(void *instance){
 }
 
 size_t vga_read(void *instance, size_t bytes, char *buf){
-	hold_lock hl(&vga_device_lock);
+	hold_lock hl(&vga_device_lock, false);
     vga_instance *inst=(vga_instance*)instance;
     if(current_mode->vidmode.textmode){
         return text_read(inst, bytes, buf);
@@ -47,7 +47,7 @@ size_t vga_read(void *instance, size_t bytes, char *buf){
 }
 
 size_t vga_write(void *instance, size_t bytes, char *buf){
-	hold_lock hl(&vga_device_lock);
+	hold_lock hl(&vga_device_lock, false);
     vga_instance *inst=(vga_instance*)instance;
     if(current_mode->vidmode.textmode){
         return text_write(inst, bytes, buf);
@@ -57,7 +57,7 @@ size_t vga_write(void *instance, size_t bytes, char *buf){
 }
 
 bt_filesize_t vga_seek(void *instance, bt_filesize_t pos, uint32_t flags){
-	hold_lock hl(&vga_device_lock);
+	hold_lock hl(&vga_device_lock, false);
     vga_instance *inst=(vga_instance*)instance;
     if(current_mode->vidmode.textmode){
         return text_seek(inst, pos, flags);
@@ -67,7 +67,7 @@ bt_filesize_t vga_seek(void *instance, bt_filesize_t pos, uint32_t flags){
 }
 
 int vga_ioctl(void *instance, int fn, size_t bytes, char *buf){
-	hold_lock hl(&vga_device_lock);
+	hold_lock hl(&vga_device_lock, false);
     vga_instance *inst=(vga_instance*)instance;
     if(fn == bt_vid_ioctl::GetModeCount) {
         return vga_mode_count;
@@ -125,7 +125,7 @@ int vga_type(){
 }
 
 char *vga_desc(){
-    return "VGA video device.";
+    return "VGA video device";
 }
 
 drv_driver vga_device={&vga_open, &vga_close, &vga_read, &vga_write, &vga_seek, &vga_ioctl, &vga_type, &vga_desc};

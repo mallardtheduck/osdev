@@ -1,0 +1,33 @@
+diff -rupN freetype-2.7.1/builds/unix/config.sub originals/freetype-2.7.1/builds/unix/config.sub
+--- freetype-2.7.1/builds/unix/config.sub	2017-03-17 10:59:30.302039000 +0000
++++ originals/freetype-2.7.1/builds/unix/config.sub	2016-12-30 20:17:23.000000000 +0000
+@@ -1409,7 +1409,7 @@ case $os in
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+ 	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
+-	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -btos* )
++	      | -onefs* | -tirtos* | -phoenix* | -fuchsia*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+diff -rupN freetype-2.7.1/builds/unix/configure originals/freetype-2.7.1/builds/unix/configure
+--- freetype-2.7.1/builds/unix/configure	2017-03-17 11:05:32.086039000 +0000
++++ originals/freetype-2.7.1/builds/unix/configure	2016-12-30 20:17:23.000000000 +0000
+@@ -11033,17 +11033,6 @@ uts4*)
+   soname_spec='$libname$release$shared_ext$major'
+   shlibpath_var=LD_LIBRARY_PATH
+   ;;
+-  
+-btos*)
+-  version_type=linux
+-  libname_spec='$name'
+-  shrext_cmds=".ell"
+-  need_lib_prefix=no
+-  library_names_spec='$libname${shared_ext}'
+-  dynamic_linker="$host_os ELOADER"
+-  shlibpath_var=LIBPATH
+-  soname_spec='$libname${shared_ext}'
+-  ;;
+ 
+ *)
+   dynamic_linker=no

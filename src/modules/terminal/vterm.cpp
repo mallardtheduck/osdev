@@ -10,7 +10,13 @@
 //vterm *current_vterm=NULL;
 vterm_list *terminals=NULL;
 
+struct active_blockcheck_params{
+	vterm *term;
+	uint32_t lactive;
+};
+
 bool event_blockcheck(void *p);
+bool active_blockcheck(void *p);
 
 size_t strlen(const char *str){
 	size_t len;
@@ -44,6 +50,7 @@ vterm::vterm(uint64_t nid, i_backend *back)
 	event_mode = bt_terminal_event_mode::None;
 	event_mode_enabled = false;
 	last_move_message = 0;
+	pointer_speed = back->get_pointer_speed();
 	if(backend) backend->open(nid);
 }
 
@@ -94,7 +101,7 @@ void vterm::putstring(char *s)
 void vterm::setcolours(uint8_t c)
 {
 	textcolour=c;
-	if(backend) backend->set_text_colours(c);
+	if(backend && backend->is_active(id)) backend->set_text_colours(c);
 }
 
 uint8_t vterm::getcolours()
@@ -106,15 +113,18 @@ void vterm::scroll()
 {
 	int factor=1;
 	if(vidmode.textmode) factor=2;
-	for(size_t y=0; y<vidmode.height; ++y) {
-		for(size_t x=0; x<(vidmode.width*factor); ++x) {
-			const size_t source = y * (vidmode.width*factor) + x;
-			if(y) {
-				const size_t dest = (y-1) * (vidmode.width*factor) + x;
-				buffer[dest]=buffer[source];
+	if(scrolling){
+		size_t start = infoline ? 1 : 0;
+		for(size_t y = start + 1; y<vidmode.height; ++y) {
+			for(size_t x=0; x<(vidmode.width*factor); ++x) {
+				const size_t source = y * (vidmode.width*factor) + x;
+				if(y > start) {
+					const size_t dest = (y-1) * (vidmode.width*factor) + x;
+					buffer[dest]=buffer[source];
+				}
+				buffer[source]=0;
+				if(vidmode.textmode && source % 2) buffer[source]=textcolour;
 			}
-			buffer[source]=0;
-			if(vidmode.textmode && source % 2) buffer[source]=textcolour;
 		}
 	}
 	bufpos=((vidmode.height-1)*vidmode.width)*factor;
@@ -126,22 +136,22 @@ void vterm::do_infoline()
 	vterm_options opts;
 	if(backend && backend->is_active(id) && infoline && vidmode.textmode) {
 		size_t pos=seek(opts, 0, true);
+		char *infoline_text = (char*)malloc(vidmode.width + 1);
+		memset(infoline_text, 0, vidmode.width + 1);
+		sprintf(infoline_text, "[%i] %s", (int)id, title);
+		for(size_t i = 0; i < vidmode.width; ++i){
+			if(infoline_text[i] == 0) infoline_text[i] = ' ';
+		}
 		seek(opts, 0, false);
 		uint16_t linecol=0x1F;
 		uint8_t colour=backend->get_text_colours();
 		setcolours(linecol);
-		for(size_t i=0; i<vidmode.width; ++i) {
-			putchar(' ');
-		}
-		seek(opts, 0, false);
-		char buf[8];
-		sprintf(buf, "[%i] ", (int)id);
-		putstring(buf);
-		putstring(title);
+		putstring(infoline_text);
 		setcolours(colour);
 		seek(opts, pos, false);
 		if(pos < vidmode.width) putchar('\n');
-		backend->refresh();
+		free(infoline_text);
+		//backend->refresh();
 	}
 }
 
@@ -186,7 +196,9 @@ void vterm::activate()
 			backend->hide_pointer();
 		}
 		backend->set_pointer_autohide(pointer_autohide);
+		backend->set_pointer_speed(pointer_speed);
 		backend->refresh();
+		++activecounter;
 	}
 }
 
@@ -224,7 +236,7 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf)
 		bufpos += size;
 	}
 	if(!iline_valid) do_infoline();
-	if(backend) backend->refresh();
+	if(backend && backend->is_active(id)) backend->refresh();
 	return size;
 }
 
@@ -262,14 +274,14 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf)
 					uint64_t scount=scrollcount;
 					if(echo){
 						putchar(c);
-						if(backend) backend->refresh();
+						if(backend && backend->is_active(id)) backend->refresh();
 					}
 					if(scount != scrollcount) do_infoline();
 					return i + 1;
 				}
 				if(echo && put) {
 					putchar(c);
-					if(backend) backend->refresh();
+					if(backend && backend->is_active(id)) backend->refresh();
 				}
 			}
 		}
@@ -315,6 +327,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 				memset(title, 0, titlemax);
 				memcpy(title, buf, size);
 				do_infoline();
+				if(backend && backend->is_active(id)) backend->refresh();
 			}
 			break;
 		}
@@ -322,6 +335,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			if(buf){
 				strncpy(buf, title, MIN(size, titlemax));
 			}
+			return strlen(title) + 1;
 			break;
 		}
 		case bt_terminal_ioctl::ClearScreen: {
@@ -333,6 +347,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			if(infoline) {
 				putchar('\n');
 				do_infoline();
+				if(backend && backend->is_active(id)) backend->refresh();
 			}
 			break;
 		}
@@ -364,7 +379,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			create_terminal(buf);
 			break;
 		}
-		case bt_terminal_ioctl::SwtichTerminal: {
+		case bt_terminal_ioctl::SwitchTerminal: {
 			uint64_t sw_id=*(uint64_t*)buf;
 			if(backend) backend->switch_terminal(sw_id);
 			break;
@@ -391,6 +406,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 				if(vidmode.textmode && infoline) {
 					putchar('\n');
 					do_infoline();
+					if(backend && backend->is_active(id)) backend->refresh();
 				}
 			}
 			break;
@@ -505,15 +521,99 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			if(backend && backend->is_active(id)) backend->unfreeze_pointer();
 			break;
 		}
+		case bt_terminal_ioctl::GetPointerSpeed: {
+			if(size == sizeof(uint32_t)){
+				*(uint32_t*)buf = pointer_speed;
+			}
+			break;
+		}
+		case bt_terminal_ioctl::SetPointerSpeed: {
+			if(size == sizeof(uint32_t)){
+				pointer_speed = *(uint32_t*)buf;
+				if(backend && backend->is_active(id)) backend->set_pointer_speed(pointer_speed);
+			}
+			break;
+		}
 		case bt_terminal_ioctl::RegisterGlobalShortcut:{ 
 			if(buf){
 				uint16_t keycode = *(uint16_t*)buf;
 				if(backend) backend->register_global_shortcut(keycode, id);
 			}
+		}case bt_terminal_ioctl::WaitActive:{
+			if(!backend || !backend->is_active(id)){
+				active_blockcheck_params p;
+				p.term = this;
+				p.lactive = activecounter;
+				release_lock(&term_lock);
+				thread_setblock(&active_blockcheck, (void*)&p);
+				take_lock(&term_lock);
+			}
 		}
 	}
 	if(backend && backend->is_active(id)) backend->refresh();
 	return 0;
+}
+
+struct cmdLine{
+	char *cmd;
+	size_t argc;
+	char **argv;
+};
+
+cmdLine parse_cmd(const char *c){
+	cmdLine cl = {nullptr, 0, nullptr};
+	char* buf = (char*)malloc(BT_MAX_PATH);
+	if(!buf) panic("(TERM) Allocation failed!");
+	memset(buf, 0, BT_MAX_PATH);
+	size_t i = 0;
+	bool escape = false;
+	bool quote = false;
+	while(c && *c){
+		if(escape) buf[i] = *c;
+		else if(quote && *c != '"') buf[i] = *c;
+		else if(*c == '\\') escape = true;
+		else if(*c == '"') quote = !quote;
+		else if((*c == ' ' && i) || i == BT_MAX_PATH - 1){
+			if(!cl.cmd) cl.cmd = buf;
+			else{
+				char **nargv = (char**)malloc((cl.argc + 1) * sizeof(char*));
+				if(!nargv) panic("(TERM) Allocation failed!");
+				memcpy(nargv, cl.argv, sizeof(char*) * cl.argc);
+				nargv[cl.argc] = buf;
+				if(cl.argv) free(cl.argv);
+				cl.argv = nargv;
+				++cl.argc;
+			}
+			buf = (char*)malloc(BT_MAX_PATH);
+			if(!buf) panic("(TERM) Allocation failed!");
+			memset(buf, 0, BT_MAX_PATH);
+			i = -1;
+			escape=quote=false;
+		}else{
+			buf[i] = *c;
+		}
+		++i; ++c;
+	}
+	if(i){
+		char **nargv = (char**)malloc((cl.argc + 1) * sizeof(char*));
+		if(!nargv) panic("(TERM) Allocation failed!");
+		memcpy(nargv, cl.argv, sizeof(char*) * cl.argc);
+		nargv[cl.argc] = buf;
+		if(cl.argv) free(cl.argv);
+		cl.argv = nargv;
+		++cl.argc;
+	}else{
+		free(buf);
+	}
+	return cl;
+};
+
+void free_cmd(cmdLine c){
+	if(c.cmd) free(c.cmd);
+	for(size_t i = 0; i < c.argc; ++i){
+		free(c.argv[i]);
+	}
+	if(c.argv) free(c.argv);
 }
 
 void vterm::create_terminal(char *command)
@@ -529,7 +629,9 @@ void vterm::create_terminal(char *command)
 			char new_terminal_id[128]= {0};
 			i64toa(new_id, new_terminal_id, 10);
 			setenv(terminal_var, new_terminal_id, 0, getpid());
-			pid_t pid=spawn(command, 0, NULL);
+			cmdLine cmd = parse_cmd(command);
+			pid_t pid=spawn(cmd.cmd, cmd.argc, cmd.argv);
+			free_cmd(cmd);
 			setenv(terminal_var, old_terminal_id, 0, getpid());
 			vterm_options opts;
 			if(!pid) terminals->get(new_id)->close(opts);
@@ -599,7 +701,7 @@ void vterm::sync(bool content)
 	} else {
 		clear_buffer();
 	}
-	this->scrolling = backend->get_screen_scroll();
+	//this->scrolling = backend->get_screen_scroll();
 }
 
 void vterm::clear_buffer()
@@ -697,6 +799,12 @@ bool event_blockcheck(void *p)
 	return input_blockcheck(p) || pointer_blockcheck(p);
 }
 
+bool active_blockcheck(void *p)
+{
+	auto *pa = (active_blockcheck_params*)p;
+	return pa->term->activecounter != pa->lactive;
+}
+
 bt_terminal_pointer_event vterm::get_pointer()
 {
 	hold_lock hl(&input_lock);
@@ -716,7 +824,8 @@ char vterm::get_char()
 
 void vterm::update_current_pid()
 {
-	pid_t pid = getpid();
+	curpid = getpid();
+	/*pid_t pid = getpid();
 	if(pid) {
 		uint64_t termid=0;
 		if(getenv(terminal_var, pid)) {
@@ -726,7 +835,7 @@ void vterm::update_current_pid()
 			//dbgpf("TERM: %i updating curpid from %i to %i\n", (int)id, (int)curpid, (int)id);
 			curpid = pid;
 		}
-	}
+	}*/
 }
 
 i_backend *vterm::get_backend(){

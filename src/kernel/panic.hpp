@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <module/drivers.h>
 
-void panic(char *msg) __attribute__ ((noreturn));
+extern "C" void panic(char *msg) __attribute__ ((noreturn));
 void kernel_debug_stacktrace(isr_regs *ctx);
 
 #endif

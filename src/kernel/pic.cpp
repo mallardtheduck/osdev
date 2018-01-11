@@ -118,7 +118,7 @@ uint16_t pic_get_irr(void)
 }
  
 /* Returns the combined value of the cascaded PICs in-service register */
-uint16_t pic_get_isr(void)
+uint16_t pic_get_isr()
 {
     return __pic_get_irq_reg(PIC_READ_ISR);
 }

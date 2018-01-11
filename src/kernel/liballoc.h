@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "printf.h"
 
 /** \defgroup ALLOCHOOKS liballoc hooks 
  *
@@ -72,6 +73,10 @@ extern void    *PREFIX(realloc)(void *, size_t);		///< The standard function.
 extern void    *PREFIX(calloc)(size_t, size_t);		///< The standard function.
 extern void     PREFIX(free)(void *);					///< The standard function.
 
+
+void panic(char *msg) __attribute__ ((noreturn));
+void serial_writestring(const char *str);
+extern char dbgbuf[256];
 
 #ifdef __cplusplus
 }

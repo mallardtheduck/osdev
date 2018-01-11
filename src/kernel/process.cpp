@@ -40,7 +40,7 @@ struct proc_process{
 	int retval;
     file_handle file;
 
-	vmm_pagedir *pagedir;
+	MM2::PageDirectory *pagedir;
 	handle_t handlecounter;
     proc_status::Enum status;
 
@@ -49,13 +49,15 @@ struct proc_process{
 	vector<string> args;
 
     map<pid_t, void*> msg_buffers;
+    
+    vector<btos_api::bt_msg_header*> msg_q;
 
 	proc_process() : pid(++curpid) {
 		init_lock(ulock);
 	}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
-		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(vmm_newpagedir()),
-		 handlecounter(0), status(proc_status::Running) {
+		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(new MM2::PageDirectory),
+		 handlecounter(0), status(proc_status::Starting) {
 		init_lock(ulock);
     }
 };
@@ -67,12 +69,12 @@ char *proc_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
 	sprintf(buffer, "# PID, path, memory, parent\n");
-	size_t kmem=vmm_getkernelmemory();
+	size_t kmem=MM2::current_pagedir->get_kernel_used();
 	{hold_lock hl(proc_lock);
 		for(size_t i=0; i<proc_processes->size(); ++i){
             proc_process *cur=(*proc_processes)[i];
 			sprintf(&buffer[strlen(buffer)],"%i, \"%s\", %i, %i\n", (int)(cur->pid), cur->name.c_str(),
-				(int)((cur->pid)?vmm_getusermemory(cur->pagedir):kmem), (int)(cur->parent));
+				(int)((cur->pid)?cur->pagedir->get_user_used():kmem), (int)(cur->parent));
 		}
     }
     return buffer;
@@ -108,7 +110,8 @@ void proc_init(){
 	kproc->pid=0;
 	curpid--;
 	kproc->parent=0;
-	kproc->pagedir=vmm_cur_pagedir;
+	kproc->pagedir=MM2::current_pagedir;
+	kproc->status=proc_status::Running;
 	proc_processes->push_back(kproc);
 	proc_current_process=proc_get(0);
 	proc_current_pid=0;
@@ -130,6 +133,7 @@ proc_process *proc_get(pid_t pid){
 			proc_process *cur=(*proc_processes)[i];
 			if(cur->pid==pid) return cur;
 		}
+		dbgpf("PROC: PID %i not found!\n", (int)pid);
 		return NULL;
 	}
 }
@@ -163,7 +167,7 @@ void proc_switch_sch(pid_t pid){
         if(!newproc) panic("(PROC) Attempt to switch to unknown process.");
 		proc_current_process=newproc;
 		proc_current_pid=newproc->pid;
-		vmm_switch(proc_current_process->pagedir);
+		MM2::mm2_switch(proc_current_process->pagedir);
 	}
 }
 
@@ -176,7 +180,7 @@ bool proc_switch(pid_t pid){
             hold_lock hl(proc_lock, false);
             proc_current_process = newproc;
             proc_current_pid = newproc->pid;
-            vmm_switch(proc_current_process->pagedir);
+            MM2::mm2_switch(proc_current_process->pagedir);
         }
 	}
     return true;
@@ -209,6 +213,7 @@ static bool proc_threads_blockcheck(void *p){
 
 void proc_end(pid_t pid) {
     if(pid==0) return;
+	if(proc_get_status(pid) == proc_status::Ended) return;
 	//This is not in the "right" place, but cannot be done once we have the lock.
 	debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
 	take_lock_exclusive(proc_lock);
@@ -242,7 +247,7 @@ void proc_end(pid_t pid) {
 	bool cont = true;
 	while (cont) {
 		cont = false;
-		for (map<handle_t, bt_handle_info>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
+		for (map<handle_t, bt_handle_info>::iterator i = proc->handles.rbegin(); i != proc->handles.rend(); --i) {
 			if (i->second.type == kernel_handle_types::thread) {
  				uint64_t thread_id = *(uint64_t *) i->second.value;
 				if (thread_id != sch_get_id()) {
@@ -257,6 +262,9 @@ void proc_end(pid_t pid) {
 				}
 			}
 		}
+		release_lock(proc->ulock);
+		sch_yield();
+		take_lock_exclusive(proc->ulock);
 	}
 	if(sch_get_pid_threadcount(pid, true) > 0){
 		proc_threads_blockcheck_params params = {pid, sch_get_id()};
@@ -266,7 +274,9 @@ void proc_end(pid_t pid) {
 	while (cont) {
 		cont = false;
 		for (map<handle_t, bt_handle_info>::iterator i = proc->handles.begin(); i != proc->handles.end(); ++i) {
+			release_lock(proc->ulock);
 			close_handle(i->second);
+			take_lock_exclusive(proc->ulock);
 			proc_remove_handle(i->first, pid);
 			cont = true;
 			break;
@@ -277,7 +287,7 @@ void proc_end(pid_t pid) {
 	for (size_t i = 0; i < proc_processes->size(); ++i) {
 		proc_process *cur = (*proc_processes)[i];
 		if (cur->pid == pid) {
-			vmm_deletepagedir(cur->pagedir);
+			delete cur->pagedir;
 			proc_processes->erase(i);
 			release_lock(proc->ulock);
 			delete cur;
@@ -349,10 +359,10 @@ struct proc_info{
 };
 
 void *proc_alloc_stack(size_t size){
-	size_t pages=(size/VMM_PAGE_SIZE);
-	uint32_t baseaddr=0-(pages*VMM_PAGE_SIZE);
+	size_t pages=(size/MM2::MM2_Page_Size);
+	uint32_t baseaddr=0-(pages*MM2::MM2_Page_Size);
 	dbgpf("PROC: %i pages of stack at %x.\n", (int)pages, baseaddr);
-	vmm_alloc_at(pages, baseaddr);
+	MM2::current_pagedir->alloc_pages_at(pages, (void*)baseaddr);
 	memset((void*)baseaddr, 0, size);
 	//Stack pointer starts 4 bytes below top, just in case something tries to read the top-level return address.
 	return (void*)(0-sizeof(uint32_t));
@@ -364,7 +374,7 @@ void proc_start(void *ptr){
     void *stackptr = ((proc_info*)ptr)->stackptr;
 	delete (proc_info*)ptr;
 	if(!proc_switch(pid)) return;
-	if(!stackptr) stackptr=proc_alloc_stack(4*VMM_PAGE_SIZE);
+	if(!stackptr) stackptr=proc_alloc_stack(16 * MM2::MM2_Page_Size);
     sch_set_priority(default_userspace_priority);
 	//Yes, there are supposed to be two of these calls.
 	sch_abortable(true);
@@ -372,11 +382,19 @@ void proc_start(void *ptr){
 	proc_add_thread(sch_get_id());
     debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);
 	if(sch_get_abortlevel()) panic("(PROC) Entering userspace with non-zero abortlevel.");
+	proc_set_status(proc_status::Running);
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 
 pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
-	file_handle file=fs_open((char*)path.c_str(), FS_Read);
+	file_handle file;
+	if(!is_kvar_set("LOADER")){
+		file=fs_open((char*)path.c_str(), FS_Read);
+	}else{
+		string loader = get_kvar("LOADER");
+		dbgpf("PROC: Using program loader: %s\n", loader.c_str());
+		file=fs_open((char*)loader.c_str(), FS_Read);
+	}
     pid_t ret=proc_new(path, argc, argv, parent, &file);
 	if(!file.valid){
         proc_end(ret);
@@ -408,6 +426,9 @@ uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t 
 handle_t proc_add_handle(bt_handle_info handle, pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return 0;
+    //~ for(auto i = proc->handles.begin(); i!=proc->handles.end(); ++i){
+		//~ if(i->second.value == handle.value) panic("(PROC) Duplicate handle add!");
+	//~ }
     handle_t ret=++proc->handlecounter;
     while(!ret || proc->handles.has_key(ret)) ret=++proc->handlecounter;
     proc->handles[ret] = handle;
@@ -510,7 +531,7 @@ bool proc_wait_blockcheck(void *p){
 }
 
 int proc_wait(pid_t pid){
-	if(proc_get(pid)){
+	while(proc_get(pid)){
 		sch_setblock(&proc_wait_blockcheck, (void*)&pid);
 	}
     {
@@ -608,7 +629,7 @@ void proc_set_status(proc_status::Enum status, pid_t pid){
 }
 proc_status::Enum proc_get_status(pid_t pid){
     proc_process *proc=proc_get_lock(pid);
-    if(!proc) return proc_status::DoesNotExist;	
+    if(!proc) return proc_status::DoesNotExist;
     proc_status::Enum ret = proc->status;
     release_lock(proc->ulock);
 	return ret;
@@ -671,6 +692,7 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 		release_lock(proc->ulock);
 		release_lock(to->ulock);
 		release_lock(msg_lock);
+		sch_yield();
 		return ret;
 	} while(again);
 	return 0;
@@ -692,4 +714,58 @@ void proc_message_wait(pid_t pid){
 	}
 	release_lock(proc->ulock);
     sch_setblock(&proc_msg_wait_blockcheck, (void *)&pid);
+}
+
+void proc_add_msg(btos_api::bt_msg_header *msg){
+	proc_process *proc = proc_get_lock(msg->to);
+	if (!proc) return;
+	proc->msg_q.push_back(msg);
+	release_lock(proc->ulock);
+}
+
+void proc_remove_msg(btos_api::bt_msg_header *msg){
+	proc_process *proc = proc_get_lock(msg->to);
+	if (!proc) return;
+	for(size_t i = 0; i < proc->msg_q.size(); ++i){
+		if(proc->msg_q[i] == msg){
+			proc->msg_q.erase(i);
+			break;
+		}
+	}
+	release_lock(proc->ulock);
+}
+
+btos_api::bt_msg_header *proc_get_msg(size_t index, pid_t pid){
+	proc_process *proc = proc_get_lock(pid);
+	if (!proc) return NULL;
+	btos_api::bt_msg_header *msg;
+	if(index >= proc->msg_q.size()) msg = NULL;
+	else msg = proc->msg_q[index];
+	release_lock(proc->ulock);
+	return msg;
+}
+
+btos_api::bt_msg_header *proc_get_msg_nolock(size_t index, pid_t pid){
+	proc_process *proc = proc_get(pid);
+	if (!proc) return NULL;
+	btos_api::bt_msg_header *msg;
+	if(index >= proc->msg_q.size()) msg = NULL;
+	else msg = proc->msg_q[index];
+	return msg;
+}
+
+btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id){
+	//dbgout("PROC: p_g_m_b_i.\n");
+	hold_lock hl(proc_lock);
+	btos_api::bt_msg_header *ret = NULL;
+	for(size_t i = 0; i < proc_processes->size(); ++i){
+		proc_process *cproc = (*proc_processes)[i];
+		for(size_t j = 0; j < cproc->msg_q.size(); ++j){
+			if(cproc->msg_q[j]->id == id){
+				ret = cproc->msg_q[j];
+				break;
+			}
+		}
+	}
+	return ret;
 }

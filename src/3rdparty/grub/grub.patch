@@ -1,5 +1,5 @@
 diff -rupN grub-2.00/build-aux/config.sub originals/grub-2.00/build-aux/config.sub
---- grub-2.00/build-aux/config.sub	2016-05-10 00:00:06.288983876 +0100
+--- grub-2.00/build-aux/config.sub	2017-06-21 14:13:58.271356131 +0100
 +++ originals/grub-2.00/build-aux/config.sub	2012-06-18 22:08:46.000000000 +0100
 @@ -1368,8 +1368,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
@@ -11,116 +11,35 @@ diff -rupN grub-2.00/build-aux/config.sub originals/grub-2.00/build-aux/config.s
  	# Remember, each alternative MUST END IN *, to match a version number.
  		;;
  	-qnx*)
-diff -rupN grub-2.00/config.h originals/grub-2.00/config.h
---- grub-2.00/config.h	1970-01-01 01:00:00.000000000 +0100
-+++ originals/grub-2.00/config.h	2012-06-27 22:11:28.000000000 +0100
-@@ -0,0 +1,56 @@
-+#undef _LARGEFILE_SOURCE
-+#undef _FILE_OFFSET_BITS
-+#define _LARGEFILE_SOURCE
-+#define _FILE_OFFSET_BITS 64
-+#if defined(__PPC__) && !defined(__powerpc__)
-+#define __powerpc__ 1
-+#endif
-+#if defined (GRUB_UTIL) || !defined (GRUB_MACHINE)
-+#include <config-util.h>
-+#define NESTED_FUNC_ATTR
-+#else
-+/* Define if C symbols get an underscore after compilation. */
-+#define HAVE_ASM_USCORE 0
-+/* Define it to \"addr32\" or \"addr32;\" to make GAS happy.  */
-+#define ADDR32 addr32
-+/* Define it to \"data32\" or \"data32;\" to make GAS happy. */
-+#define DATA32 data32
-+/* Define it to one of __bss_start, edata and _edata.  */
-+#define BSS_START_SYMBOL __bss_start
-+/* Define it to either end or _end.  */
-+#define END_SYMBOL end
-+/* Name of package.  */
-+#define PACKAGE "grub"
-+/* Version number of package.  */
-+#define VERSION "2.00"
-+/* Define to the full name and version of this package. */
-+#define PACKAGE_STRING "GRUB 2.00"
-+/* Define to the version of this package. */
-+#define PACKAGE_VERSION "2.00"
-+/* Define to the full name of this package. */
-+#define PACKAGE_NAME "GRUB"
-+/* Define to the address where bug reports for this package should be sent. */
-+#define PACKAGE_BUGREPORT "bug-grub@gnu.org"
-+/* Default boot directory name" */
-+#define GRUB_BOOT_DIR_NAME "boot"
-+/* Default grub directory name */
-+#define GRUB_DIR_NAME "grub"
-+/* Define to 1 if GCC generates calls to __enable_execute_stack().  */
-+#define NEED_ENABLE_EXECUTE_STACK 0
-+/* Define to 1 if GCC generates calls to __register_frame_info().  */
-+#define NEED_REGISTER_FRAME_INFO 0
-+/* Define to 1 to enable disk cache statistics.  */
-+#define DISK_CACHE_STATS 0
-+
-+#define GRUB_TARGET_CPU "i386"
-+#define GRUB_PLATFORM "pc"
-+
-+#define RE_ENABLE_I18N 1
-+
-+#if defined(__i386__)
-+#define NESTED_FUNC_ATTR __attribute__ ((__regparm__ (1)))
-+#else
-+#define NESTED_FUNC_ATTR
-+#endif
-+
-+#endif
-diff -rupN grub-2.00/configure originals/grub-2.00/configure
---- grub-2.00/configure	2016-05-10 00:00:06.288983876 +0100
-+++ originals/grub-2.00/configure	2012-06-26 12:59:16.000000000 +0100
-@@ -9139,7 +9139,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -9185,7 +9185,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -9209,7 +9209,7 @@ rm -f core conftest.err conftest.$ac_obj
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -9254,7 +9254,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -9278,7 +9278,7 @@ rm -f core conftest.err conftest.$ac_obj
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
+diff -rupN grub-2.00/configure.ac originals/grub-2.00/configure.ac
+--- grub-2.00/configure.ac	2017-06-21 14:18:14.419070842 +0100
++++ originals/grub-2.00/configure.ac	2012-06-26 02:47:37.000000000 +0100
+@@ -390,6 +390,7 @@ CC="$TARGET_CC"
+ CFLAGS="$TARGET_CFLAGS"
+ CPPFLAGS="$TARGET_CPPFLAGS"
+ LDFLAGS="$TARGET_LDFLAGS"
++LIBS=""
+ 
+ # debug flags.
+ WARN_FLAGS="-Wall -W -Wshadow -Wold-style-definition -Wpointer-arith -Wundef -Wextra -Waddress -Wattributes -Wcast-align -Wchar-subscripts -Wcomment -Wdeprecated-declarations -Wdisabled-optimization -Wdiv-by-zero -Wempty-body -Wendif-labels -Wfloat-equal -Wformat-extra-args -Wformat-security -Wformat-y2k -Wimplicit -Wimplicit-function-declaration -Wimplicit-int -Winit-self -Wint-to-pointer-cast -Winvalid-pch -Wmain -Wmissing-braces -Wmissing-field-initializers -Wmissing-format-attribute -Wmissing-noreturn -Wmultichar -Wnonnull -Woverflow -Wparentheses -Wpointer-arith -Wpointer-to-int-cast -Wreturn-type -Wsequence-point -Wshadow -Wsign-compare -Wstrict-aliasing -Wswitch -Wtrigraphs -Wundef -Wunknown-pragmas -Wunused -Wunused-function -Wunused-label -Wunused-parameter -Wunused-value  -Wunused-variable -Wvariadic-macros -Wvolatile-register-var -Wwrite-strings -Wnested-externs -Wstrict-prototypes -Wpointer-sign"
+@@ -689,6 +690,7 @@ CFLAGS="$TARGET_CFLAGS -nostdlib"
+ else
+ CFLAGS="$TARGET_CFLAGS -nostdlib -Wl,--defsym,___main=0x8100"
+ fi
++LIBS=""
+ 
+ # Defined in aclocal.m4.
+ grub_PROG_TARGET_CC
+@@ -1074,6 +1076,7 @@ fi
+ AC_SUBST([LIBZFS])
+ AC_SUBST([LIBNVPAIR])
+ 
++LIBS=""
+ 
+ AC_SUBST([FONT_SOURCE])
+ AS_IF([test x$target_cpu = xi386 -a x$platform = xqemu],
 diff -rupN grub-2.00/grub-core/disk/ahci.c originals/grub-2.00/grub-core/disk/ahci.c
---- grub-2.00/grub-core/disk/ahci.c	2016-05-10 00:00:06.288983876 +0100
+--- grub-2.00/grub-core/disk/ahci.c	2017-06-21 14:13:58.607355757 +0100
 +++ originals/grub-2.00/grub-core/disk/ahci.c	2012-03-10 12:23:16.000000000 +0000
 @@ -600,8 +600,8 @@ grub_ahci_readwrite_real (struct grub_ah
  		dev->command_table[0].prdt[0].data_base,
@@ -134,7 +53,7 @@ diff -rupN grub-2.00/grub-core/disk/ahci.c originals/grub-2.00/grub-core/disk/ah
    if (parms->write)
      grub_memcpy ((char *) grub_dma_get_virt (bufc), parms->buffer, parms->size);
 diff -rupN grub-2.00/grub-core/gnulib/sleep.c originals/grub-2.00/grub-core/gnulib/sleep.c
---- grub-2.00/grub-core/gnulib/sleep.c	2016-05-10 00:00:06.288983876 +0100
+--- grub-2.00/grub-core/gnulib/sleep.c	2017-06-21 14:13:58.607355757 +0100
 +++ originals/grub-2.00/grub-core/gnulib/sleep.c	2010-12-01 14:45:43.000000000 +0000
 @@ -68,15 +68,6 @@ rpl_sleep (unsigned int seconds)
    return sleep (seconds);
@@ -153,7 +72,7 @@ diff -rupN grub-2.00/grub-core/gnulib/sleep.c originals/grub-2.00/grub-core/gnul
  
   #error "Please port gnulib sleep.c to your platform, possibly using usleep() or select(), then report this to bug-gnulib."
 diff -rupN grub-2.00/grub-core/kern/emu/hostdisk.c originals/grub-2.00/grub-core/kern/emu/hostdisk.c
---- grub-2.00/grub-core/kern/emu/hostdisk.c	2016-05-10 00:00:06.288983876 +0100
+--- grub-2.00/grub-core/kern/emu/hostdisk.c	2017-06-21 14:13:58.607355757 +0100
 +++ originals/grub-2.00/grub-core/kern/emu/hostdisk.c	2012-06-25 09:32:04.000000000 +0100
 @@ -115,11 +115,6 @@ struct hd_geometry
  # endif /* ! RAW_FLOPPY_MAJOR */
@@ -220,7 +139,7 @@ diff -rupN grub-2.00/grub-core/kern/emu/hostdisk.c originals/grub-2.00/grub-core
  grub_err_t
  grub_util_fd_seek (int fd, const char *name, grub_uint64_t off)
 diff -rupN grub-2.00/grub-core/kern/emu/mm.c originals/grub-2.00/grub-core/kern/emu/mm.c
---- grub-2.00/grub-core/kern/emu/mm.c	2016-05-10 00:00:06.288983876 +0100
+--- grub-2.00/grub-core/kern/emu/mm.c	2017-06-21 14:13:58.607355757 +0100
 +++ originals/grub-2.00/grub-core/kern/emu/mm.c	2012-02-07 23:13:14.000000000 +0000
 @@ -25,10 +25,6 @@
  #include <string.h>
@@ -234,7 +153,7 @@ diff -rupN grub-2.00/grub-core/kern/emu/mm.c originals/grub-2.00/grub-core/kern/
  grub_malloc (grub_size_t size)
  {
 diff -rupN grub-2.00/grub-core/lib/backtrace.c originals/grub-2.00/grub-core/lib/backtrace.c
---- grub-2.00/grub-core/lib/backtrace.c	2016-05-10 00:00:06.288983876 +0100
+--- grub-2.00/grub-core/lib/backtrace.c	2017-06-21 14:13:58.607355757 +0100
 +++ originals/grub-2.00/grub-core/lib/backtrace.c	2012-02-26 19:56:25.000000000 +0000
 @@ -39,7 +39,7 @@ grub_backtrace_print_address (void *addr
  	  + segment->size > (grub_uint8_t *) addr)
@@ -246,7 +165,7 @@ diff -rupN grub-2.00/grub-core/lib/backtrace.c originals/grub-2.00/grub-core/lib
  	}
    }
 diff -rupN grub-2.00/grub-core/lib/minilzo/lzoconf.h originals/grub-2.00/grub-core/lib/minilzo/lzoconf.h
---- grub-2.00/grub-core/lib/minilzo/lzoconf.h	2016-05-10 00:00:06.288983876 +0100
+--- grub-2.00/grub-core/lib/minilzo/lzoconf.h	2017-06-21 14:13:58.607355757 +0100
 +++ originals/grub-2.00/grub-core/lib/minilzo/lzoconf.h	2011-10-14 18:10:35.000000000 +0100
 @@ -53,7 +53,7 @@
  #  include <config.h>
@@ -258,7 +177,7 @@ diff -rupN grub-2.00/grub-core/lib/minilzo/lzoconf.h originals/grub-2.00/grub-co
  
  /***********************************************************************
 diff -rupN grub-2.00/grub-core/lib/minilzo/minilzo.c originals/grub-2.00/grub-core/lib/minilzo/minilzo.c
---- grub-2.00/grub-core/lib/minilzo/minilzo.c	2016-05-10 00:00:06.292983876 +0100
+--- grub-2.00/grub-core/lib/minilzo/minilzo.c	2017-06-21 14:13:58.607355757 +0100
 +++ originals/grub-2.00/grub-core/lib/minilzo/minilzo.c	2012-02-29 14:04:03.000000000 +0000
 @@ -58,12 +58,7 @@
  #  include <config.h>
@@ -275,7 +194,7 @@ diff -rupN grub-2.00/grub-core/lib/minilzo/minilzo.c originals/grub-2.00/grub-co
  
  #ifndef __LZODEFS_H_INCLUDED
 diff -rupN grub-2.00/grub-core/lib/xzembed/xz_dec_lzma2.c originals/grub-2.00/grub-core/lib/xzembed/xz_dec_lzma2.c
---- grub-2.00/grub-core/lib/xzembed/xz_dec_lzma2.c	2016-05-10 00:00:06.292983876 +0100
+--- grub-2.00/grub-core/lib/xzembed/xz_dec_lzma2.c	2017-06-21 14:13:58.607355757 +0100
 +++ originals/grub-2.00/grub-core/lib/xzembed/xz_dec_lzma2.c	2010-12-01 14:45:43.000000000 +0000
 @@ -24,8 +24,6 @@
  #include "xz_private.h"
@@ -287,7 +206,7 @@ diff -rupN grub-2.00/grub-core/lib/xzembed/xz_dec_lzma2.c originals/grub-2.00/gr
   * Range decoder initialization eats the first five bytes of each LZMA chunk.
   */
 diff -rupN grub-2.00/grub-core/net/ip.c originals/grub-2.00/grub-core/net/ip.c
---- grub-2.00/grub-core/net/ip.c	2016-05-10 00:00:06.292983876 +0100
+--- grub-2.00/grub-core/net/ip.c	2017-06-21 14:13:58.607355757 +0100
 +++ originals/grub-2.00/grub-core/net/ip.c	2012-06-09 10:12:46.000000000 +0100
 @@ -403,7 +403,7 @@ grub_net_recv_ip4_packets (struct grub_n
  					    * sizeof (grub_uint32_t)))
@@ -308,7 +227,7 @@ diff -rupN grub-2.00/grub-core/net/ip.c originals/grub-2.00/grub-core/net/ip.c
        return GRUB_ERR_NONE;
      }
 diff -rupN grub-2.00/grub-core/net/tcp.c originals/grub-2.00/grub-core/net/tcp.c
---- grub-2.00/grub-core/net/tcp.c	2016-05-10 00:00:06.292983876 +0100
+--- grub-2.00/grub-core/net/tcp.c	2017-06-21 14:13:58.607355757 +0100
 +++ originals/grub-2.00/grub-core/net/tcp.c	2012-06-22 16:42:07.000000000 +0100
 @@ -766,7 +766,7 @@ grub_net_recv_tcp_packet (struct grub_ne
  					     >> 12) * sizeof (grub_uint32_t)))
@@ -320,7 +239,7 @@ diff -rupN grub-2.00/grub-core/net/tcp.c originals/grub-2.00/grub-core/net/tcp.c
        return GRUB_ERR_NONE;
      }
 diff -rupN grub-2.00/grub-core/net/udp.c originals/grub-2.00/grub-core/net/udp.c
---- grub-2.00/grub-core/net/udp.c	2016-05-10 00:00:06.292983876 +0100
+--- grub-2.00/grub-core/net/udp.c	2017-06-21 14:13:58.607355757 +0100
 +++ originals/grub-2.00/grub-core/net/udp.c	2012-06-09 10:12:46.000000000 +0100
 @@ -155,7 +155,7 @@ grub_net_recv_udp_packet (struct grub_ne
    if (nb->tail - nb->data < (grub_ssize_t) sizeof (*udph))
@@ -331,496 +250,20 @@ diff -rupN grub-2.00/grub-core/net/udp.c originals/grub-2.00/grub-core/net/udp.c
        grub_netbuff_free (nb);
        return GRUB_ERR_NONE;
      }
-diff -rupN grub-2.00/grub-core/rs_decoder.S originals/grub-2.00/grub-core/rs_decoder.S
---- grub-2.00/grub-core/rs_decoder.S	2016-05-10 00:00:06.292983876 +0100
-+++ originals/grub-2.00/grub-core/rs_decoder.S	1970-01-01 01:00:00.000000000 +0100
-@@ -1,484 +0,0 @@
--	.file	"reed_solomon.c"
--	.text
--	.type	pol_evaluate, @function
--pol_evaluate:
--	pushl	%ebp
--	movl	%esp, %ebp
--	pushl	%edi
--	movl	%ecx, %edi
--	pushl	%esi
--	movl	%eax, %esi
--	pushl	%ebx
--	xorl	%eax, %eax
--	xorl	%ebx, %ebx
--.L2:
--	testl	%edx, %edx
--	js	.L11
--	movzbl	(%esi,%edx), %ecx
--	testb	%cl, %cl
--	je	.L3
--	movzbl	1049088(%ecx), %ecx
--	xorb	1048576(%ebx,%ecx), %al
--.L3:
--	addl	%edi, %ebx
--	cmpl	$255, %ebx
--	leal	-255(%ebx), %ecx
--	cmovge	%ecx, %ebx
--	decl	%edx
--	jmp	.L2
--.L11:
--	popl	%ebx
--	popl	%esi
--	popl	%edi
--	popl	%ebp
--	ret
--	.size	pol_evaluate, .-pol_evaluate
--	.type	gf_mul, @function
--gf_mul:
--	pushl	%ebp
--	testl	%eax, %eax
--	movl	%esp, %ebp
--	je	.L14
--	testl	%edx, %edx
--	je	.L14
--	movzbl	1049088(%eax), %ecx
--	movzbl	1049088(%edx), %eax
--	movb	1048576(%ecx,%eax), %al
--	jmp	.L13
--.L14:
--	xorl	%eax, %eax
--.L13:
--	popl	%ebp
--	ret
--	.size	gf_mul, .-gf_mul
--	.type	gauss_solve.constprop.2, @function
--gauss_solve.constprop.2:
--	pushl	%ebp
--	movl	%esp, %ebp
--	pushl	%edi
--	pushl	%esi
--	pushl	%ebx
--	subl	$40, %esp
--	movl	%eax, -24(%ebp)
--	xorl	%eax, %eax
--	movl	%edx, -16(%ebp)
--	movl	%ecx, -32(%ebp)
--.L17:
--	cmpl	-24(%ebp), %eax
--	jge	.L46
--	movl	$-1, 1049344(,%eax,4)
--	incl	%eax
--	jmp	.L17
--.L46:
--	xorl	%eax, %eax
--.L19:
--	cmpl	-16(%ebp), %eax
--	jge	.L47
--	movl	-32(%ebp), %edx
--	movb	$0, (%edx,%eax)
--	incl	%eax
--	jmp	.L19
--.L47:
--	movl	-16(%ebp), %eax
--	xorl	%edi, %edi
--	movl	$0, -20(%ebp)
--	incl	%eax
--	movl	%eax, -28(%ebp)
--	movl	%eax, -48(%ebp)
--.L21:
--	movl	-24(%ebp), %eax
--	cmpl	%eax, -20(%ebp)
--	jge	.L34
--	xorl	%ebx, %ebx
--.L35:
--	cmpl	-16(%ebp), %ebx
--	jl	.L22
--.L26:
--	cmpl	-16(%ebp), %ebx
--	je	.L27
--	movl	-20(%ebp), %eax
--	movl	$255, %edx
--	xorl	%esi, %esi
--	movl	%ebx, 1049344(,%eax,4)
--	movzbl	1052672(%ebx,%edi), %eax
--	movzbl	1049088(%eax), %eax
--	subl	%eax, %edx
--	movzbl	1048576(%edx), %eax
--	movl	%eax, -36(%ebp)
--	jmp	.L28
--.L22:
--	cmpb	$0, 1052672(%ebx,%edi)
--	jne	.L26
--	incl	%ebx
--	jmp	.L35
--.L28:
--	cmpl	%esi, -16(%ebp)
--	jl	.L48
--	movzbl	1052672(%esi,%edi), %eax
--	incl	%esi
--	movl	-36(%ebp), %edx
--	call	gf_mul
--	movb	%al, 1052671(%esi,%edi)
--	jmp	.L28
--.L48:
--	movl	-20(%ebp), %eax
--	incl	%eax
--	movl	%eax, -36(%ebp)
--	movl	-48(%ebp), %eax
--	leal	(%eax,%edi), %ecx
--.L30:
--	movl	-24(%ebp), %eax
--	cmpl	%eax, -36(%ebp)
--	je	.L27
--	movzbl	1052672(%ebx,%ecx), %eax
--	xorl	%esi, %esi
--	movl	%eax, -44(%ebp)
--.L31:
--	cmpl	%esi, -16(%ebp)
--	jl	.L49
--	movb	1052672(%esi,%ecx), %al
--	incl	%esi
--	movl	%ecx, -52(%ebp)
--	movl	-44(%ebp), %edx
--	movb	%al, -37(%ebp)
--	movzbl	1052671(%esi,%edi), %eax
--	call	gf_mul
--	movl	-52(%ebp), %ecx
--	xorb	-37(%ebp), %al
--	movb	%al, 1052671(%esi,%ecx)
--	jmp	.L31
--.L49:
--	incl	-36(%ebp)
--	addl	-28(%ebp), %ecx
--	jmp	.L30
--.L27:
--	incl	-20(%ebp)
--	addl	-28(%ebp), %edi
--	jmp	.L21
--.L34:
--	movl	-24(%ebp), %ebx
--	movl	-28(%ebp), %edi
--	movl	-16(%ebp), %eax
--	decl	%ebx
--	imull	%ebx, %edi
--	notl	%eax
--	movl	%eax, -24(%ebp)
--.L36:
--	testl	%ebx, %ebx
--	js	.L50
--	movl	1049344(,%ebx,4), %eax
--	movl	%eax, -20(%ebp)
--	incl	%eax
--	je	.L37
--	xorl	%ecx, %ecx
--	xorl	%esi, %esi
--.L38:
--	cmpl	-16(%ebp), %esi
--	jge	.L51
--	movl	-32(%ebp), %eax
--	movl	%ecx, -28(%ebp)
--	movzbl	(%eax,%esi), %edx
--	incl	%esi
--	movzbl	1052671(%esi,%edi), %eax
--	call	gf_mul
--	movl	-28(%ebp), %ecx
--	xorl	%eax, %ecx
--	jmp	.L38
--.L51:
--	movl	-16(%ebp), %eax
--	movl	-20(%ebp), %edx
--	xorb	1052672(%edi,%eax), %cl
--	movl	-32(%ebp), %eax
--	movb	%cl, (%eax,%edx)
--.L37:
--	decl	%ebx
--	addl	-24(%ebp), %edi
--	jmp	.L36
--.L50:
--	addl	$40, %esp
--	popl	%ebx
--	popl	%esi
--	popl	%edi
--	popl	%ebp
--	ret
--	.size	gauss_solve.constprop.2, .-gauss_solve.constprop.2
--	.globl	grub_reed_solomon_recover
--	.type	grub_reed_solomon_recover, @function
--grub_reed_solomon_recover:
--	pushl	%ebp
--	movl	%esp, %ebp
--	pushl	%edi
--	pushl	%esi
--	pushl	%ebx
--	subl	$64, %esp
--	testl	%ecx, %ecx
--	movl	%eax, -52(%ebp)
--	movl	%edx, -24(%ebp)
--	movl	%ecx, -44(%ebp)
--	je	.L52
--	movb	$0, 1049088
--	movb	$1, %al
--	xorl	%edx, %edx
--.L58:
--	movzbl	%al, %ecx
--	testb	%al, %al
--	movb	%al, 1048576(%edx)
--	movb	%al, 1048831(%edx)
--	movb	%dl, 1049088(%ecx)
--	jns	.L54
--	leal	(%ecx,%ecx), %eax
--	xorl	$29, %eax
--	jmp	.L55
--.L54:
--	addl	%eax, %eax
--.L55:
--	incl	%edx
--	cmpl	$255, %edx
--	jne	.L58
--	movl	-52(%ebp), %eax
--	addl	-24(%ebp), %eax
--	movl	%eax, -56(%ebp)
--.L57:
--	cmpl	$0, -24(%ebp)
--	je	.L52
--	movl	-44(%ebp), %ecx
--	addl	-24(%ebp), %ecx
--	cmpl	$102400, %ecx
--	jbe	.L94
--	imull	$200, -24(%ebp), %eax
--	xorl	%edx, %edx
--	divl	%ecx
--	xorl	%edx, %edx
--	movl	%eax, -28(%ebp)
--	imull	$200, -44(%ebp), %eax
--	sall	$9, -28(%ebp)
--	divl	%ecx
--	movl	%eax, -36(%ebp)
--	sall	$9, -36(%ebp)
--	jmp	.L59
--.L94:
--	movl	-44(%ebp), %eax
--	movl	%eax, -36(%ebp)
--	movl	-24(%ebp), %eax
--	movl	%eax, -28(%ebp)
--.L59:
--	movl	-28(%ebp), %eax
--	movl	-52(%ebp), %esi
--	leal	511(%eax), %ebx
--	movl	%ebx, -40(%ebp)
--	movl	-56(%ebp), %ebx
--	leal	-1(%eax), %edi
--	movl	%esi, -48(%ebp)
--	movl	%edi, -64(%ebp)
--	leal	511(%ebx,%eax), %eax
--	movl	%eax, -72(%ebp)
--.L91:
--	movl	-40(%ebp), %ebx
--	movl	%ebx, %eax
--	shrl	$9, %eax
--	movl	%eax, -20(%ebp)
--	movl	-36(%ebp), %eax
--	subl	-28(%ebp), %eax
--	addl	%ebx, %eax
--	shrl	$9, %eax
--	movl	%eax, -16(%ebp)
--	je	.L60
--	xorl	%eax, %eax
--	cmpl	$0, -20(%ebp)
--	jne	.L61
--.L60:
--	decl	-40(%ebp)
--	movl	-64(%ebp), %eax
--	incl	-48(%ebp)
--	cmpl	%eax, -40(%ebp)
--	jne	.L91
--	movl	-28(%ebp), %eax
--	movl	-36(%ebp), %edi
--	addl	%eax, -52(%ebp)
--	addl	%edi, -56(%ebp)
--	subl	%eax, -24(%ebp)
--	subl	%edi, -44(%ebp)
--	jmp	.L57
--.L61:
--	cmpl	-20(%ebp), %eax
--	jge	.L97
--	movl	-48(%ebp), %esi
--	movl	%eax, %edx
--	incl	%eax
--	sall	$9, %edx
--	movb	(%esi,%edx), %dl
--	movb	%dl, 1052159(%eax)
--	jmp	.L61
--.L97:
--	xorl	%eax, %eax
--.L65:
--	cmpl	-16(%ebp), %eax
--	jge	.L98
--	movl	-72(%ebp), %ecx
--	movl	%eax, %edx
--	incl	%eax
--	subl	-40(%ebp), %ecx
--	sall	$9, %edx
--	movl	-20(%ebp), %edi
--	movb	(%ecx,%edx), %dl
--	movb	%dl, 1052159(%eax,%edi)
--	jmp	.L65
--.L98:
--	movl	-16(%ebp), %eax
--	xorl	%esi, %esi
--	movl	-20(%ebp), %edi
--	movl	%eax, %ebx
--	shrl	%ebx
--	leal	-1(%edi,%eax), %eax
--	movl	%ebx, -32(%ebp)
--	movl	%eax, -60(%ebp)
--.L67:
--	movl	-60(%ebp), %edx
--	movl	%esi, %ecx
--	movl	$1052160, %eax
--	incl	%esi
--	call	pol_evaluate
--	movb	%al, 1051903(%esi)
--	cmpl	-16(%ebp), %esi
--	jl	.L67
--	xorl	%eax, %eax
--.L70:
--	cmpb	$0, 1051904(%eax)
--	jne	.L69
--	incl	%eax
--	cmpl	-16(%ebp), %eax
--	jl	.L70
--.L69:
--	cmpl	-16(%ebp), %eax
--	je	.L71
--	movl	-32(%ebp), %eax
--	xorl	%ecx, %ecx
--	xorl	%edx, %edx
--	leal	1(%eax), %esi
--	jmp	.L72
--.L71:
--	xorl	%eax, %eax
--	jmp	.L73
--.L77:
--	movb	1051904(%eax,%edx), %bl
--	incl	%eax
--	movb	%bl, 1052671(%eax,%ecx)
--	cmpl	%eax, -32(%ebp)
--	jge	.L77
--	incl	%edx
--	addl	%esi, %ecx
--.L72:
--	xorl	%eax, %eax
--	cmpl	-32(%ebp), %edx
--	jl	.L77
--.L76:
--	cmpl	-32(%ebp), %eax
--	jge	.L99
--	movb	$0, 1050368(%eax)
--	incl	%eax
--	jmp	.L76
--.L99:
--	movl	-32(%ebp), %ebx
--	movl	$1050368, %ecx
--	xorl	%esi, %esi
--	xorl	%edi, %edi
--	movl	%ebx, %eax
--	movl	%ebx, %edx
--	call	gauss_solve.constprop.2
--	movl	-16(%ebp), %eax
--	decl	%ebx
--	addl	-20(%ebp), %eax
--	movl	%eax, -32(%ebp)
--.L79:
--	cmpl	-32(%ebp), %esi
--	jge	.L100
--	movl	$255, %ecx
--	movl	%ebx, %edx
--	subl	%esi, %ecx
--	movl	$1050368, %eax
--	call	pol_evaluate
--	cmpb	1048576(%esi), %al
--	jne	.L80
--	movb	%al, 1050624(%edi)
--	movl	-60(%ebp), %eax
--	movl	%edi, %edx
--	incl	%edi
--	subl	%esi, %eax
--	movl	%eax, 1050880(,%edx,4)
--.L80:
--	incl	%esi
--	jmp	.L79
--.L100:
--	xorl	%eax, %eax
--.L82:
--	cmpl	%edi, %eax
--	jge	.L101
--	movb	$1, 1052672(%eax)
--	incl	%eax
--	jmp	.L82
--.L101:
--	movb	1051904, %al
--	xorl	%esi, %esi
--	movl	$1, %ecx
--	movb	%al, 1052672(%edi)
--	leal	1(%edi), %eax
--	movl	%eax, -32(%ebp)
--	movl	%eax, -68(%ebp)
--.L84:
--	cmpl	-16(%ebp), %ecx
--	jge	.L86
--	movl	-68(%ebp), %eax
--	xorl	%ebx, %ebx
--	addl	%esi, %eax
--	movl	%eax, -60(%ebp)
--.L87:
--	cmpl	%edi, %ebx
--	jge	.L102
--	movl	%ecx, -76(%ebp)
--	movzbl	1052672(%ebx,%esi), %edx
--	incl	%ebx
--	movzbl	1050623(%ebx), %eax
--	call	gf_mul
--	movl	-60(%ebp), %edx
--	movb	%al, 1052671(%ebx,%edx)
--	movl	-76(%ebp), %ecx
--	jmp	.L87
--.L102:
--	movb	1051904(%ecx), %al
--	incl	%ecx
--	movb	%al, 1052673(%esi,%edi,2)
--	addl	-32(%ebp), %esi
--	jmp	.L84
--.L86:
--	movl	-16(%ebp), %eax
--	movl	$1052416, %ecx
--	movl	%edi, %edx
--	call	gauss_solve.constprop.2
--	xorl	%eax, %eax
--.L88:
--	cmpl	%edi, %eax
--	jge	.L71
--	movl	1050880(,%eax,4), %edx
--	incl	%eax
--	movb	1052415(%eax), %cl
--	xorb	%cl, 1052160(%edx)
--	jmp	.L88
--.L73:
--	movb	1052160(%eax), %dl
--	movl	%eax, %ecx
--	incl	%eax
--	movl	-48(%ebp), %ebx
--	sall	$9, %ecx
--	cmpl	-20(%ebp), %eax
--	movb	%dl, (%ebx,%ecx)
--	jl	.L73
--	jmp	.L60
--.L52:
--	addl	$64, %esp
--	popl	%ebx
--	popl	%esi
--	popl	%edi
--	popl	%ebp
--	ret
--	.size	grub_reed_solomon_recover, .-grub_reed_solomon_recover
--	.ident	"GCC: (GNU) 4.8.1"
+diff -rupN grub-2.00/grub-core/script/yylex.l originals/grub-2.00/grub-core/script/yylex.l
+--- grub-2.00/grub-core/script/yylex.l	2017-06-21 14:13:58.619355744 +0100
++++ originals/grub-2.00/grub-core/script/yylex.l	2012-06-08 21:24:15.000000000 +0100
+@@ -29,8 +29,6 @@
+ #pragma GCC diagnostic ignored "-Wmissing-prototypes"
+ #pragma GCC diagnostic ignored "-Wmissing-declarations"
+ #pragma GCC diagnostic ignored "-Wunsafe-loop-optimizations"
+-#pragma GCC diagnostic ignored "-Wunused-function"
+-#pragma GCC diagnostic ignored "-Wsign-compare"
+ 
+ #define yyfree    grub_lexer_yyfree
+ #define yyalloc   grub_lexer_yyalloc
 diff -rupN grub-2.00/util/getroot.c originals/grub-2.00/util/getroot.c
---- grub-2.00/util/getroot.c	2016-05-10 23:00:09.816554365 +0100
+--- grub-2.00/util/getroot.c	2017-06-21 14:13:58.623355740 +0100
 +++ originals/grub-2.00/util/getroot.c	2012-06-22 16:42:07.000000000 +0100
 @@ -143,13 +143,6 @@
  # endif /* ! RAW_FLOPPY_MAJOR */
@@ -963,7 +406,7 @@ diff -rupN grub-2.00/util/getroot.c originals/grub-2.00/util/getroot.c
  # warning "The function `grub_util_biosdisk_get_grub_dev' might not work on your OS correctly."
    return make_device_name (drive, -1, -1);
 diff -rupN grub-2.00/util/grub-mkimage.c originals/grub-2.00/util/grub-mkimage.c
---- grub-2.00/util/grub-mkimage.c	2016-05-10 00:00:06.292983876 +0100
+--- grub-2.00/util/grub-mkimage.c	2017-06-21 14:13:58.623355740 +0100
 +++ originals/grub-2.00/util/grub-mkimage.c	2012-06-26 03:15:15.000000000 +0100
 @@ -575,7 +575,7 @@ static ISzAlloc g_Alloc = { SzAlloc, SzF
  
@@ -1002,7 +445,7 @@ diff -rupN grub-2.00/util/grub-mkimage.c originals/grub-2.00/util/grub-mkimage.c
    size_t prefix_size = 0;
    char *kernel_path;
 diff -rupN grub-2.00/util/misc.c originals/grub-2.00/util/misc.c
---- grub-2.00/util/misc.c	2016-05-10 00:00:06.292983876 +0100
+--- grub-2.00/util/misc.c	2017-06-21 14:13:58.627355736 +0100
 +++ originals/grub-2.00/util/misc.c	2012-03-08 12:49:11.000000000 +0000
 @@ -149,7 +149,7 @@ grub_util_write_image_at (const void *im
  			  const char *name)

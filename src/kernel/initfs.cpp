@@ -186,6 +186,10 @@ bt_filesize_t initfs_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
 	return fdata->pos;
 }
 
+bool initfs_seek(void *filedata, bt_filesize_t size){
+	return false;
+}
+
 size_t initfs_dirseek(void *dirdata, size_t pos, uint32_t flags){
 	if(flags & FS_Relative) ddata->pos+=pos;
 	else if(flags & FS_Backwards){
@@ -201,14 +205,14 @@ bool initfs_format(char*, void*){
 
 fs_driver initfs_driver = {true, "INITFS", false,
 	initfs_mount, initfs_unmount,
-	initfs_open, initfs_close, initfs_read, initfs_write, initfs_seek, initfs_ioctl, initfs_flush,
+	initfs_open, initfs_close, initfs_read, initfs_write, initfs_seek, initfs_seek, initfs_ioctl, initfs_flush,
 	initfs_open_dir, initfs_close_dir, initfs_read_dir, initfs_write_dir, initfs_dirseek,
 	initfs_stat, initfs_format};
 
 fs_driver initfs_getdriver(){
 	if(!initfs_data){
 		initfs_data = new vector<initfs_file>();
-		multiboot_info_t *mbi = vmm_get_multiboot();
+		multiboot_info_t *mbi = mbt;
 		if(mbi->mods_count > 0){
 			module_t *mod = (module_t *)mbi->mods_addr;
 			tar_header *th = (tar_header*)mod->mod_start;

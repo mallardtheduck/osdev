@@ -211,13 +211,14 @@ void out_int_info(const isr_regs ctx){
 	dbgpf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
 	dbgpf("EDI: %x ESI: %x EBP: %x ESP: %x\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
 	dbgpf("EIP: %x CS: %x SS*: %x\n", ctx.eip, ctx.cs, get_ss());
-	dbgpf("EFLAGS: %x\n", ctx.eflags);
+	dbgpf("EFLAGS: %x UESP: %x\n", ctx.eflags, ctx.useresp);
 }
 
 extern size_t current_thread;
 
 extern "C" void isr_handler(isr_regs *ctx){
     imode++;
+    //debug_setbreaks(false);
     if(sch_can_lock()) {
         sch_update_eip(ctx->eip);
         sch_abortable(false);
@@ -230,7 +231,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		dbgpf("\nInterrupt %i at %x!\n", (int)ctx->interrupt_number, (int)ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
 		out_int_info(*ctx);
-		if(ctx->eip < VMM_USERSPACE_START) panic("Invalid opcode.");
+		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Invalid opcode.");
         else {
             debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::InvalidOpCode);
             proc_terminate();
@@ -240,7 +241,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		dbgpf("\nInterrupt %i at %x!\n", (int)ctx->interrupt_number, (int)ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
 		out_int_info(*ctx);
-        if(ctx->eip < VMM_USERSPACE_START) panic("General Protection Fault.");
+        if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("General Protection Fault.");
         else {
             debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::ProtectionFault);
             proc_terminate();
@@ -250,13 +251,13 @@ extern "C" void isr_handler(isr_regs *ctx){
 		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
 		dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
 		out_int_info(*ctx);
-        if(ctx->eip < VMM_USERSPACE_START) panic("Double fault.");
+        if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Double fault.");
         else proc_terminate();
 	}else if(ctx->interrupt_number==0x00){
         dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
         dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
         out_int_info(*ctx);
-        if(ctx->eip < VMM_USERSPACE_START) panic("Devide by zero!");
+        if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Devide by zero!");
         else{
             debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::DivideByZero);
             proc_terminate();
@@ -271,10 +272,23 @@ extern "C" void isr_handler(isr_regs *ctx){
         sch_abortable(true);
     }
     imode--;
+    //debug_setbreaks(!imode);
 }
 
 void irq_ack(size_t irq_no) {
     PIC_sendEOI(irq_no);
+}
+
+void irq_ack_if_needed(size_t irqno){
+	uint16_t cmbisr = pic_get_isr();
+	uint8_t isr = 0;
+	if(irqno < 8) isr = (uint8_t)cmbisr;
+	else{
+		if((isr & 0x4) == 0) return;
+		isr = (uint8_t)(cmbisr >> 8);
+	}
+	
+	if((isr & (1 << irqno))) irq_ack(irqno);
 }
 
 inline void out_regs(const irq_regs ctx){
@@ -297,11 +311,11 @@ extern "C" void irq_handler(irq_regs *r) {
 	//out_regs(*r);
 	int irq=r->int_no-IRQ_BASE;
 	if(handlers[r->int_no]) handlers[r->int_no](r->int_no - 32, (isr_regs*)r);
-    irq_ack(irq);
-    //disable_interrupts();
+    disable_interrupts();
     if(sch_can_lock()) {
         sch_abortable(true);
     }
+    irq_ack(irq);
     imode--;
 }
 
@@ -320,6 +334,14 @@ void int_handle(size_t intno, int_handler handler){
 
 void irq_handle(size_t irqno, int_handler handler){
 	handlers[irqno+IRQ_BASE]=handler;
+}
+
+void int_handle_raw(size_t intno, void *handler){
+	idt_set_gate(intno, (uint32_t)handler, 0x08, 0x8E);
+}
+
+void irq_handle_raw(size_t irqno, void *handler){
+	int_handle_raw(irqno + IRQ_BASE, handler);
 }
 
 bool is_imode(){

@@ -24,7 +24,7 @@ user: dummy.file
 user-clean:
 	$(MAKE) -C user clean
 
-test: dummy.file disk
+test: dummy.file disk qemu-launch-opts.txt
 	cd kernel && ./test.sh
 
 testtxt: dummy.file disk
@@ -56,4 +56,15 @@ packages: dummy.file
 packages-clean: dummy.file
 	make -C packages clean
 
+newlib: dummy.file
+	make -C user/libs/btoscore all
+	make -C user/libs/newlib all
+
+newlib-clean: dummy.file
+	make -C user/libs/newlib clean
+
 dummy.file:
+
+qemu-launch-opts.txt: | qemu-launch-opts.template
+	cp qemu-launch-opts.template qemu-launch-opts.txt
+	

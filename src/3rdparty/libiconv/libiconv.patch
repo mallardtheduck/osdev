@@ -1,5 +1,5 @@
 diff -rupN libiconv-1.14/build-aux/config.sub originals/libiconv-1.14/build-aux/config.sub
---- libiconv-1.14/build-aux/config.sub	2016-02-17 20:36:31.479799217 +0000
+--- libiconv-1.14/build-aux/config.sub	2017-06-21 10:54:12.162223608 +0100
 +++ originals/libiconv-1.14/build-aux/config.sub	2009-06-21 12:17:33.000000000 +0100
 @@ -1282,7 +1282,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
@@ -10,8 +10,52 @@ diff -rupN libiconv-1.14/build-aux/config.sub originals/libiconv-1.14/build-aux/
  	# Remember, each alternative MUST END IN *, to match a version number.
  		;;
  	-qnx*)
+diff -rupN libiconv-1.14/configure originals/libiconv-1.14/configure
+--- libiconv-1.14/configure	2017-06-21 11:50:17.961862074 +0100
++++ originals/libiconv-1.14/configure	2011-08-07 18:49:02.000000000 +0100
+@@ -7085,11 +7085,6 @@ sysv4 | sysv4.3*)
+ tpf*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+-  
+-btos*)
+-  lt_cv_deplibs_check_method=pass_all
+-  ;;
+-
+ esac
+ 
+ fi
+@@ -12460,16 +12455,6 @@ uts4*)
+   soname_spec='${libname}${release}${shared_ext}$major'
+   shlibpath_var=LD_LIBRARY_PATH
+   ;;
+-  
+-btos*)
+-  libname_spec='$name'
+-  shrext_cmds=".ell"
+-  need_lib_prefix=no
+-  library_names_spec='$libname${shared_ext}'
+-  dynamic_linker="$host_os ELOADER"
+-  shlibpath_var=LIBPATH
+-  soname_spec='$libname${shared_ext}'
+-  ;;
+ 
+ *)
+   dynamic_linker=no
+diff -rupN libiconv-1.14/lib/Makefile.in originals/libiconv-1.14/lib/Makefile.in
+--- libiconv-1.14/lib/Makefile.in	2017-06-21 10:54:12.170223598 +0100
++++ originals/libiconv-1.14/lib/Makefile.in	2011-08-07 18:48:03.000000000 +0100
+@@ -25,7 +25,7 @@ DEFS = -DLIBDIR=\"$(libdir)\" -DBUILDING
+ -DENABLE_RELOCATABLE=1 -DIN_LIBRARY -DINSTALLDIR=\"$(libdir)\" -DNO_XMALLOC \
+ -Dset_relocation_prefix=libiconv_set_relocation_prefix \
+ -Drelocate=libiconv_relocate @DEFS@
+-LIBTOOL = @LIBTOOL@ --tag=CC
++LIBTOOL = @LIBTOOL@
+ LIBTOOL_COMPILE = $(LIBTOOL) --mode=compile
+ LIBTOOL_LINK = $(LIBTOOL) --mode=link
+ LIBTOOL_INSTALL = $(LIBTOOL) --mode=install
 diff -rupN libiconv-1.14/libcharset/build-aux/config.sub originals/libiconv-1.14/libcharset/build-aux/config.sub
---- libiconv-1.14/libcharset/build-aux/config.sub	2016-02-17 20:37:41.431797964 +0000
+--- libiconv-1.14/libcharset/build-aux/config.sub	2017-06-21 10:54:12.170223598 +0100
 +++ originals/libiconv-1.14/libcharset/build-aux/config.sub	2009-06-21 12:17:33.000000000 +0100
 @@ -1214,7 +1214,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
@@ -22,8 +66,84 @@ diff -rupN libiconv-1.14/libcharset/build-aux/config.sub originals/libiconv-1.14
  	# Remember, each alternative MUST END IN *, to match a version number.
  		;;
  	-qnx*)
+diff -rupN libiconv-1.14/libcharset/configure originals/libiconv-1.14/libcharset/configure
+--- libiconv-1.14/libcharset/configure	2017-06-21 12:21:59.659407008 +0100
++++ originals/libiconv-1.14/libcharset/configure	2011-08-07 18:49:19.000000000 +0100
+@@ -4874,11 +4874,6 @@ sysv4 | sysv4.3*)
+ tpf*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+-  
+-btos*)
+-  lt_cv_deplibs_check_method=pass_all
+-  ;;
+-  
+ esac
+ 
+ fi
+@@ -7884,16 +7879,6 @@ lt_prog_compiler_static=
+       lt_prog_compiler_pic='-pic'
+       lt_prog_compiler_static='-Bstatic'
+       ;;
+-      
+-    btos*)
+-	  libname_spec='$name'
+-	  shrext_cmds=".ell"
+-	  need_lib_prefix=no
+-	  library_names_spec='$libname${shared_ext}'
+-	  dynamic_linker="$host_os ELOADER"
+-	  shlibpath_var=LIBPATH
+-	  soname_spec='$libname${shared_ext}'
+-	  ;;
+ 
+     *)
+       lt_prog_compiler_can_build_shared=no
+diff -rupN libiconv-1.14/preload/configure originals/libiconv-1.14/preload/configure
+--- libiconv-1.14/preload/configure	2017-06-21 12:20:59.959483841 +0100
++++ originals/libiconv-1.14/preload/configure	2010-09-24 00:33:42.000000000 +0100
+@@ -4886,11 +4886,6 @@ sysv4 | sysv4.3*)
+ tpf*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+-  
+-btos*)
+-  lt_cv_deplibs_check_method=pass_all
+-  ;;
+-  
+ esac
+ 
+ fi
+@@ -7896,16 +7891,6 @@ lt_prog_compiler_static=
+       lt_prog_compiler_pic='-pic'
+       lt_prog_compiler_static='-Bstatic'
+       ;;
+-      
+-    btos*)
+-	  libname_spec='$name'
+-	  shrext_cmds=".ell"
+-	  need_lib_prefix=no
+-	  library_names_spec='$libname${shared_ext}'
+-	  dynamic_linker="$host_os ELOADER"
+-	  shlibpath_var=LIBPATH
+-	  soname_spec='$libname${shared_ext}'
+-	  ;;
+ 
+     *)
+       lt_prog_compiler_can_build_shared=no
+diff -rupN libiconv-1.14/src/Makefile.in originals/libiconv-1.14/src/Makefile.in
+--- libiconv-1.14/src/Makefile.in	2017-06-21 10:54:12.170223598 +0100
++++ originals/libiconv-1.14/src/Makefile.in	2011-06-04 18:05:58.000000000 +0100
+@@ -22,7 +22,7 @@ CFLAGS = @CFLAGS@
+ CPPFLAGS = @CPPFLAGS@
+ LDFLAGS = @LDFLAGS@
+ INCLUDES = -I. -I$(srcdir) -I.. -I../include -I$(srcdir)/../include -I../srclib -I$(srcdir)/../srclib
+-LIBTOOL = @LIBTOOL@ --tag=CC
++LIBTOOL = @LIBTOOL@
+ LIBTOOL_COMPILE = $(LIBTOOL) --mode=compile
+ LIBTOOL_LINK = $(LIBTOOL) --mode=link
+ LIBTOOL_INSTALL = $(LIBTOOL) --mode=install
 diff -rupN libiconv-1.14/srclib/error.c originals/libiconv-1.14/srclib/error.c
---- libiconv-1.14/srclib/error.c	2016-02-17 20:47:59.947786888 +0000
+--- libiconv-1.14/srclib/error.c	2017-06-21 10:54:12.170223598 +0100
 +++ originals/libiconv-1.14/srclib/error.c	2011-08-07 14:42:06.000000000 +0100
 @@ -49,10 +49,6 @@
  # define _(String) String

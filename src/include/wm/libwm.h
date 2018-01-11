@@ -26,6 +26,16 @@ BTOS_API_NS bt_msg_filter WM_GetEventFilter();
 wm_Event WM_ParseMessage(BTOS_API_NS bt_msg_header *msg);
 void WM_Sync();
 
+uint64_t WM_SelectMenu(uint64_t id);
+uint64_t WM_CreateMenu();
+void WM_DestroyMenu(uint64_t id);
+uint32_t WM_AddMenuItem(wm_MenuItem i);
+void WM_RemoveMenuItem(uint32_t id);
+void WM_ShowMenu(wm_Rect pos);
+void WM_SelectWindowMenu();
+void WM_SetWindowMenu();
+void WM_UnSetWindowMenu();
+
 #ifdef __cplusplus
 }
 

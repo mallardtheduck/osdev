@@ -38,11 +38,15 @@ struct syscall_table{
 	void *(*malloc)(size_t bytes);
 	void (*free)(void *ptr);
 	void *(*memset)(void* ptr, int value, size_t num);
-	void (*memcpy)(void *dst, void *src, size_t size);
+	void (*memcpy)(void *dst, const void *src, size_t size);
 	void (*memmove)(void *dst, void *src, size_t size);
 	int (*strcmp)(char *s1, char *s2);
 	void (*strncpy)(char *dst, char *src, size_t num);
     uint32_t (*physaddr)(void *ptr);
+    void *(*map_physical_pages)(uint32_t addr, size_t pages);
+    void (*free_pages)(void *addr, size_t pages);
+    void (*lock_low_memory)();
+    void (*unlock_low_memory)();
 
 	void (*init_lock)(lock *l);
 	void (*take_lock)(lock *l);
@@ -82,6 +86,8 @@ struct syscall_table{
 	void (*mask_irq)(size_t irqno);
 	void (*unmask_irq)(size_t irqno);
 	void (*irq_ack)(size_t irq_no);
+	void (*handle_int_raw)(size_t intno, void *handler);
+	void (*handle_irq_raw)(size_t irqno, void *handler);
 
 	void (*add_filesystem)(fs_driver *fs);
 	bool (*mount)(const char *name, const char *device, const char *fs);
@@ -92,6 +98,7 @@ struct syscall_table{
 	size_t (*fread)(file_handle *handle, size_t bytes, char *buf);
 	size_t (*fwrite)(file_handle *handle, size_t bytes, char *buf);
 	bt_filesize_t (*fseek)(file_handle *handle, bt_filesize_t pos, uint32_t flags);
+	bool (*fsetsize)(file_handle *handle, bt_filesize_t size);
 	int (*fioctl)(file_handle *handle, int fn, size_t bytes, char *buf);
     void (*fflush)(file_handle *handle);
 
@@ -128,6 +135,8 @@ struct syscall_table{
 	
 	bt_handle_t (*add_user_handle)(bt_handle_info info, pid_t pid);
 	bt_handle_info (*get_user_handle)(bt_handle_t h, pid_t pid);
+	void (*set_kvar)(const char *name, const char *value);
+	size_t (*get_kvar)(const char *name, char *buffer, size_t size);
 };
 
 #ifndef __cplusplus

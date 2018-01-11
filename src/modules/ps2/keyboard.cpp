@@ -57,7 +57,7 @@ static void keyboard_thread(void*){
 					keyboard_buffer.add_item(scancode2buffervalue(key));
 					updateflags(keycode);
 				} else {
-					//dbgpf("KEYBOARD: Ignored unmapped scancode %x (%x).\n", (int) key, (int) keycode);
+					dbgpf("PS2: KEYBOARD: Ignored unmapped scancode %x (%x).\n", (int) key, (int) keycode);
 				}
 			}
 		}
@@ -217,15 +217,20 @@ void init_keyboard(uint8_t kchannel){
 	numkeys=us_keyboard_numkeys;
 	input_available=false;
 	if(channel==1){
+		dbgout("PS2: Keyboard on channel 1.\n");
 		irq=Port1IRQ;
 		ps2_write_command(PS2_Command::EnablePort1);
 		write_device=&ps2_write_port1;
 
 	}else{
+		dbgout("PS2: Keyboard on channel 2.\n");
 		irq=Port2IRQ;
 		ps2_write_command(PS2_Command::EnablePort2);
 		write_device=&ps2_write_port2;
 	}
+	write_device(Device_Command::Reset);
+	write_device(Device_Command::SetDefaults);
+	write_device(Device_Command::DisableScanning);
 	write_device(Device_Command::GetSetScanCode);
 	ps2_write_data(0x01);
 	write_device(Device_Command::GetSetScanCode);
@@ -253,4 +258,5 @@ void init_keyboard(uint8_t kchannel){
 	keyboard_thread_id=new_thread(&keyboard_thread, NULL);
 	add_device("KEYBD", &keyboard_driver, NULL);
 	unmask_irq(irq);
+	ps2_clear_data();
 }

@@ -5,6 +5,7 @@ USE_DEBUG_PRINTF;
 char *current_section="default";
 
 #include "ini.h"
+#include "cmdline.hpp"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -85,9 +86,21 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 		}else module_load((char*)value, NULL);
 
 	}else if(MATCH(current_section, "run")){
-		wait(spawn((char*)value, 0, NULL));
+		cmdLine cmd = parse_cmd(value);
+		wait(spawn(cmd.cmd, cmd.argc, cmd.argv));
+		free_cmd(cmd);
     }else if(MATCH(current_section, "spawn")){
-        spawn("INIT:/SPAWN.ELX", 1, (char**)&value);
+		spawn("INIT:/SPAWN.ELX", 1, (char**)&value);
+	}else if(MATCH(current_section, "service")){
+		char *varname, *cmd;
+		if(split(value, ' ', &varname, &cmd)){
+			pid_t pid = spawn(cmd, 0, NULL);
+			char buf[64] = {0};
+			sprintf(buf, "%i", (int)pid);
+			setenv(varname, buf, 0, 0);
+			free(varname);
+			free(cmd);
+		}
 	}else if(MATCH(current_section, "mount")){
 		char *path, *rest;
 		if(split(value, ',', &path, &rest)){
@@ -111,7 +124,14 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
             free(set);
             free(varname);
         }
-    }
+    }else if(strcmp(section, current_section) == 0 && starts_with("kset ", name)){
+        char *set, *varname;
+        if(split(name, ' ', &set, &varname)){
+            set_kvar(varname, (char*)value);
+            free(set);
+            free(varname);
+        }
+	}
 	return 1;
 }
 

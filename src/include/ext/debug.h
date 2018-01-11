@@ -36,6 +36,10 @@ ENUM_START(bt_debug_function)
 	ENUM_SET(bt_debug_function, Poke, 5),
 	ENUM_SET(bt_debug_function, GetStackPtr, 6),
 	ENUM_SET(bt_debug_function, GetContext, 7),
+	ENUM_SET(bt_debug_function, SetBreakpoint, 8),
+	ENUM_SET(bt_debug_function, ClearBreakpoint, 9),
+	ENUM_SET(bt_debug_function, GetBPInfo, 10),
+	ENUM_SET(bt_debug_function, StepInstruction, 11),
 ENUM_END
 ENUM_TYPE(bt_debug_function);
 

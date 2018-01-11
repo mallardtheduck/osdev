@@ -33,22 +33,27 @@ struct ata_operation{
 
 bool ata_queue_proc(ata_operation *op){
     pid_t pid=getpid();
-    if(!setpid(op->pid)) return false;
-    if(op->type==ata_operation_types::Read){
-        ata_device_read_sector(op->device, op->lba, op->buf);
-        op->status=ata_operation_status::Complete;
-    }else if(op->type==ata_operation_types::Write){
-        ata_device_write_sector_retry(op->device, op->lba, op->buf);
-        op->status=ata_operation_status::Complete;
-    }else if(op->type==ata_operation_types::Sync){
-        op->status=ata_operation_status::Complete;
-	}else if(op->type==ata_operation_types::ATAPIRead){
-		op->retval = atapi_device_read(op->device, op->lba, op->buf);
-		op->status=ata_operation_status::Complete;
-    }else{
-        return false;
-    }
-    setpid(pid);
+    if(setpid(op->pid)){
+		if(op->type==ata_operation_types::Read){
+		    ata_device_read_sector(op->device, op->lba, op->buf);
+		    op->status=ata_operation_status::Complete;
+		}else if(op->type==ata_operation_types::Write){
+		    ata_device_write_sector_retry(op->device, op->lba, op->buf);
+		    op->status=ata_operation_status::Complete;
+		}else if(op->type==ata_operation_types::Sync){
+		    op->status=ata_operation_status::Complete;
+		}else if(op->type==ata_operation_types::ATAPIRead){
+			op->retval = atapi_device_read(op->device, op->lba, op->buf);
+			op->status=ata_operation_status::Complete;
+		}else{
+			dbgpf("ATA: Invalid operation: %i\n", op->type);
+		    op->status=ata_operation_status::Error;
+		}
+		setpid(pid);
+	}else{
+		dbgpf("ATA: Could not set pid to: %i (current pid: %i)\n", (int)op->pid, (int)pid);
+		op->status=ata_operation_status::Error;
+	}
     return true;
 }
 
@@ -71,6 +76,7 @@ void ata_sync(){
 void init_queue(){
     dbgout("ATA: Initialising queue...\n");
     queue=new ata_queue();
+	dbgpf("ATA: queue at: %p\n", queue);
     dbgout("ATA: Syncing...\n");
     ata_sync();
 }

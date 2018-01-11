@@ -23,6 +23,7 @@ private:
 	uint32_t pointer_draw_serial, pointer_cur_serial;
 	uint32_t cur_pointer_x, cur_pointer_y;
 	map<uint16_t, uint64_t> global_shortcuts;
+	uint32_t pointer_speed=300000;
 
     friend void console_backend_input_thread(void *p);
     friend void console_backend_pointer_thread(void *p);
@@ -49,6 +50,8 @@ public:
 	void set_pointer_autohide(bool val);
 	void freeze_pointer();
 	void unfreeze_pointer();
+	uint32_t get_pointer_speed();
+	void set_pointer_speed(uint32_t speed);
 	
 	void set_text_colours(uint8_t c);
 	uint8_t get_text_colours();

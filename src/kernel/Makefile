@@ -49,7 +49,7 @@ boot.o: boot.s Makefile
 .cpp.o: %.cpp Makefile
 	$(BUILD-CPP) -MMD -MP $(BUILD-CPP-FLAGS) $< -o $@ $(BUILD-CPP-OPTIONS)
 
-buildid.c: dummy.file
+buildid.c: ../../.git/HEAD ../../.git/index
 	./buildid.sh
 
 dummy.file:

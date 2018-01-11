@@ -99,6 +99,7 @@ struct fs_driver{
 	size_t (*read)(void *filedata, size_t bytes, char *buf);
 	size_t (*write)(void *filedata, size_t bytes, char *buf);
 	bt_filesize_t (*seek)(void *filedata, bt_filesize_t pos, uint32_t flags);
+	bool (*setsize)(void *filedata, bt_filesize_t size);
 	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
     void (*flush)(void *filedata);
 	void *(*open_dir)(void *mountdata, fs_path *path, fs_mode_flags mode);

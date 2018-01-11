@@ -107,6 +107,20 @@ void replace_char(char *s, char c, char r){
 	}
 }
 
+char to_upper(char c){
+	if(c >= 'a' && c <= 'z') c = c -'a' + 'A';
+	return c;
+}
+
+static bool compare_upper(const char *a, const char *b, size_t len){
+	for(size_t i = 0; i < len; ++i){
+		if((a && !b) || (b && !a)) return false;
+		if((a[i] && !b[i]) || (b[i] && !a[i])) return false;
+		if(to_upper(a[i]) != to_upper(b[i])) return false;
+	}
+	return true;
+}
+
 bool compare_filenames(const char *isoname, const char *filename, size_t len){
 	char *comparename = (char*)isoname;
 	//if filename does not contain ';', but isoname does
@@ -117,7 +131,7 @@ bool compare_filenames(const char *isoname, const char *filename, size_t len){
 		len = strlen(comparename);
 	}
 	bool ret = (len == strlen(filename));
-	if(ret) ret = (memcmp(comparename, filename, len) == 0);
+	if(ret) ret = compare_upper(comparename, filename, len);
 	if(comparename != isoname) free(comparename);
 	return ret;
 }

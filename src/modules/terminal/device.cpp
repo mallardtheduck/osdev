@@ -98,7 +98,7 @@ size_t term_write(void *instance, size_t bytes, char *buf){
 
 bt_filesize_t term_seek(void *instance, bt_filesize_t pos, uint32_t flags){
     if(instance) {
-        hold_lock hl(&term_lock);
+        //hold_lock hl(&term_lock);
         term_instance *inst=(term_instance*)instance;
         return inst->terminal->seek(inst->opts, pos, flags);
     }

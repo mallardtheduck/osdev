@@ -1,17 +1,25 @@
-all: ~/.mtoolsrc btos.img copy.always
+disk-files:= $(shell find diskfiles -type f)
 
-btos.img: 
+import-files:= \
+ data/tests.pkf \
+
+all: ~/.mtoolsrc btos.img
+
+data/tests.pkf: ../packages/tests.pkf
+	cp $< $@
+
+btos.img: $(shell find data -type f) ../packages/base.tar $(disk-files) $(import-files)
 	if [ ! -e btos.img ] ; \
 	then \
 		gunzip -k btos.img.gz ; \
 	fi;
+	mkdir -p data
+	tar xf ../packages/base.tar -C data
+	cp -Rv diskfiles/* data
+	mcopy -i btos.img@@1M data/* ::/ -s -o
 
 ~/.mtoolsrc:
 	echo "mtools_skip_check=1" > ~/.mtoolsrc
-
-copy.always: $(shell find data -type f)
-	tar xf ../packages/base.tar -C data
-	mcopy -i btos.img@@1M data/* ::/ -s -o
 
 clean:
 	-rm btos.img

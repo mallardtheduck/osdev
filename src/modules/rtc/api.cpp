@@ -9,20 +9,20 @@ struct rtc_sleep_params{
 
 bool rtc_sleep_blockcheck(void *p){
 	rtc_sleep_params &params = *(rtc_sleep_params*)p;
-	return (msec_counter - params.start >= params.duration);
+	return (get_msecs() - params.start >= params.duration);
 }
 
 void rtc_sleep(uint32_t msec){
-	rtc_sleep_params p = {msec_counter, msec};
+	rtc_sleep_params p = {get_msecs(), msec};
 	thread_setblock(&rtc_sleep_blockcheck, (void*)&p);
 }
 
 uint64_t rtc_millis(){
-	return msec_counter;
+	return get_msecs();
 }
 
 uint64_t rtc_get_time(){
-	return msec_counter + boot_msec;
+	return get_msecs() + boot_msec;
 }
 
 rtc_calltable calltable = {&rtc_sleep, &rtc_millis};

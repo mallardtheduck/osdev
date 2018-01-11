@@ -9,7 +9,7 @@ map<string, fs_driver> *fs_drivers;
 
 lock fs_lock;
 
-static const fs_driver invalid_fs_driver={false, "", false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+static const fs_driver invalid_fs_driver={false, "", false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL};
 static const fs_mountpoint invalid_mountpoint={false, "", "", invalid_fs_driver, NULL};
 
@@ -226,13 +226,11 @@ file_handle fs_open(const char *path, fs_mode_flags mode){
 
 bool fs_close(file_handle &file){
 	if(!file.valid) return true;
+	MM2::mm2_close(file);
 	bool ret=file.mount->driver.close(file.filedata);
-	if(ret) {
-        amm_close(file);
-        file.valid=false;
-        delete file.mount;
-        dbgout("FS: Closed a file.\n");
-    }
+	file.valid=false;
+	delete file.mount;
+	dbgout("FS: Closed a file.\n");
 	return ret;
 }
 
@@ -248,6 +246,10 @@ size_t fs_write(file_handle &file, size_t bytes, char *buf){
 
 bt_filesize_t fs_seek(file_handle &file, bt_filesize_t pos, uint32_t flags){
 	return file.mount->driver.seek(file.filedata, pos, flags);
+}
+
+bool fs_setsize(file_handle &file, bt_filesize_t size){
+	return file.mount->driver.setsize(file.filedata, size);
 }
 
 int fs_ioctl(file_handle &file, int fn, size_t bytes, char *buf){
@@ -330,7 +332,7 @@ directory_entry fs_stat(const char *path){
 
 void fs_flush(file_handle &file){
     if(!file.valid) return;
-    amm_flush(file);
+    MM2::mm2_flush(file);
     file.mount->driver.flush(file.filedata);
 }
 

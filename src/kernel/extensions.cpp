@@ -41,7 +41,7 @@ void user_call_extension(uint16_t ext_id, uint16_t fn, isr_regs *regs){
     if(extensions->has_key(ext_id) && (*extensions)[ext_id]->uapi_handler){
         (*extensions)[ext_id]->uapi_handler(fn, regs);
     }else{
-		dbgpf("EXT: Unknown API extension: %i!\n", (int)ext_id);
+		dbgpf("EXT: Unknown API extension: %i (PID: %i, EIP:%x)!\n", (int)ext_id, (int)proc_current_pid, regs->eip);
         regs->eax=(uint32_t)-1;
     }
 }

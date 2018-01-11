@@ -32,7 +32,7 @@ inline static void free(void *ptr){
 inline static void *memset(void *ptr, int value, size_t num){
 	return SYSCALL_TABLE->memset(ptr, value, num);
 }
-inline static void memcpy(void *dst, void *src, size_t size){
+inline static void memcpy(void *dst, const void *src, size_t size){
 	SYSCALL_TABLE->memcpy(dst, src, size);
 }
 inline static void memmove(void *dst, void *src, size_t size){
@@ -47,6 +47,22 @@ inline static void strncpy(char *dst, const char *src, size_t num){
 
 inline static uint32_t physaddr(void *ptr){
     return SYSCALL_TABLE->physaddr(ptr);
+}
+
+inline static void *map_physical_pages(uint32_t addr, size_t pages){
+	return SYSCALL_TABLE->map_physical_pages(addr, pages);
+}
+
+inline static void free_pages(void *addr, size_t pages){
+	SYSCALL_TABLE->free_pages(addr, pages);
+}
+
+inline static void lock_low_memory(){
+	SYSCALL_TABLE->lock_low_memory();
+}
+
+inline static void unlock_low_memory(){
+	SYSCALL_TABLE->unlock_low_memory();
 }
 
 inline static void init_lock(lock *l){
@@ -184,6 +200,14 @@ inline static void irq_ack(size_t irq){
 	SYSCALL_TABLE->irq_ack(irq);
 }
 
+inline static void handle_int_raw(size_t intno, void *handler){
+	SYSCALL_TABLE->handle_int_raw(intno, handler);
+}
+
+inline static void handle_irq_raw(size_t irqno, void *handler){
+	SYSCALL_TABLE->handle_irq_raw(irqno, handler);
+}
+
 inline static void add_filesystem(fs_driver *fs){
 	SYSCALL_TABLE->add_filesystem(fs);
 }
@@ -214,6 +238,10 @@ inline static size_t fwrite(file_handle *handle, size_t bytes, char *buf){
 
 inline static size_t fseek(file_handle *handle, size_t pos, uint32_t flags){
 	return SYSCALL_TABLE->fseek(handle, pos, flags);
+}
+
+inline static bool fsetsize(file_handle *handle, bt_filesize_t size){
+	return SYSCALL_TABLE->fsetsize(handle, size);
 }
 
 inline static int fioctl(file_handle *handle, int fn, size_t bytes, char *buf){
@@ -322,6 +350,14 @@ inline static bt_handle_t add_user_handle(bt_handle_info info, pid_t pid){
 
 inline static bt_handle_info get_user_handle(bt_handle_t h, pid_t pid){
 	return SYSCALL_TABLE->get_user_handle(h, pid);
+}
+
+inline static void set_kvar(const char *name, const char *value){
+	SYSCALL_TABLE->set_kvar(name, value);
+}
+
+inline static size_t get_kvar(const char *name, char *buffer, size_t size){
+	return SYSCALL_TABLE->get_kvar(name, buffer, size);
 }
 
 #endif

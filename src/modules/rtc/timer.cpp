@@ -33,7 +33,7 @@ bool events_blockcheck(void*){
 }
 
 bool next_event_blockcheck(void*){
-	return msec_counter >= next_event->time;
+	return get_msecs() >= next_event->time;
 }
 
 void update_next_event(){
@@ -59,12 +59,14 @@ void timer_thread(void*){
 			msg.to = next_event->pid;
 			msg.source = extension_id;
 			msg.type = 0;
+			msg.critical = 0;
+			msg.flags = 0;
 			msg.length = sizeof(bt_handle_t);
 			msg.content = malloc(sizeof(bt_handle_t));
 			timer_info *timer = (*timers)[next_event->timer_id];
 			*(bt_handle_t*)msg.content = timer->handle_id;
-			msg_send(&msg);
 			timer->active = false;
+			msg_send(&msg);
 		}
 		events->erase(events->find(next_event));
 		timer_event *last_event = next_event;
@@ -120,7 +122,7 @@ void reset_timer(isr_regs *regs){
 			timer_event *e = new timer_event();
 			e->cancel = false;
 			e->pid = getpid();
-			e->time = msec_counter + t->duration;
+			e->time = get_msecs() + t->duration;
 			e->timer_id = t->timer_id;
 			take_lock(&timer_lock);
 			events->push_back(e);

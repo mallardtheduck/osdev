@@ -1,0 +1,1 @@
+rm hdd:/btos/config/registry.db
