@@ -1,11 +1,11 @@
 all: livecd.iso
-packages:= $(shell find ../../packages/ -name \*.tar)
+packages:= $(shell find ../../packages/ -name \*.pkf)
 
-livecd.iso: ../../kernel/btos.bin ../../tarinit/livecd/init.tar ../../packages/base.tar $(packages)
+livecd.iso: ../../kernel/btos.bin ../../tarinit/livecd/init.tar ../../packages/base.pkf $(packages)
 	mkdir -p isodir
-	tar xf ../../packages/base.tar -C isodir
+	tar xf ../../packages/base.pkf -C isodir
 	mkdir -p isodir/packages
-	cp ../../packages/*.tar isodir/packages
+	cp ../../packages/*.pkf isodir/packages
 	mkdir -p isodir/boot
 	cp ../../kernel/btos.bin isodir/boot/btos.bin
 	cp ../../tarinit/livecd/init.tar isodir/boot/init.tar

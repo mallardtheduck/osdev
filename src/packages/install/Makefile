@@ -1,15 +1,17 @@
-all: ../install.tar
+output-name := install.pkf
+
+all: ../$(output-name)
 pkg-files:= $(shell find pkgfiles -type f)
 
 create.directories:
 	mkdir -p data/btos
 	touch create.directories
 
-../install.tar: $(pkg-files) create.directories
+../$(output-name): $(pkg-files) create.directories
 	-cp -R pkgfiles/* data
-	tar cf ../install.tar -C data .
+	tar cf ../$(output-name) -C data .
 
 clean:
 	-rm -rf data
-	-rm ../install.tar
+	-rm ../$(output-name)
 	-rm create.directories

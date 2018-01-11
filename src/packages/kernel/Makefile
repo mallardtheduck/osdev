@@ -1,7 +1,18 @@
-import-files:=data/btos/boot/btos.bin data/btos/boot/initfs/boot.sys data/btos/boot/initfs/rtc.sys data/btos/boot/initfs/ps2.sys data/btos/boot/initfs/ata.sys data/btos/boot/initfs/spawn.elx data/btos/boot/initfs/fat.sys data/btos/boot/initfs/eloader.elx
+output-name := kernel.pkf
+
+import-files:= \
+  data/btos/boot/btos.bin \
+  data/btos/boot/initfs/boot.sys \
+  data/btos/boot/initfs/rtc.sys \
+  data/btos/boot/initfs/ps2.sys \
+  data/btos/boot/initfs/ata.sys \
+  data/btos/boot/initfs/spawn.elx \
+  data/btos/boot/initfs/fat.sys \
+  data/btos/boot/initfs/eloader.elx \
+
 pkg-files:= $(shell find pkgfiles -type f)
 
-all: ../kernel.tar
+all: ../$(output-name)
 
 data/btos/boot/btos.bin: ../../kernel/btos.bin create.directories
 	cp $< $@
@@ -40,14 +51,14 @@ copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/i
 	cp ../../3rdparty/install/btos/bin/grub-mkrelpath.elx data/btos/boot/grub/grubmkrp.elx
 	touch copy.grub
 
-../kernel.tar: $(import-files) $(pkg-files) copy.grub
+../$(output-name): $(import-files) $(pkg-files) copy.grub
 	-cp -R pkgfiles/* data
 	find data/btos/boot/initfs/ -name \*.elx -not -name eloader.elx -exec strip {} \;
 	strip -K loaded_modules -K loaded_module_count data/btos/boot/initfs/eloader.elx
 	strip -g data/btos/boot/initfs/*.sys
-	tar cf ../kernel.tar -C data .
+	tar cf ../$(output-name) -C data .
 
 clean:
 	-rm -rf data
-	-rm ../kernel.tar
+	-rm ../$(output-name)
 	-rm create.directories
