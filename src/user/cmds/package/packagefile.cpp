@@ -179,7 +179,14 @@ bool PackageFile::CheckVersion(PackageFile::InstallStatus &status){
 }
 
 bool PackageFile::CheckPathConflicts(PackageFile::InstallStatus &status, const string &path){
-	auto curPkg = reg::GetPackageByName(packageInfo.name);
+	auto curPkg = reg::GetPackageByPath(path);
+	if(curPkg.id > 0 && curPkg.name != packageInfo.name){
+		stringstream ss;
+		ss << "Another package (" << curPkg.name << ") is already installed at the path \"" << path << "\".";
+		status.messages.push_back(ss.str());
+		return false;
+	}
+	curPkg = reg::GetPackageByName(packageInfo.name);
 	if(!curPkg.path.empty()){
 		if(path != curPkg.path){
 			stringstream ss;
