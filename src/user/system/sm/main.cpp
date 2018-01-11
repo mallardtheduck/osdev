@@ -2,11 +2,13 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <sstream>
 
 #include <btos/processlist.hpp>
 #include <btos/envvars.hpp>
 #include <btos/ini.hpp>
 #include <dev/terminal.hpp>
+#include <btos/registry.hpp>
 
 #include <sm/sessions.hpp>
 
@@ -14,8 +16,11 @@
 
 using namespace std;
 using namespace btos_api::sm;
+namespace reg = btos_api::registry;
 
 static const string SessionsPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/SESSIONS/");
+
+extern void RegTest();
 
 vector<string> argv_to_vec(int argc, char **argv){
 	vector<string> ret;
@@ -45,6 +50,18 @@ void kill_children(){
 std::pair<bool, SessionType> GetSessionType(string &name){
 	auto sessionFilePath = SessionsPath + name + ".ini";
 	auto entry = bt_stat(sessionFilePath.c_str());
+	if(!entry.valid || entry.type != FS_File){
+		auto feat = reg::GetFeatureByName(name);
+		std::stringstream ss;
+		ss << "\'" << name << "\' is a feature." << std::endl;
+		ss << feat.description << std::endl;
+		bt_zero(ss.str().c_str());
+		if(feat.type == "sm.ses"){
+			auto pkg = reg::GetPackageById(feat.package);
+			sessionFilePath = pkg.path + feat.path + feat.file;
+			entry = bt_stat(sessionFilePath.c_str());
+		}
+	}
 	if(entry.valid && entry.type == FS_File){
 		auto file = ReadIniFile(sessionFilePath);
 		auto section = file["session"];

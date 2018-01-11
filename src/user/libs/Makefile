@@ -1,4 +1,4 @@
-LIBS := btoscore newlib sm btoslib libgds libwm eloader ansi cmd
+LIBS := btoscore newlib sm btoslib libgds libwm eloader ansi cmd registry
 
 all: dummy.file
 	for dir in $(LIBS); do \

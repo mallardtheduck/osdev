@@ -39,6 +39,13 @@ namespace btos_api{
 		filter.flags = 0;
 	}
 
+	Message &Message::operator=(const Message &other){
+		header = other.header;
+		filter = other.filter;
+		content.reset();
+		return *this;
+	}
+
 	bt_msg_header Message::Header() const{
 		return header;
 	}
@@ -92,18 +99,19 @@ namespace btos_api{
 		return content.get();
 	}
 	
-	void Message::SendReply(void *c, size_t size) const{
+	uint64_t Message::SendReply(void *c, size_t size, uint32_t type) const{
 		bt_msg_header reply;
 		reply.to = From();
 		reply.reply_id = ID();
 		reply.flags = bt_msg_flags::Reply;
 		reply.length = size;
 		reply.content = c;
-		bt_send(reply);
+		reply.type = type;
+		return bt_send(reply);
 	}
 
-	void Message::SendReply() const{
-		Message::SendReply(nullptr, 0);
+	uint64_t Message::SendReply(uint32_t type) const{
+		return Message::SendReply(nullptr, 0, type);
 	}
 
 	void Message::Acknowledge(){

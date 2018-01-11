@@ -72,6 +72,10 @@ bt_filesize_t fseek(file_handle *handle, bt_filesize_t pos, uint32_t flags){
 	return fs_seek(*handle, pos, flags);
 }
 
+bool fsetsize(file_handle *handle, bt_filesize_t size){
+	return fs_setsize(*handle, size);
+}
+
 int fioctl(file_handle *handle, int fn, size_t bytes, char *buf){
 	return fs_ioctl(*handle, fn, bytes, buf);
 }
@@ -262,6 +266,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&fread,
 	&fwrite,
 	&fseek,
+	&fsetsize,
 	&fioctl,
     &fflush,
 

@@ -31,6 +31,7 @@ src/kernel/isodir/*
 *.tar.gz
 *.tar.xz
 *.tar
+*.zip
 qemu-launch-opts.txt
 src/3rdparty/freetype-2.7.1
 src/3rdparty/install
@@ -43,8 +44,14 @@ src/3rdparty/originals
 src/3rdparty/parted-3.2
 src/3rdparty/udis86-1.7.2
 src/3rdparty/grub-2.00
+src/3rdparty/sqlite-amalgamation-3200100
 src/disk/data
 src/iso/livecd/isodir
 src/iso/test/isodir
 src/packages/base/data
+src/packages/kernel/data/btos/boot/grub/i386-pc
 src/.vscode
+src/packages/kernel/copy.grub
+*.pkf
+create.directories
+src/packages/*/data

@@ -316,6 +316,19 @@ void time_command(const command &cmd){
 	
 }
 
+void bg_command(const command &cmd){
+	vector<string> commandline=cmd.args;
+	if(commandline.size() < 2){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " command" << endl;
+	}else{
+		commandline.erase(commandline.begin());
+		command ncmd = cmd;
+		ncmd.args = commandline;
+		run_program(ncmd, true);
+	}
+}
+
 unordered_map<string, command_fn> builtin_commands={
 	{"ls", &ls_command},
 	{"dir", &ls_command},
@@ -352,6 +365,7 @@ unordered_map<string, command_fn> builtin_commands={
 	{"str", &str_command},
 	{"arr", &arr_command},
 	{"tab", &tab_command},
+	{"bg", &bg_command},
 };
 
 bool run_builtin(const command &cmd){
@@ -364,7 +378,7 @@ bool run_builtin(const command &cmd){
     return false;
 }
 
-bool run_program(const command &cmd) {
+bool run_program(const command &cmd, bool bg) {
     vector<string> commandline=cmd.args;
     const string command = to_lower(commandline[0]);
     string path = parse_path(command);
@@ -397,7 +411,13 @@ bool run_program(const command &cmd) {
             set_env("STDIN", std_in);
             set_env("STDOUT", std_out);
             int ret = 0;
-            if (proc.GetPID()) ret = proc.Wait();
+            if (proc.GetPID()){
+				if(bg){
+					ostream &output=cmd.OutputStream();
+					ret = 0;
+					output << proc.GetPID() << endl;
+				}else ret = proc.Wait();
+			}
 			else cout << "Could not launch " << p << endl;
             if (ret == -1) cout << p << " crashed." << endl;
             return true;

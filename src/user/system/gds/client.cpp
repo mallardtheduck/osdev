@@ -18,7 +18,7 @@ static uint64_t surfaceCounter = 0;
 static map<bt_pid_t, shared_ptr<Client>> allClients;
 
 template<typename T> static void SendReply(const Message &msg, const T &content) {
-	msg.SendReply(content);
+	msg.SendReply(content, 0);
 }
 
 Client::Client(bt_pid_t p) : pid(p) {
@@ -248,6 +248,10 @@ bool Client::HandleMessage(const Message &msg) {
 					currentSurface->ReorderOp(rop.op, rop.ref, rop.mode);
 				}			
 			}
+			break;
+		}
+		default:{
+			DBG("GDS: Unknown request " << msg.Type() << " from PID: " << msg.From());
 			break;
 		}
 	}

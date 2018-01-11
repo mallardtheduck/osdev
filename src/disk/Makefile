@@ -1,12 +1,21 @@
+disk-files:= $(shell find diskfiles -type f)
+
+import-files:= \
+ data/tests.pkf \
+
 all: ~/.mtoolsrc btos.img
 
-btos.img: $(shell find data -type f) ../packages/base.tar
+data/tests.pkf: ../packages/tests.pkf
+	cp $< $@
+
+btos.img: $(shell find data -type f) ../packages/base.tar $(disk-files) $(import-files)
 	if [ ! -e btos.img ] ; \
 	then \
 		gunzip -k btos.img.gz ; \
 	fi;
 	mkdir -p data
 	tar xf ../packages/base.tar -C data
+	cp -Rv diskfiles/* data
 	mcopy -i btos.img@@1M data/* ::/ -s -o
 
 ~/.mtoolsrc:

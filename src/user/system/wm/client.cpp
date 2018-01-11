@@ -12,7 +12,7 @@ using namespace std;
 using namespace gds;
 
 template<typename T> static void SendReply(const Message &msg, const T &content) {
-	msg.SendReply(content);
+	msg.SendReply(content, 0);
 }
 
 template<typename T> static void SendMessage(bt_pid_t to, wm_MessageType::Enum type, const T &content) {

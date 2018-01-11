@@ -106,6 +106,7 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 
 
 		default:
+			DBG("GDS: Unknown primitive " << op.type << " on surface " << this << "!");
 			break;
 
 	}

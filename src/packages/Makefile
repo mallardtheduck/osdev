@@ -1,4 +1,4 @@
-PACKAGES := base kernel install
+PACKAGES := base kernel install tests
 
 all: dummy.file
 	for dir in $(PACKAGES); do \

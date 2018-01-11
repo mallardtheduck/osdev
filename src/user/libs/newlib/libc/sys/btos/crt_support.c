@@ -28,41 +28,42 @@ void btos_open_std_streams(){
     size_t s=bt_getenv("STDIN", buffer, BT_MAX_PATH);
     if(s){
         bt_handle input=bt_fopen(buffer, FS_Read);
-        btos_set_specific_filenum(0, input);
+        btos_set_specific_filenum(0, input, buffer);
     }
     memset(buffer, 0, BT_MAX_PATH);
     s=bt_getenv("STDOUT", buffer, BT_MAX_PATH);
     if(s){
         bt_handle output=bt_fopen(buffer, FS_Write | FS_AtEnd);
-        btos_set_specific_filenum(1, output);
+        btos_set_specific_filenum(1, output, buffer);
     }
     memset(buffer, 0, BT_MAX_PATH);
     s=bt_getenv("STDERR", buffer, BT_MAX_PATH);
     if(s){
         bt_handle output=bt_fopen(buffer, FS_Write | FS_AtEnd);
-        btos_set_specific_filenum(2, output);
+        btos_set_specific_filenum(2, output, buffer);
     }
     std_streams_open = true;
 }
 
-int btos_set_filenum_virt(virtual_handle vh){
+int btos_set_filenum_virt(virtual_handle *vh){
     size_t i;
     for(i=0; i<fh_count; ++i){
         if(filehandles[i] == NULL){
-            filehandles[i]=memdup(&vh, sizeof(vh));
+            filehandles[i]=vh;
             return (int)i;
         }
     }
     ++fh_count;
     filehandles=realloc(filehandles, fh_count * sizeof(virtual_handle*));
-    filehandles[fh_count-1]=memdup(&vh, sizeof(vh));
+    filehandles[fh_count-1]=vh;
     return (int)fh_count-1;
 }
 
-int btos_set_filenum(bt_handle fh){
-	virtual_handle vh;
-	vh.type = HANDLE_OS;
-	vh.handle = fh;
+int btos_set_filenum(bt_handle fh, const char *path){
+	virtual_handle *vh = calloc(1, sizeof(virtual_handle));
+	vh->type = HANDLE_OS;
+	vh->os.handle = fh;
+	strncpy(vh->os.path, path, BT_MAX_PATH);
 	return btos_set_filenum_virt(vh);
 }
 
@@ -75,27 +76,28 @@ virtual_handle *btos_get_handle_virt(int fd){
 bt_handle btos_get_handle(int fd){
 	btos_open_std_streams();
     if((size_t)fd < fh_count){
-		if(filehandles[fd] && filehandles[fd]->type == HANDLE_OS) return filehandles[fd]->handle;
+		if(filehandles[fd] && filehandles[fd]->type == HANDLE_OS) return filehandles[fd]->os.handle;
 		else return 0;
 	}
     else return 0;
 }
 
-void btos_set_specific_filenum_virt(int fd, virtual_handle vh){
-    if((size_t)fd < fh_count) filehandles[fd]=memdup(&vh, sizeof(vh));
+void btos_set_specific_filenum_virt(int fd, virtual_handle *vh){
+    if((size_t)fd < fh_count) filehandles[fd]=vh;
     else{
         size_t oldsize=fh_count;
         fh_count=fd+1;
         filehandles=realloc(filehandles, fh_count * sizeof(virtual_handle*));
         memset(&filehandles[oldsize], 0, (fh_count-oldsize) * sizeof(virtual_handle*));
-        filehandles[fd]=memdup(&vh, sizeof(vh));
+        filehandles[fd]=vh;
     }
 }
 
-void btos_set_specific_filenum(int fd, bt_handle_t fh){
-	virtual_handle vh;
-	vh.type = HANDLE_OS;
-	vh.handle = fh;
+void btos_set_specific_filenum(int fd, bt_handle_t fh, const char *path){
+	virtual_handle *vh = calloc(1, sizeof(virtual_handle));
+	vh->type = HANDLE_OS;
+	vh->os.handle = fh;
+	strncpy(vh->os.path, path, BT_MAX_PATH);
 	btos_set_specific_filenum_virt(fd, vh);
 }
 

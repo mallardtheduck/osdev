@@ -1,0 +1,21 @@
+--- sqlite-amalgamation-3200100/sqlite3.c	2017-10-08 21:02:03.070723129 +0100
++++ originals/sqlite-amalgamation-3200100/sqlite3.c	2017-08-24 23:58:36.000000000 +0100
+@@ -36413,10 +36413,6 @@ static int mkFullPathname(
+   char *zOut,                     /* Output buffer */
+   int nOut                        /* Allocated size of buffer zOut */
+ ){
+-#ifdef __btos__
+-  btos_path_parse(zPath, zOut, nOut);
+-  return SQLITE_OK;
+-#else
+   int nPath = sqlite3Strlen30(zPath);
+   int iOff = 0;
+   if( zPath[0]!='/' ){
+@@ -36434,7 +36430,6 @@ static int mkFullPathname(
+   }
+   sqlite3_snprintf(nOut-iOff, &zOut[iOff], "%s", zPath);
+   return SQLITE_OK;
+-#endif
+ }
+ 
+ /*

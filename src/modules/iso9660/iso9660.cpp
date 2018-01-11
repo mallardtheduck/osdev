@@ -185,6 +185,10 @@ bt_filesize_t iso9660_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
 	return ret;
 }
 
+bool iso9660_setsize(void *filedata, bt_filesize_t size){
+	return false;
+}
+
 int iso9660_ioctl(void *filedata, int fn, size_t bytes, char *buf){
 	return 0;
 }
@@ -324,7 +328,7 @@ bool iso9660_format(char *, void *){
 }
 
 fs_driver iso9660_driver = {true, "iso9660", false, iso9660_mount, iso9660_unmount,
-							iso9660_open, iso9660_close, iso9660_read, iso9660_write, iso9660_seek, iso9660_ioctl, iso9660_flush,
+							iso9660_open, iso9660_close, iso9660_read, iso9660_write, iso9660_seek, iso9660_setsize, iso9660_ioctl, iso9660_flush,
 							iso9660_open_dir, iso9660_close_dir, iso9660_read_dir, iso9660_write_dir, iso9660_dirseek,
 							iso9660_stat, iso9660_format};
 

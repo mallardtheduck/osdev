@@ -76,6 +76,10 @@ bt_filesize_t infofs_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
     return fdata->pos;
 }
 
+bool infofs_setsize(void *filedata, bt_filesize_t size){
+	return false;
+}
+
 int infofs_ioctl(void *filedata, int fn, size_t bytes, char *buf){
 	return 0;
 }
@@ -150,7 +154,7 @@ bool infofs_format(char*, void*){
 }
 
 fs_driver infofs_driver={true, "INFOFS", false, infofs_mount, infofs_unmount, infofs_open, infofs_close, infofs_read,
-	infofs_write, infofs_seek, infofs_ioctl, infofs_flush, infofs_open_dir, infofs_close_dir, infofs_read_dir, infofs_write_dir,
+	infofs_write, infofs_seek, infofs_setsize, infofs_ioctl, infofs_flush, infofs_open_dir, infofs_close_dir, infofs_read_dir, infofs_write_dir,
 	infofs_dirseek, infofs_stat, infofs_format};
 
 void infofs_register(const char *name, info_function fn){

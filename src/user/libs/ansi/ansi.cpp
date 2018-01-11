@@ -81,7 +81,7 @@ static void gotoxy(int c, int r){
 	if(bt_term_GetInfoLine()) ++r;
 	
 	size_t pos = (mode.width * r) + c;
-	bt_fseek(real_stdout->handle, pos, FS_Set);
+	bt_fseek(real_stdout->os.handle, pos, FS_Set);
 }
 
 static void clearscreen(){
@@ -189,7 +189,7 @@ static void write_screen(size_t c, size_t r, const vector<uint16_t> &chars){
 			}
 			gotoxy(c + cstart, r);
 			bt_term_SetTextColours(a);
-			bt_fwrite(real_stdout->handle, cs.length(), cs.c_str());
+			bt_fwrite(real_stdout->os.handle, cs.length(), cs.c_str());
 			a = ca;
 			cstart = i;
 		}
@@ -215,7 +215,7 @@ static void callback(tmt_msg_t m, TMT *vt, const void *a, void *p){
 		break;
 		
 		case TMT_MSG_UPDATE:{
-			bt_filesize_t pos = bt_fseek(real_stdout->handle, 0, FS_Relative);
+			bt_filesize_t pos = bt_fseek(real_stdout->os.handle, 0, FS_Relative);
 			for(size_t r = 0; r < s->nline; ++r){
 				int changestart = -1;
 				vector<uint16_t> changestring;
@@ -240,7 +240,7 @@ static void callback(tmt_msg_t m, TMT *vt, const void *a, void *p){
 					s->lines[r]->dirty = 0;
 				}
 			}
-			bt_fseek(real_stdout->handle, pos, FS_Set);
+			bt_fseek(real_stdout->os.handle, pos, FS_Set);
 		}
 		break;
 		
@@ -327,13 +327,15 @@ static void ansi_stdin_thread(void*){
 	}
 }
 
+static virtual_handle ansi_terminal;
+
 extern "C" void init_ansi(){
 	if(ansi_on) return;
 	terminal_ext_id = bt_query_extension("TERMINAL");
 	if(!isatty(fileno(stdout))) return;
 	real_stdout = btos_get_handle_virt(fileno(stdout));
 	real_stdin = btos_get_handle_virt(fileno(stdin));
-	bt_term_handle(real_stdout->handle);
+	bt_term_handle(real_stdout->os.handle);
 	bt_vidmode mode = bt_term_QueryScreenMode();
 	if(!mode.textmode) return;
 	if(bt_term_GetInfoLine()) --mode.height;
@@ -343,7 +345,6 @@ extern "C" void init_ansi(){
 		cerr << "Failed to initialize ANSI!" << endl;
 		exit(-1);
 	}
-	virtual_handle ansi_terminal;
 	ansi_terminal.type = HANDLE_VIRT;
 	ansi_terminal.virt.data = (void*)tmt;
 	ansi_terminal.virt.write = &ansi_virt_write;
@@ -352,8 +353,8 @@ extern "C" void init_ansi(){
 	ansi_terminal.virt.fsync = &ansi_virt_fsync;
 	ansi_terminal.virt.isatty = &ansi_virt_isatty;
 	ansi_terminal.virt.close = &ansi_virt_close;
-	btos_set_specific_filenum_virt(fileno(stdout), ansi_terminal);
-	btos_set_specific_filenum_virt(fileno(stdin), ansi_terminal);
+	btos_set_specific_filenum_virt(fileno(stdout), &ansi_terminal);
+	btos_set_specific_filenum_virt(fileno(stdin), &ansi_terminal);
 	start_event_mode();
 	if(!key_thread_id){
 		key_thread_id = bt_new_thread(&ansi_stdin_thread, NULL, keythread_stack + thread_stack_size);
@@ -373,8 +374,8 @@ extern "C" void end_ansi(){
 		clearscreen();
 		bt_term_SetScrolling(true);
 		bt_term_EndEventMode();
-		btos_set_specific_filenum_virt(fileno(stdout), *real_stdout);
-		btos_set_specific_filenum_virt(fileno(stdin), *real_stdin);
+		btos_set_specific_filenum_virt(fileno(stdout), real_stdout);
+		btos_set_specific_filenum_virt(fileno(stdin), real_stdin);
 		free(real_stdout);
 		free(real_stdout);
 		ansi_on = false;

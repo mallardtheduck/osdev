@@ -8,8 +8,11 @@
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
+#include <util/clipp.hpp>
+#include <btos/envvars.hpp>
 
 using namespace std;
+using namespace clipp;
 
 vector<string> args_to_vec(int argc, char **argv){
 	vector<string> ret;
@@ -20,102 +23,131 @@ vector<string> args_to_vec(int argc, char **argv){
 }
 
 int main(int argc, char **argv){
+	enum class Mode{
+		Help,
+		Title,
+		Echo,
+		Clear,
+		New,
+		Switch,
+		Pointer,
+		Modes,
+		Reset
+	};
+	Mode mode = Mode::Help;
+	string title;
+	string cmd;
+	uint64_t id = 0;
+	bool on = false;
+	bool info = false;
+	bool speedMode = false;
+	uint32_t speed = 0;
 	
-    if(argc < 2 && argv[1]){
-        printf("BT/OS terminal utility.\n");
-        printf("Usage: %s command [params...]\n", argv[0]);
-        return 1;
-    }
-    
-    vector<string> args = args_to_vec(argc, argv);
-    string cmd = args[1];
-    
-    Terminal term;
-    
-    if(cmd == "title" && args.size() == 3) {
-		term.SetTitle(args[2]);
-        return 0;
-    }
-    
-    if(cmd == "echo" && args.size() == 3) {
-        if(args[2] == "on") {
-			term.SetEcho(true);
-        }else if(args[2] == "off"){
-            term.SetEcho(false);
-        }else return 1;
-        return 0;
-    }
-    
-    if(cmd == "clear") {
-        term.ClearScreen();
-        return 0;
-    }
-    
-    if(cmd == "new"){
-        char runpath[BT_MAX_PATH]="";
-        if(argc < 3){
-            bt_getenv("SHELL", runpath, BT_MAX_PATH);
-        }else{
-            btos_path_parse(argv[2], runpath, BT_MAX_PATH);
-        }
-		term.New(runpath);
-        return 0;
-    }
-    if(cmd == "switch" && args.size() == 3){
-        uint64_t id = strtoull(args[2].c_str(), NULL, 0);
-		term.Switch(id);
-        return 0;
-    }
-    
-    if(cmd == "pointer" && args.size() == 3){
-        if(args[2] == "on"){
-            term.SetPointerVisibility(true);
-        }else if(args[2] == "off"){
-            term.SetPointerVisibility(false);
-        }else return 1;
-        return 0;
-    }
-    
-    if(cmd == "pointer" && args.size() == 2){
-        bt_terminal_pointer_info info = term.GetPointerInfo();
-        printf("Pointer: (%i, %i) Flags: %x\n", info.x, info.y, info.flags);
-        return 0;
-    }
-    
-    if(cmd == "modes"){
-		size_t i = 0;
-        for(auto mode : term.GetScreenModes()){
-            printf("Mode %i: ID: %i %ix%i %ibpp %s.\n", (int)i, mode.id, mode.width, mode.height, mode.bpp, mode.textmode?"text":"graphics");
-			++i;
-        }
-        bt_vidmode cmode = term.GetCurrentScreenMode();
-        printf("Current mode: ID: %i %ix%i %ibpp %s.\n", cmode.id, cmode.width, cmode.height, cmode.bpp, cmode.textmode?"text":"graphics");
-        return 0;
-    }
-    
-    if(cmd == "reset"){
-        for(auto mode : term.GetScreenModes()) {
-            if(mode.textmode){
-				term.SetScreenMode(mode);
-                break;
-            }
-			term.SetScrolling(true);
-        }
-        return 0;
-    }
-    
-    if(cmd == "pointer_speed" && args.size() >= 3){
-    	if(args[2] == "get"){
-    		uint32_t speed = term.GetPointerSpeed();
-    		printf("Pointer speed: %i\n", speed);
-    	}
-    	if(args[2] == "set" && args.size() == 4){
-    		uint32_t speed = strtoul(args[3].c_str(), NULL, 0);
-			term.SetPointerSpeed(speed);
-    	}else return 1;
-    	return 0;
-    }
-        
-    printf("Unknown option '%s'\n", cmd.c_str());
-    return 1;
+	auto helpCmd = (
+		command("help", "--help").set(mode, Mode::Help) % "Display usage help"
+	);
+	auto titleCmd = (
+		command("title").set(mode, Mode::Title) % "Set terminal title",
+		value("new-title").set(title) % "New title text"
+	);
+	auto echoCmd = (
+		command("echo").set(mode, Mode::Echo) % "Change character echo setting",
+		command("on").set(on, true) | command("off").set(on, false)
+	);
+	auto clearCmd = (
+		command("clear").set(mode, Mode::Clear) % "Clear the display"
+	);
+	auto newCmd = (
+		command("new").set(mode, Mode::New) % "Create new terminal",
+		opt_value("command").set(cmd) % "Command to run on new terminal (default: $SHELL$)"
+	);
+	auto switchCmd = (
+		command("switch").set(mode, Mode::Switch) % "Switch to another terminal",
+		value("term-id").set(id) % "ID of terminal to switch to"
+	);
+	auto pointerCmd = (
+		command("pointer").set(mode, Mode::Pointer) % "Control the pointing cursor",
+		command("on").set(on, true) | command("off").set(on, false) | command("info").set(info) | (
+			command("speed").set(speedMode) % "Control pointer speed",
+			command("get").set(on, true) | (command("set").set(on, false) & value("speed").set(speed))
+		)
+	);
+	auto modesCmd = (
+		command("modes").set(mode, Mode::Modes) % "List available display modes"
+	);
+	auto resetCmd = (
+		command("reset").set(mode, Mode::Reset) % "Reset terminal to first text display mode"
+	);
+	
+	auto cli = (helpCmd | titleCmd | echoCmd | clearCmd | newCmd | switchCmd | pointerCmd | modesCmd | resetCmd);
+	
+	if(parse(argc, argv, cli)){
+		Terminal term;
+		switch(mode){
+			case Mode::Help:{
+					auto fmt = doc_formatting{}.start_column(2).alternatives_min_split_size(1);
+					cout << make_man_page(cli, argv[0], fmt);
+				}
+				break;
+			case Mode::Title:
+				term.SetTitle(title);
+				break;
+			case Mode::Echo:
+				term.SetEcho(on);
+				break;
+			case Mode::Clear:
+				term.ClearScreen();
+				break;
+			case Mode::New:{
+					char runpath[BT_MAX_PATH]="";
+					if(cmd.empty()){
+						bt_getenv("SHELL", runpath, BT_MAX_PATH);
+					}else{
+						btos_path_parse(cmd.c_str(), runpath, BT_MAX_PATH);
+					}
+					term.New(runpath);
+				}
+				break;
+			case Mode::Switch:
+				term.Switch(id);
+				break;
+			case Mode::Pointer:
+				if(speedMode){
+					if(on){
+						uint32_t speed = term.GetPointerSpeed();
+    					printf("Pointer speed: %i\n", speed);
+					}else{
+						term.SetPointerSpeed(speed);
+					}
+				}else if(info){
+					bt_terminal_pointer_info info = term.GetPointerInfo();
+        			printf("Pointer: (%i, %i) Flags: %x\n", info.x, info.y, info.flags);
+				}else{
+					term.SetPointerVisibility(on);
+				}
+				break;
+			case Mode::Modes:{
+					size_t i = 0;
+			        for(auto mode : term.GetScreenModes()){
+			            printf("Mode %i: ID: %i %ix%i %ibpp %s.\n", (int)i, mode.id, mode.width, mode.height, mode.bpp, mode.textmode?"text":"graphics");
+						++i;
+			        }
+			        bt_vidmode cmode = term.GetCurrentScreenMode();
+			        printf("Current mode: ID: %i %ix%i %ibpp %s.\n", cmode.id, cmode.width, cmode.height, cmode.bpp, cmode.textmode?"text":"graphics");
+				}
+				break;
+			case Mode::Reset:
+				for(auto mode : term.GetScreenModes()) {
+					if(mode.textmode){
+						term.SetScreenMode(mode);
+						break;
+					}
+					term.SetScrolling(true);
+				}
+				break;
+		}
+	}else{
+		cerr << usage_lines(cli, argv[0]) << endl;
+	}
+	return 0;
 }

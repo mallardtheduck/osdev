@@ -98,6 +98,7 @@ struct syscall_table{
 	size_t (*fread)(file_handle *handle, size_t bytes, char *buf);
 	size_t (*fwrite)(file_handle *handle, size_t bytes, char *buf);
 	bt_filesize_t (*fseek)(file_handle *handle, bt_filesize_t pos, uint32_t flags);
+	bool (*fsetsize)(file_handle *handle, bt_filesize_t size);
 	int (*fioctl)(file_handle *handle, int fn, size_t bytes, char *buf);
     void (*fflush)(file_handle *handle);
 

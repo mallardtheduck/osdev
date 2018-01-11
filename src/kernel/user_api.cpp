@@ -297,6 +297,14 @@ USERAPI_HANDLER(BT_FSEEK){
     }
 }
 
+USERAPI_HANDLER(BT_FSETSIZE){
+	file_handle *file=proc_get_file(regs->ebx);
+    if(file && is_safe_ptr(regs->ecx, sizeof(bt_filesize_t))){
+		bt_filesize_t *size = (bt_filesize_t*)regs->ecx;
+		regs->eax = fs_setsize(*file, *size);
+	}
+}
+
 USERAPI_HANDLER(BT_FFLUSH){
     file_handle *file=proc_get_file(regs->ebx);
     if(file){
@@ -502,6 +510,7 @@ USERAPI_HANDLER(BT_THREAD_ABORT){
 USERAPI_HANDLER(BT_SEND){
 	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_msg_header)) && is_safe_ptr(regs->ecx, sizeof(uint64_t))){
 		btos_api::bt_msg_header header=*(btos_api::bt_msg_header*)regs->ebx;
+		if(header.length && !is_safe_ptr((uint32_t)header.content, header.length)) return;
 		uint64_t &ret=*(uint64_t*)regs->ecx;
 		header.flags=header.flags | btos_api::bt_msg_flags::UserSpace;
 		header.from=proc_current_pid;
@@ -652,6 +661,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_FREAD);
 		USERAPI_HANDLE_CALL(BT_FIOCTL);
 		USERAPI_HANDLE_CALL(BT_FSEEK);
+		USERAPI_HANDLE_CALL(BT_FSETSIZE);
         USERAPI_HANDLE_CALL(BT_FFLUSH);
         USERAPI_HANDLE_CALL(BT_MMAP);
 		USERAPI_HANDLE_CALL(BT_DOPEN);

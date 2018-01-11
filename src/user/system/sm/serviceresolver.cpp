@@ -3,8 +3,12 @@
 #include <btos/directory.hpp>
 #include <btos/ini.hpp>
 
+#include <btos/registry.hpp>
+
 using namespace sm;
 using namespace std;
+
+namespace reg = btos_api::registry;
 
 static const string ServicesPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/SESSIONS/SERVICES/");
 
@@ -13,10 +17,10 @@ SessionServiceResolver::SessionServiceResolver(){
 }
 
 void SessionServiceResolver::UpdateCache(){
-	Directory dir{ServicesPath.c_str(), FS_Read};
-	for(auto f : dir){
-		if(f.type == FS_File){
-			auto file = ReadIniFile(ServicesPath + f.filename);
+	auto addService = [&](const string &fname){
+		auto info = bt_stat(fname.c_str());
+		if(info.type == FS_File){
+			auto file = ReadIniFile(fname);
 			auto section = file["service"];
 			auto name = section["name"];
 			auto path = EnvInterpolate(section["path"]);
@@ -26,6 +30,16 @@ void SessionServiceResolver::UpdateCache(){
 			}
 			serviceCache.insert(make_pair(name, Service{name, path, cleanup}));
 		}
+	};
+	Directory dir{ServicesPath.c_str(), FS_Read};
+	for(auto f : dir){
+		addService(ServicesPath + f.filename);
+	}
+	auto feats = reg::GetFeaturesByType("sm.svc");
+	for(auto &f : feats){
+		auto feat = reg::GetFeatureByName(f);
+		auto fname = reg::GetFeaturePath(feat.id);
+		addService(fname);
 	}
 }
 

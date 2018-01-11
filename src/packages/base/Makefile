@@ -1,6 +1,4 @@
 import-files:=\
- data/btos/tests/ctest.elx \
- data/btos/tests/cpptest.elx \
  data/btos/cmd/cmd.elx \
  data/btos/system/terminal.sys \
  data/btos/cmd/cls.elx \
@@ -10,19 +8,11 @@ import-files:=\
  data/btos/cmd/kill.elx \
  data/btos/drivers/pci.sys \
  data/btos/cmd/load.elx \
- data/btos/tests/test.sys \
  data/btos/cmd/mount.elx \
- data/btos/tests/msgtest.elx \
- data/btos/tests/mousetest.elx \
  data/btos/drivers/vga.sys \
- data/btos/tests/vgatest.elx \
- data/btos/tests/fputest.elx \
  data/btos/system/gds.elx \
  data/btos/bin/debug.elx \
- data/btos/tests/crash.elx \
- data/btos/tests/gdstest.elx \
  data/btos/system/wm.elx \
- data/btos/tests/wmtest.elx \
  data/btos/bin/wmmenu.elx \
  data/btos/bin/startwm.elx \
  data/btos/bin/termwin.elx \
@@ -35,9 +25,6 @@ import-files:=\
  data/btos/cmd/parted.elx \
  data/btos/cmd/format.elx \
  data/btos/bin/install.elx \
- data/btos/tests/shmtest.elx \
- data/btos/tests/elltest.elx \
- data/btos/tests/testlib.ell \
  data/btos/lib/libc.ell \
  data/btos/lib/libm.ell \
  data/btos/lib/stdc++.ell \
@@ -49,12 +36,10 @@ import-files:=\
  data/btos/lib/iconv.ell \
  data/btos/lib/uuid.ell \
  data/btos/lib/parted.ell \
- data/btos/tests/elldtest.elx \
  data/btos/lib/eloader.ell \
  data/btos/lib/udis86.ell \
  data/btos/cmd/kilo.elx \
  data/btos/lib/ansi.ell \
- data/btos/tests/nctest.elx \
  data/btos/share/terminfo \
  data/btos/lib/ncurses.ell \
  data/btos/lib/ncurses++.ell \
@@ -68,23 +53,23 @@ import-files:=\
  data/btos/lib/btoscore.ell \
  data/btos/lib/btoslib.ell \
  data/btos/system/session.elx \
- data/btos/config/sessions \
+ data/btos/system/sessions \
  data/btos/lib/sm.ell \
  data/btos/cmd/smutil.elx \
  data/btos/lib/cmd.ell \
+ data/btos/lib/sqlite3.ell \
+ data/btos/bin/sqlite.elx \
  data/btos/cmd/ini.elx \
+ data/btos/system/registry.elx \
+ data/btos/lib/registry.ell \
+ data/btos/cmd/reg.elx \
+ data/btos/cmd/package.elx \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
 .SUFFIXES:
 
 all: ../base.tar
-
-data/btos/tests/ctest.elx: ../../user/tests/ctest/ctest.elx create.directories
-	cp $< $@
-
-data/btos/tests/cpptest.elx: ../../user/tests/cpptest/cpptest.elx create.directories
-	cp $< $@
 
 data/btos/cmd/cmd.elx: ../../user/cmds/cmd/cmd.elx create.directories
 	cp $< $@
@@ -113,45 +98,21 @@ data/btos/drivers/pci.sys: ../../modules/pci/pci.sys create.directories
 data/btos/cmd/load.elx: ../../user/cmds/load/load.elx create.directories
 	cp $< $@
 
-data/btos/tests/test.sys: ../../modules/test/test.sys create.directories
-	cp $< $@
-
 data/btos/cmd/mount.elx: ../../user/cmds/mount/mount.elx create.directories
-	cp $< $@
-
-data/btos/tests/msgtest.elx: ../../user/tests/msgtest/msgtest.elx create.directories
-	cp $< $@
-
-data/btos/tests/mousetest.elx: ../../user/tests/mousetest/mousetest.elx create.directories
 	cp $< $@
 
 data/btos/drivers/vga.sys: ../../modules/vga/vga.sys create.directories
 	cp $< $@
 
-data/btos/tests/vgatest.elx: ../../user/tests/vgatest/vgatest.elx create.directories
-	cp $< $@
-
 data/btos/bin/debug.elx: ../../user/bin/debug/debug.elx create.directories
-	cp $< $@
-
-data/btos/tests/crash.elx: ../../user/tests/crash/crash.elx create.directories
 	cp $< $@
 
 data/btos/system/gds.elx: ../../user/system/gds/gds.elx create.directories
 	cp $< $@
 	
-data/btos/tests/gdstest.elx: ../../user/libs/libgds/gdstest.elx create.directories
-	cp $< $@
-
-data/btos/tests/fputest.elx: ../../user/tests/fputest/fputest.elx create.directories
-	cp $< $@
-	
 data/btos/system/wm.elx: ../../user/system/wm/wm.elx create.directories
 	cp $< $@
-	
-data/btos/tests/wmtest.elx: ../../user/libs/libwm/wmtest.elx create.directories
-	cp $< $@
-	
+
 data/btos/bin/wmmenu.elx: ../../user/wmapps/wmmenu/wmmenu.elx create.directories
 	cp $< $@
 
@@ -186,15 +147,6 @@ data/btos/cmd/format.elx: ../../user/cmds/format/format.elx create.directories
 	cp $< $@
 	
 data/btos/bin/install.elx: ../../user/bin/install/install.elx create.directories
-	cp $< $@
-	
-data/btos/tests/shmtest.elx: ../../user/tests/shmtest/shmtest.elx create.directories
-	cp $< $@
-
-data/btos/tests/elltest.elx: ../../user/tests/elltest/elltest.elx create.directories
-	cp $< $@
-
-data/btos/tests/testlib.ell: ../../user/tests/elltest/testlib.ell create.directories
 	cp $< $@
 
 data/btos/lib/libc.ell: ../../user/libs/newlib/libc/libc.ell
@@ -233,9 +185,6 @@ data/btos/lib/parted.ell: ../../3rdparty/install/btos/lib/parted.ell
 data/btos/lib/eloader.ell: ../../user/libs/eloader/eloader.ell
 	cp $< $@
 
-data/btos/tests/elldtest.elx: ../../user/libs/eloader/elldtest.elx
-	cp $< $@
-
 data/btos/lib/udis86.ell: ../../3rdparty/install/btos/lib/udis86.ell
 	cp $< $@
 
@@ -246,9 +195,6 @@ data/btos/cmd/kilo.elx: ../../user/cmds/kilo/kilo.elx
 	cp $< $@
 
 data/btos/lib/ansi.ell: ../../user/libs/ansi/ansi.ell
-	cp $< $@
-
-data/btos/tests/nctest.elx: ../../user/tests/nctest/nctest.elx
 	cp $< $@
 
 data/btos/share/terminfo: ../../3rdparty/install/btos/share/terminfo
@@ -292,7 +238,7 @@ data/btos/lib/btoslib.ell: ../../user/libs/btoslib/btoslib.ell
 data/btos/system/session.elx: ../../user/system/sm/session.elx
 	cp $< $@
 
-data/btos/config/sessions: ../../user/system/sm/sessions
+data/btos/system/sessions: ../../user/system/sm/sessions
 	mkdir -p $@
 	cp -Rv $</* $@
 
@@ -305,22 +251,30 @@ data/btos/cmd/smutil.elx : ../../user/libs/sm/smutil.elx
 data/btos/lib/cmd.ell: ../../user/libs/cmd/cmd.ell
 	cp $< $@
 
+data/btos/lib/sqlite3.ell: ../../3rdparty/install/btos/lib/sqlite3.ell
+	cp $< $@
+
+data/btos/bin/sqlite.elx: ../../3rdparty/install/btos/bin/sqlite.elx
+	cp $< $@
+
 data/btos/cmd/ini.elx: ../../user/cmds/ini/ini.elx
 	cp $< $@
 
-copy.grub: ../../3rdparty/install/btos/sbin/grub-bios-setup.elx ../../3rdparty/install/btos/bin/grub-mkimage.elx ../../3rdparty/install/btos/bin/grub-mklayout.elx ../../3rdparty/install/btos/bin/grub-mkrelpath.elx
-	mkdir -p data/btos/boot/grub/
-	cp -R ../../3rdparty/install/btos/lib/grub/i386-pc data/btos/boot/grub
-	cp ../../3rdparty/install/btos/sbin/grub-bios-setup.elx data/btos/boot/grub/grubbios.elx
-	cp ../../3rdparty/install/btos/bin/grub-mkimage.elx data/btos/boot/grub/grubmkim.elx
-	cp ../../3rdparty/install/btos/bin/grub-mklayout.elx data/btos/boot/grub/grubmkla.elx
-	cp ../../3rdparty/install/btos/bin/grub-mkrelpath.elx data/btos/boot/grub/grubmkrp.elx
-	touch copy.grub
+data/btos/system/registry.elx: ../../user/system/registry/registry.elx
+	cp $< $@
+
+data/btos/lib/registry.ell: ../../user/libs/registry/registry.ell
+	cp $< $@
+
+data/btos/cmd/reg.elx: ../../user/libs/registry/reg.elx
+	cp $< $@
+
+data/btos/cmd/package.elx: ../../user/cmds/package/package.elx
+	cp $< $@
 
 create.directories: Makefile
 	mkdir -p data/btos/cmd
 	mkdir -p data/btos/temp
-	mkdir -p data/btos/tests
 	mkdir -p data/btos/bin
 	mkdir -p data/btos/system
 	mkdir -p data/btos/drivers
@@ -329,8 +283,8 @@ create.directories: Makefile
 	mkdir -p data/btos/config
 	touch create.directories
 
-../base.tar: $(import-files) $(pkg-files) copy.grub
-	#cp -R pkgfiles/* data
+../base.tar: $(import-files) $(pkg-files)
+	cp -Rv pkgfiles/* data
 	tar cf ../base.tar -C data .
 
 clean:

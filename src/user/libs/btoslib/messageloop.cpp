@@ -38,6 +38,7 @@ namespace btos_api{
 	}
 
 	bool MessageLoop::HandleMessage(const Message &msg){
+		current.reset(new Message(msg));
 		if(msg.IsCritical()){
 			if(!criticalHandler || !criticalHandler(msg)) return false;
 		}
@@ -48,4 +49,7 @@ namespace btos_api{
 		return true;
 	}
 	
+	const Message &MessageLoop::GetCurrent() const{
+		return *current;
+	}
 }
