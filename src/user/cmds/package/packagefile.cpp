@@ -71,6 +71,12 @@ static bool is_content(const string &contentPath, const string &name){
 	else return false;
 }
 
+static string to_lower(const string &str){
+	string ret(str);
+	transform(str.begin(), str.end(), ret.begin(), ::tolower);
+	return ret;
+}
+
 void PackageFile::Parse(){
 	tar::reader rdr(stream);
 	while(rdr.contains_another_file()){
@@ -157,11 +163,13 @@ vector<PackageFile::ContentFile> PackageFile::GetContent(){
 
 PackageFile::InstallStatus PackageFile::Install(const string &path){
 	InstallStatus status = {false, 0, {}};
+	if(!RunHook(status, "pre-install")) return status;
 	if(!CheckVersion(status)) return status;
 	if(!CheckPathConflicts(status, path)) return status;
 	if(!CheckFeatureConflicts(status)) return status;
 	if(!ExtractFiles(status, path)) return status;
 	if(!ImportInfo(status, path)) return status;
+	if(!RunHook(status, "post-install")) return status;
 	status.success = true;
 	return status;
 }
@@ -303,7 +311,18 @@ bool PackageFile::ImportInfo(PackageFile::InstallStatus &/*status*/, const strin
 	return true;
 }
 
-bool PackageFile::RunHook(const string &hook){
+bool PackageFile::RunHook(PackageFile::InstallStatus &status, const string &hook){
+	bool success = true;
+	auto run = [&](const vector<string> &cmd, bool capture) -> string{
+		if(cmd.size() == 2 && to_lower(cmd[0]) == "setstatus"){
+			success = cmd::IsTruthy(cmd[1]);
+			return "";
+		}else if(cmd.size() == 2 && to_lower(cmd[0]) == "addmessage"){
+			status.messages.push_back(cmd[1]);
+			return "";
+		}else return cmd::RunCMDCommand(cmd, capture);
+	};
+	
 	if(hooks.find(hook) != hooks.end()){
 			tar::reader rdr(stream);
 			while(rdr.contains_another_file()){
@@ -316,7 +335,7 @@ bool PackageFile::RunHook(const string &hook){
 						scriptStream.write(buffer.get(), size);
 						scriptStream.seekg(0);
 					}
-					cmd::ScriptContext context {scriptStream};
+					cmd::ScriptContext context {scriptStream, run};
 					context.Run({});
 					break;
 				}
@@ -324,5 +343,5 @@ bool PackageFile::RunHook(const string &hook){
 			}
 			stream.seekg(0);
 	}
-	return true;
+	return success;
 }

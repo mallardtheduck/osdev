@@ -6,8 +6,8 @@ version = 0.1B
 contentPath = tests
 
 [hooks]
-pre-install := pre.pkc
-post-install := post.pkc
+pre-install = pre.pkc
+post-install = post.pkc
 
 [feature-binpath]
 

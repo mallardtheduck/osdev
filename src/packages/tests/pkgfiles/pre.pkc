@@ -1,1 +1,4 @@
 out echo "Pre-install script"
+# out echo "Not allowing installation."
+# addmessage "Test message."
+# setstatus false

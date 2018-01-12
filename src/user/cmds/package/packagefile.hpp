@@ -47,7 +47,7 @@ public:
 	bool ExtractFiles(InstallStatus &status, const std::string &path);
 	bool ImportInfo(InstallStatus &status, const std::string &path);
 	
-	bool RunHook(const std::string &hook);
+	bool RunHook(InstallStatus &status, const std::string &hook);
 };
 
 #endif
