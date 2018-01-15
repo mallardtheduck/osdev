@@ -163,13 +163,13 @@ vector<PackageFile::ContentFile> PackageFile::GetContent(){
 
 PackageFile::InstallStatus PackageFile::Install(const string &path){
 	InstallStatus status = {false, 0, {}};
-	if(!RunHook(status, "pre-install")) return status;
+	if(!RunHook(status, "pre-install", path)) return status;
 	if(!CheckVersion(status)) return status;
 	if(!CheckPathConflicts(status, path)) return status;
 	if(!CheckFeatureConflicts(status)) return status;
 	if(!ExtractFiles(status, path)) return status;
 	if(!ImportInfo(status, path)) return status;
-	if(!RunHook(status, "post-install")) return status;
+	if(!RunHook(status, "post-install", path)) return status;
 	status.success = true;
 	return status;
 }
@@ -311,7 +311,7 @@ bool PackageFile::ImportInfo(PackageFile::InstallStatus &/*status*/, const strin
 	return true;
 }
 
-bool PackageFile::RunHook(PackageFile::InstallStatus &status, const string &hook){
+bool PackageFile::RunHook(PackageFile::InstallStatus &status, const string &hook, const string &path){
 	bool success = true;
 	auto run = [&](const vector<string> &cmd, bool capture) -> string{
 		if(cmd.size() == 2 && to_lower(cmd[0]) == "setstatus"){
@@ -321,6 +321,12 @@ bool PackageFile::RunHook(PackageFile::InstallStatus &status, const string &hook
 			status.messages.push_back(cmd[1]);
 			return "";
 		}else return cmd::RunCMDCommand(cmd, capture);
+	};
+	
+	auto get = [&](const string &name) -> string{
+		if(to_lower(name) == "install_path"){
+			return path;
+		}else return GetEnv(name);
 	};
 	
 	if(hooks.find(hook) != hooks.end()){
@@ -335,7 +341,7 @@ bool PackageFile::RunHook(PackageFile::InstallStatus &status, const string &hook
 						scriptStream.write(buffer.get(), size);
 						scriptStream.seekg(0);
 					}
-					cmd::ScriptContext context {scriptStream, run};
+					cmd::ScriptContext context {scriptStream, run, get};
 					context.Run({});
 					break;
 				}
