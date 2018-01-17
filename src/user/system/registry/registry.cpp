@@ -4,6 +4,7 @@
 #include <btos/messageloop.hpp>
 #include <util/sqlentity.hpp>
 #include <util/rpc.hpp>
+#include <util/clipp.hpp>
 
 #include "tables.hpp"
 #include "registry.hpp"
@@ -15,6 +16,7 @@ using std::vector;
 using std::shared_ptr;
 
 using namespace sqlentity;
+using namespace clipp;
 
 MessageLoop msgloop;
 
@@ -22,9 +24,9 @@ static const string dbPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/REGISTRY
 
 sqlitepp::db db(dbPath, false);
 
-static void InitDB(){
+static void InitDB(const string &dbFile = dbPath){
 	if(db.is_open()) return;
-	db.open();
+	db.open(dbFile);
 	if(!db.is_open()){
 		cout << "Could not open " << dbPath << endl;
 	}
@@ -77,8 +79,11 @@ Feature GetAssociation(const string &path){
 	return {};
 }
 
-int main(){
-	InitDB();
+int main(int argc, char **argv){
+	string dbFile = dbPath;
+	auto cli = (option("-f", "--file") & opt_value("dbfile").set(dbFile));
+	parse(argc, argv, cli);
+	InitDB(dbFile);
 	auto api = btos_api::registry::InitAPI();
 	for(auto &a : api){
 		msgloop.AddHandler(a);

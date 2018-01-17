@@ -94,7 +94,9 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 	}else if(MATCH(current_section, "service")){
 		char *varname, *cmd;
 		if(split(value, ' ', &varname, &cmd)){
-			pid_t pid = spawn(cmd, 0, NULL);
+			cmdLine cmdL = parse_cmd(cmd);
+			pid_t pid = spawn(cmdL.cmd, cmdL.argc, cmdL.argv);
+			free_cmd(cmdL);
 			char buf[64] = {0};
 			sprintf(buf, "%i", (int)pid);
 			setenv(varname, buf, 0, 0);
