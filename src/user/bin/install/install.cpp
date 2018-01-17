@@ -133,27 +133,23 @@ string mount_partition(const partition_info &part){
 	return "hdd";
 }
 
-void untar(const string &datapath, const string &destpath){
+void install_package(const string &packageFile, const string &dest){
 	string sysdrive = get_env("SYSTEMDRIVE");
-	string cwd = get_env("CWD");
-	bt_setenv("CWD", destpath.c_str(), 0);
-	char *args[] = {(char*)"xvf", (char*)datapath.c_str()};
-	string tarpath = sysdrive + ":/btos/cmd/tar.elx";
-	bt_pid_t pid = bt_spawn(tarpath.c_str(), 2, args);
+	char *args[] = {(char*)"install", (char*)packageFile.c_str(), (char*)dest.c_str()};
+	string packagePath = sysdrive + ":/btos/cmd/package.elx";
+	bt_pid_t pid = bt_spawn(tarpath.c_str(), 3, args);
 	bt_wait(pid);
-	bt_setenv("CWD", cwd.c_str(), 0);
 }
 
 bool copy_files(const string &mountpoint){
 	cout << "Copying files..." << endl;
 	string sysdrive = get_env("SYSTEMDRIVE");
-	string datapath = sysdrive + ":/packages/base.tar";
-	string kernelpath = sysdrive + ":/packages/kernel.tar";
-	string installpath = sysdrive + ":/packages/install.tar";
-	string destpath = mountpoint + ":/";
-	untar(datapath, destpath);
-	untar(kernelpath, destpath);
-	untar(installpath, destpath);
+	string datapath = sysdrive + ":/packages/base.pkf";
+	string kernelpath = sysdrive + ":/packages/kernel.pkf";
+	string installpath = sysdrive + ":/packages/install.pkf";
+	install_package(datapath, mountpoint + ":/btos");
+	install_package(kernelpath, mountpoint + ":/btos/boot");
+	install_package(installpath, mountpoint + ":/btos/install);
 	return true;
 }
 
@@ -248,7 +244,7 @@ bool install_grub(const string &mountpoint, const partition_info &part){
 }
 
 void write_answers(const string &mountpoint, const partition_info &part, bool rootinstall){
-	string setuppath = mountpoint + ":/btos/setup.ini";
+	string setuppath = mountpoint + ":/btos/install/setup.ini";
 	replace_in_file(setuppath, "$DEVICE$", part.devicepath);
 	replace_in_file(setuppath, "$PART$", part.path);
 	replace_in_file(setuppath, "$FS$", part.fs);
