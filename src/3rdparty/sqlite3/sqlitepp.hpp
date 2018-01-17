@@ -231,6 +231,15 @@ public:
     return ::sqlite3_exec(db_, "VACUUM;", nullptr, nullptr, nullptr);
   }
 
+  void backup(const std::string &path){
+    sqlite3 *backupFile;
+    sqlite3_open(path.c_str(), &backupFile);
+    sqlite3_backup *pBackup = sqlite3_backup_init(backupFile, "main", db_, "main");
+    (void)sqlite3_backup_step(pBackup, -1);
+    (void)sqlite3_backup_finish(pBackup);
+    (void)sqlite3_close(backupFile);
+  }
+
 private:
   db& operator=(const db&) = delete;    // no assignment
 

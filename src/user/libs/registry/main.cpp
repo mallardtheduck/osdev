@@ -98,6 +98,8 @@ int main(int argc, char **argv){
                 ++lno;
                 if(r) cout << "Error " << r << " on line " << lno << "." << endl;
             }
+        }else if(args[1] == "backup" && args.size() == 3){
+            reg::BackupRegistry(args[2]);
         }else{
             cout << "Unknown command: " << args[1] << endl;
         }

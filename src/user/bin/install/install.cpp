@@ -137,7 +137,7 @@ void install_package(const string &packageFile, const string &dest){
 	string sysdrive = get_env("SYSTEMDRIVE");
 	char *args[] = {(char*)"install", (char*)packageFile.c_str(), (char*)dest.c_str()};
 	string packagePath = sysdrive + ":/btos/cmd/package.elx";
-	bt_pid_t pid = bt_spawn(tarpath.c_str(), 3, args);
+	bt_pid_t pid = bt_spawn(packagePath.c_str(), 3, args);
 	bt_wait(pid);
 }
 
@@ -149,7 +149,7 @@ bool copy_files(const string &mountpoint){
 	string installpath = sysdrive + ":/packages/install.pkf";
 	install_package(datapath, mountpoint + ":/btos");
 	install_package(kernelpath, mountpoint + ":/btos/boot");
-	install_package(installpath, mountpoint + ":/btos/install);
+	install_package(installpath, mountpoint + ":/btos/install");
 	return true;
 }
 
@@ -252,14 +252,37 @@ void write_answers(const string &mountpoint, const partition_info &part, bool ro
 	replace_in_file(setuppath, "$MBR$", rootinstall ? "true" : "false");
 }
 
+bt_pid_t setup_registry(const string &mountpoint){
+	string regCmd = mountpoint + ":/btos/system/registry.elx";
+	const char *regargs[] = {"-f", ":memory:"};
+	bt_pid_t regpid = bt_spawn(regCmd.c_str(), sizeof(regargs)/sizeof(regargs[0]), (char**)regargs);
+	char *regpid_str;
+	asprintf(&regpid_str, "%i", (int)regpid);
+	bt_setenv("REGISTRY_PID", regpid_str, 0);
+	free(regpid_str);
+	return regpid;
+}
+
+void finalise_registry(const string &mountpoint, bt_pid_t registry_pid){
+	string regCmd = mountpoint + ":/btos/cmd/reg.elx";
+	const char *regargs[] = {"backup", "hdd:/btos/config/registry.db"};
+	bt_pid_t regpid = bt_spawn(regCmd.c_str(), sizeof(regargs)/sizeof(regargs[0]), (char**)regargs);
+	bt_wait(regpid);
+	bt_kill(registry_pid);
+}
+
 int main(){
     cout << "BT/OS Installer" << endl << endl;
 	partition_info partition = select_partition();
 	string mountpoint = mount_partition(partition);
+	bt_pid_t regpid = setup_registry(mountpoint);
 	if(copy_files(mountpoint)){
 		configure_install(mountpoint, partition);
 		bool rootinstall = install_grub(mountpoint, partition);
 		write_answers(mountpoint, partition, rootinstall);
+		finalise_registry(mountpoint, regpid);
+	}else{
+		bt_kill(regpid);
 	}
 	
     return 0;
