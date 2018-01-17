@@ -21,6 +21,47 @@ lock iso9660_lock;
 const size_t block_size = 2048;
 char path_buffer[BT_MAX_PATH] = {0};
 
+static bool in_string(char c, const char *s){
+	while(s && *s){
+		if(*s == c) return true;
+		++s;
+	}
+	return false;
+}
+
+static void shorten(char *fname){
+	char *oname = fname;
+	char name[13];
+	memset(name, 0, 13);
+	size_t prelen = 0;
+	while(fname && *fname && *fname != '.') ++prelen, ++fname;
+	size_t extstart = prelen;
+	while(fname && *fname && *fname == '.') ++extstart, ++fname;
+	size_t extlen = 0;
+	while(fname && *fname) ++extlen, ++fname;
+	memcpy(name, oname, prelen > 8 ? 8 : prelen);
+	if(extlen){
+		size_t extput = prelen > 8 ? 8 : prelen;
+		name[extput] = '.';
+		++extput;
+		memcpy(&name[extput], &oname[extstart], extlen > 3 ? 3 : extlen);
+	}
+	size_t newlen = (prelen > 8 ? 8 : prelen) + (extlen ? ((extlen > 3 ? 3 : extlen) + 1) : 0);
+	dbgpf("ISO9660: Shorten '%s' to '%s' (%i, %i, %i)\n", oname, name, (int)prelen, (int)extstart, (int)extlen);
+	memcpy(oname, name, newlen);
+	oname[newlen] = 0;
+}
+
+static void filter_chars(char *path){
+	const char *allowed_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_.+";
+	const char replacement = '_';
+	while(path && *path){
+		if(*path >= 'a' && *path <= 'z') *path += ('A' - 'a');
+		if(!in_string(*path, allowed_chars)) *path = replacement;
+		++path;
+	}
+}
+
 size_t strlen(const char *s) {
 	size_t i;
 	for (i = 0; s[i] != '\0'; i++) ;
@@ -31,6 +72,8 @@ void fs_path_to_string(fs_path *path, char *buf){
 	buf[0] = '\0';
 	bool first = true;
 	while(path){
+		filter_chars(path->str);
+		shorten(path->str);
 		//dbgpf("ISO9660: Path segment: '%s'\n", path->str);
 		if(first){
 			strncpy(buf, path->str, BT_MAX_SEGLEN);
@@ -38,6 +81,7 @@ void fs_path_to_string(fs_path *path, char *buf){
 		}else sprintf(&buf[strlen(buf)], "/%s", path->str);
 		path=path->next;
 	}
+	dbgpf("ISO9660: Path: %s\n", buf);
 }
 
 fs_path *fs_path_last_part(fs_path *path){
@@ -52,6 +96,8 @@ l9660_dir *get_parent(iso9660_mountdata *mount, fs_path *path){
 	l9660_fs_open_root(parent, &mount->fs);
 	while(path && path->str && path->next){
 		l9660_dir *newparent = new l9660_dir();
+		filter_chars(path->str);
+		shorten(path->str);
 		l9660_opendirat(newparent, parent, path->str);
 		delete parent;
 		parent = newparent;
@@ -122,7 +168,10 @@ void *iso9660_open(void *mountdata, fs_path *path, fs_mode_flags flags){
 		take_lock(&iso9660_lock);
 		scoped_ptr<l9660_dir> parent(get_parent(mount, path));
 		l9660_file *file = new l9660_file();
-		l9660_status status = l9660_openat(file, parent.get(), fs_path_last_part(path)->str);
+		char *fname = fs_path_last_part(path)->str;
+		filter_chars(fname);
+		shorten(fname);
+		l9660_status status = l9660_openat(file, parent.get(), fname);
 		if(status == L9660_OK){
 			if((flags & FS_AtEnd)) l9660_seek(file, L9660_SEEK_END, 0);
 		}else{
