@@ -252,8 +252,9 @@ void write_answers(const string &mountpoint, const partition_info &part, bool ro
 	replace_in_file(setuppath, "$MBR$", rootinstall ? "true" : "false");
 }
 
-bt_pid_t setup_registry(const string &mountpoint){
-	string regCmd = mountpoint + ":/btos/system/registry.elx";
+bt_pid_t setup_registry(){
+	string sysdrive = get_env("SYSTEMDRIVE");
+	string regCmd = sysdrive + ":/btos/system/registry.elx";
 	const char *regargs[] = {"-f", ":memory:"};
 	bt_pid_t regpid = bt_spawn(regCmd.c_str(), sizeof(regargs)/sizeof(regargs[0]), (char**)regargs);
 	char *regpid_str;
@@ -275,7 +276,7 @@ int main(){
     cout << "BT/OS Installer" << endl << endl;
 	partition_info partition = select_partition();
 	string mountpoint = mount_partition(partition);
-	bt_pid_t regpid = setup_registry(mountpoint);
+	bt_pid_t regpid = setup_registry();
 	if(copy_files(mountpoint)){
 		configure_install(mountpoint, partition);
 		bool rootinstall = install_grub(mountpoint, partition);

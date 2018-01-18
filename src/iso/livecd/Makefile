@@ -4,6 +4,9 @@ packages:= $(shell find ../../packages/ -name \*.pkf)
 livecd.iso: ../../kernel/btos.bin ../../tarinit/livecd/init.tar ../../packages/base.pkf initreg.cmd $(packages)
 	mkdir -p isodir
 	tar xf ../../packages/base.pkf -C isodir
+	rm -rf isodir/btos/share/terminfo
+	mkdir -p isodir/btos/share/terminfo/b
+	cp ../../3rdparty/install/btos/share/terminfo/b/btosansi isodir/btos/share/terminfo/b
 	mkdir -p isodir/packages
 	cp ../../packages/*.pkf isodir/packages
 	mkdir -p isodir/boot

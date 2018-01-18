@@ -47,7 +47,7 @@ static void shorten(char *fname){
 		memcpy(&name[extput], &oname[extstart], extlen > 3 ? 3 : extlen);
 	}
 	size_t newlen = (prelen > 8 ? 8 : prelen) + (extlen ? ((extlen > 3 ? 3 : extlen) + 1) : 0);
-	dbgpf("ISO9660: Shorten '%s' to '%s' (%i, %i, %i)\n", oname, name, (int)prelen, (int)extstart, (int)extlen);
+	//dbgpf("ISO9660: Shorten '%s' to '%s' (%i, %i, %i)\n", oname, name, (int)prelen, (int)extstart, (int)extlen);
 	memcpy(oname, name, newlen);
 	oname[newlen] = 0;
 }
@@ -365,6 +365,7 @@ directory_entry iso9660_stat(void *mountdata, fs_path *path){
 			}
 		}else{
 			ret.valid = false;
+			ret.type = FS_Invalid;
 		}
 		release_lock(&iso9660_lock);
 		return ret;
