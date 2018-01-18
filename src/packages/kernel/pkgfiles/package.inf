@@ -5,3 +5,10 @@ description = BT/OS kernel, bootloader and tools
 version = 0.1B
 contentPath = content
 
+[feature-kernel]
+
+name = kernel.image
+description = BT/OS kernel image
+path = /
+file = btos.bin
+type = kernel.image
