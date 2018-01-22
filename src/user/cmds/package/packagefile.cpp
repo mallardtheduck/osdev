@@ -135,7 +135,7 @@ void PackageFile::ParseContent(){
 			auto installPath = get_install_path(contentPath, rdr.get_next_file_name());
 			auto offset = rdr.get_next_file_offset();
 			auto size = rdr.get_next_file_size();
-			auto type = rdr.get_next_file_size() == 0 ? FS_Directory : FS_File;
+			auto type = rdr.is_next_directory() ? FS_Directory : FS_File;
 			content.push_back({installPath, offset, size, type});
 		}
 		rdr.skip_next_file();
@@ -255,7 +255,11 @@ bool PackageFile::ExtractFiles(PackageFile::InstallStatus &status, const string 
 		}
 	}
 	ParseContent();
-	for(auto &c : content){
+	auto sorted = content;
+	std::sort(sorted.begin(), sorted.end(), [](const ContentFile &a, const ContentFile &b) -> bool{
+		return a.path.length() < b.path.length();
+	});
+	for(auto &c : sorted){
 		string finalPath = ParsePath(path + "/" + c.path);
 		if(!starts_with(finalPath, path)){
 			stringstream ss;

@@ -115,7 +115,13 @@ void PackageFileList(const string &filePath){
 		if(sizeLen > maxSizeLen) maxSizeLen = sizeLen;
 	}
 	for(auto &f : fileList){
-		cout << padRight(f.path, maxNameLen) << " " << std::setw(maxSizeLen) << std::dec << f.size << " bytes @0x" << std::hex << f.offset << endl;
+		cout << padRight(f.path, maxNameLen) << " ";
+		if(f.type == FS_Directory){
+			cout << padRight("<DIR>", maxSizeLen + 6);
+		}else{
+			cout << std::setw(maxSizeLen) << std::dec << f.size << " bytes";
+		}
+		cout << " @0x" << std::hex << f.offset << endl;
 	}
 }
 

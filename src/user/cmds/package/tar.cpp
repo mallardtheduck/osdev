@@ -272,6 +272,7 @@ namespace tar
 
                 _cached_header_data.file_name = tar::header_get_filename(&h);
                 _cached_header_data.file_size = tar::header_get_filesize(&h);
+                _cached_header_data.filetype = tar::header_get_filetype(&h);
                 _cached_header_data_valid = true;
         }
 
@@ -290,6 +291,11 @@ namespace tar
         file_size_t reader::get_next_file_offset()
         {
         		return _inp.tellg();
+        }
+        
+        bool reader::is_next_directory(){
+        	_cache_header();
+        	return _cached_header_data.filetype == tar_file_type_directory;
         }
 
         void reader::read_next_file(char * const data)
