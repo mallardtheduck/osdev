@@ -224,7 +224,7 @@ bt_filesize_t iso9660_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
 		take_lock(&iso9660_lock);
 		int32_t offset = pos;
 		int whence = L9660_SEEK_SET;
-		if((flags & FS_Backwards)) pos = -pos;
+		if((flags & FS_Backwards)) offset = -pos;
 		if((flags & FS_Relative)) whence = L9660_SEEK_CUR;
 		l9660_status status = l9660_seek(file, whence, offset);
 		if(status != L9660_OK) panic("(ISO9660) Seek failure.");
