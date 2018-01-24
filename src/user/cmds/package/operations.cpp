@@ -12,6 +12,7 @@
 #include <cmath>
 #include <memory>
 #include <cstdio>
+#include <sstream>
 
 #include "package.hpp"
 #include "packagefile.hpp"
@@ -126,11 +127,29 @@ void PackageFileList(const string &filePath){
 }
 
 void InstallPackage(const string &filePath, const string &path){
+	size_t proglen = 0;
+	auto progressFn = [&](const PackageFile::InstallProgress &p){
+		size_t pos = cout.tellp();
+		if(proglen){
+			cout << string(proglen, ' ') << std::flush;
+			cout.seekp(pos);
+		}
+		std::stringstream ss;
+		ss << "Installing file " << p.step << " of " << p.steps << " (" << p.desc << ")";
+		proglen = ss.str().length();
+		cout << ss.str() << std::flush;
+		if(p.step != p.steps) cout.seekp(pos);
+		else{
+			cout << endl;
+			proglen = 0;
+		}
+	};
+	
 	auto installPath = ParsePath(path);
 	if(installPath.back() == '/') installPath = installPath.substr(0, installPath.length() - 1);
 	PackageFile pkgFile(filePath);
 	cout << "Installing package \"" << pkgFile.GetInfo().name << "\" to \"" << installPath << "\"..." << endl;
-	auto res = pkgFile.Install(installPath);
+	auto res = pkgFile.Install(installPath, progressFn);
 	if(res.success) cout << "Install sucessful." << endl;
 	else{
 		cout << "Install failed:" << endl;
