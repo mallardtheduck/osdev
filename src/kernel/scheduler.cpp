@@ -47,11 +47,11 @@ struct sch_thread{
 };
 
 static vector<sch_thread*> *threads;
-sch_thread *current_thread;
-static uint64_t current_thread_id;
+sch_thread *volatile current_thread;
+static volatile uint64_t current_thread_id;
 static sch_thread *reaper_thread;
 static sch_thread *prescheduler_thread;
-static uint64_t cur_ext_id;
+static volatile uint64_t cur_ext_id;
 static sch_thread *idle_thread;
 static uint64_t sch_zero=0;
 static bool sch_deferred=false;
@@ -396,7 +396,7 @@ extern "C" void sch_isr_c(){
 	irq_ack_if_needed(0);
 }
 
-const uint64_t &sch_get_id(){
+const volatile uint64_t &sch_get_id(){
 	if(!sch_inited) return sch_zero;
 	return current_thread_id;
 }

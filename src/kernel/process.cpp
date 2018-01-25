@@ -9,8 +9,8 @@ static const uint32_t default_userspace_priority=100;
 
 extern "C" void proc_run_usermode(void *stack, proc_entry entry, int argc, char **argv);
 
-proc_process *proc_current_process;
-pid_t proc_current_pid;
+proc_process *volatile proc_current_process;
+volatile pid_t proc_current_pid;
 vector<proc_process*> *proc_processes;
 
 extern lock sch_lock;
@@ -176,6 +176,7 @@ bool proc_switch(pid_t pid){
 	if(pid!=proc_current_pid){
 		proc_process *newproc=proc_get(pid);
         if(!newproc) return false;
+        if(!newproc && pid == 0) panic("(PROC) Failed to switch to PID 0!");
         {
             hold_lock hl(proc_lock, false);
             proc_current_process = newproc;
@@ -183,6 +184,7 @@ bool proc_switch(pid_t pid){
             MM2::mm2_switch(proc_current_process->pagedir);
         }
 	}
+	if(proc_current_pid != pid) panic("(PROC) PID reset during switch?");
     return true;
 }
 
