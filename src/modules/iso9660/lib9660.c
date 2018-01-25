@@ -125,9 +125,17 @@ bool compare_filenames(const char *isoname, const char *filename, size_t len){
 	char *comparename = (char*)isoname;
 	//if filename does not contain ';', but isoname does
 	if(strpos(filename, ';') >= strlen(filename) && strpos(isoname, ';') < strlen(isoname)){
-		comparename = malloc(strlen(isoname));
+		comparename = malloc(strlen(isoname) + 1);
 		strncpy(comparename, isoname, strlen(isoname) + 1);
 		replace_char(comparename, ';', '\0');
+		len = strlen(comparename);
+	}
+	if(comparename[strlen(comparename) - 1] == '.'){
+		if(comparename == isoname){
+			comparename = malloc(strlen(isoname) + 1);
+			strncpy(comparename, isoname, strlen(isoname) + 1);
+		}
+		comparename[strlen(comparename) - 1] = '\0';
 		len = strlen(comparename);
 	}
 	bool ret = (len == strlen(filename));

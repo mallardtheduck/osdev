@@ -51,6 +51,7 @@ namespace RPCID{
     const uint32_t DeleteFeature = 302;
 
     const uint32_t RunScript = 900;
+    const uint32_t BackupRegistry = 901;
 };
 
 std::vector<std::string> GetAllPackages();
@@ -75,6 +76,7 @@ void DeletePackage(int64_t pkgid);
 void DeleteFeature(int64_t featid);
 
 std::vector<int> RunScript(const std::vector<std::string> &sql);
+void BackupRegistry(const std::string &path);
 
 std::string GetFeaturePath(uint64_t id);
 

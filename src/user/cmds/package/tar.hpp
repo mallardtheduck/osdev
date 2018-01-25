@@ -67,6 +67,7 @@ namespace tar
                 struct  {
                         std::string file_name;
                         file_size_t file_size;
+                        char filetype;
                 } _cached_header_data;
                 bool _cached_header_data_valid;
                 void _cache_header();
@@ -90,6 +91,8 @@ namespace tar
                 
                 //Returns offset in .tar archive where next file starts
                 file_size_t get_next_file_offset();
+                
+                bool is_next_directory();
 
                 // Read next file in |inp| to |data|.
                 void read_next_file(char * const data);

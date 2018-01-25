@@ -187,6 +187,10 @@ vector<int> RunScript(const vector<string> &sql){
 	return ret;
 }
 
+void BackupRegistry(const string &path){
+	db.backup(path);
+}
+
 template<uint32_t id, typename F> void AddAPI(vector<shared_ptr<IMessageHandler>> &vec, F fn){
 	shared_ptr<IMessageHandler> ptr { rpc::NewProcServer<id>(rpc::make_function(fn)) };
 	vec.push_back(ptr);
@@ -216,6 +220,7 @@ vector<shared_ptr<IMessageHandler>> InitAPI(){
 	AddAPI<RPCID::DeleteFeature>(ret, &DeleteFeature);
 
 	AddAPI<RPCID::RunScript>(ret, &RunScript);
+	AddAPI<RPCID::BackupRegistry>(ret, &BackupRegistry);
 	return ret;
 }
 

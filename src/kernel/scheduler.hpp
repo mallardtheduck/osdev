@@ -23,7 +23,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size=defau
 void sch_end_thread();
 extern "C" void sch_yield();
 extern "C" void sch_update_eip(uint32_t eip);
-const uint64_t &sch_get_id();
+const volatile uint64_t &sch_get_id();
 void sch_block();
 void sch_unblock(uint64_t ext_id);
 void sch_set_priority(uint32_t pri);

@@ -135,7 +135,7 @@ void PackageFile::ParseContent(){
 			auto installPath = get_install_path(contentPath, rdr.get_next_file_name());
 			auto offset = rdr.get_next_file_offset();
 			auto size = rdr.get_next_file_size();
-			auto type = rdr.get_next_file_size() == 0 ? FS_Directory : FS_File;
+			auto type = rdr.is_next_directory() ? FS_Directory : FS_File;
 			content.push_back({installPath, offset, size, type});
 		}
 		rdr.skip_next_file();
@@ -161,13 +161,13 @@ vector<PackageFile::ContentFile> PackageFile::GetContent(){
 	return content;
 }
 
-PackageFile::InstallStatus PackageFile::Install(const string &path){
+PackageFile::InstallStatus PackageFile::Install(const string &path, ProgressFunc progressFn){
 	InstallStatus status = {false, 0, {}};
 	if(!RunHook(status, "pre-install", path)) return status;
 	if(!CheckVersion(status)) return status;
 	if(!CheckPathConflicts(status, path)) return status;
 	if(!CheckFeatureConflicts(status)) return status;
-	if(!ExtractFiles(status, path)) return status;
+	if(!ExtractFiles(status, path, progressFn)) return status;
 	if(!ImportInfo(status, path)) return status;
 	if(!RunHook(status, "post-install", path)) return status;
 	status.success = true;
@@ -243,7 +243,7 @@ bool PackageFile::CheckFeatureConflicts(PackageFile::InstallStatus &status){
 	return ok;
 }
 
-bool PackageFile::ExtractFiles(PackageFile::InstallStatus &status, const string &path){
+bool PackageFile::ExtractFiles(PackageFile::InstallStatus &status, const string &path, ProgressFunc progressFn){
 	auto stat = bt_stat(path.c_str());
 	if(stat.type != FS_Directory){
 		auto res = mkdir(path.c_str(), 777);
@@ -255,7 +255,13 @@ bool PackageFile::ExtractFiles(PackageFile::InstallStatus &status, const string 
 		}
 	}
 	ParseContent();
-	for(auto &c : content){
+	auto sorted = content;
+	std::sort(sorted.begin(), sorted.end(), [](const ContentFile &a, const ContentFile &b) -> bool{
+		return a.path.length() < b.path.length();
+	});
+	size_t step = 0;
+	for(auto &c : sorted){
+		progressFn({sorted.size(), ++step, c.path});
 		string finalPath = ParsePath(path + "/" + c.path);
 		if(!starts_with(finalPath, path)){
 			stringstream ss;

@@ -100,6 +100,11 @@ vector<int> RunScript(const vector<string> &sql){
     return rpc::MakeClient<RPCID::RunScript>(pid, RunScript)(sql);
 }
 
+void BackupRegistry(const string &path){
+    SetPID();
+    rpc::MakeClient<RPCID::BackupRegistry>(pid, BackupRegistry)(path);
+}
+
 void DeletePackage(int64_t pkgid){
 	SetPID();
 	rpc::MakeClient<RPCID::DeletePackage>(pid, DeletePackage)(pkgid);
