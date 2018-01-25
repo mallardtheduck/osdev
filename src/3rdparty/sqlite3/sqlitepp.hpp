@@ -175,7 +175,7 @@ public:
 class db
 {
 public:
-  db(std::string name, bool initial_open = true, int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE)
+  db(const std::string &name, bool initial_open = true, int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE)
     : name_(name)
     , open_(false)
     , db_(nullptr)
@@ -198,6 +198,12 @@ public:
     int err = ::sqlite3_open_v2(name_.c_str(), &db_, flags, nullptr);
     open_ = !err;
     return err;
+  }
+
+  int open(const std::string &name, int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE)
+  {
+    name_ = name;
+    return open(flags);
   }
 
   // close the database
@@ -225,11 +231,20 @@ public:
     return ::sqlite3_exec(db_, "VACUUM;", nullptr, nullptr, nullptr);
   }
 
+  void backup(const std::string &path){
+    sqlite3 *backupFile;
+    sqlite3_open(path.c_str(), &backupFile);
+    sqlite3_backup *pBackup = sqlite3_backup_init(backupFile, "main", db_, "main");
+    (void)sqlite3_backup_step(pBackup, -1);
+    (void)sqlite3_backup_finish(pBackup);
+    (void)sqlite3_close(backupFile);
+  }
+
 private:
   db& operator=(const db&) = delete;    // no assignment
 
 private:
-  const std::string name_;  // db filename
+  std::string name_;  // db filename
   bool              open_;  // db open status
   ::sqlite3*        db_;    // associated db
 };

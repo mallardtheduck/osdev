@@ -1,2 +1,0 @@
-search --file /btos/boot/$UUID$.id --set
-configfile /btos/boot/grub/grub.cfg

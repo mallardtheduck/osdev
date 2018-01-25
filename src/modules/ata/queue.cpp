@@ -49,10 +49,17 @@ bool ata_queue_proc(ata_operation *op){
 			dbgpf("ATA: Invalid operation: %i\n", op->type);
 		    op->status=ata_operation_status::Error;
 		}
-		setpid(pid);
+		if(!setpid(pid)){
+			dbgpf("ATA: Failed to reset PID to %i\n", (int)pid);
+			panic("(ATA) Unable to reset PID after operation!");	
+		}
 	}else{
 		dbgpf("ATA: Could not set pid to: %i (current pid: %i)\n", (int)op->pid, (int)pid);
 		op->status=ata_operation_status::Error;
+	}
+	if(getpid() != pid){
+		dbgpf("ATA: PID %i != %i\n", (int)pid, (int)getpid());
+		panic("(ATA) Incorrect PID after operation!");
 	}
     return true;
 }

@@ -69,7 +69,7 @@ void gdt_set_kernel_stack(void* ptr);
 #define KERNEL_REVISION "A"
 #define KERNEL_VERSION_STRING "v" MACRO_XSTR(KERNEL_VERSION_MAJOR) "." MACRO_XSTR(KERNEL_VERSION_MINOR) KERNEL_REVISION
 #define KERNEL_OS_NAME "BT/OS"
-#define KERNEL_COPYRIGHT "(c) 2014-2017 Stuart Brockman"
+#define KERNEL_COPYRIGHT "(c) 2014-2018 Stuart Brockman"
 extern char *kernel_buildid;
 
 extern multiboot_info_t *mbt;

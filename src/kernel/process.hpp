@@ -23,8 +23,8 @@ namespace proc_env_flags{
 struct proc_process;
 class string;
 
-extern proc_process *proc_current_process;
-extern pid_t proc_current_pid;
+extern proc_process *volatile proc_current_process;
+extern volatile pid_t proc_current_pid;
 
 #include "load_elf.hpp"
 

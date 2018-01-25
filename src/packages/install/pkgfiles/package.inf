@@ -1,0 +1,13 @@
+[package]
+
+name = install
+description = Installation configuration
+version = 0.1B
+contentPath = btos
+
+[feature-install]
+
+name = install.setup.ini
+description = Installation configuration file
+path = /setup.ini
+type = ini.setup

@@ -1,0 +1,5 @@
+out echo "Pre-install script"
+# out echo "Not allowing installation."
+# addmessage "Test message."
+# setstatus false
+out echo "install_path = $install_path$"

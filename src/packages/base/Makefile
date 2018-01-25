@@ -1,3 +1,5 @@
+output-name := base.pkf
+
 import-files:=\
  data/btos/cmd/cmd.elx \
  data/btos/system/terminal.sys \
@@ -69,7 +71,7 @@ pkg-files:= $(shell find pkgfiles -type f)
 
 .SUFFIXES:
 
-all: ../base.tar
+all: ../$(output-name)
 
 data/btos/cmd/cmd.elx: ../../user/cmds/cmd/cmd.elx create.directories
 	cp $< $@
@@ -283,12 +285,12 @@ create.directories: Makefile
 	mkdir -p data/btos/config
 	touch create.directories
 
-../base.tar: $(import-files) $(pkg-files)
+../$(output-name): $(import-files) $(pkg-files)
 	cp -Rv pkgfiles/* data
-	tar cf ../base.tar -C data .
+	tar cf ../$(output-name) -C data .
 
 clean:
 	-rm -rf data
-	-rm ../base.tar
+	-rm ../$(output-name)
 	-rm create.directories
 	-rm copy.grub

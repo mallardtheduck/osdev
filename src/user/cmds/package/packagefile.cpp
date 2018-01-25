@@ -10,6 +10,7 @@
 
 #include <btos.h>
 #include <btos/directory.hpp>
+#include <cmd/scripting.hpp>
 
 using std::string;
 using std::unique_ptr;
@@ -70,6 +71,12 @@ static bool is_content(const string &contentPath, const string &name){
 	else return false;
 }
 
+static string to_lower(const string &str){
+	string ret(str);
+	transform(str.begin(), str.end(), ret.begin(), ::tolower);
+	return ret;
+}
+
 void PackageFile::Parse(){
 	tar::reader rdr(stream);
 	while(rdr.contains_another_file()){
@@ -109,6 +116,9 @@ void PackageFile::Parse(){
 						if(featinfo.ver == "") featinfo.ver = packageInfo.ver;
 						features.push_back(featinfo);
 					}
+					if(s.first == "hooks"){
+						hooks = s.second;
+					}
 				}
 			}
 		}else{
@@ -125,7 +135,7 @@ void PackageFile::ParseContent(){
 			auto installPath = get_install_path(contentPath, rdr.get_next_file_name());
 			auto offset = rdr.get_next_file_offset();
 			auto size = rdr.get_next_file_size();
-			auto type = rdr.get_next_file_size() == 0 ? FS_Directory : FS_File;
+			auto type = rdr.is_next_directory() ? FS_Directory : FS_File;
 			content.push_back({installPath, offset, size, type});
 		}
 		rdr.skip_next_file();
@@ -151,13 +161,15 @@ vector<PackageFile::ContentFile> PackageFile::GetContent(){
 	return content;
 }
 
-PackageFile::InstallStatus PackageFile::Install(const string &path){
+PackageFile::InstallStatus PackageFile::Install(const string &path, ProgressFunc progressFn){
 	InstallStatus status = {false, 0, {}};
+	if(!RunHook(status, "pre-install", path)) return status;
 	if(!CheckVersion(status)) return status;
 	if(!CheckPathConflicts(status, path)) return status;
 	if(!CheckFeatureConflicts(status)) return status;
-	if(!ExtractFiles(status, path)) return status;
+	if(!ExtractFiles(status, path, progressFn)) return status;
 	if(!ImportInfo(status, path)) return status;
+	if(!RunHook(status, "post-install", path)) return status;
 	status.success = true;
 	return status;
 }
@@ -231,7 +243,7 @@ bool PackageFile::CheckFeatureConflicts(PackageFile::InstallStatus &status){
 	return ok;
 }
 
-bool PackageFile::ExtractFiles(PackageFile::InstallStatus &status, const string &path){
+bool PackageFile::ExtractFiles(PackageFile::InstallStatus &status, const string &path, ProgressFunc progressFn){
 	auto stat = bt_stat(path.c_str());
 	if(stat.type != FS_Directory){
 		auto res = mkdir(path.c_str(), 777);
@@ -243,7 +255,13 @@ bool PackageFile::ExtractFiles(PackageFile::InstallStatus &status, const string 
 		}
 	}
 	ParseContent();
-	for(auto &c : content){
+	auto sorted = content;
+	std::sort(sorted.begin(), sorted.end(), [](const ContentFile &a, const ContentFile &b) -> bool{
+		return a.path.length() < b.path.length();
+	});
+	size_t step = 0;
+	for(auto &c : sorted){
+		progressFn({sorted.size(), ++step, c.path});
 		string finalPath = ParsePath(path + "/" + c.path);
 		if(!starts_with(finalPath, path)){
 			stringstream ss;
@@ -297,4 +315,45 @@ bool PackageFile::ImportInfo(PackageFile::InstallStatus &/*status*/, const strin
 		reg::InstallFeature(f);
 	}
 	return true;
+}
+
+bool PackageFile::RunHook(PackageFile::InstallStatus &status, const string &hook, const string &path){
+	bool success = true;
+	auto run = [&](const vector<string> &cmd, bool capture) -> string{
+		if(cmd.size() == 2 && to_lower(cmd[0]) == "setstatus"){
+			success = cmd::IsTruthy(cmd[1]);
+			return "";
+		}else if(cmd.size() == 2 && to_lower(cmd[0]) == "addmessage"){
+			status.messages.push_back(cmd[1]);
+			return "";
+		}else return cmd::RunCMDCommand(cmd, capture);
+	};
+	
+	auto get = [&](const string &name) -> string{
+		if(to_lower(name) == "install_path"){
+			return path;
+		}else return GetEnv(name);
+	};
+	
+	if(hooks.find(hook) != hooks.end()){
+			tar::reader rdr(stream);
+			while(rdr.contains_another_file()){
+				if(filter_filename(rdr.get_next_file_name()) == hooks[hook]){
+					stringstream scriptStream;
+					{
+						auto size = rdr.get_next_file_size();
+						unique_ptr<char[]> buffer{new char[size]};
+						rdr.read_next_file(buffer.get());
+						scriptStream.write(buffer.get(), size);
+						scriptStream.seekg(0);
+					}
+					cmd::ScriptContext context {scriptStream, run, get};
+					context.Run({});
+					break;
+				}
+				rdr.skip_next_file();
+			}
+			stream.seekg(0);
+	}
+	return success;
 }

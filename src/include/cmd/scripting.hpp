@@ -16,6 +16,7 @@ class ScriptScope;
 class ScriptContext;
 
 std::string RunCMDCommand(const std::vector<std::string> &tokens, bool capture);
+bool IsTruthy(const std::string &q);
 
 class ScriptFunction{
 private:

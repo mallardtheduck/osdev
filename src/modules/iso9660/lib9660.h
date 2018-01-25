@@ -37,18 +37,18 @@ typedef enum {
     /*! Success! */
     L9660_OK = 0,
     /*! read_sector callback returned false */
-    L9660_EIO,
+    L9660_EIO = 1,
     /*! file system is bad */
-    L9660_EBADFS,
+    L9660_EBADFS = 2,
     /*! specified name does not exist */
-    L9660_ENOENT,
+    L9660_ENOENT = 3,
     /*! attempted to open a non-file (e.g. a directory) as a file */
-    L9660_ENOTFILE,
+    L9660_ENOTFILE = 4,
     /*! attempted to open a non-directory (e.g. a file) as a directory
      *  may be returned by l9660_openat if e.g. you pass path "a/b" and
      *  "a" is a file
      */
-    L9660_ENOTDIR,
+    L9660_ENOTDIR = 5,
 } l9660_status;
 
 /* ISO9660 uses big/little/dual endian integers */
