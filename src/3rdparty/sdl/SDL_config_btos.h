@@ -77,6 +77,9 @@ typedef unsigned long uintptr_t;
 /* Enable the dummy video driver (src/video/dummy/\*.c) */
 #define SDL_VIDEO_DRIVER_DUMMY  1
 
+/* Enable the BT/OS video driver (src/video/btos/\*.c) */
+#define SDL_VIDEO_DRIVER_BTOS 1
+
 /* Enable the dummy filesystem driver (src/filesystem/dummy/\*.c) */
 #define SDL_FILESYSTEM_DUMMY  1
 

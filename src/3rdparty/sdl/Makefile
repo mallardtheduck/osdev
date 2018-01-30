@@ -2,7 +2,7 @@ LIBRARY-NAME := SDL2.ell
 DESTINATION := ../install/btos
 
 BUILD-C := i686-pc-btos-gcc
-BUILD-C-FLAGS := -c
+BUILD-C-FLAGS := -c -Wall -Wextra
 BUILD-C-OPTIONS := -g -c -I./include -I../../include -std=gnu99
 LINK := i686-pc-btos-gcc
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
@@ -32,6 +32,7 @@ SOURCES = \
 	src/timer/dummy/*.c \
 	src/video/*.c \
 	src/video/dummy/*.c \
+	src/video/btos/*.c
 
 OBJECTS = $(shell echo $(SOURCES) | sed -e 's,\.c,\.o,g')
 
