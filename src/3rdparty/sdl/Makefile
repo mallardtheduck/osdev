@@ -6,7 +6,7 @@ BUILD-C-FLAGS := -c -Wall -Wextra
 BUILD-C-OPTIONS := -g -c -I./include -I../../include -std=gnu99
 LINK := i686-pc-btos-gcc
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
-LIB-LINK-OPTIONS := -lgcc_s -lc -lbtoscore
+LIB-LINK-OPTIONS := -lgcc_s -lc -lbtoscore -lgds
 
 SOURCES = \
 	src/*.c \
@@ -50,4 +50,5 @@ clean:
 copy: $(LIBRARY-NAME)
 	mkdir -p $(DESTINATION)/lib
 	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib
-	cp -uR include/*.h $(DESTINATION)/include
+	mkdir -p $(DESTINATION)/include/SDL2
+	cp -uR include/*.h $(DESTINATION)/include/SDL2

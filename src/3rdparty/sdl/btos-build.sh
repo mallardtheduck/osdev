@@ -25,5 +25,4 @@ export CXXFLAGS=""
 export LDFLAGS=""
 
 PATH=$BASE_PATH/bin:$PATH
-cp ../sdl/Makefile .
 make

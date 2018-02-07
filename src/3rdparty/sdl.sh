@@ -13,6 +13,7 @@ cd SDL2-2.0.7
 cp ../sdl/Makefile .
 cp ../sdl/*.h include
 cp -Rv ../sdl/src/* src
+cp ../sdl/SDL_dynapi.h src/dynapi
 cp ../sdl/btos-build.sh .
 chmod +x btos-build.sh
 mkdir -p ../install

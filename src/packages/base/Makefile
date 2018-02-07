@@ -66,6 +66,7 @@ import-files:=\
  data/btos/lib/registry.ell \
  data/btos/cmd/reg.elx \
  data/btos/cmd/package.elx \
+ data/btos/lib/SDL2.ell \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -272,6 +273,9 @@ data/btos/cmd/reg.elx: ../../user/libs/registry/reg.elx
 	cp $< $@
 
 data/btos/cmd/package.elx: ../../user/cmds/package/package.elx
+	cp $< $@
+
+data/btos/lib/SDL2.ell: ../../3rdparty/install/btos/lib/SDL2.ell
 	cp $< $@
 
 create.directories: Makefile
