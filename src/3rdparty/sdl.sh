@@ -14,6 +14,8 @@ cp ../sdl/Makefile .
 cp ../sdl/*.h include
 cp -Rv ../sdl/src/* src
 cp ../sdl/SDL_dynapi.h src/dynapi
+cp ../sdl/SDL_video.c src/video
+cp ../sdl/SDL_sysvideo.h src/video
 cp ../sdl/btos-build.sh .
 chmod +x btos-build.sh
 mkdir -p ../install

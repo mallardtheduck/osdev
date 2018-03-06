@@ -49,6 +49,8 @@
 
 #define BTOSVID_DRIVER_NAME "BTOS"
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 /* Initialization/Query functions */
 static int BTOS_VideoInit(_THIS);
 static int BTOS_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode);
@@ -59,12 +61,7 @@ static void BTOS_VideoQuit(_THIS);
 static int
 BTOS_Available(void)
 {
-    const char *envr = SDL_getenv("SDL_VIDEODRIVER");
-    if ((envr) && (SDL_strcmp(envr, BTOSVID_DRIVER_NAME) == 0)) {
-        return (1);
-    }
-
-    return (0);
+    return 1;
 }
 
 static void
@@ -91,6 +88,7 @@ BTOS_CreateDevice(int devindex)
     device->VideoQuit = BTOS_VideoQuit;
     device->SetDisplayMode = BTOS_SetDisplayMode;
     //device->PumpEvents = BTOS_PumpEvents;
+    device->CreateSDLWindow = SDL_BTOS_CreateWindow;
     device->CreateWindowFramebuffer = SDL_BTOS_CreateWindowFramebuffer;
     device->UpdateWindowFramebuffer = SDL_BTOS_UpdateWindowFramebuffer;
     device->DestroyWindowFramebuffer = SDL_BTOS_DestroyWindowFramebuffer;

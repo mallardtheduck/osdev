@@ -23,5 +23,6 @@
 extern int SDL_BTOS_CreateWindowFramebuffer(_THIS, SDL_Window * window, Uint32 * format, void ** pixels, int *pitch);
 extern int SDL_BTOS_UpdateWindowFramebuffer(_THIS, SDL_Window * window, const SDL_Rect * rects, int numrects);
 extern void SDL_BTOS_DestroyWindowFramebuffer(_THIS, SDL_Window * window);
+extern int SDL_BTOS_CreateWindow(_THIS, SDL_Window *window);
 
 /* vi: set ts=4 sw=4 expandtab: */
