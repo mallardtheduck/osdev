@@ -28,6 +28,7 @@
 
 #include "../SDL_sysvideo.h"
 #include "SDL_btosframebuffer_c.h"
+#include "SDL_hints.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -73,8 +74,10 @@ static SDL_BTOS_windowdata _SDL_BTOS_CreateWindow(SDL_Window * window){
     	info.fail = true;
 		return info;
     }
+    bt_zero("SDL: Configured SHM.\n");
     
     info.gds_id = GDS_NewSurface(gds_SurfaceType_Memory, w, h, 100, gds_ColourType_True, info.shm_id, 0);
+    bt_zero("SDL: Created surface.\n");
     wm_WindowInfo wminfo;
     wminfo.x = 0;
     wminfo.y = 0;
@@ -82,8 +85,11 @@ static SDL_BTOS_windowdata _SDL_BTOS_CreateWindow(SDL_Window * window){
     wminfo.subscriptions = wm_KeyboardEvents | wm_PointerEvents | wm_FrameEvents;
     wminfo.gds_id = info.gds_id;
     strcpy(wminfo.title, "SDL Window");
+    bt_zero("SDL: Creating window.\n");
     info.wm_id = WM_CreateWindow(wminfo);
     info.fail = false;
+    bt_zero("SDL: Created window.\n");
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
     return info;
 }
 
@@ -123,7 +129,12 @@ int SDL_BTOS_CreateWindowFramebuffer(_THIS, SDL_Window * window, Uint32 * format
 
 int SDL_BTOS_UpdateWindowFramebuffer(_THIS, SDL_Window * window, const SDL_Rect * rects, int numrects)
 {
-    /* Does nothing? */
+	SDL_BTOS_windowdata *info = (SDL_BTOS_windowdata*)window->driverdata;
+	WM_SelectWindow(info->wm_id);
+	
+    for(int i = 0; i < numrects; ++i){
+    	WM_UpdateRect(rects[i].x, rects[i].y, rects[i].w, rects[i].h);	
+    }
 
     return 0;
 }

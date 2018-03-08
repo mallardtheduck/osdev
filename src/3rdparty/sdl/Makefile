@@ -6,7 +6,7 @@ BUILD-C-FLAGS := -c -Wall -Wextra
 BUILD-C-OPTIONS := -g -c -I./include -I../../include -std=gnu99
 LINK := i686-pc-btos-gcc
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
-LIB-LINK-OPTIONS := -lgcc_s -lc -lbtoscore -lgds
+LIB-LINK-OPTIONS := -lgcc_s -lc -lbtoscore -lgds -lwm
 
 SOURCES = \
 	src/*.c \
