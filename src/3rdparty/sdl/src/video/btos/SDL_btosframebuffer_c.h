@@ -19,10 +19,26 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 #include "../../SDL_internal.h"
+#include <btos.h>
 
 extern int SDL_BTOS_CreateWindowFramebuffer(_THIS, SDL_Window * window, Uint32 * format, void ** pixels, int *pitch);
 extern int SDL_BTOS_UpdateWindowFramebuffer(_THIS, SDL_Window * window, const SDL_Rect * rects, int numrects);
 extern void SDL_BTOS_DestroyWindowFramebuffer(_THIS, SDL_Window * window);
+extern void SDL_BTOS_DestroyWindow(_THIS, SDL_Window * window);
 extern int SDL_BTOS_CreateWindow(_THIS, SDL_Window *window);
+extern void BTOS_PumpEvents(_THIS);
+
+typedef struct{
+	bool fail;
+	bt_handle_t shm_handle;
+	uint64_t shm_id;
+	uint64_t gds_id;
+	uint32_t *buffer;
+	bt_handle_t mapping;
+	uint64_t wm_id;
+} SDL_BTOS_windowdata;
+
+extern SDL_BTOS_windowdata **btos_windows;
+extern int btos_window_count;
 
 /* vi: set ts=4 sw=4 expandtab: */

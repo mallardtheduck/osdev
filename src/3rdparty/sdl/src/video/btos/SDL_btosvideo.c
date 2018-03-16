@@ -70,12 +70,6 @@ BTOS_DeleteDevice(SDL_VideoDevice * device)
     SDL_free(device);
 }
 
-void
-BTOS_PumpEvents(_THIS)
-{
-    /* do nothing. */
-}
-
 static SDL_VideoDevice *
 BTOS_CreateDevice(int devindex)
 {
@@ -95,6 +89,7 @@ BTOS_CreateDevice(int devindex)
     device->SetDisplayMode = BTOS_SetDisplayMode;
     device->PumpEvents = BTOS_PumpEvents;
     device->CreateSDLWindow = SDL_BTOS_CreateWindow;
+    device->DestroyWindow = SDL_BTOS_DestroyWindow;
     device->CreateWindowFramebuffer = SDL_BTOS_CreateWindowFramebuffer;
     device->UpdateWindowFramebuffer = SDL_BTOS_UpdateWindowFramebuffer;
     device->DestroyWindowFramebuffer = SDL_BTOS_DestroyWindowFramebuffer;

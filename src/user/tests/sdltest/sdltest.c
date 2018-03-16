@@ -62,7 +62,7 @@ int pollEventsForQuit() {
         return true;
         break;
       case SDL_KEYDOWN:
-        if (e.key.keysym.sym == SDLK_ESCAPE) {
+        if (e.key.keysym.sym == SDLK_q) {
           return true;
         }
         break;

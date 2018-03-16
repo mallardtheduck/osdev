@@ -34,15 +34,33 @@
 
 #define BTOS_SURFACE   "_SDL_BTOSSurface"
 
-typedef struct{
-	bool fail;
-	bt_handle_t shm_handle;
-	uint64_t shm_id;
-	uint64_t gds_id;
-	uint32_t *buffer;
-	bt_handle_t mapping;
-	uint64_t wm_id;
-} SDL_BTOS_windowdata;
+SDL_BTOS_windowdata **btos_windows;
+int btos_window_count;
+
+static void _SDL_BTOS_AddWindow(SDL_BTOS_windowdata *data){
+	if(btos_window_count == 0){
+		btos_windows = malloc(sizeof(SDL_BTOS_windowdata*));
+		btos_windows[0] = data;
+		++btos_window_count;
+	}else{
+		btos_windows = realloc(btos_windows, ++btos_window_count * sizeof(SDL_BTOS_windowdata*));
+		btos_windows[btos_window_count - 1] = data;
+	}
+}
+
+static void _SDL_BTOS_RemoveWindow(SDL_BTOS_windowdata *data){
+	bool removed = false;
+	for(int i = 0; i < btos_window_count; ++i){
+		if(removed) btos_windows[i - 1] = btos_windows[i];
+		if(btos_windows[i] == data)	removed = true;
+	}
+	--btos_window_count;
+	if(btos_window_count > 0){
+		realloc(btos_windows, btos_window_count * sizeof(SDL_BTOS_windowdata*));
+	}else{
+		free(btos_windows);
+	}
+}
 
 static SDL_BTOS_windowdata _SDL_BTOS_CreateWindow(SDL_Window * window){
 	size_t w = window->w;
@@ -102,6 +120,7 @@ int SDL_BTOS_CreateWindow(_THIS, SDL_Window *window){
 		return -1;
 	}
 	window->driverdata = data;
+	_SDL_BTOS_AddWindow(data);
 	return 0;
 }
 
@@ -141,17 +160,24 @@ int SDL_BTOS_UpdateWindowFramebuffer(_THIS, SDL_Window * window, const SDL_Rect 
 
 void SDL_BTOS_DestroyWindowFramebuffer(_THIS, SDL_Window * window)
 {
-    /*SDL_BTOS_surfaceinfo *info;
+	// Does nothing; descruction done on DestroyWindow below
+}
 
-    info = (SDL_BTOS_surfaceinfo *) SDL_SetWindowData(window, BTOS_SURFACE, NULL);
+void SDL_BTOS_DestroyWindow(_THIS, SDL_Window * window)
+{
+    SDL_BTOS_windowdata *info = (SDL_BTOS_windowdata*)window->driverdata;
+
     if(info){
+    	WM_SelectWindow(info->wm_id);
+    	WM_DestroyWindow();
     	GDS_SelectSurface(info->gds_id);
     	GDS_DeleteSurface();
     	bt_closehandle(info->mapping);
     	SDL_free(info->buffer);
     	bt_closehandle(info->shm_handle);
+    	_SDL_BTOS_RemoveWindow(info);
     	SDL_free(info);
-    }*/
+    }
 }
 
 #endif /* SDL_VIDEO_DRIVER_BTOS */
