@@ -48,7 +48,7 @@ namespace rpc{
             while(more_data){
                 filter.flags = bt_msg_filter_flags::Reply;
                 filter.reply_to = msg.id;
-                reply = bt_recv_filtered(filter);
+                reply = bt_recv_filtered(filter, true);
                 
                 while(reply.reply_id != msg.id){
                     std::stringstream ss;
@@ -115,7 +115,7 @@ namespace rpc{
             while(more_data){
                 filter.flags = bt_msg_filter_flags::Reply;
                 filter.reply_to = msg.id;
-                reply = bt_recv_filtered(filter);
+                reply = bt_recv_filtered(filter, true);
                 
                 while(reply.reply_id != msg.id){
                     std::stringstream ss;

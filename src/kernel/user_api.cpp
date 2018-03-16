@@ -565,7 +565,7 @@ USERAPI_HANDLER(BT_UNSUBSCRIBE){
 
 USERAPI_HANDLER(BT_RECVFILTERED){
 	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_msg_filter)) && is_safe_ptr(regs->ecx, sizeof(btos_api::bt_msg_header))){
-		(*(btos_api::bt_msg_header*)regs->ecx) = msg_recv_filtered(*(btos_api::bt_msg_filter*)regs->ebx);
+		(*(btos_api::bt_msg_header*)regs->ecx) = msg_recv_filtered(*(btos_api::bt_msg_filter*)regs->ebx, proc_current_pid, (bool)regs->edx);
 	}
 }
 

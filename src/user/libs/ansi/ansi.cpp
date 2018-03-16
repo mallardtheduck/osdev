@@ -266,7 +266,7 @@ static void ansi_stdin_thread(void*){
 	filter.pid = 0;
 	filter.source = terminal_ext_id;
 	key_thread_ready = true;
-	bt_msg_header msg = bt_recv_filtered(filter);
+	bt_msg_header msg = bt_recv_filtered(filter, true);
 	while(true){
 		bt_terminal_event event;
 		bt_msg_content(&msg, &event, sizeof(event));

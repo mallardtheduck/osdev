@@ -56,7 +56,7 @@ namespace MM2{
 	}
 	
 	static void shm_pf_handler(uint64_t id, void *addr){
-		dbgpf("MM2: SHM mapping %i PF at %p.\n", (int)id, addr);
+		//dbgpf("MM2: SHM mapping %i PF at %p.\n", (int)id, addr);
 		hold_lock hl(shm_lock);
 		
 		if(!mappings->has_key(id)) panic("(MM2) Invalid mapping!");
@@ -72,7 +72,7 @@ namespace MM2{
 			space->pages[page_addr] = page;
 		}
 		void *addr_page = (void*)((uint32_t)addr & MM2_Address_Mask);
-		dbgpf("MM2: Mapping shared page %p from SHM mapping %i at address %p.\n", (void*)page->address(), (int)id, addr_page);
+		//dbgpf("MM2: Mapping shared page %p from SHM mapping %i at address %p.\n", (void*)page->address(), (int)id, addr_page);
 		uint32_t pageflags = MM2_PageFlags::Present | MM2_PageFlags::Usermode;
 		if((space->owner == proc_current_pid || !(space->flags & btos_api::bt_shm_flags::ReadOnly)) && !(mapping->flags & btos_api::bt_shm_flags::ReadOnly)){
 			pageflags |= MM2_PageFlags::Writable;
