@@ -20,6 +20,11 @@ void filledRect(void *r_in,
     }
 }
 
+void point(SDL_Renderer* renderer, int x, int y){
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	SDL_RenderDrawPoint(renderer, x, y);
+}
+
 SDL_Renderer *init(int w, int h) {
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
     fprintf(stderr, "Cannot initialise SDL: %s\n", SDL_GetError());
@@ -73,15 +78,36 @@ int pollEventsForQuit() {
 
 int main(void) {
   SDL_Renderer *renderer = init(640, 480);
-
+  bool mousedown = false;
+  
   for (;;) {
-    if (pollEventsForQuit()) goto quit;
+	  SDL_Event e;
+	  while (SDL_PollEvent(&e)) {
+		switch (e.type) {
+		  case SDL_KEYDOWN:
+			if (e.key.keysym.sym != SDLK_q) break;
+		  case SDL_QUIT:
+			goto quit;
+		  case SDL_MOUSEBUTTONDOWN:
+			  mousedown = true;
+			  break;
+		   case SDL_MOUSEBUTTONUP:
+			  mousedown = false;
+			  break;
+		}
+	  }
+	
     int rc1 = SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     if (rc1 != 0) {
       fprintf(stderr, "SDL_SetRenderDrawColor failed: %s\n", SDL_GetError());
       exit(1);
     }
-    SDL_RenderClear(renderer);
+    //SDL_RenderClear(renderer);
+	if(mousedown){
+		int x, y;
+		SDL_GetMouseState(&x, &y);
+		point(renderer, x, y);
+	}
     filledRect(renderer, 640/2 - 50/2, 480/2 - 50/2, 50, 50, 255, 0, 0, 128);
     SDL_RenderPresent(renderer); // Update screen.
   }

@@ -67,6 +67,7 @@ static SDL_BTOS_windowdata _SDL_BTOS_CreateWindow(SDL_Window * window){
 	size_t h = window->h;
 	
 	SDL_BTOS_windowdata info;
+	info.sdlwin = window;
 	info.shm_handle = bt_create_shm(bt_shm_flags_Normal);
 	if(!info.shm_handle){
 		info.fail = true;

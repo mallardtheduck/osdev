@@ -36,6 +36,7 @@ typedef struct{
 	uint32_t *buffer;
 	bt_handle_t mapping;
 	uint64_t wm_id;
+	SDL_Window *sdlwin;
 } SDL_BTOS_windowdata;
 
 extern SDL_BTOS_windowdata **btos_windows;

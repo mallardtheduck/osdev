@@ -152,10 +152,47 @@ static void _BTOS_HandleKeyboardEvent(wm_Event *event){
 	if(sdl_key) SDL_SendKeyboardKey((keycode & KeyFlags_KeyUp ? SDL_RELEASED : SDL_PRESSED), sdl_key);
 }
 
+static SDL_Window *_BTOS_GetSDLWindow(uint64_t wm_id){
+	for(int i = 0; i < btos_window_count; ++i){
+		if(btos_windows[i]->wm_id == wm_id) return btos_windows[i]->sdlwin;
+	}
+	return NULL;
+}
+
 static void _BTOS_HandlePointerEvent(wm_Event *event){
+	SDL_Window *win = _BTOS_GetSDLWindow(event->window_id);
+	if(win){
+		switch(event->type){
+			case wm_EventType_PointerMove:
+				SDL_SendMouseMotion(win, 1, 0, event->Pointer.x, event->Pointer.y);
+				break;
+			case wm_EventType_PointerButtonDown:
+				SDL_SendMouseButton(win, 1, SDL_PRESSED, event->Pointer.button);
+				break;
+			case wm_EventType_PointerButtonUp:
+				SDL_SendMouseButton(win, 1, SDL_RELEASED, event->Pointer.button);
+				break;
+			case wm_EventType_PointerEnter:
+				SDL_SendWindowEvent(win, SDL_WINDOWEVENT_ENTER, 0, 0);
+				break;
+			case wm_EventType_PointerLeave:
+				SDL_SendWindowEvent(win, SDL_WINDOWEVENT_LEAVE, 0, 0);
+				break; 
+			default: break;
+		}
+	}
 }
 
 static void _BTOS_HandleFrameEvent(wm_Event *event){
+		SDL_Window *win = _BTOS_GetSDLWindow(event->window_id);
+	if(win){
+		switch(event->type){
+			case wm_EventType_Close:
+				SDL_SendWindowEvent(win, SDL_WINDOWEVENT_CLOSE, 0, 0);
+				break;
+			default: break;
+		}
+	}
 }
 
 void BTOS_PumpEvents(_THIS){
