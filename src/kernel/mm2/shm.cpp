@@ -17,6 +17,7 @@ namespace MM2{
 		uint32_t offset;
 		size_t pages;
 		uint32_t flags;
+		bt_pid_t pid;
 	};
 	
 	static map<uint64_t, shm_space* > *spaces;
@@ -108,6 +109,7 @@ namespace MM2{
 		mapping->addr = addr;
 		mapping->offset = offset;
 		mapping->pages = pages;
+		mapping->pid = proc_current_pid;
 		(*mappings)[ret] = mapping;
 		dbgpf("MM2: Mapped %i pages from SHM space %i offset %x to address %p as mapping ID: %i\n", (int)pages, (int)id, (unsigned)offset, addr, (int)ret);
 		return ret;
@@ -118,6 +120,8 @@ namespace MM2{
 		
 		if(mappings->has_key(id)){
 			shm_mapping *mapping = (*mappings)[id];
+			bt_pid_t pid = proc_current_pid;
+			proc_switch(mapping->pid);
 			current_pagedir->remove_region(mapping->addr);
 			void *addr = mapping->addr;
 			for(uint32_t i = (uint32_t)addr; i < (uint32_t)addr + (mapping->pages * MM2_Page_Size); i += MM2_Page_Size){
@@ -125,6 +129,7 @@ namespace MM2{
 			}
 			delete mapping;
 			mappings->erase(id);
+			proc_switch(pid);
 		}
 	}
 	
