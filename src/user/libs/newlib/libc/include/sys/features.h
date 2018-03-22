@@ -64,7 +64,6 @@ extern "C" {
 
 
 /* In P1003.1b but defined by drafts at least as early as P1003.1c/D10  */
-#define _POSIX_THREADS				1
 #define _POSIX_THREAD_ATTR_STACKADDR		1
 #define _POSIX_THREAD_ATTR_STACKSIZE		1
 #define _POSIX_THREAD_PRIORITY_SCHEDULING	1
@@ -203,6 +202,11 @@ extern "C" {
 #define __STDC_ISO_10646__ 200305L
 
 #endif /* __CYGWIN__ */
+
+#ifdef __btos__
+#define _POSIX_THREADS				1
+#endif /* __btos__ */
+
 
 /* Per the permission given in POSIX.1-2008 section 2.2.1, define
  * _POSIX_C_SOURCE if _XOPEN_SOURCE is defined and _POSIX_C_SOURCE is not.

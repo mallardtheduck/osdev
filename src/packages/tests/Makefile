@@ -17,6 +17,7 @@ import-files:= \
  data/tests/elldtest.elx \
  data/tests/nctest.elx \
  data/tests/sdltest.elx \
+ data/tests/pthreadtest.elx \
 
 all: ../$(output-name)
 pkg-files:= $(shell find pkgfiles -type f)
@@ -67,6 +68,9 @@ data/tests/nctest.elx: ../../user/tests/nctest/nctest.elx
 	cp $< $@
 
 data/tests/sdltest.elx: ../../user/tests/sdltest/sdltest.elx
+	cp $< $@
+	
+data/tests/pthreadtest.elx: ../../user/tests/pthreadtest/pthreadtest.elx
 	cp $< $@
 
 create.directories:
