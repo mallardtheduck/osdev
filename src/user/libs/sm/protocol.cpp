@@ -41,7 +41,7 @@ static bt_msg_header SendMessage(sm_RequestType::Enum type, size_t size, void* c
 		bt_msg_filter filter;
 		filter.flags = bt_msg_filter_flags::Reply;
 		filter.reply_to = msg.id;
-		ret = bt_recv_filtered(filter);
+		ret = bt_recv_filtered(filter, true);
 		while(ret.reply_id != msg.id){
 			stringstream ss;
 			ss << "LIBSM: Spurious message!" << endl;

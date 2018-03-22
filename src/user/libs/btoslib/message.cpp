@@ -10,7 +10,7 @@ namespace btos_api{
 	}
 
 	Message Message::RecieveFiltered(const bt_msg_filter &filter){
-		bt_msg_header h = bt_recv_filtered(filter);
+		bt_msg_header h = bt_recv_filtered(filter, true);
 		Message ret = h;
 		ret.filter = filter;
 		return ret;

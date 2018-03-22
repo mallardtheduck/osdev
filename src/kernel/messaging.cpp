@@ -340,7 +340,7 @@ bool msg_filter_blockcheck(void *p){
 	return false;
 }
 
-bt_msg_header msg_recv_filtered(bt_msg_filter filter, pid_t pid){
+bt_msg_header msg_recv_filtered(bt_msg_filter filter, pid_t pid, bool block){
 	hold_lock hl(msg_lock);
 	while(true){
 		for(size_t i = 0; bt_msg_header *cmsg = proc_get_msg(i); ++i){
@@ -350,11 +350,17 @@ bt_msg_header msg_recv_filtered(bt_msg_filter filter, pid_t pid){
 				return msg;
 			}
 		}
-		release_lock(msg_lock);
-		sch_set_msgstaus(thread_msg_status::Waiting);
-		msg_filter_blockcheck_params p = {pid, filter};
-		sch_setblock(&msg_filter_blockcheck, (void*)&p);
-		take_lock_exclusive(msg_lock);
+		if(block){
+			release_lock(msg_lock);
+			sch_set_msgstaus(thread_msg_status::Waiting);
+			msg_filter_blockcheck_params p = {pid, filter};
+			sch_setblock(&msg_filter_blockcheck, (void*)&p);
+			take_lock_exclusive(msg_lock);
+		}else{
+			bt_msg_header ret;
+			ret.valid = false;
+			return ret;
+		}
 	}
 }
 

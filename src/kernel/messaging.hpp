@@ -23,7 +23,7 @@ void msg_nextmessage(btos_api::bt_msg_header &msg);
 void msg_clear(pid_t pid);
 bool msg_recv_reply(btos_api::bt_msg_header &msg, uint64_t msg_id);
 btos_api::bt_msg_header msg_recv_reply_block(uint64_t msg_id);
-btos_api::bt_msg_header msg_recv_filtered(btos_api::bt_msg_filter filter, pid_t pid=proc_current_pid);
+btos_api::bt_msg_header msg_recv_filtered(btos_api::bt_msg_filter filter, pid_t pid=proc_current_pid, bool block=true);
 void msg_nextmessage_filtered(btos_api::bt_msg_filter filter, btos_api::bt_msg_header &msg);
 bool msg_query_recieved(uint64_t id);
 

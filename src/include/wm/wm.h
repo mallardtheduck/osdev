@@ -28,7 +28,7 @@ ENUM_START(wm_WindowOptions)
 	ENUM_SET(wm_WindowOptions, EnableTransparency, 	1 << 9),
 	ENUM_SET(wm_WindowOptions, Default,				(1 << 0)),
 ENUM_END
-ENUM_TYPE(wm_WindowOptions)
+ENUM_TYPE(wm_WindowOptions);
 
 ENUM_START(wm_EventType)
 	ENUM_SET(wm_EventType, None,				0),
@@ -47,7 +47,15 @@ ENUM_START(wm_EventType)
 	ENUM_SET(wm_EventType, Expand,				1 << 12),
 	ENUM_SET(wm_EventType, MenuSelection,		1 << 13),
 ENUM_END
-ENUM_TYPE(wm_EventType)
+ENUM_TYPE(wm_EventType);
+
+static const int wm_KeyboardEvents = ENUM_GET(wm_EventType, KeyDown) | ENUM_GET(wm_EventType, KeyUp) 
+	| ENUM_GET(wm_EventType, Keyboard);
+static const int wm_PointerEvents = ENUM_GET(wm_EventType, PointerMove) | ENUM_GET(wm_EventType, PointerButtonDown) 
+	| ENUM_GET(wm_EventType, PointerButtonUp) | ENUM_GET(wm_EventType, PointerEnter) | ENUM_GET(wm_EventType, PointerLeave)
+	| ENUM_GET(wm_EventType, Click) | ENUM_GET(wm_EventType, DoubleClick);
+static const int wm_FrameEvents = ENUM_GET(wm_EventType, Close) | ENUM_GET(wm_EventType, Hide) | ENUM_GET(wm_EventType, Expand)
+	 | ENUM_GET(wm_EventType, MenuSelection);
 
 struct wm_WindowInfo{
 	int32_t x, y;
@@ -81,6 +89,7 @@ struct wm_Event{
 		} Menu;
 	};
 };
+BT_STRUCT_TYPE(wm_Event);
 
 ENUM_START(wm_RequestType)
 	ENUM_SET(wm_RequestType, SelectWindow, 		1),
@@ -108,12 +117,12 @@ ENUM_START(wm_RequestType)
 	ENUM_SET(wm_RequestType, SetWindowMenu,		29),
 	ENUM_SET(wm_RequestType, UnSetWindowMenu,	30),
 ENUM_END
-ENUM_TYPE(wm_RequestType)
+ENUM_TYPE(wm_RequestType);
 
 ENUM_START(wm_MessageType)
 	ENUM_SET(wm_MessageType, Event,				1),
 ENUM_END
-ENUM_TYPE(wm_MessageType)
+ENUM_TYPE(wm_MessageType);
 
 ENUM_START(wm_MenuItemFlags)
 	ENUM_SET(wm_MenuItemFlags, Default, 	0),
@@ -123,7 +132,7 @@ ENUM_START(wm_MenuItemFlags)
 	ENUM_SET(wm_MenuItemFlags, ImageRight, 	(1 << 3)),
 	ENUM_SET(wm_MenuItemFlags, ImageOnly, 	(1 << 4)),
 ENUM_END
-ENUM_TYPE(wm_MenuItemFlags)
+ENUM_TYPE(wm_MenuItemFlags);
 
 struct wm_MenuItem{
 	uint32_t actionID;

@@ -45,7 +45,7 @@ static bt_msg_header SendMessage(wm_RequestType::Enum type, size_t size, void* c
 		bt_msg_filter filter;
 		filter.flags = bt_msg_filter_flags::Reply;
 		filter.reply_to = msg.id;
-		ret = bt_recv_filtered(filter);
+		ret = bt_recv_filtered(filter, true);
 		while(ret.reply_id != msg.id){
 			stringstream ss;
 			ss << "LIBWM: Spurious message!" << endl;
@@ -161,7 +161,7 @@ extern "C" wm_Event WM_ParseMessage(bt_msg_header *msg){
 
 extern "C" wm_Event WM_GetEvent(){
 	bt_msg_filter filter = WM_GetEventFilter();
-	bt_msg_header msg = bt_recv_filtered(filter);
+	bt_msg_header msg = bt_recv_filtered(filter, true);
 	wm_Event ret;
 	ret = WM_ParseMessage(&msg);
 	bt_msg_ack(&msg);

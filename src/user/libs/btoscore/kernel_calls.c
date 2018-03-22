@@ -307,10 +307,10 @@ void bt_msgwait(){
 	btos_call(BT_MSGWAIT, 0, 0, 0);
 }
 
-bt_msg_header bt_recv_filtered(bt_msg_filter filter){
+bt_msg_header bt_recv_filtered(bt_msg_filter filter, bool block){
 	volatile bt_msg_header ret;
 	ret.valid=false;
-	btos_call(BT_RECVFILTERED, (uint32_t)&filter, (uint32_t)&ret, 0);
+	btos_call(BT_RECVFILTERED, (uint32_t)&filter, (uint32_t)&ret, (uint32_t)block);
 	return *(bt_msg_header*)&ret;
 }
 

@@ -9,6 +9,7 @@
 #else
 	#include <stdint.h>
 	#include <stddef.h>
+	#include <stdbool.h>
 #endif
 
 #define FONT_NAME_MAX 255
