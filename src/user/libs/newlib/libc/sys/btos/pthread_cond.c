@@ -44,7 +44,7 @@ int pthread_cond_timedwait(pthread_cond_t *restrict cond, pthread_mutex_t *restr
 int pthread_cond_signal(pthread_cond_t *cond){
 	check_init(cond);
 	while(true){
-		uint64_t val = bt_atom_read(*cond);
+		uint64_t val = bt_read_atom(*cond);
 		if(val > 0){
 			uint64_t nval = bt_cmpxchg_atom(*cond, val, val - 1);
 			if(nval == val - 1) break;
