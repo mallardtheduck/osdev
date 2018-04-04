@@ -24,12 +24,15 @@ typedef struct{
 	btos_pthread_specific *specifics;
 } btos_pthread_data;
 
-bt_handle_t lock = 0;
+static bt_handle_t lock = 0;
 static btos_pthread_data **threads = NULL;
 static size_t thread_count = 0;
 
+__attribute__ ((constructor)) static void init_lock(){
+	lock = bt_create_lock();
+}
+
 static btos_pthread_data *new_thread_data(){
-	if(!lock) lock = bt_create_lock();
 	bt_lock(lock);
 	if(!thread_count){
 		threads = malloc(sizeof(btos_pthread_data*));
@@ -75,8 +78,8 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 	btos_pthread_data *data = new_thread_data();
 	data->start_routine = start_routine;
 	data->arg = arg;
-	data->handle = btos_create_thread(pthread_start_adaptor, data, stacksize);
 	data->cancelstate = PTHREAD_CANCEL_ENABLE;
+	data->handle = btos_create_thread(pthread_start_adaptor, data, stacksize);
 	if(!data->handle) return 1;
 	else{
 		*thread = data->handle;
