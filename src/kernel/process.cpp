@@ -370,6 +370,12 @@ void *proc_alloc_stack(size_t size){
 	return (void*)(0-sizeof(uint32_t));
 }
 
+static bool proc_start_hold_blockcheck(void *p){
+	bt_pid_t &pid = *(bt_pid_t*)p;
+	proc_process *proc=proc_get(pid);
+	return proc && proc->status != proc_status::Held;
+}
+
 void proc_start(void *ptr){
 	pid_t pid = ((proc_info*)ptr)->pid;
 	proc_entry entry = ((proc_info*)ptr)->entry;
@@ -384,6 +390,9 @@ void proc_start(void *ptr){
 	proc_add_thread(sch_get_id());
     debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);
 	if(sch_get_abortlevel()) panic("(PROC) Entering userspace with non-zero abortlevel.");
+	if(proc_get_status() == proc_status::Held){
+		sch_setblock(&proc_start_hold_blockcheck, (void*)&pid);
+	}
 	proc_set_status(proc_status::Running);
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }

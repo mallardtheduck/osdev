@@ -94,6 +94,7 @@ namespace MM2{
 	}
 	
 	static void mmap_read(uint64_t id, void *addr){
+		hold_lock hl(mmap_lock, false);
 		//dbgpf("MM2: MMAP read at %p.\n", addr);
 		if(mmappings->has_key(id)){
 			mmapping m = (*mmappings)[id];
@@ -106,12 +107,14 @@ namespace MM2{
 			void *pageaddr = (void*)((uint32_t)addr & MM2_Address_Mask);
 			bt_filesize_t readofs = ((uint32_t)pageaddr - (uint32_t)m.page_addr) + m.page_offset;
 			//dbgpf("MM2: Reading page from %i at %p.\n", (int)readofs, pageaddr);
+			sch_hold_proc();
 			current_pagedir->map_page_at(pageaddr, flags);
 			bt_filesize_t npos = fs_seek(m.file, readofs, FS_Set);
 			if(npos != readofs) panic("(MM2) MMAP Seek failed!");
 			bt_filesize_t rd = fs_read(m.file, MM2_Page_Size, (char*)pageaddr);
 			if(rd != MM2_Page_Size) panic("(MM2) MMAP Read failed!");
 			fs_seek(m.file, pos, FS_Set);
+			sch_unhold_proc();
 		}else{
 			panic("(MM2) Invalid MMAP read request!");
 		}
