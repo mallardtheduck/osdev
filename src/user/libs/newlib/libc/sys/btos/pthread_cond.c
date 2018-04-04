@@ -12,9 +12,9 @@ __attribute__ ((constructor)) static void init_lock(){
 }
 
 static void check_init(pthread_cond_t *cond){
-	if(*cond) return;
+	if(*cond != PTHREAD_COND_INITIALIZER) return;
 	bt_lock(cond_init_lock);
-	if(!*cond) *cond = bt_create_atom(0);
+	if(*cond == PTHREAD_COND_INITIALIZER) *cond = bt_create_atom(0);
 	bt_unlock(cond_init_lock);
 }
 

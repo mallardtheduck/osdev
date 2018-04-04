@@ -12,9 +12,9 @@ __attribute__ ((constructor)) static void init_lock(){
 }
 
 static void check_init(pthread_mutex_t *mutex){
-	if(*mutex) return;
+	if(*mutex != PTHREAD_MUTEX_INITIALIZER) return;
 	bt_lock(mutex_init_lock);
-	if(!*mutex) *mutex = bt_create_lock();
+	if(*mutex == PTHREAD_MUTEX_INITIALIZER) *mutex = bt_create_lock();
 	bt_unlock(mutex_init_lock);
 }
 
