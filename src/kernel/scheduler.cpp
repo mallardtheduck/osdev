@@ -653,6 +653,36 @@ void sch_debug_resume(pid_t pid){
 	}
 }
 
+void sch_hold_proc(pid_t pid){
+	proc_set_status(proc_status::Held, pid);
+	hold_lock hl(sch_lock);	
+	for(size_t i=0; i<threads->size(); ++i){
+		sch_thread *c = (*threads)[i];
+		if(c->pid == pid && c != current_thread){
+			if(c->status == sch_thread_status::Runnable){
+				c->status = sch_thread_status::HeldRunnable;
+			}else if(c->status == sch_thread_status::Blocked){
+				c->status = sch_thread_status::HeldBlocked;
+			}
+		}
+	}
+}
+
+void sch_unhold_proc(pid_t pid){
+	proc_set_status(proc_status::Running, pid);
+	hold_lock hl(sch_lock);
+	for(size_t i=0; i<threads->size(); ++i){
+		sch_thread *c = (*threads)[i];
+		if(c->pid == pid){
+			if(c->status == sch_thread_status::HeldRunnable){
+				c->status = sch_thread_status::Runnable;
+			}else if(c->status == sch_thread_status::HeldBlocked){
+				c->status = sch_thread_status::Blocked;
+			}
+		}
+	}
+}
+
 void sch_update_usercontext(isr_regs *uc, uint64_t ext_id){
 	if(ext_id == current_thread_id){
 		current_thread->usercontext = uc;
