@@ -1,0 +1,30 @@
+LIBRARY-NAME := SDL2_ttf.ell
+DESTINATION := ../install/btos
+
+BUILD-C := i686-pc-btos-gcc
+BUILD-C-FLAGS := -c -Wall -Wextra
+BUILD-C-OPTIONS := -g -c -I./include -I../../include -I../install/btos/include -I../install/btos/include/freetype2 -std=gnu99
+LINK := i686-pc-btos-gcc
+LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
+LIB-LINK-OPTIONS := -lgcc_s -lc -lbtoscore -lgds -lwm
+
+SOURCES = SDL_ttf.c
+
+OBJECTS = $(shell echo $(SOURCES) | sed -e 's,\.c,\.o,g')
+
+all: $(LIBRARY-NAME) copy
+
+.c.o: %.c Makefile
+	$(BUILD-C) -MMD -MP $(BUILD-C-FLAGS) $< -o $@ $(BUILD-C-OPTIONS)
+
+$(LIBRARY-NAME): $(OBJECTS) Makefile
+	$(LINK) $(LIB-LINK-FLAGS) $(OBJECTS) $(LIB-LINK-OPTIONS)
+
+clean:
+	rm -f $(TARGET) $(OBJECTS)
+	
+copy: $(LIBRARY-NAME)
+	mkdir -p $(DESTINATION)/lib
+	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib
+	mkdir -p $(DESTINATION)/include/SDL2
+	cp -uR *.h $(DESTINATION)/include/SDL2
