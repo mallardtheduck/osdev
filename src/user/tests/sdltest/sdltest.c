@@ -76,9 +76,29 @@ int pollEventsForQuit() {
   return 0;
 }
 
+static int TestThread(void *ptr){
+	bool ok = true;
+	SDL_TLSID tlsid = SDL_TLSCreate();
+	SDL_TLSSet(tlsid, (void*)42, NULL);
+	if((int)SDL_TLSGet(tlsid) != 42) ok = false;
+	SDL_mutex *mtx = SDL_CreateMutex();
+	SDL_LockMutex(mtx);
+	SDL_UnlockMutex(mtx);
+	if(SDL_TryLockMutex(mtx) != 0) ok = false;
+	SDL_UnlockMutex(mtx);
+	SDL_DestroyMutex(mtx);
+	if(ok) filledRect(ptr, 10, 10, 30, 30, 0, 255, 0, 255);
+	else filledRect(ptr, 10, 10, 30, 30, 255, 0, 0, 255);
+	return 0;
+}
+
 int main(void) {
   SDL_Renderer *renderer = init(640, 480);
   bool mousedown = false;
+  SDL_RenderClear(renderer);
+  
+  SDL_Thread *thread = SDL_CreateThread(&TestThread, "TestThread", renderer);
+  SDL_WaitThread(thread, NULL);
   
   for (;;) {
 	  SDL_Event e;
@@ -102,7 +122,7 @@ int main(void) {
       fprintf(stderr, "SDL_SetRenderDrawColor failed: %s\n", SDL_GetError());
       exit(1);
     }
-    //SDL_RenderClear(renderer);
+    
 	if(mousedown){
 		int x, y;
 		SDL_GetMouseState(&x, &y);
