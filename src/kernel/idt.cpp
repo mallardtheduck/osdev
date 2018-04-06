@@ -270,6 +270,7 @@ extern "C" void isr_handler(isr_regs *ctx){
     disable_interrupts();
     if(sch_can_lock()) {
         sch_abortable(true);
+        if(sch_get_abortlevel() == 0) proc_hold();
     }
     imode--;
     //debug_setbreaks(!imode);
@@ -312,10 +313,11 @@ extern "C" void irq_handler(irq_regs *r) {
 	int irq=r->int_no-IRQ_BASE;
 	if(handlers[r->int_no]) handlers[r->int_no](r->int_no - 32, (isr_regs*)r);
     disable_interrupts();
+    irq_ack(irq);
     if(sch_can_lock()) {
         sch_abortable(true);
+        if(sch_get_abortlevel() == 0) proc_hold();
     }
-    irq_ack(irq);
     imode--;
 }
 

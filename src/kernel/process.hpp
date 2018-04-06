@@ -33,6 +33,7 @@ bool proc_switch(pid_t pid);
 void proc_switch_sch(pid_t pid);
 pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent=proc_current_pid);
 void proc_end(pid_t pid=proc_current_pid);
+void proc_hold();
 
 void proc_setenv(const pid_t pid, const string &name, const string &value, const uint8_t flags=0, bool userspace=false);
 void proc_setenv(const string &name, const string &value, const uint8_t flags=0, bool userspace=true);
