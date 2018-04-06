@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 void filledRect(void *r_in,
                 int x, int y, int w, int h,
@@ -99,6 +100,16 @@ int main(void) {
   
   SDL_Thread *thread = SDL_CreateThread(&TestThread, "TestThread", renderer);
   SDL_WaitThread(thread, NULL);
+  
+  IMG_Init(IMG_INIT_PNG);
+  SDL_Surface *img = IMG_Load("testpng.png");
+  SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, img);
+  SDL_Rect dst;
+  dst.x = 100;
+  dst.y = 100;
+  dst.w = 300;
+  dst.h = 300;
+  SDL_RenderCopy(renderer, tex, NULL, &dst);
   
   for (;;) {
 	  SDL_Event e;
