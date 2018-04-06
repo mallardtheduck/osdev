@@ -15,6 +15,8 @@ namespace sch_thread_status {
 		DebugBlocked = 3,
 		Ending = 4,
 		Special = 5,
+		HeldRunnable = 6,
+		HeldBlocked = 7
 	};
 }
 
@@ -44,6 +46,8 @@ uint8_t *sch_get_fpu_xmm_data();
 size_t sch_get_pid_threadcount(pid_t pid, bool ignore_current = false, uint64_t ext_id = sch_get_id());
 void sch_debug_stop(pid_t pid);
 void sch_debug_resume(pid_t pid);
+void sch_hold_proc(pid_t pid = proc_current_pid);
+void sch_unhold_proc(pid_t pid = proc_current_pid);
 void sch_update_usercontext(isr_regs *uc, uint64_t ext_id=sch_get_id());
 void *sch_get_usercontext(uint64_t ext_id=sch_get_id());
 int sch_get_abortlevel();

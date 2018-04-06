@@ -156,6 +156,7 @@ ENUM_START(bt_proc_status)
 	ENUM_SET(bt_proc_status, Running, 1),
 	ENUM_SET(bt_proc_status, Ending, 2),
 	ENUM_SET(bt_proc_status, Starting, 3),
+	ENUM_SET(bt_proc_status, Held, 4),
 	ENUM_SET(bt_proc_status, Ended, 0),
 	ENUM_SET(bt_proc_status, DoesNotExist, 0),
 ENUM_END

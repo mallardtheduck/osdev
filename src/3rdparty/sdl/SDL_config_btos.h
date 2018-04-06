@@ -163,4 +163,6 @@ typedef unsigned long uintptr_t;
 #define HAVE_SETJMP 1
 #define HAVE_NANOSLEEP  1
 
+#define SDL_THREAD_PTHREAD 1
+
 #endif /* SDL_config_minimal_h_ */

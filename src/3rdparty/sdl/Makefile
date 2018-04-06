@@ -27,7 +27,7 @@ SOURCES = \
 	src/render/software/*.c \
 	src/stdlib/*.c \
 	src/thread/*.c \
-	src/thread/generic/*.c \
+	src/thread/pthread/*.c \
 	src/timer/*.c \
 	src/timer/dummy/*.c \
 	src/video/*.c \

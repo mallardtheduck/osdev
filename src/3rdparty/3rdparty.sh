@@ -8,5 +8,6 @@ source ../env-os.sh &&
 ./parted.sh && 
 ./udis86.sh &&
 ./ncurses.sh &&
-./sqlite3.sh
+./sqlite3.sh &&
+./sdl.sh
 
