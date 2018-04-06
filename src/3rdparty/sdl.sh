@@ -36,3 +36,20 @@ cp ../sdl/btos-build.sh .
 chmod +x btos-build.sh
 mkdir -p ../install
 ./btos-build.sh
+
+cd ..
+rm -rf SDL2_image-2.0.3
+if [ ! -f SDL2_image-2.0.3.tar.gz ];
+then
+	wget https://www.libsdl.org/projects/SDL_image/release/SDL2_image-2.0.3.tar.gz
+fi
+tar xf SDL2_image-2.0.3.tar.gz
+mkdir -p originals
+tar xf SDL2_image-2.0.3.tar.gz -C originals
+cd SDL2_image-2.0.3
+cp ../sdl/image_Makefile Makefile
+cp ../sdl/IMG_svg.c .
+cp ../sdl/btos-build.sh .
+chmod +x btos-build.sh
+mkdir -p ../install
+./btos-build.sh

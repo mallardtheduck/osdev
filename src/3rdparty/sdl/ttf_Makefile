@@ -6,7 +6,7 @@ BUILD-C-FLAGS := -c -Wall -Wextra
 BUILD-C-OPTIONS := -g -c -I./include -I../../include -I../install/btos/include -I../install/btos/include/freetype2 -std=gnu99
 LINK := i686-pc-btos-gcc
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
-LIB-LINK-OPTIONS := -lgcc_s -lc -lbtoscore -lgds -lwm
+LIB-LINK-OPTIONS := -lgcc_s -L../install/btos/lib -Wl,-rpath-link,../install/btos/lib -lSDL2 -lfreetype
 
 SOURCES = SDL_ttf.c
 
