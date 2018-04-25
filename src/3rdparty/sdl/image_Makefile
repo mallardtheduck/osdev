@@ -5,7 +5,7 @@ BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c -Wall -Wextra \
 	-DLOAD_BMP -DLOAD_GIF -DLOAD_JPG -DLOAD_LBM -DLOAD_PCX -DLOAD_PNG -DLOAD_PNM -DLOAD_SVG -DLOAD_TGA -DLOAD_TIF -DLOAD_WEBP -DLOAD_XCF -DLOAD_XPM -DLOAD_XV -DLOAD_XXX
 BUILD-C-OPTIONS := -g -c -std=gnu99 -I./include -I../../include -I../install/btos/include \
-	-Iexternal/jpeg-9b -Iexternal/libpng-1.6.32 -Iexternal/tiff-4.0.8/libtiff -I../sdl/image_include
+	-Iexternal/jpeg-9b -Iexternal/libpng-1.6.32 -Iexternal/tiff-4.0.8/libtiff -I../sdl/image_include -I../install/btos/include/SDL2
 LINK := i686-pc-btos-gcc
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
 LIB-LINK-OPTIONS := -lgcc_s -L../install/btos/lib -Wl,-rpath-link,../install/btos/lib -lSDL2
