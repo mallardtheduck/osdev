@@ -31,6 +31,7 @@ int main(int argc, char **argv){
 		New,
 		Switch,
 		Pointer,
+		PointerSpeed,
 		Modes,
 		Reset
 	};
@@ -40,7 +41,6 @@ int main(int argc, char **argv){
 	uint64_t id = 0;
 	bool on = false;
 	bool info = false;
-	bool speedMode = false;
 	uint32_t speed = 0;
 	
 	auto helpCmd = (
@@ -67,10 +67,11 @@ int main(int argc, char **argv){
 	);
 	auto pointerCmd = (
 		command("pointer").set(mode, Mode::Pointer) % "Control the pointing cursor",
-		command("on").set(on, true) | command("off").set(on, false) | command("info").set(info) | (
-			command("speed").set(speedMode) % "Control pointer speed",
-			command("get").set(on, true) | (command("set").set(on, false) & value("speed").set(speed))
-		)
+		command("on").set(on, true) | command("off").set(on, false) | command("info").set(info)
+	);
+	auto pointerSpeedCmd = (
+		command("pointer-speed").set(mode, Mode::PointerSpeed) % "Control the pointer movement speed",
+		command("get").set(on, true) | (command("set").set(on, false) & value("speed").set(speed))
 	);
 	auto modesCmd = (
 		command("modes").set(mode, Mode::Modes) % "List available display modes"
@@ -79,7 +80,7 @@ int main(int argc, char **argv){
 		command("reset").set(mode, Mode::Reset) % "Reset terminal to first text display mode"
 	);
 	
-	auto cli = (helpCmd | titleCmd | echoCmd | clearCmd | newCmd | switchCmd | pointerCmd | modesCmd | resetCmd);
+	auto cli = (helpCmd | titleCmd | echoCmd | clearCmd | newCmd | switchCmd | pointerCmd | pointerSpeedCmd | modesCmd | resetCmd);
 	
 	if(parse(argc, argv, cli)){
 		Terminal term;
@@ -111,15 +112,16 @@ int main(int argc, char **argv){
 			case Mode::Switch:
 				term.Switch(id);
 				break;
-			case Mode::Pointer:
-				if(speedMode){
+			case Mode::PointerSpeed:
 					if(on){
 						uint32_t speed = term.GetPointerSpeed();
     					printf("Pointer speed: %i\n", speed);
 					}else{
 						term.SetPointerSpeed(speed);
 					}
-				}else if(info){
+				break;
+			case Mode::Pointer:
+				if(info){
 					bt_terminal_pointer_info info = term.GetPointerInfo();
         			printf("Pointer: (%i, %i) Flags: %x\n", info.x, info.y, info.flags);
 				}else{
