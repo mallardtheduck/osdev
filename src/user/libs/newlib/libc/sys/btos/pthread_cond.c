@@ -19,7 +19,9 @@ static void check_init(pthread_cond_t *cond){
 }
 
 int pthread_cond_init(pthread_cond_t *restrict cond, const pthread_condattr_t *restrict attr){
+	bt_lock(cond_init_lock);
 	*cond = bt_create_atom(0);
+	bt_unlock(cond_init_lock);
 	return 0;
 }
 
