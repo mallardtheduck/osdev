@@ -48,8 +48,10 @@ int pthread_cond_signal(pthread_cond_t *cond){
 	while(true){
 		uint64_t val = bt_read_atom(*cond);
 		if(val > 0){
-			uint64_t nval = bt_cmpxchg_atom(*cond, val, val - 1);
-			if(nval == val - 1) break;
+			uint64_t dval = val - 1;
+			uint64_t nval = bt_cmpxchg_atom(*cond, val, dval);
+			bt_yield();
+			if(nval == dval) break;
 		}else break;
 	}
 	return 0;
