@@ -6,7 +6,7 @@ using namespace std;
 namespace btos_api{
 namespace gds{
 
-	Surface::Surface(gds_SurfaceType::Enum type, uint32_t w, uint32_t h, uint32_t scale, gds_ColourType::Enum colourType, uint64_t shmRegion, size_t shmOffset){
+	Surface::Surface(gds_SurfaceType::Enum type, uint32_t w, uint32_t h, uint32_t scale, uint32_t colourType, uint64_t shmRegion, size_t shmOffset){
 		gds_id = GDS_NewSurface(type, w, h, scale, colourType, shmRegion, shmOffset);
 		owned = true;
 	}

@@ -10,9 +10,10 @@ protected:
 	std::shared_ptr<GD::Image> image;
 	uint32_t scale;
 	gds_DrawingOp pending_op;
+	uint32_t colourType;
 
 public:
-	BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale = 100);
+	BitmapSurface(size_t w, size_t h, uint32_t colourType, uint32_t scale = 100);
 
 	virtual size_t AddOperation(gds_DrawingOp op);
 	virtual void RemoveOperation(size_t id);

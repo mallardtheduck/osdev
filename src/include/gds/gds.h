@@ -61,8 +61,10 @@ ENUM_END
 ENUM_TYPE(gds_DrawingOpType);
 
 ENUM_START(gds_ColourType)
-	ENUM_SET(gds_ColourType, Indexed, 	0),
-	ENUM_SET(gds_ColourType, True, 		1),
+	ENUM_SET(gds_ColourType, Indexed, 				0),
+	ENUM_SET(gds_ColourType, True, 					1),
+	ENUM_SET(gds_ColourType, AlphaEnable,			0),
+	ENUM_SET(gds_ColourType, AlphaDisable,			2),
 ENUM_END
 ENUM_TYPE(gds_ColourType);
 
@@ -213,7 +215,7 @@ struct gds_SurfaceInfo{
 	uint64_t id;
 	ENUM_NAME(gds_SurfaceType) type;
 	uint32_t w, h, scale;
-	ENUM_NAME(gds_ColourType) colourType;
+	uint32_t colourType;
 	uint64_t shmRegion;
 	size_t shmOffset;
 };
