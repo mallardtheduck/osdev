@@ -114,7 +114,7 @@ uint64_t bt_cmpxchg_atom(bt_handle_t a, uint64_t cmp, uint64_t xchg){
 }
 
 uint64_t bt_read_atom(bt_handle_t a){
-	uint64_t ret;
+	volatile uint64_t ret;
 	btos_call(BT_READ_ATOM, (uint32_t)a, (uint32_t)&ret, 0);
 	return ret;
 }
