@@ -33,9 +33,9 @@ int pthread_cond_destroy(pthread_cond_t *cond){
 int pthread_cond_wait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex){
 	check_init(cond);
 	uint64_t val = bt_modify_atom(*cond, bt_atom_modify_Add, 1);
-	bt_unlock(*mutex);
+	pthread_mutex_unlock(mutex);
 	bt_wait_atom(*cond, bt_atom_compare_LessThan, val);
-	bt_lock(*mutex);
+	pthread_mutex_lock(mutex);
 	return 0;
 }
 
