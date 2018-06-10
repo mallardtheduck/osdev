@@ -15,3 +15,4 @@ make
 
 cp SDL2_widgets.ell ../install/btos/lib
 cp sdl-widgets.h ../install/btos/include/SDL2_widgets.h
+cp shapes.h ../install/btos/include

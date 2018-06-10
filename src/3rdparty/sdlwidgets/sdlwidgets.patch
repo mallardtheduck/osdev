@@ -1,6 +1,6 @@
 Binary files SDL2-widgets-2.1/bouncy-tune/bouncy-tune and originals/SDL2-widgets-2.1/bouncy-tune/bouncy-tune differ
 diff -rupN SDL2-widgets-2.1/bouncy-tune/Makefile originals/SDL2-widgets-2.1/bouncy-tune/Makefile
---- SDL2-widgets-2.1/bouncy-tune/Makefile	2018-06-10 19:41:41.621486327 +0100
+--- SDL2-widgets-2.1/bouncy-tune/Makefile	2018-06-10 21:50:01.717299530 +0100
 +++ originals/SDL2-widgets-2.1/bouncy-tune/Makefile	2014-05-30 09:51:05.000000000 +0100
 @@ -1,7 +1,8 @@
 -CC := i686-pc-btos-gcc
@@ -16,14 +16,14 @@ diff -rupN SDL2-widgets-2.1/bouncy-tune/Makefile originals/SDL2-widgets-2.1/boun
  
  .SUFFIXES=
 diff -rupN SDL2-widgets-2.1/config.h originals/SDL2-widgets-2.1/config.h
---- SDL2-widgets-2.1/config.h	2018-06-10 19:41:41.621486327 +0100
+--- SDL2-widgets-2.1/config.h	2018-06-10 21:54:03.969880882 +0100
 +++ originals/SDL2-widgets-2.1/config.h	1970-01-01 01:00:00.000000000 +0100
 @@ -1,2 +0,0 @@
--const char* FONTPATH="DroidSans.ttf";
--const char* FONTPATH_MONO="DroidSansMono.ttf";
+-const char* FONTPATH="/BTOS/FONTS/Resagnicto.ttf";
+-const char* FONTPATH_MONO="/BTOS/FONTS/DejaVuSansMono.ttf";
 Binary files SDL2-widgets-2.1/hello/hello and originals/SDL2-widgets-2.1/hello/hello differ
 diff -rupN SDL2-widgets-2.1/hello/Makefile originals/SDL2-widgets-2.1/hello/Makefile
---- SDL2-widgets-2.1/hello/Makefile	2018-06-10 19:41:41.621486327 +0100
+--- SDL2-widgets-2.1/hello/Makefile	2018-06-10 21:50:01.717299530 +0100
 +++ originals/SDL2-widgets-2.1/hello/Makefile	2014-05-30 09:51:05.000000000 +0100
 @@ -1,8 +1,6 @@
 -CC := i686-pc-btos-gcc
@@ -38,7 +38,7 @@ diff -rupN SDL2-widgets-2.1/hello/Makefile originals/SDL2-widgets-2.1/hello/Make
  .SUFFIXES=
  
 diff -rupN SDL2-widgets-2.1/Makefile originals/SDL2-widgets-2.1/Makefile
---- SDL2-widgets-2.1/Makefile	2018-06-10 21:00:56.639787177 +0100
+--- SDL2-widgets-2.1/Makefile	2018-06-10 21:50:01.717299530 +0100
 +++ originals/SDL2-widgets-2.1/Makefile	2014-06-28 14:13:04.000000000 +0100
 @@ -1,14 +1,14 @@
 -CC := i686-pc-btos-gcc
@@ -85,7 +85,7 @@ diff -rupN SDL2-widgets-2.1/Makefile originals/SDL2-widgets-2.1/Makefile
 -testsw: testsw.o SDL2_widgets.ell
 -	$(CC) $< -o $@ $(LFLAGS)
 diff -rupN SDL2-widgets-2.1/make-waves/Makefile originals/SDL2-widgets-2.1/make-waves/Makefile
---- SDL2-widgets-2.1/make-waves/Makefile	2018-06-10 19:41:41.621486327 +0100
+--- SDL2-widgets-2.1/make-waves/Makefile	2018-06-10 21:50:01.717299530 +0100
 +++ originals/SDL2-widgets-2.1/make-waves/Makefile	2014-09-09 08:18:22.000000000 +0100
 @@ -1,7 +1,8 @@
 -CC := i686-pc-btos-gcc
@@ -111,7 +111,7 @@ diff -rupN SDL2-widgets-2.1/make-waves/Makefile originals/SDL2-widgets-2.1/make-
  	$(CC) -c $< $(CFLAGS)
 Binary files SDL2-widgets-2.1/make-waves/make-waves and originals/SDL2-widgets-2.1/make-waves/make-waves differ
 diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widgets.cpp
---- SDL2-widgets-2.1/sdl-widgets.cpp	2018-06-10 19:41:41.621486327 +0100
+--- SDL2-widgets-2.1/sdl-widgets.cpp	2018-06-10 21:50:01.717299530 +0100
 +++ originals/SDL2-widgets-2.1/sdl-widgets.cpp	2014-08-19 09:24:41.000000000 +0100
 @@ -800,21 +800,20 @@ TopWin::TopWin(const char* wm_title,Rect
      texture(0),
@@ -143,7 +143,7 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
    if (!(title_font=TTF_OpenFont(FONTPATH,nominal_font_size+1)))  // fontpath from config.h
 Binary files SDL2-widgets-2.1/testsw and originals/SDL2-widgets-2.1/testsw differ
 diff -rupN SDL2-widgets-2.1/testsw.cpp originals/SDL2-widgets-2.1/testsw.cpp
---- SDL2-widgets-2.1/testsw.cpp	2018-06-10 19:41:41.621486327 +0100
+--- SDL2-widgets-2.1/testsw.cpp	2018-06-10 21:50:01.717299530 +0100
 +++ originals/SDL2-widgets-2.1/testsw.cpp	2014-08-14 11:06:49.000000000 +0100
 @@ -15,8 +15,7 @@
      You should have received a copy of the GNU Lesser General Public
