@@ -29,7 +29,7 @@ SOURCES = \
 	src/thread/*.c \
 	src/thread/pthread/*.c \
 	src/timer/*.c \
-	src/timer/dummy/*.c \
+	src/timer/btos/*.c \
 	src/video/*.c \
 	src/video/dummy/*.c \
 	src/video/btos/*.c
