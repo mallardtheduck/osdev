@@ -1,6 +1,6 @@
 Binary files SDL2-widgets-2.1/bouncy-tune/bouncy-tune and originals/SDL2-widgets-2.1/bouncy-tune/bouncy-tune differ
 diff -rupN SDL2-widgets-2.1/bouncy-tune/Makefile originals/SDL2-widgets-2.1/bouncy-tune/Makefile
---- SDL2-widgets-2.1/bouncy-tune/Makefile	2018-04-26 10:04:17.406849630 +0100
+--- SDL2-widgets-2.1/bouncy-tune/Makefile	2018-06-10 19:41:41.621486327 +0100
 +++ originals/SDL2-widgets-2.1/bouncy-tune/Makefile	2014-05-30 09:51:05.000000000 +0100
 @@ -1,7 +1,8 @@
 -CC := i686-pc-btos-gcc
@@ -16,14 +16,14 @@ diff -rupN SDL2-widgets-2.1/bouncy-tune/Makefile originals/SDL2-widgets-2.1/boun
  
  .SUFFIXES=
 diff -rupN SDL2-widgets-2.1/config.h originals/SDL2-widgets-2.1/config.h
---- SDL2-widgets-2.1/config.h	2018-04-26 10:04:17.406849630 +0100
+--- SDL2-widgets-2.1/config.h	2018-06-10 19:41:41.621486327 +0100
 +++ originals/SDL2-widgets-2.1/config.h	1970-01-01 01:00:00.000000000 +0100
 @@ -1,2 +0,0 @@
 -const char* FONTPATH="DroidSans.ttf";
 -const char* FONTPATH_MONO="DroidSansMono.ttf";
 Binary files SDL2-widgets-2.1/hello/hello and originals/SDL2-widgets-2.1/hello/hello differ
 diff -rupN SDL2-widgets-2.1/hello/Makefile originals/SDL2-widgets-2.1/hello/Makefile
---- SDL2-widgets-2.1/hello/Makefile	2018-04-26 10:04:17.406849630 +0100
+--- SDL2-widgets-2.1/hello/Makefile	2018-06-10 19:41:41.621486327 +0100
 +++ originals/SDL2-widgets-2.1/hello/Makefile	2014-05-30 09:51:05.000000000 +0100
 @@ -1,8 +1,6 @@
 -CC := i686-pc-btos-gcc
@@ -38,23 +38,54 @@ diff -rupN SDL2-widgets-2.1/hello/Makefile originals/SDL2-widgets-2.1/hello/Make
  .SUFFIXES=
  
 diff -rupN SDL2-widgets-2.1/Makefile originals/SDL2-widgets-2.1/Makefile
---- SDL2-widgets-2.1/Makefile	2018-04-26 10:04:17.406849630 +0100
+--- SDL2-widgets-2.1/Makefile	2018-06-10 21:00:56.639787177 +0100
 +++ originals/SDL2-widgets-2.1/Makefile	2014-06-28 14:13:04.000000000 +0100
-@@ -1,8 +1,8 @@
+@@ -1,14 +1,14 @@
 -CC := i686-pc-btos-gcc
 +CC := g++
  # CFLAGS :=-g -O0 $$(sdl2-config --cflags) -std=c++11 -Wno-multichar -fmax-errors=5
 -CFLAGS := -g -O -std=gnu++11 -Wall -Wuninitialized -Wshadow\
 -  -Wno-non-virtual-dtor -Wno-delete-non-virtual-dtor -Wno-multichar -I../install/btos/include/SDL2
--LFLAGS := -lm -lstdc++ -lfreetype -L../install/btos/lib -lSDL2 -lSDL2_ttf
+-LFLAGS := -lm -lstdc++ -lfreetype -L../install/btos/lib -L. -lSDL2 -lSDL2_ttf -lSDL2_widgets
 +CFLAGS := -g -O $$(sdl2-config --cflags) -std=c++11 -Wall -Wuninitialized -Wshadow \
 +  -Wno-non-virtual-dtor -Wno-delete-non-virtual-dtor -Wno-multichar
 +LFLAGS := $$(sdl2-config --libs) -lSDL2_ttf
  OBJ := shapes.o sdl-widgets.o testsw.o
  
  .SUFFIXES=
+ .PHONY: all hello make-waves bouncy-tune archive
+ 
+-all: archive testsw hello make-waves bouncy-tune
++all: testsw hello make-waves bouncy-tune
+ 
+ %: %.o sdl-widgets.a 
+ 	$(CC) $< sdl-widgets.a -o $@ $(LFLAGS)
+@@ -16,7 +16,7 @@ all: archive testsw hello make-waves bou
+ %.o: %.cpp
+ 	$(CC) -c $< $(CFLAGS)
+ 
+-archive: sdl-widgets.a SDL2_widgets.ell
++archive: sdl-widgets.a
+ 
+ sdl-widgets.a: sdl-widgets.o shapes.o mingw32-specific.o
+ 	ar -rs $@ sdl-widgets.o shapes.o mingw32-specific.o
+@@ -25,13 +25,7 @@ hello make-waves bouncy-tune:
+ 	make -C $@
+ 
+ clean:
+-	rm *.o sdl-widgets.a */*.o *.ell
++	rm *.o sdl-widgets.a */*.o
+ 
+ sdl-widgets.o: sdl-widgets.h sw-pixmaps.h config.h shapes.h
+ testsw.o: sdl-widgets.h shapes.h
+-
+-SDL2_widgets.ell: sdl-widgets.o shapes.o
+-	$(CC) sdl-widgets.o shapes.o -o $@ -O2 -fPIC -shared -L. -L../install/btos/lib -lSDL2 -lSDL2_ttf -lgcc_s -lc
+-
+-testsw: testsw.o SDL2_widgets.ell
+-	$(CC) $< -o $@ $(LFLAGS)
 diff -rupN SDL2-widgets-2.1/make-waves/Makefile originals/SDL2-widgets-2.1/make-waves/Makefile
---- SDL2-widgets-2.1/make-waves/Makefile	2018-04-26 10:04:17.406849630 +0100
+--- SDL2-widgets-2.1/make-waves/Makefile	2018-06-10 19:41:41.621486327 +0100
 +++ originals/SDL2-widgets-2.1/make-waves/Makefile	2014-09-09 08:18:22.000000000 +0100
 @@ -1,7 +1,8 @@
 -CC := i686-pc-btos-gcc
@@ -80,7 +111,7 @@ diff -rupN SDL2-widgets-2.1/make-waves/Makefile originals/SDL2-widgets-2.1/make-
  	$(CC) -c $< $(CFLAGS)
 Binary files SDL2-widgets-2.1/make-waves/make-waves and originals/SDL2-widgets-2.1/make-waves/make-waves differ
 diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widgets.cpp
---- SDL2-widgets-2.1/sdl-widgets.cpp	2018-05-24 14:10:17.427279375 +0100
+--- SDL2-widgets-2.1/sdl-widgets.cpp	2018-06-10 19:41:41.621486327 +0100
 +++ originals/SDL2-widgets-2.1/sdl-widgets.cpp	2014-08-19 09:24:41.000000000 +0100
 @@ -800,21 +800,20 @@ TopWin::TopWin(const char* wm_title,Rect
      texture(0),
@@ -112,7 +143,7 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
    if (!(title_font=TTF_OpenFont(FONTPATH,nominal_font_size+1)))  // fontpath from config.h
 Binary files SDL2-widgets-2.1/testsw and originals/SDL2-widgets-2.1/testsw differ
 diff -rupN SDL2-widgets-2.1/testsw.cpp originals/SDL2-widgets-2.1/testsw.cpp
---- SDL2-widgets-2.1/testsw.cpp	2018-05-24 14:02:58.003287259 +0100
+--- SDL2-widgets-2.1/testsw.cpp	2018-06-10 19:41:41.621486327 +0100
 +++ originals/SDL2-widgets-2.1/testsw.cpp	2014-08-14 11:06:49.000000000 +0100
 @@ -15,8 +15,7 @@
      You should have received a copy of the GNU Lesser General Public

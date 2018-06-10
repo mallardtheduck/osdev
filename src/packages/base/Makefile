@@ -68,7 +68,9 @@ import-files:=\
  data/btos/cmd/package.elx \
  data/btos/lib/SDL2.ell \
  data/btos/lib/SDL2_ttf.ell \
- data/btos/lib/SDL2_image.ell
+ data/btos/lib/SDL2_image.ell \
+ data/btos/lib/SDL2_ttf.ell \
+ data/btos/lib/SDL2_widgets.ell \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -284,6 +286,12 @@ data/btos/lib/SDL2_ttf.ell: ../../3rdparty/install/btos/lib/SDL2_ttf.ell
 	cp $< $@
 
 data/btos/lib/SDL2_image.ell: ../../3rdparty/install/btos/lib/SDL2_image.ell
+	cp $< $@
+
+data/btos/lib/SDL2_ttf.ell: ../../3rdparty/install/btos/lib/SDL2_ttf.ell
+	cp $< $@
+
+data/btos/lib/SDL2_widgets.ell: ../../3rdparty/install/btos/lib/SDL2_widgets.ell
 	cp $< $@
 
 create.directories: Makefile
