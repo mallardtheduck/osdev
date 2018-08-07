@@ -26,7 +26,7 @@ static void _BTOS_HandleKeyboardEvent(wm_Event *event){
 	int sdl_key = 0;
 	uint16_t keycode = KB_code(event->Key.code);
 	if(keycode && (keycode & KeyFlags_NonASCII)){
-		switch((char)keycode){
+		switch((char)keycode & KC_Mask){
 			KEYCODE_MAP(KeyCodes_Escape, SDL_SCANCODE_ESCAPE);
 			KEYCODE_MAP(KeyCodes_PrintScreen, SDL_SCANCODE_PRINTSCREEN);
 			KEYCODE_MAP(KeyCodes_ScrollLock, SDL_SCANCODE_SCROLLLOCK);
@@ -41,14 +41,17 @@ static void _BTOS_HandleKeyboardEvent(wm_Event *event){
 			case KeyCodes_Control:
 				if(keycode & KeyFlags_Right) sdl_key = SDL_SCANCODE_RCTRL;
 				else sdl_key = SDL_SCANCODE_LCTRL;
+				break;
 			case KeyCodes_Alt:
 				if(keycode & KeyFlags_Right) sdl_key = SDL_SCANCODE_RALT;
 				else sdl_key = SDL_SCANCODE_LALT;
+				break;
 			KEYCODE_MAP(KeyCodes_Insert, SDL_SCANCODE_INSERT);
 			KEYCODE_MAP(KeyCodes_AltGr, SDL_SCANCODE_RALT);
 			case KeyCodes_Meta:
 				if(keycode & KeyFlags_Right) sdl_key = SDL_SCANCODE_RGUI;
 				else sdl_key = SDL_SCANCODE_LGUI;
+				break;
 			KEYCODE_MAP(KeyCodes_Menu, SDL_SCANCODE_MENU);
 			KEYCODE_MAP(KeyCodes_UpArrow, SDL_SCANCODE_UP);
 			KEYCODE_MAP(KeyCodes_DownArrow, SDL_SCANCODE_DOWN);
@@ -57,6 +60,7 @@ static void _BTOS_HandleKeyboardEvent(wm_Event *event){
 			case KeyCodes_Shift:
 				if(keycode & KeyFlags_Right) sdl_key = SDL_SCANCODE_RSHIFT;
 				else sdl_key = SDL_SCANCODE_LSHIFT;
+				break;
 			KEYCODE_MAP(KeyCodes_F1, SDL_SCANCODE_F1);
 			KEYCODE_MAP(KeyCodes_F2, SDL_SCANCODE_F2);
 			KEYCODE_MAP(KeyCodes_F3, SDL_SCANCODE_F3);
@@ -143,6 +147,7 @@ static void _BTOS_HandleKeyboardEvent(wm_Event *event){
 			KEYCODE_MAP('\t', SDL_SCANCODE_TAB);
 			KEYCODE_MAP('\n', SDL_SCANCODE_RETURN);
 			KEYCODE_MAP(0x08, SDL_SCANCODE_BACKSPACE);
+			KEYCODE_MAP(' ', SDL_SCANCODE_SPACE);
 			
 			default:
 				sdl_key = 0; break;
