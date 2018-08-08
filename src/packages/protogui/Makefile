@@ -5,8 +5,12 @@ pkg-files:= $(shell find pkgfiles -type f)
 
 import-files:= \
  data/btos/protoclock.elx \
+ data/btos/prototext.elx \
  
 data/btos/protoclock.elx: ../../user/wmapps/protoclock/protoclock.elx
+	cp $< $@
+	
+data/btos/prototext.elx: ../../user/wmapps/prototext/prototext.elx
 	cp $< $@
 
 create.directories:
