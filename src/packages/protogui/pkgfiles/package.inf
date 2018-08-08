@@ -12,3 +12,11 @@ description = ProtoClock
 path = /
 file = protoclock.elx
 type = app
+
+[feature-text]
+
+name = protogui.app.text
+description = ProtoText
+path = /
+file = prototext.elx
+type = app
