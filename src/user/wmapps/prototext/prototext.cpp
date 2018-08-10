@@ -24,28 +24,33 @@ static void disp_topw() {
 	//fill_rect(top_win->render, 0, top_win->bgcol);
 }
 
+static void update_scrollbar(){
+	int lines = 0;
+	int ypos = 0;
+	edit_win->get_info(nullptr, &lines, &ypos, nullptr, nullptr);
+	if(ypos < 0) ypos = 0;
+	if(lines != edit_lines){
+		edit_scr->set_range((lines + 1) * TDIST);
+		edit_lines = lines;
+		edit_scr->set_ypos(edit_offset);
+	}
+	if(ypos * TDIST > edit_offset + 480){
+		edit_offset = ((ypos + 1) * TDIST) - 480;
+		edit_win->set_offset(edit_offset);
+		edit_scr->set_ypos(edit_offset);
+	}
+	if(ypos * TDIST < edit_offset){
+		edit_offset = ypos * TDIST;
+		edit_win->set_offset(edit_offset);
+		edit_scr->set_ypos(edit_offset);
+	}
+}
+
 int main(){
 	top_win = new TopWin("ProtoText", Rect(100, 100, 500, 500), 0, SDL_WINDOW_RESIZABLE, true, disp_topw, set_icon);
 	edit_win = new EditWin(top_win, Rect(0, 20, 490, 480), nullptr, 
 		[](int ctrl_key, int key) {
-			int lines = 0;
-			int ypos = 0;
-			edit_win->get_info(nullptr, &lines, &ypos, nullptr, nullptr);
-			if(lines != edit_lines){
-				edit_scr->set_range((lines + 1) * TDIST);
-				edit_lines = lines;
-				edit_scr->set_ypos(edit_offset);
-			}
-			if(ypos * TDIST > edit_offset + 480){
-				edit_offset = ((ypos + 1) * TDIST) - 480;
-				edit_win->set_offset(edit_offset);
-				edit_scr->set_ypos(edit_offset);
-			}
-			if(ypos * TDIST < edit_offset){
-				edit_offset = ypos * TDIST;
-				edit_win->set_offset(edit_offset);
-				edit_scr->set_ypos(edit_offset);
-			}
+			update_scrollbar();
 		}
 	);
 	edit_scr=new VScrollbar(top_win,Style(0, 0, 5), Rect(490, 20, 10, 480), 1, 
@@ -58,6 +63,11 @@ int main(){
 		file_chooser([](const char* path) {
 			std::ifstream file(path);
 			if(file.is_open()){
+				int lines = 0;
+				edit_win->get_info(nullptr, &lines, nullptr, nullptr, nullptr);
+				for(int i = 0; i < lines; ++i){
+					edit_win->set_line(i, true, "");
+				}
 				edit_win->reset();
 				int cline = 0;
 				while(file.good()){
@@ -65,7 +75,7 @@ int main(){
 					std::getline(file, line);
 					edit_win->set_line(cline++, true, "%s", line.c_str());
 				}
-				edit_win->draw();
+				update_scrollbar();
 				cur_file = path;
 				file_txt->reset();
 				file_txt->add_text(path, true);
