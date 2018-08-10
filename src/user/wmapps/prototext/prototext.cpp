@@ -2,18 +2,26 @@
 #pragma GCC diagnostic ignored "-Wunused-function"
 
 #include <SDL2_widgets.h>
+#include <btos.h>
+#include <iostream>
+#include <fstream>
 
 static TopWin *top_win;
 static EditWin *edit_win;
 static VScrollbar *edit_scr;
+static Button *open_btn;
+static Button *save_btn;
+static TextWin *file_txt;
 
 static int edit_lines = 0;
 static int edit_offset = 0;
 
+static std::string cur_file;
+
 void set_icon(SDL_Window* window) {}
 
 static void disp_topw() {
-	fill_rect(top_win->render, 0, top_win->bgcol);
+	//fill_rect(top_win->render, 0, top_win->bgcol);
 }
 
 int main(){
@@ -40,12 +48,34 @@ int main(){
 			}
 		}
 	);
-	edit_scr=new VScrollbar(top_win,Style(0,0,5), Rect(490, 20, 10, 480), 1, 
+	edit_scr=new VScrollbar(top_win,Style(0, 0, 5), Rect(490, 20, 10, 480), 1, 
 		[](VScrollbar *sb) { 
 			edit_offset = sb->value;
 			edit_win->set_offset(edit_offset); 
 		}  
 	);
+	open_btn = new Button(top_win, Style(0, 0, 5), Rect(0, 0, 50, 20), "Open", [](Button*){
+		file_chooser([](const char* path) {
+			std::ifstream file(path);
+			if(file.is_open()){
+				edit_win->reset();
+				int cline = 0;
+				while(file.good()){
+					std::string line;
+					std::getline(file, line);
+					edit_win->set_line(cline++, true, "%s", line.c_str());
+				}
+				edit_win->draw();
+				cur_file = path;
+				file_txt->reset();
+				file_txt->add_text(path, true);
+			}
+		});
+	});
+	save_btn = new Button(top_win, Style(0, 0, 5), Rect(50, 0, 50, 20), "Save", [](Button*){});
+	file_txt = new TextWin(top_win, Style(0, 0 ,5), Rect(100, 0, 400, 20), 1, nullptr);
+	file_txt->bgcol = cBackground;
+	file_txt->add_text("Unsaved file", true);
 	get_events();
 	return 0;
 }
