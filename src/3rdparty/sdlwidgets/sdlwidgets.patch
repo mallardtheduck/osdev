@@ -1,6 +1,6 @@
 Binary files SDL2-widgets-2.1/bouncy-tune/bouncy-tune and originals/SDL2-widgets-2.1/bouncy-tune/bouncy-tune differ
 diff -rupN SDL2-widgets-2.1/bouncy-tune/Makefile originals/SDL2-widgets-2.1/bouncy-tune/Makefile
---- SDL2-widgets-2.1/bouncy-tune/Makefile	2018-06-12 11:56:56.579226839 +0100
+--- SDL2-widgets-2.1/bouncy-tune/Makefile	2018-08-14 19:29:12.545518152 +0100
 +++ originals/SDL2-widgets-2.1/bouncy-tune/Makefile	2014-05-30 09:51:05.000000000 +0100
 @@ -1,7 +1,8 @@
 -CC := i686-pc-btos-gcc
@@ -16,14 +16,14 @@ diff -rupN SDL2-widgets-2.1/bouncy-tune/Makefile originals/SDL2-widgets-2.1/boun
  
  .SUFFIXES=
 diff -rupN SDL2-widgets-2.1/config.h originals/SDL2-widgets-2.1/config.h
---- SDL2-widgets-2.1/config.h	2018-06-12 11:56:56.579226839 +0100
+--- SDL2-widgets-2.1/config.h	2018-08-14 19:29:12.545518152 +0100
 +++ originals/SDL2-widgets-2.1/config.h	1970-01-01 01:00:00.000000000 +0100
 @@ -1,2 +0,0 @@
 -const char* FONTPATH="/BTOS/FONTS/Resagnicto.ttf";
 -const char* FONTPATH_MONO="/BTOS/FONTS/DejaVuSansMono.ttf";
 Binary files SDL2-widgets-2.1/hello/hello and originals/SDL2-widgets-2.1/hello/hello differ
 diff -rupN SDL2-widgets-2.1/hello/Makefile originals/SDL2-widgets-2.1/hello/Makefile
---- SDL2-widgets-2.1/hello/Makefile	2018-06-12 11:56:56.579226839 +0100
+--- SDL2-widgets-2.1/hello/Makefile	2018-08-14 19:29:12.545518152 +0100
 +++ originals/SDL2-widgets-2.1/hello/Makefile	2014-05-30 09:51:05.000000000 +0100
 @@ -1,8 +1,6 @@
 -CC := i686-pc-btos-gcc
@@ -38,7 +38,7 @@ diff -rupN SDL2-widgets-2.1/hello/Makefile originals/SDL2-widgets-2.1/hello/Make
  .SUFFIXES=
  
 diff -rupN SDL2-widgets-2.1/Makefile originals/SDL2-widgets-2.1/Makefile
---- SDL2-widgets-2.1/Makefile	2018-06-12 11:56:56.579226839 +0100
+--- SDL2-widgets-2.1/Makefile	2018-08-14 19:29:12.545518152 +0100
 +++ originals/SDL2-widgets-2.1/Makefile	2014-06-28 14:13:04.000000000 +0100
 @@ -1,14 +1,14 @@
 -CC := i686-pc-btos-gcc
@@ -85,7 +85,7 @@ diff -rupN SDL2-widgets-2.1/Makefile originals/SDL2-widgets-2.1/Makefile
 -testsw: testsw.o SDL2_widgets.ell
 -	$(CC) $< -o $@ $(LFLAGS)
 diff -rupN SDL2-widgets-2.1/make-waves/Makefile originals/SDL2-widgets-2.1/make-waves/Makefile
---- SDL2-widgets-2.1/make-waves/Makefile	2018-06-12 11:56:56.579226839 +0100
+--- SDL2-widgets-2.1/make-waves/Makefile	2018-08-14 19:29:12.545518152 +0100
 +++ originals/SDL2-widgets-2.1/make-waves/Makefile	2014-09-09 08:18:22.000000000 +0100
 @@ -1,7 +1,8 @@
 -CC := i686-pc-btos-gcc
@@ -111,7 +111,7 @@ diff -rupN SDL2-widgets-2.1/make-waves/Makefile originals/SDL2-widgets-2.1/make-
  	$(CC) -c $< $(CFLAGS)
 Binary files SDL2-widgets-2.1/make-waves/make-waves and originals/SDL2-widgets-2.1/make-waves/make-waves differ
 diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widgets.cpp
---- SDL2-widgets-2.1/sdl-widgets.cpp	2018-08-10 16:10:29.782166988 +0100
+--- SDL2-widgets-2.1/sdl-widgets.cpp	2018-08-14 19:42:36.812039954 +0100
 +++ originals/SDL2-widgets-2.1/sdl-widgets.cpp	2014-08-19 09:24:41.000000000 +0100
 @@ -800,21 +800,20 @@ TopWin::TopWin(const char* wm_title,Rect
      texture(0),
@@ -187,12 +187,13 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
      if (!chars[ind]) set_char(ind);
      wid+=ch_wid[ind];
    }
-@@ -2165,10 +2166,11 @@ struct Line {
+@@ -2165,11 +2166,11 @@ struct Line {
      data[0]=0;
    }
    int xpos(int nr) {
 -    int pos = 0;
 -    for(int i = leftside; i < leftside + nr; ++i){
+-		if(!draw_mono_ttf->chars[(int)data[i]]) draw_mono_ttf->set_char(data[i]);
 -    	pos += draw_mono_ttf->ch_wid[(int)data[i]];
 -    }
 +    char ch=data[nr];
@@ -203,7 +204,7 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
      return pos+3;
    }
    void reset() { data[0]=0; dlen=leftside=0; }
-@@ -2209,7 +2211,7 @@ void DialogWin::set_cursor(int x) {
+@@ -2210,7 +2211,7 @@ void DialogWin::set_cursor(int x) {
    int wid=0,
        i=lin->leftside;
    for (;lin->data[i];++i) {
@@ -212,7 +213,7 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
      if (wid >= x - tw_area.x) break;
    }
    cursor=min(lin->dlen,i);
-@@ -2444,7 +2446,7 @@ void EditWin::set_cursor(int x1,int y1)
+@@ -2445,7 +2446,7 @@ void EditWin::set_cursor(int x1,int y1)
      int wid=0,
          i=lin->leftside;
      for (;lin->data[i];++i) {
@@ -221,7 +222,7 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
        if (wid >= x1 - tw_area.x) break;
      }
      cursor.x=min(lin->dlen,i);
-@@ -2686,7 +2688,7 @@ void EditWin::handle_key(SDL_Keysym *key
+@@ -2687,7 +2688,7 @@ void EditWin::handle_key(SDL_Keysym *key
        break;
      default:
        if (cmd) cmd(key->mod,ks1);
@@ -231,7 +232,7 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
            if (ks1==SDLK_d) {
              if (lin) lin->reset();
 diff -rupN SDL2-widgets-2.1/sdl-widgets.h originals/SDL2-widgets-2.1/sdl-widgets.h
---- SDL2-widgets-2.1/sdl-widgets.h	2018-08-10 15:10:11.454187440 +0100
+--- SDL2-widgets-2.1/sdl-widgets.h	2018-08-14 19:29:12.545518152 +0100
 +++ originals/SDL2-widgets-2.1/sdl-widgets.h	2014-05-30 09:51:05.000000000 +0100
 @@ -76,7 +76,7 @@ struct Style {
  };
@@ -244,7 +245,7 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.h originals/SDL2-widgets-2.1/sdl-widgets
    TTF_Font *ttf_font;
 Binary files SDL2-widgets-2.1/testsw and originals/SDL2-widgets-2.1/testsw differ
 diff -rupN SDL2-widgets-2.1/testsw.cpp originals/SDL2-widgets-2.1/testsw.cpp
---- SDL2-widgets-2.1/testsw.cpp	2018-06-12 11:56:56.579226839 +0100
+--- SDL2-widgets-2.1/testsw.cpp	2018-08-14 19:29:12.545518152 +0100
 +++ originals/SDL2-widgets-2.1/testsw.cpp	2014-08-14 11:06:49.000000000 +0100
 @@ -15,8 +15,7 @@
      You should have received a copy of the GNU Lesser General Public
