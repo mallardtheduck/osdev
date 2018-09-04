@@ -2,30 +2,40 @@ export PREFIX="$HOME/Projects/os/cross"
 export TARGET=i686-pc-btos
 export PATH="$PREFIX/bin:$PATH"
 
-rm -rf binutils-2.23
-if [ ! -f binutils-2.23.tar.gz ];
+if [ "$1" != "buildonly" ]; 
 then
-	wget http://ftp.gnu.org/gnu/binutils/binutils-2.23.tar.gz
+
+	rm -rf binutils-2.23
+	if [ ! -f binutils-2.23.tar.gz ];
+	then
+		wget http://ftp.gnu.org/gnu/binutils/binutils-2.23.tar.gz
+	fi
+	tar xvfz binutils-2.23.tar.gz
+	
+	rm -rf gcc-4.8.1
+	if [ ! -f gcc-4.8.1.tar.bz2 ];
+	then
+		wget http://ftp.gnu.org/gnu/gcc/gcc-4.8.1/gcc-4.8.1.tar.bz2
+	fi
+	tar xvfj gcc-4.8.1.tar.bz2
+	
+	# rm -rf newlib-2.1.0
+	# if [ ! -f newlib-2.1.0.tar.gz ];
+	# then
+	# 	wget ftp://sourceware.org/pub/newlib/newlib-2.1.0.tar.gz
+	# fi
+	# tar xvfz newlib-2.1.0.tar.gz
+	
+	cp -Rv toolchain/binutils-2.23/* ./binutils-2.23  && \
+	cp -Rv toolchain/gcc-4.8.1/* ./gcc-4.8.1  && \
+	
+	if [ "$1" == "download" ];  
+	then 
+		exit
+	fi
+	
 fi
-tar xvfz binutils-2.23.tar.gz
 
-rm -rf gcc-4.8.1
-if [ ! -f gcc-4.8.1.tar.bz2 ];
-then
-	wget http://ftp.gnu.org/gnu/gcc/gcc-4.8.1/gcc-4.8.1.tar.bz2
-fi
-tar xvfj gcc-4.8.1.tar.bz2
-
-# rm -rf newlib-2.1.0
-# if [ ! -f newlib-2.1.0.tar.gz ];
-# then
-# 	wget ftp://sourceware.org/pub/newlib/newlib-2.1.0.tar.gz
-# fi
-# tar xvfz newlib-2.1.0.tar.gz
-
-cp -Rv toolchain/binutils-2.23/* ./binutils-2.23  && \
-cp -Rv toolchain/gcc-4.8.1/* ./gcc-4.8.1  && \
-\
 pushd gcc-4.8.1/libstdc++-v3 && \
 autoconf2.64 && \
 popd && \
