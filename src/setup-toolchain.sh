@@ -95,20 +95,19 @@ esac
 case "$run" in
 	*2*)
 
+	cd build-gcc && \
 	make -C ../user/libs/newlib/libc startfiles && \
-	make all-target-libgcc
-	cp i686-pc-btos/libgcc/libgcc.a "$PREFIX/i686-pc-btos/lib"
+	make all-target-libgcc && \
+	cp i686-pc-btos/libgcc/libgcc.a "$PREFIX/i686-pc-btos/lib" && \
 	SHLIB_LINK="i686-pc-btos-gcc -O2 -fPIC -shared @shlib_objs@ -o @shlib_base_name@.ell" make all-target-libgcc && \
 	make install-target-libgcc && \
 	find i686-pc-btos/libgcc -name \*.ell -exec cp {} ../../cross/i686-pc-btos/lib \;
 	;;
 esac
 
-
 case "$run" in
 	*3*)
 	
-	cd .. && \
 	make -C user/libs/newlib/libc copy-includes && \
 	make newlib
 	;;
@@ -118,7 +117,6 @@ case "$run" in
 	*4*)
 	
 	cd build-gcc && \
-	\
 	cd $HOME/Projects/os/src/build-gcc && \
 	mkdir -p i686-pc-btos/libstdc++-v3 && \
 	cp ../toolchain/misc/libtool i686-pc-btos/libstdc++-v3 && \
