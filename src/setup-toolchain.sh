@@ -28,6 +28,7 @@ then
 	
 	cp -Rv toolchain/binutils-2.23/* ./binutils-2.23  && \
 	cp -Rv toolchain/gcc-4.8.1/* ./gcc-4.8.1  && \
+	rm ./gcc-4.8.1/gcc/cp/cfns.h && \
 	
 	if [ "$1" == "download" ];  
 	then 
