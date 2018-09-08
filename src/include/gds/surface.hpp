@@ -18,7 +18,7 @@ namespace gds{
 		Surface operator=(const Surface&) = delete;
 		Surface() {}
 	public:
-		Surface(gds_SurfaceType::Enum type, uint32_t w, uint32_t h, uint32_t scale = 100, gds_ColourType::Enum colourType = gds_ColourType::Indexed, uint64_t shmRegion = 0, size_t shmOffset = 0);
+		Surface(gds_SurfaceType::Enum type, uint32_t w, uint32_t h, uint32_t scale = 100, uint32_t colourType = gds_ColourType::Indexed, uint64_t shmRegion = 0, size_t shmOffset = 0);
 
 		Surface(Surface &&s);
 		

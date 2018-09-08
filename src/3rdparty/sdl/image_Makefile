@@ -1,0 +1,50 @@
+LIBRARY-NAME := SDL2_image.ell
+DESTINATION := ../install/btos
+
+BUILD-C := i686-pc-btos-gcc
+BUILD-C-FLAGS := -c -Wall -Wextra \
+	-DLOAD_BMP -DLOAD_GIF -DLOAD_JPG -DLOAD_LBM -DLOAD_PCX -DLOAD_PNG -DLOAD_PNM -DLOAD_SVG -DLOAD_TGA -DLOAD_TIF -DLOAD_WEBP -DLOAD_XCF -DLOAD_XPM -DLOAD_XV -DLOAD_XXX
+BUILD-C-OPTIONS := -g -c -std=gnu99 -I./include -I../../include -I../install/btos/include \
+	-Iexternal/jpeg-9b -Iexternal/libpng-1.6.32 -Iexternal/tiff-4.0.8/libtiff -I../sdl/image_include -I../install/btos/include/SDL2
+LINK := i686-pc-btos-gcc
+LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
+LIB-LINK-OPTIONS := -lgcc_s -L../install/btos/lib -Wl,-rpath-link,../install/btos/lib -lSDL2
+
+JPG_SOURCES := $(shell find external/jpeg-9b -name j\*.c -not -name jmem*.c -not -name jpegtran.c)
+TIFF_SOURCES := $(shell find external/tiff-4.0.8/libtiff -name \*.c -not -name tif_win32.c)
+PNG_SOURCES := $(shell find external/libpng-1.6.32 -maxdepth 1 -name png\*.c -not -name pngtest.c)
+WEBP_SOURCES := $(shell find external/libwebp-0.6.0/src -name \*.c)
+
+SOURCES = IMG.c IMG_*.c \
+	$(JPG_SOURCES) \
+	external/jpeg-9b/jmemname.c \
+	external/jpeg-9b/jmemmgr.c \
+	$(PNG_SOURCES) \
+	$(TIFF_SOURCES) \
+	external/zlib-1.2.11/*.c \
+	$(WEBP_SOURCES)
+
+OBJECTS = $(shell echo $(SOURCES) | sed -e 's,\.c,\.o,g')
+
+all: tif_config $(LIBRARY-NAME) copy
+
+tif_config: external/tiff-4.0.8/libtiff/tif_config.h
+
+external/tiff-4.0.8/libtiff/tif_config.h: ../sdl/image_include/tiffconf.h
+	cp $< $@
+
+.c.o: %.c Makefile
+	$(BUILD-C) -MMD -MP $(BUILD-C-FLAGS) $< -o $@ $(BUILD-C-OPTIONS)
+
+$(LIBRARY-NAME): $(OBJECTS) Makefile
+	$(LINK) $(LIB-LINK-FLAGS) $(OBJECTS) $(LIB-LINK-OPTIONS)
+
+clean:
+	rm -f $(TARGET) $(OBJECTS)
+	rm external/tiff-4.0.8/libtiff/tif_config.h
+	
+copy: $(LIBRARY-NAME)
+	mkdir -p $(DESTINATION)/lib
+	cp -u $(LIBRARY-NAME) $(DESTINATION)/lib
+	mkdir -p $(DESTINATION)/include/SDL2
+	cp -uR *.h $(DESTINATION)/include/SDL2

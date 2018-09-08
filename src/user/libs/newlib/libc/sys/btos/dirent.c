@@ -20,6 +20,7 @@ int readdir_r (DIR *__restrict dirp, struct dirent *__restrict entry, struct dir
 		strncpy(entry->d_name, de.filename, MAXNAMLEN);
 		entry->d_namlen = strlen(entry->d_name);
 		entry->d_reclen = sizeof(entry);
+		entry->d_type = de.type;
 		if(result) *result = entry;
 		return 0;
 	}else{

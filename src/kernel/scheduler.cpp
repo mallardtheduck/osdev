@@ -658,7 +658,7 @@ void sch_hold_proc(pid_t pid){
 	hold_lock hl(sch_lock);	
 	for(size_t i=0; i<threads->size(); ++i){
 		sch_thread *c = (*threads)[i];
-		if(c->pid == pid && c != current_thread){
+		if(c->pid == pid && c != current_thread && c->abortlevel == 0){
 			if(c->status == sch_thread_status::Runnable){
 				c->status = sch_thread_status::HeldRunnable;
 			}else if(c->status == sch_thread_status::Blocked){

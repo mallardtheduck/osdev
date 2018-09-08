@@ -27,6 +27,7 @@ extern void SDL_BTOS_DestroyWindowFramebuffer(_THIS, SDL_Window * window);
 extern void SDL_BTOS_DestroyWindow(_THIS, SDL_Window * window);
 extern int SDL_BTOS_CreateWindow(_THIS, SDL_Window *window);
 extern void BTOS_PumpEvents(_THIS);
+extern void SDL_BTOS_SetWindowTitle(_THIS, SDL_Window * window);
 
 typedef struct{
 	bool fail;

@@ -54,5 +54,11 @@ int main(int argc, char **argv){
     for(size_t i = 0; i < 1000; ++i) bt_yield();
     uint64_t end = bt_rtc_millis();
     printf("Schedulter benchmark: %i\n", (int)(end - start));
+    bt_handle_t a = bt_create_atom(1);
+    printf("Atom value: %i\n", (int)bt_read_atom(a));
+    bt_cmpxchg_atom(a, 1, 2);
+    printf("Atom value: %i\n", (int)bt_read_atom(a));
+    bt_cmpxchg_atom(a, 1, 3);
+    printf("Atom value: %i\n", (int)bt_read_atom(a));
 	return 42;
 }

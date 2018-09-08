@@ -71,8 +71,8 @@ typedef unsigned long uintptr_t;
 /* Enable the stub thread support (src/thread/generic/\*.c) */
 #define SDL_THREADS_DISABLED    1
 
-/* Enable the stub timer support (src/timer/dummy/\*.c) */
-#define SDL_TIMERS_DISABLED 1
+/* Enable the btos timer support (src/timer/btos/\*.c) */
+#define SDL_TIMER_BTOS 1
 
 /* Enable the dummy video driver (src/video/dummy/\*.c) */
 #define SDL_VIDEO_DRIVER_DUMMY  1

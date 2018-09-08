@@ -56,7 +56,10 @@ int pthread_mutex_lock(pthread_mutex_t *mutex){
 	while(true){
 		bt_wait_atom(mtx->atom, bt_atom_compare_Equal, 0);
 		uint64_t val = bt_cmpxchg_atom(mtx->atom, 0, bt_get_thread());
-		if(val == bt_get_thread()) return 0;
+		if(val == bt_get_thread()){
+			if(mtx->type == PTHREAD_MUTEX_RECURSIVE) bt_modify_atom(mtx->count, bt_atom_modify_Set, 1);
+			return 0;
+		}
 	}
 }
 
@@ -69,7 +72,10 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex){
 		return 0;
 	}
 	uint64_t val = bt_cmpxchg_atom(mtx->atom, 0, bt_get_thread());
-	if(val == bt_get_thread()) return 0;
+	if(val == bt_get_thread()){
+		if(mtx->type == PTHREAD_MUTEX_RECURSIVE) bt_modify_atom(mtx->count, bt_atom_modify_Set, 1);
+		return 0;
+	}
 	else return EBUSY;
 }
 

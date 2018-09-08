@@ -17,7 +17,10 @@
 
 using namespace std;
 
-BitmapSurface::BitmapSurface(size_t w, size_t h, bool indexed, uint32_t scale) {
+BitmapSurface::BitmapSurface(size_t w, size_t h, uint32_t cT, uint32_t scale)
+: colourType(cT)
+{
+	bool indexed = !(cT & gds_ColourType::True);
 	image.reset(new GD::Image((int)w, (int)h, !indexed));
 	this->scale = scale;
 	pending_op.type = gds_DrawingOpType::None;

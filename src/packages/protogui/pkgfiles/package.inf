@@ -1,0 +1,22 @@
+[package]
+
+name = protogui
+description = Prototype GUI applications
+version = 0.1B
+contentPath = btos
+
+[feature-clock]
+
+name = protogui.app.clock
+description = ProtoClock
+path = /
+file = protoclock.elx
+type = app
+
+[feature-text]
+
+name = protogui.app.text
+description = ProtoText
+path = /
+file = prototext.elx
+type = app

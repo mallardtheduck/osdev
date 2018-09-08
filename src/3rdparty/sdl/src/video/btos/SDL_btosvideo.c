@@ -93,6 +93,7 @@ BTOS_CreateDevice(int devindex)
     device->CreateWindowFramebuffer = SDL_BTOS_CreateWindowFramebuffer;
     device->UpdateWindowFramebuffer = SDL_BTOS_UpdateWindowFramebuffer;
     device->DestroyWindowFramebuffer = SDL_BTOS_DestroyWindowFramebuffer;
+    device->SetWindowTitle = SDL_BTOS_SetWindowTitle;
 
     device->free = BTOS_DeleteDevice;
 

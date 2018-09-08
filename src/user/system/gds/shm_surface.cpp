@@ -16,7 +16,7 @@ static inline uint32_t getPixelIndexed(char *ptr, uint32_t w, uint32_t x, uint32
 }
 
 
-SHMSurface::SHMSurface(size_t w, size_t h, bool i, uint32_t /*scale*/, uint64_t shmRegion, size_t shmOffset) : width(w), height(h), indexed(i) {
+SHMSurface::SHMSurface(size_t w, size_t h, uint32_t cT, uint32_t /*scale*/, uint64_t shmRegion, size_t shmOffset) : width(w), height(h), colourType(cT) {
 	size_t size = width * height * (GetDepth() / 8);
 	size_t pages = size / 4096;
 	if(pages * 4096 < size) ++pages;
@@ -51,7 +51,7 @@ size_t SHMSurface::GetHeight(){
 }
 
 size_t SHMSurface::GetDepth(){
-	return indexed ? 8 : 32;
+	return (colourType & gds_ColourType::True) ? 32 : 8;
 }
 
 uint32_t SHMSurface::GetScale(){
@@ -68,7 +68,7 @@ gds_SurfaceType::Enum SHMSurface::GetType(){
 uint32_t SHMSurface::GetColour(uint8_t r, uint8_t g, uint8_t b, uint8_t a){
 	a >>= 1;
 	uint32_t colour = (a << 24) | (r << 16) | (g << 8) | b;
-	if(!indexed){
+	if((colourType & gds_ColourType::True)){
 		return colour;
 	}else{
 		if(colour == 0) return 0;
@@ -101,11 +101,15 @@ std::shared_ptr<gds_OpParameters> SHMSurface::GetOpParameters(uint32_t /*op*/){
 void SHMSurface::Resize(size_t w, size_t h, bool i){
 	width = w;
 	height = h;
-	indexed = i;
+	if(i){
+		colourType &= ~gds_ColourType::True;
+	}else{
+		colourType |= gds_ColourType::True;
+	}
 }
 
 std::shared_ptr<GD::Image> SHMSurface::Render(uint32_t /*scale*/){
-	shared_ptr<GD::Image> rendering = make_shared<GD::Image>(width, height, !indexed);
+	shared_ptr<GD::Image> rendering = make_shared<GD::Image>(width, height, !(colourType & gds_ColourType::True));
 	uint64_t start = bt_rtc_millis();
 	RenderTo(rendering, 0, 0, 0, 0, width, height);
 	uint64_t end = bt_rtc_millis();
@@ -147,14 +151,16 @@ void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t 
 	if(dstX + w > (uint32_t)dst->Width()) w = dst->Width() - dstX;
 	if(dstY + h > (uint32_t)dst->Height()) h = dst->Height() - dstY;
 	gdImagePtr dstPtr = dst->GetPtr();
-	if(!indexed){
+	if((colourType & gds_ColourType::True)){
 		if(dst->IsTrueColor()){
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
 					uint32_t srcPxl = getPixelTrueColour(ptr, width, srcX + x, srcY + y);
-					if(gdTrueColorGetAlpha(srcPxl) != gdAlphaOpaque){
+					if(!(colourType & ~gds_ColourType::AlphaDisable) && gdTrueColorGetAlpha(srcPxl) != gdAlphaOpaque){
 						uint32_t dstPxl = gdImageTrueColorPixel(dstPtr, dstX + x, dstY + y);
 						srcPxl = gdAlphaBlend(dstPxl, srcPxl);
+					}else{
+						srcPxl = gdTrueColorAlpha(gdTrueColorGetRed(srcPxl), gdTrueColorGetGreen(srcPxl), gdTrueColorGetBlue(srcPxl), gdAlphaOpaque);
 					}
 					gdImageTrueColorPixel(dstPtr, dstX + x, dstY + y) = srcPxl;
 				}
@@ -166,7 +172,7 @@ void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t 
 				for(size_t x = 0; x < w; ++x){
 					uint32_t srcPxl = getPixelTrueColour(ptr, width, srcX + x, srcY + y);
 					if((!y && !x) || srcCol != srcPxl){
-						dstCol = gdImageColorResolveAlpha(dstPtr, gdTrueColorGetRed(srcPxl), gdTrueColorGetGreen(srcPxl), gdTrueColorGetBlue(srcPxl), gdTrueColorGetAlpha(srcPxl));
+						dstCol = gdImageColorResolveAlpha(dstPtr, gdTrueColorGetRed(srcPxl), gdTrueColorGetGreen(srcPxl), gdTrueColorGetBlue(srcPxl), gdAlphaOpaque);// gdTrueColorGetAlpha(srcPxl));
 						srcCol = srcPxl;
 					}
 					gdImagePalettePixel(dstPtr, dstX + x, dstY + y) = dstCol;

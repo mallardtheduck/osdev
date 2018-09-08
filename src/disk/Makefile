@@ -2,6 +2,7 @@ disk-files:= $(shell find diskfiles -type f)
 
 import-files:= \
  data/tests.pkf \
+ data/protogui.pkf
 
 all: ~/.mtoolsrc btos.img
 
@@ -11,6 +12,9 @@ data/tests.pkf: ../packages/tests.pkf
 create.directories:
 	mkdir -p data
 	touch $@
+
+data/protogui.pkf: ../packages/protogui.pkf
+	cp $< $@
 
 btos.img: create.directories $(shell find data -type f) ../packages/base.pkf $(disk-files) $(import-files)
 	if [ ! -e btos.img ] ; \

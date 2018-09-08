@@ -1,4 +1,4 @@
-PROGS := wmmenu termwin breakout
+PROGS := wmmenu termwin breakout protoclock prototext
 
 all: dummy.file
 	for dir in $(PROGS); do \
