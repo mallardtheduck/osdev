@@ -1,12 +1,12 @@
 Binary files SDL2-widgets-2.1/bouncy-tune/bouncy-tune and originals/SDL2-widgets-2.1/bouncy-tune/bouncy-tune differ
 diff -rupN SDL2-widgets-2.1/bouncy-tune/Makefile originals/SDL2-widgets-2.1/bouncy-tune/Makefile
---- SDL2-widgets-2.1/bouncy-tune/Makefile	2018-08-24 12:57:59.350277928 +0100
+--- SDL2-widgets-2.1/bouncy-tune/Makefile	2018-09-11 12:06:51.374186691 +0100
 +++ originals/SDL2-widgets-2.1/bouncy-tune/Makefile	2014-05-30 09:51:05.000000000 +0100
 @@ -1,7 +1,8 @@
 -CC := i686-pc-btos-gcc
 -CFLAGS := -g -O -std=gnu++11 -Wall -Wuninitialized -Wshadow\
 -  -Wno-non-virtual-dtor -Wno-delete-non-virtual-dtor -Wno-multichar -I../../install/btos/include/SDL2
--LFLAGS := -lm -lstdc++ -lfreetype -L../../install/btos/lib -lSDL2 -lSDL2_ttf
+-LFLAGS := -lm -lstdc++ -lfreetype -L../../install/btos/lib -lSDL2 -lSDL2_ttf -lbtoslib
 +CC := g++
 +# CFLAGS := -g $$(sdl2-config --cflags) -I.. -std=c++11 -O0 -Wno-multichar -fmax-errors=3
 +CFLAGS := -g $$(sdl2-config --cflags) -I.. -std=c++11 -O \
@@ -16,20 +16,20 @@ diff -rupN SDL2-widgets-2.1/bouncy-tune/Makefile originals/SDL2-widgets-2.1/boun
  
  .SUFFIXES=
 diff -rupN SDL2-widgets-2.1/config.h originals/SDL2-widgets-2.1/config.h
---- SDL2-widgets-2.1/config.h	2018-08-24 12:57:59.350277928 +0100
+--- SDL2-widgets-2.1/config.h	2018-09-11 10:20:54.554247325 +0100
 +++ originals/SDL2-widgets-2.1/config.h	1970-01-01 01:00:00.000000000 +0100
 @@ -1,2 +0,0 @@
 -const char* FONTPATH="/BTOS/FONTS/Resagnicto.ttf";
 -const char* FONTPATH_MONO="/BTOS/FONTS/DejaVuSansMono.ttf";
 Binary files SDL2-widgets-2.1/hello/hello and originals/SDL2-widgets-2.1/hello/hello differ
 diff -rupN SDL2-widgets-2.1/hello/Makefile originals/SDL2-widgets-2.1/hello/Makefile
---- SDL2-widgets-2.1/hello/Makefile	2018-08-24 12:57:59.350277928 +0100
+--- SDL2-widgets-2.1/hello/Makefile	2018-09-11 12:07:02.326186661 +0100
 +++ originals/SDL2-widgets-2.1/hello/Makefile	2014-05-30 09:51:05.000000000 +0100
 @@ -1,8 +1,6 @@
 -CC := i686-pc-btos-gcc
 -CFLAGS := -g -O -std=gnu++11 -Wall -Wuninitialized -Wshadow\
 -  -Wno-non-virtual-dtor -Wno-delete-non-virtual-dtor -Wno-multichar -I../../install/btos/include/SDL2
--LFLAGS := -lm -lstdc++ -lfreetype -L../../install/btos/lib -lSDL2 -lSDL2_ttf
+-LFLAGS := -lm -lstdc++ -lfreetype -L../../install/btos/lib -lSDL2 -lSDL2_ttf -lbtoslib
 -OBJ := shapes.o sdl-widgets.o testsw.o
 +CC := g++
 +CFLAGS := -g $(shell sdl2-config --cflags) -std=c++11
@@ -38,15 +38,16 @@ diff -rupN SDL2-widgets-2.1/hello/Makefile originals/SDL2-widgets-2.1/hello/Make
  .SUFFIXES=
  
 diff -rupN SDL2-widgets-2.1/Makefile originals/SDL2-widgets-2.1/Makefile
---- SDL2-widgets-2.1/Makefile	2018-08-24 12:57:59.350277928 +0100
+--- SDL2-widgets-2.1/Makefile	2018-09-11 12:02:02.642186008 +0100
 +++ originals/SDL2-widgets-2.1/Makefile	2014-06-28 14:13:04.000000000 +0100
-@@ -1,14 +1,14 @@
+@@ -1,15 +1,14 @@
 -CC := i686-pc-btos-gcc
 +CC := g++
  # CFLAGS :=-g -O0 $$(sdl2-config --cflags) -std=c++11 -Wno-multichar -fmax-errors=5
 -CFLAGS := -g -O -std=gnu++11 -Wall -Wuninitialized -Wshadow\
--  -Wno-non-virtual-dtor -Wno-delete-non-virtual-dtor -Wno-multichar -I../install/btos/include/SDL2
--LFLAGS := -lm -lstdc++ -lfreetype -L../install/btos/lib -L. -lSDL2 -lSDL2_ttf -lSDL2_widgets
+-  -Wno-non-virtual-dtor -Wno-delete-non-virtual-dtor -Wno-multichar -I../install/btos/include/SDL2\
+-  -I../../include
+-LFLAGS := -lm -lstdc++ -lfreetype -L../install/btos/lib -L. -lSDL2 -lSDL2_ttf -lSDL2_widgets -lbtoslib
 +CFLAGS := -g -O $$(sdl2-config --cflags) -std=c++11 -Wall -Wuninitialized -Wshadow \
 +  -Wno-non-virtual-dtor -Wno-delete-non-virtual-dtor -Wno-multichar
 +LFLAGS := $$(sdl2-config --libs) -lSDL2_ttf
@@ -60,7 +61,7 @@ diff -rupN SDL2-widgets-2.1/Makefile originals/SDL2-widgets-2.1/Makefile
  
  %: %.o sdl-widgets.a 
  	$(CC) $< sdl-widgets.a -o $@ $(LFLAGS)
-@@ -16,7 +16,7 @@ all: archive testsw hello make-waves bou
+@@ -17,7 +16,7 @@ all: archive testsw hello make-waves bou
  %.o: %.cpp
  	$(CC) -c $< $(CFLAGS)
  
@@ -69,7 +70,7 @@ diff -rupN SDL2-widgets-2.1/Makefile originals/SDL2-widgets-2.1/Makefile
  
  sdl-widgets.a: sdl-widgets.o shapes.o mingw32-specific.o
  	ar -rs $@ sdl-widgets.o shapes.o mingw32-specific.o
-@@ -25,13 +25,7 @@ hello make-waves bouncy-tune:
+@@ -26,13 +25,7 @@ hello make-waves bouncy-tune:
  	make -C $@
  
  clean:
@@ -85,13 +86,13 @@ diff -rupN SDL2-widgets-2.1/Makefile originals/SDL2-widgets-2.1/Makefile
 -testsw: testsw.o SDL2_widgets.ell
 -	$(CC) $< -o $@ $(LFLAGS)
 diff -rupN SDL2-widgets-2.1/make-waves/Makefile originals/SDL2-widgets-2.1/make-waves/Makefile
---- SDL2-widgets-2.1/make-waves/Makefile	2018-08-24 12:57:59.354277928 +0100
+--- SDL2-widgets-2.1/make-waves/Makefile	2018-09-11 12:07:12.250186635 +0100
 +++ originals/SDL2-widgets-2.1/make-waves/Makefile	2014-09-09 08:18:22.000000000 +0100
 @@ -1,7 +1,8 @@
 -CC := i686-pc-btos-gcc
 -CFLAGS := -g -O -std=gnu++11 -Wall -Wuninitialized -Wshadow\
 -  -Wno-non-virtual-dtor -Wno-delete-non-virtual-dtor -Wno-multichar -I../../install/btos/include/SDL2
--LFLAGS := -lm -lstdc++ -lfreetype -L../../install/btos/lib -lSDL2 -lSDL2_ttf
+-LFLAGS := -lm -lstdc++ -lfreetype -L../../install/btos/lib -lSDL2 -lSDL2_ttf -lbtoslib
 +CC := g++
 +CFLAGS := -g -O $$(sdl2-config --cflags) -I.. -std=c++11 \
 +  -Wuninitialized -Wshadow -Wall -Wno-multichar -Wno-delete-non-virtual-dtor \
@@ -111,9 +112,22 @@ diff -rupN SDL2-widgets-2.1/make-waves/Makefile originals/SDL2-widgets-2.1/make-
  	$(CC) -c $< $(CFLAGS)
 Binary files SDL2-widgets-2.1/make-waves/make-waves and originals/SDL2-widgets-2.1/make-waves/make-waves differ
 diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widgets.cpp
---- SDL2-widgets-2.1/sdl-widgets.cpp	2018-08-24 13:44:16.454270926 +0100
+--- SDL2-widgets-2.1/sdl-widgets.cpp	2018-09-11 12:05:55.970186847 +0100
 +++ originals/SDL2-widgets-2.1/sdl-widgets.cpp	2014-08-19 09:24:41.000000000 +0100
-@@ -800,21 +800,20 @@ TopWin::TopWin(const char* wm_title,Rect
+@@ -28,12 +28,6 @@
+ #include "sdl-widgets.h"
+ #include "sw-pixmaps.h"
+ 
+-#ifdef __btos__
+-#include <crt_support.h>
+-#include <btos/table.hpp>
+-#include <fstream>
+-#endif
+-
+ /*  === BEGIN WINDOWS DEPENDENT CODE ==== */
+ 
+ #ifdef __MINGW32__
+@@ -806,21 +800,20 @@ TopWin::TopWin(const char* wm_title,Rect
      texture(0),
      renderer(0),
      display_cmd(disp_cmd) {
@@ -141,7 +155,7 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
  
    if (TTF_Init() < 0) err("SDL ttf init problem");
    if (!(title_font=TTF_OpenFont(FONTPATH,nominal_font_size+1)))  // fontpath from config.h
-@@ -1328,7 +1327,11 @@ int RenderText::draw_string(Render rend,
+@@ -1334,7 +1327,11 @@ int RenderText::draw_string(Render rend,
        offset.y+=TDIST; offset.x=pt.x;
        continue;
      }
@@ -154,7 +168,7 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
      if (!chars[ind]) set_char(ind);
      Rect off(offset);
      SDL_BlitSurface(chars[ind],0,rend.surf,&off); // off.w end off.h might be modified!
-@@ -1338,27 +1341,21 @@ int RenderText::draw_string(Render rend,
+@@ -1344,27 +1341,21 @@ int RenderText::draw_string(Render rend,
  }
  
  void RenderText::set_char(const int ind) {
@@ -191,7 +205,7 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
      if (!chars[ind]) set_char(ind);
      wid+=ch_wid[ind];
    }
-@@ -2169,11 +2166,11 @@ struct Line {
+@@ -2175,11 +2166,11 @@ struct Line {
      data[0]=0;
    }
    int xpos(int nr) {
@@ -208,7 +222,7 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
      return pos+3;
    }
    void reset() { data[0]=0; dlen=leftside=0; }
-@@ -2214,7 +2211,7 @@ void DialogWin::set_cursor(int x) {
+@@ -2220,7 +2211,7 @@ void DialogWin::set_cursor(int x) {
    int wid=0,
        i=lin->leftside;
    for (;lin->data[i];++i) {
@@ -217,7 +231,7 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
      if (wid >= x - tw_area.x) break;
    }
    cursor=min(lin->dlen,i);
-@@ -2449,7 +2446,7 @@ void EditWin::set_cursor(int x1,int y1)
+@@ -2455,7 +2446,7 @@ void EditWin::set_cursor(int x1,int y1)
      int wid=0,
          i=lin->leftside;
      for (;lin->data[i];++i) {
@@ -226,7 +240,7 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
        if (wid >= x1 - tw_area.x) break;
      }
      cursor.x=min(lin->dlen,i);
-@@ -2691,7 +2688,7 @@ void EditWin::handle_key(SDL_Keysym *key
+@@ -2697,7 +2688,7 @@ void EditWin::handle_key(SDL_Keysym *key
        break;
      default:
        if (cmd) cmd(key->mod,ks1);
@@ -235,8 +249,63 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
          if (key->mod==KMOD_LCTRL || key->mod==KMOD_RCTRL) {
            if (ks1==SDLK_d) {
              if (lin) lin->reset();
+@@ -2768,8 +2759,8 @@ struct FileChooser {
+     const char* cur_wdir=getcwd(0,0);
+     //SDL_WM_SetCaption(cur_wdir,0);
+     working_dir();
+-    if (callback) callback(cur_wdir); // cur_wdir not free'd
+-    else free((void*)cur_wdir);
++    if (callback)
++      callback(cur_wdir); // cur_wdir not free'd
+   }
+   static void rbw_wdir_cmd(RButtons*,int nr,int fire) {
+     if (the_menu) { the_menu->mclose(); the_menu=0; }
+@@ -2836,21 +2827,6 @@ bool FileChooser::fill_fname_array(int &
+     return false;
+   }
+   free((void*)wd);
+-#ifdef __btos__
+-	if(btos_path_is_root(wd)){
+-		//Generate nmes of other drives in root
+-		std::ifstream mounts("info:/mounts");
+-		auto tbl = btos_api::parsecsv(mounts);
+-		for(auto r : tbl.rows){
+-			if (dir_nr==d_max-1) dir_names=re_alloc(dir_names,d_max);
+-			dir_names[++dir_nr] = strdup((r["name"] + ":/").c_str());
+-		}
+-	}else{
+-		// On BT/OS, the '..' directory is "virtual"
+-		if (dir_nr==d_max-1) dir_names=re_alloc(dir_names,d_max);
+-		dir_names[++dir_nr] = strdup("../");
+-	}
+-#endif
+   while ((dir=readdir(dp))!=0) {
+ #ifdef __MINGW32__
+     if (!isDirentInoOK(dir)) { alert("d_ino?"); continue; }
+@@ -2908,21 +2884,6 @@ bool FileChooser::fill_dname_array(int &
+     return false;
+   }
+   free((void*)wd);
+-#ifdef __btos__
+-	if(btos_path_is_root(wd)){
+-		//Generate nmes of other drives in root
+-		std::ifstream mounts("info:/mounts");
+-		auto tbl = btos_api::parsecsv(mounts);
+-		for(auto r : tbl.rows){
+-			if (dir_nr==d_max-1) dir_names=re_alloc(dir_names,d_max);
+-			dir_names[++dir_nr] = strdup((r["name"] + ":/").c_str());
+-		}
+-	}else{
+-		// On BT/OS, the '..' directory is "virtual"
+-		if (dir_nr==d_max-1) dir_names=re_alloc(dir_names,d_max);
+-		dir_names[++dir_nr] = strdup("../");
+-	}
+-#endif
+   while ((dir=readdir(dp))!=0) {
+ #ifdef __MINGW32__
+     if (!isDirentInoOK(dir)) { alert("d_ino?"); continue; }
 diff -rupN SDL2-widgets-2.1/sdl-widgets.h originals/SDL2-widgets-2.1/sdl-widgets.h
---- SDL2-widgets-2.1/sdl-widgets.h	2018-08-24 12:57:59.354277928 +0100
+--- SDL2-widgets-2.1/sdl-widgets.h	2018-09-11 10:20:54.558247325 +0100
 +++ originals/SDL2-widgets-2.1/sdl-widgets.h	2014-05-30 09:51:05.000000000 +0100
 @@ -76,7 +76,7 @@ struct Style {
  };
@@ -249,7 +318,7 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.h originals/SDL2-widgets-2.1/sdl-widgets
    TTF_Font *ttf_font;
 Binary files SDL2-widgets-2.1/testsw and originals/SDL2-widgets-2.1/testsw differ
 diff -rupN SDL2-widgets-2.1/testsw.cpp originals/SDL2-widgets-2.1/testsw.cpp
---- SDL2-widgets-2.1/testsw.cpp	2018-08-24 12:57:59.354277928 +0100
+--- SDL2-widgets-2.1/testsw.cpp	2018-09-11 10:20:54.558247325 +0100
 +++ originals/SDL2-widgets-2.1/testsw.cpp	2014-08-14 11:06:49.000000000 +0100
 @@ -15,8 +15,7 @@
      You should have received a copy of the GNU Lesser General Public

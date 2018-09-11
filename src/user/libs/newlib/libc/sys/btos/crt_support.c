@@ -126,6 +126,14 @@ char **get_argv(){
 	return argsptr;
 }
 
+bool btos_path_is_root(const char *path){
+	if(!path) return false;
+	size_t len = strlen(path);
+	if(len < 3) return false;
+	if(path[len - 1] == '/' && path[len - 2] == ':') return true;
+	else return false;
+}
+
 bool btos_path_is_absolute(const char *path){
 	if(!path) return false;
 	const char *c;
