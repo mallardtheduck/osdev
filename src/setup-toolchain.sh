@@ -88,7 +88,8 @@ case "$run" in
 	cd build-gcc && \
 	../gcc-4.8.1/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers --with-newlib --disable-multilib --enable-shared=libgcc,libstdc++ --enable-initfini-array && \
 	make all-gcc && \
-	make install-gcc
+	make install-gcc && \
+	cd $HOME/Projects/os/src
 	;;
 esac
 
