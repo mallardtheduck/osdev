@@ -72,6 +72,8 @@ static void open_file(const char *path){
 		}
 		update_scrollbar();
 		cur_file = path;
+		char buf[BT_MAX_PATH] = {0};
+		cur_path = getcwd(buf, BT_MAX_PATH);
 		file_txt->reset();
 		file_txt->add_text(path, true);
 	}
