@@ -288,9 +288,6 @@ data/btos/lib/SDL2_ttf.ell: ../../3rdparty/install/btos/lib/SDL2_ttf.ell
 data/btos/lib/SDL2_image.ell: ../../3rdparty/install/btos/lib/SDL2_image.ell
 	cp $< $@
 
-data/btos/lib/SDL2_ttf.ell: ../../3rdparty/install/btos/lib/SDL2_ttf.ell
-	cp $< $@
-
 data/btos/lib/SDL2_widgets.ell: ../../3rdparty/install/btos/lib/SDL2_widgets.ell
 	cp $< $@
 
