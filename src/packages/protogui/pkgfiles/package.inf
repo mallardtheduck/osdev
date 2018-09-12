@@ -20,3 +20,11 @@ description = ProtoText
 path = /
 file = prototext.elx
 type = app
+
+[feature-task]
+
+name = protogui.app.task
+description = ProtoTask
+path = /
+file = prototask.elx
+type = app
