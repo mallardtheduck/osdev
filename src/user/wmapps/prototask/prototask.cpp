@@ -122,7 +122,6 @@ void update_cpugraph(){
 	int usedcpu = 0;
 	std::ifstream threadsfile{"INFO:/THREADS"};
 	auto threadstbl = parsecsv(threadsfile);
-	std::stringstream ss;
 	for(auto row : threadstbl.rows){
 		auto load = strtol(row["load"].c_str(), nullptr, 10);
 		auto priority = strtol(row["priority"].c_str(), nullptr, 10);
