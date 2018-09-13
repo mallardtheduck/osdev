@@ -276,7 +276,7 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 	for(size_t i=0; i<threads->size(); ++i){
 		sch_thread *ithread = (*threads)[i];
 		//Priority 0xFFFFFFFF == "idle", only run when nothing else is available.
-		if(!ithread->priority==0xFFFFFFFF) ithread->dynpriority=0xFFFFFFFF;
+		if(ithread->priority == 0xFFFFFFFF) ithread->dynpriority=0xFFFFFFFF;
 	    if(lcycle != cycle && ithread->status == sch_thread_status::Blocked && ithread->blockcheck!=NULL){
 	        if(ithread->blockcheck(ithread->bc_param)) ithread->status = sch_thread_status::Runnable;
 	    }
@@ -316,16 +316,16 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 					foundtorun=true;
 					torun=ithread;
 				}
-				else if(ithread->modifier) --ithread->modifier;
-			}else if(ithread->modifier) --ithread->modifier;
+				//else if(ithread->modifier) --ithread->modifier;
+			}//else if(ithread->modifier) --ithread->modifier;
 		}
 	}
 	if(foundtorun){
-		if(torun->modifier < modifier_limit) ++torun->modifier;
+		//if(torun->modifier < modifier_limit) ++torun->modifier;
 		return true;
 	}else{
 		torun=current_thread;
-		if(torun->modifier < modifier_limit) ++torun->modifier;
+		//if(torun->modifier < modifier_limit) ++torun->modifier;
 		return true;
 	}
 }
@@ -553,6 +553,10 @@ void sch_prescheduler_thread(void*){
 	while(true){
 		cycle++;
 		take_lock_exclusive(sch_lock);
+		for(size_t i=0; i<threads->size(); ++i){
+			sch_thread *ithread = (*threads)[i];
+			if(ithread->modifier > 0) --ithread->modifier;
+		}
 		sch_thread *current=current_thread;
 		sch_thread *next=NULL;
 		uint32_t count=0;
@@ -562,6 +566,8 @@ void sch_prescheduler_thread(void*){
 			}
 			current->next=next;
 			current=current->next;
+			
+			if(current->modifier < modifier_limit) ++current->modifier;
 			if(current->modifier < modifier_limit) ++current->modifier;
 			//Prevent overflow of dynamic priority...
 			if(current->priority + current->modifier >= current->priority){
