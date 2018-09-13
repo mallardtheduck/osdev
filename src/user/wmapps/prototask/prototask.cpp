@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <deque>
 #include <btos/table.hpp>
+#include <dev/rtc.h>
 
 using std::string;
 
@@ -20,6 +21,8 @@ static TextWin *totalmem_win;
 static const size_t graph_samples = 10;
 static std::deque<int> mem_samples;
 static std::deque<int> cpu_samples;
+
+static uint32_t update_delay = 1000;
 
 SDL_Color graph_background = {0, 0, 0, 255};
 
@@ -107,8 +110,8 @@ void draw_graph(Rect &r, const std::deque<int> &samples, SDL_Color graph_foregro
 void update_memgraph(){
 	auto freemem = get_freemem();
 	int percent = 100 - (((float)freemem / (float)totalmem) * 100);
-	mem_samples.push_front(percent);
-	while(mem_samples.size() > graph_samples) mem_samples.pop_back();
+	mem_samples.push_back(percent);
+	while(mem_samples.size() > graph_samples) mem_samples.pop_front();
 	Rect graph = {350, 95, 150, 150};
 	draw_graph(graph, mem_samples, {0, 255, 0, 255});
 	top_win->blit_upd(&graph);
@@ -123,15 +126,15 @@ void update_cpugraph(){
 	for(auto row : threadstbl.rows){
 		auto load = strtol(row["load"].c_str(), nullptr, 10);
 		auto priority = strtol(row["priority"].c_str(), nullptr, 10);
-		if(priority > 0){
+		if(priority < 0){
 			usedcpu = totalcpu - load;
 			break;
 		}
 	}
 	int percent = ((float)usedcpu / (float)totalcpu) * 100;
 	if(percent > 100) percent = 100;
-	cpu_samples.push_front(percent);
-	while(cpu_samples.size() > graph_samples) cpu_samples.pop_back();
+	cpu_samples.push_back(percent);
+	while(cpu_samples.size() > graph_samples) cpu_samples.pop_front();
 	Rect graph = {350, 250, 150, 150};
 	draw_graph(graph, cpu_samples, {255, 0, 0, 255});
 	top_win->blit_upd(&graph);
@@ -139,12 +142,12 @@ void update_cpugraph(){
 
 int thread_fun(void *arg){
 	while(true){
-		SDL_Delay(1000);
+		SDL_Delay(update_delay);
 		send_uev([](int) {
+			update_cpugraph();
+			update_memgraph();
 			update_freemem();
 			update_text();
-			update_memgraph();
-			update_cpugraph();
 		}, 0);
 	}
 	return 0;
@@ -157,11 +160,17 @@ int main(){
 	totalmem_win->bgcol = cBackground;
 	freemem_win = new TextWin(top_win, Style(0, 0 ,5), Rect(350, 20, 150, 20), 1, nullptr);
 	freemem_win->bgcol = cBackground;
+	auto start = bt_rtc_millis();
+	update_cpugraph();
+	update_memgraph();
 	update_text();
 	update_totalmem();
 	update_freemem();
-	update_memgraph();
-	update_cpugraph();
+	auto end = bt_rtc_millis();
+	auto diff =  end - start;
+	if(diff > (update_delay / 2)){
+		update_delay = ceil((double)diff / 1000.0) * 2000;
+	}
 	SDL_CreateThread(thread_fun, "thread_fun", 0);
 	get_events();
 	return 0;
