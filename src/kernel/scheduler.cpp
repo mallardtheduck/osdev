@@ -275,6 +275,8 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 	uint32_t min=0xFFFFFFFF;
 	for(size_t i=0; i<threads->size(); ++i){
 		sch_thread *ithread = (*threads)[i];
+		//Decrement all threads load modifiers at start of cycle
+		if(lcycle != cycle && ithread->modifier > 0) --ithread->modifier;
 		//Priority 0xFFFFFFFF == "idle", only run when nothing else is available.
 		if(ithread->priority == 0xFFFFFFFF) ithread->dynpriority=0xFFFFFFFF;
 	    if(lcycle != cycle && ithread->status == sch_thread_status::Blocked && ithread->blockcheck!=NULL){
@@ -320,14 +322,16 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 			}//else if(ithread->modifier) --ithread->modifier;
 		}
 	}
-	if(foundtorun){
-		//if(torun->modifier < modifier_limit) ++torun->modifier;
-		return true;
-	}else{
+	if(!foundtorun){
 		torun=current_thread;
-		//if(torun->modifier < modifier_limit) ++torun->modifier;
-		return true;
 	}
+	if(!foundtorun) panic("(SCH) Error finding runnable thread!\n");
+	//Counter the decrement at the start of the cycle and add another for this cycle
+	if(torun->modifier < modifier_limit){ 
+		++torun->modifier;
+		if(torun->modifier < modifier_limit) ++torun->modifier;
+	}
+	return true;
 }
 
 extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
@@ -553,10 +557,6 @@ void sch_prescheduler_thread(void*){
 	while(true){
 		cycle++;
 		take_lock_exclusive(sch_lock);
-		for(size_t i=0; i<threads->size(); ++i){
-			sch_thread *ithread = (*threads)[i];
-			if(ithread->modifier > 0) --ithread->modifier;
-		}
 		sch_thread *current=current_thread;
 		sch_thread *next=NULL;
 		uint32_t count=0;
@@ -567,8 +567,6 @@ void sch_prescheduler_thread(void*){
 			current->next=next;
 			current=current->next;
 			
-			if(current->modifier < modifier_limit) ++current->modifier;
-			if(current->modifier < modifier_limit) ++current->modifier;
 			//Prevent overflow of dynamic priority...
 			if(current->priority + current->modifier >= current->priority){
 				current->dynpriority=current->priority + current->modifier;
