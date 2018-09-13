@@ -301,31 +301,32 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 	if(preferred_next_pid){
 		for(size_t i=0; i<(*threads).size(); ++i){
 			sch_thread *ithread = (*threads)[i];
-			if(ithread->status == sch_thread_status::Runnable && ithread->pid == preferred_next_pid){
+			if(ithread->status == sch_thread_status::Runnable && ithread->pid == preferred_next_pid && ithread->sch_cycle != cycle){
 				foundtorun=true;
 				torun=ithread;
 				preferred_next_pid = preferred_return_pid;
 				preferred_return_pid = 0;
+				break;
 			}
 		}
 	}
 	if(!foundtorun){
 		for(size_t i=0; i<(*threads).size(); ++i){
 			sch_thread *ithread = (*threads)[i];
-			if(ithread->status == sch_thread_status::Runnable){
+			if(ithread->status == sch_thread_status::Runnable && ithread->sch_cycle != cycle){
 				if(ithread->dynpriority) ithread->dynpriority-=min;
 				if(ithread!=current_thread && ithread->dynpriority==0){
 					foundtorun=true;
 					torun=ithread;
+					break;
 				}
-				//else if(ithread->modifier) --ithread->modifier;
-			}//else if(ithread->modifier) --ithread->modifier;
+			}
 		}
 	}
 	if(!foundtorun){
 		torun=current_thread;
+		foundtorun=true;
 	}
-	if(!foundtorun) panic("(SCH) Error finding runnable thread!\n");
 	//Counter the decrement at the start of the cycle and add another for this cycle
 	if(torun->modifier < modifier_limit){ 
 		++torun->modifier;
