@@ -6,7 +6,9 @@
 #include <fstream>
 
 static TopWin *top_win;
-static Message *timeMsg;
+static TextWin *timeMsg;
+
+std::string text;
 
 static std::string GetTimeString(){
 	std::ifstream rtc("INFO:/RTC");
@@ -19,15 +21,17 @@ void set_icon(SDL_Window* window) {}
 
 static void disp_topw() {
 	fill_rect(top_win->render, 0, top_win->bgcol);
-	auto t = GetTimeString();
-	timeMsg->label = t.c_str();
-	timeMsg->draw_label();
 }
 
 int thread_fun(void *arg){
 	while(true){
 		send_uev([](int) {
-			disp_topw();
+			auto ntext = GetTimeString();
+			if(text != ntext){
+				timeMsg->reset();
+				timeMsg->add_text(text.c_str(), true);
+				text = ntext;
+			}
 			top_win->refresh();
 		}, 0);
 		SDL_Delay(250);
@@ -37,7 +41,8 @@ int thread_fun(void *arg){
 
 int main(){
 	top_win = new TopWin("ProtoClock", Rect(100, 100, 200, 50), 0, SDL_WINDOW_RESIZABLE, true, disp_topw, set_icon);
-	timeMsg = new Message(top_win, 2, "1999-99-99 99:99:99", Point(30, 15));
+	timeMsg = new TextWin(top_win, Style(0, 0 ,5), Rect(30, 15, 170, 20), 1, nullptr);
+	timeMsg->bgcol = cBackground;
 	SDL_CreateThread(thread_fun, "thread_fun", 0);
 	get_events();
 	return 0;

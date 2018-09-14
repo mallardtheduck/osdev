@@ -8,6 +8,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <deque>
+#include <map>
 #include <btos/table.hpp>
 #include <dev/rtc.h>
 
@@ -17,16 +18,30 @@ static TopWin *top_win;
 static TextWin *text_win;
 static TextWin *freemem_win;
 static TextWin *totalmem_win;
+static TextWin *totalcpu_win;
 
 static const size_t graph_samples = 10;
 static std::deque<int> mem_samples;
 static std::deque<int> cpu_samples;
 
+struct proc_info{
+	bt_pid_t pid;
+	string name;
+	size_t threads;
+	size_t memory;
+	int load;
+};
+
+std::map<bt_pid_t, proc_info> procs_info;
+
+const int totalcpu = 128;
+int usedcpu = 0;
+size_t totalmem = 0;
+int totalload = 0;
+
 static uint32_t update_delay = 1000;
 
 SDL_Color graph_background = {0, 0, 0, 255};
-
-size_t totalmem = 0;
 
 void set_icon(SDL_Window* window) {}
 
@@ -56,13 +71,12 @@ string formatSize(size_t size){
 
 void update_text(){
 	text_win->reset();
-	std::ifstream procsfile{"INFO:/PROCS"};
-	auto procstbl = parsecsv(procsfile);
 	std::stringstream ss;
-	for(auto row : procstbl.rows){
-		auto size = strtoul(row["memory"].c_str(), nullptr, 10);
-		auto sizeFmt = formatSize(size);
-		ss <<  row["PID"] << ": " << row["path"] << " (" << sizeFmt << ")";
+	for(auto proc : procs_info){
+		auto sizeFmt = formatSize(proc.second.memory);
+		int load = (((float)proc.second.load / (float)totalload) * 100.0) * ((float)usedcpu / (float)totalcpu);
+		ss << proc.second.pid << ": " << proc.second.name << " (" << sizeFmt << " ";
+		ss << proc.second.threads << "T " << load << "%)";
 		text_win->add_text(ss.str().c_str(), false);
 		ss.str("");
 	}
@@ -93,6 +107,14 @@ void update_totalmem(){
 	totalmem_win->add_text(text.c_str(), true);
 }
 
+void update_totalcpu(){
+	totalcpu_win->reset();
+	std::stringstream ss;
+	int percent = ((float)usedcpu / (float)totalcpu) * 100;
+	ss << "CPU usage: " << percent << "%";
+	totalcpu_win->add_text(ss.str().c_str(), true);
+}
+
 void draw_graph(Rect &r, const std::deque<int> &samples, SDL_Color graph_foreground){
 	fill_rect(top_win->render, &r, graph_background);
 	float scale = (float)r.h / 100.0;
@@ -118,20 +140,7 @@ void update_memgraph(){
 }
 
 void update_cpugraph(){
-	const int totalcpu = 128;
-	int usedcpu = 0;
-	std::ifstream threadsfile{"INFO:/THREADS"};
-	auto threadstbl = parsecsv(threadsfile);
-	for(auto row : threadstbl.rows){
-		auto load = strtol(row["load"].c_str(), nullptr, 10);
-		auto priority = strtol(row["priority"].c_str(), nullptr, 10);
-		if(priority < 0){
-			usedcpu = totalcpu - load;
-			break;
-		}
-	}
 	int percent = ((float)usedcpu / (float)totalcpu) * 100;
-	if(percent > 100) percent = 100;
 	cpu_samples.push_back(percent);
 	while(cpu_samples.size() > graph_samples) cpu_samples.pop_front();
 	Rect graph = {350, 250, 150, 150};
@@ -139,13 +148,50 @@ void update_cpugraph(){
 	top_win->blit_upd(&graph);
 }
 
+void get_proc_info(){
+	std::ifstream procsfile{"INFO:/PROCS"};
+	auto procstbl = parsecsv(procsfile);
+	procs_info.clear();
+	for(auto proc : procstbl.rows){
+		proc_info info;
+		info.pid = strtoul(proc["PID"].c_str(), nullptr, 10);
+		info.name = proc["path"];
+		info.memory = strtoul(proc["memory"].c_str(), nullptr, 10);
+		info.threads = 0;
+		info.load = 0;
+		procs_info[info.pid] = info;
+	}
+	
+	totalload = 0;
+	usedcpu = 0;
+	std::ifstream threadsfile{"INFO:/THREADS"};
+	auto threadstbl = parsecsv(threadsfile);
+	for(auto thread : threadstbl.rows){
+		auto load = strtol(thread["load"].c_str(), nullptr, 10);
+		auto priority = strtol(thread["priority"].c_str(), nullptr, 10);
+		if(priority > 0){
+			auto pid = strtoul(thread["PID"].c_str(), nullptr, 10);
+			totalload += load;
+			auto proc = procs_info.find(pid);
+			if(proc != procs_info.end()){
+				proc->second.load += load;
+				++proc->second.threads;
+			}
+		}else{
+			usedcpu = totalcpu - load;
+		}
+	}
+}
+
 int thread_fun(void *arg){
 	while(true){
 		SDL_Delay(update_delay);
 		send_uev([](int) {
+			get_proc_info();
 			update_cpugraph();
 			update_memgraph();
 			update_freemem();
+			update_totalcpu();
 			update_text();
 		}, 0);
 	}
@@ -154,17 +200,21 @@ int thread_fun(void *arg){
 
 int main(){
 	top_win = new TopWin("ProtoTask", Rect(100, 100, 500, 400), 0, SDL_WINDOW_RESIZABLE, true, disp_topw, set_icon);
-	text_win = new TextWin(top_win, Style(0, 0 ,5), Rect(0, 0, 350, 400), 1024, nullptr);
+	text_win = new TextWin(top_win, Style(0, 0 ,5), Rect(0, 0, 350, 400), 128, nullptr);
 	totalmem_win = new TextWin(top_win, Style(0, 0 ,5), Rect(350, 0, 150, 20), 1, nullptr);
 	totalmem_win->bgcol = cBackground;
 	freemem_win = new TextWin(top_win, Style(0, 0 ,5), Rect(350, 20, 150, 20), 1, nullptr);
 	freemem_win->bgcol = cBackground;
+	totalcpu_win = new TextWin(top_win, Style(0, 0 ,5), Rect(350, 40, 150, 20), 1, nullptr);
+	totalcpu_win->bgcol = cBackground;
 	auto start = bt_rtc_millis();
+	get_proc_info();
 	update_cpugraph();
 	update_memgraph();
 	update_text();
 	update_totalmem();
 	update_freemem();
+	update_totalcpu();
 	auto end = bt_rtc_millis();
 	auto diff =  end - start;
 	if(diff > (update_delay / 2)){
