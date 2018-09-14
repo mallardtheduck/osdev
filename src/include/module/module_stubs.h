@@ -100,6 +100,10 @@ inline static void yield(){
 	SYSCALL_TABLE->yield();
 }
 
+inline static void yield_to(pid_t pid){
+	SYSCALL_TABLE->yield_to(pid);
+}
+
 inline static uint64_t thread_id(){
 	return SYSCALL_TABLE->thread_id();
 }

@@ -60,6 +60,7 @@ struct syscall_table{
 	thread_id_t (*new_thread)(thread_func entry, void *param);
 	void (*block)();
 	void (*yield)();
+	void (*yield_to)(pid_t pid);
 	thread_id_t (*thread_id)();
 	void (*thread_priority)(uint32_t p_);
 	void (*end_thread)();

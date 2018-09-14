@@ -228,6 +228,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&new_thread,
 	&sch_block,
 	&sch_yield,
+	&sch_yield_to,
 	&thread_id,
 	&sch_set_priority,
 	&sch_end_thread,

@@ -31,9 +31,12 @@ struct ata_operation{
 	size_t retval;
 };
 
+static pid_t last_pid = 0;
+
 bool ata_queue_proc(ata_operation *op){
     pid_t pid=getpid();
     if(setpid(op->pid)){
+    	last_pid = op->pid;
 		if(op->type==ata_operation_types::Read){
 		    ata_device_read_sector(op->device, op->lba, op->buf);
 		    op->status=ata_operation_status::Complete;
@@ -62,6 +65,11 @@ bool ata_queue_proc(ata_operation *op){
 		panic("(ATA) Incorrect PID after operation!");
 	}
     return true;
+}
+
+void ata_yield_fn(){
+	if(last_pid) yield_to(last_pid);
+	last_pid = 0;
 }
 
 typedef operation_queue<ata_operation, &ata_queue_proc, 128> ata_queue;
