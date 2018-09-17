@@ -220,9 +220,11 @@ void stat_command(){
 		cout << "No thread selected." << endl;
 		return;
 	}
+	debug_stop(selected_pid);
 	context ctx = get_context(selected_thread);
 	out_context(ctx);
 	do_stacktrace(selected_pid, ctx);
+	debug_continue(selected_pid);
 }
 
 void modules_command(){
