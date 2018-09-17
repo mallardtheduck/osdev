@@ -139,6 +139,7 @@ vector<Rect> TileRects(const vector<Rect> &rects){
 
 vector<Rect> SubtractRect(const Rect &r1, const Rect &r2){
 	if(!Overlaps(r1, r2)) return {r1};
+	if(Contains(r2, r1)) return {};
 	vector<Rect> ret;
 	auto r1r = r1.x + r1.w;
 	auto r1b = r1.y + r1.h;
@@ -176,6 +177,13 @@ vector<Rect> SubtractRect(const Rect &r1, const Rect &r2){
 		bottom.h = r1b - r2b;
 		ret.push_back(bottom);
 	}
+/*	DBG("Input rects: ");
+	DBG("(" << r1.x << ", " << r1.y << ") " << r1.w << " x " << r1.h);
+	DBG("(" << r2.x << ", " << r2.y << ") " << r2.w << " x " << r2.h);
+	DBG("Output rects: ");
+	for(auto r : ret){
+		DBG("(" << r.x << ", " << r.y << ") " << r.w << " x " << r.h);
+	}*/
 	return ret;
 }
 
