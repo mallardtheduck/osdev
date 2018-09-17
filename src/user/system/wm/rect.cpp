@@ -82,10 +82,42 @@ vector<Rect> TileRects(const Rect &r1, const Rect &r2){
 		}else if(Contains(r2, r1)){
 			ret.push_back(r2);
 		}else{
-			Rect maxRect = Rect(min(r1.x, r2.x), min(r1.y, r2.y), max(r1.x + r1.w, r2.x + r2.w), max(r1.y + r1.h, r2.y + r2.h));
-			maxRect.w -= maxRect.x;
-			maxRect.h -= maxRect.y;
-			ret.push_back(maxRect);
+			vector<int32_t> ys;
+			ys.push_back(r1.y);
+			ys.push_back(r2.y);
+			ys.push_back(r1.y + r1.h);
+			ys.push_back(r2.y + r2.h);
+			std::sort(ys.begin(), ys.end());
+			Rect cr;
+			bool first = true;
+			for(int32_t y : ys){
+				if(first) first = false;
+				else{
+					cr.h = y - cr.y;
+					if(cr.h > 0) ret.push_back(cr);
+					cr = Rect();
+				}
+				int32_t minx = INT32_MAX;
+				bool inr1 = false;
+				if(InRect(r1.x, y, r1)){
+					minx = r1.x;
+					inr1 = true;
+				}
+				bool inr2 = false;
+				if(InRect(r2.x, y, r2)){
+					minx = min(minx, r2.x);
+					inr2 = true;
+				}
+				cr.x = minx;
+				int32_t maxx = 0;
+				if(inr1){
+					maxx = r1.x + r1.w;
+				}
+				if(inr2){
+					maxx = max(maxx, (int32_t)(r2.x + r2.w));
+				}
+				cr.w = maxx - minx;
+			}
 		}
 	}
 	return ret;
