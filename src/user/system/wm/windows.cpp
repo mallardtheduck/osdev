@@ -112,8 +112,7 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 		if((rect || above) && w == lastWin) drawing = true;
 		if(drawing){
 			if(rect && Overlaps(r, w->GetBoundingRect())){
-				w->Draw(w == awin, r); 
-
+				w->Draw(w == awin, r);
 			}
 			else if(!rect) w->Draw(w == awin);
 		}
@@ -124,13 +123,15 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 	RedrawMenus(r);
 }
 
-void DrawWindows(const vector<Rect> &v){
+void DrawWindows(const vector<Rect> &v, uint64_t above){
 	vector<shared_ptr<Window>> wins = SortWindows();
-	for(auto r: v) Screen.Box(r, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	if(!above) for(auto r: v) Screen.Box(r, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	shared_ptr<Window> awin = activeWindow.lock();
+	bool aboveYet = false;
 	for(auto w: wins){
 		if(!w->GetVisible()) continue;
-		for(auto r: v) if(Overlaps(r, w->GetBoundingRect())){
+		if(!aboveYet && w->id == above) aboveYet = true;
+		if(!above || aboveYet) for(auto r: v) if(Overlaps(r, w->GetBoundingRect())){
 			w->Draw(w==awin, r);
 		}
 	}
@@ -149,7 +150,8 @@ void RefreshScreen(Rect r){
 }
 
 void RefreshScreen(const vector<Rect> &v){
-	for(auto r: v) RefreshScreen(r);
+	auto tiles = TileRects(v);
+	for(auto t: tiles) RefreshScreen(t);
 }
 
 shared_ptr<Window> GetWindowAt(uint32_t x, uint32_t y){
@@ -232,9 +234,26 @@ void UnGrab(){
 	grabbedWindow.reset();
 }
 
+static vector<Rect> ReduceRect(const Rect &r, uint64_t above){
+	vector<Rect> ret = {r};
+	if(!above) return ret;
+	vector<shared_ptr<Window>> wins = SortWindows();
+	bool aboveYet = false;
+	for(auto &w : wins){
+		if(!aboveYet){
+			if(w->id == above) aboveYet = true;
+		}else{
+			ret = SubtractRect(ret, w->GetBoundingRect());
+		}
+	}
+	return ret;
+}
+
 void DrawAndRefreshWindows(const Rect &r, uint64_t above){
-	DrawWindows(r, above);
-	RefreshScreen(r);
+	auto reduced = ReduceRect(r, above);
+	if(reduced.empty()) return;
+	DrawWindows(reduced, above);
+	RefreshScreen(reduced);
 }
 
 void DrawAndRefreshWindows(const vector<Rect> &v){

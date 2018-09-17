@@ -97,7 +97,7 @@ bool Client::HandleMessage(const Message &msg){
 		}
 		case wm_RequestType::Update:{
 			if(currentWindow){
-				DrawAndRefreshWindows(currentWindow->GetBoundingRect());
+				DrawAndRefreshWindows(currentWindow->GetBoundingRect(), currentWindow->id);
 			}
 			break;
 		}

@@ -14,7 +14,7 @@ void RemoveWindow(uint64_t id);
 std::shared_ptr<Window> GetWindow(uint64_t id);
 std::shared_ptr<Window> GetActiveWindow();
 void DrawWindows(const gds::Rect &r = gds::Rect(), uint64_t above = 0, bool ignoreGrab = false);
-void DrawWindows(const std::vector<gds::Rect> &v);
+void DrawWindows(const std::vector<gds::Rect> &v, uint64_t above = 0);
 void HandleInput(const bt_terminal_event &event);
 void RefreshScreen(gds::Rect r = gds::Rect());
 void RefreshScreen(const std::vector<gds::Rect> &v);

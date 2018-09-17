@@ -72,8 +72,8 @@ void Window::SetPosition(Point p){
 	pos = p;
 	Rect newrect = GetBoundingRect();
 	if(GetVisible()){
-		DrawAndRefreshWindows(oldrect);
-		DrawAndRefreshWindows(newrect, id);
+		DrawAndRefreshWindows({oldrect, newrect});
+		//DrawAndRefreshWindows(newrect, id);
 	}
 	stringstream ss;
 	ss << "WM: Window '" << title << "' moved to (" << p.x << ", " << p.y << ")."<< endl;
