@@ -8,6 +8,9 @@
 static TopWin *top_win;
 static TextWin *timeMsg;
 
+static size_t draw_count = 0;
+static size_t drawn = 0;
+
 std::string text;
 
 static std::string GetTimeString(){
@@ -26,14 +29,19 @@ static void disp_topw() {
 int thread_fun(void *arg){
 	while(true){
 		send_uev([](int) {
+			++drawn;
 			auto ntext = GetTimeString();
 			if(text != ntext){
-				timeMsg->reset();
-				timeMsg->add_text(text.c_str(), true);
-				text = ntext;
+				if(drawn >= draw_count){
+					timeMsg->reset();
+					timeMsg->add_text(text.c_str(), true);
+					text = ntext;
+				}
 			}
 			top_win->refresh();
 		}, 0);
+		++draw_count;
+		if(draw_count == 0) drawn = 0;
 		SDL_Delay(250);
 	}
 	return 0;

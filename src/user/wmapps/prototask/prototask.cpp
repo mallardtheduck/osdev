@@ -24,6 +24,9 @@ static const size_t graph_samples = 10;
 static std::deque<int> mem_samples;
 static std::deque<int> cpu_samples;
 
+static size_t draw_count = 0;
+static size_t drawn = 0;
+
 struct proc_info{
 	bt_pid_t pid;
 	string name;
@@ -135,8 +138,10 @@ void update_memgraph(){
 	mem_samples.push_back(percent);
 	while(mem_samples.size() > graph_samples) mem_samples.pop_front();
 	Rect graph = {350, 95, 150, 150};
-	draw_graph(graph, mem_samples, {0, 255, 0, 255});
-	top_win->blit_upd(&graph);
+	if(drawn >= draw_count){
+		draw_graph(graph, mem_samples, {0, 255, 0, 255});
+		top_win->blit_upd(&graph);
+	}
 }
 
 void update_cpugraph(){
@@ -144,8 +149,10 @@ void update_cpugraph(){
 	cpu_samples.push_back(percent);
 	while(cpu_samples.size() > graph_samples) cpu_samples.pop_front();
 	Rect graph = {350, 250, 150, 150};
-	draw_graph(graph, cpu_samples, {255, 0, 0, 255});
-	top_win->blit_upd(&graph);
+	if(drawn >= draw_count){
+		draw_graph(graph, cpu_samples, {255, 0, 0, 255});
+		top_win->blit_upd(&graph);
+	}
 }
 
 void get_proc_info(){
@@ -187,13 +194,16 @@ int thread_fun(void *arg){
 	while(true){
 		SDL_Delay(update_delay);
 		send_uev([](int) {
+			++drawn;
 			get_proc_info();
 			update_cpugraph();
 			update_memgraph();
 			update_freemem();
 			update_totalcpu();
-			update_text();
+			if(drawn >= draw_count) update_text();
 		}, 0);
+		++draw_count;
+		if(draw_count == 0) drawn = 0;
 	}
 	return 0;
 }
