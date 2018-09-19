@@ -276,7 +276,10 @@ static int sch_precyle(){
 		//Decrement all threads load modifiers at start of cycle
 		if(ithread->modifier > 0) --ithread->modifier;
 		//Ignore idle thread
-		if(ithread == idle_thread) continue;
+		if(ithread == idle_thread){
+			ithread->dynpriority = 0xFFFFFFFF;
+			continue;
+		}
 		//Run blockchecks
 		if(ithread->status == sch_thread_status::Blocked && ithread->blockcheck!=NULL){
 			if(ithread->blockcheck(ithread->bc_param)) ithread->status = sch_thread_status::Runnable;
