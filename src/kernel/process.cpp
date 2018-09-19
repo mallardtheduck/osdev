@@ -51,6 +51,7 @@ struct proc_process{
     map<pid_t, void*> msg_buffers;
     
     vector<btos_api::bt_msg_header*> msg_q;
+    btos_api::bt_msg_header *cur_msg = NULL;
 
 	proc_process() : pid(++curpid) {
 		init_lock(ulock);
@@ -708,7 +709,7 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 		release_lock(proc->ulock);
 		release_lock(to->ulock);
 		release_lock(msg_lock);
-		sch_yield();
+		sch_yield_to(header.to);
 		return ret;
 	} while(again);
 	return 0;
@@ -785,3 +786,25 @@ btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id){
 	}
 	return ret;
 }
+
+void proc_set_cur_msg(btos_api::bt_msg_header *msg, pid_t pid){
+	proc_process *proc = proc_get_lock(pid);
+	if (!proc) return;
+	proc->cur_msg = msg;
+	release_lock(proc->ulock);
+}
+
+btos_api::bt_msg_header *proc_get_cur_msg(pid_t pid){
+	proc_process *proc = proc_get_lock(pid);
+	if (!proc) return NULL;
+	btos_api::bt_msg_header *ret = proc->cur_msg;
+	release_lock(proc->ulock);
+	return ret;
+}
+
+void proc_set_cur_msg_nolock(btos_api::bt_msg_header *msg, pid_t pid){
+	proc_process *proc = proc_get(pid);
+	if (!proc) return;
+	proc->cur_msg = msg;
+}
+
