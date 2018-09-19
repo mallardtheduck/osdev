@@ -52,6 +52,9 @@ private:
 	pid_t events_pid;
 	bt_terminal_event_mode::Enum event_mode;
 	bool event_mode_enabled;
+	
+	pid_t exclusive_pid;
+	bool exclusive_mode_enabled;
 
     void putchar(char c);
     void putstring(char *s);
@@ -98,6 +101,7 @@ public:
     void clear_buffer();
 	
 	void update_current_pid();
+	bool check_exclusive();
 	i_backend *get_backend();
 	
 	void read_buffer(size_t size, uint8_t *buf);

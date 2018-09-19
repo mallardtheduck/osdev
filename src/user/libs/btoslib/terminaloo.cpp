@@ -239,4 +239,12 @@ namespace btos_api{
 	void Terminal::WaitActive(){
 		IOCtl(bt_terminal_ioctl::WaitActive, 0, NULL);
 	}
+	
+	bool Terminal::TakeExclusive(){
+		return (bool)IOCtl(bt_terminal_ioctl::TakeExclusive, 0, NULL);
+	}
+	
+	void Terminal::ReleaseExclusive(){
+		IOCtl(bt_terminal_ioctl::ReleaseExclusive, 0, NULL);
+	}
 }

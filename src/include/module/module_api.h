@@ -120,6 +120,7 @@ struct syscall_table{
 	pid_t (*spawn)(const char *exec, size_t argc, char **argv);
 	void (*wait)(pid_t pid);
     void (*kill)(pid_t pid);
+    int (*get_proc_status)(pid_t pid);
 
 	void (*infofs_register)(const char *name, info_function fn);
 

@@ -308,6 +308,10 @@ inline static void kill(pid_t pid){
     SYSCALL_TABLE->kill(pid);
 }
 
+inline static int get_proc_status(pid_t pid){
+	return SYSCALL_TABLE->get_proc_status(pid);
+}
+
 inline static void infofs_register(const char *name, info_function fn){
 	SYSCALL_TABLE->infofs_register(name, fn);
 }
@@ -332,8 +336,8 @@ inline static size_t msg_getcontent(API_NS bt_msg_header *msg, void *buffer, siz
 	return SYSCALL_TABLE->msg_getcontent(msg, buffer, buffersize);
 }
 
-inline static void msg_acknowledge(API_NS bt_msg_header *msg, bool set_status){
-	SYSCALL_TABLE->msg_acknowledge(msg, set_status);
+inline static void msg_acknowledge(API_NS bt_msg_header *msg, bool set_q){
+	SYSCALL_TABLE->msg_acknowledge(msg, set_q);
 }
 
 inline static void msg_recv_reply(API_NS bt_msg_header *msg, uint64_t msg_id){

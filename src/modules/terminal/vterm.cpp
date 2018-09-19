@@ -219,6 +219,7 @@ void vterm::deactivate()
 size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf)
 {
 	hold_lock hl(&term_lock);
+	if(check_exclusive() && getpid() != exclusive_pid) return size;
 	update_current_pid();
 	bool iline_valid=infoline && vidmode.textmode;
 	if(bufpos <= vidmode.width) iline_valid=false;
@@ -243,6 +244,7 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf)
 size_t vterm::read(vterm_options &opts, size_t size, char *buf)
 {
 	hold_lock hl(&term_lock);
+	if(check_exclusive() && getpid() != exclusive_pid) return 0;
 	update_current_pid();
 	if(opts.mode == bt_terminal_mode::Terminal) {
 		int incr;
@@ -548,6 +550,18 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 				thread_setblock(&active_blockcheck, (void*)&p);
 				take_lock(&term_lock);
 			}
+		}case bt_terminal_ioctl::TakeExclusive:{
+			if(check_exclusive()) return 0;
+			exclusive_pid = getpid();
+			exclusive_mode_enabled = true;
+			return 1;
+			break;
+		}case bt_terminal_ioctl::ReleaseExclusive:{
+			if(check_exclusive() && exclusive_pid == getpid()){
+				exclusive_mode_enabled = false;
+				exclusive_pid = 0;
+			}
+			break;
 		}
 	}
 	if(backend && backend->is_active(id)) backend->refresh();
@@ -641,6 +655,7 @@ void vterm::create_terminal(char *command)
 
 uint64_t vterm::send_event(const bt_terminal_event &e)
 {
+	if(!get_proc_status(events_pid)) return 0;
 	btos_api::bt_msg_header msg;
 	memset((void*)&msg, 0, sizeof(msg));
 	bt_terminal_event *content = new bt_terminal_event();
@@ -763,7 +778,8 @@ void vterm::queue_pointer(bt_terminal_pointer_event event)
 			bt_terminal_event e;
 			e.type = bt_terminal_event_type::Pointer;
 			e.pointer = event;
-			last_move_message = send_event(e);
+			uint64_t msgid = send_event(e);
+			if(msgid) last_move_message = msgid;
 		}
 	}
 	pointer_buffer.add_item(event);
@@ -836,6 +852,15 @@ void vterm::update_current_pid()
 			curpid = pid;
 		}
 	}*/
+}
+
+bool vterm::check_exclusive(){
+	if(!exclusive_mode_enabled) return false;
+	if(!get_proc_status(exclusive_pid)){
+		exclusive_mode_enabled = false;
+		return false;
+	}
+	return true;
 }
 
 i_backend *vterm::get_backend(){

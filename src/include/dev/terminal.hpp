@@ -116,6 +116,8 @@ namespace btos_api{
 		
 		void WaitActive();
 		
+		bool TakeExclusive();
+		void ReleaseExclusive();
 	};	
 
 }
