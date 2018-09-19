@@ -5,6 +5,7 @@
 #include "geom.hpp"
 #include <vector>
 #include <string>
+#include <map>
 
 namespace btos_api{
 namespace gds{
@@ -13,6 +14,10 @@ namespace gds{
 	protected:
 		uint64_t gds_id;
 		bool owned;
+		std::vector<gds_DrawingOp> queue;
+		bool queued;
+		
+		mutable std::map<uint32_t, Colour> colourCache;
 
 		Surface(const Surface&) = delete;
 		Surface operator=(const Surface&) = delete;
@@ -51,6 +56,10 @@ namespace gds{
 		uint32_t Text(const Point &p, const std::string &text, const Font &font, uint32_t size, const Colour &c, uint8_t style = gds_TextStyle::Normal);
 		uint32_t TextChar(const Point &p, char c, const Font &font, uint32_t size, const Colour &col, uint8_t style = gds_TextStyle::Normal);
 		uint32_t Blit(const Surface &src, const Rect &srcRect, const Rect &dstRect, uint32_t scale = 100, uint32_t flags = 0);
+		
+		void BeginQueue();
+		void CommitQueue();
+		void CancelQueue();
 	};
 	
 }

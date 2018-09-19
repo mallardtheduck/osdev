@@ -56,7 +56,7 @@ int main(){
 			case gamestate::GamePlay:{
 				t.Reset();
 				bool end = GameStep(surface);
-				GameDraw(win);
+				GameDraw(win, surface);
 				if(end) state = gamestate::Finish;
 				break;
 			}

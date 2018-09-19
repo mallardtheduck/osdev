@@ -67,12 +67,14 @@ Screen::Screen() : BitmapSurface::BitmapSurface(1, 1, true){
 	original_mode.bpp=0;
 	
 	update_q_lock = bt_create_lock();
+	bt_term_TakeExclusive();
 }
 
 Screen::~Screen(){
 	QueueUpdate(0, 0, 0, false);
 	update_thread->Wait();
 	RestoreMode();
+	bt_term_ReleaseExclusive();
 	bt_fclose(fh);
 	if(buffer) delete buffer;
 }

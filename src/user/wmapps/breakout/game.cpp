@@ -78,8 +78,7 @@ void GameEvent(const wm_Event &e){
 	}
 }
 
-bool GameStep(std::shared_ptr<gds::Surface> surf){
-	DrawBackground(surf);
+bool GameStep(shared_ptr<Surface> /*surf*/){
 	vector<shared_ptr<Sprite>> currentSprites(sprites);
 	for(auto s : currentSprites){
 		auto preRect = s->GetBoundingRect();
@@ -99,16 +98,38 @@ bool ZOrderSort(shared_ptr<Sprite> a, shared_ptr<Sprite> b){
 	return a->GetZOrder() < b->GetZOrder();
 }
 
-void GameDraw(shared_ptr<Window> win){
+void GameDraw(shared_ptr<Window> win, shared_ptr<Surface> surf){
 	sort(begin(sprites), end(sprites), &ZOrderSort);
+	surf->BeginQueue();
+	DrawBackground(surf);
 	for(auto s : sprites){
 		s->Draw();
 	}
+	surf->CommitQueue();
 	if(!redrawScreen){
-		while(!drawQ.empty()){
+		if(!drawQ.empty()){
+			auto rect = drawQ.front();
+			drawQ.pop();
+			while(!drawQ.empty()){
+				auto rectl = rect.x + rect.w;
+				auto rectb = rect.y + rect.h;
+				auto &cur = drawQ.front();
+				auto curl = cur.x + cur.w;
+				auto curb = cur.y + cur.h;
+				rect.x = min(rect.x, cur.x);
+				rect.y = min(rect.y, cur.y);
+				rectl = max(rectl, curl);
+				rectb = max(rectb, curb);
+				rect.w = rectl - rect.x;
+				rect.h = rectb - rect.y;
+				drawQ.pop();
+			}
+			win->Update(rect);
+		}
+		/*while(!drawQ.empty()){
 			win->Update(drawQ.front());
 			drawQ.pop();
-		}
+		}*/
 		WM_Sync();
 	}else{
 		win->Update();
@@ -124,7 +145,7 @@ void InitGame(shared_ptr<Surface> s, shared_ptr<Window> win){
 	sprites.push_back(paddle);
 	InitBlocks(s);
 	redrawScreen = true;
-	GameDraw(win);
+	GameDraw(win, s);
 }
 
 void EndGame(){

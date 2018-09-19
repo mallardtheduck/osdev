@@ -22,7 +22,7 @@ void InitGame(std::shared_ptr<gds::Surface> s, std::shared_ptr<wm::Window> win);
 void EndGame();
 void GameEvent(const wm_Event &e);
 bool GameStep(std::shared_ptr<gds::Surface> s);
-void GameDraw(std::shared_ptr<wm::Window> win);
+void GameDraw(std::shared_ptr<wm::Window> win, std::shared_ptr<gds::Surface> s);
 
 void AddSprite(Sprite *s);
 void RemoveSprite(std::shared_ptr<Sprite> s);
