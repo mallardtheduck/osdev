@@ -213,7 +213,7 @@ namespace gds{
 		if(params){
 			QueueItem it(ParamOp);
 			it.paramOp.op = op;
-			it.paramOp.params.reset(new gds_OpParameters(*params));
+			it.paramOp.params.reset(params);
 			queue.push_back(move(it));
 		}else{
 			if(queue.empty() || queue.back().itemType != OpList){

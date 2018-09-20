@@ -25,8 +25,10 @@ int main(){
     auto surface = make_shared<Surface>(gds_SurfaceType::Bitmap, 320, 240);
 	auto win = make_shared<Window>(Point{100, 100}, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close, *surface, "Breakout");
 	font = Font::Get("DejaVu Sans", gds_FontStyle::Bold);
+	surface->BeginQueue();
 	DrawBackground(surface);
 	DrawTitle(surface);
+	surface->CommitQueue();
 	win->Update();
 	auto timer = make_shared<Timer>(100);
 	gamestate state = gamestate::Title;
