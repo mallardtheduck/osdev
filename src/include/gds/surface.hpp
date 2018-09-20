@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <memory>
 
 namespace btos_api{
 namespace gds{
@@ -14,8 +15,32 @@ namespace gds{
 	protected:
 		uint64_t gds_id;
 		bool owned;
-		std::vector<gds_DrawingOp> queue;
+		
+		enum QueueItemType{
+			OpList, ParamOp, Destroyed
+		};
+		
+		struct QueueItem{
+			QueueItemType itemType;
+			union{
+				struct{
+					gds_DrawingOp op;
+					std::unique_ptr<gds_OpParameters> params;
+				} paramOp;
+				std::vector<gds_DrawingOp> opList;
+			};
+			
+			QueueItem(QueueItemType type);
+			~QueueItem();
+			QueueItem(QueueItem &&other);
+			
+			QueueItem &operator=(QueueItem &&other);
+		};
+		
+		std::vector<QueueItem> queue;
 		bool queued;
+		
+		void QueueOp(const gds_DrawingOp &op, gds_OpParameters *params = nullptr);
 		
 		mutable std::map<uint32_t, Colour> colourCache;
 
