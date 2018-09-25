@@ -73,14 +73,25 @@ namespace gds{
 
 	uint32_t Surface::AddDrawingOp(gds_DrawingOp op){
 		Select();
-		return GDS_AddDrawingOp(op);
+		if(queued){
+			QueueOp(op);
+			return 0;
+		}
+		else return GDS_AddDrawingOp(op);
 	}
 
 	vector<uint32_t> Surface::AddDrawingOps(const vector<gds_DrawingOp> &ops){
 		Select();
-		vector<uint32_t> ret(ops.size());
-		GDS_MultiDrawingOps(ops.size(), const_cast<gds_DrawingOp*>(ops.data()), ret.data());
-		return ret;
+		if(queued){
+			for(auto &o : ops){
+				QueueOp(o);
+			}
+			return {};
+		}else{
+			vector<uint32_t> ret(ops.size());
+			GDS_MultiDrawingOps(ops.size(), const_cast<gds_DrawingOp*>(ops.data()), ret.data());
+			return ret;
+		}
 	}
 	void Surface::RemoveDrawingOp(uint32_t index){
 		Select();
@@ -192,6 +203,7 @@ namespace gds{
 	}
 	
 	void Surface::CommitQueue(){
+		queued = false;
 		for(auto &qi : queue){
 			if(qi.itemType == OpList) AddDrawingOps(qi.opList);
 			else if(qi.itemType == ParamOp){
@@ -201,7 +213,6 @@ namespace gds{
 			}
 		}
 		queue.clear();
-		queued = false;
 	}
 	
 	void Surface::CancelQueue(){

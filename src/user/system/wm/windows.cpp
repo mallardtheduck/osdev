@@ -99,6 +99,7 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 			}
 		}
 	}
+	Screen.BeginQueue();
 	if(drawing){
 		if(rect) Screen.Box(r, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		else{
@@ -120,6 +121,7 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 	if(!ignoreGrab){
 		if(auto gwin = grabbedWindow.lock())gwin->DrawGrabbed(r);
 	}
+	Screen.CommitQueue();
 	RedrawMenus(r);
 }
 
@@ -128,6 +130,7 @@ void DrawWindows(const vector<Rect> &v, uint64_t above){
 	if(!above) for(auto r: v) Screen.Box(r, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	shared_ptr<Window> awin = activeWindow.lock();
 	bool aboveYet = false;
+	Screen.BeginQueue();
 	for(auto w: wins){
 		if(!w->GetVisible()) continue;
 		if(!aboveYet && w->id == above) aboveYet = true;
@@ -135,6 +138,7 @@ void DrawWindows(const vector<Rect> &v, uint64_t above){
 			w->Draw(w==awin, r);
 		}
 	}
+	Screen.CommitQueue();
 }
 
 void RefreshScreen(Rect r){
