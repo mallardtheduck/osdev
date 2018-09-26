@@ -124,6 +124,7 @@ shared_ptr<Surface> TitleBar::Draw(uint32_t w, const string &t, bool active, uin
 	if(t != title) drawAll = true;
 	if(options != window_options) drawAll = true;
 	
+	ret->BeginQueue();
 	if(drawAll || p != pressed){
 		buttonHighlightColour = GetColour(*ret, ButtonHighlightColour);
 		buttonFaceColour = GetColour(*ret, ButtonFaceColour);
@@ -165,6 +166,7 @@ shared_ptr<Surface> TitleBar::Draw(uint32_t w, const string &t, bool active, uin
 	window_options = options;
 	if(active) gds_active_title = ret;
 	else gds_inactive_title = ret;
+	ret->CommitQueue();
 	return ret;
 }
 
@@ -204,6 +206,7 @@ void DrawBorder(Surface &surf, const Rect &r, const Rect &bounds){
 Surface DrawMenuItem(const string &text, uint32_t flags, const Surface *image, uint32_t width, bool selected){ 
 	if(!(flags & wm_MenuItemFlags::Seperator)){
 		Surface ret(gds_SurfaceType::Bitmap, width, GetMetric(MenuItemHeight));
+		ret.BeginQueue();
 		if(selected) ret.Box({0, 0, width, (uint32_t)GetMetric(MenuItemHeight)}, Colour(), GetColour(ret, MenuSelectionColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		else ret.Box({0, 0, width, (uint32_t)GetMetric(MenuItemHeight)}, Colour(), GetColour(ret, MenuBackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		int32_t lpos = GetMetric(MenuItemMargin);
@@ -226,12 +229,15 @@ Surface DrawMenuItem(const string &text, uint32_t flags, const Surface *image, u
 			Colour col = GetColour(ret, MenuForegroundColour);
 			ret.Polygon(points, true, col, col, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		}
+		ret.CommitQueue();
 		return ret;
 	}else{
 		int32_t height = (GetMetric(MenuItemMargin) * 2) + 1;
 		Surface ret(gds_SurfaceType::Bitmap, width, height);
+		ret.BeginQueue();
 		ret.Box({0, 0, width, (uint32_t)GetMetric(MenuItemHeight)}, Colour(), GetColour(ret, MenuBackgroundColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		ret.Line({GetMetric(MenuItemMargin), height / 2}, {(int32_t)(width - GetMetric(MenuItemMargin)), height / 2}, GetColour(ret, MenuForegroundColour));
+		ret.CommitQueue();		
 		return ret;
 	}
 }
