@@ -4,6 +4,7 @@
 #ifdef __cplusplus
 namespace driver_types{
 #endif
+	static const int COMPUTER	= 0x00;
 	static const int TIMER		= 0x01;
 	static const int BUS		= 0x02;
 	static const int INPUT		= 0x10;
