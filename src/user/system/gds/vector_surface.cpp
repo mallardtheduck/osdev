@@ -8,7 +8,7 @@ using namespace std;
 
 static const size_t ZUnspecified = SIZE_MAX;
 
-VectorSurface::VectorSurface(size_t w, size_t h, bool i, uint32_t /*scale*/) : width(w), height(h), indexed(i) {}
+VectorSurface::VectorSurface(size_t w, size_t h, uint32_t cT, uint32_t /*scale*/) : width(w), height(h), colourType(cT) {}
 
 VectorSurface::~VectorSurface() {}
 
@@ -45,7 +45,7 @@ size_t VectorSurface::GetHeight(){
 }
 
 size_t VectorSurface::GetDepth(){
-	return indexed ? 8 : 32;
+	return (colourType & gds_ColourType::True) ? 32 : 8;
 }
 
 uint32_t VectorSurface::GetScale(){
@@ -83,7 +83,11 @@ std::shared_ptr<gds_OpParameters> VectorSurface::GetOpParameters(uint32_t op){
 void VectorSurface::Resize(size_t w, size_t h, bool i){
 	width = w;
 	height = h;
-	indexed = i;
+	if(i){
+		colourType &= ~gds_ColourType::True;
+	}else{
+		colourType |= gds_ColourType::True;
+	}
 }
 
 std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
@@ -95,7 +99,7 @@ std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
 			sops.push_back(op.second);
 		}
 		sort(sops.begin(), sops.end(), [](const VectorOp &a, const VectorOp &b){return a.zOrder < b.zOrder;});
-		BitmapSurface bsurf(width, height, indexed);
+		BitmapSurface bsurf(width, height, colourType);
 		for(const auto &op : sops){
 			gds_DrawingOp dop = op.op;
 			shared_ptr<gds_OpParameters> p;

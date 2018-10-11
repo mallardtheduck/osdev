@@ -128,6 +128,14 @@ void bt_term_WaitActive(){
 	bt_fioctl(th, bt_terminal_ioctl_WaitActive, 0, NULL);
 }
 
+bool bt_term_TakeExclusive(){
+	return (bool)bt_fioctl(th, bt_terminal_ioctl_TakeExclusive, 0, NULL);
+}
+
+void bt_term_ReleaseExclusive(){
+	bt_fioctl(th, bt_terminal_ioctl_ReleaseExclusive, 0, NULL);
+}
+
 void bt_term_ClearScreen(){
 	bt_fioctl(th, bt_terminal_ioctl_ClearScreen, 0, NULL);
 }

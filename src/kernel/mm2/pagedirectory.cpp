@@ -156,12 +156,18 @@ namespace MM2{
 	}
 	
 	uint32_t PageDirectory::entrycache_get(size_t pageindex){
+		size_t pos = entrycache_size;
 		for(size_t i = 0; i < entrycache_size; ++i){
 			if(entrycache[i].index == pageindex){
-				if(entrycache[i].hits < entrycache_maxhits) entrycache[i].hits++;
-				return entrycache[i].entry;
+				if(entrycache[i].hits < entrycache_maxhits){
+					entrycache[i].hits++;
+					if(entrycache[i].hits < entrycache_maxhits) entrycache[i].hits++;
+					pos = i;
+				} 
+				else if(entrycache[i].hits > 0) entrycache[i].hits--;
 			}
 		}
+		if(pos < entrycache_size) return entrycache[pos].entry;
 		return 0;
 	}
 	

@@ -578,7 +578,7 @@ char *getcwd(char *buf, size_t size){
 int _chdir(const char *path){
 	char buf[BT_MAX_PATH] = {0};
 	btos_path_parse(path, buf, BT_MAX_PATH);
-	bt_setenv("CWD", path, 0);
+	bt_setenv("CWD", buf, 0);
 	return 0;
 }
 

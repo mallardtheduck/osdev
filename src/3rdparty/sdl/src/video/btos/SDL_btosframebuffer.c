@@ -95,7 +95,7 @@ static SDL_BTOS_windowdata _SDL_BTOS_CreateWindow(SDL_Window * window){
     }
     bt_zero("SDL: Configured SHM.\n");
     
-    info.gds_id = GDS_NewSurface(gds_SurfaceType_Memory, w, h, 100, gds_ColourType_True, info.shm_id, 0);
+    info.gds_id = GDS_NewSurface(gds_SurfaceType_Memory, w, h, 100, gds_ColourType_True | gds_ColourType_AlphaDisable, info.shm_id, 0);
     bt_zero("SDL: Created surface.\n");
     wm_WindowInfo wminfo;
     wminfo.x = 0;
@@ -103,7 +103,11 @@ static SDL_BTOS_windowdata _SDL_BTOS_CreateWindow(SDL_Window * window){
     wminfo.options = wm_WindowOptions_Default;
     wminfo.subscriptions = wm_KeyboardEvents | wm_PointerEvents | wm_FrameEvents;
     wminfo.gds_id = info.gds_id;
-    strcpy(wminfo.title, "SDL Window");
+    if(window->title) {
+    	strncpy(wminfo.title, window->title, WM_TITLE_MAX);
+    }else{
+    	strcpy(wminfo.title, "SDL Window");
+    }
     bt_zero("SDL: Creating window.\n");
     info.wm_id = WM_CreateWindow(wminfo);
     info.fail = false;
@@ -127,7 +131,7 @@ int SDL_BTOS_CreateWindow(_THIS, SDL_Window *window){
 
 int SDL_BTOS_CreateWindowFramebuffer(_THIS, SDL_Window * window, Uint32 * format, void ** pixels, int *pitch)
 {
-    const Uint32 surface_format = SDL_PIXELFORMAT_RGB888;
+    const Uint32 surface_format = SDL_PIXELFORMAT_ARGB8888;
     int w, h;
     int bpp;
     Uint32 Rmask, Gmask, Bmask, Amask;
@@ -138,6 +142,7 @@ int SDL_BTOS_CreateWindowFramebuffer(_THIS, SDL_Window * window, Uint32 * format
     /* Create a new one */
     SDL_PixelFormatEnumToMasks(surface_format, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
     SDL_GetWindowSize(window, &w, &h);
+    //printf("bpp: %i, Rmask:  %x, Gmask: %x, Bmask: %x, Amask: %x\n", bpp, Rmask, Gmask, Bmask, Amask);
     
     SDL_BTOS_windowdata *info = (SDL_BTOS_windowdata*)window->driverdata;
     
@@ -149,11 +154,14 @@ int SDL_BTOS_CreateWindowFramebuffer(_THIS, SDL_Window * window, Uint32 * format
 
 int SDL_BTOS_UpdateWindowFramebuffer(_THIS, SDL_Window * window, const SDL_Rect * rects, int numrects)
 {
+	//printf("SDL_BTOS_UpdateWindowFramebuffer\n");
+	//printf("window: %p, rects: %p, numrects: %i\n", window, rects, numrects);
 	SDL_BTOS_windowdata *info = (SDL_BTOS_windowdata*)window->driverdata;
 	WM_SelectWindow(info->wm_id);
 	
     for(int i = 0; i < numrects; ++i){
-    	WM_UpdateRect(rects[i].x, rects[i].y, rects[i].w, rects[i].h);	
+    	WM_UpdateRect(rects[i].x, rects[i].y, rects[i].w, rects[i].h);
+    	//printf("rect: %i - (%i, %i, %i, %i)\n", i, rects[i].x, rects[i].y, rects[i].w, rects[i].h);
     }
 
     return 0;
@@ -179,6 +187,14 @@ void SDL_BTOS_DestroyWindow(_THIS, SDL_Window * window)
     	_SDL_BTOS_RemoveWindow(info);
     	SDL_free(info);
     }
+}
+
+void SDL_BTOS_SetWindowTitle(_THIS, SDL_Window * window){
+	SDL_BTOS_windowdata *info = (SDL_BTOS_windowdata*)window->driverdata;
+	if(info && window->title){
+		WM_SelectWindow(info->wm_id);
+		WM_SetTitle(window->title);
+	}
 }
 
 #endif /* SDL_VIDEO_DRIVER_BTOS */

@@ -10,12 +10,12 @@ private:
 	bt_handle_t shm_handle;
 	uint32_t width;
 	uint32_t height;
-	bool indexed;
+	uint32_t colourType;
 	char *ptr;
 	
 	std::array<uint32_t, 256> palette;
 public:
-	SHMSurface(size_t w, size_t h, bool indexed, uint32_t scale, uint64_t shmRegion, size_t shmOffset);
+	SHMSurface(size_t w, size_t h, uint32_t colourType, uint32_t scale, uint64_t shmRegion, size_t shmOffset);
 
 	virtual size_t AddOperation(gds_DrawingOp op);
 	virtual void RemoveOperation(size_t id);

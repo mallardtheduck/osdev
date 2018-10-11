@@ -169,7 +169,8 @@ extern "C" wm_Event WM_GetEvent(){
 }
 
 extern "C" void WM_Sync(){
-	SendMessage(wm_RequestType::Sync, 0, NULL, true);
+	bt_msg_header reply = SendMessage(wm_RequestType::Sync, 0, NULL, true);
+	GetContent<bool>(reply);
 }
 
 extern "C" uint64_t WM_SelectMenu(uint64_t id){

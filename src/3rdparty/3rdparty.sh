@@ -33,7 +33,8 @@ esac
 
 case "$run" in
 	*2*)
-	./sdl.sh
+	./sdl.sh &&
+	./sdlwidgets.sh
 	;;
 esac
 

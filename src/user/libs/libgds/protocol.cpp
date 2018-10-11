@@ -70,7 +70,7 @@ extern "C" gds_Info GDS_Info(){
 	return GetContent<gds_Info>(&reply);
 }
 
-extern "C" uint64_t GDS_NewSurface(gds_SurfaceType::Enum type, uint32_t w, uint32_t h, uint32_t scale, gds_ColourType::Enum colourType, uint64_t shmRegion, size_t shmOffset){
+extern "C" uint64_t GDS_NewSurface(gds_SurfaceType::Enum type, uint32_t w, uint32_t h, uint32_t scale, uint32_t colourType, uint64_t shmRegion, size_t shmOffset){
 	gds_SurfaceInfo info;
 	info.type = type;
 	info.w = w; info.h = h;

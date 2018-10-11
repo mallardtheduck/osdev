@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 gds_Info GDS_Info();
-uint64_t GDS_NewSurface(ENUM_NAME(gds_SurfaceType) type, uint32_t w, uint32_t h, uint32_t scale GDS_DEFAULT(100), ENUM_NAME(gds_ColourType) colourType GDS_DEFAULT(ENUM_GET(gds_ColourType, Indexed)), uint64_t shmRegion GDS_DEFAULT(0), size_t shmOffset GDS_DEFAULT(0));
+uint64_t GDS_NewSurface(ENUM_NAME(gds_SurfaceType) type, uint32_t w, uint32_t h, uint32_t scale GDS_DEFAULT(100), uint32_t colourType GDS_DEFAULT(ENUM_GET(gds_ColourType, Indexed)), uint64_t shmRegion GDS_DEFAULT(0), size_t shmOffset GDS_DEFAULT(0));
 void GDS_DeleteSurface();
 uint64_t GDS_SelectSurface(uint64_t id);
 size_t GDS_AddDrawingOp(gds_DrawingOp op);

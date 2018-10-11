@@ -292,7 +292,9 @@ bool MenuPointerInput(const bt_terminal_pointer_event &pevent){
 void OpenMenu(std::shared_ptr<Menu> menu, std::weak_ptr<Window> win, const Point &p){
 	currentMenus.push_back(menu);
 	menu->SetWindow(win);
+	Screen.BeginQueue();
 	menu->Draw(p, {0, 0}, true);
+	Screen.CommitQueue();
 	RefreshScreen(menu->GetBoundingRect());
 }
 
@@ -343,11 +345,13 @@ shared_ptr<Menu> CreateMenu(){
 }
 
 void RedrawMenus(const Rect &r){
+	Screen.BeginQueue();
 	for(auto m : currentMenus){
 		if(Overlaps(m->GetBoundingRect(), r)){
 			m->Redraw();
 		}
 	}
+	Screen.CommitQueue();
 }
 
 shared_ptr<Menu> MergeMenus(shared_ptr<Menu> m1, shared_ptr<Menu> m2){

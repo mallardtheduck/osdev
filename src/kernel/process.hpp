@@ -33,6 +33,7 @@ bool proc_switch(pid_t pid);
 void proc_switch_sch(pid_t pid);
 pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent=proc_current_pid);
 void proc_end(pid_t pid=proc_current_pid);
+void proc_hold();
 
 void proc_setenv(const pid_t pid, const string &name, const string &value, const uint8_t flags=0, bool userspace=false);
 void proc_setenv(const string &name, const string &value, const uint8_t flags=0, bool userspace=true);
@@ -82,5 +83,9 @@ void proc_remove_msg(btos_api::bt_msg_header *msg);
 btos_api::bt_msg_header *proc_get_msg(size_t index, pid_t pid=proc_current_pid);
 btos_api::bt_msg_header *proc_get_msg_nolock(size_t index, pid_t pid=proc_current_pid);
 btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id);
+
+void proc_set_cur_msg(btos_api::bt_msg_header *msg, pid_t pid=proc_current_pid);
+void proc_set_cur_msg_nolock(btos_api::bt_msg_header *msg, pid_t pid=proc_current_pid);
+btos_api::bt_msg_header *proc_get_cur_msg(pid_t pid=proc_current_pid);
 
 #endif

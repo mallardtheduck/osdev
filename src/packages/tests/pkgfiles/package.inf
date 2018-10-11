@@ -23,3 +23,11 @@ description = WM Test
 path = /
 file = wmtest.elx
 type = app
+
+[feature-app-testw]
+
+name = tests.app.testsw
+description = SDL Widgets Test
+path = /
+file = testsw.elx
+type = app

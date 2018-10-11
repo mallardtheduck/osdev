@@ -37,6 +37,7 @@ typedef struct virtual_handle virtual_handle;
 
 bool btos_path_parse(const char *opath, char *buffer, size_t size);
 bool btos_path_is_absolute(const char *path);
+bool btos_path_is_root(const char *path);
 size_t btos_get_drive_end(const char *path);
 int btos_set_filenum(bt_handle fh, const char *path);
 int btos_set_filenum_virt(virtual_handle *vh);

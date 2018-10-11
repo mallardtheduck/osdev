@@ -16,13 +16,13 @@ private:
 	uint32_t opCounter = 0;
 	uint32_t width;
 	uint32_t height;
-	bool indexed;
+	uint32_t colourType;
 	
 	std::shared_ptr<GD::Image> cache;
 	
 	void OrderOps();
 public:
-	VectorSurface(size_t w, size_t h, bool indexed, uint32_t scale = 100);
+	VectorSurface(size_t w, size_t h, uint32_t colourType, uint32_t scale = 100);
 
 	virtual size_t AddOperation(gds_DrawingOp op);
 	virtual void RemoveOperation(size_t id);

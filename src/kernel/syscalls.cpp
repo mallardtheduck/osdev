@@ -201,6 +201,10 @@ void mod_unlock_low_memory(){
 	MM2::unlock_low_memory();	
 }
 
+int mod_get_proc_status(pid_t pid){
+	return (int)proc_get_status(pid);
+}
+
 module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&panic,
 	&malloc,
@@ -228,6 +232,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&new_thread,
 	&sch_block,
 	&sch_yield,
+	&sch_yield_to,
 	&thread_id,
 	&sch_set_priority,
 	&sch_end_thread,
@@ -287,6 +292,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&mod_spawn,
 	&mod_wait,
     &mod_kill,
+    &mod_get_proc_status,
 
 	&infofs_register,
     &add_extension,

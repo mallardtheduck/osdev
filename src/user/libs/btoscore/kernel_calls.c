@@ -108,12 +108,13 @@ uint64_t bt_wait_atom(bt_handle_t a, ENUM_NAME(bt_atom_compare) cmp, uint64_t va
 }
 
 uint64_t bt_cmpxchg_atom(bt_handle_t a, uint64_t cmp, uint64_t xchg){
-	btos_call(BT_CMPXCHG_ATOM, (uint32_t)a, (uint32_t)&cmp, (uint32_t)&xchg);
-	return xchg;
+	volatile uint64_t ret = xchg;
+	btos_call(BT_CMPXCHG_ATOM, (uint32_t)a, (uint32_t)&cmp, (uint32_t)&ret);
+	return ret;
 }
 
 uint64_t bt_read_atom(bt_handle_t a){
-	uint64_t ret;
+	volatile uint64_t ret;
 	btos_call(BT_READ_ATOM, (uint32_t)a, (uint32_t)&ret, 0);
 	return ret;
 }

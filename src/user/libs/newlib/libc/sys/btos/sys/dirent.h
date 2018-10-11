@@ -6,12 +6,16 @@
 typedef uint64_t DIR;
 
 #define MAXNAMLEN 256
+#define DT_REG 0
+#define DT_DIR 1
+#define DT_LNK 2
 
 struct dirent {
 	unsigned long	d_ino;
 	unsigned short	d_reclen;
 	unsigned short	d_namlen;
 	char		d_name[MAXNAMLEN + 1];
+	int		d_type;
 };
 
 DIR *opendir (const char *);

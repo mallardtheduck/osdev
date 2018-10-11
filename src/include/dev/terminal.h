@@ -41,6 +41,8 @@ ENUM_START(bt_terminal_ioctl)
 	ENUM_SET(bt_terminal_ioctl, PointerUnfreeze, 280),
 	ENUM_SET(bt_terminal_ioctl, GetPointerSpeed, 281),
 	ENUM_SET(bt_terminal_ioctl, SetPointerSpeed, 282),
+	ENUM_SET(bt_terminal_ioctl, TakeExclusive, 283),
+	ENUM_SET(bt_terminal_ioctl, ReleaseExclusive, 284),
 
     ENUM_SET(bt_terminal_ioctl, NewTerminal, 291),
     ENUM_SET(bt_terminal_ioctl, SwitchTerminal, 293),

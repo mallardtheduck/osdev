@@ -19,7 +19,9 @@ static void check_init(pthread_cond_t *cond){
 }
 
 int pthread_cond_init(pthread_cond_t *restrict cond, const pthread_condattr_t *restrict attr){
+	bt_lock(cond_init_lock);
 	*cond = bt_create_atom(0);
+	bt_unlock(cond_init_lock);
 	return 0;
 }
 
@@ -31,9 +33,9 @@ int pthread_cond_destroy(pthread_cond_t *cond){
 int pthread_cond_wait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex){
 	check_init(cond);
 	uint64_t val = bt_modify_atom(*cond, bt_atom_modify_Add, 1);
-	bt_unlock(*mutex);
+	pthread_mutex_unlock(mutex);
 	bt_wait_atom(*cond, bt_atom_compare_LessThan, val);
-	bt_lock(*mutex);
+	pthread_mutex_lock(mutex);
 	return 0;
 }
 
@@ -46,8 +48,10 @@ int pthread_cond_signal(pthread_cond_t *cond){
 	while(true){
 		uint64_t val = bt_read_atom(*cond);
 		if(val > 0){
-			uint64_t nval = bt_cmpxchg_atom(*cond, val, val - 1);
-			if(nval == val - 1) break;
+			uint64_t dval = val - 1;
+			uint64_t nval = bt_cmpxchg_atom(*cond, val, dval);
+			bt_yield();
+			if(nval == dval) break;
 		}else break;
 	}
 	return 0;

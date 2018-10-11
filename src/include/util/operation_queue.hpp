@@ -4,9 +4,23 @@
 #include <btos_module.h>
 #include <util/holdlock.hpp>
 
-template<typename opT, bool (*proccessFn)(opT*), size_t queue_size> class operation_queue{
+#if __cplusplus <= 199711L
+inline void operation_queue_null_yield_fn(){}
+#endif
+
+template<
+	typename opT, 
+	bool(*proccessFn)(opT*), 
+	size_t queue_size, 
+	void(*yieldFn)() = 
+	#if __cplusplus <= 199711L
+		operation_queue_null_yield_fn
+	#else
+		nullptr
+	#endif
+> class operation_queue{
 private:
-    typedef operation_queue<opT, proccessFn, queue_size> this_type;
+    typedef operation_queue<opT, proccessFn, queue_size, yieldFn> this_type;
 
     opT *queue[queue_size];
     size_t queue_count, queue_top;
@@ -21,6 +35,7 @@ private:
         hold_lock hl(&queue_lock);
         while(!queue_count){
             release_lock(&queue_lock);
+            if(yieldFn) yieldFn();
             thread_setblock(&operation_queue_blockcheck, (void*)&queue_count);
             take_lock(&queue_lock);
         }

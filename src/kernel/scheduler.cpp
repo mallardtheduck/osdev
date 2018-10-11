@@ -87,9 +87,9 @@ char *sch_threads_infofs(){
 void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
-	uint8_t sch_freq = 100;
-	if(cpu_get_umips() < 1000) sch_freq = 50;
-	if(cpu_get_umips() < 500) sch_freq = 30;
+	uint8_t sch_freq = 50;
+	if(cpu_get_umips() < 1000) sch_freq = 30;
+	if(cpu_get_umips() < 500) sch_freq = 20;
     uint16_t value=193182 / sch_freq;
     dbgpf("SCH: Scheduler frequency: %i\n", (int)sch_freq);
 	outb(0x43, 0x36);
@@ -268,30 +268,46 @@ inline void out_regs(const irq_regs &ctx){
 	dbgpf("EFLAGS: %x ORESP: %x\n", ctx.eflags, ctx.useresp);
 }
 
+
+static int sch_precyle(){
+	int nrunnables=0;
+	for(size_t i=0; i<threads->size(); ++i){
+		sch_thread *ithread = (*threads)[i];
+		//Decrement all threads load modifiers at start of cycle
+		if(ithread->modifier > 0) --ithread->modifier;
+		//Ignore idle thread
+		if(ithread == idle_thread){
+			ithread->dynpriority = 0xFFFFFFFF;
+			continue;
+		}
+		//Run blockchecks
+		if(ithread->status == sch_thread_status::Blocked && ithread->blockcheck!=NULL){
+			if(ithread->blockcheck(ithread->bc_param)) ithread->status = sch_thread_status::Runnable;
+		}
+		if(ithread->status == sch_thread_status::Runnable){
+			if(!ithread->priority) panic("(SCH) Thread priority 0 is not allowed.\n");
+			nrunnables++;
+		}
+	}
+	return nrunnables;
+}
+
 static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
-	static uint32_t lcycle=0;
 	//Find runnable threads and minimum dynamic priority
 	int nrunnables=0;
 	uint32_t min=0xFFFFFFFF;
 	for(size_t i=0; i<threads->size(); ++i){
 		sch_thread *ithread = (*threads)[i];
-		//Priority 0xFFFFFFFF == "idle", only run when nothing else is available.
-		if(!ithread->priority==0xFFFFFFFF) ithread->dynpriority=0xFFFFFFFF;
-	    if(lcycle != cycle && ithread->status == sch_thread_status::Blocked && ithread->blockcheck!=NULL){
-	        if(ithread->blockcheck(ithread->bc_param)) ithread->status = sch_thread_status::Runnable;
-	    }
-		if(ithread->status == sch_thread_status::Runnable){
-			if(!ithread->priority) panic("(SCH) Thread priority 0 is not allowed.\n");
-			nrunnables++;
+		//Ignore idle thread
+		if(ithread == idle_thread) continue;
+		if(ithread->status == sch_thread_status::Runnable && ithread->sch_cycle != cycle){
 			if(ithread->dynpriority < min) min=ithread->dynpriority;
+			++nrunnables;
 		}
 	}
-	lcycle=cycle;
-
-	//If there are no runnable threads, halt. Hopefully an interrupt will awaken one soon...
-	if(nrunnables==0){
-		return false;
-	}
+	
+	//If we've run out of runnable treads, we've finished.
+	if(nrunnables == 0) return false;
 	
 	//Subtract minimum dynamic priority from all threads. If there is now a thread with dynamic priority 0
 	//that isn't the current thread, record it
@@ -299,35 +315,40 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 	if(preferred_next_pid){
 		for(size_t i=0; i<(*threads).size(); ++i){
 			sch_thread *ithread = (*threads)[i];
-			if(ithread->status == sch_thread_status::Runnable && ithread->pid == preferred_next_pid){
+			if(ithread == idle_thread) continue;
+			if(ithread->status == sch_thread_status::Runnable && ithread->pid == preferred_next_pid && ithread->sch_cycle != cycle){
 				foundtorun=true;
 				torun=ithread;
 				preferred_next_pid = preferred_return_pid;
 				preferred_return_pid = 0;
+				break;
 			}
 		}
 	}
 	if(!foundtorun){
 		for(size_t i=0; i<(*threads).size(); ++i){
 			sch_thread *ithread = (*threads)[i];
-			if(ithread->status == sch_thread_status::Runnable){
+			if(ithread == idle_thread) continue;
+			if(ithread->status == sch_thread_status::Runnable && ithread->sch_cycle != cycle){
 				if(ithread->dynpriority) ithread->dynpriority-=min;
 				if(ithread!=current_thread && ithread->dynpriority==0){
 					foundtorun=true;
 					torun=ithread;
+					break;
 				}
-				else if(ithread->modifier) --ithread->modifier;
-			}else if(ithread->modifier) --ithread->modifier;
+			}
 		}
 	}
-	if(foundtorun){
-		if(torun->modifier < modifier_limit) ++torun->modifier;
-		return true;
-	}else{
+	if(!foundtorun){
 		torun=current_thread;
-		if(torun->modifier < modifier_limit) ++torun->modifier;
-		return true;
+		foundtorun=true;
 	}
+	//Counter the decrement at the start of the cycle and add another for this cycle
+	if(torun->modifier < modifier_limit){ 
+		++torun->modifier;
+		if(torun->modifier < modifier_limit) ++torun->modifier;
+	}
+	return true;
 }
 
 extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
@@ -553,24 +574,29 @@ void sch_prescheduler_thread(void*){
 	while(true){
 		cycle++;
 		take_lock_exclusive(sch_lock);
+		int runnable = sch_precyle();
 		sch_thread *current=current_thread;
-		sch_thread *next=NULL;
-		uint32_t count=0;
-		while(sch_find_thread(next, cycle)){
-			if(next->sch_cycle==cycle || (count && next==idle_thread)){
-				break;
+		if(runnable){
+			sch_thread *next=NULL;
+			uint32_t count=0;
+			while(sch_find_thread(next, cycle)){
+				current->next=next;
+				current=current->next;
+				
+				//Prevent overflow of dynamic priority...
+				if(current->priority + current->modifier >= current->priority){
+					current->dynpriority=current->priority + current->modifier;
+				}else{
+					current->dynpriority=0xFFFFFFFF;
+				}
+				current->sch_cycle=cycle;
+				count++;
 			}
-			current->next=next;
-			current=current->next;
-			if(current->modifier < modifier_limit) ++current->modifier;
-			//Prevent overflow of dynamic priority...
-			if(current->priority + current->modifier >= current->priority){
-				current->dynpriority=current->priority + current->modifier;
-			}else{
-				current->dynpriority=0xFFFFFFFF;
-			}
-			current->sch_cycle=cycle;
-			count++;
+		}else{
+			current_thread->next = idle_thread;
+			idle_thread->next = current_thread;
+			if(idle_thread->modifier < modifier_limit) ++idle_thread->modifier;
+			if(idle_thread->modifier < modifier_limit) ++idle_thread->modifier;
 		}
 		release_lock(sch_lock);
 		sch_yield();
@@ -658,7 +684,7 @@ void sch_hold_proc(pid_t pid){
 	hold_lock hl(sch_lock);	
 	for(size_t i=0; i<threads->size(); ++i){
 		sch_thread *c = (*threads)[i];
-		if(c->pid == pid && c != current_thread){
+		if(c->pid == pid && c != current_thread && c->abortlevel == 0){
 			if(c->status == sch_thread_status::Runnable){
 				c->status = sch_thread_status::HeldRunnable;
 			}else if(c->status == sch_thread_status::Blocked){

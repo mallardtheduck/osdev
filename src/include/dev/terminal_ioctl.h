@@ -37,6 +37,9 @@ EXTERN_C void bt_term_SwitchTerminal(uint64_t id);
 EXTERN_C void bt_term_RegisterGlobalShortcut(uint16_t keycode);
 EXTERN_C void bt_term_WaitActive();
 
+EXTERN_C bool bt_term_TakeExclusive();
+EXTERN_C void bt_term_ReleaseExclusive();
+
 EXTERN_C void bt_term_ClearScreen();
 EXTERN_C size_t bt_term_GetScreenModeCount();
 EXTERN_C bt_vidmode bt_term_GetScreenMode(size_t id);
