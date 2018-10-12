@@ -5,8 +5,29 @@ using namespace btos_api::hwpnp;
 
 vector<IDriver*> *drivers;
 
+static char *pnp_drivers_infofs(){
+	char *buffer=(char*)malloc(4096);
+	memset(buffer, 0, 4096);
+	sprintf(buffer, "# id, devid, description\n");
+	for(auto d : *drivers){
+		auto devid = d->GetDeviceID();
+		sprintf(&buffer[strlen(buffer)], "%p, %x%x:%x%x:%x%x:%x%x:%x%x:%x%x, \"%s\"\n", 
+			d,
+			Upper(devid.Bus), Lower(devid.Bus), 
+			Upper(devid.VendorID), Lower(devid.VendorID), 
+			Upper(devid.DeviceID), Lower(devid.DeviceID), 
+			Upper(devid.Revision), Lower(devid.Revision), 
+			Upper(devid.ExtraID), Lower(devid.ExtraID), 
+			Upper(devid.Class), Lower(devid.Class),
+			d->GetDescription()
+		);
+	}
+	return buffer;
+}
+
 void pnp_init_drivers(){
 	drivers = new vector<IDriver*>();
+	infofs_register("DRIVERS", &pnp_drivers_infofs);
 }
 
 void pnp_register_driver(IDriver *driver){

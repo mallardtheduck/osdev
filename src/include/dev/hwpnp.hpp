@@ -66,6 +66,7 @@ namespace hwpnp{
 		virtual DeviceID GetDeviceID() = 0;
 		virtual bool IsCompatible(const DeviceID &dev) = 0;
 		virtual IDevice *CreateDevice(const DeviceID &dev, IDevice *parent, size_t index) = 0;
+		virtual const char *GetDescription() = 0;
 		virtual void DestroyDevice(IDevice *dev) = 0;
 	
 		virtual ~IDriver() {}

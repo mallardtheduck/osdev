@@ -61,6 +61,7 @@ class PCRTCDriver : public btos_api::hwpnp::IDriver{
 public:
 	btos_api::hwpnp::DeviceID GetDeviceID();
 	bool IsCompatible(const btos_api::hwpnp::DeviceID &dev);
+	const char *GetDescription();
 	btos_api::hwpnp::IDevice *CreateDevice(const btos_api::hwpnp::DeviceID &dev, btos_api::hwpnp::IDevice *parent, size_t index);
 	void DestroyDevice(btos_api::hwpnp::IDevice *dev);
 };
@@ -83,6 +84,10 @@ bool PCRTCDriver::IsCompatible(const btos_api::hwpnp::DeviceID &dev){
 	dev.Revision == PCRTCDeviceID.Revision &&
 	dev.ExtraID == PCRTCDeviceID.ExtraID &&
 	dev.Class == PCRTCDeviceID.Class;
+}
+
+const char *PCRTCDriver::GetDescription(){
+	return "PC-style RTC driver";
 }
 
 btos_api::hwpnp::IDevice *PCRTCDriver::CreateDevice(const btos_api::hwpnp::DeviceID&, btos_api::hwpnp::IDevice*, size_t){

@@ -18,8 +18,37 @@ struct KnownDevice{
 
 vector<KnownDevice> *known_devices;
 
+static char *pnp_devices_infofs(){
+	char *buffer=(char*)malloc(4096);
+	memset(buffer, 0, 4096);
+	sprintf(buffer, "# id, parent, index, devid, type, description, driver\n");
+	sprintf(&buffer[strlen(buffer)], "%p, %p, %i, %x%x:%x%x:%x%x:%x%x:%x%x:%x%x, %i, \"%s\", %p\n",
+			rootDev, nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			rootDev->GetType(),
+			rootDev->GetDescription(),
+			rootDev->GetDriver()
+		);
+	for(auto d : *known_devices){
+		auto devid = d.id;
+		sprintf(&buffer[strlen(buffer)], "%p, %p, %i, %x%x:%x%x:%x%x:%x%x:%x%x:%x%x, %i, \"%s\", %p\n",
+			d.device, d.parent, (int)d.index,
+			Upper(devid.Bus), Lower(devid.Bus), 
+			Upper(devid.VendorID), Lower(devid.VendorID), 
+			Upper(devid.DeviceID), Lower(devid.DeviceID), 
+			Upper(devid.Revision), Lower(devid.Revision), 
+			Upper(devid.ExtraID), Lower(devid.ExtraID), 
+			Upper(devid.Class), Lower(devid.Class),
+			(d.device ? d.device->GetType() : -1),
+			(d.device ? d.device->GetDescription() : "Unknown device"),
+			(d.device ? d.device->GetDriver() : nullptr)
+		);
+	}
+	return buffer;
+}
+
 void pnp_init_devices(){
 	known_devices = new vector<KnownDevice>();
+	infofs_register("PNPDEVICES", &pnp_devices_infofs);
 }
 
 void pnp_add_device(IDevice *parent, const DeviceID &id, size_t idx){
