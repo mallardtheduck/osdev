@@ -56,6 +56,7 @@ extern "C"{
 #include "infofs.hpp"
 #include "debug_ext.hpp"
 #include "atoms.hpp"
+#include "hwpnp_kernel.hpp"
 
 void GDT_init();
 void IDT_init();
@@ -66,7 +67,7 @@ void gdt_set_kernel_stack(void* ptr);
 
 #define KERNEL_VERSION_MAJOR 0
 #define KERNEL_VERSION_MINOR 1
-#define KERNEL_REVISION "A"
+#define KERNEL_REVISION "C"
 #define KERNEL_VERSION_STRING "v" MACRO_XSTR(KERNEL_VERSION_MAJOR) "." MACRO_XSTR(KERNEL_VERSION_MINOR) KERNEL_REVISION
 #define KERNEL_OS_NAME "BT/OS"
 #define KERNEL_COPYRIGHT "(c) 2014-2018 Stuart Brockman"

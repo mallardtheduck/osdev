@@ -13,19 +13,33 @@
 #include "../btos/bt_msg.h"
 #include "handle.h"
 
+#if defined(__cplusplus) && defined(KERNEL)
+	#define MODAPI_NS module_api::
+	namespace module_api{
+#endif
+
 typedef void(*thread_func)(void*);
 typedef uint64_t thread_id_t;
 typedef uint64_t pid_t;
 typedef uint32_t bt_handle_t;
 
 typedef char* (*info_function)();
-
 struct kernel_extension;
+
+#ifdef MODAPI_NS
+}
+#endif
+
 #ifndef __cplusplus
 	typedef struct kernel_extension kernel_extension;
 	#define API_NS
 #else
-	#define API_NS btos_api::
+	#define API_NS ::btos_api::
+	#include "../dev/hwpnp.hpp"
+	
+	#ifdef MODAPI_NS
+		namespace module_api{
+	#endif
 #endif
 
 #define	ENV_Global 		(1<<0) //Use PID 0 (kernel) value instead
@@ -139,6 +153,22 @@ struct syscall_table{
 	bt_handle_info (*get_user_handle)(bt_handle_t h, pid_t pid);
 	void (*set_kvar)(const char *name, const char *value);
 	size_t (*get_kvar)(const char *name, char *buffer, size_t size);
+	
+	#ifdef __cplusplus
+	void (*pnp_register_driver)(btos_api::hwpnp::IDriver *driver);
+	void (*pnp_unregister_driver)(btos_api::hwpnp::IDriver *driver);
+	void (*pnp_add_device)(btos_api::hwpnp::IDevice *parent, const btos_api::hwpnp::DeviceID &id, size_t idx);
+	btos_api::hwpnp::IDevice *(*pnp_resolve_device)(btos_api::hwpnp::IDevice *parent, const btos_api::hwpnp::DeviceID &id, size_t idx);
+	void (*pnp_rescan_devices)();
+	void (*pnp_set_root_device)(btos_api::hwpnp::IRootDevice *dev);
+	#else
+	void *pnp_register_driver;
+	void *pnp_unregister_driver;
+	void *pnp_add_device;
+	void *pnp_resolve_device;
+	void *pnp_rescan_devices;
+	void *pnp_set_root_device;
+	#endif
 };
 
 #ifndef __cplusplus
@@ -147,6 +177,10 @@ typedef struct syscall_table syscall_table;
 
 #ifndef KERNEL
 extern syscall_table *SYSCALL_TABLE;
+#endif
+
+#ifdef MODAPI_NS
+}
 #endif
 
 #endif

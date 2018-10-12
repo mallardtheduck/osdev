@@ -1,4 +1,14 @@
-init.tar: Makefile data/config.ini data/boot.sys data/rtc.sys data/ps2.sys data/ata.sys data/fat.sys data/spawn.elx data/eloader.elx
+init.tar: Makefile\
+	data/config.ini\
+	data/boot.sys\
+	data/pcrtc.sys\
+	data/stdpc.sys\
+	data/ps2.sys\
+	data/ata.sys\
+	data/fat.sys\
+	data/spawn.elx\
+	data/eloader.elx
+	
 	find data/ -name \*.elx -not -name eloader.elx -exec strip {} \;
 	strip -K loaded_modules -K loaded_module_count data/eloader.elx
 	strip -g data/*.sys
@@ -7,7 +17,10 @@ init.tar: Makefile data/config.ini data/boot.sys data/rtc.sys data/ps2.sys data/
 data/boot.sys: ../../modules/boot/boot.sys
 	cp $< $@
 
-data/rtc.sys: ../../modules/rtc/rtc.sys
+data/pcrtc.sys: ../../modules/hwpnp/pcrtc/pcrtc.sys
+	cp $< $@
+	
+data/stdpc.sys: ../../modules/hwpnp/stdpc/stdpc.sys
 	cp $< $@
 
 data/fat.sys: ../../modules/fat/fat.sys

@@ -368,4 +368,30 @@ inline static size_t get_kvar(const char *name, char *buffer, size_t size){
 	return SYSCALL_TABLE->get_kvar(name, buffer, size);
 }
 
+#ifdef __cplusplus
+inline static void pnp_register_driver(btos_api::hwpnp::IDriver *driver){
+	SYSCALL_TABLE->pnp_register_driver(driver);
+}
+
+inline static void pnp_unregister_driver(btos_api::hwpnp::IDriver *driver){
+	SYSCALL_TABLE->pnp_unregister_driver(driver);
+}
+
+inline static void pnp_add_device(btos_api::hwpnp::IDevice *parent, const btos_api::hwpnp::DeviceID &id, size_t idx){
+	SYSCALL_TABLE->pnp_add_device(parent, id, idx);
+}
+
+inline static btos_api::hwpnp::IDevice *pnp_resolve_device(btos_api::hwpnp::IDevice *parent, const btos_api::hwpnp::DeviceID &id, size_t idx){
+	return SYSCALL_TABLE->pnp_resolve_device(parent, id, idx);
+}
+
+inline static void pnp_rescan_devices(){
+	SYSCALL_TABLE->pnp_rescan_devices();
+}
+
+inline static void pnp_set_root_device(btos_api::hwpnp::IRootDevice *dev){
+	SYSCALL_TABLE->pnp_set_root_device(dev);
+}
+#endif
+
 #endif

@@ -2,8 +2,7 @@
 #define _HWPNP_HPP
 
 #ifndef KERNEL
-#include "../module/module_stubs.h"
-#include "../module/module_cpp.hpp"
+#include <stdint.h>
 #endif
 #include "../util/bt_enum.h"
 #include <btos/devices.h>
@@ -18,6 +17,8 @@ namespace hwpnp{
 		ENUM_SET(PNPBUS, ISA, 2),
 		ENUM_SET(PNPBUS, PCI, 3),
 		ENUM_SET(PNPBUS, IDE, 4),
+		ENUM_SET(PNPBUS, SCSI, 5),
+		ENUM_SET(PNPBUS, PS2, 6),
 		
 		ENUM_SET(PNPBUS, Software, 100),
 	ENUM_END

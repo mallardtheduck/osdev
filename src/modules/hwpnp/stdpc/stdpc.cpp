@@ -1,3 +1,4 @@
+#include <btos_module.h>
 #include <dev/hwpnp.hpp>
 #include <dev/hwpnp/timerdevice.hpp>
 
@@ -53,8 +54,8 @@ static StdPC theDevice;
 
 extern "C" int module_main(syscall_table *systbl, char */*params*/){
 	SYSCALL_TABLE=systbl;
-	//sysTimer = pnp_resolve_device(&theDevice, PCRTCDeviceID);
+	sysTimer = (btos_api::hwpnp::ITimerDevice*)pnp_resolve_device(&theDevice, PCRTCDeviceID, 0);
 	if(!sysTimer) panic("(STDPC) Could not resolve timer device!");
-	//pnp_set_root_device(&theDevice);
+	pnp_set_root_device(&theDevice);
 	return 0;
 }
