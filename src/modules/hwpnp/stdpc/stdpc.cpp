@@ -12,6 +12,24 @@ static const btos_api::hwpnp::DeviceID PCRTCDeviceID = {
 		0, 0, 0, 0, 1
 	};
 
+static const btos_api::hwpnp::DeviceID PCATADeviceID = {
+		btos_api::hwpnp::PNPBUS::PCBUS,
+		0, 0, 0, 0, 2
+};
+
+static const btos_api::hwpnp::DeviceID PCPS2DeviceID = {
+		btos_api::hwpnp::PNPBUS::PCBUS,
+		0, 0, 0, 0, 3
+};
+
+static const btos_api::hwpnp::DeviceID PCPCIDeviceID = {
+		btos_api::hwpnp::PNPBUS::PCBUS,
+		0, 0, 0, 0, 4
+};
+
+static const btos_api::hwpnp::DeviceID *subDevices[] = {&PCRTCDeviceID, &PCATADeviceID, &PCPS2DeviceID, &PCPCIDeviceID};
+static const size_t subDeviceCount = 4;
+
 static btos_api::hwpnp::ITimerDevice *sysTimer;
 
 class StdPC : public btos_api::hwpnp::IRootDevice{
@@ -35,11 +53,12 @@ const char *StdPC::GetDescription(){
 }
 
 size_t StdPC::GetSubDeviceCount(){
-	return 0;
+	return subDeviceCount;
 }
 
-btos_api::hwpnp::DeviceID StdPC::GetSubDevice(size_t){
-	return btos_api::hwpnp::NullDeviceID;
+btos_api::hwpnp::DeviceID StdPC::GetSubDevice(size_t idx){
+	if(idx < subDeviceCount) return *subDevices[idx];
+	else return btos_api::hwpnp::NullDeviceID;
 }
 
 btos_api::hwpnp::IDriver *StdPC::GetDriver(){

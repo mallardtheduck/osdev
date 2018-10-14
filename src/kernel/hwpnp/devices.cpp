@@ -52,6 +52,15 @@ void pnp_init_devices(){
 }
 
 void pnp_add_device(IDevice *parent, const DeviceID &id, size_t idx){
+	dbgpf("PNP: Adding device %p, %i, %x%x:%x%x:%x%x:%x%x:%x%x:%x%x\n",
+		parent, (int)idx,
+		Upper(id.Bus), Lower(id.Bus), 
+		Upper(id.VendorID), Lower(id.VendorID), 
+		Upper(id.DeviceID), Lower(id.DeviceID), 
+		Upper(id.Revision), Lower(id.Revision), 
+		Upper(id.ExtraID), Lower(id.ExtraID), 
+		Upper(id.Class), Lower(id.Class)
+	);
 	for(auto d : *known_devices){
 		if(d.parent == parent && d.index == idx) return;
 	}
@@ -73,6 +82,22 @@ void pnp_rescan_devices(){
 	}
 }
 
+void pnp_enum_subdevices(IDevice *dev){
+	for(size_t i = 0; i < dev->GetSubDeviceCount(); ++i){
+		auto devId = dev->GetSubDevice(i);
+		if(devId.Bus != PNPBUS::Null){
+			auto sdev = pnp_resolve_device(dev, devId, i);
+			if(sdev) pnp_enum_subdevices(sdev);
+		}
+	}
+}
+
+void pnp_enum_devices(){
+	if(!rootDev) return;
+	pnp_enum_subdevices(rootDev);
+}
+
 void pnp_set_root_device(IRootDevice *dev){
 	if(!rootDev) rootDev = dev;
+	pnp_enum_devices();
 }
