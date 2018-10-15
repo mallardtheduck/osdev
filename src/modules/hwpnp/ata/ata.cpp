@@ -2,9 +2,6 @@
 #include <util/holdlock.hpp>
 #include "ata.hpp"
 
-syscall_table *SYSCALL_TABLE;
-char dbgbuf[256];
-
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #pragma GCC diagnostic ignored "-Wunused-function"
@@ -111,7 +108,7 @@ static bool ata_device_init(struct ata_device * dev) {
 	return true;
 }
 
-static int ata_device_detect(struct ata_device * dev) {
+static int ata_device_detect(struct ata_device * dev, ATABusDevice *parent) {
 	ata_soft_reset(dev);
 	outb(dev->io_base + ATA_REG_HDDEVSEL, 0xA0 | dev->slave << 4);
 	ata_io_wait(dev);
@@ -126,13 +123,17 @@ static int ata_device_detect(struct ata_device * dev) {
 		return 0;
 	}else{
 		if(ata_device_init(dev)){
-			char devicename[9]="ATA";
+			btos_api::hwpnp::DeviceID id = HDDDeviceID;
+			parent->devices.push_back({id, dev});
+			/*char devicename[9]="ATA";
 			add_device(devicename, &ata_driver, (void*)dev);
-			mbr_parse(devicename);
+			mbr_parse(devicename);*/
 			return 1;
 		}else if(atapi_device_init(dev)){
-			char devicename[9]="ATAPI";
-			add_device(devicename, &atapi_driver, (void*)dev);
+			btos_api::hwpnp::DeviceID id = ATAPIDeviceID;
+			parent->devices.push_back({id, dev});
+			/*char devicename[9]="ATAPI";
+			add_device(devicename, &atapi_driver, (void*)dev);*/
 			return 1;
 		}
 	}
@@ -240,13 +241,13 @@ static struct ata_device ata_secondary_master = {.io_base = 0x170, .control = 0x
 static struct ata_device ata_secondary_slave  = {.io_base = 0x170, .control = 0x376, .slave = 1};
 
 
-static int ata_initialize(void) {
+static int ata_initialize(ATABusDevice *parent) {
 	/* Detect drives and mount them */
 
-	ata_device_detect(&ata_primary_master);
-	ata_device_detect(&ata_primary_slave);
-	ata_device_detect(&ata_secondary_master);
-	ata_device_detect(&ata_secondary_slave);
+	ata_device_detect(&ata_primary_master, parent);
+	ata_device_detect(&ata_primary_slave, parent);
+	ata_device_detect(&ata_secondary_master, parent);
+	ata_device_detect(&ata_secondary_slave, parent);
 
 	return 0;
 }
@@ -347,7 +348,7 @@ char *ata_desc(){
 	return (char*)"ATA HDD";
 }
 
-extern "C" int module_main(syscall_table *systbl, char *params){
+/*extern "C" int module_main(syscall_table *systbl, char *params){
 	drv_driver driver={ata_open, ata_close, ata_read, ata_write, ata_seek, ata_ioctl, ata_type, ata_desc};
 	ata_driver=driver;
 	SYSCALL_TABLE=systbl;
@@ -358,4 +359,73 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 	preinit_dma();
 	ata_initialize();
     return 0;
+}*/
+
+ATABusDevice::ATABusDevice(){
+	dbgout("ATA: Init...\n");
+	init_lock(&ata_lock);
+    init_lock(&ata_drv_lock);
+    init_queue();
+	preinit_dma();
+	ata_initialize(this);
 }
+
+btos_api::hwpnp::DeviceID ATABusDevice::GetID(){
+	return PCATADeviceID;
+}
+
+const char *ATABusDevice::GetDescription(){
+	return "ATA Storage bus";
+}
+
+size_t ATABusDevice::GetSubDeviceCount(){
+	return devices.size();
+}
+
+btos_api::hwpnp::DeviceID ATABusDevice::GetSubDevice(size_t idx){
+	if(idx < devices.size()) return devices[idx].id;
+	else return btos_api::hwpnp::NullDeviceID;
+}
+
+btos_api::hwpnp::IDriver *ATABusDevice::GetDriver(){
+	return GetATADriver();
+}
+
+void ATABusDevice::OutByte(size_t i, size_t reg, uint8_t byte){
+	if(i < devices.size()){
+		outb(devices[i].dev->io_base + reg, byte);
+	}
+}
+
+void ATABusDevice::OutWord(size_t i, size_t reg, uint16_t word){
+	if(i < devices.size()){
+		out16(devices[i].dev->io_base + reg, word);
+	}
+}
+
+void ATABusDevice::OutBytes(size_t i, size_t reg, size_t count, const uint8_t *buffer){
+	if(i < devices.size()){
+		outsm(devices[i].dev->io_base + reg, (uint8_t*)buffer, count);
+	}
+}
+
+uint8_t ATABusDevice::InByte(size_t i, size_t reg){
+	if(i < devices.size()){
+		return inb(devices[i].dev->io_base + reg);
+	}
+	return 0;
+}
+
+void ATABusDevice::InBytes(size_t i, size_t reg, size_t count, uint8_t *buffer){
+	if(i < devices.size()){
+		insm(devices[i].dev->io_base + reg, buffer, count);
+	}
+}
+
+uint8_t ATABusDevice::ReadControlByte(size_t i){
+	if(i < devices.size()){
+		return inb(devices[i].dev->control);
+	}
+	return 0;
+}
+

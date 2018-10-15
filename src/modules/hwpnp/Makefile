@@ -1,4 +1,4 @@
-MODULES := stdpc pcrtc
+MODULES := stdpc pcrtc ata
 
 all: dummy.file
 	for dir in $(MODULES); do \

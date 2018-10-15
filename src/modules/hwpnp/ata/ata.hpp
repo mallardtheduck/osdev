@@ -1,6 +1,18 @@
 #ifndef ATA_HPP
 #define ATA_HPP
 #include <btos_module.h>
+#include <dev/hwpnp.hpp>
+#include <dev/hwpnp/atabus.hpp>
+#include <dev/hwpnp/hdd.hpp>
+#include <util/ministl.hpp>
+
+static const btos_api::hwpnp::DeviceID PCATADeviceID = {
+		btos_api::hwpnp::PNPBUS::PCBUS,
+		0, 0, 0, 0, 2
+};
+
+static const btos_api::hwpnp::DeviceID HDDDeviceID = {btos_api::hwpnp::PNPBUS::ATA, 0, 0, 0, 0, btos_api::hwpnp::ATADeviceType::HDD};
+static const btos_api::hwpnp::DeviceID ATAPIDeviceID = {btos_api::hwpnp::PNPBUS::ATA, 0, 0, 0, 0, btos_api::hwpnp::ATADeviceType::ATAPI};
 
 #define ATA_SR_BSY     0x80
 #define ATA_SR_DRDY    0x40
@@ -177,5 +189,50 @@ void ata_io_wait(struct ata_device * dev);
 int atapi_device_read(ata_device *dev, uint32_t lba, uint8_t *buf);
 void ata_reset_wait(uint32_t bus);
 void ata_wait_irq(uint32_t bus);
+
+btos_api::hwpnp::IDriver *GetATADriver();
+
+class ATABusDevice : public btos_api::hwpnp::IATABus{
+public:
+	struct ATADevice{
+		btos_api::hwpnp::DeviceID id;
+		ata_device *dev;
+	};
+
+	vector<ATADevice> devices;
+
+	ATABusDevice();
+
+	btos_api::hwpnp::DeviceID GetID();
+	const char *GetDescription();
+	size_t GetSubDeviceCount();
+	btos_api::hwpnp::DeviceID GetSubDevice(size_t);
+	btos_api::hwpnp::IDriver *GetDriver();
+	
+	void OutByte(size_t index, size_t reg, uint8_t byte);
+	void OutWord(size_t index, size_t reg, uint16_t word);
+	void OutBytes(size_t index, size_t reg, size_t count, const uint8_t *buffer);
+	uint8_t InByte(size_t index, size_t reg);
+	void InBytes(size_t index, size_t reg, size_t count, uint8_t *buffer);
+	uint8_t ReadControlByte(size_t index);
+};
+
+class ATAHDDDevice : public btos_api::hwpnp::IHDDDevice{
+private:
+	btos_api::hwpnp::IATABus *bus;
+	size_t index;
+public:
+	ATAHDDDevice(btos_api::hwpnp::IATABus *b, size_t i) : bus(b), index(i) {}
+
+	btos_api::hwpnp::DeviceID GetID();
+	const char *GetDescription();
+	size_t GetSubDeviceCount();
+	btos_api::hwpnp::DeviceID GetSubDevice(size_t);
+	btos_api::hwpnp::IDriver *GetDriver();
+	
+	void ReadSector(uint64_t lba, uint8_t *buf);
+	void WriteSector(uint64_t lba, const uint8_t *buf);
+	size_t GetSectorSize();
+};
 
 #endif
