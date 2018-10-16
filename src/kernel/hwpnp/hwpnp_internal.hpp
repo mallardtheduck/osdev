@@ -16,4 +16,6 @@ inline static uint32_t Lower(uint64_t i){
 	return (uint32_t)i;
 }
 
+void pnp_node_add(btos_api::hwpnp::IDeviceNode *node);
+
 #endif

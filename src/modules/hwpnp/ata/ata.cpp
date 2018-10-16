@@ -54,6 +54,38 @@ int ata_wait(struct ata_device * dev, int advanced) {
 	return 0;
 }
 
+int ata_wait(btos_api::hwpnp::IATABus *bus, size_t index, int advanced) {
+	uint8_t status = 0;
+
+	bus->ReadControlByte(index);
+	bus->ReadControlByte(index);
+	bus->ReadControlByte(index);
+	bus->ReadControlByte(index);
+
+	while ((status = bus->InByte(index, ATA_REG_STATUS)) & ATA_SR_BSY) {
+        //dbgpf("ATA: Status: %x\n", inb(dev->io_base + ATA_REG_STATUS));
+        yield();
+    }
+
+	if (advanced) {
+		status = bus->InByte(index, ATA_REG_STATUS);
+		if (status   & ATA_SR_ERR) {
+            dbgpf("ATA: ATA_SR_ERR\n");
+            return 1;
+        }
+		if (status   & ATA_SR_DF)   {
+            dbgpf("ATA: ATA_SR_DF\n");
+            return 1;
+        }
+		if (!(status & ATA_SR_DRQ)) {
+            dbgpf("ATA: ATA_SR_DRQ\n");
+            return 1;
+        }
+	}
+
+	return 0;
+}
+
 static void ata_soft_reset(struct ata_device * dev) {
 	outb(dev->control, 0x04);
 	outb(dev->control, 0x00);
@@ -125,51 +157,46 @@ static int ata_device_detect(struct ata_device * dev, ATABusDevice *parent) {
 		if(ata_device_init(dev)){
 			btos_api::hwpnp::DeviceID id = HDDDeviceID;
 			parent->devices.push_back({id, dev});
-			/*char devicename[9]="ATA";
-			add_device(devicename, &ata_driver, (void*)dev);
-			mbr_parse(devicename);*/
+			//mbr_parse(devicename);
 			return 1;
-		}else if(atapi_device_init(dev)){
+		}/*else if(atapi_device_init(dev)){
 			btos_api::hwpnp::DeviceID id = ATAPIDeviceID;
 			parent->devices.push_back({id, dev});
-			/*char devicename[9]="ATAPI";
-			add_device(devicename, &atapi_driver, (void*)dev);*/
 			return 1;
-		}
+		}*/
 	}
 	return 0;
 }
 
-void ata_device_read_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf){
+void ata_device_read_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf){
     take_lock(&ata_lock);
-    if(init_dma()){
-        dma_read_sector(dev, lba, buf);
-    }else{
-        ata_device_read_sector_pio(dev, lba, buf);
-    }
+    /*if(init_dma()){
+        dma_read_sector(bus, index, lba, buf);
+    }else{*/
+        ata_device_read_sector_pio(bus, index, lba, buf);
+    //}
     release_lock(&ata_lock);
 }
 
-void ata_device_read_sector_pio(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
-	if(lba > dev->length) return;
-	uint16_t bus = dev->io_base;
-	uint8_t slave = dev->slave;
+void ata_device_read_sector_pio(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf) {
+	//if(lba > dev->length) return;
+	int slave = bus->IsSlave(index);
 
 	int errors = 0;
 try_again:
-	outb(dev->control, 0);
+	bus->WriteControlByte(index, 0);
 
-	ata_wait(dev, 0);
+	ata_wait(bus, index, 0);
 
-	outb(bus + ATA_REG_HDDEVSEL, 0xe0 | slave << 4 | (lba & 0x0f000000) >> 24);
+	bus->OutByte(index, ATA_REG_HDDEVSEL, 0xe0 | slave << 4 | (lba & 0x0f000000) >> 24);
 	//outb(bus + ATA_REG_FEATURES, 0x00);
-	outb(bus + ATA_REG_SECCOUNT0, 1);
-	outb(bus + ATA_REG_LBA0, (lba & 0x000000ff) >>  0);
-	outb(bus + ATA_REG_LBA1, (lba & 0x0000ff00) >>  8);
-	outb(bus + ATA_REG_LBA2, (lba & 0x00ff0000) >> 16);
-	outb(bus + ATA_REG_COMMAND, ATA_CMD_READ_PIO);
+	bus->OutByte(index, ATA_REG_SECCOUNT0, 1);
+	bus->OutByte(index, ATA_REG_LBA0, (lba & 0x000000ff) >>  0);
+	bus->OutByte(index, ATA_REG_LBA1, (lba & 0x0000ff00) >>  8);
+	bus->OutByte(index, ATA_REG_LBA2, (lba & 0x00ff0000) >> 16);
+	bus->OutByte(index, ATA_REG_COMMAND, ATA_CMD_READ_PIO);
 
-	if (ata_wait(dev, 1)) {
+	if (ata_wait(bus, index, 1)) {
 		dbgpf("ATA: Error during ATA read of lba block %d\n", lba);
 		errors++;
 		if (errors > 4) {
@@ -180,35 +207,34 @@ try_again:
 	}
 
 	int size = 256;
-	insm(bus,buf,size);
-	ata_wait(dev, 0);
+	bus->InWords(index, ATA_REG_DATA, size, buf);
+	ata_wait(bus, index, 0);
 }
 
-void ata_device_write_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
-	if(lba > dev->length) return;
+void ata_device_write_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf) {
+	//if(lba > dev->length) return;
     take_lock(&ata_lock);
+    int slave = bus->IsSlave(index);
 
-    if(init_dma()){} //TODO: Use DMA
-	uint16_t bus = dev->io_base;
-	uint8_t slave = dev->slave;
+    //if(init_dma()){} //TODO: Use DMA
 
-	outb(dev->control, 0);
+	bus->WriteControlByte(index, 0);
 
-	ata_wait(dev, 0);
-	outb(bus + ATA_REG_HDDEVSEL, 0xe0 | slave << 4 | (lba & 0x0f000000) >> 24);
-	ata_wait(dev, 0);
+	ata_wait(bus, index, 0);
+	bus->OutByte(index, ATA_REG_HDDEVSEL, 0xe0 | slave << 4 | (lba & 0x0f000000) >> 24);
+	ata_wait(bus, index, 0);
 
 	//outb(bus + ATA_REG_FEATURES, 0x00);
-	outb(bus + ATA_REG_SECCOUNT0, 0x01);
-	outb(bus + ATA_REG_LBA0, (lba & 0x000000ff) >>  0);
-	outb(bus + ATA_REG_LBA1, (lba & 0x0000ff00) >>  8);
-	outb(bus + ATA_REG_LBA2, (lba & 0x00ff0000) >> 16);
-	outb(bus + ATA_REG_COMMAND, ATA_CMD_WRITE_PIO);
-	ata_wait(dev, 0);
+	bus->OutByte(index, ATA_REG_SECCOUNT0, 0x01);
+	bus->OutByte(index, ATA_REG_LBA0, (lba & 0x000000ff) >>  0);
+	bus->OutByte(index, ATA_REG_LBA1, (lba & 0x0000ff00) >>  8);
+	bus->OutByte(index, ATA_REG_LBA2, (lba & 0x00ff0000) >> 16);
+	bus->OutByte(index, ATA_REG_COMMAND, ATA_CMD_WRITE_PIO);
+	ata_wait(bus, index, 0);
 	int size = ATA_SECTOR_SIZE / 2;
-	outsm(bus, buf, size);
-	outb(bus + 0x07, ATA_CMD_CACHE_FLUSH);
-	ata_wait(dev, 0);
+	bus->OutWords(index, ATA_REG_DATA, size, buf);
+	bus->OutByte(index, ATA_REG_COMMAND, ATA_CMD_CACHE_FLUSH);
+	ata_wait(bus, index, 0);
 	release_lock(&ata_lock);
 }
 
@@ -224,7 +250,7 @@ static int buffer_compare(uint32_t * ptr1, uint32_t * ptr2, size_t size) {
 	return 0;
 }
 
-void ata_device_write_sector_retry(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
+/*void ata_device_write_sector_retry(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
 	uint8_t *read_buf = (uint8_t*) malloc(ATA_SECTOR_SIZE);
 	disable_interrupts();
 	do {
@@ -233,7 +259,7 @@ void ata_device_write_sector_retry(struct ata_device * dev, uint32_t lba, uint8_
 	} while (buffer_compare((uint32_t *)buf, (uint32_t *)read_buf, ATA_SECTOR_SIZE));
 	enable_interrupts();
 	free(read_buf);
-}
+}*/
 
 static struct ata_device ata_primary_master   = {.io_base = 0x1F0, .control = 0x3F6, .slave = 0};
 static struct ata_device ata_primary_slave    = {.io_base = 0x1F0, .control = 0x3F6, .slave = 1};
@@ -257,97 +283,6 @@ static int ata_finalize(void) {
 	return 0;
 }
 
-struct ata_instance{
-	ata_device *dev;
-	bt_filesize_t pos;
-};
-
-void *ata_open(void *id){
-    hold_lock hl(&ata_drv_lock);
-	ata_instance *instance=new ata_instance();
-	instance->dev=(ata_device*)id;
-	instance->pos=0;
-	return instance;
-}
-
-bool ata_close(void *instance){
-    hold_lock hl(&ata_drv_lock);
-	if(instance){
-		delete (ata_device*) instance;
-		return true;
-	}else return false;
-}
-
-size_t ata_read(void *instance, size_t bytes, char *buf){
-    hold_lock hl(&ata_drv_lock);
-	if(bytes % 512) return 0;
-	ata_instance *inst=(ata_instance*)instance;
-	size_t read = 0;
-	for(size_t i=0; i<bytes; i+=512){
-		if((uint64_t)inst->pos > inst->dev->length * 512){
-			dbgout("ATA: Attempt to read past end of disk!\n");
-			dbgpf("ATA: %i %i\n", (int)inst->pos, (int)inst->dev->length);
-			break;
-		}
-        if(!cache_get((size_t)inst->dev, inst->pos/512, &buf[i])) {
-            release_lock(&ata_drv_lock);
-            ata_queued_read(inst->dev, inst->pos / 512, (uint8_t *) &buf[i]);
-            take_lock(&ata_drv_lock);
-            cache_add((size_t)inst->dev, inst->pos/512, &buf[i]);
-        }
-		read += 512;
-		inst->pos+=512;
-	}
-	return read;
-}
-
-size_t ata_write(void *instance, size_t bytes, char *buf){
-    hold_lock hl(&ata_drv_lock);
-	if(bytes % 512) return 0;
-	ata_instance *inst=(ata_instance*)instance;
-	size_t written = 0;
-	for(size_t i=0; i<bytes; i+=512){
-		if((uint64_t)inst->pos > inst->dev->length * 512){
-			dbgout("ATA: Attempt to write past end of disk!\n");
-			break;
-		}
-        cache_drop((size_t)inst->dev, inst->pos/512);
-        release_lock(&ata_drv_lock);
-        ata_queued_write(inst->dev, inst->pos/512, (uint8_t*)&buf[i]);
-        take_lock(&ata_drv_lock);
-		written += 512;
-		inst->pos+=512;
-	}
-	return written;
-}
-
-bt_filesize_t ata_seek(void *instance, bt_filesize_t pos, uint32_t flags){
-	ata_instance *inst=(ata_instance*)instance;
-	if(pos % 512) return inst->pos;
-	if(flags == FS_Relative) inst->pos+=pos;
-	else if(flags == FS_Backwards){
-		dbgpf("ATA: Length: %i, pos: %i\n", (int)inst->dev->length, (int)pos);
-		inst->pos = (inst->dev->length * 512) - pos;
-		dbgpf("ATA: Final pos: %i\n", (int)inst->pos);
-	}else if(flags == (FS_Relative | FS_Backwards)) inst->pos-=pos;
-	else inst->pos=pos;
-	if(inst->pos < 0) inst->pos = 0;
-	if(inst->pos > (bt_filesize_t)inst->dev->length * 512) inst->pos = (inst->dev->length * 512);
-	return inst->pos;
-}
-
-int ata_ioctl(void *instance, int fn, size_t bytes, char *buf){
-	return 0;
-}
-
-int ata_type(){
-	return driver_types::STR_HDD;
-}
-
-char *ata_desc(){
-	return (char*)"ATA HDD";
-}
-
 /*extern "C" int module_main(syscall_table *systbl, char *params){
 	drv_driver driver={ata_open, ata_close, ata_read, ata_write, ata_seek, ata_ioctl, ata_type, ata_desc};
 	ata_driver=driver;
@@ -365,8 +300,8 @@ ATABusDevice::ATABusDevice(){
 	dbgout("ATA: Init...\n");
 	init_lock(&ata_lock);
     init_lock(&ata_drv_lock);
-    init_queue();
-	preinit_dma();
+    //init_queue();
+	//preinit_dma();
 	ata_initialize(this);
 }
 
@@ -403,7 +338,7 @@ void ATABusDevice::OutWord(size_t i, size_t reg, uint16_t word){
 	}
 }
 
-void ATABusDevice::OutBytes(size_t i, size_t reg, size_t count, const uint8_t *buffer){
+void ATABusDevice::OutWords(size_t i, size_t reg, size_t count, const uint8_t *buffer){
 	if(i < devices.size()){
 		outsm(devices[i].dev->io_base + reg, (uint8_t*)buffer, count);
 	}
@@ -416,7 +351,7 @@ uint8_t ATABusDevice::InByte(size_t i, size_t reg){
 	return 0;
 }
 
-void ATABusDevice::InBytes(size_t i, size_t reg, size_t count, uint8_t *buffer){
+void ATABusDevice::InWords(size_t i, size_t reg, size_t count, uint8_t *buffer){
 	if(i < devices.size()){
 		insm(devices[i].dev->io_base + reg, buffer, count);
 	}
@@ -429,3 +364,57 @@ uint8_t ATABusDevice::ReadControlByte(size_t i){
 	return 0;
 }
 
+void ATABusDevice::WriteControlByte(size_t i, uint8_t byte){
+	if(i < devices.size()){
+		outb(devices[i].dev->control, byte);
+	}
+}
+
+bool ATABusDevice::IsSlave(size_t i){
+	if(i < devices.size()){
+		return !!devices[i].dev->slave;
+	}
+	return false;
+}
+
+ATAHDDDeviceNode::ATAHDDDeviceNode(ATAHDDDevice *dev) : btos_api::hwpnp::HDDDeviceNode(dev) {}
+
+const char *ATAHDDDeviceNode::GetBaseName(){
+	return "ATA";
+}
+
+btos_api::hwpnp::DeviceID ATAHDDDevice::GetID(){
+	return HDDDeviceID;
+}
+
+const char *ATAHDDDevice::GetDescription(){
+	return "ATA fixed disk drive";
+}
+
+size_t ATAHDDDevice::GetSubDeviceCount(){
+	return 0;
+}
+
+btos_api::hwpnp::DeviceID ATAHDDDevice::GetSubDevice(size_t){
+	return btos_api::hwpnp::NullDeviceID;
+}
+
+btos_api::hwpnp::IDriver *ATAHDDDevice::GetDriver(){
+	return GetATAHDDDriver();
+}
+
+btos_api::hwpnp::IDeviceNode *ATAHDDDevice::GetDeviceNode(){
+	return &node;
+}
+	
+void ATAHDDDevice::ReadSector(uint64_t lba, uint8_t *buf){
+	ata_device_read_sector(bus, index, lba, buf);
+}
+
+void ATAHDDDevice::WriteSector(uint64_t lba, const uint8_t *buf){
+	ata_device_write_sector(bus, index, lba, (uint8_t*)buf);
+}
+
+size_t ATAHDDDevice::GetSectorSize(){
+	return ATA_SECTOR_SIZE;
+}

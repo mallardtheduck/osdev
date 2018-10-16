@@ -198,11 +198,11 @@ int keyboard_ioctl(void *instance, int fn, size_t bytes, char *buf){
 	return 0;
 }
 
-int keyboard_type(){
+int keyboard_type(void*){
 	return driver_types::IN_KEYBOARD;
 }
 
-char *keyboard_desc(){
+char *keyboard_desc(void*){
 	return (char*)"PS/2 keyboard.";
 }
 

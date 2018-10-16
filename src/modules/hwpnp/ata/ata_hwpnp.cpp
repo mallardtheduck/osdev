@@ -87,7 +87,6 @@ btos_api::hwpnp::IDriver *GetATAHDDDriver(){
 	return &ataHDDDriver;
 }
 
-
 extern "C" int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
 	pnp_register_driver(&ataDriver);

@@ -1,3 +1,4 @@
+#if 0
 #include <btos_module.h>
 #include <util/holdlock.hpp>
 #include "ata.hpp"
@@ -233,3 +234,5 @@ void atapi_test(ata_device *dev){
 	
 	dbgpf("ATAPI TEST: %x %x %x\n", (int)buf[0], (int)buf[1], (int)buf[2]);
 }
+
+#endif

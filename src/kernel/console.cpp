@@ -156,24 +156,13 @@ int terminal_ioctl(void *instance, int fn, size_t bytes, char *buf){
 	return 0;
 }
 
-int terminal_type(){
+int terminal_type(void*){
 	return driver_types::VID_TEXT;
 }
 
-char *terminal_desc(){
+char *terminal_desc(void*){
 	return "Kernel built-in VGA text output.";
 }
-
-/*struct drv_driver{
-	void *(*open)();
-	bool (*close)(void *instance);
-	int (*read)(void *instance, size_t bytes, char *buf);
-	bool (*write)(void *instance, size_t bytes, char *buf);
-	void (*seek)(void *instance, size_t pos, bool relative);
-	int (*ioctl)(void *instance, int fn, size_t bytes, char *buf);
-	int (*type)();
-	char *(*desc)();
-};*/
 
 drv_driver terminal_driver={terminal_open, terminal_close, terminal_read, terminal_write, terminal_seek,
 				terminal_ioctl, terminal_type, terminal_desc};

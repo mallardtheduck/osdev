@@ -13,6 +13,10 @@ namespace hwpnp{
 		virtual uint64_t GetMillis() = 0;
 		virtual void SetTime(uint64_t time) = 0;
 		
+		IDeviceNode *GetDeviceNode(){ 
+			return nullptr;
+		}
+		
 		int GetType() {
 			return driver_types::TIMER;
 		}

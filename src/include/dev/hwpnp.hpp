@@ -35,6 +35,21 @@ namespace hwpnp{
 	
 	static const DeviceID NullDeviceID = {PNPBUS::Null, 0, 0, 0, 0, 0};
 	
+	class IDeviceNode{
+	public:
+		virtual const char *GetBaseName() = 0;
+		virtual void *Open() = 0;
+		virtual bool Close(void *h) = 0;
+		virtual size_t Read(void *h, size_t bytes, char *buf) = 0;
+		virtual size_t Write(void *h, size_t bytes, const char *buf) = 0;
+		virtual bt_filesize_t Seek(void *h, bt_filesize_t pos, uint32_t flags) = 0;
+		virtual int IOCtl(void *h, int fn, size_t bytes, char *buf) = 0;
+		virtual int GetType() = 0;
+		virtual const char *GetDescription() = 0;
+	
+		virtual ~IDeviceNode() {}
+	};
+	
 	class IDriver;
 	
 	class IDevice{
@@ -45,6 +60,7 @@ namespace hwpnp{
 		virtual size_t GetSubDeviceCount() = 0;
 		virtual DeviceID GetSubDevice(size_t) = 0;
 		virtual IDriver *GetDriver() = 0;
+		virtual IDeviceNode *GetDeviceNode() = 0;
 		
 		virtual ~IDevice() {}
 	};
@@ -56,6 +72,9 @@ namespace hwpnp{
 		virtual ITimerDevice *GetSysTimer() = 0;
 		virtual int GetType() {
 			return driver_types::COMPUTER;
+		}
+		virtual IDeviceNode *GetDeviceNode(){
+			return nullptr;
 		}
 		
 		virtual ~IRootDevice() {}

@@ -113,11 +113,11 @@ int term_ioctl(void *instance, int fn, size_t bytes, char *buf){
     return 0;
 }
 
-int term_type(){
+int term_type(void*){
     return driver_types::TERMINAL;
 }
 
-char *term_desc(){
+char *term_desc(void*){
     return (char*)"Terminal device.";
 }
 

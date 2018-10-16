@@ -138,11 +138,11 @@ int mouse_ioctl(void *instance, int fn, size_t bytes, char *buf){
 	return 0;
 }
 
-int mouse_type(){
+int mouse_type(void*){
 	return driver_types::IN_MOUSE;
 }
 
-char *mouse_description(){
+char *mouse_description(void*){
 	return (char*)"PS/2 mouse/pointing device.";
 }
 

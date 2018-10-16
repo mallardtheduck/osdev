@@ -1,3 +1,5 @@
+#if 0
+
 #include <btos_module.h>
 #include <util/holdlock.hpp>
 #include <util/operation_queue.hpp>
@@ -133,3 +135,4 @@ size_t atapi_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf){
 	return op.retval;
 }
 
+#endif

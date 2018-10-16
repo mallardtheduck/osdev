@@ -1,3 +1,4 @@
+#if 0
 #include "ata.hpp"
 #include <dev/pci.h>
 #include <util/holdlock.hpp>
@@ -198,3 +199,5 @@ void preinit_dma(){
 	unmask_irq(15);
     init_lock(&dma_init_lock);
 }
+
+#endif

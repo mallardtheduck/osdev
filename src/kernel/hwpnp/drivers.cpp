@@ -53,7 +53,12 @@ bool DeviceIDMatch(const DeviceID &a, const DeviceID &b){
 IDevice *pnp_create_device(IDevice *parent, size_t idx, DeviceID id){
 	for(auto d : *drivers){
 		if(DeviceIDMatch(d->GetDeviceID(), id) && d->IsCompatible(id)){
-			return d->CreateDevice(id, parent, idx);
+			auto ret = d->CreateDevice(id, parent, idx);
+			if(ret){
+				auto node = ret->GetDeviceNode();
+				if(node) pnp_node_add(node);
+				return ret;
+			}
 		}
 	}
 	return nullptr;

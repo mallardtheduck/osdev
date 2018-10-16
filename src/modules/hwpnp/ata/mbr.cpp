@@ -89,11 +89,11 @@ int mbr_ioctl(void *, int, size_t, char *){
 	return 0;
 }
 
-int mbr_type(){
+int mbr_type(void*){
 	return driver_types::STR_PART;
 };
 
-char *mbr_desc(){
+char *mbr_desc(void*){
 	return "ATA HDD Partition (MBR scheme).";
 }
 

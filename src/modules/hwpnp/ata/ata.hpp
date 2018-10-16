@@ -158,8 +158,8 @@ struct ata_device {
 
 extern lock ata_lock, ata_drv_lock;
 
-void ata_device_read_sector(struct ata_device * dev, uint32_t lba, uint8_t * buf);
-void ata_device_read_sector_pio(struct ata_device * dev, uint32_t lba, uint8_t * buf);
+void ata_device_read_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf);
+void ata_device_read_sector_pio(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf);
 void ata_device_write_sector_retry(struct ata_device * dev, uint32_t lba, uint8_t * buf);
 void init_queue();
 void ata_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
@@ -179,9 +179,9 @@ void cache_add(size_t deviceid, size_t sector, char *data);
 bool cache_get(size_t deviceid, size_t sector, char *data);
 void cache_drop(size_t deviceid, size_t sector);
 
-void preinit_dma();
-bool init_dma();
-void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf);
+//void preinit_dma();
+//bool init_dma();
+//void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf);
 
 extern drv_driver atapi_driver;
 bool atapi_device_init(ata_device *dev);
@@ -211,28 +211,43 @@ public:
 	
 	void OutByte(size_t index, size_t reg, uint8_t byte);
 	void OutWord(size_t index, size_t reg, uint16_t word);
-	void OutBytes(size_t index, size_t reg, size_t count, const uint8_t *buffer);
+	void OutWords(size_t index, size_t reg, size_t count, const uint8_t *buffer);
 	uint8_t InByte(size_t index, size_t reg);
-	void InBytes(size_t index, size_t reg, size_t count, uint8_t *buffer);
+	void InWords(size_t index, size_t reg, size_t count, uint8_t *buffer);
 	uint8_t ReadControlByte(size_t index);
+	void WriteControlByte(size_t index, uint8_t byte);
+	bool IsSlave(size_t index);
+};
+
+class ATAHDDDevice;
+
+class ATAHDDDeviceNode : public btos_api::hwpnp::HDDDeviceNode{
+public:
+	ATAHDDDeviceNode(ATAHDDDevice *dev);
+
+	const char *GetBaseName();
 };
 
 class ATAHDDDevice : public btos_api::hwpnp::IHDDDevice{
 private:
 	btos_api::hwpnp::IATABus *bus;
 	size_t index;
+	ATAHDDDeviceNode node;
 public:
-	ATAHDDDevice(btos_api::hwpnp::IATABus *b, size_t i) : bus(b), index(i) {}
+	ATAHDDDevice(btos_api::hwpnp::IATABus *b, size_t i) : bus(b), index(i), node(this) {}
 
 	btos_api::hwpnp::DeviceID GetID();
 	const char *GetDescription();
 	size_t GetSubDeviceCount();
 	btos_api::hwpnp::DeviceID GetSubDevice(size_t);
 	btos_api::hwpnp::IDriver *GetDriver();
+	btos_api::hwpnp::IDeviceNode *GetDeviceNode();
 	
 	void ReadSector(uint64_t lba, uint8_t *buf);
 	void WriteSector(uint64_t lba, const uint8_t *buf);
 	size_t GetSectorSize();
 };
+
+btos_api::hwpnp::IDriver *GetATAHDDDriver();
 
 #endif

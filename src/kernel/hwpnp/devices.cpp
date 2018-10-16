@@ -52,15 +52,6 @@ void pnp_init_devices(){
 }
 
 void pnp_add_device(IDevice *parent, const DeviceID &id, size_t idx){
-	dbgpf("PNP: Adding device %p, %i, %x%x:%x%x:%x%x:%x%x:%x%x:%x%x\n",
-		parent, (int)idx,
-		Upper(id.Bus), Lower(id.Bus), 
-		Upper(id.VendorID), Lower(id.VendorID), 
-		Upper(id.DeviceID), Lower(id.DeviceID), 
-		Upper(id.Revision), Lower(id.Revision), 
-		Upper(id.ExtraID), Lower(id.ExtraID), 
-		Upper(id.Class), Lower(id.Class)
-	);
 	for(auto d : *known_devices){
 		if(d.parent == parent && d.index == idx) return;
 	}
@@ -82,22 +73,70 @@ void pnp_rescan_devices(){
 	}
 }
 
-void pnp_enum_subdevices(IDevice *dev){
-	for(size_t i = 0; i < dev->GetSubDeviceCount(); ++i){
-		auto devId = dev->GetSubDevice(i);
-		if(devId.Bus != PNPBUS::Null){
-			auto sdev = pnp_resolve_device(dev, devId, i);
-			if(sdev) pnp_enum_subdevices(sdev);
-		}
+void pnp_set_root_device(IRootDevice *dev){
+	if(!rootDev) rootDev = dev;
+}
+
+struct node_instance{
+	IDeviceNode *node;
+	void *h;
+};
+
+static void *pnp_node_open(void *id){
+	IDeviceNode *node = (IDeviceNode*)id;
+	void *h = node->Open();
+	if(h){
+		node_instance *inst = new node_instance();
+		inst->node = node;
+		inst->h = h;
+		return inst;
+	}else{
+		return nullptr;
 	}
 }
 
-void pnp_enum_devices(){
-	if(!rootDev) return;
-	pnp_enum_subdevices(rootDev);
+static bool pnp_node_close(void *instance){
+	node_instance *inst = (node_instance*)instance;
+	if(inst->node->Close(inst->h)){
+		delete inst;
+		return true;
+	}else return false;
 }
 
-void pnp_set_root_device(IRootDevice *dev){
-	if(!rootDev) rootDev = dev;
-	pnp_enum_devices();
+static size_t pnp_node_read(void *instance, size_t bytes, char *buf){
+	node_instance *inst = (node_instance*)instance;
+	return inst->node->Read(inst->h, bytes, buf);
+}
+
+static size_t pnp_node_write(void *instance, size_t bytes, char *buf){
+	node_instance *inst = (node_instance*)instance;
+	return inst->node->Write(inst->h, bytes, buf);
+}
+
+static bt_filesize_t pnp_node_seek(void *instance, bt_filesize_t pos, uint32_t flags){
+	node_instance *inst = (node_instance*)instance;
+	return inst->node->Seek(inst->h, pos, flags);
+}
+
+static int pnp_node_ioctl(void *instance, int fn, size_t bytes, char *buf){
+	node_instance *inst = (node_instance*)instance;
+	return inst->node->IOCtl(inst->h, fn, bytes, buf);
+}
+
+static int pnp_node_type(void *id){
+	IDeviceNode *node = (IDeviceNode*)id;
+	return node->GetType();
+}
+
+static char *pnp_node_desc(void *id){
+	IDeviceNode *node = (IDeviceNode*)id;
+	return (char*)node->GetDescription();
+}
+
+drv_driver nodeAdaptor = {pnp_node_open, pnp_node_close, pnp_node_read, pnp_node_write, pnp_node_seek, pnp_node_ioctl, pnp_node_type, pnp_node_desc};
+
+void pnp_node_add(IDeviceNode *node){
+	char name[8] = {0};
+	strncpy(name, node->GetBaseName(), 7);
+	drv_add_device(name, &nodeAdaptor, node);
 }

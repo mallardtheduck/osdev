@@ -120,11 +120,11 @@ int vga_ioctl(void *instance, int fn, size_t bytes, char *buf){
     }
 }
 
-int vga_type(){
+int vga_type(void*){
     return driver_types::VIDEO;
 }
 
-char *vga_desc(){
+char *vga_desc(void*){
     return "VGA video device";
 }
 
