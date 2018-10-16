@@ -11,14 +11,8 @@ static char *pnp_drivers_infofs(){
 	sprintf(buffer, "# id, devid, description\n");
 	for(auto d : *drivers){
 		auto devid = d->GetDeviceID();
-		sprintf(&buffer[strlen(buffer)], "%p, %x%x:%x%x:%x%x:%x%x:%x%x:%x%x, \"%s\"\n", 
-			d,
-			Upper(devid.Bus), Lower(devid.Bus), 
-			Upper(devid.VendorID), Lower(devid.VendorID), 
-			Upper(devid.DeviceID), Lower(devid.DeviceID), 
-			Upper(devid.Revision), Lower(devid.Revision), 
-			Upper(devid.ExtraID), Lower(devid.ExtraID), 
-			Upper(devid.Class), Lower(devid.Class),
+		sprintf(&buffer[strlen(buffer)], "%p, %s, \"%s\"\n", 
+			d, deviceIDtoString(devid).c_str(),
 			d->GetDescription()
 		);
 	}
@@ -55,14 +49,8 @@ IDevice *pnp_create_device(IDevice *parent, size_t idx, DeviceID id){
 	for(auto d : *drivers){
 		auto devid = d->GetDeviceID();
 		if(DeviceIDMatch(devid, id) && d->IsCompatible(id)){
-			dbgpf("PNP: Using driver: %p for device: %x%x:%x%x:%x%x:%x%x:%x%x:%x%x\n", 
-				d,
-				Upper(devid.Bus), Lower(devid.Bus), 
-				Upper(devid.VendorID), Lower(devid.VendorID), 
-				Upper(devid.DeviceID), Lower(devid.DeviceID), 
-				Upper(devid.Revision), Lower(devid.Revision), 
-				Upper(devid.ExtraID), Lower(devid.ExtraID), 
-				Upper(devid.Class), Lower(devid.Class)
+			dbgpf("PNP: Using driver: %p for device: %s\n", 
+				d, deviceIDtoString(devid).c_str()
 			);
 			auto ret = d->CreateDevice(id, parent, idx);
 			if(ret){

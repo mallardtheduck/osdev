@@ -22,22 +22,17 @@ static char *pnp_devices_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
 	sprintf(buffer, "# id, parent, index, devid, type, description, driver\n");
-	sprintf(&buffer[strlen(buffer)], "%p, %p, %i, %x%x:%x%x:%x%x:%x%x:%x%x:%x%x, %i, \"%s\", %p\n",
-			rootDev, nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	sprintf(&buffer[strlen(buffer)], "%p, %p, %i, %s, %i, \"%s\", %p\n",
+			rootDev, nullptr, 0, deviceIDtoString(rootDev->GetID()).c_str(),
 			rootDev->GetType(),
 			rootDev->GetDescription(),
 			rootDev->GetDriver()
 		);
 	for(auto d : *known_devices){
 		auto devid = d.id;
-		sprintf(&buffer[strlen(buffer)], "%p, %p, %i, %x%x:%x%x:%x%x:%x%x:%x%x:%x%x, %i, \"%s\", %p\n",
+		sprintf(&buffer[strlen(buffer)], "%p, %p, %i, %s, %i, \"%s\", %p\n",
 			d.device, d.parent, (int)d.index,
-			Upper(devid.Bus), Lower(devid.Bus), 
-			Upper(devid.VendorID), Lower(devid.VendorID), 
-			Upper(devid.DeviceID), Lower(devid.DeviceID), 
-			Upper(devid.Revision), Lower(devid.Revision), 
-			Upper(devid.ExtraID), Lower(devid.ExtraID), 
-			Upper(devid.Class), Lower(devid.Class),
+			deviceIDtoString(devid).c_str(),
 			(d.device ? d.device->GetType() : -1),
 			(d.device ? d.device->GetDescription() : "Unknown device"),
 			(d.device ? d.device->GetDriver() : nullptr)
@@ -55,14 +50,9 @@ void pnp_add_device(IDevice *parent, const DeviceID &id, size_t idx){
 	for(auto d : *known_devices){
 		if(d.parent == parent && d.index == idx) return;
 	}
-	dbgpf("PNP: Adding device %p, %i, %x%x:%x%x:%x%x:%x%x:%x%x:%x%x\n",
+	dbgpf("PNP: Adding device %p, %i, %s\n",
 		parent, (int)idx,
-		Upper(id.Bus), Lower(id.Bus), 
-		Upper(id.VendorID), Lower(id.VendorID), 
-		Upper(id.DeviceID), Lower(id.DeviceID), 
-		Upper(id.Revision), Lower(id.Revision), 
-		Upper(id.ExtraID), Lower(id.ExtraID), 
-		Upper(id.Class), Lower(id.Class)
+		deviceIDtoString(id).c_str()
 	);
 	auto dev = pnp_create_device(parent, idx, id);
 	known_devices->push_back(KnownDevice(parent, idx, id, dev));

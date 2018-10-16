@@ -310,7 +310,7 @@ btos_api::hwpnp::DeviceID ATABusDevice::GetID(){
 }
 
 const char *ATABusDevice::GetDescription(){
-	return "ATA Storage bus";
+	return "ATA storage bus";
 }
 
 size_t ATABusDevice::GetSubDeviceCount(){
@@ -384,7 +384,7 @@ uint64_t ATABusDevice::GetLength(size_t i){
 	return 0;
 }
 
-ATAHDDDeviceNode::ATAHDDDeviceNode(ATAHDDDevice *dev) : btos_api::hwpnp::HDDDeviceNode(dev) {}
+ATAHDDDeviceNode::ATAHDDDeviceNode(ATAHDDDevice *dev) : btos_api::hwpnp::BlockDeviceNode(dev) {}
 
 const char *ATAHDDDeviceNode::GetBaseName(){
 	return "ATA";
@@ -399,11 +399,12 @@ const char *ATAHDDDevice::GetDescription(){
 }
 
 size_t ATAHDDDevice::GetSubDeviceCount(){
-	return 0;
+	return 1;
 }
 
-btos_api::hwpnp::DeviceID ATAHDDDevice::GetSubDevice(size_t){
-	return btos_api::hwpnp::NullDeviceID;
+btos_api::hwpnp::DeviceID ATAHDDDevice::GetSubDevice(size_t i){
+	if(i != 0) return btos_api::hwpnp::NullDeviceID;
+	else return VolumeDeviceID;
 }
 
 btos_api::hwpnp::IDriver *ATAHDDDevice::GetDriver(){
@@ -427,5 +428,5 @@ size_t ATAHDDDevice::GetSectorSize(){
 }
 
 bt_filesize_t ATAHDDDevice::GetSize(){
-	return bus->GetLength(index);
+	return bus->GetLength(index) * ATA_SECTOR_SIZE;
 }

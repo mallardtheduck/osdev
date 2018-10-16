@@ -14,6 +14,9 @@ static const btos_api::hwpnp::DeviceID PCATADeviceID = {
 static const btos_api::hwpnp::DeviceID HDDDeviceID = {btos_api::hwpnp::PNPBUS::ATA, 0, 0, 0, 0, btos_api::hwpnp::ATADeviceType::HDD};
 static const btos_api::hwpnp::DeviceID ATAPIDeviceID = {btos_api::hwpnp::PNPBUS::ATA, 0, 0, 0, 0, btos_api::hwpnp::ATADeviceType::ATAPI};
 
+static const btos_api::hwpnp::DeviceID VolumeDeviceID = {btos_api::hwpnp::PNPBUS::Volume, 0, 0, 0, 0, 1};
+static const btos_api::hwpnp::DeviceID PartitionDeviceID = {btos_api::hwpnp::PNPBUS::Partition, 0, 0, 0, 0, 1};
+
 #define ATA_SR_BSY     0x80
 #define ATA_SR_DRDY    0x40
 #define ATA_SR_DF      0x20
@@ -169,8 +172,6 @@ size_t atapi_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
 
 int ata_wait(struct ata_device * dev, int advanced);
 
-void mbr_parse(char* device);
-
 /* TODO support other sector sizes */
 #define ATA_SECTOR_SIZE 512
 #define ATAPI_SECTOR_SIZE 2048
@@ -222,7 +223,7 @@ public:
 
 class ATAHDDDevice;
 
-class ATAHDDDeviceNode : public btos_api::hwpnp::HDDDeviceNode{
+class ATAHDDDeviceNode : public btos_api::hwpnp::BlockDeviceNode{
 public:
 	ATAHDDDeviceNode(ATAHDDDevice *dev);
 
@@ -251,5 +252,64 @@ public:
 };
 
 btos_api::hwpnp::IDriver *GetATAHDDDriver();
+
+class MBRVolume : public btos_api::hwpnp::IVolume{
+private:
+	btos_api::hwpnp::IBlockDevice *device;
+public:
+	struct Partition{
+		uint64_t start, sectors;
+	};
+	vector<Partition> partitions;
+
+	MBRVolume(btos_api::hwpnp::IBlockDevice *dev);
+
+	btos_api::hwpnp::DeviceID GetID();
+	const char *GetDescription();
+	size_t GetSubDeviceCount();
+	btos_api::hwpnp::DeviceID GetSubDevice(size_t);
+	btos_api::hwpnp::IDriver *GetDriver();
+	btos_api::hwpnp::IDeviceNode *GetDeviceNode();
+	
+	void ReadSector(size_t index, uint64_t lba, uint8_t *buf);
+	void WriteSector(size_t index, uint64_t lba, const uint8_t *buf);
+	size_t GetSectorSize();
+	bt_filesize_t GetSize(size_t index);
+};
+
+btos_api::hwpnp::IDriver *GetMBRVolumeDriver();
+
+class Partition;
+
+class PartitionDeviceNode : public btos_api::hwpnp::BlockDeviceNode{
+public:
+	PartitionDeviceNode(Partition *dev);
+
+	const char *GetBaseName();
+};
+
+class Partition : public btos_api::hwpnp::IBlockDevice{
+private:
+	btos_api::hwpnp::IVolume *volume;
+	size_t index;
+	PartitionDeviceNode node;
+public:
+	Partition(btos_api::hwpnp::IVolume *vol, size_t i);
+		
+	btos_api::hwpnp::DeviceID GetID();
+	const char *GetDescription();
+	size_t GetSubDeviceCount();
+	btos_api::hwpnp::DeviceID GetSubDevice(size_t);
+	btos_api::hwpnp::IDriver *GetDriver();
+	btos_api::hwpnp::IDeviceNode *GetDeviceNode();
+	int GetType();
+	
+	void ReadSector(uint64_t lba, uint8_t *buf);
+	void WriteSector(uint64_t lba, const uint8_t *buf);
+	size_t GetSectorSize();
+	bt_filesize_t GetSize();
+};
+
+btos_api::hwpnp::IDriver *GetPartitionDriver();
 
 #endif

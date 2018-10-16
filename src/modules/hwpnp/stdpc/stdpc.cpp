@@ -45,7 +45,7 @@ public:
 
 
 btos_api::hwpnp::DeviceID StdPC::GetID(){
-	return btos_api::hwpnp::NullDeviceID;
+	return btos_api::hwpnp::DeviceID();
 }
 
 const char *StdPC::GetDescription(){
