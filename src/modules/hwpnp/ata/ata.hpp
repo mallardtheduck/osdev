@@ -217,6 +217,7 @@ public:
 	uint8_t ReadControlByte(size_t index);
 	void WriteControlByte(size_t index, uint8_t byte);
 	bool IsSlave(size_t index);
+	uint64_t GetLength(size_t index);
 };
 
 class ATAHDDDevice;
@@ -246,6 +247,7 @@ public:
 	void ReadSector(uint64_t lba, uint8_t *buf);
 	void WriteSector(uint64_t lba, const uint8_t *buf);
 	size_t GetSectorSize();
+	bt_filesize_t GetSize();
 };
 
 btos_api::hwpnp::IDriver *GetATAHDDDriver();

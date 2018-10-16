@@ -7,13 +7,16 @@ init.tar: Makefile data/config.ini data/boot.sys data/rtc.sys data/ps2.sys data/
 data/boot.sys: ../../modules/boot/boot.sys
 	cp $< $@
 
-data/rtc.sys: ../../modules/rtc/rtc.sys
+data/pcrtc.sys: ../../modules/hwpnp/pcrtc/pcrtc.sys
+	cp $< $@
+	
+data/stdpc.sys: ../../modules/hwpnp/stdpc/stdpc.sys
 	cp $< $@
 
 data/ps2.sys: ../../modules/ps2/ps2.sys
 	cp $< $@
 
-data/ata.sys: ../../modules/ata/ata.sys
+data/ata.sys: ../../modules/hwpnp/ata/ata.sys
 	cp $< $@
 
 data/spawn.elx: ../../user/system/spawn/spawn.elx

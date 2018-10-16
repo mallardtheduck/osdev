@@ -17,5 +17,6 @@ inline static uint32_t Lower(uint64_t i){
 }
 
 void pnp_node_add(btos_api::hwpnp::IDeviceNode *node);
+void pnp_enum_devices();
 
 #endif

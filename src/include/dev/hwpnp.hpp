@@ -20,7 +20,10 @@ namespace hwpnp{
 		ENUM_SET(PNPBUS, SCSI, 5),
 		ENUM_SET(PNPBUS, PS2, 6),
 		
-		ENUM_SET(PNPBUS, Software, 100),
+		ENUM_SET(PNPBUS, Volume, 101),
+		ENUM_SET(PNPBUS, Partition, 102),
+		
+		ENUM_SET(PNPBUS, Software, 900),
 	ENUM_END
 	ENUM_TYPE(PNPBUS);
 	

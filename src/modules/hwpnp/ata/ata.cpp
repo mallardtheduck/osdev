@@ -377,6 +377,13 @@ bool ATABusDevice::IsSlave(size_t i){
 	return false;
 }
 
+uint64_t ATABusDevice::GetLength(size_t i){
+	if(i < devices.size()){
+		return !!devices[i].dev->length;
+	}
+	return 0;
+}
+
 ATAHDDDeviceNode::ATAHDDDeviceNode(ATAHDDDevice *dev) : btos_api::hwpnp::HDDDeviceNode(dev) {}
 
 const char *ATAHDDDeviceNode::GetBaseName(){
@@ -417,4 +424,8 @@ void ATAHDDDevice::WriteSector(uint64_t lba, const uint8_t *buf){
 
 size_t ATAHDDDevice::GetSectorSize(){
 	return ATA_SECTOR_SIZE;
+}
+
+bt_filesize_t ATAHDDDevice::GetSize(){
+	return bus->GetLength(index);
 }

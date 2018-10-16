@@ -24,6 +24,7 @@ namespace hwpnp{
 		virtual uint8_t ReadControlByte(size_t index) = 0;
 		virtual void WriteControlByte(size_t index, uint8_t byte) = 0;
 		virtual bool IsSlave(size_t index) = 0;
+		virtual uint64_t GetLength(size_t index) = 0;
 		
 		IDeviceNode *GetDeviceNode(){ 
 			return nullptr;

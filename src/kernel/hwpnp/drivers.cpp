@@ -33,6 +33,7 @@ void pnp_init_drivers(){
 void pnp_register_driver(IDriver *driver){
 	drivers->push_back(driver);
 	pnp_rescan_devices();
+	pnp_enum_devices();
 }
 
 void pnp_unregister_driver(IDriver *driver){
@@ -52,12 +53,25 @@ bool DeviceIDMatch(const DeviceID &a, const DeviceID &b){
 
 IDevice *pnp_create_device(IDevice *parent, size_t idx, DeviceID id){
 	for(auto d : *drivers){
-		if(DeviceIDMatch(d->GetDeviceID(), id) && d->IsCompatible(id)){
+		auto devid = d->GetDeviceID();
+		if(DeviceIDMatch(devid, id) && d->IsCompatible(id)){
+			dbgpf("PNP: Using driver: %p for device: %x%x:%x%x:%x%x:%x%x:%x%x:%x%x\n", 
+				d,
+				Upper(devid.Bus), Lower(devid.Bus), 
+				Upper(devid.VendorID), Lower(devid.VendorID), 
+				Upper(devid.DeviceID), Lower(devid.DeviceID), 
+				Upper(devid.Revision), Lower(devid.Revision), 
+				Upper(devid.ExtraID), Lower(devid.ExtraID), 
+				Upper(devid.Class), Lower(devid.Class)
+			);
 			auto ret = d->CreateDevice(id, parent, idx);
 			if(ret){
+				dbgpf("PNP: Sucessfully created device %p\n", ret);
 				auto node = ret->GetDeviceNode();
 				if(node) pnp_node_add(node);
 				return ret;
+			}else{
+				dbgout("PNP: Device creation failed!\n");
 			}
 		}
 	}

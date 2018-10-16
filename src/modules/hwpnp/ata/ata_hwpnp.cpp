@@ -70,12 +70,12 @@ bool ATAHDDDriver::IsCompatible(const btos_api::hwpnp::DeviceID &dev){
 	dev.Class == HDDDeviceID.Class;
 }
 
-btos_api::hwpnp::IDevice *ATAHDDDriver::CreateDevice(const btos_api::hwpnp::DeviceID &, btos_api::hwpnp::IDevice *, size_t){
-	return nullptr;
+btos_api::hwpnp::IDevice *ATAHDDDriver::CreateDevice(const btos_api::hwpnp::DeviceID &, btos_api::hwpnp::IDevice *bus, size_t index){
+	return new ATAHDDDevice((btos_api::hwpnp::IATABus*)bus, index);
 }
 
 const char *ATAHDDDriver::GetDescription(){
-	return "ATA Hard Drive driver";
+	return "ATA fixed disk driver";
 }
 
 void ATAHDDDriver::DestroyDevice(btos_api::hwpnp::IDevice *){
@@ -91,5 +91,6 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
 	pnp_register_driver(&ataDriver);
 	pnp_register_driver(&ataHDDDriver);
+	pnp_rescan_devices();
 	return 0;
 }

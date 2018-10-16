@@ -255,11 +255,11 @@ int vbe_ioctl(void *instance, int fn, size_t bytes, char *buf){
 	return 0;
 }
 
-int vbe_type(){
+int vbe_type(void*){
     return driver_types::VIDEO;
 }
 
-char *vbe_desc(){
+char *vbe_desc(void*){
     return "VGA/VBE video device";
 }
 

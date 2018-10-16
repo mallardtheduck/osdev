@@ -29,7 +29,7 @@ data/fat.sys: ../../modules/fat/fat.sys
 data/ps2.sys: ../../modules/ps2/ps2.sys
 	cp $< $@
 
-data/ata.sys: ../../modules/ata/ata.sys
+data/ata.sys: ../../modules/hwpnp/ata/ata.sys
 	cp $< $@
 
 data/spawn.elx: ../../user/system/spawn/spawn.elx

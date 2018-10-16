@@ -55,6 +55,15 @@ void pnp_add_device(IDevice *parent, const DeviceID &id, size_t idx){
 	for(auto d : *known_devices){
 		if(d.parent == parent && d.index == idx) return;
 	}
+	dbgpf("PNP: Adding device %p, %i, %x%x:%x%x:%x%x:%x%x:%x%x:%x%x\n",
+		parent, (int)idx,
+		Upper(id.Bus), Lower(id.Bus), 
+		Upper(id.VendorID), Lower(id.VendorID), 
+		Upper(id.DeviceID), Lower(id.DeviceID), 
+		Upper(id.Revision), Lower(id.Revision), 
+		Upper(id.ExtraID), Lower(id.ExtraID), 
+		Upper(id.Class), Lower(id.Class)
+	);
 	auto dev = pnp_create_device(parent, idx, id);
 	known_devices->push_back(KnownDevice(parent, idx, id, dev));
 }
@@ -68,13 +77,38 @@ IDevice *pnp_resolve_device(IDevice *parent, const DeviceID &id, size_t idx){
 }
 
 void pnp_rescan_devices(){
-	for(auto d : *known_devices){
+	for(auto &d : *known_devices){
 		if(!d.device) d.device = pnp_create_device(d.parent, d.index, d.id);
+	}
+}
+
+void pnp_enum_subdevices(IDevice *dev){
+	for(size_t i = 0; i < dev->GetSubDeviceCount(); ++i){
+		auto devId = dev->GetSubDevice(i);
+		if(devId.Bus != PNPBUS::Null){
+			auto sdev = pnp_resolve_device(dev, devId, i);
+			if(sdev) pnp_enum_subdevices(sdev);
+		}
+	}
+}
+void pnp_enum_devices(){
+	if(!rootDev) return;
+	size_t count;
+	bool repeat = true;
+	while(repeat){
+		repeat = false;
+		count = known_devices->size();
+		pnp_enum_subdevices(rootDev);
+		if(count != known_devices->size()){
+			pnp_rescan_devices();
+			repeat = true;
+		}
 	}
 }
 
 void pnp_set_root_device(IRootDevice *dev){
 	if(!rootDev) rootDev = dev;
+	pnp_enum_devices();
 }
 
 struct node_instance{
