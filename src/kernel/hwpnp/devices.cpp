@@ -16,26 +16,34 @@ struct KnownDevice{
 		parent(p), index(idx), id(i), device(d) {}
 };
 
-vector<KnownDevice> *known_devices;
+static vector<KnownDevice> *known_devices;
+static map<IDeviceNode*, string> *device_nodes;
 
 static char *pnp_devices_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
-	sprintf(buffer, "# id, parent, index, devid, type, description, driver\n");
-	sprintf(&buffer[strlen(buffer)], "%p, %p, %i, %s, %i, \"%s\", %p\n",
+	sprintf(buffer, "# id, parent, index, devid, type, description, driver, node\n");
+	sprintf(&buffer[strlen(buffer)], "%p, %p, %i, %s, %x, \"%s\", %p, %s\n",
 			rootDev, nullptr, 0, deviceIDtoString(rootDev->GetID()).c_str(),
 			rootDev->GetType(),
 			rootDev->GetDescription(),
-			rootDev->GetDriver()
+			rootDev->GetDriver(),
+			"-"
 		);
 	for(auto d : *known_devices){
 		auto devid = d.id;
-		sprintf(&buffer[strlen(buffer)], "%p, %p, %i, %s, %i, \"%s\", %p\n",
+		const char *nodeName = "-";
+		IDeviceNode *node = nullptr;
+		if(d.device && (node = d.device->GetDeviceNode())){
+			nodeName = pnp_get_node_name(node);
+		}
+		sprintf(&buffer[strlen(buffer)], "%p, %p, %i, %s, %x, \"%s\", %p, %s\n",
 			d.device, d.parent, (int)d.index,
 			deviceIDtoString(devid).c_str(),
-			(d.device ? d.device->GetType() : -1),
+			(d.device ? d.device->GetType() : driver_types::UNKNONWN),
 			(d.device ? d.device->GetDescription() : "Unknown device"),
-			(d.device ? d.device->GetDriver() : nullptr)
+			(d.device ? d.device->GetDriver() : nullptr),
+			nodeName
 		);
 	}
 	return buffer;
@@ -43,6 +51,7 @@ static char *pnp_devices_infofs(){
 
 void pnp_init_devices(){
 	known_devices = new vector<KnownDevice>();
+	device_nodes = new map<IDeviceNode*, string>();
 	infofs_register("PNPDEVICES", &pnp_devices_infofs);
 }
 
@@ -163,4 +172,19 @@ void pnp_node_add(IDeviceNode *node){
 	char name[8] = {0};
 	strncpy(name, node->GetBaseName(), 7);
 	drv_add_device(name, &nodeAdaptor, node);
+	(*device_nodes)[node] = name;
+}
+
+IDevice *pnp_get_parent(IDevice *dev){
+	for(auto d : *known_devices){
+		if(d.device == dev) return d.parent;
+	}
+	return nullptr;
+}
+
+const char *pnp_get_node_name(IDeviceNode *node){
+	for(auto &n : *device_nodes){
+		if(n.first == node) return n.second.c_str();
+	}
+	return "";
 }

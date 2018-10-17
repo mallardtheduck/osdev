@@ -79,7 +79,19 @@ bt_filesize_t MBRVolume::GetSize(size_t i){
 	return partitions[i].sectors * device->GetSectorSize();
 }
 
-Partition::Partition(btos_api::hwpnp::IVolume *vol, size_t i) : volume(vol), index(i), node(this) {}
+Partition::Partition(btos_api::hwpnp::IVolume *vol, size_t i) : volume(vol), index(i), node(this) {
+	btos_api::hwpnp::IDevice *cdev = vol;
+	btos_api::hwpnp::IDeviceNode *node = nullptr;
+	while(cdev && !node){
+		node = cdev->GetDeviceNode();
+		cdev = pnp_get_parent(cdev);
+	}
+	if(node){
+		char tmpname[8] = {0};
+		strncpy(tmpname, pnp_get_node_name(node), 6);
+		sprintf(basename, "%sP", tmpname);
+	}
+}
 		
 btos_api::hwpnp::DeviceID Partition::GetID(){
 	return PartitionDeviceID;
@@ -125,8 +137,8 @@ bt_filesize_t Partition::GetSize(){
 	return volume->GetSize(index);
 }
 
-PartitionDeviceNode::PartitionDeviceNode(Partition *dev) : btos_api::hwpnp::BlockDeviceNode(dev) {}
+PartitionDeviceNode::PartitionDeviceNode(Partition *dev) : btos_api::hwpnp::BlockDeviceNode(dev), part(dev) {}
 
 const char *PartitionDeviceNode::GetBaseName(){
-	return "PART";
+	return part->basename;
 }

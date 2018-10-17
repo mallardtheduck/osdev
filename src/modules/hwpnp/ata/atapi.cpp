@@ -18,8 +18,6 @@ memcmp(const void *vs1, const void *vs2, size_t n){
 	return 0;
 }
 
-void atapi_test(ata_device *dev);
-
 bool atapi_device_init(ata_device *dev){
 	dbgpf("ATA: Initializing ATAPI device on bus %d\n", dev->io_base);
 
@@ -82,31 +80,30 @@ bool atapi_device_init(ata_device *dev){
 	return true;
 }
 
-size_t atapi_scsi_command(ata_device *dev, uint8_t cmd[12], size_t size, uint8_t *buf){
+size_t atapi_scsi_command(btos_api::hwpnp::IATABus *bus, size_t index, uint8_t cmd[12], size_t size, uint8_t *buf){
 	const int max_fails = 5;
 	int fails = 0;
 	while(true){
 		memset(buf, 0, size);
-		uint16_t bus = dev->io_base;
-		uint8_t slave = dev->slave;
+		uint8_t slave = bus->IsSlave(index);
 		//dbgpf("ATA: Executing ATAPI SCSI command: %x\n", cmd[0]);
 		
-		outb(dev->io_base + ATA_REG_HDDEVSEL, slave << 4);
-		ata_wait(dev, 0);
+		bus->OutByte(index, ATA_REG_HDDEVSEL, slave << 4);
+		ata_wait(bus, index, 0);
 		outb(dev->control, 0x00);
-		outb(bus + ATA_REG_FEATURES, 0x00);
-		outb(bus + ATA_REG_LBA1, (size & 0x000000ff) >> 0);
-		outb(bus + ATA_REG_LBA2, (size & 0x0000ff00) >> 8);
-		outb(bus +  ATA_REG_COMMAND, ATA_CMD_PACKET);
-		ata_wait(dev, 0);
-		while(!(inb(dev->control) & ATA_SR_DRQ));
-		ata_reset_wait(bus);
+		bus->OutByte(index, ATA_REG_FEATURES, 0x00);
+		bus->OutByte(index, ATA_REG_LBA1, (size & 0x000000ff) >> 0);
+		bus->OutByte(index, ATA_REG_LBA2, (size & 0x0000ff00) >> 8);
+		bus->OutByte(index, ATA_REG_COMMAND, ATA_CMD_PACKET);
+		ata_wait(bus, index, 0);
+		while(!(bus->ReadControlByte(index) & ATA_SR_DRQ));
+		ata_reset_wait(bus, index);
 		for(size_t i=0; i<6; ++i){
-			out16(bus, ((uint16_t*)cmd)[i]);
+			bus->OutWord(index, ((uint16_t*)cmd)[i]);
 		}
-		ata_wait_irq(bus);
-		ata_reset_wait(bus);
-		uint8_t status = inb(dev->control);
+		ata_wait_irq(bus, index);
+		ata_reset_wait(bus, index);
+		uint8_t status = bus->ReadControlByte(index);
 		//dbgpf("ATA: ATAPI status: %x\n", (int)status);
 		if(status & ATA_SR_ERR){
 			dbgout("ATA: ATAPI command error.\n");
@@ -114,7 +111,7 @@ size_t atapi_scsi_command(ata_device *dev, uint8_t cmd[12], size_t size, uint8_t
 			if(fails < max_fails) continue;
 			else return 0;
 		}
-		size_t read = inb(bus + ATA_REG_LBA1) + (inb(bus + ATA_REG_LBA2) << 8);
+		size_t read = bus->InByte(index, ATA_REG_LBA1) + (bus->InByte(index, ATA_REG_LBA2) << 8);
 		
 		if(read != size){
 			dbgout("ATA: ATAPI data size mismatch.\n");
@@ -127,12 +124,12 @@ size_t atapi_scsi_command(ata_device *dev, uint8_t cmd[12], size_t size, uint8_t
 			((uint16_t*)buf)[i] = in16(bus);
 		}
 		ata_wait(dev, 0);
-		while((inb(dev->control) & ATA_SR_DRQ));
+		while((bus->ReadControlByte(index) & ATA_SR_DRQ));
 		return read;
 	}
 }
 
-int atapi_device_read(ata_device *dev, uint32_t lba, uint8_t *buf){
+int atapi_device_read(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t *buf){
 	uint8_t read_cmd[12] = {0xA8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	read_cmd[9] = 1;              /* 1 sector */
 	read_cmd[2] = (lba >> 0x18) & 0xFF;   /* most sig. byte of LBA */
@@ -141,7 +138,7 @@ int atapi_device_read(ata_device *dev, uint32_t lba, uint8_t *buf){
 	read_cmd[5] = (lba >> 0x00) & 0xFF;
 	//dbgpf("ATA: Read ATAPI sector %i.\n", lba);
 	
-	size_t ret = atapi_scsi_command(dev, read_cmd, ATAPI_SECTOR_SIZE, buf);
+	size_t ret = atapi_scsi_command(bus, index, read_cmd, ATAPI_SECTOR_SIZE, buf);
 	
 	return ret;
 }

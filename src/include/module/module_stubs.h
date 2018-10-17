@@ -392,6 +392,15 @@ inline static void pnp_rescan_devices(){
 inline static void pnp_set_root_device(btos_api::hwpnp::IRootDevice *dev){
 	SYSCALL_TABLE->pnp_set_root_device(dev);
 }
+
+inline static btos_api::hwpnp::IDevice *pnp_get_parent(btos_api::hwpnp::IDevice *dev){
+	return SYSCALL_TABLE->pnp_get_parent(dev);
+}
+
+inline static const char *pnp_get_node_name(btos_api::hwpnp::IDeviceNode *node){
+	return SYSCALL_TABLE->pnp_get_node_name(node);
+}
+
 #endif
 
 #endif

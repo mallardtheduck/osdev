@@ -282,6 +282,8 @@ btos_api::hwpnp::IDriver *GetMBRVolumeDriver();
 class Partition;
 
 class PartitionDeviceNode : public btos_api::hwpnp::BlockDeviceNode{
+private:
+	Partition *part;
 public:
 	PartitionDeviceNode(Partition *dev);
 
@@ -293,6 +295,9 @@ private:
 	btos_api::hwpnp::IVolume *volume;
 	size_t index;
 	PartitionDeviceNode node;
+	char basename[8] = {'P', 'A', 'R', 'T', 0};
+	
+	friend class PartitionDeviceNode;
 public:
 	Partition(btos_api::hwpnp::IVolume *vol, size_t i);
 		

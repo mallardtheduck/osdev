@@ -13,4 +13,7 @@ btos_api::hwpnp::IDevice *pnp_resolve_device(btos_api::hwpnp::IDevice *parent, c
 void pnp_rescan_devices();
 void pnp_set_root_device(btos_api::hwpnp::IRootDevice *dev);
 
+btos_api::hwpnp::IDevice *pnp_get_parent(btos_api::hwpnp::IDevice *dev);
+const char *pnp_get_node_name(btos_api::hwpnp::IDeviceNode *node);
+
 #endif
