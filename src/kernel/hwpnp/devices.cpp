@@ -40,7 +40,7 @@ static char *pnp_devices_infofs(){
 		sprintf(&buffer[strlen(buffer)], "%p, %p, %i, %s, %x, \"%s\", %p, %s\n",
 			d.device, d.parent, (int)d.index,
 			deviceIDtoString(devid).c_str(),
-			(d.device ? d.device->GetType() : driver_types::UNKNONWN),
+			(d.device ? d.device->GetType() : driver_types::UNKNOWN),
 			(d.device ? d.device->GetDescription() : "Unknown device"),
 			(d.device ? d.device->GetDriver() : nullptr),
 			nodeName
