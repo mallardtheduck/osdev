@@ -144,7 +144,7 @@ void *iso9660_mount(char *path){
 		if(s == L9660_OK){
 			ret = (void*)mount;
 		}else{
-			dbgpf("ISO9660: Failed to mount %s\n", path);
+			dbgpf("ISO9660: Failed to mount %s (status: %i)\n", path, s);
 			delete mount;
 		}
 	}

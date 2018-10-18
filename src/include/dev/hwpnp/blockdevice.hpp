@@ -9,8 +9,8 @@ namespace hwpnp{
 
 	class IBlockDevice : public IDevice{
 	public:
-		virtual void ReadSector(uint64_t lba, uint8_t *buf) = 0;
-		virtual void WriteSector(uint64_t lba, const uint8_t *buf) = 0;
+		virtual bool ReadSector(uint64_t lba, uint8_t *buf) = 0;
+		virtual bool WriteSector(uint64_t lba, const uint8_t *buf) = 0;
 		virtual size_t GetSectorSize() = 0;
 		virtual bt_filesize_t GetSize() = 0;
 	
@@ -44,11 +44,16 @@ namespace hwpnp{
 			Handle *handle = (Handle*)h;
 			bt_filesize_t lba = handle->pos / secSize;
 			size_t count = bytes / secSize;
+			size_t read = 0;
 			for(size_t i = 0; i < count; ++i){
-				device->ReadSector(lba + i, (uint8_t*)buf + (secSize * i));
-				handle->pos += secSize;
+				if(device->ReadSector(lba + i, (uint8_t*)buf + (secSize * i))){
+					handle->pos += secSize;
+					read += secSize;
+				}else{
+					break;
+				}
 			}
-			return bytes;
+			return read;
 		}
 		
 		virtual size_t Write(void *h, size_t bytes, const char *buf){
@@ -57,11 +62,16 @@ namespace hwpnp{
 			Handle *handle = (Handle*)h;
 			bt_filesize_t lba = handle->pos / secSize;
 			size_t count = bytes / secSize;
+			size_t written = 0;
 			for(size_t i = 0; i < count; ++i){
-				device->WriteSector(lba + i, (uint8_t*)buf + (secSize * i));
-				handle->pos += secSize;
+				if(device->WriteSector(lba + i, (uint8_t*)buf + (secSize * i))){
+					handle->pos += secSize;
+					written += secSize;
+				}else{
+					break;
+				}
 			}
-			return bytes;
+			return written;
 		}
 		
 		virtual bt_filesize_t Seek(void *h, bt_filesize_t pos, uint32_t flags){

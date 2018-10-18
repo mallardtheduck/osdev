@@ -162,12 +162,12 @@ struct ata_device {
 
 extern lock ata_lock, ata_drv_lock;
 
-void ata_device_read_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf);
-void ata_device_read_sector_pio(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf);
-void ata_device_write_sector_retry(struct ata_device * dev, uint32_t lba, uint8_t * buf);
+bool ata_device_read_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf);
+bool ata_device_read_sector_pio(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf);
+//void ata_device_write_sector_retry(struct ata_device * dev, uint32_t lba, uint8_t * buf);
 void init_queue();
-void ata_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
-void ata_queued_write(ata_device *dev, uint32_t lba, uint8_t *buf);
+//void ata_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
+//void ata_queued_write(ata_device *dev, uint32_t lba, uint8_t *buf);
 
 size_t atapi_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
 
@@ -250,8 +250,8 @@ public:
 	btos_api::hwpnp::IDriver *GetDriver();
 	btos_api::hwpnp::IDeviceNode *GetDeviceNode();
 	
-	void ReadSector(uint64_t lba, uint8_t *buf);
-	void WriteSector(uint64_t lba, const uint8_t *buf);
+	bool ReadSector(uint64_t lba, uint8_t *buf);
+	bool WriteSector(uint64_t lba, const uint8_t *buf);
 	size_t GetSectorSize();
 	bt_filesize_t GetSize();
 };
@@ -282,8 +282,8 @@ public:
 	btos_api::hwpnp::IDriver *GetDriver();
 	btos_api::hwpnp::IDeviceNode *GetDeviceNode();
 	
-	void ReadSector(uint64_t lba, uint8_t *buf);
-	void WriteSector(uint64_t lba, const uint8_t *buf);
+	bool ReadSector(uint64_t lba, uint8_t *buf);
+	bool WriteSector(uint64_t lba, const uint8_t *buf);
 	size_t GetSectorSize();
 	bt_filesize_t GetSize();
 };
@@ -309,8 +309,8 @@ public:
 	btos_api::hwpnp::IDriver *GetDriver();
 	btos_api::hwpnp::IDeviceNode *GetDeviceNode();
 	
-	void ReadSector(size_t index, uint64_t lba, uint8_t *buf);
-	void WriteSector(size_t index, uint64_t lba, const uint8_t *buf);
+	bool ReadSector(size_t index, uint64_t lba, uint8_t *buf);
+	bool WriteSector(size_t index, uint64_t lba, const uint8_t *buf);
 	size_t GetSectorSize();
 	bt_filesize_t GetSize(size_t index);
 	
@@ -349,8 +349,8 @@ public:
 	btos_api::hwpnp::IDeviceNode *GetDeviceNode();
 	int GetType();
 	
-	void ReadSector(uint64_t lba, uint8_t *buf);
-	void WriteSector(uint64_t lba, const uint8_t *buf);
+	bool ReadSector(uint64_t lba, uint8_t *buf);
+	bool WriteSector(uint64_t lba, const uint8_t *buf);
 	size_t GetSectorSize();
 	bt_filesize_t GetSize();
 };

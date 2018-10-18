@@ -21,8 +21,8 @@ namespace hwpnp{
 	
 	class IVolume : public IDevice{
 	public:
-		virtual void ReadSector(size_t index, uint64_t lba, uint8_t *buf) = 0;
-		virtual void WriteSector(size_t index, uint64_t lba, const uint8_t *buf) = 0;
+		virtual bool ReadSector(size_t index, uint64_t lba, uint8_t *buf) = 0;
+		virtual bool WriteSector(size_t index, uint64_t lba, const uint8_t *buf) = 0;
 		virtual size_t GetSectorSize() = 0;
 		virtual bt_filesize_t GetSize(size_t index) = 0;
 		

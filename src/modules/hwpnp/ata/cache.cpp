@@ -1,7 +1,7 @@
 #include "ata.hpp"
 #include <btos_module.h>
 
-//#define CACHE_DISABLE
+#define CACHE_DISABLE
 
 #ifndef CACHE_DISABLE
 

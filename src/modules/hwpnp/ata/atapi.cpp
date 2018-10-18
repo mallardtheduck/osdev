@@ -129,6 +129,7 @@ size_t atapi_scsi_command(btos_api::hwpnp::IATABus *bus, size_t index, uint8_t c
 }
 
 int atapi_device_read(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t *buf){
+	dbgpf("ATAPI: Reading sector %i\n", lba);
 	uint8_t read_cmd[12] = {0xA8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	read_cmd[9] = 1;              /* 1 sector */
 	read_cmd[2] = (lba >> 0x18) & 0xFF;   /* most sig. byte of LBA */
@@ -167,12 +168,13 @@ btos_api::hwpnp::IDeviceNode *ATAPIDevice::GetDeviceNode(){
 	return &node;
 }
 	
-void ATAPIDevice::ReadSector(uint64_t lba, uint8_t *buf){
-	atapi_device_read(bus, index, lba, buf);
+bool ATAPIDevice::ReadSector(uint64_t lba, uint8_t *buf){
+	return atapi_device_read(bus, index, lba, buf) == ATAPI_SECTOR_SIZE;
 }
 
-void ATAPIDevice::WriteSector(uint64_t, const uint8_t*){
+bool ATAPIDevice::WriteSector(uint64_t, const uint8_t*){
 	//Not supported
+	return false;
 }
 
 size_t ATAPIDevice::GetSectorSize(){

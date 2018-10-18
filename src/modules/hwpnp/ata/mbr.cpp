@@ -65,18 +65,18 @@ btos_api::hwpnp::IDeviceNode *MBRVolume::GetDeviceNode(){
 	return nullptr;
 }
 
-void MBRVolume::ReadSector(size_t i, uint64_t lba, uint8_t *buf){
-	if(i > partitions.size()) return;
-	if(lba > partitions[i].sectors) return;
+bool MBRVolume::ReadSector(size_t i, uint64_t lba, uint8_t *buf){
+	if(i > partitions.size()) return false;
+	if(lba > partitions[i].sectors) return false;
 	uint64_t realLBA = partitions[i].start + lba;
-	device->ReadSector(realLBA, buf);
+	return device->ReadSector(realLBA, buf);
 }
 
-void MBRVolume::WriteSector(size_t i, uint64_t lba, const uint8_t *buf){
-	if(i > partitions.size()) return;
-	if(lba > partitions[i].sectors) return;
+bool MBRVolume::WriteSector(size_t i, uint64_t lba, const uint8_t *buf){
+	if(i > partitions.size()) return false;
+	if(lba > partitions[i].sectors) return false;
 	uint64_t realLBA = partitions[i].start + lba;
-	device->WriteSector(realLBA, buf);
+	return device->WriteSector(realLBA, buf);
 }
 
 size_t MBRVolume::GetSectorSize(){
@@ -134,12 +134,12 @@ int Partition::GetType(){
 	return driver_types::STR_PART;
 }
 	
-void Partition::ReadSector(uint64_t lba, uint8_t *buf){
-	volume->ReadSector(index, lba, buf);
+bool Partition::ReadSector(uint64_t lba, uint8_t *buf){
+	return volume->ReadSector(index, lba, buf);
 }
 
-void Partition::WriteSector(uint64_t lba, const uint8_t *buf){
-	volume->WriteSector(index, lba, buf);
+bool Partition::WriteSector(uint64_t lba, const uint8_t *buf){
+	return volume->WriteSector(index, lba, buf);
 }
 
 size_t Partition::GetSectorSize(){

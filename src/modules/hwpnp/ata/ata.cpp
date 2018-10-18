@@ -167,17 +167,18 @@ static int ata_device_detect(struct ata_device * dev, ATABusDevice *parent) {
 	return 0;
 }
 
-void ata_device_read_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf){
+bool ata_device_read_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf){
     take_lock(&ata_lock);
     /*if(init_dma()){
         dma_read_sector(bus, index, lba, buf);
     }else{*/
-        ata_device_read_sector_pio(bus, index, lba, buf);
+        auto ret = ata_device_read_sector_pio(bus, index, lba, buf);
     //}
     release_lock(&ata_lock);
+    return ret;
 }
 
-void ata_device_read_sector_pio(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf) {
+bool ata_device_read_sector_pio(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf) {
 	//if(lba > dev->length) return;
 	int slave = bus->IsSlave(index);
 
@@ -200,7 +201,7 @@ try_again:
 		errors++;
 		if (errors > 4) {
 			dbgpf("ATA: -- Too many errors trying to read this block. Bailing.\n");
-			return;
+			return false;
 		}
 		goto try_again;
 	}
@@ -208,9 +209,10 @@ try_again:
 	int size = 256;
 	bus->InWords(index, ATA_REG_DATA, size, buf);
 	ata_wait(bus, index, 0);
+	return true;
 }
 
-void ata_device_write_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf) {
+bool ata_device_write_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf) {
 	//if(lba > dev->length) return;
     take_lock(&ata_lock);
     int slave = bus->IsSlave(index);
@@ -235,6 +237,7 @@ void ata_device_write_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32
 	bus->OutByte(index, ATA_REG_COMMAND, ATA_CMD_CACHE_FLUSH);
 	ata_wait(bus, index, 0);
 	release_lock(&ata_lock);
+	return true;
 }
 
 /*static int buffer_compare(uint32_t * ptr1, uint32_t * ptr2, size_t size) {
@@ -433,12 +436,12 @@ btos_api::hwpnp::IDeviceNode *ATAHDDDevice::GetDeviceNode(){
 	return &node;
 }
 	
-void ATAHDDDevice::ReadSector(uint64_t lba, uint8_t *buf){
-	ata_device_read_sector(bus, index, lba, buf);
+bool ATAHDDDevice::ReadSector(uint64_t lba, uint8_t *buf){
+	return ata_device_read_sector(bus, index, lba, buf);
 }
 
-void ATAHDDDevice::WriteSector(uint64_t lba, const uint8_t *buf){
-	ata_device_write_sector(bus, index, lba, (uint8_t*)buf);
+bool ATAHDDDevice::WriteSector(uint64_t lba, const uint8_t *buf){
+	return ata_device_write_sector(bus, index, lba, (uint8_t*)buf);
 }
 
 size_t ATAHDDDevice::GetSectorSize(){
