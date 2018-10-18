@@ -1,17 +1,17 @@
-#if 0
 #include "ata.hpp"
 #include <dev/pci.h>
 #include <util/holdlock.hpp>
 
 static bool dma_init=false;
+/*
 pci_call_table *PCI_CALL_TABLE;
 
 const int DMA_ON = 1;
 const int DMA_READ = 8;
-
+*/
 const int bus0_io_base=0x1F0;
 const int bus1_io_base=0x170;
-
+/*
 struct prd{
     uint32_t data;
     uint16_t bytes;
@@ -20,10 +20,10 @@ struct prd{
     prd() : reserved((1 << 15)) {}
 } __attribute__((packed));
 
-prd bus0prd __attribute__((aligned(8))), bus1prd __attribute__((aligned(8)));
+prd bus0prd __attribute__((aligned(8))), bus1prd __attribute__((aligned(8)));*/
 lock dma_lock, dma_init_lock;
-uint32_t bmr;
 
+uint32_t bmr;
 volatile bool bus0done, bus1done;
 
 void dma_int_handler(int irq, isr_regs *){
@@ -76,7 +76,7 @@ void ata_wait_irq(uint32_t bus){
 	}
 	thread_setblock(&dma_blockcheck, blockptr);
 }
-
+/*
 void set_bus0_prdt(uint32_t bmr, prd *prd){
     uint32_t phys=physaddr((void*)prd);
     dbgpf("ATA: Setting bus 0 PRDT pointer to %x.\n", phys);
@@ -190,6 +190,7 @@ void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf){
     }
     dbgpf("ATA: DMA complete.\n");
 }
+*/
 
 void preinit_dma(){
 	dbgout("ATA: DMA/IRQ Pre-Init.\n");
@@ -199,5 +200,3 @@ void preinit_dma(){
 	unmask_irq(15);
     init_lock(&dma_init_lock);
 }
-
-#endif

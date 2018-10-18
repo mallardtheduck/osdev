@@ -15,7 +15,7 @@ namespace hwpnp{
 		}
 		
 		~IOpticalDevice() {}
-	}
+	};
 	
 }
 }

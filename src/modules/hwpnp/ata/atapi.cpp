@@ -1,4 +1,3 @@
-#if 0
 #include <btos_module.h>
 #include <util/holdlock.hpp>
 #include "ata.hpp"
@@ -90,19 +89,19 @@ size_t atapi_scsi_command(btos_api::hwpnp::IATABus *bus, size_t index, uint8_t c
 		
 		bus->OutByte(index, ATA_REG_HDDEVSEL, slave << 4);
 		ata_wait(bus, index, 0);
-		outb(dev->control, 0x00);
+		bus->WriteControlByte(index, 0x00);
 		bus->OutByte(index, ATA_REG_FEATURES, 0x00);
 		bus->OutByte(index, ATA_REG_LBA1, (size & 0x000000ff) >> 0);
 		bus->OutByte(index, ATA_REG_LBA2, (size & 0x0000ff00) >> 8);
 		bus->OutByte(index, ATA_REG_COMMAND, ATA_CMD_PACKET);
 		ata_wait(bus, index, 0);
 		while(!(bus->ReadControlByte(index) & ATA_SR_DRQ));
-		ata_reset_wait(bus, index);
+		bus->ResetIntWait(index);
 		for(size_t i=0; i<6; ++i){
-			bus->OutWord(index, ((uint16_t*)cmd)[i]);
+			bus->OutWord(index, ATA_REG_DATA, ((uint16_t*)cmd)[i]);
 		}
-		ata_wait_irq(bus, index);
-		ata_reset_wait(bus, index);
+		bus->WaitInt(index);
+		bus->ResetIntWait(index);
 		uint8_t status = bus->ReadControlByte(index);
 		//dbgpf("ATA: ATAPI status: %x\n", (int)status);
 		if(status & ATA_SR_ERR){
@@ -121,9 +120,9 @@ size_t atapi_scsi_command(btos_api::hwpnp::IATABus *bus, size_t index, uint8_t c
 		}
 		
 		for(size_t i=0; i<read/2; ++i){
-			((uint16_t*)buf)[i] = in16(bus);
+			((uint16_t*)buf)[i] = bus->InWord(index, ATA_REG_DATA);
 		}
-		ata_wait(dev, 0);
+		ata_wait(bus, index, 0);
 		while((bus->ReadControlByte(index) & ATA_SR_DRQ));
 		return read;
 	}
@@ -143,93 +142,49 @@ int atapi_device_read(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba,
 	return ret;
 }
 
-struct atapi_instance{
-	ata_device *dev;
-	size_t pos;
-};
-
-void *atapi_open(void *id){
-    hold_lock hl(&ata_drv_lock);
-	atapi_instance *instance=new atapi_instance();
-	instance->dev=(ata_device*)id;
-	instance->pos=0;
-	return instance;
+btos_api::hwpnp::DeviceID ATAPIDevice::GetID(){
+	return ATAPIDeviceID;
 }
 
-bool atapi_close(void *instance){
-    hold_lock hl(&ata_drv_lock);
-	if(instance){
-		delete (ata_device*) instance;
-		return true;
-	}else return false;
+const char *ATAPIDevice::GetDescription(){
+	return "ATAPI optical drive";
 }
 
-bool atapi_cache_get(size_t dev, uint32_t pos, char *buf){
-	for(size_t i=0; i<4; ++i){
-		uint32_t ata_pos = (pos / ATA_SECTOR_SIZE) + i;
-		if(!cache_get(dev, ata_pos, &buf[ATA_SECTOR_SIZE * i])) return false;
-	}
-	return true;
+size_t ATAPIDevice::GetSubDeviceCount(){
+	return 1;
 }
 
-void atapi_cache_add(size_t dev, uint32_t pos, char *buf){
-	for(size_t i=0; i<4; ++i){
-		uint32_t ata_pos = (pos / ATA_SECTOR_SIZE) + i;
-		cache_add(dev, ata_pos, &buf[ATA_SECTOR_SIZE * i]);
-	}
+btos_api::hwpnp::DeviceID ATAPIDevice::GetSubDevice(size_t index){
+	if(index == 0) return VolumeDeviceID;
+	return btos_api::hwpnp::NullDeviceID;
 }
 
-size_t atapi_read(void *instance, size_t bytes, char *buf){
-    hold_lock hl(&ata_drv_lock);
-	if(bytes % ATAPI_SECTOR_SIZE) return 0;
-	atapi_instance *inst=(atapi_instance*)instance;
-	for(size_t i=0; i<bytes; i+=ATAPI_SECTOR_SIZE){
-        if(!atapi_cache_get((size_t)inst->dev, inst->pos, &buf[i])) {
-            release_lock(&ata_drv_lock);
-            size_t read = atapi_queued_read(inst->dev, inst->pos / ATAPI_SECTOR_SIZE, (uint8_t *) &buf[i]);
-			if(read != ATAPI_SECTOR_SIZE) panic("(ATA) ATAPI sector read failed!");
-			take_lock(&ata_drv_lock);
-            atapi_cache_add((size_t)inst->dev, inst->pos, &buf[i]);
-        }
-		inst->pos+=ATAPI_SECTOR_SIZE;
-	}
-	return bytes;
+btos_api::hwpnp::IDriver *ATAPIDevice::GetDriver(){
+	return GetATAPIDriver();
 }
 
-size_t atapi_write(void */*instance*/, size_t /*bytes*/, char */*buf*/){
-    return 0;
+btos_api::hwpnp::IDeviceNode *ATAPIDevice::GetDeviceNode(){
+	return &node;
 }
-
-bt_filesize_t atapi_seek(void *instance, bt_filesize_t pos, uint32_t flags){
-	atapi_instance *inst=(atapi_instance*)instance;
-	if(pos % ATAPI_SECTOR_SIZE) return inst->pos;
-	if(flags & FS_Relative) inst->pos+=pos;
-	else if(flags & FS_Backwards){
-		inst->pos = (inst->dev->identity.sectors_48 * ATAPI_SECTOR_SIZE) - pos;
-	}else if(flags == (FS_Relative | FS_Backwards)) inst->pos-=pos;
-	else inst->pos=pos;
-	return inst->pos;
-}
-
-int atapi_ioctl(void */*instance*/, int /*fn*/, size_t /*bytes*/, char */*buf*/){
-	return 0;
-}
-
-int atapi_type(){
-	return driver_types::STR_OPTICAL;
-}
-
-char *atapi_desc(){
-	return (char*)"ATAPI Optical drive";
-}
-
-drv_driver atapi_driver={&atapi_open, &atapi_close, &atapi_read, &atapi_write, &atapi_seek, &atapi_ioctl, &atapi_type, &atapi_desc};
-
-void atapi_test(ata_device *dev){
-	uint8_t buf[ATAPI_SECTOR_SIZE] = {0};
-	atapi_device_read(dev, 0, buf);
 	
-	dbgpf("ATAPI TEST: %x %x %x\n", (int)buf[0], (int)buf[1], (int)buf[2]);
+void ATAPIDevice::ReadSector(uint64_t lba, uint8_t *buf){
+	atapi_device_read(bus, index, lba, buf);
 }
 
-#endif
+void ATAPIDevice::WriteSector(uint64_t, const uint8_t*){
+	//Not supported
+}
+
+size_t ATAPIDevice::GetSectorSize(){
+	return ATAPI_SECTOR_SIZE;
+}
+
+bt_filesize_t ATAPIDevice::GetSize(){
+	return bus->GetLength(index) * ATAPI_SECTOR_SIZE;
+}
+
+ATAPIDeviceNode::ATAPIDeviceNode(ATAPIDevice *dev) : btos_api::hwpnp::BlockDeviceNode(dev) {}
+
+const char *ATAPIDeviceNode::GetBaseName(){
+	return "ATAPI";
+}

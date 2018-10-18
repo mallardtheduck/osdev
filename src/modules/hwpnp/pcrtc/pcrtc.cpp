@@ -64,6 +64,7 @@ public:
 	const char *GetDescription();
 	btos_api::hwpnp::IDevice *CreateDevice(const btos_api::hwpnp::DeviceID &dev, btos_api::hwpnp::IDevice *parent, size_t index);
 	void DestroyDevice(btos_api::hwpnp::IDevice *dev);
+	uint32_t GetPriority();
 };
 
 static PCRTCDriver theDriver;
@@ -100,6 +101,10 @@ btos_api::hwpnp::IDevice *PCRTCDriver::CreateDevice(const btos_api::hwpnp::Devic
 
 void PCRTCDriver::DestroyDevice(btos_api::hwpnp::IDevice *){
 	/* Do nothing */
+}
+
+uint32_t PCRTCDriver::GetPriority(){
+	return btos_api::hwpnp::DriverPriority::Generic;
 }
 
 extern "C" int module_main(syscall_table *systbl, char */*params*/){

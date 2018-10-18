@@ -4,6 +4,7 @@
 #include <dev/hwpnp.hpp>
 #include <dev/hwpnp/atabus.hpp>
 #include <dev/hwpnp/hdd.hpp>
+#include <dev/hwpnp/optical.hpp>
 #include <util/ministl.hpp>
 
 static const btos_api::hwpnp::DeviceID PCATADeviceID = {
@@ -171,6 +172,7 @@ void ata_queued_write(ata_device *dev, uint32_t lba, uint8_t *buf);
 size_t atapi_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
 
 int ata_wait(struct ata_device * dev, int advanced);
+int ata_wait(btos_api::hwpnp::IATABus *bus, size_t index, int advanced);
 
 /* TODO support other sector sizes */
 #define ATA_SECTOR_SIZE 512
@@ -180,7 +182,7 @@ void cache_add(size_t deviceid, size_t sector, char *data);
 bool cache_get(size_t deviceid, size_t sector, char *data);
 void cache_drop(size_t deviceid, size_t sector);
 
-//void preinit_dma();
+void preinit_dma();
 //bool init_dma();
 //void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf);
 
@@ -214,11 +216,14 @@ public:
 	void OutWord(size_t index, size_t reg, uint16_t word);
 	void OutWords(size_t index, size_t reg, size_t count, const uint8_t *buffer);
 	uint8_t InByte(size_t index, size_t reg);
+	uint16_t InWord(size_t index, size_t reg);
 	void InWords(size_t index, size_t reg, size_t count, uint8_t *buffer);
 	uint8_t ReadControlByte(size_t index);
 	void WriteControlByte(size_t index, uint8_t byte);
 	bool IsSlave(size_t index);
 	uint64_t GetLength(size_t index);
+	void ResetIntWait(size_t index);
+	void WaitInt(size_t index);
 };
 
 class ATAHDDDevice;
@@ -253,9 +258,42 @@ public:
 
 btos_api::hwpnp::IDriver *GetATAHDDDriver();
 
+class ATAPIDevice;
+
+class ATAPIDeviceNode : public btos_api::hwpnp::BlockDeviceNode{
+public:
+	ATAPIDeviceNode(ATAPIDevice *dev);
+
+	const char *GetBaseName();
+};
+
+class ATAPIDevice : public btos_api::hwpnp::IOpticalDevice{
+private:
+	btos_api::hwpnp::IATABus *bus;
+	size_t index;
+	ATAPIDeviceNode node;
+public:
+	ATAPIDevice(btos_api::hwpnp::IATABus *b, size_t i) : bus(b), index(i), node(this) {}
+
+	btos_api::hwpnp::DeviceID GetID();
+	const char *GetDescription();
+	size_t GetSubDeviceCount();
+	btos_api::hwpnp::DeviceID GetSubDevice(size_t);
+	btos_api::hwpnp::IDriver *GetDriver();
+	btos_api::hwpnp::IDeviceNode *GetDeviceNode();
+	
+	void ReadSector(uint64_t lba, uint8_t *buf);
+	void WriteSector(uint64_t lba, const uint8_t *buf);
+	size_t GetSectorSize();
+	bt_filesize_t GetSize();
+};
+
+btos_api::hwpnp::IDriver *GetATAPIDriver();
+
 class MBRVolume : public btos_api::hwpnp::IVolume{
 private:
 	btos_api::hwpnp::IBlockDevice *device;
+	bool mbrOk;
 public:
 	struct Partition{
 		uint64_t start, sectors;
@@ -275,6 +313,8 @@ public:
 	void WriteSector(size_t index, uint64_t lba, const uint8_t *buf);
 	size_t GetSectorSize();
 	bt_filesize_t GetSize(size_t index);
+	
+	bool IsOK();
 };
 
 btos_api::hwpnp::IDriver *GetMBRVolumeDriver();

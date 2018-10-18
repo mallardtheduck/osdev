@@ -8,12 +8,13 @@ vector<IDriver*> *drivers;
 static char *pnp_drivers_infofs(){
 	char *buffer=(char*)malloc(4096);
 	memset(buffer, 0, 4096);
-	sprintf(buffer, "# id, devid, description\n");
+	sprintf(buffer, "# id, devid, description, priority\n");
 	for(auto d : *drivers){
 		auto devid = d->GetDeviceID();
-		sprintf(&buffer[strlen(buffer)], "%p, %s, \"%s\"\n", 
+		sprintf(&buffer[strlen(buffer)], "%p, %s, \"%s\", %i\n", 
 			d, deviceIDtoString(devid).c_str(),
-			d->GetDescription()
+			d->GetDescription(),
+			d->GetPriority()
 		);
 	}
 	return buffer;
@@ -46,21 +47,39 @@ bool DeviceIDMatch(const DeviceID &a, const DeviceID &b){
 }
 
 IDevice *pnp_create_device(IDevice *parent, size_t idx, DeviceID id){
+	vector<IDriver*> compatible_drivers;
 	for(auto d : *drivers){
 		auto devid = d->GetDeviceID();
 		if(DeviceIDMatch(devid, id) && d->IsCompatible(id)){
-			dbgpf("PNP: Using driver: %p for device: %s\n", 
-				d, deviceIDtoString(devid).c_str()
-			);
-			auto ret = d->CreateDevice(id, parent, idx);
-			if(ret){
-				dbgpf("PNP: Sucessfully created device %p\n", ret);
-				auto node = ret->GetDeviceNode();
-				if(node) pnp_node_add(node);
-				return ret;
-			}else{
-				dbgout("PNP: Device creation failed!\n");
+			compatible_drivers.push_back(d);
+		}
+	}
+	while(!compatible_drivers.empty()){
+		uint32_t priority = 0;
+		IDriver *drv = nullptr;
+		size_t didx = 0;
+		for(size_t i = 0; i < compatible_drivers.size(); ++i){
+			auto d = compatible_drivers[i];
+			auto p = d->GetPriority();
+			if(p > priority || !drv){
+				drv = d;
+				priority = p;
+				didx = i;
 			}
+		}
+		auto devid = drv->GetDeviceID();
+		dbgpf("PNP: Using driver: %p for device: %s\n", 
+			drv, deviceIDtoString(devid).c_str()
+		);
+		auto ret = drv->CreateDevice(id, parent, idx);
+		if(ret){
+			dbgpf("PNP: Sucessfully created device %p\n", ret);
+			auto node = ret->GetDeviceNode();
+			if(node) pnp_node_add(node);
+			return ret;
+		}else{
+			dbgout("PNP: Device creation failed!\n");
+			compatible_drivers.erase(didx);
 		}
 	}
 	return nullptr;

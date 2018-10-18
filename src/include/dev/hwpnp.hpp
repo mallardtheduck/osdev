@@ -36,6 +36,13 @@ namespace hwpnp{
 		uint64_t Class;
 	};
 	
+	ENUM_START(DriverPriority)
+		ENUM_SET(DriverPriority, Fallback, 1),
+		ENUM_SET(DriverPriority, Generic, 100),
+		ENUM_SET(DriverPriority, Specific, 1000),
+	ENUM_END
+	ENUM_TYPE(DriverPriority);
+	
 	static const DeviceID NullDeviceID = {PNPBUS::Null, 0, 0, 0, 0, 0};
 	
 	class IDeviceNode{
@@ -90,6 +97,7 @@ namespace hwpnp{
 		virtual IDevice *CreateDevice(const DeviceID &dev, IDevice *parent, size_t index) = 0;
 		virtual const char *GetDescription() = 0;
 		virtual void DestroyDevice(IDevice *dev) = 0;
+		virtual uint32_t GetPriority() = 0;
 	
 		virtual ~IDriver() {}
 	};

@@ -13,10 +13,17 @@ struct part_entry{
 	uint32_t sectors;
 } __attribute__((packed));
 
-static void mbr_parse(MBRVolume *vol, btos_api::hwpnp::IBlockDevice *dev){
-	char blockbuf[512];
+static bool mbr_parse(MBRVolume *vol, btos_api::hwpnp::IBlockDevice *dev){
+	size_t secSize = dev->GetSectorSize();
+	char *blockbuf = (char*)malloc(secSize);
+	memset(blockbuf, 0, secSize);
 	part_entry part_table[4];
 	dev->ReadSector(0, (uint8_t*)blockbuf);
+	uint16_t sig = *(uint16_t*)(&blockbuf[0x1fe]);
+	if(sig != 0xAA55){
+		free(blockbuf);
+		return false;
+	}
 	memcpy((void*)part_table, (void*)&blockbuf[0x1be], 64);
 	for(size_t i=0; i<4; ++i){
 		part_entry &p=part_table[i];
@@ -25,10 +32,12 @@ static void mbr_parse(MBRVolume *vol, btos_api::hwpnp::IBlockDevice *dev){
 			vol->partitions.push_back({p.start_lba, p.sectors});
 		}
 	}
+	free(blockbuf);
+	return true;
 }
 
 MBRVolume::MBRVolume(btos_api::hwpnp::IBlockDevice *dev) : device(dev) {
-	mbr_parse(this, device);
+	mbrOk = mbr_parse(this, device);
 }
 
 btos_api::hwpnp::DeviceID MBRVolume::GetID(){
@@ -79,6 +88,10 @@ bt_filesize_t MBRVolume::GetSize(size_t i){
 	return partitions[i].sectors * device->GetSectorSize();
 }
 
+bool MBRVolume::IsOK(){
+	return mbrOk;
+}
+
 Partition::Partition(btos_api::hwpnp::IVolume *vol, size_t i) : volume(vol), index(i), node(this) {
 	btos_api::hwpnp::IDevice *cdev = vol;
 	btos_api::hwpnp::IDeviceNode *node = nullptr;
@@ -88,7 +101,7 @@ Partition::Partition(btos_api::hwpnp::IVolume *vol, size_t i) : volume(vol), ind
 	}
 	if(node){
 		char tmpname[8] = {0};
-		strncpy(tmpname, pnp_get_node_name(node), 6);
+		strncpy(tmpname, pnp_get_node_name(node), 7);
 		sprintf(basename, "%sP", tmpname);
 	}
 }

@@ -157,13 +157,12 @@ static int ata_device_detect(struct ata_device * dev, ATABusDevice *parent) {
 		if(ata_device_init(dev)){
 			btos_api::hwpnp::DeviceID id = HDDDeviceID;
 			parent->devices.push_back({id, dev});
-			//mbr_parse(devicename);
 			return 1;
-		}/*else if(atapi_device_init(dev)){
+		}else if(atapi_device_init(dev)){
 			btos_api::hwpnp::DeviceID id = ATAPIDeviceID;
 			parent->devices.push_back({id, dev});
 			return 1;
-		}*/
+		}
 	}
 	return 0;
 }
@@ -238,7 +237,7 @@ void ata_device_write_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32
 	release_lock(&ata_lock);
 }
 
-static int buffer_compare(uint32_t * ptr1, uint32_t * ptr2, size_t size) {
+/*static int buffer_compare(uint32_t * ptr1, uint32_t * ptr2, size_t size) {
 	if(size % 4) panic("ATA");
 	size_t i = 0;
 	while (i < size) {
@@ -248,7 +247,7 @@ static int buffer_compare(uint32_t * ptr1, uint32_t * ptr2, size_t size) {
 		i += sizeof(uint32_t);
 	}
 	return 0;
-}
+}*/
 
 /*void ata_device_write_sector_retry(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
 	uint8_t *read_buf = (uint8_t*) malloc(ATA_SECTOR_SIZE);
@@ -278,10 +277,10 @@ static int ata_initialize(ATABusDevice *parent) {
 	return 0;
 }
 
-static int ata_finalize(void) {
+/*static int ata_finalize(void) {
 
 	return 0;
-}
+}*/
 
 /*extern "C" int module_main(syscall_table *systbl, char *params){
 	drv_driver driver={ata_open, ata_close, ata_read, ata_write, ata_seek, ata_ioctl, ata_type, ata_desc};
@@ -301,7 +300,7 @@ ATABusDevice::ATABusDevice(){
 	init_lock(&ata_lock);
     init_lock(&ata_drv_lock);
     //init_queue();
-	//preinit_dma();
+	preinit_dma();
 	ata_initialize(this);
 }
 
@@ -351,6 +350,13 @@ uint8_t ATABusDevice::InByte(size_t i, size_t reg){
 	return 0;
 }
 
+uint16_t ATABusDevice::InWord(size_t i, size_t reg){
+	if(i < devices.size()){
+		return in16(devices[i].dev->io_base + reg);
+	}
+	return 0;
+}
+
 void ATABusDevice::InWords(size_t i, size_t reg, size_t count, uint8_t *buffer){
 	if(i < devices.size()){
 		insm(devices[i].dev->io_base + reg, buffer, count);
@@ -382,6 +388,18 @@ uint64_t ATABusDevice::GetLength(size_t i){
 		return !!devices[i].dev->length;
 	}
 	return 0;
+}
+
+void ATABusDevice::ResetIntWait(size_t i){
+	if(i < devices.size()){
+		ata_reset_wait(devices[i].dev->io_base);
+	}
+}
+
+void ATABusDevice::WaitInt(size_t i){
+	if(i < devices.size()){
+		ata_wait_irq(devices[i].dev->io_base);
+	}
 }
 
 ATAHDDDeviceNode::ATAHDDDeviceNode(ATAHDDDevice *dev) : btos_api::hwpnp::BlockDeviceNode(dev) {}
