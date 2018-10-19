@@ -17,6 +17,13 @@ memcmp(const void *vs1, const void *vs2, size_t n){
 	return 0;
 }
 
+/*static void ata_io_wait(btos_api::hwpnp::IATABus *bus, size_t index) {
+	bus->ReadControlByte(index);
+	bus->ReadControlByte(index);
+	bus->ReadControlByte(index);
+	bus->ReadControlByte(index);
+}*/
+
 bool atapi_device_init(ata_device *dev){
 	dbgpf("ATA: Initializing ATAPI device on bus %d\n", dev->io_base);
 
@@ -95,7 +102,7 @@ size_t atapi_scsi_command(btos_api::hwpnp::IATABus *bus, size_t index, uint8_t c
 		bus->OutByte(index, ATA_REG_LBA2, (size & 0x0000ff00) >> 8);
 		bus->OutByte(index, ATA_REG_COMMAND, ATA_CMD_PACKET);
 		ata_wait(bus, index, 0);
-		while(!(bus->ReadControlByte(index) & ATA_SR_DRQ));
+		while(!(bus->ReadControlByte(index) & ATA_SR_DRQ)) cpu_pause();
 		bus->ResetIntWait(index);
 		for(size_t i=0; i<6; ++i){
 			bus->OutWord(index, ATA_REG_DATA, ((uint16_t*)cmd)[i]);
@@ -119,17 +126,20 @@ size_t atapi_scsi_command(btos_api::hwpnp::IATABus *bus, size_t index, uint8_t c
 			else return 0;
 		}
 		
+		//dbgout("ATA: ATAPI data:\n");
 		for(size_t i=0; i<read/2; ++i){
 			((uint16_t*)buf)[i] = bus->InWord(index, ATA_REG_DATA);
+			//dbgpf("%x", (uint32_t)((uint16_t*)buf)[i]);
 		}
+		//dbgout("\n");
 		ata_wait(bus, index, 0);
-		while((bus->ReadControlByte(index) & ATA_SR_DRQ));
+		while((bus->ReadControlByte(index) & ATA_SR_DRQ)) cpu_pause();
 		return read;
 	}
 }
 
 int atapi_device_read(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t *buf){
-	dbgpf("ATAPI: Reading sector %i\n", lba);
+	//dbgpf("ATAPI: READ bus: %p, index: %i, lba: %x, buf: %p\n", bus, (int)index, lba, buf);
 	uint8_t read_cmd[12] = {0xA8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	read_cmd[9] = 1;              /* 1 sector */
 	read_cmd[2] = (lba >> 0x18) & 0xFF;   /* most sig. byte of LBA */
@@ -142,6 +152,23 @@ int atapi_device_read(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba,
 	
 	return ret;
 }
+
+atapi_capacity atapi_device_capacity(btos_api::hwpnp::IATABus *bus, size_t index){
+	uint8_t capacity_cmd[12] = {0x25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+	atapi_capacity buf;
+	auto len = atapi_scsi_command(bus, index, capacity_cmd, sizeof(buf), (uint8_t*)&buf);
+	buf.block_size = __builtin_bswap32(buf.block_size);
+	buf.total_blocks = __builtin_bswap32(buf.total_blocks);
+	//dbgpf("ATAPI: %x %x\n", buf.block_size, buf.total_blocks);
+	if(len != sizeof(buf)) panic("(ATAPI) Could not read capacity!");
+	if(buf.block_size != ATAPI_SECTOR_SIZE) panic("(ATAPI) Unsupported block size.");
+	return buf;
+}
+
+ATAPIDevice::ATAPIDevice(btos_api::hwpnp::IATABus *b, size_t i) : 
+	bus(b), index(i), node(this), capacity(atapi_device_capacity(bus, index))
+{}
 
 btos_api::hwpnp::DeviceID ATAPIDevice::GetID(){
 	return ATAPIDeviceID;
@@ -169,6 +196,7 @@ btos_api::hwpnp::IDeviceNode *ATAPIDevice::GetDeviceNode(){
 }
 	
 bool ATAPIDevice::ReadSector(uint64_t lba, uint8_t *buf){
+	auto lock = bus->GetLock();
 	return atapi_device_read(bus, index, lba, buf) == ATAPI_SECTOR_SIZE;
 }
 
@@ -182,7 +210,9 @@ size_t ATAPIDevice::GetSectorSize(){
 }
 
 bt_filesize_t ATAPIDevice::GetSize(){
-	return bus->GetLength(index) * ATAPI_SECTOR_SIZE;
+	auto size = capacity.total_blocks * ATAPI_SECTOR_SIZE;
+	dbgpf("ATAPI: Size: %i\n", (int)size);
+	return size;
 }
 
 ATAPIDeviceNode::ATAPIDeviceNode(ATAPIDevice *dev) : btos_api::hwpnp::BlockDeviceNode(dev) {}

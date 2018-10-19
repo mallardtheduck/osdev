@@ -168,13 +168,13 @@ static int ata_device_detect(struct ata_device * dev, ATABusDevice *parent) {
 }
 
 bool ata_device_read_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf){
-    take_lock(&ata_lock);
+    //take_lock(&ata_lock);
     /*if(init_dma()){
         dma_read_sector(bus, index, lba, buf);
     }else{*/
         auto ret = ata_device_read_sector_pio(bus, index, lba, buf);
     //}
-    release_lock(&ata_lock);
+    //release_lock(&ata_lock);
     return ret;
 }
 
@@ -214,7 +214,7 @@ try_again:
 
 bool ata_device_write_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf) {
 	//if(lba > dev->length) return;
-    take_lock(&ata_lock);
+    //take_lock(&ata_lock);
     int slave = bus->IsSlave(index);
 
     //if(init_dma()){} //TODO: Use DMA
@@ -236,7 +236,7 @@ bool ata_device_write_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32
 	bus->OutWords(index, ATA_REG_DATA, size, buf);
 	bus->OutByte(index, ATA_REG_COMMAND, ATA_CMD_CACHE_FLUSH);
 	ata_wait(bus, index, 0);
-	release_lock(&ata_lock);
+	//release_lock(&ata_lock);
 	return true;
 }
 
@@ -305,6 +305,14 @@ ATABusDevice::ATABusDevice(){
     //init_queue();
 	preinit_dma();
 	ata_initialize(this);
+}
+
+void ATABusDevice::Lock(){
+	take_lock(&ata_lock);
+}
+
+void ATABusDevice::Unlock(){
+	release_lock(&ata_lock);
 }
 
 btos_api::hwpnp::DeviceID ATABusDevice::GetID(){
@@ -437,10 +445,12 @@ btos_api::hwpnp::IDeviceNode *ATAHDDDevice::GetDeviceNode(){
 }
 	
 bool ATAHDDDevice::ReadSector(uint64_t lba, uint8_t *buf){
+	auto lock = bus->GetLock();
 	return ata_device_read_sector(bus, index, lba, buf);
 }
 
 bool ATAHDDDevice::WriteSector(uint64_t lba, const uint8_t *buf){
+	auto lock = bus->GetLock();
 	return ata_device_write_sector(bus, index, lba, (uint8_t*)buf);
 }
 

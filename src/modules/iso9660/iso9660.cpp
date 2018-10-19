@@ -126,7 +126,8 @@ bool read_sector(struct l9660_fs *fs, void *buf, uint32_t sector){
 	iso9660_mountdata *mount = (iso9660_mountdata*)fs;
 	size_t readaddr = sector * block_size;
 	take_lock_recursive(&iso9660_lock);
-	fseek(mount->fh, readaddr, false);
+	bt_filesize_t pos = fseek(mount->fh, readaddr, false);
+	if(pos != readaddr) panic("(ISO9660) Seek failure.");
 	int ret=fread(mount->fh, block_size, (char*)buf);
 	release_lock(&iso9660_lock);
 	if(ret == 0) panic("(ISO9660) read_sector failed.");

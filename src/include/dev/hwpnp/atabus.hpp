@@ -3,6 +3,7 @@
 
 #include "../hwpnp.hpp"
 #include <btos/devices.h>
+#include "lockable.hpp"
 
 namespace btos_api{
 namespace hwpnp{
@@ -14,7 +15,7 @@ namespace hwpnp{
 	ENUM_END
 	ENUM_TYPE(ATADeviceType);
 
-	class IATABus : public IDevice{
+	class IATABus : public IDevice, public ILockable{
 	public:
 		virtual void OutByte(size_t index, size_t reg, uint8_t byte) = 0;
 		virtual void OutWord(size_t index, size_t reg, uint16_t word) = 0;

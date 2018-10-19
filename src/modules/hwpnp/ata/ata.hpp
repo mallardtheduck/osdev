@@ -160,6 +160,11 @@ struct ata_device {
 	uint64_t length;
 };
 
+struct atapi_capacity{
+	uint32_t total_blocks;
+	uint32_t block_size;
+};
+
 extern lock ata_lock, ata_drv_lock;
 
 bool ata_device_read_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf);
@@ -196,6 +201,9 @@ void ata_wait_irq(uint32_t bus);
 btos_api::hwpnp::IDriver *GetATADriver();
 
 class ATABusDevice : public btos_api::hwpnp::IATABus{
+protected:
+	void Lock();
+	void Unlock();
 public:
 	struct ATADevice{
 		btos_api::hwpnp::DeviceID id;
@@ -272,8 +280,9 @@ private:
 	btos_api::hwpnp::IATABus *bus;
 	size_t index;
 	ATAPIDeviceNode node;
+	atapi_capacity capacity;
 public:
-	ATAPIDevice(btos_api::hwpnp::IATABus *b, size_t i) : bus(b), index(i), node(this) {}
+	ATAPIDevice(btos_api::hwpnp::IATABus *b, size_t i);
 
 	btos_api::hwpnp::DeviceID GetID();
 	const char *GetDescription();

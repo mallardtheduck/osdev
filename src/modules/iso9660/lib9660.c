@@ -178,13 +178,23 @@ l9660_status l9660_openfs(
             return L9660_EIO;
 
         // Validate magic
-        if (memcmp(pvd->hdr.magic, "CD001", 5) != 0)
+        if (memcmp(pvd->hdr.magic, "CD001", 5) != 0){
+#ifdef DEBUG
+			dbgout("ISO: MAGIC MISMATCH:");
+			for(size_t i = 0; i < 5; ++i){
+				dbgpf("%x", pvd->hdr.magic[i]);
+			}
+			dbgout("\n");
+#endif
             return L9660_EBADFS;
+        }
 
         if (pvd->hdr.type == 1)
             break; // Found PVD
         else if(pvd->hdr.type == 255)
             return L9660_EBADFS;
+            
+        ++idx;
     }
 
 #ifdef L9660_SINGLEBUFFER

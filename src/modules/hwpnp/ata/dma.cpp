@@ -44,6 +44,12 @@ void dma_int_handler(int irq, isr_regs *){
 			outb(bmr+0x0A, 0x04);
 		}
 	}
+	if(!bus0done && irq == 14){
+		dbgout("ATA: Bus 0 IRQ\n");
+	}
+	if(!bus1done && irq == 15){
+		dbgout("ATA: Bus 1 IRQ\n");
+	}
 	if(irq == 14) bus0done = true;
 	if(irq == 15) bus1done = true;
     irq_ack(irq);
