@@ -169,9 +169,7 @@ static char *pnp_node_desc(void *id){
 drv_driver nodeAdaptor = {pnp_node_open, pnp_node_close, pnp_node_read, pnp_node_write, pnp_node_seek, pnp_node_ioctl, pnp_node_type, pnp_node_desc};
 
 void pnp_node_add(IDeviceNode *node){
-	char name[8] = {0};
-	strncpy(name, node->GetBaseName(), 7);
-	drv_add_device(name, &nodeAdaptor, node);
+	auto name = drv_add_device(node->GetBaseName(), &nodeAdaptor, node);
 	(*device_nodes)[node] = name;
 }
 

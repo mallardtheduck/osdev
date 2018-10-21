@@ -84,7 +84,7 @@ struct syscall_table{
 	void (*thread_abortable)(bool abortable);
 	void (*thread_abort)(thread_id_t id);
 
-	void (*add_device)(char *name, drv_driver *driver, void *id);
+	const char *(*add_device)(const char *name, drv_driver *driver, void *id);
 	drv_device *(*get_device)(const char *name);
 	void *(*get_first_device)(char **name);
 	void *(*get_next_device)(void *itr, char **name);

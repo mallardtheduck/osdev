@@ -100,8 +100,8 @@ Partition::Partition(btos_api::hwpnp::IVolume *vol, size_t i) : volume(vol), ind
 		cdev = pnp_get_parent(cdev);
 	}
 	if(node){
-		char tmpname[8] = {0};
-		strncpy(tmpname, pnp_get_node_name(node), 7);
+		char tmpname[32] = {0};
+		strncpy(tmpname, pnp_get_node_name(node), 31);
 		sprintf(basename, "%sP", tmpname);
 	}
 }

@@ -31,7 +31,7 @@ void drv_init(){
 }
 
 string get_unique_name(string name){
-	char buf[12];
+	char buf[32];
 	for(int i=0; i < 1000; ++i){
 		sprintf(buf, "%s%i", name.c_str(), i);
 		if(!devices->has_key(buf)) return buf;
@@ -39,15 +39,17 @@ string get_unique_name(string name){
 	return "";
 }
 
-void drv_add_device(char *name, drv_driver *driver, void *id){
+const char *drv_add_device(const char *name, drv_driver *driver, void *id){
 	string sname;
+	const char *ret = nullptr;
 	{ hold_lock hl(drv_lock);
 		sname=get_unique_name(name);
 		(*devices)[sname].driver=*driver;
 		(*devices)[sname].id=id;
+		ret = devices->get(sname).first.c_str();
 	}
-	strncpy(name, sname.c_str(), 12);
 	dbgpf("DRV: Device %s registered.\n", sname.c_str());
+	return ret;
 }
 
 drv_device *drv_get(const char *name){

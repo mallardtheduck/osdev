@@ -206,8 +206,7 @@ void terminal_initialize()
 }
 
 void terminal_add_device(){
-	char name[12]={"KTEXT\0"};
-	drv_add_device(name, &terminal_driver, NULL);
+	drv_add_device("KTEXT", &terminal_driver, NULL);
 }
  
 void terminal_scroll(){
