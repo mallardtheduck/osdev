@@ -5,8 +5,18 @@
 syscall_table *SYSCALL_TABLE;
 char dbgbuf[256];
 
+lock ps2_lock;
+
 extern "C" int module_main(syscall_table *systbl, char *params) {
     SYSCALL_TABLE = systbl;
+    pnp_register_driver(GetPS2Driver());
+    pnp_register_driver(GetPS2KeyboardDriver());
+    pnp_register_driver(GetPS2MouseDriver());
+    return 0;
+}
+    
+void ps2_init(PS2BusDevice *dev){
+	init_lock(&ps2_lock);
     dbgout("PS2: Disable ports\n");
     ps2_write_command(PS2_Command::DisablePort1);
     ps2_write_command(PS2_Command::DisablePort2);
@@ -41,7 +51,6 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
         ps2_write_command(PS2_Command::TestPort2);
         ch2=!ps2_read_data();
     }
-    uint8_t keyport=0, mouseport=0;
     ps2_clear_data();
     if(ch1){
         ps2_write_command(PS2_Command::EnablePort1);
@@ -56,8 +65,8 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
             ps2_write_port1(Device_Command::Identify);
             uint8_t id = ps2_read_data();
             dbgpf("PS2: Detected device id: %x on port 1.\n", (int)id);
-            if (id == Device_Types::MF2Keyboard || id == Device_Types::ATKeyboard) keyport = 1;
-            else mouseport = 1;
+            if (id == Device_Types::MF2Keyboard || id == Device_Types::ATKeyboard) dev->SetDevice(0, PS2KeyboardDeviceID);
+            else dev->SetDevice(0, PS2MouseDeviceID);
         }
         ps2_write_command(PS2_Command::DisablePort1);
     }
@@ -74,15 +83,11 @@ extern "C" int module_main(syscall_table *systbl, char *params) {
             ps2_write_port2(Device_Command::Identify);
             uint8_t id = ps2_read_data();
             dbgpf("PS2: Detected device id: %x on port 2.\n", (int)id);
-            if (id == Device_Types::MF2Keyboard || id == Device_Types::ATKeyboard) keyport = 2;
-            else mouseport = 2;
+            if (id == Device_Types::MF2Keyboard || id == Device_Types::ATKeyboard) dev->SetDevice(1, PS2KeyboardDeviceID);
+            else dev->SetDevice(1, PS2MouseDeviceID);
         }
         ps2_write_command(PS2_Command::DisablePort2);
     }
-    dbgpf("PS2: Ports: Keyboard: %i, Mouse: %i\n", (int)keyport, (int)mouseport);
-    if(keyport) init_keyboard(keyport);
-    if(mouseport) init_mouse(mouseport);
-    return 0;
 }
 
 uint8_t ps2_read_data(){
@@ -130,4 +135,82 @@ void ps2_write_port2(uint8_t byte){
 
 void ps2_clear_data(){
     while(ps2_read_status() & 1) inb(PS2_Data_Port);
+}
+
+PS2BusDevice::PS2BusDevice(){
+	ps2_init(this);
+}
+
+void PS2BusDevice::SetDevice(size_t index, btos_api::hwpnp::DeviceID id){
+	devices[index] = id;
+}
+
+btos_api::hwpnp::DeviceID PS2BusDevice::GetID(){
+	return PCPS2DeviceID;
+}
+
+const char *PS2BusDevice::GetDescription(){
+	return "8042-style PS/2 input device bus";
+}
+
+size_t PS2BusDevice::GetSubDeviceCount(){
+	return 2;
+}
+
+btos_api::hwpnp::DeviceID PS2BusDevice::GetSubDevice(size_t i){
+	if(devices.has_key(i)) return devices[i];
+	else return btos_api::hwpnp::NullDeviceID;
+}
+
+btos_api::hwpnp::IDriver *PS2BusDevice::GetDriver(){
+	return GetPS2Driver();
+}
+
+uint8_t PS2BusDevice::ReadData(){
+	return ps2_read_data();
+}
+
+uint8_t PS2BusDevice::ReadDataWithoutStatusCheck(){
+	return ps2_read_data_nocheck();
+}
+
+void PS2BusDevice::WriteData(uint8_t byte){
+	ps2_write_data(byte);
+}
+
+void PS2BusDevice::ClearData(){
+	ps2_clear_data();
+}
+
+uint8_t PS2BusDevice::ReadStatus(){
+	return ps2_read_status();
+}
+
+void PS2BusDevice::WriteCommand(uint8_t byte){
+	ps2_write_command(byte);
+}
+
+void PS2BusDevice::WritePort(size_t index, uint8_t byte){
+	if(index == 0) ps2_write_port1(byte);
+	else if(index == 1) ps2_write_port2(byte);
+}
+
+uint8_t PS2BusDevice::GetIRQ(size_t index){
+	if(index == 0) return Port1IRQ;
+	else if(index == 1) return Port2IRQ;
+	return 0;
+}
+
+void PS2BusDevice::EnableDevice(size_t index){
+	if(index == 0) ps2_write_command(PS2_Command::EnablePort1);
+	else if(index == 1) ps2_write_command(PS2_Command::EnablePort2);
+}
+
+void PS2BusDevice::Lock(){
+	take_lock(&ps2_lock);
+}
+
+
+void PS2BusDevice::Unlock(){
+	release_lock(&ps2_lock);
 }

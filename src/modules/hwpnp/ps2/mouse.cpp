@@ -3,7 +3,6 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-static uint8_t channel;
 static bool input_available=false;
 static constexpr bt_mouse_packet zero_packet={0, 0, 0};
 
@@ -14,11 +13,11 @@ static uint8_t irq;
 static thread_id_t mouse_thread_id;
 static lock buf_lock;
 
-static void (*write_device)(uint8_t);
-
+static btos_api::hwpnp::IPS2Bus *theBus;
+static size_t theIndex;
 
 static void mouse_handler(int irq, isr_regs *regs){
-	uint8_t ps2_byte= ps2_read_data_nocheck();
+	uint8_t ps2_byte = theBus->ReadDataWithoutStatusCheck();
 	pre_buffer.add_item(ps2_byte);
 	input_available = true;
 	/*if(thread_id()!=mouse_thread_id) {
@@ -65,8 +64,8 @@ void mouse_thread(void*){
 			input_available=false;
 			enable_interrupts();
 			mask_irq(irq);
-			write_device(Device_Command::Reset);
-			write_device(Device_Command::EnableReporting);
+			theBus->WritePort(theIndex, Device_Command::Reset);
+			theBus->WritePort(theIndex, Device_Command::EnableReporting);
 			unmask_irq(irq);
 			continue;
 		}
@@ -84,23 +83,11 @@ void mouse_thread(void*){
 	}
 }
 
-struct mouse_instance{
-};
-
-void *mouse_open(void *id){
-	return new mouse_instance();
-}
-
-bool mouse_close(void *instance){
-	delete (mouse_instance*)instance;
-	return true;
-}
-
 bool mouseread_lockcheck(void *p){
 	return mouse_buffer.count() >= *(size_t*)p;
 }
 
-size_t mouse_read(void *instance, size_t bytes, char *cbuf){
+size_t mouse_read(btos_api::hwpnp::IPS2Bus *bus, size_t index, size_t bytes, char *cbuf){
 	if((bytes % sizeof(bt_mouse_packet))) return 0;
 	size_t values = bytes / sizeof(bt_mouse_packet);
 	bt_mouse_packet *buf=(bt_mouse_packet*)cbuf;
@@ -121,56 +108,67 @@ size_t mouse_read(void *instance, size_t bytes, char *cbuf){
 	return bytes;
 }
 
-size_t mouse_write(void *instance, size_t bytes, char *cbuf){
-	return 0;
-}
-
-bt_filesize_t mouse_seek(void *instance, bt_filesize_t pos, uint32_t flags){
-	return 0;
-}
-
-int mouse_ioctl(void *instance, int fn, size_t bytes, char *buf){
-	if(fn==bt_mouse_ioctl::ClearBuffer) {
-		take_lock(&buf_lock);
-		mouse_buffer.clear();
-		release_lock(&buf_lock);
-	}
-	return 0;
-}
-
-int mouse_type(void*){
-	return driver_types::IN_MOUSE;
-}
-
-char *mouse_description(void*){
-	return (char*)"PS/2 mouse/pointing device.";
-}
-
-drv_driver mouse_driver={&mouse_open, &mouse_close, &mouse_read, &mouse_write, &mouse_seek, &mouse_ioctl, &mouse_type, &mouse_description};
-
-void init_mouse(uint8_t mchannel){
+void init_mouse(btos_api::hwpnp::IPS2Bus *bus, size_t index){
+	auto busLock = bus->GetLock();
 	init_lock(&buf_lock);
-	channel=mchannel;
-	if(channel==1){
-		write_device=&ps2_write_port1;
-		irq=Port1IRQ;
-		ps2_write_command(PS2_Command::EnablePort1);
-	}else{
-		write_device=&ps2_write_port2;
-		irq=Port2IRQ;
-		ps2_write_command(PS2_Command::EnablePort2);
-	}
-	write_device(Device_Command::Identify);
+	irq = bus->GetIRQ(index);
+	bus->EnableDevice(index);
+	
+	bus->WritePort(index, Device_Command::Identify);
 	uint8_t id=ps2_read_data();
 	dbgpf("PS: Mouse type: %x\n", (int)id);
-	write_device(Device_Command::Reset);
-	write_device(Device_Command::DisableReporting);
+	bus->WritePort(index, Device_Command::Reset);
+	bus->WritePort(index, Device_Command::DisableReporting);
 
 	pre_buffer.clear();
 	handle_irq(irq, &mouse_handler);
 	mouse_thread_id=new_thread(&mouse_thread, NULL);
-	write_device(Device_Command::EnableReporting);
+	bus->WritePort(index, Device_Command::EnableReporting);
 	unmask_irq(irq);
+}
 
-	add_device("MOUSE", &mouse_driver, NULL);
+PS2MouseDevice::PS2MouseDevice(btos_api::hwpnp::IPS2Bus *b, size_t i) : bus(b), index(i), node(this) {
+	theBus = bus;
+	theIndex = index;
+	init_mouse(bus, index);
+}
+
+btos_api::hwpnp::DeviceID PS2MouseDevice::GetID(){
+	return PS2KeyboardDeviceID;
+}
+
+const char *PS2MouseDevice::GetDescription(){
+	return "PS/2 mouse";
+}
+
+size_t PS2MouseDevice::GetSubDeviceCount(){
+	return 0;
+}
+
+btos_api::hwpnp::DeviceID PS2MouseDevice::GetSubDevice(size_t){
+	return btos_api::hwpnp::NullDeviceID;
+}
+
+btos_api::hwpnp::IDriver *PS2MouseDevice::GetDriver(){
+	return GetPS2MouseDriver();
+}
+
+btos_api::hwpnp::IDeviceNode *PS2MouseDevice::GetDeviceNode(){
+	return &node;
+}
+	
+size_t PS2MouseDevice::Read(size_t bytes, char *buf){
+	return mouse_read(bus, index, bytes, buf);
+}
+
+void PS2MouseDevice::ClearBuffer(){
+	take_lock(&buf_lock);
+	mouse_buffer.clear();
+	release_lock(&buf_lock);
+}
+
+PS2MouseDeviceNode::PS2MouseDeviceNode(btos_api::hwpnp::IMouse *d) : btos_api::hwpnp::MouseDeviceNode(d) {}
+
+const char *PS2MouseDeviceNode::GetBaseName(){
+	return "MOUSE";
 }

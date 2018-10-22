@@ -8,12 +8,12 @@
 namespace btos_api{
 namespace hwpnp{
 
-	ENUM_START(ATADeviceType)
-		ENUM_SET(ATADeviceType, Unknown, 0),
-		ENUM_SET(ATADeviceType, HDD, 1),
-		ENUM_SET(ATADeviceType, ATAPI, 2),
+	ENUM_START(ATADeviceClass)
+		ENUM_SET(ATADeviceClass, Unknown, 0),
+		ENUM_SET(ATADeviceClass, HDD, 1),
+		ENUM_SET(ATADeviceClass, ATAPI, 2),
 	ENUM_END
-	ENUM_TYPE(ATADeviceType);
+	ENUM_TYPE(ATADeviceClass);
 
 	class IATABus : public IDevice, public ILockable{
 	public:

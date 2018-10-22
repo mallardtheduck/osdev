@@ -27,7 +27,7 @@ data/content/initfs/pcrtc.sys: ../../modules/hwpnp/pcrtc/pcrtc.sys create.direct
 data/content/initfs/stdpc.sys: ../../modules/hwpnp/stdpc/stdpc.sys create.directories
 	cp $< $@
 
-data/content/initfs/ps2.sys: ../../modules/ps2/ps2.sys create.directories
+data/content/initfs/ps2.sys: ../../modules/hwpnp/ps2/ps2.sys create.directories
 	cp $< $@
 
 data/content/initfs/ata.sys: ../../modules/hwpnp/ata/ata.sys create.directories

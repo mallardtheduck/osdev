@@ -26,7 +26,7 @@ data/stdpc.sys: ../../modules/hwpnp/stdpc/stdpc.sys
 data/fat.sys: ../../modules/fat/fat.sys
 	cp $< $@
 
-data/ps2.sys: ../../modules/ps2/ps2.sys
+data/ps2.sys: ../../modules/hwpnp/ps2/ps2.sys
 	cp $< $@
 
 data/ata.sys: ../../modules/hwpnp/ata/ata.sys

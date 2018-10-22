@@ -12,8 +12,6 @@ static thread_id_t keyboard_thread_id;
 
 static circular_buffer<uint8_t, 16> pre_buffer;
 
-static uint8_t channel;
-
 static key_info *layout;
 static uint8_t *capskeys;
 static uint8_t *numkeys;
@@ -26,18 +24,14 @@ static void updateflags(uint16_t keycode);
 static uint16_t scancode2keycode(uint8_t c);
 static uint32_t scancode2buffervalue(uint8_t c);
 
-static void (*write_device)(uint8_t);
+static btos_api::hwpnp::IPS2Bus *theBus;
+static size_t theIndex;
 
 static void keyboard_handler(int irq, isr_regs *regs){
-	uint8_t ps2_byte=ps2_read_data_nocheck();
+	uint8_t ps2_byte=theBus->ReadDataWithoutStatusCheck();
 	if(ps2_byte == 0xFA) return;
 	pre_buffer.add_item(ps2_byte);
 	input_available = true;
-	/*if(thread_id() != keyboard_thread_id) {
-		enable_interrupts();
-		yield();
-		disable_interrupts();
-	}*/
 }
 
 static bool input_blockcheck(void*){
@@ -141,31 +135,16 @@ static void updateflags(uint16_t keycode){
 	if(currentflags & KeyFlags::CapsLock){
 		leds |= 1 << 2;
 	}
-	write_device(Device_Command::SetLEDs);
-	ps2_write_data(leds);
+	theBus->WritePort(theIndex, Device_Command::SetLEDs);
+	theBus->WriteData(leds);
 	return;
-}
-
-struct keyboard_instance{
-	bool rawmode;
-};
-
-void *keyboard_open(void *id){
-	keyboard_instance *ret=new keyboard_instance();
-	ret->rawmode=false;
-	return (void*)ret;
-}
-
-bool keyboard_close(void *instance){
-	delete (keyboard_instance*)instance;
-	return true;
 }
 
 bool keyread_lockcheck(void *p){
 	return keyboard_buffer.count() >= *(size_t*)p;
 }
 
-size_t keyboard_read(void *instance, size_t bytes, char *cbuf){
+size_t keyboard_read(btos_api::hwpnp::IPS2Bus *bus, size_t index, size_t bytes, char *cbuf){
 	if((bytes % sizeof(uint32_t))) return 0;
 	size_t values = bytes / sizeof(uint32_t);
 	uint32_t *buf=(uint32_t*)cbuf;
@@ -186,77 +165,83 @@ size_t keyboard_read(void *instance, size_t bytes, char *cbuf){
 	return bytes;
 }
 
-size_t keyboard_write(void *instance, size_t bytes, char *buf){
-	return 0;
-}
-
-bt_filesize_t keyboard_seek(void *instance, bt_filesize_t pos, uint32_t flags){
-	return 0;
-}
-
-int keyboard_ioctl(void *instance, int fn, size_t bytes, char *buf){
-	return 0;
-}
-
-int keyboard_type(void*){
-	return driver_types::IN_KEYBOARD;
-}
-
-char *keyboard_desc(void*){
-	return (char*)"PS/2 keyboard.";
-}
-
-drv_driver keyboard_driver={&keyboard_open, &keyboard_close, &keyboard_read, &keyboard_write, &keyboard_seek,
-&keyboard_ioctl, &keyboard_type, &keyboard_desc};
-
-void init_keyboard(uint8_t kchannel){
-	channel=kchannel;
+void init_keyboard(btos_api::hwpnp::IPS2Bus *bus, size_t index){
+	auto busLock = bus->GetLock();
 	init_lock(&buf_lock);
 	layout=us_keyboard_layout;
 	capskeys=us_keyboard_capskeys;
 	numkeys=us_keyboard_numkeys;
 	input_available=false;
-	if(channel==1){
-		dbgout("PS2: Keyboard on channel 1.\n");
-		irq=Port1IRQ;
-		ps2_write_command(PS2_Command::EnablePort1);
-		write_device=&ps2_write_port1;
-
-	}else{
-		dbgout("PS2: Keyboard on channel 2.\n");
-		irq=Port2IRQ;
-		ps2_write_command(PS2_Command::EnablePort2);
-		write_device=&ps2_write_port2;
-	}
-	write_device(Device_Command::Reset);
-	write_device(Device_Command::SetDefaults);
-	write_device(Device_Command::DisableScanning);
-	write_device(Device_Command::GetSetScanCode);
-	ps2_write_data(0x01);
-	write_device(Device_Command::GetSetScanCode);
-	ps2_write_data(0x00);
+	irq = bus->GetIRQ(index);
+	bus->EnableDevice(index);
+	bus->WritePort(index, Device_Command::Reset);
+	bus->WritePort(index, Device_Command::SetDefaults);
+	bus->WritePort(index, Device_Command::DisableScanning);
+	bus->WritePort(index, Device_Command::GetSetScanCode);
+	bus->WriteData(0x01);
+	bus->WritePort(index, Device_Command::GetSetScanCode);
+	bus->WriteData(0x00);
 	uint8_t byte = 0xFA;
-	while(byte == 0xFA) byte = ps2_read_data();
+	while(byte == 0xFA) byte = bus->ReadData();
 	dbgpf("PS2: Scan set: %x\n", byte);
 	if(byte == 0x02 || byte == 0x41){
-		if(channel == 1){
+		if(irq == Port1IRQ){
 			dbgpf("PS2: Keyboard does not support scan set 1. Re-enabling translation.\n");
 			dbgout("PS2: Read config\n");
-			ps2_write_command(PS2_Command::ReadRAM);
-			uint8_t config=ps2_read_data();
+			bus->WriteCommand(PS2_Command::ReadRAM);
+			uint8_t config=bus->ReadData();
 			dbgpf("PS2: Config: %x\n", (int)config);
 			config |= (1 << 6);
 			dbgout("PS2: Write config\n");
-			ps2_write_command(PS2_Command::WriteRAM);
-			ps2_write_data(config);
+			bus->WriteCommand(PS2_Command::WriteRAM);
+			bus->WriteData(config);
 		}else{
 			panic("(PS2) Keyboard does not support scan set 1 and cannot be translated.");
 		}
 	}
-	write_device(Device_Command::EnableScanning);
+	bus->WritePort(index, Device_Command::EnableScanning);
 	handle_irq(irq, &keyboard_handler);
 	keyboard_thread_id=new_thread(&keyboard_thread, NULL);
-	add_device("KEYBD", &keyboard_driver, NULL);
 	unmask_irq(irq);
-	ps2_clear_data();
+	bus->ClearData();
+}
+
+PS2KeyboardDevice::PS2KeyboardDevice(btos_api::hwpnp::IPS2Bus *b, size_t i) : bus(b), index(i), node(this) {
+	theBus = bus;
+	theIndex = index;
+	init_keyboard(bus, index);
+}
+
+btos_api::hwpnp::DeviceID PS2KeyboardDevice::GetID(){
+	return PS2KeyboardDeviceID;
+}
+
+const char *PS2KeyboardDevice::GetDescription(){
+	return "PS/2 keyboard";
+}
+
+size_t PS2KeyboardDevice::GetSubDeviceCount(){
+	return 0;
+}
+
+btos_api::hwpnp::DeviceID PS2KeyboardDevice::GetSubDevice(size_t){
+	return btos_api::hwpnp::NullDeviceID;
+}
+
+btos_api::hwpnp::IDriver *PS2KeyboardDevice::GetDriver(){
+	return GetPS2KeyboardDriver();
+}
+
+btos_api::hwpnp::IDeviceNode *PS2KeyboardDevice::GetDeviceNode(){
+	return &node;
+}
+	
+size_t PS2KeyboardDevice::Read(size_t bytes, char *buf){
+	return keyboard_read(bus, index, bytes, buf);
+}
+
+PS2KeyboardDeviceNode::PS2KeyboardDeviceNode(btos_api::hwpnp::IKeyboard *d) : btos_api::hwpnp::KeyboardDeviceNode(d) {}
+
+const char *PS2KeyboardDeviceNode::GetBaseName(){
+	return "KEYBD";
 }

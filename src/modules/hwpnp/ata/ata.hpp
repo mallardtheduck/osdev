@@ -12,8 +12,8 @@ static const btos_api::hwpnp::DeviceID PCATADeviceID = {
 		0, 0, 0, 0, 2
 };
 
-static const btos_api::hwpnp::DeviceID HDDDeviceID = {btos_api::hwpnp::PNPBUS::ATA, 0, 0, 0, 0, btos_api::hwpnp::ATADeviceType::HDD};
-static const btos_api::hwpnp::DeviceID ATAPIDeviceID = {btos_api::hwpnp::PNPBUS::ATA, 0, 0, 0, 0, btos_api::hwpnp::ATADeviceType::ATAPI};
+static const btos_api::hwpnp::DeviceID HDDDeviceID = {btos_api::hwpnp::PNPBUS::ATA, 0, 0, 0, 0, btos_api::hwpnp::ATADeviceClass::HDD};
+static const btos_api::hwpnp::DeviceID ATAPIDeviceID = {btos_api::hwpnp::PNPBUS::ATA, 0, 0, 0, 0, btos_api::hwpnp::ATADeviceClass::ATAPI};
 
 static const btos_api::hwpnp::DeviceID VolumeDeviceID = {btos_api::hwpnp::PNPBUS::Volume, 0, 0, 0, 0, 1};
 static const btos_api::hwpnp::DeviceID PartitionDeviceID = {btos_api::hwpnp::PNPBUS::Partition, 0, 0, 0, 0, 1};
