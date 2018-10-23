@@ -196,8 +196,14 @@ btos_api::hwpnp::IDeviceNode *ATAPIDevice::GetDeviceNode(){
 }
 	
 bool ATAPIDevice::ReadSector(uint64_t lba, uint8_t *buf){
+	if(!cache){
+		if(btos_api::IsCacheLoaded()) cache = btos_api::CreateCache(ATAPI_SECTOR_SIZE, 1024);
+	}
+	if(cache && cache->Retrieve(lba, (char*)buf)) return true;
 	auto lock = bus->GetLock();
-	return atapi_device_read(bus, index, lba, buf) == ATAPI_SECTOR_SIZE;
+	auto ret = atapi_device_read(bus, index, lba, buf) == ATAPI_SECTOR_SIZE;
+	if(ret && cache) cache->Store(lba, (char*)buf);
+	return ret;
 }
 
 bool ATAPIDevice::WriteSector(uint64_t, const uint8_t*){

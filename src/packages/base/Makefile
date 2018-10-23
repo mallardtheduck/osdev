@@ -71,6 +71,7 @@ import-files:=\
  data/btos/lib/SDL2_image.ell \
  data/btos/lib/SDL2_ttf.ell \
  data/btos/lib/SDL2_widgets.ell \
+ data/btos/system/cache.sys \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -289,6 +290,9 @@ data/btos/lib/SDL2_image.ell: ../../3rdparty/install/btos/lib/SDL2_image.ell
 	cp $< $@
 
 data/btos/lib/SDL2_widgets.ell: ../../3rdparty/install/btos/lib/SDL2_widgets.ell
+	cp $< $@
+	
+data/btos/system/cache.sys: ../../modules/cache/cache.sys
 	cp $< $@
 
 create.directories: Makefile

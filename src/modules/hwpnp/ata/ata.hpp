@@ -6,6 +6,7 @@
 #include <dev/hwpnp/hdd.hpp>
 #include <dev/hwpnp/optical.hpp>
 #include <util/ministl.hpp>
+#include <module/cache.hpp>
 
 static const btos_api::hwpnp::DeviceID PCATADeviceID = {
 		btos_api::hwpnp::PNPBUS::PCBUS,
@@ -183,10 +184,6 @@ int ata_wait(btos_api::hwpnp::IATABus *bus, size_t index, int advanced);
 #define ATA_SECTOR_SIZE 512
 #define ATAPI_SECTOR_SIZE 2048
 
-void cache_add(size_t deviceid, size_t sector, char *data);
-bool cache_get(size_t deviceid, size_t sector, char *data);
-void cache_drop(size_t deviceid, size_t sector);
-
 void preinit_dma();
 //bool init_dma();
 //void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf);
@@ -248,6 +245,7 @@ private:
 	btos_api::hwpnp::IATABus *bus;
 	size_t index;
 	ATAHDDDeviceNode node;
+	btos_api::ICache *cache = nullptr;
 public:
 	ATAHDDDevice(btos_api::hwpnp::IATABus *b, size_t i) : bus(b), index(i), node(this) {}
 
@@ -281,6 +279,7 @@ private:
 	size_t index;
 	ATAPIDeviceNode node;
 	atapi_capacity capacity;
+	btos_api::ICache *cache = nullptr;
 public:
 	ATAPIDevice(btos_api::hwpnp::IATABus *b, size_t i);
 
