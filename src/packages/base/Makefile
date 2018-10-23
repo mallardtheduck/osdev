@@ -99,7 +99,7 @@ data/btos/cmd/spawn.elx: ../../user/system/spawn/spawn.elx create.directories
 data/btos/cmd/kill.elx: ../../user/cmds/kill/kill.elx create.directories
 	cp $< $@
 
-data/btos/drivers/pci.sys: ../../modules/pci/pci.sys create.directories
+data/btos/drivers/pci.sys: ../../modules/hwpnp/pci/pci.sys create.directories
 	cp $< $@
 
 data/btos/cmd/load.elx: ../../user/cmds/load/load.elx create.directories

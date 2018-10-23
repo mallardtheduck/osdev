@@ -1,5 +1,4 @@
 #include "ata.hpp"
-#include <dev/pci.h>
 #include <util/holdlock.hpp>
 
 static bool dma_init=false;
