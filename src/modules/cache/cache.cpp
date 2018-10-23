@@ -77,15 +77,18 @@ void Cache::Store(uint64_t id, const char *buf){
 }
 
 bool Cache::Retrieve(uint64_t id, char *buf){
+	bool ret = false;
 	for(auto &e : entries){
-		if(e.id == id){
+		if(!ret && e.id == id){
 			memcpy(buf, e.buf, blockSize);
-			if(e.usage < MaxUsage) ++e.usage;
+			if(e.usage < MaxUsage) e.usage += 5;
 			//dbgpf("CACHE: Retrieved entry for ID: %i\n", (int)id);
-			return true;
+			ret = true;
+		}else{
+			if(e.usage > 0) --e.usage;
 		}
 	}
-	return false;
+	return ret;
 }
 
 void Cache::Drop(uint64_t id){
