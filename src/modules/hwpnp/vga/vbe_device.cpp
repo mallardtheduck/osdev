@@ -208,6 +208,10 @@ int vbe_ioctl(void *instance, int fn, size_t bytes, char *buf){
 		if(bytes == sizeof(bt_vidmode)) {
 			bt_vidmode &vidmode = *(bt_vidmode *) buf;
 			dbgpf("VGA: Request for mode %x\n", vidmode.id);
+			if(vidmode.id == vbe_current_mode){
+				dbgout("VGA: Already in mode. Nothing to do.\n");
+				return 0;
+			}
 			if(is_vbe_mode(vidmode.id)){
 				dbgpf("VGA: Setting VBE mode %x\n", vidmode.id);
 				unmap_fb();

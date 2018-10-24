@@ -320,7 +320,7 @@ void set_mode_03h() {
 	write_attribute(Attribute_Registers::PaletteD, 0x0D);
 	write_attribute(Attribute_Registers::PaletteE, 0x0E);
 	write_attribute(Attribute_Registers::PaletteF, 0x0F);
-	write_attribute(Attribute_Registers::ModeControl, 0x0C);
+	write_attribute(Attribute_Registers::ModeControl, 0x04);
 	write_attribute(Attribute_Registers::OverscanColour, 0x00);
 	write_attribute(Attribute_Registers::ColourPlaneEnable, 0x0F);
 	write_attribute(Attribute_Registers::PixelPanning, 0x08);

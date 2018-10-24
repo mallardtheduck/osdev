@@ -1,4 +1,4 @@
-MODULES := stdpc pcrtc ata ps2 pci
+MODULES := stdpc pcrtc ata ps2 pci vga
 
 all: dummy.file
 	for dir in $(MODULES); do \

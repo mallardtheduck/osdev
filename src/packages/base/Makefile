@@ -109,7 +109,7 @@ data/btos/cmd/load.elx: ../../user/cmds/load/load.elx create.directories
 data/btos/cmd/mount.elx: ../../user/cmds/mount/mount.elx create.directories
 	cp $< $@
 
-data/btos/drivers/vga.sys: ../../modules/vga/vga.sys create.directories
+data/btos/drivers/vga.sys: ../../modules/hwpnp/vga/vga.sys create.directories
 	cp $< $@
 
 data/btos/bin/debug.elx: ../../user/bin/debug/debug.elx create.directories
