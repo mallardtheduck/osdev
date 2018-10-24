@@ -3,6 +3,7 @@
 #include "ministl.hpp"
 #include "locks.hpp"
 #include "strutil.hpp"
+#include <util/asprintf.h>
 
 map<string, fs_mountpoint> *fs_mounts;
 map<string, fs_driver> *fs_drivers;
@@ -14,21 +15,19 @@ static const fs_driver invalid_fs_driver={false, "", false, NULL, NULL, NULL, NU
 static const fs_mountpoint invalid_mountpoint={false, "", "", invalid_fs_driver, NULL};
 
 char *fs_mounts_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# name, device, filesystem\n");
+	char *buffer=nullptr;
+	asprintf(&buffer, "# name, device, filesystem\n");
 	for(map<string, fs_mountpoint>::iterator i=fs_mounts->begin(); i!=fs_mounts->end(); ++i){
-		sprintf(&buffer[strlen(buffer)], "%s, %s, %s\n", i->first.c_str(), i->second.device, i->second.driver.name);
+		reasprintf_append(&buffer, "%s, %s, %s\n", i->first.c_str(), i->second.device, i->second.driver.name);
 	}
 	return buffer;
 }
 
 char *fs_registered_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# name, addr\n");
+	char *buffer=nullptr;
+	asprintf(&buffer, "# name, addr\n");
 	for(map<string, fs_driver>::iterator i=fs_drivers->begin(); i!=fs_drivers->end(); ++i){
-		sprintf(&buffer[strlen(buffer)], "%s, %p\n", i->first.c_str(), &i->second);
+		reasprintf_append(&buffer, "%s, %p\n", i->first.c_str(), &i->second);
 	}
 	return buffer;
 }

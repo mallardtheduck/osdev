@@ -1,4 +1,5 @@
 #include "rtc.hpp"
+#include <util/asprintf.h>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -16,14 +17,6 @@ uint64_t last_resync = 0;
 uint32_t resync_flag = 0;
 
 extern char rtc_irq_handler;
-
-size_t strlen(const char* str){
-	size_t ret = 0;
-	while ( str[ret] != 0 )
-		ret++;
-	return ret;
-}
-
 
 uint8_t read_cmos(int reg){
 	outb(RTC_Index, reg);
@@ -78,9 +71,9 @@ datetime read_rtc(){
 }
 
 char *rtc_infofs(){
-	char *buf=(char*)malloc(128);
+	char *buf=nullptr;
 	datetime dt=current_datetime();
-	sprintf(buf, FORMAT "\n", dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
+	asprintf(&buf, FORMAT "\n", dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
 	return buf;
 }
 
@@ -100,9 +93,8 @@ void ui64toa(uint64_t n, char s[]){
 
 char *msec_infofs(){
 	dbgpf("RTC: %i\n", (int)get_msecs());
-	char *buf=(char*)malloc(128);
-	ui64toa(get_msecs(), buf);
-	sprintf(&buf[strlen(buf)], "\n");
+	char *buf=nullptr;
+	asprintf(&buf, "%llu\n", get_msecs());
 	return buf;
 }
 

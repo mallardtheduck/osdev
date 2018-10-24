@@ -1,17 +1,17 @@
 #include "hwpnp_internal.hpp"
 #include "../ministl.hpp"
+#include <util/asprintf.h>
 
 using namespace btos_api::hwpnp;
 
 vector<IDriver*> *drivers;
 
 static char *pnp_drivers_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# id, devid, description, priority\n");
+	char *buffer=nullptr;
+	asprintf(&buffer, "# id, devid, description, priority\n");
 	for(auto d : *drivers){
 		auto devid = d->GetDeviceID();
-		sprintf(&buffer[strlen(buffer)], "%p, %s, \"%s\", %i\n", 
+		reasprintf_append(&buffer, "%p, %s, \"%s\", %i\n", 
 			d, deviceIDtoString(devid).c_str(),
 			d->GetDescription(),
 			d->GetPriority()

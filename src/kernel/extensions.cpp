@@ -1,14 +1,14 @@
 #include "kernel.hpp"
 #include "ministl.hpp"
+#include <util/asprintf.h>
 
 static map<uint16_t, module_api::kernel_extension*> *extensions;
 
 char *extensions_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# id, name\n");
+	char *buffer=nullptr;
+	asprintf(&buffer, "# id, name\n");
 	for(map<uint16_t, module_api::kernel_extension*>::iterator i=extensions->begin(); i!=extensions->end(); ++i){
-		sprintf(&buffer[strlen(buffer)], "%i, %s\n", (int)i->first, i->second->name);
+		reasprintf_append(&buffer, "%i, %s\n", (int)i->first, i->second->name);
 	}
 	return buffer;
 }

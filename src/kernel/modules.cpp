@@ -1,6 +1,7 @@
 #include "kernel.hpp"
 #include "locks.hpp"
 #include "ministl.hpp"
+#include <util/asprintf.h>
 
 lock mod_lock;
 
@@ -14,11 +15,10 @@ struct kernel_module{
 vector<kernel_module> *loaded_modules;
 
 char *modules_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# address, path, parameters\n");
+	char *buffer=nullptr;
+	asprintf(&buffer, "# address, path, parameters\n");
 	for(size_t i=0; i<loaded_modules->size(); ++i){
-		sprintf(&buffer[strlen(buffer)], "%p, \"%s\", \"%s\"\n", (*loaded_modules)[i].elf.mem.aligned, (*loaded_modules)[i].filename.c_str(),
+		reasprintf_append(&buffer, "%p, \"%s\", \"%s\"\n", (*loaded_modules)[i].elf.mem.aligned, (*loaded_modules)[i].filename.c_str(),
 			(*loaded_modules)[i].params.c_str());
 	}
 	return buffer;

@@ -2,6 +2,7 @@
 #include "ministl.hpp"
 #include "string.hpp"
 #include "locks.hpp"
+#include <util/asprintf.h>
 
 lock drv_lock;
 map<string, drv_device>* devices;
@@ -13,12 +14,11 @@ struct drv_instance{
 };
 
 char *drv_devices_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# name, type, description\n");
+	char *buffer=nullptr;
+	asprintf(&buffer, "# name, type, description\n");
 	hold_lock hl(drv_lock);
 	for(map<string, drv_device>::iterator i=devices->begin(); i!=devices->end(); ++i){
-		sprintf(&buffer[strlen(buffer)], "%s, %x, \"%s\"\n", i->first.c_str(), i->second.driver.type(i->second.id), i->second.driver.desc(i->second.id));
+		reasprintf_append(&buffer, "%s, %x, \"%s\"\n", i->first.c_str(), i->second.driver.type(i->second.id), i->second.driver.desc(i->second.id));
 	}
 	return buffer;
 }

@@ -131,6 +131,5 @@ public:
 
 char *terms_infofs();
 extern vterm_list *terminals;
-size_t strlen(const char *str);
 
 #endif

@@ -55,7 +55,7 @@ inline static int reasprintf_append(char **strp, const char *fmt, ...){
 }
 
 #ifdef printf_is_macro
-#pragma push_macro("printf")
+#pragma pop_macro("printf")
 #undef printf_is_macro
 #endif
 

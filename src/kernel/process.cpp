@@ -4,6 +4,7 @@
 #include "string.hpp"
 #include "locks.hpp"
 #include "strutil.hpp"
+#include <util/asprintf.h>
 
 static const uint32_t default_userspace_priority=100;
 
@@ -67,14 +68,13 @@ proc_process *proc_get(pid_t pid);
 proc_process *proc_get_lock(pid_t pid);
 
 char *proc_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# PID, path, memory, parent\n");
+	char *buffer=nullptr;
+	asprintf(&buffer, "# PID, path, memory, parent\n");
 	size_t kmem=MM2::current_pagedir->get_kernel_used();
 	{hold_lock hl(proc_lock);
 		for(size_t i=0; i<proc_processes->size(); ++i){
             proc_process *cur=(*proc_processes)[i];
-			sprintf(&buffer[strlen(buffer)],"%i, \"%s\", %i, %i\n", (int)(cur->pid), cur->name.c_str(),
+			reasprintf_append(&buffer, "%i, \"%s\", %i, %i\n", (int)(cur->pid), cur->name.c_str(),
 				(int)((cur->pid)?cur->pagedir->get_user_used():kmem), (int)(cur->parent));
 		}
     }
@@ -82,20 +82,19 @@ char *proc_infofs(){
 }
 
 char *env_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# name, value, flags\n");
+	char *buffer=nullptr;
+	asprintf(&buffer, "# name, value, flags\n");
     {
         hold_lock hl(env_lock);
 		env_t &kenv=proc_get(0)->environment;
 		for(env_t::iterator i = kenv.begin(); i != kenv.end(); ++i){
 			if(i->second.flags & proc_env_flags::Global){
-				sprintf(&buffer[strlen(buffer)], "\"%s\", \"%s\", %x\n", i->first.c_str(), i->second.value.c_str(), (int) i->second.flags);
+				reasprintf_append(&buffer, "\"%s\", \"%s\", %x\n", i->first.c_str(), i->second.value.c_str(), (int) i->second.flags);
 			}
 		}
         for (env_t::iterator i = proc_current_process->environment.begin(); i != proc_current_process->environment.end(); ++i) {
             if (!(i->second.flags & proc_env_flags::Private)) {
-                sprintf(&buffer[strlen(buffer)], "\"%s\", \"%s\", %x\n", i->first.c_str(), i->second.value.c_str(), (int) i->second.flags);
+                reasprintf_append(&buffer, "\"%s\", \"%s\", %x\n", i->first.c_str(), i->second.value.c_str(), (int) i->second.flags);
             }
         }
     }

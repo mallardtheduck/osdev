@@ -4,6 +4,7 @@
 #include "api.hpp"
 #include "terminal.hpp"
 #include "device.hpp"
+#include <util/asprintf.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b)) 
 

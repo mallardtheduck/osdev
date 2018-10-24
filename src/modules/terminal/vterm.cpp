@@ -4,6 +4,7 @@
 #include "vterm.hpp"
 #include "terminal.hpp"
 #include "device.hpp"
+#include <util/asprintf.h>
 
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 
@@ -17,12 +18,6 @@ struct active_blockcheck_params{
 
 bool event_blockcheck(void *p);
 bool active_blockcheck(void *p);
-
-size_t strlen(const char *str){
-	size_t len;
-    for (len = 0; str[len]; (len)++);
-	return len;
-}
 
 vterm::vterm(uint64_t nid, i_backend *back)
 {
@@ -93,7 +88,7 @@ void vterm::putchar(char c)
 
 void vterm::putstring(char *s)
 {
-	for(size_t i=0; i<strlen(s); ++i) {
+	for(int i=0; i<strlen(s); ++i) {
 		putchar(s[i]);
 	}
 }
@@ -939,12 +934,11 @@ size_t vterm_list::get_count()
 
 char *terms_infofs()
 {
-	char *buffer=(char*)malloc(4096);
+	char *buffer=nullptr;
 	vterm_list *t=terminals;
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# ID, title, backend\n");
+	asprintf(&buffer, "# ID, title, backend\n");
 	for(size_t i=0; i<t->terminals.size(); ++i) {
-		sprintf(&buffer[strlen(buffer)], "%i, \"%s\", %p\n", (int)t->terminals[i]->get_id(), t->terminals[i]->get_title(), t->terminals[i]->get_backend());
+		reasprintf_append(&buffer, "%i, \"%s\", %p\n", (int)t->terminals[i]->get_id(), t->terminals[i]->get_title(), t->terminals[i]->get_backend());
 	}
 	return buffer;
 }
