@@ -209,6 +209,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&panic,
 	&malloc,
 	&free,
+	&realloc,
 	&memset,
 	&mod_memcpy,
 	&mod_memmove,
@@ -227,7 +228,8 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&mod_release_lock,
 
 	&dbgout,
-	&sprintf,
+	&vsprintf,
+	&vsnprintf,
 
 	&new_thread,
 	&sch_block,

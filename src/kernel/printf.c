@@ -450,7 +450,7 @@ struct _vsnprintf_putcf_data
 static void _vsnprintf_putcf(void *p, char c)
 {
   struct _vsnprintf_putcf_data *data = (struct _vsnprintf_putcf_data*)p;
-  if (data->num_chars < data->dest_capacity)
+  if (data->dest && data->num_chars < data->dest_capacity)
     data->dest[data->num_chars] = c;
   data->num_chars ++;
 }
@@ -459,18 +459,17 @@ int tfp_vsnprintf(char *str, size_t size, const char *format, va_list ap)
 {
   struct _vsnprintf_putcf_data data;
 
-  if (size < 1)
-    return 0;
-
   data.dest = str;
   data.dest_capacity = size-1;
   data.num_chars = 0;
   tfp_format(&data, _vsnprintf_putcf, format, ap);
 
-  if (data.num_chars < data.dest_capacity)
-    data.dest[data.num_chars] = '\0';
-  else
-    data.dest[data.dest_capacity] = '\0';
+  if(size > 0){
+	  if (data.num_chars < data.dest_capacity)
+	    data.dest[data.num_chars] = '\0';
+	  else
+	    data.dest[data.dest_capacity] = '\0';
+  }
 
   return data.num_chars;
 }

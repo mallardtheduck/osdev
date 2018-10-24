@@ -51,6 +51,7 @@ struct syscall_table{
 	void (*panic)(char *msg);
 	void *(*malloc)(size_t bytes);
 	void (*free)(void *ptr);
+	void *(*realloc)(void *ptr, size_t new_size);
 	void *(*memset)(void* ptr, int value, size_t num);
 	void (*memcpy)(void *dst, const void *src, size_t size);
 	void (*memmove)(void *dst, void *src, size_t size);
@@ -69,7 +70,8 @@ struct syscall_table{
 	void (*release_lock)(lock *l);
 
 	void (*dbgout)(const char *msg);
-	int (*sprintf)(char *buf, const char *fmt, ...) __attribute__ ((format (__printf__, 2, 3)));
+	int (*vsprintf)(char *str, const char *fmt, va_list ap);
+	int (*vsnprintf)(char *str, size_t size, const char *fmt, va_list ap);
 
 	thread_id_t (*new_thread)(thread_func entry, void *param);
 	void (*block)();

@@ -1,6 +1,7 @@
 #include <btos_module.h>
 #include <module/cache.hpp>
 #include <util/ministl.hpp>
+#include <util/asprintf.h>
 
 USE_SYSCALL_TABLE;
 USE_DEBUG_PRINTF;
@@ -35,18 +36,11 @@ public:
 
 vector<Cache*> *caches;
 
-static size_t strlen(const char *str){
-	size_t len;
-    for (len = 0; str[len]; (len)++);
-	return len;
-}
-
 static char *caches_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# id, blockSize, maxBlocks, hits, misses\n");
+	char *buffer = nullptr;
+	asprintf(&buffer, "# id, blockSize, maxBlocks, hits, misses\n");
 	for(auto c : *caches){
-		sprintf(&buffer[strlen(buffer)], "%p, %zu, %zu, %llu, %llu\n", 
+		reasprintf_append(&buffer, "%p, %zu, %zu, %llu, %llu\n", 
 			c, c->blockSize, c->maxBlocks, c->hits, c->misses
 		);
 	}

@@ -1,5 +1,6 @@
 #include "hwpnp_internal.hpp"
 #include "../ministl.hpp"
+#include <util/asprintf.h>
 
 using namespace btos_api::hwpnp;
 
@@ -20,10 +21,9 @@ static vector<KnownDevice> *known_devices;
 static map<IDeviceNode*, string> *device_nodes;
 
 static char *pnp_devices_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# id, parent, index, devid, type, description, driver, node\n");
-	sprintf(&buffer[strlen(buffer)], "%p, %p, %i, %s, %x, \"%s\", %p, %s\n",
+	char *buffer=nullptr;
+	asprintf(&buffer, "# id, parent, index, devid, type, description, driver, node\n");
+	reasprintf_append(&buffer, "%p, %p, %i, %s, %x, \"%s\", %p, %s\n",
 			rootDev, nullptr, 0, deviceIDtoString(rootDev->GetID()).c_str(),
 			rootDev->GetType(),
 			rootDev->GetDescription(),
@@ -37,7 +37,7 @@ static char *pnp_devices_infofs(){
 		if(d.device && (node = d.device->GetDeviceNode())){
 			nodeName = pnp_get_node_name(node);
 		}
-		sprintf(&buffer[strlen(buffer)], "%p, %p, %i, %s, %x, \"%s\", %p, %s\n",
+		reasprintf_append(&buffer, "%p, %p, %i, %s, %x, \"%s\", %p, %s\n",
 			d.device, d.parent, (int)d.index,
 			deviceIDtoString(devid).c_str(),
 			(d.device ? d.device->GetType() : driver_types::UNKNOWN),

@@ -17,8 +17,7 @@ extern char dbgbuf[256];
 #define USE_SYSCALL_TABLE syscall_table *SYSCALL_TABLE
 #define USE_DEBUG_PRINTF char dbgbuf[256]
 
-#define dbgpf(...) do{sprintf(dbgbuf, __VA_ARGS__); dbgout(dbgbuf);}while(false)
-#define sprintf(...) SYSCALL_TABLE->sprintf(__VA_ARGS__)
+#define dbgpf(...) do{snprintf(dbgbuf, 256, __VA_ARGS__); dbgout(dbgbuf);}while(false)
 
 inline static void panic(char *msg){
 	SYSCALL_TABLE->panic(msg);
@@ -28,6 +27,9 @@ inline static void *malloc(size_t bytes){
 }
 inline static void free(void *ptr){
 	SYSCALL_TABLE->free(ptr);
+}
+inline static void *realloc(void *ptr, size_t new_size){
+	return SYSCALL_TABLE->realloc(ptr, new_size);
 }
 inline static void *memset(void *ptr, int value, size_t num){
 	return SYSCALL_TABLE->memset(ptr, value, num);
@@ -86,6 +88,34 @@ inline static void release_lock(lock *l){
 
 inline static void dbgout(char *msg){
 	SYSCALL_TABLE->dbgout(msg);
+}
+
+inline static int vsprintf(char *str, const char *fmt, va_list ap){
+	return SYSCALL_TABLE->vsprintf(str, fmt, ap);
+}
+
+inline static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap){
+	return SYSCALL_TABLE->vsnprintf(str, size, fmt, ap);
+}
+
+inline static int sprintf(char *str, const char *fmt, ...) __attribute__((format (printf, 2, 3)));
+
+inline static int sprintf(char *str, const char *fmt, ...){
+	va_list ap;
+	va_start(ap, fmt);
+	int retval = vsprintf(str, fmt, ap);
+	va_end(ap);
+	return retval;
+}
+
+inline static int snprintf(char *str, size_t size, const char *fmt, ...) __attribute__((format (printf, 3, 4)));
+
+inline static int snprintf(char *str, size_t size, const char *fmt, ...){
+	va_list ap;
+	va_start(ap, fmt);
+	int retval = vsnprintf(str, size, fmt, ap);
+	va_end(ap);
+	return retval;
 }
 
 inline static thread_id_t new_thread(thread_func entry, void *param){
