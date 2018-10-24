@@ -69,7 +69,7 @@ struct syscall_table{
 	void (*release_lock)(lock *l);
 
 	void (*dbgout)(const char *msg);
-	void (*sprintf)(char *buf, const char *fmt, ...) __attribute__ ((format (__printf__, 2, 3)));
+	int (*sprintf)(char *buf, const char *fmt, ...) __attribute__ ((format (__printf__, 2, 3)));
 
 	thread_id_t (*new_thread)(thread_func entry, void *param);
 	void (*block)();

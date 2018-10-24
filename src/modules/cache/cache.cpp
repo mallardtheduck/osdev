@@ -7,7 +7,6 @@ USE_DEBUG_PRINTF;
 USE_PURE_VIRTUAL;
 
 static const size_t MaxCacheSize = 4 * 1024 * 1024; //Max cache: 4MB
-static const size_t MaxUsage = 1024;
 
 class Cache : public btos_api::ICache{
 private:
@@ -16,8 +15,6 @@ private:
 		char *buf;
 		uint32_t usage;
 	};
-	size_t blockSize;
-	size_t maxBlocks;
 	
 	vector<CacheEntry> entries;
 	void Prune();
@@ -28,7 +25,33 @@ public:
 	void Store(uint64_t id, const char *buf);
 	bool Retrieve(uint64_t id, char *buf);
 	void Drop(uint64_t id);
+	
+	size_t blockSize;
+	size_t maxBlocks;
+	
+	uint64_t hits = 0;
+	uint64_t misses = 0;
 };
+
+vector<Cache*> *caches;
+
+static size_t strlen(const char *str){
+	size_t len;
+    for (len = 0; str[len]; (len)++);
+	return len;
+}
+
+static char *caches_infofs(){
+	char *buffer=(char*)malloc(4096);
+	memset(buffer, 0, 4096);
+	sprintf(buffer, "# id, blockSize, maxBlocks, hits, misses\n");
+	for(auto c : *caches){
+		sprintf(&buffer[strlen(buffer)], "%p, %zu, %zu, %llu, %llu\n", 
+			c, c->blockSize, c->maxBlocks, c->hits, c->misses
+		);
+	}
+	return buffer;
+}
 
 Cache::Cache(size_t bS, size_t mB) : blockSize(bS), maxBlocks(mB){
 	if(blockSize * maxBlocks > MaxCacheSize) maxBlocks = MaxCacheSize / blockSize;
@@ -42,7 +65,7 @@ Cache::~Cache(){
 }
 
 void Cache::Prune(){
-	uint32_t min = MaxUsage;
+	uint32_t min = maxBlocks;
 	size_t idx = maxBlocks;
 	char *buf = nullptr;
 	for(size_t i = 0; i < entries.size(); ++i){
@@ -81,13 +104,15 @@ bool Cache::Retrieve(uint64_t id, char *buf){
 	for(auto &e : entries){
 		if(!ret && e.id == id){
 			memcpy(buf, e.buf, blockSize);
-			if(e.usage < MaxUsage) e.usage += 5;
+			e.usage = maxBlocks;
 			//dbgpf("CACHE: Retrieved entry for ID: %i\n", (int)id);
-			ret = true;
+			++hits;
 		}else{
 			if(e.usage > 0) --e.usage;
 		}
 	}
+	if(ret) ++hits;
+	else ++misses;
 	return ret;
 }
 
@@ -103,11 +128,15 @@ void Cache::Drop(uint64_t id){
 }
 
 btos_api::ICache *CreateCache(size_t blockSize, size_t maxBlocks){
-	return new Cache(blockSize, maxBlocks);
+	auto ret = new Cache(blockSize, maxBlocks);
+	caches->push_back(ret);
+	return ret;
 }
 
 void DestroyCache(btos_api::ICache *cache){
 	delete (Cache*)cache;
+	auto i = caches->find((Cache*)cache);
+	if(i != caches->npos) caches->erase(i);
 }
 
 btos_api::CacheCallTable calltable = {&CreateCache, &DestroyCache};
@@ -116,6 +145,8 @@ kernel_extension cache_extension{"CACHE", (void*)&calltable, nullptr};
 
 extern "C" int module_main(syscall_table *systbl, char */*params*/){
 	SYSCALL_TABLE=systbl;
+	caches = new vector<Cache*>();
 	add_extension(&cache_extension);
+	infofs_register("CACHESTATS", &caches_infofs);
 	return 0;
 }
