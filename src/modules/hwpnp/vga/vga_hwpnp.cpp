@@ -2,13 +2,25 @@
 #include <dev/hwpnp/video.hpp>
 #include "vga.hpp"
 #include "vbe.hpp"
+#include "device.hpp"
+#include "modes.hpp"
+#include "ops.hpp"
+
+USE_PURE_VIRTUAL;
+USE_STATIC_INIT;
 
 static const btos_api::hwpnp::DeviceID VGADeviceID = {
 	btos_api::hwpnp::PNPBUS::PCI, 0, 0, 0, 0, 0x0300
 };
 
+btos_api::hwpnp::IDriver* GetVGADriver();
+
 class VGAVideoDevice : public btos_api::hwpnp::IVideo{
+private:
+	btos_api::hwpnp::VideoDeviceNode *node;
 public:
+	VGAVideoDevice();
+	
 	btos_api::hwpnp::DeviceID GetID();
 	const char *GetDescription();
 	size_t GetSubDeviceCount();
@@ -16,8 +28,9 @@ public:
 	btos_api::hwpnp::IDriver *GetDriver();
 	btos_api::hwpnp::IDeviceNode *GetDeviceNode();
 	
-	size_t WriteFrameBuffer(size_t pos, size_t len, const uint8_t *buf);
-	size_t ReadFrameBuffer(size_t pos, size_t len, uint8_t *buf);
+	size_t WriteFrameBuffer(size_t pos, size_t len, const uint8_t *buf, bt_vid_text_access_mode::Enum textmode, size_t &newpos);
+	size_t ReadFrameBuffer(size_t pos, size_t len, uint8_t *buf, bt_vid_text_access_mode::Enum textmode, size_t &newpos);
+	size_t GetFrameBufferSize(bt_vid_text_access_mode::Enum textmode);
 		
 	size_t GetModeCount();
 	bt_vidmode GetMode(size_t idx);
@@ -40,7 +53,7 @@ btos_api::hwpnp::DeviceID VGAVideoDevice::GetID(){
 }
 
 const char *VGAVideoDevice::GetDescription(){
-	return "VGA/VESA VBE display device";
+	return "VGA/VESA VBE display";
 }
 
 size_t VGAVideoDevice::GetSubDeviceCount(){
@@ -52,43 +65,75 @@ btos_api::hwpnp::DeviceID VGAVideoDevice::GetSubDevice(size_t){
 }
 
 btos_api::hwpnp::IDriver *VGAVideoDevice::GetDriver(){
-	return nullptr;
+	return GetVGADriver();
 }
 
 btos_api::hwpnp::IDeviceNode *VGAVideoDevice::GetDeviceNode(){
-	return nullptr;
+	return node;
 }
 
-size_t VGAVideoDevice::WriteFrameBuffer(size_t pos, size_t len, const uint8_t *buf){
+size_t VGAVideoDevice::WriteFrameBuffer(size_t pos, size_t len, const uint8_t *buf, bt_vid_text_access_mode::Enum textmode, size_t &newpos){
 	if(is_vbe_mode()){
 		if(pos + len > fb_sz) len = (fb_sz - pos);
 		memcpy(&fb[pos], buf, len);
+		newpos = pos + len;
 		return len;
 	}else{
 		vga_instance inst;
 		inst.pos = pos;
+		inst.mode = textmode;
 		if(current_mode->vidmode.textmode){
-			return text_write(&inst, len, buf);
+			text_seek(&inst, pos, FS_Set);
+			size_t ret = text_write(&inst, len, (char*)buf);
+			newpos = inst.pos;
+			return ret;
 		}else {
-			return graphics_write(&inst, len, buf);
+			size_t ret = graphics_write(&inst, len, (char*)buf);
+			newpos = inst.pos;
+			return ret;
 		}
 	}	
 }
 
-size_t VGAVideoDevice::ReadFrameBuffer(size_t pos, size_t len, uint8_t *buf){
+size_t VGAVideoDevice::ReadFrameBuffer(size_t pos, size_t len, uint8_t *buf, bt_vid_text_access_mode::Enum textmode, size_t &newpos){
 	if(is_vbe_mode()){
 		if(pos + len > fb_sz) len = (fb_sz - pos);
-		memcpy(buf, &fb[inst->pos], len);
+		memcpy(buf, &fb[pos], len);
+		newpos = pos + len;
 		return len;
 	}else{
 		vga_instance inst;
 		inst.pos = pos;
+		inst.mode = textmode;
 		if(current_mode->vidmode.textmode){
-			return text_read(inst, bytes, buf);
+			text_seek(&inst, pos, FS_Set);
+			size_t ret = text_read(&inst, len, (char*)buf);
+			newpos = inst.pos;
+			return ret;
 		}else{
-			return graphics_read(inst, bytes, buf);
+			size_t ret = graphics_read(&inst, len, (char*)buf);
+			newpos = inst.pos;
+			return ret;
 		}
 	}	
+}
+
+size_t VGAVideoDevice::GetFrameBufferSize(bt_vid_text_access_mode::Enum textmode){
+	if(is_vbe_mode()){
+		return fb_sz;
+	}else{
+		vga_instance inst;
+		inst.pos = 0;
+		inst.mode = textmode;
+		if(current_mode->vidmode.textmode){
+			size_t cpos = text_seek(&inst, 0, FS_Relative);
+			size_t ret = text_seek(&inst, 0, FS_Backwards);
+			text_seek(&inst, cpos, FS_Set);
+			return ret;
+		}else {
+			return graphics_seek(&inst, 0, FS_Backwards);
+		}
+	}
 }
 		
 size_t VGAVideoDevice::GetModeCount(){
@@ -97,10 +142,10 @@ size_t VGAVideoDevice::GetModeCount(){
 
 bt_vidmode VGAVideoDevice::GetMode(size_t idx){
 	if(idx < vbe_modes->size()){
-		return (*vbe_modes)[idx];
+		return make_vidmode_from_index(idx);
 	}else{
-		index -= vbe_modes->size();
-		bt_vidmode mode = vga_modes[index]->vidmode;
+		idx -= vbe_modes->size();
+		bt_vidmode mode = vga_modes[idx]->vidmode;
 		mode.id += 0xF0000;
 		return mode;
 	}
@@ -108,15 +153,15 @@ bt_vidmode VGAVideoDevice::GetMode(size_t idx){
 
 void VGAVideoDevice::SetMode(const bt_vidmode &mode){
 	dbgpf("VGA: Request for mode %x\n", mode.id);
-	if(vidmode.id == vbe_current_mode){
+	if(mode.id == vbe_current_mode){
 		dbgout("VGA: Already in mode. Nothing to do.\n");
-		return 0;
+		return;
 	}
 	if(is_vbe_mode(mode.id)){
 		dbgpf("VGA: Setting VBE mode %x\n", mode.id);
 		unmap_fb();
 		modeinfo = (*vbe_modes)[mode.id];
-		if(!modeinfo.PhysBasePtr) return 0;
+		if(!modeinfo.PhysBasePtr) return;
 		VBE_SetMode(mode.id, true);
 		vbe_current_mode = mode.id;
 		if(modeinfo.MemoryModel == VBE_MemoryModel::Packed) set_palette();
@@ -139,10 +184,10 @@ void VGAVideoDevice::SetMode(const bt_vidmode &mode){
                 break;
             }
         }
-        if(vgamode==NULL) return 0;
-        current_mode = vga;
+        if(vgamode==NULL) return;
+        current_mode = vgamode;
         vgamode->set_mode();
-		return ret;
+		return;
 	}
 }
 
@@ -187,4 +232,63 @@ void VGAVideoDevice::ClearScreen(){
 	}else{
 		current_mode->set_mode();
 	}
+}
+
+class VGADeviceNode : public btos_api::hwpnp::VideoDeviceNode{
+public:
+	VGADeviceNode(VGAVideoDevice *dev);
+	const char *GetBaseName();
+};
+
+VGAVideoDevice::VGAVideoDevice() : node(new VGADeviceNode(this)) {}
+
+VGADeviceNode::VGADeviceNode(VGAVideoDevice *dev) : btos_api::hwpnp::VideoDeviceNode(dev) {}
+
+const char *VGADeviceNode::GetBaseName(){
+	return "VGA";
+}
+
+class VGADriver : public btos_api::hwpnp::IDriver{
+public:
+	btos_api::hwpnp::DeviceID GetDeviceID();
+	bool IsCompatible(const btos_api::hwpnp::DeviceID &dev);
+	btos_api::hwpnp::IDevice *CreateDevice(const btos_api::hwpnp::DeviceID &dev, btos_api::hwpnp::IDevice *parent, size_t index);
+	const char *GetDescription();
+	void DestroyDevice(btos_api::hwpnp::IDevice *dev);
+	uint32_t GetPriority();
+};
+
+btos_api::hwpnp::DeviceID VGADriver::GetDeviceID(){
+	return VGADeviceID;
+}
+
+bool VGADriver::IsCompatible(const btos_api::hwpnp::DeviceID &dev){
+	if(dev.Bus == VGADeviceID.Bus && dev.Class == VGADeviceID.Class) return true;
+	else return false;
+}
+
+btos_api::hwpnp::IDevice *VGADriver::CreateDevice(const btos_api::hwpnp::DeviceID &dev, btos_api::hwpnp::IDevice *parent, size_t index){
+	return new VGAVideoDevice();
+}
+
+const char *VGADriver::GetDescription(){
+	return "VGA/VESA VBE display driver";
+}
+
+void VGADriver::DestroyDevice(btos_api::hwpnp::IDevice *dev){
+	delete (VGAVideoDevice*)dev;
+}
+
+uint32_t VGADriver::GetPriority(){
+	return btos_api::hwpnp::DriverPriority::Fallback;
+}
+
+static VGADriver theDriver;
+
+btos_api::hwpnp::IDriver* GetVGADriver(){
+	return &theDriver;
+}
+
+void init_hwpnp(){
+	pnp_register_driver(GetVGADriver());
 }

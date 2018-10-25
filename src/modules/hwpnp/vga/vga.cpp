@@ -22,9 +22,8 @@ extern "C" int module_main(syscall_table *systbl, char *params){
 	SYSCALL_TABLE=systbl;
 	//dump_regs();
 	init_modes();
-	if(!vbe_init()){
-		init_device();
-	}
+	vbe_init();
+	init_hwpnp();
 	
 	return 0;
 }

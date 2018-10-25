@@ -8,8 +8,6 @@ struct vga_instance{
     bt_vid_text_access_mode::Enum mode;
 };
 
-extern drv_driver vga_device;
-
-void init_device();
+void init_hwpnp();
 
 #endif

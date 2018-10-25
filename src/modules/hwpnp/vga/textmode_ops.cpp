@@ -7,8 +7,8 @@
 
 static size_t text_row;
 static size_t text_column;
-static uint8_t text_color;
-static bool scrolling_enabled=true;
+uint8_t text_color;
+bool scrolling_enabled=true;
 
 void text_writestring(const char* data);
 void text_poscursor(size_t row, size_t col);
@@ -49,6 +49,7 @@ size_t text_write(vga_instance *inst, size_t bytes, char *buf){
         memcpy(obuf, buf, bytes);
         text_writestring(obuf);
         free(obuf);
+        inst->pos = (text_row * current_mode->vidmode.width) + text_column;
         return bytes;
     }
 }
@@ -86,36 +87,6 @@ size_t text_seek(vga_instance *inst, size_t pos, uint32_t flags){
         inst->pos=cpos;
     }
     return ret;
-}
-
-int text_ioctl(vga_instance *inst, int fn, size_t bytes, char *buf){
-    size_t maxchar=current_mode->vidmode.width * current_mode->vidmode.height * 2;
-    if(fn==bt_vid_ioctl::SetTextColours){
-        if(bytes>=1){
-            text_color=(uint8_t)*buf;
-            return 1;
-        }else return 0;
-    }else if(fn==bt_vid_ioctl::GetTextColours){
-        return text_color;
-    }else if(fn==bt_vid_ioctl::ClearScreen){
-        text_move(0, 0);
-        for(size_t i=0; i<maxchar; ++i){
-            text_putchar(' ');
-        }
-        text_move(0, 0);
-    }else if(fn==bt_vid_ioctl::GetScrolling){
-        return scrolling_enabled;
-    }else if(fn==bt_vid_ioctl::SetScrolling){
-        scrolling_enabled=*(bool*)buf;
-    }else if(fn==bt_vid_ioctl::GetTextAccessMode){
-        return inst->mode;
-    }else if(fn==bt_vid_ioctl::SetTextAccessMode){
-        if(bytes==sizeof(bt_vid_text_access_mode::Enum)) {
-            inst->mode = *(bt_vid_text_access_mode::Enum *) buf;
-            return sizeof(bt_vid_text_access_mode::Enum);
-        }
-    }
-    return 0;
 }
 
 uint8_t make_color(uint8_t fg, uint8_t bg)

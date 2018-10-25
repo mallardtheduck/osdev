@@ -111,6 +111,8 @@ void write_dac(uint8_t index, uint8_t r, uint8_t g, uint8_t b);
 void read_dac(uint8_t index, uint8_t &r, uint8_t &g, uint8_t &b);
 
 static const size_t vga_font_size=(16*256);
+extern uint8_t text_color;
+extern bool scrolling_enabled;
 
 void unlock_crtc();
 void lock_crtc();

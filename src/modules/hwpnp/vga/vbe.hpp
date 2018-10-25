@@ -79,4 +79,18 @@ void VBE_SetMode(uint16_t modeId, bool linear);
 bt_video_palette_entry VBE_GetPaletteEntry(uint8_t index);
 void VBE_SetPalette(void *address);
 
+extern uint32_t vbe_current_mode;
+extern char *fb;
+extern size_t fb_sz;
+extern VBE_ModeInfo modeinfo;
+
+bool is_vbe_mode(uint32_t mode_id = vbe_current_mode);
+bt_vidmode make_vidmode_from_id(uint16_t id);
+void map_fb();
+void unmap_fb();
+void set_palette();
+void vbe_clear_screen();
+bt_video_palette_entry get_palette_entry(uint8_t entry);
+bt_vidmode make_vidmode_from_index(size_t idx);
+
 #endif
