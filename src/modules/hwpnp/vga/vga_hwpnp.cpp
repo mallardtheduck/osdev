@@ -126,10 +126,7 @@ size_t VGAVideoDevice::GetFrameBufferSize(bt_vid_text_access_mode::Enum textmode
 		inst.pos = 0;
 		inst.mode = textmode;
 		if(current_mode->vidmode.textmode){
-			size_t cpos = text_seek(&inst, 0, FS_Relative);
-			size_t ret = text_seek(&inst, 0, FS_Backwards);
-			text_seek(&inst, cpos, FS_Set);
-			return ret;
+			return text_seek(&inst, 0, FS_Backwards);
 		}else {
 			return graphics_seek(&inst, 0, FS_Backwards);
 		}
