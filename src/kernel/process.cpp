@@ -761,6 +761,45 @@ btos_api::bt_msg_header *proc_get_msg(size_t index, pid_t pid){
 	return msg;
 }
 
+btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id, pid_t pid){
+	proc_process *proc = proc_get_lock(pid);
+	if (!proc) return NULL;
+	btos_api::bt_msg_header *msg = nullptr;
+	for(auto &m : proc->msg_q){
+		if(m->id == id){
+			msg = m;
+			break;
+		}
+	}
+	release_lock(proc->ulock);
+	return msg;
+}
+
+btos_api::bt_msg_header *proc_get_msg_match(btos_api::bt_msg_filter &filt, pid_t pid){
+	proc_process *proc = proc_get_lock(pid);
+	if (!proc) return NULL;
+	btos_api::bt_msg_header *msg = nullptr;
+	for(auto &m : proc->msg_q){
+		if(msg_is_match(*m, filt)){
+			msg = m;
+			break;
+		}
+	}
+	release_lock(proc->ulock);
+	return msg;
+}
+
+btos_api::bt_msg_header *proc_get_msg_match_nolock(btos_api::bt_msg_filter &filt, pid_t pid){
+	proc_process *proc = proc_get(pid);
+	if (!proc) return nullptr;
+	for(auto &m : proc->msg_q){
+		if(msg_is_match(*m, filt)){
+			return m;
+		}
+	}
+	return nullptr;
+}
+
 btos_api::bt_msg_header *proc_get_msg_nolock(size_t index, pid_t pid){
 	proc_process *proc = proc_get(pid);
 	if (!proc) return NULL;

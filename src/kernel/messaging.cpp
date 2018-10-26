@@ -82,11 +82,10 @@ uint64_t msg_send(bt_msg_header &msg){
             bt_msg_header *h = proc_get_cur_msg();
     		if(h && h->id == prev.id) h->replied = true;
     		else{
-	            for (size_t i = 0; bt_msg_header *omsg = proc_get_msg(i, msg.from); ++i){
-	                if (omsg->id == prev.id) {
-	                    omsg->replied = true;
-	                }
-	            }
+    			bt_msg_header *omsg  = proc_get_msg_by_id(prev.id, msg.from);
+                if (omsg) {
+                    omsg->replied = true;
+                }
     		}
         }
     }
@@ -155,13 +154,12 @@ static bool msg_get(uint64_t id, bt_msg_header &msg, pid_t pid){
     	msg = *h;
     	return true;
     }else{
-	    for(size_t i = 0; bt_msg_header *cmsg = proc_get_msg(i, pid); ++i){
-	        if(cmsg->id==id){
-	            msg=*cmsg;
-	            return true;
-	        }
-	    }
-	    return false;
+    	auto msg_ptr = proc_get_msg_by_id(id, pid);
+    	if(msg_ptr){
+    		msg = *msg_ptr;
+    		return true;	
+    	}
+    	else return false;
     }
 }
 
@@ -188,15 +186,13 @@ void msg_acknowledge(bt_msg_header &msg, bool set_status){
 			release_msg_header(h);
 			proc_set_cur_msg(NULL);
 		}else{
-			for(size_t i = 0; bt_msg_header *cmsg = proc_get_msg(i, msg.to); ++i){
-				bt_msg_header &header = *cmsg;
-				if(header.id==msg.id){
-					msg = header;
-					found = header.content;
-					proc_remove_msg(cmsg);
-					release_msg_header(cmsg);
-					break;
-				}
+			auto msg_ptr = proc_get_msg_by_id(msg.id, msg.to);
+			if(msg_ptr){
+				bt_msg_header &header = *msg_ptr;
+				msg = header;
+				found = header.content;
+				proc_remove_msg(msg_ptr);
+				release_msg_header(msg_ptr);
 			}
 		}
 	}
@@ -335,7 +331,7 @@ bt_msg_header msg_recv_reply_block(uint64_t msg_id){
     return ret;
 }
 
-static bool msg_is_match(const bt_msg_header &msg, const bt_msg_filter &filter){
+bool msg_is_match(const bt_msg_header &msg, const bt_msg_filter &filter){
 	if(msg.critical) return true;
 	bool ret = true;
 	if((filter.flags & bt_msg_filter_flags::NonReply) && (msg.flags & bt_msg_flags::Reply)) ret = false;
@@ -355,12 +351,10 @@ struct msg_filter_blockcheck_params{
 bool msg_filter_blockcheck(void *p){
 	msg_filter_blockcheck_params &params=*(msg_filter_blockcheck_params*)p;
 	if(get_lock_owner(msg_lock)) return false;
-	for(size_t i = 0; bt_msg_header *cmsg = proc_get_msg_nolock(i, params.pid); ++i){
-		bt_msg_header &msg=*cmsg;
-		if(msg_is_match(msg, params.filter)){
-			proc_set_cur_msg_nolock(cmsg);
-			return true;
-		}
+	bt_msg_header *cmsg = proc_get_msg_match_nolock(params.filter, params.pid);
+	if(cmsg){
+		proc_set_cur_msg_nolock(cmsg);
+		return true;
 	}
 	return false;
 }
@@ -368,13 +362,12 @@ bool msg_filter_blockcheck(void *p){
 bt_msg_header msg_recv_filtered(bt_msg_filter filter, pid_t pid, bool block){
 	hold_lock hl(msg_lock);
 	while(true){
-		for(size_t i = 0; bt_msg_header *cmsg = proc_get_msg(i); ++i){
+		bt_msg_header *cmsg = proc_get_msg_match(filter, pid);
+		if(cmsg){
 			bt_msg_header &msg=*cmsg;
-			if(msg.to == pid && msg_is_match(msg, filter)) {
-				proc_set_cur_msg(cmsg);
-				sch_set_msgstaus(thread_msg_status::Processing);
-				return msg;
-			}
+			proc_set_cur_msg(cmsg);
+			sch_set_msgstaus(thread_msg_status::Processing);
+			return msg;
 		}
 		if(block){
 			release_lock(msg_lock);
