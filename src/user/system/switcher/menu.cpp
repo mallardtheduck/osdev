@@ -45,7 +45,9 @@ Menu::Menu(int y, int x, int h, int w, const string &title, const vector<pair<st
 
     // Initialize NCursesMenu.
     InitMenu(&itemList[0], true, false);
+    attron(COLOR_PAIR(3));
     frame(title.c_str());
+    attroff(COLOR_PAIR(3));
 }
 
 size_t Menu::getSelection(){
