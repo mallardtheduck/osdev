@@ -26,6 +26,7 @@ namespace hwpnp{
 		virtual void SetScrolling(bool v) = 0;
 		virtual bool GetCursorVisibility() = 0;
 		virtual void SetCursorVisibility(bool v) = 0;
+		virtual void SetCursorPosition(size_t pos) = 0;
 		
 		virtual void ClearScreen() = 0;
 		
@@ -96,6 +97,7 @@ namespace hwpnp{
 					handle->pos -= pos;
 				}
 			}
+			if(handle->textmode == ENUM_GET(bt_vid_text_access_mode, Simple)) device->SetCursorPosition(handle->pos);
 			return handle->pos;
 		}
 		

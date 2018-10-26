@@ -44,6 +44,7 @@ public:
 	void SetScrolling(bool v);
 	bool GetCursorVisibility();
 	void SetCursorVisibility(bool v);
+	void SetCursorPosition(size_t pos);
 		
 	void ClearScreen();
 };
@@ -126,9 +127,9 @@ size_t VGAVideoDevice::GetFrameBufferSize(bt_vid_text_access_mode::Enum textmode
 		inst.pos = 0;
 		inst.mode = textmode;
 		if(current_mode->vidmode.textmode){
-			size_t cpos = text_seek(&inst, 0, FS_Relative);
+			//size_t cpos = text_seek(&inst, 0, FS_Relative);
 			size_t ret = text_seek(&inst, 0, FS_Backwards);
-			text_seek(&inst, cpos, FS_Set);
+			//text_seek(&inst, cpos, FS_Set);
 			return ret;
 		}else {
 			return graphics_seek(&inst, 0, FS_Backwards);
@@ -224,6 +225,15 @@ bool VGAVideoDevice::GetCursorVisibility(){
 
 void VGAVideoDevice::SetCursorVisibility(bool){
 	//Not implemented
+}
+
+void VGAVideoDevice::SetCursorPosition(size_t pos){
+	if(!is_vbe_mode() && current_mode->vidmode.textmode){
+		vga_instance inst;
+		inst.pos = 0;
+		inst.mode = bt_vid_text_access_mode::Simple;
+		text_seek(&inst, pos, FS_Set);
+	}
 }
 		
 void VGAVideoDevice::ClearScreen(){
