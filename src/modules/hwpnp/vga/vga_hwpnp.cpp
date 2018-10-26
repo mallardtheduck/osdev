@@ -5,9 +5,12 @@
 #include "device.hpp"
 #include "modes.hpp"
 #include "ops.hpp"
+#include <util/holdlock.hpp>
 
 USE_PURE_VIRTUAL;
 USE_STATIC_INIT;
+
+lock device_lock;
 
 static const btos_api::hwpnp::DeviceID VGADeviceID = {
 	btos_api::hwpnp::PNPBUS::PCI, 0, 0, 0, 0, 0x0300
@@ -74,6 +77,7 @@ btos_api::hwpnp::IDeviceNode *VGAVideoDevice::GetDeviceNode(){
 }
 
 size_t VGAVideoDevice::WriteFrameBuffer(size_t pos, size_t len, const uint8_t *buf, bt_vid_text_access_mode::Enum textmode, size_t &newpos){
+	hold_lock hl(&device_lock);
 	if(is_vbe_mode()){
 		if(pos + len > fb_sz) len = (fb_sz - pos);
 		memcpy(&fb[pos], buf, len);
@@ -97,6 +101,7 @@ size_t VGAVideoDevice::WriteFrameBuffer(size_t pos, size_t len, const uint8_t *b
 }
 
 size_t VGAVideoDevice::ReadFrameBuffer(size_t pos, size_t len, uint8_t *buf, bt_vid_text_access_mode::Enum textmode, size_t &newpos){
+	hold_lock hl(&device_lock);
 	if(is_vbe_mode()){
 		if(pos + len > fb_sz) len = (fb_sz - pos);
 		memcpy(buf, &fb[pos], len);
@@ -120,6 +125,7 @@ size_t VGAVideoDevice::ReadFrameBuffer(size_t pos, size_t len, uint8_t *buf, bt_
 }
 
 size_t VGAVideoDevice::GetFrameBufferSize(bt_vid_text_access_mode::Enum textmode){
+	hold_lock hl(&device_lock);
 	if(is_vbe_mode()){
 		return fb_sz;
 	}else{
@@ -153,6 +159,7 @@ bt_vidmode VGAVideoDevice::GetMode(size_t idx){
 }
 
 void VGAVideoDevice::SetMode(const bt_vidmode &mode){
+	hold_lock hl(&device_lock);
 	dbgpf("VGA: Request for mode %x\n", mode.id);
 	if(mode.id == vbe_current_mode){
 		dbgout("VGA: Already in mode. Nothing to do.\n");
@@ -193,6 +200,7 @@ void VGAVideoDevice::SetMode(const bt_vidmode &mode){
 }
 
 bt_vidmode VGAVideoDevice::QueryMode(){
+	hold_lock hl(&device_lock);
 	if(is_vbe_mode()) return make_vidmode_from_id(vbe_current_mode);
 	auto ret = current_mode->vidmode;
 	ret.id += 0xF0000;
@@ -228,6 +236,7 @@ void VGAVideoDevice::SetCursorVisibility(bool){
 }
 
 void VGAVideoDevice::SetCursorPosition(size_t pos){
+	hold_lock hl(&device_lock);
 	if(!is_vbe_mode() && current_mode->vidmode.textmode){
 		vga_instance inst;
 		inst.pos = 0;
@@ -237,6 +246,7 @@ void VGAVideoDevice::SetCursorPosition(size_t pos){
 }
 		
 void VGAVideoDevice::ClearScreen(){
+	hold_lock hl(&device_lock);
 	if(is_vbe_mode()){
 		vbe_clear_screen();
 	}else{
@@ -300,5 +310,6 @@ btos_api::hwpnp::IDriver* GetVGADriver(){
 }
 
 void init_hwpnp(){
+	init_lock(&device_lock);
 	pnp_register_driver(GetVGADriver());
 }
