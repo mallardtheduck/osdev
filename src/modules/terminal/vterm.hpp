@@ -72,6 +72,7 @@ private:
     friend bool pointer_blockcheck(void *p);
     friend bool event_blockcheck(void *p);
     friend bool active_blockcheck(void *p);
+    friend bool exclusive_blockcheck(void *p);
 
     static const size_t titlemax=256;
     char title[titlemax];

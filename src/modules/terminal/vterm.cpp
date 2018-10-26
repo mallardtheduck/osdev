@@ -239,7 +239,6 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf)
 size_t vterm::read(vterm_options &opts, size_t size, char *buf)
 {
 	hold_lock hl(&term_lock);
-	if(check_exclusive() && getpid() != exclusive_pid) return 0;
 	update_current_pid();
 	if(opts.mode == bt_terminal_mode::Terminal) {
 		int incr;
@@ -851,7 +850,8 @@ void vterm::update_current_pid()
 
 bool vterm::check_exclusive(){
 	if(!exclusive_mode_enabled) return false;
-	if(!get_proc_status(exclusive_pid)){
+	int pstatus = get_proc_status(exclusive_pid);
+	if(pstatus == 0 || pstatus == 2){
 		exclusive_mode_enabled = false;
 		return false;
 	}
