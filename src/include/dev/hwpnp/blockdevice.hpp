@@ -96,6 +96,8 @@ namespace hwpnp{
 				}else{
 					handle->pos -= pos;
 				}
+			}else{
+				dbgout("BLOCKDEV: Unknown seek flags!\n");
 			}
 			return handle->pos;
 		}

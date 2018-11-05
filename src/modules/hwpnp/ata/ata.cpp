@@ -396,7 +396,7 @@ bool ATABusDevice::IsSlave(size_t i){
 
 uint64_t ATABusDevice::GetLength(size_t i){
 	if(i < devices.size()){
-		return !!devices[i].dev->length;
+		return devices[i].dev->length;
 	}
 	return 0;
 }
