@@ -2,6 +2,7 @@
 #include "locks.hpp"
 #include "ministl.hpp"
 #include <util/asprintf.h>
+#include "strutil.hpp"
 
 lock mod_lock;
 
@@ -36,6 +37,13 @@ void init_modules(){
 
 void load_module(const char *path, char *params){
     take_lock_exclusive(mod_lock);
+    for(auto &m : *loaded_modules){
+    	if(to_upper(m.filename) == to_upper(path)){
+    		dbgpf("MOD: Module '%s' already loaded!\n", path);
+    		release_lock(mod_lock);
+    		return;
+    	}
+    }
 	file_handle file=fs_open(path, FS_Read);
 	if(!file.valid){
 		dbgpf("MOD: Could not open '%s'!\n", path);

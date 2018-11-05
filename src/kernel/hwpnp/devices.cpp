@@ -1,6 +1,7 @@
 #include "hwpnp_internal.hpp"
 #include "../ministl.hpp"
 #include <util/asprintf.h>
+#include "../locks.hpp"
 
 using namespace btos_api::hwpnp;
 
@@ -19,6 +20,8 @@ struct KnownDevice{
 
 static vector<KnownDevice> *known_devices;
 static map<IDeviceNode*, string> *device_nodes;
+
+lock rescan_lock;
 
 static char *pnp_devices_infofs(){
 	char *buffer=nullptr;
@@ -52,6 +55,7 @@ static char *pnp_devices_infofs(){
 void pnp_init_devices(){
 	known_devices = new vector<KnownDevice>();
 	device_nodes = new map<IDeviceNode*, string>();
+	init_lock(rescan_lock);
 	infofs_register("PNPDEVICES", &pnp_devices_infofs);
 }
 
@@ -76,9 +80,11 @@ IDevice *pnp_resolve_device(IDevice *parent, const DeviceID &id, size_t idx){
 }
 
 void pnp_rescan_devices(){
+	if(!try_take_lock_exclusive(rescan_lock)) return;
 	for(auto &d : *known_devices){
 		if(!d.device) d.device = pnp_create_device(d.parent, d.index, d.id);
 	}
+	release_lock(rescan_lock);
 }
 
 void pnp_enum_subdevices(IDevice *dev){
