@@ -3,6 +3,7 @@
 
 #include "../hwpnp.hpp"
 #include <btos/devices.h>
+#include <btos/ioctl.h>
 
 namespace btos_api{
 namespace hwpnp{
@@ -102,7 +103,11 @@ namespace hwpnp{
 			return handle->pos;
 		}
 		
-		virtual int IOCtl(void *, int, size_t, char *){
+		virtual int IOCtl(void */*h*/, int fn, size_t sz, char *buf){
+			if(fn == bt_ioctl::BlockSize && sz >= sizeof(size_t)){
+				*(size_t*)buf = device->GetSectorSize();
+				return sizeof(size_t);
+			}
 			return 0;
 		};
 		

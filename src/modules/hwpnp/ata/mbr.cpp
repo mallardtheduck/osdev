@@ -15,25 +15,39 @@ struct part_entry{
 
 static bool mbr_parse(MBRVolume *vol, btos_api::hwpnp::IBlockDevice *dev){
 	size_t secSize = dev->GetSectorSize();
+	int active = 0;
 	char *blockbuf = (char*)malloc(secSize);
 	memset(blockbuf, 0, secSize);
 	part_entry part_table[4];
 	dev->ReadSector(0, (uint8_t*)blockbuf);
 	uint16_t sig = *(uint16_t*)(&blockbuf[0x1fe]);
-	if(sig != 0xAA55){
-		free(blockbuf);
-		return false;
-	}
+	if(sig != 0xAA55) goto fail;
 	memcpy((void*)part_table, (void*)&blockbuf[0x1be], 64);
 	for(size_t i=0; i<4; ++i){
 		part_entry &p=part_table[i];
-		dbgpf("ATA: MBR parition %i: %x, %i,+%i\n", (int)i, (int)p.system, p.start_lba, (int)p.sectors);
+		if(p.boot == 0x80) ++active;
+		else if(p.boot !=0) goto fail;
+		dbgpf("ATA: MBR parition %i: %x, %x, %i,+%i\n", (int)i, (int)p.boot, (int)p.system, p.start_lba, (int)p.sectors);
 		if(p.system){
 			vol->partitions.push_back({p.start_lba, p.sectors});
 		}
 	}
+	if(!active){
+		uint16_t secSize = *(uint16_t*)(&blockbuf[0x0B]);
+		dbgpf("ATA: MBR Sector size: %i\n", (int)secSize);
+		if(secSize == 512 || secSize == 1024 || secSize == 2048 || secSize == 4096){
+			uint8_t media = *(uint8_t*)(&blockbuf[0x15]);
+			dbgpf("ATA: MBR Media descriptor: %x\n", (int)secSize);
+			if(media == 0xF8 || media == 0xF0) goto fail;
+		}
+	}
+	
 	free(blockbuf);
 	return true;
+	
+	fail:
+		free(blockbuf);
+		return false;
 }
 
 MBRVolume::MBRVolume(btos_api::hwpnp::IBlockDevice *dev) : device(dev) {

@@ -46,7 +46,7 @@ bool devfs_setsize(void *filedata, bt_filesize_t size){
 }
 
 int devfs_ioctl(void *filedata, int fn, size_t bytes, char *buf){
-    if(fn < 256){
+    if(fn < 256 && fn != bt_ioctl::BlockSize){
         if(fn==bt_ioctl::DevType) return drv_get_type(filedata);
         else if(fn==bt_ioctl::DevDesc){
             memcpy(buf, drv_get_desc(filedata), bytes-1);
