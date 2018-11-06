@@ -522,7 +522,7 @@ bool sch_abort_blockcheck(void *p){
 	uint64_t &ext_id=*(uint64_t*)p;
 	for(size_t i=0; i<threads->size(); ++i){
 		if((*threads)[i]->ext_id==ext_id){
-			return (*threads)[i]->abortlevel > 0;
+			return (*threads)[i]->abortlevel == 0;
 		}
 	}
 	return true;
