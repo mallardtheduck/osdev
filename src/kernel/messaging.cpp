@@ -251,6 +251,7 @@ void msg_send_event(bt_kernel_messages::Enum message, void *content, size_t size
 			msg.type=message;
 			msg.to=i->first;
 			msg.content=malloc(size);
+			msg.length = size;
 			msg.source=0;
 			msg.from=0;
 			msg.flags=0;
