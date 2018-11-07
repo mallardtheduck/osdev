@@ -1,6 +1,10 @@
 #ifndef _HWPNP_HPP
 #define _HWPNP_HPP
 
+#if !defined(KERNEL) && !defined(KERNEL_MODULE) && !defined(_DMI_HPP)
+#error "<dev/hwpnp.hpp> is for kernel/module use only. Userspace API can be used via <ext/dmi.hpp>."
+#endif
+
 #ifndef KERNEL
 #include <stdint.h>
 #endif
@@ -36,6 +40,20 @@ namespace hwpnp{
 		uint64_t Class;
 	};
 	
+	inline static bool operator==(const DeviceID &a, const DeviceID &b){
+		return 
+			a.Bus == b.Bus &&
+			a.VendorID == b.VendorID &&
+			a.DeviceID == b.DeviceID &&
+			a.Revision == b.Revision &&
+			a.ExtraID == b.ExtraID &&
+			a.Class == b.Class;
+	}
+	
+	inline static bool operator!=(const DeviceID &a, const DeviceID &b){
+		return !(a == b);
+	}
+	
 	ENUM_START(DriverPriority)
 		ENUM_SET(DriverPriority, Fallback, 1),
 		ENUM_SET(DriverPriority, Generic, 100),
@@ -44,6 +62,8 @@ namespace hwpnp{
 	ENUM_TYPE(DriverPriority);
 	
 	static const DeviceID NullDeviceID = {PNPBUS::Null, 0, 0, 0, 0, 0};
+
+#ifndef _DMI_HPP
 	
 	class IDeviceNode{
 	public:
@@ -101,6 +121,8 @@ namespace hwpnp{
 	
 		virtual ~IDriver() {}
 	};
+	
+#endif /*_DMI_HPP*/
 	
 }
 }

@@ -73,6 +73,7 @@ import-files:=\
  data/btos/lib/SDL2_widgets.ell \
  data/btos/system/cache.sys \
  data/btos/cmd/hwtree.elx \
+ data/btos/system/dm.elx \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -297,6 +298,9 @@ data/btos/system/cache.sys: ../../modules/cache/cache.sys
 	cp $< $@
 	
 data/btos/cmd/hwtree.elx: ../../user/cmds/hwtree/hwtree.elx
+	cp $< $@
+
+data/btos/system/dm.elx: ../../user/system/dm/dm.elx
 	cp $< $@
 
 create.directories: Makefile

@@ -15,6 +15,7 @@ struct part_entry{
 
 static bool mbr_parse(MBRVolume *vol, btos_api::hwpnp::IBlockDevice *dev){
 	size_t secSize = dev->GetSectorSize();
+	bt_filesize_t devSize = dev->GetSize();
 	int active = 0;
 	char *blockbuf = (char*)malloc(secSize);
 	memset(blockbuf, 0, secSize);
@@ -28,6 +29,12 @@ static bool mbr_parse(MBRVolume *vol, btos_api::hwpnp::IBlockDevice *dev){
 		if(p.boot == 0x80) ++active;
 		else if(p.boot !=0) goto fail;
 		dbgpf("ATA: MBR parition %i: %x, %x, %i,+%i\n", (int)i, (int)p.boot, (int)p.system, p.start_lba, (int)p.sectors);
+		bt_filesize_t startByte = p.start_lba * secSize;
+		bt_filesize_t endByte = startByte + (p.sectors * secSize);
+		if(endByte > devSize){
+			dbgpf("ATA: Partition end (%lld) exceeds disk size (%lld).\n", endByte, devSize);
+			goto fail;
+		}
 		if(p.system){
 			vol->partitions.push_back({p.start_lba, p.sectors});
 		}

@@ -89,3 +89,18 @@ description = Basic system fonts
 path = /fonts/
 type = fontpath
 
+[feature-base-pci-driver]
+
+name = base.drivers.pci
+description = PCI system bus driver
+path = /drivers/
+file = pci.inf
+type = dm.driver
+
+[feature-base-vga-driver]
+
+name = base.drivers.vga
+description = VGA/VESA VBE display driver
+path = /drivers/
+file = vga.inf
+type = dm.driver

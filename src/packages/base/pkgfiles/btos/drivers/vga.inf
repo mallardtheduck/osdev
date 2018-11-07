@@ -1,0 +1,4 @@
+[driver]
+
+devid = 3:0:0:0:0:0x0300
+file = vga.sys

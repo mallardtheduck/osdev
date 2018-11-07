@@ -30,7 +30,7 @@ vector<string> split_string(const string &str, const char c){
 			current="";
 			
 		}else{
-			current+=c;
+			current+=str[i];
 		}
 	}
 	if(current!="") ret.push_back(current);
