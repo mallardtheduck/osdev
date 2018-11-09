@@ -68,6 +68,7 @@ void pnp_add_device(IDevice *parent, const DeviceID &id, size_t idx){
 		deviceIDtoString(id).c_str()
 	);
 	auto dev = pnp_create_device(parent, idx, id);
+	pnp_dmi_notify_device_found(id);
 	known_devices->push_back(KnownDevice(parent, idx, id, dev));
 }
 
@@ -191,4 +192,22 @@ const char *pnp_get_node_name(IDeviceNode *node){
 		if(n.first == node) return n.second.c_str();
 	}
 	return "";
+}
+
+dm_dev_info get_first_device(){
+	if(known_devices->empty()){
+		return {NullDeviceID, nullptr, 0};
+	}else{
+		auto kd = (*known_devices)[0];
+		return {kd.id, kd.parent, kd.index};
+	}
+}
+
+dm_dev_info get_next_device(const dm_dev_info &cur){
+	bool ret = false;
+	for(const auto &d : *known_devices){
+		if(ret) return {d.id, d.parent, d.index};
+		else if(d.parent == cur.parent && d.index == cur.index) ret = true;
+	}
+	return {NullDeviceID, nullptr, 0};
 }

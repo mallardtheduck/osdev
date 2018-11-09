@@ -8,7 +8,6 @@ init.tar: Makefile\
 	data/fat.sys\
 	data/spawn.elx\
 	data/eloader.elx\
-	data/pci.sys
 	
 	find data/ -name \*.elx -not -name eloader.elx -exec strip {} \;
 	strip -K loaded_modules -K loaded_module_count data/eloader.elx
@@ -27,9 +26,6 @@ data/stdpc.sys: ../../modules/hwpnp/stdpc/stdpc.sys
 data/fat.sys: ../../modules/fat/fat.sys
 	cp $< $@
 
-data/ps2.sys: ../../modules/hwpnp/ps2/ps2.sys
-	cp $< $@
-
 data/ata.sys: ../../modules/hwpnp/ata/ata.sys
 	cp $< $@
 
@@ -37,9 +33,6 @@ data/spawn.elx: ../../user/system/spawn/spawn.elx
 	cp $< $@
 
 data/eloader.elx: ../../user/system/eloader/eloader.elx
-	cp $< $@
-	
-data/pci.sys: ../../modules/hwpnp/pci/pci.sys
 	cp $< $@
 
 clean: dummy.file

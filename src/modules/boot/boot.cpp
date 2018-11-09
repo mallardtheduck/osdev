@@ -119,7 +119,16 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 			free(path);
 			free(rest);
 		}
-    }else if(strcmp(section, current_section) == 0 && starts_with("set ", name)){
+	}else if(MATCH(current_section, "setwait")){
+		setenv(value, "-", ENV_Global, 0);
+	}else if(MATCH(current_section, "waitfor")){
+		char *v = getenv(value, 0);
+		while(strlen(v) <= 1){
+			yield();
+			v = getenv(value, 0);
+		}
+		setenv(value, "", ENV_Global, 0);
+	}else if(strcmp(section, current_section) == 0 && starts_with("set ", name)){
         char *set, *varname;
         if(split(name, ' ', &set, &varname)){
             setenv(varname, (char*)value, 0, 0);

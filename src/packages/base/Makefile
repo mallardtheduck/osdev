@@ -74,6 +74,7 @@ import-files:=\
  data/btos/system/cache.sys \
  data/btos/cmd/hwtree.elx \
  data/btos/system/dm.elx \
+ data/btos/drivers/ps2.sys \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -301,6 +302,9 @@ data/btos/cmd/hwtree.elx: ../../user/cmds/hwtree/hwtree.elx
 	cp $< $@
 
 data/btos/system/dm.elx: ../../user/system/dm/dm.elx
+	cp $< $@
+	
+data/btos/drivers/ps2.sys: ../../modules/hwpnp/ps2/ps2.sys create.directories
 	cp $< $@
 
 create.directories: Makefile

@@ -45,7 +45,7 @@ struct kernel_extension;
 #define	ENV_Global 		(1<<0) //Use PID 0 (kernel) value instead
 #define ENV_ReadOnly	(1<<1) //Not changeable by user-mode code
 #define	ENV_Private 	(1<<2) //Not visible to user-mode code
-#define ENV_NoInherit 	(1<<3), //Do not copy from parent to child
+#define ENV_NoInherit 	(1<<3) //Do not copy from parent to child
 
 struct syscall_table{
 	void (*panic)(char *msg);

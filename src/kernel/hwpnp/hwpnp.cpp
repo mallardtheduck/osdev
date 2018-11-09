@@ -6,6 +6,7 @@ void hwpnp_init(){
 	dbgout("PNP: Init.");
 	pnp_init_drivers();
 	pnp_init_devices();
+	pnp_dmi_init();
 }
 
 string uint64ToString(uint64_t i){

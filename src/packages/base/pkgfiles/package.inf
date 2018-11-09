@@ -104,3 +104,11 @@ description = VGA/VESA VBE display driver
 path = /drivers/
 file = vga.inf
 type = dm.driver
+
+[feature-base-ps2-driver]
+
+name = base.drivers.ps2
+description = PS/2 input bus and devices driver
+path = /drivers/
+file = ps2.inf
+type = dm.driver
