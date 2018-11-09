@@ -6,6 +6,22 @@ using namespace btos_api::hwpnp;
 
 vector<IDriver*> *drivers;
 
+struct bad_combo{
+	IDevice *parent;
+	size_t index;
+	IDriver *driver;
+};
+
+bool operator==(const bad_combo &a, const bad_combo &b){
+	return a.parent == b.parent && a.index == b.index && a.driver == b.driver;
+}
+
+bool operator!=(const bad_combo &a, const bad_combo &b){
+	return !(a == b);
+}
+
+vector<bad_combo> *bad_combos;
+
 static char *pnp_drivers_infofs(){
 	char *buffer=nullptr;
 	asprintf(&buffer, "# id, devid, description, priority\n");
@@ -22,6 +38,7 @@ static char *pnp_drivers_infofs(){
 
 void pnp_init_drivers(){
 	drivers = new vector<IDriver*>();
+	bad_combos = new vector<bad_combo>();
 	infofs_register("DRIVERS", &pnp_drivers_infofs);
 }
 
@@ -49,6 +66,7 @@ bool DeviceIDMatch(const DeviceID &a, const DeviceID &b){
 IDevice *pnp_create_device(IDevice *parent, size_t idx, DeviceID id){
 	vector<IDriver*> compatible_drivers;
 	for(auto d : *drivers){
+		if(bad_combos->find({parent, idx, d}) != bad_combos->npos) continue;
 		auto devid = d->GetDeviceID();
 		if(DeviceIDMatch(devid, id) && d->IsCompatible(id)){
 			compatible_drivers.push_back(d);
@@ -79,6 +97,7 @@ IDevice *pnp_create_device(IDevice *parent, size_t idx, DeviceID id){
 			return ret;
 		}else{
 			dbgout("PNP: Device creation failed!\n");
+			bad_combos->push_back({parent, idx, drv});
 			compatible_drivers.erase(didx);
 		}
 	}
