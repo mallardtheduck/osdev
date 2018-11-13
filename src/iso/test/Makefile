@@ -1,10 +1,11 @@
-test.iso: ../../kernel/btos.bin ../../tarinit/test/init.tar
+test.iso: ../../kernel/btos.bin ../../tarinit/test/init.tar Makefile
 	mkdir -p isodir
 	mkdir -p isodir/boot
 	cp ../../kernel/btos.bin isodir/boot/btos.bin
 	cp ../../tarinit/test/init.tar isodir/boot/init.tar
 	mkdir -p isodir/boot/grub
 	cp grub.cfg isodir/boot/grub/grub.cfg
+	cp splash.tga isodir/boot/splash.tga
 	mkdir -p isodir/boot/grub/i386-pc
 	cp -r /usr/lib/grub/i386-pc/* isodir/boot/grub/i386-pc
 	rm isodir/boot/grub/i386-pc/*.img
