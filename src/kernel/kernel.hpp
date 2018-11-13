@@ -57,6 +57,7 @@ extern "C"{
 #include "debug_ext.hpp"
 #include "atoms.hpp"
 #include "hwpnp_kernel.hpp"
+#include "rtc/rtc.hpp"
 
 void GDT_init();
 void IDT_init();

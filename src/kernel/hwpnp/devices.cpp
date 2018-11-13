@@ -117,6 +117,10 @@ void pnp_set_root_device(IRootDevice *dev){
 	pnp_enum_devices();
 }
 
+btos_api::hwpnp::IRootDevice *pnp_get_root_device(){
+	return rootDev;
+}
+
 struct node_instance{
 	IDeviceNode *node;
 	void *h;

@@ -1,6 +1,4 @@
-#include "rtc.hpp"
-
-uint64_t boot_msec;
+#include "rtc_internal.hpp"
 
 const int epochYear = 2000;
 
@@ -77,12 +75,4 @@ datetime epoch2datetime(uint64_t ep){
 	}
 	ret.second = ep;
 	return ret;
-}
-
-void init_clock(const datetime bootTime){
-	boot_msec = datetime2epoch(bootTime);
-}
-
-datetime current_datetime(){
-	return epoch2datetime(boot_msec + get_msecs());
 }

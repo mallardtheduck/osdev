@@ -3,6 +3,8 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
+extern uint64_t boot_msec;
+
 const uint16_t RTC_Index = 0x70;
 const uint16_t RTC_Data = 0x71;
 const uint8_t RTC_IRQ = 0x08;
@@ -70,34 +72,6 @@ datetime read_rtc(){
 	return get_rtc_time();
 }
 
-char *rtc_infofs(){
-	char *buf=nullptr;
-	datetime dt=current_datetime();
-	asprintf(&buf, FORMAT "\n", dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
-	return buf;
-}
-
-void ui64toa(uint64_t n, char s[]){
-	size_t i = 0;
-	do {
-		s[i++] = n % 10 + '0';
-	} while ((n /= 10) > 0);
-	s[i] = '\0';
-	
-	for (size_t i = 0, j = strlen(s)-1; i < j; i++, j--) {
-		 char c = s[i];
-		 s[i] = s[j];
-		 s[j] = c;
-	 }
-}
-
-char *msec_infofs(){
-	dbgpf("RTC: %i\n", (int)get_msecs());
-	char *buf=nullptr;
-	asprintf(&buf, "%llu\n", get_msecs());
-	return buf;
-}
-
 void set_update_int(bool value){
 	uint8_t regB = read_cmos(0x0B);
 	if(value) regB |= (1 << 4);
@@ -160,15 +134,12 @@ void init_interrupt(){
 	unmask_irq(RTC_IRQ);
 }
 
+uint64_t rtc_get_time(){
+	return get_msecs() + boot_msec;
+}
+
 void init_rtc(){
+	auto dt = read_rtc();
 	init_interrupt();
-	datetime dt=read_rtc();
-	dbgpf("RTC: " FORMAT "\n",  dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
 	init_clock(dt);
-	char buf[128];
-	sprintf(buf, FORMAT, dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
-	setenv("BOOT_TIME", buf, ENV_Global, 0);
-	infofs_register("RTC", &rtc_infofs);
-	infofs_register("MSEC", &msec_infofs);
-	init_api();
 }

@@ -1,6 +1,9 @@
-#include "rtc.hpp"
+#include "rtc_internal.hpp"
+#include <dev/rtc.h>
+#include <util/asprintf.h>
 
 uint16_t extension_id;
+uint64_t boot_msec;
 
 struct rtc_sleep_params{
 	uint64_t start;
@@ -14,7 +17,7 @@ bool rtc_sleep_blockcheck(void *p){
 
 void rtc_sleep(uint32_t msec){
 	rtc_sleep_params p = {get_msecs(), msec};
-	thread_setblock(&rtc_sleep_blockcheck, (void*)&p);
+	sch_setblock(&rtc_sleep_blockcheck, (void*)&p);
 }
 
 uint64_t rtc_millis(){
@@ -52,9 +55,41 @@ void rtc_uapi(uint16_t id,isr_regs *regs){
 	}
 }
 
-kernel_extension rtc_extension{RTC_EXTENSION_NAME, (void*)&calltable, &rtc_uapi};
+module_api::kernel_extension rtc_extension{RTC_EXTENSION_NAME, (void*)&calltable, &rtc_uapi};
 
 void init_api(){
 	init_timer();
 	extension_id = add_extension(&rtc_extension);
+}
+
+char *rtc_infofs(){
+	char *buf=nullptr;
+	datetime dt=current_datetime();
+	asprintf(&buf, FORMAT "\n", dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
+	return buf;
+}
+
+char *msec_infofs(){
+	dbgpf("RTC: %i\n", (int)get_msecs());
+	char *buf=nullptr;
+	asprintf(&buf, "%llu\n", get_msecs());
+	return buf;
+}
+
+
+
+void rtc_init_real(void*){
+	sch_setblock(&timer_ready_blockcheck, nullptr);
+	datetime dt=current_datetime();
+	char buf[128];
+	sprintf(buf, FORMAT, dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
+	proc_setenv("BOOT_TIME", buf, ENV_Global, 0);
+	infofs_register("RTC", &rtc_infofs);
+	infofs_register("MSEC", &msec_infofs);
+	init_timer();
+	init_api();
+}
+
+void rtc_init(){
+	sch_new_thread(&rtc_init_real, nullptr);
 }
