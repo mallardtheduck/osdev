@@ -9,6 +9,7 @@ import-files:= \
   data/content/initfs/spawn.elx \
   data/content/initfs/fat.sys \
   data/content/initfs/eloader.elx \
+  data/content/grub/splash.tga \
 
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -37,6 +38,9 @@ data/content/initfs/fat.sys: ../../modules/fat/fat.sys create.directories
 
 data/content/initfs/eloader.elx: ../../user/system/eloader/eloader.elx create.directories
 	cp $< $@
+	
+data/content/grub/splash.tga: ../../../other/art/splash.tga copy.grub
+	cp $< $@
 
 create.directories:
 	mkdir -p data/content/initfs
@@ -62,3 +66,4 @@ clean:
 	-rm -rf data
 	-rm ../$(output-name)
 	-rm create.directories
+	-rm copy.grub
