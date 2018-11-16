@@ -217,7 +217,7 @@ size_t ATAPIDevice::GetSectorSize(){
 
 bt_filesize_t ATAPIDevice::GetSize(){
 	auto size = capacity.total_blocks * ATAPI_SECTOR_SIZE;
-	dbgpf("ATAPI: Size: %i\n", (int)size);
+	//dbgpf("ATAPI: Size: %i\n", (int)size);
 	return size;
 }
 

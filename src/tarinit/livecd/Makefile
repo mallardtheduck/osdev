@@ -1,4 +1,4 @@
-init.tar: Makefile data/config.ini data/boot.sys data/rtc.sys data/ps2.sys data/ata.sys data/spawn.elx data/iso9660.sys data/eloader.elx data/pci.sys
+init.tar: Makefile data/config.ini data/boot.sys data/ata.sys data/spawn.elx data/iso9660.sys data/eloader.elx data/stdpc.sys data/pcrtc.sys
 	find data/ -name \*.elx -not -name eloader.elx -exec strip {} \;
 	strip -K loaded_modules -K loaded_module_count data/eloader.elx
 	strip -g data/*.sys
@@ -6,14 +6,17 @@ init.tar: Makefile data/config.ini data/boot.sys data/rtc.sys data/ps2.sys data/
 
 data/boot.sys: ../../modules/boot/boot.sys
 	cp $< $@
-
+	
 data/pcrtc.sys: ../../modules/hwpnp/pcrtc/pcrtc.sys
 	cp $< $@
 	
 data/stdpc.sys: ../../modules/hwpnp/stdpc/stdpc.sys
 	cp $< $@
 
-data/ps2.sys: ../../modules/hwpnp/ps2/ps2.sys
+data/pcrtc.sys: ../../modules/hwpnp/pcrtc/pcrtc.sys
+	cp $< $@
+	
+data/stdpc.sys: ../../modules/hwpnp/stdpc/stdpc.sys
 	cp $< $@
 
 data/ata.sys: ../../modules/hwpnp/ata/ata.sys
@@ -26,9 +29,6 @@ data/iso9660.sys: ../../modules/iso9660/iso9660.sys
 	cp $< $@
 
 data/eloader.elx: ../../user/system/eloader/eloader.elx
-	cp $< $@
-	
-data/pci.sys: ../../modules/hwpnp/pci/pci.sys
 	cp $< $@
 
 clean: dummy.file
