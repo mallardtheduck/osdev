@@ -2,7 +2,7 @@
 
 name = protogui
 description = Prototype GUI applications
-version = 0.1B
+version = 0.1C
 contentPath = btos
 
 [feature-clock]

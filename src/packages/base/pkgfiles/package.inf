@@ -2,7 +2,7 @@
 
 name = base
 description = The BT/OS base operating system.
-version = 0.1B
+version = 0.1C
 contentPath = btos
 
 [feature-libpath]
