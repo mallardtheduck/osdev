@@ -6,12 +6,6 @@ init.tar: Makefile data/config.ini data/boot.sys data/ata.sys data/spawn.elx dat
 
 data/boot.sys: ../../modules/boot/boot.sys
 	cp $< $@
-	
-data/pcrtc.sys: ../../modules/hwpnp/pcrtc/pcrtc.sys
-	cp $< $@
-	
-data/stdpc.sys: ../../modules/hwpnp/stdpc/stdpc.sys
-	cp $< $@
 
 data/pcrtc.sys: ../../modules/hwpnp/pcrtc/pcrtc.sys
 	cp $< $@

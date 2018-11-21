@@ -30,7 +30,9 @@ void _exit(){
 int _close(int file){
     virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
-    if(vh->type == HANDLE_OS){
+    if(vh->type == HANDLE_NULL){
+    	return 0;
+    }else if(vh->type == HANDLE_OS){
 		bt_handle_t h = vh->os.handle;
 		int ret=bt_fclose(h);
 		if(ret) btos_remove_filenum(file);
@@ -77,7 +79,9 @@ int fork(){
 int _fstat(int file, struct stat *st) {
     virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
-	if(vh->type == HANDLE_OS){
+    if(vh->type == HANDLE_NULL){
+    	return _stat("", st);
+    }else if(vh->type == HANDLE_OS){
 		int ret = _stat(vh->os.path, st);
 		if((st->st_mode & S_IFREG) == S_IFREG){
 			//Some filesystems report different "on-disk" sizes to the actual file size
@@ -109,7 +113,9 @@ int getpid(){
 int _isatty(int file){
     virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
-    if(vh->type == HANDLE_OS){
+    if(vh->type == HANDLE_NULL){
+    	return 0;
+    }else if(vh->type == HANDLE_OS){
 		bt_filehandle fh = vh->os.handle;
 		if(fh){
 			size_t type=bt_fioctl(fh, bt_ioctl_DevType, 0, NULL);
@@ -162,7 +168,10 @@ off_t _lseek(int file, off_t ptr, int dir){
 	
 	virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
-    if(vh->type == HANDLE_OS){
+    
+    if(vh->type == HANDLE_NULL){
+    	return 0;
+    }else if(vh->type == HANDLE_OS){
 		bt_filehandle fh = vh->os.handle;
 		return bt_fseek(fh, ptr, flags);
 	}else{
@@ -203,7 +212,9 @@ int open(const char *name, int flags, ...){
 int _read(int file, char *ptr, int len){
 	virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
-    if(vh->type == HANDLE_OS){
+    if(vh->type == HANDLE_NULL){
+    	return 0;
+    }else if(vh->type == HANDLE_OS){
 		bt_filehandle fh = vh->os.handle;
 		return bt_fread(fh, len, ptr);
 	}else{
@@ -327,7 +338,9 @@ int wait(int *status){
 int _write(int file, char *ptr, int len){
 	virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
-    if(vh->type == HANDLE_OS){
+    if(vh->type == HANDLE_NULL){
+    	return len;
+    }else if(vh->type == HANDLE_OS){
 		bt_filehandle fh = vh->os.handle;
 		return bt_fwrite(fh, len, ptr);
 	}else{
@@ -544,7 +557,9 @@ int tcsetattr(int fildes, int optional_actions, const struct termios *termios_p)
 int _fsync(int fd){
 	virtual_handle *vh=btos_get_handle_virt(fd);
     if(!vh) return -1;
-    if(vh->type == HANDLE_OS){
+    if(vh->type == HANDLE_NULL){
+    	return 0;
+    }else if(vh->type == HANDLE_OS){
 		bt_filehandle fh = vh->os.handle;
 		bt_fflush(fh);
 	}else{
@@ -650,7 +665,9 @@ int utimes(const char *path, const struct timeval times[2]){
 int ftruncate(int fd, off_t length){
 	virtual_handle *vh=btos_get_handle_virt(fd);
     if(!vh) return -1;
-    if(vh->type == HANDLE_OS){
+    if(vh->type == HANDLE_NULL){
+    	return 0;
+    }else if(vh->type == HANDLE_OS){
 		bt_filehandle fh = vh->os.handle;
 		bt_fsetsize(fh, length);
 		return 0;

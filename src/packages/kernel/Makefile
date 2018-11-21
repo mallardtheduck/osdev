@@ -10,6 +10,7 @@ import-files:= \
   data/content/initfs/fat.sys \
   data/content/initfs/eloader.elx \
   data/content/grub/splash.tga \
+  data/content/grub/grub.pf2 \
 
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -40,6 +41,9 @@ data/content/initfs/eloader.elx: ../../user/system/eloader/eloader.elx create.di
 	cp $< $@
 	
 data/content/grub/splash.tga: ../../../other/art/splash.tga copy.grub
+	cp $< $@
+
+data/content/grub/grub.pf2: ../../../other/art/grub.pf2 copy.grub
 	cp $< $@
 
 create.directories:

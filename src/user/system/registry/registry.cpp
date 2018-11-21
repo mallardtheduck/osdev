@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <btos.h>
 #include <btos/envvars.hpp>
 #include <btos/messageloop.hpp>
@@ -26,9 +27,16 @@ sqlitepp::db db(dbPath, false);
 
 static void InitDB(const string &dbFile = dbPath){
 	if(db.is_open()) return;
-	db.open(dbFile);
+	auto s = db.open(dbFile);
 	if(!db.is_open()){
-		cout << "Could not open " << dbPath << endl;
+		std::stringstream ss;
+		ss << "REG: Could not open " << dbFile << "! Staus: " << s << endl;
+		ss << "REG: Extended error code: " << db.extended_errcode() << " Message: " << db.errmsg() << endl;
+		bt_zero(ss.str().c_str());
+	}else{
+		std::stringstream ss;
+		ss << "REG: Opened " << dbFile << " successfully. Status: " << s << endl;
+		bt_zero(ss.str().c_str());
 	}
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS package(id INTEGER PRIMARY KEY, path TEXT, name TEXT, descr TEXT, ver TEXT)").exec();
 	sqlitepp::query(db, "CREATE TABLE IF NOT EXISTS feature(id INTEGER PRIMARY KEY, pkgid INTEGER REFERENCES package(id), type TEXT, name TEXT, ver TEXT, descr TEXT, path TEXT, file TEXT, flags INTEGER)").exec();

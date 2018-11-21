@@ -122,7 +122,7 @@ partition_info select_partition(){
 		}else{
 			exit(0);
 		}
-	}else if(yesno("Format parition? (This WILL destroy all data in the partition!)", 'n')){
+	}else if(yesno("Format partition? (This WILL destroy all data in the partition!)", 'n')){
 			bt_format("FAT", ret.path.c_str(), NULL);
 	}
 	return ret;
@@ -266,7 +266,8 @@ bt_pid_t setup_registry(){
 
 void finalise_registry(const string &mountpoint, bt_pid_t registry_pid){
 	string regCmd = mountpoint + ":/btos/cmd/reg.elx";
-	const char *regargs[] = {"backup", "hdd:/btos/config/registry.db"};
+	string regPath = mountpoint + ":/btos/config/registry.db";
+	const char *regargs[] = {"backup", regPath.c_str()};
 	bt_pid_t regpid = bt_spawn(regCmd.c_str(), sizeof(regargs)/sizeof(regargs[0]), (char**)regargs);
 	bt_wait(regpid);
 	bt_kill(registry_pid);

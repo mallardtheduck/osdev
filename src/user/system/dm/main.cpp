@@ -21,7 +21,7 @@ using std::vector;
 namespace reg = btos_api::registry;
 namespace hwpnp = btos_api::hwpnp;
 
-static const string DriverFeatureType = "dm.driver";
+static const string DriverFeatureType = "dm.driver.inf";
 static uint16_t dmi_ext = 0;
 
 vector<hwpnp::DeviceID> known_devices;
@@ -97,6 +97,7 @@ static vector<string> split(const string& s, char delimiter){
 static vector<Driver> GetDrivers(){
 	static vector<Driver> ret;
 	auto regDrivers = reg::GetFeaturesByType(DriverFeatureType);
+	if(regDrivers.empty()) btos_api::bt_zero("DM: No drivers found!\n");
 	for(const auto &rd : regDrivers){
 		if(std::find_if(ret.begin(), ret.end(), [&](const Driver &x) -> bool{
 			return x.feature == rd;

@@ -9,6 +9,7 @@ extern "C" {
 
 #include <sys/types.h>
 
+#define HANDLE_NULL 0
 #define HANDLE_OS 1
 #define HANDLE_VIRT 2
 

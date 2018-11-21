@@ -3,7 +3,6 @@ init.tar: Makefile\
 	data/boot.sys\
 	data/pcrtc.sys\
 	data/stdpc.sys\
-	data/ps2.sys\
 	data/ata.sys\
 	data/fat.sys\
 	data/spawn.elx\
