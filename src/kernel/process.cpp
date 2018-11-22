@@ -68,16 +68,29 @@ proc_process *proc_get(pid_t pid);
 proc_process *proc_get_lock(pid_t pid);
 
 char *proc_infofs(){
-	char *buffer=nullptr;
-	asprintf(&buffer, "# PID, path, memory, parent\n");
-	size_t kmem=MM2::current_pagedir->get_kernel_used();
-	{hold_lock hl(proc_lock);
-		for(size_t i=0; i<proc_processes->size(); ++i){
-            proc_process *cur=(*proc_processes)[i];
-			reasprintf_append(&buffer, "%i, \"%s\", %i, %i\n", (int)(cur->pid), cur->name.c_str(),
-				(int)((cur->pid)?cur->pagedir->get_user_used():kmem), (int)(cur->parent));
-		}
-    }
+	bool done = false;
+	size_t bufferSize = 4096;
+	char *buffer;
+	while(!done){
+		done = true;
+		buffer=(char*)malloc(bufferSize);
+		snprintf(buffer, bufferSize, "# PID, path, memory, parent\n");
+		size_t kmem=MM2::current_pagedir->get_kernel_used();
+		{hold_lock hl(proc_lock);
+			for(size_t i=0; i<proc_processes->size(); ++i){
+	            proc_process *cur=(*proc_processes)[i];
+				auto count = snprintf(buffer, bufferSize, "%s%i, \"%s\", %i, %i\n", buffer, (int)(cur->pid), cur->name.c_str(),
+					(int)((cur->pid)?cur->pagedir->get_user_used():kmem), (int)(cur->parent));
+				if((size_t)count > bufferSize){
+					free(buffer);
+					buffer = nullptr;
+					bufferSize *= 2;
+					done = false;
+					break;
+				}
+			}
+	    }
+	}
     return buffer;
 }
 
