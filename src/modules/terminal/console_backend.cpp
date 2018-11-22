@@ -161,9 +161,6 @@ void console_backend::draw_pointer(uint32_t x, uint32_t y, bool erase) {
     if(mode.textmode){
         size_t pos=(((y * mode.width) + x) * 2) + 1;
         size_t cpos=fseek(display, 0, true);
-        bt_vid_text_access_mode::Enum omode=(bt_vid_text_access_mode::Enum) fioctl(display, bt_vid_ioctl::GetTextAccessMode, 0, NULL);
-        bt_vid_text_access_mode::Enum nmode=bt_vid_text_access_mode::Raw;
-        fioctl(display, bt_vid_ioctl::SetTextAccessMode, sizeof(nmode), (char*)&nmode);
         fseek(display, pos, false);
         if(erase) {
             if(mouseback) {
@@ -179,7 +176,6 @@ void console_backend::draw_pointer(uint32_t x, uint32_t y, bool erase) {
             uint8_t cursor=*mouseback ^ 0xFF;
             fwrite(display, 1, (char*)&cursor);
         }
-        fioctl(display, bt_vid_ioctl::SetTextAccessMode, sizeof(omode), (char*)&omode);
         fseek(display, cpos, false);
     }else{
         if(erase){
@@ -355,14 +351,6 @@ void console_backend::close(uint64_t id){
 	}while(found);
 }
 
-void console_backend::set_text_colours(uint8_t c){
-	fioctl(display, bt_vid_ioctl::SetTextColours, sizeof(c), (char*)&c);
-}
-
-uint8_t console_backend::get_text_colours(){
-	return fioctl(display, bt_vid_ioctl::GetTextColours, 0, NULL);
-}
-
 size_t console_backend::get_screen_mode_count(){
 	return fioctl(display, bt_vid_ioctl::GetModeCount, 0, NULL);
 }
@@ -384,18 +372,6 @@ bt_vidmode console_backend::get_current_screen_mode(){
 	return ret;
 }
 
-void console_backend::set_screen_scroll(bool v){
-	fioctl(display, bt_vid_ioctl::SetScrolling, sizeof(v), (char*)&v);
-}
-
-bool console_backend::get_screen_scroll(){
-	return fioctl(display, bt_vid_ioctl::GetScrolling, 0, NULL);
-}
-
-void console_backend::set_text_access_mode(bt_vid_text_access_mode::Enum mode){
-	fioctl(display, bt_vid_ioctl::SetTextAccessMode, sizeof(mode), (char*)&mode);
-}
-
 bt_video_palette_entry console_backend::get_palette_entry(uint8_t entry){
 	bt_video_palette_entry ret;
 	*(uint8_t*)&ret = entry;
@@ -405,6 +381,10 @@ bt_video_palette_entry console_backend::get_palette_entry(uint8_t entry){
 
 void console_backend::clear_screen(){
 	fioctl(display, bt_vid_ioctl::ClearScreen, 0, NULL);
+}
+
+void console_backend::set_cursor_position(size_t pos){
+	fioctl(display, bt_vid_ioctl::SetCursorPosition, sizeof(pos), (char*)&pos);
 }
 
 void console_backend::register_global_shortcut(uint16_t keycode, uint64_t termid){

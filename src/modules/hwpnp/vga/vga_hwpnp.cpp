@@ -31,9 +31,9 @@ public:
 	btos_api::hwpnp::IDriver *GetDriver();
 	btos_api::hwpnp::IDeviceNode *GetDeviceNode();
 	
-	size_t WriteFrameBuffer(size_t pos, size_t len, const uint8_t *buf, bt_vid_text_access_mode::Enum textmode, size_t &newpos);
-	size_t ReadFrameBuffer(size_t pos, size_t len, uint8_t *buf, bt_vid_text_access_mode::Enum textmode, size_t &newpos);
-	size_t GetFrameBufferSize(bt_vid_text_access_mode::Enum textmode);
+	size_t WriteFrameBuffer(size_t pos, size_t len, const uint8_t *buf, size_t &newpos);
+	size_t ReadFrameBuffer(size_t pos, size_t len, uint8_t *buf, size_t &newpos);
+	size_t GetFrameBufferSize();
 		
 	size_t GetModeCount();
 	bt_vidmode GetMode(size_t idx);
@@ -41,10 +41,6 @@ public:
 	bt_vidmode QueryMode();
 	bt_video_palette_entry GetPaletteEntry(uint8_t idx);
 		
-	void SetTextColours(uint8_t c);
-	uint8_t GetTextColours();
-	bool GetScrolling();
-	void SetScrolling(bool v);
 	bool GetCursorVisibility();
 	void SetCursorVisibility(bool v);
 	void SetCursorPosition(size_t pos);
@@ -76,7 +72,7 @@ btos_api::hwpnp::IDeviceNode *VGAVideoDevice::GetDeviceNode(){
 	return node;
 }
 
-size_t VGAVideoDevice::WriteFrameBuffer(size_t pos, size_t len, const uint8_t *buf, bt_vid_text_access_mode::Enum textmode, size_t &newpos){
+size_t VGAVideoDevice::WriteFrameBuffer(size_t pos, size_t len, const uint8_t *buf, size_t &newpos){
 	hold_lock hl(&device_lock);
 	if(is_vbe_mode()){
 		if(pos + len > fb_sz) len = (fb_sz - pos);
@@ -86,7 +82,6 @@ size_t VGAVideoDevice::WriteFrameBuffer(size_t pos, size_t len, const uint8_t *b
 	}else{
 		vga_instance inst;
 		inst.pos = pos;
-		inst.mode = textmode;
 		if(current_mode->vidmode.textmode){
 			text_seek(&inst, pos, FS_Set);
 			size_t ret = text_write(&inst, len, (char*)buf);
@@ -100,7 +95,7 @@ size_t VGAVideoDevice::WriteFrameBuffer(size_t pos, size_t len, const uint8_t *b
 	}	
 }
 
-size_t VGAVideoDevice::ReadFrameBuffer(size_t pos, size_t len, uint8_t *buf, bt_vid_text_access_mode::Enum textmode, size_t &newpos){
+size_t VGAVideoDevice::ReadFrameBuffer(size_t pos, size_t len, uint8_t *buf, size_t &newpos){
 	hold_lock hl(&device_lock);
 	if(is_vbe_mode()){
 		if(pos + len > fb_sz) len = (fb_sz - pos);
@@ -110,7 +105,6 @@ size_t VGAVideoDevice::ReadFrameBuffer(size_t pos, size_t len, uint8_t *buf, bt_
 	}else{
 		vga_instance inst;
 		inst.pos = pos;
-		inst.mode = textmode;
 		if(current_mode->vidmode.textmode){
 			text_seek(&inst, pos, FS_Set);
 			size_t ret = text_read(&inst, len, (char*)buf);
@@ -124,19 +118,15 @@ size_t VGAVideoDevice::ReadFrameBuffer(size_t pos, size_t len, uint8_t *buf, bt_
 	}	
 }
 
-size_t VGAVideoDevice::GetFrameBufferSize(bt_vid_text_access_mode::Enum textmode){
+size_t VGAVideoDevice::GetFrameBufferSize(){
 	hold_lock hl(&device_lock);
 	if(is_vbe_mode()){
 		return fb_sz;
 	}else{
 		vga_instance inst;
 		inst.pos = 0;
-		inst.mode = textmode;
 		if(current_mode->vidmode.textmode){
-			//size_t cpos = text_seek(&inst, 0, FS_Relative);
-			size_t ret = text_seek(&inst, 0, FS_Backwards);
-			//text_seek(&inst, cpos, FS_Set);
-			return ret;
+			return text_seek(&inst, 0, FS_Backwards);
 		}else {
 			return graphics_seek(&inst, 0, FS_Backwards);
 		}
@@ -210,22 +200,6 @@ bt_vidmode VGAVideoDevice::QueryMode(){
 bt_video_palette_entry VGAVideoDevice::GetPaletteEntry(uint8_t idx){
 	return get_palette_entry((uint8_t)idx);
 }
-		
-void VGAVideoDevice::SetTextColours(uint8_t c){
-	text_color=c;
-}
-
-uint8_t VGAVideoDevice::GetTextColours(){
-	return text_color;
-}
-
-bool VGAVideoDevice::GetScrolling(){
-	return scrolling_enabled;
-}
-
-void VGAVideoDevice::SetScrolling(bool v){
-	scrolling_enabled = v;
-}
 
 bool VGAVideoDevice::GetCursorVisibility(){
 	return true;
@@ -238,10 +212,9 @@ void VGAVideoDevice::SetCursorVisibility(bool){
 void VGAVideoDevice::SetCursorPosition(size_t pos){
 	hold_lock hl(&device_lock);
 	if(!is_vbe_mode() && current_mode->vidmode.textmode){
-		vga_instance inst;
-		inst.pos = 0;
-		inst.mode = bt_vid_text_access_mode::Simple;
-		text_seek(&inst, pos, FS_Set);
+		int row = pos / current_mode->vidmode.width;
+		int col = pos - (row * current_mode->vidmode.width);
+		text_poscursor(row, col);
 	}
 }
 		

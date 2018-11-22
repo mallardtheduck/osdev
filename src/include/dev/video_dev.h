@@ -29,11 +29,6 @@ typedef struct bt_vidmode bt_vidmode;
 
 #include <util/bt_enum.h>
 
-ENUM_START(bt_vid_text_access_mode)
-    ENUM_SET(bt_vid_text_access_mode, Simple, 0),
-    ENUM_SET(bt_vid_text_access_mode, Raw, 1),
-ENUM_END
-
 ENUM_START(bt_vid_ioctl)
     ENUM_SET(bt_vid_ioctl, GetModeCount, 301),
     ENUM_SET(bt_vid_ioctl, GetMode, 302),
@@ -41,14 +36,9 @@ ENUM_START(bt_vid_ioctl)
     ENUM_SET(bt_vid_ioctl, QueryMode, 304),
     ENUM_SET(bt_vid_ioctl, GetPaletteEntry, 305),
 
-    ENUM_SET(bt_vid_ioctl, SetTextColours, 401),
-    ENUM_SET(bt_vid_ioctl, GetTextColours, 402),
-    ENUM_SET(bt_vid_ioctl, GetScrolling, 403),
-    ENUM_SET(bt_vid_ioctl, SetScrolling, 404),
     ENUM_SET(bt_vid_ioctl, GetCursorVisibility, 405),
     ENUM_SET(bt_vid_ioctl, SetCursorVisibility, 406),
-    ENUM_SET(bt_vid_ioctl, SetTextAccessMode, 407),
-    ENUM_SET(bt_vid_ioctl, GetTextAccessMode, 408),
+    ENUM_SET(bt_vid_ioctl, SetCursorPosition, 409),
 
     ENUM_SET(bt_vid_ioctl, ClearScreen, 501),
 ENUM_END

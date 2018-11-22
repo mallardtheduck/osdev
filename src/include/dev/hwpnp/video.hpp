@@ -10,9 +10,9 @@ namespace hwpnp{
 	
 	class IVideo : public IDevice{
 	public:
-		virtual size_t WriteFrameBuffer(size_t pos, size_t len, const uint8_t *buf, ENUM_NAME(bt_vid_text_access_mode) textmode, size_t &newpos) = 0;
-		virtual size_t ReadFrameBuffer(size_t pos, size_t len, uint8_t *buf, ENUM_NAME(bt_vid_text_access_mode) textmode, size_t &newpos) = 0;
-		virtual size_t GetFrameBufferSize(ENUM_NAME(bt_vid_text_access_mode) textmode) = 0;
+		virtual size_t WriteFrameBuffer(size_t pos, size_t len, const uint8_t *buf, size_t &newpos) = 0;
+		virtual size_t ReadFrameBuffer(size_t pos, size_t len, uint8_t *buf, size_t &newpos) = 0;
+		virtual size_t GetFrameBufferSize() = 0;
 		
 		virtual size_t GetModeCount() = 0;
 		virtual bt_vidmode GetMode(size_t idx) = 0;
@@ -20,10 +20,6 @@ namespace hwpnp{
 		virtual bt_vidmode QueryMode() = 0;
 		virtual bt_video_palette_entry GetPaletteEntry(uint8_t idx) = 0;
 		
-		virtual void SetTextColours(uint8_t c) = 0;
-		virtual uint8_t GetTextColours() = 0;
-		virtual bool GetScrolling() = 0;
-		virtual void SetScrolling(bool v) = 0;
 		virtual bool GetCursorVisibility() = 0;
 		virtual void SetCursorVisibility(bool v) = 0;
 		virtual void SetCursorPosition(size_t pos) = 0;
@@ -42,7 +38,6 @@ namespace hwpnp{
 		IVideo *device;
 		struct Handle{
 			bt_filesize_t pos = 0;
-			ENUM_NAME(bt_vid_text_access_mode) textmode = ENUM_GET(bt_vid_text_access_mode, Simple);
 		};
 	public:
 		VideoDeviceNode(IVideo *dev) : device(dev) {}
@@ -62,7 +57,7 @@ namespace hwpnp{
 		virtual size_t Read(void *h, size_t bytes, char *buf){
 			Handle *handle = (Handle*)h;
 			size_t newpos;
-			size_t ret = device->ReadFrameBuffer(handle->pos, bytes, (uint8_t*)buf, handle->textmode, newpos);
+			size_t ret = device->ReadFrameBuffer(handle->pos, bytes, (uint8_t*)buf, newpos);
 			handle->pos = newpos;
 			return ret;
 		}
@@ -70,14 +65,14 @@ namespace hwpnp{
 		virtual size_t Write(void *h, size_t bytes, const char *buf){
 			Handle *handle = (Handle*)h;
 			size_t newpos;
-			size_t ret = device->WriteFrameBuffer(handle->pos, bytes, (const uint8_t*)buf, handle->textmode, newpos);
+			size_t ret = device->WriteFrameBuffer(handle->pos, bytes, (const uint8_t*)buf, newpos);
 			handle->pos = newpos;
 			return ret;
 		}
 		
 		virtual bt_filesize_t Seek(void *h, bt_filesize_t pos, uint32_t flags){
 			Handle *handle = (Handle*)h;
-			auto size = device->GetFrameBufferSize(handle->textmode);
+			auto size = device->GetFrameBufferSize();
 			if(flags == FS_Set){
 				if(pos > size) pos = size;
 				handle->pos = pos;
@@ -97,12 +92,10 @@ namespace hwpnp{
 					handle->pos -= pos;
 				}
 			}
-			if(handle->textmode == ENUM_GET(bt_vid_text_access_mode, Simple)) device->SetCursorPosition(handle->pos);
 			return handle->pos;
 		}
 		
-		virtual int IOCtl(void *h, int fn, size_t bytes, char *buf){
-			Handle *handle = (Handle*)h;
+		virtual int IOCtl(void */*h*/, int fn, size_t bytes, char *buf){
 			if(fn == bt_vid_ioctl::GetModeCount) {
 		        return device->GetModeCount();
 		    }
@@ -133,26 +126,12 @@ namespace hwpnp{
 		            return (int)entry.index;
 		        }
 		        return 0;
-		    }else  if(fn==bt_vid_ioctl::SetTextColours){
-		        if(bytes>=1){
-		            device->SetTextColours((uint8_t)*buf);
-		            return 1;
-		        }else return 0;
-		    }else if(fn==bt_vid_ioctl::GetTextColours){
-		        return device->GetTextColours();
 		    }else if(fn==bt_vid_ioctl::ClearScreen){
 		        device->ClearScreen();
-		    }else if(fn==bt_vid_ioctl::GetScrolling){
-		        return device->GetScrolling();
-		    }else if(fn==bt_vid_ioctl::SetScrolling){
-		        device->SetScrolling(*(bool*)buf);
-		    }else if(fn==bt_vid_ioctl::GetTextAccessMode){
-		        return handle->textmode;
-		    }else if(fn==bt_vid_ioctl::SetTextAccessMode){
-		        if(bytes==sizeof(ENUM_NAME(bt_vid_text_access_mode))) {
-		            handle->textmode = *(ENUM_NAME(bt_vid_text_access_mode)*) buf;
-		            return sizeof(ENUM_NAME(bt_vid_text_access_mode));
-		        }
+		    }else if(fn==bt_vid_ioctl::SetCursorPosition){
+		    	if(bytes==sizeof(size_t)){
+		    		device->SetCursorPosition(*(size_t*)buf);
+		    	}
 		    }
 			return 0;
 		};

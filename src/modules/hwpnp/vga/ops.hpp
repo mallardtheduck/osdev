@@ -12,6 +12,7 @@ size_t text_write(vga_instance *inst, size_t bytes, char *buf);
 size_t text_seek(vga_instance *inst, size_t pos, uint32_t flags);
 int text_ioctl(vga_instance *inst, int fn, size_t bytes, char *buf);
 void init_text();
+void text_poscursor(size_t row, size_t col);
 
 size_t graphics_read(vga_instance *inst, size_t bytes, char *buf);
 size_t graphics_write(vga_instance *inst, size_t bytes, char *buf);

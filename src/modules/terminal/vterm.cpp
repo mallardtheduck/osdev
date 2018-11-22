@@ -35,7 +35,6 @@ vterm::vterm(uint64_t nid, i_backend *back)
 	keyboard_buffer.clear();
 	pointer_buffer.clear();
 	refcount=0;
-	scrollcount=0;
 	sprintf(title, "BT/OS Terminal %i", (int)id);
 	pointer_enabled=false;
 	pointer_autohide = true;
@@ -60,7 +59,11 @@ void vterm::putchar(char c)
 	if(!vidmode.textmode) return;
 	if(c == '\n') {
 		bufpos=(((bufpos/(vidmode.width*2))+1) * (vidmode.width*2));
-		if(backend && backend->is_active(id)) backend->display_write(1, &c);
+		if(backend && backend->is_active(id)){ //backend->display_write(1, &c);
+			size_t cpos = backend->display_seek(0, true);
+			size_t newpos = (((cpos/(vidmode.width*2))+1) * (vidmode.width*2));
+			backend->display_seek(newpos, false);
+		}
 	} else if(c == 0x08) {
 		if(bufpos >= 2) {
 			bufpos -= 2;
@@ -70,16 +73,17 @@ void vterm::putchar(char c)
 		}
 		if(backend && backend->is_active(id)) {
 			size_t cpos = backend->display_seek(0, true);
-			cpos--;
+			cpos -= 2;
 			backend->display_seek(cpos, false);
-			char s = ' ';
-			backend->display_write(1, &s);
+			uint16_t s = (uint8_t)' ' | (textcolour << 8);
+			backend->display_write(2, (char*)&s);
 			backend->display_seek(cpos, false);
 		}
 	} else {
 		buffer[bufpos++]=(uint8_t)c;
 		buffer[bufpos++]=textcolour;
-		if(backend && backend->is_active(id)) backend->display_write(1, &c);
+		uint16_t s = (uint8_t)c | (textcolour << 8);
+		if(backend && backend->is_active(id)) backend->display_write(2, (char*)&s);
 	}
 	if(bufpos>=bufsize) {
 		scroll();
@@ -96,7 +100,6 @@ void vterm::putstring(char *s)
 void vterm::setcolours(uint8_t c)
 {
 	textcolour=c;
-	if(backend && backend->is_active(id)) backend->set_text_colours(c);
 }
 
 uint8_t vterm::getcolours()
@@ -110,20 +113,29 @@ void vterm::scroll()
 	if(vidmode.textmode) factor=2;
 	if(scrolling){
 		size_t start = infoline ? 1 : 0;
-		for(size_t y = start + 1; y<vidmode.height; ++y) {
-			for(size_t x=0; x<(vidmode.width*factor); ++x) {
-				const size_t source = y * (vidmode.width*factor) + x;
-				if(y > start) {
-					const size_t dest = (y-1) * (vidmode.width*factor) + x;
-					buffer[dest]=buffer[source];
-				}
-				buffer[source]=0;
-				if(vidmode.textmode && source % 2) buffer[source]=textcolour;
-			}
+		size_t lineSize = (vidmode.width*factor);
+		size_t scrollSize = (vidmode.height - start - 1) * lineSize;
+		auto source = &buffer[(start + 1) * lineSize];
+		auto dest = &buffer[start * lineSize];
+		memmove(dest, source, scrollSize);
+		auto lastLine = &buffer[(vidmode.height - 1) * lineSize];
+		for(size_t i = 0; i < lineSize; ++i){
+			lastLine[i] = (i % 2) ? textcolour : ' ';
+		}
+		if(backend && backend->is_active(id)){
+			uint8_t *scrollBuf = (uint8_t*)malloc(scrollSize);
+			backend->display_seek((start + 1) * lineSize, false);
+			backend->display_read(scrollSize, (char*)scrollBuf);
+			backend->display_seek(start * lineSize, false);
+			backend->display_write(scrollSize, (char*)scrollBuf);
+			free(scrollBuf);
+			size_t cpos = backend->display_seek(0, true);
+			backend->display_write(lineSize, (char*)lastLine);
+			backend->display_seek(cpos, false);
+			backend->set_cursor_position(bufpos / 2);
 		}
 	}
 	bufpos=((vidmode.height-1)*vidmode.width)*factor;
-	scrollcount++;
 }
 
 void vterm::do_infoline()
@@ -139,7 +151,7 @@ void vterm::do_infoline()
 		}
 		seek(opts, 0, false);
 		uint16_t linecol=0x1F;
-		uint8_t colour=backend->get_text_colours();
+		auto colour = getcolours();
 		setcolours(linecol);
 		putstring(infoline_text);
 		setcolours(colour);
@@ -164,24 +176,12 @@ const char *vterm::get_title()
 void vterm::activate()
 {
 	hold_lock hl(&term_lock, false);
-	bool scroll=false;
 	if(backend) {
 		backend->set_screen_mode(vidmode);
 		backend->set_active(id);
-		backend->set_screen_scroll(scroll);
-		if(vidmode.textmode) {
-			backend->set_text_access_mode(bt_vid_text_access_mode::Raw);
-			setcolours(getcolours());
-		}
 		backend->display_seek(0, false);
 		backend->display_write(bufsize, (char*)buffer);
-		if(vidmode.textmode) {
-			backend->set_text_access_mode(bt_vid_text_access_mode::Simple);
-			backend->display_seek(bufpos/2, false);
-		} else {
-			backend->display_seek(bufpos, false);
-		}
-		backend->set_screen_scroll(scrolling);
+		backend->display_seek(bufpos, false);
 		do_infoline();
 		if(infoline && bufpos==0) putchar('\n');
 		if(pointer_enabled) {
@@ -192,6 +192,7 @@ void vterm::activate()
 		}
 		backend->set_pointer_autohide(pointer_autohide);
 		backend->set_pointer_speed(pointer_speed);
+		backend->set_cursor_position(bufpos / 2);
 		backend->refresh();
 		++activecounter;
 	}
@@ -216,13 +217,9 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf)
 	hold_lock hl(&term_lock);
 	if(check_exclusive() && getpid() != exclusive_pid) return size;
 	update_current_pid();
-	bool iline_valid=infoline && vidmode.textmode;
-	if(bufpos <= vidmode.width) iline_valid=false;
 	if(bufpos+size > bufsize) size = bufsize - bufpos;
 	if(vidmode.textmode) {
-		uint64_t scount=scrollcount;
 		for(size_t i=0; i<size; ++i) putchar(buf[i]);
-		if(scount != scrollcount) iline_valid=false;
 	} else {
 		if(backend && backend->is_active(id)) {
 			backend->display_write(size, buf);
@@ -231,8 +228,10 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf)
 		}
 		bufpos += size;
 	}
-	if(!iline_valid) do_infoline();
-	if(backend && backend->is_active(id)) backend->refresh();
+	if(backend && backend->is_active(id)){
+		backend->set_cursor_position(bufpos / 2);
+		backend->refresh();
+	}
 	return size;
 }
 
@@ -267,17 +266,21 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf)
 					incr=0;
 				}
 				if(c == '\n') {
-					uint64_t scount=scrollcount;
 					if(echo){
 						putchar(c);
-						if(backend && backend->is_active(id)) backend->refresh();
+						if(backend && backend->is_active(id)){
+							backend->set_cursor_position(bufpos / 2);
+							backend->refresh();
+						}
 					}
-					if(scount != scrollcount) do_infoline();
 					return i + 1;
 				}
 				if(echo && put) {
 					putchar(c);
-					if(backend && backend->is_active(id)) backend->refresh();
+					if(backend && backend->is_active(id)){
+						backend->set_cursor_position(bufpos / 2);
+						backend->refresh();
+					}
 				}
 			}
 		}
@@ -301,14 +304,15 @@ size_t vterm::seek(vterm_options &/*opts*/, size_t pos, uint32_t flags)
 	update_current_pid();
 	int factor=1;
 	if(vidmode.textmode) factor=2;
-	if(flags & FS_Relative) bufpos+=pos*factor;
+	if(flags & FS_Relative) bufpos+=pos * factor;
 	else if(flags & FS_Backwards) {
 		bufpos = bufsize - (pos*factor);
 	} else if(flags == (FS_Relative | FS_Backwards)) bufpos -= (pos*factor);
 	else bufpos=pos*factor;
 	if(bufpos>bufsize) bufpos=bufsize;
 	if(backend && backend->is_active(id)) {
-		backend->display_seek(pos, flags);
+		backend->display_seek(pos * factor, flags);
+		backend->set_cursor_position(bufpos / 2);
 	}
 	return bufpos/factor;
 }
@@ -439,9 +443,6 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 		case bt_terminal_ioctl::SetScrolling: {
 			if(size==sizeof(bool)) {
 				scrolling=*(bool*)buf;
-				if(backend && backend->is_active(id)) {
-					backend->set_screen_scroll(scrolling);
-				}
 			}
 			break;
 		}
@@ -694,23 +695,17 @@ void vterm::sync(bool content)
 	vidmode = backend->get_current_screen_mode();
 	allocate_buffer();
 	if(content) {
-		size_t vpos = this->backend->display_seek(0, true);
-		this->backend->display_seek(0, false);
-		if(this->vidmode.textmode) {
-			backend->set_text_access_mode(bt_vid_text_access_mode::Raw);
-			backend->set_text_colours(textcolour);
-		}
-		this->backend->display_read(this->bufsize, (char *) this->buffer);
-		if(this->vidmode.textmode) 	backend->set_text_access_mode(bt_vid_text_access_mode::Simple);
-		this->backend->display_seek(vpos, false);
-		this->bufpos = this->backend->display_seek(0, true);
-		if(this->vidmode.textmode) {
-			this->bufpos *= 2;
+		size_t vpos = backend->display_seek(0, true);
+		backend->display_seek(0, false);
+		backend->display_read(bufsize, (char *) buffer);
+		backend->display_seek(vpos, false);
+		bufpos = backend->display_seek(0, true);
+		if(vidmode.textmode) {
+			bufpos *= 2;
 		}
 	} else {
 		clear_buffer();
 	}
-	//this->scrolling = backend->get_screen_scroll();
 }
 
 void vterm::clear_buffer()

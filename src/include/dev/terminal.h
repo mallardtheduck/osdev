@@ -119,15 +119,10 @@ ENUM_START(bt_terminal_backend_operation_type)
 	ENUM_SET(bt_terminal_backend_operation_type, SetPointerAutohide, 8),
 	ENUM_SET(bt_terminal_backend_operation_type, FreezePointer, 9),
 	ENUM_SET(bt_terminal_backend_operation_type, UnfreezePointer, 10),
-	ENUM_SET(bt_terminal_backend_operation_type, SetTextColours, 11),
-	ENUM_SET(bt_terminal_backend_operation_type, GetTextColours, 12),
 	ENUM_SET(bt_terminal_backend_operation_type, GetScreenModeCount, 13),
 	ENUM_SET(bt_terminal_backend_operation_type, SetScreenMode, 14),
 	ENUM_SET(bt_terminal_backend_operation_type, GetScreenMode, 15),
 	ENUM_SET(bt_terminal_backend_operation_type, GetCurrentScreenMode, 16),
-	ENUM_SET(bt_terminal_backend_operation_type, SetScreenScroll, 17),
-	ENUM_SET(bt_terminal_backend_operation_type, GetScreenScroll, 18),
-	ENUM_SET(bt_terminal_backend_operation_type, SetTextAccessMode, 19),
 	ENUM_SET(bt_terminal_backend_operation_type, GetPaletteEntry, 20),
 	ENUM_SET(bt_terminal_backend_operation_type, ClearScreen, 21),
 	ENUM_SET(bt_terminal_backend_operation_type, RegisterGlobalShortcut, 22),
@@ -138,6 +133,7 @@ ENUM_START(bt_terminal_backend_operation_type)
 	ENUM_SET(bt_terminal_backend_operation_type, SwitchTerminal, 27),
 	ENUM_SET(bt_terminal_backend_operation_type, CanCreate, 28),
 	ENUM_SET(bt_terminal_backend_operation_type, Refresh, 29),
+	ENUM_SET(bt_terminal_backend_operation_type, SetCursorPosition, 30),
 ENUM_END
 ENUM_TYPE(bt_terminal_backend_operation_type);
 

@@ -53,17 +53,13 @@ public:
 	uint32_t get_pointer_speed();
 	void set_pointer_speed(uint32_t speed);
 	
-	void set_text_colours(uint8_t c);
-	uint8_t get_text_colours();
 	size_t get_screen_mode_count();
 	void set_screen_mode(const bt_vidmode &mode);
 	bt_vidmode get_screen_mode(size_t index);
 	bt_vidmode get_current_screen_mode();
-	void set_screen_scroll(bool v);
-	bool get_screen_scroll();
-	void set_text_access_mode(bt_vid_text_access_mode::Enum mode);
 	bt_video_palette_entry get_palette_entry(uint8_t entry);
 	void clear_screen();
+	void set_cursor_position(size_t pos);
 	
 	void register_global_shortcut(uint16_t keycode, uint64_t termid);
 
