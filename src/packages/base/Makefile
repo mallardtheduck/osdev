@@ -71,6 +71,10 @@ import-files:=\
  data/btos/lib/SDL2_image.ell \
  data/btos/lib/SDL2_ttf.ell \
  data/btos/lib/SDL2_widgets.ell \
+ data/btos/system/cache.sys \
+ data/btos/cmd/hwtree.elx \
+ data/btos/system/dm.elx \
+ data/btos/drivers/ps2.sys \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -99,7 +103,7 @@ data/btos/cmd/spawn.elx: ../../user/system/spawn/spawn.elx create.directories
 data/btos/cmd/kill.elx: ../../user/cmds/kill/kill.elx create.directories
 	cp $< $@
 
-data/btos/drivers/pci.sys: ../../modules/pci/pci.sys create.directories
+data/btos/drivers/pci.sys: ../../modules/hwpnp/pci/pci.sys create.directories
 	cp $< $@
 
 data/btos/cmd/load.elx: ../../user/cmds/load/load.elx create.directories
@@ -108,7 +112,7 @@ data/btos/cmd/load.elx: ../../user/cmds/load/load.elx create.directories
 data/btos/cmd/mount.elx: ../../user/cmds/mount/mount.elx create.directories
 	cp $< $@
 
-data/btos/drivers/vga.sys: ../../modules/vga/vga.sys create.directories
+data/btos/drivers/vga.sys: ../../modules/hwpnp/vga/vga.sys create.directories
 	cp $< $@
 
 data/btos/bin/debug.elx: ../../user/bin/debug/debug.elx create.directories
@@ -289,6 +293,18 @@ data/btos/lib/SDL2_image.ell: ../../3rdparty/install/btos/lib/SDL2_image.ell
 	cp $< $@
 
 data/btos/lib/SDL2_widgets.ell: ../../3rdparty/install/btos/lib/SDL2_widgets.ell
+	cp $< $@
+	
+data/btos/system/cache.sys: ../../modules/cache/cache.sys
+	cp $< $@
+	
+data/btos/cmd/hwtree.elx: ../../user/cmds/hwtree/hwtree.elx
+	cp $< $@
+
+data/btos/system/dm.elx: ../../user/system/dm/dm.elx
+	cp $< $@
+	
+data/btos/drivers/ps2.sys: ../../modules/hwpnp/ps2/ps2.sys create.directories
 	cp $< $@
 
 create.directories: Makefile

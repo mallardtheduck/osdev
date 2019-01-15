@@ -1,6 +1,8 @@
 #include "kernel.hpp"
 #include "locks.hpp"
 #include "ministl.hpp"
+#include <util/asprintf.h>
+#include "strutil.hpp"
 
 lock mod_lock;
 
@@ -14,11 +16,10 @@ struct kernel_module{
 vector<kernel_module> *loaded_modules;
 
 char *modules_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# address, path, parameters\n");
+	char *buffer=nullptr;
+	asprintf(&buffer, "# address, path, parameters\n");
 	for(size_t i=0; i<loaded_modules->size(); ++i){
-		sprintf(&buffer[strlen(buffer)], "%p, \"%s\", \"%s\"\n", (*loaded_modules)[i].elf.mem.aligned, (*loaded_modules)[i].filename.c_str(),
+		reasprintf_append(&buffer, "%p, \"%s\", \"%s\"\n", (*loaded_modules)[i].elf.mem.aligned, (*loaded_modules)[i].filename.c_str(),
 			(*loaded_modules)[i].params.c_str());
 	}
 	return buffer;
@@ -36,6 +37,13 @@ void init_modules(){
 
 void load_module(const char *path, char *params){
     take_lock_exclusive(mod_lock);
+    for(auto &m : *loaded_modules){
+    	if(to_upper(m.filename) == to_upper(path)){
+    		dbgpf("MOD: Module '%s' already loaded!\n", path);
+    		release_lock(mod_lock);
+    		return;
+    	}
+    }
 	file_handle file=fs_open(path, FS_Read);
 	if(!file.valid){
 		dbgpf("MOD: Could not open '%s'!\n", path);

@@ -32,6 +32,9 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
     init_extensions();
     msg_init();
 	init_debug_extension();
+	hwpnp_init();
+	rtc_init();
+	
 	load_module("INIT:/BOOT.SYS");
 	//printf("Ready.");
 	while(true)sch_block();

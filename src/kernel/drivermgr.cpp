@@ -2,22 +2,23 @@
 #include "ministl.hpp"
 #include "string.hpp"
 #include "locks.hpp"
+#include <util/asprintf.h>
 
 lock drv_lock;
 map<string, drv_device>* devices;
 
 struct drv_instance{
 	drv_driver driver;
+	void *id;
 	void *instance;
 };
 
 char *drv_devices_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# name, type, description\n");
+	char *buffer=nullptr;
+	asprintf(&buffer, "# name, type, description\n");
 	hold_lock hl(drv_lock);
 	for(map<string, drv_device>::iterator i=devices->begin(); i!=devices->end(); ++i){
-		sprintf(&buffer[strlen(buffer)], "%s, %x, \"%s\"\n", i->first.c_str(), i->second.driver.type(), i->second.driver.desc());
+		reasprintf_append(&buffer, "%s, %x, \"%s\"\n", i->first.c_str(), i->second.driver.type(i->second.id), i->second.driver.desc(i->second.id));
 	}
 	return buffer;
 }
@@ -30,7 +31,7 @@ void drv_init(){
 }
 
 string get_unique_name(string name){
-	char buf[12];
+	char buf[32];
 	for(int i=0; i < 1000; ++i){
 		sprintf(buf, "%s%i", name.c_str(), i);
 		if(!devices->has_key(buf)) return buf;
@@ -38,15 +39,17 @@ string get_unique_name(string name){
 	return "";
 }
 
-void drv_add_device(char *name, drv_driver *driver, void *id){
+const char *drv_add_device(const char *name, drv_driver *driver, void *id){
 	string sname;
+	const char *ret = nullptr;
 	{ hold_lock hl(drv_lock);
 		sname=get_unique_name(name);
 		(*devices)[sname].driver=*driver;
 		(*devices)[sname].id=id;
+		ret = devices->get(sname).first.c_str();
 	}
-	strncpy(name, sname.c_str(), 12);
 	dbgpf("DRV: Device %s registered.\n", sname.c_str());
+	return ret;
 }
 
 drv_device *drv_get(const char *name){
@@ -66,6 +69,7 @@ void *drv_open(const char *driver){
 	//TODO: Attach to process somehow...
 	inst->driver=drv->driver;
 	inst->instance=inst->driver.open(drv->id);
+	inst->id = drv->id;
 	return (void*)inst;
 }
 
@@ -97,21 +101,23 @@ int drv_ioctl(void *instance, int fn, size_t bytes, char *buf){
 }
 	
 int drv_get_type(const char *driver){
-	return drv_get(driver)->driver.type();
+	auto dev = drv_get(driver);
+	return dev->driver.type(dev->id);
 }
 
 int drv_get_type(void *instance){
 	drv_instance *inst=(drv_instance*)instance;
-	return inst->driver.type();
+	return inst->driver.type(inst->id);
 }
 
 char *drv_get_desc(const char *driver){
-	return drv_get(driver)->driver.desc();
+	auto dev = drv_get(driver);
+	return dev->driver.desc(dev->id);
 }
 
 char *drv_get_desc(void *instance){
 	drv_instance *inst=(drv_instance*)instance;
-	return inst->driver.desc();
+	return inst->driver.desc(inst->id);
 }
 
 void *drv_firstdevice(char **p){

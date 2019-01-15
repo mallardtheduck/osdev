@@ -3,12 +3,14 @@ output-name := kernel.pkf
 import-files:= \
   data/content/btos.bin \
   data/content/initfs/boot.sys \
-  data/content/initfs/rtc.sys \
-  data/content/initfs/ps2.sys \
+  data/content/initfs/pcrtc.sys \
+  data/content/initfs/stdpc.sys \
   data/content/initfs/ata.sys \
   data/content/initfs/spawn.elx \
   data/content/initfs/fat.sys \
   data/content/initfs/eloader.elx \
+  data/content/grub/splash.tga \
+  data/content/grub/grub.pf2 \
 
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -20,13 +22,13 @@ data/content/btos.bin: ../../kernel/btos.bin create.directories
 data/content/initfs/boot.sys: ../../modules/boot/boot.sys create.directories
 	cp $< $@
 
-data/content/initfs/rtc.sys: ../../modules/rtc/rtc.sys create.directories
+data/content/initfs/pcrtc.sys: ../../modules/hwpnp/pcrtc/pcrtc.sys create.directories
 	cp $< $@
 
-data/content/initfs/ps2.sys: ../../modules/ps2/ps2.sys create.directories
+data/content/initfs/stdpc.sys: ../../modules/hwpnp/stdpc/stdpc.sys create.directories
 	cp $< $@
 
-data/content/initfs/ata.sys: ../../modules/ata/ata.sys create.directories
+data/content/initfs/ata.sys: ../../modules/hwpnp/ata/ata.sys create.directories
 	cp $< $@
 
 data/content/initfs/spawn.elx: ../../user/system/spawn/spawn.elx create.directories
@@ -36,6 +38,12 @@ data/content/initfs/fat.sys: ../../modules/fat/fat.sys create.directories
 	cp $< $@
 
 data/content/initfs/eloader.elx: ../../user/system/eloader/eloader.elx create.directories
+	cp $< $@
+	
+data/content/grub/splash.tga: ../../../other/art/splash.tga copy.grub
+	cp $< $@
+
+data/content/grub/grub.pf2: ../../../other/art/grub.pf2 copy.grub
 	cp $< $@
 
 create.directories:
@@ -62,3 +70,4 @@ clean:
 	-rm -rf data
 	-rm ../$(output-name)
 	-rm create.directories
+	-rm copy.grub

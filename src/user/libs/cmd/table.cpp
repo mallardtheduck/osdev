@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <sstream>
 #include <btos/table.hpp>
+#include <dev/terminal_ioctl.h>
 
 namespace btos_api{
 namespace cmd{
@@ -81,9 +82,20 @@ void display_table(table tbl, size_t width, ostream &output=cout){
 			}
 		}
 	}
+	uint8_t c = 0;
+	if(&output == &cout){
+		bt_term_stdout();
+		c = bt_term_GetTextColours();
+		uint8_t nc = ((c & 0x0F) << 4 | (c & 0xF0) >> 4);
+		bt_term_SetTextColours(nc);
+	}
 	for(const string &h : tbl.headers){
 		print_padded(h, maxlength[h], true, output);
 	}
+    if(&output == &cout){
+    	output << std::flush;
+    	bt_term_SetTextColours(c);
+    }
     output << endl;
 	for(const table_row &row : tbl.rows){
 		for(const string &h : tbl.headers){

@@ -15,8 +15,8 @@ struct drv_driver{
 	size_t (*write)(void *instance, size_t bytes, char *buf);
 	bt_filesize_t (*seek)(void *instance, bt_filesize_t pos, uint32_t flags);
 	int (*ioctl)(void *instance, int fn, size_t bytes, char *buf);
-	int (*type)();
-	char *(*desc)();
+	int (*type)(void *id);
+	char *(*desc)(void *id);
 };
 
 #ifndef __cplusplus

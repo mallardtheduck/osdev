@@ -239,6 +239,14 @@ public:
     (void)sqlite3_backup_finish(pBackup);
     (void)sqlite3_close(backupFile);
   }
+  
+  int extended_errcode(){
+  	return sqlite3_extended_errcode(db_);
+  }
+  
+  const char *errmsg(){
+  	return sqlite3_errmsg(db_);
+  }
 
 private:
   db& operator=(const db&) = delete;    // no assignment

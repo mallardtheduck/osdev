@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dev/video_dev.h>
+#include <dev/terminal.h>
 #include <crt_support.h>
 #include <dev/rtc.h>
 
@@ -38,14 +39,14 @@ int main(int argc, char **argv){
     printf("%x - %s\n", (int)type, desc);
     bt_vidmode mode;
     char bg=1, fg=15;
-    uint8_t colour=(uint8_t)bt_fioctl(file, bt_vid_ioctl_GetTextColours, 0, NULL);
+    uint8_t colour=(uint8_t)bt_fioctl(file, bt_terminal_ioctl_GetTextColours, 0, NULL);
     uint8_t col=(uint8_t)((bg << 4) | fg);
-    bt_fioctl(file, bt_vid_ioctl_SetTextColours, 1, (char*)&col);
-    bt_fioctl(file, bt_vid_ioctl_QueryMode, sizeof(mode), (char*)&mode);
+    bt_fioctl(file, bt_terminal_ioctl_SetTextColours, 1, (char*)&col);
+    bt_fioctl(file, bt_terminal_ioctl_QueryScreenMode, sizeof(mode), (char*)&mode);
     //bt_fioctl(file, bt_vid_ioctl_ClearScreen, 0, NULL);
     printf("Video mode: %ix%i %ibpp text:%i, pal:%i, colours:%02x\n", mode.width, mode.height, mode.bpp, mode.textmode, mode.palette, (int)colour);
     bg=0; fg=7;
-    bt_fioctl(file, bt_vid_ioctl_SetTextColours, sizeof(colour), (char*)&colour);
+    bt_fioctl(file, bt_terminal_ioctl_SetTextColours, sizeof(colour), (char*)&colour);
     /*char *memory=malloc(32768);
     bt_mmap(file, 0, memory, (80*25));
     strcpy(memory+40, "Hello world!");

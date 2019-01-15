@@ -68,5 +68,9 @@ static inline bool are_interrupts_enabled()
     return flags & (1 << 9);
 }
 
+inline static void cpu_pause(){
+	asm volatile("pause");
+}
+
 
 #endif

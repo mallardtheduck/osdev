@@ -2,7 +2,7 @@
 
 name = base
 description = The BT/OS base operating system.
-version = 0.1B
+version = 0.1C
 contentPath = btos
 
 [feature-libpath]
@@ -89,3 +89,26 @@ description = Basic system fonts
 path = /fonts/
 type = fontpath
 
+[feature-base-pci-driver]
+
+name = base.drivers.pci
+description = PCI system bus driver
+path = /drivers/
+file = pci.inf
+type = dm.driver.inf
+
+[feature-base-vga-driver]
+
+name = base.drivers.vga
+description = VGA/VESA VBE display driver
+path = /drivers/
+file = vga.inf
+type = dm.driver.inf
+
+[feature-base-ps2-driver]
+
+name = base.drivers.ps2
+description = PS/2 input bus and devices driver
+path = /drivers/
+file = ps2.inf
+type = dm.driver.inf

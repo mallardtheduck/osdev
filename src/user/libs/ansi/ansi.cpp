@@ -178,22 +178,25 @@ static void write_screen(size_t c, size_t r, const vector<uint16_t> &chars){
 	
 	uint8_t a = chars[0] >> 8;
 	size_t cstart = 0;
+	string cs;
 	for(size_t i = 0; i < chars.size(); ++i){
 		uint8_t ca = chars[i] >> 8;
-		if(ca != a || i == chars.size() - 1){
-			string cs;
-			for(size_t j = cstart; j <= i; ++j){
-				char ch = (char)chars[j];
-				if(ch == 10 || ch == 13) ch = ' ';
-				cs += ch;
-			}
-			gotoxy(c + cstart, r);
+		char ch = (char)chars[i];
+		if(ch == 10 || ch == 13) ch = ' ';
+		if(ca == a){
+			cs += ch;
+		}else{
 			bt_term_SetTextColours(a);
+			gotoxy(c + cstart, r);
 			bt_fwrite(real_stdout->os.handle, cs.length(), cs.c_str());
 			a = ca;
 			cstart = i;
+			cs = ch;
 		}
 	}
+	bt_term_SetTextColours(a);
+	gotoxy(c + cstart, r);
+	bt_fwrite(real_stdout->os.handle, cs.length(), cs.c_str());
 	
 	bt_term_SetTextColours(cc);
 }

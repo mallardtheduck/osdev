@@ -16,7 +16,11 @@ ENUM_TYPE(bt_rtc_api);
 
 #if defined(KERNEL) || defined(KERNEL_MODULE)
 
+#ifdef KERNEL_MODULE
 #include <btos_module.h>
+#else
+#define RTC_NO_STUBS
+#endif
 
 struct rtc_calltable{
 	void (*rtc_sleep)(uint32_t msec);

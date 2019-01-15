@@ -4,6 +4,7 @@
 #include "string.hpp"
 #include "locks.hpp"
 #include "strutil.hpp"
+#include <util/asprintf.h>
 
 static const uint32_t default_userspace_priority=100;
 
@@ -67,35 +68,46 @@ proc_process *proc_get(pid_t pid);
 proc_process *proc_get_lock(pid_t pid);
 
 char *proc_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# PID, path, memory, parent\n");
-	size_t kmem=MM2::current_pagedir->get_kernel_used();
-	{hold_lock hl(proc_lock);
-		for(size_t i=0; i<proc_processes->size(); ++i){
-            proc_process *cur=(*proc_processes)[i];
-			sprintf(&buffer[strlen(buffer)],"%i, \"%s\", %i, %i\n", (int)(cur->pid), cur->name.c_str(),
-				(int)((cur->pid)?cur->pagedir->get_user_used():kmem), (int)(cur->parent));
-		}
-    }
+	bool done = false;
+	size_t bufferSize = 4096;
+	char *buffer;
+	while(!done){
+		done = true;
+		buffer=(char*)malloc(bufferSize);
+		snprintf(buffer, bufferSize, "# PID, path, memory, parent\n");
+		size_t kmem=MM2::current_pagedir->get_kernel_used();
+		{hold_lock hl(proc_lock);
+			for(size_t i=0; i<proc_processes->size(); ++i){
+	            proc_process *cur=(*proc_processes)[i];
+				auto count = snprintf(buffer, bufferSize, "%s%i, \"%s\", %i, %i\n", buffer, (int)(cur->pid), cur->name.c_str(),
+					(int)((cur->pid)?cur->pagedir->get_user_used():kmem), (int)(cur->parent));
+				if((size_t)count > bufferSize){
+					free(buffer);
+					buffer = nullptr;
+					bufferSize *= 2;
+					done = false;
+					break;
+				}
+			}
+	    }
+	}
     return buffer;
 }
 
 char *env_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# name, value, flags\n");
+	char *buffer=nullptr;
+	asprintf(&buffer, "# name, value, flags\n");
     {
         hold_lock hl(env_lock);
 		env_t &kenv=proc_get(0)->environment;
 		for(env_t::iterator i = kenv.begin(); i != kenv.end(); ++i){
 			if(i->second.flags & proc_env_flags::Global){
-				sprintf(&buffer[strlen(buffer)], "\"%s\", \"%s\", %x\n", i->first.c_str(), i->second.value.c_str(), (int) i->second.flags);
+				reasprintf_append(&buffer, "\"%s\", \"%s\", %x\n", i->first.c_str(), i->second.value.c_str(), (int) i->second.flags);
 			}
 		}
         for (env_t::iterator i = proc_current_process->environment.begin(); i != proc_current_process->environment.end(); ++i) {
             if (!(i->second.flags & proc_env_flags::Private)) {
-                sprintf(&buffer[strlen(buffer)], "\"%s\", \"%s\", %x\n", i->first.c_str(), i->second.value.c_str(), (int) i->second.flags);
+                reasprintf_append(&buffer, "\"%s\", \"%s\", %x\n", i->first.c_str(), i->second.value.c_str(), (int) i->second.flags);
             }
         }
     }
@@ -760,6 +772,45 @@ btos_api::bt_msg_header *proc_get_msg(size_t index, pid_t pid){
 	else msg = proc->msg_q[index];
 	release_lock(proc->ulock);
 	return msg;
+}
+
+btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id, pid_t pid){
+	proc_process *proc = proc_get_lock(pid);
+	if (!proc) return NULL;
+	btos_api::bt_msg_header *msg = nullptr;
+	for(auto &m : proc->msg_q){
+		if(m->id == id){
+			msg = m;
+			break;
+		}
+	}
+	release_lock(proc->ulock);
+	return msg;
+}
+
+btos_api::bt_msg_header *proc_get_msg_match(btos_api::bt_msg_filter &filt, pid_t pid){
+	proc_process *proc = proc_get_lock(pid);
+	if (!proc) return NULL;
+	btos_api::bt_msg_header *msg = nullptr;
+	for(auto &m : proc->msg_q){
+		if(msg_is_match(*m, filt)){
+			msg = m;
+			break;
+		}
+	}
+	release_lock(proc->ulock);
+	return msg;
+}
+
+btos_api::bt_msg_header *proc_get_msg_match_nolock(btos_api::bt_msg_filter &filt, pid_t pid){
+	proc_process *proc = proc_get(pid);
+	if (!proc) return nullptr;
+	for(auto &m : proc->msg_q){
+		if(msg_is_match(*m, filt)){
+			return m;
+		}
+	}
+	return nullptr;
 }
 
 btos_api::bt_msg_header *proc_get_msg_nolock(size_t index, pid_t pid){

@@ -1,6 +1,7 @@
 #include "../kernel.hpp"
 #include "../locks.hpp"
 #include "mm2_internal.hpp"
+#include <util/asprintf.h>
 
 extern "C" char _start, _end;
 
@@ -17,14 +18,14 @@ namespace MM2{
 	static lock mm2_low_memory_lock;
 	
 	static char *totalmem_infofs(){
-		char *ret = (char*)malloc(128);
-		sprintf(ret, "%u", (unsigned)total_memory);
+		char *ret = nullptr;
+		asprintf(&ret, "%u", (unsigned)total_memory);
 		return ret;
 	}
 	
 	static char *freemem_infofs(){
-		char *ret = (char*)malloc(128);
-		sprintf(ret, "%u", (unsigned)(free_pages * MM2_Page_Size));
+		char *ret = nullptr;
+		asprintf(&ret, "%u", (unsigned)(free_pages * MM2_Page_Size));
 		return ret;
 	}
 

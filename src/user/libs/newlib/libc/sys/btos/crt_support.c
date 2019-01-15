@@ -16,6 +16,8 @@ static size_t fh_count=0;
 
 static bool std_streams_open = false;
 
+static virtual_handle null_virt_handle = {HANDLE_NULL};
+
 static void *memdup(void *ptr, size_t size){
 	void *ret = malloc(size);
 	memcpy(ret, ptr, size);
@@ -29,18 +31,24 @@ void btos_open_std_streams(){
     if(s){
         bt_handle input=bt_fopen(buffer, FS_Read);
         btos_set_specific_filenum(0, input, buffer);
+    }else{
+    	btos_set_specific_filenum_virt(0, &null_virt_handle);
     }
     memset(buffer, 0, BT_MAX_PATH);
     s=bt_getenv("STDOUT", buffer, BT_MAX_PATH);
     if(s){
         bt_handle output=bt_fopen(buffer, FS_Write | FS_AtEnd);
         btos_set_specific_filenum(1, output, buffer);
+    }else{
+    	btos_set_specific_filenum_virt(1, &null_virt_handle);
     }
     memset(buffer, 0, BT_MAX_PATH);
     s=bt_getenv("STDERR", buffer, BT_MAX_PATH);
     if(s){
         bt_handle output=bt_fopen(buffer, FS_Write | FS_AtEnd);
         btos_set_specific_filenum(2, output, buffer);
+    }else{
+    	btos_set_specific_filenum_virt(2, &null_virt_handle);
     }
     std_streams_open = true;
 }

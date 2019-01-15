@@ -26,6 +26,7 @@ btos_api::bt_msg_header msg_recv_reply_block(uint64_t msg_id);
 btos_api::bt_msg_header msg_recv_filtered(btos_api::bt_msg_filter filter, pid_t pid=proc_current_pid, bool block=true);
 void msg_nextmessage_filtered(btos_api::bt_msg_filter filter, btos_api::bt_msg_header &msg);
 bool msg_query_recieved(uint64_t id);
+bool msg_is_match(const btos_api::bt_msg_header &msg, const btos_api::bt_msg_filter &filter);
 
 void msg_subscribe(btos_api::bt_kernel_messages::Enum message, pid_t pid=proc_current_pid);
 void msg_unsubscribe(btos_api::bt_kernel_messages::Enum, pid_t pid=proc_current_pid);

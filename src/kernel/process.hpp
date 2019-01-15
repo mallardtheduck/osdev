@@ -83,6 +83,9 @@ void proc_remove_msg(btos_api::bt_msg_header *msg);
 btos_api::bt_msg_header *proc_get_msg(size_t index, pid_t pid=proc_current_pid);
 btos_api::bt_msg_header *proc_get_msg_nolock(size_t index, pid_t pid=proc_current_pid);
 btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id);
+btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id, pid_t pid);
+btos_api::bt_msg_header *proc_get_msg_match(btos_api::bt_msg_filter &filt, pid_t pid);
+btos_api::bt_msg_header *proc_get_msg_match_nolock(btos_api::bt_msg_filter &filt, pid_t pid);
 
 void proc_set_cur_msg(btos_api::bt_msg_header *msg, pid_t pid=proc_current_pid);
 void proc_set_cur_msg_nolock(btos_api::bt_msg_header *msg, pid_t pid=proc_current_pid);

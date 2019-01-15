@@ -1,6 +1,7 @@
 #include "kernel.hpp"
 #include "ministl.hpp"
 #include "locks.hpp"
+#include <util/asprintf.h>
 
 extern char _start, _end;
 static const uint32_t default_priority=10;
@@ -71,13 +72,12 @@ static pid_t preferred_next_pid = 0;
 static pid_t preferred_return_pid = 0;
 
 char *sch_threads_infofs(){
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# ID, PID, priority, addr, status, alevel, load\n");
+	char *buffer=nullptr;
+	asprintf(&buffer, "# ID, PID, priority, addr, status, alevel, load\n");
 	{hold_lock hl(sch_lock);
 		for(size_t i=0; i<threads->size(); ++i){
 			sch_thread *t=(*threads)[i];
-			sprintf(&buffer[strlen(buffer)],"%i, %i, %i, %x, %i, %i, %i\n", (int)t->ext_id, (int)t->pid, t->priority, t->eip,
+			reasprintf_append(&buffer, "%i, %i, %i, %x, %i, %i, %i\n", (int)t->ext_id, (int)t->pid, t->priority, t->eip,
 				(int)t->status, t->abortlevel, t->modifier);
 		}
     }
@@ -522,7 +522,7 @@ bool sch_abort_blockcheck(void *p){
 	uint64_t &ext_id=*(uint64_t*)p;
 	for(size_t i=0; i<threads->size(); ++i){
 		if((*threads)[i]->ext_id==ext_id){
-			return (*threads)[i]->abortlevel > 0;
+			return (*threads)[i]->abortlevel == 0;
 		}
 	}
 	return true;

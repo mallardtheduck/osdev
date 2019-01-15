@@ -1,17 +1,17 @@
 #include "kernel.hpp"
 #include "ministl.hpp"
 #include "locks.hpp"
+#include <util/asprintf.h>
 
 static map<string, string> *kvars;
 static lock kvar_lock;
 
 static char *kvars_infofs(){
 	hold_lock hl(kvar_lock);
-	char *buffer=(char*)malloc(4096);
-	memset(buffer, 0, 4096);
-	sprintf(buffer, "# name, value\n");
+	char *buffer=nullptr;
+	asprintf(&buffer, "# name, value\n");
 	for(auto i = kvars->begin(); i != kvars->end(); ++i){
-		sprintf(&buffer[strlen(buffer)],"\"%s\", \"%s\"\n", i->first.c_str(), i->second.c_str());
+		reasprintf_append(&buffer, "\"%s\", \"%s\"\n", i->first.c_str(), i->second.c_str());
 	}
     return buffer;
 }

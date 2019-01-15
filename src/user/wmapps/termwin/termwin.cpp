@@ -285,10 +285,6 @@ void mainthread(void*){
 					send_reply(msg, terminal_mode);
 					break;
 				}
-				case bt_terminal_backend_operation_type::GetScreenScroll:{
-					send_reply(msg, true);
-					break;
-				}
 				case bt_terminal_backend_operation_type::DisplaySeek:{
 					struct sp{
 						size_t pos;
@@ -314,14 +310,6 @@ void mainthread(void*){
 				}
 				case bt_terminal_backend_operation_type::IsActive:{
 					send_reply(msg, true);
-					break;
-				}
-				case bt_terminal_backend_operation_type::SetTextColours:{
-					textcolours = *(uint8_t*)op->data;
-					break;
-				}
-				case bt_terminal_backend_operation_type::GetTextColours:{
-					send_reply(msg, textcolours);
 					break;
 				}
 				case bt_terminal_backend_operation_type::Refresh:{

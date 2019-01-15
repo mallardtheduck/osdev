@@ -1,4 +1,4 @@
-MODULES := boot test rtc ps2 ata fat terminal pci vga iso9660
+MODULES := boot test fat terminal iso9660 hwpnp cache
 
 all: dummy.file
 	for dir in $(MODULES); do \

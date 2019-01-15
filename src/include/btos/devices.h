@@ -4,8 +4,10 @@
 #ifdef __cplusplus
 namespace driver_types{
 #endif
-	static const int TIMER		= 0x01;
-	static const int BUS		= 0x02;
+	static const int UNKNOWN	= 0x00;
+	static const int COMPUTER	= 0x01;
+	static const int TIMER		= 0x02;
+	static const int BUS		= 0x03;
 	static const int INPUT		= 0x10;
 	static const int IN_KEYBOARD 	= 0x11;
 	static const int IN_MOUSE	= 0x12;
@@ -23,6 +25,7 @@ namespace driver_types{
 	static const int STR_FLOPPY = 0x35;
 	static const int STR_TAPE	 = 0x36;
 	static const int STR_PART	= 0x37;
+	static const int STR_VOLUME	= 0x38;
 	static const int NIC		= 0x40;
 	static const int NIC_ETHERNET	= 0x41;
 	static const int NIC_WIRELESS	= 0x42;

@@ -17,8 +17,7 @@ extern char dbgbuf[256];
 #define USE_SYSCALL_TABLE syscall_table *SYSCALL_TABLE
 #define USE_DEBUG_PRINTF char dbgbuf[256]
 
-#define dbgpf(...) do{sprintf(dbgbuf, __VA_ARGS__); dbgout(dbgbuf);}while(false)
-#define sprintf(...) SYSCALL_TABLE->sprintf(__VA_ARGS__)
+#define dbgpf(...) do{snprintf(dbgbuf, 256, __VA_ARGS__); dbgout(dbgbuf);}while(false)
 
 inline static void panic(char *msg){
 	SYSCALL_TABLE->panic(msg);
@@ -28,6 +27,9 @@ inline static void *malloc(size_t bytes){
 }
 inline static void free(void *ptr){
 	SYSCALL_TABLE->free(ptr);
+}
+inline static void *realloc(void *ptr, size_t new_size){
+	return SYSCALL_TABLE->realloc(ptr, new_size);
 }
 inline static void *memset(void *ptr, int value, size_t num){
 	return SYSCALL_TABLE->memset(ptr, value, num);
@@ -88,6 +90,34 @@ inline static void dbgout(char *msg){
 	SYSCALL_TABLE->dbgout(msg);
 }
 
+inline static int vsprintf(char *str, const char *fmt, va_list ap){
+	return SYSCALL_TABLE->vsprintf(str, fmt, ap);
+}
+
+inline static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap){
+	return SYSCALL_TABLE->vsnprintf(str, size, fmt, ap);
+}
+
+inline static int sprintf(char *str, const char *fmt, ...) __attribute__((format (printf, 2, 3)));
+
+inline static int sprintf(char *str, const char *fmt, ...){
+	va_list ap;
+	va_start(ap, fmt);
+	int retval = vsprintf(str, fmt, ap);
+	va_end(ap);
+	return retval;
+}
+
+inline static int snprintf(char *str, size_t size, const char *fmt, ...) __attribute__((format (printf, 3, 4)));
+
+inline static int snprintf(char *str, size_t size, const char *fmt, ...){
+	va_list ap;
+	va_start(ap, fmt);
+	int retval = vsnprintf(str, size, fmt, ap);
+	va_end(ap);
+	return retval;
+}
+
 inline static thread_id_t new_thread(thread_func entry, void *param){
 	return SYSCALL_TABLE->new_thread(entry, param);
 }
@@ -136,8 +166,8 @@ inline static void thread_abort(thread_id_t id){
 	SYSCALL_TABLE->thread_abort(id);
 }
 
-inline static void add_device(char *name, drv_driver *driver, void *id){
-	SYSCALL_TABLE->add_device(name, driver, id);
+inline static const char *add_device(const char *name, drv_driver *driver, void *id){
+	return SYSCALL_TABLE->add_device(name, driver, id);
 }
 
 inline static drv_device *get_device(const char *name){
@@ -367,5 +397,40 @@ inline static void set_kvar(const char *name, const char *value){
 inline static size_t get_kvar(const char *name, char *buffer, size_t size){
 	return SYSCALL_TABLE->get_kvar(name, buffer, size);
 }
+
+#ifdef __cplusplus
+inline static void pnp_register_driver(btos_api::hwpnp::IDriver *driver){
+	SYSCALL_TABLE->pnp_register_driver(driver);
+}
+
+inline static void pnp_unregister_driver(btos_api::hwpnp::IDriver *driver){
+	SYSCALL_TABLE->pnp_unregister_driver(driver);
+}
+
+inline static void pnp_add_device(btos_api::hwpnp::IDevice *parent, const btos_api::hwpnp::DeviceID &id, size_t idx){
+	SYSCALL_TABLE->pnp_add_device(parent, id, idx);
+}
+
+inline static btos_api::hwpnp::IDevice *pnp_resolve_device(btos_api::hwpnp::IDevice *parent, const btos_api::hwpnp::DeviceID &id, size_t idx){
+	return SYSCALL_TABLE->pnp_resolve_device(parent, id, idx);
+}
+
+inline static void pnp_rescan_devices(){
+	SYSCALL_TABLE->pnp_rescan_devices();
+}
+
+inline static void pnp_set_root_device(btos_api::hwpnp::IRootDevice *dev){
+	SYSCALL_TABLE->pnp_set_root_device(dev);
+}
+
+inline static btos_api::hwpnp::IDevice *pnp_get_parent(btos_api::hwpnp::IDevice *dev){
+	return SYSCALL_TABLE->pnp_get_parent(dev);
+}
+
+inline static const char *pnp_get_node_name(btos_api::hwpnp::IDeviceNode *node){
+	return SYSCALL_TABLE->pnp_get_node_name(node);
+}
+
+#endif
 
 #endif

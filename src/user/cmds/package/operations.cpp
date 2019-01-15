@@ -150,7 +150,7 @@ void InstallPackage(const string &filePath, const string &path){
 	PackageFile pkgFile(filePath);
 	cout << "Installing package \"" << pkgFile.GetInfo().name << "\" to \"" << installPath << "\"..." << endl;
 	auto res = pkgFile.Install(installPath, progressFn);
-	if(res.success) cout << "Install sucessful." << endl;
+	if(res.success) cout << "Install successful." << endl;
 	else{
 		cout << "Install failed:" << endl;
 		for(const auto &m : res.messages){

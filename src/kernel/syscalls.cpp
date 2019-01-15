@@ -1,4 +1,4 @@
-#include "syscalls.hpp"
+#include "kernel.hpp"
 #include "locks.hpp"
 
 module_api::thread_id_t thread_id(){
@@ -209,6 +209,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&panic,
 	&malloc,
 	&free,
+	&realloc,
 	&memset,
 	&mod_memcpy,
 	&mod_memmove,
@@ -227,7 +228,8 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&mod_release_lock,
 
 	&dbgout,
-	&sprintf,
+	&vsprintf,
+	&vsnprintf,
 
 	&new_thread,
 	&sch_block,
@@ -311,4 +313,13 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	
 	&mod_set_kvar,
 	&mod_get_kvar,
+	
+	&pnp_register_driver,
+	&pnp_unregister_driver,
+	&pnp_add_device,
+	&pnp_resolve_device,
+	&pnp_rescan_devices,
+	&pnp_set_root_device,
+	&pnp_get_parent,
+	&pnp_get_node_name,
 };

@@ -76,6 +76,7 @@ namespace rpc{
                 }else{
                     more_data = false;
                 }
+                bt_msg_ack(&reply);
             }
             rss.seekg(0);
             R ret;
@@ -143,6 +144,7 @@ namespace rpc{
                 }else{
                     more_data = false;
                 }
+                bt_msg_ack(&reply);
             }
         }
     };

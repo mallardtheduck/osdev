@@ -44,38 +44,54 @@ bool starts_with(const char *s, const char *str){
     return true;
 }
 
-void dputs(void *handle, char *c){
-	devwrite(handle, strlen(c), c);
+void dputs(void *handle, char *s){
+	size_t buflen = (strlen(s) * 2);
+	char *buf = (char*)malloc(buflen);
+	for(size_t i = 0; i < buflen; ++i){
+		buf[i * 2] = s[i];
+		buf[(i * 2) + 1] = 0x07;
+	}
+	devwrite(handle, buflen, buf);
+	free(buf);
 }
 
-struct config{
-	char *display;
-	char *input;
-} c;
-
-void displaywrite(const char *s){
-	void *handle=devopen(c.display);
+void displaywrite(const char *s, const char *dev){
+	void *handle=devopen(dev);
 	if(!handle){
-		dbgpf("BOOT: Specified display device: %s\n", c.display);
+		dbgpf("BOOT: Specified display device: %s\n", dev);
 		panic("(BOOT) Display device not valid!");
 	}
     dputs(handle, (char*)s);
     devclose(handle);
 }
 
+void configure_console(const char */*value*/){
+	char *dname;
+	void *ditr = get_first_device(&dname);
+	while(ditr){
+		drv_device *dev = get_device(dname);
+		auto type = dev->driver.type(dev->id);
+		if((type & 0xF0) == driver_types::VIDEO){
+			dbgpf("(BOOT) DISPLAY_DEVICE = %s\n", dname);
+			setenv("DISPLAY_DEVICE", dname, 0, 0);
+		}else if(type == driver_types::IN_KEYBOARD){
+			dbgpf("(BOOT) INPUT_DEVICE = %s\n", dname);
+			setenv("INPUT_DEVICE", dname, 0, 0);
+		}else if(type == driver_types::IN_MOUSE){
+			dbgpf("(BOOT) POINTER_DEVICE = %s\n", dname);
+			setenv("POINTER_DEVICE", dname, 0, 0);
+		}
+		ditr = get_next_device(ditr, &dname);
+	}
+	displaywrite("Starting BT/OS...", getenv("DISPLAY_DEVICE", 0));
+}
+
 extern "C" int handler(void *c, const char* section, const char* name, const char* value){
 	#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
 	dbgpf("BOOT: [%s] %s=%s\n", section, name, value);
 
-	if(MATCH(current_section, "display")){
-		((config*)c)->display=strdup(value);
-		setenv("DISPLAY_DEVICE", ((config*)c)->display, 0, 0);
-		displaywrite("Starting BT/OS...");
-
-	}else if(MATCH(current_section, "input")){
-		((config*)c)->input=strdup(value);
-		setenv("INPUT_DEVICE", ((config*)c)->input, 0, 0);
-
+	if(MATCH(current_section, "configure_console")){
+		configure_console(value);
 	}else if(MATCH(current_section, "load")){
 		char *name, *params;
 		if(split(value, ',', &name, &params)){
@@ -110,8 +126,8 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 			if(split(rest, ',', &name, &fs)){
 				if(!mount(name, path, fs)){
 					char errormsg[128];
-					sprintf(errormsg, "BOOT: Could not mount %s.\n", path);
-					displaywrite(errormsg);
+					sprintf(errormsg, "(BOOT) Could not mount %s.\n", path);
+					panic(errormsg);
 				}
 				free(name);
 				free(fs);
@@ -119,7 +135,16 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 			free(path);
 			free(rest);
 		}
-    }else if(strcmp(section, current_section) == 0 && starts_with("set ", name)){
+	}else if(MATCH(current_section, "setwait")){
+		setenv(value, "-", ENV_Global, 0);
+	}else if(MATCH(current_section, "waitfor")){
+		char *v = getenv(value, 0);
+		while(strlen(v) <= 1){
+			yield();
+			v = getenv(value, 0);
+		}
+		setenv(value, "", ENV_Global, 0);
+	}else if(strcmp(section, current_section) == 0 && starts_with("set ", name)){
         char *set, *varname;
         if(split(name, ' ', &set, &varname)){
             setenv(varname, (char*)value, 0, 0);
@@ -139,7 +164,7 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 
 void boot_thread(void*){
 	dbgout("BOOT: Boot manager loaded.\n");
-	if (ini_parse("INIT:/config.ini", &handler, &c) < 0) {
+	if (ini_parse("INIT:/config.ini", &handler, nullptr) < 0) {
             panic("(BOOT) Can't load 'config.ini'!\n");
     }
 }

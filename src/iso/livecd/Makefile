@@ -15,6 +15,7 @@ livecd.iso: ../../kernel/btos.bin ../../tarinit/livecd/init.tar ../../packages/b
 	cp initreg.cmd isodir
 	mkdir -p isodir/boot/grub
 	cp grub.cfg isodir/boot/grub/grub.cfg
+	cp ../../../other/art/splash.tga isodir/boot/splash.tga
 	mkdir -p isodir/boot/grub/i386-pc
 	cp -r /usr/lib/grub/i386-pc/* isodir/boot/grub/i386-pc
 	rm isodir/boot/grub/i386-pc/*.img

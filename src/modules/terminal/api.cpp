@@ -4,6 +4,7 @@
 #include "api.hpp"
 #include "terminal.hpp"
 #include "device.hpp"
+#include <util/asprintf.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b)) 
 
@@ -248,14 +249,6 @@ void user_backend::unfreeze_pointer(){
 	send_request(pid, handle_id, bt_terminal_backend_operation_type::UnfreezePointer);
 }
 
-void user_backend::set_text_colours(uint8_t c){
-	send_request(pid, handle_id, bt_terminal_backend_operation_type::SetTextColours, c);
-}
-
-uint8_t user_backend::get_text_colours(){
-	return send_request_get_reply<uint8_t>(pid, handle_id, bt_terminal_backend_operation_type::GetTextColours);
-}
-
 size_t user_backend::get_screen_mode_count(){
 	return send_request_get_reply<size_t>(pid, handle_id, bt_terminal_backend_operation_type::GetScreenModeCount);
 }
@@ -272,24 +265,16 @@ bt_vidmode user_backend::get_current_screen_mode(){
 	return send_request_get_reply<bt_vidmode>(pid, handle_id, bt_terminal_backend_operation_type::GetCurrentScreenMode);
 }
 
-void user_backend::set_screen_scroll(bool v){
-	send_request(pid, handle_id, bt_terminal_backend_operation_type::SetScreenScroll, v);
-}
-
-bool user_backend::get_screen_scroll(){
-	return send_request_get_reply<bool>(pid, handle_id, bt_terminal_backend_operation_type::GetScreenScroll);
-}
-
-void user_backend::set_text_access_mode(bt_vid_text_access_mode::Enum mode){
-	send_request(pid, handle_id, bt_terminal_backend_operation_type::SetTextAccessMode, mode);
-}
-
 bt_video_palette_entry user_backend::get_palette_entry(uint8_t entry){
 	return send_request_get_reply<bt_video_palette_entry>(pid, handle_id, bt_terminal_backend_operation_type::GetPaletteEntry, entry);
 }
 
 void user_backend::clear_screen(){
 	send_request(pid, handle_id, bt_terminal_backend_operation_type::ClearScreen);
+}
+
+void user_backend::set_cursor_position(size_t pos){
+	send_request(pid, handle_id, bt_terminal_backend_operation_type::SetCursorPosition);
 }
 
 void user_backend::register_global_shortcut(uint16_t keycode, uint64_t termid){

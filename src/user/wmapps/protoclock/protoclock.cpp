@@ -36,9 +36,9 @@ int thread_fun(void *arg){
 					timeMsg->reset();
 					timeMsg->add_text(text.c_str(), true);
 					text = ntext;
+					//top_win->refresh();
 				}
 			}
-			top_win->refresh();
 		}, 0);
 		++draw_count;
 		if(draw_count == 0) drawn = 0;

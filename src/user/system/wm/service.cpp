@@ -45,7 +45,7 @@ void Service(bt_pid_t root_pid){
 			if(clients.find(pid) != clients.end()){
 				clients.erase(pid);
 			}
-			if(pid == root_pid) return false;
+			if(pid == root_pid || clients.empty()) return false;
 		}else if(msg.From() == 0 && msg.Source() == 0 && msg.Type() == bt_kernel_messages::MessageReceipt) {
 			bt_msg_header omsg = msg.Content<bt_msg_header>();
 			if(!(omsg.flags & bt_msg_flags::Reply) && clients.find(omsg.to) != clients.end()){

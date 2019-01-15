@@ -113,11 +113,11 @@ int term_ioctl(void *instance, int fn, size_t bytes, char *buf){
     return 0;
 }
 
-int term_type(){
+int term_type(void*){
     return driver_types::TERMINAL;
 }
 
-char *term_desc(){
+char *term_desc(void*){
     return (char*)"Terminal device.";
 }
 
@@ -125,8 +125,9 @@ drv_driver term_driver={&term_open, &term_close, &term_read, &term_write, &term_
 
 void init_device(){
     init_lock(&term_lock);
-    char devname[BT_MAX_PATH]="DEV:/TERM";
-    add_device(&devname[5], &term_driver, NULL);
+    const char *node = add_device("TERM", &term_driver, NULL);
+    char devname[BT_MAX_PATH];
+    sprintf(devname, "DEV:/%s", node);
     setenv("STDOUT", devname, 0, 0);
     setenv("STDIN", devname, 0, 0);
     setenv("STDERR", devname, 0, 0);

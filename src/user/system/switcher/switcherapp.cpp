@@ -28,6 +28,7 @@ int SwitcherApp::run(){
 	Root_Window->setpalette(COLOR_WHITE, COLOR_BLACK);
 	init_pair(1, COLOR_WHITE, COLOR_RED);
     init_pair(2, COLOR_WHITE, COLOR_BLUE);
+    init_pair(3, COLOR_BLUE, COLOR_WHITE);
 
 	while(true){
 		vector<pair<string, size_t>> items;

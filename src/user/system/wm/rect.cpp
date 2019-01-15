@@ -156,7 +156,7 @@ vector<Rect> SubtractRect(const Rect &r1, const Rect &r2){
 	if(r1.x < r2.x){
 		Rect left;
 		left.x = r1.x;
-		left.y = r2.y;
+		left.y = max(r1.y, r2.y);
 		left.w = r2.x - r1.x;
 		left.h = min(r1b, r2b) - left.y;
 		ret.push_back(left);
@@ -164,7 +164,7 @@ vector<Rect> SubtractRect(const Rect &r1, const Rect &r2){
 	if(r2r < r1r){
 		Rect right;
 		right.x = r2r;
-		right.y = r2.y;
+		right.y = max(r1.y, r2.y);
 		right.w = r1r - r2r;
 		right.h = min(r1b, r2b) - right.y;
 		ret.push_back(right);

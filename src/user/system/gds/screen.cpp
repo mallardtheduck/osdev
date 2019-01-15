@@ -11,11 +11,19 @@ static const size_t thread_stack_size = (4 * 1024);
 static size_t max_syscall_items = 256;
 static bt_syscall_item syscall_items[256];
 
+//#define DRAW_DEBUG
+
 void screen_update_thread(void *p){
 	Screen *pthis = (Screen*)p;
 	bool quit = false;
 	deque<Screen::update> batch;
+#ifdef DRAW_DEBUG
+	uint8_t mask = 0;
+#endif
 	while(true){
+#ifdef DRAW_DEBUG
+		mask ^= 0xFF;
+#endif
 		pthis->sync_atom.WaitFor(AtomValue > 0);
 		bt_lock(pthis->update_q_lock);
 		batch.swap(pthis->update_q);
@@ -30,6 +38,9 @@ void screen_update_thread(void *p){
 				quit = true;
 				break;
 			}
+#ifdef DRAW_DEBUG
+			for(size_t i = 0; i < up.size; ++i)	up.data[i] ^= mask;
+#endif
 			if(up.hide_pointer) hide_pointer = true;
 			syscall_items[callcount++] = {BT_FSEEK, pthis->fh, (uint32_t)&up.pos, FS_Set};
 			syscall_items[callcount++] = {BT_FWRITE, pthis->fh, up.size, (uint32_t)up.data};

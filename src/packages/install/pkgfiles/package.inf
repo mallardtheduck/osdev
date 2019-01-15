@@ -2,7 +2,7 @@
 
 name = install
 description = Installation configuration
-version = 0.1B
+version = 0.1C
 contentPath = btos
 
 [feature-install]

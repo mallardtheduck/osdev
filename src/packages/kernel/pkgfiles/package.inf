@@ -2,7 +2,7 @@
 
 name = kernel
 description = BT/OS kernel, bootloader and tools
-version = 0.1B
+version = 0.1C
 contentPath = content
 
 [feature-kernel]

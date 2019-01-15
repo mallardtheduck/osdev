@@ -35,7 +35,6 @@ private:
     bool echo;
     uint32_t refcount;
     lock term_lock;
-    uint64_t scrollcount;
     bool pointer_enabled;
 	bool pointer_autohide;
     bt_terminal_pointer_bitmap *pointer_bitmap;
@@ -72,6 +71,7 @@ private:
     friend bool pointer_blockcheck(void *p);
     friend bool event_blockcheck(void *p);
     friend bool active_blockcheck(void *p);
+    friend bool exclusive_blockcheck(void *p);
 
     static const size_t titlemax=256;
     char title[titlemax];
@@ -131,6 +131,5 @@ public:
 
 char *terms_infofs();
 extern vterm_list *terminals;
-size_t strlen(const char *str);
 
 #endif
