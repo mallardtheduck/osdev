@@ -98,7 +98,7 @@ extern "C" wm_WindowInfo WM_WindowInfo(){
 extern "C" void WM_Subscribe(uint32_t events){
 	wm_WindowInfo info;
 	info.subscriptions = events;
-	SendMessage(wm_RequestType::MoveWindow, info, false);
+	SendMessage(wm_RequestType::Subscribe, info, false);
 }
 
 extern "C" void WM_Update(){
