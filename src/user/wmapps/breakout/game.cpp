@@ -21,10 +21,6 @@ bool redrawScreen = false;
 uint32_t curblocks = 0;
 Font font;
 
-bool Overlaps(const Rect &r1, const Rect &r2){
-	return !(r1.x + (int32_t)r1.w - 1 < r2.x || r1.y + (int32_t)r1.h - 1 < r2.y || r1.x > r2.x + (int32_t)r2.w - 1 || r1.y > r2.y + (int32_t)r2.h - 1);
-}
-
 void DrawBackground(shared_ptr<Surface> s){
 	Colour col = s->GetColour(0, 0, 255);
 	s->Box({0, 0, 320, 240}, col, col, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);

@@ -3,6 +3,7 @@
 
 #include "gds.h"
 #include <string>
+#include <vector>
 
 namespace btos_api{
 namespace gds{
@@ -65,6 +66,19 @@ namespace gds{
 		gds_GlyphInfo GetGlyphInfo(uint32_t size, char c);
 		static Font Get(const std::string &name, gds_FontStyle::Enum style = gds_FontStyle::Normal);
 	};
+	
+	bool InRect(int32_t x, int32_t y, const gds::Rect &r);
+	bool InRect(const gds::Point &p, const gds::Rect &r);
+	bool Overlaps(const gds::Rect &r1, const gds::Rect &r2);
+	bool Contains(const gds::Rect &r1, const gds::Rect &r2);
+	gds::Rect Reoriginate(const gds::Rect &r, const gds::Point &p);
+	gds::Point Reoriginate(const gds::Point &pr, const gds::Point &po);
+	std::vector<gds::Rect> TileRects(const gds::Rect &r1, const gds::Rect &r2);
+	std::vector<gds::Rect> TileRects(const std::vector<gds::Rect> &rects);
+	std::vector<gds::Rect> SubtractRect(const gds::Rect &r1, const gds::Rect &r2);
+	std::vector<gds::Rect> SubtractRect(const std::vector<gds::Rect> &from, const gds::Rect &r);
+	gds::Rect Constrain(gds::Rect r, const gds::Rect &bounds);
+	gds::Rect Intersection(const gds::Rect &r1, const gds::Rect &r2);
 
 }
 }
