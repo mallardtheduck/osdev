@@ -23,7 +23,7 @@ namespace colours{
 		gds::Colour White		{0, 0xFF, 0xFF, 0xFF, 0};
 	}
 	
-	gds::Colour GetBackgroundColour(){
+	gds::Colour GetBackground(){
 		return constants::White;
 	}
 	

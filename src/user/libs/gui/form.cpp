@@ -1,4 +1,5 @@
 #include <gui/form.hpp>
+#include <gui/defaults.hpp>
 
 using namespace std::placeholders;
 
@@ -32,14 +33,26 @@ bool Form::HandleEvent(const wm_Event &e){
 
 void Form::Paint(const gds::Rect &){
 	auto surface = GetSurface();
+	auto info = surface.Info();
 	surface.Clear();
+	surface.BeginQueue();
+	auto bkg = colours::GetBackground().Fix(surface);
+	surface.Box({0, 0, info.w, info.h}, bkg, bkg, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	for(auto &c : controls){
 		c->Paint(surface);
 	}
+	surface.CommitQueue();
+	Update();
 }
 
 void Form::AddControl(std::shared_ptr<IControl> control){
 	controls.push_back(control);
+	
+	uint32_t subs = 0;
+	for(auto &c : controls){
+		subs |= c->GetSubscribed();
+	}
+	SetSubscribed(subs);
 }
 
 }
