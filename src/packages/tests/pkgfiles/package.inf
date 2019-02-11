@@ -31,3 +31,11 @@ description = SDL Widgets Test
 path = /
 file = testsw.elx
 type = app
+
+[feature-app-guitest]
+
+name = tests.app.guitest
+description = GUI Widgets Test
+path = /
+file = guitest.elx
+type = app

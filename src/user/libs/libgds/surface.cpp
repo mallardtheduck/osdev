@@ -110,6 +110,11 @@ namespace gds{
 		GDS_SetOpParameters(params);
 	}
 	
+	void Surface::Clear(){
+		Select();
+		GDS_ClearSurface();
+	}
+	
 	gds_SurfaceInfo Surface::Info() const{
 		Select();
 		return GDS_SurfaceInfo();

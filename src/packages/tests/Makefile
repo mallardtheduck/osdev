@@ -20,6 +20,7 @@ import-files:= \
  data/tests/pthreadtest.elx \
  data/tests/testpng.png \
  data/tests/testsw.elx \
+ data/tests/guitest.elx \
 
 all: ../$(output-name)
 pkg-files:= $(shell find pkgfiles -type f)
@@ -79,6 +80,9 @@ data/tests/testpng.png: ../../user/tests/sdltest/testpng.png
 	cp $< $@
 
 data/tests/testsw.elx: ../../3rdparty/SDL2-widgets-2.1/testsw
+	cp $< $@
+
+data/tests/guitest.elx: ../../user/libs/gui/guitest.elx
 	cp $< $@
 
 create.directories:
