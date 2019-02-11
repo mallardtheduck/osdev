@@ -28,6 +28,7 @@ ENUM_START(gds_MsgType)
 	ENUM_SET(gds_MsgType, SetOpParameters,	10),
 	ENUM_SET(gds_MsgType, GetOpParameters,	11),
 	ENUM_SET(gds_MsgType, ReorderOp,		12),
+	ENUM_SET(gds_MsgType, ClearSurface,		13),
 	
 	ENUM_SET(gds_MsgType, GetFontID,		20),
 	ENUM_SET(gds_MsgType, GetFontInfo,		21),

@@ -65,6 +65,7 @@ namespace gds{
 		gds_DrawingOp GetDrawingOp(uint32_t index) const;
 		void ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum mode);
 		void SetOpParameters(const gds_OpParameters *params);
+		void Clear();
 		
 		gds_SurfaceInfo Info() const;
 		

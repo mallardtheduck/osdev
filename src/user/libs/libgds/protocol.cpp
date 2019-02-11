@@ -209,3 +209,7 @@ extern "C" void GDS_ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum m
 	gds_ReorderOp rop = {op, ref, mode};
 	SendMessage(gds_MsgType::ReorderOp, sizeof(rop), (void*)&rop, false);
 }
+
+extern "C" void GDS_ClearSurface(){
+	SendMessage(gds_MsgType::ClearSurface, 0, NULL, false);
+}

@@ -210,6 +210,10 @@ std::shared_ptr<gds_OpParameters> BitmapSurface::GetOpParameters(uint32_t){
 void BitmapSurface::ReorderOp(uint32_t /*op*/, uint32_t /*ref*/, gds_ReorderMode::Enum /*mode*/){
 }
 
+void BitmapSurface::Clear(){
+	FastBox(*image, 0, 0, image->Width(), image->Height(), 0);
+}
+
 void BitmapSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h){
 	FastBlit(*image, *dst, srcX, srcY, dstX, dstY, w, h);
 }

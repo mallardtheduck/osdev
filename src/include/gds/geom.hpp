@@ -48,6 +48,8 @@ namespace gds{
 		return !(r1 == r2);
 	}
 
+	class Surface;
+
 	struct Colour{
 		uint32_t id;
 		uint8_t r, g, b, a;
@@ -55,6 +57,8 @@ namespace gds{
 		Colour() {}
 		Colour(uint32_t _id, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a) : id(_id), r(_r), g(_g), b(_b), a(_a) {}
 		explicit Colour(uint32_t i) : id(i) {}
+		
+		Colour Fix(Surface &surf);
 	};
 
 	struct Font{
@@ -67,18 +71,18 @@ namespace gds{
 		static Font Get(const std::string &name, gds_FontStyle::Enum style = gds_FontStyle::Normal);
 	};
 	
-	bool InRect(int32_t x, int32_t y, const gds::Rect &r);
-	bool InRect(const gds::Point &p, const gds::Rect &r);
-	bool Overlaps(const gds::Rect &r1, const gds::Rect &r2);
-	bool Contains(const gds::Rect &r1, const gds::Rect &r2);
-	gds::Rect Reoriginate(const gds::Rect &r, const gds::Point &p);
-	gds::Point Reoriginate(const gds::Point &pr, const gds::Point &po);
-	std::vector<gds::Rect> TileRects(const gds::Rect &r1, const gds::Rect &r2);
-	std::vector<gds::Rect> TileRects(const std::vector<gds::Rect> &rects);
-	std::vector<gds::Rect> SubtractRect(const gds::Rect &r1, const gds::Rect &r2);
-	std::vector<gds::Rect> SubtractRect(const std::vector<gds::Rect> &from, const gds::Rect &r);
-	gds::Rect Constrain(gds::Rect r, const gds::Rect &bounds);
-	gds::Rect Intersection(const gds::Rect &r1, const gds::Rect &r2);
+	bool InRect(int32_t x, int32_t y, const Rect &r);
+	bool InRect(const Point &p, const Rect &r);
+	bool Overlaps(const Rect &r1, const Rect &r2);
+	bool Contains(const Rect &r1, const Rect &r2);
+	Rect Reoriginate(const Rect &r, const Point &p);
+	Point Reoriginate(const Point &pr, const Point &po);
+	std::vector<Rect> TileRects(const Rect &r1, const Rect &r2);
+	std::vector<Rect> TileRects(const std::vector<Rect> &rects);
+	std::vector<Rect> SubtractRect(const Rect &r1, const Rect &r2);
+	std::vector<Rect> SubtractRect(const std::vector<Rect> &from, const Rect &r);
+	Rect Constrain(Rect r, const Rect &bounds);
+	Rect Intersection(const Rect &r1, const Rect &r2);
 
 }
 }

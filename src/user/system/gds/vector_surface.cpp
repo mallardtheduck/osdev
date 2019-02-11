@@ -176,3 +176,8 @@ void VectorSurface::ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum m
 	OrderOps();
 	cache.reset();
 }
+
+void VectorSurface::Clear(){
+	ops.clear();
+	cache.reset();
+}

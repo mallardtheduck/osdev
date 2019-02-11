@@ -250,6 +250,11 @@ bool Client::HandleMessage(const Message &msg) {
 			}
 			break;
 		}
+		case gds_MsgType::ClearSurface:{
+			if(currentSurface){
+				currentSurface->Clear();
+			}
+		}
 		default:{
 			DBG("GDS: Unknown request " << msg.Type() << " from PID: " << msg.From());
 			break;

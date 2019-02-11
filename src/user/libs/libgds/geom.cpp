@@ -1,4 +1,5 @@
 #include <gds/geom.hpp>
+#include <gds/surface.hpp>
 #include "gds/libgds.h"
 
 #include <algorithm>
@@ -50,6 +51,10 @@ namespace gds{
 
 	Point operator+(const Point &p1, const Point &p2){
 		return {p1.x + p2.x, p1.y + p2.y};
+	}
+	
+	Colour Colour::Fix(Surface &surf){
+		return surf.GetColour(r, g, b, a);
 	}
 
 	bool InRect(int32_t x, int32_t y, const Rect &r){

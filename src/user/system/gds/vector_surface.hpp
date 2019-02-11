@@ -39,6 +39,7 @@ public:
 	virtual void SetOpParameters(std::shared_ptr<gds_OpParameters>);
 	virtual std::shared_ptr<gds_OpParameters> GetOpParameters(uint32_t op);
 	virtual void ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum mode);
+	virtual void Clear();
 	
 	virtual void Resize(size_t w, size_t h, bool indexed);
 
