@@ -28,20 +28,23 @@ void Button::Paint(gds::Surface &s){
 		auto buttonColour = colours::GetButtonColour().Fix(*surf);
 		auto border = colours::GetBorder().Fix(*surf);
 		
+		int32_t inW = rect.w - 1;
+		int32_t inH = rect.h - 1;
+		
 		surf->Box({0, 0, rect.w, rect.h}, buttonColour, buttonColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		surf->Line({1, 0}, {(int32_t)rect.w - 1, 0}, border);
-		surf->Line({0, 1}, {0, (int32_t)rect.h - 1}, border);
-		surf->Line({1, (int32_t)rect.h}, {(int32_t)rect.w - 1, (int32_t)rect.h}, border);
-		surf->Line({(int32_t)rect.w, 1}, {(int32_t)rect.w, (int32_t)rect.h - 1}, border);
+		surf->Line({1, 0}, {inW - 1, 0}, border);
+		surf->Line({0, 1}, {0, inH - 1}, border);
+		surf->Line({1, inH}, {inW - 1, inH}, border);
+		surf->Line({inW, 1}, {inW, inH - 1}, border);
 		
 		auto topLeft = colours::GetButtonHiLight().Fix(*surf);
 		auto bottomRight = colours::GetButtonLowLight().Fix(*surf);
 		if(state == ButtonState::Down) std::swap(topLeft, bottomRight);
 		
-		surf->Line({1, 1}, {(int32_t)rect.w - 1, 1}, topLeft);
-		surf->Line({1, 1}, {1, (int32_t)rect.h - 1}, topLeft);
-		surf->Line({1, (int32_t)rect.h - 1}, {(int32_t)rect.w - 1, (int32_t)rect.h - 1}, bottomRight);
-		surf->Line({(int32_t)rect.w - 1, 1}, {(int32_t)rect.w - 1, (int32_t)rect.h - 1}, bottomRight);
+		surf->Line({1, 1}, {inW - 1, 1}, topLeft);
+		surf->Line({1, 1}, {1, inH - 1}, topLeft);
+		surf->Line({1, inH - 1}, {inW - 1, inH - 1}, bottomRight);
+		surf->Line({inW - 1, 1}, {inW - 1, inH - 1}, bottomRight);
 		
 		surf->CommitQueue();
 		

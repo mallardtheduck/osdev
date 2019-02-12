@@ -91,7 +91,7 @@ extern "C" void WM_DestroyWindow(){
 }
 
 extern "C" wm_WindowInfo WM_WindowInfo(){
-	bt_msg_header reply = SendMessage(wm_RequestType::CreateWindow, 0, NULL, true);
+	bt_msg_header reply = SendMessage(wm_RequestType::WindowInfo, 0, NULL, true);
 	return GetContent<wm_WindowInfo>(reply);
 }
 
