@@ -31,30 +31,37 @@ EventResponse Button::HandleEvent(const wm_Event &e){
 
 void Button::Paint(gds::Surface &s){
 	if(!surf || state != paintState){
-		if(!surf){
+		int32_t inW = rect.w - 1;
+		int32_t inH = rect.h - 1;
+		
+		if(!surf || !bkSurf){
 			surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-			labelMeasures = surf->MeasureText(label, fonts::GetButtonFont(), fonts::GetButtonTextSize());
+			
+			bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+			labelMeasures = bkSurf->MeasureText(label, fonts::GetButtonFont(), fonts::GetButtonTextSize());
+			bkSurf->BeginQueue();
+			
+			auto buttonColour = colours::GetButtonColour().Fix(*bkSurf);
+			auto border = colours::GetBorder().Fix(*bkSurf);
+			
+			int32_t labelX = std::max<int32_t>(((rect.w - labelMeasures.w) / 2), 0);
+			int32_t labelY = std::max<int32_t>(((rect.h + labelMeasures.h) / 2), 0);
+			
+			bkSurf->Box({0, 0, rect.w, rect.h}, buttonColour, buttonColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+			bkSurf->Line({1, 0}, {inW - 1, 0}, border);
+			bkSurf->Line({0, 1}, {0, inH - 1}, border);
+			bkSurf->Line({1, inH}, {inW - 1, inH}, border);
+			bkSurf->Line({inW, 1}, {inW, inH - 1}, border);
+			
+			auto textColour = colours::GetButtonText().Fix(*bkSurf);
+			bkSurf->Text({labelX, labelY}, label, fonts::GetButtonFont(), fonts::GetButtonTextSize(), textColour);
+			bkSurf->CommitQueue();
+			
 		}else surf->Clear();
 		
 		surf->BeginQueue();
 		
-		auto buttonColour = colours::GetButtonColour().Fix(*surf);
-		auto border = colours::GetBorder().Fix(*surf);
-		
-		int32_t inW = rect.w - 1;
-		int32_t inH = rect.h - 1;
-		
-		int32_t labelX = std::max<int32_t>(((rect.w - labelMeasures.w) / 2), 0);
-		int32_t labelY = std::max<int32_t>(((rect.h + labelMeasures.h) / 2), 0);
-		
-		surf->Box({0, 0, rect.w, rect.h}, buttonColour, buttonColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		surf->Line({1, 0}, {inW - 1, 0}, border);
-		surf->Line({0, 1}, {0, inH - 1}, border);
-		surf->Line({1, inH}, {inW - 1, inH}, border);
-		surf->Line({inW, 1}, {inW, inH - 1}, border);
-		
-		auto textColour = colours::GetButtonText().Fix(*surf);
-		surf->Text({labelX, labelY}, label, fonts::GetButtonFont(), fonts::GetButtonTextSize(), textColour);
+		surf->Blit(*bkSurf, {0, 0, rect.w, rect.h}, {0, 0, rect.w, rect.h});
 		
 		auto topLeft = colours::GetButtonHiLight().Fix(*surf);
 		auto bottomRight = colours::GetButtonLowLight().Fix(*surf);

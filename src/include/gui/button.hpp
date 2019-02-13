@@ -19,6 +19,7 @@ private:
 	std::function<void()> onClick;
 	
 	std::unique_ptr<gds::Surface> surf;
+	std::unique_ptr<gds::Surface> bkSurf;
 	gds::TextMeasurements labelMeasures;
 	
 public:
