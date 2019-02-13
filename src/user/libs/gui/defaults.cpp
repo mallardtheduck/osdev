@@ -46,6 +46,10 @@ namespace colours{
 	gds::Colour GetButtonText(){
 		return constants::Black;
 	}
+	
+	gds::Colour GetLabelText(){
+		return constants::Black;
+	}
 }
 
 namespace fonts{
@@ -54,6 +58,14 @@ namespace fonts{
 	}
 	
 	uint32_t GetButtonTextSize(){
+		return 12;
+	}
+	
+	gds::Font GetLabelFont(){
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+	}
+	
+	uint32_t GetLabelTextSize(){
 		return 12;
 	}
 }

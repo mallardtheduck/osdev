@@ -27,17 +27,21 @@ namespace colours{
 	}
 	
 	gds::Colour GetBackground();
+	gds::Colour GetBorder();
+	
 	gds::Colour GetButtonColour();
 	gds::Colour GetButtonHiLight();
 	gds::Colour GetButtonLowLight();
 	gds::Colour GetButtonText();
-	
-	gds::Colour GetBorder();
+	gds::Colour GetLabelText();
 }
 
 namespace fonts{
 	gds::Font GetButtonFont();
 	uint32_t GetButtonTextSize();
+	
+	gds::Font GetLabelFont();
+	uint32_t GetLabelTextSize();
 }
 
 }
