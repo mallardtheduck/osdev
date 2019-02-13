@@ -19,6 +19,8 @@ private:
 	bt_pid_t pid;
 	std::set<std::shared_ptr<Surface>> surfaces;
 	std::shared_ptr<Surface> currentSurface;
+	
+	gds_TextParameters txtParams;
 public:
 	Client(bt_pid_t pid);
 	~Client();

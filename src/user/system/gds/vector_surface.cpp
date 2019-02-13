@@ -1,6 +1,7 @@
 #include "vector_surface.hpp"
 #include "bitmap_surface.hpp"
 #include "graphics.hpp"
+#include "fonts.hpp"
 #include <gd.h>
 #include <dev/rtc.h>
 
@@ -180,4 +181,8 @@ void VectorSurface::ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum m
 void VectorSurface::Clear(){
 	ops.clear();
 	cache.reset();
+}
+
+std::unique_ptr<gds_TextMeasurements> VectorSurface::MeasureText(const gds_TextParameters &p, std::string text){
+	return ::MeasureText(p, text);
 }

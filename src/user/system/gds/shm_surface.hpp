@@ -33,6 +33,7 @@ public:
 	virtual std::shared_ptr<gds_OpParameters> GetOpParameters(uint32_t op);
 	virtual void ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum mode);
 	virtual void Clear();
+	virtual std::unique_ptr<gds_TextMeasurements> MeasureText(const gds_TextParameters &p, std::string text); 
 	
 	virtual void Resize(size_t w, size_t h, bool indexed);
 

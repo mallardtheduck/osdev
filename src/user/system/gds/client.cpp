@@ -255,6 +255,26 @@ bool Client::HandleMessage(const Message &msg) {
 				currentSurface->Clear();
 			}
 		}
+		case gds_MsgType::SetTextParameters:{
+			txtParams = msg.Content<gds_TextParameters>();
+			SendReply(msg, 0);
+			break;
+		}
+		case gds_MsgType::MeasureText:{
+			if(currentSurface){
+				std::unique_ptr<char[]> text {new char[msg.Length()]};
+				bt_msg_header head = msg.Header();
+				bt_msg_content(&head, (void*)text.get(), msg.Length());
+				auto ret = currentSurface->MeasureText(txtParams, text.get());
+				bt_msg_header reply;
+				reply.to = msg.From();
+				reply.reply_id = msg.ID();
+				reply.flags = bt_msg_flags::Reply;
+				reply.length = sizeof(ret) + (ret->charCount * sizeof(uint32_t));
+				reply.content = ret.get();
+				bt_send(reply);
+			}
+		}
 		default:{
 			DBG("GDS: Unknown request " << msg.Type() << " from PID: " << msg.From());
 			break;

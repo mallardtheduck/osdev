@@ -1,4 +1,5 @@
 #include "shm_surface.hpp"
+#include "graphics.hpp"
 #include <gd.h>
 #include <dev/rtc.h>
 #include <malloc.h>
@@ -215,4 +216,8 @@ void SHMSurface::ReorderOp(uint32_t /*op*/, uint32_t /*ref*/, gds_ReorderMode::E
 }
 
 void SHMSurface::Clear(){}
+
+std::unique_ptr<gds_TextMeasurements> SHMSurface::MeasureText(const gds_TextParameters &p, std::string text){
+	return ::MeasureText(p, text);
+}
 

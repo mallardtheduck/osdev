@@ -1,4 +1,5 @@
 #include "screen.hpp"
+#include "fonts.hpp"
 #include <cstring>
 #include <cstdlib>
 #include <dev/rtc.h>
@@ -149,4 +150,27 @@ void FastBox(GD::Image &im, int32_t x, int32_t y, uint32_t w, uint32_t h, uint32
 			}
 		}
 	}
+}
+
+std::unique_ptr<gds_TextMeasurements> MeasureText(const gds_TextParameters &p, std::string text){
+	static std::unique_ptr<GD::Image> image {new GD::Image(1, 1, false)};
+	
+	gdFTStringExtra ftex;
+	ftex.flags = gdFTEX_RESOLUTION | gdFTEX_XSHOW;
+	ftex.vdpi = 72;
+	ftex.hdpi = 72;
+	std::string fontfile = GetFontManager()->GetFontFile(p.fontID);
+	auto info = GetFontManager()->GetFont(p.fontID);
+	if(!info) return std::unique_ptr<gds_TextMeasurements>{new gds_TextMeasurements()};
+	int brect[] = {0, 0, 0, 0};
+	if(fontfile != "") image->StringFT(brect, 0, (char*)fontfile.c_str(), p.size, 0, 0, 0, text, &ftex);
+	std::unique_ptr<gds_TextMeasurements> ret {(gds_TextMeasurements*)(new char[sizeof(gds_TextMeasurements) + (sizeof(uint32_t) * text.length())])};
+	ret->h = (info->maxH * p.size) / info->scale;
+	ret->charCount = text.length();
+	for(size_t i = 0; i < text.length(); ++i){
+		ret->charX[i] = ftex.xshow[i];
+		ret->w = ftex.xshow[i];
+	}
+	gdFree(ftex.xshow);
+	return ret;
 }

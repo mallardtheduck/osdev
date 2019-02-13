@@ -214,6 +214,10 @@ void BitmapSurface::Clear(){
 	FastBox(*image, 0, 0, image->Width(), image->Height(), 0);
 }
 
+std::unique_ptr<gds_TextMeasurements> BitmapSurface::MeasureText(const gds_TextParameters &p, std::string text){
+	return ::MeasureText(p, text);
+}
+
 void BitmapSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h){
 	FastBlit(*image, *dst, srcX, srcY, dstX, dstY, w, h);
 }

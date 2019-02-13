@@ -1,5 +1,6 @@
 #include <gds/surface.hpp>
 #include <gds/libgds.h>
+#include <cstdlib>
 
 using namespace std;
 
@@ -113,6 +114,20 @@ namespace gds{
 	void Surface::Clear(){
 		Select();
 		GDS_ClearSurface();
+	}
+	
+	TextMeasurements Surface::MeasureText(const std::string &text, const Font &font, uint32_t size){
+		gds_TextParameters p;
+		p.fontID = font.id;
+		p.size = size;
+		Select();
+		gds_TextMeasurements *m = GDS_MeasureText(p, text.c_str());
+		TextMeasurements ret;
+		ret.w = m->w; ret.h = m->h;
+		ret.charCount = m->charCount;
+		for(size_t i = 0; i < m->charCount; ++i) ret.charX.push_back(m->charX[i]);
+		free(m);
+		return ret;
 	}
 	
 	gds_SurfaceInfo Surface::Info() const{
