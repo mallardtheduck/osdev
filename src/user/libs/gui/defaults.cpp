@@ -42,10 +42,20 @@ namespace colours{
 	gds::Colour GetBorder(){
 		return constants::Black;
 	}
+	
+	gds::Colour GetButtonText(){
+		return constants::Black;
+	}
 }
 
 namespace fonts{
-	gds::Font GetButtonFont();
+	gds::Font GetButtonFont(){
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Bold);
+	}
+	
+	uint32_t GetButtonTextSize(){
+		return 12;
+	}
 }
 
 }

@@ -9,7 +9,6 @@ int main(){
 	auto btn = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "A Button", [] {std::cout << "Button pressed." << std::endl;});
 	
 	frm->AddControl(btn);
-	frm->Paint();
 	
 	btos_api::wm::EventLoop loop({frm});
 	loop.RunLoop();

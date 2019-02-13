@@ -30,12 +30,14 @@ namespace colours{
 	gds::Colour GetButtonColour();
 	gds::Colour GetButtonHiLight();
 	gds::Colour GetButtonLowLight();
+	gds::Colour GetButtonText();
 	
 	gds::Colour GetBorder();
 }
 
 namespace fonts{
 	gds::Font GetButtonFont();
+	uint32_t GetButtonTextSize();
 }
 
 }

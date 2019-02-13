@@ -10,6 +10,13 @@
 
 namespace btos_api{
 namespace gds{
+	
+	struct TextMeasurements{
+		uint32_t w;
+		uint32_t h;
+		size_t charCount;
+		std::vector<uint32_t> charX;
+	};
 
 	class Surface{
 	protected:
@@ -66,6 +73,7 @@ namespace gds{
 		void ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum mode);
 		void SetOpParameters(const gds_OpParameters *params);
 		void Clear();
+		TextMeasurements MeasureText(const std::string &text, const Font &font, uint32_t size);
 		
 		gds_SurfaceInfo Info() const;
 		

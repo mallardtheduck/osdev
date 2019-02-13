@@ -19,13 +19,15 @@ private:
 	std::function<void()> onClick;
 	
 	std::unique_ptr<gds::Surface> surf;
+	gds::TextMeasurements labelMeasures;
 	
 public:
 	Button(const gds::Rect &r, const std::string &l, std::function<void()> oC);
 
-	bool HandleEvent(const wm_Event&);
+	EventResponse HandleEvent(const wm_Event&);
 	void Paint(gds::Surface &s);
-	gds::Rect GetRect();
+	gds::Rect GetPaintRect();
+	gds::Rect GetInteractRect();
 	uint32_t GetSubscribed();
 	void Focus();
 	void Blur();

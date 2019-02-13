@@ -174,7 +174,12 @@ void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
 					ftex.vdpi = 72;
 					ftex.hdpi = 72;
 					string fontfile = GetFontManager()->GetFontFile(pending_op.Text.fontID);
+					uint64_t start = bt_rtc_millis();
 					if(fontfile != "" && pending_op.Text.size) image->StringFT(NULL, pending_op.Common.lineColour, (char*)fontfile.c_str(), pending_op.Text.size, 0, pending_op.Text.x, pending_op.Text.y, params->data, &ftex);
+					uint64_t end = bt_rtc_millis();
+					stringstream ss;
+					ss << "GDS: Text rendered rendered in " << end - start << "ms." << endl;
+					bt_zero(ss.str().c_str());
 				}
 				break;
 			case gds_DrawingOpType::Polygon:

@@ -161,15 +161,14 @@ std::unique_ptr<gds_TextMeasurements> MeasureText(const gds_TextParameters &p, s
 	ftex.hdpi = 72;
 	std::string fontfile = GetFontManager()->GetFontFile(p.fontID);
 	auto info = GetFontManager()->GetFont(p.fontID);
-	if(!info) return std::unique_ptr<gds_TextMeasurements>{new gds_TextMeasurements()};
-	int brect[] = {0, 0, 0, 0};
+	int brect[] = {0, 0, 0, 0, 0, 0, 0, 0};
 	if(fontfile != "") image->StringFT(brect, 0, (char*)fontfile.c_str(), p.size, 0, 0, 0, text, &ftex);
 	std::unique_ptr<gds_TextMeasurements> ret {(gds_TextMeasurements*)(new char[sizeof(gds_TextMeasurements) + (sizeof(uint32_t) * text.length())])};
-	ret->h = (info->maxH * p.size) / info->scale;
+	ret->h = brect[1] - brect[7];
+	ret->w = brect[2] - brect[0];
 	ret->charCount = text.length();
 	for(size_t i = 0; i < text.length(); ++i){
 		ret->charX[i] = ftex.xshow[i];
-		ret->w = ftex.xshow[i];
 	}
 	gdFree(ftex.xshow);
 	return ret;

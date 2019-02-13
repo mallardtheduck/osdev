@@ -12,30 +12,58 @@ namespace gui{
 Form::Form(const gds::Rect &r, uint32_t options, const std::string &title)
 	: Window({r.x, r.y}, options, 0, gds::Surface::Wrap(GDS_NewSurface(gds_SurfaceType::Vector, r.w, r.h, 100, gds_ColourType::True), false), title){
 	SetEventHandler(std::bind(&Form::HandleEvent, this, _1));
+	Paint();
 }
 
 bool Form::HandleEvent(const wm_Event &e){
+	EventResponse response;
 	if(focus && (e.type & wm_KeyboardEvents) && (focus->GetSubscribed() & e.type)){
-		if(focus->HandleEvent(e)) return true;
+		response = focus->HandleEvent(e);
 	}
 	
-	if((e.type | wm_PointerEvents)){
-		for(auto &c : controls){
-			if((c->GetSubscribed() & e.type) && gds::InRect(e.Pointer.x, e.Pointer.y, c->GetRect())){
-				if(c->HandleEvent(e)){
-					focus = c;
-					c->Focus();
-					Paint(c->GetRect());
-					return true;
+	if(!response.IsFinishedProcessing() && (e.type | wm_PointerEvents)){
+		
+		if(e.type == wm_EventType::PointerMove){
+			if(mouseOver && !gds::InRect(e.Pointer.x, e.Pointer.y, mouseOver->GetInteractRect())){
+				auto leaveEvt = e;
+				leaveEvt.type = wm_EventType::PointerLeave;
+				HandleEvent(leaveEvt);
+				mouseOver.reset();
+			}
+		}
+		
+		if(mouseOver && e.type == wm_EventType::PointerLeave){
+			response = mouseOver->HandleEvent(e);
+		}
+		
+		if(!response.IsFinishedProcessing()){
+			for(auto &c : controls){
+				if(e.type == wm_EventType::PointerMove && mouseOver != c && gds::InRect(e.Pointer.x, e.Pointer.y, c->GetInteractRect()) && (c->GetSubscribed() & wm_EventType::PointerEnter)){
+					auto enterEvt = e;
+					enterEvt.type = wm_EventType::PointerEnter;
+					HandleEvent(enterEvt);
+					mouseOver = c;
+				}
+				if((c->GetSubscribed() & e.type) && gds::InRect(e.Pointer.x, e.Pointer.y, c->GetInteractRect())){
+					response = c->HandleEvent(e);
+					if(response.IsFinishedProcessing()){
+						if(e.type != wm_EventType::PointerMove) focus = c;
+						c->Focus();
+						break;
+					}
 				}
 			}
 		}
 	}
 	
+	Paint(response.GetRedrawRects());
+	
 	return true;
 }
 
-void Form::Paint(const gds::Rect &rect){
+void Form::Paint(const std::vector<gds::Rect> &rects){
+	if(rects.empty()) return;
+	
 	auto surface = GetSurface();
 	auto info = surface.Info();
 	surface.Clear();
@@ -46,8 +74,18 @@ void Form::Paint(const gds::Rect &rect){
 		c->Paint(surface);
 	}
 	surface.CommitQueue();
-	if(rect.w && rect.h) Update(rect);
-	else Update();
+	
+	for(auto &r : rects){
+		if(r.w && r.h) Update(r);
+		else{
+			Update();
+			break;
+		}
+	}
+}
+
+void Form::Paint(const gds::Rect &r){
+	Paint(std::vector<gds::Rect>{r});
 }
 
 void Form::AddControl(std::shared_ptr<IControl> control){
@@ -57,7 +95,11 @@ void Form::AddControl(std::shared_ptr<IControl> control){
 	for(auto &c : controls){
 		subs |= c->GetSubscribed();
 	}
+	if(subs & (wm_EventType::PointerEnter | wm_EventType::PointerLeave)) subs |= wm_EventType::PointerMove;
+	
 	SetSubscribed(subs);
+	
+	Paint(control->GetPaintRect());
 }
 
 }
