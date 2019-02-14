@@ -274,6 +274,7 @@ bool Client::HandleMessage(const Message &msg) {
 				reply.content = ret.get();
 				bt_send(reply);
 			}
+			break;
 		}
 		default:{
 			DBG("GDS: Unknown request " << msg.Type() << " from PID: " << msg.From());
