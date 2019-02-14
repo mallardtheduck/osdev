@@ -1,5 +1,5 @@
-diff -rupN libgd-2.1.0/config/config.sub originals/libgd-2.1.0/config/config.sub
---- libgd-2.1.0/config/config.sub	2017-04-07 20:42:52.679150114 +0100
+diff -rupN --ignore-space-change libgd-2.1.0/config/config.sub originals/libgd-2.1.0/config/config.sub
+--- libgd-2.1.0/config/config.sub	2018-01-04 13:18:31.469726763 +0000
 +++ originals/libgd-2.1.0/config/config.sub	2013-06-25 10:58:55.000000000 +0100
 @@ -1354,7 +1354,7 @@ case $os in
  	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
@@ -10,8 +10,8 @@ diff -rupN libgd-2.1.0/config/config.sub originals/libgd-2.1.0/config/config.sub
  	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
  	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
  	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \
-diff -rupN libgd-2.1.0/configure originals/libgd-2.1.0/configure
---- libgd-2.1.0/configure	2017-04-07 20:42:52.687150114 +0100
+diff -rupN --ignore-space-change libgd-2.1.0/configure originals/libgd-2.1.0/configure
+--- libgd-2.1.0/configure	2018-01-04 13:18:31.473726763 +0000
 +++ originals/libgd-2.1.0/configure	2013-06-25 14:53:41.000000000 +0100
 @@ -5587,10 +5587,6 @@ sysv4 | sysv4.3*)
  tpf*)
@@ -24,11 +24,10 @@ diff -rupN libgd-2.1.0/configure originals/libgd-2.1.0/configure
  esac
  
  fi
-@@ -10230,17 +10226,6 @@ uts4*)
-   soname_spec='${libname}${release}${shared_ext}$major'
+@@ -10231,17 +10227,6 @@ uts4*)
    shlibpath_var=LD_LIBRARY_PATH
    ;;
--  
+   
 -btos*)
 -  version_type=linux
 -  libname_spec='$name'
@@ -39,11 +38,12 @@ diff -rupN libgd-2.1.0/configure originals/libgd-2.1.0/configure
 -  shlibpath_var=LIBPATH
 -  soname_spec='$libname${shared_ext}'
 -  ;;
- 
+-
  *)
    dynamic_linker=no
-diff -rupN libgd-2.1.0/src/gd.c originals/libgd-2.1.0/src/gd.c
---- libgd-2.1.0/src/gd.c	2017-04-07 20:42:52.691150114 +0100
+   ;;
+diff -rupN --ignore-space-change libgd-2.1.0/src/gd.c originals/libgd-2.1.0/src/gd.c
+--- libgd-2.1.0/src/gd.c	2018-01-04 13:18:31.473726763 +0000
 +++ originals/libgd-2.1.0/src/gd.c	2013-06-25 10:58:23.000000000 +0100
 @@ -561,14 +561,6 @@ BGD_DECLARE(int) gdImageColorResolve (gd
  
@@ -87,8 +87,8 @@ diff -rupN libgd-2.1.0/src/gd.c originals/libgd-2.1.0/src/gd.c
  			             fill_color);
  		}
  	}
-diff -rupN libgd-2.1.0/src/gdcache.c originals/libgd-2.1.0/src/gdcache.c
---- libgd-2.1.0/src/gdcache.c	2017-05-21 00:02:35.984913173 +0100
+diff -rupN --ignore-space-change libgd-2.1.0/src/gdcache.c originals/libgd-2.1.0/src/gdcache.c
+--- libgd-2.1.0/src/gdcache.c	2018-01-04 13:18:31.473726763 +0000
 +++ originals/libgd-2.1.0/src/gdcache.c	2013-06-25 10:58:23.000000000 +0100
 @@ -5,8 +5,6 @@
  #include "gd.h"
@@ -99,8 +99,8 @@ diff -rupN libgd-2.1.0/src/gdcache.c originals/libgd-2.1.0/src/gdcache.c
  #ifdef HAVE_LIBTTF
  #	define NEED_CACHE 1
  #else
-diff -rupN libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
---- libgd-2.1.0/src/gd_errors.h	2017-04-07 20:42:52.691150114 +0100
+diff -rupN --ignore-space-change libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
+--- libgd-2.1.0/src/gd_errors.h	2018-01-04 13:18:31.473726763 +0000
 +++ originals/libgd-2.1.0/src/gd_errors.h	2013-06-25 10:58:23.000000000 +0100
 @@ -1,7 +1,7 @@
  #ifndef GD_ERRORS_H
@@ -111,8 +111,8 @@ diff -rupN libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
  # include <syslog.h>
  #else
  /*
-diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
---- libgd-2.1.0/src/gdft.c	2017-05-21 00:03:18.220915543 +0100
+diff -rupN --ignore-space-change libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
+--- libgd-2.1.0/src/gdft.c	2019-02-14 15:14:44.143983551 +0000
 +++ originals/libgd-2.1.0/src/gdft.c	2013-06-25 10:58:23.000000000 +0100
 @@ -5,7 +5,6 @@
  /* John Ellson   ellson@graphviz.org        */
@@ -140,15 +140,6 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  #    define PATHSEPARATOR ";"
  #  else
  #    define PATHSEPARATOR ":"
-@@ -507,7 +504,7 @@ fontFetch (char **error, void *key)
- 
- 		return NULL;
- 	}
--	
-+
- 	err = FT_New_Face(*b->library, a->fontpath, 0, &a->face);
- 
- 	/* Read kerning metrics for Postscript fonts. */
 @@ -931,8 +928,6 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  
  			strex->fontpath = (char *) gdMalloc(fontpath_len + 1);
@@ -158,7 +149,62 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  				return "could not alloc full list of fonts";
  			}
  			strncpy(strex->fontpath, font->fontpath, fontpath_len);
-@@ -1332,11 +1327,6 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1079,6 +1074,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 			continue;
+ 		}
+ 
++
+ 		switch (encoding) {
+ 		case gdFTEX_Unicode: {
+ 			/* use UTF-8 mapping from ASCII */
+@@ -1203,11 +1199,8 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 		}
+ 		oldpenf.x = penf.x;
+ 
+-		horiAdvance = 0;
+-		if (brect) {
+-			/* only if need brect */
+ 			/* load glyph image into the slot (erase previous one) */
+-			err = FT_Load_Glyph (face, glyph_index, FT_LOAD_NO_HINTING);//render_mode);
++		err = FT_Load_Glyph (face, glyph_index, render_mode);
+ 			if (err) {
+ 				if (tmpstr)
+ 					gdFree (tmpstr);
+@@ -1215,8 +1208,12 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 				gdMutexUnlock (gdFontCacheMutex);
+ 				return "Problem loading glyph";
+ 			}
++
+ 			horiAdvance = slot->metrics.horiAdvance;
+ 
++		if (brect) {
++			/* only if need brect */
++
+ 			glyph_min.x = penf.x + slot->metrics.horiBearingX;
+ 			glyph_min.y = penf.y - slot->metrics.horiBearingY;
+ 
+@@ -1250,7 +1247,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 			FT_Activate_Size (platform_specific);
+ 
+ 			/* load glyph again into the slot (erase previous one)  - this time with scaling */
+-			err = FT_Load_Glyph (face, glyph_index, render_mode | FT_LOAD_RENDER);
++			err = FT_Load_Glyph (face, glyph_index, render_mode);
+ 			if (err) {
+ 				if (tmpstr)
+ 					gdFree (tmpstr);
+@@ -1258,7 +1255,6 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 				gdMutexUnlock (gdFontCacheMutex);
+ 				return "Problem loading glyph";
+ 			}
+-			if(!horiAdvance) horiAdvance = slot->metrics.horiAdvance * (METRIC_RES / hdpi);
+ 
+ 			/* load and transform glyph image */
+ 			FT_Get_Glyph (slot, &image);
+@@ -1328,15 +1324,9 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 		gdFree (tmpstr);
+ 	gdCacheDelete (tc_cache);
+ 	gdMutexUnlock (gdFontCacheMutex);
+-	
  	return (char *) NULL;
  }
  
@@ -179,8 +225,8 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  		/* netware uses the format "volume:/path" or the standard "/path" */
  		if (name[0] != 0 && (strstr(name, ":/") || name[0] == '/'))
  #else
-diff -rupN libgd-2.1.0/src/gdpp.h originals/libgd-2.1.0/src/gdpp.h
---- libgd-2.1.0/src/gdpp.h	2017-04-07 20:42:52.695150114 +0100
+diff -rupN --ignore-space-change libgd-2.1.0/src/gdpp.h originals/libgd-2.1.0/src/gdpp.h
+--- libgd-2.1.0/src/gdpp.h	2018-01-04 13:18:31.473726763 +0000
 +++ originals/libgd-2.1.0/src/gdpp.h	2013-06-25 10:58:23.000000000 +0100
 @@ -1476,7 +1476,7 @@ public:
  		return gdImageTrueColorPixel(im, x, y);
@@ -191,8 +237,8 @@ diff -rupN libgd-2.1.0/src/gdpp.h originals/libgd-2.1.0/src/gdpp.h
  		return im;
  	}
  
-diff -rupN libgd-2.1.0/src/Makefile.in originals/libgd-2.1.0/src/Makefile.in
---- libgd-2.1.0/src/Makefile.in	2017-04-07 20:42:52.699150115 +0100
+diff -rupN --ignore-space-change libgd-2.1.0/src/Makefile.in originals/libgd-2.1.0/src/Makefile.in
+--- libgd-2.1.0/src/Makefile.in	2018-01-04 13:18:31.477726763 +0000
 +++ originals/libgd-2.1.0/src/Makefile.in	2013-06-25 14:53:39.000000000 +0100
 @@ -393,7 +393,7 @@ top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
