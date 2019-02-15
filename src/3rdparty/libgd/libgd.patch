@@ -1,4 +1,4 @@
-diff -rupN --ignore-space-change libgd-2.1.0/config/config.sub originals/libgd-2.1.0/config/config.sub
+diff -rupN libgd-2.1.0/config/config.sub originals/libgd-2.1.0/config/config.sub
 --- libgd-2.1.0/config/config.sub	2018-01-04 13:18:31.469726763 +0000
 +++ originals/libgd-2.1.0/config/config.sub	2013-06-25 10:58:55.000000000 +0100
 @@ -1354,7 +1354,7 @@ case $os in
@@ -10,7 +10,7 @@ diff -rupN --ignore-space-change libgd-2.1.0/config/config.sub originals/libgd-2
  	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
  	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
  	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \
-diff -rupN --ignore-space-change libgd-2.1.0/configure originals/libgd-2.1.0/configure
+diff -rupN libgd-2.1.0/configure originals/libgd-2.1.0/configure
 --- libgd-2.1.0/configure	2018-01-04 13:18:31.473726763 +0000
 +++ originals/libgd-2.1.0/configure	2013-06-25 14:53:41.000000000 +0100
 @@ -5587,10 +5587,6 @@ sysv4 | sysv4.3*)
@@ -24,10 +24,11 @@ diff -rupN --ignore-space-change libgd-2.1.0/configure originals/libgd-2.1.0/con
  esac
  
  fi
-@@ -10231,17 +10227,6 @@ uts4*)
+@@ -10230,17 +10226,6 @@ uts4*)
+   soname_spec='${libname}${release}${shared_ext}$major'
    shlibpath_var=LD_LIBRARY_PATH
    ;;
-   
+-  
 -btos*)
 -  version_type=linux
 -  libname_spec='$name'
@@ -38,11 +39,10 @@ diff -rupN --ignore-space-change libgd-2.1.0/configure originals/libgd-2.1.0/con
 -  shlibpath_var=LIBPATH
 -  soname_spec='$libname${shared_ext}'
 -  ;;
--
+ 
  *)
    dynamic_linker=no
-   ;;
-diff -rupN --ignore-space-change libgd-2.1.0/src/gd.c originals/libgd-2.1.0/src/gd.c
+diff -rupN libgd-2.1.0/src/gd.c originals/libgd-2.1.0/src/gd.c
 --- libgd-2.1.0/src/gd.c	2018-01-04 13:18:31.473726763 +0000
 +++ originals/libgd-2.1.0/src/gd.c	2013-06-25 10:58:23.000000000 +0100
 @@ -561,14 +561,6 @@ BGD_DECLARE(int) gdImageColorResolve (gd
@@ -87,7 +87,7 @@ diff -rupN --ignore-space-change libgd-2.1.0/src/gd.c originals/libgd-2.1.0/src/
  			             fill_color);
  		}
  	}
-diff -rupN --ignore-space-change libgd-2.1.0/src/gdcache.c originals/libgd-2.1.0/src/gdcache.c
+diff -rupN libgd-2.1.0/src/gdcache.c originals/libgd-2.1.0/src/gdcache.c
 --- libgd-2.1.0/src/gdcache.c	2018-01-04 13:18:31.473726763 +0000
 +++ originals/libgd-2.1.0/src/gdcache.c	2013-06-25 10:58:23.000000000 +0100
 @@ -5,8 +5,6 @@
@@ -99,7 +99,7 @@ diff -rupN --ignore-space-change libgd-2.1.0/src/gdcache.c originals/libgd-2.1.0
  #ifdef HAVE_LIBTTF
  #	define NEED_CACHE 1
  #else
-diff -rupN --ignore-space-change libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
+diff -rupN libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
 --- libgd-2.1.0/src/gd_errors.h	2018-01-04 13:18:31.473726763 +0000
 +++ originals/libgd-2.1.0/src/gd_errors.h	2013-06-25 10:58:23.000000000 +0100
 @@ -1,7 +1,7 @@
@@ -111,8 +111,8 @@ diff -rupN --ignore-space-change libgd-2.1.0/src/gd_errors.h originals/libgd-2.1
  # include <syslog.h>
  #else
  /*
-diff -rupN --ignore-space-change libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
---- libgd-2.1.0/src/gdft.c	2019-02-14 15:14:44.143983551 +0000
+diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
+--- libgd-2.1.0/src/gdft.c	2019-02-15 12:53:56.912099433 +0000
 +++ originals/libgd-2.1.0/src/gdft.c	2013-06-25 10:58:23.000000000 +0100
 @@ -5,7 +5,6 @@
  /* John Ellson   ellson@graphviz.org        */
@@ -122,7 +122,16 @@ diff -rupN --ignore-space-change libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/sr
  
  #include <stdio.h>
  #include <stdlib.h>
-@@ -73,8 +72,6 @@ static char *font_path(char **fontpath,
+@@ -36,8 +35,6 @@
+ #endif
+ #endif
+ 
+-#include <freetype/ftcache.h>
+-
+ /* number of antialised colors for indexed bitmaps */
+ #define GD_NUMCOLORS 8
+ 
+@@ -75,8 +72,6 @@ static char *font_path(char **fontpath,
  #    define DEFAULT_FONTPATH "C:\\WINDOWS\\FONTS;C:\\WINNT\\FONTS"
  #  elif defined(__APPLE__) || (defined(__MWERKS__) && defined(macintosh))
  #    define DEFAULT_FONTPATH "/usr/share/fonts/truetype:/System/Library/Fonts:/Library/Fonts"
@@ -131,7 +140,7 @@ diff -rupN --ignore-space-change libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/sr
  #  else
     /* default fontpath for unix systems  - whatever happened to standards ! */
  #    define DEFAULT_FONTPATH "/usr/X11R6/lib/X11/fonts/TrueType:/usr/X11R6/lib/X11/fonts/truetype:/usr/X11R6/lib/X11/fonts/TTF:/usr/share/fonts/TrueType:/usr/share/fonts/truetype:/usr/openwin/lib/X11/fonts/TrueType:/usr/X11R6/lib/X11/fonts/Type1:/usr/lib/X11/fonts/Type1:/usr/openwin/lib/X11/fonts/Type1"
-@@ -82,7 +79,7 @@ static char *font_path(char **fontpath,
+@@ -84,7 +79,7 @@ static char *font_path(char **fontpath,
  #endif
  
  #ifndef PATHSEPARATOR
@@ -140,7 +149,220 @@ diff -rupN --ignore-space-change libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/sr
  #    define PATHSEPARATOR ";"
  #  else
  #    define PATHSEPARATOR ":"
-@@ -931,8 +928,6 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -271,11 +266,8 @@ extern int any2eucjp (char *, char *, un
+ 
+ /* 2.0.16: thread safety (the font cache is shared) */
+ gdMutexDeclare (gdFontCacheMutex);
+-//static gdCache_head_t *fontCache;
++static gdCache_head_t *fontCache;
+ static FT_Library library;
+-static FTC_Manager cacheManager;
+-static FTC_ImageCache imageCache;
+-static FTC_CMapCache cmapCache;
+ 
+ #define Tcl_UniChar int
+ #define TCL_UTF_MAX 3
+@@ -512,7 +504,7 @@ fontFetch (char **error, void *key)
+ 
+ 		return NULL;
+ 	}
+-	
++
+ 	err = FT_New_Face(*b->library, a->fontpath, 0, &a->face);
+ 
+ 	/* Read kerning metrics for Postscript fonts. */
+@@ -546,40 +538,6 @@ fontRelease (void *element)
+ 	gdFree ((char *) element);
+ }
+ 
+-static size_t fontkey_count = 0;
+-static fontkey_t **known_fontkeys = NULL;
+-
+-static fontkey_t *canonicaliseFontkey(fontkey_t *key){
+-	fontkey_t *canKey = NULL;
+-	
+-	for(size_t i = 0; i < fontkey_count; ++i){
+-	fontkey_t *test = known_fontkeys[i];
+-		if(strcmp (key->fontlist, test->fontlist) == 0 && key->flags == test->flags){
+-			canKey = test;
+-			break;
+-		}
+-	}
+-	
+-	if(canKey == NULL){
+-		if(fontkey_count == 0) known_fontkeys = gdMalloc(sizeof(fontkey_t*));
+-		else known_fontkeys = gdRealloc(known_fontkeys, sizeof(fontkey_t*) * (fontkey_count + 1));
+-		canKey = gdMalloc(sizeof(fontkey_t));
+-		memcpy(canKey, key, sizeof(fontkey_t));
+-		known_fontkeys[fontkey_count] = canKey;
+-		++fontkey_count;
+-	}
+-	return canKey;
+-}
+-
+-static FT_Error cacheRequester(FTC_FaceID face_id, FT_Library library, FT_Pointer request_data, FT_Face* aface){
+-	fontkey_t *key = (fontkey_t *) face_id;
+-	
+-	char *fontPath;
+-	font_path(&fontPath, key->fontlist);
+-	FT_New_Face(library, fontPath, 0, aface);
+-	return 0;
+-}
+-
+ /********************************************************************/
+ /* tweencolor cache functions                                            */
+ 
+@@ -820,15 +778,15 @@ BGD_DECLARE(void) gdFreeFontCache ()
+ 
+ BGD_DECLARE(void) gdFontCacheShutdown ()
+ {
+-	// if (fontCache) {
+-		// gdMutexLock(gdFontCacheMutex);
+-		// gdCacheDelete (fontCache);
+-		// /* 2.0.16: Gustavo Scotti: make sure we don't free this twice */
+-		// fontCache = 0;
+-		// gdMutexUnlock(gdFontCacheMutex);
+-		// gdMutexShutdown (gdFontCacheMutex);
+-		// FT_Done_FreeType (library);
+-	// }
++	if (fontCache) {
++		gdMutexLock(gdFontCacheMutex);
++		gdCacheDelete (fontCache);
++		/* 2.0.16: Gustavo Scotti: make sure we don't free this twice */
++		fontCache = 0;
++		gdMutexUnlock(gdFontCacheMutex);
++		gdMutexShutdown (gdFontCacheMutex);
++		FT_Done_FreeType (library);
++	}
+ }
+ 
+ /********************************************************************/
+@@ -843,7 +801,7 @@ BGD_DECLARE(char *) gdImageStringFT (gdI
+ 
+ BGD_DECLARE(int) gdFontCacheSetup (void)
+ {
+-	if (cacheManager) {
++	if (fontCache) {
+ 		/* Already set up */
+ 		return 0;
+ 	}
+@@ -852,33 +810,13 @@ BGD_DECLARE(int) gdFontCacheSetup (void)
+ 		gdMutexShutdown (gdFontCacheMutex);
+ 		return -1;
+ 	}
+-	FT_Error err = FTC_Manager_New(library, 16, 32, 4*1024*1024, &cacheRequester, NULL, &cacheManager);
+-	if (err || !cacheManager) {
++	fontCache = gdCacheCreate (FONTCACHESIZE, fontTest, fontFetch, fontRelease);
++	if (!fontCache) {
+ 		return -2;
+ 	}
+-	err = FTC_ImageCache_New(cacheManager, &imageCache);
+-	if (err || !imageCache) {
+-		return -3;
+-	}
+-	err = FTC_CMapCache_New(cacheManager, &cmapCache);
+-	if (err || !imageCache) {
+-		return -4;
+-	}
+ 	return 0;
+ }
+ 
+-BGD_DECLARE(void) gdFTLoadFace(FT_Library lib, const char *path, int face_index, FT_Face *face){
+-	if (!cacheManager) gdFontCacheSetup ();	
+-	
+-	fontkey_t tempFontkey, *fontkey;
+-	tempFontkey.fontlist = (char*)path;
+-	tempFontkey.flags = 0;
+-	tempFontkey.library = &library;
+-	
+-	fontkey = canonicaliseFontkey(&tempFontkey);
+-	FTC_Manager_LookupFace(cacheManager, (FTC_FaceID)fontkey, face);
+-}
+-
+ /* the platform-independent resolution used for size and position calculations */
+ /*    the size of the error introduced by rounding is affected by this number */
+ #define METRIC_RES 300
+@@ -898,9 +836,8 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 	double sin_a = sin (angle);
+ 	double cos_a = cos (angle);
+ 	int len, i, ch;
+-	int charmap_index;
+-	//font_t *font;
+-	fontkey_t tempFontkey, *fontkey;
++	font_t *font;
++	fontkey_t fontkey;
+ 	char *next;
+ 	char *tmpstr = 0;
+ 	int render = (im && (im->trueColor || (fg <= 255 && fg >= -255)));
+@@ -922,7 +859,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 	gdCache_head_t *tc_cache;
+ 	/* Tuneable horizontal and vertical resolution in dots per inch */
+ 	int hdpi, vdpi, horiAdvance, xshow_alloc = 0, xshow_pos = 0;
+-	//FT_Size platform_specific, platform_independent;
++	FT_Size platform_specific, platform_independent;
+ 
+ 	if (strex) {
+ 		if ((strex->flags & gdFTEX_LINESPACE) == gdFTEX_LINESPACE) {
+@@ -934,7 +871,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 	                          tweenColorRelease);
+ 
+ 	/***** initialize font library and font cache on first call ******/
+-	if (!cacheManager) {
++	if (!fontCache) {
+ 		if (gdFontCacheSetup () != 0) {
+ 			gdCacheDelete (tc_cache);
+ 			return "Failure to initialize font library";
+@@ -943,31 +880,27 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 	/*****/
+ 	gdMutexLock (gdFontCacheMutex);
+ 	/* get the font (via font cache) */
+-	tempFontkey.fontlist = fontlist;
++	fontkey.fontlist = fontlist;
+ 	if (strex)
+-		tempFontkey.flags = strex->flags & (gdFTEX_FONTPATHNAME |
++		fontkey.flags = strex->flags & (gdFTEX_FONTPATHNAME |
+ 		                                gdFTEX_FONTCONFIG);
+ 	else
+-		tempFontkey.flags = 0;
+-	tempFontkey.library = &library;
+-	
+-	fontkey = canonicaliseFontkey(&tempFontkey);
+-	//font = (font_t *) gdCacheGet (fontCache, &fontkey);
+-	// if (!font) {
+-		// gdCacheDelete (tc_cache);
+-		// gdMutexUnlock (gdFontCacheMutex);
+-		// return fontCache->error;
+-	// }
+-	//face = font->face;		/* shortcut */
+-	//slot = face->glyph;		/* shortcut */
+-	
+-	FTC_Manager_LookupFace(cacheManager, (FTC_FaceID)fontkey, &face);
++		fontkey.flags = 0;
++	fontkey.library = &library;
++	font = (font_t *) gdCacheGet (fontCache, &fontkey);
++	if (!font) {
++		gdCacheDelete (tc_cache);
++		gdMutexUnlock (gdFontCacheMutex);
++		return fontCache->error;
++	}
++	face = font->face;		/* shortcut */
++	slot = face->glyph;		/* shortcut */
+ 
+ 	if (brect) {
+ 		total_min.x = total_min.y = 0;
+ 		total_max.x = total_max.y = 0;
+ 	}
+-	
++
+ 	/*
+ 	 * Added hdpi and vdpi to support images at non-screen resolutions, i.e. 300 dpi TIFF,
+ 	 *    or 100h x 50v dpi FAX format. 2.0.23.
+@@ -991,28 +924,26 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 		}
+ 		/* 2.0.29: we can return the font path if desired */
+ 		if (strex->flags & gdFTEX_RETURNFONTPATHNAME) {
+-			const unsigned int fontpath_len = strlen(fontkey->fontlist);
++			const unsigned int fontpath_len = strlen(font->fontpath);
  
  			strex->fontpath = (char *) gdMalloc(fontpath_len + 1);
  			if (strex->fontpath == NULL) {
@@ -148,8 +370,105 @@ diff -rupN --ignore-space-change libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/sr
 -				gdMutexUnlock (gdFontCacheMutex);
  				return "could not alloc full list of fonts";
  			}
- 			strncpy(strex->fontpath, font->fontpath, fontpath_len);
-@@ -1079,6 +1074,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+-			strncpy(strex->fontpath, fontkey->fontlist, fontpath_len);
++			strncpy(strex->fontpath, font->fontpath, fontpath_len);
+ 			strex->fontpath[fontpath_len] = 0;
+ 		}
+ 	}
+-	
++
+ 	matrix.xx = (FT_Fixed) (cos_a * (1 << 16));
+ 	matrix.yx = (FT_Fixed) (sin_a * (1 << 16));
+ 	matrix.xy = -matrix.yx;
+ 	matrix.yy = matrix.xx;
+ 
+ 	/* set rotation transform */
+-	//FT_Set_Transform (face, &matrix, NULL);
++	FT_Set_Transform (face, &matrix, NULL);
+ 
+-	/*FT_New_Size (face, &platform_independent);
++	FT_New_Size (face, &platform_independent);
+ 	FT_Activate_Size (platform_independent);
+ 	if (FT_Set_Char_Size (face, 0, (FT_F26Dot6)(ptsize*64), METRIC_RES, METRIC_RES)) {
+ 		gdCacheDelete (tc_cache);
+@@ -1028,7 +959,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 			gdMutexUnlock (gdFontCacheMutex);
+ 			return "Could not set character size";
+ 		}
+-	}*/
++	}
+ 
+ 	if (fg < 0)
+ 		render_mode |= FT_LOAD_MONOCHROME;
+@@ -1044,13 +975,11 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 			        || charmap->encoding == FT_ENCODING_UNICODE
+ 			        || charmap->encoding == FT_ENCODING_ADOBE_CUSTOM
+ 			        || charmap->encoding == FT_ENCODING_ADOBE_STANDARD) {
+-				charmap_index = i;
+ 				encodingfound++;
+ 				break;
+ 			}
+ 		} else if (encoding == gdFTEX_Adobe_Custom) {
+ 			if (charmap->encoding == FT_ENCODING_ADOBE_CUSTOM) {
+-				charmap_index = i;
+ 				encodingfound++;
+ 				break;
+ 			}
+@@ -1060,7 +989,6 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ #define FT_ENCODING_BIG5 FT_ENCODING_MS_BIG5
+ #endif
+ 			if (charmap->encoding == FT_ENCODING_BIG5) {
+-				charmap_index = i;
+ 				encodingfound++;
+ 				break;
+ 			}
+@@ -1070,7 +998,6 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ #define FT_ENCODING_SJIS FT_ENCODING_MS_SJIS
+ #endif
+ 			if (charmap->encoding == FT_ENCODING_SJIS) {
+-				charmap_index = i;
+ 				encodingfound++;
+ 				break;
+ 			}
+@@ -1081,19 +1008,16 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 			        || (charmap->platform_id == 3 && charmap->encoding_id == 0) /* Windows Symbol */
+ 			        || (charmap->platform_id == 2 && charmap->encoding_id == 1) /* ISO Unicode */
+ 			        || (charmap->platform_id == 0)) {                        /* Apple Unicode */
+-				charmap_index = i;
+ 				encodingfound++;
+ 				break;
+ 			}
+ 		} else if (encoding == gdFTEX_Big5) {
+ 			if (charmap->platform_id == 3 && charmap->encoding_id == 4) {   /* Windows Big5 */
+-				charmap_index = i;
+ 				encodingfound++;
+ 				break;
+ 			}
+ 		} else if (encoding == gdFTEX_Shift_JIS) {
+ 			if (charmap->platform_id == 3 && charmap->encoding_id == 2) {   /* Windows Sjis */
+-				charmap_index = i;
+ 				encodingfound++;
+ 				break;
+ 			}
+@@ -1101,7 +1025,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ #endif
+ 	}
+ 	if (encodingfound) {
+-		//FT_Set_Charmap(face, charmap);
++		FT_Set_Charmap(face, charmap);
+ 	} else {
+ 		/* No character set found! */
+ 		gdCacheDelete (tc_cache);
+@@ -1128,7 +1052,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 	penf.x = penf.y = 0;	/* running position of non-rotated glyphs */
+ 	previous = 0;		/* index of previous glyph for kerning calculations */
+ 	for (i=0; *next; i++) {
+-		//FT_Activate_Size (platform_independent);
++		FT_Activate_Size (platform_independent);
+ 
+ 		ch = *next;
+ 
+@@ -1150,6 +1074,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  			continue;
  		}
  
@@ -157,50 +476,168 @@ diff -rupN --ignore-space-change libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/sr
  		switch (encoding) {
  		case gdFTEX_Unicode: {
  			/* use UTF-8 mapping from ASCII */
-@@ -1203,11 +1199,8 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1225,22 +1150,22 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 			next++;
+ 			break;
+ 		}
+-		
++
+ 		/* Convert character code to glyph index */
+-		glyph_index = FTC_CMapCache_Lookup (cmapCache, (FTC_FaceID)fontkey, charmap_index, ch);
++		glyph_index = FT_Get_Char_Index (face, ch);
+ 
+ 		/* retrieve kerning distance */
+-		// if ( ! (strex && (strex->flags & gdFTEX_DISABLE_KERNING))
+-		        // && ! FT_IS_FIXED_WIDTH(face)
+-		        // && FT_HAS_KERNING(face)
+-		        // && previous
+-		        // && glyph_index)
+-			// FT_Get_Kerning (face, previous, glyph_index, ft_kerning_default, &delta);
+-		// else
++		if ( ! (strex && (strex->flags & gdFTEX_DISABLE_KERNING))
++		        && ! FT_IS_FIXED_WIDTH(face)
++		        && FT_HAS_KERNING(face)
++		        && previous
++		        && glyph_index)
++			FT_Get_Kerning (face, previous, glyph_index, ft_kerning_default, &delta);
++		else
+ 			delta.x = delta.y = 0;
+ 
+ 		penf.x += delta.x;
+-		
++
+ 		/* When we know the position of the second or subsequent character,
+ 		save the (kerned) advance from the preceeding character in the
+ 		xshow vector */
+@@ -1274,31 +1199,20 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  		}
  		oldpenf.x = penf.x;
  
 -		horiAdvance = 0;
--		if (brect) {
--			/* only if need brect */
- 			/* load glyph image into the slot (erase previous one) */
--			err = FT_Load_Glyph (face, glyph_index, FT_LOAD_NO_HINTING);//render_mode);
++		/* load glyph image into the slot (erase previous one) */
 +		err = FT_Load_Glyph (face, glyph_index, render_mode);
- 			if (err) {
- 				if (tmpstr)
- 					gdFree (tmpstr);
-@@ -1215,8 +1208,12 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
- 				gdMutexUnlock (gdFontCacheMutex);
- 				return "Problem loading glyph";
- 			}
++		if (err) {
++			if (tmpstr)
++				gdFree (tmpstr);
++			gdCacheDelete (tc_cache);
++			gdMutexUnlock (gdFontCacheMutex);
++			return "Problem loading glyph";
++		}
 +
- 			horiAdvance = slot->metrics.horiAdvance;
++		horiAdvance = slot->metrics.horiAdvance;
++
+ 		if (brect) {
+-			FT_Size piSize;
+-			
+-			FTC_ScalerRec scaler;
+-			scaler.face_id = (FTC_FaceID)fontkey;
+-			scaler.pixel = 0;
+-			scaler.width = 0;
+-			scaler.height = (FT_F26Dot6)(ptsize*64);
+-			scaler.x_res = METRIC_RES;
+-			scaler.y_res = METRIC_RES;
+-			
+-			err = FTC_Manager_LookupSize(cacheManager, &scaler, &piSize);
+ 			/* only if need brect */
+-			/* load glyph image into the slot (erase previous one) */
+-			if(!err) err = FT_Load_Glyph (piSize->face, glyph_index, FT_LOAD_NO_HINTING);//render_mode);
+-			if (err) {
+-				if (tmpstr)
+-					gdFree (tmpstr);
+-				gdCacheDelete (tc_cache);
+-				gdMutexUnlock (gdFontCacheMutex);
+-				return "Problem loading glyph";
+-			}
+-			slot = piSize->face->glyph;
+-			horiAdvance = slot->metrics.horiAdvance;
  
-+		if (brect) {
-+			/* only if need brect */
-+
  			glyph_min.x = penf.x + slot->metrics.horiBearingX;
  			glyph_min.y = penf.y - slot->metrics.horiBearingY;
+@@ -1328,21 +1242,12 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 					total_max.y = glyph_max.y;
+ 			}
+ 		}
+-		
++
+ 		if (render) {
+-			/* load glyph again into the slot (erase previous one)  - this time with scaling */
+-			FT_Glyph glyph;
+-			FTC_Node node;
+-			FTC_ScalerRec scaler;
+-			scaler.face_id = (FTC_FaceID)fontkey;
+-			scaler.pixel = 0;
+-			scaler.width = 0;
+-			scaler.height = (FT_F26Dot6)(ptsize*64);
+-			scaler.x_res = hdpi;
+-			scaler.y_res = vdpi;
+-			err = FTC_ImageCache_LookupScaler(imageCache, &scaler, FT_LOAD_RENDER, glyph_index, &glyph, &node);
++			FT_Activate_Size (platform_specific);
  
-@@ -1250,7 +1247,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
- 			FT_Activate_Size (platform_specific);
- 
- 			/* load glyph again into the slot (erase previous one)  - this time with scaling */
--			err = FT_Load_Glyph (face, glyph_index, render_mode | FT_LOAD_RENDER);
+-			//err = FT_Load_Glyph (face, glyph_index, render_mode | FT_LOAD_RENDER);
++			/* load glyph again into the slot (erase previous one)  - this time with scaling */
 +			err = FT_Load_Glyph (face, glyph_index, render_mode);
  			if (err) {
  				if (tmpstr)
  					gdFree (tmpstr);
-@@ -1258,7 +1255,6 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1350,13 +1255,12 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  				gdMutexUnlock (gdFontCacheMutex);
  				return "Problem loading glyph";
  			}
--			if(!horiAdvance) horiAdvance = slot->metrics.horiAdvance * (METRIC_RES / hdpi);
+-			if(!horiAdvance) horiAdvance = (glyph->advance.x >> 6) / (METRIC_RES / hdpi);
  
  			/* load and transform glyph image */
- 			FT_Get_Glyph (slot, &image);
-@@ -1328,15 +1324,9 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+-			//FT_Get_Glyph (glyph, &image);
++			FT_Get_Glyph (slot, &image);
+ 
+-			if (glyph->format != ft_glyph_format_bitmap) {
+-				err = FT_Glyph_To_Bitmap (&glyph, ft_render_mode_normal, 0, 1);
++			if (image->format != ft_glyph_format_bitmap) {
++				err = FT_Glyph_To_Bitmap (&image, ft_render_mode_normal, 0, 1);
+ 				if (err) {
+ 					FT_Done_Glyph(image);
+ 					if (tmpstr)
+@@ -1368,23 +1272,22 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 			}
+ 
+ 			/* now, draw to our target surface */
+-			bm = (FT_BitmapGlyph) glyph;
++			bm = (FT_BitmapGlyph) image;
+ 			/* position rounded down to nearest pixel at current dpi
+ 			(the estimate was rounded up to next 1/METRIC_RES, so this should fit) */
+ 			gdft_draw_bitmap (tc_cache, im, fg, bm->bitmap,
+ 			                  (int)(x + (penf.x * cos_a + penf.y * sin_a)*hdpi/(METRIC_RES*64) + bm->left),
+ 			                  (int)(y - (penf.x * sin_a - penf.y * cos_a)*vdpi/(METRIC_RES*64) - bm->top));
+ 
+-			//FT_Done_Glyph (image);
+-			FTC_Node_Unref(node, cacheManager);
++			FT_Done_Glyph (image);
+ 		}
+-		
++
+ 		/* record current glyph index for kerning */
+ 		previous = glyph_index;
+ 
+ 		penf.x += horiAdvance;
+ 	}
+-	
++
+ 	/* Save the (unkerned) advance from the last character in the xshow vector */
+ 	if (strex && (strex->flags & gdFTEX_XSHOW) && strex->xshow) {
+ 		sprintf(strex->xshow + xshow_pos, "%g",
+@@ -1412,24 +1315,18 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+ 		brect[6] = x + (total_min.x * cos_a + total_min.y * sin_a)*scalex;
+ 		brect[7] = y - (total_min.x * sin_a - total_min.y * cos_a)*scaley;
+ 	}
+-	
+-	//FT_Done_Size (platform_independent);
+-	//if (render)
+-	//	FT_Done_Size (platform_specific);
++
++	FT_Done_Size (platform_independent);
++	if (render)
++		FT_Done_Size (platform_specific);
+ 
+ 	if (tmpstr)
  		gdFree (tmpstr);
  	gdCacheDelete (tc_cache);
  	gdMutexUnlock (gdFontCacheMutex);
@@ -216,7 +653,7 @@ diff -rupN --ignore-space-change libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/sr
  #endif /* HAVE_LIBFREETYPE */
  
  #ifdef HAVE_LIBFONTCONFIG
-@@ -1553,7 +1543,7 @@ static char * font_path(char **fontpath,
+@@ -1646,7 +1543,7 @@ static char * font_path(char **fontpath,
  			return "could not alloc full path of font";
  		}
  		/* if name is an absolute or relative pathname then test directly */
@@ -225,7 +662,7 @@ diff -rupN --ignore-space-change libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/sr
  		/* netware uses the format "volume:/path" or the standard "/path" */
  		if (name[0] != 0 && (strstr(name, ":/") || name[0] == '/'))
  #else
-diff -rupN --ignore-space-change libgd-2.1.0/src/gdpp.h originals/libgd-2.1.0/src/gdpp.h
+diff -rupN libgd-2.1.0/src/gdpp.h originals/libgd-2.1.0/src/gdpp.h
 --- libgd-2.1.0/src/gdpp.h	2018-01-04 13:18:31.473726763 +0000
 +++ originals/libgd-2.1.0/src/gdpp.h	2013-06-25 10:58:23.000000000 +0100
 @@ -1476,7 +1476,7 @@ public:
@@ -237,7 +674,7 @@ diff -rupN --ignore-space-change libgd-2.1.0/src/gdpp.h originals/libgd-2.1.0/sr
  		return im;
  	}
  
-diff -rupN --ignore-space-change libgd-2.1.0/src/Makefile.in originals/libgd-2.1.0/src/Makefile.in
+diff -rupN libgd-2.1.0/src/Makefile.in originals/libgd-2.1.0/src/Makefile.in
 --- libgd-2.1.0/src/Makefile.in	2018-01-04 13:18:31.477726763 +0000
 +++ originals/libgd-2.1.0/src/Makefile.in	2013-06-25 14:53:39.000000000 +0100
 @@ -393,7 +393,7 @@ top_builddir = @top_builddir@
