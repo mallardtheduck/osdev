@@ -61,7 +61,8 @@ void screen_update_thread(void *p){
 		batch.clear();
 		bt_unlock(pthis->update_q_lock);
 		bt_term_PointerUnfreeze();
-		bt_rtc_sleep(15);
+		//bt_rtc_sleep(15);
+		bt_yield();
 	}
 }
 
@@ -105,7 +106,11 @@ bool Screen::BufferPutPixel(uint32_t x, uint32_t y, uint32_t value) {
 	if(!buffer) return false;
 	//if(BufferGetPixel(x, y) == value) return false;
 	size_t pixelpos=(y * current_mode.width) + x;
-	if(current_mode.bpp > 8){
+	if(current_mode.bpp == 32){
+		if(pixel_conversion_required) value = ConvertPixel(value);
+		size_t bufferpos = pixelpos * 4;
+		buffer[bufferpos] = value;
+	}else if(current_mode.bpp > 8){
 		if(pixel_conversion_required) value = ConvertPixel(value);
 		size_t depth = (current_mode.bpp / 8);
 		size_t bufferpos = pixelpos * depth;
@@ -200,6 +205,13 @@ void Screen::QueueUpdate(size_t pos, size_t size, char *data, bool hide_pointer)
 	bt_unlock(update_q_lock);
 }
 
+void Screen::QueueUpdates(const vector<update> &updates){
+	bt_lock(update_q_lock);
+	for(auto &u : updates) update_q.push_back(u);
+	sync_atom.Modify(AtomValue += updates.size());
+	bt_unlock(update_q_lock);
+}
+
 bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 	DBG("GDS: Setting mode " << w << "x" << h << " " << (int)bpp << "bpp.");
 	original_mode = bt_term_QueryScreenMode();
@@ -264,6 +276,7 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 
 void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 	//uint64_t update_start = bt_rtc_millis();
+	gdImagePtr imagePtr = image->GetPtr();
 	bool hide_cursor = false;	
 	if (!x && !y && !w && !h) {
 		w = current_mode.width;
@@ -290,15 +303,17 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 	if(x > current_mode.width) return;
 	if(x + w > current_mode.width) w = current_mode.width - x;
 	if(y + h > current_mode.height) h = current_mode.height - y;
+	vector<update> updates;
+	if(w != current_mode.width || h != current_mode.height) updates.reserve(h);
 	for(uint32_t row=y; row < y+h; ++row){
 		if(row > current_mode.height) break;
 		for(uint32_t col=x; col < x+w; ++col){
 			if(col > current_mode.width) break;
 			uint32_t value;
 			if(image->IsTrueColor()) {
-				value=image->TrueColorPixel(col, row);
+				value=gdImageTrueColorPixel(imagePtr, col, row);
 			}else{
-				value=image->PalettePixel(col, row);
+				value=gdImagePalettePixel(imagePtr, col, row);
 			}
 			BufferPutPixel(col, row, value);
 		}
@@ -308,14 +323,11 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 		if(end > buffersize) end=buffersize;
 		
 		size_t bytes = end - start;
-		if(w != current_mode.width || h != current_mode.height) QueueUpdate(start, bytes, (char*)&buffer[start], hide_cursor);
+		if(w != current_mode.width || h != current_mode.height) updates.emplace_back(update{start, bytes, (char*)&buffer[start], hide_cursor});
+		 //QueueUpdate(start, bytes, (char*)&buffer[start], hide_cursor);
 	}
-	if(w == current_mode.width && h == current_mode.height) {
-		bt_lock(update_q_lock);
-		bt_fseek(fh, 0, false);
-		bt_fwrite(fh, buffersize, (char *) buffer);
-		bt_unlock(update_q_lock);
-	}
+	QueueUpdates(updates);
+	if(w == current_mode.width && h == current_mode.height) QueueUpdate(0, buffersize, (char*)buffer, true);
 	//int64_t update_end = bt_rtc_millis();
 	//DBG("GDS: Update took " << (update_end - update_start) << "ms");
 }

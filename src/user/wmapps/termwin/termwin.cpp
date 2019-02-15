@@ -18,6 +18,8 @@
 
 using namespace std;
 
+//#define DEBUG
+
 #ifdef DEBUG
 #define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
 #else
@@ -190,6 +192,7 @@ static void addRect(wm_Rect &a, const wm_Rect &b){
 void render_terminal_thread(){
 	if(!terminal_handle) return;
 	uint64_t render_counted = 0;
+	vector<gds_DrawingOp> drawingOps;
 	while(true){
 		render_counted = render_counter.WaitFor(AtomValue != render_counted);
 		if(endrender) return;
@@ -203,7 +206,6 @@ void render_terminal_thread(){
 		}
 		wm_Rect updateRect = {0, 0, 0, 0};
 		uint64_t prepStart = bt_rtc_millis();
-		vector<gds_DrawingOp> drawingOps;
 		for(size_t line = 0; line < terminal_mode.height; ++line){
 			if(!has_line_changed(line)) continue;
 			if(size_t sline = detect_line_scroll(line)){
@@ -240,11 +242,13 @@ void render_terminal_thread(){
 		}
 		uint64_t updateStart = bt_rtc_millis();
 		if(drawingOps.size()) GDS_MultiDrawingOps(drawingOps.size(), &drawingOps[0], NULL);
+		drawingOps.clear();
 		WM_UpdateRect(updateRect);
 		uint64_t updateEnd = bt_rtc_millis();
 		DBG("TW: Prep: " << updateStart - prepStart << "ms Update: " << updateEnd - updateStart << "ms");
 		updateRect = {0, 0, 0, 0};
-		bt_rtc_sleep(50);
+		//bt_rtc_sleep(50);
+		bt_yield();
 	}
 }
 
@@ -264,14 +268,14 @@ void render_terminal(){
 void mainthread(void*){
 	size_t cpos  = 0;
 	size_t refcount = 0;
-	uint8_t textcolours = 0x07; 
+	//uint8_t textcolours = 0x07; 
 	surf = GDS_NewSurface(gds_SurfaceType::Bitmap, terminal_mode.width * font_width, terminal_mode.height * font_height);
 	/*uint64_t win =*/ WM_NewWindow(50, 50, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close, surf, "Terminal Window");
 	ready = true;
 	bt_msg_filter filter;
 	filter.flags = bt_msg_filter_flags::NonReply;
 	Message msg = Message::RecieveFiltered(filter);
-	size_t maxlen = 0;
+	//size_t maxlen = 0;
 	bool loop = true;
 	while(loop){
 		if(msg.From() == 0 && msg.Source() == bt_terminal_ext_id && msg.Type() == bt_terminal_message_type::BackendOperation){
