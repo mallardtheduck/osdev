@@ -22,9 +22,11 @@ using namespace std;
 
 #ifdef DEBUG
 #define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
+#define D(x) x
 #else
 #define DBG(x)
-#pragma GCC diagnostic ignored "-Wunused-variable"
+#define D(x)
+//#pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
 static const string ProcInfoPath = "info:/procs";
@@ -39,13 +41,13 @@ static uint32_t font_height = 0;
 static uint32_t font;
 const size_t buffer_size = (terminal_width * terminal_height * 2);
 static uint8_t buffer[buffer_size];
-static uint8_t tempbuffer[buffer_size];
+static bool dirtyBuffer[buffer_size];
 static const size_t thread_stack_size = 16 * 1024;
 static bt_handle_t terminal_handle = 0;
 static volatile bool ready = false;
 static bt_handle_t renderthread = 0;
 static volatile bool endrender = false;
-static size_t curpos;
+static volatile size_t curpos;
 static uint64_t surf;
 static size_t lpos = SIZE_MAX;
 
@@ -149,21 +151,12 @@ bool compare_chars(char a, char b){
 
 static bool has_line_changed(size_t line){
 	size_t laddr = (line * terminal_mode.width) * 2;
-	if(memcmp(&tempbuffer[laddr], &buffer[laddr], terminal_mode.width * 2)) return true;
 	if(lpos != curpos){
 		if(lpos >= laddr && lpos < laddr + (terminal_mode.width * 2)) return true;
 		if(curpos > laddr && curpos < laddr + (terminal_mode.width * 2)) return true;
 	}
+	for(size_t i = laddr; i < laddr + (terminal_mode.width * 2); ++i) if(dirtyBuffer[i]) return true;
 	return false;
-}
-
-static size_t detect_line_scroll(size_t line){
-	for(size_t sline = 0; sline < terminal_mode.height; ++sline){
-		size_t l0addr = (line * terminal_mode.width) * 2;
-		size_t l1addr = (sline * terminal_mode.width) * 2;
-		if(memcmp(&tempbuffer[l0addr], &buffer[l1addr], terminal_mode.width * 2) == 0) return sline;
-	}
-	return 0;
 }
 
 static void addRect(wm_Rect &a, const wm_Rect &b){
@@ -196,7 +189,6 @@ void render_terminal_thread(){
 	while(true){
 		render_counted = render_counter.WaitFor(AtomValue != render_counted);
 		if(endrender) return;
-		bt_terminal_read_buffer(terminal_handle, buffer_size, tempbuffer);
 		static char ltitle[WM_TITLE_MAX] = {0};
 		char title[WM_TITLE_MAX];
 		bt_terminal_get_title(terminal_handle, WM_TITLE_MAX, title);
@@ -205,46 +197,34 @@ void render_terminal_thread(){
 			strncpy(ltitle, title, WM_TITLE_MAX);
 		}
 		wm_Rect updateRect = {0, 0, 0, 0};
-		uint64_t prepStart = bt_rtc_millis();
+		D(uint64_t prepStart = bt_rtc_millis();)
 		for(size_t line = 0; line < terminal_mode.height; ++line){
-			if(!has_line_changed(line)) continue;
-			if(size_t sline = detect_line_scroll(line)){
-				uint64_t start = bt_rtc_millis();
-				drawingOps.push_back(GDS_Blit_Op(surf, 0, sline * font_height, terminal_mode.width * font_width, font_height, 0, line * font_height, terminal_mode.width * font_width, font_height));
-				addRect(updateRect, {0, (int32_t)(line * font_height), (terminal_mode.width * font_width), font_height});
-				size_t l0addr = (line * terminal_mode.width) * 2;
-				size_t l1addr = (sline * terminal_mode.width) * 2;
-				DBG("TW: l0addr: " << l0addr << " l1addr " << l1addr);
-				memcpy(&buffer[l0addr], &buffer[l1addr], terminal_mode.width * 2);
-				uint64_t end = bt_rtc_millis();
-				DBG("TW: Scroll: " << end - start << "ms");
-			}else{
-				uint64_t start = bt_rtc_millis();
+			if(has_line_changed(line)){
+				D(uint64_t start = bt_rtc_millis();)
 				size_t ch = 0;
 				for(size_t col = 0; col < terminal_mode.width; ++col){
 					size_t bufaddr = ((line * terminal_mode.width) + col) * 2;
-					if(!compare_chars(tempbuffer[bufaddr], buffer[bufaddr]) || tempbuffer[bufaddr + 1] != buffer[bufaddr + 1] || bufaddr == curpos || bufaddr == lpos){
-						buffer[bufaddr] = tempbuffer[bufaddr];
+					if(dirtyBuffer[bufaddr] || dirtyBuffer[bufaddr + 1] || bufaddr == curpos || bufaddr == lpos){
+						uint64_t glyph;
 						if(bufaddr == curpos){
-							buffer[bufaddr + 1] = ((tempbuffer[bufaddr + 1] & 0x0f) << 4) | ((tempbuffer[bufaddr + 1] & 0xf0) >> 4);
+							glyph = get_glyph(((buffer[bufaddr + 1] & 0x0f) << 4) | ((buffer[bufaddr + 1] & 0xf0) >> 4), buffer[bufaddr]);
 							lpos = curpos;
-						}
-						else buffer[bufaddr + 1] = tempbuffer[bufaddr + 1];
-						uint64_t glyph = get_glyph(buffer[bufaddr + 1], buffer[bufaddr]);
+						}else glyph = get_glyph(buffer[bufaddr + 1], buffer[bufaddr]);
 						drawingOps.push_back(GDS_Blit_Op(glyph, 0, 0, font_width, font_height, col * font_width, line * font_height, font_width, font_height));
 						addRect(updateRect, {(int32_t)(col * font_width), (int32_t)(line * font_height), font_width, font_height});
 						++ch;
+						dirtyBuffer[bufaddr] = dirtyBuffer[bufaddr + 1] = false;
 					}
 				}
-				uint64_t end = bt_rtc_millis();
+				D(uint64_t end = bt_rtc_millis();)
 				DBG("TW: line drawn in " << end - start << "ms (" << ch << " changes)");
 			}
 		}
-		uint64_t updateStart = bt_rtc_millis();
+		D(uint64_t updateStart = bt_rtc_millis();)
 		if(drawingOps.size()) GDS_MultiDrawingOps(drawingOps.size(), &drawingOps[0], NULL);
 		drawingOps.clear();
 		WM_UpdateRect(updateRect);
-		uint64_t updateEnd = bt_rtc_millis();
+		D(uint64_t updateEnd = bt_rtc_millis();)
 		DBG("TW: Prep: " << updateStart - prepStart << "ms Update: " << updateEnd - updateStart << "ms");
 		updateRect = {0, 0, 0, 0};
 		//bt_rtc_sleep(50);
@@ -265,10 +245,19 @@ void render_terminal(){
 	render_counter.Modify(AtomValue++);
 }
 
+static size_t write_buffer(size_t pos, uint8_t *data, size_t len){
+	size_t ret = 0;
+	for(size_t i = pos; i < buffer_size && ret < len; ++i, ++ret){
+		buffer[i] = data[ret];
+		dirtyBuffer[i] = true;
+	}
+	return ret;
+}
+
 void mainthread(void*){
 	size_t cpos  = 0;
 	size_t refcount = 0;
-	//uint8_t textcolours = 0x07; 
+	uint8_t textcolours = 0x07; 
 	surf = GDS_NewSurface(gds_SurfaceType::Bitmap, terminal_mode.width * font_width, terminal_mode.height * font_height);
 	/*uint64_t win =*/ WM_NewWindow(50, 50, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close, surf, "Terminal Window");
 	ready = true;
@@ -308,8 +297,9 @@ void mainthread(void*){
 					break;
 				}
 				case bt_terminal_backend_operation_type::DisplayWrite:{
-					cpos += msg.Length();
-					send_reply(msg, msg.Length());
+					size_t ret = write_buffer(cpos, (uint8_t*)op->data, op->datasize);
+					cpos += ret;
+					send_reply(msg, ret);
 					break;
 				}
 				case bt_terminal_backend_operation_type::IsActive:{
@@ -349,7 +339,8 @@ void mainthread(void*){
 					break;
 				}
 				case bt_terminal_backend_operation_type::ClearScreen:{
-					memset(buffer, 0, buffer_size);
+					memset(buffer, textcolours, buffer_size);
+					for(size_t i = 0; i < buffer_size; ++i) dirtyBuffer[i] = true;
 					break;
 				}
 				default:{
@@ -390,6 +381,8 @@ int main(){
 	bt_threadhandle thread = btos_create_thread(&mainthread, NULL, thread_stack_size);
 	while(!ready) bt_yield();
 	terminal_handle = bt_terminal_create_terminal(backend_handle);
+	bt_terminal_read_buffer(terminal_handle, buffer_size, buffer);
+	for(size_t i = 0; i < buffer_size; ++i) dirtyBuffer[i] = true;
 	string shell = get_env("SHELL");
 	bt_terminal_run(terminal_handle, shell.c_str());
 	bt_wait_thread(thread);
