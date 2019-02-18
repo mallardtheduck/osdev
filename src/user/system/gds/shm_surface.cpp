@@ -167,8 +167,8 @@ void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t 
 				}
 			}
 		}else{
-			uint32_t srcCol;
-			uint8_t dstCol;
+			uint32_t srcCol = 0;
+			uint8_t dstCol = 0;
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
 					uint32_t srcPxl = getPixelTrueColour(ptr, width, srcX + x, srcY + y);
@@ -182,8 +182,8 @@ void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t 
 		}
 	}else{
 		if(dst->IsTrueColor()){
-			uint8_t srcCol;
-			uint32_t dstCol;
+			uint8_t srcCol = 0;
+			uint32_t dstCol = 0;
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
 					uint8_t srcPxl = getPixelIndexed(ptr, width, srcX + x, srcY + y);
@@ -195,8 +195,8 @@ void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t 
 				}
 			}
 		}else{
-			uint8_t srcCol;
-			uint8_t dstCol;
+			uint8_t srcCol = 0;
+			uint8_t dstCol = 0;
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
 					uint8_t srcPxl = getPixelIndexed(ptr, width, srcX + x, srcY + y);

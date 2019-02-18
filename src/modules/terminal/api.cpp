@@ -274,7 +274,7 @@ void user_backend::clear_screen(){
 }
 
 void user_backend::set_cursor_position(size_t pos){
-	send_request(pid, handle_id, bt_terminal_backend_operation_type::SetCursorPosition);
+	send_request(pid, handle_id, bt_terminal_backend_operation_type::SetCursorPosition, pos);
 }
 
 void user_backend::register_global_shortcut(uint16_t keycode, uint64_t termid){
