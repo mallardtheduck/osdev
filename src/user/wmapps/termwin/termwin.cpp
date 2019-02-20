@@ -249,7 +249,6 @@ void render_terminal_thread(){
 		memcpy(tempbuffer, buffer, buffer_size);
 		bt_unlock(buffer_lock);
 		render_time = bt_rtc_millis();
-		bt_rtc_sleep(30);
 	}
 }
 
@@ -268,18 +267,20 @@ void render_terminal(){
 
 void render_terminal_soon_thread(void *){
 	while(true){
-		bt_rtc_sleep(100);
+		bt_rtc_sleep(30);
 		uint64_t now = bt_rtc_millis();
-		if(render_by > render_time && render_by > now){
-			DBG("TW: Deferred render.");
+		if(render_by > render_time && (render_by < now || now - render_time > 500)){
+			DBG("TW: Deferred render. Time now:" << now);
 			render_terminal();
 		}
 	}
 }
 
-void render_terminal_soon(){
+void render_terminal_soon(uint64_t ms = 100){
 	if(!render_soon_thread) render_soon_thread = btos_create_thread(&render_terminal_soon_thread, NULL, 4096);
-	render_by = bt_rtc_millis() + 100;
+	uint64_t when = bt_rtc_millis() + ms;
+	DBG("TW: Deferring render until: " << when);
+	render_by = when;
 }
 
 static void clear_screen(){
@@ -351,7 +352,7 @@ void mainthread(void*){
 					break;
 				}
 				case bt_terminal_backend_operation_type::Refresh:{
-					render_terminal();
+					render_terminal_soon(30);
 					break;
 				}
 				case bt_terminal_backend_operation_type::Open:{
