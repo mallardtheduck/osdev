@@ -51,7 +51,10 @@ static bt_handle_t renderthread = 0;
 static volatile bool endrender = false;
 static volatile size_t curpos;
 static uint64_t surf;
-static size_t lpos = SIZE_MAX;
+static volatile size_t lpos = SIZE_MAX;
+static volatile uint64_t render_time = 0;
+static volatile uint64_t render_by = 0;
+static bt_handle_t render_soon_thread = 0;
 
 Atom render_counter = 0;
 
@@ -227,8 +230,8 @@ void render_terminal_thread(){
 						drawingOps.push_back(GDS_Blit_Op(glyph, 0, 0, font_width, font_height, col * font_width, line * font_height, font_width, font_height));
 						addRect(updateRect, {(int32_t)(col * font_width), (int32_t)(line * font_height), font_width, font_height});
 						++ch;
-						dirtyBuffer[bufaddr] = dirtyBuffer[bufaddr + 1] = false;
 					}
+					dirtyBuffer[bufaddr] = dirtyBuffer[bufaddr + 1] = false;
 				}
 				D(uint64_t end = bt_rtc_millis();)
 				DBG("TW: line drawn in " << end - start << "ms (" << ch << " changes)");
@@ -239,14 +242,14 @@ void render_terminal_thread(){
 		D(uint64_t updateStart = bt_rtc_millis();)
 		if(drawingOps.size()) GDS_MultiDrawingOps(drawingOps.size(), &drawingOps[0], NULL);
 		drawingOps.clear();
-		WM_UpdateRect(updateRect);
+		if(updateRect.w > 0 && updateRect.h > 0) WM_UpdateRect(updateRect);
 		D(uint64_t updateEnd = bt_rtc_millis();)
 		DBG("TW: Prep: " << updateStart - prepStart << "ms Update: " << updateEnd - updateStart << "ms");
 		updateRect = {0, 0, 0, 0};
 		memcpy(tempbuffer, buffer, buffer_size);
 		bt_unlock(buffer_lock);
+		render_time = bt_rtc_millis();
 		bt_rtc_sleep(30);
-		//bt_yield();
 	}
 }
 
@@ -261,6 +264,22 @@ void render_terminal(){
 	//curpos = bt_terminal_get_pos(terminal_handle);
 	DBG("TW: Render request.");
 	render_counter.Modify(AtomValue++);
+}
+
+void render_terminal_soon_thread(void *){
+	while(true){
+		bt_rtc_sleep(100);
+		uint64_t now = bt_rtc_millis();
+		if(render_by > render_time && render_by > now){
+			DBG("TW: Deferred render.");
+			render_terminal();
+		}
+	}
+}
+
+void render_terminal_soon(){
+	if(!render_soon_thread) render_soon_thread = btos_create_thread(&render_terminal_soon_thread, NULL, 4096);
+	render_by = bt_rtc_millis() + 100;
 }
 
 static void clear_screen(){
@@ -369,7 +388,7 @@ void mainthread(void*){
 				}
 				case bt_terminal_backend_operation_type::SetCursorPosition:{
 					curpos = (*(size_t*)op->data) * 2;
-					if(curpos != lpos) render_terminal();
+					if(curpos != lpos) render_terminal_soon();
 					break;
 				}
 				default:{
