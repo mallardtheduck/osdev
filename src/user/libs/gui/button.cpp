@@ -41,13 +41,15 @@ void Button::Paint(gds::Surface &s){
 			labelMeasures = bkSurf->MeasureText(label, fonts::GetButtonFont(), fonts::GetButtonTextSize());
 			bkSurf->BeginQueue();
 			
+			auto bkgCol = colours::GetBackground().Fix(*bkSurf);
 			auto buttonColour = colours::GetButtonColour().Fix(*bkSurf);
 			auto border = colours::GetBorder().Fix(*bkSurf);
 			
 			int32_t labelX = std::max<int32_t>(((rect.w - labelMeasures.w) / 2), 0);
 			int32_t labelY = std::max<int32_t>(((rect.h + labelMeasures.h) / 2), 0);
 			
-			bkSurf->Box({0, 0, rect.w, rect.h}, buttonColour, buttonColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+			bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+			bkSurf->Box({1, 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, buttonColour, buttonColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 			bkSurf->Line({1, 0}, {inW - 1, 0}, border);
 			bkSurf->Line({0, 1}, {0, inH - 1}, border);
 			bkSurf->Line({1, inH}, {inW - 1, inH}, border);
