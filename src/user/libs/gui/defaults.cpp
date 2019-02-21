@@ -50,6 +50,18 @@ namespace colours{
 	gds::Colour GetLabelText(){
 		return constants::Black;
 	}
+	
+	gds::Colour GetTextBoxText(){
+		return constants::Black;
+	}
+	
+	gds::Colour GetTextBoxHiLight(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetTextBoxLowLight(){
+		return constants::DarkGrey;
+	}
 }
 
 namespace fonts{
@@ -66,6 +78,14 @@ namespace fonts{
 	}
 	
 	uint32_t GetLabelTextSize(){
+		return 12;
+	}
+	
+	gds::Font GetTextBoxFont(){
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+	}
+	
+	uint32_t GetTextBoxFontSize(){
 		return 12;
 	}
 }

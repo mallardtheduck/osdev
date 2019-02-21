@@ -32,6 +32,8 @@ public:
 	uint32_t GetSubscribed();
 	void Focus();
 	void Blur();
+	
+	void OnClick(const std::function<void()> &oC);
 };
 
 }

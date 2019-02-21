@@ -35,7 +35,7 @@ type = app
 [feature-app-guitest]
 
 name = tests.app.guitest
-description = GUI Widgets Test
+description = GUI Controls Test
 path = /
 file = guitest.elx
 type = app

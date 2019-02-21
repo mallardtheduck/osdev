@@ -25,6 +25,7 @@ public:
 	void Paint(const gds::Rect &r = gds::Rect());
 	
 	void AddControl(std::shared_ptr<IControl> control);
+	void AddControls(std::vector<std::shared_ptr<IControl>> controls);
 };
 	
 }

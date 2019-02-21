@@ -33,7 +33,13 @@ namespace colours{
 	gds::Colour GetButtonHiLight();
 	gds::Colour GetButtonLowLight();
 	gds::Colour GetButtonText();
+	
 	gds::Colour GetLabelText();
+	
+	gds::Colour GetTextBoxText();
+	gds::Colour GetTextBoxHiLight();
+	gds::Colour GetTextBoxLowLight();
+	
 }
 
 namespace fonts{
@@ -42,6 +48,9 @@ namespace fonts{
 	
 	gds::Font GetLabelFont();
 	uint32_t GetLabelTextSize();
+	
+	gds::Font GetTextBoxFont();
+	uint32_t GetTextBoxFontSize();
 }
 
 }

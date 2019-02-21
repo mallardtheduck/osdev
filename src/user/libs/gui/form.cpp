@@ -75,7 +75,9 @@ void Form::Paint(const std::vector<gds::Rect> &rects){
 	}
 	surface.CommitQueue();
 	
-	for(auto &r : rects){
+	auto tRects = gds::TileRects(rects);
+	
+	for(auto &r : tRects){
 		if(r.w && r.h) Update(r);
 		else{
 			Update();
@@ -89,7 +91,11 @@ void Form::Paint(const gds::Rect &r){
 }
 
 void Form::AddControl(std::shared_ptr<IControl> control){
-	controls.push_back(control);
+	AddControls({control});
+}
+
+void Form::AddControls(std::vector<std::shared_ptr<IControl>> ncontrols){
+	for(auto &c : ncontrols) controls.push_back(c);
 	
 	uint32_t subs = 0;
 	for(auto &c : controls){
@@ -99,7 +105,12 @@ void Form::AddControl(std::shared_ptr<IControl> control){
 	
 	SetSubscribed(subs);
 	
-	Paint(control->GetPaintRect());
+	std::vector<gds::Rect> paintRects;
+	
+	for(auto &c : ncontrols){
+		paintRects.push_back(c->GetPaintRect());
+	}
+	Paint(paintRects);
 }
 
 }
