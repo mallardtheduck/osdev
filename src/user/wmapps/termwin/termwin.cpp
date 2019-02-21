@@ -269,14 +269,14 @@ void render_terminal_soon_thread(void *){
 	while(true){
 		bt_rtc_sleep(30);
 		uint64_t now = bt_rtc_millis();
-		if(render_by > render_time && (render_by < now || now - render_time > 500)){
+		if(render_by > render_time && (render_by < now || now - render_time > 100)){
 			DBG("TW: Deferred render. Time now:" << now);
 			render_terminal();
 		}
 	}
 }
 
-void render_terminal_soon(uint64_t ms = 100){
+void render_terminal_soon(uint64_t ms){
 	if(!render_soon_thread) render_soon_thread = btos_create_thread(&render_terminal_soon_thread, NULL, 4096);
 	uint64_t when = bt_rtc_millis() + ms;
 	DBG("TW: Deferring render until: " << when);
@@ -389,7 +389,7 @@ void mainthread(void*){
 				}
 				case bt_terminal_backend_operation_type::SetCursorPosition:{
 					curpos = (*(size_t*)op->data) * 2;
-					if(curpos != lpos) render_terminal_soon();
+					if(curpos != lpos) render_terminal_soon(50);
 					break;
 				}
 				default:{
