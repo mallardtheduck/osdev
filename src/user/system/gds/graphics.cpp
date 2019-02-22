@@ -167,9 +167,11 @@ std::unique_ptr<gds_TextMeasurements> MeasureText(const gds_TextParameters &p, s
 	ret->h = brect[1] - brect[7];
 	ret->w = brect[2] - brect[0];
 	ret->charCount = text.length();
-	for(size_t i = 0; i < text.length(); ++i){
-		ret->charX[i] = ftex.xshow[i];
+	if(ftex.xshow){
+		for(size_t i = 0; i < text.length(); ++i){
+			ret->charX[i] = ftex.xshow[i];
+		}
+		gdFree(ftex.xshow);
 	}
-	gdFree(ftex.xshow);
 	return ret;
 }
