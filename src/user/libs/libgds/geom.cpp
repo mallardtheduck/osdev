@@ -99,6 +99,8 @@ namespace gds{
 				ret.push_back(r1);
 			}else if(Contains(r2, r1)){
 				ret.push_back(r2);
+			}else if(r1 == r2){
+				ret.push_back(r1);
 			}else{
 				vector<int32_t> ys;
 				ys.push_back(r1.y);
@@ -143,32 +145,36 @@ namespace gds{
 	}
 
 	vector<Rect> TileRects(const vector<Rect> &rects){
+		if(rects.size() < 2) return rects;
 		vector<Rect> ret;
 		vector<Rect> tmp = rects;
 		vector<Rect> *in = &tmp;
 		vector<Rect> *out = &ret;
-		bool overlaps = true;
-		while(overlaps){
-			overlaps = false;
+		bool any_overlaps = true;
+		while(any_overlaps){
+			any_overlaps = false;
 			out->clear();
 			for(auto i = in->begin(); i != in->end(); ++i){
 				auto &r1 = *i;
-				bool co = false;
+				bool current_overlaps = false;
 				for(auto j = in->begin(); j != in->end(); ++j){
 					if(i == j) continue;
 					auto &r2 = *j;
 					if(Overlaps(r1, r2)){
-						co = true;
-						overlaps = true;
+						current_overlaps = true;
+						any_overlaps = true;
 						auto tiles = TileRects(r1, r2);
 						for(auto t : tiles){
 							out->push_back(t);
 						}
-						in->erase(i);
+						auto q = i;
+						i--;
+						in->erase(q);
+						in->erase(j);
 						break;
 					}
 				}
-				if(!co){
+				if(!current_overlaps){
 					out->push_back(r1);
 				}
 			}
