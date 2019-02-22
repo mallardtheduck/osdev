@@ -21,7 +21,7 @@ bool Form::HandleEvent(const wm_Event &e){
 		response = focus->HandleEvent(e);
 	}
 	
-	if(!response.IsFinishedProcessing() && (e.type | wm_PointerEvents)){
+	if(!response.IsFinishedProcessing() && (e.type & wm_PointerEvents)){
 		
 		if(e.type == wm_EventType::PointerMove){
 			if(mouseOver && !gds::InRect(e.Pointer.x, e.Pointer.y, mouseOver->GetInteractRect())){
@@ -47,8 +47,17 @@ bool Form::HandleEvent(const wm_Event &e){
 				if((c->GetSubscribed() & e.type) && gds::InRect(e.Pointer.x, e.Pointer.y, c->GetInteractRect())){
 					response = c->HandleEvent(e);
 					if(response.IsFinishedProcessing()){
-						if(e.type != wm_EventType::PointerMove) focus = c;
-						c->Focus();
+						if(e.type != wm_EventType::PointerMove && e.type != wm_EventType::PointerEnter && e.type != wm_EventType::PointerLeave){
+							if(c != focus){
+								if(focus){
+									focus->Blur();
+									response.AddRedrawRect(focus->GetPaintRect());
+								}
+								focus = c;
+								focus->Focus();
+								response.AddRedrawRect(focus->GetPaintRect());
+							}
+						}
 						break;
 					}
 				}
@@ -75,9 +84,7 @@ void Form::Paint(const std::vector<gds::Rect> &rects){
 	}
 	surface.CommitQueue();
 	
-	auto tRects = gds::TileRects(rects);
-	
-	for(auto &r : tRects){
+	for(auto &r : rects){
 		if(r.w && r.h) Update(r);
 		else{
 			Update();

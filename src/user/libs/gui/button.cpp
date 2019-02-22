@@ -35,18 +35,18 @@ void Button::Paint(gds::Surface &s){
 		int32_t inH = rect.h - 1;
 		
 		if(!surf || !bkSurf){
-			surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-			
+			surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));		
 			bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
 			labelMeasures = bkSurf->MeasureText(label, fonts::GetButtonFont(), fonts::GetButtonTextSize());
+			
+			int32_t labelX = std::max<int32_t>(((rect.w - labelMeasures.w) / 2), 0);
+			int32_t labelY = std::max<int32_t>(((rect.h + labelMeasures.h) / 2), 0);
+			
 			bkSurf->BeginQueue();
 			
 			auto bkgCol = colours::GetBackground().Fix(*bkSurf);
 			auto buttonColour = colours::GetButtonColour().Fix(*bkSurf);
 			auto border = colours::GetBorder().Fix(*bkSurf);
-			
-			int32_t labelX = std::max<int32_t>(((rect.w - labelMeasures.w) / 2), 0);
-			int32_t labelY = std::max<int32_t>(((rect.h + labelMeasures.h) / 2), 0);
 			
 			bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 			bkSurf->Box({1, 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, buttonColour, buttonColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
@@ -73,6 +73,20 @@ void Button::Paint(gds::Surface &s){
 		surf->Line({1, 1}, {1, inH - 1}, topLeft);
 		surf->Line({1, inH - 1}, {inW - 1, inH - 1}, bottomRight);
 		surf->Line({inW - 1, 1}, {inW - 1, inH - 1}, bottomRight);
+		
+		if(state == ButtonState::Focus || state == ButtonState::Down){
+			auto focusCol = colours::GetButtonFocus().Fix(*surf);
+				
+			int32_t labelX = std::max<int32_t>(((rect.w - labelMeasures.w) / 2), 0);
+			int32_t labelY = std::max<int32_t>(((rect.h + labelMeasures.h) / 2), 0);
+				
+			int32_t focusX = std::max<uint32_t>(labelX - 3, 0);
+			int32_t focusY = std::max<uint32_t>(labelY - labelMeasures.h - 3, 0);
+			uint32_t focusW = labelMeasures.w + 6;
+			uint32_t focusH = labelMeasures.h + 6;
+			
+			surf->Box({focusX, focusY, focusW, focusH}, focusCol, focusCol);
+		}
 		
 		surf->CommitQueue();
 		

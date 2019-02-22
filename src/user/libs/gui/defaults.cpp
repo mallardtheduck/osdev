@@ -47,6 +47,10 @@ namespace colours{
 		return constants::Black;
 	}
 	
+	gds::Colour GetButtonFocus(){
+		return constants::DarkGrey;
+	}
+	
 	gds::Colour GetLabelText(){
 		return constants::Black;
 	}
@@ -61,6 +65,10 @@ namespace colours{
 	
 	gds::Colour GetTextBoxLowLight(){
 		return constants::DarkGrey;
+	}
+	
+	gds::Colour GetTextCursor(){
+		return constants::Black;
 	}
 }
 

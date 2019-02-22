@@ -1,5 +1,6 @@
 #include <gui/eventresponse.hpp>
 
+#include <iostream>
 
 namespace btos_api{
 namespace gui{
@@ -13,7 +14,7 @@ bool EventResponse::IsFinishedProcessing(){
 
 std::vector<gds::Rect> EventResponse::GetRedrawRects(){
 	if(!rectTiled){
-		redrawRects = TileRects(redrawRects);
+		redrawRects = gds::TileRects(redrawRects);
 		rectTiled = true;
 	}
 	return redrawRects;
