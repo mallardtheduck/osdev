@@ -14,8 +14,7 @@ namespace gds{
 	struct TextMeasurements{
 		uint32_t w;
 		uint32_t h;
-		size_t charCount;
-		std::vector<uint32_t> charX;
+		std::vector<double> charX;
 	};
 
 	class Surface{

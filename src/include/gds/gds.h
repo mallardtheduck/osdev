@@ -303,8 +303,8 @@ typedef struct gds_TextParameters gds_TextParameters;
 struct gds_TextMeasurements{
 	uint32_t w;
 	uint32_t h;
-	size_t charCount;
-	uint32_t charX[];
+	size_t charXCount;
+	double charX[];
 };
 
 #ifndef __cplusplus

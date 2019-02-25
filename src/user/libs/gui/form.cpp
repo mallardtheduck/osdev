@@ -117,7 +117,7 @@ void Form::AddControls(std::vector<std::shared_ptr<IControl>> ncontrols){
 	for(auto &c : ncontrols){
 		paintRects.push_back(c->GetPaintRect());
 	}
-	Paint(paintRects);
+	Paint(gds::TileRects(paintRects));
 }
 
 }

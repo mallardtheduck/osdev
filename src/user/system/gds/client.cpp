@@ -270,7 +270,7 @@ bool Client::HandleMessage(const Message &msg) {
 				reply.to = msg.From();
 				reply.reply_id = msg.ID();
 				reply.flags = bt_msg_flags::Reply;
-				reply.length = sizeof(ret) + (ret->charCount * sizeof(uint32_t));
+				reply.length = sizeof(*ret) + (ret->charXCount * sizeof(double));
 				reply.content = ret.get();
 				bt_send(reply);
 			}

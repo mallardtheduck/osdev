@@ -16,33 +16,40 @@ void TextBox::UpdateDisplayState(){
 		update = true;
 	}
 	
-	textMeasures = surf->MeasureText(text, fonts::GetTextBoxFont(), fonts::GetTextBoxFontSize());
+	if(textMeasures.w == 0 || update) textMeasures = surf->MeasureText(text, fonts::GetTextBoxFont(), fonts::GetTextBoxFontSize());
 	textY = std::max<int32_t>(((rect.h + textMeasures.h) / 2), 0);
 	
+	size_t vchars;
 	while(true){
 		auto textW = rect.w - 5;
 		
-		size_t vchars = 0;
+		vchars = 0;
 		double cWidth = 0.0;
+		bool overflow = false;
+		bool underflow = false;
 		
 		for(size_t i = 0; i < textMeasures.charX.size(); ++i){
-			if(i >= textOffset && round(cWidth) < textW){
+			if(i >= textOffset){
 				++vchars;
 				cWidth += textMeasures.charX[i];
+				if(cWidth > textW){
+					overflow = true;
+					break;
+				}
+			}else{
+				underflow = true;
 			}
 		}
 		
-		if(cursorPos - textOffset > vchars - 1){
+		if(overflow && cursorPos > textOffset + std::max((int32_t)vchars - 2, 0)){
 			++textOffset;
 			update = true;
 			if(textOffset >= text.length()) break;
-		}else if(cursorPos < textOffset && textOffset > 0){
+		}else if(underflow && cursorPos < textOffset + 1){
 			--textOffset;
 			update = true;
 		}else break;
 	}
-	
-	
 }
 	
 EventResponse TextBox::HandleEvent(const wm_Event &e){
@@ -63,19 +70,32 @@ EventResponse TextBox::HandleEvent(const wm_Event &e){
 			update = true;
 		}else if(!(code & KeyFlags::NonASCII)){
 			char c = KB_char(e.Key.code);
+			auto preText = text;
 			if(c == 0x08 && cursorPos > 0){
 				text.erase(cursorPos - 1, 1);
 				--cursorPos;
 				if(onChange) onChange();
-				update = true;
 			}else if(c > 31){
 				text.insert(cursorPos, 1, c);
 				++cursorPos;
 				if(onChange) onChange();
-				update = true;
+			}
+			update = (preText != text);
+		}
+	}else if(e.type == wm_EventType::PointerButtonDown || e.type == wm_EventType::PointerButtonUp){
+		auto pointerX = e.Pointer.x - rect.x;
+		double xpos = 0.0;
+		for(size_t i = textOffset; i < textMeasures.charX.size(); ++i){
+			xpos += textMeasures.charX[i];
+			if(xpos > pointerX){
+				cursorPos = i;
+				updateCursor = true;
+				break;
 			}
 		}
 	}
+	
+	
 	if(update || updateCursor) return {true, rect};
 	else return {true};
 }
@@ -90,6 +110,8 @@ void TextBox::Paint(gds::Surface &s){
 		auto bkgCol = colours::GetBackground().Fix(*surf);
 		auto txtCol = colours::GetTextBoxText().Fix(*surf);
 		auto border = colours::GetBorder().Fix(*surf);
+		
+		surf->Clear();
 		
 		surf->BeginQueue();
 		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
@@ -114,14 +136,14 @@ void TextBox::Paint(gds::Surface &s){
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
 	
 	if(hasFocus){
-		auto cusorCol = colours::GetTextCursor().Fix(*surf);
+		auto cursorCol = colours::GetTextCursor().Fix(*surf);
 		
 		double cursorXd = 0.0;
-		for(size_t i = textOffset; i < (cursorPos + textOffset) && i < textMeasures.charX.size(); ++i){
+		for(size_t i = textOffset; i < cursorPos && i < textMeasures.charX.size(); ++i){
 			cursorXd += textMeasures.charX[i];
 		}
 		int32_t cursorX = round(cursorXd);
-		s.Line({(int32_t)cursorX + rect.x, (int32_t)2 + rect.y}, {(int32_t)cursorX + rect.x, (int32_t)(rect.h - 3) + rect.y}, cusorCol);
+		s.Line({(int32_t)cursorX + rect.x, (int32_t)2 + rect.y}, {(int32_t)cursorX + rect.x, (int32_t)(rect.h - 3) + rect.y}, cursorCol);
 	}
 }
 
@@ -134,7 +156,7 @@ gds::Rect TextBox::GetInteractRect(){
 }
 
 uint32_t TextBox::GetSubscribed(){
-	return wm_KeyboardEvents | wm_EventType::PointerButtonUp;
+	return wm_KeyboardEvents | wm_EventType::PointerButtonUp | wm_EventType::PointerButtonDown;
 }
 
 void TextBox::Focus(){

@@ -163,15 +163,27 @@ std::unique_ptr<gds_TextMeasurements> MeasureText(const gds_TextParameters &p, s
 	auto info = GetFontManager()->GetFont(p.fontID);
 	int brect[] = {0, 0, 0, 0, 0, 0, 0, 0};
 	if(fontfile != "") image->StringFT(brect, 0, (char*)fontfile.c_str(), p.size, 0, 0, 0, text, &ftex);
-	std::unique_ptr<gds_TextMeasurements> ret {(gds_TextMeasurements*)(new char[sizeof(gds_TextMeasurements) + (sizeof(uint32_t) * text.length())])};
-	ret->h = brect[1] - brect[7];
-	ret->w = brect[2] - brect[0];
-	ret->charCount = text.length();
+	
+	std::vector<double> xshowVec;
 	if(ftex.xshow){
-		for(size_t i = 0; i < text.length(); ++i){
-			ret->charX[i] = ftex.xshow[i];
+		std::stringstream ss(ftex.xshow);
+		std::string strvalue;
+		while(std::getline(ss, strvalue, ' ')){
+			double dblvalue = strtod(strvalue.c_str(), nullptr);
+			if(std::isnan(dblvalue)) dblvalue = 0.0;
+			xshowVec.push_back(dblvalue);
 		}
 		gdFree(ftex.xshow);
+	}
+	
+	std::unique_ptr<gds_TextMeasurements> ret {(gds_TextMeasurements*)(new char[sizeof(gds_TextMeasurements) + (sizeof(double) * xshowVec.size())])};
+	ret->h = brect[1] - brect[7];
+	ret->w = brect[2] - brect[0];
+	ret->charXCount = xshowVec.size();
+	if(!xshowVec.empty()){
+		for(size_t i = 0; i < xshowVec.size(); ++i){
+			ret->charX[i] = xshowVec[i];
+		}
 	}
 	return ret;
 }

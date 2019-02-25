@@ -124,8 +124,7 @@ namespace gds{
 		gds_TextMeasurements *m = GDS_MeasureText(p, text.c_str());
 		TextMeasurements ret;
 		ret.w = m->w; ret.h = m->h;
-		ret.charCount = m->charCount;
-		for(size_t i = 0; i < m->charCount; ++i) ret.charX.push_back(m->charX[i]);
+		for(size_t i = 0; i < m->charXCount; ++i) ret.charX.push_back(m->charX[i]);
 		free(m);
 		return ret;
 	}
