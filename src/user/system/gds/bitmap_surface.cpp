@@ -227,5 +227,9 @@ void BitmapSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32
 	FastBlit(*image, *dst, srcX, srcY, dstX, dstY, w, h);
 }
 
+std::shared_ptr<GD::Image> BitmapSurface::GetImage(){
+	return image;
+}
+
 BitmapSurface::~BitmapSurface() {
 }

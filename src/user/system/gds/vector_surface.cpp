@@ -9,6 +9,14 @@ using namespace std;
 
 static const size_t ZUnspecified = SIZE_MAX;
 
+bool operator==(const VectorSurface::Rectangle &r1, const VectorSurface::Rectangle &r2){
+	return r1.x == r2.x && r1.y == r2.y && r1.w == r2.w && r1.h == r2.h;
+}
+
+bool operator!=(const VectorSurface::Rectangle &r1, const VectorSurface::Rectangle &r2){
+	return !(r1 == r2);
+}
+
 VectorSurface::VectorSurface(size_t w, size_t h, uint32_t cT, uint32_t /*scale*/) : width(w), height(h), colourType(cT) {}
 
 VectorSurface::~VectorSurface() {}
@@ -92,7 +100,7 @@ void VectorSurface::Resize(size_t w, size_t h, bool i){
 }
 
 std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
-	if(!cache){
+	if(!cache || cacheRect != renderRect){
 		uint64_t start = bt_rtc_millis();
 		OrderOps();
 		vector<VectorOp> sops;
@@ -101,6 +109,9 @@ std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
 		}
 		sort(sops.begin(), sops.end(), [](const VectorOp &a, const VectorOp &b){return a.zOrder < b.zOrder;});
 		BitmapSurface bsurf(width, height, colourType);
+		if(renderRect.w && renderRect.h){
+			bsurf.GetImage()->SetClip(renderRect.x, renderRect.y, renderRect.x + renderRect.w, renderRect.y + renderRect.h);
+		}
 		for(const auto &op : sops){
 			gds_DrawingOp dop = op.op;
 			shared_ptr<gds_OpParameters> p;
@@ -119,6 +130,7 @@ std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
 			if(p) bsurf.SetOpParameters(p);
 		}
 		cache = bsurf.Render(100);
+		cacheRect = renderRect;
 		uint64_t end = bt_rtc_millis();
 		stringstream ss;
 		ss << "GDS: Vector surface rendered in " << end - start << "ms." << endl;
@@ -128,7 +140,9 @@ std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
 }
 
 void VectorSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h){
+	renderRect = {srcX, srcY, w, h};
 	std::shared_ptr<GD::Image> src = Render(100);
+	renderRect = {0, 0, 0, 0};
 	FastBlit(*src, *dst, srcX, srcY, dstX, dstY, w, h);
 }
 

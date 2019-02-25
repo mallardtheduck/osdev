@@ -34,6 +34,8 @@ public:
 	virtual std::unique_ptr<gds_TextMeasurements> MeasureText(const gds_TextParameters &p, std::string text); 
 	
 	virtual void Resize(size_t w, size_t h, bool indexed);
+	
+	std::shared_ptr<GD::Image> GetImage();
 
 	virtual ~BitmapSurface();
 

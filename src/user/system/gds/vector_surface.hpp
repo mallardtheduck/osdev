@@ -20,6 +20,19 @@ private:
 	
 	std::shared_ptr<GD::Image> cache;
 	
+	struct Rectangle{
+		int32_t x = 0, y = 0;
+		uint32_t w = 0, h = 0;
+		
+		Rectangle() = default;
+		Rectangle(int32_t _x, int32_t _y, uint32_t _w, uint32_t _h) : x(_x), y(_y), w(_w), h(_h) {}
+	};
+	
+	friend bool operator==(const Rectangle &r1, const Rectangle &r2);
+	friend bool operator!=(const Rectangle &r1, const Rectangle &r2);
+	
+	Rectangle renderRect, cacheRect;
+	
 	void OrderOps();
 public:
 	VectorSurface(size_t w, size_t h, uint32_t colourType, uint32_t scale = 100);
