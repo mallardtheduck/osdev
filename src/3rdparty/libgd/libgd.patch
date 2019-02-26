@@ -112,7 +112,7 @@ diff -rupN libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
  #else
  /*
 diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
---- libgd-2.1.0/src/gdft.c	2019-02-26 16:52:11.764281087 +0000
+--- libgd-2.1.0/src/gdft.c	2019-02-26 16:57:06.816265730 +0000
 +++ originals/libgd-2.1.0/src/gdft.c	2013-06-25 10:58:23.000000000 +0100
 @@ -5,7 +5,6 @@
  /* John Ellson   ellson@graphviz.org        */
@@ -182,7 +182,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  	err = FT_New_Face(*b->library, a->fontpath, 0, &a->face);
  
  	/* Read kerning metrics for Postscript fonts. */
-@@ -550,104 +538,6 @@ fontRelease (void *element)
+@@ -550,102 +538,6 @@ fontRelease (void *element)
  	gdFree ((char *) element);
  }
  
@@ -210,8 +210,6 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
 -static void *
 -metricsFetch (char **error, void *key){
 -	metrics_key_t *k = (metrics_key_t*)key;
--	
--	bt_zero("metricsFetch\n");
 -	
 -	fontkey_t *fontkey = canonicaliseFontkey(&k->fontKey);
 -	
@@ -287,7 +285,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  /********************************************************************/
  /* tweencolor cache functions                                            */
  
-@@ -888,15 +778,15 @@ BGD_DECLARE(void) gdFreeFontCache ()
+@@ -886,15 +778,15 @@ BGD_DECLARE(void) gdFreeFontCache ()
  
  BGD_DECLARE(void) gdFontCacheShutdown ()
  {
@@ -312,7 +310,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  }
  
  /********************************************************************/
-@@ -909,11 +799,9 @@ BGD_DECLARE(char *) gdImageStringFT (gdI
+@@ -907,11 +799,9 @@ BGD_DECLARE(char *) gdImageStringFT (gdI
  	                          ptsize, angle, x, y, string, 0);
  }
  
@@ -325,7 +323,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  		/* Already set up */
  		return 0;
  	}
-@@ -922,33 +810,16 @@ BGD_DECLARE(int) gdFontCacheSetup (void)
+@@ -920,33 +810,16 @@ BGD_DECLARE(int) gdFontCacheSetup (void)
  		gdMutexShutdown (gdFontCacheMutex);
  		return -1;
  	}
@@ -364,7 +362,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  
  BGD_DECLARE(char *) gdImageStringFTEx (gdImage * im, int *brect, int fg, char *fontlist,
                                         double ptsize, double angle, int x, int y, char *string,
-@@ -965,13 +836,11 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -963,13 +836,11 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  	double sin_a = sin (angle);
  	double cos_a = cos (angle);
  	int len, i, ch;
@@ -380,7 +378,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  	FT_BitmapGlyph bm;
  	/* 2.0.13: Bob Ostermann: don't force autohint, that's just for testing
  	   freetype and doesn't look as good */
-@@ -990,7 +859,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -988,7 +859,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  	gdCache_head_t *tc_cache;
  	/* Tuneable horizontal and vertical resolution in dots per inch */
  	int hdpi, vdpi, horiAdvance, xshow_alloc = 0, xshow_pos = 0;
@@ -389,7 +387,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  
  	if (strex) {
  		if ((strex->flags & gdFTEX_LINESPACE) == gdFTEX_LINESPACE) {
-@@ -1002,7 +871,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1000,7 +871,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  	                          tweenColorRelease);
  
  	/***** initialize font library and font cache on first call ******/
@@ -398,7 +396,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  		if (gdFontCacheSetup () != 0) {
  			gdCacheDelete (tc_cache);
  			return "Failure to initialize font library";
-@@ -1011,31 +880,27 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1009,31 +880,27 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  	/*****/
  	gdMutexLock (gdFontCacheMutex);
  	/* get the font (via font cache) */
@@ -443,7 +441,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  	/*
  	 * Added hdpi and vdpi to support images at non-screen resolutions, i.e. 300 dpi TIFF,
  	 *    or 100h x 50v dpi FAX format. 2.0.23.
-@@ -1059,28 +924,26 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1057,28 +924,26 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  		}
  		/* 2.0.29: we can return the font path if desired */
  		if (strex->flags & gdFTEX_RETURNFONTPATHNAME) {
@@ -477,7 +475,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  	FT_Activate_Size (platform_independent);
  	if (FT_Set_Char_Size (face, 0, (FT_F26Dot6)(ptsize*64), METRIC_RES, METRIC_RES)) {
  		gdCacheDelete (tc_cache);
-@@ -1096,7 +959,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1094,7 +959,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  			gdMutexUnlock (gdFontCacheMutex);
  			return "Could not set character size";
  		}
@@ -486,7 +484,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  
  	if (fg < 0)
  		render_mode |= FT_LOAD_MONOCHROME;
-@@ -1112,13 +975,11 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1110,13 +975,11 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  			        || charmap->encoding == FT_ENCODING_UNICODE
  			        || charmap->encoding == FT_ENCODING_ADOBE_CUSTOM
  			        || charmap->encoding == FT_ENCODING_ADOBE_STANDARD) {
@@ -500,7 +498,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  				encodingfound++;
  				break;
  			}
-@@ -1128,7 +989,6 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1126,7 +989,6 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  #define FT_ENCODING_BIG5 FT_ENCODING_MS_BIG5
  #endif
  			if (charmap->encoding == FT_ENCODING_BIG5) {
@@ -508,7 +506,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  				encodingfound++;
  				break;
  			}
-@@ -1138,7 +998,6 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1136,7 +998,6 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  #define FT_ENCODING_SJIS FT_ENCODING_MS_SJIS
  #endif
  			if (charmap->encoding == FT_ENCODING_SJIS) {
@@ -516,7 +514,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  				encodingfound++;
  				break;
  			}
-@@ -1149,19 +1008,16 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1147,19 +1008,16 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  			        || (charmap->platform_id == 3 && charmap->encoding_id == 0) /* Windows Symbol */
  			        || (charmap->platform_id == 2 && charmap->encoding_id == 1) /* ISO Unicode */
  			        || (charmap->platform_id == 0)) {                        /* Apple Unicode */
@@ -536,7 +534,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  				encodingfound++;
  				break;
  			}
-@@ -1169,7 +1025,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1167,7 +1025,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  #endif
  	}
  	if (encodingfound) {
@@ -545,7 +543,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  	} else {
  		/* No character set found! */
  		gdCacheDelete (tc_cache);
-@@ -1196,7 +1052,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1194,7 +1052,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  	penf.x = penf.y = 0;	/* running position of non-rotated glyphs */
  	previous = 0;		/* index of previous glyph for kerning calculations */
  	for (i=0; *next; i++) {
@@ -554,7 +552,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  
  		ch = *next;
  
-@@ -1218,6 +1074,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1216,6 +1074,7 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  			continue;
  		}
  
@@ -562,7 +560,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  		switch (encoding) {
  		case gdFTEX_Unicode: {
  			/* use UTF-8 mapping from ASCII */
-@@ -1293,22 +1150,22 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1291,22 +1150,22 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  			next++;
  			break;
  		}
@@ -595,7 +593,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  		/* When we know the position of the second or subsequent character,
  		save the (kerned) advance from the preceeding character in the
  		xshow vector */
-@@ -1342,29 +1199,34 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1340,29 +1199,34 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  		}
  		oldpenf.x = penf.x;
  
@@ -642,7 +640,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  
  			if (i==0) {
  				total_min = glyph_min;
-@@ -1380,21 +1242,12 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1378,21 +1242,12 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  					total_max.y = glyph_max.y;
  			}
  		}
@@ -668,7 +666,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  			if (err) {
  				if (tmpstr)
  					gdFree (tmpstr);
-@@ -1402,13 +1255,12 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1400,13 +1255,12 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  				gdMutexUnlock (gdFontCacheMutex);
  				return "Problem loading glyph";
  			}
@@ -685,7 +683,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  				if (err) {
  					FT_Done_Glyph(image);
  					if (tmpstr)
-@@ -1420,23 +1272,22 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1418,23 +1272,22 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  			}
  
  			/* now, draw to our target surface */
@@ -713,7 +711,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  	/* Save the (unkerned) advance from the last character in the xshow vector */
  	if (strex && (strex->flags & gdFTEX_XSHOW) && strex->xshow) {
  		sprintf(strex->xshow + xshow_pos, "%g",
-@@ -1464,24 +1315,18 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1462,24 +1315,18 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  		brect[6] = x + (total_min.x * cos_a + total_min.y * sin_a)*scalex;
  		brect[7] = y - (total_min.x * sin_a - total_min.y * cos_a)*scaley;
  	}
@@ -742,7 +740,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  #endif /* HAVE_LIBFREETYPE */
  
  #ifdef HAVE_LIBFONTCONFIG
-@@ -1698,7 +1543,7 @@ static char * font_path(char **fontpath,
+@@ -1696,7 +1543,7 @@ static char * font_path(char **fontpath,
  			return "could not alloc full path of font";
  		}
  		/* if name is an absolute or relative pathname then test directly */
