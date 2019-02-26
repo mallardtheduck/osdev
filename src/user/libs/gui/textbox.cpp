@@ -68,6 +68,12 @@ EventResponse TextBox::HandleEvent(const wm_Event &e){
 			text.erase(cursorPos, 1);
 			if(cursorPos > text.length()) cursorPos = text.length();
 			update = true;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
+			cursorPos = 0;
+			updateCursor = true;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
+			cursorPos = text.length();
+			updateCursor = true;
 		}else if(!(code & KeyFlags::NonASCII)){
 			char c = KB_char(e.Key.code);
 			auto preText = text;
@@ -85,13 +91,19 @@ EventResponse TextBox::HandleEvent(const wm_Event &e){
 	}else if(e.type == wm_EventType::PointerButtonDown || e.type == wm_EventType::PointerButtonUp){
 		auto pointerX = e.Pointer.x - rect.x;
 		double xpos = 0.0;
+		auto newCursorPos = cursorPos;
 		for(size_t i = textOffset; i < textMeasures.charX.size(); ++i){
 			xpos += textMeasures.charX[i];
 			if(xpos > pointerX){
-				cursorPos = i;
-				updateCursor = true;
+				newCursorPos = i;
 				break;
+			}else{
+				newCursorPos = i + 1;
 			}
+		}
+		if(newCursorPos != cursorPos){
+			cursorPos = newCursorPos;
+			updateCursor = true;
 		}
 	}
 	
