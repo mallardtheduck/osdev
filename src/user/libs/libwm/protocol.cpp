@@ -155,6 +155,7 @@ extern "C" wm_Event WM_ParseMessage(bt_msg_header *msg){
 		ret = GetContent<wm_Event>(*msg);
 	}else{
 		ret.type = wm_EventType::None;
+		bt_msg_ack(msg);
 	}
 	return ret;
 }
@@ -164,7 +165,6 @@ extern "C" wm_Event WM_GetEvent(){
 	bt_msg_header msg = bt_recv_filtered(filter, true);
 	wm_Event ret;
 	ret = WM_ParseMessage(&msg);
-	bt_msg_ack(&msg);
 	return ret;
 }
 

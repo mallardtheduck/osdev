@@ -44,7 +44,7 @@ namespace wm{
 	bool EventLoop::HandleMessage(const Message &msg){
 		auto header = msg.Header();
 		wm_Event e = WM_ParseMessage(&header);
-		if(e.window_id){
+		if(e.type != wm_EventType::None && e.window_id){
 			return HandleEvent(e);
 		}
 		return true;
