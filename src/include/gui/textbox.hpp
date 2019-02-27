@@ -12,7 +12,7 @@ private:
 	std::string text;
 	std::unique_ptr<gds::Surface> surf;
 	
-	std::function<void()> onChange;
+	std::function<void(const std::string &)> onChange;
 	std::function<bool(uint32_t)> onKeyPress;
 	
 	gds::TextMeasurements textMeasures;
@@ -25,7 +25,7 @@ private:
 	
 	void UpdateDisplayState();
 public:
-	TextBox(gds::Rect r, const std::string &t);
+	TextBox(const gds::Rect &r, const std::string &t);
 	
 	EventResponse HandleEvent(const wm_Event&);
 	void Paint(gds::Surface &surf);
@@ -38,7 +38,7 @@ public:
 	void SetText(const std::string &t);
 	std::string GetText();
 	
-	void OnChange(const std::function<void()> &oC);
+	void OnChange(const std::function<void(const std::string &)> &oC);
 	void OnKeyPress(const std::function<bool(uint32_t)> &oKP);
 };
 

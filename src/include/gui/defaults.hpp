@@ -42,6 +42,11 @@ namespace colours{
 	gds::Colour GetTextBoxLowLight();
 	gds::Colour GetTextCursor();
 	
+	gds::Colour GetSliderLineHiLight();
+	gds::Colour GetSliderLineLowLight();
+	gds::Colour GetSliderColour();
+	gds::Colour GetSliderFocus();
+	gds::Colour GetSliderTick();
 }
 
 namespace fonts{

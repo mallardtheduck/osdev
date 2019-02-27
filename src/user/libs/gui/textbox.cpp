@@ -8,7 +8,7 @@
 namespace btos_api{
 namespace gui{
 
-TextBox::TextBox(gds::Rect r, const std::string &t) : rect(r), text(t) {}
+TextBox::TextBox(const gds::Rect &r, const std::string &t) : rect(r), text(t) {}
 	
 void TextBox::UpdateDisplayState(){
 	if(!surf){
@@ -80,17 +80,17 @@ EventResponse TextBox::HandleEvent(const wm_Event &e){
 			if(c == 0x08 && cursorPos > 0){
 				text.erase(cursorPos - 1, 1);
 				--cursorPos;
-				if(onChange) onChange();
+				if(onChange) onChange(text);
 			}else if(c > 31){
 				text.insert(cursorPos, 1, c);
 				++cursorPos;
-				if(onChange) onChange();
+				if(onChange) onChange(text);
 			}
 			update = (preText != text);
 		}
 	}else if(e.type == wm_EventType::PointerButtonDown || e.type == wm_EventType::PointerButtonUp){
 		auto pointerX = e.Pointer.x - rect.x;
-		double xpos = 0.0;
+		double xpos = 0.5;
 		auto newCursorPos = cursorPos;
 		for(size_t i = textOffset; i < textMeasures.charX.size(); ++i){
 			xpos += textMeasures.charX[i];
@@ -150,7 +150,7 @@ void TextBox::Paint(gds::Surface &s){
 	if(hasFocus){
 		auto cursorCol = colours::GetTextCursor().Fix(*surf);
 		
-		double cursorXd = 0.0;
+		double cursorXd = 0.5;
 		for(size_t i = textOffset; i < cursorPos && i < textMeasures.charX.size(); ++i){
 			cursorXd += textMeasures.charX[i];
 		}
@@ -188,7 +188,7 @@ std::string TextBox::GetText(){
 	return text;
 }
 	
-void TextBox::OnChange(const std::function<void()> &oC){
+void TextBox::OnChange(const std::function<void(const std::string &)> &oC){
 	onChange = oC;
 }
 

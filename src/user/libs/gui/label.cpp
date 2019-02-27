@@ -4,7 +4,7 @@
 namespace btos_api{
 namespace gui{
 
-Label::Label(gds::Rect r, const std::string &t) : rect(r), text(t) {}
+Label::Label(const gds::Rect &r, const std::string &t) : rect(r), text(t) {}
 	
 EventResponse Label::HandleEvent(const wm_Event&){
 	return {false};

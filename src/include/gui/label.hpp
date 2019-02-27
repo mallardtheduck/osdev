@@ -12,7 +12,7 @@ private:
 	std::string text;
 	std::unique_ptr<gds::Surface> surf;
 public:
-	Label(gds::Rect r, const std::string &t);
+	Label(const gds::Rect &r, const std::string &t);
 	
 	EventResponse HandleEvent(const wm_Event&);
 	void Paint(gds::Surface &surf);

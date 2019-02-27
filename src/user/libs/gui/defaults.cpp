@@ -70,6 +70,26 @@ namespace colours{
 	gds::Colour GetTextCursor(){
 		return constants::Black;
 	}
+	
+	gds::Colour GetSliderLineHiLight(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetSliderLineLowLight(){
+		return constants::DarkGrey;
+	}
+	
+	gds::Colour GetSliderColour(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetSliderFocus(){
+		return constants::DarkGrey;
+	}
+	
+	gds::Colour GetSliderTick(){
+		return constants::Black;
+	}
 }
 
 namespace fonts{
