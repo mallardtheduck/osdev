@@ -12,6 +12,7 @@ private:
 	int32_t min;
 	int32_t max;
 	int32_t value;
+	int32_t snapTo;
 	
 	std::function<void(int32_t)> onChange;
 	
@@ -20,7 +21,7 @@ private:
 	std::unique_ptr<gds::Surface> surf;
 	std::unique_ptr<gds::Surface> bkSurf;
 public:
-	Slider(const gds::Rect &r, int32_t min, int32_t max, int32_t def);
+	Slider(const gds::Rect &r, int32_t min, int32_t max, int32_t def, int32_t snapTo = 1);
 	
 	EventResponse HandleEvent(const wm_Event&);
 	void Paint(gds::Surface &s);

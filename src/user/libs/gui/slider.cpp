@@ -5,11 +5,12 @@
 #include <dev/keyboard.h>
 
 #include <iostream>
+#include <cmath>
 
 namespace btos_api{
 namespace gui{	
 	
-Slider::Slider(const gds::Rect &r, int32_t mi, int32_t ma, int32_t def) : rect(r), min(mi), max(ma), value(def) {}
+Slider::Slider(const gds::Rect &r, int32_t mi, int32_t ma, int32_t def, int32_t sT) : rect(r), min(mi), max(ma), value(def), snapTo(sT) {}
 
 EventResponse Slider::HandleEvent(const wm_Event &e){
 	int32_t cvalue = value;
@@ -19,7 +20,7 @@ EventResponse Slider::HandleEvent(const wm_Event &e){
 			if(!(pinfo.flags & MouseFlags::Button1)) return {true};
 		}
 		
-		int32_t xpos = e.Pointer.x  - rect.x;
+		int32_t xpos = e.Pointer.x - rect.x;
 		int32_t inW = rect.w - 1;
 		int32_t lineLeft = 3;
 		int32_t lineRight = inW - 3;
@@ -27,7 +28,8 @@ EventResponse Slider::HandleEvent(const wm_Event &e){
 		if(xpos < lineLeft) value = min;
 		else if(xpos > lineRight) value = max;
 		else{
-			xpos -= min;
+			xpos -= lineLeft;
+			if(xpos < 0) xpos = 0;
 			double scale = (((double)(lineRight - lineLeft) / (double)(max - min)));
 			value = (xpos / scale) + min;
 			if(value > max) value = max;
@@ -36,14 +38,20 @@ EventResponse Slider::HandleEvent(const wm_Event &e){
 	}else if(e.type == wm_EventType::Keyboard && !(e.Key.code & KeyFlags::KeyUp)){
 		uint16_t code = KB_code(e.Key.code);
 		if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && value > min){
-			--value;
+			value -= snapTo;
 			update = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && value < max){
-			++value;
+			value += snapTo;
 			update = true;
 		}
 	}
 	if(cvalue != value){
+		if((value - min) % snapTo){
+			value -= min;
+			value = round((double)value / (double)snapTo) * snapTo;
+			value += min;
+		}
+		if(onChange) onChange(value);
 		update = true;
 		return {true, rect};
 	}else return {true};

@@ -18,7 +18,7 @@ int main(){
 		auto btn2 = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 50, 100, 30}, "Button 2", [] {std::cout << "Button 2 pressed." << std::endl;});
 		auto lbl = std::make_shared<btos_api::gui::Label>(gds::Rect{120, 10, 100, 20}, "A Label");
 		auto txt = std::make_shared<btos_api::gui::TextBox>(gds::Rect{220, 10, 100, 20}, "An editable textbox");
-		auto sld = std::make_shared<btos_api::gui::Slider>(gds::Rect{340, 10, 140, 20}, 0, 100, 50);
+		auto sld = std::make_shared<btos_api::gui::Slider>(gds::Rect{340, 10, 140, 20}, 0, 100, 50, 5);
 		
 		frm->AddControls({btn1, btn2, lbl, txt, sld});
 		
