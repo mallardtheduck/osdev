@@ -8,11 +8,10 @@ namespace gui{
 
 class Button : public IControl{
 private:
-	enum class ButtonState{
-		Rest, Focus, Down
-	};
-	ButtonState state = ButtonState::Rest;
-	ButtonState paintState;
+	bool down = false;
+	bool focus = false;
+	bool paintDown;
+	bool paintFocus;
 
 	gds::Rect rect;
 	std::string label;

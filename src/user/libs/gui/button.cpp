@@ -12,25 +12,25 @@ Button::Button(const gds::Rect &r, const std::string &l, std::function<void()> o
 
 EventResponse Button::HandleEvent(const wm_Event &e){
 	if(e.type == wm_EventType::PointerButtonDown && e.Pointer.button == 1){
-		state = ButtonState::Down;
+		down = true;
 	}
 	if(e.type == wm_EventType::PointerButtonUp && e.Pointer.button == 1){
-		state = ButtonState::Focus;
+		down = false;
 		onClick();
 	}
 	if(e.type == wm_EventType::PointerLeave){
-		if(state == ButtonState::Down) state = ButtonState::Focus;
+		if(down) down = false;
 	}
 	if(e.type == wm_EventType::PointerEnter){
 		auto pinfo = Terminal().GetPointerInfo();
-		if(pinfo.flags & MouseFlags::Button1) state = ButtonState::Down;
+		if(pinfo.flags & MouseFlags::Button1) down = true;
 	}
-	if(state != paintState) return {true, rect};
+	if(down != paintDown) return {true, rect};
 	else return {true};
 }
 
 void Button::Paint(gds::Surface &s){
-	if(!surf || state != paintState){
+	if(!surf || down != paintDown || focus != paintFocus){
 		int32_t inW = rect.w - 1;
 		int32_t inH = rect.h - 1;
 		
@@ -67,14 +67,14 @@ void Button::Paint(gds::Surface &s){
 		
 		auto topLeft = colours::GetButtonHiLight().Fix(*surf);
 		auto bottomRight = colours::GetButtonLowLight().Fix(*surf);
-		if(state == ButtonState::Down) std::swap(topLeft, bottomRight);
+		if(down) std::swap(topLeft, bottomRight);
 		
 		surf->Line({1, 1}, {inW - 1, 1}, topLeft);
 		surf->Line({1, 1}, {1, inH - 1}, topLeft);
 		surf->Line({1, inH - 1}, {inW - 1, inH - 1}, bottomRight);
 		surf->Line({inW - 1, 1}, {inW - 1, inH - 1}, bottomRight);
 		
-		if(state == ButtonState::Focus || state == ButtonState::Down){
+		if(focus){
 			auto focusCol = colours::GetButtonFocus().Fix(*surf);
 				
 			int32_t labelX = std::max<int32_t>(((rect.w - labelMeasures.w) / 2), 0);
@@ -90,7 +90,8 @@ void Button::Paint(gds::Surface &s){
 		
 		surf->CommitQueue();
 		
-		paintState = state;
+		paintDown = down;
+		paintFocus = focus;
 	}
 	
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
@@ -109,11 +110,11 @@ uint32_t Button::GetSubscribed(){
 }
 
 void Button::Focus(){
-	if(state != ButtonState::Down) state = ButtonState::Focus;
+	focus = true;
 }
 
 void Button::Blur(){
-	if(state != ButtonState::Down) state = ButtonState::Rest;
+	focus = false;
 }
 
 }
