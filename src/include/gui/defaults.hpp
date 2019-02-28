@@ -53,6 +53,12 @@ namespace colours{
 	gds::Colour GetCheckboxLowLight();
 	gds::Colour GetCheckboxCheck();
 	gds::Colour GetCheckboxFocus();
+	
+	gds::Colour GetRadioButtonText();
+	gds::Colour GetRadioButtonHiLight();
+	gds::Colour GetRadioButtonLowLight();
+	gds::Colour GetRadioButtonCheck();
+	gds::Colour GetRadioButtonFocus();
 }
 
 namespace fonts{
@@ -67,6 +73,9 @@ namespace fonts{
 	
 	gds::Font GetCheckboxFont();
 	uint32_t GetCheckboxTextSize();
+	
+	gds::Font GetRadioButtonFont();
+	uint32_t GetRadioButtonTextSize();
 }
 
 }

@@ -110,6 +110,26 @@ namespace colours{
 	gds::Colour GetCheckboxFocus(){
 		return constants::DarkGrey;
 	}
+	
+	gds::Colour GetRadioButtonText(){
+		return constants::Black;
+	}
+	
+	gds::Colour GetRadioButtonHiLight(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetRadioButtonLowLight(){
+		return constants::DarkGrey;
+	}
+	
+	gds::Colour GetRadioButtonCheck(){
+		return constants::Black;
+	}
+	
+	gds::Colour GetRadioButtonFocus(){
+		return constants::DarkGrey;
+	}
 }
 
 namespace fonts{
@@ -142,6 +162,14 @@ namespace fonts{
 	}
 	
 	uint32_t GetCheckboxTextSize(){
+		return 12;
+	}
+	
+	gds::Font GetRadioButtonFont(){
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+	}
+	
+	uint32_t GetRadioButtonTextSize(){
 		return 12;
 	}
 }

@@ -8,6 +8,7 @@
 #include <gui/textbox.hpp>
 #include <gui/slider.hpp>
 #include <gui/checkbox.hpp>
+#include <gui/radiobutton.hpp>
 
 #include <wm/eventloop.hpp>
 
@@ -22,8 +23,14 @@ int main(){
 		auto txt = std::make_shared<btos_api::gui::TextBox>(gds::Rect{220, 10, 100, 20}, "An editable textbox");
 		auto sld = std::make_shared<btos_api::gui::Slider>(gds::Rect{340, 10, 140, 20}, 0, 100, 50, 5);
 		auto chk = std::make_shared<btos_api::gui::Checkbox>(gds::Rect{120, 30, 100, 20}, "A checkbox", true);
+		auto rd1 = std::make_shared<btos_api::gui::RadioButton>(gds::Rect{220, 35, 100, 20}, "Radio 1", false);
+		auto rd2 = std::make_shared<btos_api::gui::RadioButton>(gds::Rect{220, 60, 100, 20}, "Radio 2", false);
 		
-		frm->AddControls({btn1, btn2, lbl, txt, sld, chk});
+		btos_api::gui::RadioGroup<int> rgrp;
+		rgrp.AddButton(rd1, 1);
+		rgrp.AddButton(rd2, 2);
+		
+		frm->AddControls({btn1, btn2, lbl, txt, sld, chk, rd1, rd2});
 		
 		btos_api::wm::EventLoop loop({frm});
 		loop.RunLoop();
