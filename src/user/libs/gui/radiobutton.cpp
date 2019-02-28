@@ -45,8 +45,8 @@ void RadioButton::Paint(gds::Surface &s){
 			
 			auto topLeft = colours::GetRadioButtonLowLight().Fix(*bkSurf);
 			auto bottomRight = colours::GetRadioButtonHiLight().Fix(*bkSurf);
-			bkSurf->Arc({cx, cy, checkSize - 2, checkSize - 2}, 135, 315, topLeft, topLeft, 2);
-			bkSurf->Arc({cx + 1, cy + 1, checkSize - 2, checkSize - 2}, 315, 135, bottomRight, topLeft, 2);
+			bkSurf->Arc({cx, cy, checkSize - 1, checkSize - 1}, 135, 315, topLeft, topLeft, 1);
+			bkSurf->Arc({cx, cy, checkSize - 1, checkSize - 1}, 315, 135, bottomRight, topLeft, 1);
 			
 			auto border = colours::GetBorder().Fix(*bkSurf);
 			bkSurf->Ellipse({cx, cy, checkSize, checkSize}, border, border);

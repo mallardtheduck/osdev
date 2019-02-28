@@ -25,12 +25,14 @@ int main(){
 		auto chk = std::make_shared<btos_api::gui::Checkbox>(gds::Rect{120, 30, 100, 20}, "A checkbox", true);
 		auto rd1 = std::make_shared<btos_api::gui::RadioButton>(gds::Rect{220, 35, 100, 20}, "Radio 1", false);
 		auto rd2 = std::make_shared<btos_api::gui::RadioButton>(gds::Rect{220, 60, 100, 20}, "Radio 2", false);
+		auto rd3 = std::make_shared<btos_api::gui::RadioButton>(gds::Rect{220, 85, 100, 20}, "Radio 3", true);
 		
 		btos_api::gui::RadioGroup<int> rgrp;
 		rgrp.AddButton(rd1, 1);
 		rgrp.AddButton(rd2, 2);
+		rgrp.AddButton(rd3, 3);
 		
-		frm->AddControls({btn1, btn2, lbl, txt, sld, chk, rd1, rd2});
+		frm->AddControls({btn1, btn2, lbl, txt, sld, chk, rd1, rd2, rd3});
 		
 		btos_api::wm::EventLoop loop({frm});
 		loop.RunLoop();
