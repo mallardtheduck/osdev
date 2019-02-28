@@ -7,6 +7,8 @@
 #include <gui/label.hpp>
 #include <gui/textbox.hpp>
 #include <gui/slider.hpp>
+#include <gui/checkbox.hpp>
+
 #include <wm/eventloop.hpp>
 
 #include <cxxabi.h>
@@ -19,8 +21,9 @@ int main(){
 		auto lbl = std::make_shared<btos_api::gui::Label>(gds::Rect{120, 10, 100, 20}, "A Label");
 		auto txt = std::make_shared<btos_api::gui::TextBox>(gds::Rect{220, 10, 100, 20}, "An editable textbox");
 		auto sld = std::make_shared<btos_api::gui::Slider>(gds::Rect{340, 10, 140, 20}, 0, 100, 50, 5);
+		auto chk = std::make_shared<btos_api::gui::Checkbox>(gds::Rect{120, 30, 100, 20}, "A checkbox", true);
 		
-		frm->AddControls({btn1, btn2, lbl, txt, sld});
+		frm->AddControls({btn1, btn2, lbl, txt, sld, chk});
 		
 		btos_api::wm::EventLoop loop({frm});
 		loop.RunLoop();

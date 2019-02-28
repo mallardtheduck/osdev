@@ -90,6 +90,26 @@ namespace colours{
 	gds::Colour GetSliderTick(){
 		return constants::Black;
 	}
+	
+	gds::Colour GetCheckboxText(){
+		return constants::Black;
+	}
+	
+	gds::Colour GetCheckboxHiLight(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetCheckboxLowLight(){
+		return constants::DarkGrey;
+	}
+	
+	gds::Colour GetCheckboxCheck(){
+		return constants::Black;
+	}
+	
+	gds::Colour GetCheckboxFocus(){
+		return constants::DarkGrey;
+	}
 }
 
 namespace fonts{
@@ -114,6 +134,14 @@ namespace fonts{
 	}
 	
 	uint32_t GetTextBoxFontSize(){
+		return 12;
+	}
+	
+	gds::Font GetCheckboxFont(){
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+	}
+	
+	uint32_t GetCheckboxTextSize(){
 		return 12;
 	}
 }

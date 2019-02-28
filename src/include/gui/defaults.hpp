@@ -47,6 +47,12 @@ namespace colours{
 	gds::Colour GetSliderColour();
 	gds::Colour GetSliderFocus();
 	gds::Colour GetSliderTick();
+	
+	gds::Colour GetCheckboxText();
+	gds::Colour GetCheckboxHiLight();
+	gds::Colour GetCheckboxLowLight();
+	gds::Colour GetCheckboxCheck();
+	gds::Colour GetCheckboxFocus();
 }
 
 namespace fonts{
@@ -58,6 +64,9 @@ namespace fonts{
 	
 	gds::Font GetTextBoxFont();
 	uint32_t GetTextBoxFontSize();
+	
+	gds::Font GetCheckboxFont();
+	uint32_t GetCheckboxTextSize();
 }
 
 }

@@ -1,5 +1,6 @@
 #include <gui/textbox.hpp>
 #include <gui/defaults.hpp>
+#include <gui/drawing.hpp>
 #include <dev/keyboard.h>
 
 #include <iostream>
@@ -116,8 +117,8 @@ void TextBox::Paint(gds::Surface &s){
 	UpdateDisplayState();
 	
 	if(update){
-		int32_t inW = rect.w - 1;
-		int32_t inH = rect.h - 1;
+		uint32_t inW = rect.w - 1;
+		uint32_t inH = rect.h - 1;
 		
 		auto bkgCol = colours::GetBackground().Fix(*surf);
 		auto txtCol = colours::GetTextBoxText().Fix(*surf);
@@ -128,18 +129,11 @@ void TextBox::Paint(gds::Surface &s){
 		surf->BeginQueue();
 		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		if(textOffset < text.length()) surf->Text({2, textY}, text.substr(textOffset), fonts::GetTextBoxFont(), fonts::GetTextBoxFontSize(), txtCol);
-		surf->Line({1, 0}, {inW - 1, 0}, border);
-		surf->Line({0, 1}, {0, inH - 1}, border);
-		surf->Line({1, inH}, {inW - 1, inH}, border);
-		surf->Line({inW, 1}, {inW, inH - 1}, border);
+		drawing::Border(*surf, {0, 0, inW, inH}, border);
 		
 		auto topLeft = colours::GetTextBoxLowLight().Fix(*surf);
 		auto bottomRight = colours::GetTextBoxHiLight().Fix(*surf);
-		
-		surf->Line({1, 1}, {inW - 1, 1}, topLeft);
-		surf->Line({1, 1}, {1, inH - 1}, topLeft);
-		surf->Line({1, inH - 1}, {inW - 1, inH - 1}, bottomRight);
-		surf->Line({inW - 1, 1}, {inW - 1, inH - 1}, bottomRight);
+		drawing::BevelBox(*surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
 
 		surf->CommitQueue();
 		update = false;
