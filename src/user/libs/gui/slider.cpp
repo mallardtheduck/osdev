@@ -1,4 +1,6 @@
 #include <gui/slider.hpp>
+#include <gui/drawing.hpp>
+
 #include <gui/defaults.hpp>
 #include <dev/terminal.hpp>
 #include <dev/mouse.h>
@@ -76,18 +78,11 @@ void Slider::Paint(gds::Surface &s){
 			
 			bkSurf->BeginQueue();
 			bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-			bkSurf->Line({lineLeft + 1, lineTop}, {lineRight - 1, lineTop}, bkBorder);
-			bkSurf->Line({lineLeft, lineTop + 1}, {lineLeft, lineBottom - 1}, bkBorder);
-			bkSurf->Line({lineLeft + 1, lineBottom}, {lineRight - 1, lineBottom}, bkBorder);
-			bkSurf->Line({lineRight, lineTop + 1}, {lineRight, lineBottom - 1}, bkBorder);
+			drawing::Border(*bkSurf, {lineLeft, lineTop, (uint32_t)(lineRight - lineLeft), (uint32_t)(lineBottom - lineTop)}, bkBorder);
 			
 			auto topLeft = colours::GetSliderLineLowLight().Fix(*bkSurf);
 			auto bottomRight = colours::GetSliderLineHiLight().Fix(*bkSurf);
-			
-			bkSurf->Line({lineLeft + 1, lineTop + 1}, {lineRight - 1, lineTop + 1}, topLeft);
-			bkSurf->Line({lineLeft + 1, lineTop + 1}, {lineLeft + 1, lineBottom - 1}, topLeft);
-			bkSurf->Line({lineLeft + 1, lineBottom - 1}, {lineRight - 1, lineBottom - 1}, bottomRight);
-			bkSurf->Line({lineRight - 1, lineTop + 1}, {lineRight - 1, lineBottom - 1}, bottomRight);
+			drawing::BevelBox(*bkSurf, {lineLeft + 1, lineTop + 1, (uint32_t)(lineRight - lineLeft - 2), (uint32_t)(lineBottom - lineTop - 2)}, topLeft, bottomRight);
 			
 			int tickTop = lineBottom + 2;
 			
@@ -107,16 +102,16 @@ void Slider::Paint(gds::Surface &s){
 		
 		surf->Blit(*bkSurf, {0, 0, rect.w, rect.h}, {0, 0, rect.w, rect.h});
 		
+		if(focus){
+			auto focusCol = colours::GetSliderFocus().Fix(*surf);
+			surf->Box({0, 0, rect.w, rect.h}, focusCol, focusCol);
+		}
+		
 		int32_t pos = lineLeft + ((double)(value - min) * (((double)(lineRight - lineLeft) / (double)(max - min))));
 		std::vector<gds::Point> points = {{pos - 4, 1}, {pos - 4, 7}, {pos, 13}, {pos + 4, 7}, {pos + 4, 1}};
 		
 		surf->Polygon(points, false, border, slider, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		surf->Line({pos - 3, 0}, {pos + 3, 0}, border);
-		
-		if(focus){
-			auto focusCol = colours::GetSliderFocus().Fix(*surf);
-			surf->Box({0, 0, rect.w, rect.h}, focusCol, focusCol);
-		}
 
 		surf->CommitQueue();
 		

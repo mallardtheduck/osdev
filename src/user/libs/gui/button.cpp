@@ -1,5 +1,6 @@
 #include <btos.h>
 #include <gui/button.hpp>
+#include <gui/drawing.hpp>
 #include <gui/defaults.hpp>
 #include <dev/terminal.hpp>
 #include <dev/mouse.h>
@@ -50,10 +51,7 @@ void Button::Paint(gds::Surface &s){
 			
 			bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 			bkSurf->Box({1, 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, buttonColour, buttonColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-			bkSurf->Line({1, 0}, {inW - 1, 0}, border);
-			bkSurf->Line({0, 1}, {0, inH - 1}, border);
-			bkSurf->Line({1, inH}, {inW - 1, inH}, border);
-			bkSurf->Line({inW, 1}, {inW, inH - 1}, border);
+			drawing::Border(*bkSurf, {0, 0, (uint32_t)inW, (uint32_t)inH}, border);
 			
 			auto textColour = colours::GetButtonText().Fix(*bkSurf);
 			bkSurf->Text({labelX, labelY}, label, fonts::GetButtonFont(), fonts::GetButtonTextSize(), textColour);
@@ -69,10 +67,7 @@ void Button::Paint(gds::Surface &s){
 		auto bottomRight = colours::GetButtonLowLight().Fix(*surf);
 		if(down) std::swap(topLeft, bottomRight);
 		
-		surf->Line({1, 1}, {inW - 1, 1}, topLeft);
-		surf->Line({1, 1}, {1, inH - 1}, topLeft);
-		surf->Line({1, inH - 1}, {inW - 1, inH - 1}, bottomRight);
-		surf->Line({inW - 1, 1}, {inW - 1, inH - 1}, bottomRight);
+		drawing::BevelBox(*surf, {1, 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, topLeft, bottomRight);
 		
 		if(focus){
 			auto focusCol = colours::GetButtonFocus().Fix(*surf);
