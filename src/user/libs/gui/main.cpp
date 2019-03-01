@@ -27,8 +27,8 @@ int main(){
 		auto rd1 = std::make_shared<btos_api::gui::RadioButton>(gds::Rect{220, 35, 100, 20}, "Radio 1", false);
 		auto rd2 = std::make_shared<btos_api::gui::RadioButton>(gds::Rect{220, 60, 100, 20}, "Radio 2", false);
 		auto rd3 = std::make_shared<btos_api::gui::RadioButton>(gds::Rect{220, 85, 100, 20}, "Radio 3", true);
-		auto sch = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{340, 35, 140, 17}, 100, 1, 10, 0, true);
-		auto scv = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{463, 60, 17, 140}, 100, 1, 10, 100, false);
+		auto sch = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{340, 35, 140, 17}, 100, 5, 10, 0, true);
+		auto scv = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{463, 60, 17, 140}, 100, 5, 10, 100, false);
 		
 		btos_api::gui::RadioGroup<int> rgrp;
 		rgrp.AddButton(rd1, 1);
