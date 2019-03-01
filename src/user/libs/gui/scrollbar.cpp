@@ -63,7 +63,7 @@ void Scrollbar::Paint(gds::Surface &s){
 			std::vector<gds::Point> topArrow = {swapXY(horiz, {half, third}), swapXY(horiz, {2 * third + 1, 2 * third}), swapXY(horiz, {third, 2 * third})};
 			bkSurf->Polygon(topArrow, true, arw, arw, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 
-			int32_t btmTop = h - sqSize - 1;
+			int32_t btmTop = h - sqSize;
 			std::vector<gds::Point> btmArrow = {swapXY(horiz, {half, btmTop + (2 * third)}), swapXY(horiz, {2 * third + 1, btmTop + third}), swapXY(horiz, {third, btmTop + third})};
 			bkSurf->Polygon(btmArrow, true, arw, arw, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 			
