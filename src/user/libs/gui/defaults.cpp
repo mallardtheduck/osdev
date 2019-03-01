@@ -150,6 +150,10 @@ namespace colours{
 	gds::Colour GetScrollbarArrow(){
 		return constants::Black;
 	}
+	
+	gds::Colour GetScrollbarFocus(){
+		return constants::DarkGrey;
+	}
 }
 
 namespace fonts{

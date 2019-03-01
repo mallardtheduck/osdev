@@ -17,6 +17,7 @@ private:
 	
 	bool topBtnDown = false;
 	bool btmBtnDown = false;
+	bool grabbed = false;
 	
 	std::shared_ptr<gds::Surface> surf;
 	std::shared_ptr<gds::Surface> bkSurf;

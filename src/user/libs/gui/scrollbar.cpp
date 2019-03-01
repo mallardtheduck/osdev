@@ -1,6 +1,9 @@
 #include <gui/scrollbar.hpp>
 #include <gui/defaults.hpp>
 #include <gui/drawing.hpp>
+#include <dev/terminal.hpp>
+#include <dev/mouse.h>
+#include <dev/keyboard.h>
 
 namespace btos_api{
 namespace gui{
@@ -25,8 +28,111 @@ static inline void swapXY(bool swap, T &a, T &b){
 
 Scrollbar::Scrollbar(const gds::Rect &r, uint32_t l, uint32_t s, uint32_t p, uint32_t v, bool h) : rect(r), lines(l), step(s), page(p), value(v), horiz(h) {}
 
-EventResponse Scrollbar::HandleEvent(const wm_Event&){
-	return {false};
+EventResponse Scrollbar::HandleEvent(const wm_Event &e){
+	uint32_t oldValue = value;
+	
+	if(e.type & wm_PointerEvents){
+		int32_t p = horiz ? e.Pointer.x : e.Pointer.y;
+		auto h = horiz ? rect.w : rect.h;
+		auto w = horiz ? rect.h : rect.w;
+		
+		int32_t sqSize = w;
+		double scale = (double)(h - (3 * sqSize)) / (double)lines;
+		int32_t pos = ((double)value * scale) + sqSize;
+		uint32_t possValue = (double)(p - sqSize) * (1.0 / scale);
+		if(sqSize > p) possValue = 0;
+		if(possValue > lines) possValue = lines;
+		
+		enum class Area{
+			TopButton, UpperSpace, Box, LowerSpace, BottomButton
+		} over;
+		
+		if(p < sqSize) over = Area::TopButton;
+		else if(p < pos) over = Area::UpperSpace;
+		else if(p < pos + sqSize) over = Area::Box;
+		else if(p < (int32_t)h - sqSize) over = Area::LowerSpace;
+		else over = Area::BottomButton;
+		
+		if(e.type == wm_EventType::PointerButtonUp && e.Pointer.button == 1){
+			if(grabbed){
+				value = possValue;
+			}else{
+				switch(over){
+					case Area::TopButton:
+						value = std::max<int32_t>(0, value - step);
+						break;
+					case Area::UpperSpace:
+						value = std::max<int32_t>(0, value - page);
+						break;
+					case Area::Box:
+						// Handled by "grabbed" case
+						break;
+					case Area::LowerSpace:
+						value = std::min(lines, value + page);
+						break;
+					case Area::BottomButton:
+						value = std::min(lines, value + step);
+						break;
+				}
+			}
+			if(topBtnDown | btmBtnDown | grabbed) update = true;
+			topBtnDown = btmBtnDown = grabbed = false;
+		}else if(e.type == wm_EventType::PointerButtonDown && e.Pointer.button == 1){
+			topBtnDown = btmBtnDown = grabbed = false;
+			switch(over){
+				case Area::TopButton:
+					topBtnDown = true;
+					update = true;
+					break;
+				case Area::BottomButton:
+					btmBtnDown = true;
+					update = true;
+					break;
+				case Area::Box:
+					grabbed = true;
+				default:
+					break;
+			}
+		}else if(e.type == wm_EventType::PointerMove || e.type == wm_EventType::PointerEnter){
+			auto pinfo = Terminal().GetPointerInfo();
+			if(pinfo.flags & MouseFlags::Button1){
+				if(grabbed) value = possValue;
+				switch(over){
+					case Area::TopButton:
+						topBtnDown = true;
+						update = true;
+						break;
+					case Area::BottomButton:
+						btmBtnDown = true;
+						update = true;
+						break;
+					default:
+						break;
+				}
+			}else if(e.type == wm_EventType::PointerLeave){
+				topBtnDown = btmBtnDown = false;
+				update = true;
+			}
+		}
+	}else if(e.type == wm_EventType::Keyboard && !(e.Key.code & KeyFlags::KeyUp)){
+		uint16_t code = KB_code(e.Key.code);
+		if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow)){
+			value = std::max<int32_t>(0, value - step);
+			update = true;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow)){
+			value = std::min(lines, value + step);
+			update = true;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageUp)){
+			value = std::max<int32_t>(0, value - page);
+			update = true;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageDown)){
+			value = std::min(lines, value + page);
+			update = true;
+		}
+	}
+	
+	if(value != oldValue || update) return {true, rect};	
+	else return {true};
 }
 
 void Scrollbar::Paint(gds::Surface &s){
@@ -79,7 +185,6 @@ void Scrollbar::Paint(gds::Surface &s){
 		auto topBtnTL = topLeft;
 		auto topBtnBR = bottomRight;
 		if(topBtnDown) std::swap(topBtnTL, topBtnBR);
-		
 		drawing::BevelBox(*surf, swapXY(horiz, {1, 1, (uint32_t)sqSize - 3, (uint32_t)sqSize - 3}), topBtnTL, topBtnBR);
 		
 		auto bmBtnTL = topLeft;
@@ -92,11 +197,16 @@ void Scrollbar::Paint(gds::Surface &s){
 		
 		auto bdr = colours::GetBorder().Fix(*surf);
 		auto btn = colours::GetScrollbarButton().Fix(*surf);
-		bkSurf->Box(swapXY(horiz, {0, pos, (uint32_t)sqSize, (uint32_t)sqSize}), btn, btn, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		drawing::Border(*bkSurf, swapXY(horiz, {0, pos, (uint32_t)sqSize - 1, (uint32_t)sqSize - 1}), bdr);
+		surf->Box(swapXY(horiz, {0, pos, (uint32_t)sqSize, (uint32_t)sqSize}), btn, btn, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		drawing::Border(*surf, swapXY(horiz, {0, pos, (uint32_t)sqSize - 1, (uint32_t)sqSize - 1}), bdr);
 		drawing::BevelBox(*surf, swapXY(horiz, {1, pos + 1, (uint32_t)sqSize - 3, (uint32_t)sqSize - 3}), topLeft, bottomRight);
+		if(focus){
+			auto fcs = colours::GetScrollbarFocus().Fix(*surf);
+			surf->Box(swapXY(horiz, {3, pos + 3, (uint32_t)sqSize - 6, (uint32_t)sqSize - 6}), fcs, fcs);
+		}
 		
 		surf->CommitQueue();
+		update = false;
 	}
 	
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
@@ -111,13 +221,17 @@ gds::Rect Scrollbar::GetInteractRect(){
 }
 
 uint32_t Scrollbar::GetSubscribed(){
-	return 0;
+	return wm_EventType::PointerMove | wm_EventType::PointerButtonDown | wm_EventType::PointerButtonUp | wm_EventType::Keyboard | wm_EventType::PointerLeave | wm_EventType::PointerEnter;
 }
 
 void Scrollbar::Focus(){
+	if(!focus) update = true;
+	focus = true;
 }
 
 void Scrollbar::Blur(){
+	if(focus) update = true;
+	focus = false;
 }
 
 void Scrollbar::OnChange(const std::function<void(uint32_t)> &oC){

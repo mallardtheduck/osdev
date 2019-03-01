@@ -65,6 +65,7 @@ namespace colours{
 	gds::Colour GetScrollbarHiLight();
 	gds::Colour GetScrollbarLowLight();
 	gds::Colour GetScrollbarArrow();
+	gds::Colour GetScrollbarFocus();
 }
 
 namespace fonts{
