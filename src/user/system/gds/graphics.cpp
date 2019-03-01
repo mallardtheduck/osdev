@@ -39,6 +39,7 @@ void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, 
 	if(dstY + h > (uint32_t)dst.Height()) h = dst.Height() - dstY;
 	gdImagePtr srcPtr = src.GetPtr();
 	gdImagePtr dstPtr = dst.GetPtr();
+	if(!srcPtr || !dstPtr) return;
 	if(src.IsTrueColor()){
 		uint32_t srcTransparent = gdImageGetTransparent(srcPtr);
 		if(dst.IsTrueColor()){
@@ -134,9 +135,12 @@ void FastBox(GD::Image &im, int32_t x, int32_t y, uint32_t w, uint32_t h, uint32
 	}
 	if(x > im.Width()) return;
 	if(y > im.Height()) return;
+	if(x + w < w || x + w < (uint32_t)x) return;
+	if(y + h < h || y + h < (uint32_t)y) return;
 	if(x + w > (uint32_t)im.Width()) w = im.Width() - x;
 	if(y + h > (uint32_t)im.Height()) h = im.Height() - y;
 	gdImagePtr imPtr = im.GetPtr();
+	if(!imPtr) return;
 	if(im.IsTrueColor()){
 		for(size_t ypos = 0; ypos < h; ++ypos){
 			for(size_t xpos = 0; xpos < w; ++xpos){
