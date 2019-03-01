@@ -59,6 +59,12 @@ namespace colours{
 	gds::Colour GetRadioButtonLowLight();
 	gds::Colour GetRadioButtonCheck();
 	gds::Colour GetRadioButtonFocus();
+	
+	gds::Colour GetScrollbarBackground();
+	gds::Colour GetScrollbarButton();
+	gds::Colour GetScrollbarHiLight();
+	gds::Colour GetScrollbarLowLight();
+	gds::Colour GetScrollbarArrow();
 }
 
 namespace fonts{

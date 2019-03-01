@@ -130,6 +130,26 @@ namespace colours{
 	gds::Colour GetRadioButtonFocus(){
 		return constants::DarkGrey;
 	}
+	
+	gds::Colour GetScrollbarBackground(){
+		return constants::DarkGrey;
+	}
+	
+	gds::Colour GetScrollbarButton(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetScrollbarHiLight(){
+		return constants::White;
+	}
+	
+	gds::Colour GetScrollbarLowLight(){
+		return constants::DarkGrey;
+	}
+	
+	gds::Colour GetScrollbarArrow(){
+		return constants::Black;
+	}
 }
 
 namespace fonts{
