@@ -109,7 +109,7 @@ bool Screen::BufferPutPixel(uint32_t x, uint32_t y, uint32_t value) {
 	if(current_mode.bpp == 32){
 		if(pixel_conversion_required) value = ConvertPixel(value);
 		size_t bufferpos = pixelpos * 4;
-		buffer[bufferpos] = value;
+		*(uint32_t*)&buffer[bufferpos] = value;
 	}else if(current_mode.bpp > 8){
 		if(pixel_conversion_required) value = ConvertPixel(value);
 		size_t depth = (current_mode.bpp / 8);
