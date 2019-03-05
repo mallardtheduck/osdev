@@ -32,7 +32,6 @@ int main(){
 		auto scv = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{463, 60, 17, 140}, 100, 1, 10, 100, false);
 		auto txa = std::make_shared<btos_api::gui::TextArea>(gds::Rect{10, 100, 150, 60}, "A multi-line editable\ntext area\nwith some lines of text\nand another\nand more...");
 		
-		
 		btos_api::gui::RadioGroup<int> rgrp;
 		rgrp.AddButton(rd1, 1);
 		rgrp.AddButton(rd2, 2);

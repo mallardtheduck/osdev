@@ -28,15 +28,17 @@ void TextArea::UpdateDisplayState(){
 		lines.emplace_back(Line{"", gds::TextMeasurements()});
 		return;
 	}
-	if(curLine >= lines.size()) curLine = lines.size() - 1;
-	auto &text = lines[curLine].text;
-	auto &textMeasures = lines[curLine].textMeasures;
+	if(cursorLine >= lines.size()) cursorLine = lines.size() - 1;
+	auto &text = lines[cursorLine].text;
+	auto &textMeasures = lines[cursorLine].textMeasures;
 	
 	if(textMeasures.w == 0 || update) textMeasures = surf->MeasureText(text, fonts::GetTextAreaFont(), fonts::GetTextAreaFontSize());
 	
+	auto oldLineOffset = lineOffset;
 	size_t vlines = rect.h / fontHeight;
-	while(curLine < lineOffset && lineOffset > 0) --lineOffset;
-	while(curLine > lineOffset + vlines && lineOffset < lines.size() - 1) ++lineOffset;
+	while(cursorLine < lineOffset && lineOffset > 0) --lineOffset;
+	while(cursorLine >= lineOffset + vlines && lineOffset < lines.size() - 1) ++lineOffset;
+	if(oldLineOffset != lineOffset) update = true;
 	
 	size_t vchars;
 	while(true){
@@ -77,20 +79,32 @@ void TextArea::UpdateDisplayState(){
 	double cursorPosPxlsD = 0.5;
 	for(size_t i = 0; i < std::max(textOffset, cursorPos) && i < textMeasures.charX.size(); ++i){
 		if(i < textOffset) textOffsetPxlsD += textMeasures.charX[i];
-		if(i < cursorPos) cursorPosPxlsD += textMeasures.charX[i];
+		else if(i < cursorPos) cursorPosPxlsD += textMeasures.charX[i];
 	}
 	if(cursorPosPxls == 0.5 && cursorPos == 1 && text.length() == 1) cursorPosPxls = textMeasures.w;
 	textOffsetPxls = round(textOffsetPxlsD);
 	cursorPosPxls = round(cursorPosPxlsD);
 	//std::cout << "UpdateDisplayState: cursorPos: " << cursorPos << " textOffset: " << textOffset << " text.length():" << text.length() << std::endl;//
 }
+
+size_t TextArea::MapPosToLine(uint32_t pxlPos, const TextArea::Line &line){
+	size_t ret = line.text.length();
+	double pxlCount = 0;
+	for(size_t i = 0; i < line.textMeasures.charX.size(); ++i){
+		pxlCount += line.textMeasures.charX[i];
+		if(pxlCount > pxlPos){
+			ret = i;
+			break;
+		}else ret = i + 1;
+	}
+	return ret;
+}
 	
 EventResponse TextArea::HandleEvent(const wm_Event &e){
 	bool updateCursor = false;
 	
-	if(curLine >= lines.size()) UpdateDisplayState();
-	auto &text = lines[curLine].text;
-	auto &textMeasures = lines[curLine].textMeasures;
+	if(cursorLine >= lines.size()) UpdateDisplayState();
+	auto &text = lines[cursorLine].text;
 	
 	if(e.type == wm_EventType::Keyboard && !(e.Key.code & KeyFlags::KeyUp)){
 		uint16_t code = KB_code(e.Key.code);
@@ -101,6 +115,14 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 			updateCursor = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && cursorPos < text.length()){
 			++cursorPos;
+			updateCursor = true;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::DownArrow) && cursorLine < lines.size() - 1){
+			++cursorLine;
+			cursorPos = MapPosToLine(textOffsetPxls + cursorPosPxls, lines[cursorLine]);
+			updateCursor = true;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::UpArrow) && cursorLine > 0){
+			--cursorLine;
+			cursorPos = MapPosToLine(textOffsetPxls + cursorPosPxls, lines[cursorLine]);
 			updateCursor = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Delete) && cursorPos <= text.length()){
 			text.erase(cursorPos, 1);
@@ -128,10 +150,14 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 		}
 	}else if(e.type == wm_EventType::PointerButtonDown || e.type == wm_EventType::PointerButtonUp){
 		auto pointerX = e.Pointer.x - rect.x;
+		auto pointerY = e.Pointer.y - rect.y;
+		cursorLine = (pointerY / fontHeight) + lineOffset;
+		if(cursorLine >= lines.size()) cursorLine = lines.size() - 1;
+		auto &line = lines[cursorLine];
 		double xpos = 0.5;
 		auto newCursorPos = cursorPos;
-		for(size_t i = textOffset; i < textMeasures.charX.size(); ++i){
-			xpos += textMeasures.charX[i];
+		for(size_t i = textOffset; i < line.textMeasures.charX.size(); ++i){
+			xpos += line.textMeasures.charX[i];
 			if(xpos > pointerX){
 				newCursorPos = i;
 				break;
@@ -171,10 +197,8 @@ void TextArea::Paint(gds::Surface &s){
 			if(!lines[i].textMeasures.w) lines[i].textMeasures = surf->MeasureText(lines[i].text, fonts::GetTextAreaFont(), fonts::GetTextAreaFontSize());
 			
 			auto textY = std::max<int32_t>(((fontHeight + lines[i].textMeasures.h) / 2), 0);
-			textY += i * fontHeight;
-			size_t curTextOffset = 0;
-			double curTextOffsetPxls = 0.0;
-			for(;curTextOffsetPxls < textOffsetPxls && curTextOffset < lines[i].text.length() && curTextOffset < lines[i].textMeasures.charX.size(); textOffsetPxls += lines[i].textMeasures.charX[textOffset], ++curTextOffset);
+			textY += (i - lineOffset) * fontHeight;
+			size_t curTextOffset = MapPosToLine(textOffsetPxls, lines[i]);
 			if(curTextOffset < lines[i].text.length()) surf->Text({2, textY}, lines[i].text.substr(curTextOffset), fonts::GetTextAreaFont(), fonts::GetTextAreaFontSize(), txtCol);
 		}
 		drawing::Border(*surf, {0, 0, inW, inH}, border);
@@ -191,7 +215,7 @@ void TextArea::Paint(gds::Surface &s){
 	
 	if(hasFocus){
 		auto cursorCol = colours::GetTextCursor().Fix(*surf);
-		auto top = (curLine - lineOffset) * fontHeight;
+		auto top = (cursorLine - lineOffset) * fontHeight;
 		auto bottom = top + fontHeight;
 		s.Line({(int32_t)cursorPosPxls + rect.x, (int32_t)(rect.y + top + 2)}, {(int32_t)cursorPosPxls + rect.x, (int32_t)(rect.y + bottom - 1)}, cursorCol);
 	}

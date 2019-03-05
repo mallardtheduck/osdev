@@ -20,22 +20,26 @@ private:
 		gds::TextMeasurements textMeasures;
 	};
 	
-	std::vector<Line> lines;
-	size_t curLine = 0;
-	size_t lineOffset = 0;
 	size_t fontHeight;
 	
-	bool update = false;
+	std::vector<Line> lines;
+	
+	size_t cursorLine = 0;
+	size_t lineOffset = 0;
+	
 	size_t textOffset = 0;
 	uint32_t textOffsetPxls = 0;
 	size_t cursorPos = 0;
 	uint32_t cursorPosPxls = 0;
+	
+	bool update = false;
 	bool hasFocus = false;
 	
 	std::unique_ptr<Scrollbar> hscroll;
 	std::unique_ptr<Scrollbar> vscroll;
 	
 	void UpdateDisplayState();
+	size_t MapPosToLine(uint32_t pxlPos, const Line &line);
 public:
 	TextArea(const gds::Rect &r, const std::string &t);
 	
