@@ -40,6 +40,7 @@ namespace colours{
 	gds::Colour GetTextBoxText();
 	gds::Colour GetTextBoxHiLight();
 	gds::Colour GetTextBoxLowLight();
+	
 	gds::Colour GetTextCursor();
 	
 	gds::Colour GetSliderLineHiLight();
@@ -66,6 +67,10 @@ namespace colours{
 	gds::Colour GetScrollbarLowLight();
 	gds::Colour GetScrollbarArrow();
 	gds::Colour GetScrollbarFocus();
+	
+	gds::Colour GetTextAreaText();
+	gds::Colour GetTextAreaHiLight();
+	gds::Colour GetTextAreaLowLight();
 }
 
 namespace fonts{
@@ -83,6 +88,9 @@ namespace fonts{
 	
 	gds::Font GetRadioButtonFont();
 	uint32_t GetRadioButtonTextSize();
+	
+	gds::Font GetTextAreaFont();
+	uint32_t GetTextAreaFontSize();
 }
 
 }

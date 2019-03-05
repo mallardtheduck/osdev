@@ -154,6 +154,18 @@ namespace colours{
 	gds::Colour GetScrollbarFocus(){
 		return constants::DarkGrey;
 	}
+	
+	gds::Colour GetTextAreaText(){
+		return constants::Black;
+	}
+	
+	gds::Colour GetTextAreaHiLight(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetTextAreaLowLight(){
+		return constants::DarkGrey;
+	}
 }
 
 namespace fonts{
@@ -194,6 +206,14 @@ namespace fonts{
 	}
 	
 	uint32_t GetRadioButtonTextSize(){
+		return 12;
+	}
+	
+	gds::Font GetTextAreaFont(){
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+	}
+	
+	uint32_t GetTextAreaFontSize(){
 		return 12;
 	}
 }
