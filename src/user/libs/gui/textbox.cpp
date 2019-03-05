@@ -49,8 +49,12 @@ void TextBox::UpdateDisplayState(){
 		}else if(underflow && cursorPos < textOffset + 1){
 			--textOffset;
 			update = true;
+		}else if(textOffset > text.length()){
+			--textOffset;
+			update = true;
 		}else break;
 	}
+	//std::cout << "UpdateDisplayState: cursorPos: " << cursorPos << " textOffset: " << textOffset << " text.length():" << text.length() << std::endl;//
 }
 	
 EventResponse TextBox::HandleEvent(const wm_Event &e){
@@ -148,6 +152,7 @@ void TextBox::Paint(gds::Surface &s){
 		for(size_t i = textOffset; i < cursorPos && i < textMeasures.charX.size(); ++i){
 			cursorXd += textMeasures.charX[i];
 		}
+		if(cursorXd == 0.5 && text.length() == 1 && cursorPos == 1) cursorXd = textMeasures.w;
 		int32_t cursorX = round(cursorXd);
 		s.Line({(int32_t)cursorX + rect.x, (int32_t)2 + rect.y}, {(int32_t)cursorX + rect.x, (int32_t)(rect.h - 3) + rect.y}, cursorCol);
 	}
