@@ -267,8 +267,7 @@ void TextArea::Paint(gds::Surface &s){
 			
 			auto textY = std::max<int32_t>(((fontHeight + lines[i].textMeasures.h) / 2), 0);
 			textY += (i - lineOffset) * fontHeight;
-			//size_t curTextOffset = MapPosToLine(textOffsetPxls, lines[i]);
-			/*if(curTextOffset < lines[i].text.length())*/ surf->Text({2 - (int32_t)textOffsetPxls, textY}, lines[i].text/*.substr(curTextOffset)*/, fonts::GetTextAreaFont(), fonts::GetTextAreaFontSize(), txtCol);
+			surf->Text({2 - (int32_t)textOffsetPxls, textY}, lines[i].text, fonts::GetTextAreaFont(), fonts::GetTextAreaFontSize(), txtCol);
 		}
 		drawing::Border(*surf, {0, 0, inW, inH}, border);
 		
