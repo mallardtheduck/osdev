@@ -31,6 +31,7 @@ private:
 	uint32_t textOffsetPxls = 0;
 	size_t cursorPos = 0;
 	uint32_t cursorPosPxls = 0;
+	uint32_t perferredPosPxls = 0;
 	
 	bool update = false;
 	bool hasFocus = false;
@@ -40,6 +41,8 @@ private:
 	
 	void UpdateDisplayState();
 	size_t MapPosToLine(uint32_t pxlPos, const Line &line);
+	void MergeLines(size_t a, size_t b);
+	void SplitLine(size_t i, size_t pos);
 public:
 	TextArea(const gds::Rect &r, const std::string &t);
 	
