@@ -1,5 +1,5 @@
 diff -rupN libgd-2.1.0/config/config.sub originals/libgd-2.1.0/config/config.sub
---- libgd-2.1.0/config/config.sub	2019-02-15 13:08:23.984091587 +0000
+--- libgd-2.1.0/config/config.sub	2019-02-26 16:59:05.376260878 +0000
 +++ originals/libgd-2.1.0/config/config.sub	2013-06-25 10:58:55.000000000 +0100
 @@ -1354,7 +1354,7 @@ case $os in
  	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
@@ -11,7 +11,7 @@ diff -rupN libgd-2.1.0/config/config.sub originals/libgd-2.1.0/config/config.sub
  	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
  	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \
 diff -rupN libgd-2.1.0/configure originals/libgd-2.1.0/configure
---- libgd-2.1.0/configure	2019-02-15 13:08:23.992091587 +0000
+--- libgd-2.1.0/configure	2019-02-26 16:59:05.380260878 +0000
 +++ originals/libgd-2.1.0/configure	2013-06-25 14:53:41.000000000 +0100
 @@ -5587,10 +5587,6 @@ sysv4 | sysv4.3*)
  tpf*)
@@ -43,7 +43,7 @@ diff -rupN libgd-2.1.0/configure originals/libgd-2.1.0/configure
  *)
    dynamic_linker=no
 diff -rupN libgd-2.1.0/src/gd.c originals/libgd-2.1.0/src/gd.c
---- libgd-2.1.0/src/gd.c	2019-02-15 13:08:23.992091587 +0000
+--- libgd-2.1.0/src/gd.c	2019-02-26 16:59:05.384260878 +0000
 +++ originals/libgd-2.1.0/src/gd.c	2013-06-25 10:58:23.000000000 +0100
 @@ -561,14 +561,6 @@ BGD_DECLARE(int) gdImageColorResolve (gd
  
@@ -88,7 +88,7 @@ diff -rupN libgd-2.1.0/src/gd.c originals/libgd-2.1.0/src/gd.c
  		}
  	}
 diff -rupN libgd-2.1.0/src/gdcache.c originals/libgd-2.1.0/src/gdcache.c
---- libgd-2.1.0/src/gdcache.c	2019-02-15 13:08:23.992091587 +0000
+--- libgd-2.1.0/src/gdcache.c	2019-02-26 16:59:05.384260878 +0000
 +++ originals/libgd-2.1.0/src/gdcache.c	2013-06-25 10:58:23.000000000 +0100
 @@ -5,8 +5,6 @@
  #include "gd.h"
@@ -100,7 +100,7 @@ diff -rupN libgd-2.1.0/src/gdcache.c originals/libgd-2.1.0/src/gdcache.c
  #	define NEED_CACHE 1
  #else
 diff -rupN libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
---- libgd-2.1.0/src/gd_errors.h	2019-02-15 13:08:23.996091587 +0000
+--- libgd-2.1.0/src/gd_errors.h	2019-02-26 16:59:05.384260878 +0000
 +++ originals/libgd-2.1.0/src/gd_errors.h	2013-06-25 10:58:23.000000000 +0100
 @@ -1,7 +1,7 @@
  #ifndef GD_ERRORS_H
@@ -112,7 +112,7 @@ diff -rupN libgd-2.1.0/src/gd_errors.h originals/libgd-2.1.0/src/gd_errors.h
  #else
  /*
 diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
---- libgd-2.1.0/src/gdft.c	2019-02-26 16:57:06.816265730 +0000
+--- libgd-2.1.0/src/gdft.c	2019-03-06 15:04:24.487899471 +0000
 +++ originals/libgd-2.1.0/src/gdft.c	2013-06-25 10:58:23.000000000 +0100
 @@ -5,7 +5,6 @@
  /* John Ellson   ellson@graphviz.org        */
@@ -593,11 +593,17 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  		/* When we know the position of the second or subsequent character,
  		save the (kerned) advance from the preceeding character in the
  		xshow vector */
-@@ -1340,29 +1199,34 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1340,56 +1199,55 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  		}
  		oldpenf.x = penf.x;
  
--		horiAdvance = 0;
+-		metrics_key_t metricsKey;
+-		memcpy(&metricsKey.fontKey, fontkey, sizeof(*fontkey));
+-		metricsKey.ptsize = ptsize;
+-		metricsKey.glyph_index = glyph_index;
+-		metrics_t *metrics = gdCacheGet(metrics_cache, &metricsKey);
+-		
+-		horiAdvance = metrics->metrics.horiAdvance;
 +		/* load glyph image into the slot (erase previous one) */
 +		err = FT_Load_Glyph (face, glyph_index, render_mode);
 +		if (err) {
@@ -610,39 +616,57 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
 +
 +		horiAdvance = slot->metrics.horiAdvance;
 +
- 		if (brect) {
--			metrics_key_t metricsKey;
--			memcpy(&metricsKey.fontKey, fontkey, sizeof(*fontkey));
--			metricsKey.ptsize = ptsize;
--			metricsKey.glyph_index = glyph_index;
--			metrics_t *metrics = gdCacheGet(metrics_cache, &metricsKey);
--			
--			horiAdvance = metrics->metrics.horiAdvance;
++		if (brect) {
 +			/* only if need brect */
  
--			glyph_min.x = penf.x + metrics->metrics.horiBearingX;
--			glyph_min.y = penf.y - metrics->metrics.horiBearingY;
+-		glyph_min.x = penf.x + metrics->metrics.horiBearingX;
+-		glyph_min.y = penf.y - metrics->metrics.horiBearingY;
 +			glyph_min.x = penf.x + slot->metrics.horiBearingX;
 +			glyph_min.y = penf.y - slot->metrics.horiBearingY;
  
  #if 0
- 			if (ch == ' ') {      /* special case for trailing space */
- 				glyph_max.x = penf.x + horiAdvance;
- 			} else {
--				glyph_max.x = glyph_min.x + metrics->metrics.width;
+-		if (ch == ' ') {      /* special case for trailing space */
+-			glyph_max.x = penf.x + horiAdvance;
+-		} else {
+-			glyph_max.x = glyph_min.x + metrics->metrics.width;
+-		}
++			if (ch == ' ') {      /* special case for trailing space */
++				glyph_max.x = penf.x + horiAdvance;
++			} else {
 +				glyph_max.x = glyph_min.x + slot->metrics.width;
- 			}
++			}
  #else
- 			glyph_max.x = penf.x + horiAdvance;
+-		glyph_max.x = penf.x + horiAdvance;
++			glyph_max.x = penf.x + horiAdvance;
  #endif
--			glyph_max.y = glyph_min.y + metrics->metrics.height;
+-		glyph_max.y = glyph_min.y + metrics->metrics.height;
 +			glyph_max.y = glyph_min.y + slot->metrics.height;
  
- 			if (i==0) {
- 				total_min = glyph_min;
-@@ -1378,21 +1242,12 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
- 					total_max.y = glyph_max.y;
- 			}
+-		if (i==0) {
+-			total_min = glyph_min;
+-			total_max = glyph_max;
+-		} else {
+-			if (glyph_min.x < total_min.x)
+-				total_min.x = glyph_min.x;
+-			if (glyph_min.y < total_min.y)
+-				total_min.y = glyph_min.y;
+-			if (glyph_max.x > total_max.x)
+-				total_max.x = glyph_max.x;
+-			if (glyph_max.y > total_max.y)
+-				total_max.y = glyph_max.y;
++			if (i==0) {
++				total_min = glyph_min;
++				total_max = glyph_max;
++			} else {
++				if (glyph_min.x < total_min.x)
++					total_min.x = glyph_min.x;
++				if (glyph_min.y < total_min.y)
++					total_min.y = glyph_min.y;
++				if (glyph_max.x > total_max.x)
++					total_max.x = glyph_max.x;
++				if (glyph_max.y > total_max.y)
++					total_max.y = glyph_max.y;
++			}
  		}
 -		
 +
@@ -666,11 +690,8 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  			if (err) {
  				if (tmpstr)
  					gdFree (tmpstr);
-@@ -1400,13 +1255,12 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
- 				gdMutexUnlock (gdFontCacheMutex);
- 				return "Problem loading glyph";
+@@ -1399,10 +1257,10 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  			}
--			if(!horiAdvance) horiAdvance = (glyph->advance.x >> 6) / (METRIC_RES / hdpi);
  
  			/* load and transform glyph image */
 -			//FT_Get_Glyph (glyph, &image);
@@ -683,7 +704,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  				if (err) {
  					FT_Done_Glyph(image);
  					if (tmpstr)
-@@ -1418,23 +1272,22 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1414,23 +1272,22 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  			}
  
  			/* now, draw to our target surface */
@@ -711,7 +732,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  	/* Save the (unkerned) advance from the last character in the xshow vector */
  	if (strex && (strex->flags & gdFTEX_XSHOW) && strex->xshow) {
  		sprintf(strex->xshow + xshow_pos, "%g",
-@@ -1462,24 +1315,18 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
+@@ -1458,24 +1315,18 @@ BGD_DECLARE(char *) gdImageStringFTEx (g
  		brect[6] = x + (total_min.x * cos_a + total_min.y * sin_a)*scalex;
  		brect[7] = y - (total_min.x * sin_a - total_min.y * cos_a)*scaley;
  	}
@@ -740,7 +761,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  #endif /* HAVE_LIBFREETYPE */
  
  #ifdef HAVE_LIBFONTCONFIG
-@@ -1696,7 +1543,7 @@ static char * font_path(char **fontpath,
+@@ -1692,7 +1543,7 @@ static char * font_path(char **fontpath,
  			return "could not alloc full path of font";
  		}
  		/* if name is an absolute or relative pathname then test directly */
@@ -750,7 +771,7 @@ diff -rupN libgd-2.1.0/src/gdft.c originals/libgd-2.1.0/src/gdft.c
  		if (name[0] != 0 && (strstr(name, ":/") || name[0] == '/'))
  #else
 diff -rupN libgd-2.1.0/src/gd.h originals/libgd-2.1.0/src/gd.h
---- libgd-2.1.0/src/gd.h	2019-02-26 14:04:18.112508428 +0000
+--- libgd-2.1.0/src/gd.h	2019-02-26 16:59:05.388260878 +0000
 +++ originals/libgd-2.1.0/src/gd.h	2013-06-25 10:58:23.000000000 +0100
 @@ -579,8 +579,6 @@ gdFTStringExtra, *gdFTStringExtraPtr;
     when the call is made */
@@ -762,7 +783,7 @@ diff -rupN libgd-2.1.0/src/gd.h originals/libgd-2.1.0/src/gd.h
     and gdImageStringFTEx shall be assumed to be a fontconfig font pattern
     if fontconfig was compiled into gd. This function returns zero
 diff -rupN libgd-2.1.0/src/gdpp.h originals/libgd-2.1.0/src/gdpp.h
---- libgd-2.1.0/src/gdpp.h	2019-02-15 13:08:23.996091587 +0000
+--- libgd-2.1.0/src/gdpp.h	2019-02-26 16:59:05.392260878 +0000
 +++ originals/libgd-2.1.0/src/gdpp.h	2013-06-25 10:58:23.000000000 +0100
 @@ -1476,7 +1476,7 @@ public:
  		return gdImageTrueColorPixel(im, x, y);
@@ -774,7 +795,7 @@ diff -rupN libgd-2.1.0/src/gdpp.h originals/libgd-2.1.0/src/gdpp.h
  	}
  
 diff -rupN libgd-2.1.0/src/Makefile.in originals/libgd-2.1.0/src/Makefile.in
---- libgd-2.1.0/src/Makefile.in	2019-02-15 13:08:24.000091588 +0000
+--- libgd-2.1.0/src/Makefile.in	2019-02-26 16:59:05.392260878 +0000
 +++ originals/libgd-2.1.0/src/Makefile.in	2013-06-25 14:53:39.000000000 +0100
 @@ -393,7 +393,7 @@ top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
