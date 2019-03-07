@@ -39,7 +39,7 @@ uint64_t datetime2epoch(const datetime &dt){
 	ret = dt.second;
 	ret += dt.minute * secondsPerMinute;
 	ret += dt.hour * secondsPerHour;
-	ret += dt.day * secondsPerDay;
+	ret += (dt.day - 1) * secondsPerDay;
 	for(size_t m = 0; m < (size_t)dt.month; ++m){
 		ret += secondsPerMonth[m];
 	}
@@ -51,7 +51,7 @@ uint64_t datetime2epoch(const datetime &dt){
 }
 
 datetime epoch2datetime(uint64_t ep){
-	datetime ret = {0, 0, epochYear, 0, 0, 0};
+	datetime ret = {1, 0, epochYear, 0, 0, 0};
 	ep /= 1000;
 	while(ep >= (unsigned)seconds_in_year(ret.year)){
 		ep -= seconds_in_year(ret.year);
