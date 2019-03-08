@@ -9,7 +9,8 @@ namespace gui{
 
 class TextArea : public IControl{
 private:
-	gds::Rect rect;
+	gds::Rect outerRect;
+	gds::Rect rect;	
 	std::unique_ptr<gds::Surface> surf;
 	
 	std::function<void(const std::string &)> onChange;
@@ -44,7 +45,7 @@ private:
 	void MergeLines(size_t a, size_t b);
 	void SplitLine(size_t i, size_t pos);
 public:
-	TextArea(const gds::Rect &r, const std::string &t);
+	TextArea(const gds::Rect &r, const std::string &t, bool scrollbars = false);
 	
 	EventResponse HandleEvent(const wm_Event&);
 	void Paint(gds::Surface &surf);

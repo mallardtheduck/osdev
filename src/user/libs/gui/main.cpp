@@ -30,7 +30,7 @@ int main(){
 		auto rd3 = std::make_shared<btos_api::gui::RadioButton>(gds::Rect{220, 85, 100, 20}, "Radio 3", true);
 		auto sch = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{340, 35, 140, 17}, 100, 1, 10, 0, true);
 		auto scv = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{463, 60, 17, 140}, 100, 1, 10, 100, false);
-		auto txa = std::make_shared<btos_api::gui::TextArea>(gds::Rect{10, 100, 150, 100}, "A multi-line editable text area.\nWith some lines of text.\nAnother line.\nA further line.\nAn additional line.\nAn extra line.\nA superflous line.");
+		auto txa = std::make_shared<btos_api::gui::TextArea>(gds::Rect{10, 100, 150, 100}, "A multi-line editable text area.\nWith some lines of text.\nAnother line.\nA further line.\nAn additional line.\nAn extra line.\nA superflous line.", true);
 		
 		
 		btos_api::gui::RadioGroup<int> rgrp;

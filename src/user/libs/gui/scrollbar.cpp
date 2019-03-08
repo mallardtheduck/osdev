@@ -137,7 +137,10 @@ EventResponse Scrollbar::HandleEvent(const wm_Event &e){
 		}
 	}
 	
-	if(value != oldValue) update = true;
+	if(value != oldValue){
+		onChange(value);
+		update = true;
+	}
 	if(update) return {true, rect};	
 	else return {true};
 }
@@ -203,7 +206,8 @@ void Scrollbar::Paint(gds::Surface &s){
 		drawing::BevelBox(*surf, swapXY(horiz, {1, (int32_t)(h - sqSize) + 1, (uint32_t)sqSize - 3, (uint32_t)sqSize - 3}), btmBtnTL, btmBtnBR);
 		
 		double scale = (double)(h - (3 * sqSize)) / (double)lines;
-		int32_t pos = ((double)value * scale) + sqSize;
+		auto v = std::min(value, lines);
+		int32_t pos = ((double)v * scale) + sqSize;
 		
 		auto bdr = colours::GetBorder().Fix(*surf);
 		auto btn = colours::GetScrollbarButton().Fix(*surf);
@@ -248,5 +252,25 @@ void Scrollbar::OnChange(const std::function<void(uint32_t)> &oC){
 	onChange = oC;
 }
 	
+void Scrollbar::SetLines(uint32_t l){
+	if(l != lines) update = true;
+	lines = l;
+}
+
+void Scrollbar::SetStep(uint32_t s){
+	if(s != step) update = true;
+	step = s;
+}
+
+void Scrollbar::SetPage(uint32_t p){
+	if(p != page) update = true;
+	page = p;
+}
+
+void Scrollbar::SetValue(uint32_t v){
+	if(v != value) update = true;
+	value = v;
+}
+
 }
 }

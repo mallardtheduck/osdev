@@ -9,8 +9,27 @@
 
 namespace btos_api{
 namespace gui{
+	
+const auto scrollbarSize = 17;
 
-TextArea::TextArea(const gds::Rect &r, const std::string &t) : rect(r) {
+TextArea::TextArea(const gds::Rect &r, const std::string &t, bool scrollbars) : 
+	outerRect(r),
+	rect(scrollbars ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : r)
+{
+	if(scrollbars){
+		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
+		vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - scrollbarSize}, 1, 1, 1, 1, false));
+		
+		hscroll->OnChange([this] (uint32_t v) {
+			if(v != cursorPos) update = true;
+			cursorPos = v;
+		});
+		
+		vscroll->OnChange([this] (uint32_t v) {
+			if(v != cursorLine) update = true;
+			cursorLine = v;
+		});
+	}
 	SetText(t);
 	auto info = fonts::GetTextAreaFont().Info();
 	fontHeight = (info.maxH * fonts::GetTextAreaFontSize()) / info.scale;
@@ -39,6 +58,12 @@ void TextArea::UpdateDisplayState(){
 	while(cursorLine < lineOffset && lineOffset > 0) --lineOffset;
 	while(cursorLine >= lineOffset + vlines && lineOffset < lines.size() - 1) ++lineOffset;
 	if(oldLineOffset != lineOffset) update = true;
+	
+	if(vscroll){
+		vscroll->SetLines(std::max<uint32_t>(lines.size() - 1, 1));
+		vscroll->SetPage(vlines);
+		vscroll->SetValue(cursorLine);
+	}
 	
 	size_t vchars;
 	auto oldTextOffset = textOffset;
@@ -74,6 +99,12 @@ void TextArea::UpdateDisplayState(){
 		}else break;
 	}
 	if(textOffset != oldTextOffset) update = true;
+	
+	if(hscroll){
+		hscroll->SetLines(std::max<uint32_t>(text.length(), 1));
+		hscroll->SetPage(vchars);
+		hscroll->SetValue(cursorPos);
+	}
 	
 	double textOffsetPxlsD = 0.0;
 	double cursorPosPxlsD = 0.5;
@@ -216,32 +247,42 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 			}
 			update = update || (preText != text);
 		}
-	}else if(e.type == wm_EventType::PointerButtonDown || e.type == wm_EventType::PointerButtonUp){
-		perferredPosPxls = 0;
-		auto pointerX = e.Pointer.x - rect.x;
-		auto pointerY = e.Pointer.y - rect.y;
-		cursorLine = (pointerY / fontHeight) + lineOffset;
-		if(cursorLine >= lines.size()) cursorLine = lines.size() - 1;
-		auto &line = lines[cursorLine];
-		double xpos = 0.5;
-		auto newCursorPos = cursorPos;
-		for(size_t i = textOffset; i < line.textMeasures.charX.size(); ++i){
-			xpos += line.textMeasures.charX[i];
-			if(xpos > pointerX){
-				newCursorPos = i;
-				break;
-			}else{
-				newCursorPos = i + 1;
+	}else if(e.type & wm_PointerEvents){
+		if(InRect(e.Pointer.x, e.Pointer.y, rect) && (e.type == wm_EventType::PointerButtonDown || e.type == wm_EventType::PointerButtonUp)){
+			perferredPosPxls = 0;
+			auto pointerX = e.Pointer.x - rect.x;
+			auto pointerY = e.Pointer.y - rect.y;
+			cursorLine = (pointerY / fontHeight) + lineOffset;
+			if(cursorLine >= lines.size()) cursorLine = lines.size() - 1;
+			auto &line = lines[cursorLine];
+			double xpos = 0.5;
+			auto newCursorPos = cursorPos;
+			for(size_t i = textOffset; i < line.textMeasures.charX.size(); ++i){
+				xpos += line.textMeasures.charX[i];
+				if(xpos > pointerX){
+					newCursorPos = i;
+					break;
+				}else{
+					newCursorPos = i + 1;
+				}
 			}
-		}
-		if(newCursorPos != cursorPos){
-			cursorPos = newCursorPos;
-			updateCursor = true;
+			if(newCursorPos != cursorPos){
+				cursorPos = newCursorPos;
+				updateCursor = true;
+			}
+		}else if(hscroll && InRect(e.Pointer.x, e.Pointer.y, hscroll->GetInteractRect()) && (e.type & hscroll->GetSubscribed())){
+			auto oldCursorPos = cursorPos;
+			auto ret = hscroll->HandleEvent(e);
+			if(cursorPos == oldCursorPos) return ret;
+		}else if(vscroll && InRect(e.Pointer.x, e.Pointer.y, vscroll->GetInteractRect()) && (e.type & vscroll->GetSubscribed())){
+			auto oldCursorLine = cursorLine;
+			auto ret = vscroll->HandleEvent(e);
+			if(cursorLine == oldCursorLine) return ret;
 		}
 	}
 	
 	
-	if(update || updateCursor) return {true, rect};
+	if(update || updateCursor) return {true, outerRect};
 	else return {true};
 }
 
@@ -287,18 +328,24 @@ void TextArea::Paint(gds::Surface &s){
 		auto bottom = top + fontHeight;
 		s.Line({(int32_t)cursorPosPxls + rect.x, (int32_t)(rect.y + top + 2)}, {(int32_t)cursorPosPxls + rect.x, (int32_t)(rect.y + bottom - 1)}, cursorCol);
 	}
+	
+	if(hscroll) hscroll->Paint(s);
+	if(vscroll) vscroll->Paint(s);
 }
 
 gds::Rect TextArea::GetPaintRect(){
-	return rect;
+	return outerRect;
 }
 
 gds::Rect TextArea::GetInteractRect(){
-	return rect;
+	return outerRect;
 }
 
 uint32_t TextArea::GetSubscribed(){
-	return wm_KeyboardEvents | wm_EventType::PointerButtonUp | wm_EventType::PointerButtonDown;
+	auto ret = wm_KeyboardEvents | wm_EventType::PointerButtonUp | wm_EventType::PointerButtonDown;
+	if(hscroll) ret |= hscroll->GetSubscribed();
+	if(vscroll) ret |= vscroll->GetSubscribed();
+	return ret;
 }
 
 void TextArea::Focus(){

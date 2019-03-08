@@ -35,6 +35,11 @@ public:
 	void Blur();
 	
 	void OnChange(const std::function<void(uint32_t)> &oC);
+	
+	void SetLines(uint32_t l);
+	void SetStep(uint32_t s);
+	void SetPage(uint32_t p);
+	void SetValue(uint32_t v);
 };
 
 }
