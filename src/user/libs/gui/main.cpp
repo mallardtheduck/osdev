@@ -11,6 +11,7 @@
 #include <gui/radiobutton.hpp>
 #include <gui/scrollbar.hpp>
 #include <gui/textarea.hpp>
+#include <gui/subform.hpp>
 
 #include <wm/eventloop.hpp>
 
@@ -38,7 +39,11 @@ int main(){
 		rgrp.AddButton(rd2, 2);
 		rgrp.AddButton(rd3, 3);
 		
-		frm->AddControls({btn1, btn2, lbl, txt, sld, chk, rd1, rd2, rd3, sch, scv, txa});
+		auto sfrm = std::make_shared<btos_api::gui::SubForm>(gds::Rect{170, 110, 150, 50});
+		auto sbtn = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 3", [] {std::cout << "Button 3 pressed." << std::endl;});
+		sfrm->AddControl(sbtn);
+		
+		frm->AddControls({btn1, btn2, lbl, txt, sld, chk, rd1, rd2, rd3, sch, scv, txa, sfrm});
 		
 		btos_api::wm::EventLoop loop({frm});
 		loop.RunLoop();

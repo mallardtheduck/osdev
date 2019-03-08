@@ -2,9 +2,6 @@
 #define _FORM_HPP
 
 #include <wm/window.hpp>
-#include <functional>
-#include <memory>
-#include <vector>
 
 #include "container.hpp"
 
