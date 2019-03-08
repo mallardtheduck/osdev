@@ -138,7 +138,7 @@ EventResponse Scrollbar::HandleEvent(const wm_Event &e){
 	}
 	
 	if(value != oldValue){
-		onChange(value);
+		if(onChange) onChange(value);
 		update = true;
 	}
 	if(update) return {true, rect};	

@@ -6,26 +6,24 @@
 #include <memory>
 #include <vector>
 
-#include "icontrol.hpp"
+#include "container.hpp"
 
 namespace btos_api{
 namespace gui{
 	
-class Form : public wm::Window{
+class Form : public wm::Window, public Container{
 private:
-	std::vector<std::shared_ptr<IControl>> controls;
-	std::shared_ptr<IControl> focus;
-	std::shared_ptr<IControl> mouseOver;
+	gds::Rect rect;
+	gds::Surface surf;
 	
-	bool HandleEvent(const wm_Event&);
+	gds::Surface &GetSurface();
+	gds::Rect GetBoundingRect();
+
+	void Update(const gds::Rect &r);
+	void Update();
+	void SetSubscribed(uint32_t subs);
 public:
 	Form(const gds::Rect &r, uint32_t options, const std::string &title);
-	
-	void Paint(const std::vector<gds::Rect> &rects);
-	void Paint(const gds::Rect &r = gds::Rect());
-	
-	void AddControl(std::shared_ptr<IControl> control);
-	void AddControls(std::vector<std::shared_ptr<IControl>> controls);
 };
 	
 }
