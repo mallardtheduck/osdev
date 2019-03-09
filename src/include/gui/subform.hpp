@@ -10,7 +10,6 @@ namespace gui{
 class SubForm : public Container, public IControl{
 private:
 	gds::Rect rect;
-	bool focus = false;
 	std::unique_ptr<gds::Surface> surf;
 	
 	uint32_t subs;

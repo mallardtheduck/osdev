@@ -34,6 +34,8 @@ public:
 	void AddControl(std::shared_ptr<IControl> control);
 	void AddControls(std::vector<std::shared_ptr<IControl>> controls);
 	
+	std::shared_ptr<IControl> &GetFocus();
+	
 	~Container() {}
 };	
 

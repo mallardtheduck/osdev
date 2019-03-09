@@ -115,5 +115,9 @@ void Container::AddControls(std::vector<std::shared_ptr<IControl>> ncontrols){
 	Paint(gds::TileRects(paintRects));
 }
 
+std::shared_ptr<IControl> &Container::GetFocus(){
+	return focus;
+}
+
 }
 }

@@ -55,11 +55,13 @@ uint32_t SubForm::GetSubscribed(){
 }
 
 void SubForm::Focus(){
-	focus = true;
+	auto fcs = GetFocus();
+	if(fcs) fcs->Focus();
 }
 
 void SubForm::Blur(){
-	focus = false;
+	auto fcs = GetFocus();
+	if(fcs) fcs->Blur();
 }
 	
 }

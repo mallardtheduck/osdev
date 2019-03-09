@@ -166,6 +166,10 @@ namespace colours{
 	gds::Colour GetTextAreaLowLight(){
 		return constants::DarkGrey;
 	}
+	
+	gds::Colour GetGroupBoxText(){
+		return constants::Black;
+	}
 }
 
 namespace fonts{
@@ -214,6 +218,14 @@ namespace fonts{
 	}
 	
 	uint32_t GetTextAreaFontSize(){
+		return 12;
+	}
+	
+	gds::Font GetGroupBoxFont(){
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+	}
+	
+	uint32_t GetGroupBoxTextSize(){
 		return 12;
 	}
 }

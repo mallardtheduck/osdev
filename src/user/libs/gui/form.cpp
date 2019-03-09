@@ -26,7 +26,13 @@ void Form::Update(){
 }
 
 void Form::SetSubscribed(uint32_t subs){
-	wm::Window::SetSubscribed(subs);
+	wm::Window::SetSubscribed(subs | wm_EventType::Close);
+}
+
+bool Form::HandleEvent(const wm_Event &e){
+	if(e.type == wm_EventType::Close && onClose) return onClose();
+	
+	return Container::HandleEvent(e);
 }
 
 Form::Form(const gds::Rect &r, uint32_t options, const std::string &title)
@@ -36,6 +42,10 @@ Form::Form(const gds::Rect &r, uint32_t options, const std::string &title)
 	{
 	SetEventHandler(std::bind(&Form::HandleEvent, this, _1));
 	Paint();
+}
+
+void Form::OnClose(std::function<bool()> oC){
+	onClose = oC;
 }
 
 }

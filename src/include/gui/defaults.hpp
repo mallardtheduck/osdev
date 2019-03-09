@@ -71,6 +71,8 @@ namespace colours{
 	gds::Colour GetTextAreaText();
 	gds::Colour GetTextAreaHiLight();
 	gds::Colour GetTextAreaLowLight();
+	
+	gds::Colour GetGroupBoxText();
 }
 
 namespace fonts{
@@ -91,6 +93,9 @@ namespace fonts{
 	
 	gds::Font GetTextAreaFont();
 	uint32_t GetTextAreaFontSize();
+	
+	gds::Font GetGroupBoxFont();
+	uint32_t GetGroupBoxTextSize();
 }
 
 }

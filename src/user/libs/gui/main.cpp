@@ -12,6 +12,7 @@
 #include <gui/scrollbar.hpp>
 #include <gui/textarea.hpp>
 #include <gui/subform.hpp>
+#include <gui/groupbox.hpp>
 
 #include <wm/eventloop.hpp>
 
@@ -32,18 +33,18 @@ int main(){
 		auto sch = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{340, 35, 140, 17}, 100, 1, 10, 0, true);
 		auto scv = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{463, 60, 17, 140}, 100, 1, 10, 100, false);
 		auto txa = std::make_shared<btos_api::gui::TextArea>(gds::Rect{10, 100, 150, 100}, "A multi-line editable text area.\nWith some lines of text.\nAnother line.\nA further line.\nAn additional line.\nAn extra line.\nA superflous line.", true);
-		
+		auto grp = std::make_shared<btos_api::gui::GroupBox>(gds::Rect{165, 110, 170, 70}, "Subformy within");
 		
 		btos_api::gui::RadioGroup<int> rgrp;
 		rgrp.AddButton(rd1, 1);
 		rgrp.AddButton(rd2, 2);
 		rgrp.AddButton(rd3, 3);
 		
-		auto sfrm = std::make_shared<btos_api::gui::SubForm>(gds::Rect{170, 110, 150, 50});
+		auto sfrm = std::make_shared<btos_api::gui::SubForm>(gds::Rect{170, 130, 150, 40});
 		auto sbtn = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 3", [] {std::cout << "Button 3 pressed." << std::endl;});
 		sfrm->AddControl(sbtn);
 		
-		frm->AddControls({btn1, btn2, lbl, txt, sld, chk, rd1, rd2, rd3, sch, scv, txa, sfrm});
+		frm->AddControls({btn1, btn2, lbl, txt, sld, chk, rd1, rd2, rd3, sch, scv, txa, grp, sfrm});
 		
 		btos_api::wm::EventLoop loop({frm});
 		loop.RunLoop();

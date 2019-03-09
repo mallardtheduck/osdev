@@ -19,8 +19,14 @@ private:
 	void Update(const gds::Rect &r);
 	void Update();
 	void SetSubscribed(uint32_t subs);
+	
+	std::function<bool()> onClose;
+	
+	bool HandleEvent(const wm_Event &e);
 public:
 	Form(const gds::Rect &r, uint32_t options, const std::string &title);
+	
+	void OnClose(std::function<bool()> oC);
 };
 	
 }
