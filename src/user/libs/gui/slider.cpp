@@ -15,8 +15,10 @@ namespace gui{
 Slider::Slider(const gds::Rect &r, int32_t mi, int32_t ma, int32_t def, int32_t sT) : rect(r), min(mi), max(ma), value(def), snapTo(sT) {}
 
 EventResponse Slider::HandleEvent(const wm_Event &e){
+	bool handled = false;
 	int32_t cvalue = value;
 	if(e.type == wm_EventType::PointerMove || e.type == wm_EventType::PointerButtonUp){
+		handled = true;
 		if(e.type == wm_EventType::PointerMove){
 			auto pinfo = Terminal().GetPointerInfo();
 			if(!(pinfo.flags & MouseFlags::Button1)) return {true};
@@ -42,9 +44,11 @@ EventResponse Slider::HandleEvent(const wm_Event &e){
 		if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && value > min){
 			value -= snapTo;
 			update = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && value < max){
 			value += snapTo;
 			update = true;
+			handled = true;
 		}
 	}
 	if(cvalue != value){
@@ -55,8 +59,8 @@ EventResponse Slider::HandleEvent(const wm_Event &e){
 		}
 		if(onChange) onChange(value);
 		update = true;
-		return {true, rect};
-	}else return {true};
+		return {handled, rect};
+	}else return {handled};
 }
 
 void Slider::Paint(gds::Surface &s){
@@ -148,6 +152,10 @@ int32_t Slider::GetValue(){
 
 void Slider::OnChange(const std::function<void(int32_t)> &oC){
 	onChange = oC;
+}
+
+uint32_t Slider::GetFlags(){
+	return 0;
 }
 
 }

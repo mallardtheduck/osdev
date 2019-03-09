@@ -33,6 +33,7 @@ public:
 	uint32_t GetSubscribed();
 	void Focus();
 	void Blur();
+	uint32_t GetFlags();
 	
 	void OnChange(const std::function<void(uint32_t)> &oC);
 	

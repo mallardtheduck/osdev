@@ -34,6 +34,7 @@ public:
 	uint32_t GetSubscribed();
 	void Focus();
 	void Blur();
+	uint32_t GetFlags();
 	
 	void SetText(const std::string &t);
 	std::string GetText();

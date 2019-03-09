@@ -48,5 +48,9 @@ void Label::SetText(const std::string &t){
 	surf.reset();
 }
 
+uint32_t Label::GetFlags(){
+	return ControlFlags::NoFocus;
+}
+
 }
 }

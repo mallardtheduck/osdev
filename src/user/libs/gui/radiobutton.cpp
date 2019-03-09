@@ -1,6 +1,7 @@
 #include <gui/radiobutton.hpp>
 #include <gui/defaults.hpp>
 #include <gui/drawing.hpp>
+#include <dev/keyboard.h>
 
 namespace btos_api{
 namespace gui{
@@ -16,6 +17,20 @@ EventResponse RadioButton::HandleEvent(const wm_Event &e){
 		if(onChange) onChange(value);
 		if(getAllRects) return {true, getAllRects()};
 		else return {true, rect};
+	}
+	if(e.type == wm_EventType::Keyboard){
+		uint16_t code = KB_code(e.Key.code);
+		if(!(code & KeyFlags::NonASCII)){
+			char c = KB_char(e.Key.code);
+			if(c == ' ' || c == '\n'){
+				if(!value) update = true;
+				value = true;
+				if(onChange) onChange(value);
+				if(getAllRects) return {true, getAllRects()};
+				else return {true, rect};
+			}
+		}
+		return {false};
 	}
 	return {true};
 }
@@ -110,7 +125,7 @@ gds::Rect RadioButton::GetInteractRect(){
 }
 
 uint32_t RadioButton::GetSubscribed(){
-	return wm_EventType::PointerButtonUp;
+	return wm_EventType::PointerButtonUp | wm_EventType::Keyboard;
 }
 
 void RadioButton::Focus(){
@@ -130,6 +145,10 @@ void RadioButton::SetText(const std::string &t){
 void RadioButton::SetValue(bool v){
 	value = v;
 	update = true;
+}
+
+uint32_t RadioButton::GetFlags(){
+	return 0;
 }
 
 }

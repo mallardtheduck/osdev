@@ -59,41 +59,51 @@ void TextBox::UpdateDisplayState(){
 	
 EventResponse TextBox::HandleEvent(const wm_Event &e){
 	bool updateCursor = false;
+	bool handled = false;
 	if(e.type == wm_EventType::Keyboard && !(e.Key.code & KeyFlags::KeyUp)){
 		uint16_t code = KB_code(e.Key.code);
-		if(onKeyPress && !onKeyPress(e.Key.code)){
-			//Do nothing
-		}else if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && cursorPos > 0){
+		if(onKeyPress){
+			if(onKeyPress(e.Key.code)) handled = true;
+		}
+		if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && cursorPos > 0){
 			--cursorPos;
 			updateCursor = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && cursorPos < text.length()){
 			++cursorPos;
 			updateCursor = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Delete) && cursorPos <= text.length()){
 			text.erase(cursorPos, 1);
 			if(cursorPos > text.length()) cursorPos = text.length();
 			update = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
 			cursorPos = 0;
 			updateCursor = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
 			cursorPos = text.length();
 			updateCursor = true;
+			handled = true;
 		}else if(!(code & KeyFlags::NonASCII)){
 			char c = KB_char(e.Key.code);
 			auto preText = text;
 			if(c == 0x08 && cursorPos > 0){
 				text.erase(cursorPos - 1, 1);
 				--cursorPos;
+				handled = true;
 				if(onChange) onChange(text);
 			}else if(c > 31){
 				text.insert(cursorPos, 1, c);
 				++cursorPos;
+				handled = true;
 				if(onChange) onChange(text);
 			}
 			update = (preText != text);
 		}
 	}else if(e.type == wm_EventType::PointerButtonDown || e.type == wm_EventType::PointerButtonUp){
+		handled = true;
 		auto pointerX = e.Pointer.x - rect.x;
 		double xpos = 0.5;
 		auto newCursorPos = cursorPos;
@@ -113,8 +123,8 @@ EventResponse TextBox::HandleEvent(const wm_Event &e){
 	}
 	
 	
-	if(update || updateCursor) return {true, rect};
-	else return {true};
+	if(update || updateCursor) return {handled, rect};
+	else return {handled};
 }
 
 void TextBox::Paint(gds::Surface &s){
@@ -193,6 +203,10 @@ void TextBox::OnChange(const std::function<void(const std::string &)> &oC){
 
 void TextBox::OnKeyPress(const std::function<bool(uint32_t)> &oKP){
 	onKeyPress = oKP;
+}
+
+uint32_t TextBox::GetFlags(){
+	return 0;
 }
 
 }

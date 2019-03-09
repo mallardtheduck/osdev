@@ -63,6 +63,10 @@ void SubForm::Blur(){
 	auto fcs = GetFocus();
 	if(fcs) fcs->Blur();
 }
+
+uint32_t SubForm::GetFlags(){
+	return 0;
+}
 	
 }
 }

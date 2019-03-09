@@ -53,5 +53,9 @@ void GroupBox::SetText(const std::string &t){
 	surf.reset();
 }
 
+uint32_t GroupBox::GetFlags(){
+	return ControlFlags::NoFocus;
+}
+
 }
 }

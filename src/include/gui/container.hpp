@@ -24,6 +24,8 @@ private:
 	virtual void Update(const gds::Rect &r) = 0;
 	virtual void Update() = 0;
 	virtual void SetSubscribed(uint32_t subs) = 0;
+	
+	std::shared_ptr<IControl> FindNextFocus(bool reverse);
 protected:
 	bool HandleEvent(const wm_Event &e);
 

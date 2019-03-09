@@ -4,6 +4,7 @@
 #include <gui/defaults.hpp>
 #include <dev/terminal.hpp>
 #include <dev/mouse.h>
+#include <dev/keyboard.h>
 
 namespace btos_api{
 namespace gui{
@@ -25,6 +26,17 @@ EventResponse Button::HandleEvent(const wm_Event &e){
 	if(e.type == wm_EventType::PointerEnter){
 		auto pinfo = Terminal().GetPointerInfo();
 		if(pinfo.flags & MouseFlags::Button1) down = true;
+	}
+	if(e.type == wm_EventType::Keyboard){
+		uint16_t code = KB_code(e.Key.code);
+		if(!(code & KeyFlags::NonASCII)){
+			char c = KB_char(e.Key.code);
+			if(c == ' ' || c == '\n'){
+				onClick();
+				return {true};
+			}
+		}
+		return {false};
 	}
 	if(down != paintDown) return {true, rect};
 	else return {true};
@@ -101,7 +113,7 @@ gds::Rect Button::GetInteractRect(){
 }
 
 uint32_t Button::GetSubscribed(){
-	return (wm_EventType::PointerButtonDown | wm_EventType::PointerButtonUp | wm_EventType::PointerLeave | wm_EventType::PointerEnter);
+	return (wm_EventType::PointerButtonDown | wm_EventType::PointerButtonUp | wm_EventType::PointerLeave | wm_EventType::PointerEnter | wm_EventType::Keyboard);
 }
 
 void Button::Focus(){
@@ -110,6 +122,10 @@ void Button::Focus(){
 
 void Button::Blur(){
 	focus = false;
+}
+
+uint32_t Button::GetFlags(){
+	return 0;
 }
 
 }

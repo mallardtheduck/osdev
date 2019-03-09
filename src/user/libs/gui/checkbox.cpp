@@ -1,6 +1,7 @@
 #include <gui/checkbox.hpp>
 #include <gui/defaults.hpp>
 #include <gui/drawing.hpp>
+#include <dev/keyboard.h>
 
 namespace btos_api{
 namespace gui{
@@ -14,6 +15,19 @@ EventResponse Checkbox::HandleEvent(const wm_Event &e){
 		value = !value;
 		update = true;
 		if(onChange) onChange(value);
+	}
+	if(e.type == wm_EventType::Keyboard){
+		uint16_t code = KB_code(e.Key.code);
+		if(!(code & KeyFlags::NonASCII)){
+			char c = KB_char(e.Key.code);
+			if(c == ' ' || c == '\n'){
+				value = !value;
+				update = true;
+				if(onChange) onChange(value);
+				return {true, rect};
+			}
+		}
+		return {false};
 	}
 	return {true, rect};
 }
@@ -105,7 +119,7 @@ gds::Rect Checkbox::GetInteractRect(){
 }
 
 uint32_t Checkbox::GetSubscribed(){
-	return wm_EventType::PointerButtonUp;
+	return wm_EventType::PointerButtonUp | wm_EventType::Keyboard;
 }
 
 void Checkbox::Focus(){
@@ -128,6 +142,10 @@ bool Checkbox::GetValue(){
 
 void Checkbox::OnChange(const std::function<void(bool)> &oC){
 	onChange = oC;
+}
+
+uint32_t Checkbox::GetFlags(){
+	return 0;
 }
 
 }

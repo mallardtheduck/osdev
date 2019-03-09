@@ -153,73 +153,87 @@ void TextArea::SplitLine(size_t i, size_t pos){
 	
 EventResponse TextArea::HandleEvent(const wm_Event &e){
 	bool updateCursor = false;
+	bool handled = false;
 	
 	if(cursorLine >= lines.size()) UpdateDisplayState();
 	auto &text = lines[cursorLine].text;
 	
 	if(e.type == wm_EventType::Keyboard && !(e.Key.code & KeyFlags::KeyUp)){
 		uint16_t code = KB_code(e.Key.code);
-		if(onKeyPress && !onKeyPress(e.Key.code)){
-			//Do nothing
-		}else if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && cursorPos > 0){
+		if(onKeyPress){
+			if(onKeyPress(e.Key.code)) handled = true;
+		}
+		if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && cursorPos > 0){
 			perferredPosPxls = 0;
 			--cursorPos;
 			updateCursor = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && cursorLine > 0){
 			perferredPosPxls = 0;
 			--cursorLine;
 			cursorPos = lines[cursorLine].text.length();
 			updateCursor = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && cursorPos < text.length()){
 			perferredPosPxls = 0;
 			++cursorPos;
 			updateCursor = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && cursorLine < lines.size() - 1){
 			perferredPosPxls = 0;
 			cursorPos = 0;
 			++cursorLine;
 			updateCursor = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::DownArrow) && cursorLine < lines.size() - 1){
 			++cursorLine;
 			if(!perferredPosPxls) perferredPosPxls = textOffsetPxls + cursorPosPxls;
 			cursorPos = MapPosToLine(perferredPosPxls, lines[cursorLine]);
 			updateCursor = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::UpArrow) && cursorLine > 0){
 			--cursorLine;
 			if(!perferredPosPxls) perferredPosPxls = textOffsetPxls + cursorPosPxls;
 			cursorPos = MapPosToLine(perferredPosPxls, lines[cursorLine]);
 			updateCursor = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageUp) && cursorLine > 0){
 			size_t vlines = rect.h / fontHeight;
 			cursorLine -= std::min(cursorLine, vlines);
 			if(!perferredPosPxls) perferredPosPxls = textOffsetPxls + cursorPosPxls;
 			cursorPos = MapPosToLine(perferredPosPxls, lines[cursorLine]);
 			updateCursor = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageDown) && cursorLine < lines.size() - 1){
 			size_t vlines = rect.h / fontHeight;
 			cursorLine = std::min(cursorLine + vlines, lines.size() - 1);
 			if(!perferredPosPxls) perferredPosPxls = textOffsetPxls + cursorPosPxls;
 			cursorPos = MapPosToLine(perferredPosPxls, lines[cursorLine]);
 			updateCursor = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Delete) && cursorPos < text.length()){
 			perferredPosPxls = 0;
 			text.erase(cursorPos, 1);
 			if(cursorPos > text.length()) cursorPos = text.length();
 			update = true;
+			handled = true;
 			if(onChange) onChange(text);
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Delete) && cursorLine < lines.size() - 1){
 			perferredPosPxls = 0;
 			MergeLines(cursorLine, cursorLine + 1);
 			update = true;
+			handled = true;
 			if(onChange) onChange(text);
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
 			perferredPosPxls = 0;
 			cursorPos = 0;
 			updateCursor = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
 			perferredPosPxls = 0;
 			cursorPos = text.length();
 			updateCursor = true;
+			handled = true;
 		}else if(!(code & KeyFlags::NonASCII)){
 			perferredPosPxls = 0;
 			char c = KB_char(e.Key.code);
@@ -227,27 +241,32 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 			if(c == 0x08 && cursorPos > 0){
 				text.erase(cursorPos - 1, 1);
 				--cursorPos;
+				handled = true;
 				if(onChange) onChange(text);
 			}else if(c == 0x08 && cursorLine > 0){
 				--cursorLine;
 				cursorPos = lines[cursorLine].text.length();
 				MergeLines(cursorLine, cursorLine + 1);
 				update = true;
+				handled = true;
 				if(onChange) onChange(text);
 			}else if(c == '\n'){
 				SplitLine(cursorLine, cursorPos);
 				++cursorLine;
 				cursorPos = 0;
 				update = true;
+				handled = true;
 				if(onChange) onChange(text);
 			}else if(c > 31){
 				text.insert(cursorPos, 1, c);
 				++cursorPos;
+				handled = true;
 				if(onChange) onChange(text);
 			}
 			update = update || (preText != text);
 		}
 	}else if(e.type & wm_PointerEvents){
+		handled = true;
 		if(InRect(e.Pointer.x, e.Pointer.y, rect) && (e.type == wm_EventType::PointerButtonDown || e.type == wm_EventType::PointerButtonUp)){
 			perferredPosPxls = 0;
 			auto pointerX = e.Pointer.x - rect.x;
@@ -282,8 +301,8 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 	}
 	
 	
-	if(update || updateCursor) return {true, outerRect};
-	else return {true};
+	if(update || updateCursor) return {handled, outerRect};
+	else return {handled};
 }
 
 void TextArea::Paint(gds::Surface &s){
@@ -379,6 +398,10 @@ void TextArea::OnChange(const std::function<void(const std::string &)> &oC){
 
 void TextArea::OnKeyPress(const std::function<bool(uint32_t)> &oKP){
 	onKeyPress = oKP;
+}
+
+uint32_t TextArea::GetFlags(){
+	return 0;
 }
 
 }

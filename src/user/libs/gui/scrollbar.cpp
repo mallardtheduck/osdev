@@ -31,9 +31,11 @@ static inline void swapXY(bool swap, T &a, T &b){
 Scrollbar::Scrollbar(const gds::Rect &r, uint32_t l, uint32_t s, uint32_t p, uint32_t v, bool h) : rect(r), lines(l), step(s), page(p), value(v), horiz(h) {}
 
 EventResponse Scrollbar::HandleEvent(const wm_Event &e){
+	bool handled = false;
 	uint32_t oldValue = value;
 	
 	if(e.type & wm_PointerEvents){
+		handled = true;
 		int32_t p = horiz ? e.Pointer.x - rect.x : e.Pointer.y - rect.y;
 		auto h = horiz ? rect.w : rect.h;
 		auto w = horiz ? rect.h : rect.w;
@@ -125,15 +127,19 @@ EventResponse Scrollbar::HandleEvent(const wm_Event &e){
 		if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) || code == (KeyFlags::NonASCII | KeyCodes::UpArrow)){
 			value = std::max<int32_t>(0, value - step);
 			update = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) || code == (KeyFlags::NonASCII | KeyCodes::DownArrow)){
 			value = std::min(lines, value + step); 
 			update = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageUp)){
 			value = std::max<int32_t>(0, value - page);
 			update = true;
+			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageDown)){
 			value = std::min(lines, value + page);
 			update = true;
+			handled = true;
 		}
 	}
 	
@@ -141,8 +147,8 @@ EventResponse Scrollbar::HandleEvent(const wm_Event &e){
 		if(onChange) onChange(value);
 		update = true;
 	}
-	if(update) return {true, rect};	
-	else return {true};
+	if(update) return {handled, rect};	
+	else return {handled};
 }
 
 void Scrollbar::Paint(gds::Surface &s){
@@ -270,6 +276,10 @@ void Scrollbar::SetPage(uint32_t p){
 void Scrollbar::SetValue(uint32_t v){
 	if(v != value) update = true;
 	value = v;
+}
+
+uint32_t Scrollbar::GetFlags(){
+	return 0;
 }
 
 }
