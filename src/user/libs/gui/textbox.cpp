@@ -75,6 +75,7 @@ EventResponse TextBox::HandleEvent(const wm_Event &e){
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Delete) && cursorPos <= text.length()){
 			text.erase(cursorPos, 1);
+			if(onChange) onChange(text);
 			if(cursorPos > text.length()) cursorPos = text.length();
 			update = true;
 			handled = true;
@@ -91,14 +92,14 @@ EventResponse TextBox::HandleEvent(const wm_Event &e){
 			auto preText = text;
 			if(c == 0x08 && cursorPos > 0){
 				text.erase(cursorPos - 1, 1);
+				if(onChange) onChange(text);
 				--cursorPos;
 				handled = true;
-				if(onChange) onChange(text);
 			}else if(c > 31){
 				text.insert(cursorPos, 1, c);
+				if(onChange) onChange(text);
 				++cursorPos;
 				handled = true;
-				if(onChange) onChange(text);
 			}
 			update = (preText != text);
 		}

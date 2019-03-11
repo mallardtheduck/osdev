@@ -32,6 +32,8 @@ public:
 	void Focus();
 	void Blur();
 	uint32_t GetFlags();
+	
+	void Paint(const std::vector<gds::Rect> &rects);
 };
 	
 }

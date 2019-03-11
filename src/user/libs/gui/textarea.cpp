@@ -18,7 +18,9 @@ TextArea::TextArea(const gds::Rect &r, const std::string &t, bool scrollbars) :
 {
 	if(scrollbars){
 		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
+		GetContainer().BindControl(*hscroll);
 		vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - scrollbarSize}, 1, 1, 1, 1, false));
+		GetContainer().BindControl(*vscroll);
 		
 		hscroll->OnChange([this] (uint32_t v) {
 			if(v != cursorPos) update = true;
@@ -215,15 +217,15 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 			perferredPosPxls = 0;
 			text.erase(cursorPos, 1);
 			if(cursorPos > text.length()) cursorPos = text.length();
+			if(onChange) onChange(text);
 			update = true;
 			handled = true;
-			if(onChange) onChange(text);
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Delete) && cursorLine < lines.size() - 1){
 			perferredPosPxls = 0;
 			MergeLines(cursorLine, cursorLine + 1);
+			if(onChange) onChange(text);
 			update = true;
 			handled = true;
-			if(onChange) onChange(text);
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
 			perferredPosPxls = 0;
 			cursorPos = 0;
@@ -240,28 +242,30 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 			auto preText = text;
 			if(c == 0x08 && cursorPos > 0){
 				text.erase(cursorPos - 1, 1);
+				if(onChange) onChange(text);
 				--cursorPos;
 				handled = true;
-				if(onChange) onChange(text);
+				update = true;
 			}else if(c == 0x08 && cursorLine > 0){
 				--cursorLine;
 				cursorPos = lines[cursorLine].text.length();
 				MergeLines(cursorLine, cursorLine + 1);
+				if(onChange) onChange(text);
 				update = true;
 				handled = true;
-				if(onChange) onChange(text);
 			}else if(c == '\n'){
 				SplitLine(cursorLine, cursorPos);
+				if(onChange) onChange(text);
 				++cursorLine;
 				cursorPos = 0;
 				update = true;
 				handled = true;
-				if(onChange) onChange(text);
 			}else if(c > 31){
 				text.insert(cursorPos, 1, c);
-				++cursorPos;
-				handled = true;
 				if(onChange) onChange(text);
+				++cursorPos;
+				update = true;
+				handled = true;
 			}
 			update = update || (preText != text);
 		}

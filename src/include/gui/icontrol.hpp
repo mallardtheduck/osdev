@@ -5,16 +5,24 @@
 #include <wm/wm.h>
 #include <gds/surface.hpp>
 
+#include "container.hpp"
 #include "eventresponse.hpp"
 
 namespace btos_api{
 namespace gui{
+	
+class Container;
 
 namespace ControlFlags{
 	static const uint32_t NoFocus = 1 << 0;
 }
 
 class IControl{
+private:
+	friend class Container;
+	std::function<Container&()> getContainer;
+protected:
+	Container &GetContainer();
 public:
 	virtual EventResponse HandleEvent(const wm_Event&) = 0;
 	virtual void Paint(gds::Surface &surf) = 0;

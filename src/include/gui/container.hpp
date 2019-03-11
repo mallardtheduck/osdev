@@ -12,6 +12,8 @@
 namespace btos_api{
 namespace gui{
 
+class IControl;
+
 class Container{
 private:
 	std::vector<std::shared_ptr<IControl>> controls;
@@ -30,11 +32,13 @@ protected:
 	bool HandleEvent(const wm_Event &e);
 
 public:
-	void Paint(const std::vector<gds::Rect> &rects);
+	virtual void Paint(const std::vector<gds::Rect> &rects);
 	void Paint(const gds::Rect &r = gds::Rect());
 
 	void AddControl(std::shared_ptr<IControl> control);
 	void AddControls(std::vector<std::shared_ptr<IControl>> controls);
+	
+	void BindControl(IControl &control);
 	
 	std::shared_ptr<IControl> &GetFocus();
 	

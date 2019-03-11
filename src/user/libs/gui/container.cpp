@@ -9,6 +9,38 @@
 namespace btos_api{
 namespace gui{
 
+class NullContainer : public Container{
+private: 
+	std::unique_ptr<gds::Surface> surf;
+
+	gds::Surface &GetSurface(){
+		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, 1, 1, 100, gds_ColourType::True));
+		return *surf;
+	}
+	gds::Rect GetBoundingRect(){
+		return {0, 0, 1, 1};
+	}
+	
+	void Update(const gds::Rect &){
+	}
+	
+	void Update(){
+	}
+	
+	void SetSubscribed(uint32_t){
+	}
+};
+
+static std::unique_ptr<NullContainer> nullContainer;
+
+Container &IControl::GetContainer(){
+	if(getContainer) return getContainer();
+	else{
+		if(!nullContainer) nullContainer.reset(new NullContainer());
+		return *nullContainer;
+	}
+}
+
 template<typename T> static std::shared_ptr<IControl> FNFSearch(std::shared_ptr<IControl> focus, T begin, T end){
 	auto i = begin;
 	bool found = false;
@@ -99,14 +131,14 @@ bool Container::HandleEvent(const wm_Event &evt){
 	}
 	
 	Paint(response.GetRedrawRects());
-	
 	return true;
 }
 	
 void Container::Paint(const std::vector<gds::Rect> &rects){
 	if(rects.empty()) return;
+	tfm::printf("Painting: %s rects:\n", rects.size());
+	for(const auto &r : rects) tfm::printf("  (%s, %s : %s x %s)\n", r.x, r.y, r.w, r.h);
 	
-	WM_Sync();
 	auto &surface = GetSurface();
 	auto br = GetBoundingRect();
 	surface.Clear();
@@ -125,6 +157,7 @@ void Container::Paint(const std::vector<gds::Rect> &rects){
 			break;
 		}
 	}
+	WM_Sync();
 }
 
 void Container::Paint(const gds::Rect &r){
@@ -136,7 +169,10 @@ void Container::AddControl(std::shared_ptr<IControl> control){
 }
 
 void Container::AddControls(std::vector<std::shared_ptr<IControl>> ncontrols){
-	for(auto &c : ncontrols) controls.push_back(c);
+	for(auto &c : ncontrols){
+		BindControl(*c);
+		controls.push_back(c);
+	}
 	
 	uint32_t subs = wm_EventType::Keyboard;
 	for(auto &c : controls){
@@ -152,6 +188,10 @@ void Container::AddControls(std::vector<std::shared_ptr<IControl>> ncontrols){
 		paintRects.push_back(c->GetPaintRect());
 	}
 	Paint(gds::TileRects(paintRects));
+}
+
+void Container::BindControl(IControl &control){
+	control.getContainer = [this] () -> Container& {return *this;};
 }
 
 std::shared_ptr<IControl> &Container::GetFocus(){

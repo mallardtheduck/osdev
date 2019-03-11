@@ -13,12 +13,13 @@ Button::Button(const gds::Rect &r, const std::string &l, std::function<void()> o
 }
 
 EventResponse Button::HandleEvent(const wm_Event &e){
+	auto oldDown = down;
 	if(e.type == wm_EventType::PointerButtonDown && e.Pointer.button == 1){
 		down = true;
 	}
 	if(e.type == wm_EventType::PointerButtonUp && e.Pointer.button == 1){
 		down = false;
-		onClick();
+		if(onClick) onClick();
 	}
 	if(e.type == wm_EventType::PointerLeave){
 		if(down) down = false;
@@ -38,7 +39,7 @@ EventResponse Button::HandleEvent(const wm_Event &e){
 		}
 		return {false};
 	}
-	if(down != paintDown) return {true, rect};
+	if(down != oldDown) return {true, rect};
 	else return {true};
 }
 

@@ -13,8 +13,8 @@ Checkbox::Checkbox(const gds::Rect &r, const std::string &t, bool v) : rect(r), 
 EventResponse Checkbox::HandleEvent(const wm_Event &e){
 	if(e.type == wm_EventType::PointerButtonUp){
 		value = !value;
-		update = true;
 		if(onChange) onChange(value);
+		update = true;
 	}
 	if(e.type == wm_EventType::Keyboard){
 		uint16_t code = KB_code(e.Key.code);
@@ -22,8 +22,8 @@ EventResponse Checkbox::HandleEvent(const wm_Event &e){
 			char c = KB_char(e.Key.code);
 			if(c == ' ' || c == '\n'){
 				value = !value;
-				update = true;
 				if(onChange) onChange(value);
+				update = true;
 				return {true, rect};
 			}
 		}

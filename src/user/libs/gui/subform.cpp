@@ -36,9 +36,9 @@ EventResponse SubForm::HandleEvent(const wm_Event &e){
 	return {ret, uR};
 }
 
+
+//IControl::Paint
 void SubForm::Paint(gds::Surface &s){	
-	Container::Paint();
-	
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
 }
 
@@ -66,6 +66,13 @@ void SubForm::Blur(){
 
 uint32_t SubForm::GetFlags(){
 	return 0;
+}
+
+//Container::Paint
+void SubForm::Paint(const std::vector<gds::Rect> &rects){
+	Container::Paint(rects);
+	for(const auto &uR : updateRects) GetContainer().Paint(uR);
+	updateRects.clear();
 }
 	
 }

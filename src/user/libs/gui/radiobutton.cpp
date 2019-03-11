@@ -12,9 +12,12 @@ RadioButton::RadioButton(const gds::Rect &r, const std::string &t, bool v) : rec
 	
 EventResponse RadioButton::HandleEvent(const wm_Event &e){
 	if(e.type == wm_EventType::PointerButtonUp){
-		if(!value) update = true;
+		auto oldValue = value;
 		value = true;
-		if(onChange) onChange(value);
+		if(value != oldValue){
+			if(onChange) onChange(value);
+			update = true;
+		}
 		if(getAllRects) return {true, getAllRects()};
 		else return {true, rect};
 	}
@@ -23,9 +26,12 @@ EventResponse RadioButton::HandleEvent(const wm_Event &e){
 		if(!(code & KeyFlags::NonASCII)){
 			char c = KB_char(e.Key.code);
 			if(c == ' ' || c == '\n'){
-				if(!value) update = true;
+				auto oldValue = value;
 				value = true;
-				if(onChange) onChange(value);
+				if(value != oldValue){
+					if(onChange) onChange(value);
+					update = true;
+				}
 				if(getAllRects) return {true, getAllRects()};
 				else return {true, rect};
 			}
