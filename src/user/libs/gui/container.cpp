@@ -136,8 +136,6 @@ bool Container::HandleEvent(const wm_Event &evt){
 	
 void Container::Paint(const std::vector<gds::Rect> &rects){
 	if(rects.empty()) return;
-	tfm::printf("Painting: %s rects:\n", rects.size());
-	for(const auto &r : rects) tfm::printf("  (%s, %s : %s x %s)\n", r.x, r.y, r.w, r.h);
 	
 	auto &surface = GetSurface();
 	auto br = GetBoundingRect();
