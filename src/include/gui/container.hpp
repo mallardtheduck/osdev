@@ -19,6 +19,8 @@ private:
 	std::vector<std::shared_ptr<IControl>> controls;
 	std::shared_ptr<IControl> focus;
 	std::shared_ptr<IControl> mouseOver;
+	std::vector<gds::Rect> paintQueue;
+	bool queuePaint = false;
 	
 	virtual gds::Surface &GetSurface() = 0;
 	virtual gds::Rect GetBoundingRect() = 0;

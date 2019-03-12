@@ -62,6 +62,7 @@ std::shared_ptr<IControl> Container::FindNextFocus(bool reverse){
 }
 
 bool Container::HandleEvent(const wm_Event &evt){
+	queuePaint = true;
 	EventResponse response;
 	if(focus && (evt.type & wm_KeyboardEvents) && (focus->GetSubscribed() & evt.type)){
 		response = focus->HandleEvent(evt);
@@ -127,11 +128,18 @@ bool Container::HandleEvent(const wm_Event &evt){
 			}
 		}
 	}
+	queuePaint = false;
+	Paint(gds::TileRects(paintQueue));
+	paintQueue.clear();
 	return true;
 }
 	
 void Container::Paint(const std::vector<gds::Rect> &rects){
 	if(rects.empty()) return;
+	if(queuePaint){ 
+		for(auto &r : rects) paintQueue.push_back(r);
+		return;
+	}
 	
 	auto &surface = GetSurface();
 	auto br = GetBoundingRect();
