@@ -41,7 +41,7 @@ Container &IControl::GetContainer(){
 	}
 }
 
-template<typename T> static std::shared_ptr<IControl> FNFSearch(std::shared_ptr<IControl> focus, T begin, T end){
+template<typename T> static std::shared_ptr<IControl> FNFSearch(std::shared_ptr<IControl> focus, T begin, T end, std::function<bool()> onLastControl){
 	auto i = begin;
 	bool found = false;
 	while(true){
@@ -49,13 +49,16 @@ template<typename T> static std::shared_ptr<IControl> FNFSearch(std::shared_ptr<
 		if(found && *i == focus) return focus;
 		if(*i == focus) found = true;
 		++i;
-		if(i == end) i = begin;
+		if(i == end){
+			if(onLastControl()) return nullptr;
+			i = begin;
+		}
 	}
 }
 
 std::shared_ptr<IControl> Container::FindNextFocus(bool reverse){
-	if(reverse) return FNFSearch(focus, controls.rbegin(), controls.rend());
-	else return FNFSearch(focus, controls.begin(), controls.end());
+	if(reverse) return FNFSearch(focus, controls.rbegin(), controls.rend(), [this, reverse]{return OnLastControlFocus(reverse);});
+	else return FNFSearch(focus, controls.begin(), controls.end(), [this, reverse]{return OnLastControlFocus(reverse);});
 }
 
 bool Container::HandleEvent(const wm_Event &evt){
@@ -70,14 +73,11 @@ bool Container::HandleEvent(const wm_Event &evt){
 			if(!focus){
 				focus = *controls.begin();
 				if(focus->GetFlags() & ControlFlags::NoFocus) focus = FindNextFocus(false);
-				focus->Focus();
-				response.AddRedrawRect(focus->GetPaintRect());
+				if(focus) focus->Focus();
 			}else{
 				focus->Blur();
-				response.AddRedrawRect(focus->GetPaintRect());
 				focus = FindNextFocus(evt.Key.code & KeyFlags::Shift);
-				focus->Focus();
-				response.AddRedrawRect(focus->GetPaintRect());
+				if(focus) focus->Focus();
 			}
 		}
 	}
@@ -116,11 +116,9 @@ bool Container::HandleEvent(const wm_Event &evt){
 							if(c != focus){
 								if(focus){
 									focus->Blur();
-									response.AddRedrawRect(focus->GetPaintRect());
 								}
 								focus = c;
 								focus->Focus();
-								response.AddRedrawRect(focus->GetPaintRect());
 							}
 						}
 						break;
@@ -129,8 +127,6 @@ bool Container::HandleEvent(const wm_Event &evt){
 			}
 		}
 	}
-	
-	Paint(response.GetRedrawRects());
 	return true;
 }
 	
@@ -149,7 +145,7 @@ void Container::Paint(const std::vector<gds::Rect> &rects){
 	surface.CommitQueue();
 	
 	for(auto &r : rects){
-		if(r.w && r.h) Update(r);
+		if(r.w && r.h) Update();
 		else{
 			Update();
 			break;
@@ -194,6 +190,18 @@ void Container::BindControl(IControl &control){
 
 std::shared_ptr<IControl> &Container::GetFocus(){
 	return focus;
+}
+
+void Container::FocusNext(bool reverse){
+	if(!focus){
+		focus = *controls.begin();
+		if(focus->GetFlags() & ControlFlags::NoFocus) focus = FindNextFocus(false);
+		if(focus) focus->Focus();
+	}else{
+		focus->Blur();
+		focus = FindNextFocus(reverse);
+		if(focus) focus->Focus();
+	}
 }
 
 }

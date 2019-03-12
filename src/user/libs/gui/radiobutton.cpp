@@ -18,8 +18,9 @@ EventResponse RadioButton::HandleEvent(const wm_Event &e){
 			if(onChange) onChange(value);
 			update = true;
 		}
-		if(getAllRects) return {true, getAllRects()};
-		else return {true, rect};
+		if(getAllRects) GetContainer().Paint(getAllRects());
+		else GetContainer().Paint(rect);
+		return {true};
 	}
 	if(e.type == wm_EventType::Keyboard){
 		uint16_t code = KB_code(e.Key.code);
@@ -32,8 +33,9 @@ EventResponse RadioButton::HandleEvent(const wm_Event &e){
 					if(onChange) onChange(value);
 					update = true;
 				}
-				if(getAllRects) return {true, getAllRects()};
-				else return {true, rect};
+				if(getAllRects) GetContainer().Paint(getAllRects());
+				else GetContainer().Paint(rect);
+				return {true};
 			}
 		}
 		return {false};
@@ -137,20 +139,24 @@ uint32_t RadioButton::GetSubscribed(){
 void RadioButton::Focus(){
 	if(!focus) update = true;
 	focus = true;
+	GetContainer().Paint(rect);
 }
 void RadioButton::Blur(){
 	if(focus) update = true;
 	focus = false;
+	GetContainer().Paint(rect);
 }
 	
 void RadioButton::SetText(const std::string &t){
 	text = t;
 	bkSurf.reset();
+	GetContainer().Paint(rect);
 }
 
 void RadioButton::SetValue(bool v){
 	value = v;
 	update = true;
+	GetContainer().Paint(rect);
 }
 
 uint32_t RadioButton::GetFlags(){

@@ -305,8 +305,10 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 	}
 	
 	
-	if(update || updateCursor) return {handled, outerRect};
-	else return {handled};
+	if(update || updateCursor){
+		GetContainer().Paint(outerRect);
+	}
+	return {handled};
 }
 
 void TextArea::Paint(gds::Surface &s){
@@ -373,10 +375,12 @@ uint32_t TextArea::GetSubscribed(){
 
 void TextArea::Focus(){
 	hasFocus = true;
+	GetContainer().Paint(outerRect);
 }
 
 void TextArea::Blur(){
 	hasFocus = false;
+	GetContainer().Paint(outerRect);
 }
 	
 void TextArea::SetText(const std::string &t){
@@ -386,6 +390,7 @@ void TextArea::SetText(const std::string &t){
 		lines.emplace_back(Line{l, gds::TextMeasurements()});
 	}
 	update = true;
+	GetContainer().Paint(outerRect);
 }
 
 std::string TextArea::GetText(){

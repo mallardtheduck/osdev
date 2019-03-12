@@ -28,6 +28,7 @@ private:
 	virtual void SetSubscribed(uint32_t subs) = 0;
 	
 	std::shared_ptr<IControl> FindNextFocus(bool reverse);
+	virtual bool OnLastControlFocus(bool /*reverse*/) {return false;}
 protected:
 	bool HandleEvent(const wm_Event &e);
 
@@ -41,6 +42,7 @@ public:
 	void BindControl(IControl &control);
 	
 	std::shared_ptr<IControl> &GetFocus();
+	void FocusNext(bool reverse);
 	
 	~Container() {}
 };	

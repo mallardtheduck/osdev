@@ -21,6 +21,7 @@ private:
 	void Update(const gds::Rect &r);
 	void Update();
 	void SetSubscribed(uint32_t subs);
+	bool OnLastControlFocus(bool reverse);
 public:
 	SubForm(const gds::Rect &r);
 

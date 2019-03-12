@@ -59,8 +59,9 @@ EventResponse Slider::HandleEvent(const wm_Event &e){
 		}
 		if(onChange) onChange(value);
 		update = true;
-		return {handled, rect};
-	}else return {handled};
+		GetContainer().Paint(rect);
+	}
+	return {handled};
 }
 
 void Slider::Paint(gds::Surface &s){
@@ -139,11 +140,13 @@ uint32_t Slider::GetSubscribed(){
 void Slider::Focus(){
 	if(!focus) update = true;
 	focus = true;
+	GetContainer().Paint(rect);
 }
 
 void Slider::Blur(){
 	if(focus) update = true;
 	focus = false;
+	GetContainer().Paint(rect);
 }
 
 int32_t Slider::GetValue(){

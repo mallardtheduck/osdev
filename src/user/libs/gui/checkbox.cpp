@@ -24,12 +24,14 @@ EventResponse Checkbox::HandleEvent(const wm_Event &e){
 				value = !value;
 				if(onChange) onChange(value);
 				update = true;
-				return {true, rect};
+				GetContainer().Paint(rect);
+				return {true};
 			}
 		}
 		return {false};
 	}
-	return {true, rect};
+	GetContainer().Paint(rect);
+	return {true};
 }
 
 void Checkbox::Paint(gds::Surface &s){
@@ -125,15 +127,18 @@ uint32_t Checkbox::GetSubscribed(){
 void Checkbox::Focus(){
 	if(!focus) update = true;
 	focus = true;
+	GetContainer().Paint(rect);
 }
 void Checkbox::Blur(){
 	if(focus) update = true;
 	focus = false;
+	GetContainer().Paint(rect);
 }
 	
 void Checkbox::SetText(const std::string &t){
 	text = t;
 	bkSurf.reset();
+	GetContainer().Paint(rect);
 }
 
 bool Checkbox::GetValue(){

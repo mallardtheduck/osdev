@@ -10,16 +10,10 @@ namespace gui{
 class EventResponse{
 private:
 	bool finishedProcessing = false;
-	std::vector<gds::Rect> redrawRects;
-	bool rectTiled = true;
 public:
-	EventResponse(bool fP = false, const std::vector<gds::Rect> &rR = {});
-	EventResponse(bool fP, gds::Rect r) : EventResponse(fP, std::vector<gds::Rect>{r}) {}
+	EventResponse(bool fP = false);
 
 	bool IsFinishedProcessing();
-	std::vector<gds::Rect> GetRedrawRects();
-	
-	void AddRedrawRect(const gds::Rect &r);
 };
 
 }

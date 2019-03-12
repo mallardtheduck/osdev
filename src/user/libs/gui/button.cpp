@@ -39,8 +39,8 @@ EventResponse Button::HandleEvent(const wm_Event &e){
 		}
 		return {false};
 	}
-	if(down != oldDown) return {true, rect};
-	else return {true};
+	if(down != oldDown) GetContainer().Paint(rect);
+	return {true};
 }
 
 void Button::Paint(gds::Surface &s){
@@ -119,10 +119,12 @@ uint32_t Button::GetSubscribed(){
 
 void Button::Focus(){
 	focus = true;
+	GetContainer().Paint(rect);
 }
 
 void Button::Blur(){
 	focus = false;
+	GetContainer().Paint(rect);
 }
 
 uint32_t Button::GetFlags(){

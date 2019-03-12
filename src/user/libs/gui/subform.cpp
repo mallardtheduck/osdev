@@ -27,13 +27,15 @@ void SubForm::SetSubscribed(uint32_t s){
 	subs = s;
 }
 
+bool SubForm::OnLastControlFocus(bool reverse){
+	GetContainer().FocusNext(reverse);
+	return GetContainer().GetFocus().get() != this;
+}
+
 SubForm::SubForm(const gds::Rect &r): rect(r) {}
 
 EventResponse SubForm::HandleEvent(const wm_Event &e){
-	bool ret = Container::HandleEvent(e);
-	auto uR = updateRects;
-	updateRects.clear();
-	return {ret, uR};
+	return {Container::HandleEvent(e)};
 }
 
 
@@ -57,6 +59,7 @@ uint32_t SubForm::GetSubscribed(){
 void SubForm::Focus(){
 	auto fcs = GetFocus();
 	if(fcs) fcs->Focus();
+	else FocusNext(false);
 }
 
 void SubForm::Blur(){
