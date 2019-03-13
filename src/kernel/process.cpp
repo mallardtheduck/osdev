@@ -152,6 +152,10 @@ proc_process *proc_get(pid_t pid){
 }
 
 proc_process *proc_get_lock(pid_t pid){
+	if(proc_current_process && pid == proc_current_pid){
+		take_lock_recursive(proc_current_process->ulock);
+		return proc_current_process;
+	}
 	while(true){
 		take_lock_recursive(proc_lock);
 		proc_process *ret = proc_get(pid);
@@ -657,11 +661,15 @@ void proc_set_status(proc_status::Enum status, pid_t pid){
 	release_lock(proc->ulock);
 }
 proc_status::Enum proc_get_status(pid_t pid){
-    proc_process *proc=proc_get_lock(pid);
-    if(!proc) return proc_status::DoesNotExist;
-    proc_status::Enum ret = proc->status;
-    release_lock(proc->ulock);
-	return ret;
+    //proc_process *proc=proc_get_lock(pid);
+    //if(!proc) return proc_status::DoesNotExist;
+    //proc_status::Enum ret = proc->status;
+    //release_lock(proc->ulock);
+	//return ret;
+	interrupt_lock il;
+	proc_process *proc = proc_get(pid);
+	if(!proc) return proc_status::DoesNotExist;
+	else return proc->status;
 }
 
 void proc_free_message_buffer(pid_t topid, pid_t pid){

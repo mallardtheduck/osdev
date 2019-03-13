@@ -32,7 +32,7 @@ void take_lock_exclusive(lock &l, uint64_t thread){
     if(thread==0) panic("(LOCK) Attempt to lock thread to invalid thread ID.");
     while(l.lockval != thread) {
         while (!__sync_bool_compare_and_swap(&l.lockval, 0, thread)) {
-            if (&l != &sch_lock && sch_lock.lockval != thread) sch_setblock(&lock_blockcheck, (void *) &l.lockval);
+            if (&l != &sch_lock && sch_lock.lockval != thread) sch_setblock(&lock_blockcheck, (void *) &l.lockval, l.lockval);
             else panic("(LOCK) Deadlock - waiting for lock while holding scheduler lock!");
         }
     }
@@ -53,7 +53,7 @@ void take_lock_recursive(lock &l, uint64_t thread){
     if(thread==0) panic("(LOCK) Attempt to lock thread to invalid thread ID.");
     while(l.lockval != thread) {
         while (!__sync_bool_compare_and_swap(&l.lockval, 0, thread)) {
-            if (&l != &sch_lock && sch_lock.lockval != thread) sch_setblock(&lock_blockcheck, (void *) &l.lockval);
+            if (&l != &sch_lock && sch_lock.lockval != thread) sch_setblock(&lock_blockcheck, (void *) &l.lockval, l.lockval);
             else panic("(LOCK) Deadlock - waiting for lock while holding scheduler lock!");
         }
     }
