@@ -99,7 +99,7 @@ extern "C" uint64_t GDS_SelectSurface(uint64_t id){
 	current_known = true;
 	current_screen = false;
 	current_surface = ret;
-	return GetContent<uint64_t>(&reply);
+	return ret;
 }
 
 extern "C" size_t GDS_AddDrawingOp(gds_DrawingOp op){
