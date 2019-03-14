@@ -8,6 +8,7 @@
 #include <btos/messageloop.hpp>
 #include <wm/eventloop.hpp>
 #include <memory>
+#include <util/tinyformat.hpp>
 #include "game.hpp"
 
 using namespace std;

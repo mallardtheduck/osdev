@@ -24,10 +24,10 @@ static bool Init(){
 	return true;
 }
 
-template<typename T> static T GetContent(const bt_msg_header &msg){
+template<typename T> static T GetContent(const bt_msg_header &msg, bool ack = true){
 	T ret;
 	bt_msg_content((bt_msg_header*)&msg, (void*)&ret, sizeof(ret));
-	bt_msg_ack((bt_msg_header*)&msg);
+	if(ack) bt_msg_ack((bt_msg_header*)&msg);
 	return ret;
 }
 
@@ -152,10 +152,9 @@ extern "C" bt_msg_filter WM_GetEventFilter(){
 extern "C" wm_Event WM_ParseMessage(bt_msg_header *msg){
 	wm_Event ret;
 	if(msg && msg->from == wm_pid && msg->type == wm_MessageType::Event && msg->length == sizeof(wm_Event)){
-		ret = GetContent<wm_Event>(*msg);
+		ret = GetContent<wm_Event>(*msg, false);
 	}else{
 		ret.type = wm_EventType::None;
-		bt_msg_ack(msg);
 	}
 	return ret;
 }
@@ -165,6 +164,7 @@ extern "C" wm_Event WM_GetEvent(){
 	bt_msg_header msg = bt_recv_filtered(filter, true);
 	wm_Event ret;
 	ret = WM_ParseMessage(&msg);
+	bt_msg_ack(&msg);
 	return ret;
 }
 
