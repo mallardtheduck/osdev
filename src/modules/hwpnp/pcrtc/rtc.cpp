@@ -8,7 +8,7 @@ extern uint64_t boot_msec;
 const uint16_t RTC_Index = 0x70;
 const uint16_t RTC_Data = 0x71;
 const uint8_t RTC_IRQ = 0x08;
-const int RTC_Rate = 6;
+int RTC_Rate = 6;
 const uint64_t ResyncRate = 5000;
 
 uint64_t msec_counter = 0;
@@ -17,6 +17,7 @@ uint32_t int_counter1000 = 0;
 volatile uint32_t tick_counter = 0;
 uint64_t last_resync = 0;
 uint32_t resync_flag = 0;
+uint32_t ticks_per_irq = 0;
 
 extern char rtc_irq_handler;
 
@@ -119,7 +120,42 @@ uint64_t get_msecs(){
 	return msec_counter;
 }
 
+static uint8_t read_second(){
+	outb(RTC_Index, 0x00);
+	return inb(RTC_Data);
+}
+
+static char pbuf1[1024];
+static char pbuf2[1024];
+
 void init_interrupt(){
+	uint8_t s;
+	uint8_t p = read_second();
+	while(p == (s = read_second()));
+	uint64_t ctr = 0;
+	while(s == read_second()){
+		memset(pbuf1, (int)ctr, 1024);
+		memcpy(pbuf2, pbuf1, 1024);
+		++ctr;
+	}
+	dbgpf("RTC: Performance: %llu\n", ctr);
+	if(ctr < 50000){
+		RTC_Rate = 10;
+		ticks_per_irq = 16;	
+	}else if(ctr < 100000){
+		RTC_Rate = 9;
+		ticks_per_irq = 8;
+	}else if(ctr < 500000){
+		RTC_Rate = 8;
+		ticks_per_irq = 4;
+	}else if(ctr < 1000000){
+		RTC_Rate = 7;
+		ticks_per_irq = 2;
+	}else{
+		RTC_Rate = 6;
+		ticks_per_irq = 1;
+	}
+	
 	//handle_irq(RTC_IRQ, &rtc_interrupt);
 	handle_irq_raw(RTC_IRQ, (void*)&rtc_irq_handler);
 	disable_interrupts();

@@ -1,5 +1,5 @@
 #!/bin/bash
-nsamples=100
+nsamples=1000
 sleeptime=0
 pid=$(pidof mysqld)
 
@@ -13,4 +13,5 @@ awk '
   /^Thread/ { print s; s = ""; } 
   /^\#/ { if (s != "" ) { s = s "," $2} else { s = $2 } } 
   END { print s }' | \
+  awk  -F, '{print $1}' | \
 sort | uniq -c | sort -r -n -k 1,1
