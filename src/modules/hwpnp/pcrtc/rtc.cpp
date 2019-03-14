@@ -17,7 +17,7 @@ uint32_t int_counter1000 = 0;
 volatile uint32_t tick_counter = 0;
 uint64_t last_resync = 0;
 uint32_t resync_flag = 0;
-uint32_t ticks_per_irq = 0;
+uint32_t ticks_per_irq = 1;
 
 extern char rtc_irq_handler;
 
@@ -120,44 +120,7 @@ uint64_t get_msecs(){
 	return msec_counter;
 }
 
-static uint8_t read_second(){
-	outb(RTC_Index, 0x00);
-	return inb(RTC_Data);
-}
-
-static char pbuf1[1024];
-static char pbuf2[1024];
-
-void init_interrupt(){
-	uint8_t s;
-	uint8_t p = read_second();
-	while(p == (s = read_second()));
-	uint64_t ctr = 0;
-	while(s == read_second()){
-		memset(pbuf1, (int)ctr, 1024);
-		memcpy(pbuf2, pbuf1, 1024);
-		++ctr;
-	}
-	dbgpf("RTC: Performance: %llu\n", ctr);
-	if(ctr < 50000){
-		RTC_Rate = 10;
-		ticks_per_irq = 16;	
-	}else if(ctr < 100000){
-		RTC_Rate = 9;
-		ticks_per_irq = 8;
-	}else if(ctr < 500000){
-		RTC_Rate = 8;
-		ticks_per_irq = 4;
-	}else if(ctr < 1000000){
-		RTC_Rate = 7;
-		ticks_per_irq = 2;
-	}else{
-		RTC_Rate = 6;
-		ticks_per_irq = 1;
-	}
-	
-	//handle_irq(RTC_IRQ, &rtc_interrupt);
-	handle_irq_raw(RTC_IRQ, (void*)&rtc_irq_handler);
+static void program_rtc(){
 	disable_interrupts();
 	uint8_t regA = read_cmos(0x8A);
 	regA = (regA & 0xF0) | RTC_Rate;
@@ -168,6 +131,44 @@ void init_interrupt(){
 	outb(RTC_Data, regB);
 	enable_interrupts();
 	unmask_irq(RTC_IRQ);
+}
+
+void init_interrupt(){
+	handle_irq_raw(RTC_IRQ, (void*)&rtc_irq_handler);
+	program_rtc();
+	
+	auto start = get_msecs();
+	uint32_t i = 2;
+	uint32_t c = i;
+	while(i < 1500000){
+		if(c == 1) c = ++i;
+		if(c % 2) c = (3 * c) + 1;
+		else c = c / 2;
+	}
+	auto end = get_msecs();
+	auto time = end - start;
+	if(start > end) time = 0;
+	
+	dbgpf("RTC: Performance: %llu\n", time);
+	
+	if(time < 1000){
+		RTC_Rate = 6;
+		ticks_per_irq = 1;
+	}else if(time < 2000){
+		RTC_Rate = 7;
+		ticks_per_irq = 2;
+	}else if(time < 4000){
+		RTC_Rate = 8;
+		ticks_per_irq = 4;
+	}else if(time < 8000){
+		RTC_Rate = 9;
+		ticks_per_irq = 8;
+	}else{
+		RTC_Rate = 10;
+		ticks_per_irq = 16;
+	}
+	
+	program_rtc();
 }
 
 uint64_t rtc_get_time(){
