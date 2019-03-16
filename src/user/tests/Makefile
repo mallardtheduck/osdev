@@ -1,4 +1,4 @@
-PROGS := ctest cpptest crash mousetest msgtest shmtest vgatest fputest elltest nctest sdltest pthreadtest
+PROGS := ctest cpptest crash mousetest msgtest shmtest vgatest fputest elltest nctest sdltest pthreadtest cltzbench
 
 all: dummy.file
 	for dir in $(PROGS); do \
