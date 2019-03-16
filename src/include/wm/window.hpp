@@ -54,6 +54,11 @@ namespace wm{
 		void SetEventHandler(std::function<bool(const wm_Event&)> fn);
 		std::function<bool(const wm_Event&)> GetEventHandler() const;
 		virtual bool Event(const wm_Event& evt);
+		
+		void Hide();
+		void Show();
+		void Close();
+		void Open();
 	};
 
 }

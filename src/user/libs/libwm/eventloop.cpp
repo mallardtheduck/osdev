@@ -5,6 +5,8 @@ using namespace std;
 
 namespace btos_api{
 namespace wm{
+	
+	EventLoop *EventLoop::current = nullptr;
 
 	EventLoop::EventLoop(const vector<shared_ptr<Window>> &wins, const vector<shared_ptr<Menu>> &ms){
 		for(auto w : wins){
@@ -36,10 +38,12 @@ namespace wm{
 	}
 
 	void EventLoop::RunLoop(){
+		current = this;
 		while(true){
 			wm_Event e = WM_GetEvent();
-			if(!HandleEvent(e)) return;
+			if(!HandleEvent(e)) break;
 		}
+		current = nullptr;
 	}
 	bool EventLoop::HandleMessage(const Message &msg){
 		auto header = msg.Header();
@@ -62,6 +66,10 @@ namespace wm{
 			}
 		}
 		return true;
+	}
+	
+	EventLoop *EventLoop::GetCurrent(){
+		return current;
 	}
 }
 }

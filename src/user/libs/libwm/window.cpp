@@ -112,5 +112,29 @@ namespace wm{
 		else return true;
 	}
 
+	void Window::Hide(){
+		auto opts = GetOptions();
+		opts &= ~wm_WindowOptions::Visible;
+		SetOptions(opts);
+	}
+	void Window::Show(){
+		auto opts = GetOptions();
+		opts |= wm_WindowOptions::Visible;
+		SetOptions(opts);
+	}
+	
+	void Window::Close(){
+		auto opts = GetOptions();
+		opts &= ~wm_WindowOptions::Visible;
+		opts |= wm_WindowOptions::Unlisted;
+		SetOptions(opts);
+	}
+	void Window::Open(){
+		auto opts = GetOptions();
+		opts |= wm_WindowOptions::Visible;
+		opts &= ~wm_WindowOptions::Unlisted;
+		SetOptions(opts);
+	}
+
 }
 }

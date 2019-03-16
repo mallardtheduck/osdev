@@ -1,6 +1,7 @@
 #include <gui/form.hpp>
 #include <gui/defaults.hpp>
 #include <gds/libgds.h>
+#include <wm/eventloop.hpp>
 
 #include <iostream>
 
@@ -30,7 +31,14 @@ void Form::SetSubscribed(uint32_t subs){
 }
 
 bool Form::HandleEvent(const wm_Event &e){
-	if(e.type == wm_EventType::Close && onClose) return onClose();
+	if(!(GetOptions() & wm_WindowOptions::Visible)) return true;
+	
+	if(e.type == wm_EventType::Close){
+		if(!onClose || !onClose()){
+			Close();
+		}
+		return true;
+	}
 	
 	return Container::HandleEvent(e);
 }

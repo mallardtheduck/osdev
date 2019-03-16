@@ -16,6 +16,8 @@
 
 #include <wm/eventloop.hpp>
 
+#include <util/tinyformat.hpp>
+
 #include <cxxabi.h>
 
 int main(){
@@ -46,6 +48,10 @@ int main(){
 		sfrm->AddControl(sbtn);
 		
 		frm->AddControls({btn1, btn2, lbl1, lbl2, txt, sld, chk, rd1, rd2, rd3, sch, scv, txa, grp, sfrm});
+		frm->OnClose([]{
+			tfm::printf("Form close.\n");
+			return false;
+		});
 		
 		btos_api::wm::EventLoop loop({frm});
 		loop.RunLoop();

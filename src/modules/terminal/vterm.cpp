@@ -845,7 +845,7 @@ void vterm::update_current_pid()
 
 bool vterm::check_exclusive(){
 	if(!exclusive_mode_enabled) return false;
-	int pstatus = get_proc_status(exclusive_pid);
+	int pstatus = 1;//get_proc_status(exclusive_pid);
 	if(pstatus == 0 || pstatus == 2){
 		exclusive_mode_enabled = false;
 		return false;

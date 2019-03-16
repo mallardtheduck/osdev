@@ -22,6 +22,7 @@ namespace wm{
 		std::map<uint64_t, std::shared_ptr<Window>> windows;
 		std::map<uint64_t, std::shared_ptr<Menu>> menus;
 
+		static EventLoop *current;
 	public:
 		EventLoop() = default;
 		EventLoop(const std::vector<std::shared_ptr<Window>> &windows, const std::vector<std::shared_ptr<Menu>> &menus = std::vector<std::shared_ptr<Menu>>());
@@ -37,6 +38,8 @@ namespace wm{
 		void RunLoop();
 		bool HandleMessage(const Message &msg) override;
 		bool HandleEvent(const wm_Event &e);
+		
+		static EventLoop *GetCurrent();
 	};
 
 }

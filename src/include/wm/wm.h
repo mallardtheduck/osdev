@@ -26,6 +26,7 @@ ENUM_START(wm_WindowOptions)
 	ENUM_SET(wm_WindowOptions, Resizable, 			1 << 7),
 	ENUM_SET(wm_WindowOptions, ToolWindow, 			1 << 8),
 	ENUM_SET(wm_WindowOptions, EnableTransparency, 	1 << 9),
+	ENUM_SET(wm_WindowOptions, Unlisted,			1 << 10),
 	ENUM_SET(wm_WindowOptions, Default,				(1 << 0)),
 ENUM_END
 ENUM_TYPE(wm_WindowOptions);
