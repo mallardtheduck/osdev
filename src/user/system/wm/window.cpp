@@ -467,6 +467,9 @@ uint32_t Window::Subscribe(){
 
 void Window::SetOptions(uint32_t opts){
 	options = opts;
+	if(GetVisible()) DrawWindows(GetBoundingRect(), id);
+	else DrawWindows(GetBoundingRect());
+	RefreshScreen(GetBoundingRect());
 }
 
 uint32_t Window::GetOptions(){

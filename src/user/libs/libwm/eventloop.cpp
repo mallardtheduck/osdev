@@ -65,7 +65,8 @@ namespace wm{
 				if(!menus[e.Menu.menu_id]->Event(e.Menu.action)) return false;
 			}
 		}
-		return true;
+		if(windows.empty()) return false;
+		else return true;
 	}
 	
 	EventLoop *EventLoop::GetCurrent(){
