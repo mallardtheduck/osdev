@@ -1,5 +1,6 @@
 #include <wm/wm.h>
 #include <btos/message.hpp>
+#include <dev/terminal.hpp>
 #include "client.hpp"
 #include "windows.hpp"
 
@@ -205,6 +206,9 @@ bool Client::HandleMessage(const Message &msg){
 		case wm_RequestType::UnSetWindowMenu:{
 			if(currentWindow) currentWindow->SetWindowMenu(nullptr);
 			break;
+		}
+		case wm_RequestType::GetPointerInfo:{
+			SendReply(msg, Terminal().GetPointerInfo());
 		}
 	}
 	return true;

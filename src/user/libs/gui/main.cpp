@@ -13,6 +13,7 @@
 #include <gui/textarea.hpp>
 #include <gui/subform.hpp>
 #include <gui/groupbox.hpp>
+#include <gui/testcontrol.hpp>
 
 #include <wm/eventloop.hpp>
 
@@ -36,18 +37,28 @@ int main(){
 		auto sch = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{340, 35, 140, 17}, 100, 1, 10, 0, true);
 		auto scv = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{463, 60, 17, 140}, 100, 1, 10, 100, false);
 		auto txa = std::make_shared<btos_api::gui::TextArea>(gds::Rect{10, 100, 150, 100}, "A multi-line editable text area.\nWith some lines of text.\nAnother line.\nA further line.\nAn additional line.\nAn extra line.\nA superflous line.", true);
-		auto grp = std::make_shared<btos_api::gui::GroupBox>(gds::Rect{165, 110, 170, 70}, "Subformy within");
+		auto grp = std::make_shared<btos_api::gui::GroupBox>(gds::Rect{165, 110, 170, 150}, "Subformy within");
+		auto tst1 = std::make_shared<btos_api::gui::TestControl>(gds::Rect{350, 110, 100, 30});
+		tst1->OnEvent([] (const wm_Event &e){
+			tfm::printf("Test: EventType: %s\n", e.type);
+			return true;
+		});
 		
 		btos_api::gui::RadioGroup<int> rgrp;
 		rgrp.AddButton(rd1, 1);
 		rgrp.AddButton(rd2, 2);
 		rgrp.AddButton(rd3, 3);
 		
-		auto sfrm = std::make_shared<btos_api::gui::SubForm>(gds::Rect{170, 130, 150, 40});
+		auto sfrm = std::make_shared<btos_api::gui::SubForm>(gds::Rect{170, 130, 150, 120});
 		auto sbtn = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 3", [&] {lbl2->SetText("Button 3");});
-		sfrm->AddControl(sbtn);
+		auto tst2 = std::make_shared<btos_api::gui::TestControl>(gds::Rect{10, 50, 100, 30});
+		tst2->OnEvent([] (const wm_Event &e){
+			tfm::printf("Subform Test: EventType: %s\n", e.type);
+			return true;
+		});
+		sfrm->AddControls({sbtn, tst2});
 		
-		frm->AddControls({btn1, btn2, lbl1, lbl2, txt, sld, chk, rd1, rd2, rd3, sch, scv, txa, grp, sfrm});
+		frm->AddControls({btn1, btn2, lbl1, lbl2, txt, sld, chk, rd1, rd2, rd3, sch, scv, txa, grp, sfrm, tst1});
 		frm->OnClose([]{
 			tfm::printf("Form close.\n");
 			return false;

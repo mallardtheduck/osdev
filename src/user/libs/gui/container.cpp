@@ -2,7 +2,6 @@
 #include <gui/defaults.hpp>
 #include <wm/libwm.h>
 #include <dev/keyboard.h>
-#include <util/tinyformat.hpp>
 
 #include <algorithm>
 
@@ -105,10 +104,10 @@ bool Container::HandleEvent(const wm_Event &evt){
 		if(!response.IsFinishedProcessing()){
 			for(auto &c : controls){
 				if(e.type == wm_EventType::PointerMove && mouseOver != c && gds::InRect(e.Pointer.x, e.Pointer.y, c->GetInteractRect()) && (c->GetSubscribed() & wm_EventType::PointerEnter)){
-					auto enterEvt = e;
+					mouseOver = c;
+					auto enterEvt = evt;
 					enterEvt.type = wm_EventType::PointerEnter;
 					HandleEvent(enterEvt);
-					mouseOver = c;
 				}
 				if((c->GetSubscribed() & e.type) && gds::InRect(e.Pointer.x, e.Pointer.y, c->GetInteractRect())){
 					response = c->HandleEvent(e);

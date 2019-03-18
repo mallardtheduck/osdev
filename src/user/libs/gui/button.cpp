@@ -2,9 +2,9 @@
 #include <gui/button.hpp>
 #include <gui/drawing.hpp>
 #include <gui/defaults.hpp>
-#include <dev/terminal.hpp>
 #include <dev/mouse.h>
 #include <dev/keyboard.h>
+#include <wm/libwm.h>
 
 namespace btos_api{
 namespace gui{
@@ -25,7 +25,7 @@ EventResponse Button::HandleEvent(const wm_Event &e){
 		if(down) down = false;
 	}
 	if(e.type == wm_EventType::PointerEnter){
-		auto pinfo = Terminal().GetPointerInfo();
+		auto pinfo = WM_GetPointerInfo();
 		if(pinfo.flags & MouseFlags::Button1) down = true;
 	}
 	if(e.type == wm_EventType::Keyboard){

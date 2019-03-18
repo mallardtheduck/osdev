@@ -211,3 +211,8 @@ extern "C" void WM_SetWindowMenu(){
 extern "C" void WM_UnSetWindowMenu(){
 	SendMessage(wm_RequestType::UnSetWindowMenu, 0, NULL, false);
 }
+
+extern "C" bt_terminal_pointer_info WM_GetPointerInfo(){
+	bt_msg_header reply = SendMessage(wm_RequestType::GetPointerInfo, 0, NULL, true);
+	return GetContent<bt_terminal_pointer_info>(reply);
+}

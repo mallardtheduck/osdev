@@ -3,6 +3,7 @@
 
 #include <wm/wm.h>
 #include <btos.h>
+#include <dev/terminal.h>
 
 #ifdef __cplusplus
 #include <string>
@@ -35,6 +36,8 @@ void WM_ShowMenu(wm_Rect pos);
 void WM_SelectWindowMenu();
 void WM_SetWindowMenu();
 void WM_UnSetWindowMenu();
+
+bt_terminal_pointer_info WM_GetPointerInfo();
 
 #ifdef __cplusplus
 }

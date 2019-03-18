@@ -1,11 +1,9 @@
 #include <gui/scrollbar.hpp>
 #include <gui/defaults.hpp>
 #include <gui/drawing.hpp>
-#include <dev/terminal.hpp>
 #include <dev/mouse.h>
 #include <dev/keyboard.h>
-
-#include <iostream>
+#include <wm/libwm.h>
 
 namespace btos_api{
 namespace gui{
@@ -98,7 +96,7 @@ EventResponse Scrollbar::HandleEvent(const wm_Event &e){
 					break;
 			}
 		}else if(e.type == wm_EventType::PointerMove || e.type == wm_EventType::PointerEnter){
-			auto pinfo = Terminal().GetPointerInfo();
+			auto pinfo = WM_GetPointerInfo();
 			if(pinfo.flags & MouseFlags::Button1){
 				if(grabbed) value = possValue;
 				else{

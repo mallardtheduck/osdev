@@ -1,6 +1,7 @@
 #ifndef _WM_H
 #define _WM_H
 
+#include <dev/terminal.h>
 #include <util/bt_enum.h>
 
 #ifdef __cplusplus
@@ -117,6 +118,8 @@ ENUM_START(wm_RequestType)
 	ENUM_SET(wm_RequestType, SelectWindowMenu,	28),
 	ENUM_SET(wm_RequestType, SetWindowMenu,		29),
 	ENUM_SET(wm_RequestType, UnSetWindowMenu,	30),
+	
+	ENUM_SET(wm_RequestType, GetPointerInfo,	50),
 ENUM_END
 ENUM_TYPE(wm_RequestType);
 

@@ -1,12 +1,10 @@
 #include <gui/slider.hpp>
 #include <gui/drawing.hpp>
-
 #include <gui/defaults.hpp>
-#include <dev/terminal.hpp>
 #include <dev/mouse.h>
 #include <dev/keyboard.h>
+#include <wm/libwm.h>
 
-#include <iostream>
 #include <cmath>
 
 namespace btos_api{
@@ -20,7 +18,7 @@ EventResponse Slider::HandleEvent(const wm_Event &e){
 	if(e.type == wm_EventType::PointerMove || e.type == wm_EventType::PointerButtonUp){
 		handled = true;
 		if(e.type == wm_EventType::PointerMove){
-			auto pinfo = Terminal().GetPointerInfo();
+			auto pinfo = WM_GetPointerInfo();
 			if(!(pinfo.flags & MouseFlags::Button1)) return {true};
 		}
 		
