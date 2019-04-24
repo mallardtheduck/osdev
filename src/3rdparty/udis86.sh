@@ -3,7 +3,7 @@
 rm -rf grub-2.00
 if [ ! -f udis86-1.7.2.tar.gz ];
 then
-	wget https://downloads.sourceforge.net/project/udis86/udis86/1.7/udis86-1.7.2.tar.gz
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/udis86-1.7.2.tar.gz
 fi
 tar xf udis86-1.7.2.tar.gz
 mkdir -p originals

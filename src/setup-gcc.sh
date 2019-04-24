@@ -5,7 +5,7 @@ export PATH="$PREFIX/bin:$PATH"
 rm -rf gcc-4.8.1
 if [ ! -f gcc-4.8.1.tar.bz2 ];
 then
-	wget ftp://ftp.gnu.org/gnu/gcc/gcc-4.8.1/gcc-4.8.1.tar.bz2
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/gcc-4.8.1.tar.bz2
 fi
 tar xvfj gcc-4.8.1.tar.bz2
 

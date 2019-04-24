@@ -3,7 +3,7 @@
 rm -rf sqlite-amalgamation-3200100
 if [ ! -f sqlite-amalgamation-3200100.zip ];
 then
-	wget https://sqlite.org/2017/sqlite-amalgamation-3200100.zip
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/sqlite-amalgamation-3200100.zip
 fi
 
 unzip sqlite-amalgamation-3200100.zip

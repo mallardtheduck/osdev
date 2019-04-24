@@ -3,7 +3,7 @@
 rm -rf ncurses-6.0
 if [ ! -f ncurses-6.0.tar.gz ];
 then
-	wget http://ftp.gnu.org/gnu/ncurses/ncurses-6.0.tar.gz
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/ncurses-6.0.tar.gz
 fi
 tar xf ncurses-6.0.tar.gz
 mkdir -p originals

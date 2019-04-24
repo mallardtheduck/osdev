@@ -3,7 +3,7 @@
 rm -rf freetype-2.7.1
 if [ ! -f freetype-2.7.1.tar.gz ];
 then
-	wget http://mirrors.fe.up.pt/pub/nongnu/freetype/freetype-2.7.1.tar.gz
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/freetype-2.7.1.tar.gz
 fi
 tar xf freetype-2.7.1.tar.gz
 mkdir -p originals

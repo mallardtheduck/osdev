@@ -3,7 +3,7 @@
 rm -rf SDL2-2.0.7
 if [ ! -f SDL2-2.0.7.tar.gz ];
 then
-	wget https://www.libsdl.org/release/SDL2-2.0.7.tar.gz
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/SDL2-2.0.7.tar.gz
 fi
 tar xf SDL2-2.0.7.tar.gz
 mkdir -p originals
@@ -25,7 +25,7 @@ cd ..
 rm -rf SDL2_ttf-2.0.14
 if [ ! -f SDL2_ttf-2.0.14.tar.gz ];
 then
-	wget https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.14.tar.gz
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/SDL2_ttf-2.0.14.tar.gz
 fi
 tar xf SDL2_ttf-2.0.14.tar.gz
 mkdir -p originals
@@ -41,7 +41,7 @@ cd ..
 rm -rf SDL2_image-2.0.3
 if [ ! -f SDL2_image-2.0.3.tar.gz ];
 then
-	wget https://www.libsdl.org/projects/SDL_image/release/SDL2_image-2.0.3.tar.gz
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/SDL2_image-2.0.3.tar.gz
 fi
 tar xf SDL2_image-2.0.3.tar.gz
 mkdir -p originals

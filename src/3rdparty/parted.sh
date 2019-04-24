@@ -3,7 +3,7 @@
 rm -rf parted-3.2
 if [ ! -f parted-3.2.tar.xz ];
 then
-	wget http://ftp.gnu.org/gnu/parted/parted-3.2.tar.xz
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/parted-3.2.tar.xz
 fi
 tar xf parted-3.2.tar.xz
 mkdir -p originals

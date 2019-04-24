@@ -3,7 +3,7 @@
 rm -rf grub-2.00
 if [ ! -f grub-2.00.tar.xz ];
 then
-	wget ftp://ftp.gnu.org/gnu/grub/grub-2.00.tar.xz
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/grub-2.00.tar.xz
 fi
 tar xf grub-2.00.tar.xz
 mkdir -p originals

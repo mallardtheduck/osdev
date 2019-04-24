@@ -3,7 +3,7 @@
 rm -rf libuuid-1.0.3
 if [ ! -f libuuid-1.0.3.tar.gz ];
 then
-	wget http://downloads.sourceforge.net/project/libuuid/libuuid-1.0.3.tar.gz
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/libuuid-1.0.3.tar.gz
 fi
 tar xf libuuid-1.0.3.tar.gz
 mkdir -p originals

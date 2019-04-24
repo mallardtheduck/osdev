@@ -5,7 +5,7 @@ source ../env-os.sh
 rm -rf libgd-2.1.0
 if [ ! -f libgd-2.1.0.tar.gz ];
 then
-	wget https://bitbucket.org/libgd/gd-libgd/downloads/libgd-2.1.0.tar.gz
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/libgd-2.1.0.tar.gz
 fi
 tar xf libgd-2.1.0.tar.gz
 mkdir -p originals

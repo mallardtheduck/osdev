@@ -3,7 +3,7 @@
 rm -rf SDL2-widgets-2.1
 if [ ! -f SDL2-widgets-2.1.tar.gz ];
 then
-	wget http://members.chello.nl/w.boeke/SDL-widgets/SDL2-widgets-2.1.tar.gz
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/SDL2-widgets-2.1.tar.gz
 fi
 tar xf SDL2-widgets-2.1.tar.gz
 mkdir -p originals

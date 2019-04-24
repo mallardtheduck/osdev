@@ -3,7 +3,7 @@
 rm -rf libelf-0.8.9
 if [ ! -f libelf-0.8.9.tar.gz ];
 then
-	wget http://www.mr511.de/software/libelf-0.8.9.tar.gz
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/libelf-0.8.9.tar.gz
 fi
 tar xf libelf-0.8.9.tar.gz
 mkdir -p originals

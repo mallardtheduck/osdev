@@ -3,7 +3,7 @@
 rm -rf libiconv-1.14
 if [ ! -f libiconv-1.14.tar.gz ];
 then
-	wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz
+	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/libiconv-1.14.tar.gz
 fi
 tar xf libiconv-1.14.tar.gz
 mkdir -p originals
