@@ -146,7 +146,7 @@ EventResponse Scrollbar::HandleEvent(const wm_Event &e){
 		update = true;
 	}
 	if(update){
-		GetContainer().Paint(rect);
+		IControl::Paint(rect);
 	}
 	return {handled};
 }
@@ -247,13 +247,13 @@ uint32_t Scrollbar::GetSubscribed(){
 void Scrollbar::Focus(){
 	if(!focus) update = true;
 	focus = true;
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 
 void Scrollbar::Blur(){
 	if(focus) update = true;
 	focus = false;
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 
 void Scrollbar::OnChange(const std::function<void(uint32_t)> &oC){
@@ -263,25 +263,25 @@ void Scrollbar::OnChange(const std::function<void(uint32_t)> &oC){
 void Scrollbar::SetLines(uint32_t l){
 	if(l != lines) update = true;
 	lines = l;
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 
 void Scrollbar::SetStep(uint32_t s){
 	if(s != step) update = true;
 	step = s;
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 
 void Scrollbar::SetPage(uint32_t p){
 	if(p != page) update = true;
 	page = p;
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 
 void Scrollbar::SetValue(uint32_t v){
 	if(v != value) update = true;
 	value = v;
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 
 uint32_t Scrollbar::GetFlags(){

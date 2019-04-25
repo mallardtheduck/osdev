@@ -5,7 +5,6 @@
 #include <wm/wm.h>
 #include <gds/surface.hpp>
 
-#include "container.hpp"
 #include "eventresponse.hpp"
 
 namespace btos_api{
@@ -18,12 +17,16 @@ namespace ControlFlags{
 }
 
 class IControl{
-private:
-	friend class Container;
-	std::function<Container&()> getContainer;
 protected:
-	Container &GetContainer();
+	void Paint(const gds::Rect &rect);
+	void BindToParent(IControl &ctrl);
+	void FocusNext(bool reverse);
 public:
+	std::function<void(const gds::Rect &)> paintFn;
+	std::function<void(IControl &)> bindFn;
+	std::function<bool(const IControl *)> isFocusFn;
+	std::function<void(bool)> focusNextFn;
+
 	virtual EventResponse HandleEvent(const wm_Event&) = 0;
 	virtual void Paint(gds::Surface &surf) = 0;
 	virtual gds::Rect GetPaintRect() = 0;
@@ -32,6 +35,8 @@ public:
 	virtual void Focus() = 0;
 	virtual void Blur() = 0;
 	virtual uint32_t GetFlags() = 0;
+	
+	bool IsFocus();
 
 	virtual ~IControl() {}
 };

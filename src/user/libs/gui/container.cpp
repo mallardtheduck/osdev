@@ -8,36 +8,21 @@
 namespace btos_api{
 namespace gui{
 
-class NullContainer : public Container{
-private: 
-	std::unique_ptr<gds::Surface> surf;
+void IControl::Paint(const gds::Rect &rect){
+	if(paintFn) paintFn(rect);
+}
 
-	gds::Surface &GetSurface(){
-		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, 1, 1, 100, gds_ColourType::True));
-		return *surf;
-	}
-	gds::Rect GetBoundingRect(){
-		return {0, 0, 1, 1};
-	}
-	
-	void Update(const gds::Rect &){
-	}
-	
-	void Update(){
-	}
-	
-	void SetSubscribed(uint32_t){
-	}
-};
+void IControl::BindToParent(IControl &ctrl){
+	if(bindFn) bindFn(ctrl);
+}
 
-static std::unique_ptr<NullContainer> nullContainer;
+bool IControl::IsFocus(){
+	if(isFocusFn) return isFocusFn(this);
+	else return false;
+}
 
-Container &IControl::GetContainer(){
-	if(getContainer) return getContainer();
-	else{
-		if(!nullContainer) nullContainer.reset(new NullContainer());
-		return *nullContainer;
-	}
+void IControl::FocusNext(bool reverse){
+	if(focusNextFn) focusNextFn(reverse);
 }
 
 template<typename T> static std::shared_ptr<IControl> FNFSearch(std::shared_ptr<IControl> focus, T begin, T end, std::function<bool()> onLastControl){
@@ -192,7 +177,10 @@ void Container::AddControls(std::vector<std::shared_ptr<IControl>> ncontrols){
 }
 
 void Container::BindControl(IControl &control){
-	control.getContainer = [this] () -> Container& {return *this;};
+	control.paintFn = [this] (const gds::Rect &rect) -> void {Paint(rect);};
+	control.bindFn = [this] (IControl &ctrl) -> void {BindControl(ctrl);};
+	control.isFocusFn = [this] (const IControl *ctrl) -> bool {return GetFocus().get() == ctrl;};
+	control.focusNextFn = [this] (bool reverse) -> void {FocusNext(reverse);};
 }
 
 std::shared_ptr<IControl> &Container::GetFocus(){

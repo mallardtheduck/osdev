@@ -51,7 +51,7 @@ void GroupBox::Blur() {}
 void GroupBox::SetText(const std::string &t){
 	text = t;
 	surf.reset();
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 
 uint32_t GroupBox::GetFlags(){

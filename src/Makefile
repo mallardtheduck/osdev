@@ -30,7 +30,7 @@ test: dummy.file disk qemu-launch-opts.txt
 testtxt: dummy.file disk
 	cd kernel && ./testtxt.sh
 
-disk: disk/btos.img
+disk: packages disk/btos.img
 
 disk/btos.img: dummy.file
 	make -C disk
@@ -50,7 +50,7 @@ iso: dummy.file
 iso-clean:
 	make -C iso clean
 
-packages: dummy.file
+packages: dummy.file kernel user modules
 	make -C packages
 
 packages-clean: dummy.file

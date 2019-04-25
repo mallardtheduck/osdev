@@ -39,7 +39,7 @@ EventResponse Button::HandleEvent(const wm_Event &e){
 		}
 		return {false};
 	}
-	if(down != oldDown) GetContainer().Paint(rect);
+	if(down != oldDown) IControl::Paint(rect);
 	return {true};
 }
 
@@ -119,12 +119,12 @@ uint32_t Button::GetSubscribed(){
 
 void Button::Focus(){
 	focus = true;
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 
 void Button::Blur(){
 	focus = false;
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 
 uint32_t Button::GetFlags(){

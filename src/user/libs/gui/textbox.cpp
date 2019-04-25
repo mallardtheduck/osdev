@@ -124,7 +124,7 @@ EventResponse TextBox::HandleEvent(const wm_Event &e){
 	}
 	
 	
-	if(update || updateCursor) GetContainer().Paint(rect);
+	if(update || updateCursor) IControl::Paint(rect);
 	return {handled};
 }
 
@@ -183,18 +183,18 @@ uint32_t TextBox::GetSubscribed(){
 
 void TextBox::Focus(){
 	hasFocus = true;
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 
 void TextBox::Blur(){
 	hasFocus = false;
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 	
 void TextBox::SetText(const std::string &t){
 	text = t;
 	update = true;
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 
 std::string TextBox::GetText(){

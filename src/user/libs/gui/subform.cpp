@@ -28,8 +28,8 @@ void SubForm::SetSubscribed(uint32_t s){
 }
 
 bool SubForm::OnLastControlFocus(bool reverse){
-	GetContainer().FocusNext(reverse);
-	return GetContainer().GetFocus().get() != this;
+	IControl::FocusNext(reverse);
+	return !IControl::IsFocus();
 }
 
 SubForm::SubForm(const gds::Rect &r): rect(r) {}
@@ -59,7 +59,7 @@ uint32_t SubForm::GetSubscribed(){
 void SubForm::Focus(){
 	auto fcs = GetFocus();
 	if(fcs) fcs->Focus();
-	else FocusNext(false);
+	else Container::FocusNext(false);
 }
 
 void SubForm::Blur(){
@@ -74,7 +74,7 @@ uint32_t SubForm::GetFlags(){
 //Container::Paint
 void SubForm::Paint(const std::vector<gds::Rect> &rects){
 	Container::Paint(rects);
-	for(const auto &uR : updateRects) GetContainer().Paint(uR);
+	for(const auto &uR : updateRects) IControl::Paint(uR);
 	updateRects.clear();
 }
 	

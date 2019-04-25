@@ -57,7 +57,7 @@ EventResponse Slider::HandleEvent(const wm_Event &e){
 		}
 		if(onChange) onChange(value);
 		update = true;
-		GetContainer().Paint(rect);
+		IControl::Paint(rect);
 	}
 	return {handled};
 }
@@ -138,13 +138,13 @@ uint32_t Slider::GetSubscribed(){
 void Slider::Focus(){
 	if(!focus) update = true;
 	focus = true;
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 
 void Slider::Blur(){
 	if(focus) update = true;
 	focus = false;
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 
 int32_t Slider::GetValue(){

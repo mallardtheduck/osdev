@@ -46,7 +46,7 @@ void Label::Blur() {}
 void Label::SetText(const std::string &t){
 	text = t;
 	surf.reset();
-	GetContainer().Paint(rect);
+	IControl::Paint(rect);
 }
 
 uint32_t Label::GetFlags(){
