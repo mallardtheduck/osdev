@@ -6,7 +6,7 @@
 namespace btos_api{
 namespace gui{
 
-class Button : public IControl{
+class Button : public IActionControl<void>{
 private:
 	bool down = false;
 	bool focus = false;
@@ -32,6 +32,8 @@ public:
 	void Focus();
 	void Blur();
 	uint32_t GetFlags();
+	
+	bool GetValue();
 	
 	void OnClick(const std::function<void()> &oC);
 };

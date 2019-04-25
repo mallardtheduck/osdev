@@ -6,7 +6,7 @@
 namespace btos_api{
 namespace gui{
 	
-class Slider : public IControl{
+class Slider : public IValueControl<int32_t>{
 private:
 	gds::Rect rect;
 	int32_t min;

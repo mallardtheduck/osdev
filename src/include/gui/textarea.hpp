@@ -7,7 +7,7 @@
 namespace btos_api{
 namespace gui{
 
-class TextArea : public IControl{
+class TextArea : public IValueControl<std::string>{
 private:
 	gds::Rect outerRect;
 	gds::Rect rect;	
@@ -58,6 +58,7 @@ public:
 	
 	void SetText(const std::string &t);
 	std::string GetText();
+	std::string GetValue() {return GetText();}
 	
 	void OnChange(const std::function<void(const std::string &)> &oC);
 	void OnKeyPress(const std::function<bool(uint32_t)> &oKP);

@@ -165,6 +165,10 @@ void RadioButton::SetValue(bool v){
 	IControl::Paint(rect);
 }
 
+bool RadioButton::GetValue(){
+	return value;
+}
+
 uint32_t RadioButton::GetFlags(){
 	return 0;
 }

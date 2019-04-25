@@ -6,7 +6,7 @@
 namespace btos_api{
 namespace gui{
 	
-class RadioButton : public IControl{
+class RadioButton : public IValueControl<bool> {
 private:
 	gds::Rect rect;
 	std::string text;
@@ -34,6 +34,7 @@ public:
 	void Focus();
 	void Blur();
 	uint32_t GetFlags();
+	bool GetValue();
 	
 	void SetText(const std::string &t);
 };

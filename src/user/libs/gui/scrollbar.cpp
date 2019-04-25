@@ -284,6 +284,10 @@ void Scrollbar::SetValue(uint32_t v){
 	IControl::Paint(rect);
 }
 
+uint32_t Scrollbar::GetValue(){
+	return value;
+}
+
 uint32_t Scrollbar::GetFlags(){
 	return 0;
 }

@@ -6,7 +6,7 @@
 namespace btos_api{
 namespace gui{
 
-class Scrollbar : public IControl{
+class Scrollbar : public IValueControl<uint32_t>{
 private:
 	gds::Rect rect;
 	
@@ -41,6 +41,7 @@ public:
 	void SetStep(uint32_t s);
 	void SetPage(uint32_t p);
 	void SetValue(uint32_t v);
+	uint32_t GetValue();
 };
 
 }

@@ -6,7 +6,7 @@
 namespace btos_api{
 namespace gui{
 
-class Checkbox : public IControl{
+class Checkbox : public IValueControl<bool> {
 private:
 	gds::Rect rect;
 	std::string text;

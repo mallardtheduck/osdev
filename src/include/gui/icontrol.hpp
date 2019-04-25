@@ -41,6 +41,45 @@ public:
 	virtual ~IControl() {}
 };
 
+template<typename T>
+class IActionControl : public IControl{
+protected:
+	std::function<bool(T)> actionFn;
+	bool RaiseEvent(const T &p){
+		if(actionFn) return actionFn(p);
+		else return false;
+	}
+public:
+	void SetAction(const std::function<bool(T)> &fn){
+		actionFn = fn;
+	}
+	
+	virtual ~IActionControl() {}
+};
+
+template<>
+class IActionControl<void> : public IControl{
+protected:
+	std::function<bool()> actionFn;
+	bool RaiseEvent(){
+		if(actionFn) return actionFn();
+		else return false;
+	}
+public:
+	void SetAction(const std::function<bool()> &fn){
+		actionFn = fn;
+	}
+	
+	virtual ~IActionControl() {}
+};
+
+template<typename T> 
+class IValueControl : public IControl{
+public:
+	virtual T GetValue() = 0;
+	virtual ~IValueControl() {}
+};
+
 }
 }
 
