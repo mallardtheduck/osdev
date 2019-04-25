@@ -296,11 +296,13 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 		}else if(hscroll && InRect(e.Pointer.x, e.Pointer.y, hscroll->GetInteractRect()) && (e.type & hscroll->GetSubscribed())){
 			auto oldCursorPos = cursorPos;
 			auto ret = hscroll->HandleEvent(e);
-			if(cursorPos == oldCursorPos) return ret;
+			if(cursorPos == oldCursorPos) update = true;
+			handled = handled || ret.IsFinishedProcessing();
 		}else if(vscroll && InRect(e.Pointer.x, e.Pointer.y, vscroll->GetInteractRect()) && (e.type & vscroll->GetSubscribed())){
 			auto oldCursorLine = cursorLine;
 			auto ret = vscroll->HandleEvent(e);
-			if(cursorLine == oldCursorLine) return ret;
+			if(cursorLine == oldCursorLine) update = true;
+			handled = handled || ret.IsFinishedProcessing();
 		}
 	}
 	
