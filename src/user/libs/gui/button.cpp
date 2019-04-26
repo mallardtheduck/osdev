@@ -9,7 +9,7 @@
 namespace btos_api{
 namespace gui{
 	
-Button::Button(const gds::Rect &r, const std::string &l, std::function<void()> oC) :  rect(r), label(l), onClick(oC){
+Button::Button(const gds::Rect &r, const std::string &l) :  rect(r), label(l){
 }
 
 EventResponse Button::HandleEvent(const wm_Event &e){
@@ -19,7 +19,7 @@ EventResponse Button::HandleEvent(const wm_Event &e){
 	}
 	if(e.type == wm_EventType::PointerButtonUp && e.Pointer.button == 1){
 		down = false;
-		if(onClick) onClick();
+		RaiseActionEvent();
 	}
 	if(e.type == wm_EventType::PointerLeave){
 		if(down) down = false;
@@ -33,7 +33,7 @@ EventResponse Button::HandleEvent(const wm_Event &e){
 		if(!(code & KeyFlags::NonASCII)){
 			char c = KB_char(e.Key.code);
 			if(c == ' ' || c == '\n'){
-				onClick();
+				RaiseActionEvent();
 				return {true};
 			}
 		}

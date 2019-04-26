@@ -15,7 +15,7 @@ EventResponse RadioButton::HandleEvent(const wm_Event &e){
 		auto oldValue = value;
 		value = true;
 		if(value != oldValue){
-			if(onChange) onChange(value);
+			RaiseChangeEvent();
 			update = true;
 		}
 		if(getAllRects){ 
@@ -33,7 +33,7 @@ EventResponse RadioButton::HandleEvent(const wm_Event &e){
 				auto oldValue = value;
 				value = true;
 				if(value != oldValue){
-					if(onChange) onChange(value);
+					RaiseChangeEvent();
 					update = true;
 				}
 				if(getAllRects){ 

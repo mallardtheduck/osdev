@@ -55,7 +55,7 @@ EventResponse Slider::HandleEvent(const wm_Event &e){
 			value = round((double)value / (double)snapTo) * snapTo;
 			value += min;
 		}
-		if(onChange) onChange(value);
+		RaiseChangeEvent();
 		update = true;
 		IControl::Paint(rect);
 	}
@@ -149,10 +149,6 @@ void Slider::Blur(){
 
 int32_t Slider::GetValue(){
 	return value;
-}
-
-void Slider::OnChange(const std::function<void(int32_t)> &oC){
-	onChange = oC;
 }
 
 uint32_t Slider::GetFlags(){

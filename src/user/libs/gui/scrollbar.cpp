@@ -142,7 +142,7 @@ EventResponse Scrollbar::HandleEvent(const wm_Event &e){
 	}
 	
 	if(value != oldValue){
-		if(onChange) onChange(value);
+		RaiseChangeEvent();
 		update = true;
 	}
 	if(update){
@@ -254,10 +254,6 @@ void Scrollbar::Blur(){
 	if(focus) update = true;
 	focus = false;
 	IControl::Paint(rect);
-}
-
-void Scrollbar::OnChange(const std::function<void(uint32_t)> &oC){
-	onChange = oC;
 }
 	
 void Scrollbar::SetLines(uint32_t l){

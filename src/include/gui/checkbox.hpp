@@ -17,8 +17,6 @@ private:
 	gds::TextMeasurements textMeasures;
 	bool update = false;
 	bool focus = false;
-	
-	std::function<void(bool)> onChange;
 public:
 	Checkbox(const gds::Rect &r, const std::string &t, bool v);
 	
@@ -33,8 +31,6 @@ public:
 	
 	void SetText(const std::string &t);
 	bool GetValue();
-	
-	void OnChange(const std::function<void(bool)> &oC);
 };
 
 }

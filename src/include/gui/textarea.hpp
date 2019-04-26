@@ -13,7 +13,6 @@ private:
 	gds::Rect rect;	
 	std::unique_ptr<gds::Surface> surf;
 	
-	std::function<void(const std::string &)> onChange;
 	std::function<bool(uint32_t)> onKeyPress;
 	
 	struct Line{
@@ -60,7 +59,6 @@ public:
 	std::string GetText();
 	std::string GetValue() {return GetText();}
 	
-	void OnChange(const std::function<void(const std::string &)> &oC);
 	void OnKeyPress(const std::function<bool(uint32_t)> &oKP);
 };
 

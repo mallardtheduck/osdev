@@ -75,7 +75,7 @@ EventResponse TextBox::HandleEvent(const wm_Event &e){
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Delete) && cursorPos <= text.length()){
 			text.erase(cursorPos, 1);
-			if(onChange) onChange(text);
+			RaiseChangeEvent();
 			if(cursorPos > text.length()) cursorPos = text.length();
 			update = true;
 			handled = true;
@@ -92,12 +92,12 @@ EventResponse TextBox::HandleEvent(const wm_Event &e){
 			auto preText = text;
 			if(c == 0x08 && cursorPos > 0){
 				text.erase(cursorPos - 1, 1);
-				if(onChange) onChange(text);
+				RaiseChangeEvent();
 				--cursorPos;
 				handled = true;
 			}else if(c > 31){
 				text.insert(cursorPos, 1, c);
-				if(onChange) onChange(text);
+				RaiseChangeEvent();
 				++cursorPos;
 				handled = true;
 			}
@@ -199,10 +199,6 @@ void TextBox::SetText(const std::string &t){
 
 std::string TextBox::GetText(){
 	return text;
-}
-	
-void TextBox::OnChange(const std::function<void(const std::string &)> &oC){
-	onChange = oC;
 }
 
 void TextBox::OnKeyPress(const std::function<bool(uint32_t)> &oKP){

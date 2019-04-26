@@ -15,14 +15,13 @@ private:
 
 	gds::Rect rect;
 	std::string label;
-	std::function<void()> onClick;
 	
 	std::unique_ptr<gds::Surface> surf;
 	std::unique_ptr<gds::Surface> bkSurf;
 	gds::TextMeasurements labelMeasures;
 	
 public:
-	Button(const gds::Rect &r, const std::string &l, std::function<void()> oC);
+	Button(const gds::Rect &r, const std::string &l);
 
 	EventResponse HandleEvent(const wm_Event&);
 	void Paint(gds::Surface &s);
@@ -34,8 +33,6 @@ public:
 	uint32_t GetFlags();
 	
 	bool GetValue();
-	
-	void OnClick(const std::function<void()> &oC);
 };
 
 }

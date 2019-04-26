@@ -26,8 +26,10 @@ int main(){
 		auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{200, 200, 500, 300}, wm_WindowOptions::Default, "GUI Controls Test");
 		auto lbl1 = std::make_shared<btos_api::gui::Label>(gds::Rect{120, 10, 100, 20}, "A Label");
 		auto lbl2 = std::make_shared<btos_api::gui::Label>(gds::Rect{120, 30, 100, 20}, "Nothing");
-		auto btn1 = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 1", [&] {lbl2->SetText("Button 1");});
-		auto btn2 = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 50, 100, 30}, "Button 2", [&] {lbl2->SetText("Button 2");});
+		auto btn1 = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 1");
+		btn1->OnAction([&] {lbl2->SetText("Button 1");});
+		auto btn2 = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 50, 100, 30}, "Button 2");
+		btn2->OnAction([&] {lbl2->SetText("Button 2");});
 		auto txt = std::make_shared<btos_api::gui::TextBox>(gds::Rect{220, 10, 100, 20}, "An editable textbox");
 		auto sld = std::make_shared<btos_api::gui::Slider>(gds::Rect{340, 10, 140, 20}, 0, 100, 50, 5);
 		auto chk = std::make_shared<btos_api::gui::Checkbox>(gds::Rect{120, 55, 100, 20}, "A checkbox", true);
@@ -50,7 +52,8 @@ int main(){
 		rgrp.AddButton(rd3, 3);
 		
 		auto sfrm = std::make_shared<btos_api::gui::SubForm>(gds::Rect{170, 130, 150, 120});
-		auto sbtn = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 3", [&] {lbl2->SetText("Button 3");});
+		auto sbtn = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 3");
+		sbtn->OnAction([&] {lbl2->SetText("Button 3");});
 		auto tst2 = std::make_shared<btos_api::gui::TestControl>(gds::Rect{10, 50, 100, 30});
 		tst2->OnEvent([] (const wm_Event &e){
 			tfm::printf("Subform Test: EventType: %s\n", e.type);

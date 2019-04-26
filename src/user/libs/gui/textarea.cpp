@@ -217,13 +217,13 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 			perferredPosPxls = 0;
 			text.erase(cursorPos, 1);
 			if(cursorPos > text.length()) cursorPos = text.length();
-			if(onChange) onChange(text);
+			RaiseChangeEvent();
 			update = true;
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Delete) && cursorLine < lines.size() - 1){
 			perferredPosPxls = 0;
 			MergeLines(cursorLine, cursorLine + 1);
-			if(onChange) onChange(text);
+			RaiseChangeEvent();
 			update = true;
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
@@ -242,7 +242,7 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 			auto preText = text;
 			if(c == 0x08 && cursorPos > 0){
 				text.erase(cursorPos - 1, 1);
-				if(onChange) onChange(text);
+				RaiseChangeEvent();
 				--cursorPos;
 				handled = true;
 				update = true;
@@ -250,19 +250,19 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 				--cursorLine;
 				cursorPos = lines[cursorLine].text.length();
 				MergeLines(cursorLine, cursorLine + 1);
-				if(onChange) onChange(text);
+				RaiseChangeEvent();
 				update = true;
 				handled = true;
 			}else if(c == '\n'){
 				SplitLine(cursorLine, cursorPos);
-				if(onChange) onChange(text);
+				RaiseChangeEvent();
 				++cursorLine;
 				cursorPos = 0;
 				update = true;
 				handled = true;
 			}else if(c > 31){
 				text.insert(cursorPos, 1, c);
-				if(onChange) onChange(text);
+				RaiseChangeEvent();
 				++cursorPos;
 				update = true;
 				handled = true;
@@ -401,10 +401,6 @@ std::string TextArea::GetText(){
 		ss << l.text << '\n';
 	}
 	return ss.str();
-}
-	
-void TextArea::OnChange(const std::function<void(const std::string &)> &oC){
-	onChange = oC;
 }
 
 void TextArea::OnKeyPress(const std::function<bool(uint32_t)> &oKP){

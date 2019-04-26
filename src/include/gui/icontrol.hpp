@@ -44,13 +44,12 @@ public:
 template<typename T>
 class IActionControl : public IControl{
 protected:
-	std::function<bool(T)> actionFn;
-	bool RaiseEvent(const T &p){
-		if(actionFn) return actionFn(p);
-		else return false;
+	std::function<void(T)> actionFn;
+	void RaiseEvent(const T &p){
+		if(actionFn) actionFn(p);
 	}
 public:
-	void SetAction(const std::function<bool(T)> &fn){
+	void SetAction(const std::function<void(T)> &fn){
 		actionFn = fn;
 	}
 	
@@ -58,15 +57,15 @@ public:
 };
 
 template<>
-class IActionControl<void> : public IControl{
+class IActionControl<void> : public virtual IControl{
+private:
+	std::function<void()> actionFn;
 protected:
-	std::function<bool()> actionFn;
-	bool RaiseEvent(){
-		if(actionFn) return actionFn();
-		else return false;
+	void RaiseActionEvent(){
+		if(actionFn) actionFn();
 	}
 public:
-	void SetAction(const std::function<bool()> &fn){
+	virtual void OnAction(const std::function<void()> &fn){
 		actionFn = fn;
 	}
 	
@@ -74,9 +73,20 @@ public:
 };
 
 template<typename T> 
-class IValueControl : public IControl{
+class IValueControl : public virtual IControl{
+private:
+	std::function<void(const T&)> onChangeFn;
+protected:
+	void RaiseChangeEvent(){
+		if(onChangeFn) onChangeFn(GetValue());
+	}
 public:
+	virtual void OnChange(const std::function<void(const T&)> &fn){
+		onChangeFn = fn;
+	}
+	
 	virtual T GetValue() = 0;
+	
 	virtual ~IValueControl() {}
 };
 

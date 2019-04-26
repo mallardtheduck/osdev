@@ -14,8 +14,6 @@ private:
 	int32_t value;
 	int32_t snapTo;
 	
-	std::function<void(int32_t)> onChange;
-	
 	bool update = false;
 	bool focus = false;
 	std::unique_ptr<gds::Surface> surf;
@@ -33,7 +31,6 @@ public:
 	uint32_t GetFlags();
 	
 	int32_t GetValue();
-	void OnChange(const std::function<void(int32_t)> &oC);
 };
 	
 }

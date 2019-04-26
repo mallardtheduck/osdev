@@ -13,7 +13,7 @@ Checkbox::Checkbox(const gds::Rect &r, const std::string &t, bool v) : rect(r), 
 EventResponse Checkbox::HandleEvent(const wm_Event &e){
 	if(e.type == wm_EventType::PointerButtonUp){
 		value = !value;
-		if(onChange) onChange(value);
+		RaiseChangeEvent();
 		update = true;
 	}
 	if(e.type == wm_EventType::Keyboard){
@@ -22,7 +22,7 @@ EventResponse Checkbox::HandleEvent(const wm_Event &e){
 			char c = KB_char(e.Key.code);
 			if(c == ' ' || c == '\n'){
 				value = !value;
-				if(onChange) onChange(value);
+				RaiseChangeEvent();
 				update = true;
 				IControl::Paint(rect);
 				return {true};
@@ -143,10 +143,6 @@ void Checkbox::SetText(const std::string &t){
 
 bool Checkbox::GetValue(){
 	return value;
-}
-
-void Checkbox::OnChange(const std::function<void(bool)> &oC){
-	onChange = oC;
 }
 
 uint32_t Checkbox::GetFlags(){

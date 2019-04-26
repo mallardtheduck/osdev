@@ -21,8 +21,6 @@ private:
 	
 	std::shared_ptr<gds::Surface> surf;
 	std::shared_ptr<gds::Surface> bkSurf;
-	
-	std::function<void(uint32_t)> onChange;
 public:
 	Scrollbar(const gds::Rect &r, uint32_t lines, uint32_t step, uint32_t page, uint32_t value, bool horiz = false);
 	
@@ -34,8 +32,6 @@ public:
 	void Focus();
 	void Blur();
 	uint32_t GetFlags();
-	
-	void OnChange(const std::function<void(uint32_t)> &oC);
 	
 	void SetLines(uint32_t l);
 	void SetStep(uint32_t s);

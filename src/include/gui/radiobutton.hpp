@@ -19,7 +19,6 @@ private:
 	bool focus = false;
 	
 	template<typename T> friend class RadioGroup;
-	std::function<void(bool)> onChange;
 	std::function<std::vector<gds::Rect>()> getAllRects;
 	
 	void SetValue(bool v);
@@ -55,7 +54,7 @@ public:
 	void AddButton(std::shared_ptr<RadioButton> r, T v){
 		values[r] = v;
 		std::weak_ptr<RadioButton> w = r;
-		r->onChange = [w, this](bool b) {
+		r->OnChange([w, this](bool b) {
 			if(w.expired())	return;
 			auto r = w.lock();
 			if(b && (r != current)){
@@ -67,7 +66,7 @@ public:
 					}
 				}		
 			}
-		};
+		});
 		r->getAllRects = [this](){
 			std::vector<gds::Rect> ret;
 			for(auto &p : values){
