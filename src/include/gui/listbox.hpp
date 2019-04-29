@@ -6,11 +6,11 @@
 
 namespace btos_api{
 namespace gui{
-    
+	
 class ListBox : public IValueControl<size_t>{
 private:
-    gds::Rect outerRect;
-	gds::Rect rect;	
+	gds::Rect outerRect;
+	gds::Rect rect; 
 	std::unique_ptr<gds::Surface> surf;
 	
 	std::vector<std::string> items;
@@ -30,9 +30,9 @@ private:
 	
 	bool scrollHoriz;
 public:
-    ListBox(const gds::Rect &r, bool scrollHoriz = false);
-    
-    EventResponse HandleEvent(const wm_Event&);
+	ListBox(const gds::Rect &r, bool scrollHoriz = false);
+	
+	EventResponse HandleEvent(const wm_Event&);
 	void Paint(gds::Surface &surf);
 	gds::Rect GetPaintRect();
 	gds::Rect GetInteractRect();
@@ -46,7 +46,7 @@ public:
 	
 	std::vector<std::string> &Items();
 };
-    
+	
 }
 }
 

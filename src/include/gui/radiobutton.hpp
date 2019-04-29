@@ -55,7 +55,7 @@ public:
 		values[r] = v;
 		std::weak_ptr<RadioButton> w = r;
 		r->OnChange([w, this](bool b) {
-			if(w.expired())	return;
+			if(w.expired()) return;
 			auto r = w.lock();
 			if(b && (r != current)){
 				current = r;
@@ -64,7 +64,7 @@ public:
 					if(r != p.first){
 						if(p.first) p.first->SetValue(false);
 					}
-				}		
+				}       
 			}
 		});
 		r->getAllRects = [this](){

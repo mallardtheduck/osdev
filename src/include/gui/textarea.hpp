@@ -10,7 +10,7 @@ namespace gui{
 class TextArea : public IValueControl<std::string>{
 private:
 	gds::Rect outerRect;
-	gds::Rect rect;	
+	gds::Rect rect; 
 	std::unique_ptr<gds::Surface> surf;
 	
 	std::function<bool(uint32_t)> onKeyPress;

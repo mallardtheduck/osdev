@@ -47,7 +47,7 @@ public:
 	void FocusNext(bool reverse);
 	
 	~Container() {}
-};	
+};  
 
 }
 }

@@ -24,7 +24,7 @@ void BevelBox(gds::Surface &surf, gds::Rect rect, gds::Colour topLeft, gds::Colo
 	
 	surf.Line({x1, y1}, {x1, y2}, topLeft);
 	surf.Line({x1, y2}, {x2, y2}, bottomRight);
-	surf.Line({x2, y1}, {x2, y2}, bottomRight);		
+	surf.Line({x2, y1}, {x2, y2}, bottomRight);             
 	surf.Line({x1, y1}, {x2, y1}, topLeft);
 }
 	

@@ -8,7 +8,7 @@
 #include <cmath>
 
 namespace btos_api{
-namespace gui{	
+namespace gui{  
 	
 Slider::Slider(const gds::Rect &r, int32_t mi, int32_t ma, int32_t def, int32_t sT) : rect(r), min(mi), max(ma), value(def), snapTo(sT) {}
 

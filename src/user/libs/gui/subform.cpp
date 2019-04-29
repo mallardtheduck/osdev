@@ -40,7 +40,7 @@ EventResponse SubForm::HandleEvent(const wm_Event &e){
 
 
 //IControl::Paint
-void SubForm::Paint(gds::Surface &s){	
+void SubForm::Paint(gds::Surface &s){   
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
 }
 
