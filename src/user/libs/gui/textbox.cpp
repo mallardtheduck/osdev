@@ -17,7 +17,7 @@ void TextBox::UpdateDisplayState(){
 		update = true;
 	}
 	
-	if(textMeasures.w == 0 || update) textMeasures = surf->MeasureText(text, fonts::GetTextBoxFont(), fonts::GetTextBoxFontSize());
+	if(textMeasures.w == 0 || update) textMeasures = surf->MeasureText(text, fonts::GetTextBoxFont(), fonts::GetTextBoxTextSize());
 	textY = std::max<int32_t>(((rect.h + textMeasures.h) / 2), 0);
 	
 	size_t vchars;
@@ -143,7 +143,7 @@ void TextBox::Paint(gds::Surface &s){
 		
 		surf->BeginQueue();
 		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		if(textOffset < text.length()) surf->Text({2, textY}, text.substr(textOffset), fonts::GetTextBoxFont(), fonts::GetTextBoxFontSize(), txtCol);
+		if(textOffset < text.length()) surf->Text({2, textY}, text.substr(textOffset), fonts::GetTextBoxFont(), fonts::GetTextBoxTextSize(), txtCol);
 		drawing::Border(*surf, {0, 0, inW, inH}, border);
 		
 		auto topLeft = colours::GetTextBoxLowLight().Fix(*surf);

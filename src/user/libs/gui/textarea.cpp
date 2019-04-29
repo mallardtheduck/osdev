@@ -34,7 +34,7 @@ TextArea::TextArea(const gds::Rect &r, const std::string &t, bool scrollbars) :
 	}
 	SetText(t);
 	auto info = fonts::GetTextAreaFont().Info();
-	fontHeight = (info.maxH * fonts::GetTextAreaFontSize()) / info.scale;
+	fontHeight = (info.maxH * fonts::GetTextAreaTextSize()) / info.scale;
 }
 	
 void TextArea::UpdateDisplayState(){
@@ -53,7 +53,7 @@ void TextArea::UpdateDisplayState(){
 	auto &text = lines[cursorLine].text;
 	auto &textMeasures = lines[cursorLine].textMeasures;
 	
-	if(textMeasures.w == 0 || update) textMeasures = surf->MeasureText(text, fonts::GetTextAreaFont(), fonts::GetTextAreaFontSize());
+	if(textMeasures.w == 0 || update) textMeasures = surf->MeasureText(text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize());
 	
 	auto oldLineOffset = lineOffset;
 	size_t vlines = rect.h / fontHeight;
@@ -331,11 +331,11 @@ void TextArea::Paint(gds::Surface &s){
 		for(size_t i = lineOffset; i < lines.size(); ++i){
 			if((i - lineOffset) * fontHeight > rect.h) break;
 			
-			if(!lines[i].textMeasures.w) lines[i].textMeasures = surf->MeasureText(lines[i].text, fonts::GetTextAreaFont(), fonts::GetTextAreaFontSize());
+			if(!lines[i].textMeasures.w) lines[i].textMeasures = surf->MeasureText(lines[i].text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize());
 			
 			auto textY = std::max<int32_t>(((fontHeight + lines[i].textMeasures.h) / 2), 0);
 			textY += (i - lineOffset) * fontHeight;
-			surf->Text({2 - (int32_t)textOffsetPxls, textY}, lines[i].text, fonts::GetTextAreaFont(), fonts::GetTextAreaFontSize(), txtCol);
+			surf->Text({2 - (int32_t)textOffsetPxls, textY}, lines[i].text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize(), txtCol);
 		}
 		drawing::Border(*surf, {0, 0, inW, inH}, border);
 		

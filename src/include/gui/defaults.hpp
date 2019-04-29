@@ -28,6 +28,7 @@ namespace colours{
 	
 	gds::Colour GetBackground();
 	gds::Colour GetBorder();
+	gds::Colour GetSelection();
 	
 	gds::Colour GetButtonColour();
 	gds::Colour GetButtonHiLight();
@@ -73,6 +74,10 @@ namespace colours{
 	gds::Colour GetTextAreaLowLight();
 	
 	gds::Colour GetGroupBoxText();
+	
+	gds::Colour GetListBoxText();
+	gds::Colour GetListBoxHiLight();
+	gds::Colour GetListBoxLowLight();
 }
 
 namespace fonts{
@@ -83,7 +88,7 @@ namespace fonts{
 	uint32_t GetLabelTextSize();
 	
 	gds::Font GetTextBoxFont();
-	uint32_t GetTextBoxFontSize();
+	uint32_t GetTextBoxTextSize();
 	
 	gds::Font GetCheckboxFont();
 	uint32_t GetCheckboxTextSize();
@@ -92,10 +97,13 @@ namespace fonts{
 	uint32_t GetRadioButtonTextSize();
 	
 	gds::Font GetTextAreaFont();
-	uint32_t GetTextAreaFontSize();
+	uint32_t GetTextAreaTextSize();
 	
 	gds::Font GetGroupBoxFont();
 	uint32_t GetGroupBoxTextSize();
+	
+	gds::Font GetListBoxFont();
+	uint32_t GetListBoxTextSize();
 }
 
 }

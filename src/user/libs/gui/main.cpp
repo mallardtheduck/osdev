@@ -14,12 +14,22 @@
 #include <gui/subform.hpp>
 #include <gui/groupbox.hpp>
 #include <gui/testcontrol.hpp>
+#include <gui/listbox.hpp>
 
 #include <wm/eventloop.hpp>
-
 #include <util/tinyformat.hpp>
-
 #include <cxxabi.h>
+
+void MoreForm(btos_api::wm::EventLoop &eloop){
+	auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{250, 250, 300, 500}, wm_WindowOptions::Default, "More Controls");
+	auto lst = std::make_shared<btos_api::gui::ListBox>(gds::Rect{10, 10, 150, 200});
+	for(auto i = 0; i < 100; ++i){
+		auto label = tfm::format("Item %s", i);
+		lst->Items().push_back(label);
+	}
+	frm->AddControls({lst});
+	eloop.AddWindow(frm);
+}
 
 int main(){
 	try{
@@ -61,13 +71,16 @@ int main(){
 		});
 		sfrm->AddControls({sbtn, tst2});
 		
-		frm->AddControls({btn1, btn2, lbl1, lbl2, txt, sld, chk, rd1, rd2, rd3, sch, scv, txa, grp, sfrm, tst1});
+		auto mBtn = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 260, 100, 30}, "More...");
+		
+		frm->AddControls({btn1, btn2, lbl1, lbl2, txt, sld, chk, rd1, rd2, rd3, sch, scv, txa, grp, sfrm, tst1, mBtn});
 		frm->OnClose([]{
 			tfm::printf("Form close.\n");
 			return false;
 		});
 		
 		btos_api::wm::EventLoop loop({frm});
+		mBtn->OnAction([&] {MoreForm(loop);});
 		loop.RunLoop();
 	}catch(std::exception &e){
 		int status;

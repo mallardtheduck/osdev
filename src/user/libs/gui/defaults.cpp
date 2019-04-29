@@ -27,6 +27,10 @@ namespace colours{
 		return constants::White;
 	}
 	
+	gds::Colour GetSelection(){
+		return constants::LightBlue;
+	}
+	
 	gds::Colour GetButtonColour(){
 		return constants::Grey;
 	}
@@ -170,6 +174,18 @@ namespace colours{
 	gds::Colour GetGroupBoxText(){
 		return constants::Black;
 	}
+	
+	gds::Colour GetListBoxText(){
+		return constants::Black;
+	}
+	
+	gds::Colour GetListBoxHiLight(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetListBoxLowLight(){
+		return constants::DarkGrey;
+	}
 }
 
 namespace fonts{
@@ -193,7 +209,7 @@ namespace fonts{
 		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
 	}
 	
-	uint32_t GetTextBoxFontSize(){
+	uint32_t GetTextBoxTextSize(){
 		return 12;
 	}
 	
@@ -217,7 +233,7 @@ namespace fonts{
 		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
 	}
 	
-	uint32_t GetTextAreaFontSize(){
+	uint32_t GetTextAreaTextSize(){
 		return 12;
 	}
 	
@@ -226,6 +242,14 @@ namespace fonts{
 	}
 	
 	uint32_t GetGroupBoxTextSize(){
+		return 12;
+	}
+	
+	gds::Font GetListBoxFont(){
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+	}
+	
+	uint32_t GetListBoxTextSize(){
 		return 12;
 	}
 }
