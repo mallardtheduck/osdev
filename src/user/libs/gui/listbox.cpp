@@ -17,14 +17,40 @@ ListBox::ListBox(const gds::Rect &r, bool sH) :
 	
 	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
 	IControl::BindToParent(*vscroll);
+	vscroll->OnChange([this] (uint32_t v) {
+		if(v != vOffset) update = true;
+		vOffset = v;
+	});
+	
 	if(scrollHoriz){
 		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
 		IControl::BindToParent(*hscroll);
+		
+		hscroll->OnChange([this] (uint32_t v) {
+			if(v != hOffset) update = true;
+			hOffset = v;
+		});
+		
 	}
 }
 
-EventResponse ListBox::HandleEvent(const wm_Event&){
-	return {true};
+EventResponse ListBox::HandleEvent(const wm_Event &e){
+	bool handled = true;
+	if(e.type & wm_PointerEvents){
+		if(hscroll && InRect(e.Pointer.x, e.Pointer.y, hscroll->GetInteractRect()) && (e.type & hscroll->GetSubscribed())){
+			auto oldHOffset = hOffset;
+			auto ret = hscroll->HandleEvent(e);
+			if(hOffset != oldHOffset) update = true;
+			handled = handled || ret.IsFinishedProcessing();
+		}else if(vscroll && InRect(e.Pointer.x, e.Pointer.y, vscroll->GetInteractRect()) && (e.type & vscroll->GetSubscribed())){
+			auto oldVOffset = vOffset;
+			auto ret = vscroll->HandleEvent(e);
+			if(vOffset == oldVOffset) update = true;
+			handled = handled || ret.IsFinishedProcessing();
+		}
+	}
+	
+	return {handled};
 }
 
 void ListBox::Paint(gds::Surface &s){
@@ -63,15 +89,15 @@ void ListBox::Paint(gds::Surface &s){
 		
 	if(vscroll){
 		vscroll->SetLines(std::max<uint32_t>(items.size() - 1, 1));
-		vscroll->SetPage(vlines);
+		vscroll->SetPage(inH / fontHeight);
 		vscroll->SetValue(vOffset);
 	}
 	
-	if(hscroll){
-		hscroll->SetLines(std::max<uint32_t>(text.length(), 1));
-		hscroll->SetPage(vchars);
-		hscroll->SetValue(cursorPos);
-	}
+	// if(hscroll){
+	// 	hscroll->SetLines(std::max<uint32_t>(text.length(), 1));
+	// 	hscroll->SetPage(vchars);
+	// 	hscroll->SetValue(cursorPos);
+	// }
 		
 	}
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
@@ -89,7 +115,10 @@ gds::Rect ListBox::GetInteractRect(){
 }
 
 uint32_t ListBox::GetSubscribed(){
-	return 0;
+	auto ret = wm_KeyboardEvents | wm_EventType::PointerButtonUp | wm_EventType::PointerButtonDown;
+	if(hscroll) ret |= hscroll->GetSubscribed();
+	if(vscroll) ret |= vscroll->GetSubscribed();
+	return ret;
 }
 
 void ListBox::Focus(){
