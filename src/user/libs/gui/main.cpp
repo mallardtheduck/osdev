@@ -21,13 +21,20 @@
 #include <cxxabi.h>
 
 void MoreForm(btos_api::wm::EventLoop &eloop){
-	auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{250, 250, 300, 500}, wm_WindowOptions::Default, "More Controls");
+	auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{250, 50, 300, 500}, wm_WindowOptions::Default, "More Controls");
 	auto lst = std::make_shared<btos_api::gui::ListBox>(gds::Rect{10, 10, 150, 200});
+	auto tst = std::make_shared<btos_api::gui::TestControl>(gds::Rect{170, 10, 50, 50});
+	tst->OnEvent([] (const wm_Event &e){
+		tfm::printf("More Test: EventType: %s\n", e.type);
+		return true;
+	});
+	
 	for(auto i = 0; i < 100; ++i){
 		auto label = tfm::format("Item %s", i);
 		lst->Items().push_back(label);
 	}
-	frm->AddControls({lst});
+	lst->Refresh();
+	frm->AddControls({lst, tst});
 	eloop.AddWindow(frm);
 }
 

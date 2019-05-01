@@ -31,6 +31,10 @@ namespace colours{
 		return constants::LightBlue;
 	}
 	
+	gds::Colour GetSelectionFocus(){
+		return constants::Blue;
+	}
+	
 	gds::Colour GetButtonColour(){
 		return constants::Grey;
 	}

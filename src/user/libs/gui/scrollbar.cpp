@@ -33,7 +33,6 @@ EventResponse Scrollbar::HandleEvent(const wm_Event &e){
 	uint32_t oldValue = value;
 	
 	if(e.type & wm_PointerEvents){
-		handled = true;
 		int32_t p = horiz ? e.Pointer.x - rect.x : e.Pointer.y - rect.y;
 		auto h = horiz ? rect.w : rect.h;
 		auto w = horiz ? rect.h : rect.w;
@@ -56,6 +55,7 @@ EventResponse Scrollbar::HandleEvent(const wm_Event &e){
 		else over = Area::BottomButton;
 		
 		if(e.type == wm_EventType::PointerButtonUp && e.Pointer.button == 1){
+			handled = true;
 			if(grabbed){
 				value = possValue;
 			}else{
@@ -80,6 +80,7 @@ EventResponse Scrollbar::HandleEvent(const wm_Event &e){
 			if(topBtnDown || btmBtnDown || grabbed) update = true;
 			topBtnDown = btmBtnDown = grabbed = false;
 		}else if(e.type == wm_EventType::PointerButtonDown && e.Pointer.button == 1){
+			handled = true;
 			topBtnDown = btmBtnDown = grabbed = false;
 			switch(over){
 				case Area::TopButton:
@@ -98,6 +99,7 @@ EventResponse Scrollbar::HandleEvent(const wm_Event &e){
 		}else if(e.type == wm_EventType::PointerMove || e.type == wm_EventType::PointerEnter){
 			auto pinfo = WM_GetPointerInfo();
 			if(pinfo.flags & MouseFlags::Button1){
+				handled = true;
 				if(grabbed) value = possValue;
 				else{
 					if(topBtnDown | btmBtnDown) update = true;
@@ -117,6 +119,7 @@ EventResponse Scrollbar::HandleEvent(const wm_Event &e){
 				}
 			}else grabbed = false;
 		}else if(e.type == wm_EventType::PointerLeave){
+			handled = true;
 			topBtnDown = btmBtnDown = false;
 			update = true;
 		}

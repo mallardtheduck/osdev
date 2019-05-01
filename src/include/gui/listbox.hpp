@@ -15,6 +15,13 @@ private:
 	
 	std::vector<std::string> items;
 	
+	struct DrawItem{
+		std::string text;
+		gds::TextMeasurements measures;
+	};
+	
+	std::vector<DrawItem> drawItems;
+	
 	size_t fontHeight;
 	
 	size_t itemHeight;
@@ -29,6 +36,8 @@ private:
 	std::unique_ptr<Scrollbar> vscroll;
 	
 	bool scrollHoriz;
+	
+	void UpdateDisplayState(bool changePos = true);
 public:
 	ListBox(const gds::Rect &r, bool scrollHoriz = false);
 	
@@ -45,6 +54,7 @@ public:
 	void SetValue(size_t idx);
 	
 	std::vector<std::string> &Items();
+	void Refresh();
 };
 	
 }

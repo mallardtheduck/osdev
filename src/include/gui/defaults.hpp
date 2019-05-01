@@ -29,6 +29,7 @@ namespace colours{
 	gds::Colour GetBackground();
 	gds::Colour GetBorder();
 	gds::Colour GetSelection();
+	gds::Colour GetSelectionFocus();
 	
 	gds::Colour GetButtonColour();
 	gds::Colour GetButtonHiLight();
