@@ -58,7 +58,7 @@ namespace gds{
 		Colour(uint32_t _id, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a) : id(_id), r(_r), g(_g), b(_b), a(_a) {}
 		explicit Colour(uint32_t i) : id(i) {}
 		
-		Colour Fix(Surface &surf);
+		Colour Fix(Surface &surf) const;
 	};
 
 	struct Font{

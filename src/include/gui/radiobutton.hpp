@@ -17,6 +17,7 @@ private:
 	gds::TextMeasurements textMeasures;
 	bool update = false;
 	bool focus = false;
+	bool enabled = true;
 	
 	template<typename T> friend class RadioGroup;
 	std::function<std::vector<gds::Rect>()> getAllRects;
@@ -34,6 +35,9 @@ public:
 	void Blur();
 	uint32_t GetFlags();
 	bool GetValue();
+	void Enable();
+	void Disable();
+	bool IsEnabled();
 	
 	void SetText(const std::string &t);
 };

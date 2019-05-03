@@ -1,4 +1,5 @@
 #include <gui/subform.hpp>
+#include <gui/defaults.hpp>
 
 namespace btos_api{
 namespace gui{
@@ -42,6 +43,11 @@ EventResponse SubForm::HandleEvent(const wm_Event &e){
 //IControl::Paint
 void SubForm::Paint(gds::Surface &s){   
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	
+	if(!enabled){
+		auto cast = colours::GetDisabledCast().Fix(s);
+		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	}
 }
 
 gds::Rect SubForm::GetPaintRect(){
@@ -76,6 +82,24 @@ void SubForm::Paint(const std::vector<gds::Rect> &rects){
 	Container::Paint(rects);
 	for(const auto &uR : updateRects) IControl::Paint(uR);
 	updateRects.clear();
+}
+
+void SubForm::Enable(){
+	if(!enabled){
+		enabled = true;
+		IControl::Paint(rect);
+	}
+}
+
+void SubForm::Disable(){
+	if(enabled){
+		enabled = false;
+		IControl::Paint(rect);
+	}
+}
+
+bool SubForm::IsEnabled(){
+	return enabled;
 }
 	
 }

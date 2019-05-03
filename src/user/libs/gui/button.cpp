@@ -103,6 +103,10 @@ void Button::Paint(gds::Surface &s){
 	}
 	
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	if(!enabled){
+		auto cast = colours::GetDisabledCast().Fix(s);
+		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	}
 }
 
 gds::Rect Button::GetPaintRect(){
@@ -129,6 +133,24 @@ void Button::Blur(){
 
 uint32_t Button::GetFlags(){
 	return 0;
+}
+
+void Button::Enable(){
+	if(!enabled){
+		enabled = true;
+		IControl::Paint(rect);
+	}
+}
+
+void Button::Disable(){
+	if(enabled){
+		enabled = false;
+		IControl::Paint(rect);
+	}
+}
+
+bool Button::IsEnabled(){
+	return enabled;
 }
 
 }

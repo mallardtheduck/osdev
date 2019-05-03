@@ -233,6 +233,11 @@ void Scrollbar::Paint(gds::Surface &s){
 	}
 	
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	
+	if(!enabled){
+		auto cast = colours::GetDisabledCast().Fix(s);
+		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	}
 }
 
 gds::Rect Scrollbar::GetPaintRect(){
@@ -289,6 +294,24 @@ uint32_t Scrollbar::GetValue(){
 
 uint32_t Scrollbar::GetFlags(){
 	return 0;
+}
+
+void Scrollbar::Enable(){
+	if(!enabled){
+		enabled = true;
+		IControl::Paint(rect);
+	}
+}
+
+void Scrollbar::Disable(){
+	if(enabled){
+		enabled = false;
+		IControl::Paint(rect);
+	}
+}
+
+bool Scrollbar::IsEnabled(){
+	return enabled;
 }
 
 }

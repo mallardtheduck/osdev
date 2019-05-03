@@ -22,6 +22,9 @@ public:
 	void Focus();
 	void Blur();
 	uint32_t GetFlags();
+	void Enable();
+	void Disable();
+	bool IsEnabled();
 	
 	void OnEvent(const std::function<bool(const wm_Event&)> &oE);
 };

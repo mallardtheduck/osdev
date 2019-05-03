@@ -40,5 +40,13 @@ void TestControl::OnEvent(const std::function<bool(const wm_Event&)> &oE){
 	onEvent = oE;
 }
 
+void TestControl::Enable(){}
+
+void TestControl::Disable(){}
+
+bool TestControl::IsEnabled(){
+	return true;
+}
+
 }
 }

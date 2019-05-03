@@ -356,6 +356,11 @@ void TextArea::Paint(gds::Surface &s){
 	
 	if(hscroll) hscroll->Paint(s);
 	if(vscroll) vscroll->Paint(s);
+	
+	if(!enabled){
+		auto cast = colours::GetDisabledCast().Fix(s);
+		s.Box(outerRect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	}
 }
 
 gds::Rect TextArea::GetPaintRect(){
@@ -407,6 +412,24 @@ void TextArea::OnKeyPress(const std::function<bool(uint32_t)> &oKP){
 
 uint32_t TextArea::GetFlags(){
 	return 0;
+}
+
+void TextArea::Enable(){
+	if(!enabled){
+		enabled = true;
+		IControl::Paint(rect);
+	}
+}
+
+void TextArea::Disable(){
+	if(enabled){
+		enabled = false;
+		IControl::Paint(rect);
+	}
+}
+
+bool TextArea::IsEnabled(){
+	return enabled;
 }
 
 }

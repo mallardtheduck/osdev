@@ -29,7 +29,7 @@ template<typename T> static std::shared_ptr<IControl> FNFSearch(std::shared_ptr<
 	auto i = begin;
 	bool found = false;
 	while(true){
-		if(found && !((*i)->GetFlags() & ControlFlags::NoFocus)) return *i;
+		if(found && !((*i)->GetFlags() & ControlFlags::NoFocus) && (*i)->IsEnabled()) return *i;
 		if(found && *i == focus) return focus;
 		if(*i == focus) found = true;
 		++i;
@@ -48,7 +48,7 @@ std::shared_ptr<IControl> Container::FindNextFocus(bool reverse){
 bool Container::HandleEvent(const wm_Event &evt){
 	queuePaint = true;
 	EventResponse response;
-	if(focus && (evt.type & wm_KeyboardEvents) && (focus->GetSubscribed() & evt.type)){
+	if(focus && focus->IsEnabled() && (evt.type & wm_KeyboardEvents) && (focus->GetSubscribed() & evt.type)){
 		response = focus->HandleEvent(evt);
 	}
 	
@@ -82,12 +82,13 @@ bool Container::HandleEvent(const wm_Event &evt){
 			}
 		}
 		
-		if(mouseOver && e.type == wm_EventType::PointerLeave){
+		if(mouseOver && mouseOver->IsEnabled() && e.type == wm_EventType::PointerLeave){
 			response = mouseOver->HandleEvent(e);
 		}
 		
 		if(!response.IsFinishedProcessing()){
 			for(auto &c : controls){
+				if(!c->IsEnabled()) continue;
 				if(e.type == wm_EventType::PointerMove && mouseOver != c && gds::InRect(e.Pointer.x, e.Pointer.y, c->GetInteractRect()) && (c->GetSubscribed() & wm_EventType::PointerEnter)){
 					mouseOver = c;
 					auto enterEvt = evt;

@@ -6,7 +6,7 @@
 namespace btos_api{
 namespace gui{
 
-class Label : public IControl{
+class Label : public IDecorativeControl{
 private:
 	gds::Rect rect;
 	std::string text;
@@ -19,9 +19,6 @@ public:
 	gds::Rect GetPaintRect();
 	gds::Rect GetInteractRect();
 	uint32_t GetSubscribed();
-	void Focus();
-	void Blur();
-	uint32_t GetFlags();
 	
 	void SetText(const std::string &t);
 };

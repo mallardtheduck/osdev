@@ -5,22 +5,22 @@ namespace gui{
 	
 namespace colours{
 	namespace constants{
-		gds::Colour Black               {0, 0x00, 0x00, 0x00, 0};
-		gds::Colour Blue                {0, 0x00, 0x00, 0xA8, 0};
-		gds::Colour Green               {0, 0x00, 0xA8, 0x00, 0};
-		gds::Colour Cyan                {0, 0x00, 0xA8, 0xA8, 0};
-		gds::Colour Red                 {0, 0xA8, 0x00, 0x00, 0};
-		gds::Colour Purple              {0, 0xA8, 0x00, 0xA8, 0};
-		gds::Colour Orange              {0, 0xA8, 0x54, 0x00, 0};
-		gds::Colour Grey                {0, 0xA8, 0xA8, 0xA8, 0};
-		gds::Colour DarkGrey    		{0, 0x54, 0x54, 0x54, 0};
-		gds::Colour LightBlue   		{0, 0x54, 0x54, 0xFF, 0};
-		gds::Colour LightGreen  		{0, 0x54, 0xFF, 0x54, 0};
-		gds::Colour LightCyan   		{0, 0x54, 0xFF, 0xFF, 0};
-		gds::Colour Pink                {0, 0xFF, 0x54, 0x54, 0};
-		gds::Colour Magenta             {0, 0xFF, 0x54, 0xFF, 0};
-		gds::Colour Yellow              {0, 0xFF, 0xFF, 0x54, 0};
-		gds::Colour White               {0, 0xFF, 0xFF, 0xFF, 0};
+		const gds::Colour Black               {0, 0x00, 0x00, 0x00, 0};
+		const gds::Colour Blue                {0, 0x00, 0x00, 0xA8, 0};
+		const gds::Colour Green               {0, 0x00, 0xA8, 0x00, 0};
+		const gds::Colour Cyan                {0, 0x00, 0xA8, 0xA8, 0};
+		const gds::Colour Red                 {0, 0xA8, 0x00, 0x00, 0};
+		const gds::Colour Purple              {0, 0xA8, 0x00, 0xA8, 0};
+		const gds::Colour Orange              {0, 0xA8, 0x54, 0x00, 0};
+		const gds::Colour Grey                {0, 0xA8, 0xA8, 0xA8, 0};
+		const gds::Colour DarkGrey    		  {0, 0x54, 0x54, 0x54, 0};
+		const gds::Colour LightBlue   		  {0, 0x54, 0x54, 0xFF, 0};
+		const gds::Colour LightGreen  	  	  {0, 0x54, 0xFF, 0x54, 0};
+		const gds::Colour LightCyan   		  {0, 0x54, 0xFF, 0xFF, 0};
+		const gds::Colour Pink                {0, 0xFF, 0x54, 0x54, 0};
+		const gds::Colour Magenta             {0, 0xFF, 0x54, 0xFF, 0};
+		const gds::Colour Yellow              {0, 0xFF, 0xFF, 0x54, 0};
+		const gds::Colour White               {0, 0xFF, 0xFF, 0xFF, 0};
 	}
 	
 	gds::Colour GetBackground(){
@@ -33,6 +33,12 @@ namespace colours{
 	
 	gds::Colour GetSelectionFocus(){
 		return constants::Blue;
+	}
+	
+	gds::Colour GetDisabledCast(){
+		auto c = constants::Grey;
+		c.a = 128;
+		return c;
 	}
 	
 	gds::Colour GetButtonColour(){

@@ -17,6 +17,7 @@ private:
 	gds::TextMeasurements textMeasures;
 	bool update = false;
 	bool focus = false;
+	bool enabled = true;
 public:
 	Checkbox(const gds::Rect &r, const std::string &t, bool v);
 	
@@ -28,6 +29,9 @@ public:
 	void Focus();
 	void Blur();
 	uint32_t GetFlags();
+	void Enable();
+	void Disable();
+	bool IsEnabled();
 	
 	void SetText(const std::string &t);
 	bool GetValue();

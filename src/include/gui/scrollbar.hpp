@@ -13,6 +13,7 @@ private:
 	uint32_t lines, step, page, value;
 	bool horiz;
 	bool focus = false;
+	bool enabled = true;
 	bool update = false;
 	
 	bool topBtnDown = false;
@@ -32,6 +33,9 @@ public:
 	void Focus();
 	void Blur();
 	uint32_t GetFlags();
+	void Enable();
+	void Disable();
+	bool IsEnabled();
 	
 	void SetLines(uint32_t l);
 	void SetStep(uint32_t s);

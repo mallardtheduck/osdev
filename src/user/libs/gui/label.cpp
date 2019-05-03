@@ -39,18 +39,11 @@ gds::Rect Label::GetInteractRect(){
 uint32_t Label::GetSubscribed(){
 	return 0;
 }
-
-void Label::Focus() {}
-void Label::Blur() {}
 	
 void Label::SetText(const std::string &t){
 	text = t;
 	surf.reset();
 	IControl::Paint(rect);
-}
-
-uint32_t Label::GetFlags(){
-	return ControlFlags::NoFocus;
 }
 
 }

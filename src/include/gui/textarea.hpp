@@ -35,6 +35,7 @@ private:
 	
 	bool update = false;
 	bool hasFocus = false;
+	bool enabled = true;
 	
 	std::unique_ptr<Scrollbar> hscroll;
 	std::unique_ptr<Scrollbar> vscroll;
@@ -54,6 +55,9 @@ public:
 	void Focus();
 	void Blur();
 	uint32_t GetFlags();
+	void Enable();
+	void Disable();
+	bool IsEnabled();
 	
 	void SetText(const std::string &t);
 	std::string GetText();

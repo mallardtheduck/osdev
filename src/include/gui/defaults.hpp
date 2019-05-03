@@ -8,28 +8,29 @@ namespace gui{
 	
 namespace colours{
 	namespace constants{
-		extern gds::Colour Black;
-		extern gds::Colour Blue;
-		extern gds::Colour Green;
-		extern gds::Colour Cyan;
-		extern gds::Colour Red;
-		extern gds::Colour Purple;
-		extern gds::Colour Orange;
-		extern gds::Colour Grey;
-		extern gds::Colour DarkGrey;
-		extern gds::Colour LightBlue;
-		extern gds::Colour LightGreen;
-		extern gds::Colour LightCyan;
-		extern gds::Colour Pink;
-		extern gds::Colour Magenta;
-		extern gds::Colour Yellow;
-		extern gds::Colour White;
+		extern const gds::Colour Black;
+		extern const gds::Colour Blue;
+		extern const gds::Colour Green;
+		extern const gds::Colour Cyan;
+		extern const gds::Colour Red;
+		extern const gds::Colour Purple;
+		extern const gds::Colour Orange;
+		extern const gds::Colour Grey;
+		extern const gds::Colour DarkGrey;
+		extern const gds::Colour LightBlue;
+		extern const gds::Colour LightGreen;
+		extern const gds::Colour LightCyan;
+		extern const gds::Colour Pink;
+		extern const gds::Colour Magenta;
+		extern const gds::Colour Yellow;
+		extern const gds::Colour White;
 	}
 	
 	gds::Colour GetBackground();
 	gds::Colour GetBorder();
 	gds::Colour GetSelection();
 	gds::Colour GetSelectionFocus();
+	gds::Colour GetDisabledCast();
 	
 	gds::Colour GetButtonColour();
 	gds::Colour GetButtonHiLight();

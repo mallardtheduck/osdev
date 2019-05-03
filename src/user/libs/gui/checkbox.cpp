@@ -98,6 +98,10 @@ void Checkbox::Paint(gds::Surface &s){
 	}
 	
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	if(!enabled){
+		auto cast = colours::GetDisabledCast().Fix(s);
+		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	}
 }
 
 gds::Rect Checkbox::GetPaintRect(){
@@ -147,6 +151,24 @@ bool Checkbox::GetValue(){
 
 uint32_t Checkbox::GetFlags(){
 	return 0;
+}
+
+void Checkbox::Enable(){
+	if(!enabled){
+		enabled = true;
+		IControl::Paint(rect);
+	}
+}
+
+void Checkbox::Disable(){
+	if(enabled){
+		enabled = false;
+		IControl::Paint(rect);
+	}
+}
+
+bool Checkbox::IsEnabled(){
+	return enabled;
 }
 
 }

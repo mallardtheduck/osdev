@@ -53,7 +53,7 @@ namespace gds{
 		return {p1.x + p2.x, p1.y + p2.y};
 	}
 	
-	Colour Colour::Fix(Surface &surf){
+	Colour Colour::Fix(Surface &surf) const{
 		return surf.GetColour(r, g, b, a);
 	}
 

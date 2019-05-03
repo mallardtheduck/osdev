@@ -3,6 +3,9 @@
 #include <gui/drawing.hpp>
 #include <dev/keyboard.h>
 
+#include <cctype>
+#include <algorithm>
+
 namespace btos_api{
 namespace gui{
 	
@@ -37,23 +40,53 @@ ListBox::ListBox(const gds::Rect &r, bool sH) :
 }
 
 void ListBox::UpdateDisplayState(bool changePos){
-	auto visibleItems = rect.h / fontHeight;
+	visibleItems = rect.h / fontHeight;
 	if(changePos){
 		if(selectedItem < vOffset) vOffset = selectedItem;
 		if(selectedItem >= vOffset + (visibleItems - 1)) vOffset = std::max<int32_t>(0, (int32_t)(selectedItem - (visibleItems - 1)));
 	}
 	
-	if(vscroll){
-		vscroll->SetLines(std::max<int32_t>((int32_t)items.size() - visibleItems, 1));
-		vscroll->SetPage(visibleItems);
-		vscroll->SetValue(vOffset);
+	uint32_t maxTextW = 0;
+	drawItems.resize(items.size());
+	for(size_t i = 0; i < items.size(); ++i){
+		auto &di = drawItems[i];
+		auto &it = items[i];
+		if(di.text != it || !di.measures.w){
+			di.text = it;
+			di.measures = surf->MeasureText(it, fonts::GetListBoxFont(), fonts::GetListBoxTextSize());
+		}
+		if(di.measures.w > maxTextW) maxTextW = di.measures.w;
 	}
 	
-	// if(hscroll){
-	// 	hscroll->SetLines(std::max<uint32_t>(text.length(), 1));
-	// 	hscroll->SetPage(vchars);
-	// 	hscroll->SetValue(cursorPos);
-	// }
+	if(vscroll){
+		if(visibleItems < items.size()){
+			vscroll->Enable();
+			vscroll->SetLines(std::max<int32_t>((int32_t)items.size() - visibleItems, 1));
+			vscroll->SetPage(visibleItems);
+			vscroll->SetValue(vOffset);
+		}else{
+			vscroll->Disable();
+			vscroll->SetLines(1);
+			vscroll->SetPage(1);
+			vscroll->SetValue(0);
+			vOffset = 0;
+		}
+	}
+	
+	if(hscroll){
+		if(maxTextW > rect.w - 2){
+			hscroll->Enable();
+		 	hscroll->SetLines(maxTextW - (rect.w - 2));
+		 	hscroll->SetPage(rect.w - 2);
+		 	hscroll->SetValue(hOffset);
+		}else{
+			hscroll->Disable();
+			hscroll->SetLines(1);
+			hscroll->SetPage(1);
+			hscroll->SetValue(0);
+			hOffset = 0;
+		}
+	}
 }
 
 EventResponse ListBox::HandleEvent(const wm_Event &e){
@@ -70,6 +103,47 @@ EventResponse ListBox::HandleEvent(const wm_Event &e){
 			update = true;
 			handled = true;
 			UpdateDisplayState();
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageUp)){
+			if(selectedItem != 0){
+				if(selectedItem > visibleItems) selectedItem -= visibleItems;
+				else selectedItem = 0;
+				update = true;
+				UpdateDisplayState();
+			}
+			handled = true;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageDown)){
+			if(selectedItem < items.size() - 1){
+				if(selectedItem + visibleItems < items.size()) selectedItem += visibleItems;
+				else selectedItem = items.size() - 1;
+				update = true;
+				UpdateDisplayState();
+			}
+			handled = true;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
+			if(selectedItem != 0){
+				selectedItem = 0;
+				update = true;
+				UpdateDisplayState();
+			}
+			handled = true;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
+			if(selectedItem < items.size() - 1){
+				selectedItem = items.size() - 1;
+				update = true;
+				UpdateDisplayState();
+			}
+			handled = true;
+		}else if(!(code & KeyFlags::NonASCII)){
+			auto oldSelectedItem = selectedItem;
+			char c = KB_char(e.Key.code);
+			c = std::tolower(c);
+			auto finder = [&](const std::string &item){return !item.empty() && std::tolower(item.front()) == c;};
+			auto it = std::find_if(begin(items) + selectedItem + 1, end(items), finder);
+			if(it == end(items)) it = std::find_if(begin(items), end(items), finder);
+			if(it != end(items)) selectedItem = it - begin(items);
+			update = oldSelectedItem != selectedItem;
+			handled = true;
+			UpdateDisplayState();
 		}
 	}else if(e.type & wm_PointerEvents){
 		if(InRect(e.Pointer.x, e.Pointer.y, rect)){
@@ -80,11 +154,11 @@ EventResponse ListBox::HandleEvent(const wm_Event &e){
 				handled = true;
 				UpdateDisplayState();
 			}
-		}else if(hscroll && InRect(e.Pointer.x, e.Pointer.y, hscroll->GetInteractRect()) && (e.type & hscroll->GetSubscribed())){
+		}else if(hscroll && hscroll->IsEnabled() && InRect(e.Pointer.x, e.Pointer.y, hscroll->GetInteractRect()) && (e.type & hscroll->GetSubscribed())){
 			auto ret = hscroll->HandleEvent(e);
 			update = ret.IsFinishedProcessing();
 			handled = handled || update;
-		}else if(vscroll && InRect(e.Pointer.x, e.Pointer.y, vscroll->GetInteractRect()) && (e.type & vscroll->GetSubscribed())){
+		}else if(vscroll && vscroll->IsEnabled() && InRect(e.Pointer.x, e.Pointer.y, vscroll->GetInteractRect()) && (e.type & vscroll->GetSubscribed())){
 			auto ret = vscroll->HandleEvent(e);
 			update = ret.IsFinishedProcessing();
 			handled = handled || update;
@@ -98,16 +172,6 @@ void ListBox::Paint(gds::Surface &s){
 	if(update || !surf){
 		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
 		UpdateDisplayState(false);
-		
-		drawItems.resize(items.size());
-		for(size_t i = 0; i < items.size(); ++i){
-			auto &di = drawItems[i];
-			auto &it = items[i];
-			if(di.text != it || !di.measures.w){
-				di.text = it;
-				di.measures = surf->MeasureText(it, fonts::GetListBoxFont(), fonts::GetListBoxTextSize());
-			}
-		}
 		
 		uint32_t inW = rect.w - 1;
 		uint32_t inH = rect.h - 1;
@@ -147,6 +211,11 @@ void ListBox::Paint(gds::Surface &s){
 
 	if(hscroll) hscroll->Paint(s);
 	if(vscroll) vscroll->Paint(s);
+	
+	if(!enabled){
+		auto cast = colours::GetDisabledCast().Fix(s);
+		s.Box(outerRect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	}
 }
 
 gds::Rect ListBox::GetPaintRect(){
@@ -182,6 +251,24 @@ void ListBox::Blur(){
 
 uint32_t ListBox::GetFlags(){
 	return 0;
+}
+
+void ListBox::Enable(){
+	if(!enabled){
+		enabled = true;
+		IControl::Paint(rect);
+	}
+}
+
+void ListBox::Disable(){
+	if(enabled){
+		enabled = false;
+		IControl::Paint(rect);
+	}
+}
+
+bool ListBox::IsEnabled(){
+	return enabled;
 }
 
 size_t ListBox::GetValue(){

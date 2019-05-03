@@ -35,6 +35,9 @@ public:
 	virtual void Focus() = 0;
 	virtual void Blur() = 0;
 	virtual uint32_t GetFlags() = 0;
+	virtual void Enable() = 0;
+	virtual void Disable() = 0;
+	virtual bool IsEnabled() = 0;
 	
 	bool IsFocus();
 
@@ -88,6 +91,16 @@ public:
 	virtual T GetValue() = 0;
 	
 	virtual ~IValueControl() {}
+};
+
+class IDecorativeControl : public virtual IControl{
+public:
+	void Enable() {}
+	void Disable() {}
+	bool IsEnabled() { return false; }
+	void Focus() {}
+	void Blur() {}
+	uint32_t GetFlags(){ return ControlFlags::NoFocus; }
 };
 
 }

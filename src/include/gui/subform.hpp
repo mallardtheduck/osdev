@@ -18,6 +18,8 @@ private:
 	gds::Surface &GetSurface();
 	gds::Rect GetBoundingRect();
 	
+	bool enabled = true;
+	
 	void Update(const gds::Rect &r);
 	void Update();
 	void SetSubscribed(uint32_t subs);
@@ -33,6 +35,9 @@ public:
 	void Focus();
 	void Blur();
 	uint32_t GetFlags();
+	void Enable();
+	void Disable();
+	bool IsEnabled();
 	
 	void Paint(const std::vector<gds::Rect> &rects);
 };

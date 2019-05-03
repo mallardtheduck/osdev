@@ -167,6 +167,11 @@ void TextBox::Paint(gds::Surface &s){
 		int32_t cursorX = round(cursorXd);
 		s.Line({(int32_t)cursorX + rect.x, (int32_t)2 + rect.y}, {(int32_t)cursorX + rect.x, (int32_t)(rect.h - 3) + rect.y}, cursorCol);
 	}
+	
+	if(!enabled){
+		auto cast = colours::GetDisabledCast().Fix(s);
+		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	}
 }
 
 gds::Rect TextBox::GetPaintRect(){
@@ -207,6 +212,24 @@ void TextBox::OnKeyPress(const std::function<bool(uint32_t)> &oKP){
 
 uint32_t TextBox::GetFlags(){
 	return 0;
+}
+
+void TextBox::Enable(){
+	if(!enabled){
+		enabled = true;
+		IControl::Paint(rect);
+	}
+}
+
+void TextBox::Disable(){
+	if(enabled){
+		enabled = false;
+		IControl::Paint(rect);
+	}
+}
+
+bool TextBox::IsEnabled(){
+	return enabled;
 }
 
 }

@@ -116,6 +116,11 @@ void RadioButton::Paint(gds::Surface &s){
 	}
 	
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	
+	if(!enabled){
+		auto cast = colours::GetDisabledCast().Fix(s);
+		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	}
 }
 
 gds::Rect RadioButton::GetPaintRect(){
@@ -171,6 +176,24 @@ bool RadioButton::GetValue(){
 
 uint32_t RadioButton::GetFlags(){
 	return 0;
+}
+
+void RadioButton::Enable(){
+	if(!enabled){
+		enabled = true;
+		IControl::Paint(rect);
+	}
+}
+
+void RadioButton::Disable(){
+	if(enabled){
+		enabled = false;
+		IControl::Paint(rect);
+	}
+}
+
+bool RadioButton::IsEnabled(){
+	return enabled;
 }
 
 }

@@ -28,9 +28,11 @@ private:
 	size_t selectedItem = 0;
 	size_t vOffset = 0;
 	size_t hOffset = 0;
+	size_t visibleItems = 0;
 	
 	bool update = false;
 	bool hasFocus = false;
+	bool enabled = true;
 	
 	std::unique_ptr<Scrollbar> hscroll;
 	std::unique_ptr<Scrollbar> vscroll;
@@ -49,6 +51,9 @@ public:
 	void Focus();
 	void Blur();
 	uint32_t GetFlags();
+	void Enable();
+	void Disable();
+	bool IsEnabled();
 	
 	size_t GetValue();
 	void SetValue(size_t idx);

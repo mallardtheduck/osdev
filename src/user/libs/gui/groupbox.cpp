@@ -44,18 +44,11 @@ gds::Rect GroupBox::GetInteractRect(){
 uint32_t GroupBox::GetSubscribed(){
 	return 0;
 }
-
-void GroupBox::Focus() {}
-void GroupBox::Blur() {}
 	
 void GroupBox::SetText(const std::string &t){
 	text = t;
 	surf.reset();
 	IControl::Paint(rect);
-}
-
-uint32_t GroupBox::GetFlags(){
-	return ControlFlags::NoFocus;
 }
 
 }

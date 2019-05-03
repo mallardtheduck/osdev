@@ -10,6 +10,7 @@ class Button : public IActionControl<void>{
 private:
 	bool down = false;
 	bool focus = false;
+	bool enabled = true;
 	bool paintDown;
 	bool paintFocus;
 
@@ -31,6 +32,9 @@ public:
 	void Focus();
 	void Blur();
 	uint32_t GetFlags();
+	void Enable();
+	void Disable();
+	bool IsEnabled();
 	
 	bool GetValue();
 };

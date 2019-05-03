@@ -16,6 +16,8 @@ private:
 	
 	bool update = false;
 	bool focus = false;
+	bool enabled = true;
+	
 	std::unique_ptr<gds::Surface> surf;
 	std::unique_ptr<gds::Surface> bkSurf;
 public:
@@ -29,6 +31,9 @@ public:
 	void Focus();
 	void Blur();
 	uint32_t GetFlags();
+	void Enable();
+	void Disable();
+	bool IsEnabled();
 	
 	int32_t GetValue();
 };

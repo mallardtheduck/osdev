@@ -51,8 +51,11 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 
 		case gds_DrawingOpType::Box:
 			if(op.Common.fillStyle > 0) {
-				//image->FilledRectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.fillColour);
-				FastBox(*image, op.Box.x, op.Box.y, op.Box.w, op.Box.h, op.Common.fillColour);
+				if(image->Alpha(op.Common.fillColour)){
+					image->FilledRectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.fillColour);
+				}else{
+					FastBox(*image, op.Box.x, op.Box.y, op.Box.w, op.Box.h, op.Common.fillColour);
+				}
 			}
 			if(op.Common.lineWidth > 0){ 
 				image->Rectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.lineColour);

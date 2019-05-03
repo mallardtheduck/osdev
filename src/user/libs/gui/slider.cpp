@@ -122,6 +122,11 @@ void Slider::Paint(gds::Surface &s){
 	}
 	
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	
+	if(!enabled){
+		auto cast = colours::GetDisabledCast().Fix(s);
+		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	}
 }
 
 gds::Rect Slider::GetPaintRect(){
@@ -153,6 +158,24 @@ int32_t Slider::GetValue(){
 
 uint32_t Slider::GetFlags(){
 	return 0;
+}
+
+void Slider::Enable(){
+	if(!enabled){
+		enabled = true;
+		IControl::Paint(rect);
+	}
+}
+
+void Slider::Disable(){
+	if(enabled){
+		enabled = false;
+		IControl::Paint(rect);
+	}
+}
+
+bool Slider::IsEnabled(){
+	return enabled;
 }
 
 }

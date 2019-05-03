@@ -20,6 +20,7 @@ private:
 	size_t textOffset = 0;
 	size_t cursorPos = 0;
 	bool hasFocus = false;
+	bool enabled = true;
 	int32_t textY = 0;
 	
 	void UpdateDisplayState();
@@ -34,6 +35,9 @@ public:
 	void Focus();
 	void Blur();
 	uint32_t GetFlags();
+	void Enable();
+	void Disable();
+	bool IsEnabled();
 	
 	void SetText(const std::string &t);
 	std::string GetText();

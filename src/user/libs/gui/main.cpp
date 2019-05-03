@@ -22,7 +22,7 @@
 
 void MoreForm(btos_api::wm::EventLoop &eloop){
 	auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{250, 50, 300, 500}, wm_WindowOptions::Default, "More Controls");
-	auto lst = std::make_shared<btos_api::gui::ListBox>(gds::Rect{10, 10, 150, 200});
+	auto lst = std::make_shared<btos_api::gui::ListBox>(gds::Rect{10, 10, 150, 200}, true);
 	auto tst = std::make_shared<btos_api::gui::TestControl>(gds::Rect{170, 10, 50, 50});
 	tst->OnEvent([] (const wm_Event &e){
 		tfm::printf("More Test: EventType: %s\n", e.type);
@@ -33,6 +33,7 @@ void MoreForm(btos_api::wm::EventLoop &eloop){
 		auto label = tfm::format("Item %s", i);
 		lst->Items().push_back(label);
 	}
+	lst->Items().push_back("A much, much longer item name...");
 	lst->Refresh();
 	frm->AddControls({lst, tst});
 	eloop.AddWindow(frm);
@@ -46,7 +47,14 @@ int main(){
 		auto btn1 = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 1");
 		btn1->OnAction([&] {lbl2->SetText("Button 1");});
 		auto btn2 = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 50, 100, 30}, "Button 2");
-		btn2->OnAction([&] {lbl2->SetText("Button 2");});
+		btn2->OnAction([&] {
+			lbl2->SetText("Button 2");
+			if(btn1->IsEnabled()){
+				btn1->Disable();
+			}else{
+				btn1->Enable();
+			}
+		});
 		auto txt = std::make_shared<btos_api::gui::TextBox>(gds::Rect{220, 10, 100, 20}, "An editable textbox");
 		auto sld = std::make_shared<btos_api::gui::Slider>(gds::Rect{340, 10, 140, 20}, 0, 100, 50, 5);
 		auto chk = std::make_shared<btos_api::gui::Checkbox>(gds::Rect{120, 55, 100, 20}, "A checkbox", true);
