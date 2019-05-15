@@ -80,6 +80,11 @@ namespace colours{
 	gds::Colour GetListBoxText();
 	gds::Colour GetListBoxHiLight();
 	gds::Colour GetListBoxLowLight();
+	
+	gds::Colour GetDetailListText();
+	gds::Colour GetDetailListHiLight();
+	gds::Colour GetDetailListLowLight();
+	gds::Colour GetDetailListHeader();
 }
 
 namespace fonts{
@@ -106,6 +111,9 @@ namespace fonts{
 	
 	gds::Font GetListBoxFont();
 	uint32_t GetListBoxTextSize();
+	
+	gds::Font GetDetailListFont();
+	uint32_t GetDetailListTextSize();
 }
 
 }

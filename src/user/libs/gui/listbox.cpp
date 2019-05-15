@@ -150,7 +150,7 @@ EventResponse ListBox::HandleEvent(const wm_Event &e){
 			if(e.type == wm_EventType::PointerButtonUp){
 				auto oldSelectedItem = selectedItem;
 				selectedItem = ((e.Pointer.y - outerRect.y) / fontHeight) + vOffset;
-				update = oldSelectedItem != selectedItem;
+				if(selectedItem < items.size()) update = oldSelectedItem != selectedItem;
 				handled = true;
 				UpdateDisplayState();
 			}

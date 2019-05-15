@@ -196,6 +196,22 @@ namespace colours{
 	gds::Colour GetListBoxLowLight(){
 		return constants::DarkGrey;
 	}
+	
+	gds::Colour GetDetailListText(){
+		return constants::Black;
+	}
+	
+	gds::Colour GetDetailListHiLight(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetDetailListLowLight(){
+		return constants::DarkGrey;
+	}
+	
+	gds::Colour GetDetailListHeader(){
+		return constants::Grey;
+	}
 }
 
 namespace fonts{
@@ -260,6 +276,14 @@ namespace fonts{
 	}
 	
 	uint32_t GetListBoxTextSize(){
+		return 12;
+	}
+	
+	gds::Font GetDetailListFont(){
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+	}
+	
+	uint32_t GetDetailListTextSize(){
 		return 12;
 	}
 }
