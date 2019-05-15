@@ -25,7 +25,7 @@ void MoreForm(btos_api::wm::EventLoop &eloop){
 	auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{250, 50, 300, 500}, wm_WindowOptions::Default, "More Controls");
 	auto lst = std::make_shared<btos_api::gui::ListBox>(gds::Rect{10, 10, 150, 200}, true);
 	auto tst = std::make_shared<btos_api::gui::TestControl>(gds::Rect{170, 10, 50, 50});
-	auto dls = std::make_shared<btos_api::gui::DetailList>(gds::Rect{10, 220, 280, 200}, std::vector<std::string>{"Col 1", "Col 2", "Col 3"});
+	auto dls = std::make_shared<btos_api::gui::DetailList>(gds::Rect{10, 220, 280, 200}, std::vector<std::string>{"Col 1", "Col 2", "Col 3"}, true);
 	tst->OnEvent([] (const wm_Event &e){
 		tfm::printf("More Test: EventType: %s\n", e.type);
 		return true;
@@ -42,6 +42,7 @@ void MoreForm(btos_api::wm::EventLoop &eloop){
 		dls->Items().push_back({label, "Detail 1", "Detail 2"});
 	}
 	dls->Items().push_back({"A longer item", "Some extra detail", "Another string of superflous detail text"});
+	dls->ColumnWidths() = {70, 150, 200};
 	dls->Refresh();
 	
 	frm->AddControls({lst, tst, dls});

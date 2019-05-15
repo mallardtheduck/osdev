@@ -1,4 +1,4 @@
-#include <gui/listbox.hpp>
+#include <gui/detaillist.hpp>
 #include <gui/defaults.hpp>
 #include <gui/drawing.hpp>
 #include <dev/keyboard.h>
@@ -6,17 +6,20 @@
 #include <cctype>
 #include <algorithm>
 
+#include <util/tinyformat.hpp>
+
 namespace btos_api{
 namespace gui{
 	
 const auto scrollbarSize = 17;
 
-ListBox::ListBox(const gds::Rect &r, bool sH) : 
+DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bool sH) : 
 	outerRect(r), 
 	rect(sH ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h}),
+	cols(c),
 	scrollHoriz(sH){
-	auto info = fonts::GetListBoxFont().Info();
-	fontHeight = (info.maxH * fonts::GetListBoxTextSize()) / info.scale;
+	auto info = fonts::GetDetailListFont().Info();
+	fontHeight = (info.maxH * fonts::GetDetailListTextSize()) / info.scale;
 	
 	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
 	IControl::BindToParent(*vscroll);
@@ -26,7 +29,10 @@ ListBox::ListBox(const gds::Rect &r, bool sH) :
 		vOffset = v;
 	});
 	
+	UpdateDisplayState();
+	
 	if(scrollHoriz){
+		CalculateColumnWidths();
 		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
 		IControl::BindToParent(*hscroll);
 		
@@ -35,27 +41,57 @@ ListBox::ListBox(const gds::Rect &r, bool sH) :
 			hOffset = v;
 		});
 	}
-	
-	UpdateDisplayState();
 }
 
-void ListBox::UpdateDisplayState(bool changePos){
-	visibleItems = rect.h / fontHeight;
+void DetailList::CalculateColumnWidths(){
+	colWidths.resize(cols.size());
+	for(size_t i = 0; i < cols.size(); ++i){
+		uint32_t maxW = colItems[i].measures.w;
+		for(const auto &di : drawItems){
+			if(di.size() > i && di[i].measures.w > maxW) maxW = di[i].measures.w;
+		}
+		colWidths[i] = maxW;
+	}
+	while(std::accumulate(colWidths.begin(), colWidths.end(), colWidths.size()) > rect.w){
+		auto maxIt = std::max_element(colWidths.begin(), colWidths.end());
+		--*maxIt;
+	}
+}
+
+void DetailList::UpdateDisplayState(bool changePos){
+	if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+	
+	visibleItems = (rect.h / fontHeight) - 1;
 	if(changePos){
 		if(selectedItem < vOffset) vOffset = selectedItem;
 		if(selectedItem >= vOffset + (visibleItems - 1)) vOffset = std::max<int32_t>(0, (int32_t)(selectedItem - (visibleItems - 1)));
 	}
 	
-	uint32_t maxTextW = 0;
 	drawItems.resize(items.size());
 	for(size_t i = 0; i < items.size(); ++i){
-		auto &di = drawItems[i];
-		auto &it = items[i];
-		if(di.text != it || !di.measures.w){
-			di.text = it;
-			di.measures = surf->MeasureText(it, fonts::GetListBoxFont(), fonts::GetListBoxTextSize());
+		drawItems[i].resize(items[i].size());
+		for(size_t j = 0; j < items[i].size(); ++j){
+			auto &di = drawItems[i][j];
+			auto &it = items[i][j];
+			if(di.text != it || !di.measures.w){
+				di.text = it;
+				di.measures = surf->MeasureText(it, fonts::GetDetailListFont(), fonts::GetDetailListTextSize());
+				di.fittedText = "";
+				di.fittedWidth = 0;
+			}
 		}
-		if(di.measures.w > maxTextW) maxTextW = di.measures.w;
+	}
+	
+	colItems.resize(cols.size());
+	for(size_t i = 0; i < cols.size(); ++i){
+		auto &di = colItems[i];
+		auto &ci = cols[i];
+		if(di.text != ci || !di.measures.w){
+			di.text = ci;
+			di.measures = surf->MeasureText(ci, fonts::GetDetailListFont(), fonts::GetDetailListTextSize());
+			di.fittedText = "";
+			di.fittedWidth = 0;
+		}
 	}
 	
 	if(vscroll){
@@ -74,12 +110,13 @@ void ListBox::UpdateDisplayState(bool changePos){
 	}
 	
 	if(hscroll){
-		if(maxTextW > rect.w - 2){
+		auto overallWidth = std::accumulate(colWidths.begin(), colWidths.end(), colWidths.size());
+		if(overallWidth > rect.w - 2){
 			hscroll->Enable();
-		 	hscroll->SetLines(maxTextW - (rect.w - 2));
+		 	hscroll->SetLines(overallWidth - (rect.w - 2));
 		 	hscroll->SetPage(rect.w - 2);
 		 	hscroll->SetValue(hOffset);
-		 	hscroll->SetStep(fonts::GetListBoxTextSize() / 2);
+		 	hscroll->SetStep(fonts::GetDetailListTextSize() / 2);
 		}else{
 			hscroll->Disable();
 			hscroll->SetLines(1);
@@ -87,10 +124,33 @@ void ListBox::UpdateDisplayState(bool changePos){
 			hscroll->SetValue(0);
 			hOffset = 0;
 		}
+	}else{
+		CalculateColumnWidths();
 	}
 }
 
-EventResponse ListBox::HandleEvent(const wm_Event &e){
+std::string DetailList::FitTextToCol(DrawItem &item, size_t colIndex){
+	auto width = colWidths[colIndex];
+	if(item.fittedWidth == width) return item.fittedText;
+	if(item.measures.w < width){
+		item.fittedWidth = width;
+		item.fittedText = item.text;
+		return item.text;	
+	}
+	
+	std::string suffix = "...";
+	if(width < surf->MeasureText(suffix, fonts::GetDetailListFont(), fonts::GetDetailListTextSize()).w) suffix = "";
+	std::string text = item.text;
+	while(surf->MeasureText(text + suffix, fonts::GetDetailListFont(), fonts::GetDetailListTextSize()).w > width){
+		text.pop_back();
+	}
+	
+	item.fittedText = text + suffix;
+	item.fittedWidth = width;
+	return item.fittedText;
+}
+
+EventResponse DetailList::HandleEvent(const wm_Event &e){
 	bool handled = false;
 	if(e.type == wm_EventType::Keyboard && !(e.Key.code & KeyFlags::KeyUp)){
 		uint16_t code = KB_code(e.Key.code);
@@ -138,7 +198,10 @@ EventResponse ListBox::HandleEvent(const wm_Event &e){
 			auto oldSelectedItem = selectedItem;
 			char c = KB_char(e.Key.code);
 			c = std::tolower(c);
-			auto finder = [&](const std::string &item){return !item.empty() && std::tolower(item.front()) == c;};
+			auto finder = [&](const std::vector<std::string> &item){
+				return !item.empty() && !item.front().empty() && std::tolower(item.front().front()) == c;
+				
+			};
 			auto it = std::find_if(begin(items) + selectedItem + 1, end(items), finder);
 			if(it == end(items)) it = std::find_if(begin(items), end(items), finder);
 			if(it != end(items)) selectedItem = it - begin(items);
@@ -150,7 +213,7 @@ EventResponse ListBox::HandleEvent(const wm_Event &e){
 		if(InRect(e.Pointer.x, e.Pointer.y, rect)){
 			if(e.type == wm_EventType::PointerButtonUp){
 				auto oldSelectedItem = selectedItem;
-				selectedItem = ((e.Pointer.y - outerRect.y) / fontHeight) + vOffset;
+				selectedItem = ((e.Pointer.y - outerRect.y) / fontHeight) + vOffset - 1;
 				if(selectedItem < items.size()) update = oldSelectedItem != selectedItem;
 				handled = true;
 				UpdateDisplayState();
@@ -169,38 +232,65 @@ EventResponse ListBox::HandleEvent(const wm_Event &e){
 	return {handled};
 }
 
-void ListBox::Paint(gds::Surface &s){
+void DetailList::Paint(gds::Surface &s){
 	if(update || !surf){
-		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
 		UpdateDisplayState(false);
 		
 		uint32_t inW = rect.w - 1;
 		uint32_t inH = rect.h - 1;
 		
 		auto bkgCol = colours::GetBackground().Fix(*surf);
-		auto txtCol = colours::GetListBoxText().Fix(*surf);
+		auto txtCol = colours::GetDetailListText().Fix(*surf);
 		auto border = colours::GetBorder().Fix(*surf);
 		auto selCol = colours::GetSelection().Fix(*surf);
+		auto hdrCol = colours::GetDetailListHeader().Fix(*surf);
 		
-		auto topLeft = colours::GetListBoxLowLight().Fix(*surf);
-		auto bottomRight = colours::GetListBoxHiLight().Fix(*surf);
+		auto topLeft = colours::GetDetailListLowLight().Fix(*surf);
+		auto bottomRight = colours::GetDetailListHiLight().Fix(*surf);
 		surf->Clear();
 		surf->BeginQueue();
 		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		for(auto i = vOffset; i < items.size() && i < vOffset + (inH / fontHeight) + 1; ++i){
-			auto &cItem = drawItems[i];
+
+		surf->Box({1, 1, inW, fontHeight}, hdrCol, hdrCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		
+		for(size_t i = 0; i < cols.size(); ++i){
+			auto &cItem = colItems[i];
 			
+			auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + i, i);
+			auto textX = ((int32_t)colOffset + 2) - (int32_t)hOffset;
 			auto textY = std::max<int32_t>(((fontHeight + cItem.measures.h) / 2), 0);
-			textY += (i - vOffset) * fontHeight;
+			
+			auto text = FitTextToCol(cItem, i);
+			
+			surf->Text({textX, textY}, text, fonts::GetDetailListFont(), fonts::GetDetailListTextSize(), txtCol);
+		}
+		surf->Line({1, (int32_t)fontHeight}, {(int32_t)inW, (int32_t)fontHeight}, border);
+		
+		auto visibleItems = (inH / fontHeight);
+		
+		for(auto i = vOffset; i < items.size() && i < vOffset + visibleItems; ++i){
 			if(i == selectedItem){
-				int32_t selY = fontHeight * (i - vOffset);
+				int32_t selY = fontHeight * ((i + 1) - vOffset);
 				surf->Box({0, selY, inW, fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 				if(hasFocus){
 					auto selFocus = colours::GetSelectionFocus().Fix(*surf);
 					surf->Box({0, selY, inW, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
 				}
 			}
-			surf->Text({2 - (int32_t)hOffset, textY}, cItem.text, fonts::GetListBoxFont(), fonts::GetListBoxTextSize(), txtCol);
+			for(size_t j = 0; j < items[i].size(); ++j){
+				if(j > cols.size()) continue;
+				auto &cItem = drawItems[i][j];
+				auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + j, j);
+				if(colOffset + cItem.measures.w < hOffset) continue;
+				
+				auto textX = ((int32_t)colOffset + 2) - (int32_t)hOffset;
+				auto textY = std::max<int32_t>(((fontHeight + cItem.measures.h) / 2), 0);
+				textY += ((i + 1) - vOffset) * fontHeight;
+				
+				auto text = FitTextToCol(cItem, j);
+				
+				surf->Text({textX, textY}, text, fonts::GetDetailListFont(), fonts::GetDetailListTextSize(), txtCol);
+			}
 		}
 		drawing::Border(*surf, {0, 0, inW, inH}, border);
 		drawing::BevelBox(*surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
@@ -219,22 +309,22 @@ void ListBox::Paint(gds::Surface &s){
 	}
 }
 
-gds::Rect ListBox::GetPaintRect(){
+gds::Rect DetailList::GetPaintRect(){
 	return outerRect;
 }
 
-gds::Rect ListBox::GetInteractRect(){
+gds::Rect DetailList::GetInteractRect(){
 	return outerRect;
 }
 
-uint32_t ListBox::GetSubscribed(){
+uint32_t DetailList::GetSubscribed(){
 	auto ret = wm_KeyboardEvents | wm_EventType::PointerButtonUp | wm_EventType::PointerButtonDown;
 	if(hscroll) ret |= hscroll->GetSubscribed();
 	if(vscroll) ret |= vscroll->GetSubscribed();
 	return ret;
 }
 
-void ListBox::Focus(){
+void DetailList::Focus(){
 	if(!hasFocus){
 		update = true;
 		hasFocus = true;
@@ -242,7 +332,7 @@ void ListBox::Focus(){
 	}
 }
 
-void ListBox::Blur(){
+void DetailList::Blur(){
 	if(hasFocus){
 		update = true;
 		hasFocus = false;
@@ -250,45 +340,54 @@ void ListBox::Blur(){
 	}
 }
 
-uint32_t ListBox::GetFlags(){
+uint32_t DetailList::GetFlags(){
 	return 0;
 }
 
-void ListBox::Enable(){
+void DetailList::Enable(){
 	if(!enabled){
 		enabled = true;
 		IControl::Paint(rect);
 	}
 }
 
-void ListBox::Disable(){
+void DetailList::Disable(){
 	if(enabled){
 		enabled = false;
 		IControl::Paint(rect);
 	}
 }
 
-bool ListBox::IsEnabled(){
+bool DetailList::IsEnabled(){
 	return enabled;
 }
 
-size_t ListBox::GetValue(){
+size_t DetailList::GetValue(){
 	return selectedItem;
 }
 
-void ListBox::SetValue(size_t idx){
+void DetailList::SetValue(size_t idx){
 	if(selectedItem == idx) return;
 	selectedItem = idx;
 	update = true;
 }
 
-std::vector<std::string> &ListBox::Items(){
+std::vector<std::vector<std::string>> &DetailList::Items(){
 	return items;
 }
 
-void ListBox::Refresh(){
+std::vector<std::string> &DetailList::Columns(){
+	return cols;
+}
+
+std::vector<uint32_t> &DetailList::ColumnWidths(){
+	return colWidths;
+}
+
+void DetailList::Refresh(){
 	update = true;
 	IControl::Paint(outerRect);
+	colWidths.resize(cols.size());
 }
 
 }
