@@ -19,18 +19,10 @@ void output_rescs(std::istream &stream){
 	}
 }
 
-std::string elf_get_string(Elf64_Word offset, std::string filename){
-	int fd = open(filename.c_str(), O_RDONLY, 0);
-	Elf *e = elf_begin(fd, ELF_C_READ, NULL);
+std::string elf_get_section_name(Elf64_Word offset, Elf *e){
 	size_t shidx;
 	elf_getshstrndx(e, &shidx);
-	Elf_Scn *scn = elf_getscn(e, shidx);
-	Elf_Data *data = elf_getdata(scn, NULL);
-	std::string ret = (char*)(data->d_buf) + offset;
-	free(data->d_buf);
-	elf_end(e);
-	close(fd);
-	return ret;
+	return elf_strptr(e, shidx, offset);
 }
 
 void output_rescs_from_file(const std::string &filename){
@@ -40,7 +32,7 @@ void output_rescs_from_file(const std::string &filename){
 	GElf_Shdr shdr;
 	while ((scn = elf_nextscn(e, scn))) {
 		gelf_getshdr(scn, &shdr);
-		if (elf_get_string(shdr.sh_name, filename) == "resc") {
+		if (shdr.sh_type == SHT_PROGBITS && elf_get_section_name(shdr.sh_name, e) == "resc") {
 			/* found the resources, go print it. */
 			break;
 		}
