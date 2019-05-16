@@ -76,6 +76,7 @@ import-files:=\
  data/btos/system/dm.elx \
  data/btos/drivers/ps2.sys \
  data/btos/lib/gui.ell \
+ data/btos/lib/resc.ell \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -309,6 +310,9 @@ data/btos/drivers/ps2.sys: ../../modules/hwpnp/ps2/ps2.sys create.directories
 	cp $< $@
 	
 data/btos/lib/gui.ell: ../../user/libs/gui/gui.ell
+	cp $< $@
+	
+data/btos/lib/resc.ell: ../../user/libs/resc/resc.ell
 	cp $< $@
 
 create.directories: Makefile

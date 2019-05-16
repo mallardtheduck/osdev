@@ -57,3 +57,5 @@ src/packages/kernel/copy.grub
 create.directories
 src/packages/*/data
 .fuse_hidden*
+*.tar.h
+

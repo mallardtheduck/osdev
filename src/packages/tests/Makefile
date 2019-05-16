@@ -22,6 +22,7 @@ import-files:= \
  data/tests/testsw.elx \
  data/tests/guitest.elx \
  data/tests/cltzbench.elx \
+ data/tests/resctest.elx \
 
 all: ../$(output-name)
 pkg-files:= $(shell find pkgfiles -type f)
@@ -87,6 +88,9 @@ data/tests/guitest.elx: ../../user/libs/gui/guitest.elx
 	cp $< $@
 
 data/tests/cltzbench.elx: ../../user/tests/cltzbench/cltzbench.elx
+	cp $< $@
+
+data/tests/resctest.elx: ../../user/libs/resc/resctest.elx
 	cp $< $@
 
 create.directories:
