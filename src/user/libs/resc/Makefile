@@ -1,5 +1,7 @@
 OUTPUT-NAME := resctest.elx
 LIBRARY-NAME := resc.ell
+RESC-TAR-NAME := resctest_resc.tar
+RESC-VAR-NAME := resctest_resc
 
 DESTINATION := $(HOME)/Projects/os/cross/i686-pc-btos
 
@@ -24,6 +26,7 @@ ASFILES := $(shell find . -type f -name "*.s")
 CFILES := $(shell find . -type f -name "*.c")
 CPPFILES := $(shell find . -type f -name "*.cpp" -not -name "main.cpp")
 MAINCPP := main.cpp
+RESCFILES := $(shell find resc -type f)
 
 ASOBJS := $(ASFILES:.s=.o)
 COBJS := $(CFILES:.c=.o)
@@ -50,8 +53,8 @@ dummy.delete:
 $(LIBRARY-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile
 	$(LINK) $(LIB-LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LIB-LINK-OPTIONS)
 
-$(OUTPUT-NAME): $(LIBRARY-NAME) $(MAINOBJ) Makefile resc.tar.o
-	$(LINK) $(LINK-FLAGS) $(MAINOBJ) resc.tar.o $(LINK-OPTIONS)
+$(OUTPUT-NAME): $(LIBRARY-NAME) $(MAINOBJ) Makefile resctest_resc.tar.o
+	$(LINK) $(LINK-FLAGS) $(MAINOBJ) resctest_resc.tar.o $(LINK-OPTIONS)
 
 .s.o: %.s
 	$(BUILD-AS) $< -o $@ $(BUILD-AS-OPTIONS)
@@ -63,10 +66,10 @@ $(OUTPUT-NAME): $(LIBRARY-NAME) $(MAINOBJ) Makefile resc.tar.o
 	$(BUILD-CPP) -MMD -MP $(BUILD-CPP-FLAGS) $< -o $@ $(BUILD-CPP-OPTIONS)
 
 $(CPPOBJS) $(COBJS) $(MAINOBJ) $(ASOBJS): Makefile
-$(CPPOBJS) $(COBJS) $(MAINOBJ): resc.tar.h
+$(CPPOBJS) $(COBJS) $(MAINOBJ): $(RESC-TAR-NAME).h
 
-resc.tar.h resc.tar.o: resc.tar
-	../../../scripts/elfembed.sh resc.tar resc
+$(RESC-TAR-NAME).h $(RESC-TAR-NAME).o: $(RESC-TAR-NAME)
+	../../../scripts/elfembed.sh $(RESC-TAR-NAME) resc $(RESC-VAR-NAME)
 	
-resc.tar: $(find resc -type f)
+$(RESC-TAR-NAME): $(RESCFILES)
 	tar cf $@ -C resc .

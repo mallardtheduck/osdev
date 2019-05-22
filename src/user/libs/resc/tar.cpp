@@ -179,6 +179,7 @@ namespace tar
 
         void _read_header(std::istream& inp, tar_header* header)
         {
+                LOG("Reading TAR header at %lld.\n", (int64_t)inp.tellg());
                 inp.read((char*)header, sizeof(tar_header));
         }
 
@@ -293,7 +294,8 @@ namespace tar
         		return _inp.tellg();
         }
         
-        bool reader::is_next_directory(){
+        bool reader::is_next_directory()
+        {
         	_cache_header();
         	return _cached_header_data.filetype == tar_file_type_directory;
         }
@@ -308,7 +310,10 @@ namespace tar
 
         void reader::skip_next_file()
         {
+                LOG("skip_next_file: size: %lld\n", (int64_t)get_next_file_size());
+                LOG("tellg before %lld.\n", (int64_t)_inp.tellg());
                 _inp.seekg(get_next_file_size(), std::ios::cur);
+                LOG("tellg after %lld.\n", (int64_t)_inp.tellg());
 
                 _cached_header_data_valid = false;
                 tar::_seek_to_next_header(_inp);

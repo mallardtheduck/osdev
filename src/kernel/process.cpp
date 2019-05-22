@@ -722,9 +722,11 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 			sch_yield();
 			continue;
 		}
-		proc->msg_buffers[header.to]=malloc(header.length);
-		memcpy(proc->msg_buffers[header.to], header.content, header.length);
-		header.content=proc->msg_buffers[header.to];
+		if(header.content && header.length){
+			proc->msg_buffers[header.to]=malloc(header.length);
+			memcpy(proc->msg_buffers[header.to], header.content, header.length);
+			header.content=proc->msg_buffers[header.to];
+		}
 		uint64_t ret = msg_send(header);
 		release_lock(proc->ulock);
 		release_lock(to->ulock);
