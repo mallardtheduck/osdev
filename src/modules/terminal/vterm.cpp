@@ -639,11 +639,16 @@ void vterm::create_terminal(char *command)
 			i64toa(new_id, new_terminal_id, 10);
 			setenv(terminal_var, new_terminal_id, 0, getpid());
 			cmdLine cmd = parse_cmd(command);
-			pid_t pid=spawn(cmd.cmd, cmd.argc, cmd.argv);
-			free_cmd(cmd);
-			setenv(terminal_var, old_terminal_id, 0, getpid());
-			vterm_options opts;
-			if(!pid) terminals->get(new_id)->close(opts);
+			if(cmd.cmd){
+				pid_t pid=spawn(cmd.cmd, cmd.argc, cmd.argv);
+				free_cmd(cmd);
+				setenv(terminal_var, old_terminal_id, 0, getpid());
+				vterm_options opts;
+				if(!pid) terminals->get(new_id)->close(opts);
+			}else{
+				vterm_options opts;
+				terminals->get(new_id)->close(opts);
+			}
 		}
 	}
 }
