@@ -12,11 +12,13 @@ using namespace btos_api::gds;
 
 extern "C" uint64_t GDS_LoadPNG(int fd){
 	FILE *file = fdopen(fd, "r");
-	ok_png *image = ok_png_read(file, OK_PNG_COLOR_FORMAT_BGRA);
+	ok_png *image = ok_png_read(file, OK_PNG_INFO_ONLY);
 	if(image && file){
 		size_t width = image->width;
 		size_t height = image->height;
 		size_t pixels = width * height;
+		ok_png_free(image);
+		fseek(file, 0, SEEK_SET);
 		
 		auto space = SHMSpace(bt_shm_flags::Normal);
 		uint64_t shmRegion = space.ID();
@@ -24,10 +26,10 @@ extern "C" uint64_t GDS_LoadPNG(int fd){
 		size_t size = pixels * 4;
 		size_t pages = size / 4096;
 		if(pages < size) ++pages;
-		uint32_t *data = (uint32_t*)memalign(4096, pages * 4096);
+		uint8_t *data = (uint8_t*)memalign(4096, pages * 4096);
 		
 		auto mapping = SHMMapping(shmRegion, (void*)data, 0, pages, bt_shm_flags::Normal);
-		memcpy(mapping.Address(), image->data, size);
+		image = ok_png_read_to_buffer(file, data, 0, OK_PNG_COLOR_FORMAT_BGRA);
 		ok_png_free(image);
 		fclose(file);
 		
