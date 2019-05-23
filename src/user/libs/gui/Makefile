@@ -1,5 +1,7 @@
 OUTPUT-NAME := guitest.elx
 LIBRARY-NAME := gui.ell
+RESC-TAR-NAME := guitest_resc.tar
+RESC-VAR-NAME := guitest_resc
 
 DESTINATION := $(HOME)/Projects/os/cross/i686-pc-btos
 
@@ -16,7 +18,7 @@ LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L. -L../libgds
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L. -L../libgds -L../libwm
 AR-FLAGS := rcs -o $(LIBRARY-NAME)
-LINK-OPTIONS := -lgds -lwm -lgui -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib
+LINK-OPTIONS := -Wl,-rpath-link,../../../3rdparty/install/btos/lib -lgds -lwm -lgui -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib -lresc
 LIB-LINK-OPTIONS := -lgds -lwm -lgcc_s -lstdc++ -lbtoscore -lbtoslib -lm
 
 BOOTFILE := boot.o
@@ -24,6 +26,7 @@ ASFILES := $(shell find . -type f -name "*.s")
 CFILES := $(shell find . -type f -name "*.c")
 CPPFILES := $(shell find . -type f -name "*.cpp" -not -name "main.cpp")
 MAINCPP := main.cpp
+RESCFILES := $(shell find resc -type f)
 
 ASOBJS := $(ASFILES:.s=.o)
 COBJS := $(CFILES:.c=.o)
@@ -50,14 +53,23 @@ dummy.delete:
 $(LIBRARY-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile
 	$(LINK) $(LIB-LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LIB-LINK-OPTIONS)
 
-$(OUTPUT-NAME): $(LIBRARY-NAME) $(MAINOBJ) Makefile
-	$(LINK) $(LINK-FLAGS) $(MAINOBJ) $(LINK-OPTIONS)
+$(OUTPUT-NAME): $(MAINOBJ) $(LIBRARY-NAME) $(RESC-TAR-NAME).o Makefile
+	$(LINK) $(LINK-FLAGS) $(MAINOBJ) $(RESC-TAR-NAME).o $(LINK-OPTIONS)
 
-.s.o: %.s Makefile
+.s.o: %.s
 	$(BUILD-AS) $< -o $@ $(BUILD-AS-OPTIONS)
 
-.c.o: %.c Makefile
+.c.o: %.c
 	$(BUILD-C) -MMD -MP $(BUILD-C-FLAGS) $< -o $@ $(BUILD-C-OPTIONS)
 
-.cpp.o: %.cpp Makefile
+.cpp.o: %.cpp
 	$(BUILD-CPP) -MMD -MP $(BUILD-CPP-FLAGS) $< -o $@ $(BUILD-CPP-OPTIONS)
+
+$(CPPOBJS) $(COBJS) $(MAINOBJ) $(ASOBJS): Makefile
+$(CPPOBJS) $(COBJS) $(MAINOBJ): $(RESC-TAR-NAME).h
+
+$(RESC-TAR-NAME).h $(RESC-TAR-NAME).o: $(RESC-TAR-NAME)
+	../../../scripts/elfembed.sh $(RESC-TAR-NAME) resc $(RESC-VAR-NAME)
+	
+$(RESC-TAR-NAME): $(RESCFILES)
+	tar cf $@ -C resc .

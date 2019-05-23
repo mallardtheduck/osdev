@@ -159,7 +159,6 @@ void FastBox(GD::Image &im, int32_t x, int32_t y, uint32_t w, uint32_t h, uint32
 std::unique_ptr<gds_TextMeasurements> MeasureText(const gds_TextParameters &p, std::string text){
 	static std::unique_ptr<GD::Image> image {new GD::Image(1, 1, false)};
 	
-	uint64_t start = bt_rtc_millis();
 	gdFTStringExtra ftex;
 	ftex.flags = gdFTEX_RESOLUTION | gdFTEX_XSHOW | gdFTEX_NORENDER;
 	ftex.vdpi = 72;
@@ -168,7 +167,6 @@ std::unique_ptr<gds_TextMeasurements> MeasureText(const gds_TextParameters &p, s
 	auto info = GetFontManager()->GetFont(p.fontID);
 	int brect[] = {0, 0, 0, 0, 0, 0, 0, 0};
 	if(fontfile != "") image->StringFT(brect, 0, (char*)fontfile.c_str(), p.size, 0, 0, 0, text, &ftex);
-	uint64_t mid = bt_rtc_millis();
 	std::vector<double> xshowVec;
 	xshowVec.reserve(text.length());
 	if(ftex.xshow){
@@ -191,9 +189,5 @@ std::unique_ptr<gds_TextMeasurements> MeasureText(const gds_TextParameters &p, s
 			ret->charX[i] = xshowVec[i];
 		}
 	}
-	uint64_t end = bt_rtc_millis();
-	std::stringstream ss;
-	ss << "GDS: MeasureText took: " << end - start << "ms. (" << mid - start << "ms in StringFT)" << std::endl;
-	bt_zero(ss.str().c_str());
 	return ret;
 }

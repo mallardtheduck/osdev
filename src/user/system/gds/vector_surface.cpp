@@ -157,7 +157,6 @@ void VectorSurface::Resize(size_t w, size_t h, bool i){
 
 std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){	
 	if(!cache || update || !Contains(cacheRect, renderRect)){
-		uint64_t start = bt_rtc_millis();
 		OrderOps();
 		vector<VectorOp> sops;
 		for(const auto &op : ops){
@@ -204,10 +203,6 @@ std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
 			if(p) bsurf.SetOpParameters(p);
 		}
 		cacheRect = renderRect;
-		uint64_t end = bt_rtc_millis();
-		stringstream ss;
-		ss << "GDS: Vector surface rendered in " << end - start << "ms. Ops: " << opsRendered << endl;
-		bt_zero(ss.str().c_str());
 		update = false;
 	}
 	return cache->Render(100);

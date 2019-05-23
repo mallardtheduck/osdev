@@ -12,7 +12,7 @@ using namespace btos_api::gds;
 
 extern "C" uint64_t GDS_LoadPNG(int fd){
 	FILE *file = fdopen(fd, "r");
-	ok_png *image = ok_png_read(file, (ok_png_decode_flags)(OK_PNG_COLOR_FORMAT_RGBA | OK_PNG_PREMULTIPLIED_ALPHA));
+	ok_png *image = ok_png_read(file, OK_PNG_COLOR_FORMAT_BGRA);
 	if(image && file){
 		size_t width = image->width;
 		size_t height = image->height;
@@ -33,7 +33,8 @@ extern "C" uint64_t GDS_LoadPNG(int fd){
 		
 		Surface shmSurf(gds_SurfaceType::Memory, width, height, 100, gds_ColourType::True, shmRegion, 0);
 		uint64_t bmpSurf = GDS_NewSurface(gds_SurfaceType::Bitmap, width, height, 100, gds_ColourType::True);
-		GDS_Blit(shmSurf.GetID(), bmpSurf, 0, 0, width, height, 0, 0, width, height);
+		GDS_SelectSurface(bmpSurf);
+		GDS_Blit(shmSurf.GetID(), 0, 0, width, height, 0, 0, width, height);
 		return bmpSurf;
 	}else{
 		if(file) fclose(file);
