@@ -60,6 +60,8 @@ uint32_t GDS_TextChar(int32_t x, int32_t y, char c, uint32_t fontID, uint32_t si
 gds_DrawingOp GDS_Blit_Op(uint64_t src, uint32_t srcX, uint32_t srcY, uint32_t srcW, uint32_t srcH, int32_t dstX, int32_t dstY, uint32_t dstW, uint32_t dstH, uint32_t scale GDS_DEFAULT(100), uint32_t flags GDS_DEFAULT(0));
 uint32_t GDS_Blit(uint64_t src, uint32_t srcX, uint32_t srcY, uint32_t srcW, uint32_t srcH, int32_t dstX, int32_t dstY, uint32_t dstW, uint32_t dstH, uint32_t scale GDS_DEFAULT(100), uint32_t flags GDS_DEFAULT(0));
 
+uint64_t GDS_LoadPNG(int fd);
+
 #ifdef __cplusplus
 }
 #endif
