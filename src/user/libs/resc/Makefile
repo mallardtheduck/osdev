@@ -18,8 +18,8 @@ LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L. -L../libgds
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L. -L../libgds -L../libwm
 AR-FLAGS := rcs -o $(LIBRARY-NAME)
-LINK-OPTIONS := -L../../../3rdparty/install/btos/lib -lresc -lelf -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib
-LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lbtoscore -lbtoslib -lm
+LINK-OPTIONS := -Wl,-rpath-link,../../../3rdparty/install/btos/lib -lresc -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib
+LIB-LINK-OPTIONS := -L../../../3rdparty/install/btos/lib -lgcc_s -lstdc++ -lbtoscore -lbtoslib -lm -lelf
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")
