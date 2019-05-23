@@ -77,6 +77,7 @@ import-files:=\
  data/btos/drivers/ps2.sys \
  data/btos/lib/gui.ell \
  data/btos/lib/resc.ell \
+ data/btos/cmd/rescutil.elx \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -313,6 +314,9 @@ data/btos/lib/gui.ell: ../../user/libs/gui/gui.ell
 	cp $< $@
 	
 data/btos/lib/resc.ell: ../../user/libs/resc/resc.ell
+	cp $< $@
+
+data/btos/cmd/rescutil.elx: ../../user/cmds/rescutil/rescutil.elx
 	cp $< $@
 
 create.directories: Makefile
