@@ -10,13 +10,17 @@ namespace btos_api{
 namespace gui{
 	
 const auto scrollbarSize = 17;
+const auto checkSize = 17;
 
-ListBox::ListBox(const gds::Rect &r, bool sH) : 
+ListBox::ListBox(const gds::Rect &r, bool sH, bool mS) : 
 	outerRect(r), 
 	rect(sH ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h}),
-	scrollHoriz(sH){
+	scrollHoriz(sH),
+	multiSelect(mS)
+	{
 	auto info = fonts::GetListBoxFont().Info();
 	fontHeight = (info.maxH * fonts::GetListBoxTextSize()) / info.scale;
+	if(multiSelect && fontHeight < checkSize) fontHeight = checkSize;
 	
 	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
 	IControl::BindToParent(*vscroll);
@@ -31,10 +35,11 @@ ListBox::ListBox(const gds::Rect &r, bool sH) :
 		IControl::BindToParent(*hscroll);
 		
 		hscroll->OnChange([this] (uint32_t v) {
-			if(v != hOffset) update = true;
-			hOffset = v;
+			if(v != hOffset + (multiSelect ? checkSize : 0)) update = true;
+			hOffset = v - (multiSelect ? checkSize : 0);
 		});
 	}
+	if(multiSelect) hOffset = -checkSize;
 	
 	UpdateDisplayState();
 }
@@ -78,14 +83,14 @@ void ListBox::UpdateDisplayState(bool changePos){
 			hscroll->Enable();
 		 	hscroll->SetLines(maxTextW - (rect.w - 2));
 		 	hscroll->SetPage(rect.w - 2);
-		 	hscroll->SetValue(hOffset);
+		 	hscroll->SetValue(hOffset + (multiSelect ? checkSize : 0));
 		 	hscroll->SetStep(fonts::GetListBoxTextSize() / 2);
 		}else{
 			hscroll->Disable();
 			hscroll->SetLines(1);
 			hscroll->SetPage(1);
 			hscroll->SetValue(0);
-			hOffset = 0;
+			hOffset = (multiSelect ? -checkSize : 0);
 		}
 	}
 }
@@ -137,12 +142,17 @@ EventResponse ListBox::HandleEvent(const wm_Event &e){
 		}else if(!(code & KeyFlags::NonASCII)){
 			auto oldSelectedItem = selectedItem;
 			char c = KB_char(e.Key.code);
-			c = std::tolower(c);
-			auto finder = [&](const std::string &item){return !item.empty() && std::tolower(item.front()) == c;};
-			auto it = std::find_if(begin(items) + selectedItem + 1, end(items), finder);
-			if(it == end(items)) it = std::find_if(begin(items), end(items), finder);
-			if(it != end(items)) selectedItem = it - begin(items);
-			update = oldSelectedItem != selectedItem;
+			if(multiSelect && (c == ' ' || c == '\n')){
+				multiSelection[selectedItem] = !multiSelection[selectedItem];
+				update = true;
+			}else{
+				c = std::tolower(c);
+				auto finder = [&](const std::string &item){return !item.empty() && std::tolower(item.front()) == c;};
+				auto it = std::find_if(begin(items) + selectedItem + 1, end(items), finder);
+				if(it == end(items)) it = std::find_if(begin(items), end(items), finder);
+				if(it != end(items)) selectedItem = it - begin(items);
+				update = oldSelectedItem != selectedItem;
+			}
 			handled = true;
 			UpdateDisplayState();
 		}
@@ -152,6 +162,10 @@ EventResponse ListBox::HandleEvent(const wm_Event &e){
 				auto oldSelectedItem = selectedItem;
 				selectedItem = ((e.Pointer.y - outerRect.y) / fontHeight) + vOffset;
 				if(selectedItem < items.size()) update = oldSelectedItem != selectedItem;
+				if(multiSelect && (e.Pointer.x - outerRect.x) < checkSize + 1){
+					multiSelection[selectedItem] = !multiSelection[selectedItem];
+					update = true;
+				}
 				handled = true;
 				UpdateDisplayState();
 			}
@@ -194,13 +208,23 @@ void ListBox::Paint(gds::Surface &s){
 			textY += (i - vOffset) * fontHeight;
 			if(i == selectedItem){
 				int32_t selY = fontHeight * (i - vOffset);
-				surf->Box({0, selY, inW, fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+				surf->Box({1, selY, inW, fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 				if(hasFocus){
 					auto selFocus = colours::GetSelectionFocus().Fix(*surf);
-					surf->Box({0, selY, inW, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
+					surf->Box({1, selY, inW, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
 				}
 			}
 			surf->Text({2 - (int32_t)hOffset, textY}, cItem.text, fonts::GetListBoxFont(), fonts::GetListBoxTextSize(), txtCol);
+			
+			if(multiSelect){
+				int32_t chkY = fontHeight * (i - vOffset);
+				surf->Box({1, chkY, checkSize, checkSize}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+				drawing::BevelBox(*surf, {2, chkY + 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
+				if(multiSelection[i]){
+					surf->Line({5, chkY + 5}, {checkSize - 3, (chkY + checkSize) - 4}, txtCol, 2);
+					surf->Line({5,  (chkY + checkSize) - 4}, {checkSize - 3, chkY + 5}, txtCol, 2);
+				}
+			}
 		}
 		drawing::Border(*surf, {0, 0, inW, inH}, border);
 		drawing::BevelBox(*surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
@@ -282,6 +306,10 @@ void ListBox::SetValue(size_t idx){
 	update = true;
 }
 
+std::vector<bool> &ListBox::MulitSelections(){
+	return multiSelection;
+}
+
 std::vector<std::string> &ListBox::Items(){
 	return items;
 }
@@ -289,6 +317,7 @@ std::vector<std::string> &ListBox::Items(){
 void ListBox::Refresh(){
 	update = true;
 	IControl::Paint(outerRect);
+	multiSelection.resize(items.size());
 }
 
 }

@@ -37,8 +37,9 @@ uint64_t load_png_resc(const char *path){
 }
 
 void MoreForm(btos_api::wm::EventLoop &eloop){
-	auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{250, 50, 300, 500}, wm_WindowOptions::Default, "More Controls");
+	auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{200, 50, 600, 500}, wm_WindowOptions::Default, "More Controls");
 	auto lst = std::make_shared<btos_api::gui::ListBox>(gds::Rect{10, 10, 150, 200}, true);
+	auto lst2 = std::make_shared<btos_api::gui::ListBox>(gds::Rect{240, 10, 150, 200}, false, true);
 	auto tst = std::make_shared<btos_api::gui::TestControl>(gds::Rect{170, 10, 50, 50});
 	auto dls = std::make_shared<btos_api::gui::DetailList>(gds::Rect{10, 220, 280, 200}, std::vector<std::string>{"Col 1", "Col 2", "Col 3"}, true);
 	auto png = load_png_resc("logo.png");
@@ -51,9 +52,13 @@ void MoreForm(btos_api::wm::EventLoop &eloop){
 	for(auto i = 0; i < 100; ++i){
 		auto label = tfm::format("Item %s", i);
 		lst->Items().push_back(label);
+		lst2->Items().push_back(label);
 	}
 	lst->Items().push_back("A much, much longer item name...");
 	lst->Refresh();
+	lst2->Items().push_back("A much, much longer item name...");
+	lst2->Refresh();
+	
 	for(auto i = 0; i < 100; ++i){
 		auto label = tfm::format("Item %s", i);
 		dls->Items().push_back({label, "Detail 1", "Detail 2"});
@@ -62,7 +67,7 @@ void MoreForm(btos_api::wm::EventLoop &eloop){
 	dls->ColumnWidths() = {70, 150, 200};
 	dls->Refresh();
 	
-	frm->AddControls({lst, tst, dls, img});
+	frm->AddControls({lst, lst2, tst, dls, img});
 	eloop.AddWindow(frm);
 }
 
@@ -91,7 +96,7 @@ int main(){
 		auto sch = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{340, 35, 140, 17}, 100, 1, 10, 0, true);
 		auto scv = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{463, 60, 17, 140}, 100, 1, 10, 100, false);
 		auto txa = std::make_shared<btos_api::gui::TextArea>(gds::Rect{10, 100, 150, 100}, "A multi-line editable text area.\nWith some lines of text.\nAnother line.\nA further line.\nAn additional line.\nAn extra line.\nA superflous line.", true);
-		auto grp = std::make_shared<btos_api::gui::GroupBox>(gds::Rect{165, 110, 170, 150}, "Subformy within");
+		auto grp = std::make_shared<btos_api::gui::GroupBox>(gds::Rect{165, 110, 170, 110}, "Subformy within");
 		auto tst1 = std::make_shared<btos_api::gui::TestControl>(gds::Rect{350, 110, 100, 30});
 		tst1->OnEvent([] (const wm_Event &e){
 			tfm::printf("Test: EventType: %s\n", e.type);
@@ -103,7 +108,7 @@ int main(){
 		rgrp.AddButton(rd2, 2);
 		rgrp.AddButton(rd3, 3);
 		
-		auto sfrm = std::make_shared<btos_api::gui::SubForm>(gds::Rect{170, 130, 150, 120});
+		auto sfrm = std::make_shared<btos_api::gui::SubForm>(gds::Rect{170, 130, 150, 80});
 		auto sbtn = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 3");
 		sbtn->OnAction([&] {lbl2->SetText("Button 3");});
 		auto tst2 = std::make_shared<btos_api::gui::TestControl>(gds::Rect{10, 50, 100, 30});
@@ -114,8 +119,9 @@ int main(){
 		sfrm->AddControls({sbtn, tst2});
 		
 		auto mBtn = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 260, 100, 30}, "More...");
+		auto m2Btn = std::make_shared<btos_api::gui::Button>(gds::Rect{120, 260, 100, 30}, "Even more...");
 		
-		frm->AddControls({btn1, btn2, lbl1, lbl2, txt, sld, chk, rd1, rd2, rd3, sch, scv, txa, grp, sfrm, tst1, mBtn});
+		frm->AddControls({btn1, btn2, lbl1, lbl2, txt, sld, chk, rd1, rd2, rd3, sch, scv, txa, grp, sfrm, tst1, mBtn, m2Btn});
 		frm->OnClose([]{
 			tfm::printf("Form close.\n");
 			return false;

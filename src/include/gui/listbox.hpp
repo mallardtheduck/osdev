@@ -3,6 +3,7 @@
 
 #include "icontrol.hpp"
 #include "scrollbar.hpp"
+#include "checkbox.hpp"
 
 namespace btos_api{
 namespace gui{
@@ -14,6 +15,7 @@ private:
 	std::unique_ptr<gds::Surface> surf;
 	
 	std::vector<std::string> items;
+	std::vector<bool> multiSelection;
 	
 	struct DrawItem{
 		std::string text;
@@ -38,10 +40,11 @@ private:
 	std::unique_ptr<Scrollbar> vscroll;
 	
 	bool scrollHoriz;
+	bool multiSelect;
 	
 	void UpdateDisplayState(bool changePos = true);
 public:
-	ListBox(const gds::Rect &r, bool scrollHoriz = false);
+	ListBox(const gds::Rect &r, bool scrollHoriz = false, bool multiSelect = false);
 	
 	EventResponse HandleEvent(const wm_Event&);
 	void Paint(gds::Surface &surf);
@@ -57,6 +60,7 @@ public:
 	
 	size_t GetValue();
 	void SetValue(size_t idx);
+	std::vector<bool> &MulitSelections();
 	
 	std::vector<std::string> &Items();
 	void Refresh();
