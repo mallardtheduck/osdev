@@ -14,6 +14,7 @@ private:
 	std::unique_ptr<gds::Surface> surf;
 	
 	std::vector<std::vector<std::string>> items;
+	std::vector<std::shared_ptr<gds::Surface>> icons;
 	std::vector<std::string> cols;
 	
 	struct DrawItem{
@@ -27,6 +28,8 @@ private:
 	std::vector<uint32_t> colWidths;
 	std::vector<DrawItem> colItems;
 	
+	std::shared_ptr<gds::Surface> defaultIcon;
+	
 	size_t fontHeight;
 	
 	size_t itemHeight;
@@ -34,6 +37,7 @@ private:
 	size_t vOffset = 0;
 	size_t hOffset = 0;
 	size_t visibleItems = 0;
+	size_t iconsize = 0;
 	
 	bool update = false;
 	bool hasFocus = false;
@@ -48,7 +52,7 @@ private:
 	void CalculateColumnWidths();
 	std::string FitTextToCol(DrawItem &item, size_t colIndex);
 public:
-	DetailList(const gds::Rect &r, const std::vector<std::string> &cols, bool scrollHoriz = false);
+	DetailList(const gds::Rect &r, const std::vector<std::string> &cols, bool scrollHoriz = false, size_t iconsize = 0);
 	
 	EventResponse HandleEvent(const wm_Event&);
 	void Paint(gds::Surface &surf);
@@ -69,6 +73,10 @@ public:
 	std::vector<std::string> &Columns();
 	std::vector<uint32_t> &ColumnWidths();
 	void Refresh();
+	
+	void SetDefaultIcon(std::shared_ptr<gds::Surface> img);
+	void SetItemIcon(size_t idx, std::shared_ptr<gds::Surface> img);
+	void ClearItemIcons();
 };
 	
 }

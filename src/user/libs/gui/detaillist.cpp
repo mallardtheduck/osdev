@@ -13,11 +13,10 @@ namespace gui{
 	
 const auto scrollbarSize = 17;
 
-DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bool sH) : 
+DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bool sH, size_t is) : 
 	outerRect(r), 
 	rect(sH ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h}),
-	cols(c),
-	scrollHoriz(sH){
+	cols(c), iconsize(is), scrollHoriz(sH){
 	auto info = fonts::GetDetailListFont().Info();
 	fontHeight = (info.maxH * fonts::GetDetailListTextSize()) / info.scale;
 	
@@ -256,9 +255,10 @@ void DetailList::Paint(gds::Surface &s){
 		for(size_t i = 0; i < cols.size(); ++i){
 			auto &cItem = colItems[i];
 			
-			auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + i, i);
+			auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + i, i + iconsize + 1);
 			auto textX = ((int32_t)colOffset + 2) - (int32_t)hOffset;
 			auto textY = std::max<int32_t>(((fontHeight + cItem.measures.h) / 2), 0);
+			if((int32_t)colOffset + (int32_t)colWidths[i] < 0) continue;
 			
 			auto text = FitTextToCol(cItem, i);
 			
@@ -277,10 +277,15 @@ void DetailList::Paint(gds::Surface &s){
 					surf->Box({0, selY, inW, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
 				}
 			}
+			if(hOffset < iconsize && (icons[i] || defaultIcon)){
+				int32_t iconY = fontHeight * ((i + 1) - vOffset);
+				auto icon = icons[i] ? icons[i] : defaultIcon;
+				surf->Blit(*icon, {0, 0, iconsize, iconsize}, {1 - (int32_t)hOffset, iconY, iconsize, iconsize});
+			}
 			for(size_t j = 0; j < items[i].size(); ++j){
 				if(j > cols.size()) continue;
 				auto &cItem = drawItems[i][j];
-				auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + j, j);
+				auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + j, j + iconsize + 1);
 				if(colOffset + cItem.measures.w < hOffset) continue;
 				
 				auto textX = ((int32_t)colOffset + 2) - (int32_t)hOffset;
@@ -388,6 +393,20 @@ void DetailList::Refresh(){
 	update = true;
 	IControl::Paint(outerRect);
 	colWidths.resize(cols.size());
+	icons.resize(items.size());
+}
+
+void DetailList::SetDefaultIcon(std::shared_ptr<gds::Surface> img){
+	defaultIcon = img;
+}
+
+void DetailList::SetItemIcon(size_t idx, std::shared_ptr<gds::Surface> img){
+	icons[idx] = img;
+}
+
+void DetailList::ClearItemIcons(){
+	icons.clear();
+	icons.resize(items.size());
 }
 
 }

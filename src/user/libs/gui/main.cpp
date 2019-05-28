@@ -42,7 +42,7 @@ void MoreForm(btos_api::wm::EventLoop &eloop){
 	auto lst = std::make_shared<btos_api::gui::ListBox>(gds::Rect{10, 10, 150, 200}, true);
 	auto lst2 = std::make_shared<btos_api::gui::ListBox>(gds::Rect{240, 10, 150, 200}, false, true);
 	auto tst = std::make_shared<btos_api::gui::TestControl>(gds::Rect{170, 10, 50, 50});
-	auto dls = std::make_shared<btos_api::gui::DetailList>(gds::Rect{10, 220, 280, 200}, std::vector<std::string>{"Col 1", "Col 2", "Col 3"}, true);
+	auto dls = std::make_shared<btos_api::gui::DetailList>(gds::Rect{10, 220, 280, 200}, std::vector<std::string>{"Col 1", "Col 2", "Col 3"}, true, 16);
 	auto png = load_png_resc("logo.png");
 	auto img = std::make_shared<btos_api::gui::Image>(gds::Rect{10, 430, 170, 60}, png);
 	auto png2 = load_png_resc("button_img.png");
@@ -69,6 +69,10 @@ void MoreForm(btos_api::wm::EventLoop &eloop){
 	dls->Items().push_back({"A longer item", "Some extra detail", "Another string of superflous detail text"});
 	dls->ColumnWidths() = {70, 150, 200};
 	dls->Refresh();
+	auto icon = load_png_resc("list_icon.png");
+	dls->SetItemIcon(dls->Items().size() - 1, icon);
+	auto dicon = load_png_resc("list_default.png");
+	dls->SetDefaultIcon(dicon);
 	
 	frm->AddControls({lst, lst2, tst, dls, img, igb});
 	eloop.AddWindow(frm);
