@@ -4,7 +4,7 @@
 namespace btos_api{
 namespace gui{
 
-Image::Image(const gds::Rect &r, gds::Surface &&surf) : rect(r), img(std::move(surf)) {}
+Image::Image(const gds::Rect &r, std::shared_ptr<gds::Surface> i) : rect(r), img(i) {}
 	
 EventResponse Image::HandleEvent(const wm_Event&){
 	return {false};
@@ -16,8 +16,8 @@ void Image::Paint(gds::Surface &s){
 		auto bkgCol = colours::GetBackground().Fix(*surf);
 		
 		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		auto info = img.Info();
-		surf->Blit(img, {0, 0, info.w, info.h}, {0, 0, info.w, info.h});
+		auto info = img->Info();
+		surf->Blit(*img, {0, 0, info.w, info.h}, {0, 0, info.w, info.h});
 	}
 	
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);

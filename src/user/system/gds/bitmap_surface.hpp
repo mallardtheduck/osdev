@@ -26,7 +26,7 @@ public:
 	virtual gds_SurfaceType::Enum GetType(); 
 	virtual uint32_t GetColour(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	virtual std::shared_ptr<GD::Image> Render(uint32_t scale);
-	virtual void RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h);
+	virtual void RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h, uint32_t flags);
 	virtual void SetOpParameters(std::shared_ptr<gds_OpParameters>);
 	virtual std::shared_ptr<gds_OpParameters> GetOpParameters(uint32_t op);
 	virtual void ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum mode);

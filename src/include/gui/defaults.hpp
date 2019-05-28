@@ -38,6 +38,11 @@ namespace colours{
 	gds::Colour GetButtonText();
 	gds::Colour GetButtonFocus();
 	
+	gds::Colour GetImageButtonColour();
+	gds::Colour GetImageButtonHiLight();
+	gds::Colour GetImageButtonLowLight();
+	gds::Colour GetImageButtonFocus();
+	
 	gds::Colour GetLabelText();
 	
 	gds::Colour GetTextBoxText();

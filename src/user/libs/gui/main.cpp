@@ -17,6 +17,7 @@
 #include <gui/listbox.hpp>
 #include <gui/detaillist.hpp>
 #include <gui/image.hpp>
+#include <gui/imagebutton.hpp>
 
 #include <wm/eventloop.hpp>
 #include <util/tinyformat.hpp>
@@ -27,13 +28,13 @@
 #include <unistd.h>
 #include "guitest_resc.tar.h"
 
-uint64_t load_png_resc(const char *path){
+std::shared_ptr<gds::Surface> load_png_resc(const char *path){
 	auto r = btos_api::resc::Resc_LocalOpen(guitest_resc_data, guitest_resc_size);
 	auto fd = btos_api::resc::Resc_OpenResc(r, path);
 	auto ret = GDS_LoadPNG(fd);
 	close(fd);
 	btos_api::resc::Resc_Close(r);
-	return ret;
+	return std::make_shared<gds::Surface>(std::move(gds::Surface::Wrap(ret, true)));
 }
 
 void MoreForm(btos_api::wm::EventLoop &eloop){
@@ -43,7 +44,9 @@ void MoreForm(btos_api::wm::EventLoop &eloop){
 	auto tst = std::make_shared<btos_api::gui::TestControl>(gds::Rect{170, 10, 50, 50});
 	auto dls = std::make_shared<btos_api::gui::DetailList>(gds::Rect{10, 220, 280, 200}, std::vector<std::string>{"Col 1", "Col 2", "Col 3"}, true);
 	auto png = load_png_resc("logo.png");
-	auto img = std::make_shared<btos_api::gui::Image>(gds::Rect{10, 430, 170, 60}, gds::Surface::Wrap(png, true));
+	auto img = std::make_shared<btos_api::gui::Image>(gds::Rect{10, 430, 170, 60}, png);
+	auto png2 = load_png_resc("button_img.png");
+	auto igb = std::make_shared<btos_api::gui::ImageButton>(gds::Rect{190, 430, 50, 50}, png2);
 	tst->OnEvent([] (const wm_Event &e){
 		tfm::printf("More Test: EventType: %s\n", e.type);
 		return true;
@@ -67,7 +70,7 @@ void MoreForm(btos_api::wm::EventLoop &eloop){
 	dls->ColumnWidths() = {70, 150, 200};
 	dls->Refresh();
 	
-	frm->AddControls({lst, lst2, tst, dls, img});
+	frm->AddControls({lst, lst2, tst, dls, img, igb});
 	eloop.AddWindow(frm);
 }
 

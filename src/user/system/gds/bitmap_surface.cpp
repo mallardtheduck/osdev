@@ -85,7 +85,7 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 				if(srcSurface) {
 					if(op.Blit.srcW == op.Blit.dstW && op.Blit.srcH == op.Blit.dstH){
 						//FastBlit(*srcImage, *image, op.Blit.srcX, op.Blit.srcY, op.Blit.dstX, op.Blit.dstY, op.Blit.dstW, op.Blit.dstH);
-						srcSurface->RenderTo(image, op.Blit.srcX, op.Blit.srcY, op.Blit.dstX, op.Blit.dstY, op.Blit.dstW, op.Blit.dstH);
+						srcSurface->RenderTo(image, op.Blit.srcX, op.Blit.srcY, op.Blit.dstX, op.Blit.dstY, op.Blit.dstW, op.Blit.dstH, op.Blit.flags);
 					}else{
 						auto srcImage = srcSurface->Render(op.Blit.scale);
 						if(srcImage){
@@ -221,8 +221,8 @@ std::unique_ptr<gds_TextMeasurements> BitmapSurface::MeasureText(const gds_TextP
 	return ::MeasureText(p, text);
 }
 
-void BitmapSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h){
-	FastBlit(*image, *dst, srcX, srcY, dstX, dstY, w, h);
+void BitmapSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h, uint32_t flags){
+	FastBlit(*image, *dst, srcX, srcY, dstX, dstY, w, h, flags);
 }
 
 std::shared_ptr<GD::Image> BitmapSurface::GetImage(){

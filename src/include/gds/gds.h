@@ -68,6 +68,7 @@ ENUM_START(gds_ColourType)
 	ENUM_SET(gds_ColourType, True, 					1),
 	ENUM_SET(gds_ColourType, AlphaEnable,			0),
 	ENUM_SET(gds_ColourType, AlphaDisable,			2),
+	ENUM_SET(gds_ColourType, SHM_Alpha255,			4),
 ENUM_END
 ENUM_TYPE(gds_ColourType);
 
@@ -115,6 +116,13 @@ ENUM_START(gds_ReorderMode)
 	ENUM_SET(gds_ReorderMode, Below, 4),
 ENUM_END
 ENUM_TYPE(gds_ReorderMode);
+
+ENUM_START(gds_BlitFlags)
+	ENUM_SET(gds_BlitFlags, Default, 0),
+	ENUM_SET(gds_BlitFlags, Overwrite, 1 << 0),
+	ENUM_SET(gds_BlitFlags, IgnoreAlpha, 1 << 1),
+ENUM_END
+ENUM_TYPE(gds_BlitFlags);
 
 struct gds_DrawingOp {
 	ENUM_NAME(gds_DrawingOpType) type;

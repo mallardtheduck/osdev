@@ -208,11 +208,11 @@ std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
 	return cache->Render(100);
 }
 
-void VectorSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h){
+void VectorSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h, uint32_t flags){
 	renderRect = {srcX, srcY, w, h};
 	std::shared_ptr<GD::Image> src = Render(100);
 	renderRect = {0, 0, 0, 0};
-	FastBlit(*src, *dst, srcX, srcY, dstX, dstY, w, h);
+	FastBlit(*src, *dst, srcX, srcY, dstX, dstY, w, h, flags);
 }
 
 void VectorSurface::OrderOps(){

@@ -4,7 +4,9 @@
 #include <cstdlib>
 #include <dev/rtc.h>
 
-void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h){
+void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h, uint32_t flags){
+	bool overwrite = (flags & gds_BlitFlags::Overwrite);
+	bool noalpha = (flags & gds_BlitFlags::IgnoreAlpha);
 	if(srcX < 0){
 		if(w < (uint32_t)-srcX) return;
 		w += srcX;
@@ -46,8 +48,9 @@ void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, 
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
 					uint32_t srcPxl = gdImageTrueColorPixel(srcPtr, srcX + x, srcY + y);
+					if(noalpha) srcPxl = gdTrueColorAlpha(gdTrueColorGetRed(srcPxl), gdTrueColorGetGreen(srcPxl), gdTrueColorGetBlue(srcPxl), gdAlphaOpaque);
 					if(srcPxl == srcTransparent) continue;
-					if(gdTrueColorGetAlpha(srcPxl) != gdAlphaOpaque){
+					if(!overwrite && gdTrueColorGetAlpha(srcPxl) != gdAlphaOpaque){
 						uint32_t dstPxl = gdImageTrueColorPixel(dstPtr, dstX + x, dstY + y);
 						srcPxl = gdAlphaBlend(dstPxl, srcPxl);
 					}
@@ -60,6 +63,7 @@ void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, 
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
 					uint32_t srcPxl = gdImageTrueColorPixel(srcPtr, srcX + x, srcY + y);
+					if(noalpha) srcPxl = gdTrueColorAlpha(gdTrueColorGetRed(srcPxl), gdTrueColorGetGreen(srcPxl), gdTrueColorGetBlue(srcPxl), gdAlphaOpaque);
 					if(srcPxl == srcTransparent) continue;
 					if((!y && !x) || srcCol != srcPxl){
 						dstCol = gdImageColorResolveAlpha(dstPtr, gdTrueColorGetRed(srcPxl), gdTrueColorGetGreen(srcPxl), gdTrueColorGetBlue(srcPxl), gdTrueColorGetAlpha(srcPxl));
@@ -79,7 +83,7 @@ void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, 
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
 					uint8_t srcPxl = gdImagePalettePixel(srcPtr, srcX + x, srcY + y);
-					if(srcPxl == srcTransparent) continue;
+					if(!noalpha && srcPxl == srcTransparent) continue;
 					if((!y && !x) || srcCol != srcPxl){
 						if(palette[srcPxl] != 0xFFFFFFFF){
 							dstCol = palette[srcPxl];
@@ -101,14 +105,15 @@ void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, 
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
 					uint8_t srcPxl = gdImagePalettePixel(srcPtr, srcX + x, srcY + y);
-					if(srcPxl == srcTransparent) continue;
+					if(!noalpha && srcPxl == srcTransparent) continue;
 					if(srcPtr == dstPtr) dstCol = srcPxl;
 					else if ((!y && !x) || srcPxl != srcCol){
 						if(palette[srcPxl] != 0xFF){
 							dstCol = palette[srcPxl];
 							srcCol = srcPxl;
 						}else{
-							dstCol = gdImageColorResolveAlpha(dstPtr, srcPtr->red[srcPxl], srcPtr->green[srcPxl], srcPtr->blue[srcPxl], srcPtr->alpha[srcPxl]);
+							auto alpha = noalpha ? gdAlphaOpaque : srcPtr->alpha[srcPxl];
+							dstCol = gdImageColorResolveAlpha(dstPtr, srcPtr->red[srcPxl], srcPtr->green[srcPxl], srcPtr->blue[srcPxl], alpha);
 							palette[srcPxl] = dstCol;
 							srcCol = srcPxl;
 						}

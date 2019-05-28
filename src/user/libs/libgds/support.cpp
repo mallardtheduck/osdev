@@ -33,10 +33,10 @@ extern "C" uint64_t GDS_LoadPNG(int fd){
 		ok_png_free(image);
 		fclose(file);
 		
-		Surface shmSurf(gds_SurfaceType::Memory, width, height, 100, gds_ColourType::True, shmRegion, 0);
+		Surface shmSurf(gds_SurfaceType::Memory, width, height, 100, gds_ColourType::True | gds_ColourType::SHM_Alpha255, shmRegion, 0);
 		uint64_t bmpSurf = GDS_NewSurface(gds_SurfaceType::Bitmap, width, height, 100, gds_ColourType::True);
 		GDS_SelectSurface(bmpSurf);
-		GDS_Blit(shmSurf.GetID(), 0, 0, width, height, 0, 0, width, height);
+		GDS_Blit(shmSurf.GetID(), 0, 0, width, height, 0, 0, width, height, 100, gds_BlitFlags::Overwrite);
 		return bmpSurf;
 	}else{
 		if(file) fclose(file);

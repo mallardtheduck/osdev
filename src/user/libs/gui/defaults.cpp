@@ -41,6 +41,10 @@ namespace colours{
 		return c;
 	}
 	
+	gds::Colour GetBorder(){
+		return constants::Black;
+	}
+	
 	gds::Colour GetButtonColour(){
 		return constants::Grey;
 	}
@@ -53,15 +57,27 @@ namespace colours{
 		return constants::DarkGrey;
 	}
 	
-	gds::Colour GetBorder(){
-		return constants::Black;
-	}
-	
 	gds::Colour GetButtonText(){
 		return constants::Black;
 	}
 	
 	gds::Colour GetButtonFocus(){
+		return constants::DarkGrey;
+	}
+	
+	gds::Colour GetImageButtonColour(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetImageButtonHiLight(){
+		return constants::White;
+	}
+	
+	gds::Colour GetImageButtonLowLight(){
+		return constants::DarkGrey;
+	}
+	
+	gds::Colour GetImageButtonFocus(){
 		return constants::DarkGrey;
 	}
 	
