@@ -34,7 +34,6 @@ private:
 	
 	size_t fontHeight;
 	
-	size_t itemHeight;
 	size_t selectedItem = 0;
 	size_t vOffset = 0;
 	int32_t hOffset = 0;

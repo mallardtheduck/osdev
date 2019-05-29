@@ -228,6 +228,18 @@ namespace colours{
 	gds::Colour GetDetailListHeader(){
 		return constants::Grey;
 	}
+	
+	gds::Colour GetIconViewText(){
+		return constants::Black;
+	}
+	
+	gds::Colour GetIconViewHiLight(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetIconViewLowLight(){
+		return constants::DarkGrey;
+	}
 }
 
 namespace fonts{
@@ -301,6 +313,14 @@ namespace fonts{
 	
 	uint32_t GetDetailListTextSize(){
 		return 12;
+	}
+	
+	gds::Font GetIconViewFont(){
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+	}
+	
+	uint32_t GetIconViewTextSize(){
+		return 10;
 	}
 }
 

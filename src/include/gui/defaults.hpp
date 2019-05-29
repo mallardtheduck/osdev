@@ -90,6 +90,10 @@ namespace colours{
 	gds::Colour GetDetailListHiLight();
 	gds::Colour GetDetailListLowLight();
 	gds::Colour GetDetailListHeader();
+	
+	gds::Colour GetIconViewText();
+	gds::Colour GetIconViewHiLight();
+	gds::Colour GetIconViewLowLight();
 }
 
 namespace fonts{
@@ -119,6 +123,9 @@ namespace fonts{
 	
 	gds::Font GetDetailListFont();
 	uint32_t GetDetailListTextSize();
+	
+	gds::Font GetIconViewFont();
+	uint32_t GetIconViewTextSize();
 }
 
 }
