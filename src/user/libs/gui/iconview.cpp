@@ -35,12 +35,12 @@ IconView::IconView(const gds::Rect &r, size_t iS, bool mS) :
 }
 
 void IconView::UpdateDisplayState(bool changePos){
-	visibleLines = rect.h / itemSize;
+	visibleLines = (rect.h / itemSize) + 1;
 	visibleCols = rect.w / itemSize;
 	if(changePos){
 		auto selectionLine = selectedItem / visibleCols; 
 		if(selectionLine < vOffset) vOffset = selectionLine;
-		if(selectionLine >= vOffset + (visibleLines - 1)) vOffset = std::max<int32_t>(0, (int32_t)(selectionLine - (visibleLines - 1)));
+		if(selectionLine >= vOffset + (visibleLines - 1)) vOffset = std::max<int32_t>(0, (int32_t)(selectionLine - (visibleLines - 2)));
 	}
 	
 	drawItems.resize(items.size());
@@ -58,8 +58,8 @@ void IconView::UpdateDisplayState(bool changePos){
 		auto lines = items.size() / visibleCols;
 		if(visibleLines < lines){
 			vscroll->Enable();
-			vscroll->SetLines(std::max<int32_t>(lines - visibleLines, 1));
-			vscroll->SetPage(visibleLines);
+			vscroll->SetLines(std::max<int32_t>(lines - (visibleLines - 1), 1));
+			vscroll->SetPage(visibleLines - 1);
 			vscroll->SetValue(vOffset);
 		}else{
 			vscroll->Disable();
@@ -118,7 +118,7 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 			UpdateDisplayState();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageUp)){
 			if(selectedItem != 0){
-				auto visibleItems = visibleLines * visibleCols;
+				auto visibleItems = (visibleLines - 1) * visibleCols;
 				if(selectedItem > visibleItems) selectedItem -= visibleItems;
 				else selectedItem = 0;
 				update = true;
@@ -127,7 +127,7 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageDown)){
 			if(selectedItem < items.size() - 1){
-				auto visibleItems = visibleLines * visibleCols;
+				auto visibleItems = (visibleLines - 1) * visibleCols;
 				if(selectedItem + visibleItems < items.size()) selectedItem += visibleItems;
 				else selectedItem = items.size() - 1;
 				update = true;
@@ -225,31 +225,33 @@ void IconView::Paint(gds::Surface &s){
 				int32_t xPos = (col * itemSize) + 1;
 				
 				if(idx == selectedItem){
-					surf->Box({xPos, yPos, itemSize, itemSize}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+					auto selFocus = colours::GetSelectionFocus().Fix(*surf);
 					if(hasFocus){
-						auto selFocus = colours::GetSelectionFocus().Fix(*surf);
-						surf->Box({xPos, yPos, itemSize, itemSize}, selFocus, selFocus, 1, gds_LineStyle::Solid);
+						surf->Box({xPos, yPos, itemSize, itemSize}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 					}
+					surf->Box({xPos, yPos, itemSize, itemSize}, selFocus, selFocus, 1, gds_LineStyle::Solid);
 				}
 				
 				if(icons[idx] || defaultIcon){
 					auto &icon = icons[idx] ? icons[idx] : defaultIcon;
 					int32_t iconX = xPos + (iconSize / 2);
 					int32_t iconY = yPos + ((itemSize - fontHeight - iconSize) / 2);
-					surf->Blit(*icon, {0, 0, iconSize, iconSize}, {iconX, iconY, iconSize, iconSize});
+					if(iconY < (int32_t)rect.h) surf->Blit(*icon, {0, 0, iconSize, iconSize}, {iconX, iconY, iconSize, iconSize});
 				}
 				
 				int32_t textX = xPos + ((itemSize - item.measures.w - (multiSelect ? checkSize : 0)) / 2) + (multiSelect ? checkSize : 0);
 				int32_t textY = yPos + (itemSize - fontHeight) + ((fontHeight + item.measures.h) / 2);
-				surf->Text({textX, textY}, item.fittedText, fonts::GetIconViewFont(), fonts::GetIconViewTextSize(), txtCol);
+				if(textY - fontHeight < rect.h) surf->Text({textX, textY}, item.fittedText, fonts::GetIconViewFont(), fonts::GetIconViewTextSize(), txtCol);
 				
 				if(multiSelect){
 					int32_t chkY = yPos + (itemSize - checkSize);
-					surf->Box({xPos, chkY + 1, checkSize - 2, checkSize - 2}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-					drawing::BevelBox(*surf, {xPos, chkY + 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
-					if(multiSelection[idx]){
-						surf->Line({xPos + 3, chkY + 5}, {xPos + checkSize - 5, (chkY + checkSize) - 4}, txtCol, 2);
-						surf->Line({xPos + 3,  (chkY + checkSize) - 4}, {xPos + checkSize - 5, chkY + 5}, txtCol, 2);
+					if(chkY < (int32_t)rect.h){
+						surf->Box({xPos, chkY + 1, checkSize - 2, checkSize - 2}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+						drawing::BevelBox(*surf, {xPos, chkY + 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
+						if(multiSelection[idx]){
+							surf->Line({xPos + 3, chkY + 5}, {xPos + checkSize - 5, (chkY + checkSize) - 4}, txtCol, 2);
+							surf->Line({xPos + 3,  (chkY + checkSize) - 4}, {xPos + checkSize - 5, chkY + 5}, txtCol, 2);
+						}
 					}
 				}
 			}

@@ -283,11 +283,11 @@ void DetailList::Paint(gds::Surface &s){
 		for(auto i = vOffset; i < items.size() && i < vOffset + visibleItems; ++i){
 			if(i == selectedItem){
 				int32_t selY = fontHeight * ((i + 1) - vOffset);
-				surf->Box({0, selY, inW, fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+				auto selFocus = colours::GetSelectionFocus().Fix(*surf);
 				if(hasFocus){
-					auto selFocus = colours::GetSelectionFocus().Fix(*surf);
-					surf->Box({0, selY, inW, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
+					surf->Box({0, selY, inW, fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 				}
+				surf->Box({0, selY, inW, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
 			}
 			if(hOffset < (int32_t)iconsize && (icons[i] || defaultIcon)){
 				int32_t iconY = fontHeight * ((i + 1) - vOffset);

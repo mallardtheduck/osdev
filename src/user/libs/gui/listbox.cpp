@@ -207,12 +207,12 @@ void ListBox::Paint(gds::Surface &s){
 			auto textY = std::max<int32_t>(((fontHeight + cItem.measures.h) / 2), 0);
 			textY += (i - vOffset) * fontHeight;
 			if(i == selectedItem){
+				auto selFocus = colours::GetSelectionFocus().Fix(*surf);
 				int32_t selY = fontHeight * (i - vOffset);
-				surf->Box({1, selY, inW, fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 				if(hasFocus){
-					auto selFocus = colours::GetSelectionFocus().Fix(*surf);
-					surf->Box({1, selY, inW, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
+					surf->Box({1, selY, inW, fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 				}
+				surf->Box({1, selY, inW, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
 			}
 			surf->Text({2 - (int32_t)hOffset, textY}, cItem.text, fonts::GetListBoxFont(), fonts::GetListBoxTextSize(), txtCol);
 			
