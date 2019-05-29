@@ -17,6 +17,8 @@ private:
 	std::vector<std::shared_ptr<gds::Surface>> icons;
 	std::vector<std::string> cols;
 	
+	std::vector<bool> multiSelection;
+	
 	struct DrawItem{
 		std::string text;
 		gds::TextMeasurements measures;
@@ -35,7 +37,7 @@ private:
 	size_t itemHeight;
 	size_t selectedItem = 0;
 	size_t vOffset = 0;
-	size_t hOffset = 0;
+	int32_t hOffset = 0;
 	size_t visibleItems = 0;
 	size_t iconsize = 0;
 	
@@ -47,12 +49,13 @@ private:
 	std::unique_ptr<Scrollbar> vscroll;
 	
 	bool scrollHoriz;
+	bool multiSelect;
 	
 	void UpdateDisplayState(bool changePos = true);
 	void CalculateColumnWidths();
 	std::string FitTextToCol(DrawItem &item, size_t colIndex);
 public:
-	DetailList(const gds::Rect &r, const std::vector<std::string> &cols, bool scrollHoriz = false, size_t iconsize = 0);
+	DetailList(const gds::Rect &r, const std::vector<std::string> &cols, bool scrollHoriz = false, size_t iconsize = 0, bool multiSelect = false);
 	
 	EventResponse HandleEvent(const wm_Event&);
 	void Paint(gds::Surface &surf);
@@ -68,6 +71,7 @@ public:
 	
 	size_t GetValue();
 	void SetValue(size_t idx);
+	std::vector<bool> &MulitSelections();
 	
 	std::vector<std::vector<std::string>> &Items();
 	std::vector<std::string> &Columns();

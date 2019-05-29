@@ -12,13 +12,15 @@ namespace btos_api{
 namespace gui{
 	
 const auto scrollbarSize = 17;
+const auto checkSize = 17;
 
-DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bool sH, size_t is) : 
+DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bool sH, size_t is, bool mS) : 
 	outerRect(r), 
 	rect(sH ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h}),
-	cols(c), iconsize(is), scrollHoriz(sH){
+	cols(c), iconsize(is), scrollHoriz(sH), multiSelect(mS){
 	auto info = fonts::GetDetailListFont().Info();
 	fontHeight = (info.maxH * fonts::GetDetailListTextSize()) / info.scale;
+	if(multiSelect && fontHeight < checkSize) fontHeight = checkSize;
 	
 	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
 	IControl::BindToParent(*vscroll);
@@ -36,10 +38,11 @@ DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bo
 		IControl::BindToParent(*hscroll);
 		
 		hscroll->OnChange([this] (uint32_t v) {
-			if(v != hOffset) update = true;
-			hOffset = v;
+			if((int32_t)v != hOffset + (multiSelect ? checkSize : 0)) update = true;
+			hOffset = v - (multiSelect ? checkSize : 0);
 		});
 	}
+	if(multiSelect) hOffset = -checkSize;
 }
 
 void DetailList::CalculateColumnWidths(){
@@ -114,14 +117,14 @@ void DetailList::UpdateDisplayState(bool changePos){
 			hscroll->Enable();
 		 	hscroll->SetLines(overallWidth - (rect.w - 2));
 		 	hscroll->SetPage(rect.w - 2);
-		 	hscroll->SetValue(hOffset);
+		 	hscroll->SetValue(hOffset + (multiSelect ? checkSize : 0));
 		 	hscroll->SetStep(fonts::GetDetailListTextSize() / 2);
 		}else{
 			hscroll->Disable();
 			hscroll->SetLines(1);
 			hscroll->SetPage(1);
 			hscroll->SetValue(0);
-			hOffset = 0;
+			hOffset = (multiSelect ? -checkSize : 0);
 		}
 	}else{
 		CalculateColumnWidths();
@@ -196,15 +199,20 @@ EventResponse DetailList::HandleEvent(const wm_Event &e){
 		}else if(!(code & KeyFlags::NonASCII)){
 			auto oldSelectedItem = selectedItem;
 			char c = KB_char(e.Key.code);
-			c = std::tolower(c);
-			auto finder = [&](const std::vector<std::string> &item){
-				return !item.empty() && !item.front().empty() && std::tolower(item.front().front()) == c;
-				
-			};
-			auto it = std::find_if(begin(items) + selectedItem + 1, end(items), finder);
-			if(it == end(items)) it = std::find_if(begin(items), end(items), finder);
-			if(it != end(items)) selectedItem = it - begin(items);
-			update = oldSelectedItem != selectedItem;
+			if(multiSelect && (c == ' ' || c == '\n')){
+				multiSelection[selectedItem] = !multiSelection[selectedItem];
+				update = true;
+			}else{
+				c = std::tolower(c);
+				auto finder = [&](const std::vector<std::string> &item){
+					return !item.empty() && !item.front().empty() && std::tolower(item.front().front()) == c;
+					
+				};
+				auto it = std::find_if(begin(items) + selectedItem + 1, end(items), finder);
+				if(it == end(items)) it = std::find_if(begin(items), end(items), finder);
+				if(it != end(items)) selectedItem = it - begin(items);
+				update = oldSelectedItem != selectedItem;
+			}
 			handled = true;
 			UpdateDisplayState();
 		}
@@ -214,6 +222,10 @@ EventResponse DetailList::HandleEvent(const wm_Event &e){
 				auto oldSelectedItem = selectedItem;
 				selectedItem = ((e.Pointer.y - outerRect.y) / fontHeight) + vOffset - 1;
 				if(selectedItem < items.size()) update = oldSelectedItem != selectedItem;
+				if(multiSelect && (e.Pointer.x - outerRect.x) < checkSize + 1){
+					multiSelection[selectedItem] = !multiSelection[selectedItem];
+					update = true;
+				}
 				handled = true;
 				UpdateDisplayState();
 			}
@@ -277,7 +289,7 @@ void DetailList::Paint(gds::Surface &s){
 					surf->Box({0, selY, inW, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
 				}
 			}
-			if(hOffset < iconsize && (icons[i] || defaultIcon)){
+			if(hOffset < (int32_t)iconsize && (icons[i] || defaultIcon)){
 				int32_t iconY = fontHeight * ((i + 1) - vOffset);
 				auto icon = icons[i] ? icons[i] : defaultIcon;
 				surf->Blit(*icon, {0, 0, iconsize, iconsize}, {1 - (int32_t)hOffset, iconY, iconsize, iconsize});
@@ -286,7 +298,7 @@ void DetailList::Paint(gds::Surface &s){
 				if(j > cols.size()) continue;
 				auto &cItem = drawItems[i][j];
 				auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + j, j + iconsize + 1);
-				if(colOffset + cItem.measures.w < hOffset) continue;
+				if((int32_t)colOffset + (int32_t)cItem.measures.w < hOffset) continue;
 				
 				auto textX = ((int32_t)colOffset + 2) - (int32_t)hOffset;
 				auto textY = std::max<int32_t>(((fontHeight + cItem.measures.h) / 2), 0);
@@ -295,6 +307,15 @@ void DetailList::Paint(gds::Surface &s){
 				auto text = FitTextToCol(cItem, j);
 				
 				surf->Text({textX, textY}, text, fonts::GetDetailListFont(), fonts::GetDetailListTextSize(), txtCol);
+			}
+			if(multiSelect){
+				int32_t chkY = fontHeight * ((i + 1) - vOffset);
+				surf->Box({1, chkY, checkSize, checkSize}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+				drawing::BevelBox(*surf, {2, chkY + 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
+				if(multiSelection[i]){
+					surf->Line({5, chkY + 5}, {checkSize - 3, (chkY + checkSize) - 4}, txtCol, 2);
+					surf->Line({5,  (chkY + checkSize) - 4}, {checkSize - 3, chkY + 5}, txtCol, 2);
+				}
 			}
 		}
 		drawing::Border(*surf, {0, 0, inW, inH}, border);
@@ -377,6 +398,10 @@ void DetailList::SetValue(size_t idx){
 	update = true;
 }
 
+std::vector<bool> &DetailList::MulitSelections(){
+	return multiSelection;
+}
+
 std::vector<std::vector<std::string>> &DetailList::Items(){
 	return items;
 }
@@ -394,6 +419,7 @@ void DetailList::Refresh(){
 	IControl::Paint(outerRect);
 	colWidths.resize(cols.size());
 	icons.resize(items.size());
+	multiSelection.resize(items.size());
 }
 
 void DetailList::SetDefaultIcon(std::shared_ptr<gds::Surface> img){
