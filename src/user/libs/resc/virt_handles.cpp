@@ -1,6 +1,7 @@
 #include "virt_handles.hpp"
 #include <unistd.h>
 #include <cstring>
+#include <sys/errno.h>
 
 //#include <util/tinyformat.hpp>
 
@@ -23,16 +24,22 @@ int Mem_isatty(void *){
 off_t Mem_lseek(void *data, off_t offset, int whence){
 	//tfm::printf("Mem_lseek(%p, %s, %s)\n", data, offset, whence);
 	MemData *mdata = (MemData*)data;
+	errno = 0;
 	ptrdiff_t startpos;
 	switch(whence){
 		case SEEK_SET: startpos = 0; break;
 		case SEEK_CUR: startpos = mdata->pos; break;
 		case SEEK_END: startpos = mdata->size; break;
-		default: return (off_t)-1;
+		default: 
+			errno = EINVAL;
+			return (off_t)-1;
 	}
 	//tfm::printf("Mem_lseek pos: %s\n", mdata->pos);
-	if(startpos + offset < (ptrdiff_t)mdata->size && startpos + offset >= 0) mdata->pos = startpos + offset;
-	else return (off_t)-1;
+	if(startpos + offset <= (ptrdiff_t)mdata->size && startpos + offset >= 0) mdata->pos = startpos + offset;
+	else {
+		errno = EINVAL;
+		return (off_t)-1;
+	}
 	//tfm::printf("Mem_lseek pos: %s\n", mdata->pos);
 	return mdata->pos;
 }
@@ -102,17 +109,22 @@ int Off_isatty(void *){
 
 off_t Off_lseek(void *data, off_t offset, int whence){
 	OffsetData *odata = (OffsetData*)data;
-	
+	errno = 0;
 	off_t startpos;
 	switch(whence){
 		case SEEK_SET: startpos = 0; break;
 		case SEEK_CUR: startpos = odata->pos; break;
 		case SEEK_END: startpos = odata->size; break;
-		default: return (off_t)-1;
+		default: 
+			errno = EINVAL;
+			return (off_t)-1;
 	}
-	if(startpos + offset < odata->size && startpos + offset >= 0) odata->pos = startpos + offset;
-	else return (off_t)-1;
 	
+	if(startpos + offset <= odata->size && startpos + offset >= 0) odata->pos = startpos + offset;
+	else{
+		errno = EINVAL;
+		return (off_t)-1;
+	}
 	return odata->pos;
 }
 
