@@ -2,6 +2,9 @@
 #define _DEFAULTS_HPP
 
 #include <gds/geom.hpp>
+#include <gds/surface.hpp>
+
+#include <memory>
 
 namespace btos_api{
 namespace gui{
@@ -94,6 +97,10 @@ namespace colours{
 	gds::Colour GetIconViewText();
 	gds::Colour GetIconViewHiLight();
 	gds::Colour GetIconViewLowLight();
+	
+	gds::Colour GetTreeViewText();
+	gds::Colour GetTreeViewHiLight();
+	gds::Colour GetTreeViewLowLight();
 }
 
 namespace fonts{
@@ -126,6 +133,15 @@ namespace fonts{
 	
 	gds::Font GetIconViewFont();
 	uint32_t GetIconViewTextSize();
+	
+	gds::Font GetTreeViewFont();
+	uint32_t GetTreeViewTextSize();
+}
+
+namespace icons{
+	std::shared_ptr<gds::Surface> GetTreeViewDefaultChildren();
+	std::shared_ptr<gds::Surface> GetTreeViewDefaultNoChildren();
+	std::shared_ptr<gds::Surface> GetTreeViewDefaultOpen();
 }
 
 }

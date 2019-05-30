@@ -1,4 +1,9 @@
 #include <gui/defaults.hpp>
+#include <gds/libgds.h>
+#include <btos/resc.h>
+#include <unistd.h>
+
+#include "gui_resc.tar.h"
 
 namespace btos_api{
 namespace gui{
@@ -240,6 +245,18 @@ namespace colours{
 	gds::Colour GetIconViewLowLight(){
 		return constants::DarkGrey;
 	}
+	
+	gds::Colour GetTreeViewText(){
+		return constants::Black;
+	}
+	
+	gds::Colour GetTreeViewHiLight(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetTreeViewLowLight(){
+		return constants::DarkGrey;
+	}
 }
 
 namespace fonts{
@@ -321,6 +338,43 @@ namespace fonts{
 	
 	uint32_t GetIconViewTextSize(){
 		return 10;
+	}
+	
+	gds::Font GetTreeViewFont(){
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+	}
+	
+	uint32_t GetTreeViewTextSize(){
+		return 12;
+	}
+}
+
+namespace icons{
+	static std::shared_ptr<gds::Surface> LoadIcon(const char *path){
+		auto r = resc::Resc_LocalOpen(gui_resc_data, gui_resc_size);
+		auto fd = resc::Resc_OpenResc(r, path);
+		auto ret = GDS_LoadPNG(fd);
+		close(fd);
+		resc::Resc_Close(r);
+		return std::make_shared<gds::Surface>(std::move(gds::Surface::Wrap(ret, true)));
+	}
+	
+	std::shared_ptr<gds::Surface> GetTreeViewDefaultChildren(){
+		static std::shared_ptr<gds::Surface> ret;
+		if(!ret) ret = LoadIcon("tv_default_icon.png");
+		return ret;
+	}
+	
+	std::shared_ptr<gds::Surface> GetTreeViewDefaultNoChildren(){
+		static std::shared_ptr<gds::Surface> ret;
+		if(!ret) ret = LoadIcon("tv_default_nochildren.png");
+		return ret;
+	}
+	
+	std::shared_ptr<gds::Surface> GetTreeViewDefaultOpen(){
+		static std::shared_ptr<gds::Surface> ret;
+		if(!ret) ret = LoadIcon("tv_default_open.png");
+		return ret;
 	}
 }
 

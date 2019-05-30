@@ -2,6 +2,9 @@ OUTPUT-NAME := guitest.elx
 LIBRARY-NAME := gui.ell
 RESC-TAR-NAME := guitest_resc.tar
 RESC-VAR-NAME := guitest_resc
+LIBRESC-TAR-NAME := gui_resc.tar
+LIBRESC-VAR-NAME := gui_resc
+
 
 DESTINATION := $(HOME)/Projects/os/cross/i686-pc-btos
 
@@ -19,7 +22,7 @@ LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L. -L../libgds
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L. -L../libgds -L../libwm
 AR-FLAGS := rcs -o $(LIBRARY-NAME)
 LINK-OPTIONS := -Wl,-rpath-link,../../../3rdparty/install/btos/lib -lgds -lwm -lgui -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib -lresc
-LIB-LINK-OPTIONS := -lgds -lwm -lgcc_s -lstdc++ -lbtoscore -lbtoslib -lm
+LIB-LINK-OPTIONS := -Wl,-rpath-link,../../../3rdparty/install/btos/lib -lgds -lwm -lgcc_s -lstdc++ -lbtoscore -lbtoslib -lm -lresc
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")
@@ -27,6 +30,7 @@ CFILES := $(shell find . -type f -name "*.c")
 CPPFILES := $(shell find . -type f -name "*.cpp" -not -name "main.cpp")
 MAINCPP := main.cpp
 RESCFILES := $(shell find resc -type f)
+LIBRESCFILES := $(shell find libresc -type f)
 
 ASOBJS := $(ASFILES:.s=.o)
 COBJS := $(CFILES:.c=.o)
@@ -35,10 +39,11 @@ MAINOBJ := $(MAINCPP:.cpp=.o)
 
 CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
+MAINDEPFILE := $(patsubst %.cpp,%.d,$(MAINCPP))
 
 all: $(OUTPUT-NAME) copy
 
--include $(CDEPFILES) $(CPPDEPFILES)
+-include $(CDEPFILES) $(CPPDEPFILES) $(MAINDEPFILE)
 
 copy: $(LIBRARY-NAME)
 	mkdir -p $(DESTINATION)/lib
@@ -50,8 +55,8 @@ dummy.delete:
 	-@$(RM) *.o
 	-@$(RM) $(OUTPUT-NAME)
 
-$(LIBRARY-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile
-	$(LINK) $(LIB-LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LIB-LINK-OPTIONS)
+$(LIBRARY-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) $(LIBRESC-TAR-NAME).o Makefile
+	$(LINK) $(LIB-LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LIBRESC-TAR-NAME).o $(LIB-LINK-OPTIONS)
 
 $(OUTPUT-NAME): $(MAINOBJ) $(LIBRARY-NAME) $(RESC-TAR-NAME).o Makefile
 	$(LINK) $(LINK-FLAGS) $(MAINOBJ) $(RESC-TAR-NAME).o $(LINK-OPTIONS)
@@ -66,10 +71,17 @@ $(OUTPUT-NAME): $(MAINOBJ) $(LIBRARY-NAME) $(RESC-TAR-NAME).o Makefile
 	$(BUILD-CPP) -MMD -MP $(BUILD-CPP-FLAGS) $< -o $@ $(BUILD-CPP-OPTIONS)
 
 $(CPPOBJS) $(COBJS) $(MAINOBJ) $(ASOBJS): Makefile
-$(CPPOBJS) $(COBJS) $(MAINOBJ): $(RESC-TAR-NAME).h
+$(CPPOBJS) $(COBJS): $(LIBRESC-TAR-NAME).h
+$(MAINOBJ): $(RESC-TAR-NAME).h
 
 $(RESC-TAR-NAME).h $(RESC-TAR-NAME).o: $(RESC-TAR-NAME)
 	../../../scripts/elfembed.sh $(RESC-TAR-NAME) resc $(RESC-VAR-NAME)
 	
-$(RESC-TAR-NAME): $(RESCFILES)
+$(RESC-TAR-NAME): $(RESCFILES) Makefile
 	tar cf $@ -C resc .
+	
+$(LIBRESC-TAR-NAME).h $(LIBRESC-TAR-NAME).o: $(LIBRESC-TAR-NAME)
+	../../../scripts/elfembed.sh $(LIBRESC-TAR-NAME) resc $(LIBRESC-VAR-NAME)
+	
+$(LIBRESC-TAR-NAME): $(LIBRESCFILES) Makefile
+	tar cf $@ -C libresc .

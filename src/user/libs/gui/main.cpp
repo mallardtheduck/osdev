@@ -19,6 +19,7 @@
 #include <gui/image.hpp>
 #include <gui/imagebutton.hpp>
 #include <gui/iconview.hpp>
+#include <gui/treeview.hpp>
 
 #include <wm/eventloop.hpp>
 #include <util/tinyformat.hpp>
@@ -49,6 +50,7 @@ void MoreForm(btos_api::wm::EventLoop &eloop){
 	auto img = std::make_shared<btos_api::gui::Image>(gds::Rect{10, 430, 170, 60}, png);
 	auto png2 = load_png_resc("button_img.png");
 	auto igb = std::make_shared<btos_api::gui::ImageButton>(gds::Rect{190, 430, 50, 50}, png2);
+	auto trv = std::make_shared<btos_api::gui::TreeView>(gds::Rect{400, 10, 150, 200}, true);
 	tst->OnEvent([] (const wm_Event &e){
 		tfm::printf("More Test: EventType: %s\n", e.type);
 		return true;
@@ -84,7 +86,41 @@ void MoreForm(btos_api::wm::EventLoop &eloop){
 	}
 	icv->Refresh();
 	
-	frm->AddControls({lst, lst2, tst, dls, img, igb, icv});
+	btos_api::gui::TreeViewNode root{0, "Root 1"};
+	root.open = true;
+	root.children = {
+		{1, "Child 1"},
+		{2, "Child 2"},
+		{3, "Child 3"},
+		{4, "Child 4"}
+	};
+	trv->Items().push_back(root);
+	btos_api::gui::TreeViewNode root2{5, "Root 2"};
+	root2.icon = load_png_resc("folder.png");
+	root2.openIcon = load_png_resc("folder_open.png");
+	root2.children = {
+		{6, "Child 1"},
+		{7, "Child 2"},
+		{8, "Child 3"},
+		{9, "Child 4"}
+	};
+	root2.children[2].children = {
+		{10, "Child 1"},
+		{11, "Child 2"},
+		{12, "Child 3"},
+		{13, "Child 4"}
+	};
+	root2.children[2].children[3].onOpen = [](btos_api::gui::TreeViewNode &n){
+		n.children.clear();
+		for(size_t i = 0; i < 20; ++i){
+			auto text = tfm::format("Gen Child %s", i);
+			n.children.push_back({100 + i, text});
+		}
+	};
+	trv->Items().push_back(root2);
+	trv->Refresh();
+	
+	frm->AddControls({lst, lst2, tst, dls, img, igb, icv, trv});
 	eloop.AddWindow(frm);
 }
 
