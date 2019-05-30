@@ -7,7 +7,6 @@
 
 #include <cstring>
 #include <malloc.h>
-#include <util/tinyformat.hpp>
 
 using namespace btos_api::gds;
 
@@ -18,7 +17,6 @@ extern "C" uint64_t GDS_LoadPNG(int fd){
 		size_t width = image->width;
 		size_t height = image->height;
 		size_t pixels = width * height;
-		if(image->error_message) tfm::printf("OK PNG error message: %s\n", image->error_message);
 		ok_png_free(image);
 		fseek(file, 0, SEEK_SET);
 		
@@ -29,7 +27,6 @@ extern "C" uint64_t GDS_LoadPNG(int fd){
 		size_t pages = size / 4096;
 		if(pages < size) ++pages;
 		uint8_t *data = (uint8_t*)memalign(4096, pages * 4096);
-		tfm::printf("GDS_LoadPNG: fd: %s width: %s height: %s pixels: %s pages: %s data: %p\n", fd, width, height, pixels, pages, data);
 		
 		auto mapping = SHMMapping(shmRegion, (void*)data, 0, pages, bt_shm_flags::Normal);
 		image = ok_png_read_to_buffer(file, data, 0, OK_PNG_COLOR_FORMAT_BGRA);
