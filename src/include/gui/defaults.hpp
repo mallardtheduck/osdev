@@ -108,6 +108,9 @@ namespace colours{
 	gds::Colour GetToolbarButtonHiLight();
 	gds::Colour GetToolbarButtonLowLight();
 	gds::Colour GetToolbarButtonText();
+	
+	gds::Colour GetStatusBarBackground();
+	gds::Colour GetStatusBarText();
 }
 
 namespace fonts{
@@ -146,6 +149,9 @@ namespace fonts{
 	
 	gds::Font GetToolbarButtonFont();
 	uint32_t GetToolbarButtonTextSize();
+	
+	gds::Font GetStatusBarFont();
+	uint32_t GetStatusBarTextSize();
 }
 
 namespace icons{

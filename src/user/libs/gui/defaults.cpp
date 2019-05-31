@@ -277,6 +277,14 @@ namespace colours{
 	gds::Colour GetToolbarButtonText(){
 		return constants::Black;
 	}
+	
+	gds::Colour GetStatusBarBackground(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetStatusBarText(){
+		return constants::Black;
+	}
 }
 
 namespace fonts{
@@ -374,6 +382,14 @@ namespace fonts{
 	
 	uint32_t GetToolbarButtonTextSize(){
 		return 10;
+	}
+	
+	gds::Font GetStatusBarFont(){
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+	}
+	
+	uint32_t GetStatusBarTextSize(){
+		return 12;
 	}
 }
 

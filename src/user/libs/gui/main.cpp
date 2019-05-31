@@ -21,6 +21,7 @@
 #include <gui/iconview.hpp>
 #include <gui/treeview.hpp>
 #include <gui/toolbar.hpp>
+#include <gui/statusbar.hpp>
 
 #include <wm/eventloop.hpp>
 #include <util/tinyformat.hpp>
@@ -140,7 +141,12 @@ void EvenMoreForm(btos_api::wm::EventLoop &eloop){
 	tbar->Controls().push_back(tb3);
 	tbar->Refresh();
 	
-	frm->AddControls({tbar});
+	auto sbar = std::make_shared<btos_api::gui::StatusBar>("Status text.");
+	tb3->OnAction([=](){
+		sbar->SetText("New status.");
+	});
+	
+	frm->AddControls({tbar, sbar});
 	
 	eloop.AddWindow(frm);
 }
