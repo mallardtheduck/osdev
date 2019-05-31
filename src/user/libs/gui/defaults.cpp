@@ -257,6 +257,26 @@ namespace colours{
 	gds::Colour GetTreeViewLowLight(){
 		return constants::DarkGrey;
 	}
+	
+	gds::Colour GetToolbarBackground(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetToolbarButtonColour(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetToolbarButtonHiLight(){
+		return constants::White;
+	}
+	
+	gds::Colour GetToolbarButtonLowLight(){
+		return constants::DarkGrey;
+	}
+	
+	gds::Colour GetToolbarButtonText(){
+		return constants::Black;
+	}
 }
 
 namespace fonts{
@@ -309,7 +329,7 @@ namespace fonts{
 	}
 	
 	gds::Font GetGroupBoxFont(){
-		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Bold);
 	}
 	
 	uint32_t GetGroupBoxTextSize(){
@@ -346,6 +366,14 @@ namespace fonts{
 	
 	uint32_t GetTreeViewTextSize(){
 		return 12;
+	}
+	
+	gds::Font GetToolbarButtonFont(){
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+	}
+	
+	uint32_t GetToolbarButtonTextSize(){
+		return 10;
 	}
 }
 

@@ -35,8 +35,6 @@ public:
 	void Enable();
 	void Disable();
 	bool IsEnabled();
-	
-	bool GetValue();
 };
 
 }

@@ -25,6 +25,11 @@ void IControl::FocusNext(bool reverse){
 	if(focusNextFn) focusNextFn(reverse);
 }
 
+gds::Rect IControl::GetContainerRect(){
+	if(getRectFn) return getRectFn();
+	else return {};
+}
+
 template<typename T> static std::shared_ptr<IControl> FNFSearch(std::shared_ptr<IControl> focus, T begin, T end, std::function<bool()> onLastControl){
 	auto i = begin;
 	bool found = false;
@@ -138,7 +143,7 @@ void Container::Paint(const std::vector<gds::Rect> &rects){
 	surface.CommitQueue();
 	
 	for(auto &r : rects){
-		if(r.w && r.h) Update();
+		if(r.w && r.h) Update(r);
 		else{
 			Update();
 			break;
@@ -168,13 +173,7 @@ void Container::AddControls(std::vector<std::shared_ptr<IControl>> ncontrols){
 	if(subs & (wm_EventType::PointerEnter | wm_EventType::PointerLeave)) subs |= wm_EventType::PointerMove;
 	
 	SetSubscribed(subs);
-	
-	std::vector<gds::Rect> paintRects;
-	
-	for(auto &c : ncontrols){
-		paintRects.push_back(c->GetPaintRect());
-	}
-	Paint(gds::TileRects(paintRects));
+	Paint();
 }
 
 void Container::BindControl(IControl &control){
@@ -182,6 +181,8 @@ void Container::BindControl(IControl &control){
 	control.bindFn = [this] (IControl &ctrl) -> void {BindControl(ctrl);};
 	control.isFocusFn = [this] (const IControl *ctrl) -> bool {return GetFocus().get() == ctrl;};
 	control.focusNextFn = [this] (bool reverse) -> void {FocusNext(reverse);};
+	control.getRectFn = [this]() -> gds::Rect {return GetBoundingRect();};
+	control.OnBind();
 }
 
 std::shared_ptr<IControl> &Container::GetFocus(){

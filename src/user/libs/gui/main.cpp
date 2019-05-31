@@ -20,6 +20,7 @@
 #include <gui/imagebutton.hpp>
 #include <gui/iconview.hpp>
 #include <gui/treeview.hpp>
+#include <gui/toolbar.hpp>
 
 #include <wm/eventloop.hpp>
 #include <util/tinyformat.hpp>
@@ -124,6 +125,26 @@ void MoreForm(btos_api::wm::EventLoop &eloop){
 	eloop.AddWindow(frm);
 }
 
+void EvenMoreForm(btos_api::wm::EventLoop &eloop){
+	auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{100, 100, 400, 300}, wm_WindowOptions::Default, "Even More Controls");
+	auto tbar = std::make_shared<btos_api::gui::Toolbar>();
+	
+	auto tb1icon = load_png_resc("tb1_icon.png");
+	auto tb3icon = load_png_resc("tb3_icon.png");
+	auto tb1 = std::make_shared<btos_api::gui::ToolbarButton>(tb1icon);
+	auto tb2 = std::make_shared<btos_api::gui::ToolbarButton>(nullptr, "Test");
+	auto tb3 = std::make_shared<btos_api::gui::ToolbarButton>(tb3icon, "Label");
+	tbar->Controls().push_back(tb1);
+	tbar->Controls().push_back(tb2);
+	tbar->Controls().push_back(std::make_shared<btos_api::gui::ToolbarSpacer>());
+	tbar->Controls().push_back(tb3);
+	tbar->Refresh();
+	
+	frm->AddControls({tbar});
+	
+	eloop.AddWindow(frm);
+}
+
 int main(){
 	try{
 		auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{200, 200, 500, 300}, wm_WindowOptions::Default, "GUI Controls Test");
@@ -182,6 +203,7 @@ int main(){
 		
 		btos_api::wm::EventLoop loop({frm});
 		mBtn->OnAction([&] {MoreForm(loop);});
+		m2Btn->OnAction([&] {EvenMoreForm(loop);});
 		loop.RunLoop();
 	}catch(std::exception &e){
 		int status;

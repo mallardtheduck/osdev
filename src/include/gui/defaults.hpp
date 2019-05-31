@@ -101,6 +101,13 @@ namespace colours{
 	gds::Colour GetTreeViewText();
 	gds::Colour GetTreeViewHiLight();
 	gds::Colour GetTreeViewLowLight();
+	
+	gds::Colour GetToolbarBackground();
+	
+	gds::Colour GetToolbarButtonColour();
+	gds::Colour GetToolbarButtonHiLight();
+	gds::Colour GetToolbarButtonLowLight();
+	gds::Colour GetToolbarButtonText();
 }
 
 namespace fonts{
@@ -136,6 +143,9 @@ namespace fonts{
 	
 	gds::Font GetTreeViewFont();
 	uint32_t GetTreeViewTextSize();
+	
+	gds::Font GetToolbarButtonFont();
+	uint32_t GetToolbarButtonTextSize();
 }
 
 namespace icons{
