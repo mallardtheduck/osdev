@@ -170,6 +170,7 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 			auto pX = e.Pointer.x - outerRect.x;
 			auto pY = e.Pointer.y - outerRect.y;
 			auto col = pX / itemSize;
+			if(col >= visibleCols) col = visibleCols - 1;
 			auto line = (pY / itemSize) + vOffset;
 			auto idx = (line * visibleCols) + col;
 			if(e.type == wm_EventType::PointerButtonUp && idx < items.size()){
