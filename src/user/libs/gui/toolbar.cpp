@@ -82,7 +82,7 @@ void Toolbar::Paint(gds::Surface &s){
 			
 			ctrl->rect = {cXpos, margin, width, size};
 			ctrl->Paint(*surf);
-			cXpos += width + margin;
+			cXpos += width + (margin / 2);
 		}
 		
 		surf->CommitQueue();
