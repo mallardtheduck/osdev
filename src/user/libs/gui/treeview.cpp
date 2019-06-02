@@ -27,7 +27,6 @@ TreeView::TreeView(const gds::Rect &r, bool sH, size_t iS) :
 	if(fontHeight < iconSize) fontHeight = iconSize;
 	
 	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
-	IControl::BindToParent(*vscroll);
 	
 	vscroll->OnChange([this] (uint32_t v) {
 		if(v != vOffset) update = true;
@@ -36,7 +35,6 @@ TreeView::TreeView(const gds::Rect &r, bool sH, size_t iS) :
 	
 	if(scrollHoriz){
 		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
-		IControl::BindToParent(*hscroll);
 		
 		hscroll->OnChange([this] (uint32_t v) {
 			if(v != hOffset) update = true;

@@ -18,9 +18,7 @@ TextArea::TextArea(const gds::Rect &r, const std::string &t, bool scrollbars) :
 {
 	if(scrollbars){
 		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
-		IControl::BindToParent(*hscroll);
 		vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - scrollbarSize}, 1, 1, 1, 1, false));
-		IControl::BindToParent(*vscroll);
 		
 		hscroll->OnChange([this] (uint32_t v) {
 			if(v != cursorPos) update = true;

@@ -24,7 +24,6 @@ IconView::IconView(const gds::Rect &r, size_t iS, bool mS) :
 	itemSize = iconSize * 2;
 	
 	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h}, 1, 1, 1, 1, false));
-	IControl::BindToParent(*vscroll);
 	
 	vscroll->OnChange([this] (uint32_t v) {
 		if(v != vOffset) update = true;

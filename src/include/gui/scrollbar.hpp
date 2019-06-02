@@ -42,6 +42,8 @@ public:
 	void SetPage(uint32_t p);
 	void SetValue(uint32_t v);
 	uint32_t GetValue();
+	
+	void Refresh();
 };
 
 }

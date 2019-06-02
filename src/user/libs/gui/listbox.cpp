@@ -23,7 +23,6 @@ ListBox::ListBox(const gds::Rect &r, bool sH, bool mS) :
 	if(multiSelect && fontHeight < checkSize) fontHeight = checkSize;
 	
 	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
-	IControl::BindToParent(*vscroll);
 	
 	vscroll->OnChange([this] (uint32_t v) {
 		if(v != vOffset) update = true;
@@ -32,7 +31,6 @@ ListBox::ListBox(const gds::Rect &r, bool sH, bool mS) :
 	
 	if(scrollHoriz){
 		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
-		IControl::BindToParent(*hscroll);
 		
 		hscroll->OnChange([this] (uint32_t v) {
 			if(v != hOffset + (multiSelect ? checkSize : 0)) update = true;

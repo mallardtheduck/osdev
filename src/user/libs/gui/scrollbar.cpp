@@ -253,39 +253,45 @@ uint32_t Scrollbar::GetSubscribed(){
 }
 
 void Scrollbar::Focus(){
-	if(!focus) update = true;
-	focus = true;
-	IControl::Paint(rect);
+	if(!focus){
+		update = true;
+		focus = true;
+	}
 }
 
 void Scrollbar::Blur(){
-	if(focus) update = true;
-	focus = false;
-	IControl::Paint(rect);
+	if(focus){
+		update = true;
+		focus = false;
+	}
 }
 	
 void Scrollbar::SetLines(uint32_t l){
-	if(l != lines) update = true;
-	lines = l;
-	IControl::Paint(rect);
+	if(l != lines){
+		update = true;
+		lines = l;
+	}
 }
 
 void Scrollbar::SetStep(uint32_t s){
-	if(s != step) update = true;
-	step = s;
-	IControl::Paint(rect);
+	if(s != step){
+		update = true;
+		step = s;
+	}
 }
 
 void Scrollbar::SetPage(uint32_t p){
-	if(p != page) update = true;
-	page = p;
-	IControl::Paint(rect);
+	if(p != page){
+		update = true;
+		page = p;
+	}
 }
 
 void Scrollbar::SetValue(uint32_t v){
-	if(v != value) update = true;
-	value = v;
-	IControl::Paint(rect);
+	if(v != value){
+		update = true;
+		value = v;
+	}
 }
 
 uint32_t Scrollbar::GetValue(){
@@ -299,19 +305,21 @@ uint32_t Scrollbar::GetFlags(){
 void Scrollbar::Enable(){
 	if(!enabled){
 		enabled = true;
-		IControl::Paint(rect);
 	}
 }
 
 void Scrollbar::Disable(){
 	if(enabled){
 		enabled = false;
-		IControl::Paint(rect);
 	}
 }
 
 bool Scrollbar::IsEnabled(){
 	return enabled;
+}
+
+void Scrollbar::Refresh(){
+	if(update) IControl::Paint(rect);
 }
 
 }

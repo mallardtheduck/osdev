@@ -23,8 +23,7 @@ DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bo
 	if(multiSelect && fontHeight < checkSize) fontHeight = checkSize;
 	
 	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
-	IControl::BindToParent(*vscroll);
-	
+
 	vscroll->OnChange([this] (uint32_t v) {
 		if(v != vOffset) update = true;
 		vOffset = v;
@@ -35,7 +34,6 @@ DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bo
 	if(scrollHoriz){
 		CalculateColumnWidths();
 		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
-		IControl::BindToParent(*hscroll);
 		
 		hscroll->OnChange([this] (uint32_t v) {
 			if((int32_t)v != hOffset + (multiSelect ? checkSize : 0)) update = true;
