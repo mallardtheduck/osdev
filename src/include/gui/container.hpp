@@ -40,6 +40,7 @@ public:
 
 	void AddControl(std::shared_ptr<IControl> control);
 	void AddControls(std::vector<std::shared_ptr<IControl>> controls);
+	void RemoveControl(std::shared_ptr<IControl> control);
 	
 	void BindControl(IControl &control);
 	

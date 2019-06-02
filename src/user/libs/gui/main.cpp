@@ -22,6 +22,7 @@
 #include <gui/treeview.hpp>
 #include <gui/toolbar.hpp>
 #include <gui/statusbar.hpp>
+#include <gui/tabs.hpp>
 
 #include <wm/eventloop.hpp>
 #include <util/tinyformat.hpp>
@@ -141,12 +142,23 @@ void EvenMoreForm(btos_api::wm::EventLoop &eloop){
 	tbar->Controls().push_back(tb3);
 	tbar->Refresh();
 	
+	auto tabs = std::make_shared<btos_api::gui::Tabs>(gds::Rect{10, 40, 380, 230});
+	auto t1c = std::make_shared<btos_api::gui::Label>(tabs->GetContentRect(), "Tab 1 content");
+	tabs->TabItems().push_back({"Tab 1", t1c});
+	auto t2c = std::make_shared<btos_api::gui::Label>(tabs->GetContentRect(), "Tab 2 content");
+	tabs->TabItems().push_back({"Tab 2", t2c});
+	auto t3c = std::make_shared<btos_api::gui::Label>(tabs->GetContentRect(), "Tab 3 content");
+	tabs->TabItems().push_back({"Tab 3", t3c});
+	auto ttc = std::make_shared<btos_api::gui::TestControl>(tabs->GetContentRect());
+	tabs->TabItems().push_back({"Test Tab", ttc});
+	tabs->Refresh();
+	
 	auto sbar = std::make_shared<btos_api::gui::StatusBar>("Status text.");
 	tb3->OnAction([=](){
 		sbar->SetText("New status.");
 	});
 	
-	frm->AddControls({tbar, sbar});
+	frm->AddControls({tbar, sbar, tabs});
 	
 	eloop.AddWindow(frm);
 }

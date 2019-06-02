@@ -22,12 +22,16 @@ protected:
 	void BindToParent(IControl &ctrl);
 	void FocusNext(bool reverse);
 	gds::Rect GetContainerRect();
+	void AddToParent(std::shared_ptr<IControl> ctrl);
+	void RemoveFromParent(std::shared_ptr<IControl> ctrl);
 public:
 	std::function<void(const gds::Rect &)> paintFn;
 	std::function<void(IControl &)> bindFn;
 	std::function<bool(const IControl *)> isFocusFn;
 	std::function<void(bool)> focusNextFn;
 	std::function<gds::Rect()> getRectFn;
+	std::function<void(std::shared_ptr<IControl>)> addControlFn;
+	std::function<void(std::shared_ptr<IControl>)> removeControlFn;
 
 	virtual EventResponse HandleEvent(const wm_Event&) = 0;
 	virtual void Paint(gds::Surface &surf) = 0;

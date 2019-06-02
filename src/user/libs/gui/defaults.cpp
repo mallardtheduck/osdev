@@ -285,6 +285,18 @@ namespace colours{
 	gds::Colour GetStatusBarText(){
 		return constants::Black;
 	}
+	
+	gds::Colour GetTabsUnselectedBackground(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetTabsSelectedBackground(){
+		return constants::White;
+	}
+	
+	gds::Colour GetTabsText(){
+		return constants::Black;
+	}
 }
 
 namespace fonts{
@@ -389,6 +401,14 @@ namespace fonts{
 	}
 	
 	uint32_t GetStatusBarTextSize(){
+		return 12;
+	}
+	
+	gds::Font GetTabsFont(){
+		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+	}
+	
+	uint32_t GetTabsTextSize(){
 		return 12;
 	}
 }

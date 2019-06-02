@@ -111,6 +111,10 @@ namespace colours{
 	
 	gds::Colour GetStatusBarBackground();
 	gds::Colour GetStatusBarText();
+	
+	gds::Colour GetTabsUnselectedBackground();
+	gds::Colour GetTabsSelectedBackground();
+	gds::Colour GetTabsText();
 }
 
 namespace fonts{
@@ -152,6 +156,9 @@ namespace fonts{
 	
 	gds::Font GetStatusBarFont();
 	uint32_t GetStatusBarTextSize();
+	
+	gds::Font GetTabsFont();
+	uint32_t GetTabsTextSize();
 }
 
 namespace icons{

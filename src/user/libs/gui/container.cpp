@@ -30,6 +30,14 @@ gds::Rect IControl::GetContainerRect(){
 	else return {};
 }
 
+void IControl::AddToParent(std::shared_ptr<IControl> ctrl){
+	if(addControlFn) addControlFn(ctrl);
+}
+
+void IControl::RemoveFromParent(std::shared_ptr<IControl> ctrl){
+	if(removeControlFn) removeControlFn(ctrl);	
+}
+
 template<typename T> static std::shared_ptr<IControl> FNFSearch(std::shared_ptr<IControl> focus, T begin, T end, std::function<bool()> onLastControl){
 	auto i = begin;
 	bool found = false;
@@ -52,16 +60,17 @@ std::shared_ptr<IControl> Container::FindNextFocus(bool reverse){
 
 bool Container::HandleEvent(const wm_Event &evt){
 	queuePaint = true;
+	auto ctrlsCopy = controls;
 	EventResponse response;
 	if(focus && focus->IsEnabled() && (evt.type & wm_KeyboardEvents) && (focus->GetSubscribed() & evt.type)){
 		response = focus->HandleEvent(evt);
 	}
 	
-	if(!controls.empty() && !response.IsFinishedProcessing() && evt.type == wm_EventType::Keyboard){
+	if(!ctrlsCopy.empty() && !response.IsFinishedProcessing() && evt.type == wm_EventType::Keyboard){
 		int16_t code = KB_code(evt.Key.code);
 		if(!(code & KeyFlags::NonASCII) && KB_char(evt.Key.code) == '\t'){
 			if(!focus){
-				focus = *controls.begin();
+				focus = *ctrlsCopy.begin();
 				if(focus->GetFlags() & ControlFlags::NoFocus) focus = FindNextFocus(false);
 				if(focus) focus->Focus();
 			}else{
@@ -92,7 +101,7 @@ bool Container::HandleEvent(const wm_Event &evt){
 		}
 		
 		if(!response.IsFinishedProcessing()){
-			for(auto &c : controls){
+			for(auto &c : ctrlsCopy){
 				if(!c->IsEnabled()) continue;
 				if(e.type == wm_EventType::PointerMove && mouseOver != c && gds::InRect(e.Pointer.x, e.Pointer.y, c->GetInteractRect()) && (c->GetSubscribed() & wm_EventType::PointerEnter)){
 					mouseOver = c;
@@ -162,18 +171,30 @@ void Container::AddControl(std::shared_ptr<IControl> control){
 
 void Container::AddControls(std::vector<std::shared_ptr<IControl>> ncontrols){
 	for(auto &c : ncontrols){
-		BindControl(*c);
-		controls.push_back(c);
+		if(std::find(controls.begin(), controls.end(), c) == controls.end()){
+			controls.push_back(c);
+			BindControl(*c);
+		}
 	}
 	
 	uint32_t subs = wm_EventType::Keyboard;
-	for(auto &c : controls){
-		subs |= c->GetSubscribed();
-	}
+	for(auto &c : controls)	subs |= c->GetSubscribed();
+	
 	if(subs & (wm_EventType::PointerEnter | wm_EventType::PointerLeave)) subs |= wm_EventType::PointerMove;
 	
 	SetSubscribed(subs);
 	Paint();
+}
+
+void Container::RemoveControl(std::shared_ptr<IControl> ctrl){
+	controls.erase(std::remove(controls.begin(), controls.end(), ctrl), controls.end());
+	ctrl->paintFn = nullptr;
+	ctrl->bindFn = nullptr;
+	ctrl->isFocusFn = nullptr;
+	ctrl->focusNextFn = nullptr;
+	ctrl->getRectFn = nullptr;
+	ctrl->addControlFn = nullptr;
+	ctrl->removeControlFn = nullptr;
 }
 
 void Container::BindControl(IControl &control){
@@ -182,6 +203,8 @@ void Container::BindControl(IControl &control){
 	control.isFocusFn = [this] (const IControl *ctrl) -> bool {return GetFocus().get() == ctrl;};
 	control.focusNextFn = [this] (bool reverse) -> void {FocusNext(reverse);};
 	control.getRectFn = [this]() -> gds::Rect {return GetBoundingRect();};
+	control.addControlFn = [this](std::shared_ptr<IControl> ctrl) -> void {AddControl(ctrl);};
+	control.removeControlFn = [this](std::shared_ptr<IControl> ctrl) -> void {RemoveControl(ctrl);};
 	control.OnBind();
 }
 
