@@ -42,7 +42,7 @@ namespace MM2{
 		bool cont = true;
 		while(cont){
 			for(auto i = mappings->begin(); i != mappings->end(); ++i){
-				if(i->second->space == space) {
+				if(i->second && i->second->space == space) {
 					shm_close_map(i->first);
 					break;
 				}

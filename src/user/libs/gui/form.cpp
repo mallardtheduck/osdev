@@ -2,6 +2,7 @@
 #include <gui/defaults.hpp>
 #include <gds/libgds.h>
 #include <wm/eventloop.hpp>
+#include <gui/resizehandle.hpp>
 
 #include <iostream>
 
@@ -11,7 +12,7 @@ namespace btos_api{
 namespace gui{
 	
 gds::Surface &Form::GetSurface(){
-	return surf;
+	return *surf;
 }
 
 gds::Rect Form::GetBoundingRect(){
@@ -27,7 +28,8 @@ void Form::Update(){
 }
 
 void Form::SetSubscribed(uint32_t subs){
-	wm::Window::SetSubscribed(subs | wm_EventType::Close);
+	uint32_t formSubs = wm_EventType::Close | wm_EventType::Resize | wm_EventType::Move;
+	wm::Window::SetSubscribed(subs | formSubs);
 }
 
 bool Form::HandleEvent(const wm_Event &e){
@@ -40,6 +42,26 @@ bool Form::HandleEvent(const wm_Event &e){
 			if(el) el->RemoveWindow(GetID());
 		}
 		return true;
+	}else if(e.type == wm_EventType::Resize){
+		rect.w = e.MoveResize.w;
+		rect.h = e.MoveResize.h;
+		surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+		SetSurface(*surf);
+		if(onResize) onResize(rect);
+		if(resizeHandle){
+			RemoveControl(resizeHandle);
+			auto rsBtn = std::make_shared<ResizeHandle>(gds::Rect{(int32_t)rect.w - 20, (int32_t)rect.h - 20, 20, 20});
+			rsBtn->OnAction([this]{
+				StartResize();
+			});
+			resizeHandle = rsBtn;
+			AddControl(rsBtn);
+		}
+		
+	}else if(e.type == wm_EventType::Move){
+		rect.x = e.MoveResize.x;
+		rect.y = e.MoveResize.y;
+		if(onMove) onMove(rect);
 	}
 	
 	return Container::HandleEvent(e);
@@ -48,14 +70,34 @@ bool Form::HandleEvent(const wm_Event &e){
 Form::Form(const gds::Rect &r, uint32_t options, const std::string &title)
 	: Window({r.x, r.y}, options, 0, gds::Surface::Wrap(GDS_NewSurface(gds_SurfaceType::Vector, r.w, r.h, 100, gds_ColourType::True), false), title),
 	rect(r),
-	surf(wm::Window::GetSurface())
-	{
+	surf(new gds::Surface(gds::Surface::Wrap(wm::Window::GetSurface().GetID(), true)))
+{
 	SetEventHandler(std::bind(&Form::HandleEvent, this, _1));
+	if((options & wm_WindowOptions::Resizable)){
+		auto rsBtn = std::make_shared<ResizeHandle>(gds::Rect{(int32_t)r.w - 20, (int32_t)r.h - 20, 20, 20});
+		rsBtn->OnAction([this]{
+			StartResize();
+		});
+		resizeHandle = rsBtn;
+		AddControl(rsBtn);
+	}
 	Paint();
 }
 
 void Form::OnClose(std::function<bool()> oC){
 	onClose = oC;
+}
+
+void Form::OnResize(std::function<void(gds::Rect)> oR){
+	onResize = oR;
+}
+
+void Form::OnExpand(std::function<void()> oX){
+	onExpand = oX;
+}
+
+void Form::OnMove(std::function<void(gds::Rect)> oM){
+	onMove = oM;
 }
 
 }

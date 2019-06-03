@@ -59,6 +59,9 @@ namespace wm{
 		void Show();
 		void Close();
 		void Open();
+		
+		void StartResize();
+		void StartDrag();
 	};
 
 }

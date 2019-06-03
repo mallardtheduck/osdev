@@ -36,6 +36,8 @@ void WM_ShowMenu(wm_Rect pos);
 void WM_SelectWindowMenu();
 void WM_SetWindowMenu();
 void WM_UnSetWindowMenu();
+void WM_StartResize();
+void WM_StartDrag();
 
 bt_terminal_pointer_info WM_GetPointerInfo();
 

@@ -135,6 +135,16 @@ namespace wm{
 		opts &= ~wm_WindowOptions::Unlisted;
 		SetOptions(opts);
 	}
+	
+	void Window::StartResize(){
+		Select();
+		WM_StartResize();
+	}
+	
+	void Window::StartDrag(){
+		Select();
+		WM_StartDrag();
+	}
 
 }
 }

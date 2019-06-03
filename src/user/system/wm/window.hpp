@@ -28,9 +28,15 @@ private:
 	std::string title;
 	bool active = false;
 	bool last_active = false;
-	bool dragging = false;
+	
+	enum class DragMode{
+		None, Move, Resize
+	};
+	
+	DragMode dragMode = DragMode::None;
 	gds::Point dragoffset;
 	gds::Point last_drag_pos = {0, 0};
+	gds::Point resize_origin;
 	std::shared_ptr<gds::Surface> dragImage;
 	WindowArea pressed = WindowArea::None;
 	uint32_t event_subs = 0;
@@ -55,6 +61,7 @@ public:
 	void SetTitle(std::string title);
 	std::string GetTitle();
 	std::shared_ptr<gds::Surface> GetSurface();
+	void SetSurface(std::shared_ptr<gds::Surface> surf);
 	
 	void SetZOrder(uint32_t zorder, bool update = true);
 	uint32_t GetZOrder();
@@ -76,6 +83,8 @@ public:
 	void Hide();
 	void Expand();
 	void MenuAction(uint64_t menu, uint32_t action);
+	void Move(gds::Point newpos);
+	void Resize(uint32_t w, uint32_t h);
 	
 	void SetVisible(bool v, bool update = true);
 	bool GetVisible();
@@ -86,6 +95,9 @@ public:
 	uint32_t GetOptions();
 	void SetWindowMenu(std::shared_ptr<Menu> menu);
 	std::shared_ptr<Menu> GetWindowMenu();
+	
+	void StartDrag();
+	void StartResize();
 };
 
 #endif // WINDOW_HPP

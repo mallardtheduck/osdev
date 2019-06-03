@@ -4,6 +4,9 @@
 #include <wm/wm.h>
 #include <dev/rtc.h>
 #include <gds/screen.hpp>
+#include <dev/terminal.hpp>
+#include <dev/mouse.h>
+
 #include "window.hpp"
 #include "metrics.hpp"
 #include "drawing.hpp"
@@ -104,6 +107,16 @@ shared_ptr<Surface> Window::GetSurface(){
 	return content;
 }
 
+void Window::SetSurface(std::shared_ptr<gds::Surface> surf){
+	auto oldRect = GetBoundingRect();
+	content = surf;
+	gds_info = content->Info();
+	UpdateTitleBar(true);
+	if(GetVisible()){
+		DrawAndRefreshWindows({oldRect, GetBoundingRect()});
+	}
+}
+
 void Window::SetZOrder(uint32_t zorder, bool update){
 	z = zorder;
 	if(update && GetVisible()){
@@ -191,7 +204,7 @@ void RefreshRectEdges(const Rect &r, uint32_t lineWidth){
 }
 
 void Window::PointerInput(const bt_terminal_pointer_event &pevent){
-	if(dragging){
+	if(dragMode == DragMode::Move){
 		Point curpos = Point(pevent.x, pevent.y);
 		Point newpos = {curpos.x - dragoffset.x, curpos.y - dragoffset.y};
 		if(GetMetric(FullWindowDrag)){
@@ -218,7 +231,7 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 		}
 		if(pevent.type == bt_terminal_pointer_event_type::ButtonUp){
 			UnGrab();
-			dragging = false;
+			dragMode = DragMode::None;
 			auto oldpos = pos;
 			SetPosition(newpos);
 			if(GetMetric(FullWindowDrag)){
@@ -232,52 +245,75 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 				DrawWindows(winRect);
 				RefreshRectEdges({last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight()}, GetMetric(BorderWidth));
 			}
+			Move(newpos);
 		}
-	}
-	Point epoint = Reoriginate(Point(pevent.x, pevent.y), pos);
-	WindowArea over = GetWindowArea(epoint);
-	if(pevent.type == bt_terminal_pointer_event_type::ButtonDown && pevent.button == 1){
-		pressed = over;
-		if(pressed != WindowArea::Content){
-			if(pressed == WindowArea::Title){
-				WindowGrab(id);
-				dragoffset = epoint;
-				dragging = true;
-			}else{
-				RefreshTitleBar(true);
-				Rect r = GetBoundingRect();
-				r.h = GetMetric(TitleBarSize);
-				DrawAndRefreshWindows(r, id);
+	}else if(dragMode == DragMode::Resize){
+		if((int32_t)pevent.x > pos.x && (int32_t)pevent.y > pos.y){
+			Point newpos = Reoriginate({(int32_t)pevent.x, (int32_t)pevent.y}, pos);
+			newpos = Reoriginate(newpos, resize_origin);
+			if(newpos.x != last_drag_pos.x || newpos.y != last_drag_pos.y){
+				DrawAndRefreshRectEdges({pos.x, pos.y, GetWidth() + last_drag_pos.x, GetHeight() + last_drag_pos.y}, GetMetric(BorderWidth));
+				DrawBorder(Screen, {pos.x, pos.y, GetWidth() + newpos.x, GetHeight() + newpos.y});
+				RefreshRectEdges({pos.x, pos.y, GetWidth() + newpos.x, GetHeight() + newpos.y}, GetMetric(BorderWidth));
+				last_drag_pos = newpos;
 			}
 		}
-	}
-	if(pevent.type == bt_terminal_pointer_event_type::ButtonUp && pevent.button == 1 && pressed != WindowArea::None){
-		if(pressed == over){
-			if(pressed == WindowArea::MenuButton && !(options & wm_WindowOptions::NoMenu)) OpenMenu();
-			if(pressed == WindowArea::CloseButton && !(options & wm_WindowOptions::NoClose)) Close();
-			if(pressed == WindowArea::HideButton && !(options & wm_WindowOptions::NoHide)) Hide();
-			if(pressed == WindowArea::ExpandButton && !(options & wm_WindowOptions::NoExpand)) Expand();
+		if(pevent.type == bt_terminal_pointer_event_type::ButtonUp){
+			UnGrab();
+			dragMode = DragMode::None;
+			RefreshRectEdges({pos.x, pos.y, GetWidth() + last_drag_pos.x, GetHeight() + last_drag_pos.y}, GetMetric(BorderWidth));
+			if(last_drag_pos.x || last_drag_pos.y) Resize(gds_info.w + last_drag_pos.x, gds_info.h + last_drag_pos.y);
+			else{
+				PointerInput(pevent);
+			}
 		}
-		pressed = WindowArea::None;
-		RefreshTitleBar(true);
-		Rect r = GetBoundingRect();
-		r.h = GetMetric(TitleBarSize);
-		DrawAndRefreshWindows(r, id);
-	}
-	if(over == WindowArea::Content){
-		wm_Event e;
-		if(pevent.type == bt_terminal_pointer_event_type::ButtonDown) e.type = wm_EventType::PointerButtonDown;
-		else if(pevent.type == bt_terminal_pointer_event_type::ButtonUp) e.type = wm_EventType::PointerButtonUp;
-		else if(pevent.type == bt_terminal_pointer_event_type::Move) e.type = wm_EventType::PointerMove;
-		else return;
-		shared_ptr<Client> client = owner.lock();
-		if(client && (e.type & event_subs) == e.type){
-			Point cpoint = Reoriginate(epoint, GetContentOffset());
-			e.window_id = id;
-			e.Pointer.x = cpoint.x;
-			e.Pointer.y = cpoint.y;
-			e.Pointer.button = pevent.button;
-			client->SendEvent(e);
+	}else{
+		Point epoint = Reoriginate(Point(pevent.x, pevent.y), pos);
+		WindowArea over = GetWindowArea(epoint);
+		if(pevent.type == bt_terminal_pointer_event_type::ButtonDown && pevent.button == 1){
+			pressed = over;
+			if(pressed != WindowArea::Content){
+				if(pressed == WindowArea::Title){
+					WindowGrab(id);
+					dragoffset = epoint;
+					last_drag_pos = pos;
+					dragMode = DragMode::Move;
+				}else{
+					RefreshTitleBar(true);
+					Rect r = GetBoundingRect();
+					r.h = GetMetric(TitleBarSize);
+					DrawAndRefreshWindows(r, id);
+				}
+			}
+		}
+		if(pevent.type == bt_terminal_pointer_event_type::ButtonUp && pevent.button == 1 && pressed != WindowArea::None){
+			if(pressed == over){
+				if(pressed == WindowArea::MenuButton && !(options & wm_WindowOptions::NoMenu)) OpenMenu();
+				if(pressed == WindowArea::CloseButton && !(options & wm_WindowOptions::NoClose)) Close();
+				if(pressed == WindowArea::HideButton && !(options & wm_WindowOptions::NoHide)) Hide();
+				if(pressed == WindowArea::ExpandButton && !(options & wm_WindowOptions::NoExpand)) Expand();
+			}
+			pressed = WindowArea::None;
+			RefreshTitleBar(true);
+			Rect r = GetBoundingRect();
+			r.h = GetMetric(TitleBarSize);
+			DrawAndRefreshWindows(r, id);
+		}
+		if(over == WindowArea::Content){
+			wm_Event e;
+			if(pevent.type == bt_terminal_pointer_event_type::ButtonDown) e.type = wm_EventType::PointerButtonDown;
+			else if(pevent.type == bt_terminal_pointer_event_type::ButtonUp) e.type = wm_EventType::PointerButtonUp;
+			else if(pevent.type == bt_terminal_pointer_event_type::Move) e.type = wm_EventType::PointerMove;
+			else return;
+			shared_ptr<Client> client = owner.lock();
+			if(client && (e.type & event_subs) == e.type){
+				Point cpoint = Reoriginate(epoint, GetContentOffset());
+				e.window_id = id;
+				e.Pointer.x = cpoint.x;
+				e.Pointer.y = cpoint.y;
+				e.Pointer.button = pevent.button;
+				client->SendEvent(e);
+			}
 		}
 	}
 }
@@ -453,6 +489,40 @@ void Window::MenuAction(uint64_t menu, uint32_t action){
 	}
 }
 
+void Window::Move(Point newpos){
+	stringstream ss;
+	ss << "WM: Window '" << title << "' move."<< endl;
+	bt_zero(ss.str().c_str());
+	shared_ptr<Client> client = owner.lock();
+	if(client && (event_subs & wm_EventType::Move)){
+		wm_Event e;
+		e.window_id = id;
+		e.type = wm_EventType::Move;
+		e.MoveResize.x = newpos.x;
+		e.MoveResize.y = newpos.y;
+		e.MoveResize.w = GetWidth();
+		e.MoveResize.h = GetHeight();
+		client->SendEvent(e);
+	}
+}
+
+void Window::Resize(uint32_t w, uint32_t h){
+	stringstream ss;
+	ss << "WM: Window '" << title << "' resize."<< endl;
+	bt_zero(ss.str().c_str());
+	shared_ptr<Client> client = owner.lock();
+	if(client && (event_subs & wm_EventType::Resize)){
+		wm_Event e;
+		e.window_id = id;
+		e.type = wm_EventType::Resize;
+		e.MoveResize.x = pos.x;
+		e.MoveResize.y = pos.y;
+		e.MoveResize.w = w;
+		e.MoveResize.h = h;
+		client->SendEvent(e);
+	}
+}
+
 void Window::SetOwner(std::weak_ptr<Client> o){
 	owner = o;
 }
@@ -482,4 +552,26 @@ void Window::SetWindowMenu(shared_ptr<Menu> menu){
 
 shared_ptr<Menu> Window::GetWindowMenu(){
 	return windowMenu;
+}
+
+void Window::StartResize(){
+	auto info = Terminal().GetPointerInfo();
+	if((info.flags & MouseFlags::Button1)){
+		Point epoint = Reoriginate(Point(info.x, info.y), pos);
+		resize_origin = epoint;
+		WindowGrab(id);
+		dragoffset = epoint;
+		dragMode = DragMode::Resize;
+	}
+}
+
+void Window::StartDrag(){
+	auto info = Terminal().GetPointerInfo();
+	if((info.flags & MouseFlags::Button1)){
+		Point epoint = Reoriginate(Point(info.x, info.y), pos);
+		last_drag_pos = pos;
+		WindowGrab(id);
+		dragoffset = epoint;
+		dragMode = DragMode::Move;
+	}
 }

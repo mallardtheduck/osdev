@@ -301,6 +301,18 @@ namespace colours{
 	gds::Colour GetTabsFocus(){
 		return constants::DarkGrey;
 	}
+	
+	gds::Colour GetResizeHandleBackground(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetResizeHandleForeground(){
+		return constants::Black;
+	}
+	
+	gds::Colour GetResizeHandleDown(){
+		return constants::DarkGrey;
+	}
 }
 
 namespace fonts{

@@ -48,6 +48,8 @@ ENUM_START(wm_EventType)
 	ENUM_SET(wm_EventType, Hide,				1 << 11),
 	ENUM_SET(wm_EventType, Expand,				1 << 12),
 	ENUM_SET(wm_EventType, MenuSelection,		1 << 13),
+	ENUM_SET(wm_EventType, Move,				1 << 14),
+	ENUM_SET(wm_EventType, Resize,				1 << 15),
 ENUM_END
 ENUM_TYPE(wm_EventType);
 
@@ -57,7 +59,7 @@ static const int wm_PointerEvents = ENUM_GET(wm_EventType, PointerMove) | ENUM_G
 	| ENUM_GET(wm_EventType, PointerButtonUp) | ENUM_GET(wm_EventType, PointerEnter) | ENUM_GET(wm_EventType, PointerLeave)
 	| ENUM_GET(wm_EventType, Click) | ENUM_GET(wm_EventType, DoubleClick);
 static const int wm_FrameEvents = ENUM_GET(wm_EventType, Close) | ENUM_GET(wm_EventType, Hide) | ENUM_GET(wm_EventType, Expand)
-	 | ENUM_GET(wm_EventType, MenuSelection);
+	 | ENUM_GET(wm_EventType, MenuSelection) | ENUM_GET(wm_EventType, Move) | ENUM_GET(wm_EventType, Resize);
 
 struct wm_WindowInfo{
 	int32_t x, y;
@@ -89,6 +91,10 @@ struct wm_Event{
 			uint64_t menu_id;
 			uint32_t action;
 		} Menu;
+		struct{
+			int32_t x, y;
+			uint32_t w, h;
+		} MoveResize;
 	};
 };
 BT_STRUCT_TYPE(wm_Event);
@@ -120,6 +126,9 @@ ENUM_START(wm_RequestType)
 	ENUM_SET(wm_RequestType, UnSetWindowMenu,	30),
 	
 	ENUM_SET(wm_RequestType, GetPointerInfo,	50),
+	
+	ENUM_SET(wm_RequestType, StartResize,		60),
+	ENUM_SET(wm_RequestType, StartDrag,			61),
 ENUM_END
 ENUM_TYPE(wm_RequestType);
 

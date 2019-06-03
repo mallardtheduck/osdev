@@ -116,6 +116,10 @@ namespace colours{
 	gds::Colour GetTabsSelectedBackground();
 	gds::Colour GetTabsText();
 	gds::Colour GetTabsFocus();
+	
+	gds::Colour GetResizeHandleBackground();
+	gds::Colour GetResizeHandleForeground();
+	gds::Colour GetResizeHandleDown();
 }
 
 namespace fonts{

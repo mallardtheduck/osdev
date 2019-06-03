@@ -113,7 +113,11 @@ bool Client::HandleMessage(const Message &msg){
 			break;
 		}
 		case wm_RequestType::ReplaceSurface:{
-			//TODO: Implement
+			if(currentWindow){
+				uint64_t gds_id = msg.Content<uint64_t>();
+				auto ptr = make_shared<Surface>(Surface::Wrap(gds_id, true));
+				currentWindow->SetSurface(ptr);
+			}
 			break;
 		}
 		case wm_RequestType::MoveWindow:{
@@ -209,6 +213,15 @@ bool Client::HandleMessage(const Message &msg){
 		}
 		case wm_RequestType::GetPointerInfo:{
 			SendReply(msg, Terminal().GetPointerInfo());
+			break;
+		}
+		case wm_RequestType::StartResize:{
+			if(currentWindow) currentWindow->StartResize();
+			break;
+		}
+		case wm_RequestType::StartDrag:{
+			if(currentWindow) currentWindow->StartDrag();
+			break;
 		}
 	}
 	return true;

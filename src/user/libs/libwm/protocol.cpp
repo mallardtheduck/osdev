@@ -216,3 +216,11 @@ extern "C" bt_terminal_pointer_info WM_GetPointerInfo(){
 	bt_msg_header reply = SendMessage(wm_RequestType::GetPointerInfo, 0, NULL, true);
 	return GetContent<bt_terminal_pointer_info>(reply);
 }
+
+extern "C" void WM_StartResize(){
+	SendMessage(wm_RequestType::StartResize, 0, NULL, false);
+}
+
+extern "C" void WM_StartDrag(){
+	SendMessage(wm_RequestType::StartDrag, 0 , NULL, false);
+}

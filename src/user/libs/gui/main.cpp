@@ -128,7 +128,7 @@ void MoreForm(btos_api::wm::EventLoop &eloop){
 }
 
 void EvenMoreForm(btos_api::wm::EventLoop &eloop){
-	auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{100, 100, 400, 300}, wm_WindowOptions::Default, "Even More Controls");
+	auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{100, 100, 400, 300}, wm_WindowOptions::Default | wm_WindowOptions::Resizable, "Even More Controls");
 	auto tbar = std::make_shared<btos_api::gui::Toolbar>();
 	
 	auto tb1icon = load_png_resc("tb1_icon.png");
@@ -158,7 +158,7 @@ void EvenMoreForm(btos_api::wm::EventLoop &eloop){
 		sbar->SetText("New status.");
 	});
 	
-	frm->AddControls({tbar, sbar, tabs});
+	frm->AddControls({tbar, /*sbar,*/ tabs});
 	
 	eloop.AddWindow(frm);
 }
