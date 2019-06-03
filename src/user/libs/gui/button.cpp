@@ -70,8 +70,8 @@ void Button::Paint(gds::Surface &s){
 			bkSurf->Text({labelX, labelY}, label, fonts::GetButtonFont(), fonts::GetButtonTextSize(), textColour);
 			bkSurf->CommitQueue();
 			
-		}else surf->Clear();
-		
+		}
+		surf->Clear();
 		surf->BeginQueue();
 		
 		surf->Blit(*bkSurf, {0, 0, rect.w, rect.h}, {0, 0, rect.w, rect.h});

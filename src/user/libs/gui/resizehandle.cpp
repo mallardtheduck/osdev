@@ -51,15 +51,15 @@ void ResizeHandle::Paint(gds::Surface &s){
 			
 			bkSurf->CommitQueue();
 			
-		}else surf->Clear();
-		
+		}
+		surf->Clear();
 		surf->BeginQueue();
 		
 		surf->Blit(*bkSurf, {0, 0, rect.w, rect.h}, {0, 0, rect.w, rect.h});
 		
 		if(down){
 			auto downCol = colours::GetResizeHandleDown().Fix(*surf);
-			bkSurf->Box({1, 1, (uint32_t)inW - 1, (uint32_t)inH - 1}, downCol, downCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+			surf->Box({1, 1, (uint32_t)inW - 1, (uint32_t)inH - 1}, downCol, downCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		}
 		
 		auto fgCol = colours::GetResizeHandleForeground().Fix(*surf);

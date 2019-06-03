@@ -202,8 +202,8 @@ void ToolbarButton::Paint(gds::Surface &s){
 			
 			bkSurf->CommitQueue();
 			
-		}else surf->Clear();
-		
+		}
+		surf->Clear();
 		surf->BeginQueue();
 		
 		surf->Blit(*bkSurf, {0, 0, rect.w, rect.h}, {0, 0, rect.w, rect.h});

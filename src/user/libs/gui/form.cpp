@@ -46,7 +46,6 @@ bool Form::HandleEvent(const wm_Event &e){
 		rect.w = e.MoveResize.w;
 		rect.h = e.MoveResize.h;
 		surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		SetSurface(*surf);
 		if(onResize) onResize(rect);
 		if(resizeHandle){
 			RemoveControl(resizeHandle);
@@ -56,7 +55,10 @@ bool Form::HandleEvent(const wm_Event &e){
 			});
 			resizeHandle = rsBtn;
 			AddControl(rsBtn);
+		}else{
+			Paint();
 		}
+		SetSurface(*surf);
 		
 	}else if(e.type == wm_EventType::Move){
 		rect.x = e.MoveResize.x;
