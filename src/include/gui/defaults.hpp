@@ -115,6 +115,7 @@ namespace colours{
 	gds::Colour GetTabsUnselectedBackground();
 	gds::Colour GetTabsSelectedBackground();
 	gds::Colour GetTabsText();
+	gds::Colour GetTabsFocus();
 }
 
 namespace fonts{

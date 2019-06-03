@@ -297,6 +297,10 @@ namespace colours{
 	gds::Colour GetTabsText(){
 		return constants::Black;
 	}
+	
+	gds::Colour GetTabsFocus(){
+		return constants::DarkGrey;
+	}
 }
 
 namespace fonts{

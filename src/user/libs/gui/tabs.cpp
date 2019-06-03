@@ -47,8 +47,12 @@ EventResponse Tabs::HandleEvent(const wm_Event &e){
 				RaiseActionEvent();
 				return {true};
 			}
+			return {false};
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && currentTab > 0){
+			--currentTab;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && currentTab < tabs.size() - 1){
+			++currentTab;
 		}
-		return {false};
 	}
 	if(oldCurrent != currentTab){
 		SwitchTab();
@@ -95,6 +99,18 @@ void Tabs::Paint(gds::Surface &s){
 			int32_t labelY = std::max<int32_t>(((TabHeight + tab.labelMeasures.h) / 2), 0);
 			
 			surf->Text({labelX, labelY}, tab.label, fonts::GetTabsFont(), fonts::GetTabsTextSize(), textColour);
+			
+			if(focus && i == currentTab){
+				auto focusCol = colours::GetTabsFocus().Fix(*surf);
+				
+				int32_t focusX = std::max<uint32_t>(labelX - TabMargin, 0);
+				int32_t focusY = std::max<uint32_t>(labelY - tab.labelMeasures.h - TabMargin, 0);
+				uint32_t focusW = tab.labelMeasures.w + (TabMargin * 2);
+				uint32_t focusH = tab.labelMeasures.h + (TabMargin * 2);
+				
+				surf->Box({focusX, focusY, focusW, focusH}, focusCol, focusCol);
+			}
+			
 			curX += width + TabMargin;
 		}
 		
@@ -121,13 +137,19 @@ uint32_t Tabs::GetSubscribed(){
 }
 
 void Tabs::Focus(){
-	focus = true;
-	IControl::Paint(rect);
+	if(!focus){
+		focus = true;
+		update = true;
+		IControl::Paint(rect);
+	}
 }
 
 void Tabs::Blur(){
-	focus = false;
-	IControl::Paint(rect);
+	if(focus){
+		focus = false;
+		update = true;
+		IControl::Paint(rect);
+	}
 }
 
 uint32_t Tabs::GetFlags(){
