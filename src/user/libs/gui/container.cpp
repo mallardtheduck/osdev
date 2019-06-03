@@ -113,7 +113,7 @@ bool Container::HandleEvent(const wm_Event &evt){
 					response = c->HandleEvent(e);
 					if(response.IsFinishedProcessing()){
 						if(e.type != wm_EventType::PointerMove && e.type != wm_EventType::PointerEnter && e.type != wm_EventType::PointerLeave){
-							if(c != focus){
+							if(c != focus && !(c->GetFlags() & ControlFlags::NoFocus)){
 								if(focus){
 									focus->Blur();
 								}
