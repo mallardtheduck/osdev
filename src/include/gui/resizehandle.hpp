@@ -34,6 +34,8 @@ public:
 	bool IsEnabled();
 	
 	bool GetValue();
+	
+	size_t GetZOrder();
 };
 
 }

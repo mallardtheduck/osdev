@@ -49,17 +49,9 @@ bool Form::HandleEvent(const wm_Event &e){
 		if(onResize) onResize(rect);
 		if(resizeHandle){
 			RemoveControl(resizeHandle);
-			auto rsBtn = std::make_shared<ResizeHandle>(gds::Rect{(int32_t)rect.w - 20, (int32_t)rect.h - 20, 20, 20});
-			rsBtn->OnAction([this]{
-				StartResize();
-			});
-			resizeHandle = rsBtn;
-			AddControl(rsBtn);
-		}else{
-			Paint();
+			CreateResizeHandle();
 		}
 		SetSurface(*surf);
-		
 	}else if(e.type == wm_EventType::Move){
 		rect.x = e.MoveResize.x;
 		rect.y = e.MoveResize.y;
@@ -76,14 +68,19 @@ Form::Form(const gds::Rect &r, uint32_t options, const std::string &title)
 {
 	SetEventHandler(std::bind(&Form::HandleEvent, this, _1));
 	if((options & wm_WindowOptions::Resizable)){
-		auto rsBtn = std::make_shared<ResizeHandle>(gds::Rect{(int32_t)r.w - 20, (int32_t)r.h - 20, 20, 20});
-		rsBtn->OnAction([this]{
-			StartResize();
-		});
-		resizeHandle = rsBtn;
-		AddControl(rsBtn);
+		CreateResizeHandle();
 	}
 	Paint();
+}
+
+void Form::CreateResizeHandle(){
+	const auto handleSize = 18;
+	auto rsBtn = std::make_shared<ResizeHandle>(gds::Rect{(int32_t)rect.w - handleSize, (int32_t)rect.h - handleSize, handleSize, handleSize});
+	rsBtn->OnAction([this]{
+		StartResize();
+	});
+	resizeHandle = rsBtn;
+	AddControl(rsBtn);
 }
 
 void Form::OnClose(std::function<bool()> oC){

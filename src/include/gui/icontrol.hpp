@@ -16,6 +16,12 @@ namespace ControlFlags{
 	static const uint32_t NoFocus = 1 << 0;
 }
 
+namespace ZOrder{
+	const size_t Background = 1000;
+	const size_t Default = 2000;
+	const size_t Foreground = 3000;
+};
+
 class IControl{
 protected:
 	void Paint(const gds::Rect &rect);
@@ -44,6 +50,10 @@ public:
 	virtual void Enable() = 0;
 	virtual void Disable() = 0;
 	virtual bool IsEnabled() = 0;
+	
+	virtual size_t GetZOrder(){
+		return ZOrder::Default;
+	}
 	
 	bool IsFocus();
 	virtual void OnBind() {}

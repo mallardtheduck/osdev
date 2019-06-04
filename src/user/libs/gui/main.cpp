@@ -158,7 +158,7 @@ void EvenMoreForm(btos_api::wm::EventLoop &eloop){
 		sbar->SetText("New status.");
 	});
 	
-	frm->AddControls({tbar, /*sbar,*/ tabs});
+	frm->AddControls({tbar, sbar, tabs});
 	
 	eloop.AddWindow(frm);
 }

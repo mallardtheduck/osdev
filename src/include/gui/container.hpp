@@ -31,6 +31,8 @@ private:
 	
 	std::shared_ptr<IControl> FindNextFocus(bool reverse);
 	virtual bool OnLastControlFocus(bool /*reverse*/) {return false;}
+	
+	void ZSortControls();
 protected:
 	bool HandleEvent(const wm_Event &e);
 

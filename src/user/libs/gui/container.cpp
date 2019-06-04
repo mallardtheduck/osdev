@@ -58,6 +58,12 @@ std::shared_ptr<IControl> Container::FindNextFocus(bool reverse){
 	else return FNFSearch(focus, controls.begin(), controls.end(), [this, reverse]{return OnLastControlFocus(reverse);});
 }
 
+void Container::ZSortControls(){
+	std::sort(controls.begin(), controls.end(), [](const std::shared_ptr<IControl> &a, const std::shared_ptr<IControl> &b){
+		return a->GetZOrder() < b->GetZOrder();
+	});
+}
+
 bool Container::HandleEvent(const wm_Event &evt){
 	queuePaint = true;
 	auto ctrlsCopy = controls;
@@ -101,7 +107,8 @@ bool Container::HandleEvent(const wm_Event &evt){
 		}
 		
 		if(!response.IsFinishedProcessing()){
-			for(auto &c : ctrlsCopy){
+			for(auto i = ctrlsCopy.rbegin(); i != ctrlsCopy.rend(); ++i){
+				auto &c = *i;
 				if(!c->IsEnabled()) continue;
 				if(e.type == wm_EventType::PointerMove && mouseOver != c && gds::InRect(e.Pointer.x, e.Pointer.y, c->GetInteractRect()) && (c->GetSubscribed() & wm_EventType::PointerEnter)){
 					mouseOver = c;
@@ -150,7 +157,6 @@ void Container::Paint(const std::vector<gds::Rect> &rects){
 		c->Paint(surface);
 	}
 	surface.CommitQueue();
-	
 	for(auto &r : rects){
 		if(r.w && r.h) Update(r);
 		else{
@@ -181,7 +187,7 @@ void Container::AddControls(std::vector<std::shared_ptr<IControl>> ncontrols){
 	for(auto &c : controls)	subs |= c->GetSubscribed();
 	
 	if(subs & (wm_EventType::PointerEnter | wm_EventType::PointerLeave)) subs |= wm_EventType::PointerMove;
-	
+	ZSortControls();
 	SetSubscribed(subs);
 	Paint();
 }

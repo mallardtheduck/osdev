@@ -28,6 +28,7 @@ private:
 	std::function<void(gds::Rect)> onMove;
 	
 	bool HandleEvent(const wm_Event &e);
+	void CreateResizeHandle();
 public:
 	Form(const gds::Rect &r, uint32_t options, const std::string &title);
 	
