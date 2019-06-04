@@ -43,7 +43,7 @@ std::shared_ptr<gds::Surface> load_png_resc(const char *path){
 }
 
 void MoreForm(btos_api::wm::EventLoop &eloop){
-	auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{200, 50, 600, 500}, wm_WindowOptions::Default, "More Controls");
+	auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{200, 50, 600, 500}, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, "More Controls");
 	auto lst = std::make_shared<btos_api::gui::ListBox>(gds::Rect{10, 10, 150, 200}, true);
 	auto lst2 = std::make_shared<btos_api::gui::ListBox>(gds::Rect{240, 10, 150, 200}, false, true);
 	auto tst = std::make_shared<btos_api::gui::TestControl>(gds::Rect{170, 10, 50, 50});
@@ -173,7 +173,7 @@ void EvenMoreForm(btos_api::wm::EventLoop &eloop){
 
 int main(){
 	try{
-		auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{200, 200, 500, 300}, wm_WindowOptions::Default, "GUI Controls Test");
+		auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{200, 200, 500, 300}, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, "GUI Controls Test");
 		auto lbl1 = std::make_shared<btos_api::gui::Label>(gds::Rect{120, 10, 100, 20}, "A Label");
 		auto lbl2 = std::make_shared<btos_api::gui::Label>(gds::Rect{120, 30, 100, 20}, "Nothing");
 		auto btn1 = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 1");

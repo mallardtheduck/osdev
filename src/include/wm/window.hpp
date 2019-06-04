@@ -5,6 +5,7 @@
 #include <wm/wm.h>
 #include <string>
 #include <functional>
+#include <dev/video_dev.h>
 
 #include "menu.hpp"
 
@@ -62,6 +63,8 @@ namespace wm{
 		
 		void StartResize();
 		void StartDrag();
+		
+		bt_vidmode GetScreenMode();
 	};
 
 }

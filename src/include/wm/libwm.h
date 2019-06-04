@@ -4,6 +4,7 @@
 #include <wm/wm.h>
 #include <btos.h>
 #include <dev/terminal.h>
+#include <dev/video_dev.h>
 
 #ifdef __cplusplus
 #include <string>
@@ -40,6 +41,7 @@ void WM_StartResize();
 void WM_StartDrag();
 
 bt_terminal_pointer_info WM_GetPointerInfo();
+bt_vidmode WM_GetScreenMode();
 
 #ifdef __cplusplus
 }

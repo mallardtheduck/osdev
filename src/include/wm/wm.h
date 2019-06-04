@@ -63,6 +63,7 @@ static const int wm_FrameEvents = ENUM_GET(wm_EventType, Close) | ENUM_GET(wm_Ev
 
 struct wm_WindowInfo{
 	int32_t x, y;
+	int32_t contentX, contentY;
 	uint32_t options;
 	uint32_t subscriptions;
 	uint64_t gds_id;
@@ -126,6 +127,7 @@ ENUM_START(wm_RequestType)
 	ENUM_SET(wm_RequestType, UnSetWindowMenu,	30),
 	
 	ENUM_SET(wm_RequestType, GetPointerInfo,	50),
+	ENUM_SET(wm_RequestType, GetScreenMode,		51),
 	
 	ENUM_SET(wm_RequestType, StartResize,		60),
 	ENUM_SET(wm_RequestType, StartDrag,			61),

@@ -76,12 +76,17 @@ bool Client::HandleMessage(const Message &msg){
 				Point p = currentWindow->GetPosition();
 				info.x = p.x;
 				info.y = p.y;
+				Point content = currentWindow->GetContentOffset();
+				info.contentX = content.x;
+				info.contentY = content.y;
 				info.options = wm_WindowOptions::Visible;
 				info.subscriptions = currentWindow->Subscribe();
 				info.gds_id = currentWindow->GetSurface()->GetID();
 			}else{
 				info.x = 0;
 				info.y = 0;
+				info.contentX = 0;
+				info.contentY = 0;
 				info.options = 0;
 				info.subscriptions = 0;
 				info.gds_id = 0;
@@ -214,6 +219,9 @@ bool Client::HandleMessage(const Message &msg){
 		case wm_RequestType::GetPointerInfo:{
 			SendReply(msg, Terminal().GetPointerInfo());
 			break;
+		}
+		case wm_RequestType::GetScreenMode:{
+			SendReply(msg, Terminal().GetCurrentScreenMode());
 		}
 		case wm_RequestType::StartResize:{
 			if(currentWindow) currentWindow->StartResize();

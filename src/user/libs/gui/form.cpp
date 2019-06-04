@@ -28,7 +28,7 @@ void Form::Update(){
 }
 
 void Form::SetSubscribed(uint32_t subs){
-	uint32_t formSubs = wm_EventType::Close | wm_EventType::Resize | wm_EventType::Move;
+	uint32_t formSubs = wm_FrameEvents;
 	wm::Window::SetSubscribed(subs | formSubs);
 }
 
@@ -42,16 +42,30 @@ bool Form::HandleEvent(const wm_Event &e){
 			if(el) el->RemoveWindow(GetID());
 		}
 		return true;
+	}else if(e.type == wm_EventType::Expand){
+		if(!expanded){
+			auto mode = GetScreenMode();
+			auto info = Info();
+			auto titleSize = info.contentY;
+			auto borderSize = info.contentX;
+			nonExpandRect = rect;
+			rect.x = 0;
+			rect.y = 0;
+			rect.w = mode.width - (2 * borderSize);
+			rect.h = mode.height - (titleSize + borderSize);
+			SetPosition({0, 0});
+			expanded = true;
+		}else{
+			rect = nonExpandRect;
+			SetPosition({rect.x, rect.y});
+			expanded = false;
+		}
+		PerformResize();
+		if(onExpand) onExpand();
 	}else if(e.type == wm_EventType::Resize){
 		rect.w = e.MoveResize.w;
 		rect.h = e.MoveResize.h;
-		surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		if(onResize) onResize(rect);
-		if(resizeHandle){
-			resizeHandle->SetPosition({(int32_t)rect.w - handleSize, (int32_t)rect.h - handleSize, handleSize, handleSize});
-		}
-		Paint();
-		SetSurface(*surf);
+		PerformResize();
 	}else if(e.type == wm_EventType::Move){
 		rect.x = e.MoveResize.x;
 		rect.y = e.MoveResize.y;
@@ -80,6 +94,16 @@ void Form::CreateResizeHandle(){
 	});
 	resizeHandle = rsBtn;
 	AddControl(rsBtn);
+}
+
+void Form::PerformResize(){
+	surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+	if(onResize) onResize(rect);
+	if(resizeHandle){
+		resizeHandle->SetPosition({(int32_t)rect.w - handleSize, (int32_t)rect.h - handleSize, handleSize, handleSize});
+	}
+	Paint();
+	SetSurface(*surf);
 }
 
 void Form::OnClose(std::function<bool()> oC){

@@ -145,6 +145,11 @@ namespace wm{
 		Select();
 		WM_StartDrag();
 	}
+	
+	bt_vidmode Window::GetScreenMode(){
+		Select();
+		return WM_GetScreenMode();
+	}
 
 }
 }

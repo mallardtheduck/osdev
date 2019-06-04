@@ -217,6 +217,11 @@ extern "C" bt_terminal_pointer_info WM_GetPointerInfo(){
 	return GetContent<bt_terminal_pointer_info>(reply);
 }
 
+extern "C" bt_vidmode WM_GetScreenMode(){
+	bt_msg_header reply = SendMessage(wm_RequestType::GetScreenMode, 0, NULL, true);
+	return GetContent<bt_vidmode>(reply);
+}
+
 extern "C" void WM_StartResize(){
 	SendMessage(wm_RequestType::StartResize, 0, NULL, false);
 }

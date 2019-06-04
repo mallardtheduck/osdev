@@ -11,6 +11,8 @@ namespace gui{
 class Form : public wm::Window, public Container{
 private:
 	static const auto handleSize = 18;
+	bool expanded = false;
+	gds::Rect nonExpandRect;
 
 	gds::Rect rect;
 	std::unique_ptr<gds::Surface> surf;
@@ -31,6 +33,7 @@ private:
 	
 	bool HandleEvent(const wm_Event &e);
 	void CreateResizeHandle();
+	void PerformResize();
 public:
 	Form(const gds::Rect &r, uint32_t options, const std::string &title);
 	
