@@ -170,7 +170,7 @@ std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
 		if(!cache) return nullptr;
 		
 		auto &bsurf = *cache;
-		if(renderRect.w && renderRect.w < width && renderRect.h < height){
+		if(renderRect.w){
 			bsurf.GetImage()->SetClip(renderRect.x, renderRect.y, renderRect.x + renderRect.w, renderRect.y + renderRect.h);
 		}
 		size_t opsRendered = 0;

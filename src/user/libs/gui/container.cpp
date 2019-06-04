@@ -135,7 +135,7 @@ bool Container::HandleEvent(const wm_Event &evt){
 		}
 	}
 	queuePaint = false;
-	Paint(gds::TileRects(paintQueue));
+	Paint(/*gds::TileRects(*/paintQueue/*)*/);
 	paintQueue.clear();
 	return true;
 }
