@@ -153,5 +153,11 @@ bool Button::IsEnabled(){
 	return enabled;
 }
 
+void Button::SetPosition(const gds::Rect &r){
+	rect = r;
+	surf.reset();
+	bkSurf.reset();
+}
+
 }
 }

@@ -34,6 +34,7 @@ public:
 	void Enable();
 	void Disable();
 	bool IsEnabled();
+	void SetPosition(const gds::Rect&);
 	
 	int32_t GetValue();
 };

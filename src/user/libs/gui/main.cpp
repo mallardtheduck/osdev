@@ -158,6 +158,14 @@ void EvenMoreForm(btos_api::wm::EventLoop &eloop){
 		sbar->SetText("New status.");
 	});
 	
+	frm->OnResize([=](const gds::Rect &size){
+		tabs->SetPosition({10, 40, size.w - 20, size.h - 70});
+		t1c->SetPosition(tabs->GetContentRect());
+		t2c->SetPosition(tabs->GetContentRect());
+		t3c->SetPosition(tabs->GetContentRect());
+		ttc->SetPosition(tabs->GetContentRect());
+	});
+	
 	frm->AddControls({tbar, sbar, tabs});
 	
 	eloop.AddWindow(frm);

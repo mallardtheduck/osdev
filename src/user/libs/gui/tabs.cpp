@@ -174,6 +174,12 @@ bool Tabs::IsEnabled(){
 	return enabled;
 }
 
+void Tabs::SetPosition(const gds::Rect &r){
+	rect = r;
+	update = true;
+	surf.reset();
+}
+
 void Tabs::OnBind(){
 	if(currentContent) AddToParent(currentContent);
 }
@@ -188,12 +194,13 @@ void Tabs::Refresh(){
 }
 
 gds::Rect Tabs::GetContentRect(){
-	return {
-		(int32_t)(rect.x + TabMargin), 
-		(int32_t)(rect.y + TabHeight + TabMargin), 
-		(uint32_t)(rect.w - (2 * TabMargin)),
-		(uint32_t)(rect.h - (2 * TabMargin) - TabHeight)
-	};
+	int32_t x = rect.x + TabMargin;
+	int32_t y = rect.y + TabHeight + TabMargin;
+	uint32_t w = rect.w - (2 * TabMargin);
+	uint32_t h = rect.h - (2 * TabMargin) - TabHeight;
+	if(w > rect.w) w = 0;
+	if(h > rect.h) h = 0;
+	return {x, y, w, h};
 }
 
 }

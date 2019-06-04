@@ -232,5 +232,11 @@ bool TextBox::IsEnabled(){
 	return enabled;
 }
 
+void TextBox::SetPosition(const gds::Rect &r){
+	rect = r;
+	update = true;
+	surf.reset();
+}
+
 }
 }

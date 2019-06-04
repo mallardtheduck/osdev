@@ -152,5 +152,11 @@ bool ImageButton::IsEnabled(){
 	return enabled;
 }
 
+void ImageButton::SetPosition(const gds::Rect &r){
+	rect = r;
+	surf.reset();
+	bkSurf.reset();
+}
+
 }
 }

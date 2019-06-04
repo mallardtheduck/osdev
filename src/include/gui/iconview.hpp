@@ -61,6 +61,7 @@ public:
 	void Enable();
 	void Disable();
 	bool IsEnabled();
+	void SetPosition(const gds::Rect&);
 	
 	size_t GetValue();
 	void SetValue(size_t idx);

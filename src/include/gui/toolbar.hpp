@@ -15,6 +15,7 @@ protected:
 	friend class Toolbar;
 public:
 	virtual uint32_t GetWidth() = 0;
+	void SetPosition(const gds::Rect&){}
 	
 	virtual ~IToolbarControlBase() {}
 };
@@ -59,6 +60,7 @@ public:
 	void Enable();
 	void Disable();
 	bool IsEnabled();
+	void SetPosition(const gds::Rect&) {}
 	
 	std::vector<std::shared_ptr<IToolbarControlBase>> &Controls();
 	void Refresh();

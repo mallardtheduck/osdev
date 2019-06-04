@@ -318,5 +318,14 @@ void ListBox::Refresh(){
 	multiSelection.resize(items.size());
 }
 
+void ListBox::SetPosition(const gds::Rect &r){
+	outerRect = r;
+	rect = scrollHoriz ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h};
+	if(vscroll) vscroll->SetPosition({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)});
+	if(hscroll) hscroll->SetPosition({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize});
+	update = true;
+	surf.reset();
+}
+
 }
 }

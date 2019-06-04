@@ -86,6 +86,7 @@ public:
 	void Enable();
 	void Disable();
 	bool IsEnabled();
+	void SetPosition(const gds::Rect&);
 	
 	TreeViewNode *GetValue();
 	void SetValue(TreeViewNode *node);

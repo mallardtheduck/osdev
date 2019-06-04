@@ -196,5 +196,12 @@ bool RadioButton::IsEnabled(){
 	return enabled;
 }
 
+void RadioButton::SetPosition(const gds::Rect &r){
+	rect = r;
+	update = true;
+	surf.reset();
+	bkSurf.reset();
+}
+
 }
 }

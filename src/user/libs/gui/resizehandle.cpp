@@ -123,5 +123,12 @@ size_t ResizeHandle::GetZOrder(){
 	return ZOrder::Foreground;
 }
 
+void ResizeHandle::SetPosition(const gds::Rect &r){
+	rect = r;
+	surf.reset();
+	bkSurf.reset();
+	down = false;
+}
+
 }
 }

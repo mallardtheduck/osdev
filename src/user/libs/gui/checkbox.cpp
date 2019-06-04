@@ -171,5 +171,12 @@ bool Checkbox::IsEnabled(){
 	return enabled;
 }
 
+void Checkbox::SetPosition(const gds::Rect &r){
+	rect = r;
+	update = true;
+	surf.reset();
+	bkSurf.reset();
+}
+
 }
 }

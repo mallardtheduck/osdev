@@ -19,7 +19,7 @@ using namespace gds;
 #define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
 
 uint32_t GetMinWidth(){
-	return GetMetric(ButtonSize) * 5;
+	return GetMetric(ButtonSize) * 8;
 }
 
 uint32_t GetMinHeight(){

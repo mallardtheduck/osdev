@@ -38,6 +38,7 @@ public:
 	void Enable();
 	void Disable();
 	bool IsEnabled();
+	void SetPosition(const gds::Rect&);
 	
 	void Paint(const std::vector<gds::Rect> &rects);
 };

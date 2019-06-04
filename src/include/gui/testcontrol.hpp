@@ -25,6 +25,7 @@ public:
 	void Enable();
 	void Disable();
 	bool IsEnabled();
+	void SetPosition(const gds::Rect&);
 	
 	void OnEvent(const std::function<bool(const wm_Event&)> &oE);
 };

@@ -203,6 +203,14 @@ void Container::RemoveControl(std::shared_ptr<IControl> ctrl){
 	ctrl->removeControlFn = nullptr;
 }
 
+void Container::MoveControl(std::shared_ptr<IControl> control, gds::Rect newpos){
+	if(control && std::find(controls.begin(), controls.end(), control) != controls.end()){
+		auto oldpos = control->GetPaintRect();
+		control->SetPosition(newpos);
+		Paint({oldpos, newpos});
+	}
+}
+
 void Container::BindControl(IControl &control){
 	control.paintFn = [this] (const gds::Rect &rect) -> void {Paint(rect);};
 	control.bindFn = [this] (IControl &ctrl) -> void {BindControl(ctrl);};

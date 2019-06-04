@@ -46,5 +46,10 @@ void Label::SetText(const std::string &t){
 	IControl::Paint(rect);
 }
 
+void Label::SetPosition(const gds::Rect &r){
+	rect = r;
+	surf.reset();
+}
+
 }
 }

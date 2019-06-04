@@ -322,5 +322,12 @@ void Scrollbar::Refresh(){
 	if(update) IControl::Paint(rect);
 }
 
+void Scrollbar::SetPosition(const gds::Rect &r){
+	rect = r;
+	update = true;
+	surf.reset();
+	bkSurf.reset();
+}
+
 }
 }

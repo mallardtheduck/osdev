@@ -324,6 +324,14 @@ bool IconView::IsEnabled(){
 	return enabled;
 }
 
+void IconView::SetPosition(const gds::Rect &r){
+	outerRect = r;
+	rect = {r.x, r.y, r.w - scrollbarSize, r.h};
+	if(vscroll) vscroll->SetPosition({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h});
+	update = true;
+	surf.reset();
+}
+
 size_t IconView::GetValue(){
 	return selectedItem;
 }

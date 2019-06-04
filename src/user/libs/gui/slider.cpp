@@ -178,5 +178,12 @@ bool Slider::IsEnabled(){
 	return enabled;
 }
 
+void Slider::SetPosition(const gds::Rect &r){
+	rect = r;
+	update = true;
+	surf.reset();
+	bkSurf.reset();
+}
+
 }
 }

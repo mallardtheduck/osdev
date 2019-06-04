@@ -430,5 +430,14 @@ bool TextArea::IsEnabled(){
 	return enabled;
 }
 
+void TextArea::SetPosition(const gds::Rect &r){
+	outerRect = r;
+	rect = (hscroll || vscroll) ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : r;
+	if(vscroll) vscroll->SetPosition({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - scrollbarSize});
+	if(hscroll) hscroll->SetPosition({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize});
+	update = true;
+	surf.reset();
+}
+
 }
 }

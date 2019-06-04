@@ -35,5 +35,10 @@ uint32_t Image::GetSubscribed(){
 	return 0;
 }
 
+void Image::SetPosition(const gds::Rect &r){
+	rect = r;
+	surf.reset();
+}
+
 }
 }

@@ -51,5 +51,11 @@ void GroupBox::SetText(const std::string &t){
 	IControl::Paint(rect);
 }
 
+void GroupBox::SetPosition(const gds::Rect &r){
+	rect = r;
+	surf.reset();
+}
+
+
 }
 }

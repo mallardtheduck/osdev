@@ -19,6 +19,7 @@ public:
 	gds::Rect GetPaintRect();
 	gds::Rect GetInteractRect();
 	uint32_t GetSubscribed();
+	void SetPosition(const gds::Rect&);
 };
 
 }

@@ -101,6 +101,11 @@ void SubForm::Disable(){
 bool SubForm::IsEnabled(){
 	return enabled;
 }
+
+void SubForm::SetPosition(const gds::Rect &r){
+	rect = r;
+	surf.reset();
+}
 	
 }
 }

@@ -48,9 +48,9 @@ bool Form::HandleEvent(const wm_Event &e){
 		surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
 		if(onResize) onResize(rect);
 		if(resizeHandle){
-			RemoveControl(resizeHandle);
-			CreateResizeHandle();
+			resizeHandle->SetPosition({(int32_t)rect.w - handleSize, (int32_t)rect.h - handleSize, handleSize, handleSize});
 		}
+		Paint();
 		SetSurface(*surf);
 	}else if(e.type == wm_EventType::Move){
 		rect.x = e.MoveResize.x;
@@ -74,7 +74,6 @@ Form::Form(const gds::Rect &r, uint32_t options, const std::string &title)
 }
 
 void Form::CreateResizeHandle(){
-	const auto handleSize = 18;
 	auto rsBtn = std::make_shared<ResizeHandle>(gds::Rect{(int32_t)rect.w - handleSize, (int32_t)rect.h - handleSize, handleSize, handleSize});
 	rsBtn->OnAction([this]{
 		StartResize();
@@ -87,7 +86,7 @@ void Form::OnClose(std::function<bool()> oC){
 	onClose = oC;
 }
 
-void Form::OnResize(std::function<void(gds::Rect)> oR){
+void Form::OnResize(std::function<void(const gds::Rect &)> oR){
 	onResize = oR;
 }
 
@@ -95,7 +94,7 @@ void Form::OnExpand(std::function<void()> oX){
 	onExpand = oX;
 }
 
-void Form::OnMove(std::function<void(gds::Rect)> oM){
+void Form::OnMove(std::function<void(const gds::Rect &)> oM){
 	onMove = oM;
 }
 

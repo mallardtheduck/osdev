@@ -36,6 +36,7 @@ public:
 	void Enable();
 	void Disable();
 	bool IsEnabled();
+	void SetPosition(const gds::Rect&);
 	
 	void SetLines(uint32_t l);
 	void SetStep(uint32_t s);

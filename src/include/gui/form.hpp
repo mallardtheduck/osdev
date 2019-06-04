@@ -10,6 +10,8 @@ namespace gui{
 	
 class Form : public wm::Window, public Container{
 private:
+	static const auto handleSize = 18;
+
 	gds::Rect rect;
 	std::unique_ptr<gds::Surface> surf;
 	
@@ -23,9 +25,9 @@ private:
 	void SetSubscribed(uint32_t subs);
 	
 	std::function<bool()> onClose;
-	std::function<void(gds::Rect)> onResize;
+	std::function<void(const gds::Rect&)> onResize;
 	std::function<void()> onExpand;
-	std::function<void(gds::Rect)> onMove;
+	std::function<void(const gds::Rect&)> onMove;
 	
 	bool HandleEvent(const wm_Event &e);
 	void CreateResizeHandle();
@@ -33,9 +35,9 @@ public:
 	Form(const gds::Rect &r, uint32_t options, const std::string &title);
 	
 	void OnClose(std::function<bool()> oC);
-	void OnResize(std::function<void(gds::Rect)> oR);
+	void OnResize(std::function<void(const gds::Rect&)> oR);
 	void OnExpand(std::function<void()> oX);
-	void OnMove(std::function<void(gds::Rect)> oM);
+	void OnMove(std::function<void(const gds::Rect&)> oM);
 };
 	
 }

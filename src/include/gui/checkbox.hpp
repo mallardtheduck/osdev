@@ -32,6 +32,7 @@ public:
 	void Enable();
 	void Disable();
 	bool IsEnabled();
+	void SetPosition(const gds::Rect&);
 	
 	void SetText(const std::string &t);
 	bool GetValue();

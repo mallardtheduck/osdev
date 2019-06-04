@@ -167,9 +167,10 @@ std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
 			bt_zero("GDS: vector_surface cache allocate.\n");
 			cache.reset(new BitmapSurface(width, height, colourType));
 		}else cache->Clear();
+		if(!cache) return nullptr;
 		
 		auto &bsurf = *cache;
-		if(renderRect.w){
+		if(renderRect.w && renderRect.w < width && renderRect.h < height){
 			bsurf.GetImage()->SetClip(renderRect.x, renderRect.y, renderRect.x + renderRect.w, renderRect.y + renderRect.h);
 		}
 		size_t opsRendered = 0;
@@ -212,7 +213,7 @@ void VectorSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32
 	renderRect = {srcX, srcY, w, h};
 	std::shared_ptr<GD::Image> src = Render(100);
 	renderRect = {0, 0, 0, 0};
-	FastBlit(*src, *dst, srcX, srcY, dstX, dstY, w, h, flags);
+	if(src) FastBlit(*src, *dst, srcX, srcY, dstX, dstY, w, h, flags);
 }
 
 void VectorSurface::OrderOps(){

@@ -48,5 +48,9 @@ bool TestControl::IsEnabled(){
 	return true;
 }
 
+void TestControl::SetPosition(const gds::Rect &r){
+	rect = r;
+}
+
 }
 }
