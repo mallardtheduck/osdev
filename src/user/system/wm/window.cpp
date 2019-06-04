@@ -253,7 +253,8 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 				DrawWindows(winRect);
 				RefreshRectEdges({last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight()}, GetMetric(BorderWidth));
 			}
-			Move(newpos);
+			if(newpos.x != pre_move_pos.x || newpos.y != pre_move_pos.y) Move(newpos);
+			else PointerInput(pevent);
 			last_drag_pos = {0, 0};
 		}
 	}else if(dragMode == DragMode::Resize){
@@ -278,9 +279,7 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			dragMode = DragMode::None;
 			RefreshRectEdges({pos.x, pos.y, GetWidth() + last_drag_pos.x, GetHeight() + last_drag_pos.y}, GetMetric(BorderWidth));
 			if(last_drag_pos.x || last_drag_pos.y) Resize(gds_info.w + last_drag_pos.x, gds_info.h + last_drag_pos.y);
-			else{
-				PointerInput(pevent);
-			}
+			else PointerInput(pevent);
 			last_drag_pos = {0, 0};
 		}
 	}else{
@@ -293,6 +292,7 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 					WindowGrab(id);
 					dragoffset = epoint;
 					last_drag_pos = pos;
+					pre_move_pos = pos;
 					dragMode = DragMode::Move;
 				}else{
 					RefreshTitleBar(true);
@@ -586,6 +586,7 @@ void Window::StartDrag(){
 	if((info.flags & MouseFlags::Button1)){
 		Point epoint = Reoriginate(Point(info.x, info.y), pos);
 		last_drag_pos = pos;
+		pre_move_pos = pos;
 		WindowGrab(id);
 		dragoffset = epoint;
 		dragMode = DragMode::Move;

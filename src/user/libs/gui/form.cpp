@@ -69,6 +69,12 @@ bool Form::HandleEvent(const wm_Event &e){
 	}else if(e.type == wm_EventType::Move){
 		rect.x = e.MoveResize.x;
 		rect.y = e.MoveResize.y;
+		if(expanded){
+			rect.w = nonExpandRect.w;
+			rect.h = nonExpandRect.h;
+			expanded = false;
+			PerformResize();
+		}
 		if(onMove) onMove(rect);
 	}
 	

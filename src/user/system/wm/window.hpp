@@ -37,6 +37,7 @@ private:
 	gds::Point dragoffset;
 	gds::Point last_drag_pos = {0, 0};
 	gds::Point resize_origin;
+	gds::Point pre_move_pos;
 	std::shared_ptr<gds::Surface> dragImage;
 	WindowArea pressed = WindowArea::None;
 	uint32_t event_subs = 0;
