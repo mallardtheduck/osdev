@@ -4,7 +4,7 @@
 namespace btos_api{
 namespace gui{
 
-StatusBar::StatusBar(const std::string &t) : text(t), height(fonts::GetStatusBarTextSize() * 2) {}
+StatusBar::StatusBar(const std::string &t) : text(t), height(fonts::GetStatusBarTextSize() * 1.5) {}
 
 EventResponse StatusBar::HandleEvent(const wm_Event&){
 	return {false};
@@ -12,7 +12,7 @@ EventResponse StatusBar::HandleEvent(const wm_Event&){
 
 void StatusBar::Paint(gds::Surface &s){
 	auto containerRect = GetContainerRect();
-	if(rect.w != containerRect.w){
+	if(rect.w != containerRect.w || rect.y != (int32_t)(containerRect.h - height)){
 		surf.reset();
 		rect = {0, (int32_t)(containerRect.h - height), containerRect.w, height};
 	}

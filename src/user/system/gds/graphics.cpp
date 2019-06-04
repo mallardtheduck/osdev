@@ -43,8 +43,10 @@ void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, 
 	gdImagePtr dstPtr = dst.GetPtr();
 	if(!srcPtr || !dstPtr) return;
 	if(src.IsTrueColor()){
+		if(!srcPtr->tpixels) return;
 		uint32_t srcTransparent = gdImageGetTransparent(srcPtr);
 		if(dst.IsTrueColor()){
+			if(!dstPtr->tpixels) return;
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
 					uint32_t srcPxl = gdImageTrueColorPixel(srcPtr, srcX + x, srcY + y);
@@ -58,6 +60,7 @@ void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, 
 				}
 			}
 		}else{
+			if(!dstPtr->pixels) return;
 			uint32_t srcCol = 0;
 			uint8_t dstCol = 0;
 			for(size_t y = 0; y < h; ++y){
@@ -74,8 +77,10 @@ void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, 
 			}
 		}
 	}else{
+		if(!srcPtr->pixels) return;
 		uint8_t srcTransparent = (uint8_t)gdImageGetTransparent(srcPtr);
 		if(dst.IsTrueColor()){
+			if(!dstPtr->tpixels) return;
 			uint8_t srcCol = 0;
 			uint32_t dstCol = 0;
 			uint32_t palette[256];
@@ -98,6 +103,7 @@ void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, 
 				}
 			}
 		}else{
+			if(!dstPtr->pixels) return;
 			uint8_t srcCol = 0;
 			uint8_t dstCol = 0;
 			uint8_t palette[256];

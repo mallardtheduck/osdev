@@ -18,6 +18,14 @@ using namespace gds;
 
 #define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
 
+uint32_t GetMinWidth(){
+	return GetMetric(ButtonSize) * 5;
+}
+
+uint32_t GetMinHeight(){
+	return GetMetric(TitleBarSize) * 2;
+}
+
 Window::Window(shared_ptr<Surface> c) : content(c){
 	gds_info = content->Info();
 }
@@ -246,11 +254,18 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 				RefreshRectEdges({last_drag_pos.x, last_drag_pos.y, GetWidth(), GetHeight()}, GetMetric(BorderWidth));
 			}
 			Move(newpos);
+			last_drag_pos = {0, 0};
 		}
 	}else if(dragMode == DragMode::Resize){
 		if((int32_t)pevent.x > pos.x && (int32_t)pevent.y > pos.y){
 			Point newpos = Reoriginate({(int32_t)pevent.x, (int32_t)pevent.y}, pos);
 			newpos = Reoriginate(newpos, resize_origin);
+			if((int32_t)GetWidth() + newpos.x < (int32_t)GetMinWidth()){
+				newpos.x = GetMinWidth() - GetWidth();
+			}
+			if((int32_t)GetHeight() + newpos.y < (int32_t)GetMinHeight()){
+				newpos.y = GetMinHeight() - GetHeight();
+			}
 			if(newpos.x != last_drag_pos.x || newpos.y != last_drag_pos.y){
 				DrawAndRefreshRectEdges({pos.x, pos.y, GetWidth() + last_drag_pos.x, GetHeight() + last_drag_pos.y}, GetMetric(BorderWidth));
 				DrawBorder(Screen, {pos.x, pos.y, GetWidth() + newpos.x, GetHeight() + newpos.y});
@@ -266,6 +281,7 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			else{
 				PointerInput(pevent);
 			}
+			last_drag_pos = {0, 0};
 		}
 	}else{
 		Point epoint = Reoriginate(Point(pevent.x, pevent.y), pos);
