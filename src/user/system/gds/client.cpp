@@ -12,7 +12,7 @@
 
 using namespace std;
 
-static const auto MaxSurfaceSize = 32768;
+const size_t MaxSurfaceSize = 32768;
 
 map<uint64_t, weak_ptr<Surface>> allSurfaces;
 static uint64_t surfaceCounter = 0;

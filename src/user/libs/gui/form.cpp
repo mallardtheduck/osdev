@@ -20,11 +20,11 @@ gds::Rect Form::GetBoundingRect(){
 }
 
 void Form::Update(const gds::Rect &r){
-	wm::Window::Update(r);
+	if(enableUpdate) wm::Window::Update(r);
 }
 
 void Form::Update(){
-	wm::Window::Update();
+	if(enableUpdate) wm::Window::Update();
 }
 
 void Form::SetSubscribed(uint32_t subs){
@@ -103,6 +103,7 @@ void Form::CreateResizeHandle(){
 }
 
 void Form::PerformResize(){
+	enableUpdate = false;
 	surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
 	if(onResize) onResize(rect);
 	if(resizeHandle){
@@ -110,6 +111,7 @@ void Form::PerformResize(){
 	}
 	Paint();
 	SetSurface(*surf);
+	enableUpdate = true;
 }
 
 void Form::OnClose(std::function<bool()> oC){

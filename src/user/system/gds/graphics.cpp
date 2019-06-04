@@ -3,10 +3,13 @@
 #include <cstring>
 #include <cstdlib>
 #include <dev/rtc.h>
+#include <algorithm>
 
 void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h, uint32_t flags){
 	bool overwrite = (flags & gds_BlitFlags::Overwrite);
 	bool noalpha = (flags & gds_BlitFlags::IgnoreAlpha);
+	if(std::max({srcX, srcY, dstX, dstY}) > (int32_t)MaxSurfaceSize) return;
+	if(std::max(w, h) > MaxSurfaceSize) return;
 	if(srcX < 0){
 		if(w < (uint32_t)-srcX) return;
 		w += srcX;

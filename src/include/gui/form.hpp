@@ -12,6 +12,7 @@ class Form : public wm::Window, public Container{
 private:
 	static const auto handleSize = 18;
 	bool expanded = false;
+	bool enableUpdate = true;
 	gds::Rect nonExpandRect;
 
 	gds::Rect rect;

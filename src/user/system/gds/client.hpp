@@ -8,6 +8,7 @@
 #include <btos/imessagehandler.hpp>
 #include "surface.hpp"
 
+extern const size_t MaxSurfaceSize;
 extern std::map<uint64_t, std::weak_ptr<Surface>> allSurfaces;
 
 namespace btos_api{

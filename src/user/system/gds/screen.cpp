@@ -275,6 +275,7 @@ bool Screen::SetMode(uint32_t w, uint32_t h, uint8_t bpp) {
 }
 
 void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
+	if(std::max({x, y, w, h}) > MaxSurfaceSize) return;
 	//uint64_t update_start = bt_rtc_millis();
 	gdImagePtr imagePtr = image->GetPtr();
 	bool hide_cursor = false;	
