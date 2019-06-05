@@ -1,4 +1,4 @@
-PACKAGES := base kernel install tests protogui
+PACKAGES := base kernel install tests protogui gui
 
 all: dummy.file
 	for dir in $(PACKAGES); do \

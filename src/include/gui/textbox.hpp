@@ -25,7 +25,7 @@ private:
 	
 	void UpdateDisplayState();
 public:
-	TextBox(const gds::Rect &r, const std::string &t);
+	TextBox(const gds::Rect &r, const std::string &t = "");
 	
 	EventResponse HandleEvent(const wm_Event&);
 	void Paint(gds::Surface &surf);

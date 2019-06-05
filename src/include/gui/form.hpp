@@ -7,7 +7,12 @@
 
 namespace btos_api{
 namespace gui{
-	
+
+namespace FormOptions{
+	static const uint32_t Fixed = (wm_WindowOptions::Default | wm_WindowOptions::NoExpand);
+	static const uint32_t Sizable = (wm_WindowOptions::Default | wm_WindowOptions::Resizable);
+}
+
 class Form : public wm::Window, public Container{
 private:
 	static const auto handleSize = 18;
