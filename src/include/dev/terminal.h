@@ -9,8 +9,10 @@
 #include <btos.h>
 #endif
 
-#ifdef __cplusplus
-using namespace btos_api;
+#if defined(__cplusplus) && !defined(KERNEL) && !defined(KERNEL_MODULE)
+#define TERM_BTOS_NS btos_api::
+#else
+#define TERM_BTOS_NS
 #endif
 
 ENUM_START(bt_terminal_mode)
@@ -156,7 +158,7 @@ typedef struct bt_terminal_event bt_terminal_event;
 #endif
 
 struct bt_terminal_backend_operation{
-	bt_handle_t handle;
+	TERM_BTOS_NS bt_handle_t handle;
 	ENUM_NAME(bt_terminal_backend_operation_type) type;
 	size_t datasize;
 	char data[];

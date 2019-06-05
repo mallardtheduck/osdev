@@ -8,6 +8,8 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b)) 
 
+using namespace btos_api;
+
 template<typename P> uint64_t send_request(pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type, P *param, size_t size){
 	size_t totalsize = sizeof(bt_terminal_backend_operation) + size;
 	bt_terminal_backend_operation *op = (bt_terminal_backend_operation*)malloc(totalsize);
