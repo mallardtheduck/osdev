@@ -37,7 +37,7 @@ METRIC(ColourValue, ButtonHighlightColour);
 METRIC(ColourValue, ButtonShadowColour);
 METRIC(ColourValue, LineColour);
 METRIC(ColourValue, BorderColour);
-METRIC(ColourValue, SeperatorColour);
+METRIC(ColourValue, SeparatorColour);
 METRIC(ColourValue, TitleTextColour);
 METRIC(ColourValue, InactiveTitleColour);
 METRIC(ColourValue, SymbolColour);

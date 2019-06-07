@@ -25,7 +25,7 @@ void InitDrawing(){
 }
 
 static Colour buttonHighlightColour, buttonFaceColour, buttonShadowColour, borderColour, lineColour, titleBarColour, inactiveTitleColour;
-static Colour seperatorColour, titleTextColour, symbolColour, disabledSymbolColour;
+static Colour separatorColour, titleTextColour, symbolColour, disabledSymbolColour;
 
 static void DrawButtonUp(Surface &surf, const Rect &r, bool active){
 	vector<gds_DrawingOp> ops;
@@ -133,13 +133,13 @@ shared_ptr<Surface> TitleBar::Draw(uint32_t w, const string &t, bool active, uin
 		lineColour = GetColour(*ret, LineColour); 
 		titleBarColour = GetColour(*ret, TitleBarColour);
 		inactiveTitleColour = GetColour(*ret, InactiveTitleColour);
-		seperatorColour = GetColour(*ret, SeperatorColour);
+		separatorColour = GetColour(*ret, SeparatorColour);
 		titleTextColour = GetColour(*ret, TitleTextColour);
 		symbolColour = GetColour(*ret, SymbolColour);
 		disabledSymbolColour = GetColour(*ret, DisabledSymbolColour);
 	}
 	
-	if(drawAll) ret->Box({0, 0, w, (uint32_t)GetMetric(TitleBarSize)}, seperatorColour, active?titleBarColour:inactiveTitleColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	if(drawAll) ret->Box({0, 0, w, (uint32_t)GetMetric(TitleBarSize)}, separatorColour, active?titleBarColour:inactiveTitleColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	if(drawAll || (p != pressed && (p == WindowArea::MenuButton || pressed == WindowArea::MenuButton))){
 		bool enabled = !(options & wm_WindowOptions::NoMenu);
 		DrawMenuButton(*ret, {GetMetric(BorderWidth), GetMetric(BorderWidth)}, active, (enabled && p == WindowArea::MenuButton), enabled);
@@ -204,7 +204,7 @@ void DrawBorder(Surface &surf, const Rect &r, const Rect &bounds){
 }
 
 Surface DrawMenuItem(const string &text, uint32_t flags, const Surface *image, uint32_t width, bool selected){ 
-	if(!(flags & wm_MenuItemFlags::Seperator)){
+	if(!(flags & wm_MenuItemFlags::Separator)){
 		Surface ret(gds_SurfaceType::Bitmap, width, GetMetric(MenuItemHeight));
 		ret.BeginQueue();
 		if(selected) ret.Box({0, 0, width, (uint32_t)GetMetric(MenuItemHeight)}, Colour(), GetColour(ret, MenuSelectionColour), 0, gds_LineStyle::Solid, gds_FillStyle::Filled);

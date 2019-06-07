@@ -141,7 +141,7 @@ ENUM_TYPE(wm_MessageType);
 
 ENUM_START(wm_MenuItemFlags)
 	ENUM_SET(wm_MenuItemFlags, Default, 	0),
-	ENUM_SET(wm_MenuItemFlags, Seperator, 	(1 << 0)),
+	ENUM_SET(wm_MenuItemFlags, Separator, 	(1 << 0)),
 	ENUM_SET(wm_MenuItemFlags, Disabled, 	(1 << 1)),
 	ENUM_SET(wm_MenuItemFlags, ChildMenu, 	(1 << 2)),
 	ENUM_SET(wm_MenuItemFlags, ImageRight, 	(1 << 3)),

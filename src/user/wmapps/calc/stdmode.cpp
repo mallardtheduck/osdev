@@ -190,10 +190,10 @@ void StandardMode::Show(){
 	menu->AddItem(wm::MenuItem(1, "Standard Mode", wm_MenuItemFlags::Disabled, iconStd.get()));
 	menu->AddItem(wm::MenuItem(2, "Scientific Mode", wm_MenuItemFlags::Default, iconSci.get()));
 	menu->AddItem(wm::MenuItem(3, "Programmer Mode", wm_MenuItemFlags::Default, iconProg.get()));
-	menu->AddItem(wm::MenuItem(0, "",  wm_MenuItemFlags::Seperator));
+	menu->AddItem(wm::MenuItem(0, "",  wm_MenuItemFlags::Separator));
 	menu->AddItem(wm::MenuItem(4, "Copy", wm_MenuItemFlags::Default, iconCopy.get()));
 	menu->AddItem(wm::MenuItem(5, "Paste", wm_MenuItemFlags::Default, iconPaste.get()));
-	menu->AddItem(wm::MenuItem(0, "",  wm_MenuItemFlags::Seperator));
+	menu->AddItem(wm::MenuItem(0, "",  wm_MenuItemFlags::Separator));
 	menu->AddItem(wm::MenuItem(5, "About...", wm_MenuItemFlags::Default, iconCalc.get()));
 	form->SetMenu(*menu);
 	
