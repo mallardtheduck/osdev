@@ -71,6 +71,10 @@ void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, 
 					uint32_t srcPxl = gdImageTrueColorPixel(srcPtr, srcX + x, srcY + y);
 					if(noalpha) srcPxl = gdTrueColorAlpha(gdTrueColorGetRed(srcPxl), gdTrueColorGetGreen(srcPxl), gdTrueColorGetBlue(srcPxl), gdAlphaOpaque);
 					if(srcPxl == srcTransparent) continue;
+					if(gdTrueColorGetAlpha(srcPxl) != gdAlphaOpaque){
+						uint32_t dstPxl = gdImageGetTrueColorPixel(dstPtr, dstX + x, dstY + y);
+						srcPxl = gdAlphaBlend(dstPxl, srcPxl);
+					}
 					if((!y && !x) || srcCol != srcPxl){
 						dstCol = gdImageColorResolveAlpha(dstPtr, gdTrueColorGetRed(srcPxl), gdTrueColorGetGreen(srcPxl), gdTrueColorGetBlue(srcPxl), gdTrueColorGetAlpha(srcPxl));
 						srcCol = srcPxl;

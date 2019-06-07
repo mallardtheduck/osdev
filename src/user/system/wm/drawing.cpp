@@ -212,7 +212,8 @@ Surface DrawMenuItem(const string &text, uint32_t flags, const Surface *image, u
 		int32_t lpos = GetMetric(MenuItemMargin);
 		if(image){
 			gds_SurfaceInfo image_info = image->Info();
-			ret.Blit(*image, {0, 0, image_info.w, image_info.h}, {lpos, GetMetric(MenuItemMargin), image_info.w, image_info.h});
+			int32_t imageXPos = (GetMetric(MenuItemHeight) - image_info.h) / 2;
+			ret.Blit(*image, {0, 0, image_info.w, image_info.h}, {lpos, imageXPos, image_info.w, image_info.h});
 			lpos += image_info.w;
 			lpos += GetMetric(MenuItemMargin);
 		}

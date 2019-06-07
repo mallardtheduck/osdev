@@ -164,8 +164,9 @@ uint32_t Menu::GetSelected(const Point &cursor){
 	int32_t cy = lp.y;
 	for(auto &i : items){
 		uint32_t height = i.second->GetHeight();
-		if((EffectiveFlags(i.second->GetFlags(), i.second->GetAction()) & wm_MenuItemFlags::Disabled)) continue;
-		if(InRect(cursor, {lp.x, cy, brect.w, height})) return i.first;
+		if(!(EffectiveFlags(i.second->GetFlags(), i.second->GetAction()) & wm_MenuItemFlags::Disabled)){
+			if(InRect(cursor, {lp.x, cy, brect.w, height})) return i.first;
+		}
 		cy += height;
 	}
 	return 0;
