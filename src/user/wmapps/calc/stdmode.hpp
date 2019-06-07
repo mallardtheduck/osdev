@@ -17,7 +17,7 @@ private:
 		Default, Add, Subtract, Multiply, Divide, Equals=Default
 	};
 	
-	OpState opState;
+	OpState opState = OpState::Default;
 	double curTotal;
 	bool awaiting = false;
 	
@@ -30,8 +30,6 @@ private:
 		output->SetText(text);
 		awaiting = false;
 	}
-	
-	void HandleDecimal();
 
 	template<OpState O> void HandleOp(){
 		curTotal = Calculate();
@@ -41,6 +39,7 @@ private:
 		awaiting = true;
 	}
 	
+	void HandleDecimal();
 	void HandleClear();
 	void HandleClearEntry();
 	void HandleSqrt();
