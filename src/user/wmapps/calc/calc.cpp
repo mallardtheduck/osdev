@@ -4,8 +4,10 @@
 #include <gui/button.hpp>
 #include <gui/textbox.hpp>
 #include <gui/toolbar.hpp>
+#include <gui/label.hpp>
 
 #include <wm/eventloop.hpp>
+#include <dev/keyboard.h>
 
 #include "calc_resc.tar.h"
 
@@ -24,6 +26,7 @@ namespace gds = btos_api::gds;
 resc::RescHandle rsc;
 
 std::shared_ptr<gui::TextBox> output;
+std::shared_ptr<gui::Label> curOp;
 
 enum class OpState{
 	Default, Add, Subtract, Multiply, Divide, Equals=Default
@@ -38,6 +41,26 @@ std::shared_ptr<gds::Surface> LoadPNG(const char *path){
 	auto ret = GDS_LoadPNG(fd);
 	close(fd);
 	return std::make_shared<gds::Surface>(std::move(gds::Surface::Wrap(ret, true)));
+}
+
+void UpdateOp(){
+	switch(opState){
+		case OpState::Default:
+			curOp->SetText("=");
+			break;
+		case OpState::Add:
+			curOp->SetText("+");
+			break;
+		case OpState::Subtract:
+			curOp->SetText("-");
+			break;
+		case OpState::Multiply:
+			curOp->SetText("\xC3\x97");
+			break;
+		case OpState::Divide:
+			curOp->SetText("\xC3\xB7");
+			break;
+	}
 }
 
 double Calculate(){
@@ -79,12 +102,14 @@ void HandleDecimal(){
 template<OpState O> void HandleOp(){
 	curTotal = Calculate();
 	opState = O;
+	UpdateOp();
 	output->SetText(tfm::format("%s", curTotal));
 	awaiting = true;
 }
 
 void HandleClear(){
 	opState = OpState::Default;
+	UpdateOp();
 	curTotal = 0;
 	output->SetText("");
 }
@@ -99,6 +124,7 @@ void HandleSqrt(){
 	curTotal = sqrt(curValue);
 	output->SetText(tfm::format("%s", curTotal));
 	opState = OpState::Default;
+	UpdateOp();
 }
 
 void HandlePercent(){
@@ -108,21 +134,103 @@ void HandlePercent(){
 	awaiting = true;
 }
 
+bool HandleKeyPress(uint32_t key){
+	if(!(key & KeyFlags::NonASCII)){
+		char c = KB_char(key);
+		c = tolower(c);
+		switch(c){
+			case '0':
+				HandleDigit<0>();
+				break;
+			case '1':
+				HandleDigit<1>();
+				break;
+			case '2':
+				HandleDigit<2>();
+				break;
+			case '3':
+				HandleDigit<3>();
+				break;
+			case '4':
+				HandleDigit<4>();
+				break;
+			case '5':
+				HandleDigit<5>();
+				break;
+			case '6':
+				HandleDigit<6>();
+				break;
+			case '7':
+				HandleDigit<7>();
+				break;
+			case '8':
+				HandleDigit<8>();
+				break;
+			case '9':
+				HandleDigit<9>();
+				break;
+			case '.':
+				HandleDecimal();
+				break;
+			
+			case '+':
+				HandleOp<OpState::Add>();
+				break;
+			case '-':
+				HandleOp<OpState::Subtract>();
+				break;
+			case '*':
+				HandleOp<OpState::Multiply>();
+				break;
+			case '/':
+				HandleOp<OpState::Divide>();
+				break;
+			case '=':
+			case '\n':
+				HandleOp<OpState::Equals>();
+				break;
+			
+			case 'r':
+			case 's':
+				HandleSqrt();
+				break;
+			case '%':
+			case 'p':
+				HandlePercent();
+				break;
+			
+			
+			case 'c':
+				HandleClear();
+				break;
+			case 'e':
+			case 0x08:
+				HandleClearEntry();
+				break;
+		}
+	}
+	return true;
+}
+
 int main(){
 	rsc = resc::Resc_LocalOpen(calc_resc_data, calc_resc_size);
 	
 	auto form = std::make_shared<gui::Form>(gds::Rect{100, 100, 210, 232}, gui::FormOptions::Fixed, "Calculator");
 	
 	auto toolbar = std::make_shared<gui::Toolbar>();
-	auto tbModeStd = std::make_shared<gui::ToolbarButton>(nullptr, "Standard");
-	auto tbModeSci = std::make_shared<gui::ToolbarButton>(nullptr, "Scientific");
-	auto tbModeProg = std::make_shared<gui::ToolbarButton>(nullptr, "Programmer");
+	auto tbModeStd = std::make_shared<gui::ToolbarButton>(LoadPNG("calc_standard.png"));
+	tbModeStd->Disable();
+	auto tbModeSci = std::make_shared<gui::ToolbarButton>(LoadPNG("calc_scientific.png"));
+	auto tbModeProg = std::make_shared<gui::ToolbarButton>(LoadPNG("calc_programmer.png"));
 	auto tbSpacer = std::make_shared<gui::ToolbarSpacer>();
-	auto tbCopy = std::make_shared<gui::ToolbarButton>(nullptr, "Copy");
-	auto tbPaste = std::make_shared<gui::ToolbarButton>(nullptr, "Paste");
+	auto tbCopy = std::make_shared<gui::ToolbarButton>(LoadPNG("editcopy.png"));
+	auto tbPaste = std::make_shared<gui::ToolbarButton>(LoadPNG("editpaste.png"));
 	toolbar->Controls().insert(toolbar->Controls().end(), {tbModeStd, tbModeSci, tbModeProg, tbSpacer, tbCopy, tbPaste});
+	toolbar->Refresh();
 	
-	output = std::make_shared<gui::TextBox>(gds::Rect{10, 42, 190, 20});
+	curOp = std::make_shared<gui::Label>(gds::Rect{180, 42, 20, 20}, "=");
+	output = std::make_shared<gui::TextBox>(gds::Rect{10, 42, 160, 20});
+	output->OnKeyPress(HandleKeyPress);
 	
 	auto opDivide = std::make_shared<gui::Button>(gds::Rect{170, 72, 30, 30}, "\xC3\xB7");
 	opDivide->OnAction(HandleOp<OpState::Divide>);
@@ -171,7 +279,7 @@ int main(){
 	opEquals->OnAction(HandleOp<OpState::Equals>);
 	
 	form->AddControls({
-		toolbar, output, 
+		toolbar, output, curOp, 
 		opDivide, opMultiply, opSubtract, opAdd,
 		clear, clearEntry, opSqrt, opPercent,
 		digit7, digit8, digit9,
@@ -179,6 +287,7 @@ int main(){
 		digit1, digit2, digit3,
 		digit0, decimal, opEquals,
 	});
+	form->SetFocus(output);
 	
 	btos_api::wm::EventLoop loop({form});
 	loop.RunLoop();
