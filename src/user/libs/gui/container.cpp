@@ -226,6 +226,22 @@ std::shared_ptr<IControl> &Container::GetFocus(){
 	return focus;
 }
 
+void Container::SetFocus(std::shared_ptr<IControl> ctrl){
+	if(focus == ctrl) return;
+	bool found = false;
+	for(auto &c : controls){
+		if(c == ctrl){
+			found = true;
+			break;
+		}
+	}
+	if(found){
+		if(focus) focus->Blur();
+		focus = ctrl;
+		focus->Focus();
+	}
+}
+
 void Container::FocusNext(bool reverse){
 	if(!focus){
 		focus = *controls.begin();

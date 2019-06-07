@@ -48,6 +48,7 @@ public:
 	void BindControl(IControl &control);
 	
 	std::shared_ptr<IControl> &GetFocus();
+	void SetFocus(std::shared_ptr<IControl> ctrl);
 	void FocusNext(bool reverse);
 	
 	~Container() {}

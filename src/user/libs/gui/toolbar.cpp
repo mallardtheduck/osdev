@@ -8,7 +8,7 @@ namespace btos_api{
 namespace gui{
 
 Toolbar::Toolbar(uint32_t s) : size(s) {
-	height = (size / 3) * 4;
+	height = (size / 3.0) * 4;
 }
 
 EventResponse Toolbar::HandleEvent(const wm_Event &evt){

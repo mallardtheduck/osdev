@@ -65,43 +65,45 @@ EventResponse TextBox::HandleEvent(const wm_Event &e){
 		if(onKeyPress){
 			if(onKeyPress(e.Key.code)) handled = true;
 		}
-		if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && cursorPos > 0){
-			--cursorPos;
-			updateCursor = true;
-			handled = true;
-		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && cursorPos < text.length()){
-			++cursorPos;
-			updateCursor = true;
-			handled = true;
-		}else if(code == (KeyFlags::NonASCII | KeyCodes::Delete) && cursorPos <= text.length()){
-			text.erase(cursorPos, 1);
-			RaiseChangeEvent();
-			if(cursorPos > text.length()) cursorPos = text.length();
-			update = true;
-			handled = true;
-		}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
-			cursorPos = 0;
-			updateCursor = true;
-			handled = true;
-		}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
-			cursorPos = text.length();
-			updateCursor = true;
-			handled = true;
-		}else if(!(code & KeyFlags::NonASCII)){
-			char c = KB_char(e.Key.code);
-			auto preText = text;
-			if(c == 0x08 && cursorPos > 0){
-				text.erase(cursorPos - 1, 1);
-				RaiseChangeEvent();
+		if(!handled){
+			if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && cursorPos > 0){
 				--cursorPos;
+				updateCursor = true;
 				handled = true;
-			}else if(c > 31){
-				text.insert(cursorPos, 1, c);
-				RaiseChangeEvent();
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && cursorPos < text.length()){
 				++cursorPos;
+				updateCursor = true;
 				handled = true;
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::Delete) && cursorPos <= text.length()){
+				text.erase(cursorPos, 1);
+				RaiseChangeEvent();
+				if(cursorPos > text.length()) cursorPos = text.length();
+				update = true;
+				handled = true;
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
+				cursorPos = 0;
+				updateCursor = true;
+				handled = true;
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
+				cursorPos = text.length();
+				updateCursor = true;
+				handled = true;
+			}else if(!(code & KeyFlags::NonASCII)){
+				char c = KB_char(e.Key.code);
+				auto preText = text;
+				if(c == 0x08 && cursorPos > 0){
+					text.erase(cursorPos - 1, 1);
+					RaiseChangeEvent();
+					--cursorPos;
+					handled = true;
+				}else if(c > 31){
+					text.insert(cursorPos, 1, c);
+					RaiseChangeEvent();
+					++cursorPos;
+					handled = true;
+				}
+				update = (preText != text);
 			}
-			update = (preText != text);
 		}
 	}else if(e.type == wm_EventType::PointerButtonDown || e.type == wm_EventType::PointerButtonUp){
 		handled = true;
