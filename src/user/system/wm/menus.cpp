@@ -340,9 +340,10 @@ shared_ptr<Menu> GetWindowMenuTemplate(){
 	return templateMenu;
 }
 
-shared_ptr<Menu> CreateMenu(){
+shared_ptr<Menu> CreateMenu(uint64_t id){
 	static uint64_t id_counter = 0;
-	return make_shared<Menu>(++id_counter);
+	if(id == UINT64_MAX) id = ++id_counter;
+	return make_shared<Menu>(id);
 }
 
 void RedrawMenus(const Rect &r){
@@ -355,8 +356,8 @@ void RedrawMenus(const Rect &r){
 	Screen.CommitQueue();
 }
 
-shared_ptr<Menu> MergeMenus(shared_ptr<Menu> m1, shared_ptr<Menu> m2){
-	auto ret = CreateMenu();
+shared_ptr<Menu> MergeMenus(shared_ptr<Menu> m1, shared_ptr<Menu> m2, uint64_t id){
+	auto ret = CreateMenu(id);
 	auto m1items = m1->GetItems();
 	auto m2items = m2->GetItems();
 	

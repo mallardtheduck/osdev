@@ -444,7 +444,7 @@ void Window::OpenMenu(){
 	bt_zero(ss.str().c_str());
 	if(windowMenu){
 		auto t = GetWindowMenuTemplate();
-		auto m = MergeMenus(t, windowMenu);
+		auto m = MergeMenus(t, windowMenu, windowMenu->id);
 		::OpenMenu(m, shared_from_this(), {pos.x, pos.y + GetMetric(TitleBarSize)});
 	}else{
 		auto m = GetDefaultWindowMenu();
