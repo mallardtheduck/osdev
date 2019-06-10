@@ -46,6 +46,9 @@ src/3rdparty/udis86-1.7.2
 src/3rdparty/grub-2.00
 src/3rdparty/sqlite-amalgamation-3200100
 src/3rdparty/SDL2-2.0.7
+src/3rdparty/SDL2-widgets-2.1/
+src/3rdparty/SDL2_image-2.0.3/
+src/3rdparty/SDL2_ttf-2.0.14/
 src/disk/data
 src/iso/livecd/isodir
 src/iso/test/isodir
@@ -58,4 +61,5 @@ create.directories
 src/packages/*/data
 .fuse_hidden*
 *.tar.h
+src/user/wmapps/*/resc/
 
