@@ -7,11 +7,14 @@
 
 #include <util/tinyformat.hpp>
 
-class StandardMode{
+#include "icalcmode.hpp"
+#include "calc.hpp"
+
+class StandardMode : public ICalcMode{
 private:
 	std::shared_ptr<btos_api::gui::TextBox> output;
 	std::shared_ptr<btos_api::gui::Label> curOp;
-	std::shared_ptr<btos_api::wm::Menu> menu;
+	btos_api::gds::Point pos;
 	
 	enum class OpState{
 		Default, Add, Subtract, Multiply, Divide, Equals=Default
@@ -47,7 +50,8 @@ private:
 	bool HandleKeyPress(uint32_t key);
 	
 public:
-	void Show();
+	StandardMode(const btos_api::gds::Point &pos);
+	std::shared_ptr<btos_api::gui::Form> Show();
 };
 
 #endif

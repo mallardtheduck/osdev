@@ -4,9 +4,7 @@
 #include "calc.hpp"
 
 #include <gui/button.hpp>
-#include <gui/toolbar.hpp>
 
-#include <wm/eventloop.hpp>
 #include <dev/keyboard.h>
 
 #include <cstdlib>
@@ -170,43 +168,14 @@ bool StandardMode::HandleKeyPress(uint32_t key){
 	return true;
 }
 
-std::shared_ptr<gds::Surface> iconCalc;
+StandardMode::StandardMode(const gds::Point &p) : pos(p) {}
 
-void StandardMode::Show(){
+std::shared_ptr<gui::Form> StandardMode::Show(){
 	using namespace std::placeholders;
 	
-	auto form = std::make_shared<gui::Form>(gds::Rect{100, 100, 210, 232}, gui::FormOptions::Fixed, "Calculator");
+	auto form = std::make_shared<gui::Form>(gds::Rect{pos.x, pos.y, 210, 232}, gui::FormOptions::Fixed, "Calculator");
 	
-	auto iconStd = LoadPNG("calc_standard.png");
-	auto iconSci = LoadPNG("calc_scientific.png");
-	auto iconProg = LoadPNG("calc_programmer.png");
-	
-	auto iconCopy = LoadPNG("editcopy.png");
-	auto iconPaste = LoadPNG("editpaste.png");
-	
-	iconCalc = LoadPNG("calc_16.png");
-	
-	menu = std::make_shared<wm::Menu>();
-	menu->AddItem(wm::MenuItem(1, "Standard Mode", wm_MenuItemFlags::Disabled, iconStd.get()));
-	menu->AddItem(wm::MenuItem(2, "Scientific Mode", wm_MenuItemFlags::Default, iconSci.get()));
-	menu->AddItem(wm::MenuItem(3, "Programmer Mode", wm_MenuItemFlags::Default, iconProg.get()));
-	menu->AddItem(wm::MenuItem(0, "",  wm_MenuItemFlags::Separator));
-	menu->AddItem(wm::MenuItem(4, "Copy", wm_MenuItemFlags::Default, iconCopy.get()));
-	menu->AddItem(wm::MenuItem(5, "Paste", wm_MenuItemFlags::Default, iconPaste.get()));
-	menu->AddItem(wm::MenuItem(0, "",  wm_MenuItemFlags::Separator));
-	menu->AddItem(wm::MenuItem(5, "About...", wm_MenuItemFlags::Default, iconCalc.get()));
-	form->SetMenu(*menu);
-	
-	auto toolbar = std::make_shared<gui::Toolbar>();
-	auto tbModeStd = std::make_shared<gui::ToolbarButton>(iconStd);
-	tbModeStd->Disable();
-	auto tbModeSci = std::make_shared<gui::ToolbarButton>(iconSci);
-	auto tbModeProg = std::make_shared<gui::ToolbarButton>(iconProg);
-	auto tbSpacer = std::make_shared<gui::ToolbarSpacer>();
-	auto tbCopy = std::make_shared<gui::ToolbarButton>(iconCopy);
-	auto tbPaste = std::make_shared<gui::ToolbarButton>(iconPaste);
-	toolbar->Controls().insert(toolbar->Controls().end(), {tbModeStd, tbModeSci, tbModeProg, tbSpacer, tbCopy, tbPaste});
-	toolbar->Refresh();
+	MakeToolbarAndMenu(form);
 	
 	curOp = std::make_shared<gui::Label>(gds::Rect{180, 42, 20, 20}, "=");
 	output = std::make_shared<gui::TextBox>(gds::Rect{10, 42, 160, 20});
@@ -259,7 +228,7 @@ void StandardMode::Show(){
 	opEquals->OnAction(std::bind(&StandardMode::HandleOp<OpState::Equals>, this));
 	
 	form->AddControls({
-		toolbar, output, curOp, 
+		output, curOp, 
 		opDivide, opMultiply, opSubtract, opAdd,
 		clear, clearEntry, opSqrt, opPercent,
 		digit7, digit8, digit9,
@@ -269,6 +238,5 @@ void StandardMode::Show(){
 	});
 	form->SetFocus(output);
 	
-	btos_api::wm::EventLoop loop({form});
-	loop.RunLoop();
+	return form;
 }

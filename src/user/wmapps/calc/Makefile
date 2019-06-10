@@ -76,10 +76,13 @@ $(RESC-TAR-NAME): $(RESCFILES)
 	tar cf $@ -C resc .
 	
 $(RESCFILES-16-ACTIONS-DST): $(RESCFILES-16-ACTIONS-SRC)
+	@mkdir -p $(@D)
 	cp ../../../icons/16/actions/$(patsubst resc/%,%,$@) $@
 
 resc/$(APP-ICON-NAME)_16.png: ../../../icons/16/apps/$(APP-ICON-NAME).png
+	@mkdir -p $(@D)
 	cp $< $@
 
 resc/$(APP-ICON-NAME)_32.png: ../../../icons/32/apps/$(APP-ICON-NAME).png
+	@mkdir -p $(@D)
 	cp $< $@
