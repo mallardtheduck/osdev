@@ -21,6 +21,9 @@ namespace wm{
 		std::function<bool(const wm_Event&)> previewer;
 		std::map<uint64_t, std::shared_ptr<Window>> windows;
 		std::map<uint64_t, std::shared_ptr<Menu>> menus;
+		
+		std::vector<uint64_t> winRemoveList;
+		std::vector<uint64_t> menuRemoveList;
 
 		static EventLoop *current;
 	public:

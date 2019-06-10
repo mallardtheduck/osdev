@@ -28,13 +28,13 @@ namespace wm{
 		windows.insert(make_pair(win->GetID(), win));
 	}
 	void EventLoop::RemoveWindow(uint64_t id){
-		windows.erase(id);
+		winRemoveList.push_back(id);
 	}
 	void EventLoop::AddMenu(shared_ptr<Menu> m){
 		menus.insert(make_pair(m->GetID(), m));
 	}
 	void EventLoop::RemoveMenu(uint64_t id){
-		menus.erase(id);
+		menuRemoveList.push_back(id);
 	}
 
 	void EventLoop::RunLoop(){
@@ -54,19 +54,24 @@ namespace wm{
 		return true;
 	}
 	bool EventLoop::HandleEvent(const wm_Event &e){
+		bool ret = true;
 		if(previewer){
-			if(!previewer(e)) return false;
+			if(!previewer(e)) ret =  false;
 		}
-		if(windows.find(e.window_id) != windows.end()){
-			if(!windows[e.window_id]->Event(e)) return false;
+		if(ret && windows.find(e.window_id) != windows.end()){
+			ret = windows[e.window_id]->Event(e);
 		}
-		if(e.type == wm_EventType::MenuSelection){
+		if(ret && e.type == wm_EventType::MenuSelection){
 			if(menus.find(e.Menu.menu_id) != menus.end()){
-				if(!menus[e.Menu.menu_id]->Event(e.Menu.action)) return false;
+				ret = menus[e.Menu.menu_id]->Event(e.Menu.action);
 			}
 		}
-		if(windows.empty()) return false;
-		else return true;
+		for(auto w : winRemoveList) windows.erase(w);
+		for(auto m : menuRemoveList) menus.erase(m);
+		winRemoveList.clear();
+		menuRemoveList.clear();
+		if(windows.empty()) ret = false;
+		return ret;
 	}
 	
 	EventLoop *EventLoop::GetCurrent(){
