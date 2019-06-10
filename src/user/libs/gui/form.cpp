@@ -28,7 +28,7 @@ void Form::Update(){
 }
 
 void Form::SetSubscribed(uint32_t subs){
-	uint32_t formSubs = wm_FrameEvents;
+	uint32_t formSubs = wm_FrameEvents | wm_EventType::MenuSelection;
 	wm::Window::SetSubscribed(subs | formSubs);
 }
 
