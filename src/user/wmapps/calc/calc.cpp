@@ -11,6 +11,7 @@
 #include "calc_resc.tar.h"
 #include "icalcmode.hpp"
 #include "stdmode.hpp"
+#include "scimode.hpp"
 #include "calc.hpp"
 
 namespace gds = btos_api::gds;
@@ -50,7 +51,7 @@ bool MenuHandler(int id){
 			SwitchCalc<StandardMode, CalcMode::Standard>();
 			break;
 		case 2:
-			SwitchCalc<StandardMode, CalcMode::Scientific>();
+			SwitchCalc<ScientificMode, CalcMode::Scientific>();
 			break;
 		case 3:
 			SwitchCalc<StandardMode, CalcMode::Programmer>();
@@ -102,7 +103,7 @@ void MakeToolbarAndMenu(std::shared_ptr<gui::Form> form){
 	auto tbModeStd = std::make_shared<gui::ToolbarButton>(iconStd);
 	tbModeStd->OnAction(SwitchCalc<StandardMode, CalcMode::Standard>);
 	auto tbModeSci = std::make_shared<gui::ToolbarButton>(iconSci);
-	tbModeSci->OnAction(SwitchCalc<StandardMode, CalcMode::Scientific>);
+	tbModeSci->OnAction(SwitchCalc<ScientificMode, CalcMode::Scientific>);
 	auto tbModeProg = std::make_shared<gui::ToolbarButton>(iconProg);
 	tbModeProg->OnAction(SwitchCalc<StandardMode, CalcMode::Programmer>);
 	
