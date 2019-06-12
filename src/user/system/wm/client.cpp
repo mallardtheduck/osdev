@@ -63,10 +63,10 @@ bool Client::HandleMessage(const Message &msg){
 			break;
 		}
 		case wm_RequestType::DestroyWindow:{
-			uint64_t id = msg.Content<uint64_t>();
-			if(windows.find(id) != windows.end()){
+			if(currentWindow){
+				uint64_t id = currentWindow->id;
 				RemoveWindow(id);
-				if(windows[id] == currentWindow) currentWindow.reset();
+				currentWindow.reset();
 				windows.erase(id);
 			}
 		}
