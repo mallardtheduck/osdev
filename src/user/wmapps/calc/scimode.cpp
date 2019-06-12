@@ -275,7 +275,7 @@ double ScientificMode::Evaluate(std::vector<std::string>::iterator begin, std::v
 	// tfm::printf("\n");
 	
 	if(!evalStack.empty()) return evalStack.top();
-	else return -1.0;
+	else throw EvalError();
 }
 
 double ScientificMode::EvalFunc(const std::string &func, double param){
