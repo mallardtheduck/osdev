@@ -394,6 +394,8 @@ void TextArea::SetText(const std::string &t){
 	while(std::getline(ss, l)){
 		lines.emplace_back(Line{l, gds::TextMeasurements()});
 	}
+	cursorLine = 0;
+	cursorPos = 0;
 	update = true;
 	IControl::Paint(outerRect);
 }

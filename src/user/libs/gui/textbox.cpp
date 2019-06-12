@@ -200,6 +200,7 @@ void TextBox::Blur(){
 	
 void TextBox::SetText(const std::string &t){
 	text = t;
+	cursorPos = 0;
 	update = true;
 	IControl::Paint(rect);
 }
