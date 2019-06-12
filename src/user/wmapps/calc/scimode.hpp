@@ -17,8 +17,17 @@ private:
 		Degrees, Radians
 	};
 	
+	std::function<void()> MakeHandler(const std::string &str);
+	bool HandleKeyPress(uint32_t key);
+	void HandleClear();
+	void Calculate();
+	double Evaluate(std::vector<std::string>::iterator begin, std::vector<std::string>::iterator end);
+	double EvalFunc(const std::string &func, double param);
+	
 	btos_api::gui::RadioGroup<AngleMode> modeGroup;
 	
+	double ans = 0.0;
+	bool awaiting = false;
 public:
 	ScientificMode(const btos_api::gds::Point &pos);
 	std::shared_ptr<btos_api::gui::Form> Show();
