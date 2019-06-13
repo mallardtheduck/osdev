@@ -24,6 +24,9 @@ private:
 	double Evaluate(std::vector<std::string>::iterator begin, std::vector<std::string>::iterator end);
 	double EvalFunc(const std::string &func, double param);
 	
+	double ConvertAngleIn(double a);
+	double ConvertAngleOut(double a);
+	
 	btos_api::gui::RadioGroup<AngleMode> modeGroup;
 	
 	double ans = 0.0;

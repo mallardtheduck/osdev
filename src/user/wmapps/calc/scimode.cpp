@@ -282,14 +282,26 @@ double ScientificMode::EvalFunc(const std::string &func, double param){
 	if(func == "log") return log10(param);
 	else if(func ==  "ln") return log(param);
 	else if(func ==  "log2") return log2(param);
-	else if(func == "sin") return sin(param);
-	else if(func == "cos") return cos(param);
-	else if(func == "tan") return tan(param);
-	else if(func == "asin") return asin(param);
-	else if(func == "acos") return acos(param);
-	else if(func == "atan") return atan(param);
+	else if(func == "sin") return sin(ConvertAngleIn(param));
+	else if(func == "cos") return cos(ConvertAngleIn(param));
+	else if(func == "tan") return tan(ConvertAngleIn(param));
+	else if(func == "asin") return ConvertAngleOut(asin(param));
+	else if(func == "acos") return ConvertAngleOut(acos(param));
+	else if(func == "atan") return ConvertAngleOut(atan(param));
 	else if(func == "sqrt") return sqrt(param);
 	else throw EvalError();
+}
+
+double ScientificMode::ConvertAngleIn(double a){
+	if(modeGroup.GetValue() == AngleMode::Degrees){
+		return a * M_PI / 180.0;
+	}else return a;
+}
+
+double ScientificMode::ConvertAngleOut(double a){
+	if(modeGroup.GetValue() == AngleMode::Degrees){
+		return a * 180.0 / M_PI;
+	}else return a;
 }
 
 std::shared_ptr<gui::Form> ScientificMode::Show(){
