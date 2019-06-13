@@ -21,8 +21,9 @@ private:
 	};
 	
 	OpState opState = OpState::Default;
-	double curTotal;
+	double curTotal, curValue;
 	bool awaiting = false;
+	bool curValueValid = false;
 	
 	void UpdateOp();
 	double Calculate();
@@ -32,6 +33,7 @@ private:
 		text += (char)('0' + N);
 		output->SetText(text);
 		awaiting = false;
+		curValueValid = false;
 	}
 
 	template<OpState O> void HandleOp(){
@@ -48,6 +50,8 @@ private:
 	void HandleSqrt();
 	void HandlePercent();
 	bool HandleKeyPress(uint32_t key);
+	
+	double GetCurrentValue();
 	
 public:
 	StandardMode(const btos_api::gds::Point &pos);

@@ -35,20 +35,30 @@ void StandardMode::UpdateOp(){
 }
 
 double StandardMode::Calculate(){
-	auto curValue = strtod(output->GetText().c_str(), nullptr);
+	auto value = GetCurrentValue();
+	double ret = -1.0;
 	switch(opState){
 		case OpState::Default:
-			return curValue;
+			ret = value;
+			break;
 		case OpState::Add:
-			return curTotal + curValue;
+			ret = curTotal + value;
+			break;
 		case OpState::Subtract:
-			return curTotal - curValue;
+			ret = curTotal - value;
+			break;
 		case OpState::Multiply:
-			return curTotal * curValue;
+			ret = curTotal * value;
+			break;
 		case OpState::Divide:
-			return curTotal / curValue;
+			ret = curTotal / value;
+			break;
+		default:
+			throw std::exception();
 	}
-	throw std::exception();
+	curValue = ret;
+	curValueValid = true;
+	return ret;
 }
 
 void StandardMode::HandleDecimal(){
@@ -57,9 +67,11 @@ void StandardMode::HandleDecimal(){
 		text += '.';
 		output->SetText(text);
 		awaiting = false;
-	}else if(text == ""){
+		curValueValid = false;
+	}else if(text.empty()){
 		output->SetText("0.");
 		awaiting = false;
+		curValueValid = false;
 	}
 }
 
@@ -68,25 +80,29 @@ void StandardMode::HandleClear(){
 	UpdateOp();
 	curTotal = 0;
 	output->SetText("");
+	curValueValid = false;
 }
 
 void StandardMode::HandleClearEntry(){
 	output->SetText("");
 	awaiting = true;
+	curValueValid = false;
 }
 
 void StandardMode::HandleSqrt(){
-	auto curValue = strtod(output->GetText().c_str(), nullptr);
-	curTotal = sqrt(curValue);
+	curTotal = sqrt(GetCurrentValue());
 	output->SetText(tfm::format("%s", curTotal));
 	opState = OpState::Default;
+	curValue = curTotal;
+	curValueValid = true;
 	UpdateOp();
 }
 
 void StandardMode::HandlePercent(){
-	auto curValue = strtod(output->GetText().c_str(), nullptr);
-	curValue = curTotal * (curValue / 100.0);
-	output->SetText(tfm::format("%s", curValue));
+	double result = curTotal * (GetCurrentValue() / 100.0);
+	output->SetText(tfm::format("%s", result));
+	curValue = result;
+	curValueValid = true;
 	awaiting = true;
 }
 
@@ -166,6 +182,11 @@ bool StandardMode::HandleKeyPress(uint32_t key){
 		}
 	}
 	return true;
+}
+
+double StandardMode::GetCurrentValue(){
+	if(curValueValid) return curValue;
+	else return strtod(output->GetText().c_str(), nullptr);
 }
 
 StandardMode::StandardMode(const gds::Point &p) : pos(p) {}
