@@ -194,58 +194,58 @@ StandardMode::StandardMode(const gds::Point &p) : pos(p) {}
 std::shared_ptr<gui::Form> StandardMode::Show(){
 	using namespace std::placeholders;
 	
-	auto form = std::make_shared<gui::Form>(gds::Rect{pos.x, pos.y, 210, 232}, gui::FormOptions::Fixed, "Calculator");
+	auto form = std::make_shared<gui::Form>(gds::Rect{pos.x, pos.y, 210, 237}, gui::FormOptions::Fixed, "Calculator");
 	
 	MakeToolbarAndMenu(form);
 	
-	curOp = std::make_shared<gui::Label>(gds::Rect{180, 42, 20, 20}, "=");
-	output = std::make_shared<gui::TextBox>(gds::Rect{10, 42, 160, 20});
+	curOp = std::make_shared<gui::Label>(gds::Rect{180, 42, 20, 25}, "=");
+	output = std::make_shared<gui::TextBox>(gds::Rect{10, 42, 160, 25});
 	output->OnKeyPress(std::bind(&StandardMode::HandleKeyPress, this, _1));
 	
-	auto opDivide = std::make_shared<gui::Button>(gds::Rect{170, 72, 30, 30}, "\xC3\xB7");
+	auto opDivide = std::make_shared<gui::Button>(gds::Rect{170, 77, 30, 30}, "\xC3\xB7");
 	opDivide->OnAction(std::bind(&StandardMode::HandleOp<OpState::Divide>, this));
-	auto opMultiply = std::make_shared<gui::Button>(gds::Rect{170, 112, 30, 30}, "\xC3\x97");
+	auto opMultiply = std::make_shared<gui::Button>(gds::Rect{170, 117, 30, 30}, "\xC3\x97");
 	opMultiply->OnAction(std::bind(&StandardMode::HandleOp<OpState::Multiply>, this));
-	auto opSubtract = std::make_shared<gui::Button>(gds::Rect{170, 152, 30, 30}, "-");
+	auto opSubtract = std::make_shared<gui::Button>(gds::Rect{170, 157, 30, 30}, "-");
 	opSubtract->OnAction(std::bind(&StandardMode::HandleOp<OpState::Subtract>, this));
-	auto opAdd = std::make_shared<gui::Button>(gds::Rect{170, 192, 30, 30}, "+");
+	auto opAdd = std::make_shared<gui::Button>(gds::Rect{170, 197, 30, 30}, "+");
 	opAdd->OnAction(std::bind(&StandardMode::HandleOp<OpState::Add>, this));
 	
-	auto clear = std::make_shared<gui::Button>(gds::Rect{10, 72, 30, 30}, "C");
+	auto clear = std::make_shared<gui::Button>(gds::Rect{10, 77, 30, 30}, "C");
 	clear->OnAction(std::bind(&StandardMode::HandleClear, this));
-	auto clearEntry = std::make_shared<gui::Button>(gds::Rect{10, 112, 30, 30}, "CE");
+	auto clearEntry = std::make_shared<gui::Button>(gds::Rect{10, 117, 30, 30}, "CE");
 	clearEntry->OnAction(std::bind(&StandardMode::HandleClearEntry, this));
-	auto opSqrt = std::make_shared<gui::Button>(gds::Rect{10, 152, 30, 30}, "\xE2\x88\x9A");
+	auto opSqrt = std::make_shared<gui::Button>(gds::Rect{10, 157, 30, 30}, "\xE2\x88\x9A");
 	opSqrt->OnAction(std::bind(&StandardMode::HandleSqrt, this));
-	auto opPercent = std::make_shared<gui::Button>(gds::Rect{10, 192, 30, 30}, "%");
+	auto opPercent = std::make_shared<gui::Button>(gds::Rect{10, 197, 30, 30}, "%");
 	opPercent->OnAction(std::bind(&StandardMode::HandlePercent, this));
 	
-	auto digit7 = std::make_shared<gui::Button>(gds::Rect{50, 72, 30, 30}, "7");
+	auto digit7 = std::make_shared<gui::Button>(gds::Rect{50, 77, 30, 30}, "7");
 	digit7->OnAction(std::bind(&StandardMode::HandleDigit<7>, this));
-	auto digit8 = std::make_shared<gui::Button>(gds::Rect{90, 72, 30, 30}, "8");
+	auto digit8 = std::make_shared<gui::Button>(gds::Rect{90, 77, 30, 30}, "8");
 	digit8->OnAction(std::bind(&StandardMode::HandleDigit<8>, this));
-	auto digit9 = std::make_shared<gui::Button>(gds::Rect{130, 72, 30, 30}, "9");
+	auto digit9 = std::make_shared<gui::Button>(gds::Rect{130, 77, 30, 30}, "9");
 	digit9->OnAction(std::bind(&StandardMode::HandleDigit<9>, this));
 	
-	auto digit4 = std::make_shared<gui::Button>(gds::Rect{50, 112, 30, 30}, "4");
+	auto digit4 = std::make_shared<gui::Button>(gds::Rect{50, 117, 30, 30}, "4");
 	digit4->OnAction(std::bind(&StandardMode::HandleDigit<4>, this));
-	auto digit5 = std::make_shared<gui::Button>(gds::Rect{90, 112, 30, 30}, "5");
+	auto digit5 = std::make_shared<gui::Button>(gds::Rect{90, 117, 30, 30}, "5");
 	digit5->OnAction(std::bind(&StandardMode::HandleDigit<5>, this));
-	auto digit6 = std::make_shared<gui::Button>(gds::Rect{130, 112, 30, 30}, "6");
+	auto digit6 = std::make_shared<gui::Button>(gds::Rect{130, 117, 30, 30}, "6");
 	digit6->OnAction(std::bind(&StandardMode::HandleDigit<6>, this));
 	
-	auto digit1 = std::make_shared<gui::Button>(gds::Rect{50, 152, 30, 30}, "1");
+	auto digit1 = std::make_shared<gui::Button>(gds::Rect{50, 157, 30, 30}, "1");
 	digit1->OnAction(std::bind(&StandardMode::HandleDigit<1>, this));
-	auto digit2 = std::make_shared<gui::Button>(gds::Rect{90, 152, 30, 30}, "2");
+	auto digit2 = std::make_shared<gui::Button>(gds::Rect{90, 157, 30, 30}, "2");
 	digit2->OnAction(std::bind(&StandardMode::HandleDigit<2>, this));
-	auto digit3 = std::make_shared<gui::Button>(gds::Rect{130, 152, 30, 30}, "3");
+	auto digit3 = std::make_shared<gui::Button>(gds::Rect{130, 157, 30, 30}, "3");
 	digit3->OnAction(std::bind(&StandardMode::HandleDigit<3>, this));
 	
-	auto digit0 = std::make_shared<gui::Button>(gds::Rect{50, 192, 30, 30}, "0");
+	auto digit0 = std::make_shared<gui::Button>(gds::Rect{50, 197, 30, 30}, "0");
 	digit0->OnAction(std::bind(&StandardMode::HandleDigit<0>, this));
-	auto decimal = std::make_shared<gui::Button>(gds::Rect{90, 192, 30, 30}, ".");
+	auto decimal = std::make_shared<gui::Button>(gds::Rect{90, 197, 30, 30}, ".");
 	decimal->OnAction(std::bind(&StandardMode::HandleDecimal, this));
-	auto opEquals = std::make_shared<gui::Button>(gds::Rect{130, 192, 30, 30}, "=");
+	auto opEquals = std::make_shared<gui::Button>(gds::Rect{130, 197, 30, 30}, "=");
 	opEquals->OnAction(std::bind(&StandardMode::HandleOp<OpState::Equals>, this));
 	
 	form->AddControls({
