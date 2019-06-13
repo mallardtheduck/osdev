@@ -333,11 +333,11 @@ namespace fonts{
 	}
 	
 	gds::Font GetTextBoxFont(){
-		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+		return gds::Font::Get("DejaVu Sans", gds_FontStyle::Normal);
 	}
 	
 	uint32_t GetTextBoxTextSize(){
-		return 12;
+		return 13;
 	}
 	
 	gds::Font GetCheckboxFont(){
@@ -357,11 +357,11 @@ namespace fonts{
 	}
 	
 	gds::Font GetTextAreaFont(){
-		return gds::Font::Get("Resagnicto", gds_FontStyle::Normal);
+		return gds::Font::Get("DejaVu Sans", gds_FontStyle::Normal);
 	}
 	
 	uint32_t GetTextAreaTextSize(){
-		return 12;
+		return 13;
 	}
 	
 	gds::Font GetGroupBoxFont(){
