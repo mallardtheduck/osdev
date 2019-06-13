@@ -53,7 +53,15 @@ public:
 	T GetValue(){
 		auto v = values.find(current);
 		if(v != values.end()) return v->second;
-		else return {};
+		else{
+			for(auto &p : values){
+				if(p.first && p.first->GetValue()){
+					current = p.first;
+					return p.second;
+				}
+			}
+			return {};
+		}
 	}
 	
 	void AddButton(std::shared_ptr<RadioButton> r, T v){
