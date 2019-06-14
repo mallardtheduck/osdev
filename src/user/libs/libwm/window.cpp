@@ -151,5 +151,15 @@ namespace wm{
 		return WM_GetScreenMode();
 	}
 
+	void Window::SetModal(const Window &win){
+		Select();
+		WM_SetModal(win.id);
+	}
+	
+	void Window::ClearModal(){
+		Select();
+		WM_ClearModal();
+	}
+
 }
 }

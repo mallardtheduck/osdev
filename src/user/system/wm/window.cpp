@@ -184,9 +184,14 @@ bool Window::HasBorder(){
 }
 
 void Window::KeyInput(uint32_t key){
-	stringstream ss;
+	auto mwin = modal.lock();
+	if(mwin){
+		BringToFront(mwin);
+		return;
+	}
+	//stringstream ss;
 	//ss << "WM: Window '" << title << "' key input:" << key << endl;
-	bt_zero(ss.str().c_str());
+	//bt_zero(ss.str().c_str());
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::Keyboard)){
 		wm_Event e;
@@ -212,6 +217,11 @@ void RefreshRectEdges(const Rect &r, uint32_t lineWidth){
 }
 
 void Window::PointerInput(const bt_terminal_pointer_event &pevent){
+	auto mwin = modal.lock();
+	if(mwin){
+		mwin->SetZOrder(z + 1, true);
+		return;
+	}
 	if(dragMode == DragMode::Move){
 		Point curpos = Point(pevent.x, pevent.y);
 		Point newpos = {curpos.x - dragoffset.x, curpos.y - dragoffset.y};
@@ -591,4 +601,16 @@ void Window::StartDrag(){
 		dragoffset = epoint;
 		dragMode = DragMode::Move;
 	}
+}
+
+void Window::SetModal(std::weak_ptr<Window> win){
+	modal = win;
+	auto mwin = modal.lock();
+	if(mwin){
+		mwin->SetZOrder(z + 1, true);
+	}
+}
+
+void Window::ClearModal(){
+	modal.reset();
 }

@@ -113,6 +113,8 @@ ENUM_START(wm_RequestType)
 	ENUM_SET(wm_RequestType, ChangeOptions,		10),
 	ENUM_SET(wm_RequestType, SetTitle,			11),
 	ENUM_SET(wm_RequestType, Sync,				12),
+	ENUM_SET(wm_RequestType, SetModal,			13),
+	ENUM_SET(wm_RequestType, ClearModal,		14),
 	
 	ENUM_SET(wm_RequestType, SelectMenu,		20),
 	ENUM_SET(wm_RequestType, CreateMenu,		21),

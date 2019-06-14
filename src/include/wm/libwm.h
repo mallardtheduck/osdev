@@ -43,6 +43,9 @@ void WM_StartDrag();
 bt_terminal_pointer_info WM_GetPointerInfo();
 bt_vidmode WM_GetScreenMode();
 
+void WM_SetModal(uint64_t id);
+void WM_ClearModal();
+
 #ifdef __cplusplus
 }
 

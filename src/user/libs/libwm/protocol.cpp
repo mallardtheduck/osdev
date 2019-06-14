@@ -229,3 +229,11 @@ extern "C" void WM_StartResize(){
 extern "C" void WM_StartDrag(){
 	SendMessage(wm_RequestType::StartDrag, 0 , NULL, false);
 }
+
+extern "C" void WM_SetModal(uint64_t id){
+	SendMessage(wm_RequestType::SetModal, id, false);
+}
+
+extern "C" void WM_ClearModal(){
+	SendMessage(wm_RequestType::ClearModal, 0, NULL, false);
+}

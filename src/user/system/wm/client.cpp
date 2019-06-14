@@ -79,7 +79,7 @@ bool Client::HandleMessage(const Message &msg){
 				Point content = currentWindow->GetContentOffset();
 				info.contentX = content.x;
 				info.contentY = content.y;
-				info.options = wm_WindowOptions::Visible;
+				info.options = currentWindow->GetOptions();
 				info.subscriptions = currentWindow->Subscribe();
 				info.gds_id = currentWindow->GetSurface()->GetID();
 			}else{
@@ -229,6 +229,15 @@ bool Client::HandleMessage(const Message &msg){
 		}
 		case wm_RequestType::StartDrag:{
 			if(currentWindow) currentWindow->StartDrag();
+			break;
+		}case wm_RequestType::SetModal:{
+			auto id = msg.Content<uint64_t>();
+			if(currentWindow && windows.find(id) != windows.end()){
+				currentWindow->SetModal(windows[id]);
+			}
+			break;
+		}case wm_RequestType::ClearModal:{
+			if(currentWindow) currentWindow->ClearModal();
 			break;
 		}
 	}

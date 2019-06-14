@@ -44,6 +44,8 @@ private:
 	uint32_t options = wm_WindowOptions::Default;
 	std::shared_ptr<Menu> windowMenu;
 	
+	std::weak_ptr<Window> modal;
+	
 	WindowArea GetWindowArea(gds::Point p);
 	void RefreshTitleBar(bool force = false);
 	bool UpdateTitleBar(bool force = false);
@@ -99,6 +101,9 @@ public:
 	
 	void StartDrag();
 	void StartResize();
+	
+	void SetModal(std::weak_ptr<Window> win);
+	void ClearModal();
 };
 
 #endif // WINDOW_HPP

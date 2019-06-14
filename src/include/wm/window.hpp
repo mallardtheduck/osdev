@@ -65,6 +65,9 @@ namespace wm{
 		void StartDrag();
 		
 		bt_vidmode GetScreenMode();
+		
+		void SetModal(const Window &win);
+		void ClearModal();
 	};
 
 }
