@@ -173,6 +173,7 @@ namespace icons{
 	std::shared_ptr<gds::Surface> GetTreeViewDefaultChildren();
 	std::shared_ptr<gds::Surface> GetTreeViewDefaultNoChildren();
 	std::shared_ptr<gds::Surface> GetTreeViewDefaultOpen();
+	std::shared_ptr<gds::Surface> GetMessageBoxDefault();
 }
 
 }

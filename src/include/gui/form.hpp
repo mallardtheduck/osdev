@@ -11,6 +11,8 @@ namespace gui{
 namespace FormOptions{
 	static const uint32_t Fixed = (wm_WindowOptions::Default | wm_WindowOptions::NoExpand);
 	static const uint32_t Sizable = (wm_WindowOptions::Default | wm_WindowOptions::Resizable);
+	static const uint32_t ClosedFixed = (wm_WindowOptions::Unlisted | wm_WindowOptions::NoExpand);
+	static const uint32_t ClosedSizable = (wm_WindowOptions::Unlisted | wm_WindowOptions::Resizable);
 }
 
 class Form : public wm::Window, public Container{

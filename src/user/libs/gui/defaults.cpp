@@ -464,6 +464,12 @@ namespace icons{
 		if(!ret) ret = LoadIcon("tv_default_open.png");
 		return ret;
 	}
+	
+	std::shared_ptr<gds::Surface> GetMessageBoxDefault(){
+		static std::shared_ptr<gds::Surface> ret;
+		if(!ret) ret = LoadIcon("mb_default.png");
+		return ret;
+	}
 }
 
 }

@@ -24,6 +24,7 @@
 #include <gui/statusbar.hpp>
 #include <gui/tabs.hpp>
 #include <gui/progressbar.hpp>
+#include <gui/messagebox.hpp>
 
 #include <wm/eventloop.hpp>
 #include <util/tinyformat.hpp>
@@ -211,7 +212,10 @@ int main(){
 		
 		auto sfrm = std::make_shared<btos_api::gui::SubForm>(gds::Rect{170, 130, 150, 80});
 		auto sbtn = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 3");
-		sbtn->OnAction([&] {lbl2->SetText("Button 3");});
+		sbtn->OnAction([&] {
+			lbl2->SetText("Button 3");
+			btos_api::gui::MessageBox("Test message", "Hello").Show(frm.get());
+		});
 		auto tst2 = std::make_shared<btos_api::gui::TestControl>(gds::Rect{10, 50, 100, 30});
 		tst2->OnEvent([] (const wm_Event &e){
 			tfm::printf("Subform Test: EventType: %s\n", e.type);
