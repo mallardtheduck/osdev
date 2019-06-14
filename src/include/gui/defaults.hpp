@@ -120,6 +120,9 @@ namespace colours{
 	gds::Colour GetResizeHandleBackground();
 	gds::Colour GetResizeHandleForeground();
 	gds::Colour GetResizeHandleDown();
+	
+	gds::Colour GetProgressBarHiLight();
+	gds::Colour GetProgressBarLowLight();
 }
 
 namespace fonts{

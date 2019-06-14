@@ -23,6 +23,7 @@
 #include <gui/toolbar.hpp>
 #include <gui/statusbar.hpp>
 #include <gui/tabs.hpp>
+#include <gui/progressbar.hpp>
 
 #include <wm/eventloop.hpp>
 #include <util/tinyformat.hpp>
@@ -221,7 +222,15 @@ int main(){
 		auto mBtn = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 260, 100, 30}, "More...");
 		auto m2Btn = std::make_shared<btos_api::gui::Button>(gds::Rect{120, 260, 100, 30}, "Even more...");
 		
-		frm->AddControls({btn1, btn2, lbl1, lbl2, txt, sld, chk, rd1, rd2, rd3, sch, scv, txa, grp, sfrm, tst1, mBtn, m2Btn});
+		auto pBar1 = std::make_shared<btos_api::gui::ProgressBar>(gds::Rect{230, 230, 100, 20}, 50);
+		auto pBar2 = std::make_shared<btos_api::gui::ProgressBar>(gds::Rect{230, 260, 100, 20}, 0);
+		auto pBar3 = std::make_shared<btos_api::gui::ProgressBar>(gds::Rect{230, 290, 100, 20}, 100);
+		
+		frm->AddControls({
+			btn1, btn2, lbl1, lbl2, txt, sld, chk, rd1, rd2, rd3, sch, scv, txa, grp, sfrm, 
+			tst1, mBtn, m2Btn, pBar1, pBar2, pBar3
+			
+		});
 		frm->OnClose([]{
 			tfm::printf("Form close.\n");
 			return false;

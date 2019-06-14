@@ -313,6 +313,14 @@ namespace colours{
 	gds::Colour GetResizeHandleDown(){
 		return constants::DarkGrey;
 	}
+	
+	gds::Colour GetProgressBarHiLight(){
+		return constants::Grey;
+	}
+	
+	gds::Colour GetProgressBarLowLight(){
+		return constants::DarkGrey;
+	}
 }
 
 namespace fonts{
