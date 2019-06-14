@@ -5,6 +5,7 @@
 #include <map>
 
 #include <gui/toolbar.hpp>
+#include <gui/messagebox.hpp>
 #include <wm/menu.hpp>
 #include <wm/eventloop.hpp>
 
@@ -65,7 +66,7 @@ bool MenuHandler(int id){
 			//Paste
 			break;
 		case 6:
-			//About
+			gui::MessageBox("BT/OS Calculator", "About", LoadPNG("calc_32.png")).Show(currentForm.get());
 			break;
 	}
 	return true;
@@ -135,9 +136,11 @@ std::shared_ptr<gds::Surface> LoadPNG(const char *path){
 		auto fd = resc::Resc_OpenResc(rsc, path);
 		auto ret = GDS_LoadPNG(fd);
 		close(fd);
-		pngs[path] = std::make_shared<gds::Surface>(std::move(gds::Surface::Wrap(ret, true)));
+		auto png = std::make_shared<gds::Surface>(std::move(gds::Surface::Wrap(ret, true)));
+		auto r = pngs.insert({path, png});
+		if(r.second) it = r.first;
 	}
-	return pngs[path];
+	return it->second;
 }
 
 int main(){
