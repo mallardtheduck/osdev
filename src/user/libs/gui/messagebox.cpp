@@ -85,7 +85,13 @@ size_t MessageBox::Show(wm::Window *parent){
 	int32_t buttonX = ((formWidth - buttonWidth) / 2) + (margin * 1.5);
 	int32_t buttonY = contentHeight;
 	
-	wm::EventLoop loop;
+	wm::EventLoop *loop = nullptr;
+	std::unique_ptr<wm::EventLoop> loopPtr;
+	if(parent) loop = wm::EventLoop::GetCurrent();
+	if(!loop){
+		loopPtr.reset(new wm::EventLoop());
+		loop = loopPtr.get();
+	}
 	
 	for(size_t i = 0; i < buttons.size(); ++i){
 		auto btnWidth = buttonLabelMeasures[i].w + (2 * margin);
@@ -93,15 +99,14 @@ size_t MessageBox::Show(wm::Window *parent){
 		btn->OnAction([&ret, i, &form, &loop]{
 			ret = i;
 			form->Close();
-			loop.RemoveWindow(form->GetID());
+			loop->RemoveWindow(form->GetID());
 		});
 		form->AddControl(btn);
 		buttonX += btnWidth + margin;
 	}
 	
 	form->Open();
-	loop.AddWindow(form);
-	loop.RunLoop();
+	loop->RunModal(form);
 	
 	if(parent) parent->ClearModal();
 	return ret;

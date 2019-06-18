@@ -45,6 +45,18 @@ namespace wm{
 		}
 		current = nullptr;
 	}
+	
+	void EventLoop::RunModal(std::shared_ptr<Window> modal){
+		AddWindow(modal);
+		current = this;
+		while(true){
+			wm_Event e = WM_GetEvent();
+			if(!HandleEvent(e)) break;
+			if(windows.find(modal->GetID()) == windows.end()) break;
+		}
+		current = nullptr;
+	}
+	
 	bool EventLoop::HandleMessage(const Message &msg){
 		auto header = msg.Header();
 		wm_Event e = WM_ParseMessage(&header);
