@@ -214,7 +214,7 @@ int main(){
 		auto sbtn = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 3");
 		sbtn->OnAction([&] {
 			lbl2->SetText("Button 3");
-			btos_api::gui::MessageBox("Test message", "Hello").Show(frm.get());
+			btos_api::gui::MessageBox("Test message", "Hello", nullptr, {"Yes", "No", "Potato"}).Show(frm.get());
 		});
 		auto tst2 = std::make_shared<btos_api::gui::TestControl>(gds::Rect{10, 50, 100, 30});
 		tst2->OnEvent([] (const wm_Event &e){

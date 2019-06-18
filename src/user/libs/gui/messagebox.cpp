@@ -74,7 +74,7 @@ size_t MessageBox::Show(wm::Window *parent){
 	int32_t imageX = margin;
 	int32_t imageY = (contentHeight - iconInfo.h) / 2;
 	int32_t labelX = iconInfo.w + (2 * margin);
-	int32_t labelY = (contentHeight - messageMeasures.h) / 2;
+	int32_t labelY = ((contentHeight - messageMeasures.h) / 2) - (messageMeasures.h / 3);
 	
 	auto image = std::make_shared<Image>(gds::Rect{imageX, imageY, iconInfo.w, iconInfo.h}, icon);
 	uint32_t labelHeight = (messageMeasures.h * 1.5);
@@ -82,13 +82,12 @@ size_t MessageBox::Show(wm::Window *parent){
 	
 	form->AddControls({image, label});
 	
-	int32_t buttonX = ((formWidth - buttonWidth) / 2) + margin;
+	int32_t buttonX = ((formWidth - buttonWidth) / 2) + (margin * 1.5);
 	int32_t buttonY = contentHeight;
 	
 	wm::EventLoop loop;
 	
 	for(size_t i = 0; i < buttons.size(); ++i){
-		buttonX += margin;
 		auto btnWidth = buttonLabelMeasures[i].w + (2 * margin);
 		auto btn = std::make_shared<Button>(gds::Rect{buttonX, buttonY, btnWidth, buttonHeight}, buttons[i]);
 		btn->OnAction([&ret, i, &form, &loop]{
@@ -97,7 +96,7 @@ size_t MessageBox::Show(wm::Window *parent){
 			loop.RemoveWindow(form->GetID());
 		});
 		form->AddControl(btn);
-		buttonX += btnWidth;
+		buttonX += btnWidth + margin;
 	}
 	
 	form->Open();
