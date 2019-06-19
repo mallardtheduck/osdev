@@ -163,7 +163,7 @@ USERAPI_HANDLER(BT_CREATE_LOCK){
 USERAPI_HANDLER(BT_LOCK){
     lock *l=proc_get_lock(regs->ebx);
     if(l) {
-		take_lock_exclusive(*l);
+		take_lock_exclusive(*l, sch_get_id(), true);
 		sch_abortable(true);
 	}
 }
@@ -179,7 +179,7 @@ USERAPI_HANDLER(BT_TRY_LOCK){
 USERAPI_HANDLER(BT_UNLOCK){
     lock *l=proc_get_lock(regs->ebx);
 	if(l){
-		release_lock(*l);
+		release_lock(*l, sch_get_id(), true);
 		sch_abortable(false);
 	}
 }

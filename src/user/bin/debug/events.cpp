@@ -49,6 +49,12 @@ void out_event(const bt_debug_event_msg &event){
 			case bt_exception::UnresolvedPageFault:
 				cout << "UnresolvedPageFault" << endl;
 				break;
+			case bt_exception::BadLocking:
+				cout << "BadLocking" << endl;
+				break;
+			case bt_exception::SelfAbort:
+				cout << "SelfAbort" << endl;
+				break;
 		}
 	}
 }

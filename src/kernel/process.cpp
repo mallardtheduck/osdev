@@ -593,8 +593,13 @@ size_t proc_get_arg(size_t i, char *buf, size_t size, pid_t pid){
 
 static void close_thread_handle(void *t){
     uint64_t thread_id=*(uint64_t*)t;
-    sch_abort(thread_id);
-    delete (uint64_t*)t;
+    if(thread_id == sch_get_id()){
+    	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::SelfAbort);
+    	proc_terminate();
+    }else{
+    	sch_abort(thread_id);
+    	delete (uint64_t*)t;
+    }
 }
 
 void proc_remove_thread(uint64_t thread_id, pid_t pid){
