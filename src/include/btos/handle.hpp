@@ -16,6 +16,9 @@ namespace btos_api{
 	public:
 		Handle(bt_handle_t h);
 		Handle(Handle &&h);
+		
+		Handle &operator=(Handle&&) = default;
+		
 		virtual ~Handle();
 
 		bool Query() const;
