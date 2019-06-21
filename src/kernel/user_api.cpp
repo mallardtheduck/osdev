@@ -92,23 +92,6 @@ USERAPI_HANDLER(BT_FREE_PAGES){
 	}
 }
 
-USERAPI_HANDLER(BT_CLOSEHANDLE){
-    bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
-    if(h.open && h.type!=kernel_handle_types::invalid){
-        close_handle(h);
-        proc_remove_handle((handle_t)regs->ebx);
-    }
-}
-
-USERAPI_HANDLER(BT_QUERYHANDLE){
-	bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
-	if(h.open && h.type!=kernel_handle_types::invalid){
-		regs->eax = 1;
-	}else{
-		regs->eax = 0;
-	}
-}
-
 static void close_shm_space_handle(void *f){
     MM2::shm_close(*(uint64_t*)f);
     delete (uint64_t*)f;
@@ -208,11 +191,11 @@ USERAPI_HANDLER(BT_MODIFY_ATOM){
 	}
 }
 
-USERAPI_HANDLER(BT_WAIT_ATOM){
+USERAPI_HANDLER(BT_MAKE_WAIT_ATOM){
 	bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
 	if(h.open && h.type == kernel_handle_types::atom && is_safe_ptr(regs->edx, sizeof(uint64_t))){
-		*(uint64_t*)regs->edx = atom_wait((bt_atom*)h.value, (bt_atom_compare::Enum)regs->ecx, *(uint64_t*)regs->edx);
-		regs->eax = 1;
+		auto hdl = atom_make_wait((bt_atom*)h.value, (bt_atom_compare::Enum)regs->ecx, *(uint64_t*)regs->edx);
+		regs->eax = proc_add_handle(hdl);
 	}
 }
 
@@ -605,6 +588,71 @@ USERAPI_HANDLER(BT_MULTI_CALL){
 	}
 }
 
+USERAPI_HANDLER(BT_CLOSEHANDLE){
+    bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
+    if(h.open && h.type!=kernel_handle_types::invalid){
+        close_handle(h);
+        proc_remove_handle((handle_t)regs->ebx);
+    }
+}
+
+USERAPI_HANDLER(BT_QUERYHANDLE){
+	bt_handle_info h=proc_get_handle((handle_t)regs->ebx);
+	if(h.open && h.type!=kernel_handle_types::invalid){
+		regs->eax = 1;
+	}else{
+		regs->eax = 0;
+	}
+}
+
+USERAPI_HANDLER(BT_WAITHANDLE){
+	bt_handle_info h = proc_get_handle((handle_t)regs->ebx);
+	if(h.open && h.type != kernel_handle_types::invalid){
+		wait_handle(h);
+	}
+}
+
+USERAPI_HANDLER(BT_MAKE_WAITALL){
+	size_t size = regs->ecx;
+	if(is_safe_ptr(regs->ebx, size * sizeof(bt_handle_t))){
+		bt_handle_t *sarr = (bt_handle_t*)regs->ebx;
+		auto harr = new bt_handle_info[size];
+		for(size_t i = 0; i < size; ++i){
+			harr[i] = proc_get_handle(sarr[i]);
+			if(!harr[i].open || harr[i].type == kernel_handle_types::invalid){
+				delete[] harr;
+				return;
+			}
+		}
+		auto hdl = create_wait_all_handle(harr, size);
+		regs->eax = proc_add_handle(hdl);
+	}
+}
+
+USERAPI_HANDLER(BT_MAKE_WAITANY){
+	size_t size = regs->ecx;
+	if(is_safe_ptr(regs->ebx, size * sizeof(bt_handle_t))){
+		bt_handle_t *sarr = (bt_handle_t*)regs->ebx;
+		auto harr = new bt_handle_info[size];
+		for(size_t i = 0; i < size; ++i){
+			harr[i] = proc_get_handle(sarr[i]);
+			if(!harr[i].open || harr[i].type == kernel_handle_types::invalid){
+				delete[] harr;
+				return;
+			}
+		}
+		auto hdl = create_wait_any_handle(harr, size);
+		regs->eax = proc_add_handle(hdl);
+	}
+}
+
+USERAPI_HANDLER(BT_WAIT_INDEX){
+	bt_handle_info h = proc_get_handle((handle_t)regs->ebx);
+	if(h.open && h.type == kernel_handle_types::wait){
+		regs->eax = get_wait_index(h);
+	}
+}
+
 void userapi_syscall(uint16_t fn, isr_regs *regs){
 	switch(fn){
 		case 0:
@@ -617,8 +665,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
         USERAPI_HANDLE_CALL(BT_ALLOC_AT);
         //USERAPI_HANDLE_CALL(BT_GUARD_PAGE);
         //USERAPI_HANDLE_CALL(BT_CREATE_REGION);
-        USERAPI_HANDLE_CALL(BT_CLOSEHANDLE);
-		USERAPI_HANDLE_CALL(BT_QUERYHANDLE);
+        
 		USERAPI_HANDLE_CALL(BT_CREATE_SHM);
 		USERAPI_HANDLE_CALL(BT_SHM_ID);
 		USERAPI_HANDLE_CALL(BT_SHM_MAP);
@@ -634,7 +681,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_DESTROY_LOCK);
 		USERAPI_HANDLE_CALL(BT_CREATE_ATOM);
 		USERAPI_HANDLE_CALL(BT_MODIFY_ATOM);
-		USERAPI_HANDLE_CALL(BT_WAIT_ATOM);
+		USERAPI_HANDLE_CALL(BT_MAKE_WAIT_ATOM);
 		USERAPI_HANDLE_CALL(BT_CMPXCHG_ATOM);
 		USERAPI_HANDLE_CALL(BT_READ_ATOM);
 
@@ -700,6 +747,14 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_RECVFILTERED);
 		USERAPI_HANDLE_CALL(BT_NEXTMSGFILTERED);
 		USERAPI_HANDLE_CALL(BT_MSGQUERY);
+
+		//Handles
+        USERAPI_HANDLE_CALL(BT_CLOSEHANDLE);
+		USERAPI_HANDLE_CALL(BT_QUERYHANDLE);
+		USERAPI_HANDLE_CALL(BT_WAITHANDLE);
+		USERAPI_HANDLE_CALL(BT_MAKE_WAITALL);
+		USERAPI_HANDLE_CALL(BT_MAKE_WAITANY);
+		USERAPI_HANDLE_CALL(BT_WAIT_INDEX);
 
 		//Extensions
 		USERAPI_HANDLE_CALL(BT_QUERY_EXT);

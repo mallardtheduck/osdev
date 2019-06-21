@@ -67,6 +67,10 @@ void close_terminal(void *p){
 	if(vt) vt->set_backend(NULL);
 }
 
+static bool null_wait(void*){
+	return true;
+}
+
 void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 	uint32_t backend_handle_type = (terminal_extension_id << 16) | 0x01;
 	uint32_t terminal_handle_type = (terminal_extension_id << 16) | 0x02;
@@ -75,6 +79,7 @@ void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 			bt_handle_info handle;
 			handle.open = true;
 			handle.close = &close_backend;
+			handle.wait = &null_wait;
 			handle.type = backend_handle_type;
 			user_backend *backend = new user_backend(getpid());
 			handle.value = (void*)backend;
@@ -95,6 +100,7 @@ void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 					bt_handle_info terminal_handle;
 					terminal_handle.open = true;
 					terminal_handle.close = &close_terminal;
+					terminal_handle.wait = &null_wait;
 					terminal_handle.type = terminal_handle_type;
 					terminal_handle.value = (void*)new uint64_t(terminal_id);
 					bt_handle_t handle_id = add_user_handle(terminal_handle, getpid());

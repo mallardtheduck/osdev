@@ -16,4 +16,6 @@ uint64_t atom_wait(bt_atom *a, bt_atom_compare::Enum cmp, uint64_t value);
 uint64_t atom_cmpxchg(bt_atom *a, uint64_t cmp, uint64_t xchg);
 uint64_t atom_read(bt_atom *a);
 
+bt_handle_info atom_make_wait(bt_atom *a, bt_atom_compare::Enum cmp, uint64_t value);
+
 #endif

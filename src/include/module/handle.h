@@ -2,6 +2,7 @@
 #define _HANDLE_H
 
 typedef void (*handle_close_fn)(void*);
+typedef bool (*handle_wait_fn)(void*);
 
 typedef uint32_t bt_handle_t;
 
@@ -10,6 +11,7 @@ struct bt_handle_info {
     bool open;
     void *value;
     handle_close_fn close;
+    handle_wait_fn wait;
 };
 
 #ifndef __cplusplus

@@ -36,14 +36,14 @@ uint64_t atom_modify(bt_atom *a, bt_atom_modify::Enum mod, uint64_t value){
 	return a->value;
 }
 
-struct atom_wait_lockcheck_p{
+struct atom_wait_options{
 	bt_atom *a;
 	bt_atom_compare::Enum cmp;
 	uint64_t value;
 };
 
 static bool atom_wait_lockcheck(void *vp){
-	atom_wait_lockcheck_p &p = *(atom_wait_lockcheck_p*)vp;
+	atom_wait_options &p = *(atom_wait_options*)vp;
 	if(!try_take_lock_exclusive(p.a->lk)) return false;
 	bool ret = false;
 	switch(p.cmp){
@@ -65,7 +65,7 @@ static bool atom_wait_lockcheck(void *vp){
 }
 
 uint64_t atom_wait(bt_atom *a, bt_atom_compare::Enum cmp, uint64_t value){
-	atom_wait_lockcheck_p p;
+	atom_wait_options p;
 	p.a = a;
 	p.cmp = cmp;
 	p.value = value;
@@ -84,3 +84,18 @@ uint64_t atom_read(bt_atom *a){
 	return a->value;
 }
 
+static void atom_wait_close(void *ptr){
+	delete (atom_wait_options*)ptr;
+}
+
+static bool atom_wait_wait(void *ptr){
+	return atom_wait_lockcheck(ptr);
+}
+
+bt_handle_info atom_make_wait(bt_atom *a, bt_atom_compare::Enum cmp, uint64_t value){
+	atom_wait_options *p = new atom_wait_options();
+	p->a = a;
+	p->cmp = cmp;
+	p->value = value;
+	return create_handle(kernel_handle_types::atomwait, (void*)p, &atom_wait_close, &atom_wait_wait);
+}
