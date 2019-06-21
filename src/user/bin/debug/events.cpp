@@ -55,6 +55,9 @@ void out_event(const bt_debug_event_msg &event){
 			case bt_exception::SelfAbort:
 				cout << "SelfAbort" << endl;
 				break;
+			case bt_exception::InvalidArg:
+				cout << "InvalidArg" << endl;
+				break;
 		}
 	}
 }

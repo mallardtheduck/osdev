@@ -36,6 +36,8 @@ bt_handle_t open_lib(const char *name, char **fullpath){
                     if(libPathStr[i] == '\0') break;
                 }
             }
+        }else{
+            bt_zero("ELOADER: No library path!\n");
         }
         free(libPathStr);
         if(!ret){

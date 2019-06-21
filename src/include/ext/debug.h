@@ -26,6 +26,7 @@ ENUM_START(bt_exception)
 	ENUM_SET(bt_exception, UnresolvedPageFault, 6),
 	ENUM_SET(bt_exception, BadLocking, 7),
 	ENUM_SET(bt_exception, SelfAbort, 8),
+	ENUM_SET(bt_exception, InvalidArg, 9),
 ENUM_END
 ENUM_TYPE(bt_exception);
 
