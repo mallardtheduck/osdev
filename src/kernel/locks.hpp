@@ -7,7 +7,6 @@
 bool lock_blockcheck(void *p);
 
 void init_lock(lock &l);
-uint64_t get_lock_owner(lock &l);
 void take_lock_exclusive(lock &l, uint64_t thread = sch_get_id(), bool us = false);
 void take_lock_recursive(lock &l, uint64_t thread = sch_get_id());
 bool try_take_lock_exclusive(lock &l, uint64_t thread = sch_get_id());

@@ -93,6 +93,8 @@ EXTERN_C void bt_msgwait();
 EXTERN_C bt_msg_header bt_recv_filtered(bt_msg_filter filter, bool block);
 EXTERN_C void bt_next_msg_filtered(bt_msg_header *msg, bt_msg_filter filter);
 EXTERN_C bool bt_query_msg(uint64_t id);
+EXTERN_C bt_handle_t bt_make_msg_wait(bt_msg_filter filter);
+EXTERN_C bt_msg_header bt_read_msg_wait(bt_handle_t h);
 
 EXTERN_C void bt_closehandle(bt_handle h);
 EXTERN_C bool bt_queryhandle(bt_handle h);

@@ -10,26 +10,41 @@ namespace wm{
 	
 	void EventThread(void *ptr){
 		EventLoop *evt = (EventLoop*)ptr;
+		
+		auto filt = WM_GetEventFilter();
+		auto msgwait = bt_make_msg_wait(filt);
+		auto quitwait = bt_make_wait_atom(evt->quitAtom.GetHandle(), bt_atom_compare::NotEqual, 0);
+		bt_handle_t arrhandles[] = {msgwait, quitwait};
+		auto anywait = bt_make_wait_any(arrhandles, 2);
+		
 		evt->winCountAtom.WaitFor(AtomValue > 0);
 		while(true){
-			wm_Event e = WM_GetEvent();
-			if(!evt->HandleEvent(e)) break;
-			bt_lock(evt->lock);
-			bool found;
-			do{
-				found = false;
-				for(auto i = evt->threads.begin(); i != evt->threads.end(); ++i){
-					if(!i->Query()){
-						evt->threads.erase(i);
-						found = true;
-						break;
+			bt_waithandle(anywait);
+			auto idx = bt_wait_index(anywait);
+			if(idx == 0){
+				auto hdr = bt_read_msg_wait(msgwait);
+				wm_Event e = WM_ParseMessage(&hdr);
+				if(!evt->HandleEvent(e)) break;
+				bt_lock(evt->lock);
+				bool found;
+				do{
+					found = false;
+					for(auto i = evt->threads.begin(); i != evt->threads.end(); ++i){
+						if(!i->Query()){
+							evt->threads.erase(i);
+							found = true;
+							break;
+						}
 					}
-				}
-			}while(found);
-			bt_unlock(evt->lock);
-			if(evt->quitAtom.Read()) break;
+				}while(found);
+				bt_unlock(evt->lock);
+				bt_msg_ack(&hdr);
+			}else break;
 		}
 		evt->quitAtom.Modify(AtomValue = 1);
+		bt_closehandle(anywait);
+		bt_closehandle(quitwait);
+		bt_closehandle(msgwait);
 	}
 	
 	struct ThreadArgs{
@@ -140,6 +155,7 @@ namespace wm{
 				winRemoveList.clear();
 				menuRemoveList.clear();
 				winCountAtom.Modify(AtomValue = windows.size());
+				if(windows.size() == 0) quitAtom.Modify(AtomValue = 1);
 			}
 			if(windows.find(id) == windows.end()){
 				tfm::printf("EventLoop::RunWindow: window %s not in collection. Quitting.\n", id);

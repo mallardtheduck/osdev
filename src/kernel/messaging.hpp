@@ -28,6 +28,9 @@ void msg_nextmessage_filtered(btos_api::bt_msg_filter filter, btos_api::bt_msg_h
 bool msg_query_recieved(uint64_t id);
 bool msg_is_match(const btos_api::bt_msg_header &msg, const btos_api::bt_msg_filter &filter);
 
+bt_handle_info msg_create_recv_handle(btos_api::bt_msg_filter filter);
+btos_api::bt_msg_header msg_read_recv_handle(bt_handle_info &h);
+
 void msg_subscribe(btos_api::bt_kernel_messages::Enum message, pid_t pid=proc_current_pid);
 void msg_unsubscribe(btos_api::bt_kernel_messages::Enum, pid_t pid=proc_current_pid);
 void msg_send_event(btos_api::bt_kernel_messages::Enum message, void *content, size_t size);

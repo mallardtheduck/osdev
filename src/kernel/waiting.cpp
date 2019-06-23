@@ -17,9 +17,12 @@ static void delete_waitlist(void *ptr){
 static bool wait_any_waiter(void *ptr){
 	waitlist *lst = (waitlist*)ptr;
 	for(size_t i = 0; i < lst->count; ++i){
-		if(lst->handles[i].wait(lst->handles[i].value)){
-			lst->index = i;
-			return true;	
+		auto chk = handle_dep_check(lst->handles[i]);
+		if(chk == handle_dep_check_result::Present){
+			if(lst->handles[i].wait(lst->handles[i].value)){
+				lst->index = i;
+				return true;	
+			}
 		}
 	}
 	return false;
@@ -29,21 +32,26 @@ static bool wait_any_waiter(void *ptr){
 static bool wait_all_waiter(void *ptr){
 	waitlist *lst = (waitlist*)ptr;
 	for(size_t i = 0; i < lst->count; ++i){
-		if(!lst->handles[i].wait(lst->handles[i].value)){
-			lst->index = i;
-			return false;
-		} 
+		auto chk = handle_dep_check(lst->handles[i]);
+		if(chk == handle_dep_check_result::Present){
+			if(!lst->handles[i].wait(lst->handles[i].value)){
+				lst->index = i;
+				return false;
+			}
+		}else if(chk == handle_dep_check_result::NotAvailable) return false;
 	}
 	return true;
 };
 
 bt_handle_info create_wait_any_handle(bt_handle_info *handles, size_t count){
 	waitlist *wl = new waitlist{handles, count};
+	for(size_t i = 0; i < count; ++i) add_handle_dep(handles[i]);
 	return create_handle(kernel_handle_types::wait, (void*)wl, &delete_waitlist, &wait_any_waiter);
 }
 
 bt_handle_info create_wait_all_handle(bt_handle_info *handles, size_t count){
 	waitlist *wl = new waitlist{handles, count};
+	for(size_t i = 0; i < count; ++i) add_handle_dep(handles[i]);
 	return create_handle(kernel_handle_types::wait, (void*)wl, &delete_waitlist, &wait_all_waiter);
 }
 

@@ -43,6 +43,7 @@ ENUM_END
 ENUM_TYPE(bt_kernel_messages);
 
 ENUM_START(bt_msg_filter_flags)
+	ENUM_SET(bt_msg_filter_flags, Any, 0),
 	ENUM_SET(bt_msg_filter_flags, From, 1 << 0),
 	ENUM_SET(bt_msg_filter_flags, Reply, 1 << 1),
 	ENUM_SET(bt_msg_filter_flags, Type, 1 << 2),

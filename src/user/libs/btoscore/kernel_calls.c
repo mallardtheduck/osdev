@@ -314,6 +314,17 @@ bool bt_query_msg(uint64_t id){
 	return (bool)btos_call(BT_MSGQUERY, (uint32_t)&id, 0, 0);
 }
 
+bt_handle_t bt_make_msg_wait(bt_msg_filter filter){
+	return (bt_handle_t)btos_call(BT_MAKE_MSG_WAIT, (uint32_t)&filter, 0, 0);
+}
+
+bt_msg_header bt_read_msg_wait(bt_handle_t h){
+	volatile bt_msg_header ret;
+	ret.valid=false;
+	btos_call(BT_READ_MSG_WAIT, (uint32_t)h, (uint32_t)&ret, 0);
+	return *(bt_msg_header*)&ret;
+}
+
 void bt_closehandle(bt_handle h){
     btos_call(BT_CLOSEHANDLE, (uint32_t)h, 0, 0);
 }
@@ -327,11 +338,11 @@ void bt_waithandle(bt_handle_t h){
 }
 
 bt_handle_t bt_make_wait_any(bt_handle_t *h, size_t count){
-	return btos_call(BT_MAKE_WAITALL, (uint32_t)h, (uint32_t)count, 0);
+	return btos_call(BT_MAKE_WAITANY, (uint32_t)h, (uint32_t)count, 0);
 }
 
 bt_handle_t bt_make_wait_all(bt_handle_t *h, size_t count){
-	return btos_call(BT_MAKE_WAITANY, (uint32_t)h, (uint32_t)count, 0);
+	return btos_call(BT_MAKE_WAITALL, (uint32_t)h, (uint32_t)count, 0);
 }
 
 size_t bt_wait_index(bt_handle_t h){

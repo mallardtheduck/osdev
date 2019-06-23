@@ -417,7 +417,7 @@ USERAPI_HANDLER(BT_SETENV){
 	if(is_safe_string(regs->ebx) && is_safe_string(regs->ecx)){
 		proc_setenv((char*)regs->ebx, (char*)regs->ecx, regs->edx, true);
 		regs->eax=true;
-	}
+	}else RAISE_US_ERROR();
 }
 
 USERAPI_HANDLER(BT_SPAWN){
@@ -590,6 +590,20 @@ USERAPI_HANDLER(BT_NEXTMSGFILTERED){
 USERAPI_HANDLER(BT_MSGQUERY){
 	if(is_safe_ptr(regs->ebx, sizeof(uint64_t))){
 		regs->eax = msg_query_recieved(*(uint64_t*)regs->ebx);
+	}else RAISE_US_ERROR();
+}
+
+USERAPI_HANDLER(BT_MAKE_MSG_WAIT){
+	if(is_safe_ptr(regs->ebx, sizeof(btos_api::bt_msg_filter))){
+		bt_handle_info h = msg_create_recv_handle(*(btos_api::bt_msg_filter*)regs->ebx);
+		regs->eax = proc_add_handle(h);
+	}else RAISE_US_ERROR();
+}
+
+USERAPI_HANDLER(BT_READ_MSG_WAIT){
+	if(is_safe_ptr(regs->ecx, sizeof(btos_api::bt_msg_header))){
+		bt_handle_info h = proc_get_handle(regs->ebx);
+		*(btos_api::bt_msg_header*)regs->ecx = msg_read_recv_handle(h);
 	}else RAISE_US_ERROR();
 }
 
@@ -775,6 +789,8 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_RECVFILTERED);
 		USERAPI_HANDLE_CALL(BT_NEXTMSGFILTERED);
 		USERAPI_HANDLE_CALL(BT_MSGQUERY);
+		USERAPI_HANDLE_CALL(BT_MAKE_MSG_WAIT);
+		USERAPI_HANDLE_CALL(BT_READ_MSG_WAIT);
 
 		//Handles
         USERAPI_HANDLE_CALL(BT_CLOSEHANDLE);
