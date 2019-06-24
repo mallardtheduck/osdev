@@ -142,6 +142,7 @@ void WM_SetTitle(const std::string title){
 }
 
 extern "C" bt_msg_filter WM_GetEventFilter(){
+	Init();
 	bt_msg_filter filter;
 	filter.flags = (bt_msg_filter_flags::Enum)(bt_msg_filter_flags::From | bt_msg_filter_flags::Type);
 	filter.pid = wm_pid;

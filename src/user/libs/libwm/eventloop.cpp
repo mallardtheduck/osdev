@@ -8,6 +8,8 @@ using namespace std;
 namespace btos_api{
 namespace wm{
 	
+	EventLoop *EventLoop::current = nullptr;
+	
 	void EventThread(void *ptr){
 		EventLoop *evt = (EventLoop*)ptr;
 		
@@ -23,8 +25,7 @@ namespace wm{
 			auto idx = bt_wait_index(anywait);
 			if(idx == 0){
 				auto hdr = bt_read_msg_wait(msgwait);
-				wm_Event e = WM_ParseMessage(&hdr);
-				if(!evt->HandleEvent(e)) break;
+				if(!evt->HandleMessage(hdr)) break;
 				bt_lock(evt->lock);
 				bool found;
 				do{
@@ -57,11 +58,27 @@ namespace wm{
 		ThreadArgs *a = (ThreadArgs*)ptr;
 		EventLoop *evt = a->evt;
 		uint64_t winId = a->winId;
+		tfm::printf("WinEventThread: ID: %s\n", winId);
 		a->running.Modify(AtomValue = 1);
 		evt->RunWindow(winId);
 	}
 	
-	EventLoop *EventLoop::current = nullptr;
+	void EventLoop::SetupWindow(std::shared_ptr<Window> win, bool independent){
+		bt_lock(lock);
+		auto id = win->GetID();
+		tfm::printf("EventLoop::SetupWindow %s %s\n", id, independent);
+		windows.insert(make_pair(id, win));
+		winCountAtom.Modify(AtomValue = windows.size());
+		eventQueues[id] = {};
+		if(independent){
+			ThreadArgs targs;
+			targs.evt = this;
+			targs.winId = id;
+			threads.emplace_back(Thread {&WinEventThread, (void*)&targs});
+			targs.running.WaitFor(AtomValue != 0);
+		}
+		bt_unlock(lock);
+	}
 
 	EventLoop::EventLoop() : eventThread(&EventThread, (void*) this) {}
 	
@@ -89,17 +106,7 @@ namespace wm{
 	}
 
 	void EventLoop::AddWindow(shared_ptr<Window> win){
-		bt_lock(lock);
-		auto id = win->GetID();
-		windows.insert(make_pair(id, win));
-		winCountAtom.Modify(AtomValue = windows.size());
-		eventQueues[id] = {};
-		ThreadArgs targs;
-		targs.evt = this;
-		targs.winId = id;
-		threads.emplace_back(Thread {&WinEventThread, (void*)&targs});
-		targs.running.WaitFor(AtomValue != 0);
-		bt_unlock(lock);
+		SetupWindow(win, true);
 	}
 	void EventLoop::RemoveWindow(uint64_t id){
 		bt_lock(lock);
@@ -123,7 +130,7 @@ namespace wm{
 	}
 	
 	void EventLoop::RunModal(std::shared_ptr<Window> modal){
-		AddWindow(modal);
+		SetupWindow(modal, false);
 		RunWindow(modal->GetID());
 	}
 	

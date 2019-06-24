@@ -40,6 +40,8 @@ namespace wm{
 		static EventLoop *current;
 		
 		friend void EventThread(void *);
+		
+		void SetupWindow(std::shared_ptr<Window> win, bool independent);
 	public:
 		EventLoop();
 		EventLoop(const std::vector<std::shared_ptr<Window>> &windows, const std::vector<std::shared_ptr<Menu>> &menus = std::vector<std::shared_ptr<Menu>>());

@@ -17,7 +17,7 @@ namespace btos_api{
 		Handle(bt_handle_t h);
 		Handle(Handle &&h);
 		
-		Handle &operator=(Handle&&) = default;
+		Handle &operator=(Handle&&);
 		
 		virtual ~Handle();
 
