@@ -78,7 +78,7 @@ namespace btos_api{
 		return {handle, cmp, val};
 	}
 	
-	AtomWait Atom::GetWait(const AtomCompareOp &cmp) const{
+	AtomWait Atom::GetWaitFor(const AtomCompareOp &cmp) const{
 		return GetWait(cmp.cmp, cmp.val);
 	}
 

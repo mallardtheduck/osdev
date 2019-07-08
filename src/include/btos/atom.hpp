@@ -56,7 +56,7 @@ namespace btos_api{
 		uint64_t Wait(bt_atom_compare::Enum cmp, uint64_t val = 0) const;
 		uint64_t WaitFor(const AtomCompareOp &cmp) const;
 		AtomWait GetWait(bt_atom_compare::Enum cmp, uint64_t val = 0) const;
-		AtomWait GetWait(const AtomCompareOp &cmp) const;
+		AtomWait GetWaitFor(const AtomCompareOp &cmp) const;
 		
 		uint64_t CompareExchange(uint64_t cmp, uint64_t xchg);
 		uint64_t Read() const;

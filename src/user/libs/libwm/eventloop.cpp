@@ -17,7 +17,7 @@ namespace wm{
 		
 		auto filt = WM_GetEventFilter();
 		auto msgwait = MessageWait(filt);
-		auto quitwait = evt->quitAtom.GetWait(AtomValue != 0);
+		auto quitwait = evt->quitAtom.GetWaitFor(AtomValue != 0);
 		auto anywait = MultiWait({&msgwait, &quitwait}, MultiWait::WaitMode::Any);
 		
 		evt->winCountAtom.WaitFor(AtomValue > 0);
