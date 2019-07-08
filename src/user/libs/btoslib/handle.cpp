@@ -30,4 +30,8 @@ namespace btos_api{
 	bt_handle_t Handle::GetHandle() const{
 		return handle;
 	}
+	
+	void Handle::Wait(){
+		bt_waithandle(handle);
+	}
 }

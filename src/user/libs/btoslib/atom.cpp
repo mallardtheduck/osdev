@@ -73,6 +73,14 @@ namespace btos_api{
 	uint64_t Atom::WaitFor(const AtomCompareOp &cmp) const{
 		return Wait(cmp.cmp, cmp.val);
 	}
+	
+	AtomWait Atom::GetWait(bt_atom_compare::Enum cmp, uint64_t val) const{
+		return {handle, cmp, val};
+	}
+	
+	AtomWait Atom::GetWait(const AtomCompareOp &cmp) const{
+		return GetWait(cmp.cmp, cmp.val);
+	}
 
 	uint64_t Atom::CompareExchange(uint64_t cmp, uint64_t xchg){
 		return bt_cmpxchg_atom(handle, cmp, xchg);
@@ -81,5 +89,8 @@ namespace btos_api{
 	uint64_t Atom::Read() const{
 		return bt_read_atom(handle);
 	}
+	
+	AtomWait::AtomWait(bt_handle_t a, bt_atom_compare::Enum cmp, uint64_t val) : Handle(bt_make_wait_atom(a, cmp, val))
+	{}
 
 }

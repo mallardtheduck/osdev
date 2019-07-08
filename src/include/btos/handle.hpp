@@ -23,6 +23,8 @@ namespace btos_api{
 
 		bool Query() const;
 		bt_handle_t GetHandle() const;
+		
+		void Wait();
 	};
 
 }

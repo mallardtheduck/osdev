@@ -126,6 +126,13 @@ namespace btos_api{
 			bt_next_msg(&header);
 		}
 	}
+	
+	MessageWait::MessageWait(const bt_msg_filter &filter) : Handle(bt_make_msg_wait(filter))
+	{}
+	
+	Message MessageWait::GetMessage(){
+		return bt_read_msg_wait(handle);
+	}
 
 }
 

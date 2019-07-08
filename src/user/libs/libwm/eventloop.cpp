@@ -1,6 +1,8 @@
 #include <wm/eventloop.hpp>
 #include <wm/libwm.h>
 
+#include <btos/multiwait.hpp>
+
 #include <util/tinyformat.hpp>
 
 using namespace std;
@@ -14,17 +16,16 @@ namespace wm{
 		EventLoop *evt = (EventLoop*)ptr;
 		
 		auto filt = WM_GetEventFilter();
-		auto msgwait = bt_make_msg_wait(filt);
-		auto quitwait = bt_make_wait_atom(evt->quitAtom.GetHandle(), bt_atom_compare::NotEqual, 0);
-		bt_handle_t arrhandles[] = {msgwait, quitwait};
-		auto anywait = bt_make_wait_any(arrhandles, 2);
+		auto msgwait = MessageWait(filt);
+		auto quitwait = evt->quitAtom.GetWait(AtomValue != 0);
+		auto anywait = MultiWait({&msgwait, &quitwait}, MultiWait::WaitMode::Any);
 		
 		evt->winCountAtom.WaitFor(AtomValue > 0);
 		while(true){
-			bt_waithandle(anywait);
-			auto idx = bt_wait_index(anywait);
-			if(idx == 0){
-				auto hdr = bt_read_msg_wait(msgwait);
+			anywait.Wait();
+			Handle *h = anywait.GetTriggerHandle();
+			if(h == &msgwait){
+				auto hdr = msgwait.GetMessage();
 				if(!evt->HandleMessage(hdr)) break;
 				bt_lock(evt->lock);
 				bool found;
@@ -39,13 +40,10 @@ namespace wm{
 					}
 				}while(found);
 				bt_unlock(evt->lock);
-				bt_msg_ack(&hdr);
+				hdr.Acknowledge();
 			}else break;
 		}
 		evt->quitAtom.Modify(AtomValue = 1);
-		bt_closehandle(anywait);
-		bt_closehandle(quitwait);
-		bt_closehandle(msgwait);
 	}
 	
 	struct ThreadArgs{
