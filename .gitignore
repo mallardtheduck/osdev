@@ -62,4 +62,6 @@ src/packages/*/data
 .fuse_hidden*
 *.tar.h
 src/user/wmapps/*/resc/
+src/user/libs/shell/libresc/icons/*
+*.marker_file
 

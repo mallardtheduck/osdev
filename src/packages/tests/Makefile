@@ -24,6 +24,7 @@ import-files:= \
  data/tests/cltzbench.elx \
  data/tests/resctest.elx \
  data/tests/scratch.elx \
+ data/tests/shelltest.elx \
  
 
 all: ../$(output-name)
@@ -96,6 +97,9 @@ data/tests/resctest.elx: ../../user/libs/resc/resctest.elx
 	cp $< $@
 	
 data/tests/scratch.elx: ../../user/tests/scratch/scratch.elx
+	cp $< $@
+
+data/tests/shelltest.elx: ../../user/libs/shell/shelltest.elx
 	cp $< $@
 
 create.directories:

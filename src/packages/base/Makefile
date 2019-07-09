@@ -78,6 +78,7 @@ import-files:=\
  data/btos/lib/gui.ell \
  data/btos/lib/resc.ell \
  data/btos/cmd/rescutil.elx \
+ data/btos/lib/shell.ell \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -317,6 +318,9 @@ data/btos/lib/resc.ell: ../../user/libs/resc/resc.ell
 	cp $< $@
 
 data/btos/cmd/rescutil.elx: ../../user/cmds/rescutil/rescutil.elx
+	cp $< $@
+
+data/btos/lib/shell.ell: ../../user/libs/shell/shell.ell
 	cp $< $@
 
 create.directories: Makefile
