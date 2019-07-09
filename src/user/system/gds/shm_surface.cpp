@@ -1,13 +1,22 @@
 #include "shm_surface.hpp"
+#include "graphics.hpp"
 #include <gd.h>
 #include <dev/rtc.h>
 #include <malloc.h>
 
 using namespace std;
 
-static inline uint32_t getPixelTrueColour(char *ptr, uint32_t w, uint32_t x, uint32_t y){
-	size_t pos = (w * y) + x;
-	return ((uint32_t*)ptr)[pos];
+static inline uint32_t getPixelTrueColour(char *ptr, uint32_t w, uint32_t x, uint32_t y, uint32_t colourType){
+	if(!(colourType & gds_ColourType::SHM_Alpha255)){
+		size_t pos = (w * y) + x;
+		return ((uint32_t*)ptr)[pos];
+	}else{
+		size_t pos = (w * y) + x;
+		uint32_t pxl = ((uint32_t*)ptr)[pos];
+		uint8_t alpha = (((pxl) & 0xFF000000) >> 24);
+		alpha = (0xFF - alpha) >> 1;
+		return (alpha << 24) | (pxl & 0x00FFFFFF);
+	}
 }
 
 static inline uint32_t getPixelIndexed(char *ptr, uint32_t w, uint32_t x, uint32_t y){
@@ -111,13 +120,15 @@ void SHMSurface::Resize(size_t w, size_t h, bool i){
 std::shared_ptr<GD::Image> SHMSurface::Render(uint32_t /*scale*/){
 	shared_ptr<GD::Image> rendering = make_shared<GD::Image>(width, height, !(colourType & gds_ColourType::True));
 	uint64_t start = bt_rtc_millis();
-	RenderTo(rendering, 0, 0, 0, 0, width, height);
+	RenderTo(rendering, 0, 0, 0, 0, width, height, 0);
 	uint64_t end = bt_rtc_millis();
 	DBG("GDS: SHM surface rendered in " << end - start << "ms.");
 	return rendering;
 }
 
-void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h){
+void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h, uint32_t flags){
+	bool overwrite = (flags & gds_BlitFlags::Overwrite);
+	bool noalpha = (flags & gds_BlitFlags::IgnoreAlpha);
 	if(srcX < 0){
 		if(w < (uint32_t)-srcX) return;
 		w += srcX;
@@ -155,22 +166,22 @@ void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t 
 		if(dst->IsTrueColor()){
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
-					uint32_t srcPxl = getPixelTrueColour(ptr, width, srcX + x, srcY + y);
-					if(!(colourType & ~gds_ColourType::AlphaDisable) && gdTrueColorGetAlpha(srcPxl) != gdAlphaOpaque){
+					uint32_t srcPxl = getPixelTrueColour(ptr, width, srcX + x, srcY + y, colourType);
+					if(!(colourType & ~gds_ColourType::AlphaDisable) && !noalpha && !overwrite && gdTrueColorGetAlpha(srcPxl) != gdAlphaOpaque){
 						uint32_t dstPxl = gdImageTrueColorPixel(dstPtr, dstX + x, dstY + y);
 						srcPxl = gdAlphaBlend(dstPxl, srcPxl);
-					}else{
+					}else if(!overwrite){
 						srcPxl = gdTrueColorAlpha(gdTrueColorGetRed(srcPxl), gdTrueColorGetGreen(srcPxl), gdTrueColorGetBlue(srcPxl), gdAlphaOpaque);
 					}
 					gdImageTrueColorPixel(dstPtr, dstX + x, dstY + y) = srcPxl;
 				}
 			}
 		}else{
-			uint32_t srcCol;
-			uint8_t dstCol;
+			uint32_t srcCol = 0;
+			uint8_t dstCol = 0;
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
-					uint32_t srcPxl = getPixelTrueColour(ptr, width, srcX + x, srcY + y);
+					uint32_t srcPxl = getPixelTrueColour(ptr, width, srcX + x, srcY + y, colourType);
 					if((!y && !x) || srcCol != srcPxl){
 						dstCol = gdImageColorResolveAlpha(dstPtr, gdTrueColorGetRed(srcPxl), gdTrueColorGetGreen(srcPxl), gdTrueColorGetBlue(srcPxl), gdAlphaOpaque);// gdTrueColorGetAlpha(srcPxl));
 						srcCol = srcPxl;
@@ -181,8 +192,8 @@ void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t 
 		}
 	}else{
 		if(dst->IsTrueColor()){
-			uint8_t srcCol;
-			uint32_t dstCol;
+			uint8_t srcCol = 0;
+			uint32_t dstCol = 0;
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
 					uint8_t srcPxl = getPixelIndexed(ptr, width, srcX + x, srcY + y);
@@ -194,8 +205,8 @@ void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t 
 				}
 			}
 		}else{
-			uint8_t srcCol;
-			uint8_t dstCol;
+			uint8_t srcCol = 0;
+			uint8_t dstCol = 0;
 			for(size_t y = 0; y < h; ++y){
 				for(size_t x = 0; x < w; ++x){
 					uint8_t srcPxl = getPixelIndexed(ptr, width, srcX + x, srcY + y);
@@ -212,5 +223,11 @@ void SHMSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t 
 
 void SHMSurface::ReorderOp(uint32_t /*op*/, uint32_t /*ref*/, gds_ReorderMode::Enum /*mode*/){
 	
+}
+
+void SHMSurface::Clear(){}
+
+std::unique_ptr<gds_TextMeasurements> SHMSurface::MeasureText(const gds_TextParameters &p, std::string text){
+	return ::MeasureText(p, text);
 }
 

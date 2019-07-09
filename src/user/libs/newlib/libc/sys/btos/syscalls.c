@@ -156,22 +156,21 @@ int link(char *old, char *new){
 }
 
 off_t _lseek(int file, off_t ptr, int dir){
-	uint32_t flags = 0;
-    if(dir==SEEK_CUR){ 
-		flags = FS_Relative;
-		if(ptr < 0){ 
-			flags |= FS_Backwards;
-			ptr = -ptr;
-		}
-	}
-	else if(dir==SEEK_END) flags = FS_Backwards;
-	
 	virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
     
     if(vh->type == HANDLE_NULL){
     	return 0;
     }else if(vh->type == HANDLE_OS){
+		uint32_t flags = 0;
+	    if(dir==SEEK_CUR){ 
+			flags = FS_Relative;
+			if(ptr < 0){ 
+				flags |= FS_Backwards;
+				ptr = -ptr;
+			}
+		}
+		else if(dir==SEEK_END) flags = FS_Backwards;
 		bt_filehandle fh = vh->os.handle;
 		return bt_fseek(fh, ptr, flags);
 	}else{

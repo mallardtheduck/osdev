@@ -36,6 +36,7 @@ private:
 	size_t BytesPerPixel();
 	uint32_t ConvertPixel(uint32_t pix);
 	void QueueUpdate(size_t pos, size_t size, char *data, bool hide_pointer);
+	void QueueUpdates(const std::vector<update> &updates);
 
 public:
 	Screen();

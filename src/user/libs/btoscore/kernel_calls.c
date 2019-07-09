@@ -37,14 +37,6 @@ void bt_free_pages(void *address, size_t pages){
 	btos_call(BT_FREE_PAGES, (uint32_t)address, pages, 0);
 }
 
-void bt_closehandle(bt_handle h){
-    btos_call(BT_CLOSEHANDLE, (uint32_t)h, 0, 0);
-}
-
-bool bt_queryhandle(bt_handle h){
-	return !!btos_call(BT_QUERYHANDLE, (uint32_t)h, 0, 0);
-}
-
 bt_handle_t bt_create_shm(uint32_t flags){
 	return (bt_handle_t)btos_call(BT_CREATE_SHM, flags, 0, 0);
 }
@@ -102,9 +94,8 @@ uint64_t bt_modify_atom(bt_handle_t a, ENUM_NAME(bt_atom_modify) mod, uint64_t v
 	return val;
 }
 
-uint64_t bt_wait_atom(bt_handle_t a, ENUM_NAME(bt_atom_compare) cmp, uint64_t val){
-	btos_call(BT_WAIT_ATOM, (uint32_t)a, (uint32_t)cmp, (uint32_t)&val);
-	return val;
+bt_handle_t bt_make_wait_atom(bt_handle_t a, ENUM_NAME(bt_atom_compare) cmp, uint64_t val){
+	return btos_call(BT_MAKE_WAIT_ATOM, (uint32_t)a, (uint32_t)cmp, (uint32_t)&val);
 }
 
 uint64_t bt_cmpxchg_atom(bt_handle_t a, uint64_t cmp, uint64_t xchg){
@@ -323,6 +314,41 @@ bool bt_query_msg(uint64_t id){
 	return (bool)btos_call(BT_MSGQUERY, (uint32_t)&id, 0, 0);
 }
 
+bt_handle_t bt_make_msg_wait(bt_msg_filter filter){
+	return (bt_handle_t)btos_call(BT_MAKE_MSG_WAIT, (uint32_t)&filter, 0, 0);
+}
+
+bt_msg_header bt_read_msg_wait(bt_handle_t h){
+	volatile bt_msg_header ret;
+	ret.valid=false;
+	btos_call(BT_READ_MSG_WAIT, (uint32_t)h, (uint32_t)&ret, 0);
+	return *(bt_msg_header*)&ret;
+}
+
+void bt_closehandle(bt_handle h){
+    btos_call(BT_CLOSEHANDLE, (uint32_t)h, 0, 0);
+}
+
+bool bt_queryhandle(bt_handle h){
+	return !!btos_call(BT_QUERYHANDLE, (uint32_t)h, 0, 0);
+}
+
+void bt_waithandle(bt_handle_t h){
+	btos_call(BT_WAITHANDLE, (uint32_t)h, 0, 0);
+}
+
+bt_handle_t bt_make_wait_any(bt_handle_t *h, size_t count){
+	return btos_call(BT_MAKE_WAITANY, (uint32_t)h, (uint32_t)count, 0);
+}
+
+bt_handle_t bt_make_wait_all(bt_handle_t *h, size_t count){
+	return btos_call(BT_MAKE_WAITALL, (uint32_t)h, (uint32_t)count, 0);
+}
+
+size_t bt_wait_index(bt_handle_t h){
+	return btos_call(BT_WAIT_INDEX, (uint32_t)h, 0, 0);
+}
+
 uint16_t bt_query_extension(const char *name){
 	return btos_call(BT_QUERY_EXT, (uint32_t)name, 0, 0);
 }
@@ -330,4 +356,3 @@ uint16_t bt_query_extension(const char *name){
 void bt_multi_call(bt_syscall_item *items, size_t count){
 	btos_call(BT_MULTI_CALL, (uint32_t)items, (uint32_t)count, 0);
 }
-

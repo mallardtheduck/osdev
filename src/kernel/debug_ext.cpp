@@ -166,6 +166,7 @@ void init_debug_extension() {
 }
 
 static void debug_copymem(pid_t fpid, void *faddr, pid_t tpid, void *taddr, size_t size) {
+	if((uint32_t)faddr + size < MM2::MM2_Kernel_Boundary || (uint32_t)taddr + size < MM2::MM2_Kernel_Boundary) return;
 	void *buffer = malloc(size);
 	if(!buffer) return;
 	pid_t cpid = proc_current_pid;

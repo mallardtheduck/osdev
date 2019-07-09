@@ -36,6 +36,8 @@ gds_GlyphInfo GDS_GetGlyphInfo(uint32_t fontID, size_t size, char ch);
 uint32_t GDS_GetMaxFontID();
 void GDS_MultiDrawingOps(size_t count, gds_DrawingOp *ops, uint32_t *ids);
 void GDS_ReorderOp(uint32_t op, uint32_t ref, ENUM_NAME(gds_ReorderMode) mode);
+void GDS_ClearSurface();
+gds_TextMeasurements *GDS_MeasureText(gds_TextParameters p, const char *text);
 
 gds_DrawingOp GDS_Dot_Op(int32_t x, int32_t y, uint32_t colour, uint8_t size GDS_DEFAULT(1));
 uint32_t GDS_Dot(int32_t x, int32_t y, uint32_t colour, uint8_t size GDS_DEFAULT(1));
@@ -57,6 +59,8 @@ gds_DrawingOp GDS_TextChar_Op(int32_t x, int32_t y, char c, uint32_t fontID, uin
 uint32_t GDS_TextChar(int32_t x, int32_t y, char c, uint32_t fontID, uint32_t size, uint32_t colour, uint8_t style GDS_DEFAULT(ENUM_GET(gds_TextStyle, Normal)));
 gds_DrawingOp GDS_Blit_Op(uint64_t src, uint32_t srcX, uint32_t srcY, uint32_t srcW, uint32_t srcH, int32_t dstX, int32_t dstY, uint32_t dstW, uint32_t dstH, uint32_t scale GDS_DEFAULT(100), uint32_t flags GDS_DEFAULT(0));
 uint32_t GDS_Blit(uint64_t src, uint32_t srcX, uint32_t srcY, uint32_t srcW, uint32_t srcH, int32_t dstX, int32_t dstY, uint32_t dstW, uint32_t dstH, uint32_t scale GDS_DEFAULT(100), uint32_t flags GDS_DEFAULT(0));
+
+uint64_t GDS_LoadPNG(int fd);
 
 #ifdef __cplusplus
 }

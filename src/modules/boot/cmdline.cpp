@@ -19,7 +19,7 @@ cmdLine parse_cmd(const char *c){
 			else{
 				char **nargv = (char**)malloc((cl.argc + 1) * sizeof(char*));
 				if(!nargv) panic("(BOOT) Allocation failed!");
-				memcpy(nargv, cl.argv, sizeof(char*) * cl.argc);
+				if(cl.argc) memcpy(nargv, cl.argv, sizeof(char*) * cl.argc);
 				nargv[cl.argc] = buf;
 				if(cl.argv) free(cl.argv);
 				cl.argv = nargv;
@@ -38,7 +38,7 @@ cmdLine parse_cmd(const char *c){
 	if(i){
 		char **nargv = (char**)malloc((cl.argc + 1) * sizeof(char*));
 		if(!nargv) panic("(BOOT) Allocation failed!");
-		memcpy(nargv, cl.argv, sizeof(char*) * cl.argc);
+		if(cl.argc) memcpy(nargv, cl.argv, sizeof(char*) * cl.argc);
 		nargv[cl.argc] = buf;
 		if(cl.argv) free(cl.argv);
 		cl.argv = nargv;

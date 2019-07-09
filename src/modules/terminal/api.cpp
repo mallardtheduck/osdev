@@ -8,6 +8,8 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b)) 
 
+using namespace btos_api;
+
 template<typename P> uint64_t send_request(pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type, P *param, size_t size){
 	size_t totalsize = sizeof(bt_terminal_backend_operation) + size;
 	bt_terminal_backend_operation *op = (bt_terminal_backend_operation*)malloc(totalsize);
@@ -65,6 +67,10 @@ void close_terminal(void *p){
 	if(vt) vt->set_backend(NULL);
 }
 
+static bool null_wait(void*){
+	return true;
+}
+
 void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 	uint32_t backend_handle_type = (terminal_extension_id << 16) | 0x01;
 	uint32_t terminal_handle_type = (terminal_extension_id << 16) | 0x02;
@@ -73,6 +79,7 @@ void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 			bt_handle_info handle;
 			handle.open = true;
 			handle.close = &close_backend;
+			handle.wait = &null_wait;
 			handle.type = backend_handle_type;
 			user_backend *backend = new user_backend(getpid());
 			handle.value = (void*)backend;
@@ -93,6 +100,7 @@ void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 					bt_handle_info terminal_handle;
 					terminal_handle.open = true;
 					terminal_handle.close = &close_terminal;
+					terminal_handle.wait = &null_wait;
 					terminal_handle.type = terminal_handle_type;
 					terminal_handle.value = (void*)new uint64_t(terminal_id);
 					bt_handle_t handle_id = add_user_handle(terminal_handle, getpid());
@@ -274,7 +282,7 @@ void user_backend::clear_screen(){
 }
 
 void user_backend::set_cursor_position(size_t pos){
-	send_request(pid, handle_id, bt_terminal_backend_operation_type::SetCursorPosition);
+	send_request(pid, handle_id, bt_terminal_backend_operation_type::SetCursorPosition, pos);
 }
 
 void user_backend::register_global_shortcut(uint16_t keycode, uint64_t termid){

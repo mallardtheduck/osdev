@@ -12,6 +12,8 @@
 
 using namespace std;
 
+const size_t MaxSurfaceSize = 32768;
+
 map<uint64_t, weak_ptr<Surface>> allSurfaces;
 static uint64_t surfaceCounter = 0;
 
@@ -42,28 +44,30 @@ bool Client::HandleMessage(const Message &msg) {
 			break;
 		case gds_MsgType::NewSurface:{
 			gds_SurfaceInfo s_info = msg.Content<gds_SurfaceInfo>();
-			Surface *newsurf;
-			newsurf = NULL;
-			switch(s_info.type) {
-				case gds_SurfaceType::Bitmap:
-					newsurf = new BitmapSurface(s_info.w, s_info.h, s_info.colourType, s_info.scale);
-					break;
-				case gds_SurfaceType::Vector:
-					newsurf = new VectorSurface(s_info.w, s_info.h, s_info.colourType, s_info.scale);
-					break;
-				case gds_SurfaceType::Memory:
-					newsurf = new SHMSurface(s_info.w, s_info.h, s_info.colourType, s_info.scale, s_info.shmRegion, s_info.shmOffset);
-					break;
-				default:
-					break;
-			}
-			if(newsurf) {
-				s_info.id = ++surfaceCounter;
-				newsurf->id = s_info.id;
-				shared_ptr<Surface> ptr(newsurf);
-				surfaces.insert(ptr);
-				allSurfaces.insert(pair<uint64_t, weak_ptr<Surface>>(s_info.id, ptr));
-				currentSurface = ptr;
+			if(s_info.w != 0 && s_info.w < MaxSurfaceSize && s_info.h != 0 && s_info.h < MaxSurfaceSize){
+				Surface *newsurf;
+				newsurf = NULL;
+				switch(s_info.type) {
+					case gds_SurfaceType::Bitmap:
+						newsurf = new BitmapSurface(s_info.w, s_info.h, s_info.colourType, s_info.scale);
+						break;
+					case gds_SurfaceType::Vector:
+						newsurf = new VectorSurface(s_info.w, s_info.h, s_info.colourType, s_info.scale);
+						break;
+					case gds_SurfaceType::Memory:
+						newsurf = new SHMSurface(s_info.w, s_info.h, s_info.colourType, s_info.scale, s_info.shmRegion, s_info.shmOffset);
+						break;
+					default:
+						break;
+				}
+				if(newsurf) {
+					s_info.id = ++surfaceCounter;
+					newsurf->id = s_info.id;
+					shared_ptr<Surface> ptr(newsurf);
+					surfaces.insert(ptr);
+					allSurfaces.insert(pair<uint64_t, weak_ptr<Surface>>(s_info.id, ptr));
+					currentSurface = ptr;
+				}
 			}
 			SendReply(msg, s_info);
 			break;
@@ -247,6 +251,32 @@ bool Client::HandleMessage(const Message &msg) {
 					gds_ReorderOp rop = msg.Content<gds_ReorderOp>();
 					currentSurface->ReorderOp(rop.op, rop.ref, rop.mode);
 				}			
+			}
+			break;
+		}
+		case gds_MsgType::ClearSurface:{
+			if(currentSurface){
+				currentSurface->Clear();
+			}
+		}
+		case gds_MsgType::SetTextParameters:{
+			txtParams = msg.Content<gds_TextParameters>();
+			SendReply(msg, 0);
+			break;
+		}
+		case gds_MsgType::MeasureText:{
+			if(currentSurface){
+				std::unique_ptr<char[]> text {new char[msg.Length()]};
+				bt_msg_header head = msg.Header();
+				bt_msg_content(&head, (void*)text.get(), msg.Length());
+				auto ret = currentSurface->MeasureText(txtParams, text.get());
+				bt_msg_header reply;
+				reply.to = msg.From();
+				reply.reply_id = msg.ID();
+				reply.flags = bt_msg_flags::Reply;
+				reply.length = sizeof(*ret) + (ret->charXCount * sizeof(double));
+				reply.content = ret.get();
+				bt_send(reply);
 			}
 			break;
 		}

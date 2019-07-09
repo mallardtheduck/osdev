@@ -66,7 +66,7 @@ fs_path *new_fs_path(const string &path, bool toupper=true){
 	fs_path *head=NULL;
 	fs_path *current_node=NULL;
 	for(size_t i=0; i<upath.length(); ++i){
-		if(upath[i]==FS_PATH_SEPERATOR && current_str.length()>0){
+		if(upath[i]==FS_PATH_SEPARATOR && current_str.length()>0){
 			//dbgpf("FS: segment:'%s'\n", current_str.c_str());
 			if(head==NULL){
 				head=new fs_path();
@@ -81,7 +81,7 @@ fs_path *new_fs_path(const string &path, bool toupper=true){
 			strncpy(current_node->str, current_str.c_str(), current_str.length()+1);
 			current_str="";
 		}else{
-			if(upath[i]!=FS_PATH_SEPERATOR) current_str+=upath[i];
+			if(upath[i]!=FS_PATH_SEPARATOR) current_str+=upath[i];
 		}
 	}
 	if(current_str!=""){
@@ -145,7 +145,7 @@ fs_mountpoint &getpathmount(const char *path){
 char *getfspath(const char *path){
 	char *ret=(char*)path;
 	while(*ret++!='\0'){
-		if(*ret==FS_DRIVE_SEPERATOR) return ++ret;
+		if(*ret==FS_DRIVE_SEPARATOR) return ++ret;
 	}
 	return NULL;
 }

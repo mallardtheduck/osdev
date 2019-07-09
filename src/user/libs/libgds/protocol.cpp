@@ -99,7 +99,7 @@ extern "C" uint64_t GDS_SelectSurface(uint64_t id){
 	current_known = true;
 	current_screen = false;
 	current_surface = ret;
-	return GetContent<uint64_t>(&reply);
+	return ret;
 }
 
 extern "C" size_t GDS_AddDrawingOp(gds_DrawingOp op){
@@ -208,4 +208,18 @@ extern "C" void GDS_MultiDrawingOps(size_t count, gds_DrawingOp *ops, uint32_t *
 extern "C" void GDS_ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum mode){
 	gds_ReorderOp rop = {op, ref, mode};
 	SendMessage(gds_MsgType::ReorderOp, sizeof(rop), (void*)&rop, false);
+}
+
+extern "C" void GDS_ClearSurface(){
+	SendMessage(gds_MsgType::ClearSurface, 0, NULL, false);
+}
+
+extern "C" gds_TextMeasurements *GDS_MeasureText(gds_TextParameters p, const char *text){
+	auto paramReply = SendMessage(gds_MsgType::SetTextParameters, sizeof(p), (void*)&p, true);
+	bt_msg_ack(&paramReply);
+	auto measureReply = SendMessage(gds_MsgType::MeasureText, strlen(text) + 1, (void*)text, true);
+	gds_TextMeasurements *ret = (gds_TextMeasurements*)malloc(measureReply.length);
+	bt_msg_content(&measureReply, (void*)ret, measureReply.length);
+	bt_msg_ack(&measureReply);
+	return ret;
 }

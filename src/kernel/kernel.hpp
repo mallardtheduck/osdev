@@ -58,6 +58,7 @@ extern "C"{
 #include "atoms.hpp"
 #include "hwpnp_kernel.hpp"
 #include "rtc/rtc.hpp"
+#include "waiting.hpp"
 
 void GDT_init();
 void IDT_init();

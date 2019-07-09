@@ -354,7 +354,7 @@ bool msg_filter_blockcheck(void *p){
 	if(get_lock_owner(msg_lock)) return false;
 	bt_msg_header *cmsg = proc_get_msg_match_nolock(params.filter, params.pid);
 	if(cmsg){
-		proc_set_cur_msg_nolock(cmsg);
+		proc_set_cur_msg_nolock(cmsg, params.pid);
 		return true;
 	}
 	return false;
@@ -366,7 +366,7 @@ bt_msg_header msg_recv_filtered(bt_msg_filter filter, pid_t pid, bool block){
 		bt_msg_header *cmsg = proc_get_msg_match(filter, pid);
 		if(cmsg){
 			bt_msg_header &msg=*cmsg;
-			proc_set_cur_msg(cmsg);
+			proc_set_cur_msg(cmsg, pid);
 			sch_set_msgstaus(thread_msg_status::Processing);
 			return msg;
 		}
@@ -396,4 +396,46 @@ bool msg_query_recieved(uint64_t id){
 		return false;
 	}
 	return true;
+}
+
+struct msg_recv_handle{
+	bt_pid_t pid;
+	bt_msg_filter filter;
+	bt_msg_header msg;
+};
+
+static void msg_recv_handle_close(void *ptr){
+	delete (msg_recv_handle*)ptr;
+}
+
+static bool msg_recv_handle_wait(void *ptr){
+	auto h = (msg_recv_handle*)ptr;
+	if(h->msg.valid) return true;
+	if(!get_lock_owner(msg_lock)){
+		bt_msg_header *cmsg = proc_get_msg_match_nolock(h->filter, h->pid);
+		if(cmsg){
+			h->msg = *cmsg;
+			proc_set_cur_msg_nolock(cmsg, h->pid);
+			return true;
+		}
+	}
+	return false;
+}
+
+bt_handle_info msg_create_recv_handle(bt_msg_filter filter){
+	auto value = new msg_recv_handle();
+	value->pid = proc_current_pid;
+	value->filter = filter;
+	value->msg.valid = false;
+	return create_handle(kernel_handle_types::msg_recv, (void*)value, &msg_recv_handle_close, &msg_recv_handle_wait);
+}
+
+bt_msg_header msg_read_recv_handle(bt_handle_info &h){
+	bt_msg_header ret;
+	if(h.type == kernel_handle_types::msg_recv){
+		auto v = (msg_recv_handle*)h.value;
+		ret = v->msg;
+		v->msg.valid = false;
+	}else ret.valid = false;
+	return ret;
 }

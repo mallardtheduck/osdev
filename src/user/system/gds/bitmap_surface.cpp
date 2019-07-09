@@ -51,8 +51,11 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 
 		case gds_DrawingOpType::Box:
 			if(op.Common.fillStyle > 0) {
-				//image->FilledRectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.fillColour);
-				FastBox(*image, op.Box.x, op.Box.y, op.Box.w, op.Box.h, op.Common.fillColour);
+				if(image->Alpha(op.Common.fillColour)){
+					image->FilledRectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.fillColour);
+				}else{
+					FastBox(*image, op.Box.x, op.Box.y, op.Box.w, op.Box.h, op.Common.fillColour);
+				}
 			}
 			if(op.Common.lineWidth > 0){ 
 				image->Rectangle(op.Box.x, op.Box.y, op.Box.x + op.Box.w - 1, op.Box.y + op.Box.h - 1, op.Common.lineColour);
@@ -82,7 +85,7 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 				if(srcSurface) {
 					if(op.Blit.srcW == op.Blit.dstW && op.Blit.srcH == op.Blit.dstH){
 						//FastBlit(*srcImage, *image, op.Blit.srcX, op.Blit.srcY, op.Blit.dstX, op.Blit.dstY, op.Blit.dstW, op.Blit.dstH);
-						srcSurface->RenderTo(image, op.Blit.srcX, op.Blit.srcY, op.Blit.dstX, op.Blit.dstY, op.Blit.dstW, op.Blit.dstH);
+						srcSurface->RenderTo(image, op.Blit.srcX, op.Blit.srcY, op.Blit.dstX, op.Blit.dstY, op.Blit.dstW, op.Blit.dstH, op.Blit.flags);
 					}else{
 						auto srcImage = srcSurface->Render(op.Blit.scale);
 						if(srcImage){
@@ -210,8 +213,20 @@ std::shared_ptr<gds_OpParameters> BitmapSurface::GetOpParameters(uint32_t){
 void BitmapSurface::ReorderOp(uint32_t /*op*/, uint32_t /*ref*/, gds_ReorderMode::Enum /*mode*/){
 }
 
-void BitmapSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h){
-	FastBlit(*image, *dst, srcX, srcY, dstX, dstY, w, h);
+void BitmapSurface::Clear(){
+	FastBox(*image, 0, 0, image->Width(), image->Height(), 0);
+}
+
+std::unique_ptr<gds_TextMeasurements> BitmapSurface::MeasureText(const gds_TextParameters &p, std::string text){
+	return ::MeasureText(p, text);
+}
+
+void BitmapSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h, uint32_t flags){
+	FastBlit(*image, *dst, srcX, srcY, dstX, dstY, w, h, flags);
+}
+
+std::shared_ptr<GD::Image> BitmapSurface::GetImage(){
+	return image;
 }
 
 BitmapSurface::~BitmapSurface() {

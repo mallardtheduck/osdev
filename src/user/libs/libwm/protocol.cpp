@@ -24,10 +24,10 @@ static bool Init(){
 	return true;
 }
 
-template<typename T> static T GetContent(const bt_msg_header &msg){
+template<typename T> static T GetContent(const bt_msg_header &msg, bool ack = true){
 	T ret;
 	bt_msg_content((bt_msg_header*)&msg, (void*)&ret, sizeof(ret));
-	bt_msg_ack((bt_msg_header*)&msg);
+	if(ack) bt_msg_ack((bt_msg_header*)&msg);
 	return ret;
 }
 
@@ -91,14 +91,14 @@ extern "C" void WM_DestroyWindow(){
 }
 
 extern "C" wm_WindowInfo WM_WindowInfo(){
-	bt_msg_header reply = SendMessage(wm_RequestType::CreateWindow, 0, NULL, true);
+	bt_msg_header reply = SendMessage(wm_RequestType::WindowInfo, 0, NULL, true);
 	return GetContent<wm_WindowInfo>(reply);
 }
 
 extern "C" void WM_Subscribe(uint32_t events){
 	wm_WindowInfo info;
 	info.subscriptions = events;
-	SendMessage(wm_RequestType::MoveWindow, info, false);
+	SendMessage(wm_RequestType::Subscribe, info, false);
 }
 
 extern "C" void WM_Update(){
@@ -142,6 +142,7 @@ void WM_SetTitle(const std::string title){
 }
 
 extern "C" bt_msg_filter WM_GetEventFilter(){
+	Init();
 	bt_msg_filter filter;
 	filter.flags = (bt_msg_filter_flags::Enum)(bt_msg_filter_flags::From | bt_msg_filter_flags::Type);
 	filter.pid = wm_pid;
@@ -152,7 +153,7 @@ extern "C" bt_msg_filter WM_GetEventFilter(){
 extern "C" wm_Event WM_ParseMessage(bt_msg_header *msg){
 	wm_Event ret;
 	if(msg && msg->from == wm_pid && msg->type == wm_MessageType::Event && msg->length == sizeof(wm_Event)){
-		ret = GetContent<wm_Event>(*msg);
+		ret = GetContent<wm_Event>(*msg, false);
 	}else{
 		ret.type = wm_EventType::None;
 	}
@@ -210,4 +211,30 @@ extern "C" void WM_SetWindowMenu(){
 
 extern "C" void WM_UnSetWindowMenu(){
 	SendMessage(wm_RequestType::UnSetWindowMenu, 0, NULL, false);
+}
+
+extern "C" bt_terminal_pointer_info WM_GetPointerInfo(){
+	bt_msg_header reply = SendMessage(wm_RequestType::GetPointerInfo, 0, NULL, true);
+	return GetContent<bt_terminal_pointer_info>(reply);
+}
+
+extern "C" bt_vidmode WM_GetScreenMode(){
+	bt_msg_header reply = SendMessage(wm_RequestType::GetScreenMode, 0, NULL, true);
+	return GetContent<bt_vidmode>(reply);
+}
+
+extern "C" void WM_StartResize(){
+	SendMessage(wm_RequestType::StartResize, 0, NULL, false);
+}
+
+extern "C" void WM_StartDrag(){
+	SendMessage(wm_RequestType::StartDrag, 0 , NULL, false);
+}
+
+extern "C" void WM_SetModal(uint64_t id){
+	SendMessage(wm_RequestType::SetModal, id, false);
+}
+
+extern "C" void WM_ClearModal(){
+	SendMessage(wm_RequestType::ClearModal, 0, NULL, false);
 }

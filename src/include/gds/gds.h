@@ -28,6 +28,9 @@ ENUM_START(gds_MsgType)
 	ENUM_SET(gds_MsgType, SetOpParameters,	10),
 	ENUM_SET(gds_MsgType, GetOpParameters,	11),
 	ENUM_SET(gds_MsgType, ReorderOp,		12),
+	ENUM_SET(gds_MsgType, ClearSurface,		13),
+	ENUM_SET(gds_MsgType, SetTextParameters,14),
+	ENUM_SET(gds_MsgType, MeasureText,		15),
 	
 	ENUM_SET(gds_MsgType, GetFontID,		20),
 	ENUM_SET(gds_MsgType, GetFontInfo,		21),
@@ -65,6 +68,7 @@ ENUM_START(gds_ColourType)
 	ENUM_SET(gds_ColourType, True, 					1),
 	ENUM_SET(gds_ColourType, AlphaEnable,			0),
 	ENUM_SET(gds_ColourType, AlphaDisable,			2),
+	ENUM_SET(gds_ColourType, SHM_Alpha255,			4),
 ENUM_END
 ENUM_TYPE(gds_ColourType);
 
@@ -112,6 +116,13 @@ ENUM_START(gds_ReorderMode)
 	ENUM_SET(gds_ReorderMode, Below, 4),
 ENUM_END
 ENUM_TYPE(gds_ReorderMode);
+
+ENUM_START(gds_BlitFlags)
+	ENUM_SET(gds_BlitFlags, Default, 0),
+	ENUM_SET(gds_BlitFlags, Overwrite, 1 << 0),
+	ENUM_SET(gds_BlitFlags, IgnoreAlpha, 1 << 1),
+ENUM_END
+ENUM_TYPE(gds_BlitFlags);
 
 struct gds_DrawingOp {
 	ENUM_NAME(gds_DrawingOpType) type;
@@ -286,6 +297,26 @@ struct gds_ReorderOp{
 };
 #ifndef __cplusplus
 typedef struct gds_ReorderOp gds_ReorderOp;
+#endif
+
+struct gds_TextParameters{
+	uint32_t fontID;
+	uint32_t size;
+};
+
+#ifndef __cplusplus
+typedef struct gds_TextParameters gds_TextParameters;
+#endif
+
+struct gds_TextMeasurements{
+	uint32_t w;
+	uint32_t h;
+	size_t charXCount;
+	double charX[];
+};
+
+#ifndef __cplusplus
+typedef struct gds_TextMeasurements gds_TextMeasurements;
 #endif
 
 #endif

@@ -91,7 +91,8 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 			}
 		}
 	}else if(above){
-		for(auto w : wins){
+		for(auto &w : wins){
+			if(!w->GetVisible()) continue;
 			if(w->id == above){
 				lastWin = w;
 				drawing = false;
@@ -108,7 +109,7 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 		}
 	}
 	shared_ptr<Window> awin = activeWindow.lock();
-	for(auto w: wins){
+	for(auto &w: wins){
 		if(!w->GetVisible()) continue;
 		if((rect || above) && w == lastWin) drawing = true;
 		if(drawing){
@@ -127,14 +128,14 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 
 void DrawWindows(const vector<Rect> &v, uint64_t above){
 	vector<shared_ptr<Window>> wins = SortWindows();
-	if(!above) for(auto r: v) Screen.Box(r, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	if(!above) for(const auto &r: v) Screen.Box(r, backgroundColour, backgroundColour, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	shared_ptr<Window> awin = activeWindow.lock();
 	bool aboveYet = false;
 	Screen.BeginQueue();
-	for(auto w: wins){
+	for(auto &w: wins){
 		if(!w->GetVisible()) continue;
 		if(!aboveYet && w->id == above) aboveYet = true;
-		if(!above || aboveYet) for(auto r: v) if(Overlaps(r, w->GetBoundingRect())){
+		if(!above || aboveYet) for(const auto &r: v) if(Overlaps(r, w->GetBoundingRect())){
 			w->Draw(w==awin, r);
 		}
 	}
@@ -155,7 +156,7 @@ void RefreshScreen(Rect r){
 
 void RefreshScreen(const vector<Rect> &v){
 	auto tiles = TileRects(v);
-	for(auto t: tiles) RefreshScreen(t);
+	for(const auto &t: tiles) RefreshScreen(t);
 }
 
 shared_ptr<Window> GetWindowAt(uint32_t x, uint32_t y){
@@ -173,7 +174,7 @@ shared_ptr<Window> GetWindowAt(uint32_t x, uint32_t y){
 void BringToFront(shared_ptr<Window> win){
 	vector<shared_ptr<Window>> wins = SortWindows();
 	uint32_t zcounter = 0;
-	for(auto w: wins){
+	for(auto &w: wins){
 		w->SetZOrder(++zcounter, false);
 	}
 	win->SetZOrder(++zcounter, false);

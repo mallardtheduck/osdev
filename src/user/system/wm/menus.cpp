@@ -14,7 +14,7 @@ using namespace gds;
 static vector<shared_ptr<Menu>> currentMenus;
 
 MenuItem::MenuItem(const wm_MenuItem &i) :
-	MenuItem(i.text, i.flags, GetMenu(i.childMenu), i.image ? make_shared<Surface>(Surface::Wrap(i.image, true)) : nullptr, ((i.flags & wm_MenuItemFlags::ChildMenu) ? MenuActionType::ChildMenu : ((i.flags & wm_MenuItemFlags::Seperator) ? MenuActionType::None : MenuActionType::Custom)), i.actionID) {}
+	MenuItem(i.text, i.flags, GetMenu(i.childMenu), i.image ? make_shared<Surface>(Surface::Wrap(i.image, true)) : nullptr, ((i.flags & wm_MenuItemFlags::ChildMenu) ? MenuActionType::ChildMenu : ((i.flags & wm_MenuItemFlags::Separator) ? MenuActionType::None : MenuActionType::Custom)), i.actionID) {}
 
 MenuItem::MenuItem(const std::string t, uint32_t f, std::shared_ptr<Menu> cM, shared_ptr<Surface> i, MenuActionType a, uint32_t cID) :
 	text(t), flags(f), childMenu(cM), image(i), actionType(a), customID(cID) {}
@@ -43,14 +43,14 @@ shared_ptr<Surface> MenuItem::Draw(uint32_t width, bool selected, uint32_t dflag
 }
 
 uint32_t MenuItem::GetHeight(){
-	if((flags & wm_MenuItemFlags::Seperator)) return (GetMetric(MenuItemMargin) * 2) + 1;
+	if((flags & wm_MenuItemFlags::Separator)) return (GetMetric(MenuItemMargin) * 2) + 1;
 	else return GetMetric(MenuItemHeight);
 }
 
 uint32_t MenuItem::GetMinWidth(){
 	uint32_t ret = minWidth;
 	if(!ret){
-		if((flags & wm_MenuItemFlags::Seperator)){
+		if((flags & wm_MenuItemFlags::Separator)){
 			ret = (2 * GetMetric(MenuItemMargin)) + 1;
 		}else{
 			ret = (2 * GetMetric(MenuItemMargin));
@@ -164,8 +164,9 @@ uint32_t Menu::GetSelected(const Point &cursor){
 	int32_t cy = lp.y;
 	for(auto &i : items){
 		uint32_t height = i.second->GetHeight();
-		if((EffectiveFlags(i.second->GetFlags(), i.second->GetAction()) & wm_MenuItemFlags::Disabled)) continue;
-		if(InRect(cursor, {lp.x, cy, brect.w, height})) return i.first;
+		if(!(EffectiveFlags(i.second->GetFlags(), i.second->GetAction()) & wm_MenuItemFlags::Disabled)){
+			if(InRect(cursor, {lp.x, cy, brect.w, height})) return i.first;
+		}
 		cy += height;
 	}
 	return 0;
@@ -334,14 +335,15 @@ shared_ptr<Menu> GetWindowMenuTemplate(){
 	if(!templateMenu){
 		templateMenu = CreateMenu();
 		templateMenu->AddMenuItem(make_shared<MenuItem>("Window", wm_MenuItemFlags::ChildMenu, GetDefaultWindowMenu(), nullptr, MenuActionType::ChildMenu, 0));
-		templateMenu->AddMenuItem(make_shared<MenuItem>("", wm_MenuItemFlags::Seperator, nullptr, nullptr, MenuActionType::None, 0));
+		templateMenu->AddMenuItem(make_shared<MenuItem>("", wm_MenuItemFlags::Separator, nullptr, nullptr, MenuActionType::None, 0));
 	}
 	return templateMenu;
 }
 
-shared_ptr<Menu> CreateMenu(){
+shared_ptr<Menu> CreateMenu(uint64_t id){
 	static uint64_t id_counter = 0;
-	return make_shared<Menu>(++id_counter);
+	if(id == UINT64_MAX) id = ++id_counter;
+	return make_shared<Menu>(id);
 }
 
 void RedrawMenus(const Rect &r){
@@ -354,8 +356,8 @@ void RedrawMenus(const Rect &r){
 	Screen.CommitQueue();
 }
 
-shared_ptr<Menu> MergeMenus(shared_ptr<Menu> m1, shared_ptr<Menu> m2){
-	auto ret = CreateMenu();
+shared_ptr<Menu> MergeMenus(shared_ptr<Menu> m1, shared_ptr<Menu> m2, uint64_t id){
+	auto ret = CreateMenu(id);
 	auto m1items = m1->GetItems();
 	auto m2items = m2->GetItems();
 	

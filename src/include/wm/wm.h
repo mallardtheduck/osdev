@@ -1,6 +1,7 @@
 #ifndef _WM_H
 #define _WM_H
 
+#include <dev/terminal.h>
 #include <util/bt_enum.h>
 
 #ifdef __cplusplus
@@ -26,6 +27,7 @@ ENUM_START(wm_WindowOptions)
 	ENUM_SET(wm_WindowOptions, Resizable, 			1 << 7),
 	ENUM_SET(wm_WindowOptions, ToolWindow, 			1 << 8),
 	ENUM_SET(wm_WindowOptions, EnableTransparency, 	1 << 9),
+	ENUM_SET(wm_WindowOptions, Unlisted,			1 << 10),
 	ENUM_SET(wm_WindowOptions, Default,				(1 << 0)),
 ENUM_END
 ENUM_TYPE(wm_WindowOptions);
@@ -46,6 +48,8 @@ ENUM_START(wm_EventType)
 	ENUM_SET(wm_EventType, Hide,				1 << 11),
 	ENUM_SET(wm_EventType, Expand,				1 << 12),
 	ENUM_SET(wm_EventType, MenuSelection,		1 << 13),
+	ENUM_SET(wm_EventType, Move,				1 << 14),
+	ENUM_SET(wm_EventType, Resize,				1 << 15),
 ENUM_END
 ENUM_TYPE(wm_EventType);
 
@@ -55,10 +59,11 @@ static const int wm_PointerEvents = ENUM_GET(wm_EventType, PointerMove) | ENUM_G
 	| ENUM_GET(wm_EventType, PointerButtonUp) | ENUM_GET(wm_EventType, PointerEnter) | ENUM_GET(wm_EventType, PointerLeave)
 	| ENUM_GET(wm_EventType, Click) | ENUM_GET(wm_EventType, DoubleClick);
 static const int wm_FrameEvents = ENUM_GET(wm_EventType, Close) | ENUM_GET(wm_EventType, Hide) | ENUM_GET(wm_EventType, Expand)
-	 | ENUM_GET(wm_EventType, MenuSelection);
+	 | ENUM_GET(wm_EventType, MenuSelection) | ENUM_GET(wm_EventType, Move) | ENUM_GET(wm_EventType, Resize);
 
 struct wm_WindowInfo{
 	int32_t x, y;
+	int32_t contentX, contentY;
 	uint32_t options;
 	uint32_t subscriptions;
 	uint64_t gds_id;
@@ -87,6 +92,10 @@ struct wm_Event{
 			uint64_t menu_id;
 			uint32_t action;
 		} Menu;
+		struct{
+			int32_t x, y;
+			uint32_t w, h;
+		} MoveResize;
 	};
 };
 BT_STRUCT_TYPE(wm_Event);
@@ -104,6 +113,8 @@ ENUM_START(wm_RequestType)
 	ENUM_SET(wm_RequestType, ChangeOptions,		10),
 	ENUM_SET(wm_RequestType, SetTitle,			11),
 	ENUM_SET(wm_RequestType, Sync,				12),
+	ENUM_SET(wm_RequestType, SetModal,			13),
+	ENUM_SET(wm_RequestType, ClearModal,		14),
 	
 	ENUM_SET(wm_RequestType, SelectMenu,		20),
 	ENUM_SET(wm_RequestType, CreateMenu,		21),
@@ -116,6 +127,12 @@ ENUM_START(wm_RequestType)
 	ENUM_SET(wm_RequestType, SelectWindowMenu,	28),
 	ENUM_SET(wm_RequestType, SetWindowMenu,		29),
 	ENUM_SET(wm_RequestType, UnSetWindowMenu,	30),
+	
+	ENUM_SET(wm_RequestType, GetPointerInfo,	50),
+	ENUM_SET(wm_RequestType, GetScreenMode,		51),
+	
+	ENUM_SET(wm_RequestType, StartResize,		60),
+	ENUM_SET(wm_RequestType, StartDrag,			61),
 ENUM_END
 ENUM_TYPE(wm_RequestType);
 
@@ -126,7 +143,7 @@ ENUM_TYPE(wm_MessageType);
 
 ENUM_START(wm_MenuItemFlags)
 	ENUM_SET(wm_MenuItemFlags, Default, 	0),
-	ENUM_SET(wm_MenuItemFlags, Seperator, 	(1 << 0)),
+	ENUM_SET(wm_MenuItemFlags, Separator, 	(1 << 0)),
 	ENUM_SET(wm_MenuItemFlags, Disabled, 	(1 << 1)),
 	ENUM_SET(wm_MenuItemFlags, ChildMenu, 	(1 << 2)),
 	ENUM_SET(wm_MenuItemFlags, ImageRight, 	(1 << 3)),

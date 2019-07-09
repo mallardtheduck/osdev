@@ -16,11 +16,11 @@ private:
     friend void init_lock(lock &l);
     friend uint64_t get_lock_owner(lock &l);
     friend void lock_transfer(lock &l, uint64_t to, uint64_t from);
-    friend void take_lock_exclusive(lock &l, uint64_t thread);
+    friend void take_lock_exclusive(lock &l, uint64_t thread, bool us);
     friend void take_lock_recursive(lock &l, uint64_t thread);
     friend bool try_take_lock_exclusive(lock &l, uint64_t thread);
 	friend bool try_take_lock_recursive(lock &l, uint64_t thread);
-    friend void release_lock(lock &l, uint64_t thread);
+    friend void release_lock(lock &l, uint64_t thread, bool us);
     friend bool lock_blockcheck(void *p);
 #endif
 };

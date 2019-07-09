@@ -33,7 +33,10 @@ int main(int argc, char **argv) {
 	try {
 		Service(root_pid);
 	} catch(exception &e) {
-		cout << "Exception:" << e.what() << endl;
+		stringstream ss;
+		ss << "GDS Exception: " << typeid(e).name() << ": " << e.what() << endl;
+		bt_zero(ss.str().c_str());
+		cerr << ss.str();
 	}
 	GetScreen()->RestoreMode();
 	return 0;

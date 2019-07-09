@@ -1,6 +1,8 @@
 #ifndef _MESSAGE_HPP
 #define _MESSAGE_HPP
 
+#include "handle.hpp"
+
 #include <btos.h>
 #include <memory>
 #include <type_traits>
@@ -56,6 +58,12 @@ namespace btos_api{
 
 		void Acknowledge();
 		void Next();
+	};
+	
+	class MessageWait : public Handle{
+	public:
+		MessageWait(const bt_msg_filter &filter);
+		Message GetMessage();
 	};
 
 }

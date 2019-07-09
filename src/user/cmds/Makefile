@@ -1,4 +1,4 @@
-PROGS := cls cmd format kill load mount sleep tar termctl kilo ini package hwtree
+PROGS := cls cmd format kill load mount sleep tar termctl kilo ini package hwtree rescutil
 
 all: dummy.file
 	for dir in $(PROGS); do \

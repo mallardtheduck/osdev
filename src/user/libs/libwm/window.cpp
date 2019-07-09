@@ -112,5 +112,54 @@ namespace wm{
 		else return true;
 	}
 
+	void Window::Hide(){
+		auto opts = GetOptions();
+		opts &= ~wm_WindowOptions::Visible;
+		SetOptions(opts);
+	}
+	void Window::Show(){
+		auto opts = GetOptions();
+		opts |= wm_WindowOptions::Visible;
+		SetOptions(opts);
+	}
+	
+	void Window::Close(){
+		auto opts = GetOptions();
+		opts &= ~wm_WindowOptions::Visible;
+		opts |= wm_WindowOptions::Unlisted;
+		SetOptions(opts);
+	}
+	void Window::Open(){
+		auto opts = GetOptions();
+		opts |= wm_WindowOptions::Visible;
+		opts &= ~wm_WindowOptions::Unlisted;
+		SetOptions(opts);
+	}
+	
+	void Window::StartResize(){
+		Select();
+		WM_StartResize();
+	}
+	
+	void Window::StartDrag(){
+		Select();
+		WM_StartDrag();
+	}
+	
+	bt_vidmode Window::GetScreenMode(){
+		Select();
+		return WM_GetScreenMode();
+	}
+
+	void Window::SetModal(const Window &win){
+		Select();
+		WM_SetModal(win.id);
+	}
+	
+	void Window::ClearModal(){
+		Select();
+		WM_ClearModal();
+	}
+
 }
 }

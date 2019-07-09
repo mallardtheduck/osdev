@@ -12,6 +12,7 @@ using namespace std;
 namespace reg = btos_api::registry;
 
 extern "C" FT_Library *gdGetFTLibrary(void);
+extern "C" void gdFTLoadFace(FT_Library lib, const char *path, int face_index, FT_Face *face);
 
 static bool ends_with (const string &fullString, const string &ending) {
     if (fullString.length() >= ending.length()) {
@@ -51,7 +52,8 @@ FontManager::FontManager(){
 			if(is_font_file(fontent->d_name)){
 				string fullPath = path + '/' + fontent->d_name;
 				FT_Face face;
-				FT_New_Face(library, fullPath.c_str(), 0, &face);
+				//FT_New_Face(library, fullPath.c_str(), 0, &face);
+				gdFTLoadFace(library, fullPath.c_str(), 0, &face);
 				shared_ptr<Font> f {new Font()};
 				f->file = fullPath;
 				f->info->fontID = ++counter;
@@ -74,7 +76,7 @@ FontManager::FontManager(){
 				f->info->maxW = face->max_advance_width;
 				f->info->maxH = face->max_advance_height;
 				fonts[f->info->fontID] = f;
-				FT_Done_Face(face);
+				//FT_Done_Face(face);
 				DBG("GDS: Font name: " << f->info->name << " Style: " << 
 				(f->info->fontStyle == 0 ? "Normal" : f->info->fontStyle == 1 ? "Bold" : f->info->fontStyle == 2 ? "Italic" : "BoldItalic")
 				<< " File: " << f->file);

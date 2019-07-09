@@ -5,6 +5,7 @@
 #include <wm/wm.h>
 #include <string>
 #include <functional>
+#include <dev/video_dev.h>
 
 #include "menu.hpp"
 
@@ -54,6 +55,19 @@ namespace wm{
 		void SetEventHandler(std::function<bool(const wm_Event&)> fn);
 		std::function<bool(const wm_Event&)> GetEventHandler() const;
 		virtual bool Event(const wm_Event& evt);
+		
+		void Hide();
+		void Show();
+		void Close();
+		void Open();
+		
+		void StartResize();
+		void StartDrag();
+		
+		bt_vidmode GetScreenMode();
+		
+		void SetModal(const Window &win);
+		void ClearModal();
 	};
 
 }

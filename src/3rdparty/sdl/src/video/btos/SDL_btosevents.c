@@ -221,6 +221,7 @@ void BTOS_PumpEvents(_THIS){
 	    }else if(event.type & wm_FrameEvents){
 	    	_BTOS_HandleFrameEvent(&event);
 	    }
+		bt_msg_ack(&msg);
 	}
 }
 

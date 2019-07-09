@@ -132,6 +132,7 @@ void load_symbols(intptr_t base, const string &file, vector<symbol> &vec){
 					s.size = sym.st_size;
 					symbols.push_back(s);
 				}
+				free(data->d_buf);
 			}
 		}
 		elf_end(e);

@@ -13,15 +13,14 @@ namespace btos_api{
 //#define EXTERN_C
 #endif
 
+#include "old_calls.h"
+
 EXTERN_C uint32_t btos_call(uint32_t fn, uint32_t p1, uint32_t p2, uint32_t p3);
 
 EXTERN_C void bt_zero(const char *string);
 EXTERN_C void *bt_alloc_pages(size_t pages);
 EXTERN_C void *bt_alloc_at(size_t pages, void *ptr);
 EXTERN_C void bt_free_pages(void *address, size_t pages);
-
-EXTERN_C void bt_closehandle(bt_handle h);
-EXTERN_C bool bt_queryhandle(bt_handle h);
 
 EXTERN_C bt_handle_t bt_create_shm(uint32_t flags);
 EXTERN_C uint64_t bt_shm_id(bt_handle_t h);
@@ -38,7 +37,7 @@ EXTERN_C void bt_destroy_lock(bt_lockhandle lock);
 
 EXTERN_C bt_handle_t bt_create_atom(uint64_t ini_val);
 EXTERN_C uint64_t bt_modify_atom(bt_handle_t a, ENUM_NAME(bt_atom_modify) mod, uint64_t val);
-EXTERN_C uint64_t bt_wait_atom(bt_handle_t a, ENUM_NAME(bt_atom_compare) cmp, uint64_t val);
+EXTERN_C bt_handle_t bt_make_wait_atom(bt_handle_t a, ENUM_NAME(bt_atom_compare) cmp, uint64_t val);
 EXTERN_C uint64_t bt_cmpxchg_atom(bt_handle_t a, uint64_t cmp, uint64_t xchg);
 EXTERN_C uint64_t bt_read_atom(bt_handle_t a);
 
@@ -94,6 +93,15 @@ EXTERN_C void bt_msgwait();
 EXTERN_C bt_msg_header bt_recv_filtered(bt_msg_filter filter, bool block);
 EXTERN_C void bt_next_msg_filtered(bt_msg_header *msg, bt_msg_filter filter);
 EXTERN_C bool bt_query_msg(uint64_t id);
+EXTERN_C bt_handle_t bt_make_msg_wait(bt_msg_filter filter);
+EXTERN_C bt_msg_header bt_read_msg_wait(bt_handle_t h);
+
+EXTERN_C void bt_closehandle(bt_handle h);
+EXTERN_C bool bt_queryhandle(bt_handle h);
+EXTERN_C void bt_waithandle(bt_handle_t h);
+EXTERN_C bt_handle_t bt_make_wait_any(bt_handle_t *h, size_t count);
+EXTERN_C bt_handle_t bt_make_wait_all(bt_handle_t *h, size_t count);
+EXTERN_C size_t bt_wait_index(bt_handle_t h);
 
 EXTERN_C uint16_t bt_query_extension(const char *name);
 

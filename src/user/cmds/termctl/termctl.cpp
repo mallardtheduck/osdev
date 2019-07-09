@@ -8,8 +8,10 @@
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
+#include <fstream>
 #include <util/clipp.hpp>
 #include <btos/envvars.hpp>
+#include <util/tinyformat.hpp>
 
 using namespace std;
 using namespace clipp;
@@ -42,9 +44,15 @@ int main(int argc, char **argv){
 	bool on = false;
 	bool info = false;
 	uint32_t speed = 0;
+	bool fileoutput = false;
+	string outfile;
 	
 	auto helpCmd = (
 		command("help", "--help").set(mode, Mode::Help) % "Display usage help"
+	);
+	auto outputOption = (
+		option("-o", "--output").set(fileoutput, true) % "Write output to file" &
+		value("outfile").set(outfile) % "Name of output file"
 	);
 	auto titleCmd = (
 		command("title").set(mode, Mode::Title) % "Set terminal title",
@@ -80,7 +88,10 @@ int main(int argc, char **argv){
 		command("reset").set(mode, Mode::Reset) % "Reset terminal to first text display mode"
 	);
 	
-	auto cli = (helpCmd | titleCmd | echoCmd | clearCmd | newCmd | switchCmd | pointerCmd | pointerSpeedCmd | modesCmd | resetCmd);
+	auto cli = (helpCmd | titleCmd | echoCmd | clearCmd | newCmd | switchCmd | ((pointerCmd | pointerSpeedCmd | modesCmd), outputOption) | resetCmd);
+	std::ofstream of;
+	if(fileoutput) of.open(outfile.c_str());
+	std::ostream &out = fileoutput ? of : std::cout;
 	
 	if(parse(argc, argv, cli)){
 		Terminal term;
@@ -115,7 +126,7 @@ int main(int argc, char **argv){
 			case Mode::PointerSpeed:
 					if(on){
 						uint32_t speed = term.GetPointerSpeed();
-    					printf("Pointer speed: %i\n", speed);
+    					tfm::format(out, "Pointer speed: %i\n", speed);
 					}else{
 						term.SetPointerSpeed(speed);
 					}
@@ -123,7 +134,7 @@ int main(int argc, char **argv){
 			case Mode::Pointer:
 				if(info){
 					bt_terminal_pointer_info info = term.GetPointerInfo();
-        			printf("Pointer: (%i, %i) Flags: %x\n", info.x, info.y, info.flags);
+        			tfm::format(out, "Pointer: (%i, %i) Flags: %x\n", info.x, info.y, info.flags);
 				}else{
 					term.SetPointerVisibility(on);
 				}
@@ -131,11 +142,11 @@ int main(int argc, char **argv){
 			case Mode::Modes:{
 					size_t i = 0;
 			        for(auto mode : term.GetScreenModes()){
-			            printf("Mode %i: ID: %i %ix%i %ibpp %s.\n", (int)i, mode.id, mode.width, mode.height, mode.bpp, mode.textmode?"text":"graphics");
+			            tfm::format(out, "Mode %i: ID: %i %ix%i %ibpp %s.\n", (int)i, mode.id, mode.width, mode.height, mode.bpp, mode.textmode?"text":"graphics");
 						++i;
 			        }
 			        bt_vidmode cmode = term.GetCurrentScreenMode();
-			        printf("Current mode: ID: %i %ix%i %ibpp %s.\n", cmode.id, cmode.width, cmode.height, cmode.bpp, cmode.textmode?"text":"graphics");
+			        tfm::format(out, "Current mode: ID: %i %ix%i %ibpp %s.\n", cmode.id, cmode.width, cmode.height, cmode.bpp, cmode.textmode?"text":"graphics");
 				}
 				break;
 			case Mode::Reset:
@@ -148,6 +159,7 @@ int main(int argc, char **argv){
 				}
 				break;
 		}
+		if(of.is_open()) of.close();
 	}else{
 		cerr << usage_lines(cli, argv[0]) << endl;
 	}

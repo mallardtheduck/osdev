@@ -12,8 +12,6 @@ extern std::shared_ptr<Ball> ball;
 extern std::shared_ptr<Paddle> paddle;
 extern gds::Font font;
 
-bool Overlaps(const gds::Rect &r1, const gds::Rect &r2);
-
 void DrawBackground(std::shared_ptr<gds::Surface> s);
 void DrawTitle(std::shared_ptr<gds::Surface> s);
 void DrawEndScreen(std::shared_ptr<gds::Surface> s);

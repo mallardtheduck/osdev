@@ -8,6 +8,7 @@
 #include <btos/imessagehandler.hpp>
 #include "surface.hpp"
 
+extern const size_t MaxSurfaceSize;
 extern std::map<uint64_t, std::weak_ptr<Surface>> allSurfaces;
 
 namespace btos_api{
@@ -19,6 +20,8 @@ private:
 	bt_pid_t pid;
 	std::set<std::shared_ptr<Surface>> surfaces;
 	std::shared_ptr<Surface> currentSurface;
+	
+	gds_TextParameters txtParams;
 public:
 	Client(bt_pid_t pid);
 	~Client();

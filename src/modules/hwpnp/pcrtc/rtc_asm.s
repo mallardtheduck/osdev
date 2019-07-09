@@ -1,6 +1,7 @@
 .extern tick_counter
 .extern update_msec_counter
 .extern resync_flag
+.extern ticks_per_irq
 .global rtc_irq_handler
 
 rtc_irq_handler:
@@ -14,14 +15,16 @@ rtc_irq_handler:
 	and $0x40, %al
 	jz 2f
 	mov tick_counter, %ebx
-	cmp $0xFFFFFFFF, %ebx
+	mov $0xFFFFFFFF, %eax
+	sub ticks_per_irq, %eax
+	cmp %eax, %ebx
 	jne 1f
 	pusha
 	call update_msec_counter
 	popa
 	mov $0, %ebx
 1:
-	inc %ebx
+	add ticks_per_irq, %ebx
 	mov %ebx, tick_counter
 2:
 	mov %ecx, %eax

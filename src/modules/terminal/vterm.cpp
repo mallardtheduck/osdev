@@ -587,7 +587,7 @@ cmdLine parse_cmd(const char *c){
 			else{
 				char **nargv = (char**)malloc((cl.argc + 1) * sizeof(char*));
 				if(!nargv) panic("(TERM) Allocation failed!");
-				memcpy(nargv, cl.argv, sizeof(char*) * cl.argc);
+				if(cl.argc) memcpy(nargv, cl.argv, sizeof(char*) * cl.argc);
 				nargv[cl.argc] = buf;
 				if(cl.argv) free(cl.argv);
 				cl.argv = nargv;
@@ -606,7 +606,7 @@ cmdLine parse_cmd(const char *c){
 	if(i){
 		char **nargv = (char**)malloc((cl.argc + 1) * sizeof(char*));
 		if(!nargv) panic("(TERM) Allocation failed!");
-		memcpy(nargv, cl.argv, sizeof(char*) * cl.argc);
+		if(cl.argc) memcpy(nargv, cl.argv, sizeof(char*) * cl.argc);
 		nargv[cl.argc] = buf;
 		if(cl.argv) free(cl.argv);
 		cl.argv = nargv;
@@ -639,11 +639,16 @@ void vterm::create_terminal(char *command)
 			i64toa(new_id, new_terminal_id, 10);
 			setenv(terminal_var, new_terminal_id, 0, getpid());
 			cmdLine cmd = parse_cmd(command);
-			pid_t pid=spawn(cmd.cmd, cmd.argc, cmd.argv);
-			free_cmd(cmd);
-			setenv(terminal_var, old_terminal_id, 0, getpid());
-			vterm_options opts;
-			if(!pid) terminals->get(new_id)->close(opts);
+			if(cmd.cmd){
+				pid_t pid=spawn(cmd.cmd, cmd.argc, cmd.argv);
+				free_cmd(cmd);
+				setenv(terminal_var, old_terminal_id, 0, getpid());
+				vterm_options opts;
+				if(!pid) terminals->get(new_id)->close(opts);
+			}else{
+				vterm_options opts;
+				terminals->get(new_id)->close(opts);
+			}
 		}
 	}
 }
@@ -845,7 +850,7 @@ void vterm::update_current_pid()
 
 bool vterm::check_exclusive(){
 	if(!exclusive_mode_enabled) return false;
-	int pstatus = get_proc_status(exclusive_pid);
+	int pstatus = 1;//get_proc_status(exclusive_pid);
 	if(pstatus == 0 || pstatus == 2){
 		exclusive_mode_enabled = false;
 		return false;

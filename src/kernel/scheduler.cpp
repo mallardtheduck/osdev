@@ -431,6 +431,11 @@ void sch_block(){
 	sch_yield();
 }
 
+void sch_block(pid_t to){
+	current_thread->status=sch_thread_status::Blocked;
+	sch_yield_to(to);
+}
+
 void sch_unblock(uint64_t ext_id){
 	hold_lock hl(sch_lock);
 	for(size_t i=0; i<threads->size(); ++i){
@@ -460,6 +465,20 @@ void sch_setblock(sch_blockcheck check, void *param){
 		sch_abortable(true);
 	}
     sch_block();
+    sch_clearblock();
+    if(changeabort) sch_abortable(false);
+}
+
+void sch_setblock(sch_blockcheck check, void *param, pid_t to){
+	if(check(param)) return;
+	current_thread->blockcheck=check;
+	current_thread->bc_param=param;
+	bool changeabort = false;
+	if(sch_get_abortlevel()){
+		changeabort = true;
+		sch_abortable(true);
+	}
+    sch_block(to);
     sch_clearblock();
     if(changeabort) sch_abortable(false);
 }
@@ -555,11 +574,10 @@ void sch_abort(uint64_t ext_id){
 }
 
 bool sch_can_lock(){
-    if(!try_take_lock_exclusive(sch_lock)) {
+    if(get_lock_owner(sch_lock)) {
 		sch_deferred=true;
 		return false;
 	}
-    release_lock(sch_lock);
 	sch_deferred=false;
     return true;
 }

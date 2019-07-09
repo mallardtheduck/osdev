@@ -20,6 +20,11 @@ import-files:= \
  data/tests/pthreadtest.elx \
  data/tests/testpng.png \
  data/tests/testsw.elx \
+ data/tests/guitest.elx \
+ data/tests/cltzbench.elx \
+ data/tests/resctest.elx \
+ data/tests/scratch.elx \
+ 
 
 all: ../$(output-name)
 pkg-files:= $(shell find pkgfiles -type f)
@@ -79,6 +84,18 @@ data/tests/testpng.png: ../../user/tests/sdltest/testpng.png
 	cp $< $@
 
 data/tests/testsw.elx: ../../3rdparty/SDL2-widgets-2.1/testsw
+	cp $< $@
+
+data/tests/guitest.elx: ../../user/libs/gui/guitest.elx
+	cp $< $@
+
+data/tests/cltzbench.elx: ../../user/tests/cltzbench/cltzbench.elx
+	cp $< $@
+
+data/tests/resctest.elx: ../../user/libs/resc/resctest.elx
+	cp $< $@
+	
+data/tests/scratch.elx: ../../user/tests/scratch/scratch.elx
 	cp $< $@
 
 create.directories:

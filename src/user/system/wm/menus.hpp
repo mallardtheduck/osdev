@@ -101,7 +101,7 @@ void RedrawMenus(const gds::Rect &r);
 std::shared_ptr<Menu> GetDefaultWindowMenu();
 std::shared_ptr<Menu> GetWindowMenuTemplate();
 
-std::shared_ptr<Menu> CreateMenu();
-std::shared_ptr<Menu> MergeMenus(std::shared_ptr<Menu> m1, std::shared_ptr<Menu> m2);
+std::shared_ptr<Menu> CreateMenu(uint64_t id = UINT64_MAX);
+std::shared_ptr<Menu> MergeMenus(std::shared_ptr<Menu> m1, std::shared_ptr<Menu> m2, uint64_t id);
 
 #endif

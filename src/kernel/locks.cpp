@@ -2,6 +2,11 @@
 
 extern lock sch_lock;
 
+static void lock_raise_us_error(){
+    debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::BadLocking);
+    proc_terminate();
+}
+
 bool lock_blockcheck(void *p){
 	lock *l = (lock*)p;
 	l->waiting = true;
@@ -26,13 +31,16 @@ void lock_transfer(lock &l, uint64_t to, uint64_t from){
     if(l.lockval==0) panic("(LOCK) Something bad happened!");
 }
 
-void take_lock_exclusive(lock &l, uint64_t thread){
+void take_lock_exclusive(lock &l, uint64_t thread, bool us){
     if(!sch_active()) return;
-    if(l.lockval==thread && thread!=0) panic("(LOCK) Attempt to take lock that's already held!\n");
+    if(l.lockval==thread && thread!=0){
+        if(us) lock_raise_us_error();
+        else panic("(LOCK) Attempt to take lock that's already held!\n");
+    }
     if(thread==0) panic("(LOCK) Attempt to lock thread to invalid thread ID.");
     while(l.lockval != thread) {
         while (!__sync_bool_compare_and_swap(&l.lockval, 0, thread)) {
-            if (&l != &sch_lock && sch_lock.lockval != thread) sch_setblock(&lock_blockcheck, (void *) &l.lockval);
+            if (&l != &sch_lock && sch_lock.lockval != thread) sch_setblock(&lock_blockcheck, (void *) &l.lockval, l.lockval);
             else panic("(LOCK) Deadlock - waiting for lock while holding scheduler lock!");
         }
     }
@@ -53,7 +61,7 @@ void take_lock_recursive(lock &l, uint64_t thread){
     if(thread==0) panic("(LOCK) Attempt to lock thread to invalid thread ID.");
     while(l.lockval != thread) {
         while (!__sync_bool_compare_and_swap(&l.lockval, 0, thread)) {
-            if (&l != &sch_lock && sch_lock.lockval != thread) sch_setblock(&lock_blockcheck, (void *) &l.lockval);
+            if (&l != &sch_lock && sch_lock.lockval != thread) sch_setblock(&lock_blockcheck, (void *) &l.lockval, l.lockval);
             else panic("(LOCK) Deadlock - waiting for lock while holding scheduler lock!");
         }
     }
@@ -93,11 +101,12 @@ bool try_take_lock_recursive(lock &l, uint64_t thread){
     return ret;
 }
 
-void release_lock(lock &l, uint64_t thread){
+void release_lock(lock &l, uint64_t thread, bool us){
     if(!sch_active()) return;
     if(l.lockval!=thread){
 		dbgpf("LOCK: %i != %i\n", (int)l.lockval, (int)thread);
-		panic("(LOCK) Attempt to release lock that isn't held!\n");
+		if(us) lock_raise_us_error();
+		else panic("(LOCK) Attempt to release lock that isn't held!\n");
 	}
     if(l.count==0) panic("(LOCK) Attempt to release lock with zero count!");
     l.count--;

@@ -1,10 +1,13 @@
 #include <btos/thread.hpp>
+#include <utility>
 
 namespace btos_api{
 
 	Thread::Thread(bt_handle_t h) : Handle(h, false) {}
 
 	Thread::Thread(void (*entry)(void*), void *param, size_t stacksize) : Handle(btos_create_thread(entry, param, stacksize)) {}
+	
+	Thread::Thread(Thread &&t) : Handle(std::move(t)) {}
 
 	Thread Thread::Current(){
 		return Thread(bt_get_thread());

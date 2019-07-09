@@ -16,10 +16,15 @@ namespace btos_api{
 	public:
 		Handle(bt_handle_t h);
 		Handle(Handle &&h);
+		
+		Handle &operator=(Handle&&);
+		
 		virtual ~Handle();
 
 		bool Query() const;
 		bt_handle_t GetHandle() const;
+		
+		void Wait();
 	};
 
 }

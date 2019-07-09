@@ -50,6 +50,8 @@
  **
  *******************************************************************/
 
+void panic(char *msg) __attribute__ ((noreturn));
+
 #undef memcpy
 
 /********************************************************************
@@ -65,7 +67,7 @@
  *******************************************************************/
 
 #include <stddef.h>
-
+#include <stdint.h>
 
 /********************************************************************
  ** Typedefs
@@ -313,6 +315,9 @@ typedef UInt32              UIntN;
 
 void *memcpy(void *dest, const void *src, size_t count) 
 {
+    if((uint32_t)dest + count < 4096 || (uint32_t)src + count < 4096){
+        panic("MEMCPY: Copy to/from NULL or overflow!");   
+    }
     UInt8* dst8 = (UInt8*)dest;
     UInt8* src8 = (UInt8*)src;
 

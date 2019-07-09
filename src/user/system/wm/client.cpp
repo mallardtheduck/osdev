@@ -1,5 +1,6 @@
 #include <wm/wm.h>
 #include <btos/message.hpp>
+#include <dev/terminal.hpp>
 #include "client.hpp"
 #include "windows.hpp"
 
@@ -62,10 +63,10 @@ bool Client::HandleMessage(const Message &msg){
 			break;
 		}
 		case wm_RequestType::DestroyWindow:{
-			uint64_t id = msg.Content<uint64_t>();
-			if(windows.find(id) != windows.end()){
+			if(currentWindow){
+				uint64_t id = currentWindow->id;
 				RemoveWindow(id);
-				if(windows[id] == currentWindow) currentWindow.reset();
+				currentWindow.reset();
 				windows.erase(id);
 			}
 		}
@@ -75,12 +76,17 @@ bool Client::HandleMessage(const Message &msg){
 				Point p = currentWindow->GetPosition();
 				info.x = p.x;
 				info.y = p.y;
-				info.options = wm_WindowOptions::Visible;
+				Point content = currentWindow->GetContentOffset();
+				info.contentX = content.x;
+				info.contentY = content.y;
+				info.options = currentWindow->GetOptions();
 				info.subscriptions = currentWindow->Subscribe();
 				info.gds_id = currentWindow->GetSurface()->GetID();
 			}else{
 				info.x = 0;
 				info.y = 0;
+				info.contentX = 0;
+				info.contentY = 0;
 				info.options = 0;
 				info.subscriptions = 0;
 				info.gds_id = 0;
@@ -112,7 +118,11 @@ bool Client::HandleMessage(const Message &msg){
 			break;
 		}
 		case wm_RequestType::ReplaceSurface:{
-			//TODO: Implement
+			if(currentWindow){
+				uint64_t gds_id = msg.Content<uint64_t>();
+				auto ptr = make_shared<Surface>(Surface::Wrap(gds_id, true));
+				currentWindow->SetSurface(ptr);
+			}
 			break;
 		}
 		case wm_RequestType::MoveWindow:{
@@ -204,6 +214,30 @@ bool Client::HandleMessage(const Message &msg){
 		}
 		case wm_RequestType::UnSetWindowMenu:{
 			if(currentWindow) currentWindow->SetWindowMenu(nullptr);
+			break;
+		}
+		case wm_RequestType::GetPointerInfo:{
+			SendReply(msg, Terminal().GetPointerInfo());
+			break;
+		}
+		case wm_RequestType::GetScreenMode:{
+			SendReply(msg, Terminal().GetCurrentScreenMode());
+		}
+		case wm_RequestType::StartResize:{
+			if(currentWindow) currentWindow->StartResize();
+			break;
+		}
+		case wm_RequestType::StartDrag:{
+			if(currentWindow) currentWindow->StartDrag();
+			break;
+		}case wm_RequestType::SetModal:{
+			auto id = msg.Content<uint64_t>();
+			if(currentWindow && windows.find(id) != windows.end()){
+				currentWindow->SetModal(windows[id]);
+			}
+			break;
+		}case wm_RequestType::ClearModal:{
+			if(currentWindow) currentWindow->ClearModal();
 			break;
 		}
 	}

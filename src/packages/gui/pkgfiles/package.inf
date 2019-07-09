@@ -1,0 +1,15 @@
+[package]
+
+name = gui
+description = GUI desktop and applications
+version = 0.1C
+contentPath = btos
+
+[feature-calc]
+
+name = gui.app.calc
+description = Calculator
+path = /
+file = calc.elx
+type = app
+

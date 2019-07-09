@@ -1,8 +1,8 @@
 #ifndef _FS_INTERFACE_H
 #define _FS_INTERFACE_H
 
-static const char FS_PATH_SEPERATOR='/';
-static const char FS_DRIVE_SEPERATOR=':';
+static const char FS_PATH_SEPARATOR='/';
+static const char FS_DRIVE_SEPARATOR=':';
 
 #ifndef __cplusplus
 #include <stdbool.h>

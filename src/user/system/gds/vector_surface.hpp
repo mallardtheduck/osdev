@@ -5,6 +5,8 @@
 #include "surface.hpp"
 #include "drawingop.hpp"
 
+class BitmapSurface;
+
 class VectorSurface : public Surface{
 private:
 	struct VectorOp{
@@ -18,7 +20,27 @@ private:
 	uint32_t height;
 	uint32_t colourType;
 	
-	std::shared_ptr<GD::Image> cache;
+	std::shared_ptr<BitmapSurface> cache;
+	bool update = false;
+	
+	struct Rectangle{
+		int32_t x = 0, y = 0;
+		uint32_t w = 0, h = 0;
+		
+		Rectangle() = default;
+		Rectangle(int32_t _x, int32_t _y, uint32_t _w, uint32_t _h) : x(_x), y(_y), w(_w), h(_h) {}
+	};
+	
+	friend bool operator==(const Rectangle &r1, const Rectangle &r2);
+	friend bool operator!=(const Rectangle &r1, const Rectangle &r2);
+	
+	Rectangle renderRect, cacheRect;
+	
+	bool Contains(const Rectangle &outer, const Rectangle &inner);
+	bool InRect(int32_t x, int32_t y, const Rectangle &r);
+	bool Overlaps(const Rectangle &r1, const Rectangle &r2);
+	
+	bool OpInRect(const VectorOp &op, const Rectangle &rect);
 	
 	void OrderOps();
 public:
@@ -35,10 +57,12 @@ public:
 	virtual gds_SurfaceType::Enum GetType(); 
 	virtual uint32_t GetColour(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	virtual std::shared_ptr<GD::Image> Render(uint32_t scale);
-	virtual void RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h);
+	virtual void RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h, uint32_t flags);
 	virtual void SetOpParameters(std::shared_ptr<gds_OpParameters>);
 	virtual std::shared_ptr<gds_OpParameters> GetOpParameters(uint32_t op);
 	virtual void ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum mode);
+	virtual void Clear();
+	virtual std::unique_ptr<gds_TextMeasurements> MeasureText(const gds_TextParameters &p, std::string text); 
 	
 	virtual void Resize(size_t w, size_t h, bool indexed);
 

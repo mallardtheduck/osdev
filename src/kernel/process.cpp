@@ -152,6 +152,10 @@ proc_process *proc_get(pid_t pid){
 }
 
 proc_process *proc_get_lock(pid_t pid){
+	if(proc_current_process && pid == proc_current_pid){
+		take_lock_recursive(proc_current_process->ulock);
+		return proc_current_process;
+	}
 	while(true){
 		take_lock_recursive(proc_lock);
 		proc_process *ret = proc_get(pid);
@@ -589,8 +593,13 @@ size_t proc_get_arg(size_t i, char *buf, size_t size, pid_t pid){
 
 static void close_thread_handle(void *t){
     uint64_t thread_id=*(uint64_t*)t;
-    sch_abort(thread_id);
-    delete (uint64_t*)t;
+    if(thread_id == sch_get_id()){
+    	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::SelfAbort);
+    	proc_terminate();
+    }else{
+    	sch_abort(thread_id);
+    	delete (uint64_t*)t;
+    }
 }
 
 void proc_remove_thread(uint64_t thread_id, pid_t pid){
@@ -657,11 +666,15 @@ void proc_set_status(proc_status::Enum status, pid_t pid){
 	release_lock(proc->ulock);
 }
 proc_status::Enum proc_get_status(pid_t pid){
-    proc_process *proc=proc_get_lock(pid);
-    if(!proc) return proc_status::DoesNotExist;
-    proc_status::Enum ret = proc->status;
-    release_lock(proc->ulock);
-	return ret;
+    //proc_process *proc=proc_get_lock(pid);
+    //if(!proc) return proc_status::DoesNotExist;
+    //proc_status::Enum ret = proc->status;
+    //release_lock(proc->ulock);
+	//return ret;
+	interrupt_lock il;
+	proc_process *proc = proc_get(pid);
+	if(!proc) return proc_status::DoesNotExist;
+	else return proc->status;
 }
 
 void proc_free_message_buffer(pid_t topid, pid_t pid){
@@ -685,7 +698,7 @@ extern lock msg_lock;
 uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 	if(header.flags & btos_api::bt_msg_flags::Reply){
 		void *content = malloc(header.length);
-		memcpy(content, header.content, header.length);
+		if(header.length) memcpy(content, header.content, header.length);
 		header.content = content;
 		return msg_send(header);
 	}
@@ -714,9 +727,11 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 			sch_yield();
 			continue;
 		}
-		proc->msg_buffers[header.to]=malloc(header.length);
-		memcpy(proc->msg_buffers[header.to], header.content, header.length);
-		header.content=proc->msg_buffers[header.to];
+		if(header.content && header.length){
+			proc->msg_buffers[header.to]=malloc(header.length);
+			memcpy(proc->msg_buffers[header.to], header.content, header.length);
+			header.content=proc->msg_buffers[header.to];
+		}
 		uint64_t ret = msg_send(header);
 		release_lock(proc->ulock);
 		release_lock(to->ulock);

@@ -86,7 +86,6 @@ void rtc_init_real(void*){
 	proc_setenv("BOOT_TIME", buf, ENV_Global, 0);
 	infofs_register("RTC", &rtc_infofs);
 	infofs_register("MSEC", &msec_infofs);
-	init_timer();
 	init_api();
 }
 
