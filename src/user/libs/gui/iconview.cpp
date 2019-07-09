@@ -79,9 +79,9 @@ std::string IconView::FitTextToWidth(DrawItem &item, size_t width){;
 	}
 	
 	std::string suffix = "...";
-	if(width < surf->MeasureText(suffix, fonts::GetDetailListFont(), fonts::GetDetailListTextSize()).w) suffix = "";
+	if(width < surf->MeasureText(suffix, fonts::GetIconViewFont(), fonts::GetIconViewTextSize()).w) suffix = "";
 	std::string text = item.text;
-	while((item.measures = surf->MeasureText(text + suffix, fonts::GetDetailListFont(), fonts::GetDetailListTextSize())).w > width){
+	while((item.measures = surf->MeasureText(text + suffix, fonts::GetIconViewFont(), fonts::GetIconViewTextSize())).w > width){
 		text.pop_back();
 	}
 	
@@ -240,7 +240,7 @@ void IconView::Paint(gds::Surface &s){
 				}
 				
 				int32_t textX = xPos + ((itemSize - item.measures.w - (multiSelect ? checkSize : 0)) / 2) + (multiSelect ? checkSize : 0);
-				int32_t textY = yPos + (itemSize - fontHeight) + ((fontHeight + item.measures.h) / 2);
+				int32_t textY = (yPos - 2) + (itemSize - fontHeight) + ((fontHeight + item.measures.h) / 2);
 				if(textY - fontHeight < rect.h) surf->Text({textX, textY}, item.fittedText, fonts::GetIconViewFont(), fonts::GetIconViewTextSize(), txtCol);
 				
 				if(multiSelect){
@@ -362,6 +362,7 @@ void IconView::SetDefaultIcon(std::shared_ptr<gds::Surface> img){
 }
 
 void IconView::SetItemIcon(size_t idx, std::shared_ptr<gds::Surface> img){
+	if(icons.size() < items.size()) icons.resize(items.size());
 	icons[idx] = img;
 }
 
