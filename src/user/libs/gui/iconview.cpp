@@ -78,7 +78,7 @@ std::string IconView::FitTextToWidth(DrawItem &item, size_t width){;
 		return item.text;	
 	}
 	
-	std::string suffix = "...";
+	std::string suffix = "\xE2\x80\xA6";
 	if(width < surf->MeasureText(suffix, fonts::GetIconViewFont(), fonts::GetIconViewTextSize()).w) suffix = "";
 	std::string text = item.text;
 	while((item.measures = surf->MeasureText(text + suffix, fonts::GetIconViewFont(), fonts::GetIconViewTextSize())).w > width){

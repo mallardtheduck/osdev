@@ -138,7 +138,7 @@ std::string DetailList::FitTextToCol(DrawItem &item, size_t colIndex){
 		return item.text;	
 	}
 	
-	std::string suffix = "...";
+	std::string suffix = "\xE2\x80\xA6";
 	if(width < surf->MeasureText(suffix, fonts::GetDetailListFont(), fonts::GetDetailListTextSize()).w) suffix = "";
 	std::string text = item.text;
 	while(surf->MeasureText(text + suffix, fonts::GetDetailListFont(), fonts::GetDetailListTextSize()).w > width){
