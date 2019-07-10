@@ -286,15 +286,16 @@ directory_entry fat_read_dir(void *dirdata){
         take_fat_lock();
 		directory_entry ret;
 		fl_dirent ent;
-		if(!fl_readdir(dir->fld, &ent)){
+		int err = 0;
+		while(!(err = fl_readdir(dir->fld, &ent)) && (strcmp(ent.filename, ".") == 0 || strcmp(ent.filename, "..") == 0));
+		if(!err){
 			ret.valid=true;
 			strncpy(ret.filename, ent.filename, 255);
 			ret.type=(ent.is_dir)?FS_Directory:FS_File;
 			ret.size=ent.size;
 			ret.id=ent.cluster;
             release_fat_lock();
-            if(strcmp(ret.filename, ".") == 0 || strcmp(ret.filename, "..") == 0) return fat_read_dir(dirdata);
-			else return ret;
+            return ret;
 		} else {
             release_fat_lock();
             return invalid_directory_entry;
