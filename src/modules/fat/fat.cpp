@@ -293,7 +293,8 @@ directory_entry fat_read_dir(void *dirdata){
 			ret.size=ent.size;
 			ret.id=ent.cluster;
             release_fat_lock();
-			return ret;
+            if(strcmp(ret.filename, ".") == 0 || strcmp(ret.filename, "..") == 0) return fat_read_dir(dirdata);
+			else return ret;
 		} else {
             release_fat_lock();
             return invalid_directory_entry;
