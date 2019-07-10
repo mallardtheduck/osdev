@@ -55,7 +55,7 @@ void IconView::UpdateDisplayState(bool changePos){
 	
 	if(vscroll){
 		auto lines = items.size() / visibleCols;
-		if(visibleLines < lines){
+		if(visibleLines <= lines){
 			vscroll->Enable();
 			vscroll->SetLines(std::max<int32_t>(lines - (visibleLines - 1), 1));
 			vscroll->SetPage(visibleLines - 1);
@@ -100,21 +100,25 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 			update = true;
 			handled = true;
 			UpdateDisplayState();
+			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::UpArrow) && selectedItem > 0){
 			selectedItem -= std::min(selectedItem, visibleCols);
 			update = true;
 			handled = true;
 			UpdateDisplayState();
+			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && selectedItem < items.size() - 1){
 			++selectedItem;
 			update = true;
 			handled = true;
 			UpdateDisplayState();
+			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && selectedItem > 0){
 			--selectedItem;
 			update = true;
 			handled = true;
 			UpdateDisplayState();
+			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageUp)){
 			if(selectedItem != 0){
 				auto visibleItems = (visibleLines - 1) * visibleCols;
@@ -122,6 +126,7 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 				else selectedItem = 0;
 				update = true;
 				UpdateDisplayState();
+				RaiseChangeEvent();
 			}
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageDown)){
@@ -131,6 +136,7 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 				else selectedItem = items.size() - 1;
 				update = true;
 				UpdateDisplayState();
+				RaiseChangeEvent();
 			}
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
@@ -138,6 +144,7 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 				selectedItem = 0;
 				update = true;
 				UpdateDisplayState();
+				RaiseChangeEvent();
 			}
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
@@ -145,14 +152,17 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 				selectedItem = items.size() - 1;
 				update = true;
 				UpdateDisplayState();
+				RaiseChangeEvent();
 			}
 			handled = true;
 		}else if(!(code & KeyFlags::NonASCII)){
 			auto oldSelectedItem = selectedItem;
 			char c = KB_char(e.Key.code);
-			if(multiSelect && (c == ' ' || c == '\n')){
-				multiSelection[selectedItem] = !multiSelection[selectedItem];
-				update = true;
+			if(c == ' ' || c == '\n'){
+				if(multiSelect){
+					multiSelection[selectedItem] = !multiSelection[selectedItem];
+					update = true;
+				}else if(onActivate) onActivate();
 			}else{
 				c = std::tolower(c);
 				auto finder = [&](const std::string &item){return !item.empty() && std::tolower(item.front()) == c;};
@@ -160,6 +170,7 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 				if(it == end(items)) it = std::find_if(begin(items), end(items), finder);
 				if(it != end(items)) selectedItem = it - begin(items);
 				update = oldSelectedItem != selectedItem;
+				if(update) RaiseChangeEvent();
 			}
 			handled = true;
 			UpdateDisplayState();
@@ -176,6 +187,7 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 				auto oldSelectedItem = selectedItem;
 				selectedItem = idx;
 				if(selectedItem < items.size()) update = oldSelectedItem != selectedItem;
+				if(update) RaiseChangeEvent();
 				if(multiSelect){
 					auto xPos = pX - (col * itemSize);
 					auto yPos = pY - (line * itemSize);
@@ -185,6 +197,7 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 					}
 				}
 				handled = true;
+				if(IsDoubleClick() && onActivate) onActivate();
 				UpdateDisplayState();
 			}
 		}else if(vscroll && vscroll->IsEnabled() && InRect(e.Pointer.x, e.Pointer.y, vscroll->GetInteractRect()) && (e.type & vscroll->GetSubscribed())){
@@ -355,6 +368,7 @@ void IconView::Refresh(){
 	IControl::Paint(outerRect);
 	multiSelection.resize(items.size());
 	icons.resize(items.size());
+	drawItems.clear();
 }
 
 void IconView::SetDefaultIcon(std::shared_ptr<gds::Surface> img){
@@ -371,6 +385,13 @@ void IconView::ClearItemIcons(){
 	icons.resize(items.size());
 }
 
+void IconView::OnActivate(std::function<void()> oA){
+	onActivate = oA;
+}
+
+void IconView::OnInspect(std::function<void()> oI){
+	onInspect = oI;
+}
 
 }
 }

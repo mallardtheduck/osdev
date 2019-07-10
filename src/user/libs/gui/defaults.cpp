@@ -1,6 +1,7 @@
 #include <gui/defaults.hpp>
 #include <gds/libgds.h>
 #include <btos/resc.h>
+#include <dev/rtc.h>
 #include <unistd.h>
 
 #include "gui_resc.tar.h"
@@ -470,6 +471,20 @@ namespace icons{
 		if(!ret) ret = LoadIcon("mb_default.png");
 		return ret;
 	}
+}
+
+static uint64_t lastClicktime = 0;
+
+uint64_t GetDoubleClickTime(){
+	return 500;
+}
+
+bool IsDoubleClick(){
+	uint64_t now = bt_rtc_millis();
+	bool ret = false;
+	if((now - lastClicktime) < GetDoubleClickTime()) ret = true;
+	lastClicktime = now;
+	return ret;
 }
 
 }

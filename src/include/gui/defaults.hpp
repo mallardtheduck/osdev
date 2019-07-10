@@ -176,6 +176,9 @@ namespace icons{
 	std::shared_ptr<gds::Surface> GetMessageBoxDefault();
 }
 
+uint64_t GetDoubleClickTime();
+bool IsDoubleClick();
+
 }
 }
 

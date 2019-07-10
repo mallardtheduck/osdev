@@ -45,6 +45,9 @@ private:
 	
 	bool multiSelect;
 	
+	std::function<void()> onActivate;
+	std::function<void()> onInspect;
+	
 	void UpdateDisplayState(bool changePos = true);
 	std::string FitTextToWidth(DrawItem &item, size_t width);
 public:
@@ -73,6 +76,9 @@ public:
 	void SetDefaultIcon(std::shared_ptr<gds::Surface> img);
 	void SetItemIcon(size_t idx, std::shared_ptr<gds::Surface> img);
 	void ClearItemIcons();
+	
+	void OnActivate(std::function<void()> fn);
+	void OnInspect(std::function<void()> fn);
 };
 	
 }
