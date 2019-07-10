@@ -1,28 +1,41 @@
 #define BTOS_NO_USING
 
 #include <gui/form.hpp>
-#include <gui/iconview.hpp>
-#include <gui/shell/utils.hpp>
+#include <gui/shell/foldericonview.hpp>
+#include <gui/button.hpp>
 #include <wm/eventloop.hpp>
 
 #include <btos/directory.hpp>
+#include <cmd/path.hpp>
+
+#include <util/tinyformat.hpp>
 
 namespace gds = btos_api::gds;
 namespace gui = btos_api::gui;
 namespace sh = btos_api::gui::shell;
 
 int main(){
-	auto form = std::make_shared<gui::Form>(gds::Rect{200, 200, 500, 300}, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, "Shell Library Test");
-	auto icv = std::make_shared<gui::IconView>(gds::Rect{10, 10, 480, 250}, 32, false);
+	std::string prevPath = "hdd:/";
 	
-	auto directory = btos_api::Directory("hdd:/", FS_Read);
-	for(auto d : directory){
-		auto icon = sh::GetPathIcon(std::string("hdd:/") + d.filename, 32);
-		icv->Items().push_back(d.filename);
-		icv->SetItemIcon(icv->Items().size() - 1, icon);
-	}
-	icv->Refresh();
-	form->AddControl(icv);
+	auto form = std::make_shared<gui::Form>(gds::Rect{200, 200, 500, 300}, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, "Shell Library Test");
+	auto icv = std::make_shared<sh::FolderIconView>(gds::Rect{10, 10, 480, 250}, prevPath);
+	auto backBtn = std::make_shared<gui::Button>(gds::Rect{10, 260, 50, 30}, "Back");
+	
+	backBtn->OnAction([&]{
+		icv->SetPath(prevPath);
+	});
+	
+	icv->OnActivate([&]{
+		auto entry = icv->GetSelectedEntry();
+		if(entry.valid && entry.type == FS_Directory){
+			prevPath = icv->GetPath();
+			auto path = btos_api::cmd::parse_path(prevPath + "/" + entry.filename);
+			tfm::printf("Changing view path to: %s\n", path);
+			icv->SetPath(path);
+		}
+	});
+	
+	form->AddControls({icv, backBtn});
 	
 	btos_api::wm::EventLoop e;
 	e.AddWindow(form);
