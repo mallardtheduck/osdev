@@ -23,7 +23,7 @@ int main(){
 	auto form = std::make_shared<gui::Form>(gds::Rect{200, 200, 500, 310}, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, "Shell Library Test");
 	auto icv = std::make_shared<sh::FolderIconView>(gds::Rect{10, 10, 480, 250}, "hdd:/");
 	auto backBtn = std::make_shared<gui::Button>(gds::Rect{10, 270, 50, 30}, "Back");
-	auto lbl = std::make_shared<gui::Label>(gds::Rect{70, 270, 410, 20}, "hdd:/");
+	auto lbl = std::make_shared<gui::Label>(gds::Rect{70, 270, 410, 20}, "hdd:/", gui::Label::Justification::Left);
 	
 	backBtn->OnAction([&]{
 		if(!prevPath.empty()){

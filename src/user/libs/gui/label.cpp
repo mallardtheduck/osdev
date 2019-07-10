@@ -4,7 +4,7 @@
 namespace btos_api{
 namespace gui{
 
-Label::Label(const gds::Rect &r, const std::string &t) : rect(r), text(t) {}
+Label::Label(const gds::Rect &r, const std::string &t, Label::Justification j) : rect(r), text(t), just(j) {}
 	
 EventResponse Label::HandleEvent(const wm_Event&){
 	return {false};
@@ -18,7 +18,19 @@ void Label::Paint(gds::Surface &s){
 		auto bkgCol = colours::GetBackground().Fix(*surf);
 		auto txtCol = colours::GetLabelText().Fix(*surf);
 			
-		int32_t textX = std::max<int32_t>(((rect.w - textMeasures.w) / 2), 0);
+		int32_t textX;
+		switch(just){
+			case Label::Justification::Left:
+				textX = 0;
+				break;
+			case Label::Justification::Right:
+				textX = rect.w - textMeasures.w;
+				break;
+			case Label::Justification::Center:
+				textX = std::max<int32_t>(((rect.w - textMeasures.w) / 2), 0);
+				break;
+		}
+		
 		int32_t textY = std::max<int32_t>(((rect.h + textMeasures.h) / 2), 0);
 		
 		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);

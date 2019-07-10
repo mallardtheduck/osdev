@@ -7,12 +7,19 @@ namespace btos_api{
 namespace gui{
 
 class Label : public IDecorativeControl{
+public:
+	enum class Justification{
+		Left, Center, Right	
+	};
+
 private:
 	gds::Rect rect;
 	std::string text;
 	std::unique_ptr<gds::Surface> surf;
+	
+	Justification just;
 public:
-	Label(const gds::Rect &r, const std::string &t);
+	Label(const gds::Rect &r, const std::string &t, Justification just = Justification::Center);
 	
 	EventResponse HandleEvent(const wm_Event&);
 	void Paint(gds::Surface &surf);
