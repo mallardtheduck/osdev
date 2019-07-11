@@ -9,6 +9,15 @@ namespace gui{
 namespace shell{
 	
 static const size_t folderIconSize = 32;
+
+static std::string TitleCase(const std::string &text){
+	std::string ret;
+	for(size_t i = 0; i < text.length(); ++i){
+		if(i == 0) ret += std::toupper(text[i]);
+		else ret += std::tolower(text[i]);
+	}
+	return ret;
+}
 	
 FolderIconView::FolderIconView(const gds::Rect &r, const std::string &p, bool multiSelect) : 
 IconView(r, folderIconSize, multiSelect), path(p)
@@ -36,7 +45,7 @@ void FolderIconView::Update(){
 	auto &items = Items();
 	items.clear();
 	for(auto &e : entries){
-		items.push_back(e.filename);
+		items.push_back(TitleCase(e.filename));
 	}
 	for(size_t i = 0; i < items.size(); ++i){
 		SetItemIcon(i, GetPathIcon(path + "/" + entries[i].filename, folderIconSize));
