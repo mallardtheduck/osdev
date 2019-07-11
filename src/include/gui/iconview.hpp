@@ -19,8 +19,10 @@ private:
 	
 	struct DrawItem{
 		std::string text;
-		gds::TextMeasurements measures;
-		std::string fittedText;
+		gds::TextMeasurements measures1;
+		gds::TextMeasurements measures2;
+		std::string fittedText1;
+		std::string fittedText2;
 		uint32_t fittedWidth;
 	};
 	
@@ -31,7 +33,7 @@ private:
 	size_t fontHeight;
 	size_t iconSize;
 	
-	size_t itemSize;
+	size_t itemWidth, itemHeight;
 	size_t selectedItem = 0;
 	size_t vOffset = 0;
 	size_t visibleLines = 0;
@@ -49,7 +51,7 @@ private:
 	std::function<void()> onInspect;
 	
 	void UpdateDisplayState(bool changePos = true);
-	std::string FitTextToWidth(DrawItem &item, size_t width);
+	void FitTextToWidth(DrawItem &item, size_t width);
 public:
 	IconView(const gds::Rect &r, size_t iconSize = 32, bool multiSelect = false);
 	
