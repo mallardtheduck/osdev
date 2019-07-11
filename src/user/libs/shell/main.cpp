@@ -29,6 +29,7 @@ int main(){
 		if(!prevPath.empty()){
 			lbl->SetText(prevPath.top());
 			icv->SetPath(prevPath.top());
+			icv->SetValue(0);
 			prevPath.pop();
 		}
 	});
@@ -40,6 +41,7 @@ int main(){
 			auto path = btos_api::cmd::parse_path(prevPath.top() + "/" + entry.filename);
 			lbl->SetText(path);
 			icv->SetPath(path);
+			icv->SetValue(0);
 		}
 	});
 	
