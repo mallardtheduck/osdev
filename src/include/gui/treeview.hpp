@@ -28,6 +28,7 @@ public:
 	
 	TreeViewNode(size_t id, const std::string &text, const std::vector<TreeViewNode> &children = {}, std::shared_ptr<gds::Surface> icon = nullptr, std::shared_ptr<gds::Surface> openIcon = nullptr, bool open = false);
 	
+	TreeViewNode() = default;
 	TreeViewNode(const TreeViewNode &) = default;
 	TreeViewNode(TreeViewNode &&) = default;
 	

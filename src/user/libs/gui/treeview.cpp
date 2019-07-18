@@ -203,31 +203,37 @@ EventResponse TreeView::HandleEvent(const wm_Event &e){
 			update = true;
 			handled = true;
 			UpdateDisplayState();
+			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::UpArrow)){
 			SelectionMove(-1);
 			update = true;
 			handled = true;
 			UpdateDisplayState();
+			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageUp)){
 			SelectionMove(-visibleItems);
 			update = true;
 			UpdateDisplayState();
 			handled = true;
+			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageDown)){
 			SelectionMove(visibleItems);
 			update = true;
 			UpdateDisplayState();
 			handled = true;
+			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
 			SelectionMove(0, MovePos::First);
 			update = true;
 			UpdateDisplayState();
 			handled = true;
+			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
 			SelectionMove(0, MovePos::Last);
 			update = true;
 			UpdateDisplayState();
 			handled = true;
+			RaiseChangeEvent();
 		}else if(!(code & KeyFlags::NonASCII)){
 			char c = KB_char(e.Key.code);
 			if(c == ' ' || c == '\n'){
@@ -235,6 +241,7 @@ EventResponse TreeView::HandleEvent(const wm_Event &e){
 			}else{
 				c = std::tolower(c);
 				SelectByChar(c);
+				RaiseChangeEvent();
 			}
 			update = true;
 			handled = true;
@@ -251,6 +258,7 @@ EventResponse TreeView::HandleEvent(const wm_Event &e){
 						ToggleNodeOpen(*node);
 					}
 					update = true;
+					RaiseChangeEvent();
 				}
 				handled = true;
 				UpdateDisplayState();
