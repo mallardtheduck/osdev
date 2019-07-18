@@ -9,15 +9,6 @@ namespace gui{
 namespace shell{
 	
 static const size_t folderIconSize = 32;
-
-static std::string TitleCase(const std::string &text){
-	std::string ret;
-	for(size_t i = 0; i < text.length(); ++i){
-		if(i == 0) ret += std::toupper(text[i]);
-		else ret += std::tolower(text[i]);
-	}
-	return ret;
-}
 	
 FolderIconView::FolderIconView(const gds::Rect &r, const std::string &p, bool multiSelect) : 
 IconView(r, folderIconSize, multiSelect), path(p)
@@ -30,17 +21,7 @@ void FolderIconView::Update(){
 	auto dir = Directory(path.c_str(), FS_Read);
 	for(auto d : dir) entries.push_back(d);
 	
-	std::sort(entries.begin(), entries.end(), [](const bt_directory_entry &a, const bt_directory_entry &b){
-		if(a.type == FS_Directory && b.type != FS_Directory) return true;
-		if(a.type != FS_Directory && b.type == FS_Directory) return false;
-		std::string aname = a.filename;
-		std::string bname = b.filename;
-		return std::lexicographical_compare(aname.begin(), aname.end(), bname.begin(), bname.end(), 
-			[](char a, char b){
-				return std::tolower(a) < std::tolower(b);	
-			}
-		);
-	});
+	std::sort(entries.begin(), entries.end(), DirectoryEntryComparator());
 	
 	auto &items = Items();
 	items.clear();

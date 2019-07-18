@@ -16,6 +16,13 @@ enum class DefaultIcons{
 std::shared_ptr<gds::Surface> GetDefaultIcon(DefaultIcons icon, size_t size);
 std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size);
 
+std::string TitleCase(const std::string &text);
+
+class DirectoryEntryComparator{
+public:
+	bool operator()(const bt_directory_entry &a, const bt_directory_entry &b);
+};
+
 }
 }
 }

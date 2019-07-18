@@ -99,6 +99,30 @@ std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size){
 	}
 }
 
+std::string TitleCase(const std::string &text){
+	std::string ret;
+	bool capNext = true;
+	for(size_t i = 0; i < text.length(); ++i){
+		auto c = text[i];
+		if(capNext) ret += std::toupper(c);
+		else ret += std::tolower(c);
+		capNext = (c == ' ');
+	}
+	return ret;
+}
+
+bool DirectoryEntryComparator::operator()(const bt_directory_entry &a, const bt_directory_entry &b){
+	if(a.type == FS_Directory && b.type != FS_Directory) return true;
+	if(a.type != FS_Directory && b.type == FS_Directory) return false;
+	std::string aname = a.filename;
+	std::string bname = b.filename;
+	return std::lexicographical_compare(aname.begin(), aname.end(), bname.begin(), bname.end(), 
+		[](char a, char b){
+			return std::tolower(a) < std::tolower(b);	
+		}
+	);
+}
+
 }
 }
 }

@@ -1,3 +1,6 @@
+#ifndef _FOLDERICONVIEW_HPP
+#define _FOLDERICONVIEW_HPP
+
 #include <gui/iconview.hpp>
 
 namespace btos_api{
@@ -22,3 +25,5 @@ public:
 }
 }
 }
+
+#endif
