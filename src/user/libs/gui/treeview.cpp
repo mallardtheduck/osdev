@@ -405,6 +405,7 @@ void TreeView::SetValue(TreeViewNode *node){
 	if(selectedItem == node) return;
 	selectedItem = node;
 	update = true;
+	UpdateDisplayState(true);
 }
 
 std::vector<TreeViewNode> &TreeView::Items(){
