@@ -4,8 +4,6 @@
 
 #include <algorithm>
 
-#include <util/tinyformat.hpp>
-
 namespace btos_api{
 namespace gui{
 namespace shell{
@@ -87,7 +85,6 @@ std::string FolderTreeView::GetSelectedPath(){
 }
 
 void FolderTreeView::SetSelectedPath(const std::string &path){
-	tfm::printf("FolderTreeView::SetSelectedPath(\"%s\") rootPath=\"%s\"\n", path, rootPath);
 	if(path.length() >= rootPath.length()){
 		if(path == rootPath) SetValue(&Items()[0]);
 		else if(path.substr(0, rootPath.length()) == rootPath){
@@ -95,25 +92,18 @@ void FolderTreeView::SetSelectedPath(const std::string &path){
 			auto parts = SplitPath(relPath);
 			auto rootNode = CreateNode(rootPath, true);
 			
-			tfm::printf("FolderTreeView::SetSelectedPath parts.size() = %s\n", parts.size());
-			
 			TreeViewNode *cNode = &rootNode;
 			for(auto &p : parts){
-				tfm::printf("FolderTreeView::SetSelectedPath p = %s\n", p);
 				bool found = false;
 				for(auto &c : cNode->children){
 					if(c.text == TitleCase(p)){
 						c.onOpen(c);
 						cNode = &c;
 						found = true;
-						tfm::printf("FolderTreeView::SetSelectedPath cNode = %p\n", cNode);
 						break;
 					}
 				}
-				if(!found){
-					tfm::printf("FolderTreeView::SetSelectedPath No node found!\n");
-					break;
-				}
+				if(!found) break;
 			}
 			Items().clear();
 			Items().push_back(std::move(rootNode));
