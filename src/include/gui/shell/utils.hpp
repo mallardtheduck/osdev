@@ -20,7 +20,15 @@ std::string TitleCase(const std::string &text);
 
 class DirectoryEntryComparator{
 public:
+	enum class SortBy{
+		Name, Size
+	};
+
+	DirectoryEntryComparator(SortBy order = SortBy::Name, bool directoriesFirst = true);
 	bool operator()(const bt_directory_entry &a, const bt_directory_entry &b);
+private:
+	SortBy order;
+	bool directoriesFirst;
 };
 
 }

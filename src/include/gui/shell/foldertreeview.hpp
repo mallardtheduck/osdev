@@ -14,6 +14,7 @@ private:
 	size_t idCounter = 0;
 	std::string rootPath;
 	bool showFiles;
+	std::function<bool(const bt_directory_entry &a, const bt_directory_entry &b)> sortOrder;
 	
 	TreeViewNode CreateNode(const std::string &path, bool open = false);
 public:
@@ -23,6 +24,8 @@ public:
 	
 	std::string GetRootPath();
 	void SetRootPath(const std::string &path);
+	
+	void SetSortOrder(std::function<bool(const bt_directory_entry &a, const bt_directory_entry &b)> order);
 	
 	std::string GetSelectedPath();
 	void SetSelectedPath(const std::string &path);

@@ -11,7 +11,7 @@ namespace shell{
 static const size_t folderIconSize = 32;
 	
 FolderIconView::FolderIconView(const gds::Rect &r, const std::string &p, bool multiSelect) : 
-IconView(r, folderIconSize, multiSelect), path(p)
+IconView(r, folderIconSize, multiSelect), path(p), sortOrder(DirectoryEntryComparator())
 {
 	Update();
 }
@@ -21,7 +21,7 @@ void FolderIconView::Update(){
 	auto dir = Directory(path.c_str(), FS_Read);
 	for(auto d : dir) entries.push_back(d);
 	
-	std::sort(entries.begin(), entries.end(), DirectoryEntryComparator());
+	std::sort(entries.begin(), entries.end(), sortOrder);
 	
 	auto &items = Items();
 	items.clear();
@@ -42,6 +42,10 @@ std::string FolderIconView::GetPath(){
 void FolderIconView::SetPath(const std::string &p){
 	path = p;
 	Update();
+}
+
+void FolderIconView::SetSortOrder(std::function<bool(const bt_directory_entry &a, const bt_directory_entry &b)> order){
+	sortOrder = order;
 }
 
 bt_directory_entry FolderIconView::GetSelectedEntry(){

@@ -15,7 +15,7 @@ TreeViewNode FolderTreeView::CreateNode(const std::string &path, bool open){
 		std::vector<bt_directory_entry> entries;
 		Directory dir(path.c_str(), FS_Read);
 		for(const auto &d : dir) entries.push_back(d);
-		std::sort(entries.begin(), entries.end(), DirectoryEntryComparator());
+		std::sort(entries.begin(), entries.end(), sortOrder);
 		
 		node.children.clear();	
 		for(const auto &d : entries){
@@ -49,7 +49,7 @@ TreeViewNode FolderTreeView::CreateNode(const std::string &path, bool open){
 }
 
 FolderTreeView::FolderTreeView(const gds::Rect &r, const std::string &rP, bool sF)
-:TreeView(r), rootPath(rP), showFiles(sF)
+:TreeView(r), rootPath(rP), showFiles(sF), sortOrder(DirectoryEntryComparator())
 {
 	Update();
 }
@@ -68,6 +68,10 @@ std::string FolderTreeView::GetRootPath(){
 void FolderTreeView::SetRootPath(const std::string &path){
 	rootPath = path;
 	Update();
+}
+
+void FolderTreeView::SetSortOrder(std::function<bool(const bt_directory_entry &a, const bt_directory_entry &b)> order){
+	sortOrder = order;
 }
 
 std::string FolderTreeView::GetSelectedPath(){

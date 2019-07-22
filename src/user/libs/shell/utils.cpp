@@ -79,7 +79,14 @@ std::shared_ptr<gds::Surface> GetDefaultIcon(DefaultIcons icon, size_t size){
 std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size){
 	auto entry = bt_stat(path.c_str());
 	if(entry.valid){
-		if(entry.type == FS_Directory) return GetDefaultIcon(DefaultIcons::Folder, size);
+		if(entry.type == FS_Directory){
+			size_t driveSplit = path.find(FS_DRIVE_SEPARATOR);
+			if(driveSplit != std::string::npos){
+				auto pathPart = path.substr(driveSplit);
+				if(pathPart == "" || pathPart == ":" || pathPart == ":/") return GetDefaultIcon(DefaultIcons::Drive, size);
+			}
+			return GetDefaultIcon(DefaultIcons::Folder, size);	
+		}
 		if(entry.type == FS_File){
 			bool isElx = false;
 			if(path.length() > 4){
@@ -111,16 +118,30 @@ std::string TitleCase(const std::string &text){
 	return ret;
 }
 
+DirectoryEntryComparator::DirectoryEntryComparator(SortBy o, bool dF)
+: order(o), directoriesFirst(dF)
+{}
+
 bool DirectoryEntryComparator::operator()(const bt_directory_entry &a, const bt_directory_entry &b){
-	if(a.type == FS_Directory && b.type != FS_Directory) return true;
-	if(a.type != FS_Directory && b.type == FS_Directory) return false;
-	std::string aname = a.filename;
-	std::string bname = b.filename;
-	return std::lexicographical_compare(aname.begin(), aname.end(), bname.begin(), bname.end(), 
-		[](char a, char b){
-			return std::tolower(a) < std::tolower(b);	
+	if(directoriesFirst){
+		if(a.type == FS_Directory && b.type != FS_Directory) return true;
+		if(a.type != FS_Directory && b.type == FS_Directory) return false;
+	}
+	switch(order){
+		case SortBy::Name:{
+			std::string aname = a.filename;
+			std::string bname = b.filename;
+			return std::lexicographical_compare(aname.begin(), aname.end(), bname.begin(), bname.end(), 
+				[](char a, char b){
+					return std::tolower(a) < std::tolower(b);	
+				}
+			);
 		}
-	);
+		case SortBy::Size:
+			return a.size < b.size;
+		default:
+			return false;
+	}
 }
 
 }
