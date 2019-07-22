@@ -118,6 +118,25 @@ std::string TitleCase(const std::string &text){
 	return ret;
 }
 
+std::vector<std::string> SplitPath(const std::string &path) {
+	std::vector<std::string> ret;
+	size_t driveSplit = path.find(FS_DRIVE_SEPARATOR);
+	if (driveSplit != std::string::npos) {
+		driveSplit += 1;
+		ret.push_back(path.substr(0, driveSplit) + FS_PATH_SEPARATOR);
+	} else {
+		driveSplit = 0;
+	}
+	size_t lPos = driveSplit;
+	size_t curPos = driveSplit;
+	while ((curPos = path.find(FS_PATH_SEPARATOR, lPos)) != std::string::npos) {
+		if(lPos != curPos) ret.push_back(path.substr(lPos, curPos - lPos));
+		lPos = curPos + 1;
+	}
+	if (lPos < path.length()) ret.push_back(path.substr(lPos));
+	return ret;
+}
+
 DirectoryEntryComparator::DirectoryEntryComparator(SortBy o, bool dF)
 : order(o), directoriesFirst(dF)
 {}

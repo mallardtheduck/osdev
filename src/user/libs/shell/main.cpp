@@ -9,6 +9,7 @@
 
 #include <btos/directory.hpp>
 #include <cmd/path.hpp>
+#include <gui/shell/utils.hpp>
 
 #include <stack>
 
@@ -18,7 +19,21 @@ namespace gds = btos_api::gds;
 namespace gui = btos_api::gui;
 namespace sh = btos_api::gui::shell;
 
+void outputPathParts(const std::string &path){
+	auto parts = sh::SplitPath(path);
+	for(auto &p : parts){
+		tfm::printf("[\"%s\"]", p);
+	}
+	tfm::printf("\n");
+}
+
 int main(){
+	outputPathParts("hdd:");
+	outputPathParts("hdd:/");
+	outputPathParts("hdd:/btos");
+	outputPathParts("hdd:/btos/system");
+	outputPathParts("hdd:/btos/cmd/cmd.elx");
+	
 	std::stack<std::string> prevPath;
 	
 	auto form = std::make_shared<gui::Form>(gds::Rect{200, 200, 500, 310}, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, "Shell Library Test");
@@ -31,6 +46,7 @@ int main(){
 		if(!prevPath.empty()){
 			lbl->SetText(prevPath.top());
 			icv->SetPath(prevPath.top());
+			trv->SetSelectedPath(prevPath.top());
 			icv->SetValue(0);
 			prevPath.pop();
 		}
@@ -51,6 +67,7 @@ int main(){
 			auto path = btos_api::cmd::parse_path(prevPath.top() + "/" + entry.filename);
 			lbl->SetText(path);
 			icv->SetPath(path);
+			trv->SetSelectedPath(path);
 			icv->SetValue(0);
 		}
 	});

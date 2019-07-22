@@ -17,6 +17,7 @@ std::shared_ptr<gds::Surface> GetDefaultIcon(DefaultIcons icon, size_t size);
 std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size);
 
 std::string TitleCase(const std::string &text);
+std::vector<std::string> SplitPath(const std::string &path);
 
 class DirectoryEntryComparator{
 public:
