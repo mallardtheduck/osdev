@@ -50,7 +50,7 @@ void DetailList::CalculateColumnWidths(){
 		for(const auto &di : drawItems){
 			if(di.size() > i && di[i].measures.w > maxW) maxW = di[i].measures.w;
 		}
-		colWidths[i] = maxW;
+		colWidths[i] = maxW + 1;
 	}
 	while(std::accumulate(colWidths.begin(), colWidths.end(), colWidths.size()) > rect.w){
 		auto maxIt = std::max_element(colWidths.begin(), colWidths.end());
@@ -159,17 +159,20 @@ EventResponse DetailList::HandleEvent(const wm_Event &e){
 			update = true;
 			handled = true;
 			UpdateDisplayState();
+			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::UpArrow) && selectedItem > 0){
 			--selectedItem;
 			update = true;
 			handled = true;
 			UpdateDisplayState();
+			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageUp)){
 			if(selectedItem != 0){
 				if(selectedItem > visibleItems) selectedItem -= visibleItems;
 				else selectedItem = 0;
 				update = true;
 				UpdateDisplayState();
+				RaiseChangeEvent();
 			}
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageDown)){
@@ -178,6 +181,7 @@ EventResponse DetailList::HandleEvent(const wm_Event &e){
 				else selectedItem = items.size() - 1;
 				update = true;
 				UpdateDisplayState();
+				RaiseChangeEvent();
 			}
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
@@ -185,6 +189,7 @@ EventResponse DetailList::HandleEvent(const wm_Event &e){
 				selectedItem = 0;
 				update = true;
 				UpdateDisplayState();
+				RaiseChangeEvent();
 			}
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
@@ -192,24 +197,29 @@ EventResponse DetailList::HandleEvent(const wm_Event &e){
 				selectedItem = items.size() - 1;
 				update = true;
 				UpdateDisplayState();
+				RaiseChangeEvent();
 			}
 			handled = true;
 		}else if(!(code & KeyFlags::NonASCII)){
 			auto oldSelectedItem = selectedItem;
 			char c = KB_char(e.Key.code);
-			if(multiSelect && (c == ' ' || c == '\n')){
-				multiSelection[selectedItem] = !multiSelection[selectedItem];
-				update = true;
+			if(c == ' ' || c == '\n'){
+				if(multiSelect){
+					multiSelection[selectedItem] = !multiSelection[selectedItem];
+					update = true;
+				}else if(onActivate) onActivate();
 			}else{
 				c = std::tolower(c);
 				auto finder = [&](const std::vector<std::string> &item){
 					return !item.empty() && !item.front().empty() && std::tolower(item.front().front()) == c;
-					
 				};
 				auto it = std::find_if(begin(items) + selectedItem + 1, end(items), finder);
 				if(it == end(items)) it = std::find_if(begin(items), end(items), finder);
 				if(it != end(items)) selectedItem = it - begin(items);
-				update = oldSelectedItem != selectedItem;
+				if(oldSelectedItem != selectedItem){
+					update = true;
+					RaiseChangeEvent();
+				}
 			}
 			handled = true;
 			UpdateDisplayState();
@@ -219,12 +229,18 @@ EventResponse DetailList::HandleEvent(const wm_Event &e){
 			if(e.type == wm_EventType::PointerButtonUp){
 				auto oldSelectedItem = selectedItem;
 				selectedItem = ((e.Pointer.y - outerRect.y) / fontHeight) + vOffset - 1;
-				if(selectedItem < items.size()) update = oldSelectedItem != selectedItem;
+				if(selectedItem < items.size()){
+					if(oldSelectedItem != selectedItem){
+						update = true;
+						RaiseChangeEvent();
+					}
+				}
 				if(multiSelect && (e.Pointer.x - outerRect.x) < checkSize + 1){
 					multiSelection[selectedItem] = !multiSelection[selectedItem];
 					update = true;
 				}
 				handled = true;
+				if(IsDoubleClick() && onActivate) onActivate();
 				UpdateDisplayState();
 			}
 		}else if(hscroll && hscroll->IsEnabled() && InRect(e.Pointer.x, e.Pointer.y, hscroll->GetInteractRect()) && (e.type & hscroll->GetSubscribed())){
@@ -402,6 +418,7 @@ size_t DetailList::GetValue(){
 void DetailList::SetValue(size_t idx){
 	if(selectedItem == idx) return;
 	selectedItem = idx;
+	UpdateDisplayState(true);
 	update = true;
 }
 
@@ -434,12 +451,21 @@ void DetailList::SetDefaultIcon(std::shared_ptr<gds::Surface> img){
 }
 
 void DetailList::SetItemIcon(size_t idx, std::shared_ptr<gds::Surface> img){
+	if(icons.size() < items.size()) icons.resize(items.size());
 	icons[idx] = img;
 }
 
 void DetailList::ClearItemIcons(){
 	icons.clear();
 	icons.resize(items.size());
+}
+
+void DetailList::OnActivate(std::function<void()> oA){
+	onActivate = oA;
+}
+
+void DetailList::OnInspect(std::function<void()> oI){
+	onInspect = oI;
 }
 
 }

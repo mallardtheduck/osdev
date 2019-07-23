@@ -1,13 +1,13 @@
-#ifndef _FOLDERICONVIEW_HPP
-#define _FOLDERICONVIEW_HPP
+#ifndef _FOLDERDETAILSVIEW_HPP
+#define _FOLDERDETAILSVIEW_HPP
 
-#include <gui/iconview.hpp>
+#include <gui/detaillist.hpp>
 
 namespace btos_api{
 namespace gui{
 namespace shell{
 
-class FolderIconView : public IconView{
+class FolderDetailsView : public DetailList{
 private:
 	std::vector<bt_directory_entry> entries;
 	std::string path;
@@ -15,7 +15,7 @@ private:
 	std::function<bool(const bt_directory_entry &e)> filter;
 	
 public:
-	FolderIconView(const gds::Rect &r, const std::string &path, bool multiSelect = false);
+	FolderDetailsView(const gds::Rect &r, const std::string &path, bool multiSelect = false);
 	
 	void Update();
 	
@@ -27,7 +27,7 @@ public:
 	
 	bt_directory_entry GetSelectedEntry();
 };
-
+	
 }
 }
 }

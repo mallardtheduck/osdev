@@ -19,6 +19,8 @@ std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size);
 std::string TitleCase(const std::string &text);
 std::vector<std::string> SplitPath(const std::string &path);
 
+std::string FormatSize(bt_filesize_t size);
+
 class DirectoryEntryComparator{
 public:
 	enum class SortBy{

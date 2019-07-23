@@ -372,6 +372,7 @@ void IconView::SetValue(size_t idx){
 	if(selectedItem == idx) return;
 	selectedItem = idx;
 	update = true;
+	UpdateDisplayState(true);
 }
 
 std::vector<bool> &IconView::MulitSelections(){

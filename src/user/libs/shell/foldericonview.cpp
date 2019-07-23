@@ -19,7 +19,9 @@ IconView(r, folderIconSize, multiSelect), path(p), sortOrder(DirectoryEntryCompa
 void FolderIconView::Update(){
 	entries.clear();
 	auto dir = Directory(path.c_str(), FS_Read);
-	for(auto d : dir) entries.push_back(d);
+	for(auto d : dir){
+		if(!filter || filter(d)) entries.push_back(d);
+	}
 	
 	std::sort(entries.begin(), entries.end(), sortOrder);
 	
@@ -29,7 +31,9 @@ void FolderIconView::Update(){
 		items.push_back(TitleCase(e.filename));
 	}
 	for(size_t i = 0; i < items.size(); ++i){
-		SetItemIcon(i, GetPathIcon(path + "/" + entries[i].filename, folderIconSize));
+		auto folderPath = path;
+		if(folderPath.back() != FS_PATH_SEPARATOR) folderPath += FS_PATH_SEPARATOR;
+		SetItemIcon(i, GetPathIcon(folderPath + entries[i].filename, folderIconSize));
 	}
 	
 	Refresh();
@@ -52,6 +56,11 @@ bt_directory_entry FolderIconView::GetSelectedEntry(){
 	auto index = GetValue();
 	if(index < entries.size()) return entries[index];
 	else return invalid_directory_entry;
+}
+
+void FolderIconView::SetFilter(std::function<bool(const bt_directory_entry &e)> f){
+	filter = f;
+	Update();
 }
 	
 }

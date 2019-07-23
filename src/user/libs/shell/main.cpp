@@ -3,6 +3,7 @@
 #include <gui/form.hpp>
 #include <gui/shell/foldericonview.hpp>
 #include <gui/shell/foldertreeview.hpp>
+#include <gui/shell/folderdetailsview.hpp>
 #include <gui/button.hpp>
 #include <gui/label.hpp>
 #include <wm/eventloop.hpp>
@@ -36,18 +37,21 @@ int main(){
 	
 	std::stack<std::string> prevPath;
 	
-	auto form = std::make_shared<gui::Form>(gds::Rect{200, 200, 500, 310}, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, "Shell Library Test");
-	auto icv = std::make_shared<sh::FolderIconView>(gds::Rect{170, 10, 320, 250}, "hdd:/");
-	auto trv = std::make_shared<sh::FolderTreeView>(gds::Rect{10, 10, 150, 250}, "hdd:/");
-	auto backBtn = std::make_shared<gui::Button>(gds::Rect{10, 270, 50, 30}, "Back");
-	auto lbl = std::make_shared<gui::Label>(gds::Rect{70, 270, 410, 20}, "hdd:/", gui::Label::Justification::Left);
+	auto form = std::make_shared<gui::Form>(gds::Rect{200, 100, 500, 420}, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, "Shell Library Test");
+	auto icv = std::make_shared<sh::FolderIconView>(gds::Rect{170, 10, 320, 200}, "hdd:/");
+	auto trv = std::make_shared<sh::FolderTreeView>(gds::Rect{10, 10, 150, 200}, "hdd:/");
+	auto backBtn = std::make_shared<gui::Button>(gds::Rect{10, 220, 50, 30}, "Back");
+	auto lbl = std::make_shared<gui::Label>(gds::Rect{70, 220, 410, 30}, "hdd:/", gui::Label::Justification::Left);
+	auto dtv = std::make_shared<sh::FolderDetailsView>(gds::Rect{10, 260, 480, 150}, "hdd:/");
 	
 	backBtn->OnAction([&]{
 		if(!prevPath.empty()){
 			lbl->SetText(prevPath.top());
 			icv->SetPath(prevPath.top());
-			trv->SetSelectedPath(prevPath.top());
 			icv->SetValue(0);
+			dtv->SetPath(prevPath.top());
+			dtv->SetValue(0);
+			trv->SetSelectedPath(prevPath.top());
 			prevPath.pop();
 		}
 	});
@@ -58,6 +62,8 @@ int main(){
 		lbl->SetText(path);
 		icv->SetPath(path);
 		icv->SetValue(0);
+		dtv->SetPath(path);
+		dtv->SetValue(0);
 	});
 	
 	icv->OnActivate([&]{
@@ -67,12 +73,28 @@ int main(){
 			auto path = btos_api::cmd::parse_path(prevPath.top() + "/" + entry.filename);
 			lbl->SetText(path);
 			icv->SetPath(path);
-			trv->SetSelectedPath(path);
 			icv->SetValue(0);
+			trv->SetSelectedPath(path);
+			dtv->SetPath(path);
+			dtv->SetValue(0);
 		}
 	});
 	
-	form->AddControls({trv, icv, backBtn, lbl});
+	dtv->OnActivate([&]{
+		auto entry = dtv->GetSelectedEntry();	
+		if(entry.valid && entry.type == FS_Directory){
+			prevPath.push(icv->GetPath());
+			auto path = btos_api::cmd::parse_path(prevPath.top() + "/" + entry.filename);
+			lbl->SetText(path);
+			icv->SetPath(path);
+			icv->SetValue(0);
+			trv->SetSelectedPath(path);
+			dtv->SetPath(path);
+			dtv->SetValue(0);
+		}
+	});
+	
+	form->AddControls({trv, icv, backBtn, lbl, dtv});
 	
 	btos_api::wm::EventLoop e;
 	e.AddWindow(form);

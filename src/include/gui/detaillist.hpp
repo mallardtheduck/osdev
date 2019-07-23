@@ -50,6 +50,9 @@ private:
 	bool scrollHoriz;
 	bool multiSelect;
 	
+	std::function<void()> onActivate;
+	std::function<void()> onInspect;
+	
 	void UpdateDisplayState(bool changePos = true);
 	void CalculateColumnWidths();
 	std::string FitTextToCol(DrawItem &item, size_t colIndex);
@@ -81,6 +84,9 @@ public:
 	void SetDefaultIcon(std::shared_ptr<gds::Surface> img);
 	void SetItemIcon(size_t idx, std::shared_ptr<gds::Surface> img);
 	void ClearItemIcons();
+	
+	void OnActivate(std::function<void()> fn);
+	void OnInspect(std::function<void()> fn);
 };
 	
 }

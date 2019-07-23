@@ -30,7 +30,6 @@ static std::shared_ptr<gds::Surface> LoadIcon(const char *path){
 		resc::Resc_Close(r);
 		auto s = std::make_shared<gds::Surface>(std::move(gds::Surface::Wrap(ret, true)));
 		i = loadedIcons.insert(loadedIcons.end(), std::make_pair(path, s));
-		tfm::printf("Loaded '%s' (%p)\n", path, s.get());
 	}
 	return i->second;
 }
@@ -135,6 +134,20 @@ std::vector<std::string> SplitPath(const std::string &path) {
 	}
 	if (lPos < path.length()) ret.push_back(path.substr(lPos));
 	return ret;
+}
+
+std::string FormatSize(bt_filesize_t size){
+	if(size < 1024ll) return tfm::format("%s bytes", size);
+	if(size < (10 * 1024ll)) return tfm::format("%.1f KB", size / 1024.0);
+	if(size < (1024ll * 1024ll)) return tfm::format("%s KB", size / 1024ll);
+	if(size < (10 * 1024ll * 1024ll)) return tfm::format("%.1f MB", size / (1024.0 * 1024.0));
+	if(size < (1024ll * 1024ll * 1024ll)) return tfm::format("%s MB", size / (1024ll * 1024ll));
+	if(size < (10 * 1024 * 1024ll * 1024ll)) return tfm::format("%.1f GB", size / (1024.0 * 1024.0 * 1024.0));
+	if(size < (1024ll * 1024ll * 1024ll * 1024ll)) return tfm::format("%s GB", size / (1024ll * 1024ll * 1024ll));
+	if(size < (10 * 1024ll * 1024ll * 1024ll * 1024ll)) return tfm::format("%.1f TB", size / (1024.0 * 1024.0 * 1024.0 * 1024.0));
+	if(size < (1024ll * 1024ll * 1024ll * 1024ll * 1024ll)) return tfm::format("%s TB", size / (1024ll * 1024ll * 1024ll * 1024ll));
+	if(size < (10 * 1024ll * 1024ll * 1024ll * 1024ll * 1024ll)) return tfm::format("%.1f PB", size / (1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0));
+	return tfm::format("%s PB", size / (1024ll * 1024ll * 1024ll * 1024ll * 1024ll));
 }
 
 DirectoryEntryComparator::DirectoryEntryComparator(SortBy o, bool dF)
