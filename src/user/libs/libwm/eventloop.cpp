@@ -56,7 +56,7 @@ namespace wm{
 		ThreadArgs *a = (ThreadArgs*)ptr;
 		EventLoop *evt = a->evt;
 		uint64_t winId = a->winId;
-		tfm::printf("WinEventThread: ID: %s\n", winId);
+		//tfm::printf("WinEventThread: ID: %s\n", winId);
 		a->running.Modify(AtomValue = 1);
 		evt->RunWindow(winId);
 	}
@@ -64,7 +64,7 @@ namespace wm{
 	void EventLoop::SetupWindow(std::shared_ptr<Window> win, bool independent){
 		bt_lock(lock);
 		auto id = win->GetID();
-		tfm::printf("EventLoop::SetupWindow %s %s\n", id, independent);
+		//tfm::printf("EventLoop::SetupWindow %s %s\n", id, independent);
 		windows.insert(make_pair(id, win));
 		winCountAtom.Modify(AtomValue = windows.size());
 		eventQueues[id] = {};
@@ -163,12 +163,12 @@ namespace wm{
 				if(windows.size() == 0) quitAtom.Modify(AtomValue = 1);
 			}
 			if(windows.find(id) == windows.end()){
-				tfm::printf("EventLoop::RunWindow: window %s not in collection. Quitting.\n", id);
+				//tfm::printf("EventLoop::RunWindow: window %s not in collection. Quitting.\n", id);
 				quit = true;
 			}
 			bt_unlock(lock);
 			if(quitAtom.Read()){
-				tfm::printf("EventLoop::RunWindow: quitAtom activated. Quitting.\n", id);
+				//tfm::printf("EventLoop::RunWindow: quitAtom activated. Quitting.\n");
 				quit = true;
 			}
 			if(!quit) serial = eventSerial.WaitFor(AtomValue != serial);
