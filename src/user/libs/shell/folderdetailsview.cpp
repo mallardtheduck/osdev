@@ -17,9 +17,9 @@ DetailList(r, {"Name", "Type", "Size"}, false, folderIconSize, multiSelect), pat
 	Update();
 }
 
-static std::vector<std::string> MakeItem(const bt_directory_entry &e){
+std::vector<std::string> FolderDetailsView::MakeItem(const bt_directory_entry &e){
 	std::vector<std::string> ret;
-	ret.push_back(TitleCase(e.filename));
+	ret.push_back(PathItemTitle(CombinePath({path, e.filename})));
 	switch(e.type){
 		case FS_File:
 			ret.push_back("File");
@@ -42,11 +42,7 @@ static std::vector<std::string> MakeItem(const bt_directory_entry &e){
 }
 
 void FolderDetailsView::Update(){
-	entries.clear();
-	auto dir = Directory(path.c_str(), FS_Read);
-	for(auto d : dir){
-		if(!filter || filter(d)) entries.push_back(d);
-	}
+	entries = GetItemsForPath(path, filter);
 	
 	std::sort(entries.begin(), entries.end(), sortOrder);
 	
@@ -56,9 +52,7 @@ void FolderDetailsView::Update(){
 		items.push_back(MakeItem(e));
 	}
 	for(size_t i = 0; i < items.size(); ++i){
-		auto folderPath = path;
-		if(folderPath.back() != FS_PATH_SEPARATOR) folderPath += FS_PATH_SEPARATOR;
-		SetItemIcon(i, GetPathIcon(folderPath + entries[i].filename, folderIconSize));
+		SetItemIcon(i, GetPathIcon(CombinePath({path, entries[i].filename}), folderIconSize));
 	}
 	
 	Refresh();

@@ -29,20 +29,22 @@ void outputPathParts(const std::string &path){
 }
 
 int main(){
+	outputPathParts("");
 	outputPathParts("hdd:");
 	outputPathParts("hdd:/");
 	outputPathParts("hdd:/btos");
 	outputPathParts("hdd:/btos/system");
 	outputPathParts("hdd:/btos/cmd/cmd.elx");
+	outputPathParts("potato");
 	
 	std::stack<std::string> prevPath;
 	
 	auto form = std::make_shared<gui::Form>(gds::Rect{200, 100, 500, 420}, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, "Shell Library Test");
-	auto icv = std::make_shared<sh::FolderIconView>(gds::Rect{170, 10, 320, 200}, "hdd:/");
-	auto trv = std::make_shared<sh::FolderTreeView>(gds::Rect{10, 10, 150, 200}, "hdd:/");
+	auto icv = std::make_shared<sh::FolderIconView>(gds::Rect{170, 10, 320, 200}, "");
+	auto trv = std::make_shared<sh::FolderTreeView>(gds::Rect{10, 10, 150, 200}, "");
 	auto backBtn = std::make_shared<gui::Button>(gds::Rect{10, 220, 50, 30}, "Back");
-	auto lbl = std::make_shared<gui::Label>(gds::Rect{70, 220, 410, 30}, "hdd:/", gui::Label::Justification::Left);
-	auto dtv = std::make_shared<sh::FolderDetailsView>(gds::Rect{10, 260, 480, 150}, "hdd:/");
+	auto lbl = std::make_shared<gui::Label>(gds::Rect{70, 220, 410, 30}, "", gui::Label::Justification::Left);
+	auto dtv = std::make_shared<sh::FolderDetailsView>(gds::Rect{10, 260, 480, 150}, "");
 	
 	backBtn->OnAction([&]{
 		if(!prevPath.empty()){
@@ -70,7 +72,7 @@ int main(){
 		auto entry = icv->GetSelectedEntry();
 		if(entry.valid && entry.type == FS_Directory){
 			prevPath.push(icv->GetPath());
-			auto path = btos_api::cmd::parse_path(prevPath.top() + "/" + entry.filename);
+			auto path = btos_api::cmd::parse_path(sh::CombinePath({prevPath.top(), entry.filename}));
 			lbl->SetText(path);
 			icv->SetPath(path);
 			icv->SetValue(0);
@@ -84,7 +86,7 @@ int main(){
 		auto entry = dtv->GetSelectedEntry();	
 		if(entry.valid && entry.type == FS_Directory){
 			prevPath.push(icv->GetPath());
-			auto path = btos_api::cmd::parse_path(prevPath.top() + "/" + entry.filename);
+			auto path = btos_api::cmd::parse_path(sh::CombinePath({prevPath.top(), entry.filename}));
 			lbl->SetText(path);
 			icv->SetPath(path);
 			icv->SetValue(0);

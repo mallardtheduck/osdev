@@ -1,12 +1,17 @@
 #include <map>
 #include <algorithm>
 #include <cctype>
+#include <fstream>
+#include <cstring>
 
 #include <unistd.h>
 
+#define BTOS_NO_USING
 #include <btos.h>
 #include <btos/resc.h>
 #include <gds/libgds.h>
+#include <btos/directory.hpp>
+#include <btos/table.hpp>
 
 #include <gui/shell/utils.hpp>
 
@@ -76,6 +81,8 @@ std::shared_ptr<gds::Surface> GetDefaultIcon(DefaultIcons icon, size_t size){
 }
 
 std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size){
+	if(path == "") return GetDefaultIcon(DefaultIcons::Computer, size);
+	
 	auto entry = bt_stat(path.c_str());
 	if(entry.valid){
 		if(entry.type == FS_Directory){
@@ -117,8 +124,17 @@ std::string TitleCase(const std::string &text){
 	return ret;
 }
 
-std::vector<std::string> SplitPath(const std::string &path) {
+std::string PathItemTitle(const std::string &path){
+	if(path == "") return "Computer";
+	
+	auto parts = SplitPath(path);
+	return TitleCase(parts.back());
+}
+
+std::vector<std::string> SplitPath(const std::string &path){
 	std::vector<std::string> ret;
+	if(path == "") return ret;
+	
 	size_t driveSplit = path.find(FS_DRIVE_SEPARATOR);
 	if (driveSplit != std::string::npos) {
 		driveSplit += 1;
@@ -136,6 +152,15 @@ std::vector<std::string> SplitPath(const std::string &path) {
 	return ret;
 }
 
+std::string CombinePath(const std::vector<std::string> &parts){
+	std::string ret;
+	for(const auto &p : parts){
+		if(!ret.empty() && ret.back() != FS_PATH_SEPARATOR) ret += FS_PATH_SEPARATOR;
+		ret += p;
+	}
+	return ret;
+}
+
 std::string FormatSize(bt_filesize_t size){
 	if(size < 1024ll) return tfm::format("%s bytes", size);
 	if(size < (10 * 1024ll)) return tfm::format("%.1f KB", size / 1024.0);
@@ -148,6 +173,31 @@ std::string FormatSize(bt_filesize_t size){
 	if(size < (1024ll * 1024ll * 1024ll * 1024ll * 1024ll)) return tfm::format("%s TB", size / (1024ll * 1024ll * 1024ll * 1024ll));
 	if(size < (10 * 1024ll * 1024ll * 1024ll * 1024ll * 1024ll)) return tfm::format("%.1f PB", size / (1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0));
 	return tfm::format("%s PB", size / (1024ll * 1024ll * 1024ll * 1024ll * 1024ll));
+}
+
+std::vector<bt_directory_entry> GetItemsForPath(const std::string &path, std::function<bool(const bt_directory_entry &e)> filter){
+	std::vector<bt_directory_entry> entries;
+	if(path == ""){
+		uint64_t idCounter = 0;
+		std::ifstream mountsFile("INFO:/MOUNTS");
+		auto mounts = parsecsv(mountsFile);
+		for(auto &r : mounts.rows){
+			bt_directory_entry entry;
+			entry.valid = true;
+			std::string filename = r["name"] + ":/";
+			strncpy(entry.filename, filename.c_str(), BT_MAX_SEGLEN);
+			entry.type = FS_Directory;
+			entry.size = 0;
+			entry.id = ++idCounter;
+			entries.push_back(entry);
+		}
+	}else{
+		auto dir = Directory(path.c_str(), FS_Read);
+		for(auto d : dir){
+			if(!filter || filter(d)) entries.push_back(d);
+		}
+	}
+	return entries;
 }
 
 DirectoryEntryComparator::DirectoryEntryComparator(SortBy o, bool dF)

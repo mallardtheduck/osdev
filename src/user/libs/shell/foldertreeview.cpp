@@ -12,15 +12,13 @@ TreeViewNode FolderTreeView::CreateNode(const std::string &path, bool open){
 	const auto FTVNodeFunction = [&](TreeViewNode &node){
 		auto path = nodePaths[node.id];
 		
-		std::vector<bt_directory_entry> entries;
-		Directory dir(path.c_str(), FS_Read);
-		for(const auto &d : dir) entries.push_back(d);
+		std::vector<bt_directory_entry> entries = GetItemsForPath(path);
 		std::sort(entries.begin(), entries.end(), sortOrder);
 		
 		node.children.clear();	
 		for(const auto &d : entries){
 			if(showFiles || d.type == FS_Directory){
-				auto fullPath = path + "/" + d.filename;
+				auto fullPath = CombinePath({path, d.filename});
 				auto it = nodeCache.find(fullPath);
 				if(it == nodeCache.end()){
 					nodeCache[fullPath] = CreateNode(fullPath);
@@ -36,7 +34,7 @@ TreeViewNode FolderTreeView::CreateNode(const std::string &path, bool open){
 	while(nodePaths.find(id) != nodePaths.end()) id = ++idCounter;
 	nodePaths[id] = path;
 	
-	auto name = TitleCase(bt_stat(path.c_str()).filename);
+	auto name = PathItemTitle(path);
 	auto icon = GetPathIcon(path, 16);
 	auto openIcon = icon;
 	if(icon == GetDefaultIcon(DefaultIcons::Folder, 16)){
@@ -87,8 +85,8 @@ std::string FolderTreeView::GetSelectedPath(){
 void FolderTreeView::SetSelectedPath(const std::string &path){
 	if(path.length() >= rootPath.length()){
 		if(path == rootPath) SetValue(&Items()[0]);
-		else if(path.substr(0, rootPath.length()) == rootPath){
-			auto relPath = path.substr(rootPath.length());
+		else if(rootPath == "" || path.substr(0, rootPath.length()) == rootPath){
+			auto relPath = rootPath == "" ? path : path.substr(rootPath.length());
 			auto parts = SplitPath(relPath);
 			auto rootNode = CreateNode(rootPath, true);
 			

@@ -14,6 +14,7 @@ private:
 	std::function<bool(const bt_directory_entry &a, const bt_directory_entry &b)> sortOrder;
 	std::function<bool(const bt_directory_entry &e)> filter;
 	
+	std::vector<std::string> MakeItem(const bt_directory_entry &e);
 public:
 	FolderDetailsView(const gds::Rect &r, const std::string &path, bool multiSelect = false);
 	

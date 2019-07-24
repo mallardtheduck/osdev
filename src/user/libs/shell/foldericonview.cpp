@@ -17,23 +17,17 @@ IconView(r, folderIconSize, multiSelect), path(p), sortOrder(DirectoryEntryCompa
 }
 
 void FolderIconView::Update(){
-	entries.clear();
-	auto dir = Directory(path.c_str(), FS_Read);
-	for(auto d : dir){
-		if(!filter || filter(d)) entries.push_back(d);
-	}
+	entries = GetItemsForPath(path, filter);
 	
 	std::sort(entries.begin(), entries.end(), sortOrder);
 	
 	auto &items = Items();
 	items.clear();
 	for(auto &e : entries){
-		items.push_back(TitleCase(e.filename));
+		items.push_back(PathItemTitle(CombinePath({path, e.filename})));
 	}
 	for(size_t i = 0; i < items.size(); ++i){
-		auto folderPath = path;
-		if(folderPath.back() != FS_PATH_SEPARATOR) folderPath += FS_PATH_SEPARATOR;
-		SetItemIcon(i, GetPathIcon(folderPath + entries[i].filename, folderIconSize));
+		SetItemIcon(i, GetPathIcon(CombinePath({path, entries[i].filename}), folderIconSize));
 	}
 	
 	Refresh();
