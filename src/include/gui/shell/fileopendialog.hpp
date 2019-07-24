@@ -15,9 +15,10 @@ namespace shell{
 
 class FileOpenDialog{
 private:
-	
+	std::string path;
+	std::function<bool(const bt_directory_entry &e)> filter;
 public:
-	FileOpenDialog(const std::string &path, std::function<bool(const bt_directory_entry &e)> filter);
+	FileOpenDialog(const std::string &path = "", std::function<bool(const bt_directory_entry &e)> filter = nullptr);
 	
 	std::string Show(wm::Window *parent = nullptr);
 };

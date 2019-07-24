@@ -1,9 +1,11 @@
 #define BTOS_NO_USING
 
-#include <gui/form.hpp>
 #include <gui/shell/foldericonview.hpp>
 #include <gui/shell/foldertreeview.hpp>
 #include <gui/shell/folderdetailsview.hpp>
+#include <gui/shell/fileopendialog.hpp>
+
+#include <gui/form.hpp>
 #include <gui/button.hpp>
 #include <gui/label.hpp>
 #include <wm/eventloop.hpp>
@@ -43,8 +45,10 @@ int main(){
 	auto icv = std::make_shared<sh::FolderIconView>(gds::Rect{170, 10, 320, 200}, "");
 	auto trv = std::make_shared<sh::FolderTreeView>(gds::Rect{10, 10, 150, 200}, "");
 	auto backBtn = std::make_shared<gui::Button>(gds::Rect{10, 220, 50, 30}, "Back");
-	auto lbl = std::make_shared<gui::Label>(gds::Rect{70, 220, 410, 30}, "", gui::Label::Justification::Left);
+	auto lbl = std::make_shared<gui::Label>(gds::Rect{70, 220, 300, 30}, "", gui::Label::Justification::Left);
 	auto dtv = std::make_shared<sh::FolderDetailsView>(gds::Rect{10, 260, 480, 150}, "");
+	
+	auto openBtn = std::make_shared<gui::Button>(gds::Rect{380, 220, 50, 30}, "Open");
 	
 	backBtn->OnAction([&]{
 		if(!prevPath.empty()){
@@ -96,7 +100,12 @@ int main(){
 		}
 	});
 	
-	form->AddControls({trv, icv, backBtn, lbl, dtv});
+	openBtn->OnAction([&]{
+		sh::FileOpenDialog dlg;
+		dlg.Show(form.get());
+	});
+	
+	form->AddControls({trv, icv, backBtn, lbl, dtv, openBtn});
 	
 	btos_api::wm::EventLoop e;
 	e.AddWindow(form);
