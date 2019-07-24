@@ -56,7 +56,7 @@ void IconView::UpdateDisplayState(bool changePos){
 	if(vscroll){
 		auto lines = items.size() / visibleCols;
 		if(lines * visibleCols < items.size()) ++lines;
-		if(visibleLines <= lines){
+		if(visibleLines < lines){
 			vscroll->Enable();
 			vscroll->SetLines(std::max<int32_t>(lines - (visibleLines), 1));
 			vscroll->SetPage(visibleLines);

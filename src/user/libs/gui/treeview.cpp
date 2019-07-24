@@ -78,10 +78,10 @@ void TreeView::UpdateDisplayState(bool changePos){
 	}
 	
 	if(hscroll){
-		if(maxTextW > rect.w - 2){
+		if(maxTextW > rect.w - 1){
 			hscroll->Enable();
-		 	hscroll->SetLines(maxTextW - (rect.w - 2));
-		 	hscroll->SetPage(rect.w - 2);
+		 	hscroll->SetLines(maxTextW - (rect.w - 1));
+		 	hscroll->SetPage(rect.w - 1);
 		 	hscroll->SetValue(hOffset);
 		 	hscroll->SetStep(fonts::GetTreeViewTextSize() / 2);
 		}else{
@@ -178,7 +178,7 @@ TreeViewNode *TreeView::GetNodeByPos(uint32_t yPos){
 	size_t i = 0;
 	ForEachShown([&](TreeViewNode &cItem){
 		if(i >= vOffset && i < vOffset + visibleItems + 1){
-			uint32_t itemY = (i - vOffset) * fontHeight;
+			uint32_t itemY = ((i - vOffset) * fontHeight) + 1;
 			if(itemY <= yPos) node = &cItem;
 		}
 		++i;
@@ -298,14 +298,14 @@ void TreeView::Paint(gds::Surface &s){
 		size_t i = 0;
 		ForEachShown([&](TreeViewNode &cItem){
 			if(i >= vOffset && i < vOffset + visibleItems + 1){
-				int32_t iconX = (cItem.level * iconSize) - hOffset;
-				int32_t iconY = (i - vOffset) * fontHeight;
+				int32_t iconX = ((cItem.level * iconSize) - hOffset) + 1;
+				int32_t iconY = ((i - vOffset) * fontHeight) + 1;
 				int32_t textX = iconX + iconSize;
 				int32_t textY = iconY + std::max<int32_t>(((fontHeight + cItem.measures.h) / 2), 0);
 				
 				if(&cItem == selectedItem){
 					auto selFocus = colours::GetSelectionFocus().Fix(*surf);
-					int32_t selY = fontHeight * (i - vOffset);
+					int32_t selY = (fontHeight * (i - vOffset)) + 1;
 					if(hasFocus){
 						surf->Box({1, selY, inW, fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 					}
