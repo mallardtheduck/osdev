@@ -10,7 +10,20 @@ using namespace std;
 namespace btos_api{
 namespace wm{
 	
-	EventLoop *EventLoop::current = nullptr;
+	static std::vector<EventLoop*> activeLoops;
+	static bt_handle_t activeLoopsLock = bt_create_lock();
+	
+	static void AddLoop(EventLoop *loop){
+		bt_lock(activeLoopsLock);
+		activeLoops.push_back(loop);
+		bt_unlock(activeLoopsLock);
+	}
+	
+	static void RemoveLoop(EventLoop *loop){
+		bt_lock(activeLoopsLock);
+		activeLoops.erase(std::remove(activeLoops.begin(), activeLoops.end(), loop), activeLoops.end());
+		bt_unlock(activeLoopsLock);
+	}
 	
 	void EventThread(void *ptr){
 		EventLoop *evt = (EventLoop*)ptr;
@@ -78,11 +91,14 @@ namespace wm{
 		bt_unlock(lock);
 	}
 
-	EventLoop::EventLoop() : eventThread(&EventThread, (void*) this) {}
+	EventLoop::EventLoop() : eventThread(&EventThread, (void*) this) {
+		AddLoop(this);
+	}
 	
 	EventLoop::EventLoop(const vector<shared_ptr<Window>> &wins, const vector<shared_ptr<Menu>> &ms) :
 	eventThread(&EventThread, (void*) this)
 	{
+		AddLoop(this);
 		for(auto w : wins){
 			AddWindow(w);
 		}
@@ -94,6 +110,7 @@ namespace wm{
 	EventLoop::~EventLoop(){
 		quitAtom.Modify(AtomValue = 2);
 		eventThread.Wait();
+		RemoveLoop(this);
 	}
 
 	void EventLoop::SetPreviewer(std::function<bool(const wm_Event&)> &fn){
@@ -142,7 +159,6 @@ namespace wm{
 				auto event = eventQueues[id].front();
 				eventQueues[id].pop();
 				bt_unlock(lock);
-				current = this;
 				auto res = win->Event(event);
 				if(res && event.type == wm_EventType::MenuSelection){
 					bt_lock(lock);
@@ -152,7 +168,6 @@ namespace wm{
 						res = menu->Event(event.Menu.action);
 					}else bt_unlock(lock);
 				}
-				current = nullptr;
 				if(!res) quitAtom.Modify(AtomValue = 1);
 				bt_lock(lock);
 				for(auto w : winRemoveList) windows.erase(w);
@@ -198,8 +213,40 @@ namespace wm{
 		return ret;
 	}
 	
-	EventLoop *EventLoop::GetCurrent(){
-		return current;
+	EventLoop *EventLoop::GetFor(const Window &win){
+		typedef decltype(EventLoop::windows)::value_type wins_element;
+		
+		EventLoop *ret = nullptr;
+		bt_lock(activeLoopsLock);
+		for(auto loop : activeLoops){
+			auto &wins = loop->windows;
+			if(std::any_of(wins.begin(), wins.end(), [&](wins_element &w){
+				return w.second->GetID() == win.GetID();
+			})){
+				ret = loop;
+				break;
+			}
+		}
+		bt_unlock(activeLoopsLock);
+		return ret;
+	}
+	
+	EventLoop *EventLoop::GetFor(const Menu &menu){
+		typedef decltype(EventLoop::menus)::value_type menus_element;
+		
+		EventLoop *ret = nullptr;
+		bt_lock(activeLoopsLock);
+		for(auto loop : activeLoops){
+			auto &menus = loop->menus;
+			if(std::any_of(menus.begin(), menus.end(), [&](menus_element &w){
+				return w.second->GetID() == menu.GetID();
+			})){
+				ret = loop;
+				break;
+			}
+		}
+		bt_unlock(activeLoopsLock);
+		return ret;
 	}
 }
 }

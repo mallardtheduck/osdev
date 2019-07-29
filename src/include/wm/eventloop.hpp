@@ -36,8 +36,6 @@ namespace wm{
 		bt_handle_t lock = bt_create_lock();
 		Atom quitAtom = 0;
 		Atom winCountAtom = 0;
-
-		static EventLoop *current;
 		
 		friend void EventThread(void *);
 		
@@ -61,7 +59,8 @@ namespace wm{
 		bool HandleMessage(const Message &msg) override;
 		bool HandleEvent(const wm_Event &e);
 		
-		static EventLoop *GetCurrent();
+		static EventLoop *GetFor(const Window &win);
+		static EventLoop *GetFor(const Menu &menu);
 	};
 
 }
