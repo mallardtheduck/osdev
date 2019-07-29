@@ -52,7 +52,8 @@ void DetailList::CalculateColumnWidths(){
 		}
 		colWidths[i] = maxW + 1;
 	}
-	while(std::accumulate(colWidths.begin(), colWidths.end(), colWidths.size()) > rect.w){
+	auto availableWidth = rect.w - iconsize - (multiSelect ? checkSize : 0);
+	while(std::accumulate(colWidths.begin(), colWidths.end(), colWidths.size()) > availableWidth){
 		auto maxIt = std::max_element(colWidths.begin(), colWidths.end());
 		--*maxIt;
 	}
