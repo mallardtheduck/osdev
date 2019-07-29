@@ -8,6 +8,7 @@
 #include <gui/form.hpp>
 #include <gui/button.hpp>
 #include <gui/label.hpp>
+#include <gui/messagebox.hpp>
 #include <wm/eventloop.hpp>
 
 #include <btos/directory.hpp>
@@ -102,7 +103,8 @@ int main(){
 	
 	openBtn->OnAction([&]{
 		sh::FileOpenDialog dlg;
-		dlg.Show(form.get());
+		auto path = dlg.Show(form.get());
+		gui::MessageBox(tfm::format("Selected: %s", path), "Open").Show(form.get());
 	});
 	
 	form->AddControls({trv, icv, backBtn, lbl, dtv, openBtn});
