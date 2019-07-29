@@ -2,6 +2,7 @@
 
 #include <gui/form.hpp>
 #include <gui/button.hpp>
+#include <gui/imagebutton.hpp>
 #include <gui/label.hpp>
 #include <gui/textbox.hpp>
 #include <gui/messagebox.hpp>
@@ -15,6 +16,8 @@
 #include <util/tinyformat.hpp>
 
 #include <stack>
+
+#include "shell_internal.hpp"
 
 namespace btos_api{
 namespace gui{
@@ -30,18 +33,23 @@ std::string FileOpenDialog::Show(wm::Window *parent){
 	std::string selectedPath;
 	
 	auto form = std::make_shared<Form>(gds::Rect{0, 0, totalFormWidth, totalFormHeight}, FormOptions::ClosedFixed | wm_WindowOptions::NoHide, "Open file...");
-	auto backBtn = std::make_shared<Button>(gds::Rect{10, 10, 50, 30}, "Back");
-	auto pathText = std::make_shared<TextBox>(gds::Rect{70, 10, 360, 30});
-	auto goBtn = std::make_shared<Button>(gds::Rect{440, 10, 50, 30}, "Go");
-	auto tree = std::make_shared<FolderTreeView>(gds::Rect{10, 50, 155, 220}, "");
-	auto details = std::make_shared<FolderDetailsView>(gds::Rect{170, 50, 320, 220}, "");
+	auto backBtn = std::make_shared<ImageButton>(gds::Rect{10, 10, 28, 28}, LoadIcon("icons/back_16.png"));
+	auto pathText = std::make_shared<TextBox>(gds::Rect{48, 10, 404, 28});
+	auto goBtn = std::make_shared<ImageButton>(gds::Rect{462, 10, 28, 28}, LoadIcon("icons/goto_16.png"));
+	auto tree = std::make_shared<FolderTreeView>(gds::Rect{10, 48, 155, 222}, "");
+	auto details = std::make_shared<FolderDetailsView>(gds::Rect{170, 48, 320, 222}, "");
 	auto okBtn = std::make_shared<Button>(gds::Rect{360, 280, 60, 30}, "OK");
 	auto cancelBtn = std::make_shared<Button>(gds::Rect{430, 280, 60, 30}, "Cancel");
+	
+	backBtn->Disable();
 	
 	std::stack<std::string> history;
 	
 	auto navigateTo = [&](const std::string &path, bool keep){
-		if(keep) history.push(details->GetPath());
+		if(keep){
+			history.push(details->GetPath());
+			backBtn->Enable();
+		}
 		details->SetPath(path);
 		tree->SetSelectedPath(path);
 		pathText->SetText(path); 
@@ -73,17 +81,24 @@ std::string FileOpenDialog::Show(wm::Window *parent){
 	});
 	
 	backBtn->OnAction([&]{
-		navigateTo(history.top(), false);
-		history.pop();
+		if(!history.empty()){
+			navigateTo(history.top(), false);
+			history.pop();
+		}
+		if(history.empty()) backBtn->Disable();
 	});
 	
 	goBtn->OnAction([&]{
 		auto path = pathText->GetValue();
 		auto check = bt_stat(path.c_str());
-		if(check.type == FS_Directory){
-			navigateTo(path, true);
+		if(check.valid){
+			if(check.type == FS_Directory){
+				navigateTo(path, true);
+			}else{
+				confirm(path);
+			}
 		}else{
-			MessageBox msg(tfm::format("Cannot navigate to \"%s\".", path), "Error");
+			MessageBox msg(tfm::format("File/path \"%s\" not found.", path), "Error", LoadIcon("icons/error_32.png"));
 			msg.Show(form.get());
 			pathText->SetText(details->GetPath());
 		}

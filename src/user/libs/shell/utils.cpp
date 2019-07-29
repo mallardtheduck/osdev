@@ -25,7 +25,7 @@ namespace shell{
 
 static std::map<std::string, std::shared_ptr<gds::Surface>> loadedIcons;
 
-static std::shared_ptr<gds::Surface> LoadIcon(const char *path){
+std::shared_ptr<gds::Surface> LoadIcon(const char *path){
 	auto i = loadedIcons.find(path);
 	if(i == loadedIcons.end()){
 		auto r = resc::Resc_LocalOpen(shell_resc_data, shell_resc_size);
