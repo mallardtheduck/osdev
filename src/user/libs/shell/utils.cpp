@@ -112,14 +112,31 @@ std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size){
 	}
 }
 
+static bool char_islower(char ch)
+{
+    return std::islower(static_cast<unsigned char>(ch));
+}
+
+static bool char_isupper(char ch)
+{
+    return std::isupper(static_cast<unsigned char>(ch));
+}
+
+static bool char_isspace(char ch)
+{
+    return std::isspace(static_cast<unsigned char>(ch));
+}
+
 std::string TitleCase(const std::string &text){
+	if(std::any_of(text.begin(), text.end(), char_islower) && std::any_of(text.begin(), text.end(), char_isupper)) return text;
+	
 	std::string ret;
 	bool capNext = true;
 	for(size_t i = 0; i < text.length(); ++i){
 		auto c = text[i];
 		if(capNext) ret += std::toupper(c);
 		else ret += std::tolower(c);
-		capNext = (c == ' ');
+		capNext = char_isspace(c);
 	}
 	return ret;
 }
