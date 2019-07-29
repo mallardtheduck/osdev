@@ -38,7 +38,7 @@ bool Form::HandleEvent(const wm_Event &e){
 	if(e.type == wm_EventType::Close){
 		if(!onClose || !onClose()){
 			Close();
-			auto el = wm::EventLoop::GetCurrent();
+			auto el = wm::EventLoop::GetFor(*this);
 			if(el) el->RemoveWindow(GetID());
 		}
 		return true;

@@ -87,7 +87,7 @@ size_t MessageBox::Show(wm::Window *parent){
 	
 	wm::EventLoop *loop = nullptr;
 	std::unique_ptr<wm::EventLoop> loopPtr;
-	if(parent) loop = wm::EventLoop::GetCurrent();
+	if(parent) loop = wm::EventLoop::GetFor(*parent);
 	if(!loop){
 		loopPtr.reset(new wm::EventLoop());
 		loop = loopPtr.get();
