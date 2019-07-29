@@ -20,7 +20,7 @@ private:
 public:
 	FileOpenDialog(const std::string &path = "", std::function<bool(const bt_directory_entry &e)> filter = nullptr);
 	
-	std::string Show(wm::Window *parent = nullptr);
+	std::string Show(wm::Window *parent);
 };
 
 }
