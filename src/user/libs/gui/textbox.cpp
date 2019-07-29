@@ -96,6 +96,8 @@ EventResponse TextBox::HandleEvent(const wm_Event &e){
 					RaiseChangeEvent();
 					--cursorPos;
 					handled = true;
+				}else if(c == '\n'){
+					RaiseActionEvent();
 				}else if(c > 31){
 					text.insert(cursorPos, 1, c);
 					RaiseChangeEvent();

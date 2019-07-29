@@ -46,13 +46,15 @@ std::string FileOpenDialog::Show(wm::Window *parent){
 	std::stack<std::string> history;
 	
 	auto navigateTo = [&](const std::string &path, bool keep){
-		if(keep){
-			history.push(details->GetPath());
-			backBtn->Enable();
+		if(path != details->GetPath()){
+			if(keep){
+				history.push(details->GetPath());
+				backBtn->Enable();
+			}
+			details->SetPath(path);
+			tree->SetSelectedPath(path);
+			pathText->SetText(path);
 		}
-		details->SetPath(path);
-		tree->SetSelectedPath(path);
-		pathText->SetText(path); 
 	};
 	
 	wm::EventLoop *loop = nullptr;
@@ -88,7 +90,7 @@ std::string FileOpenDialog::Show(wm::Window *parent){
 		if(history.empty()) backBtn->Disable();
 	});
 	
-	goBtn->OnAction([&]{
+	auto goAction = [&]{
 		auto path = pathText->GetValue();
 		auto check = bt_stat(path.c_str());
 		if(check.valid){
@@ -102,7 +104,10 @@ std::string FileOpenDialog::Show(wm::Window *parent){
 			msg.Show(form.get());
 			pathText->SetText(details->GetPath());
 		}
-	});
+	};
+	
+	goBtn->OnAction(goAction);
+	pathText->OnAction(goAction);
 	
 	cancelBtn->OnAction([&]{
 		confirm("");

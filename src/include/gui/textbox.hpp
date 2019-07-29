@@ -6,7 +6,7 @@
 namespace btos_api{
 namespace gui{
 
-class TextBox : public IValueControl<std::string>{
+class TextBox : public IValueControl<std::string>, public IActionControl<void>{
 private:
 	gds::Rect rect;
 	std::string text;
