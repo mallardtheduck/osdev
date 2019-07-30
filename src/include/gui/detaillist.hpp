@@ -43,6 +43,7 @@ private:
 	bool update = false;
 	bool hasFocus = false;
 	bool enabled = true;
+	bool fireCurrentSelection = true;
 	
 	std::unique_ptr<Scrollbar> hscroll;
 	std::unique_ptr<Scrollbar> vscroll;

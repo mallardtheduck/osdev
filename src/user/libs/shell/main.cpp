@@ -4,6 +4,7 @@
 #include <gui/shell/foldertreeview.hpp>
 #include <gui/shell/folderdetailsview.hpp>
 #include <gui/shell/fileopendialog.hpp>
+#include <gui/shell/filesavedialog.hpp>
 
 #include <gui/form.hpp>
 #include <gui/button.hpp>
@@ -50,6 +51,7 @@ int main(){
 	auto dtv = std::make_shared<sh::FolderDetailsView>(gds::Rect{10, 260, 480, 150}, "");
 	
 	auto openBtn = std::make_shared<gui::Button>(gds::Rect{380, 220, 50, 30}, "Open");
+	auto saveBtn = std::make_shared<gui::Button>(gds::Rect{440, 220, 50, 30}, "Save");
 	
 	backBtn->OnAction([&]{
 		if(!prevPath.empty()){
@@ -102,12 +104,18 @@ int main(){
 	});
 	
 	openBtn->OnAction([&]{
-		sh::FileOpenDialog dlg;
+		sh::FileOpenDialog dlg("", sh::FileExtensionPredicate({".txt", ".cmd", ".ini"}));
 		auto path = dlg.Show(form.get());
 		gui::MessageBox(tfm::format("Selected: %s", path), "Open").Show(form.get());
 	});
 	
-	form->AddControls({trv, icv, backBtn, lbl, dtv, openBtn});
+	saveBtn->OnAction([&]{
+		sh::FileSaveDialog dlg("untitled.txt", ".txt", "", sh::FileExtensionPredicate({".txt", ".cmd", ".ini"}));
+		auto path = dlg.Show(form.get());
+		gui::MessageBox(tfm::format("Selected: %s", path), "Open").Show(form.get());
+	});
+	
+	form->AddControls({trv, icv, backBtn, lbl, dtv, openBtn, saveBtn});
 	
 	btos_api::wm::EventLoop e;
 	e.AddWindow(form);

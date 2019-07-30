@@ -21,6 +21,10 @@ std::string PathItemTitle(const std::string &path);
 std::vector<std::string> SplitPath(const std::string &path);
 std::string CombinePath(const std::vector<std::string> &parts);
 
+template<typename T, typename ...Ts> std::string CombinePath(T a, Ts... args){
+	return CombinePath({a, args...});
+}
+
 std::string FormatSize(bt_filesize_t size);
 
 std::vector<bt_directory_entry> GetItemsForPath(const std::string &path, std::function<bool(const bt_directory_entry &e)> filter = nullptr);
@@ -36,6 +40,18 @@ public:
 private:
 	SortBy order;
 	bool directoriesFirst;
+};
+
+class FileExtensionPredicate{
+private:
+	std::vector<std::string> extensions;
+public:
+	explicit FileExtensionPredicate(const std::string &extension);
+	FileExtensionPredicate(const std::vector<std::string> &extensions);
+	FileExtensionPredicate(const std::initializer_list<const char*> &extensions);
+	
+	bool operator()(const bt_directory_entry &entry);
+	bool operator()(const std::string &filename);
 };
 
 }

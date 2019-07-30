@@ -36,6 +36,7 @@ public:
 	
 	void SetText(const std::string &t);
 	bool GetValue();
+	void SetValue(bool v);
 };
 
 }

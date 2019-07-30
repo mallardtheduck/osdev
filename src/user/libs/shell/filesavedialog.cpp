@@ -1,4 +1,4 @@
-#include <gui/shell/fileopendialog.hpp>
+#include <gui/shell/filesavedialog.hpp>
 
 #include <gui/form.hpp>
 #include <gui/button.hpp>
@@ -6,6 +6,7 @@
 #include <gui/label.hpp>
 #include <gui/textbox.hpp>
 #include <gui/checkbox.hpp>
+#include <gui/label.hpp>
 #include <gui/messagebox.hpp>
 
 #include <gui/shell/foldertreeview.hpp>
@@ -25,23 +26,26 @@ namespace gui{
 namespace shell{
 
 static const uint32_t totalFormWidth = 500;
-static const uint32_t totalFormHeight = 320;
+static const uint32_t totalFormHeight = 358;
 
-FileOpenDialog::FileOpenDialog(const std::string &p, std::function<bool(const bt_directory_entry &e)> f):
-path(p), filter(f) {}
+FileSaveDialog::FileSaveDialog(const std::string &fn, const std::string &d, const std::string &p, std::function<bool(const bt_directory_entry &e)> f) :
+filename(fn), defaultExt(d), path(p), filter(f) {}
 
-std::string FileOpenDialog::Show(wm::Window *parent){
+std::string FileSaveDialog::Show(wm::Window *parent){
 	std::string selectedPath;
 	
-	auto form = std::make_shared<Form>(gds::Rect{0, 0, totalFormWidth, totalFormHeight}, FormOptions::ClosedFixed | wm_WindowOptions::NoHide, "Open file...");
+	auto form = std::make_shared<Form>(gds::Rect{0, 0, totalFormWidth, totalFormHeight}, FormOptions::ClosedFixed | wm_WindowOptions::NoHide, "Save file...");
 	auto backBtn = std::make_shared<ImageButton>(gds::Rect{10, 10, 28, 28}, LoadIcon("icons/back_16.png"));
 	auto pathText = std::make_shared<TextBox>(gds::Rect{48, 10, 404, 28});
 	auto goBtn = std::make_shared<ImageButton>(gds::Rect{462, 10, 28, 28}, LoadIcon("icons/goto_16.png"));
-	auto tree = std::make_shared<FolderTreeView>(gds::Rect{10, 48, 155, 222}, "");
-	auto details = std::make_shared<FolderDetailsView>(gds::Rect{170, 48, 320, 222}, "");
-	auto filterChk = std::make_shared<Checkbox>(gds::Rect{10, 280, 120, 30}, "Apply filter", true);
-	auto okBtn = std::make_shared<Button>(gds::Rect{360, 280, 60, 30}, "OK");
-	auto cancelBtn = std::make_shared<Button>(gds::Rect{430, 280, 60, 30}, "Cancel");
+	auto nameLabel = std::make_shared<Label>(gds::Rect{10, 48, 40, 28}, "Name:");
+	auto nameText = std::make_shared<TextBox>(gds::Rect{60, 48, 290, 28}, filename);
+	auto extCheck = std::make_shared<Checkbox>(gds::Rect{360, 48, 130, 28}, tfm::format("Auto type (%s)", defaultExt), true);
+	auto tree = std::make_shared<FolderTreeView>(gds::Rect{10, 86, 155, 222}, "");
+	auto details = std::make_shared<FolderDetailsView>(gds::Rect{170, 86, 320, 222}, "");
+	auto filterChk = std::make_shared<Checkbox>(gds::Rect{10, 318, 120, 30}, "Apply filter", true);
+	auto okBtn = std::make_shared<Button>(gds::Rect{360, 318, 60, 30}, "OK");
+	auto cancelBtn = std::make_shared<Button>(gds::Rect{430, 318, 60, 30}, "Cancel");
 	
 	backBtn->Disable();
 	details->SetFilter(filter);
@@ -68,17 +72,53 @@ std::string FileOpenDialog::Show(wm::Window *parent){
 		loop->RemoveWindow(form->GetID());
 	};
 	
+	auto preConfirm = [&](const std::string &path, const std::string &filename){
+		std::string filepath = CombinePath(path, filename);
+		
+		if(!defaultExt.empty() && extCheck->GetValue()){
+			FileExtensionPredicate pred(defaultExt);
+			if(!pred(filepath)) filepath += defaultExt;
+		}
+		auto stat = bt_stat(filepath.c_str());
+		bool ok = true;
+		if(stat.valid && stat.type == FS_File){
+			MessageBox msg(tfm::format("Overwrite \"%s\"?", filepath), "Confirm", LoadIcon("icons/question_32.png"), {"Yes", "No"});
+			ok = msg.Show(form.get()) == 0;
+		}else if(stat.valid || path.empty() || filename.empty()){
+			MessageBox msg(tfm::format("Cannot save to \"%s\".", filepath), "Error", LoadIcon("icons/error_32.png"));
+			msg.Show(form.get());
+			ok = false;
+		}
+		if(ok) confirm(filepath);
+	};
+	
+	nameText->OnAction([&]{
+		preConfirm(details->GetPath(), nameText->GetValue());
+	});
+	
 	auto fileActivate = [&]{
 		auto item = details->GetSelectedEntry();
-		auto path = CombinePath({details->GetPath(), item.filename});
+		auto dirpath = CombinePath({details->GetPath(), item.filename});
 		if(item.type == FS_Directory){
-			navigateTo(path, true);
+			navigateTo(dirpath, true);
 		}else{
-			confirm(path);
+			preConfirm(details->GetPath(), nameText->GetValue());
 		}
 	};
 	
 	details->OnActivate(fileActivate);
+	
+	details->OnChange([&](size_t){
+		auto entry = details->GetSelectedEntry();
+		if(entry.type != FS_Directory){
+			auto filename = TitleCase(entry.filename);
+			nameText->SetText(filename);
+			if(!defaultExt.empty()){
+				FileExtensionPredicate pred(defaultExt);
+				extCheck->SetValue(pred(filename));
+			}
+		}
+	});
 	
 	tree->OnChange([&](TreeViewNode*){
 		auto path = tree->GetSelectedPath();
@@ -101,14 +141,10 @@ std::string FileOpenDialog::Show(wm::Window *parent){
 	auto goAction = [&]{
 		auto path = pathText->GetValue();
 		auto check = bt_stat(path.c_str());
-		if(check.valid){
-			if(check.type == FS_Directory){
-				navigateTo(path, true);
-			}else{
-				confirm(path);
-			}
+		if(check.valid && check.type == FS_Directory){
+			navigateTo(path, true);
 		}else{
-			MessageBox msg(tfm::format("File/path \"%s\" not found.", path), "Error", LoadIcon("icons/error_32.png"));
+			MessageBox msg(tfm::format("Cannot navigat to \"%s\".", path), "Error", LoadIcon("icons/error_32.png"));
 			msg.Show(form.get());
 			pathText->SetText(details->GetPath());
 		}
@@ -121,10 +157,16 @@ std::string FileOpenDialog::Show(wm::Window *parent){
 		confirm("");
 	});
 	
-	okBtn->OnAction(fileActivate);
+	okBtn->OnAction([&]{
+		preConfirm(details->GetPath(), nameText->GetValue());
+	});
 	
-	std::vector<std::shared_ptr<IControl>> controls = {backBtn, pathText, goBtn, tree, details, filterChk, okBtn, cancelBtn};
+	std::vector<std::shared_ptr<IControl>> controls = {backBtn, pathText, goBtn, nameLabel, nameText, extCheck, tree, details, filterChk, okBtn, cancelBtn};
 	if(!filter) controls.erase(std::find(controls.begin(), controls.end(), filterChk));
+	if(defaultExt.empty()){
+		controls.erase(std::find(controls.begin(), controls.end(), extCheck));
+		nameText->SetPosition({70, 48, 410, 28});
+	}
 	
 	form->AddControls(controls);
 	

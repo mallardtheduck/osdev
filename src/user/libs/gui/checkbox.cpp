@@ -178,5 +178,13 @@ void Checkbox::SetPosition(const gds::Rect &r){
 	bkSurf.reset();
 }
 
+void Checkbox::SetValue(bool v){
+	if(value != v){
+		value = v;
+		update = true;
+		IControl::Paint(rect);
+	}
+}
+
 }
 }

@@ -243,6 +243,36 @@ bool DirectoryEntryComparator::operator()(const bt_directory_entry &a, const bt_
 	}
 }
 
+template<typename R, typename T> static R rangeConvert(const T &range){
+	R ret;
+	for(auto &v : range) ret.insert(ret.end(), v);
+	return ret;
+}
+
+FileExtensionPredicate::FileExtensionPredicate(const std::string &e) : FileExtensionPredicate(std::vector<std::string>{e}) {}
+FileExtensionPredicate::FileExtensionPredicate(const std::vector<std::string> &exts) : extensions(exts) {}
+FileExtensionPredicate::FileExtensionPredicate(const std::initializer_list<const char*> &exts) : 
+	extensions(rangeConvert<std::vector<std::string>>(exts)) {}
+	
+bool FileExtensionPredicate::operator()(const bt_directory_entry &entry){
+	if(entry.type == FS_Directory) return true;
+	
+	std::string filename = entry.filename;
+	return operator()(filename);
+}
+
+bool FileExtensionPredicate::operator()(const std::string &filename){
+	for(auto &ext : extensions){
+		if(filename.length() > ext.length()){
+			auto extPart = filename.substr(filename.length() - ext.length());
+			if(std::equal(extPart.begin(), extPart.end(), ext.begin(), [](char a, char b){
+				return std::tolower(a) == std::tolower(b);
+			})) return true;
+		}
+	}
+	return false;
+}
+
 }
 }
 }

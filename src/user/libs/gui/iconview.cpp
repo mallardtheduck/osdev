@@ -186,7 +186,10 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 				if(it == end(items)) it = std::find_if(begin(items), end(items), finder);
 				if(it != end(items)) selectedItem = it - begin(items);
 				update = oldSelectedItem != selectedItem;
-				if(update) RaiseChangeEvent();
+				if(update || fireCurrentSelection){ 
+					RaiseChangeEvent();
+					fireCurrentSelection = false;
+				}
 			}
 			handled = true;
 			UpdateDisplayState();
@@ -203,7 +206,10 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 				auto oldSelectedItem = selectedItem;
 				selectedItem = idx;
 				if(selectedItem < items.size()) update = oldSelectedItem != selectedItem;
-				if(update) RaiseChangeEvent();
+				if(update || fireCurrentSelection){ 
+					RaiseChangeEvent();
+					fireCurrentSelection = false;
+				}
 				if(multiSelect){
 					auto xPos = pX - (col * itemWidth);
 					auto yPos = pY - (line * itemHeight);
@@ -373,6 +379,7 @@ void IconView::SetValue(size_t idx){
 	selectedItem = idx;
 	update = true;
 	UpdateDisplayState(true);
+	fireCurrentSelection = true;
 }
 
 std::vector<bool> &IconView::MulitSelections(){
@@ -389,6 +396,7 @@ void IconView::Refresh(){
 	multiSelection.resize(items.size());
 	icons.resize(items.size());
 	drawItems.clear();
+	fireCurrentSelection = true;
 }
 
 void IconView::SetDefaultIcon(std::shared_ptr<gds::Surface> img){

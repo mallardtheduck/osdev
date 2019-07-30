@@ -217,9 +217,10 @@ EventResponse DetailList::HandleEvent(const wm_Event &e){
 				auto it = std::find_if(begin(items) + selectedItem + 1, end(items), finder);
 				if(it == end(items)) it = std::find_if(begin(items), end(items), finder);
 				if(it != end(items)) selectedItem = it - begin(items);
-				if(oldSelectedItem != selectedItem){
+				if(oldSelectedItem != selectedItem || fireCurrentSelection){
 					update = true;
 					RaiseChangeEvent();
+					fireCurrentSelection = false;
 				}
 			}
 			handled = true;
@@ -231,9 +232,10 @@ EventResponse DetailList::HandleEvent(const wm_Event &e){
 				auto oldSelectedItem = selectedItem;
 				selectedItem = ((e.Pointer.y - outerRect.y) / fontHeight) + vOffset - 1;
 				if(selectedItem < items.size()){
-					if(oldSelectedItem != selectedItem){
+					if(oldSelectedItem != selectedItem || fireCurrentSelection){
 						update = true;
 						RaiseChangeEvent();
+						fireCurrentSelection = false;
 					}
 				}
 				if(multiSelect && (e.Pointer.x - outerRect.x) < checkSize + 1){
@@ -421,6 +423,7 @@ void DetailList::SetValue(size_t idx){
 	selectedItem = idx;
 	UpdateDisplayState(true);
 	update = true;
+	fireCurrentSelection = true;
 }
 
 std::vector<bool> &DetailList::MulitSelections(){
@@ -445,6 +448,7 @@ void DetailList::Refresh(){
 	colWidths.resize(cols.size());
 	icons.resize(items.size());
 	multiSelection.resize(items.size());
+	fireCurrentSelection = true;
 }
 
 void DetailList::SetDefaultIcon(std::shared_ptr<gds::Surface> img){
