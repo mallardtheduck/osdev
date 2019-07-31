@@ -29,6 +29,7 @@ BitmapSurface::BitmapSurface(size_t w, size_t h, uint32_t cT, uint32_t scale)
 size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 	//uint64_t op_start = bt_rtc_millis();
 	image->SetThickness(op.Common.lineWidth);
+	image->AlphaBlending(op.Common.fillStyle == gds_FillStyle::Overwrite ? gdEffectReplace : gdEffectNormal);
 	switch(op.type) {
 		case gds_DrawingOpType::Dot:
 			image->SetPixel(op.Dot.x, op.Dot.y, op.Common.lineColour);
@@ -172,6 +173,7 @@ void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
 	if(pending_op.type != gds_DrawingOpType::None && pending_op.type == params->type){
 		switch(pending_op.type){
 			case gds_DrawingOpType::Text:{
+					image->AlphaBlending((pending_op.Common.lineStyle & gds_TextStyle::PixelOverwrite) ? gdEffectReplace : gdEffectNormal);
 					gdFTStringExtra ftex;
 					ftex.flags = gdFTEX_RESOLUTION;
 					ftex.vdpi = 72;

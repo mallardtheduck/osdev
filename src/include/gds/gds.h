@@ -84,6 +84,7 @@ ENUM_START(gds_TextStyle)
 	ENUM_SET(gds_TextStyle, Normal, 		0),
 	ENUM_SET(gds_TextStyle, Underline, 		1 << 0),
 	ENUM_SET(gds_TextStyle, Strikethrough, 	1 << 1),
+	ENUM_SET(gds_TextStyle, PixelOverwrite, 1 << 2),
 ENUM_END
 ENUM_TYPE(gds_TextStyle);
 
@@ -105,6 +106,7 @@ ENUM_TYPE(gds_LineStyle);
 ENUM_START(gds_FillStyle)
 	ENUM_SET(gds_FillStyle, None, 0),
 	ENUM_SET(gds_FillStyle, Filled, 1),
+	ENUM_SET(gds_FillStyle, Overwrite, 2),
 ENUM_END
 ENUM_TYPE(gds_FillStyle);
 
