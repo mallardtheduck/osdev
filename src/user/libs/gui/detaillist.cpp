@@ -68,37 +68,42 @@ void DetailList::UpdateDisplayState(bool changePos){
 		if(selectedItem >= vOffset + (visibleItems - 1)) vOffset = std::max<int32_t>(0, (int32_t)(selectedItem - (visibleItems - 1)));
 	}
 	
-	drawItems.resize(items.size());
-	for(size_t i = 0; i < items.size(); ++i){
-		drawItems[i].resize(items[i].size());
-		for(size_t j = 0; j < items[i].size(); ++j){
-			auto &di = drawItems[i][j];
-			auto &it = items[i][j];
-			if(di.text != it || !di.measures.w){
-				di.text = it;
-				di.measures = surf->MeasureText(it, fonts::GetDetailListFont(), fonts::GetDetailListTextSize());
+	if(!measured){
+		drawItems.resize(items.size());
+		for(size_t i = 0; i < items.size(); ++i){
+			drawItems[i].resize(items[i].size());
+			for(size_t j = 0; j < items[i].size(); ++j){
+				auto &di = drawItems[i][j];
+				auto &it = items[i][j];
+				if(di.text != it || !di.measures.w){
+					di.text = it;
+					di.measures = surf->MeasureText(it, fonts::GetDetailListFont(), fonts::GetDetailListTextSize());
+					di.fittedText = "";
+					di.fittedWidth = 0;
+				}
+			}
+		}
+		
+		colItems.resize(cols.size());
+		for(size_t i = 0; i < cols.size(); ++i){
+			auto &di = colItems[i];
+			auto &ci = cols[i];
+			if(di.text != ci || !di.measures.w){
+				di.text = ci;
+				di.measures = surf->MeasureText(ci, fonts::GetDetailListFont(), fonts::GetDetailListTextSize());
 				di.fittedText = "";
 				di.fittedWidth = 0;
 			}
 		}
-	}
-	
-	colItems.resize(cols.size());
-	for(size_t i = 0; i < cols.size(); ++i){
-		auto &di = colItems[i];
-		auto &ci = cols[i];
-		if(di.text != ci || !di.measures.w){
-			di.text = ci;
-			di.measures = surf->MeasureText(ci, fonts::GetDetailListFont(), fonts::GetDetailListTextSize());
-			di.fittedText = "";
-			di.fittedWidth = 0;
-		}
+		measured = true;
 	}
 	
 	if(vscroll){
 		if(visibleItems < items.size()){
+			auto scrollLines = std::max<int32_t>((int32_t)items.size() - visibleItems, 1);
+			if((int32_t)vOffset > scrollLines) vOffset = scrollLines;
 			vscroll->Enable();
-			vscroll->SetLines(std::max<int32_t>((int32_t)items.size() - visibleItems, 1));
+			vscroll->SetLines(scrollLines);
 			vscroll->SetPage(visibleItems);
 			vscroll->SetValue(vOffset);
 		}else{
@@ -473,6 +478,7 @@ void DetailList::Refresh(){
 	fireCurrentSelection = true;
 	drawCache.clear();
 	drawCache.resize(items.size());
+	measured = false;
 }
 
 void DetailList::SetDefaultIcon(std::shared_ptr<gds::Surface> img){
