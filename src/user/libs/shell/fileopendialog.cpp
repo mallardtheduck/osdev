@@ -101,7 +101,8 @@ std::string FileOpenDialog::Show(wm::Window *parent){
 	auto goAction = [&]{
 		auto path = pathText->GetValue();
 		auto check = bt_stat(path.c_str());
-		if(check.valid){
+		if(path.empty()) navigateTo(path, true);
+		else if(check.valid){
 			if(check.type == FS_Directory){
 				navigateTo(path, true);
 			}else{

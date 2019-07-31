@@ -141,7 +141,7 @@ std::string FileSaveDialog::Show(wm::Window *parent){
 	auto goAction = [&]{
 		auto path = pathText->GetValue();
 		auto check = bt_stat(path.c_str());
-		if(check.valid && check.type == FS_Directory){
+		if(path.empty() || (check.valid && check.type == FS_Directory)){
 			navigateTo(path, true);
 		}else{
 			MessageBox msg(tfm::format("Cannot navigate to \"%s\".", path), "Error", LoadIcon("icons/error_32.png"));
