@@ -270,7 +270,6 @@ void DetailList::Paint(gds::Surface &s){
 		auto bkgCol = colours::GetBackground().Fix(*surf);
 		auto txtCol = colours::GetDetailListText().Fix(*surf);
 		auto border = colours::GetBorder().Fix(*surf);
-		auto selCol = colours::GetSelection().Fix(*surf);
 		auto hdrCol = colours::GetDetailListHeader().Fix(*surf);
 		
 		auto topLeft = colours::GetDetailListLowLight().Fix(*surf);
@@ -293,38 +292,60 @@ void DetailList::Paint(gds::Surface &s){
 			
 			surf->Text({textX, textY}, text, fonts::GetDetailListFont(), fonts::GetDetailListTextSize(), txtCol);
 		}
-		surf->Line({1, (int32_t)fontHeight}, {(int32_t)inW, (int32_t)fontHeight}, border);
 		
 		auto visibleItems = (inH / fontHeight);
+		uint32_t itemWidth = std::accumulate(colWidths.begin(), colWidths.end(), colWidths.size()) + iconsize;
+		if(itemWidth < inW) itemWidth = inW;
 		
 		for(auto i = vOffset; i < items.size() && i < vOffset + visibleItems; ++i){
-			if(i == selectedItem){
-				int32_t selY = fontHeight * ((i + 1) - vOffset);
-				auto selFocus = colours::GetSelectionFocus().Fix(*surf);
-				if(hasFocus){
-					surf->Box({0, selY, inW, fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+			auto &dci = drawCache[i];
+			if(!dci.surf || dci.selected != (i == selectedItem) || (dci.selected && dci.focussed != hasFocus)){
+				dci.surf.reset(new gds::Surface(gds_SurfaceType::Vector, itemWidth, fontHeight, 100, gds_ColourType::True));
+				dci.surf->BeginQueue();
+				
+				auto itemBkgCol = colours::GetBackground().Fix(*dci.surf);
+				
+				if(i == selectedItem){
+					auto selCol = colours::GetSelection().Fix(*dci.surf);
+					auto selFocus = colours::GetSelectionFocus().Fix(*dci.surf);
+					if(hasFocus){
+						dci.surf->Box({0, 0, itemWidth, fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+					}else{
+						dci.surf->Box({0, 0, itemWidth, fontHeight}, itemBkgCol, itemBkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+					}
+					dci.surf->Box({0, 0, itemWidth, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
+					dci.selected = true;
+					dci.focussed = hasFocus;
+				}else{
+					dci.surf->Box({0, 0, itemWidth, fontHeight}, itemBkgCol, itemBkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+					dci.selected = false;
 				}
-				surf->Box({0, selY, inW, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
-			}
-			if(hOffset < (int32_t)iconsize && (icons[i] || defaultIcon)){
-				int32_t iconY = fontHeight * ((i + 1) - vOffset);
-				auto icon = icons[i] ? icons[i] : defaultIcon;
-				surf->Blit(*icon, {0, 0, iconsize, iconsize}, {1 - (int32_t)hOffset, iconY, iconsize, iconsize});
-			}
-			for(size_t j = 0; j < items[i].size(); ++j){
-				if(j > cols.size()) continue;
-				auto &cItem = drawItems[i][j];
-				auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + j, j + iconsize + 1);
-				if((int32_t)colOffset + (int32_t)cItem.measures.w < hOffset) continue;
+			
+				if(icons[i] || defaultIcon){
+					auto icon = icons[i] ? icons[i] : defaultIcon;
+					dci.surf->Blit(*icon, {0, 0, iconsize, iconsize}, {1, 0, iconsize, iconsize});
+				}	
 				
-				auto textX = ((int32_t)colOffset + 2) - (int32_t)hOffset;
-				auto textY = std::max<int32_t>(((fontHeight + cItem.measures.h) / 2), 0);
-				textY += ((i + 1) - vOffset) * fontHeight;
+				auto itemTxtCol = colours::GetDetailListText().Fix(*dci.surf);
 				
-				auto text = FitTextToCol(cItem, j);
-				
-				surf->Text({textX, textY}, text, fonts::GetDetailListFont(), fonts::GetDetailListTextSize(), txtCol);
+				for(size_t j = 0; j < items[i].size(); ++j){
+					if(j > cols.size()) continue;
+					auto &cItem = drawItems[i][j];
+					auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + j, j + iconsize + 1);
+					
+					auto textX = ((int32_t)colOffset + 2);
+					auto textY = std::max<int32_t>(((fontHeight + cItem.measures.h) / 2), 0);
+					
+					auto text = FitTextToCol(cItem, j);
+					
+					dci.surf->Text({textX, textY}, text, fonts::GetDetailListFont(), fonts::GetDetailListTextSize(), itemTxtCol);
+				}
+				dci.surf->CommitQueue();
 			}
+			int32_t itemX = 0 - hOffset;
+			int32_t itemY = ((i - vOffset) + 1) * fontHeight;
+			surf->Blit(*dci.surf, {0, 0, itemWidth, fontHeight}, {itemX, itemY, itemWidth, fontHeight});
+			
 			if(multiSelect){
 				int32_t chkY = fontHeight * ((i + 1) - vOffset);
 				surf->Box({1, chkY, checkSize, checkSize}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
@@ -335,6 +356,7 @@ void DetailList::Paint(gds::Surface &s){
 				}
 			}
 		}
+		surf->Line({1, (int32_t)fontHeight}, {(int32_t)inW, (int32_t)fontHeight}, border);
 		drawing::Border(*surf, {0, 0, inW, inH}, border);
 		drawing::BevelBox(*surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
 		
@@ -449,6 +471,8 @@ void DetailList::Refresh(){
 	icons.resize(items.size());
 	multiSelection.resize(items.size());
 	fireCurrentSelection = true;
+	drawCache.clear();
+	drawCache.resize(items.size());
 }
 
 void DetailList::SetDefaultIcon(std::shared_ptr<gds::Surface> img){

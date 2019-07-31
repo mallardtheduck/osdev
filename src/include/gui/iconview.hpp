@@ -24,6 +24,9 @@ private:
 		std::string fittedText1;
 		std::string fittedText2;
 		uint32_t fittedWidth;
+		std::unique_ptr<gds::Surface> surf;
+		bool selected;
+		bool focussed;
 	};
 	
 	std::vector<DrawItem> drawItems;

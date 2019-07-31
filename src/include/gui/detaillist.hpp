@@ -26,7 +26,14 @@ private:
 		uint32_t fittedWidth;
 	};
 	
+	struct DrawCacheItem{
+		std::unique_ptr<gds::Surface> surf;
+		bool selected;
+		bool focussed;
+	};
+	
 	std::vector<std::vector<DrawItem>> drawItems;
+	std::vector<DrawCacheItem> drawCache;
 	std::vector<uint32_t> colWidths;
 	std::vector<DrawItem> colItems;
 	
