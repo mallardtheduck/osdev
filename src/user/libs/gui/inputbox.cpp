@@ -45,32 +45,9 @@ std::string InputBox::Show(wm::Window *parent){
 	auto formHeight = std::max(messageMeasures.h, iconInfo.h) + (4 * margin) + buttonHeight + textHeight;
 	
 	auto form = std::make_shared<Form>(gds::Rect{0, 0, formWidth, formHeight}, FormOptions::ClosedFixed | wm_WindowOptions::NoHide, title);
-	auto formInfo = form->Info();
-	auto totalFormWidth = formWidth + formInfo.contentX;
-	auto totalFormHeight = formHeight + formInfo.contentY;
 	
-	if(parent){
-		auto pInfo = parent->Info();
-		auto pContentInfo = gds::Surface::Wrap(pInfo.gds_id, false).Info();
-		
-		auto totalParentWidth = pContentInfo.w + pInfo.contentX;
-		auto totalParentHeight = pContentInfo.h + pInfo.contentY;
-		
-		auto formOffsetX = (totalParentWidth - totalFormWidth) / 2;
-		auto formOffsetY = (totalParentHeight - totalFormHeight) / 2;
-		
-		int32_t formX = pInfo.x + formOffsetX;
-		int32_t formY = pInfo.y + formOffsetY;
-		
-		form->SetPosition({formX, formY});
-		
-		parent->SetModal(*form);
-	}else{
-		auto smode = form->GetScreenMode();
-		int32_t formX = (smode.width - totalFormWidth) / 2;
-		int32_t formY = (smode.height - totalFormHeight) / 2;
-		form->SetPosition({formX, formY});
-	}
+	form->SetPosition(DialogPosition(parent, *form));
+	if(parent) parent->SetModal(*form);
 	
 	auto contentHeight = formHeight - (buttonHeight + margin);
 	int32_t imageX = margin;
@@ -90,13 +67,7 @@ std::string InputBox::Show(wm::Window *parent){
 	int32_t buttonX = ((formWidth - buttonWidth) / 2) + (margin * 1.5);
 	int32_t buttonY = contentHeight;
 	
-	wm::EventLoop *loop = nullptr;
-	std::unique_ptr<wm::EventLoop> loopPtr;
-	if(parent) loop = wm::EventLoop::GetFor(*parent);
-	if(!loop){
-		loopPtr.reset(new wm::EventLoop());
-		loop = loopPtr.get();
-	}
+	auto loop = DialogEventLoop(parent);
 	
 	size_t buttonIdx = -1;
 	for(size_t i = 0; i < buttons.size(); ++i){

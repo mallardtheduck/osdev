@@ -3,7 +3,7 @@ ICON_FOLDER := ../../../icons
 ICONS_FS := folder folder_open file computer hdd device
 ICONS_APPS := default
 ICONS_ACTIONS_32 := error question
-ICONS_ACTIONS_16 := error back goto
+ICONS_ACTIONS_16 := error back goto new_folder
 
 ICON_DST_template = $(addsuffix _$(2).png, $(addprefix libresc/icons/, $(1)))
 ICON_SRC_template = $(addsuffix .png, $(addprefix $(ICON_FOLDER)/$(2)/$(3)/, $(1)))

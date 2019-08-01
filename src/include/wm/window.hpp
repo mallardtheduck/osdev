@@ -64,7 +64,7 @@ namespace wm{
 		void StartResize();
 		void StartDrag();
 		
-		bt_vidmode GetScreenMode();
+		bt_vidmode GetScreenMode() const;
 		
 		void SetModal(const Window &win);
 		void ClearModal();

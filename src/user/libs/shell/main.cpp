@@ -5,6 +5,7 @@
 #include <gui/shell/folderdetailsview.hpp>
 #include <gui/shell/fileopendialog.hpp>
 #include <gui/shell/filesavedialog.hpp>
+#include <gui/shell/folderselectdialog.hpp>
 
 #include <gui/form.hpp>
 #include <gui/button.hpp>
@@ -52,6 +53,7 @@ int main(){
 	
 	auto openBtn = std::make_shared<gui::Button>(gds::Rect{380, 220, 50, 30}, "Open");
 	auto saveBtn = std::make_shared<gui::Button>(gds::Rect{440, 220, 50, 30}, "Save");
+	auto chooseBtn = std::make_shared<gui::Button>(gds::Rect{320, 220, 50, 30}, "Choose");
 	
 	backBtn->OnAction([&]{
 		if(!prevPath.empty()){
@@ -115,7 +117,13 @@ int main(){
 		gui::MessageBox(tfm::format("Selected: %s", path), "Open").Show(form.get());
 	});
 	
-	form->AddControls({trv, icv, backBtn, lbl, dtv, openBtn, saveBtn});
+	chooseBtn->OnAction([&]{
+		sh::FolderSelectDialog dlg("");
+		auto path = dlg.Show(form.get());
+		gui::MessageBox(tfm::format("Selected: %s", path), "Open").Show(form.get());
+	});
+	
+	form->AddControls({trv, icv, backBtn, lbl, dtv, openBtn, saveBtn, chooseBtn});
 	
 	btos_api::wm::EventLoop e;
 	e.AddWindow(form);

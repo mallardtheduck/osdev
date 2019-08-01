@@ -60,7 +60,7 @@ std::string FileOpenDialog::Show(wm::Window *parent){
 		}
 	};
 	
-	wm::EventLoop *loop = nullptr;
+	auto loop = DialogEventLoop(parent);
 	
 	auto confirm = [&](const std::string &path){
 		selectedPath = path;
@@ -129,35 +129,8 @@ std::string FileOpenDialog::Show(wm::Window *parent){
 	
 	form->AddControls(controls);
 	
-	if(parent){
-		auto pInfo = parent->Info();
-		auto pContentInfo = gds::Surface::Wrap(pInfo.gds_id, false).Info();
-		
-		auto totalParentWidth = pContentInfo.w + pInfo.contentX;
-		auto totalParentHeight = pContentInfo.h + pInfo.contentY;
-		
-		auto formOffsetX = (totalParentWidth - totalFormWidth) / 2;
-		auto formOffsetY = (totalParentHeight - totalFormHeight) / 2;
-		
-		int32_t formX = pInfo.x + formOffsetX;
-		int32_t formY = pInfo.y + formOffsetY;
-		
-		form->SetPosition({formX, formY});
-		
-		parent->SetModal(*form);
-	}else{
-		auto smode = form->GetScreenMode();
-		int32_t formX = (smode.width - totalFormWidth) / 2;
-		int32_t formY = (smode.height - totalFormHeight) / 2;
-		form->SetPosition({formX, formY});
-	}
-	
-	std::unique_ptr<wm::EventLoop> loopPtr;
-	if(parent) loop = wm::EventLoop::GetFor(*parent);
-	if(!loop){
-		loopPtr.reset(new wm::EventLoop());
-		loop = loopPtr.get();
-	}
+	form->SetPosition(DialogPosition(parent, *form));
+	if(parent) parent->SetModal(*form);
 	
 	form->Open();
 	loop->RunModal(form);
