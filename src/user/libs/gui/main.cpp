@@ -25,6 +25,7 @@
 #include <gui/tabs.hpp>
 #include <gui/progressbar.hpp>
 #include <gui/messagebox.hpp>
+#include <gui/inputbox.hpp>
 
 #include <wm/eventloop.hpp>
 #include <util/tinyformat.hpp>
@@ -179,7 +180,12 @@ int main(){
 		auto lbl1 = std::make_shared<btos_api::gui::Label>(gds::Rect{120, 10, 100, 20}, "A Label");
 		auto lbl2 = std::make_shared<btos_api::gui::Label>(gds::Rect{120, 30, 100, 20}, "Nothing");
 		auto btn1 = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 1");
-		btn1->OnAction([&] {lbl2->SetText("Button 1");});
+		btn1->OnAction([&] {
+			btos_api::gui::InputBox box("Please enter some text.", "Input");
+			auto val = box.Show(frm.get());
+			lbl2->SetText(val);
+			
+		});
 		auto btn2 = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 50, 100, 30}, "Button 2");
 		btn2->OnAction([&] {
 			lbl2->SetText("Button 2");

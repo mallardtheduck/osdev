@@ -471,6 +471,12 @@ namespace icons{
 		if(!ret) ret = LoadIcon("mb_default.png");
 		return ret;
 	}
+	
+	std::shared_ptr<gds::Surface> GetInputBoxDefault(){
+		static std::shared_ptr<gds::Surface> ret;
+		if(!ret) ret = LoadIcon("ib_default.png");
+		return ret;
+	}
 }
 
 static uint64_t lastClicktime = 0;

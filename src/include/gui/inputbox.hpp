@@ -1,5 +1,5 @@
-#ifndef _MESSAGEBOX_HPP
-#define _MESSAGEBOX_HPP
+#ifndef _INPUTBOX_HPP
+#define _INPUTBOX_HPP
 
 #include <wm/window.hpp>
 #include <gds/surface.hpp>
@@ -12,22 +12,21 @@
 namespace btos_api{
 namespace gui{
 
-class MessageBox : public IDialog<size_t>{
+class InputBox : public IDialog<std::string>{
 private:
 	std::string message;
 	std::string title;
+	std::string defvalue;
 	std::shared_ptr<gds::Surface> icon;
-	std::vector<std::string> buttons;
 public:
-	MessageBox();
-	MessageBox(const std::string &message, const std::string &title, std::shared_ptr<gds::Surface> icon = nullptr, std::vector<std::string> buttons = {"OK"});
+	InputBox();
+	InputBox(const std::string &message, const std::string &title, const std::string &defvalue = "", std::shared_ptr<gds::Surface> icon = nullptr);
 	
-	size_t Show(wm::Window *parent) override;
+	std::string Show(wm::Window *parent) override;
 	
 	void SetMessage(const std::string &msg);
 	void SetTitle(const std::string &title);
 	void SetIcon(std::shared_ptr<gds::Surface> icon);
-	void SetButons(std::vector<std::string> buttons);
 };
 
 }
