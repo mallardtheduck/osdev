@@ -8,12 +8,13 @@
 #include <btos.h>
 
 #include <wm/window.hpp>
+#include <gui/idialog.hpp>
 
 namespace btos_api{
 namespace gui{
 namespace shell{
 
-class FileSaveDialog{
+class FileSaveDialog : public IDialog<std::string>{
 private:
 	std::string filename;
 	std::string defaultExt;
@@ -22,7 +23,7 @@ private:
 public:
 	FileSaveDialog(const std::string &filename, const std::string &defaultExt, const std::string &path = "", std::function<bool(const bt_directory_entry &e)> filter = nullptr);
 	
-	std::string Show(wm::Window *parent);
+	std::string Show(wm::Window *parent) override;
 };
 
 }
