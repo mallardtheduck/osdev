@@ -90,6 +90,8 @@ public:
 	gds::Point GetPosition();
 	
 	std::map<uint32_t, std::shared_ptr<MenuItem>> GetItems();
+	
+	~Menu();
 };
 
 std::shared_ptr<Menu> GetMenu(uint64_t id);
