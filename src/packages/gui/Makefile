@@ -5,8 +5,12 @@ pkg-files:= $(shell find pkgfiles -type f)
 
 import-files:= \
  data/btos/calc.elx \
+ data/btos/folder.elx \
  
 data/btos/calc.elx: ../../user/wmapps/calc/calc.elx
+	cp $< $@
+
+data/btos/folder.elx: ../../user/wmapps/folder/folder.elx
 	cp $< $@
 
 create.directories:

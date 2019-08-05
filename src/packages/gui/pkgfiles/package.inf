@@ -13,3 +13,10 @@ path = /
 file = calc.elx
 type = app
 
+[feature-folder]
+
+name = gui.app.folder
+description = Folder view
+path = /
+file = folder.elx
+type = app
