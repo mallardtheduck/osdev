@@ -30,6 +30,7 @@ private:
 		std::unique_ptr<gds::Surface> surf;
 		bool selected;
 		bool focussed;
+		uint32_t width;
 	};
 	
 	std::vector<std::vector<DrawItem>> drawItems;

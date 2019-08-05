@@ -304,8 +304,9 @@ void DetailList::Paint(gds::Surface &s){
 		
 		for(auto i = vOffset; i < items.size() && i < vOffset + visibleItems; ++i){
 			auto &dci = drawCache[i];
-			if(!dci.surf || dci.selected != (i == selectedItem) || (dci.selected && dci.focussed != hasFocus)){
+			if(!dci.surf || dci.width != itemWidth || dci.selected != (i == selectedItem) || (dci.selected && dci.focussed != hasFocus)){
 				dci.surf.reset(new gds::Surface(gds_SurfaceType::Vector, itemWidth, fontHeight, 100, gds_ColourType::True));
+				dci.width = itemWidth;
 				dci.surf->BeginQueue();
 				
 				auto itemBkgCol = colours::GetBackground().Fix(*dci.surf);
