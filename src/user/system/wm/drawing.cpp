@@ -106,7 +106,7 @@ static void DrawMenuButton(Surface &surf, const Point &p, bool active, bool down
 shared_ptr<Surface> TitleBar::Draw(uint32_t w, const string &t, bool active, uint32_t options, WindowArea p){
 	shared_ptr<Surface> ret;
 	bool drawAll = false;
-	if(w != width){
+	if(w != width || t != title){
 		if(gds_active_title){
 			gds_active_title.reset();
 		}
@@ -121,7 +121,6 @@ shared_ptr<Surface> TitleBar::Draw(uint32_t w, const string &t, bool active, uin
 		if(active) ret = gds_active_title;
 		else ret = gds_inactive_title;
 	}
-	if(t != title) drawAll = true;
 	if(options != window_options) drawAll = true;
 	
 	ret->BeginQueue();
