@@ -17,6 +17,8 @@
 
 #include <gui/shell/utils.hpp>
 
+#include <btos/directory.hpp>
+
 #include <stack>
 
 #include <util/tinyformat.hpp>
@@ -108,6 +110,25 @@ int main(int argc, char **argv){
 	
 	form->OnResize(updateSize);
 	
+	auto updateStatusbar = [&](const std::string &path){
+		std::string text;
+		auto stat = btos_api::bt_stat(path.c_str());
+		if(stat.valid && stat.type == FS_Directory){
+			btos_api::Directory d(path.c_str(), FS_Read);
+			size_t count = 0;
+			for(const auto &i : d){ 
+				++count;
+				(void)i;
+			}
+			text = tfm::format("%s - %s items", path, count);
+		}else if(stat.valid){
+			text = tfm::format("%s - %s", path, sh::FormatSize(stat.size));
+		}else if(path != ""){
+			text = tfm::format("%s - ERROR!", path);
+		}
+		statusbar->SetText(text);
+	};
+	
 	auto navigateTo = [&](const std::string &path, bool keep){
 		if(path != curPath){
 			if(keep){
@@ -119,9 +140,9 @@ int main(int argc, char **argv){
 			details->SetPath(path);
 			details->SetValue(0);
 			tree->SetSelectedPath(path);
-			statusbar->SetText(path);
-			form->SetTitle(sh::PathItemTitle(path));
+			updateStatusbar(path);
 			curPath = path;
+			form->SetTitle(sh::PathItemTitle(path));
 			updateMenus();
 			if(history.empty()) backBtn->Disable();
 			else backBtn->Enable();
@@ -179,12 +200,22 @@ int main(int argc, char **argv){
 		}
 	});
 	
+	icons->OnChange([&](size_t){
+		auto path = sh::CombinePath(curPath, icons->GetSelectedEntry().filename);
+		updateStatusbar(path);
+	});
+	
 	details->OnActivate([&]{
 		auto entry = details->GetSelectedEntry();
 		if(entry.valid && entry.type == FS_Directory){
 			auto path = sh::CombinePath({details->GetPath(), entry.filename});
 			navigateTo(path, true);
 		}
+	});
+	
+	details->OnChange([&](size_t){
+		auto path = sh::CombinePath(curPath, details->GetSelectedEntry().filename);
+		updateStatusbar(path);
 	});
 	
 	auto goBack = [&]{
