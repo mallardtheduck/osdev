@@ -10,6 +10,7 @@
 #include <gui/toolbar.hpp>
 #include <gui/statusbar.hpp>
 #include <gui/messagebox.hpp>
+#include <gui/inputbox.hpp>
 
 #include <wm/eventloop.hpp>
 #include <wm/menu.hpp>
@@ -225,13 +226,36 @@ int main(int argc, char **argv){
 	
 	newWinBtn->OnAction(newWindow);
 	
+	auto newFolder = [&]{
+		if(curPath != ""){
+			gui::InputBox dlg("Enter new folder name:", "New Folder...");
+			auto name = dlg.Show(form.get());
+			if(!name.empty()){
+				auto fullpath = sh::CombinePath(curPath, name);
+				btos_api::bt_handle_t dh = btos_api::bt_dopen(fullpath.c_str(), FS_Read | FS_Create);
+				if(dh){
+					btos_api::bt_dclose(dh);
+					navigateTo(fullpath, true);
+				}else{
+					gui::MessageBox msg(tfm::format("Error creating folder."), "Error", LoadIcon("icons/error_32.png"));
+					msg.Show(form.get());
+				}
+			}
+		}else{
+			gui::MessageBox msg(tfm::format("Cannot create folder here."), "Error", LoadIcon("icons/error_32.png"));
+			msg.Show(form.get());	
+		}
+	};
+	
+	newFolderBtn->OnAction(newFolder);
+	
 	auto menuHandler = [&](int action) -> bool{
 		switch(action){
 			case 1:
 				newWindow();
 				break;
 			case 2:
-				//new folder
+				newFolder();
 				break;
 			case 3:
 				gui::MessageBox("BT/OS Folder View", "About", LoadIcon("icons/folder_32.png")).Show(form.get());
