@@ -472,7 +472,6 @@ std::vector<uint32_t> &DetailList::ColumnWidths(){
 
 void DetailList::Refresh(){
 	update = true;
-	IControl::Paint(outerRect);
 	colWidths.resize(cols.size());
 	icons.resize(items.size());
 	multiSelection.resize(items.size());
@@ -480,6 +479,7 @@ void DetailList::Refresh(){
 	drawCache.clear();
 	drawCache.resize(items.size());
 	measured = false;
+	IControl::Paint(outerRect);
 }
 
 void DetailList::SetDefaultIcon(std::shared_ptr<gds::Surface> img){

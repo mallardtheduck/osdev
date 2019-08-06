@@ -413,11 +413,11 @@ std::vector<std::string> &IconView::Items(){
 
 void IconView::Refresh(){
 	update = true;
-	IControl::Paint(outerRect);
 	multiSelection.resize(items.size());
 	icons.resize(items.size());
 	drawItems.clear();
 	fireCurrentSelection = true;
+	IControl::Paint(outerRect);
 }
 
 void IconView::SetDefaultIcon(std::shared_ptr<gds::Surface> img){
