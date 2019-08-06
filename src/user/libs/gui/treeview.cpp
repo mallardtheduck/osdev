@@ -179,7 +179,7 @@ TreeViewNode *TreeView::GetNodeByPos(uint32_t yPos){
 	ForEachShown([&](TreeViewNode &cItem){
 		if(i >= vOffset && i < vOffset + visibleItems + 1){
 			uint32_t itemY = ((i - vOffset) * fontHeight) + 1;
-			if(itemY <= yPos) node = &cItem;
+			if(itemY <= yPos && itemY + fontHeight > yPos) node = &cItem;
 		}
 		++i;
 	});
