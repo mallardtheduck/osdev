@@ -209,6 +209,8 @@ void Container::MoveControl(std::shared_ptr<IControl> control, gds::Rect newpos)
 		auto oldpos = control->GetPaintRect();
 		control->SetPosition(newpos);
 		Paint({oldpos, newpos});
+	}else{
+		control->SetPosition(newpos);
 	}
 }
 

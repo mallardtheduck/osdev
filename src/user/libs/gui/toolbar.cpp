@@ -239,11 +239,17 @@ uint32_t ToolbarButton::GetSubscribed(){
 }
 
 void ToolbarButton::Enable(){
-	enabled = true;
+	if(!enabled){
+		enabled = true;
+		IControl::Paint(rect);
+	}
 }
 
 void ToolbarButton::Disable(){
-	enabled = false;
+	if(enabled){
+		enabled = false;
+		IControl::Paint(rect);
+	}
 }
 
 bool ToolbarButton::IsEnabled(){
