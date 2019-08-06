@@ -38,7 +38,7 @@ static const uint32_t treeWidth = 150;
 static const uint32_t margin = 5;
 static const uint32_t contentHeight = formHeight - toolbarHeight - statusbarHeight - (2 * margin);
 
-int main(){
+int main(int argc, char **argv){
 	std::string curPath;
 	bool treeVisible = true;
 	ViewMode curView = ViewMode::Icons;
@@ -61,9 +61,9 @@ int main(){
 	auto iconsBtn = std::make_shared<gui::ToolbarButton>(LoadIcon("icons/view_icon_16.png"));
 	auto detailsBtn = std::make_shared<gui::ToolbarButton>(LoadIcon("icons/view_detailed_16.png"));
 	auto spc1 = std::make_shared<gui::ToolbarSpacer>();
+	auto upBtn = std::make_shared<gui::ToolbarButton>(LoadIcon("icons/up_16.png"));
 	auto backBtn = std::make_shared<gui::ToolbarButton>(LoadIcon("icons/back_16.png"));
 	auto fwdBtn = std::make_shared<gui::ToolbarButton>(LoadIcon("icons/forward_16.png"));
-	auto upBtn = std::make_shared<gui::ToolbarButton>(LoadIcon("icons/up_16.png"));
 	auto spc2 = std::make_shared<gui::ToolbarSpacer>();
 	auto newFolderBtn = std::make_shared<gui::ToolbarButton>(LoadIcon("icons/new_folder_16.png"));
 	auto editPasteBtn = std::make_shared<gui::ToolbarButton>(LoadIcon("icons/editpaste_16.png"));
@@ -71,11 +71,14 @@ int main(){
 	auto editCutBtn = std::make_shared<gui::ToolbarButton>(LoadIcon("icons/editcut_16.png"));
 	auto deleteBtn = std::make_shared<gui::ToolbarButton>(LoadIcon("icons/editdelete_16.png"));
 	
-	toolbar->Controls() = {newWinBtn, treeBtn, iconsBtn, detailsBtn, spc1, backBtn, fwdBtn, upBtn, spc2, 
+	toolbar->Controls() = {newWinBtn, treeBtn, iconsBtn, detailsBtn, spc1, upBtn, backBtn, fwdBtn, spc2, 
 		newFolderBtn, editPasteBtn, editCopyBtn, editCutBtn, deleteBtn};
 	toolbar->Refresh();
 	
 	iconsBtn->Disable();
+	upBtn->Disable();
+	backBtn->Disable();
+	fwdBtn->Disable();
 	
 	auto tree = std::make_shared<sh::FolderTreeView>(gds::Rect{margin, margin + toolbarHeight, treeWidth, contentHeight}, "");
 	auto icons = std::make_shared<sh::FolderIconView>(gds::Rect{treeWidth + (2 * margin), margin + toolbarHeight, formWidth - treeWidth - (3 * margin), contentHeight}, "");
@@ -91,22 +94,23 @@ int main(){
 		if(size.h < toolbarHeight + statusbarHeight + (2 * margin)) return;
 		uint32_t newContentHeight = size.h - toolbarHeight - statusbarHeight - (2 * margin);
 		if(treeVisible){
-			tree->SetPosition({margin, margin + toolbarHeight, treeWidth, newContentHeight});
+			form->MoveControl(tree, {margin, margin + toolbarHeight, treeWidth, newContentHeight});
 			if(size.w > treeWidth - (3 * margin)){
-				icons->SetPosition({treeWidth + (2 * margin), margin + toolbarHeight, size.w - treeWidth - (3 * margin), newContentHeight});
-				details->SetPosition({treeWidth + (2 * margin), margin + toolbarHeight, size.w - treeWidth - (3 * margin), newContentHeight});
+				form->MoveControl(icons, {treeWidth + (2 * margin), margin + toolbarHeight, size.w - treeWidth - (3 * margin), newContentHeight});
+				form->MoveControl(details, {treeWidth + (2 * margin), margin + toolbarHeight, size.w - treeWidth - (3 * margin), newContentHeight});
 			}
 		}else if(size.w > (2 * margin)){
-			icons->SetPosition({margin, margin + toolbarHeight, size.w - (2 * margin), newContentHeight});
-			details->SetPosition({margin, margin + toolbarHeight, size.w - (2 * margin), newContentHeight});
+			form->MoveControl(icons, {margin, margin + toolbarHeight, size.w - (2 * margin), newContentHeight});
+			form->MoveControl(details, {margin, margin + toolbarHeight, size.w - (2 * margin), newContentHeight});
 		}
 	};
 	
+	form->OnResize(updateSize);
+	
 	auto navigateTo = [&](const std::string &path, bool keep){
-		if(path != details->GetPath()){
+		if(path != curPath){
 			if(keep){
-				history.push(details->GetPath());
-				backBtn->Enable();
+				history.push(curPath);
 				future = {};
 			}
 			icons->SetPath(path);
@@ -118,6 +122,12 @@ int main(){
 			form->SetTitle(sh::PathItemTitle(path));
 			curPath = path;
 			updateMenus();
+			if(history.empty()) backBtn->Disable();
+			else backBtn->Enable();
+			if(future.empty()) fwdBtn->Disable();
+			else fwdBtn->Enable();
+			if(curPath.empty()) upBtn->Disable();
+			else upBtn->Enable();
 		}
 	};
 	
@@ -176,12 +186,49 @@ int main(){
 		}
 	});
 	
-	form->OnResize(updateSize);
+	auto goBack = [&]{
+		if(!history.empty()){
+			auto path = history.top();
+			history.pop();
+			future.push(curPath);
+			navigateTo(path, false);
+		}
+	};
+	
+	backBtn->OnAction(goBack);
+	
+	auto goFwd = [&]{
+		if(!future.empty()){
+			auto path = future.top();
+			future.pop();
+			history.push(curPath);
+			navigateTo(path, false);
+		}
+	};
+	
+	fwdBtn->OnAction(goFwd);
+	
+	auto goUp = [&]{
+		if(!curPath.empty()){
+			auto parts = sh::SplitPath(curPath);
+			parts.pop_back();
+			auto path = sh::CombinePath(parts);
+			navigateTo(path, true);
+		}
+	};
+	
+	upBtn->OnAction(goUp);
+	
+	auto newWindow = [&]{
+		if(argc) btos_api::bt_spawn(argv[0], 0, nullptr);
+	};
+	
+	newWinBtn->OnAction(newWindow);
 	
 	auto menuHandler = [&](int action) -> bool{
 		switch(action){
 			case 1:
-				//new window
+				newWindow();
 				break;
 			case 2:
 				//new folder
@@ -201,13 +248,13 @@ int main(){
 				break;
 			
 			case 21:
-				//back
+				goBack();
 				break;
 			case 22:
-				//forward
+				goFwd();
 				break;
 			case 23:
-				//up
+				goUp();
 				break;
 			
 			case 31:
