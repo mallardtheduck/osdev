@@ -12,12 +12,14 @@
 #include <gds/libgds.h>
 #include <btos/directory.hpp>
 #include <btos/table.hpp>
+#include <btos/ini.hpp>
 
 #include <gui/shell/utils.hpp>
 
 #include "shell_resc.tar.h"
 
 #include <util/tinyformat.hpp>
+#include <ext/stdio_filebuf.h>
 
 namespace btos_api{
 namespace gui{
@@ -25,15 +27,19 @@ namespace shell{
 
 static std::map<std::string, std::shared_ptr<gds::Surface>> loadedIcons;
 
+static std::shared_ptr<gds::Surface> LoadPNGFromFD(int fd){
+	auto png = GDS_LoadPNG(fd);
+	return std::make_shared<gds::Surface>(std::move(gds::Surface::Wrap(png, true)));
+}
+
 std::shared_ptr<gds::Surface> LoadIcon(const char *path){
 	auto i = loadedIcons.find(path);
 	if(i == loadedIcons.end()){
 		auto r = resc::Resc_LocalOpen(shell_resc_data, shell_resc_size);
 		auto fd = resc::Resc_OpenResc(r, path);
-		auto ret = GDS_LoadPNG(fd);
+		auto s = LoadPNGFromFD(fd);
 		close(fd);
 		resc::Resc_Close(r);
-		auto s = std::make_shared<gds::Surface>(std::move(gds::Surface::Wrap(ret, true)));
 		i = loadedIcons.insert(loadedIcons.end(), std::make_pair(path, s));
 	}
 	return i->second;
@@ -80,6 +86,57 @@ std::shared_ptr<gds::Surface> GetDefaultIcon(DefaultIcons icon, size_t size){
 	return LoadIcon(name.c_str());
 }
 
+static std::shared_ptr<gds::Surface> GetIconFromResc(resc::RescHandle h, const std::string &name, size_t size){
+	std::shared_ptr<gds::Surface> ret = nullptr;
+	auto iconsInf = resc::Resc_OpenResc(h, "icons.inf");
+	if(iconsInf){
+		__gnu_cxx::stdio_filebuf<char> filebuf(iconsInf, std::ios::in);
+		std::istream is(&filebuf);
+		auto ini = ReadIniFile(is);
+		close(iconsInf);
+		if(ini.find(name) != ini.end()){
+			auto sizeStr = tfm::format("%s", size);
+			if(ini[name].find(sizeStr) != ini[name].end()){
+				auto png = resc::Resc_OpenResc(h, ini[name][sizeStr]);
+				ret = LoadPNGFromFD(png);
+				close(png);
+			}
+		}
+	}
+	return ret;
+}
+
+std::shared_ptr<gds::Surface> GetIconFromFile(const std::string &filename, const std::string iconName, size_t size){
+	std::shared_ptr<gds::Surface> ret = nullptr;
+	auto h = resc::Resc_FileOpen(filename);
+	if(h){
+		ret = GetIconFromResc(h, iconName, size);
+		resc::Resc_Close(h);
+	}
+	return ret;
+}
+
+std::shared_ptr<gds::Surface> GetElxIcon(const std::string &filename, size_t size){
+	std::shared_ptr<gds::Surface> ret = nullptr;
+	auto h = resc::Resc_FileOpen(filename);
+	if(h){
+		auto appInf = resc::Resc_OpenResc(h, "app.inf");
+		if(appInf){
+			__gnu_cxx::stdio_filebuf<char> filebuf(appInf, std::ios::in);
+			std::istream is(&filebuf);
+			auto ini = ReadIniFile(is);
+			close(appInf);
+			if(ini.find("app") != ini.end()){
+				if(ini["app"].find("icon") != ini["app"].end()){
+					ret = GetIconFromResc(h, ini["app"]["icon"], size);
+				}
+			}
+		}
+		resc::Resc_Close(h);
+	}
+	return ret ? ret : GetDefaultIcon(DefaultIcons::Executable, size);
+}
+
 std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size){
 	if(path == "") return GetDefaultIcon(DefaultIcons::Computer, size);
 	
@@ -102,7 +159,7 @@ std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size){
 					return std::tolower(a) == std::tolower(b);
 				});
 			}
-			if(isElx) return GetDefaultIcon(DefaultIcons::Executable, size);
+			if(isElx) return GetElxIcon(path, size);
 			else return GetDefaultIcon(DefaultIcons::File, size);
 		}else{
 			return GetDefaultIcon(DefaultIcons::Device, size);

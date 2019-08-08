@@ -175,6 +175,11 @@ int main(int argc, char **argv){
 		if(entry.valid && entry.type == FS_Directory){
 			auto path = sh::CombinePath({icons->GetPath(), entry.filename});
 			navigateTo(path, true);
+		}else if(entry.valid && entry.type == FS_File){
+			if(sh::FileExtensionPredicate(".elx")(entry.filename)){
+				auto path = sh::CombinePath(curPath, entry.filename);
+				btos_api::bt_spawn(path.c_str(), 0, nullptr);
+			}
 		}
 	});
 	
@@ -188,6 +193,11 @@ int main(int argc, char **argv){
 		if(entry.valid && entry.type == FS_Directory){
 			auto path = sh::CombinePath({details->GetPath(), entry.filename});
 			navigateTo(path, true);
+		}else if(entry.valid && entry.type == FS_File){
+			if(sh::FileExtensionPredicate(".elx")(entry.filename)){
+				auto path = sh::CombinePath(curPath, entry.filename);
+				btos_api::bt_spawn(path.c_str(), 0, nullptr);
+			}
 		}
 	});
 	
