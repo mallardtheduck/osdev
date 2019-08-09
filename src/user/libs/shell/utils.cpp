@@ -93,7 +93,6 @@ static std::shared_ptr<gds::Surface> GetIconFromResc(resc::RescHandle h, const s
 		__gnu_cxx::stdio_filebuf<char> filebuf(iconsInf, std::ios::in);
 		std::istream is(&filebuf);
 		auto ini = ReadIniFile(is);
-		close(iconsInf);
 		if(ini.find(name) != ini.end()){
 			auto sizeStr = tfm::format("%s", size);
 			if(ini[name].find(sizeStr) != ini[name].end()){
@@ -125,7 +124,6 @@ std::shared_ptr<gds::Surface> GetElxIcon(const std::string &filename, size_t siz
 			__gnu_cxx::stdio_filebuf<char> filebuf(appInf, std::ios::in);
 			std::istream is(&filebuf);
 			auto ini = ReadIniFile(is);
-			close(appInf);
 			if(ini.find("app") != ini.end()){
 				if(ini["app"].find("icon") != ini["app"].end()){
 					ret = GetIconFromResc(h, ini["app"]["icon"], size);
