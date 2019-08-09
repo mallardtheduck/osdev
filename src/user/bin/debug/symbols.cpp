@@ -12,7 +12,7 @@
 #include <cstdlib>
 #include <btos/table.hpp>
 
-#include "lrucache.hpp"
+#include <util/lrucache.hpp>
 
 using namespace std;
 

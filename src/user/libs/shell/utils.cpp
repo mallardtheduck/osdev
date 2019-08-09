@@ -19,11 +19,14 @@
 #include "shell_resc.tar.h"
 
 #include <util/tinyformat.hpp>
+#include <util/lrucache.hpp>
 #include <ext/stdio_filebuf.h>
 
 namespace btos_api{
 namespace gui{
 namespace shell{
+	
+static cache::lru_cache<std::string, std::shared_ptr<gds::Surface>> icon_cache(128);
 
 static std::map<std::string, std::shared_ptr<gds::Surface>> loadedIcons;
 
@@ -116,23 +119,28 @@ std::shared_ptr<gds::Surface> GetIconFromFile(const std::string &filename, const
 }
 
 std::shared_ptr<gds::Surface> GetElxIcon(const std::string &filename, size_t size){
-	std::shared_ptr<gds::Surface> ret = nullptr;
-	auto h = resc::Resc_FileOpen(filename);
-	if(h){
-		auto appInf = resc::Resc_OpenResc(h, "app.inf");
-		if(appInf){
-			__gnu_cxx::stdio_filebuf<char> filebuf(appInf, std::ios::in);
-			std::istream is(&filebuf);
-			auto ini = ReadIniFile(is);
-			if(ini.find("app") != ini.end()){
-				if(ini["app"].find("icon") != ini["app"].end()){
-					ret = GetIconFromResc(h, ini["app"]["icon"], size);
+	auto cacheKey = tfm::format("%s:%s", filename, size);
+	if(!icon_cache.exists(cacheKey)){
+		std::shared_ptr<gds::Surface> ret = nullptr;
+		auto h = resc::Resc_FileOpen(filename);
+		if(h){
+			auto appInf = resc::Resc_OpenResc(h, "app.inf");
+			if(appInf){
+				__gnu_cxx::stdio_filebuf<char> filebuf(appInf, std::ios::in);
+				std::istream is(&filebuf);
+				auto ini = ReadIniFile(is);
+				if(ini.find("app") != ini.end()){
+					if(ini["app"].find("icon") != ini["app"].end()){
+						ret = GetIconFromResc(h, ini["app"]["icon"], size);
+					}
 				}
 			}
+			resc::Resc_Close(h);
 		}
-		resc::Resc_Close(h);
+		ret = ret ? ret : GetDefaultIcon(DefaultIcons::Executable, size);
+		icon_cache.put(cacheKey, ret);
 	}
-	return ret ? ret : GetDefaultIcon(DefaultIcons::Executable, size);
+	return icon_cache.get(cacheKey);
 }
 
 std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size){
