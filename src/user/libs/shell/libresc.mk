@@ -5,6 +5,8 @@ ICONS_APPS := default
 ICONS_ACTIONS_32 := error question
 ICONS_ACTIONS_16 := error back goto new_folder
 
+EXTRA_RESC_FILES := icons.inf
+
 ICON_DST_template = $(addsuffix _$(2).png, $(addprefix libresc/icons/, $(1)))
 ICON_SRC_template = $(addsuffix .png, $(addprefix $(ICON_FOLDER)/$(2)/$(3)/, $(1)))
 
@@ -24,5 +26,15 @@ $(foreach ICON, $(ICONS_APPS), $(eval $(call ICON_template,$(ICON),16,apps)))
 $(foreach ICON, $(ICONS_ACTIONS_32), $(eval $(call ICON_template,$(ICON),32,actions)))
 $(foreach ICON, $(ICONS_ACTIONS_16), $(eval $(call ICON_template,$(ICON),16,actions)))
 
+EXTRA_DST_template = $(addprefix libresc/, $(1))
+
+define EXTRA_template=
+$(call EXTRA_DST_template,$(1)): $(1)
+	cp $$< $$@
+
+$(RESC-TAR-NAME): $(call EXTRA_DST_template,$(1))
+endef
+
+$(foreach EXTRA, $(EXTRA_RESC_FILES), $(eval $(call EXTRA_template,$(EXTRA))))
 
 $(LIBRESC-TAR-NAME): libresc.mk

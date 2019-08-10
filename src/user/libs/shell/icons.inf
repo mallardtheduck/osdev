@@ -1,0 +1,31 @@
+[folder]
+16 = icons/folder_16.png
+32 = icons/folder_32.png
+
+[folder_open]
+16 = icons/folder_open_16.png
+32 = icons/folder_open_32.png
+
+[file]
+16 = icons/file_16.png
+32 = icons/file_32.png
+
+[exec]
+16 = icons/default_16.png
+32 = icons/default_32.png
+
+[computer]
+16 = icons/computer_16.png
+32 = icons/computer_32.png
+
+[hdd]
+16 = icons/hdd_16.png
+32 = icons/hdd_32.png
+
+[device]
+16 = icons/device_16.png
+32 = icons/device_32.png
+
+[error]
+16 = icons/error_16.png
+32 = icons/error_32.png

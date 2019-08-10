@@ -26,7 +26,15 @@ namespace btos_api{
 namespace gui{
 namespace shell{
 	
-static cache::lru_cache<std::string, std::shared_ptr<gds::Surface>> icon_cache(128);
+static cache::lru_cache<std::string, std::shared_ptr<gds::Surface>> iconCache(128);
+
+struct elxIconInfo{
+	bool useDefault;
+	std::string path;
+	std::string name;
+};
+
+static cache::lru_cache<std::string, elxIconInfo> elxIconIdCache(256);
 
 static std::map<std::string, std::shared_ptr<gds::Surface>> loadedIcons;
 
@@ -35,58 +43,21 @@ static std::shared_ptr<gds::Surface> LoadPNGFromFD(int fd){
 	return std::make_shared<gds::Surface>(std::move(gds::Surface::Wrap(png, true)));
 }
 
+static resc::RescHandle GetLocalResc(){
+	static auto ret = resc::Resc_LocalOpen(shell_resc_data, shell_resc_size);
+	return ret;
+}
+
 std::shared_ptr<gds::Surface> LoadIcon(const char *path){
 	auto i = loadedIcons.find(path);
 	if(i == loadedIcons.end()){
-		auto r = resc::Resc_LocalOpen(shell_resc_data, shell_resc_size);
+		auto r = GetLocalResc();
 		auto fd = resc::Resc_OpenResc(r, path);
 		auto s = LoadPNGFromFD(fd);
 		close(fd);
-		resc::Resc_Close(r);
 		i = loadedIcons.insert(loadedIcons.end(), std::make_pair(path, s));
 	}
 	return i->second;
-}
-
-std::shared_ptr<gds::Surface> GetDefaultIcon(DefaultIcons icon, size_t size){
-	std::string name = "icons/";
-	switch(icon){
-		case DefaultIcons::Folder:
-			name += "folder";
-			break;
-		case DefaultIcons::FolderOpen:
-			name += "folder_open";
-			break;
-		case DefaultIcons::File:
-			name += "file";
-			break;
-		case DefaultIcons::Executable:
-			name += "default";
-			break;
-		case DefaultIcons::Computer:
-			name += "computer";
-			break;
-		case DefaultIcons::Drive:
-			name += "hdd";
-			break;
-		case DefaultIcons::Device:
-			name += "device";
-			break;
-		case DefaultIcons::Unknown:
-			name += "error";
-			break;
-		default: return nullptr;
-	}
-	switch(size){
-		case 16:
-			name += "_16.png";
-			break;
-		case 32:
-			name += "_32.png";
-			break;
-		default: return nullptr;
-	}
-	return LoadIcon(name.c_str());
 }
 
 static std::shared_ptr<gds::Surface> GetIconFromResc(resc::RescHandle h, const std::string &name, size_t size){
@@ -96,10 +67,12 @@ static std::shared_ptr<gds::Surface> GetIconFromResc(resc::RescHandle h, const s
 		__gnu_cxx::stdio_filebuf<char> filebuf(iconsInf, std::ios::in);
 		std::istream is(&filebuf);
 		auto ini = ReadIniFile(is);
-		if(ini.find(name) != ini.end()){
+		auto section = ini.find(name);
+		if(section != ini.end()){
 			auto sizeStr = tfm::format("%s", size);
-			if(ini[name].find(sizeStr) != ini[name].end()){
-				auto png = resc::Resc_OpenResc(h, ini[name][sizeStr]);
+			auto key = section->second.find(sizeStr);
+			if(key != section->second.end()){
+				auto png = resc::Resc_OpenResc(h, key->second);
 				ret = LoadPNGFromFD(png);
 				close(png);
 			}
@@ -108,39 +81,112 @@ static std::shared_ptr<gds::Surface> GetIconFromResc(resc::RescHandle h, const s
 	return ret;
 }
 
-std::shared_ptr<gds::Surface> GetIconFromFile(const std::string &filename, const std::string iconName, size_t size){
-	std::shared_ptr<gds::Surface> ret = nullptr;
-	auto h = resc::Resc_FileOpen(filename);
-	if(h){
-		ret = GetIconFromResc(h, iconName, size);
-		resc::Resc_Close(h);
+static std::string IconCacheKey(const std::string &path, const std::string &name, size_t size){
+	return tfm::format("%s:%s:%s", path, name, size);
+}
+
+static std::shared_ptr<gds::Surface> GetIconFromCache(const std::string &cacheKey, std::function<std::shared_ptr<gds::Surface>()> loader){
+	if(!iconCache.exists(cacheKey))	iconCache.put(cacheKey, loader());
+	return iconCache.get(cacheKey);
+}
+
+static std::string GetDefaultIconName(DefaultIcons icon){
+	std::string name;
+	switch(icon){
+		case DefaultIcons::Folder:
+			name = "folder";
+			break;
+		case DefaultIcons::FolderOpen:
+			name = "folder_open";
+			break;
+		case DefaultIcons::File:
+			name = "file";
+			break;
+		case DefaultIcons::Executable:
+			name = "exec";
+			break;
+		case DefaultIcons::Computer:
+			name = "computer";
+			break;
+		case DefaultIcons::Drive:
+			name = "hdd";
+			break;
+		case DefaultIcons::Device:
+			name = "device";
+			break;
+		case DefaultIcons::Unknown:
+		default:
+			name = "error";
+			break;
 	}
-	return ret;
+	return name;
+}
+
+static std::string GetDefaultIconId(DefaultIcons icon, size_t size){
+	auto name = GetDefaultIconName(icon);
+	return IconCacheKey("-LOCAL-", name, size);
+}
+
+std::shared_ptr<gds::Surface> GetDefaultIcon(DefaultIcons icon, size_t size){
+	auto cacheKey = GetDefaultIconId(icon, size);
+	return GetIconFromCache(cacheKey, [&]{
+		auto name = GetDefaultIconName(icon);
+		return GetIconFromResc(GetLocalResc(), name, size);
+	});
+}
+
+std::shared_ptr<gds::Surface> GetIconFromFile(const std::string &filename, const std::string iconName, size_t size){
+	auto cacheKey = IconCacheKey(filename, iconName, size);
+	return GetIconFromCache(cacheKey, [&]{
+		std::shared_ptr<gds::Surface> ret = nullptr;
+		auto h = resc::Resc_FileOpen(filename);
+		if(h){
+			ret = GetIconFromResc(h, iconName, size);
+			resc::Resc_Close(h);
+		}
+		return ret;
+	});
 }
 
 std::shared_ptr<gds::Surface> GetElxIcon(const std::string &filename, size_t size){
-	auto cacheKey = tfm::format("%s:%s", filename, size);
-	if(!icon_cache.exists(cacheKey)){
-		std::shared_ptr<gds::Surface> ret = nullptr;
-		auto h = resc::Resc_FileOpen(filename);
+	resc::RescHandle h = nullptr;
+	if(!elxIconIdCache.exists(filename)){
+		elxIconInfo info;
+		info.useDefault = true;
+		h = resc::Resc_FileOpen(filename);
 		if(h){
 			auto appInf = resc::Resc_OpenResc(h, "app.inf");
 			if(appInf){
 				__gnu_cxx::stdio_filebuf<char> filebuf(appInf, std::ios::in);
 				std::istream is(&filebuf);
 				auto ini = ReadIniFile(is);
-				if(ini.find("app") != ini.end()){
-					if(ini["app"].find("icon") != ini["app"].end()){
-						ret = GetIconFromResc(h, ini["app"]["icon"], size);
+				auto section = ini.find("app");
+				if(section != ini.end()){
+					auto key = section->second.find("icon");
+					if(key != section->second.end()){
+						auto iconName = key->second;
+						info.useDefault = false;
+						info.path = filename;
+						info.name = iconName;
 					}
 				}
 			}
-			resc::Resc_Close(h);
 		}
-		ret = ret ? ret : GetDefaultIcon(DefaultIcons::Executable, size);
-		icon_cache.put(cacheKey, ret);
+		elxIconIdCache.put(filename, info);
 	}
-	return icon_cache.get(cacheKey);
+	auto info = elxIconIdCache.get(filename);
+	
+	std::shared_ptr<gds::Surface> ret;
+	if(info.useDefault) ret = GetDefaultIcon(DefaultIcons::Executable, size);
+	else {
+		auto iconKey = IconCacheKey(info.path, info.name, size);
+		ret = GetIconFromCache(iconKey, [&]{
+			if(h && info.path == filename) return GetIconFromResc(h, info.name, size);
+			else return GetIconFromFile(info.path, info.name, size);
+		});
+	}
+	if(h) resc::Resc_Close(h);
+	return ret;
 }
 
 std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size){
