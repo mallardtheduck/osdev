@@ -1,7 +1,6 @@
 OUTPUT-NAME := folder.elx
 RESC-TAR-NAME := folder_resc.tar
 RESC-VAR-NAME := folder_resc
-APP-ICON-NAME := folder
 
 BUILD-AS := i686-pc-btos-as
 BUILD-AS-OPTIONS := -g -fPIC -c
@@ -19,10 +18,6 @@ BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")
 CFILES := $(shell find . -type f -name "*.c")
 CPPFILES := $(shell find . -type f -name "*.cpp")
-
-RESCFILES-16-ACTIONS-SRC := $(patsubst %,../../../icons/16/actions/%,$(RESCFILES-16-ACTIONS))
-RESCFILES-16-ACTIONS-DST :=  $(patsubst %,resc/%,$(RESCFILES-16-ACTIONS))
-RESCFILES := $(RESCFILES-16-ACTIONS-DST) $(RESCFILES-APP-ICON) $(RESCFILES-EXTRA)
 
 ASOBJS := $(ASFILES:.s=.o)
 COBJS := $(CFILES:.c=.o)
