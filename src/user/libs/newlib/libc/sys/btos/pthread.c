@@ -7,7 +7,7 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-#define DEFAULT_STACK_SIZE 16384
+#define DEFAULT_STACK_SIZE (64 * 1024)
 
 typedef struct{
 	pthread_key_t key;

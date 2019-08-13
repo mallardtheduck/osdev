@@ -9,7 +9,7 @@ namespace btos_api{
 	private:
 		Thread(bt_handle_t h);
 	public:
-		Thread(void (*entry)(void*), void *param = NULL, size_t stacksize = 16 * 1024);
+		Thread(void (*entry)(void*), void *param = NULL, size_t stacksize = 64 * 1024);
 		Thread(Thread &&);
 		static Thread Current();
 		
