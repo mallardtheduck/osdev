@@ -1,6 +1,7 @@
 #include <btos/resc.h>
 #include "tar.hpp"
 #include "virt_handles.hpp"
+#include "elf.hpp"
 
 #include <memory>
 #include <vector>
@@ -8,8 +9,6 @@
 #include <fstream>
 #include <ext/stdio_filebuf.h>
 
-#include <libelf.h>
-#include <gelf.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -46,35 +45,6 @@ struct RescHandle_Impl{
 extern "C" RescHandle Resc_LocalOpen(const char *data, size_t size){
 	virtual_handle h = MemoryVirtualHandle(data, size);
 	return (RescHandle*)new RescHandle_Impl(h, data);
-}
-
-struct ElfRescInfo{
-	std::streampos position;
-	std::streamsize size;
-};
-
-static std::string elf_get_section_name(Elf64_Word offset, Elf *e){
-	size_t shidx;
-	elf_getshstrndx(e, &shidx);
-	return elf_strptr(e, shidx, offset);
-}
-
-static ElfRescInfo GetElfRescInfo(int fd){
-	elf_version(EV_CURRENT);
-	ElfRescInfo info;
-	Elf *e = elf_begin(fd, ELF_C_READ, NULL);
-	Elf_Scn *scn = NULL;
-	GElf_Shdr shdr;
-	while ((scn = elf_nextscn(e, scn))) {
-		gelf_getshdr(scn, &shdr);
-		if (shdr.sh_type == SHT_PROGBITS && elf_get_section_name(shdr.sh_name, e) == "resc") {
-			info.position = shdr.sh_offset;
-			info.size = shdr.sh_size;
-			break;
-		}
-	}
-	elf_end(e);
-	return info;
 }
 
 extern "C" RescHandle Resc_FileOpen(const char *filename){
