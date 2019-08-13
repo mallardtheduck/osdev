@@ -35,9 +35,8 @@ public:
 		_cache_items_map[key] = _cache_items_list.begin();
 		
 		if (_cache_items_map.size() > _max_size) {
-			auto last = _cache_items_list.end();
-			last--;
-			_cache_items_map.erase(last->first);
+			auto &last = _cache_items_list.back();
+			_cache_items_map.erase(last.first);
 			_cache_items_list.pop_back();
 		}
 	}
