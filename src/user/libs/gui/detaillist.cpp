@@ -329,7 +329,7 @@ void DetailList::Paint(gds::Surface &s){
 			
 				if(icons[i] || defaultIcon){
 					auto icon = icons[i] ? icons[i] : defaultIcon;
-					dci.surf->Blit(*icon, {0, 0, iconsize, iconsize}, {1, 0, iconsize, iconsize});
+					dci.surf->Blit(*icon, {0, 0, iconsize, iconsize}, {2, 0, iconsize, iconsize});
 				}	
 				
 				auto itemTxtCol = colours::GetDetailListText().Fix(*dci.surf);
