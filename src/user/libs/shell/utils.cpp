@@ -86,8 +86,14 @@ static std::string IconCacheKey(const std::string &path, const std::string &name
 }
 
 static std::shared_ptr<gds::Surface> GetIconFromCache(const std::string &cacheKey, std::function<std::shared_ptr<gds::Surface>()> loader){
-	if(!iconCache.exists(cacheKey))	iconCache.put(cacheKey, loader());
-	return iconCache.get(cacheKey);
+	std::shared_ptr<gds::Surface> icon;
+	if(!iconCache.exists(cacheKey)){
+		icon = loader();
+		if(icon) iconCache.put(cacheKey, icon);
+	}else{
+		icon = iconCache.get(cacheKey);
+	}
+	return icon;
 }
 
 static std::string GetDefaultIconName(DefaultIcons icon){
@@ -128,11 +134,17 @@ static std::string GetDefaultIconId(DefaultIcons icon, size_t size){
 }
 
 std::shared_ptr<gds::Surface> GetDefaultIcon(DefaultIcons icon, size_t size){
+	static std::map<std::string, std::shared_ptr<gds::Surface>> defaultIcons;
+	
 	auto cacheKey = GetDefaultIconId(icon, size);
-	return GetIconFromCache(cacheKey, [&]{
+	auto it = defaultIcons.find(cacheKey);
+	if(it != defaultIcons.end()) return it->second;
+	else{
 		auto name = GetDefaultIconName(icon);
-		return GetIconFromResc(GetLocalResc(), name, size);
-	});
+		auto icon = GetIconFromResc(GetLocalResc(), name, size);
+		defaultIcons[cacheKey] = icon;
+		return icon;
+	};
 }
 
 std::shared_ptr<gds::Surface> GetIconFromFile(const std::string &filename, const std::string iconName, size_t size){
