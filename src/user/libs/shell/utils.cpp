@@ -34,9 +34,10 @@ struct elxIconInfo{
 	std::string name;
 };
 
-static cache::lru_cache<std::string, elxIconInfo> elxIconIdCache(256);
-
+static cache::lru_cache<std::string, elxIconInfo> elxIconInfoCache(256);
 static std::map<std::string, std::shared_ptr<gds::Surface>> loadedIcons;
+
+static auto cacheLock = btos_api::bt_create_lock();
 
 static std::shared_ptr<gds::Surface> LoadPNGFromFD(int fd){
 	auto png = GDS_LoadPNG(fd);
@@ -86,13 +87,17 @@ static std::string IconCacheKey(const std::string &path, const std::string &name
 }
 
 static std::shared_ptr<gds::Surface> GetIconFromCache(const std::string &cacheKey, std::function<std::shared_ptr<gds::Surface>()> loader){
+	bt_lock(cacheLock);
 	std::shared_ptr<gds::Surface> icon;
 	if(!iconCache.exists(cacheKey)){
+		bt_unlock(cacheLock);
 		icon = loader();
+		bt_lock(cacheLock);
 		if(icon) iconCache.put(cacheKey, icon);
 	}else{
 		icon = iconCache.get(cacheKey);
 	}
+	bt_unlock(cacheLock);
 	return icon;
 }
 
@@ -130,21 +135,25 @@ static std::string GetDefaultIconName(DefaultIcons icon){
 
 static std::string GetDefaultIconId(DefaultIcons icon, size_t size){
 	auto name = GetDefaultIconName(icon);
-	return IconCacheKey("-LOCAL-", name, size);
+	return IconCacheKey("-DEFAULT-", name, size);
 }
 
 std::shared_ptr<gds::Surface> GetDefaultIcon(DefaultIcons icon, size_t size){
+	bt_lock(cacheLock);
 	static std::map<std::string, std::shared_ptr<gds::Surface>> defaultIcons;
 	
+	std::shared_ptr<gds::Surface> ret;
 	auto cacheKey = GetDefaultIconId(icon, size);
 	auto it = defaultIcons.find(cacheKey);
-	if(it != defaultIcons.end()) return it->second;
+	if(it != defaultIcons.end()) ret = it->second;
 	else{
 		auto name = GetDefaultIconName(icon);
-		auto icon = GetIconFromResc(GetLocalResc(), name, size);
-		defaultIcons[cacheKey] = icon;
-		return icon;
+		auto iconSurf = GetIconFromResc(GetLocalResc(), name, size);
+		ret = iconSurf;
+		defaultIcons[cacheKey] = iconSurf;
 	};
+	bt_unlock(cacheLock);
+	return ret;
 }
 
 std::shared_ptr<gds::Surface> GetIconFromFile(const std::string &filename, const std::string iconName, size_t size){
@@ -162,7 +171,8 @@ std::shared_ptr<gds::Surface> GetIconFromFile(const std::string &filename, const
 
 std::shared_ptr<gds::Surface> GetElxIcon(const std::string &filename, size_t size){
 	resc::RescHandle h = nullptr;
-	if(!elxIconIdCache.exists(filename)){
+	bt_lock(cacheLock);
+	if(!elxIconInfoCache.exists(filename)){
 		elxIconInfo info;
 		info.useDefault = true;
 		h = resc::Resc_FileOpen(filename);
@@ -184,9 +194,10 @@ std::shared_ptr<gds::Surface> GetElxIcon(const std::string &filename, size_t siz
 				}
 			}
 		}
-		elxIconIdCache.put(filename, info);
+		elxIconInfoCache.put(filename, info);
 	}
-	auto info = elxIconIdCache.get(filename);
+	auto info = elxIconInfoCache.get(filename);
+	bt_unlock(cacheLock);
 	
 	std::shared_ptr<gds::Surface> ret;
 	if(info.useDefault) ret = GetDefaultIcon(DefaultIcons::Executable, size);
