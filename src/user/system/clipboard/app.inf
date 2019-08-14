@@ -1,0 +1,5 @@
+[app]
+name = Clipboard Server
+vendor = BT/OS
+icon = clipboard
+mode = System
