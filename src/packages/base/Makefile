@@ -79,6 +79,7 @@ import-files:=\
  data/btos/lib/resc.ell \
  data/btos/cmd/rescutil.elx \
  data/btos/lib/shell.ell \
+ data/btos/system/sessions/services/clipboard.elx \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -321,6 +322,9 @@ data/btos/cmd/rescutil.elx: ../../user/cmds/rescutil/rescutil.elx
 	cp $< $@
 
 data/btos/lib/shell.ell: ../../user/libs/shell/shell.ell
+	cp $< $@
+
+data/btos/system/sessions/services/clipboard.elx: ../../user/system/clipboard/clipboard.elx data/btos/system/sessions
 	cp $< $@
 
 create.directories: Makefile
