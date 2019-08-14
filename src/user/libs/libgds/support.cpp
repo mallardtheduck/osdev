@@ -7,11 +7,12 @@
 
 #include <cstring>
 #include <malloc.h>
+#include <unistd.h>
 
 using namespace btos_api::gds;
 
 extern "C" uint64_t GDS_LoadPNG(int fd){
-	FILE *file = fdopen(fd, "rb");
+	FILE *file = fdopen(dup(fd), "rb");
 	ok_png *image = ok_png_read(file, OK_PNG_INFO_ONLY);
 	if(image && file){
 		size_t width = image->width;
