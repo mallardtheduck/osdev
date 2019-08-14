@@ -12,6 +12,7 @@ extern "C" {
 #define HANDLE_NULL 0
 #define HANDLE_OS 1
 #define HANDLE_VIRT 2
+#define HANDLE_DUP 3
 
 struct virtual_handle{
 	int type;
@@ -29,12 +30,18 @@ struct virtual_handle{
 			int (*write)(void*, char*, int);
 			int (*fsync)(void*);
 		}virt;
+		struct{
+			struct virtual_handle *parent;
+		}dup;
 	};
 };
 
 #ifndef __cplusplus
 typedef struct virtual_handle virtual_handle;
 #endif
+
+virtual_handle *btos_dup(virtual_handle *vh);
+int btos_close(virtual_handle *vh);
 
 bool btos_path_parse(const char *opath, char *buffer, size_t size);
 bool btos_path_is_absolute(const char *path);

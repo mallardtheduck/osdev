@@ -30,19 +30,13 @@ void _exit(){
 int _close(int file){
     virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
-    if(vh->type == HANDLE_NULL){
-    	return 0;
-    }else if(vh->type == HANDLE_OS){
-		bt_handle_t h = vh->os.handle;
-		int ret=bt_fclose(h);
-		if(ret) btos_remove_filenum(file);
-		else errno = EBADF;
-		return ret;
+	int ret = btos_close(vh);
+	if(ret){
+		btos_remove_filenum(file);
+		return 0;
 	}else{
-		int ret=vh->virt.close(vh->virt.data);
-		if(ret) btos_remove_filenum(file);
-		else errno = EBADF;
-		return ret;
+		errno = EBADF;
+		return 1;
 	}
 }
 
@@ -79,6 +73,7 @@ int fork(){
 int _fstat(int file, struct stat *st) {
     virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
+    if(vh->type == HANDLE_DUP) vh = vh->dup.parent;
     if(vh->type == HANDLE_NULL){
     	return _stat("", st);
     }else if(vh->type == HANDLE_OS){
@@ -113,6 +108,7 @@ int getpid(){
 int _isatty(int file){
     virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
+    if(vh->type == HANDLE_DUP) vh = vh->dup.parent;
     if(vh->type == HANDLE_NULL){
     	return 0;
     }else if(vh->type == HANDLE_OS){
@@ -158,7 +154,7 @@ int link(char *old, char *new){
 off_t _lseek(int file, off_t ptr, int dir){
 	virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
-    
+    if(vh->type == HANDLE_DUP) vh = vh->dup.parent;
     if(vh->type == HANDLE_NULL){
     	return 0;
     }else if(vh->type == HANDLE_OS){
@@ -211,6 +207,7 @@ int open(const char *name, int flags, ...){
 int _read(int file, char *ptr, int len){
 	virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
+    if(vh->type == HANDLE_DUP) vh = vh->dup.parent;
     if(vh->type == HANDLE_NULL){
     	return 0;
     }else if(vh->type == HANDLE_OS){
@@ -337,6 +334,7 @@ int wait(int *status){
 int _write(int file, char *ptr, int len){
 	virtual_handle *vh=btos_get_handle_virt(file);
     if(!vh) return -1;
+    if(vh->type == HANDLE_DUP) vh = vh->dup.parent;
     if(vh->type == HANDLE_NULL){
     	return len;
     }else if(vh->type == HANDLE_OS){
@@ -411,9 +409,10 @@ int pipe(int fildes[2]){
 }
 
 int _dup(int fildes){
-	errno = ENOTSUP;
-	(void)fildes;
-	return -1;
+	virtual_handle *vh=btos_get_handle_virt(fildes);
+    if(!vh) return -1;
+	virtual_handle *dup = btos_dup(vh);
+	return btos_set_filenum_virt(dup);
 }
 
 int dup(int fildes){
@@ -664,6 +663,7 @@ int utimes(const char *path, const struct timeval times[2]){
 int ftruncate(int fd, off_t length){
 	virtual_handle *vh=btos_get_handle_virt(fd);
     if(!vh) return -1;
+    if(vh->type == HANDLE_DUP) vh = vh->dup.parent;
     if(vh->type == HANDLE_NULL){
     	return 0;
     }else if(vh->type == HANDLE_OS){
