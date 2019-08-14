@@ -58,7 +58,7 @@ namespace gds{
 
 		Surface(Surface &&s);
 		
-		~Surface();
+		virtual ~Surface();
 
 		static Surface Wrap(uint64_t id, bool own);
 
