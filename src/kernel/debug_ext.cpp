@@ -1,4 +1,5 @@
 #include "kernel.hpp"
+#include <util/bitset.hpp>
 
 static const size_t DEBUG_COPYLIMT=4096*1024;
 static const uint32_t CR4_DE=(1 << 3);
@@ -7,7 +8,7 @@ static uint16_t debug_ext_id;
 static pid_t debugger_pid=0;
 
 static void debug_copymem(pid_t fpid, void *faddr, pid_t tpid, void *taddr, size_t size);
-static bool debug_setbreakpoint(uint64_t thread_id, uint32_t addr);
+static bool debug_setbreakpoint(uint64_t thread_id, uint32_t addr, uint8_t type);
 static bool debug_clearbreakpoint(uint64_t thread_id, uint32_t addr);
 static uint32_t debug_getbpinfo(uint64_t thread_id);
 
@@ -52,7 +53,7 @@ void debug_extension_uapi(uint16_t fn, isr_regs *regs) {
 		case bt_debug_function::SetBreakpoint:
 			if(is_safe_ptr(regs->ebx, sizeof(uint64_t))){
 				uint64_t thread_id = *(uint64_t*)regs->ebx;
-				regs->eax = debug_setbreakpoint(thread_id, regs->ecx);
+				regs->eax = debug_setbreakpoint(thread_id, regs->ecx, regs->edx);
 			}
 			break;
 		case bt_debug_function::ClearBreakpoint:
@@ -218,7 +219,23 @@ static size_t debug_dridx(char dr){
 	return 0xFFFFFFFF;
 }
 
-static bool debug_setbreakpoint(uint64_t thread_id, uint32_t addr){
+static void configure_dr7(size_t i, bool enable, uint8_t type, uint32_t &dr7){
+	BitSet dr7Bits(32);
+	dr7Bits.SetBits((void*)&dr7, 32);
+	auto controlIndex = i * 2;
+	dr7Bits.Set(controlIndex + 0, enable);
+	dr7Bits.Set(controlIndex + 1, enable);
+	auto typeIndex = 16 + (i * 4);
+	BitSet typeBits(8);
+	typeBits.SetBits((void*)&type, 8);
+	dr7Bits.Set(typeIndex + 0, typeBits.IsSet(0));
+	dr7Bits.Set(typeIndex + 1, typeBits.IsSet(1));
+	dr7Bits.Set(typeIndex + 2, typeBits.IsSet(2));
+	dr7Bits.Set(typeIndex + 3, typeBits.IsSet(3));
+	memcpy(&dr7, dr7Bits.GetBits(), 4);
+}
+
+static bool debug_setbreakpoint(uint64_t thread_id, uint32_t addr, uint8_t type){
 	bool ret = false;
 	uint32_t *state = sch_getdebugstate(thread_id);
 	if(!state) return false;
@@ -226,9 +243,9 @@ static bool debug_setbreakpoint(uint64_t thread_id, uint32_t addr){
 	for(size_t i = 0; i < 4; ++i){
 		if(state[debug_dridx(i)] == 0){
 			state[debug_dridx(i)] = addr;
-			dr7 |= (1 << (i * 2));
-			dr7 |= (1 << ((i * 2) + 1));
+			configure_dr7(i, true, type, dr7);
 			ret = true;
+			dbgpf("DEBUG: Set breakpoint %lu at %p for thread %llu (DR7: %x).\n", i, (void*)addr, thread_id, dr7);
 			break;
 		}
 	}
@@ -244,8 +261,7 @@ static bool debug_clearbreakpoint(uint64_t thread_id, uint32_t addr){
 	for(size_t i = 0; i < 4; ++i){
 		if(state[debug_dridx(i)] == addr){
 			state[debug_dridx(i)] = 0;
-			dr7 &= ~(1 << (i * 2));
-			dr7 &= ~(1 << ((i * 2) + 1));
+			configure_dr7(i, false, 0, dr7);
 			ret = true;
 			break;
 		}

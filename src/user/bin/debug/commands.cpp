@@ -311,11 +311,36 @@ void setbp_command(const vector<string> &args){
 		return;
 	}
 	
-	bool result = debug_setbreakpoint(selected_thread, sym.address);
+	bool result = debug_setbreakpoint(selected_thread, sym.address, 0);
 	if(!result){
 		cout << "Breakpoint could not be set." << endl;
 	}else{
 		cout << "Breakpoint set at: 0x" << hex << sym.address << endl;
+	}
+	cout.copyfmt(ios(NULL));
+}
+
+void setwp_command(const vector<string> &args){
+	if(!selected_thread){
+		cout << "No thread selected." << endl;
+		return;
+	}
+	
+	if(args.size() != 2){
+		cout << "No symbol specified." << endl;
+		return;
+	}
+	symbol sym = get_best_symbol(args[1]);
+	if(sym.address == 0){
+		cout << "Symbol not found." << endl;
+		return;
+	}
+	
+	bool result = debug_setbreakpoint(selected_thread, sym.address, 0xD);
+	if(!result){
+		cout << "Watchpoint could not be set." << endl;
+	}else{
+		cout << "Watchpoint set at: 0x" << hex << sym.address << endl;
 	}
 	cout.copyfmt(ios(NULL));
 }
@@ -465,6 +490,8 @@ bool do_command(string cmd){
 			disas_command(line);
 		}else if(line[0] == "setbp"){
 			setbp_command(line);
+		}else if(line[0] == "setwp"){
+			setwp_command(line);
 		}else if(line[0] == "clearbp"){
 			clearbp_command(line);
 		}else if(line[0] == "bpstat"){
