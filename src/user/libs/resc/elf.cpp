@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <cstring>
 #include <unistd.h>
 
 #define EI_NIDENT	16
@@ -52,7 +53,7 @@ static std::vector<char> read_data(int fd, Elf32_Off offset, Elf32_Word size){
 	return ret;
 }
 
-static std::vector<Elf32_Shdr> read_section_table(int fd, Elf32_Ehdr hdr){
+static std::vector<Elf32_Shdr> read_section_table(int fd, const Elf32_Ehdr &hdr){
 	std::vector<Elf32_Shdr> ret;
 	lseek(fd, hdr.e_shoff, SEEK_SET);
 	for(size_t i = 0; i < hdr.e_shnum; ++i){
@@ -64,13 +65,15 @@ static std::vector<Elf32_Shdr> read_section_table(int fd, Elf32_Ehdr hdr){
 }
 
 static std::string section_name(const Elf32_Shdr &s, const std::vector<char> &strings){
-	return strings.data() + s.sh_name;
+	if(s.sh_name < strings.size()) return strings.data() + s.sh_name;
+	else return "";
 }
 
 ElfRescInfo GetElfRescInfo(int fd){
 	Elf32_Ehdr hdr;
 	auto bytes = read(fd, (void*)&hdr, sizeof(hdr));
 	if(bytes != sizeof(hdr)) return {};
+	if(memcmp(hdr.e_ident, "\x7F""ELF", 4) != 0) return {};
 	
 	auto sections = read_section_table(fd, hdr);
 	if(sections.size() > hdr.e_shstrndx){
