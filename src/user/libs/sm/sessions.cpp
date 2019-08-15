@@ -81,7 +81,7 @@ pair<bool, shared_ptr<ServiceInstance>> Session::StartService(const string &name
 		if(r.first){
 			auto s = r.second;
 			auto i = make_shared<ServiceInstance>(s.Start());
-			i->SetSticky(sticky);
+			i->SetSticky(sticky || s.IsSticky());
 			services.insert(make_pair(name, i));
 			return {true, i};
 		}
