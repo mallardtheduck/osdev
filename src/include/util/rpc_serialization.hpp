@@ -1,6 +1,9 @@
 #ifndef _RPC_SERIALIZATION_HPP
 #define _RPC_SERIALIZATION_HPP
 
+#include <tuple>
+#include <iostream>
+
 namespace rpc{
 	template<typename T> void serialize(std::ostream &os, const T &val){
         static_assert(std::is_fundamental<T>::value, "Non-fundamental types need custom serialization!");
