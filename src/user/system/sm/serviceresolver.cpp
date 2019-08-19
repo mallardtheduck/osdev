@@ -43,15 +43,16 @@ static void addService(const std::string &fname, std::map<std::string, btos_api:
 				resc::Resc_Close(h);
 			}
 			if(!file.empty()){
-				auto section = file["service"];
-				auto name = section["name"];
-				auto path = btos_api::Interpolate(section["path"], [&](const std::string &key){
+				auto varGet = [&](const std::string &key){
 					if(key == "this") return fname;
 					else return btos_api::GetEnv(key);
-				});
+				};
+				auto section = file["service"];
+				auto name = section["name"];
+				auto path = btos_api::Interpolate(section["path"], varGet);
 				std::string cleanup;
 				if(section.find("cleanup") != section.end()){
-					cleanup = btos_api::EnvInterpolate(section["cleanup"]);
+					cleanup = btos_api::Interpolate(section["cleanup"], varGet);
 				}
 				bool sticky = false;
 				if(section.find("sticky") != section.end()){

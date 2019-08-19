@@ -27,6 +27,7 @@ namespace RPCID{
 	const uint32_t GetContentHeader = 1;
 	const uint32_t CopyCut = 2;
 	const uint32_t Paste = 3;
+	const uint32_t Clear = 4;
 }
 
 inline void serialize(std::ostream &s, const ContentHeader &h){
@@ -50,8 +51,9 @@ inline void deserialize(std::istream &s, Clipboard &c){
 }
 
 ContentHeader GetContentHeader(Clipboard c);
-void CopyCut(Clipboard c, const ContentHeader &h, const std::vector<char> &data, bool linkedBack = false);
+uint64_t CopyCut(Clipboard c, const std::string &type, const std::vector<char> &data, bool linkedBack = false);
 std::vector<char> Paste(Clipboard c, uint64_t id);
+void Clear(Clipboard c, uint64_t id);
 
 }
 }

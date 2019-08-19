@@ -18,14 +18,19 @@ ContentHeader GetContentHeader(Clipboard c){
 	return rpc::MakeClient<RPCID::GetContentHeader>(pid, GetContentHeader)(c);
 }
 
-void CopyCut(Clipboard c, const ContentHeader &h, const std::vector<char> &data, bool linkedBack){
+uint64_t CopyCut(Clipboard c, const std::string &type, const std::vector<char> &data, bool linkedBack){
 	SetPID();
-	rpc::MakeClient<RPCID::CopyCut>(pid, CopyCut)(c, h, data, linkedBack);
+	return rpc::MakeClient<RPCID::CopyCut>(pid, CopyCut)(c, type, data, linkedBack);
 }
 
 std::vector<char> Paste(Clipboard c, uint64_t id){
 	SetPID();
 	return rpc::MakeClient<RPCID::Paste>(pid, Paste)(c, id);
+}
+
+void Clear(Clipboard c, uint64_t id){
+	SetPID();
+	rpc::MakeClient<RPCID::Clear>(pid, Clear)(c, id);
 }
 
 }

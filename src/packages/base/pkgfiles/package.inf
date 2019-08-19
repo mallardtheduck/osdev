@@ -46,7 +46,7 @@ type = sm.svc
 
 name = base.svc.clipboard
 description = Clipboard service
-path = /system/sessions/services/
+path = /system/
 file = clipboard.elx
 type = sm.svc
 

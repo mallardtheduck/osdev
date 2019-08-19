@@ -1,4 +1,4 @@
-OUTPUT-NAME := clipboardtest.elx
+OUTPUT-NAME := cliputil.elx
 LIBRARY-NAME := clipboard.ell
 
 DESTINATION := $(HOME)/Projects/os/cross/i686-pc-btos
@@ -16,7 +16,7 @@ LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L. -L../libgds
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
 AR-FLAGS := rcs -o $(LIBRARY-NAME)
-LINK-OPTIONS := -lregistry -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib
+LINK-OPTIONS := -lregistry -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib -lclipboard -lsm
 LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lbtoscore -lm
 
 BOOTFILE := boot.o
