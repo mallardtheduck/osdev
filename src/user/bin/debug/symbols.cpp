@@ -211,11 +211,11 @@ static symbol stack_symbol(const string &name){
 	else return null_symbol;
 }
 
-static bool symbol_name_match(const symbol &sym, string name){
+static bool symbol_name_match(const symbol &sym, const string &name){
 	return (name == sym.name || name == sym.raw_name || name == sym.short_name);
 }
 
-symbol get_symbol_by_name(const vector<symbol> &symbols, string name){
+symbol get_symbol_by_name(const vector<symbol> &symbols, const string &name){
 	if(name.length() && name[0] == '*') return fake_symbol(name);
 	if(name.length() && name[0] == '#') return stack_symbol(name);
 	symbol ret = null_symbol;
@@ -226,6 +226,7 @@ symbol get_symbol_by_name(const vector<symbol> &symbols, string name){
 		}
 	}
 	cout << "Could not find symbol: " << name << endl;
+	if(name.length() > 2 && name.substr(0, 2) == "0x") return get_symbol_by_name(symbols, "*" + name);
 	return ret;
 }
 
@@ -239,7 +240,7 @@ symbol get_symbol(const vector<symbol> &symbols, intptr_t addr){
 	return ret;
 }
 
-vector<symbol> get_symbols_by_name(const vector<symbol> &symbols, string name){
+vector<symbol> get_symbols_by_name(const vector<symbol> &symbols, const string &name){
 	vector<symbol> ret;
 	if(name.length() && name[0] == '*'){
 		ret.push_back(fake_symbol(name));
@@ -252,5 +253,6 @@ vector<symbol> get_symbols_by_name(const vector<symbol> &symbols, string name){
 			}
 		}
 	}
+	if(ret.empty() && name.length() > 2 && name.substr(0, 2) == "0x") return get_symbols_by_name(symbols, "*" + name);
 	return ret;
 }

@@ -15,9 +15,10 @@ static void hex_dump(const void* aData, std::size_t aLength, std::basic_ostream<
 	const char* const end = start + aLength;
 	const char* line = start;
 	while (line != end)	{
+		aStream << "0x";
 		aStream.width(4);
 		aStream.fill('0');
-		aStream << std::hex << line - start << " : ";
+		aStream << std::hex << std::uppercase << line - start << " : ";
 		std::size_t lineLength = std::min(aWidth, static_cast<std::size_t>(end - line));
 		for (std::size_t pass = 1; pass <= 2; ++pass)		{	
 			for (const char* next = line; next != end && next != line + aWidth; ++next){
@@ -27,8 +28,7 @@ static void hex_dump(const void* aData, std::size_t aLength, std::basic_ostream<
 					aStream << (ch < 32 ? '.' : ch);
 					break;
 				case 2:
-					if (next != line)
-						aStream << " ";
+				    if(next != line && next != (line + lineLength)) aStream << " ";
 					aStream.width(2);
 					aStream.fill('0');
 					aStream << std::hex << std::uppercase << static_cast<int>(static_cast<unsigned char>(ch));
@@ -62,7 +62,7 @@ static void Paste(bool any){
     if(any || (hdr.type.length() > 5 && hdr.type.substr(0, 5) == "text/")){
         auto data = c::Paste(c::Clipboard::Primary, hdr.id);
         if(!data.empty()){
-            for(char c : data) cout << c;   
+            for(char c : data) std::cout << c;   
         }
         std::cout << std::endl;
     }
