@@ -7,6 +7,7 @@
 #include <util/asprintf.h>
 
 static const uint32_t default_userspace_priority=100;
+static const size_t user_thread_kernel_stack_size=16384;
 
 extern "C" void proc_run_usermode(void *stack, proc_entry entry, int argc, char **argv);
 
@@ -440,7 +441,7 @@ pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
 	info->entry=proc.entry;
     info->stackptr=NULL;
     debug_event_notify(ret, 0, bt_debug_event::ProgramStart);
-	sch_new_thread(&proc_start, (void*)info, 8192);
+	sch_new_thread(&proc_start, (void*)info, user_thread_kernel_stack_size);
 	msg_send_event(btos_api::bt_kernel_messages::ProcessStart, (void*)&ret, sizeof(ret));
 	return ret;
 }
@@ -451,7 +452,7 @@ uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t 
     info->entry=entry;
     info->stackptr=stack;
     //TODO: parameter...
-    uint64_t thread_id=sch_new_thread(&proc_start, (void*)info, 4096);
+    uint64_t thread_id=sch_new_thread(&proc_start, (void*)info, user_thread_kernel_stack_size);
     proc_add_thread(thread_id);
     return thread_id;
 }
