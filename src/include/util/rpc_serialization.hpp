@@ -58,19 +58,27 @@ namespace rpc{
         }
 	}
 	
-	template<typename T> auto deserializeAll(std::istream &is){
+	template<typename T> 
+	std::tuple<typename std::remove_cv<typename std::remove_reference<T>::type>::type> 
+	deserializeAll(std::istream &is){
 		typename std::remove_cv<typename std::remove_reference<T>::type>::type v;
         deserialize(is, v);
         return std::make_tuple(v);
     }
 
-    template<typename T, typename Ta, typename ...Ts> auto deserializeAll(std::istream &is){
+    template<typename T, typename Ta, typename ...Ts>
+    std::tuple<
+        typename std::remove_cv<typename std::remove_reference<T>::type>::type, 
+        typename std::remove_cv<typename std::remove_reference<Ta>::type>::type, 
+        typename std::remove_cv<typename std::remove_reference<Ts>::type>::type...
+    >
+    deserializeAll(std::istream &is){
         typename std::remove_cv<typename std::remove_reference<T>::type>::type v;
         deserialize(is, v);
         return std::tuple_cat(std::make_tuple(v), deserializeAll<Ta, Ts...>(is));
     }
 
-	inline auto deserializeAll(std::istream &){
+	inline std::tuple<> deserializeAll(std::istream &){
 		return std::make_tuple();
 	}	
 }
