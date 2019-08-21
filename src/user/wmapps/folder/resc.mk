@@ -1,7 +1,7 @@
 ICON_FOLDER := ../../../icons
 
 ICONS_APPS := folder
-ICONS_ACTIONS_32 := 
+ICONS_ACTIONS_32 := error question
 ICONS_ACTIONS_16 := back forward up editcopy editpaste editcut editdelete new_folder view_icon view_detailed view_tree window_new
 
 EXTRA_RESC_FILES := app.inf icons.inf

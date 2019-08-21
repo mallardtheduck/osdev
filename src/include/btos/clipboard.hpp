@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <sstream>
+#include <iterator>
 
 #include <util/rpc_serialization.hpp>
 
@@ -48,6 +50,24 @@ inline void deserialize(std::istream &s, ContentHeader &h){
 
 inline void deserialize(std::istream &s, Clipboard &c){
 	rpc::deserialize(s, (int&)c);
+}
+
+template<typename T> std::vector<char> RPCSerialize(const T &data){
+	std::stringstream ss;
+	using rpc::serialize;
+	serialize(ss, data);
+	auto str = ss.str();
+	return {str.begin(), str.end()};
+}
+
+template<typename T> T RPCDeserialize(const std::vector<char> &data){
+	std::stringstream ss;
+	std::copy(data.begin(), data.end(), std::ostream_iterator<char>(ss));
+	ss.seekg(0);
+	T ret;
+	using rpc::deserialize;
+	deserialize(ss, ret);
+	return ret;
 }
 
 ContentHeader GetContentHeader(Clipboard c);

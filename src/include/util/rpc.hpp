@@ -129,9 +129,6 @@ namespace rpc{
                     bt_next_msg_filtered(&reply, filter);
                 }
                 
-                std::vector<char> replyData(reply.length);
-                bt_msg_content(&reply, &replyData[0], reply.length);
-                rss.write(&replyData[0], replyData.size());
                 if(reply.type == MessageType_Continue){
                     msg.flags = bt_msg_flags::Reply;
                     msg.reply_id = reply.id;

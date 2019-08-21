@@ -19,6 +19,7 @@
 #include <gui/shell/utils.hpp>
 
 #include <btos/directory.hpp>
+#include <btos/clipboard.hpp>
 
 #include <stack>
 
@@ -28,6 +29,7 @@ namespace gds = btos_api::gds;
 namespace gui = btos_api::gui;
 namespace sh = btos_api::gui::shell;
 namespace wm = btos_api::wm;
+namespace clip = btos_api::clipboard;
 
 enum class ViewMode{
 	Icons, Details
@@ -262,6 +264,55 @@ int main(int argc, char **argv){
 		gui::MessageBox("BT/OS Folder View", "About", LoadIcon("icons/folder_32.png")).Show(form.get());
 	};
 	
+	const std::string copyClipType = "vnd.btos/filecopy";
+	const std::string moveClipType = "vnd.btos/filecut";
+	
+	auto paste = [&]{
+		auto header = clip::GetContentHeader(clip::Clipboard::Primary);
+		if(header.type == copyClipType || header.type == moveClipType){
+			auto data = clip::Paste(clip::Clipboard::Primary, header.id);
+			if(!data.empty()){
+				auto paths = clip::RPCDeserialize<std::vector<std::string>>(data);
+				std::string question;
+				if(header.type == copyClipType) question = "Copy %s file(s)?";
+				else question = "Move %s file(s)?";
+				auto confirm = gui::MessageBox(tfm::format(question.c_str(), paths.size()), "Confirm", LoadIcon("icons/question_32.png"), {"Yes", "No"}).Show(form.get());
+				if(confirm == 0){
+					for(auto &p : paths){
+						auto parts = sh::SplitPath(p);
+						auto dest = sh::CombinePath(curPath, parts.back());
+						CopyMove(p, dest, (header.type == moveClipType), form.get());
+						
+					}
+					if(header.type == moveClipType) clip::Clear(clip::Clipboard::Primary, header.id);
+					icons->Update();
+					details->Update();
+				}
+			}
+		}
+	};
+	
+	auto copyCut = [&](const std::string &type){
+		bt_directory_entry entry;
+		if(curView == ViewMode::Icons){
+			entry = icons->GetSelectedEntry();
+		}else{
+			entry = details->GetSelectedEntry();
+		}
+		auto path = sh::CombinePath({curPath, entry.filename});
+		std::vector<std::string> paths;
+		paths.push_back(path);
+		clip::CopyCut(clip::Clipboard::Primary, type, clip::RPCSerialize(paths));
+	};
+	
+	auto copy = [&]{
+		copyCut(copyClipType);
+	};
+	
+	auto cut = [&]{
+		copyCut(moveClipType);
+	};
+	
 	gui::ActionManager am;
 	am.Add("newWindow", "New window...", LoadIcon("icons/window_new_16.png"), newWindow);
 	am.Add("toggleTree", "Toggle tree", LoadIcon("icons/view_tree_16.png"), toggleTree);
@@ -271,9 +322,9 @@ int main(int argc, char **argv){
 	am.Add("goBack", "Back", LoadIcon("icons/back_16.png"), goBack);
 	am.Add("goFwd", "Forward", LoadIcon("icons/forward_16.png"), goFwd);
 	am.Add("newFolder", "New folder...", LoadIcon("icons/new_folder_16.png"), newFolder);
-	am.Add("editPaste", "Paste", LoadIcon("icons/editpaste_16.png"), []{});
-	am.Add("editCopy", "Copy", LoadIcon("icons/editcopy_16.png"), []{});
-	am.Add("editCut", "Cut", LoadIcon("icons/editcut_16.png"), []{});
+	am.Add("editPaste", "Paste", LoadIcon("icons/editpaste_16.png"), paste);
+	am.Add("editCopy", "Copy", LoadIcon("icons/editcopy_16.png"), copy);
+	am.Add("editCut", "Cut", LoadIcon("icons/editcut_16.png"), cut);
 	am.Add("delete", "Delete", LoadIcon("icons/editdelete_16.png"), []{});
 	am.Add("about", "About...", LoadIcon("icons/folder_16.png"), about);
 	
