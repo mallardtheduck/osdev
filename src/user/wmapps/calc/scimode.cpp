@@ -422,3 +422,11 @@ std::shared_ptr<gui::Form> ScientificMode::Show(){
 	form->SetFocus(output);
 	return form;
 }
+
+std::string ScientificMode::GetValue(){
+	return output->GetValue();
+}
+
+void ScientificMode::SetValue(const std::string &s){
+	output->SetText(s);
+}

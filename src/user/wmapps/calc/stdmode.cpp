@@ -261,3 +261,15 @@ std::shared_ptr<gui::Form> StandardMode::Show(){
 	
 	return form;
 }
+
+std::string StandardMode::GetValue(){
+	return output->GetValue();
+}
+
+void StandardMode::SetValue(const std::string &s){
+	auto val = strtod(s.c_str(), nullptr);
+	output->SetText(tfm::format("%f", val));
+	curValue = val;
+	curValueValid = true;
+	awaiting = true;
+}

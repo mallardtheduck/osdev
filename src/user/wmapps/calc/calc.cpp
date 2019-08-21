@@ -8,6 +8,7 @@
 #include <gui/messagebox.hpp>
 #include <wm/menu.hpp>
 #include <wm/eventloop.hpp>
+#include <btos/clipboard.hpp>
 
 #include "calc_resc.tar.h"
 #include "icalcmode.hpp"
@@ -20,6 +21,7 @@ namespace gds = btos_api::gds;
 namespace resc = btos_api::resc;
 namespace gui = btos_api::gui;
 namespace wm = btos_api::wm;
+namespace clip = btos_api::clipboard;
 
 CalcMode CurrentMode = CalcMode::Standard;
 
@@ -47,6 +49,21 @@ template<typename T, CalcMode M> static void SwitchCalc(){
 	loop.AddWindow(currentForm);
 }
 
+void Copy(){
+	auto text = currentCalc->GetValue();
+	std::vector<char> data(text.begin(), text.end());
+	clip::CopyCut(clip::Clipboard::Primary, "text/plain", data);
+}
+
+void Paste(){
+	auto header = clip::GetContentHeader(clip::Clipboard::Primary);
+	if(header.type == "text/plain"){
+		auto data = clip::Paste(clip::Clipboard::Primary, header.id);
+		std::string text(data.data(), data.size());
+		currentCalc->SetValue(text);
+	}
+}
+
 bool MenuHandler(int id){
 	switch(id){
 		case 1:
@@ -60,10 +77,10 @@ bool MenuHandler(int id){
 			break;
 		
 		case 4:
-			//Copy
+			Copy();
 			break;
 		case 5:
-			//Paste
+			Paste();
 			break;
 		case 6:
 			gui::MessageBox("BT/OS Calculator", "About", LoadPNG("calc_32.png")).Show(currentForm.get());
@@ -123,7 +140,9 @@ void MakeToolbarAndMenu(std::shared_ptr<gui::Form> form){
 	
 	auto tbSpacer = std::make_shared<gui::ToolbarSpacer>();
 	auto tbCopy = std::make_shared<gui::ToolbarButton>(iconCopy);
+	tbCopy->OnAction(&Copy);
 	auto tbPaste = std::make_shared<gui::ToolbarButton>(iconPaste);
+	tbPaste->OnAction(&Paste);
 	toolbar->Controls().insert(toolbar->Controls().end(), {tbModeStd, tbModeSci, tbModeProg, tbSpacer, tbCopy, tbPaste});
 	toolbar->Refresh();
 	

@@ -34,6 +34,9 @@ private:
 public:
 	ScientificMode(const btos_api::gds::Point &pos);
 	std::shared_ptr<btos_api::gui::Form> Show();
+	
+	std::string GetValue();
+	void SetValue(const std::string &);
 };
 
 #endif

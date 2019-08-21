@@ -537,3 +537,12 @@ std::shared_ptr<gui::Form> ProgrammerMode::Show(){
 	
 	return form;
 }
+
+std::string ProgrammerMode::GetValue(){
+	return output->GetValue();
+}
+
+void ProgrammerMode::SetValue(const std::string &s){
+	auto val = strtoull(s.c_str(), nullptr, 0);
+	SetOutput(val);
+}

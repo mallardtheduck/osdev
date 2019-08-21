@@ -13,7 +13,7 @@ BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -std=gnu99
 LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME) -O2
-LINK-OPTIONS := -Wl,-rpath-link,../../../3rdparty/install/btos/lib -lgcc_s -lstdc++ -lm  -lbtoscore -lbtoslib -lresc -lgds -lwm -lgui
+LINK-OPTIONS := -lgcc_s -lstdc++ -lm  -lbtoscore -lbtoslib -lresc -lgds -lwm -lgui -lclipboard
 
 RESCFILES-16-ACTIONS := \
 	calc_standard.png \
