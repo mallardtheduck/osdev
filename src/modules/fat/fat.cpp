@@ -119,7 +119,6 @@ bool fat_unmount(void *mountdata){
 
 void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 	if(mounted && mountdata==fatmagic){
-        take_fat_lock();
 		fat_file_handle *ret=new fat_file_handle();
 		ret->debug = false;
 		ret->mode=mode;
@@ -137,6 +136,7 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		if(mode==(FS_Write | FS_Read | FS_AtEnd | FS_Create)) modifiers="a+";
 		if(mode==(FS_Read | FS_Write | FS_Create)) modifiers = "a+";
 		dbgpf("FAT: Encoded flags: %s\n", modifiers);
+		take_fat_lock();
 		void *flh=fl_fopen(spath, modifiers);
 		if(flh && mode==(FS_Read | FS_Write | FS_Create)){
 			fl_fclose(flh);
