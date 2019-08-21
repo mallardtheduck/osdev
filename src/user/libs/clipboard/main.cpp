@@ -71,7 +71,7 @@ static void Paste(bool any){
 static void Dump(){
     auto hdr = c::GetContentHeader(c::Clipboard::Primary);
     auto data = c::Paste(c::Clipboard::Primary, hdr.id);
-    std::cout << "MIME type: " << (hdr.type.empty() ? "-empty-" : hdr.type) << " Size: " << data.size() << std::endl;
+    std::cout << "Type: " << (hdr.type.empty() ? "-empty-" : hdr.type) << " Size: " << data.size() << std::endl;
     hex_dump(data.data(), data.size(), std::cout);
 }
 
