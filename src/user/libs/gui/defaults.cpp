@@ -366,7 +366,7 @@ namespace fonts{
 	}
 	
 	gds::Font GetTextAreaFont(){
-		return gds::Font::Get("DejaVu Sans", gds_FontStyle::Normal);
+		return gds::Font::Get("DejaVu Sans Mono", gds_FontStyle::Normal);
 	}
 	
 	uint32_t GetTextAreaTextSize(){

@@ -44,14 +44,19 @@ void TextArea::UpdateDisplayState(){
 	if(!lines.size()){
 		cursorPos = 0;
 		textOffset = 0;
-		lines.emplace_back(Line{"", gds::TextMeasurements()});
+		lines.emplace_back(Line{""});
 		return;
 	}
 	if(cursorLine >= lines.size()) cursorLine = lines.size() - 1;
 	auto &text = lines[cursorLine].text;
 	auto &textMeasures = lines[cursorLine].textMeasures;
+	auto &measuredText = lines[cursorLine].measuredText;
 	
-	if(textMeasures.w == 0 || update) textMeasures = surf->MeasureText(text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize());
+	if(textMeasures.w == 0 || text != measuredText){
+		textMeasures = surf->MeasureText(text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize());
+		measuredText = text;
+		lines[cursorLine].surf.reset();
+	}
 	
 	auto oldLineOffset = lineOffset;
 	size_t vlines = rect.h / fontHeight;
@@ -107,14 +112,14 @@ void TextArea::UpdateDisplayState(){
 	}
 	
 	double textOffsetPxlsD = 0.0;
-	double cursorPosPxlsD = 0.5;
+	double cursorPosPxlsD = 1.5;
 	for(size_t i = 0; i < std::max(textOffset, cursorPos) && i < textMeasures.charX.size(); ++i){
 		if(i < textOffset) textOffsetPxlsD += textMeasures.charX[i];
 		else if(i < cursorPos) cursorPosPxlsD += textMeasures.charX[i];
 	}
 	textOffsetPxls = round(textOffsetPxlsD);
 	cursorPosPxls = round(cursorPosPxlsD);
-	if(cursorPosPxlsD == 0.5 && cursorPos == 1 && text.length() == 1) cursorPosPxls = textMeasures.w;
+	if(cursorPosPxlsD == 1.5 && cursorPos == 1 && text.length() == 1) cursorPosPxls = textMeasures.w;
 	//std::cout << "UpdateDisplayState: cursorPos: " << cursorPos << " cursorPosPxls: " << cursorPosPxls << " textOffset: " << textOffset << " textOffsetPxls: " << textOffsetPxls << " text.length(): " << text.length() << std::endl;//
 }
 
@@ -148,7 +153,7 @@ void TextArea::SplitLine(size_t i, size_t pos){
 	l.textMeasures = gds::TextMeasurements();
 	auto it = lines.begin();
 	std::advance(it, i + 1);
-	lines.emplace(it, Line{ntext, gds::TextMeasurements()});
+	lines.emplace(it, Line{ntext});
 }
 	
 EventResponse TextArea::HandleEvent(const wm_Event &e){
@@ -319,7 +324,6 @@ void TextArea::Paint(gds::Surface &s){
 		uint32_t inH = rect.h - 1;
 		
 		auto bkgCol = colours::GetBackground().Fix(*surf);
-		auto txtCol = colours::GetTextAreaText().Fix(*surf);
 		auto border = colours::GetBorder().Fix(*surf);
 		
 		surf->Clear();
@@ -329,11 +333,30 @@ void TextArea::Paint(gds::Surface &s){
 		for(size_t i = lineOffset; i < lines.size(); ++i){
 			if((i - lineOffset) * fontHeight > rect.h) break;
 			
-			if(!lines[i].textMeasures.w) lines[i].textMeasures = surf->MeasureText(lines[i].text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize());
+			auto &m = lines[i].textMeasures;
+			bool redraw = false;
+			if(!m.w || lines[i].text != lines[i].measuredText){
+				m = surf->MeasureText(lines[i].text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize());
+				lines[i].measuredText = lines[i].text;
+				redraw = true;
+			}
+			uint32_t lsW = m.w + 2;
+			uint32_t lsH = m.h * 1.5;
+			if(redraw || !lines[i].surf){
+				auto &ls = lines[i].surf; 
+				ls.reset(new gds::Surface(gds_SurfaceType::Vector, lsW, lsH, 100, gds_ColourType::True));
+				ls->BeginQueue();
+				auto lsBkg = colours::GetBackground().Fix(*ls);
+				ls->Box({0, 0, lsW, lsH}, lsBkg, lsBkg, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+				auto lsTxt = colours::GetTextAreaText().Fix(*ls);
+				auto textY = std::max<int32_t>(((fontHeight + m.h) / 2), 0);
+				ls->Text({2, textY}, lines[i].text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize(), lsTxt);
+				ls->CommitQueue();
+			}
 			
-			auto textY = std::max<int32_t>(((fontHeight + lines[i].textMeasures.h) / 2), 0);
-			textY += (i - lineOffset) * fontHeight;
-			surf->Text({2 - (int32_t)textOffsetPxls, textY}, lines[i].text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize(), txtCol);
+			int32_t lsX = -(int32_t)textOffsetPxls;
+			int32_t lsY = (i - lineOffset) * fontHeight;
+			surf->Blit(*lines[i].surf, {0, 0, lsW, lsH}, {lsX, lsY, lsW, lsH});
 		}
 		drawing::Border(*surf, {0, 0, inW, inH}, border);
 		
@@ -389,10 +412,11 @@ void TextArea::Blur(){
 }
 	
 void TextArea::SetText(const std::string &t){
+	lines.clear();
 	std::stringstream ss(t);
 	std::string l;
 	while(std::getline(ss, l)){
-		lines.emplace_back(Line{l, gds::TextMeasurements()});
+		lines.emplace_back(Line{l});
 	}
 	cursorLine = 0;
 	cursorPos = 0;

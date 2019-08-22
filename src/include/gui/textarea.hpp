@@ -17,7 +17,12 @@ private:
 	
 	struct Line{
 		std::string text;
+		std::string measuredText;
 		gds::TextMeasurements textMeasures;
+		std::unique_ptr<gds::Surface> surf;
+		
+		Line(const std::string &t) : text(t) {};
+		Line() = default;
 	};
 	
 	size_t fontHeight;

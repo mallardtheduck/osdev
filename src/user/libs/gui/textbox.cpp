@@ -163,11 +163,11 @@ void TextBox::Paint(gds::Surface &s){
 	if(hasFocus){
 		auto cursorCol = colours::GetTextCursor().Fix(*surf);
 		
-		double cursorXd = 0.5;
+		double cursorXd = 1.5;
 		for(size_t i = textOffset; i < cursorPos && i < textMeasures.charX.size(); ++i){
 			cursorXd += textMeasures.charX[i];
 		}
-		if(cursorXd == 0.5 && text.length() == 1 && cursorPos == 1) cursorXd = textMeasures.w;
+		if(cursorXd == 1.5 && text.length() == 1 && cursorPos == 1) cursorXd = textMeasures.w;
 		int32_t cursorX = round(cursorXd);
 		s.Line({(int32_t)cursorX + rect.x, (int32_t)2 + rect.y}, {(int32_t)cursorX + rect.x, (int32_t)(rect.h - 3) + rect.y}, cursorCol);
 	}
