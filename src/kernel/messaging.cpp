@@ -205,7 +205,7 @@ void msg_acknowledge(bt_msg_header &msg, bool set_status){
 		if(set_status) sch_set_msgstaus(thread_msg_status::Normal);
 		msg_send_receipt(msg);
 	}
-	else dbgpf("MSG: Attempt to acknowlegde non-existent message %i\n", (int)msg.id);
+	//else dbgpf("MSG: Attempt to acknowlegde non-existent message %i\n", (int)msg.id);
 }
 
 void msg_nextmessage(bt_msg_header &msg){
