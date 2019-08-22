@@ -1,4 +1,5 @@
 #include <gui/idialog.hpp>
+#include <util/tinyformat.hpp>
 
 namespace btos_api{
 namespace gui{
@@ -6,17 +7,17 @@ namespace gui{
 gds::Point DialogPosition(wm::Window *parent, const wm::Window &form){
 	auto info = form.Info();
 	auto contentInfo = gds::Surface::Wrap(info.gds_id, false).Info();
-	auto totalFormWidth = contentInfo.w + info.contentX;
-	auto totalFormHeight = contentInfo.h + info.contentY;
+	int32_t totalFormWidth = contentInfo.w + info.contentX;
+	int32_t totalFormHeight = contentInfo.h + info.contentY;
 	if(parent){
 		auto pInfo = parent->Info();
 		auto pContentInfo = gds::Surface::Wrap(pInfo.gds_id, false).Info();
 		
-		auto totalParentWidth = pContentInfo.w + pInfo.contentX;
-		auto totalParentHeight = pContentInfo.h + pInfo.contentY;
+		int32_t totalParentWidth = pContentInfo.w + pInfo.contentX;
+		int32_t totalParentHeight = pContentInfo.h + pInfo.contentY;
 		
-		auto formOffsetX = (totalParentWidth - totalFormWidth) / 2;
-		auto formOffsetY = (totalParentHeight - totalFormHeight) / 2;
+		int32_t formOffsetX = (totalParentWidth - totalFormWidth) / 2;
+		int32_t formOffsetY = (totalParentHeight - totalFormHeight) / 2;
 		
 		int32_t formX = pInfo.x + formOffsetX;
 		int32_t formY = pInfo.y + formOffsetY;
