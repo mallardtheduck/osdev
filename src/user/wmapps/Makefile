@@ -1,4 +1,4 @@
-PROGS := wmmenu termwin breakout protoclock prototext prototask calc folder
+PROGS := wmmenu termwin breakout protoclock prototext prototask calc folder notepad
 
 all: dummy.file
 	for dir in $(PROGS); do \

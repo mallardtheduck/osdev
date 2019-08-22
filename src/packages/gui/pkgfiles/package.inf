@@ -16,7 +16,15 @@ type = app
 [feature-folder]
 
 name = gui.app.folder
-description = Folder view
+description = Folder View
 path = /
 file = folder.elx
+type = app
+
+[feature-notepad]
+
+name = gui.app.notepad
+description = Notepad
+path = /
+file = notepad.elx
 type = app
