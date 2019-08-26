@@ -8,8 +8,6 @@
 #include <sstream>
 #include <algorithm>
 
-#include <util/tinyformat.hpp>
-
 namespace btos_api{
 namespace gui{
 	
@@ -86,6 +84,7 @@ void TextArea::UpdateDisplayState(){
 	
 	if(vscroll){
 		if(lines.size() > visibleLines){
+			vscroll->Enable();
 			vscroll->SetLines(std::max<uint32_t>(lines.size() - visibleLines, 1));
 			vscroll->SetPage(visibleLines);
 			vscroll->SetValue(lineOffset);
@@ -142,6 +141,7 @@ void TextArea::UpdateDisplayState(){
 	
 	if(hscroll){
 		if(maxLength > visibleChars){
+			hscroll->Enable();
 			hscroll->SetLines(std::max<uint32_t>(1, maxLength - visibleChars));
 			hscroll->SetPage(visibleChars);
 			hscroll->SetValue(textOffset);
