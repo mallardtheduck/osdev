@@ -6,6 +6,9 @@
 #include <iostream>
 #include <cmath>
 #include <sstream>
+#include <algorithm>
+
+#include <util/tinyformat.hpp>
 
 namespace btos_api{
 namespace gui{
@@ -21,13 +24,17 @@ TextArea::TextArea(const gds::Rect &r, const std::string &t, bool scrollbars) :
 		vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - scrollbarSize}, 1, 1, 1, 1, false));
 		
 		hscroll->OnChange([this] (uint32_t v) {
-			if(v != cursorPos) update = true;
-			cursorPos = v;
+			if(v != textOffset){
+				update = true;
+				textOffset = v;
+			}
 		});
 		
 		vscroll->OnChange([this] (uint32_t v) {
-			if(v != cursorLine) update = true;
-			cursorLine = v;
+			if(v != lineOffset){
+				update = true;
+				lineOffset = v;
+			}
 		});
 	}
 	SetText(t);
@@ -47,43 +54,62 @@ void TextArea::UpdateDisplayState(){
 		lines.emplace_back(Line{""});
 		return;
 	}
+
+	uint32_t maxLength = 0;
+	Line *longLine = nullptr;
+	for(auto &line : lines){		
+		if(line.textMeasures.w == 0 || line.text != line.measuredText){
+			line.textMeasures = surf->MeasureText(line.text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize());
+			line.measuredText = line.text;
+			line.surf.reset();
+		}
+		if(line.text.length() > maxLength){
+			maxLength = line.text.length();
+			longLine = &line;
+		}
+	}
+
 	if(cursorLine >= lines.size()) cursorLine = lines.size() - 1;
 	auto &text = lines[cursorLine].text;
 	auto &textMeasures = lines[cursorLine].textMeasures;
-	auto &measuredText = lines[cursorLine].measuredText;
-	
-	if(textMeasures.w == 0 || text != measuredText){
-		textMeasures = surf->MeasureText(text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize());
-		measuredText = text;
-		lines[cursorLine].surf.reset();
-	}
-	
+
 	auto oldLineOffset = lineOffset;
-	size_t vlines = rect.h / fontHeight;
-	while(cursorLine < lineOffset && lineOffset > 0) --lineOffset;
-	while(cursorLine >= lineOffset + vlines && lineOffset < lines.size() - 1) ++lineOffset;
-	if(oldLineOffset != lineOffset) update = true;
+	size_t visibleLines = rect.h / fontHeight;
+	bool cursorMoved = false;
+	if(cursorLine != lastCursorLine || cursorPos != lastCursorPos) cursorMoved = true;
+	if(cursorMoved){
+		while(cursorLine < lineOffset && lineOffset > 0) --lineOffset;
+		while(cursorLine >= lineOffset + visibleLines && lineOffset < lines.size() - 1) ++lineOffset;
+		if(oldLineOffset != lineOffset) update = true;
+	}
+	lastCursorLine = cursorLine;
 	
 	if(vscroll){
-		vscroll->SetLines(std::max<uint32_t>(lines.size() - 1, 1));
-		vscroll->SetPage(vlines);
-		vscroll->SetValue(cursorLine);
+		if(lines.size() > visibleLines){
+			vscroll->SetLines(std::max<uint32_t>(lines.size() - visibleLines, 1));
+			vscroll->SetPage(visibleLines);
+			vscroll->SetValue(lineOffset);
+		}else{
+			vscroll->Disable();
+			vscroll->SetLines(1);
+			vscroll->SetPage(1);
+			vscroll->SetValue(0);
+		}
 	}
 	
-	size_t vchars;
+	size_t visibleChars;
 	auto oldTextOffset = textOffset;
-	textOffset = 0;
 	while(true){
 		auto textW = rect.w - 5;
 		
-		vchars = 0;
+		visibleChars = 0;
 		double cWidth = 0.0;
 		bool overflow = false;
 		bool underflow = false;
 		
 		for(size_t i = 0; i < textMeasures.charX.size(); ++i){
 			if(i >= textOffset){
-				++vchars;
+				++visibleChars;
 				cWidth += textMeasures.charX[i];
 				if(cWidth > textW){
 					overflow = true;
@@ -93,29 +119,50 @@ void TextArea::UpdateDisplayState(){
 				underflow = true;
 			}
 		}
-		
-		if(overflow && cursorPos > textOffset + std::max((int32_t)vchars - 2, 0)){
-			++textOffset;
-			if(textOffset >= text.length()) break;
-		}else if(underflow && cursorPos < textOffset + 1){
-			--textOffset;
-		}else if(textOffset > text.length()){
-			--textOffset;
+		if(longLine && cWidth < textW){
+			for(size_t i = textMeasures.charX.size(); i < longLine->textMeasures.charX.size(); ++i){
+				++visibleChars;
+				cWidth += longLine->textMeasures.charX[i];
+				if(cWidth > textW) break;
+			}
+		}
+		if(cursorMoved){
+			if(overflow && cursorPos > textOffset + std::max((int32_t)visibleChars - 2, 0)){
+				++textOffset;
+				if(textOffset >= text.length()) break;
+			}else if(underflow && cursorPos < textOffset + 1){
+				--textOffset;
+			}else if(textOffset > text.length()){
+				textOffset = text.length();
+			}else break;
 		}else break;
 	}
+	lastCursorPos = cursorPos;
 	if(textOffset != oldTextOffset) update = true;
 	
 	if(hscroll){
-		hscroll->SetLines(std::max<uint32_t>(text.length(), 1));
-		hscroll->SetPage(vchars);
-		hscroll->SetValue(cursorPos);
+		if(maxLength > visibleChars){
+			hscroll->SetLines(std::max<uint32_t>(1, maxLength - visibleChars));
+			hscroll->SetPage(visibleChars);
+			hscroll->SetValue(textOffset);
+		}else{
+			hscroll->Disable();
+			hscroll->SetLines(1);
+			hscroll->SetPage(1);
+			hscroll->SetValue(0);
+		}
 	}
 	
 	double textOffsetPxlsD = 0.0;
 	double cursorPosPxlsD = 1.5;
-	for(size_t i = 0; i < std::max(textOffset, cursorPos) && i < textMeasures.charX.size(); ++i){
-		if(i < textOffset) textOffsetPxlsD += textMeasures.charX[i];
-		else if(i < cursorPos) cursorPosPxlsD += textMeasures.charX[i];
+	for(size_t i = 0; i < std::max(textOffset, cursorPos); ++i){
+		if(i < textMeasures.charX.size()){
+			if(i < textOffset) textOffsetPxlsD += textMeasures.charX[i];
+			else if(i < cursorPos) cursorPosPxlsD += textMeasures.charX[i];
+		}else if(longLine){
+			if(i < textOffset) textOffsetPxlsD += longLine->textMeasures.charX[i];
+			else if(i < cursorPos) cursorPosPxlsD += longLine->textMeasures.charX[i];
+		}
 	}
 	textOffsetPxls = round(textOffsetPxlsD);
 	cursorPosPxls = round(cursorPosPxlsD);
@@ -204,15 +251,15 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 				updateCursor = true;
 				handled = true;
 			}else if(code == (KeyFlags::NonASCII | KeyCodes::PageUp) && cursorLine > 0){
-				size_t vlines = rect.h / fontHeight;
-				cursorLine -= std::min(cursorLine, vlines);
+				size_t visibleLines = rect.h / fontHeight;
+				cursorLine -= std::min(cursorLine, visibleLines);
 				if(!perferredPosPxls) perferredPosPxls = textOffsetPxls + cursorPosPxls;
 				cursorPos = MapPosToLine(perferredPosPxls, lines[cursorLine]);
 				updateCursor = true;
 				handled = true;
 			}else if(code == (KeyFlags::NonASCII | KeyCodes::PageDown) && cursorLine < lines.size() - 1){
-				size_t vlines = rect.h / fontHeight;
-				cursorLine = std::min(cursorLine + vlines, lines.size() - 1);
+				size_t visibleLines = rect.h / fontHeight;
+				cursorLine = std::min(cursorLine + visibleLines, lines.size() - 1);
 				if(!perferredPosPxls) perferredPosPxls = textOffsetPxls + cursorPosPxls;
 				cursorPos = MapPosToLine(perferredPosPxls, lines[cursorLine]);
 				updateCursor = true;
@@ -300,11 +347,11 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 			}
 		}else if(hscroll && InRect(e.Pointer.x, e.Pointer.y, hscroll->GetInteractRect()) && (e.type & hscroll->GetSubscribed())){
 			auto ret = hscroll->HandleEvent(e);
-			update = true;
+			IControl::Paint(outerRect);
 			handled = handled || ret.IsFinishedProcessing();
 		}else if(vscroll && InRect(e.Pointer.x, e.Pointer.y, vscroll->GetInteractRect()) && (e.type & vscroll->GetSubscribed())){
 			auto ret = vscroll->HandleEvent(e);
-			update = true;
+			IControl::Paint(outerRect);
 			handled = handled || ret.IsFinishedProcessing();
 		}
 	}
@@ -370,7 +417,7 @@ void TextArea::Paint(gds::Surface &s){
 	
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
 	
-	if(hasFocus){
+	if(hasFocus && cursorPos >= textOffset && cursorPosPxls < rect.w){
 		auto cursorCol = colours::GetTextCursor().Fix(*surf);
 		auto top = (cursorLine - lineOffset) * fontHeight;
 		auto bottom = top + fontHeight;

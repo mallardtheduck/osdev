@@ -25,16 +25,18 @@ private:
 		Line() = default;
 	};
 	
-	size_t fontHeight;
+	uint32_t fontHeight;
 	
 	std::vector<Line> lines;
 	
 	size_t cursorLine = 0;
+	size_t lastCursorLine = 0;
 	size_t lineOffset = 0;
 	
 	size_t textOffset = 0;
 	uint32_t textOffsetPxls = 0;
 	size_t cursorPos = 0;
+	size_t lastCursorPos = 0;
 	uint32_t cursorPosPxls = 0;
 	uint32_t perferredPosPxls = 0;
 	
