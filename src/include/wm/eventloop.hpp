@@ -7,7 +7,7 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include <queue>
+#include <deque>
 
 #include <btos/imessagehandler.hpp>
 #include <btos/thread.hpp>
@@ -28,7 +28,7 @@ namespace wm{
 		std::vector<uint64_t> winRemoveList;
 		std::vector<uint64_t> menuRemoveList;
 		
-		std::map<uint64_t, std::queue<wm_Event>> eventQueues;
+		std::map<uint64_t, std::deque<wm_Event>> eventQueues;
 		std::vector<Thread> threads;
 		Thread eventThread;
 		

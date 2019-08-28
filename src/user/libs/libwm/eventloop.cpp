@@ -157,7 +157,7 @@ namespace wm{
 			while(eventQueues.find(id) != eventQueues.end() && windows.find(id) != windows.end() && !eventQueues[id].empty()){
 				auto win = windows[id];
 				auto event = eventQueues[id].front();
-				eventQueues[id].pop();
+				eventQueues[id].pop_front();
 				bt_unlock(lock);
 				auto res = win->Event(event);
 				if(res && event.type == wm_EventType::MenuSelection){
@@ -206,7 +206,12 @@ namespace wm{
 		}
 		bt_lock(lock);
 		if(ret && windows.find(e.window_id) != windows.end()){
-			eventQueues[e.window_id].push(e);
+			auto &eventQ = eventQueues[e.window_id];
+			if(e.type == wm_EventType::PointerMove){
+				auto i = find_if(eventQ.begin(), eventQ.end(), [](const wm_Event &e){return e.type == wm_EventType::PointerMove;});
+				if(i != eventQ.end()) eventQ.erase(i);
+			}
+			eventQ.push_back(e);
 			eventSerial.Modify(++AtomValue);
 		}
 		bt_unlock(lock);

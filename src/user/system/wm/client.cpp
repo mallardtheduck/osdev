@@ -245,7 +245,7 @@ bool Client::HandleMessage(const Message &msg){
 }
 
 void Client::SendEvent(const wm_Event &e){
-	if(msgPending && e.type == wm_EventType::PointerMove){
+	if(e.type == wm_EventType::PointerMove){
 		auto i = find_if(eventQ.begin(), eventQ.end(), [](const wm_Event &e){return e.type == wm_EventType::PointerMove;});
 		if(i != eventQ.end()) eventQ.erase(i);
 	}
