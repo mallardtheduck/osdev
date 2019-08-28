@@ -159,7 +159,7 @@ void TextArea::UpdateDisplayState(){
 		if(i < textMeasures.charX.size()){
 			if(i < textOffset) textOffsetPxlsD += textMeasures.charX[i];
 			else if(i < cursorPos) cursorPosPxlsD += textMeasures.charX[i];
-		}else if(longLine){
+		}else if(longLine && i < longLine->textMeasures.charX.size()){
 			if(i < textOffset) textOffsetPxlsD += longLine->textMeasures.charX[i];
 			else if(i < cursorPos) cursorPosPxlsD += longLine->textMeasures.charX[i];
 		}
@@ -515,7 +515,7 @@ void TextArea::Paint(gds::Surface &s){
 				redraw = true;
 			}
 			uint32_t lsW = m.w + 2;
-			uint32_t lsH = m.h * 1.5;
+			uint32_t lsH = fontHeight * 1.5;
 			
 			bool inSelectionArea = haveSelection && (i >= selStartLine && i <= selEndLine);
 			
@@ -630,8 +630,20 @@ void TextArea::SetText(const std::string &t){
 void TextArea::InsertText(const std::string &text){
 	haveSelection = false;
 	++selSerial;
-	auto &lineText = lines[cursorLine].text;
-	lineText.insert(cursorPos, text);
+	
+	size_t lineNo = cursorLine;
+	size_t insertPos = cursorPos;
+	auto *lineText = &lines[lineNo].text;
+	for(auto c : text){
+		std::string cStr = {c, 0};
+		if(c != '\n') lineText->insert(insertPos++, cStr);
+		else{
+			SplitLine(lineNo, insertPos);
+			++lineNo; insertPos = 0;
+			lineText = &lines[lineNo].text;
+		}
+	}
+	
 	update = true;
 	IControl::Paint(outerRect);
 }
