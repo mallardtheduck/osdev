@@ -40,8 +40,6 @@ int main(){
 		else return filename;
 	};
 	
-	auto nullfn=[]{};
-	
 	auto form = std::make_shared<gui::Form>(gds::Rect{100, 50, formWidth, formHeight}, gui::FormOptions::ClosedSizable, "Notepad");
 	auto toolbar = std::make_shared<gui::Toolbar>();
 	auto statusbar = std::make_shared<gui::StatusBar>(displayFilename());
@@ -88,6 +86,28 @@ int main(){
 		}
 	};
 	
+	auto copy = [&]{
+		auto text = textarea->GetSelection();
+		if(!text.empty()){
+			std::vector<char> data(text.begin(), text.end());
+			clip::CopyCut(clip::Clipboard::Primary, "text/plain", data);
+		}
+	};
+	
+	auto cut = [&]{
+		copy();
+		textarea->CutSelection();
+	};
+	
+	auto paste = [&]{
+		auto header = clip::GetContentHeader(clip::Clipboard::Primary);
+		if(header.type == "text/plain"){
+			auto data = clip::Paste(clip::Clipboard::Primary, header.id);
+			std::string text(data.data(), data.size());
+			textarea->InsertText(text);
+		}
+	};
+	
 	auto about = [&]{
 		gui::MessageBox("BT/OS Notepad", "About", LoadIcon("icons/notepad_32.png")).Show(form.get());
 	};
@@ -97,9 +117,9 @@ int main(){
 	am.Add("open", "Open file...", LoadIcon("icons/fileopen_16.png"), open);
 	am.Add("save", "Save", LoadIcon("icons/filesave_16.png"), save);
 	am.Add("saveas", "Save as...", LoadIcon("icons/filesaveas_16.png"), saveas);
-	am.Add("cut", "Cut", LoadIcon("icons/editcut_16.png"), nullfn);
-	am.Add("copy", "Copy", LoadIcon("icons/editcopy_16.png"), nullfn);
-	am.Add("paste", "Paste", LoadIcon("icons/editpaste_16.png"), nullfn);
+	am.Add("cut", "Cut", LoadIcon("icons/editcut_16.png"), cut);
+	am.Add("copy", "Copy", LoadIcon("icons/editcopy_16.png"), copy);
+	am.Add("paste", "Paste", LoadIcon("icons/editpaste_16.png"), paste);
 	am.Add("about", "About...", LoadIcon("icons/notepad_16.png"), about);
 	
 	toolbar->Controls() = {

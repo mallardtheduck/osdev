@@ -20,6 +20,7 @@ private:
 		std::string measuredText;
 		gds::TextMeasurements textMeasures;
 		std::unique_ptr<gds::Surface> surf;
+		uint64_t selSerial = 0;
 		
 		Line(const std::string &t) : text(t) {};
 		Line() = default;
@@ -29,20 +30,29 @@ private:
 	
 	std::vector<Line> lines;
 	
-	size_t cursorLine = 0;
-	size_t lastCursorLine = 0;
-	size_t lineOffset = 0;
+	bool inSelectMode = false;
+	bool haveSelection = false;
+	size_t selPos = 0;
+	size_t selLine = 0;
 	
-	size_t textOffset = 0;
-	uint32_t textOffsetPxls = 0;
 	size_t cursorPos = 0;
 	size_t lastCursorPos = 0;
+	size_t cursorLine = 0;
+	size_t lastCursorLine = 0;
+	
+	size_t lineOffset = 0;
+	size_t textOffset = 0;
+	
+	uint32_t textOffsetPxls = 0;
 	uint32_t cursorPosPxls = 0;
 	uint32_t perferredPosPxls = 0;
+	uint32_t selPosPxls = 0;
 	
 	bool update = false;
 	bool hasFocus = false;
 	bool enabled = true;
+	
+	uint64_t selSerial = 0;
 	
 	std::unique_ptr<Scrollbar> hscroll;
 	std::unique_ptr<Scrollbar> vscroll;
@@ -68,8 +78,12 @@ public:
 	void SetPosition(const gds::Rect&);
 	
 	void SetText(const std::string &t);
+	void InsertText(const std::string &text);
 	std::string GetText();
 	std::string GetValue() {return GetText();}
+	
+	std::string GetSelection();
+	void CutSelection();
 	
 	void OnKeyPress(const std::function<bool(uint32_t)> &oKP);
 };
