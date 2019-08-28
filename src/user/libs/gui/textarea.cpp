@@ -528,9 +528,9 @@ void TextArea::Paint(gds::Surface &s){
 				ls->Box({0, 0, lsW, lsH}, lsBkg, lsBkg, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 				if(inSelectionArea){
 					int32_t selX1 = 2; 
-					int32_t selX2 = inW;
+					int32_t selX2 = lsW;
 					if(i == selStartLine || i == selEndLine){
-						double selX1D = 1.5, selX2D = 0.0;
+						double selX1D = 1.5, selX2D = 1.5;
 						for(size_t j = 0; j < m.charX.size(); ++j){
 							if(i == selStartLine && j < selStartPos) selX1D += m.charX[j];
 							if(i == selEndLine && j < selEndPos) selX2D += m.charX[j];
@@ -542,10 +542,10 @@ void TextArea::Paint(gds::Surface &s){
 					
 					if(hasFocus){
 						auto selBkg = colours::GetSelection().Fix(*ls);
-						ls->Box({selX1, 0, selW - 1, lsH - 2}, selBkg, selBkg, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+						ls->Box({selX1, 0, selW, lsH - 2}, selBkg, selBkg, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 					}
 					auto selBdr = colours::GetSelectionFocus().Fix(*ls);
-					ls->Box({selX1, 0, selW - 1, lsH - 2}, selBdr, selBdr, 1, gds_LineStyle::Solid, gds_FillStyle::None);
+					ls->Box({selX1, 0, selW, lsH - 2}, selBdr, selBdr, 1, gds_LineStyle::Solid, gds_FillStyle::None);
 				}
 				auto lsTxt = colours::GetTextAreaText().Fix(*ls);
 				auto textY = std::max<int32_t>(((fontHeight + m.h) / 2), 0);
