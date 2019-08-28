@@ -543,9 +543,10 @@ void TextArea::Paint(gds::Surface &s){
 					if(hasFocus){
 						auto selBkg = colours::GetSelection().Fix(*ls);
 						ls->Box({selX1, 0, selW, lsH - 2}, selBkg, selBkg, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+					}else{
+						auto selBdr = colours::GetSelectionFocus().Fix(*ls);
+						ls->Box({selX1, 0, selW, lsH - 2}, selBdr, selBdr, 1, gds_LineStyle::Solid, gds_FillStyle::None);
 					}
-					auto selBdr = colours::GetSelectionFocus().Fix(*ls);
-					ls->Box({selX1, 0, selW, lsH - 2}, selBdr, selBdr, 1, gds_LineStyle::Solid, gds_FillStyle::None);
 				}
 				auto lsTxt = colours::GetTextAreaText().Fix(*ls);
 				auto textY = std::max<int32_t>(((fontHeight + m.h) / 2), 0);
