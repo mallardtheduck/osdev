@@ -32,6 +32,7 @@ static const uint32_t contentHeight = formHeight - toolbarHeight - statusbarHeig
 
 int main(){
 	bool onHome = true;
+	bool treeVisible = true;
 	auto curWidth = formWidth;
 	auto curHeight = formHeight;
 	
@@ -52,13 +53,27 @@ int main(){
 		curHeight = size.h;
 		if(size.h < toolbarHeight + statusbarHeight + (2 * margin)) return;
 		uint32_t newContentHeight = size.h - toolbarHeight - statusbarHeight - (2 * margin);
-		form->MoveControl(tree, {margin, margin + toolbarHeight, treeWidth, newContentHeight});
-		if(size.w > treeWidth - (3 * margin)){
-			form->MoveControl(icons, {treeWidth + (2 * margin), margin + toolbarHeight, size.w - treeWidth - (3 * margin), newContentHeight});
+		if(treeVisible){
+			form->MoveControl(tree, {margin, margin + toolbarHeight, treeWidth, newContentHeight});
+			if(size.w > treeWidth - (3 * margin)){
+				form->MoveControl(icons, {treeWidth + (2 * margin), margin + toolbarHeight, size.w - treeWidth - (3 * margin), newContentHeight});
+			}
+		}else if(size.w > (2 * margin)){
+			form->MoveControl(icons, {margin, margin + toolbarHeight, size.w - (2 * margin), newContentHeight});
 		}
 	};
 	
 	form->OnResize(updateSize);
+	
+	auto toggleTree = [&]{
+		treeVisible = !treeVisible;
+		if(treeVisible){
+			form->AddControl(tree);
+		}else{
+			form->RemoveControl(tree);
+		}
+		updateSize({0, 0, curWidth, curHeight});
+	};
 	
 	auto getCatName = [](const Category &cat) -> std::string {
 		if(cat.name.empty()) return "(Uncategorised)";
@@ -90,6 +105,7 @@ int main(){
 			icons->SetItemIcon(i, cat.icon32);
 		}
 		icons->Refresh();
+		statusbar->SetText("(Home)");
 		onHome = true;
 	};
 	
@@ -145,8 +161,12 @@ int main(){
 	gui::ActionManager am;
 	am.Add("about", "About...", LoadIcon("icons/appview_16.png"), about);
 	am.Add("home", "Home", LoadIcon("icons/home_16.png"), homeView);
+	am.Add("toggleTree", "Toggle tree", LoadIcon("icons/view_tree_16.png"), toggleTree);
 	
-	toolbar->Controls().push_back(am.GetToolbarButton("home"));
+	toolbar->Controls() = {
+		am.GetToolbarButton("home"),
+		am.GetToolbarButton("toggleTree")
+	};
 	toolbar->Refresh();
 	
 	auto menuHandler = [&](int action) -> bool{
@@ -156,6 +176,7 @@ int main(){
 	
 	auto menu = std::make_shared<wm::Menu>();
 	menu->AddItem(am.GetMenuItem("home"));
+	menu->AddItem(am.GetMenuItem("toggleTree"));
 	menu->AddItem(wm::MenuItem(0, "", wm_MenuItemFlags::Separator));
 	menu->AddItem(am.GetMenuItem("about"));
 	

@@ -18,6 +18,7 @@ struct Category{
 struct App{
 	std::string description;
 	std::string path;
+	std::string category;
 	std::shared_ptr<btos_api::gds::Surface> icon16;
 	std::shared_ptr<btos_api::gds::Surface> icon32;
 };

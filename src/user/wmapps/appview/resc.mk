@@ -2,8 +2,8 @@ ICON_FOLDER := ../../../icons
 
 ICONS_APPS := appview
 ICONS_ACTIONS_32 := 
-ICONS_ACTIONS_16 := home
-ICONS_OBJECTS := category
+ICONS_ACTIONS_16 := home view_tree
+ICONS_OBJECTS := category cat_tools cat_games cat_config cat_office cat_net cat_tests cat_graphics cat_media
 
 EXTRA_RESC_FILES := app.inf icons.inf
 
