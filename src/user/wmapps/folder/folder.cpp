@@ -38,10 +38,10 @@ enum class ViewMode{
 static const uint32_t formWidth = 500;
 static const uint32_t formHeight = 320;
 static const uint32_t toolbarHeight = 32;
-static const uint32_t statusbarHeight = 20;
+static const uint32_t statusbarHeight = 18;
 static const uint32_t treeWidth = 150;
 
-static const uint32_t margin = 5;
+static const uint32_t margin = 1;
 static const uint32_t contentHeight = formHeight - toolbarHeight - statusbarHeight - (2 * margin);
 
 int main(int argc, char **argv){

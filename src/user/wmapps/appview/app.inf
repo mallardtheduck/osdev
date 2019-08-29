@@ -1,0 +1,6 @@
+[app]
+name = Application View
+category = Tools
+vendor = BT/OS
+icon = appview
+mode = GUI

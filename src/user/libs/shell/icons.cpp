@@ -161,6 +161,32 @@ std::shared_ptr<gds::Surface> GetIconFromFile(const std::string &filename, const
 	});
 }
 
+
+static std::string GetOrBlank(const std::map<std::string, std::string> &map, const std::string &key){
+	auto it = map.find(key);
+	if(it != map.end()) return it->second;
+	else return "";
+}
+
+static AppInfo GetAppInfo(resc::RescHandle h){
+	AppInfo ret;
+	auto appInf = resc::Resc_OpenResc(h, "app.inf");
+	if(appInf){
+		__gnu_cxx::stdio_filebuf<char> filebuf(appInf, std::ios::in);
+		std::istream is(&filebuf);
+		auto ini = ReadIniFile(is);
+		auto section = ini.find("app");
+		if(section != ini.end()){
+			ret.name = GetOrBlank(section->second, "name");
+			ret.category = GetOrBlank(section->second, "category");
+			ret.vendor = GetOrBlank(section->second, "vendor");
+			ret.icon = GetOrBlank(section->second, "icon");
+			ret.mode = GetOrBlank(section->second, "mode");
+		}
+	}
+	return ret;
+}
+
 std::shared_ptr<gds::Surface> GetElxIcon(const std::string &filename, size_t size){
 	resc::RescHandle h = nullptr;
 	bt_lock(cacheLock);
@@ -169,21 +195,11 @@ std::shared_ptr<gds::Surface> GetElxIcon(const std::string &filename, size_t siz
 		info.useDefault = true;
 		h = resc::Resc_FileOpen(filename);
 		if(h){
-			auto appInf = resc::Resc_OpenResc(h, "app.inf");
-			if(appInf){
-				__gnu_cxx::stdio_filebuf<char> filebuf(appInf, std::ios::in);
-				std::istream is(&filebuf);
-				auto ini = ReadIniFile(is);
-				auto section = ini.find("app");
-				if(section != ini.end()){
-					auto key = section->second.find("icon");
-					if(key != section->second.end()){
-						auto iconName = key->second;
-						info.useDefault = false;
-						info.path = filename;
-						info.name = iconName;
-					}
-				}
+			auto appInfo = GetAppInfo(h);
+			if(!appInfo.icon.empty()){
+				info.useDefault = false;
+				info.path = filename;
+				info.name = appInfo.icon;
 			}
 		}
 		elxIconInfoCache.put(filename, info);
@@ -234,6 +250,16 @@ std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size){
 	}else{
 		return GetDefaultIcon(DefaultIcons::Unknown, size);
 	}
+}
+
+AppInfo GetAppInfo(const std::string &filename){
+	auto h = resc::Resc_FileOpen(filename);
+	if(h){
+		auto ret = GetAppInfo(h);
+		resc::Resc_Close(h);
+		return ret;
+	}
+	return AppInfo();
 }
 
 }

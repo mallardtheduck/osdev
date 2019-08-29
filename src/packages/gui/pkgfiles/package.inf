@@ -28,3 +28,11 @@ description = Notepad
 path = /
 file = notepad.elx
 type = app
+
+[feature-appview]
+
+name = gui.app.appview
+description = Application View
+path = /
+file = appview.elx
+type = app

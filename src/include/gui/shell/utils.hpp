@@ -1,6 +1,7 @@
 #ifndef _SHELL_UTILS_HPP
 #define _SHELL_UTILS_HPP
 
+#include <btos.h>
 #include <memory>
 #include <string>
 #include <gds/surface.hpp>
@@ -8,6 +9,14 @@
 namespace btos_api{
 namespace gui{
 namespace shell{
+	
+struct AppInfo{
+	std::string name;
+	std::string category;
+	std::string vendor;
+	std::string icon;
+	std::string mode;
+};
 
 enum class DefaultIcons{
 	Folder, FolderOpen, File, Executable, Computer, Drive, Device, Unknown
@@ -17,6 +26,7 @@ std::shared_ptr<gds::Surface> GetDefaultIcon(DefaultIcons icon, size_t size);
 std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size);
 std::shared_ptr<gds::Surface> GetIconFromFile(const std::string &filename, const std::string iconName, size_t size);
 std::shared_ptr<gds::Surface> GetElxIcon(const std::string &filename, size_t size);
+AppInfo GetAppInfo(const std::string &filename);
 
 std::string TitleCase(const std::string &text);
 std::string PathItemTitle(const std::string &path);

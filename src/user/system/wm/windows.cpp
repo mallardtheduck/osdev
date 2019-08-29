@@ -159,12 +159,12 @@ void RefreshScreen(const vector<Rect> &v){
 	for(const auto &t: tiles) RefreshScreen(t);
 }
 
-shared_ptr<Window> GetWindowAt(uint32_t x, uint32_t y){
+shared_ptr<Window> GetWindowAt(uint32_t x, uint32_t y, bool visibleOnly){
 	shared_ptr<Window> ret;
 	for(auto w = sortedWindows.rbegin(); w != sortedWindows.rend(); ++w){
 		shared_ptr<Window> win = w->lock();
 		if(!win) continue;
-		if(!win->GetVisible()) continue;
+		if(visibleOnly && !win->GetVisible()) continue;
 		Rect wrect = win->GetBoundingRect();
 		if(InRect(x, y, wrect)) return win;
 	}
@@ -208,7 +208,7 @@ void HandleInput(const bt_terminal_event &event){
 	else if(event.type == bt_terminal_event_type::Pointer){
 		if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == (uint32_t)curpos.x && event.pointer.y == (uint32_t)curpos.y) return;
 		curpos.x = event.pointer.x; curpos.y = event.pointer.y;
-		shared_ptr<Window> win = GetWindowAt(event.pointer.x, event.pointer.y);
+		shared_ptr<Window> win = GetWindowAt(event.pointer.x, event.pointer.y, true);
 		shared_ptr<Window> pwin = pointerWindow.lock();
 		if(win != pwin){
 			if(pwin) pwin->PointerLeave();
@@ -245,6 +245,7 @@ static vector<Rect> ReduceRect(const Rect &r, uint64_t above){
 	vector<shared_ptr<Window>> wins = SortWindows();
 	bool aboveYet = false;
 	for(auto &w : wins){
+		if(!w->GetVisible()) continue;
 		if(!aboveYet){
 			if(w->id == above) aboveYet = true;
 		}else{

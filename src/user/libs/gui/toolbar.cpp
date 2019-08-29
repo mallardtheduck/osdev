@@ -134,6 +134,7 @@ std::vector<std::shared_ptr<IToolbarControlBase>> &Toolbar::Controls(){
 void Toolbar::Refresh(){
 	for(auto &ctrl : controls) BindToParent(*ctrl);
 	update = true;
+	IControl::Paint(rect);
 }
 
 void Toolbar::OnBind(){
