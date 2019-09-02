@@ -45,17 +45,19 @@ int main(int argc, char **argv){
 	std::vector<std::string> args(argv, argv + argc);
 	
 	if(args.size() > 1){
-		auto elxName = args[1];
-		auto info = sh::GetAppInfo(elxName);
+		auto elxPath = args[1];
+		auto elxName = sh::SplitPath(elxPath).back();
+		auto info = sh::GetAppInfo(elxPath);
+		if(!info.name.empty()) elxName = info.name;
 		std::unique_ptr<btos_api::Process> proc;
 		if(info.mode == "") info.mode = "CLI";
-		if(info.mode == "GUI") proc.reset(new Process(Process::Spawn(elxName)));
+		if(info.mode == "GUI") proc.reset(new Process(Process::Spawn(elxPath)));
 		else if(info.mode == "CLI"){
 			auto drive = btos_api::GetEnv("SYSTEMDRIVE");
 			auto termPath = tfm::format("%s:/BTOS/BIN/TERMWIN.ELX", drive);
-			proc.reset(new Process(Process::Spawn(termPath, {elxName})));
+			proc.reset(new Process(Process::Spawn(termPath, {elxPath})));
 		}else{
-			gui::MessageBox(tfm::format("This is a \"%s\" program and should not be run directly.", info.mode), "Launch", LoadIcon("icons/error_32.png")).Show(nullptr);
+			gui::MessageBox(tfm::format("This is a \"%s\" program and should not be run directly.", info.mode), elxName, LoadIcon("icons/error_32.png")).Show(nullptr);
 		}
 		if(proc){
 			int ret = proc->Wait();
