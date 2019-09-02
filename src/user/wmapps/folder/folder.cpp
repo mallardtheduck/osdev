@@ -313,6 +313,65 @@ int main(int argc, char **argv){
 		copyCut(moveClipType);
 	};
 	
+	auto deleteFile = [&]{
+		bt_directory_entry entry;
+		if(curView == ViewMode::Icons){
+			entry = icons->GetSelectedEntry();
+		}else{
+			entry = details->GetSelectedEntry();
+		}
+		auto path = sh::CombinePath({curPath, entry.filename});
+		bool confirmed = false;
+		if(entry.type == FS_Directory){
+			auto btn = gui::MessageBox("Delete this folder and its entire contents?", "Confirm", LoadIcon("icons/question_32.png"), {"Yes", "No"}).Show(form.get());
+			confirmed = (btn == 0);
+		}else if(entry.type == FS_File){
+			auto btn = gui::MessageBox("Delete this file?", "Confirm", LoadIcon("icons/question_32.png"), {"Yes", "No"}).Show(form.get());
+			confirmed = (btn == 0);
+		}else{
+			gui::MessageBox("Cannot delete this item.", "Delete", LoadIcon("icons/error_32.png")).Show(form.get());
+		}
+		if(confirmed){
+			if(entry.type == FS_File){
+				auto fh = btos_api::bt_fopen(path.c_str(), FS_Read | FS_Delete);
+				if(fh) btos_api::bt_fclose(fh);
+			}else if(entry.type == FS_Directory){
+				std::stack<std::string> dirs;
+				std::stack<std::string> emptyDirs;
+				dirs.push(path);
+				while(!dirs.empty()){
+					auto curDir = dirs.top();
+					dirs.pop();
+					btos_api::Directory d(curDir.c_str(), FS_Read);
+					for(auto e : d){
+						if(e.type == FS_File){
+							auto filePath = sh::CombinePath(curDir, e.filename);
+							auto fh = btos_api::bt_fopen(filePath.c_str(), FS_Read | FS_Delete);
+							if(fh) btos_api::bt_fclose(fh);
+						}else if(e.type == FS_Directory){
+							auto dirPath = sh::CombinePath(curDir, e.filename);
+							dirs.push(dirPath);
+						}else{
+							auto itemPath = sh::CombinePath(curDir, e.filename);
+							gui::MessageBox(tfm::format("Cannot delete: %s", itemPath), "Delete", LoadIcon("icons/error_32.png")).Show(form.get());
+							icons->Update();
+							details->Update();
+							return;
+						}
+					}
+					emptyDirs.push(curDir);
+				}
+				while(!emptyDirs.empty()){
+					auto dh = btos_api::bt_dopen(emptyDirs.top().c_str(), FS_Read | FS_Delete);
+					if(dh) btos_api::bt_dclose(dh);
+					emptyDirs.pop();
+				}
+			}
+			icons->Update();
+			details->Update();
+		}
+	};
+	
 	gui::ActionManager am;
 	am.Add("newWindow", "New window...", LoadIcon("icons/window_new_16.png"), newWindow);
 	am.Add("toggleTree", "Toggle tree", LoadIcon("icons/view_tree_16.png"), toggleTree);
@@ -325,7 +384,7 @@ int main(int argc, char **argv){
 	am.Add("editPaste", "Paste", LoadIcon("icons/editpaste_16.png"), paste);
 	am.Add("editCopy", "Copy", LoadIcon("icons/editcopy_16.png"), copy);
 	am.Add("editCut", "Cut", LoadIcon("icons/editcut_16.png"), cut);
-	am.Add("delete", "Delete", LoadIcon("icons/editdelete_16.png"), []{});
+	am.Add("delete", "Delete", LoadIcon("icons/editdelete_16.png"), deleteFile);
 	am.Add("about", "About...", LoadIcon("icons/folder_16.png"), about);
 	
 	auto newWinBtn = am.GetToolbarButton("newWindow");
