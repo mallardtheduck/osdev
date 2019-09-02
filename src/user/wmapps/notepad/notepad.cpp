@@ -34,6 +34,7 @@ static const uint32_t statusbarHeight = 20;
 
 int main(){
 	std::string filename;
+	bool modified = false;
 	
 	auto displayFilename = [&]() -> std::string{
 		if(filename.empty()) return "Unsaved file";
@@ -61,6 +62,7 @@ int main(){
 			std::copy(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>(), std::back_inserter<std::string>(content));
 			textarea->SetText(content);
 			statusbar->SetText(displayFilename());
+			modified = false;
 		}
 	};
 	
@@ -71,6 +73,7 @@ int main(){
 			std::ofstream ofs(filename);
 			std::string content = textarea->GetValue();
 			std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(ofs));
+			modified = false;
 		}else{
 			saveas();
 		}
@@ -97,6 +100,7 @@ int main(){
 	auto cut = [&]{
 		copy();
 		textarea->CutSelection();
+		modified = true;
 	};
 	
 	auto paste = [&]{
@@ -106,6 +110,7 @@ int main(){
 			std::string text(data.data(), data.size());
 			textarea->InsertText(text);
 		}
+		modified = true;
 	};
 	
 	auto about = [&]{
@@ -138,6 +143,20 @@ int main(){
 	
 	form->OnResize([&](const gds::Rect &size){
 		form->MoveControl(textarea, gds::Rect{1, toolbarHeight + 1, size.w - 2, size.h - toolbarHeight - statusbarHeight});
+	});
+	
+	textarea->OnKeyPress([&](uint32_t){
+		modified = true;
+		return false;
+	});
+	
+	form->OnClose([&]{
+		if(modified){
+			auto btn = gui::MessageBox("File not saved! Save file?", "Close", LoadIcon("icons/question_32.png"), {"Save", "Close", "Cancel"}).Show(form.get());
+			if(btn == 0) save();
+			if(btn == 2) return true;
+		}
+		return false;
 	});
 	
 	auto menuHandler = [&](int action) -> bool{

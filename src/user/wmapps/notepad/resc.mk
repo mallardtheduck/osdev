@@ -1,7 +1,7 @@
 ICON_FOLDER := ../../../icons
 
 ICONS_APPS := notepad
-ICONS_ACTIONS_32 := 
+ICONS_ACTIONS_32 := question
 ICONS_ACTIONS_16 := filenew fileopen filesave filesaveas editcut editcopy editpaste
 
 EXTRA_RESC_FILES := app.inf icons.inf
