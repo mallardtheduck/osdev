@@ -13,6 +13,7 @@
 #include <util/tinyformat.hpp>
 #include <util/lrucache.hpp>
 #include <ext/stdio_filebuf.h>
+#include <btos/registry.hpp>
 
 namespace btos_api{
 namespace gui{
@@ -175,13 +176,20 @@ static AppInfo GetAppInfo(resc::RescHandle h){
 		__gnu_cxx::stdio_filebuf<char> filebuf(appInf, std::ios::in);
 		std::istream is(&filebuf);
 		auto ini = ReadIniFile(is);
-		auto section = ini.find("app");
-		if(section != ini.end()){
-			ret.name = GetOrBlank(section->second, "name");
-			ret.category = GetOrBlank(section->second, "category");
-			ret.vendor = GetOrBlank(section->second, "vendor");
-			ret.icon = GetOrBlank(section->second, "icon");
-			ret.mode = GetOrBlank(section->second, "mode");
+		auto appSection = ini.find("app");
+		if(appSection != ini.end()){
+			ret.name = GetOrBlank(appSection->second, "name");
+			ret.category = GetOrBlank(appSection->second, "category");
+			ret.vendor = GetOrBlank(appSection->second, "vendor");
+			ret.icon = GetOrBlank(appSection->second, "icon");
+			ret.mode = GetOrBlank(appSection->second, "mode");
+		}
+		auto fiSection = ini.find("fileicons");
+		if(fiSection != ini.end()){
+			for(auto &fi : fiSection->second){
+				if(fi.first == "default") ret.defaultFileIcon = fi.second;
+				ret.fileIcons[fi.first] = fi.second;
+			}
 		}
 	}
 	return ret;
@@ -234,16 +242,24 @@ std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size){
 			return GetDefaultIcon(DefaultIcons::Folder, size);	
 		}
 		if(entry.type == FS_File){
-			bool isElx = false;
-			if(path.length() > 4){
-				auto ext = path.substr(path.length() - 4);
-				std::string dotElx = ".elx";
-				isElx = std::equal(ext.begin(), ext.end(), dotElx.begin(), [] (char a, char b){
-					return std::tolower(a) == std::tolower(b);
-				});
+			if(FileExtensionPredicate(".elx")(path)) return GetElxIcon(path, size);
+			else{
+				std::shared_ptr<gds::Surface> ret;
+				auto app = registry::GetPathAssociation(path);
+				if(!app.empty()){
+					auto info = GetAppInfo(app);
+					auto icon = info.defaultFileIcon;
+					for(auto &fi : info.fileIcons){
+						if(FileExtensionPredicate(fi.first)(path)){
+							icon = fi.second;
+							break;
+						}
+					}
+					if(!icon.empty()) ret = GetIconFromFile(app, icon, size);
+				}
+				if(!ret) return GetDefaultIcon(DefaultIcons::File, size);
+				return ret;
 			}
-			if(isElx) return GetElxIcon(path, size);
-			else return GetDefaultIcon(DefaultIcons::File, size);
 		}else{
 			return GetDefaultIcon(DefaultIcons::Device, size);
 		}

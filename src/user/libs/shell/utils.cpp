@@ -12,6 +12,8 @@
 #include <gui/shell/utils.hpp>
 
 #include <util/tinyformat.hpp>
+#include <btos/registry.hpp>
+#include <btos/process.hpp>
 
 namespace btos_api{
 namespace gui{
@@ -30,6 +32,15 @@ static bool char_isupper(char ch)
 static bool char_isspace(char ch)
 {
     return std::isspace(static_cast<unsigned char>(ch));
+}
+
+bt_pid_t Launch(const std::string &path){
+	auto app = registry::GetPathAssociation(path);
+	if(!app.empty()){
+		Process p = Process::Spawn(app, {path});
+		return p.GetPID();
+	}
+	return 0;
 }
 
 std::string TitleCase(const std::string &text){

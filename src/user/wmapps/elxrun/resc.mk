@@ -1,9 +1,8 @@
 ICON_FOLDER := ../../../icons
 
-ICONS_APPS := notepad
-ICONS_FS := txt source script
-ICONS_ACTIONS_32 := question
-ICONS_ACTIONS_16 := filenew fileopen filesave filesaveas editcut editcopy editpaste
+ICONS_APPS := elxrun
+ICONS_ACTIONS_32 := error question
+ICONS_ACTIONS_16 := 
 
 EXTRA_RESC_FILES := app.inf icons.inf
 
@@ -18,9 +17,6 @@ $(call ICON_DST_template,$(1),$(2),$(3)): $(call ICON_SRC_template,$(1),$(2),$(3
 
 $(RESC-TAR-NAME): $(call ICON_DST_template,$(1),$(2),$(3))
 endef
-
-$(foreach ICON, $(ICONS_FS), $(eval $(call ICON_template,$(ICON),32,fs)))
-$(foreach ICON, $(ICONS_FS), $(eval $(call ICON_template,$(ICON),16,fs)))
 
 $(foreach ICON, $(ICONS_APPS), $(eval $(call ICON_template,$(ICON),32,apps)))
 $(foreach ICON, $(ICONS_APPS), $(eval $(call ICON_template,$(ICON),16,apps)))

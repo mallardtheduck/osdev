@@ -114,10 +114,24 @@ void PackageFile::Parse(){
 						
 						if(featinfo.name == "") continue;
 						if(featinfo.ver == "") featinfo.ver = packageInfo.ver;
-						features.push_back(featinfo);
-					}
-					if(s.first == "hooks"){
+						features[s.first] = featinfo;
+					}else if(s.first == "hooks"){
 						hooks = s.second;
+					}else if(starts_with(s.first, "filetype")){
+						reg::FileTypeInfo typeInfo;
+						typeInfo.package = -1;
+						typeInfo.extension = get_or_blank(s.second, "extension");
+						typeInfo.mimeType = get_or_blank(s.second, "mimetype");
+						if(typeInfo.extension.empty() && typeInfo.mimeType.empty()) continue;
+						fileTypes[s.first] = typeInfo;
+					}else if(starts_with(s.first, "assoc")){
+						AssocInfo assocInfo;
+						assocInfo.feature = get_or_blank(s.second, "feature");
+						assocInfo.fileType = get_or_blank(s.second, "filetype");
+						assocInfo.description = get_or_blank(s.second, "description");
+						assocInfo.cmdTemplate = get_or_blank(s.second, "command");
+						if(assocInfo.feature.empty() || assocInfo.fileType.empty()) continue;
+						assocs.push_back(assocInfo);
 					}
 				}
 			}
@@ -153,7 +167,9 @@ reg::PackageInfo PackageFile::GetInfo(){
 }
 
 vector<reg::FeatureInfo> PackageFile::GetFeatures(){
-	return features;
+	vector<reg::FeatureInfo> ret;
+	for(const auto &f : features) ret.push_back(f.second);
+	return ret;
 }
 
 vector<PackageFile::ContentFile> PackageFile::GetContent(){
@@ -230,11 +246,11 @@ bool PackageFile::CheckFeatureConflicts(PackageFile::InstallStatus &status){
 	auto curPkg = reg::GetPackageByName(packageInfo.name);
 	bool ok = true;
 	for(auto &f : features){
-		auto feat = reg::GetFeatureByName(f.name);
-		if(f.package && f.package != curPkg.id){
+		auto feat = reg::GetFeatureByName(f.second.name);
+		if(f.second.package && f.second.package != curPkg.id){
 			stringstream ss;
-			ss << "Feature \"" << f.name << "\" is already installed as part of another package (\"";
-			auto pkg = reg::GetPackageById(f.package);
+			ss << "Feature \"" << f.second.name << "\" is already installed as part of another package (\"";
+			auto pkg = reg::GetPackageById(f.second.package);
 			ss << pkg.name << "\").";
 			status.messages.push_back(ss.str());
 			ok = false;
@@ -310,9 +326,22 @@ bool PackageFile::ImportInfo(PackageFile::InstallStatus &/*status*/, const strin
 	}
 	packageInfo.path = path;
 	packageInfo.id = reg::InstallPackage(packageInfo);
-	for(auto & f : features){
-		f.package = packageInfo.id;
-		reg::InstallFeature(f);
+	for(auto &f : features){
+		f.second.package = packageInfo.id;
+		f.second.id = reg::InstallFeature(f.second);
+	}
+	for(auto &t : fileTypes){
+		t.second.package = packageInfo.id;
+		t.second.id = reg::InstallFileType(t.second);
+	}
+	for(auto &a : assocs){
+		reg::AssociationInfo assoc;
+		assoc.package = packageInfo.id;
+		assoc.feature = features[a.feature].id;
+		assoc.fileType = fileTypes[a.fileType].id;
+		assoc.description = a.description;
+		assoc.cmdTemplate = a.cmdTemplate;
+		assoc.id = reg::InstallAssociation(assoc);
 	}
 	return true;
 }

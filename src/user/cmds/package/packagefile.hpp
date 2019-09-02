@@ -34,9 +34,18 @@ public:
 	typedef ::InstallProgress InstallProgress;
 	
 private:
+	struct AssocInfo{
+		std::string feature;
+		std::string fileType;
+		std::string description;
+		std::string cmdTemplate;
+	};
+
 	std::ifstream stream;
 	btos_api::registry::PackageInfo packageInfo;
-	std::vector<btos_api::registry::FeatureInfo> features;
+	std::map<std::string, btos_api::registry::FeatureInfo> features;
+	std::map<std::string, btos_api::registry::FileTypeInfo> fileTypes;
+	std::vector<AssocInfo> assocs;
 	std::string contentPath;
 	std::vector<ContentFile> content;
 	std::map<std::string, std::string> hooks;

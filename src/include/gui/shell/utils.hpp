@@ -16,6 +16,9 @@ struct AppInfo{
 	std::string vendor;
 	std::string icon;
 	std::string mode;
+	
+	std::string defaultFileIcon;
+	std::map<std::string, std::string> fileIcons;
 };
 
 enum class DefaultIcons{
@@ -27,6 +30,8 @@ std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size);
 std::shared_ptr<gds::Surface> GetIconFromFile(const std::string &filename, const std::string iconName, size_t size);
 std::shared_ptr<gds::Surface> GetElxIcon(const std::string &filename, size_t size);
 AppInfo GetAppInfo(const std::string &filename);
+
+bt_pid_t Launch(const std::string &path);
 
 std::string TitleCase(const std::string &text);
 std::string PathItemTitle(const std::string &path);

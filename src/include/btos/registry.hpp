@@ -28,6 +28,22 @@ struct FeatureInfo{
     int64_t flags;
 };
 
+struct FileTypeInfo{
+    int64_t id;
+    int64_t package;
+    std::string extension;
+    std::string mimeType;
+};
+
+struct AssociationInfo{
+    int64_t id;
+    int64_t package;
+    int64_t feature;
+    int64_t fileType;
+    std::string description;
+    std::string cmdTemplate;
+};
+
 namespace RPCID{
     const uint32_t GetAllPackages = 1;
     const uint32_t GetPackageById = 2;
@@ -43,6 +59,8 @@ namespace RPCID{
 
     const uint32_t InstallPackage = 101;
     const uint32_t InstallFeature = 102;
+    const uint32_t InstallFileType = 103;
+    const uint32_t InstallAssociation = 104;
 
     const uint32_t UpdatePackage = 201;
     const uint32_t UpdateFeature = 201;
@@ -68,6 +86,8 @@ std::vector<std::string> GetSubPackages(int64_t pkgid);
 
 int64_t InstallPackage(const PackageInfo &info);
 int64_t InstallFeature(const FeatureInfo &info);
+int64_t InstallFileType(const FileTypeInfo &info);
+int64_t InstallAssociation(const AssociationInfo &info);
 
 void UpdatePackage(const PackageInfo &info);
 void UpdateFeature(const FeatureInfo &info);

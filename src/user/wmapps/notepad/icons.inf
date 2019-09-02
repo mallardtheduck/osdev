@@ -1,3 +1,15 @@
 [notepad]
 16 = icons/notepad_16.png
 32 = icons/notepad_32.png
+
+[txt]
+16 = icons/txt_16.png
+32 = icons/txt_32.png
+
+[source]
+16 = icons/source_16.png
+32 = icons/source_32.png
+
+[script]
+16 = icons/script_16.png
+32 = icons/script_32.png

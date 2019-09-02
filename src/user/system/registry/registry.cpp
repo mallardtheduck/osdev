@@ -50,7 +50,7 @@ static size_t suffixMatch(const string &a, const string &b){
 	size_t ret = 0;
 	if(a.length() && b.length()){
 		for(ptrdiff_t ai = a.length() - 1, bi = b.length() - 1; ai >= 0 && bi >= 0; --ai, --bi){
-			if(a[ai] == b[bi]) ++ret;
+			if(tolower(a[ai]) == tolower(b[bi])) ++ret;
 			else break;
 		}
 	}

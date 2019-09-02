@@ -94,6 +94,26 @@ int64_t InstallFeature(const FeatureInfo &info){
 	return feat.id;
 }
 
+int64_t InstallFileType(const FileTypeInfo &info){
+	FileType type;
+	type.package.key = info.package;
+	type.extension = info.extension;
+	type.mimeType = info.mimeType;
+	type.Save(db);
+	return type.id;
+}
+
+int64_t InstallAssociation(const AssociationInfo &info){
+	Association assoc;
+	assoc.package.key = info.package;
+	assoc.feature.key = info.feature;
+	assoc.fileType.key = info.fileType;
+	assoc.description = info.description;
+	assoc.cmdTemplate = info.cmdTemplate;
+	assoc.Save(db);
+	return assoc.id;
+}
+
 void UpdatePackage(const PackageInfo &info){
 	auto pkg = sqlentity::GetByKey<Package>(db, info.id);
 	pkg.name = info.name;
@@ -212,6 +232,8 @@ vector<shared_ptr<IMessageHandler>> InitAPI(){
 
 	AddAPI<RPCID::InstallPackage>(ret, &InstallPackage);
 	AddAPI<RPCID::InstallFeature>(ret, &InstallFeature);
+	AddAPI<RPCID::InstallFileType>(ret, &InstallFileType);
+	AddAPI<RPCID::InstallAssociation>(ret, &InstallAssociation);
 
 	AddAPI<RPCID::UpdatePackage>(ret, &UpdatePackage);
 	AddAPI<RPCID::UpdateFeature>(ret, &UpdateFeature);

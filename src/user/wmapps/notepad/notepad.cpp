@@ -32,7 +32,9 @@ static const uint32_t formHeight = 400;
 static const uint32_t toolbarHeight = 32;
 static const uint32_t statusbarHeight = 20;
 
-int main(){
+int main(int argc, char **argv){
+	std::vector<std::string> args(argv, argv + argc);
+	
 	std::string filename;
 	bool modified = false;
 	
@@ -52,17 +54,21 @@ int main(){
 		statusbar->SetText(displayFilename());
 	};
 	
+	auto openFile = [&](const std::string &path){
+		filename = path;
+		std::ifstream ifs(path);
+		std::string content;
+		std::copy(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>(), std::back_inserter<std::string>(content));
+		textarea->SetText(content);
+		statusbar->SetText(displayFilename());
+		modified = false;
+	};
+	
 	auto open = [&]{
-		sh::FileOpenDialog dlg("", sh::FileExtensionPredicate({".txt", ".cmd", ".ini"}));
+		sh::FileOpenDialog dlg("", sh::FileExtensionPredicate({".txt", ".cmd", ".ini", ".inf"}));
 		auto path = dlg.Show(form.get());
 		if(!path.empty()){
-			filename = path;
-			std::ifstream ifs(path);
-			std::string content;
-			std::copy(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>(), std::back_inserter<std::string>(content));
-			textarea->SetText(content);
-			statusbar->SetText(displayFilename());
-			modified = false;
+			openFile(path);
 		}
 	};
 	
@@ -80,7 +86,7 @@ int main(){
 	};
 	
 	saveas = [&]{
-		sh::FileSaveDialog dlg("untitled.txt", ".txt", "", sh::FileExtensionPredicate({".txt", ".cmd", ".ini"}));
+		sh::FileSaveDialog dlg("untitled.txt", ".txt", "", sh::FileExtensionPredicate({".txt", ".cmd", ".ini", ".inf"}));
 		auto path = dlg.Show(form.get());
 		if(!path.empty()){
 			filename = path;
@@ -185,6 +191,8 @@ int main(){
 	mainMenu->SetEventHandler(menuHandler);
 	
 	form->SetMenu(*mainMenu);
+	
+	if(args.size() > 1) openFile(args[1]);
 		
 	wm::EventLoop loop;
 	loop.AddWindow(form);

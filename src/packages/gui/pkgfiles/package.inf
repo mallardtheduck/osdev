@@ -36,3 +36,66 @@ description = Application View
 path = /
 file = appview.elx
 type = app
+
+[feature-elxrun]
+
+name = gui.app.elxrun
+description = ELX launcher
+path = /
+file = elxrun.elx
+type = sysapp
+
+[filetype-txt]
+
+extension = .txt
+mimetype = text/plain
+
+[filetype-ini]
+
+extension = .ini
+mimetype = text/plain
+
+[filetype-inf]
+
+extension = .inf
+mimetype = text/plain
+
+[filetype-cmd]
+
+extension = .cmd
+mimetype = application/x-cmd
+
+[assoc-txt]
+
+filetype = filetype-txt
+feature = feature-notepad
+description = Text file
+
+[assoc-ini]
+
+filetype = filetype-ini
+feature = feature-notepad
+description = INI file
+
+[assoc-inf]
+
+filetype = filetype-inf
+feature = feature-notepad
+description = INF file
+
+[assoc-cmd]
+
+filetype = filetype-cmd
+feature = feature-notepad
+description = Command script
+
+[filetype-elx]
+
+extension = .elx
+mimetype = application/x-elx
+
+[assoc-elx]
+
+filetype = filetype-elx
+feature = feature-elxrun
+description = Executable

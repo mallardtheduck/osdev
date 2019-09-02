@@ -8,6 +8,7 @@ import-files:= \
  data/btos/folder.elx \
  data/btos/notepad.elx \
  data/btos/appview.elx \
+ data/btos/elxrun.elx \
  
 data/btos/calc.elx: ../../user/wmapps/calc/calc.elx
 	cp $< $@
@@ -19,6 +20,9 @@ data/btos/notepad.elx: ../../user/wmapps/notepad/notepad.elx
 	cp $< $@
 
 data/btos/appview.elx: ../../user/wmapps/appview/appview.elx
+	cp $< $@
+
+data/btos/elxrun.elx: ../../user/wmapps/elxrun/elxrun.elx
 	cp $< $@
 
 create.directories:

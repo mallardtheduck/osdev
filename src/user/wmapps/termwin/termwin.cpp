@@ -419,7 +419,8 @@ void mainthread(void*){
 	kill_children();
 }
 
-int main(){
+int main(int argc, char **argv){
+	vector<string> args(argv, argv + argc);
 	clear_screen();
 	buffer_lock = bt_create_lock();
 	font = GDS_GetFontID(fontName.c_str(), gds_FontStyle::Normal);
@@ -433,7 +434,12 @@ int main(){
 	while(!ready) bt_yield();
 	terminal_handle = bt_terminal_create_terminal(backend_handle);
 	bt_terminal_read_buffer(terminal_handle, buffer_size, buffer);
-	string shell = get_env("SHELL");
+	string shell;
+	if(args.size() < 2){
+		shell = get_env("SHELL");
+	}else{
+		shell = args[1];
+	}
 	bt_terminal_run(terminal_handle, shell.c_str());
 	bt_wait_thread(thread);
 	return 0;

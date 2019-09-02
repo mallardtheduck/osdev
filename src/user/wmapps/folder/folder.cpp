@@ -172,16 +172,22 @@ int main(int argc, char **argv){
 		navigateTo(path, true);
 	});
 	
+	auto launch = [&](const std::string &path){
+		auto pid = sh::Launch(path);
+		if(!pid){
+			gui::MessageBox msg(tfm::format("Cannot launch this item."), "Error", LoadIcon("icons/error_32.png"));
+			msg.Show(form.get());
+		}
+	};
+	
 	icons->OnActivate([&]{
 		auto entry = icons->GetSelectedEntry();
 		if(entry.valid && entry.type == FS_Directory){
 			auto path = sh::CombinePath({icons->GetPath(), entry.filename});
 			navigateTo(path, true);
 		}else if(entry.valid && entry.type == FS_File){
-			if(sh::FileExtensionPredicate(".elx")(entry.filename)){
-				auto path = sh::CombinePath(curPath, entry.filename);
-				btos_api::bt_spawn(path.c_str(), 0, nullptr);
-			}
+			auto path = sh::CombinePath(curPath, entry.filename);
+			launch(path);
 		}
 	});
 	
@@ -196,10 +202,8 @@ int main(int argc, char **argv){
 			auto path = sh::CombinePath({details->GetPath(), entry.filename});
 			navigateTo(path, true);
 		}else if(entry.valid && entry.type == FS_File){
-			if(sh::FileExtensionPredicate(".elx")(entry.filename)){
-				auto path = sh::CombinePath(curPath, entry.filename);
-				btos_api::bt_spawn(path.c_str(), 0, nullptr);
-			}
+			auto path = sh::CombinePath(curPath, entry.filename);
+			launch(path);
 		}
 	});
 	

@@ -86,6 +86,16 @@ int64_t InstallFeature(const FeatureInfo &info){
     return rpc::MakeClient<RPCID::InstallFeature>(pid, InstallFeature)(info);
 }
 
+int64_t InstallFileType(const FileTypeInfo &info){
+    SetPID();
+    return rpc::MakeClient<RPCID::InstallFileType>(pid, InstallFileType)(info);
+}
+
+int64_t InstallAssociation(const AssociationInfo &info){
+    SetPID();
+    return rpc::MakeClient<RPCID::InstallAssociation>(pid, InstallAssociation)(info);
+}
+
 void UpdatePackage(const PackageInfo &info){
     SetPID();
     rpc::MakeClient<RPCID::UpdatePackage>(pid, UpdatePackage)(info);
