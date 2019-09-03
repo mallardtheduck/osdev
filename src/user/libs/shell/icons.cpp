@@ -30,6 +30,8 @@ struct elxIconInfo{
 static cache::lru_cache<std::string, elxIconInfo> elxIconInfoCache(256);
 static std::map<std::string, std::shared_ptr<gds::Surface>> loadedIcons;
 
+static cache::lru_cache<std::string, AppInfo> appInfoCache(256);
+
 static auto cacheLock = btos_api::bt_create_lock();
 
 static std::shared_ptr<gds::Surface> LoadPNGFromFD(int fd){
@@ -269,10 +271,12 @@ std::shared_ptr<gds::Surface> GetPathIcon(const std::string &path, size_t size){
 }
 
 AppInfo GetAppInfo(const std::string &filename){
+	if(appInfoCache.exists(filename)) return appInfoCache.get(filename);
 	auto h = resc::Resc_FileOpen(filename);
 	if(h){
 		auto ret = GetAppInfo(h);
 		resc::Resc_Close(h);
+		appInfoCache.put(filename, ret);
 		return ret;
 	}
 	return AppInfo();
