@@ -239,7 +239,7 @@ bool Client::HandleMessage(const Message &msg) {
 					reply.length = mops->count * sizeof(uint32_t);
 					reply.content = (void*)ids;
 					bt_send(reply);
-					delete ids;
+					delete[] ids;
 				}
 				free(mops);
 			}else{

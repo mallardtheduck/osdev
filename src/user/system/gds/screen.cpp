@@ -394,7 +394,7 @@ void Screen::SetCursorImage(const GD::Image &img, uint32_t hotx, uint32_t hoty) 
 	memcpy((char*)complete+sizeof(bmp), data, datasize);
 	bt_term_SetPointerBitmap((bt_terminal_pointer_bitmap*)complete);
 	free(complete);
-	delete data;
+	delete[] data;
 }
 
 gds_SurfaceType::Enum Screen::GetType(){

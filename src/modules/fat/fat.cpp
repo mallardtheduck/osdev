@@ -145,7 +145,7 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		if(flh){
 			ret->flh=flh;
 		}else{
-			free(ret);
+			delete ret;
             release_fat_lock();
 			return NULL;
 		}
@@ -253,7 +253,7 @@ void *fat_open_dir(void *mountdata, fs_path *path, fs_mode_flags mode){
 		}
 		if(!res){
 			free(ret->fld);
-			free(ret);
+			delete ret;
             release_fat_lock();
 			return NULL;
 		}

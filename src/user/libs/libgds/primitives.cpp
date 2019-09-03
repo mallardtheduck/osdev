@@ -109,7 +109,7 @@ extern "C" uint32_t GDS_Polygon(size_t points, gds_Point *pointData, bool closed
 	uint32_t id = GDS_AddDrawingOp(GDS_Polygon_Op(closed, lineColour, fillColour, lineWidth, lineStyle, fillStyle));
 	gds_OpParameters *params = GDS_Polygon_Params(id, points, pointData);
 	GDS_SetOpParameters(params);
-	delete params;
+	delete[] params;
 	return id;
 }
 
@@ -138,7 +138,7 @@ extern "C" uint32_t GDS_Text(int32_t x, int32_t y, const char *text, uint32_t fo
 	uint32_t id = GDS_AddDrawingOp(GDS_Text_Op(x, y, fontID, size, colour, style));
 	gds_OpParameters *params = GDS_Text_Params(id, text);
 	GDS_SetOpParameters(params);
-	delete params;
+	delete[] params;
 	return id;
 }
 

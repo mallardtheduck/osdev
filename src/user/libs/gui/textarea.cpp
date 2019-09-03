@@ -697,22 +697,20 @@ std::string TextArea::GetSelection(){
 	
 	size_t selStartLine, selEndLine;
 	size_t selStartPos, selEndPos;
-	if(haveSelection){
-		if(selLine < cursorLine){
-			selStartLine = selLine;
-			selEndLine = cursorLine;
-			selStartPos = selPos;
-			selEndPos = cursorPos;
-		}else if(selLine > cursorLine){
-			selStartLine = cursorLine;
-			selEndLine = selLine;
-			selStartPos = cursorPos;
-			selEndPos = selPos;
-		}else{
-			selStartLine = selEndLine = selLine;
-			selStartPos = std::min(selPos, cursorPos);
-			selEndPos = std::max(selPos, cursorPos);
-		}
+	if(selLine < cursorLine){
+		selStartLine = selLine;
+		selEndLine = cursorLine;
+		selStartPos = selPos;
+		selEndPos = cursorPos;
+	}else if(selLine > cursorLine){
+		selStartLine = cursorLine;
+		selEndLine = selLine;
+		selStartPos = cursorPos;
+		selEndPos = selPos;
+	}else{
+		selStartLine = selEndLine = selLine;
+		selStartPos = std::min(selPos, cursorPos);
+		selEndPos = std::max(selPos, cursorPos);
 	}
 	
 	std::stringstream ret;
@@ -732,22 +730,20 @@ void TextArea::CutSelection(){
 	
 	size_t selStartLine, selEndLine;
 	size_t selStartPos, selEndPos;
-	if(haveSelection){
-		if(selLine < cursorLine){
-			selStartLine = selLine;
-			selEndLine = cursorLine;
-			selStartPos = selPos;
-			selEndPos = cursorPos;
-		}else if(selLine > cursorLine){
-			selStartLine = cursorLine;
-			selEndLine = selLine;
-			selStartPos = cursorPos;
-			selEndPos = selPos;
-		}else{
-			selStartLine = selEndLine = selLine;
-			selStartPos = std::min(selPos, cursorPos);
-			selEndPos = std::max(selPos, cursorPos);
-		}
+	if(selLine < cursorLine){
+		selStartLine = selLine;
+		selEndLine = cursorLine;
+		selStartPos = selPos;
+		selEndPos = cursorPos;
+	}else if(selLine > cursorLine){
+		selStartLine = cursorLine;
+		selEndLine = selLine;
+		selStartPos = cursorPos;
+		selEndPos = selPos;
+	}else{
+		selStartLine = selEndLine = selLine;
+		selStartPos = std::min(selPos, cursorPos);
+		selEndPos = std::max(selPos, cursorPos);
 	}
 	
 	auto firstLine = lines[selStartLine].text;
