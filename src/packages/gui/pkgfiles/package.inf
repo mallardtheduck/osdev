@@ -39,11 +39,19 @@ type = app
 
 [feature-elxrun]
 
-name = gui.app.elxrun
+name = gui.sysapp.elxrun
 description = ELX launcher
 path = /
 file = elxrun.elx
 type = sysapp
+
+[feature-launcher]
+
+name = gui.app.launcher
+description = Launcher
+path = /
+file = launcher.elx
+type = app
 
 [filetype-txt]
 
