@@ -6,7 +6,8 @@
 #include <sstream>
 #include <gds/screen.hpp>
 
-#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
+//#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
+#define DBG(x)
 
 using namespace std;
 using namespace gds;

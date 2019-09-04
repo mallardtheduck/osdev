@@ -86,9 +86,6 @@ void Window::SetPosition(Point p){
 		DrawAndRefreshWindows({oldrect, newrect});
 		//DrawAndRefreshWindows(newrect, id);
 	}
-	stringstream ss;
-	ss << "WM: Window '" << title << "' moved to (" << p.x << ", " << p.y << ")."<< endl;
-	bt_zero(ss.str().c_str());
 }
 
 Point Window::GetPosition(){
@@ -180,7 +177,7 @@ bool Window::HasTitleBar(){
 }
 
 bool Window::HasBorder(){
-	return !(options & wm_WindowOptions::NoFrame);
+	return (options & wm_WindowOptions::NoFrame) != wm_WindowOptions::NoFrame;
 }
 
 void Window::KeyInput(uint32_t key){
@@ -365,9 +362,6 @@ void Window::DrawGrabbed(const Rect &r){
 }
 
 void Window::PointerEnter(){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' pointer enter."<< endl;
-	bt_zero(ss.str().c_str());
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::PointerEnter)){
 		wm_Event e;
@@ -378,9 +372,6 @@ void Window::PointerEnter(){
 }
 
 void Window::PointerLeave(){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' pointer leave."<< endl;
-	bt_zero(ss.str().c_str());
 	if(pressed != WindowArea::None){
 		pressed = WindowArea::None;
 		RefreshTitleBar();
@@ -449,9 +440,6 @@ bool Window::UpdateTitleBar(bool force){
 }
 
 void Window::OpenMenu(){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' open menu." << endl;
-	bt_zero(ss.str().c_str());
 	if(windowMenu){
 		auto t = GetWindowMenuTemplate();
 		auto m = MergeMenus(t, windowMenu, windowMenu->id);
@@ -463,8 +451,6 @@ void Window::OpenMenu(){
 }
 
 void Window::Close(){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' close."<< endl;
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::Close)){
 		wm_Event e;
@@ -475,9 +461,6 @@ void Window::Close(){
 }
 
 void Window::Hide(){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' hide."<< endl;
-	bt_zero(ss.str().c_str());
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::Hide)){
 		wm_Event e;
@@ -488,9 +471,6 @@ void Window::Hide(){
 }
 
 void Window::Expand(){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' expand."<< endl;
-	bt_zero(ss.str().c_str());
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::Expand)){
 		wm_Event e;
@@ -501,9 +481,6 @@ void Window::Expand(){
 }
 
 void Window::MenuAction(uint64_t menu, uint32_t action){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' menu action: " << action << endl;
-	bt_zero(ss.str().c_str());
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::MenuSelection)){
 		wm_Event e;
@@ -516,9 +493,6 @@ void Window::MenuAction(uint64_t menu, uint32_t action){
 }
 
 void Window::Move(Point newpos){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' move."<< endl;
-	bt_zero(ss.str().c_str());
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::Move)){
 		wm_Event e;
@@ -533,9 +507,6 @@ void Window::Move(Point newpos){
 }
 
 void Window::Resize(uint32_t w, uint32_t h){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' resize."<< endl;
-	bt_zero(ss.str().c_str());
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::Resize)){
 		wm_Event e;
