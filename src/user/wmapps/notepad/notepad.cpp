@@ -199,7 +199,7 @@ int main(int argc, char **argv){
 	loop.AddMenu(fileMenu);
 	loop.AddMenu(editMenu);
 	loop.AddMenu(mainMenu);
-	form->Show();
+	form->Open();
 	loop.RunLoop();
 	return 0;
 }

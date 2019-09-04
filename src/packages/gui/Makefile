@@ -10,6 +10,7 @@ import-files:= \
  data/btos/appview.elx \
  data/btos/elxrun.elx \
  data/btos/launcher.elx \
+ data/btos/launcher.ini \
  
 data/btos/calc.elx: ../../user/wmapps/calc/calc.elx
 	cp $< $@
@@ -27,6 +28,9 @@ data/btos/elxrun.elx: ../../user/wmapps/elxrun/elxrun.elx
 	cp $< $@
 	
 data/btos/launcher.elx: ../../user/wmapps/launcher/launcher.elx
+	cp $< $@
+	
+data/btos/launcher.ini: ../../user/wmapps/launcher/launcher.ini
 	cp $< $@
 
 create.directories:

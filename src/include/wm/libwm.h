@@ -8,6 +8,7 @@
 
 #ifdef __cplusplus
 #include <string>
+#include <vector>
 extern "C"{
 #endif
 
@@ -46,11 +47,15 @@ bt_vidmode WM_GetScreenMode();
 void WM_SetModal(uint64_t id);
 void WM_ClearModal();
 
+size_t WM_GetValidWindowIDs(uint64_t *buf, size_t size);
+void WM_RaiseWindow();
+
 #ifdef __cplusplus
 }
 
 void WM_UpdateRect(wm_Rect r);
 void WM_SetTitle(const std::string title);
+std::vector<uint64_t> WM_GetValidWindowIDs();
 #endif
 
 #endif

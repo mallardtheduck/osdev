@@ -53,6 +53,14 @@ path = /
 file = launcher.elx
 type = app
 
+[feature-ses-launcher]
+
+name = gui.ses.wmmenu
+description = GUI (Launcher) session type
+path = /
+file = launcher.ini
+type = sm.ses
+
 [filetype-txt]
 
 extension = .txt

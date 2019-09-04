@@ -51,11 +51,14 @@ uint64_t AddWindow(shared_ptr<Window> win){
 	shared_ptr<Window> awin = activeWindow.lock();
 	if(!awin) activeWindow = win;
 	win->id = id;
+	if(!(win->GetOptions() & wm_WindowOptions::Unlisted)) SendGlobalEvent(wm_EventType::GlobalAdd, win);
 	return id;
 }
 
 void RemoveWindow(uint64_t id){
-	Rect bounds = GetWindow(id)->GetBoundingRect();
+	auto win = GetWindow(id);
+	if(!(win->GetOptions() & wm_WindowOptions::Unlisted)) SendGlobalEvent(wm_EventType::GlobalRemove, win);
+	Rect bounds = win->GetBoundingRect();
 	windows.erase(id);
 	DrawAndRefreshWindows(bounds);
 }
@@ -265,4 +268,20 @@ void DrawAndRefreshWindows(const Rect &r, uint64_t above){
 void DrawAndRefreshWindows(const vector<Rect> &v){
 	DrawWindows(v);
 	RefreshScreen(v);
+}
+
+void SendGlobalEvent(wm_EventType::Enum event, std::shared_ptr<Window> win){
+	for(auto &w : windows){
+		if((w.second->Subscribe() & event)){
+			w.second->GlobalEvent(event, win);
+		}
+	}
+}
+
+std::vector<uint64_t> GetValidWindowIDs(){
+	std::vector<uint64_t> ret;
+	for(auto &w : windows){
+		if(!(w.second->GetOptions() & wm_WindowOptions::Unlisted)) ret.push_back(w.second->id);
+	}
+	return ret;
 }

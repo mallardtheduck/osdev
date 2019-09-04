@@ -40,8 +40,9 @@ bool Client::HandleMessage(const Message &msg){
 	switch(msg.Type()){
 		case wm_RequestType::SelectWindow:{
 			uint64_t id = msg.Content<uint64_t>();
-			if(windows.find(id) != windows.end()){
-				currentWindow = windows[id];
+			auto win = GetWindow(id);
+			if(win){
+				currentWindow = win;
 				SendReply(msg, id);
 			}
 			break;
@@ -82,6 +83,9 @@ bool Client::HandleMessage(const Message &msg){
 				info.options = currentWindow->GetOptions();
 				info.subscriptions = currentWindow->Subscribe();
 				info.gds_id = currentWindow->GetSurface()->GetID();
+				auto owner = currentWindow->GetOwner();
+				if(owner) info.owner = owner->GetPID();
+				else info.owner = 0;
 			}else{
 				info.x = 0;
 				info.y = 0;
@@ -90,6 +94,7 @@ bool Client::HandleMessage(const Message &msg){
 				info.options = 0;
 				info.subscriptions = 0;
 				info.gds_id = 0;
+				info.owner = 0;
 			}
 			SendReply(msg, info);
 			break;
@@ -240,6 +245,17 @@ bool Client::HandleMessage(const Message &msg){
 			if(currentWindow) currentWindow->ClearModal();
 			break;
 		}
+		case wm_RequestType::GetValidWindowIDs:{
+			auto ids = GetValidWindowIDs();
+			msg.SendReply((void*)ids.data(), ids.size() * sizeof(uint64_t));
+			break;
+		}case wm_RequestType::RaiseWindow:{
+			if(currentWindow){
+				BringToFront(currentWindow);
+				DrawAndRefreshWindows(currentWindow->GetBoundingRect());
+			}
+			break;
+		};
 	}
 	return true;
 }
@@ -261,4 +277,8 @@ void Client::SendNextEvent(){
 	}else{
 		msgPending = false;
 	}
+}
+
+bt_pid_t Client::GetPID(){
+	return pid;
 }

@@ -98,10 +98,12 @@ Point Window::GetContentPosition(){
 
 void Window::SetTitle(string ntitle){
 	title=ntitle;
-	RefreshTitleBar(true);
-	Rect r = GetBoundingRect();
-	r.h = GetMetric(TitleBarSize);
-	DrawAndRefreshWindows(r);
+	if(HasTitleBar()){
+		RefreshTitleBar(true);
+		Rect r = GetBoundingRect();
+		r.h = GetMetric(TitleBarSize);
+		DrawAndRefreshWindows(r);
+	}
 }
 
 std::string Window::GetTitle(){
@@ -233,7 +235,9 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			if(firstFrame || newpos.x != pos.x || newpos.y != pos.y){
 				Rect oldrect = GetBoundingRect();
 				DrawWindows(oldrect, 0, true);
-				Screen.Blit(*dragImage, {0, 0, oldrect.w, oldrect.h + GetMetric(TitleBarSize)}, {newpos.x, newpos.y, oldrect.w, oldrect.h + GetMetric(TitleBarSize)});
+				auto h = oldrect.h;
+				if(HasTitleBar()) h += GetMetric(TitleBarSize);
+				Screen.Blit(*dragImage, {0, 0, oldrect.w, h}, {newpos.x, newpos.y, oldrect.w, h});
 				pos = newpos;
 				Rect newrect = GetBoundingRect();
 				RefreshScreen(TileRects(oldrect, newrect));
@@ -329,7 +333,7 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			else if(pevent.type == bt_terminal_pointer_event_type::Move) e.type = wm_EventType::PointerMove;
 			else return;
 			shared_ptr<Client> client = owner.lock();
-			if(client && (e.type & event_subs) == e.type){
+			if(client && (e.type & event_subs) == (uint32_t)e.type){
 				Point cpoint = Reoriginate(epoint, GetContentOffset());
 				e.window_id = id;
 				e.Pointer.x = cpoint.x;
@@ -406,7 +410,9 @@ WindowArea Window::GetWindowArea(Point p){
 	if(p.x >= GetMetric(BorderWidth) && p.x < GetMetric(BorderWidth) + (int32_t)info.w){
 		if(p.y >= GetMetric(BorderWidth)){
 			if(p.y >= GetMetric(TitleBarSize) || !HasTitleBar()){
-				if(p.y < GetMetric(TitleBarSize) + (int32_t)info.h) return WindowArea::Content;
+				int32_t h = info.h;
+				if(HasTitleBar()) h += GetMetric(TitleBarSize);
+				if(p.y < h) return WindowArea::Content;
 				else return WindowArea::Border;
 			}else{
 				if(p.x < GetMetric(MenuButtonWidth) + GetMetric(BorderWidth)) return WindowArea::MenuButton;
@@ -520,6 +526,17 @@ void Window::Resize(uint32_t w, uint32_t h){
 	}
 }
 
+void Window::GlobalEvent(wm_EventType::Enum et, std::shared_ptr<Window> win){
+	auto client = owner.lock();
+	if(client && (event_subs & et)){
+		wm_Event e;
+		e.window_id = id;
+		e.type = et;
+		e.Global.window_id = win->id;
+		client->SendEvent(e);
+	}
+}
+
 void Window::SetOwner(std::weak_ptr<Client> o){
 	owner = o;
 }
@@ -533,6 +550,8 @@ uint32_t Window::Subscribe(){
 }
 
 void Window::SetOptions(uint32_t opts){
+	if((opts & wm_WindowOptions::Unlisted) && !(options & wm_WindowOptions::Unlisted)) SendGlobalEvent(wm_EventType::GlobalRemove, shared_from_this());
+	if(!(opts & wm_WindowOptions::Unlisted) && (options & wm_WindowOptions::Unlisted)) SendGlobalEvent(wm_EventType::GlobalAdd, shared_from_this());
 	options = opts;
 	if(GetVisible()) DrawWindows(GetBoundingRect(), id);
 	else DrawWindows(GetBoundingRect());
@@ -584,4 +603,8 @@ void Window::SetModal(std::weak_ptr<Window> win){
 
 void Window::ClearModal(){
 	modal.reset();
+}
+
+std::shared_ptr<Client> Window::GetOwner(){
+	return owner.lock();
 }

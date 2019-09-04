@@ -478,7 +478,7 @@ int main(int argc, char **argv){
 	updateMenus();
 	
 	loop.AddWindow(form);
-	form->Show();
+	form->Open();
 	loop.RunLoop();
 
 	return 0;

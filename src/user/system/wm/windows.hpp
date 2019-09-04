@@ -24,4 +24,7 @@ void WindowGrab(uint64_t id);
 void UnGrab();
 void BringToFront(std::shared_ptr<Window> win);
 
+void SendGlobalEvent(wm_EventType::Enum event, std::shared_ptr<Window> win);
+std::vector<uint64_t> GetValidWindowIDs();
+
 #endif

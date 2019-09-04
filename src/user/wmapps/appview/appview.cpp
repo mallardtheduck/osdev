@@ -186,7 +186,7 @@ int main(){
 	wm::EventLoop loop;
 	loop.AddWindow(form);
 	loop.AddMenu(menu);
-	form->Show();
+	form->Open();
 	loop.RunLoop();
 
 	return 0;
