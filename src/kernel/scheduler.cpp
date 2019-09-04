@@ -6,6 +6,7 @@
 extern char _start, _end;
 static const uint32_t default_priority=10;
 static const uint32_t modifier_limit=128;
+static const uint32_t thread_magic = 0xB705;
 void *sch_stack;
 extern char sch_isr_asm;
 
@@ -102,7 +103,7 @@ void sch_init(){
 	mainthread->priority=default_priority;
 	mainthread->dynpriority=0;
 	mainthread->modifier=0;
-	mainthread->magic=0xF00D;
+	mainthread->magic=thread_magic;
 	mainthread->pid=proc_current_pid;
 	mainthread->blockcheck=NULL;
 	mainthread->bc_param=NULL;
@@ -201,7 +202,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread->stack.esp=stack;
 	newthread->start=start;
 	newthread->status = sch_thread_status::Runnable;
-	newthread->magic=0xBABE;
+	newthread->magic=thread_magic;
 	newthread->priority=default_priority;
 	newthread->dynpriority=0;
 	newthread->modifier=0;
@@ -269,7 +270,7 @@ inline void out_regs(const irq_regs &ctx){
 }
 
 
-static int sch_precyle(){
+static int sch_precycle(){
 	int nrunnables=0;
 	for(size_t i=0; i<threads->size(); ++i){
 		sch_thread *ithread = (*threads)[i];
@@ -298,6 +299,7 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 	uint32_t min=0xFFFFFFFF;
 	for(size_t i=0; i<threads->size(); ++i){
 		sch_thread *ithread = (*threads)[i];
+		if(ithread->magic != thread_magic) panic("(SCH) Corrupt thread detected!");
 		//Ignore idle thread
 		if(ithread == idle_thread) continue;
 		if(ithread->status == sch_thread_status::Runnable && ithread->sch_cycle != cycle){
@@ -592,7 +594,7 @@ void sch_prescheduler_thread(void*){
 	while(true){
 		cycle++;
 		take_lock_exclusive(sch_lock);
-		int runnable = sch_precyle();
+		int runnable = sch_precycle();
 		sch_thread *current=current_thread;
 		if(runnable){
 			sch_thread *next=NULL;
