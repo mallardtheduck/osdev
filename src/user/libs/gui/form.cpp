@@ -44,6 +44,8 @@ bool Form::HandleEvent(const wm_Event &e){
 			if(el) el->RemoveWindow(GetID());
 		}
 		return true;
+	}else if(e.type == wm_EventType::Hide){
+		Hide();
 	}else if(e.type == wm_EventType::Expand){
 		if(!expanded){
 			auto mode = GetScreenMode();

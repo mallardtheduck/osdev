@@ -114,6 +114,8 @@ int main(){
 			if(!a.second.empty()){
 				for(auto w : a.second){
 					WM_SelectWindow(w);
+					auto info = WM_WindowInfo();
+					WM_ChangeOptions(info.options | wm_WindowOptions::Visible);
 					WM_RaiseWindow();
 				}
 			}else{
