@@ -50,7 +50,7 @@ public:
 		}
 	}
 	
-	void Next(){
+	inline void Next(){
 		if(pos >= max || idx > size) return;
 		++pos;
 		--cur.second;
@@ -60,7 +60,7 @@ public:
 		}
 	}
 	
-	uint32_t Read(){
+	inline uint32_t Read(){
 		return cur.first;
 	}
 	

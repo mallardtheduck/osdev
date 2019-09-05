@@ -15,6 +15,8 @@
 
 #include "graphics.hpp"
 
+#include <util/tinyformat.hpp>
+
 using namespace std;
 
 BitmapSurface::BitmapSurface(size_t w, size_t h, uint32_t cT, uint32_t scale)
@@ -273,9 +275,17 @@ void BitmapSurface::Compress(){
 	}
 	compressedImage.push_back(cur);
 	
-	cursor = {compressedImage, width, height};
-	isCompressed = true;
-	image.reset();
+	int32_t saving = (image->Width() * image->Height() * 4) - (compressedImage.size() * 8);
+	if(saving > 0){
+		bt_zero(tfm::format("GDS: BitmapSurface::Compress compression saved %s bytes.\n", saving).c_str());
+		cursor = {compressedImage, width, height};
+		isCompressed = true;
+		image.reset();
+	}else{
+		bt_zero(tfm::format("GDS: BitmapSurface::Compress compression rejected (%s bytes).\n", saving).c_str());
+		compressedImage.clear();
+		isCompressed = false;
+	}
 }
 
 void BitmapSurface::Decompress(){

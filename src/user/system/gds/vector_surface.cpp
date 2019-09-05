@@ -8,6 +8,8 @@
 
 #include <limits>
 
+#include <util/tinyformat.hpp>
+
 using namespace std;
 
 static uint64_t cacheIdCounter = 0;
@@ -29,7 +31,7 @@ bool VectorSurface::Contains(const Rectangle &outer, const Rectangle &inner){
 }
 
 bool VectorSurface::InRect(int32_t x, int32_t y, const Rectangle &r){
-	if(x >= r.x && x < (r.x + (int32_t)r.w) && y >= r.y && y < (r.y + (int32_t)r.h)) return true;
+	if(x >= r.x && x <= (r.x + (int32_t)r.w) && y >= r.y && y <= (r.y + (int32_t)r.h)) return true;
 	else return false;
 }
 
@@ -239,7 +241,25 @@ std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
 }
 
 void VectorSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h, uint32_t flags){
+	if(srcX < 0){
+		if(w < (uint32_t)-srcX) return;
+		w += srcX;
+		dstX -= srcX;
+		srcX = 0;
+	}
+	if(srcY < 0){
+		if(h < (uint32_t)-srcY) return;
+		h += srcY;
+		dstY -= srcY;
+		srcY = 0;
+	}
+	if(srcX + w > (uint32_t)width) w = width - srcX;
+	if(srcY + h > (uint32_t)height) h = height - srcY;
 	renderRect = {srcX, srcY, w, h};
+	bt_zero(tfm::format("GDS: cacheRect: {%s, %s : %s x %s} renderRect: {%s, %s : %s x %s}\n",
+		cacheRect.x, cacheRect.y, cacheRect.w, cacheRect.h,
+		renderRect.x, renderRect.y, renderRect.w, renderRect.h
+	).c_str());
 	auto src = RenderToCache();
 	renderRect = {0, 0, 0, 0};
 	if(src) src->RenderTo(dst, srcX, srcY, dstX, dstY, w, h, flags);
