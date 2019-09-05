@@ -123,7 +123,7 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 		}
 	}
 	if(!ignoreGrab){
-		if(auto gwin = grabbedWindow.lock())gwin->DrawGrabbed(r);
+		if(auto gwin = grabbedWindow.lock()) gwin->DrawGrabbed(r);
 	}
 	Screen.CommitQueue();
 	RedrawMenus(r);
@@ -142,6 +142,7 @@ void DrawWindows(const vector<Rect> &v, uint64_t above){
 			w->Draw(w==awin, r);
 		}
 	}
+	if(auto gwin = grabbedWindow.lock()) for(const auto &r: v) gwin->DrawGrabbed(r);
 	Screen.CommitQueue();
 }
 
