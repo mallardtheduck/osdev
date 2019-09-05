@@ -304,7 +304,7 @@ void mainthread(void*){
 	size_t cpos  = 0;
 	size_t refcount = 0;
 	surf = GDS_NewSurface(gds_SurfaceType::Bitmap, terminal_mode.width * font_width, terminal_mode.height * font_height);
-	/*uint64_t win =*/ WM_NewWindow(50, 50, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close, surf, "Terminal Window");
+	/*uint64_t win =*/ WM_NewWindow(50, 50, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, wm_EventType::Keyboard | wm_EventType::Close | wm_EventType::Hide, surf, "Terminal Window");
 	ready = true;
 	bt_msg_filter filter;
 	filter.flags = bt_msg_filter_flags::NonReply;
@@ -400,7 +400,10 @@ void mainthread(void*){
 			bt_msg_header head = msg.Header();
 			wm_Event e = WM_ParseMessage(&head);
 			if(e.type == wm_EventType::Close) break;
-			else if(e.type == wm_EventType::Keyboard){
+			else if(e.type == wm_EventType::Hide){
+				auto info = WM_WindowInfo();
+				WM_ChangeOptions(info.options & ~wm_WindowOptions::Visible);	
+			}else if(e.type == wm_EventType::Keyboard){
 				if(terminal_handle){
 					bt_terminal_event te;
 					te.type = bt_terminal_event_type::Key;
