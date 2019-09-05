@@ -20,7 +20,8 @@ private:
 	uint32_t height;
 	uint32_t colourType;
 	
-	std::shared_ptr<BitmapSurface> cache;
+	uint64_t cacheId = 0;
+	
 	bool update = false;
 	
 	struct Rectangle{
@@ -43,6 +44,9 @@ private:
 	bool OpInRect(const VectorOp &op, const Rectangle &rect);
 	
 	void OrderOps();
+	
+	std::shared_ptr<BitmapSurface> GetCache(bool &created);
+	void DropCache();
 public:
 	VectorSurface(size_t w, size_t h, uint32_t colourType, uint32_t scale = 100);
 

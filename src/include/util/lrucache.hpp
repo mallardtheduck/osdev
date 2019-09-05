@@ -51,6 +51,10 @@ public:
 		}
 	}
 	
+	void drop(const key_t& key) {
+		_cache_items_map.erase(key);
+	}
+	
 	bool exists(const key_t& key) const {
 		return _cache_items_map.find(key) != _cache_items_map.end();
 	}

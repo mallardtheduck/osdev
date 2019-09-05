@@ -4,12 +4,16 @@
 #include "fonts.hpp"
 #include <gd.h>
 #include <dev/rtc.h>
+#include <util/lrucache.hpp>
 
 #include <limits>
 
 using namespace std;
 
+static uint64_t cacheIdCounter = 0;
 static const size_t ZUnspecified = SIZE_MAX;
+
+static cache::lru_cache<uint64_t, std::shared_ptr<BitmapSurface>> renderCache(128);
 
 bool operator==(const VectorSurface::Rectangle &r1, const VectorSurface::Rectangle &r2){
 	return r1.x == r2.x && r1.y == r2.y && r1.w == r2.w && r1.h == r2.h;
@@ -73,9 +77,28 @@ bool VectorSurface::OpInRect(const VectorOp &vop, const VectorSurface::Rectangle
 	}
 }
 
+std::shared_ptr<BitmapSurface> VectorSurface::GetCache(bool &created){
+	if(cacheId && renderCache.exists(cacheId)){
+		created = false;
+		return renderCache.get(cacheId);
+	}else{
+		created = true;
+		cacheId = ++cacheIdCounter;
+		auto ret = make_shared<BitmapSurface>(width, height, colourType);
+		renderCache.put(cacheId, ret);
+		return ret;
+	}
+}
+
+void VectorSurface::DropCache(){
+	if(cacheId && renderCache.exists(cacheId)) renderCache.drop(cacheId);
+}
+
 VectorSurface::VectorSurface(size_t w, size_t h, uint32_t cT, uint32_t /*scale*/) : width(w), height(h), colourType(cT) {}
 
-VectorSurface::~VectorSurface() {}
+VectorSurface::~VectorSurface() {
+	DropCache();
+}
 
 size_t VectorSurface::AddOperation(gds_DrawingOp op){
 	uint32_t id = ++opCounter;
@@ -155,19 +178,20 @@ void VectorSurface::Resize(size_t w, size_t h, bool i){
 	}
 }
 
-std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){	
-	if(!cache || update || !Contains(cacheRect, renderRect)){
+std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
+	bool created;
+	auto cache = GetCache(created);
+	if(created || update || !Contains(cacheRect, renderRect)){
 		OrderOps();
 		vector<VectorOp> sops;
 		for(const auto &op : ops){
 			sops.push_back(op.second);
 		}
 		sort(sops.begin(), sops.end(), [](const VectorOp &a, const VectorOp &b){return a.zOrder < b.zOrder;});
-		if(!cache || cache->GetWidth() != width || cache->GetHeight() != height){
-			bt_zero("GDS: vector_surface cache allocate.\n");
-			cache.reset(new BitmapSurface(width, height, colourType));
+		if(cache->GetWidth() != width || cache->GetHeight() != height){
+			DropCache();
+			cache = GetCache(created);
 		}else cache->Clear();
-		if(!cache) return nullptr;
 		
 		auto &bsurf = *cache;
 		if(renderRect.w){
