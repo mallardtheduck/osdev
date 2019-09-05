@@ -182,8 +182,8 @@ void FastBlitFromCompressed(CompressedImageCursor &src, GD::Image &dst, int32_t 
 	if(dst.IsTrueColor()){
 		if(!dstPtr->tpixels) return;
 		for(size_t y = 0; y < h; ++y){
+			src.GoTo(srcX, srcY + y);
 			for(size_t x = 0; x < w; ++x){
-				src.GoTo(srcX + x, srcY + y);
 				uint32_t srcPxl = src.Read();
 				if(noalpha) srcPxl = gdTrueColorAlpha(gdTrueColorGetRed(srcPxl), gdTrueColorGetGreen(srcPxl), gdTrueColorGetBlue(srcPxl), gdAlphaOpaque);
 				if(!overwrite && gdTrueColorGetAlpha(srcPxl) != gdAlphaOpaque){
@@ -191,6 +191,7 @@ void FastBlitFromCompressed(CompressedImageCursor &src, GD::Image &dst, int32_t 
 					srcPxl = gdAlphaBlend(dstPxl, srcPxl);
 				}
 				gdImageTrueColorPixel(dstPtr, dstX + x, dstY + y) = srcPxl;
+				src.Next();
 			}
 		}
 	}else{
@@ -198,8 +199,8 @@ void FastBlitFromCompressed(CompressedImageCursor &src, GD::Image &dst, int32_t 
 		uint32_t srcCol = 0;
 		uint8_t dstCol = 0;
 		for(size_t y = 0; y < h; ++y){
+			src.GoTo(srcX, srcY + y);
 			for(size_t x = 0; x < w; ++x){
-				src.GoTo(srcX + x, srcY + y);
 				uint32_t srcPxl = src.Read();
 				if(noalpha) srcPxl = gdTrueColorAlpha(gdTrueColorGetRed(srcPxl), gdTrueColorGetGreen(srcPxl), gdTrueColorGetBlue(srcPxl), gdAlphaOpaque);
 				if(gdTrueColorGetAlpha(srcPxl) != gdAlphaOpaque){
@@ -211,6 +212,7 @@ void FastBlitFromCompressed(CompressedImageCursor &src, GD::Image &dst, int32_t 
 					srcCol = srcPxl;
 				}
 				gdImagePalettePixel(dstPtr, dstX + x, dstY + y) = dstCol;
+				src.Next();
 			}
 		}
 	}

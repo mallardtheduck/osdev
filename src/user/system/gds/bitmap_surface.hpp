@@ -50,6 +50,16 @@ public:
 		}
 	}
 	
+	void Next(){
+		if(pos >= max || idx > size) return;
+		++pos;
+		--cur.second;
+		if(cur.second == 0){
+			cur = (*s)[idx];
+			++idx;
+		}
+	}
+	
 	uint32_t Read(){
 		return cur.first;
 	}
