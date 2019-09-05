@@ -52,7 +52,11 @@ public:
 	}
 	
 	void drop(const key_t& key) {
-		_cache_items_map.erase(key);
+		auto it = _cache_items_map.find(key);
+		if (it != _cache_items_map.end()) {
+			_cache_items_list.erase(it->second);
+			_cache_items_map.erase(it);
+		}
 	}
 	
 	bool exists(const key_t& key) const {
