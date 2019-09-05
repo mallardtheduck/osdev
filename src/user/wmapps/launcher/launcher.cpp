@@ -91,7 +91,7 @@ bool AppListChanged(const AppMap &curApps, const AppMap &apps){
 int main(){
 	uint32_t formWidth = baseFormWidth;
 	
-	std::vector<std::shared_ptr<gui::ImageButton>> appButtons;
+	std::vector<std::shared_ptr<gui::IControl>> appButtons;
 	
 	auto form = std::make_shared<gui::Form>(gds::Rect{0, 0, formWidth, formHeight}, wm_WindowOptions::NoTitle | wm_WindowOptions::Unlisted, "Launcher");
 	auto timeLbl = std::make_shared<gui::Label>(gds::Rect{5, 5, 61, 21}, "12:34 PM");
@@ -142,9 +142,9 @@ int main(){
 					appBtnClick(a.first);
 				});
 				appButtons.push_back(btn);
-				form->AddControl(btn);
 				++appBtnCount;
 			}
+			form->AddControls(appButtons);
 			
 			auto mode = form->GetScreenMode();
 			int32_t formX = (mode.width - formWidth) / 2;
