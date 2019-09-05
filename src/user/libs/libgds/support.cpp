@@ -37,6 +37,7 @@ extern "C" uint64_t GDS_LoadPNG(int fd){
 		uint64_t bmpSurf = GDS_NewSurface(gds_SurfaceType::Bitmap, width, height, 100, gds_ColourType::True);
 		GDS_SelectSurface(bmpSurf);
 		GDS_Blit(shmSurf.GetID(), 0, 0, width, height, 0, 0, width, height, 100, gds_BlitFlags::Overwrite);
+		GDS_Compress();
 		//This also frees 'data'
 		ok_png_free(image);
 		return bmpSurf;

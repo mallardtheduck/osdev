@@ -145,6 +145,7 @@ uint64_t get_glyph(uint8_t attr, uint8_t ch){
 	GDS_Box(0, 0, font_width, font_height, bg, bg, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	GDS_TextChar(0, font_height - (font_height / 5), ch, font, fontSize, fg);
 	glyphcache.put(key, make_shared<glyph_holder>(id));
+	GDS_Compress();
 	GDS_SelectSurface(surf);
 	return id;
 }

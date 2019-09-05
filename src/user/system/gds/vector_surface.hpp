@@ -47,6 +47,8 @@ private:
 	
 	std::shared_ptr<BitmapSurface> GetCache(bool &created);
 	void DropCache();
+	
+	std::shared_ptr<BitmapSurface> RenderToCache();
 public:
 	VectorSurface(size_t w, size_t h, uint32_t colourType, uint32_t scale = 100);
 

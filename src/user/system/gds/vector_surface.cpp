@@ -178,7 +178,7 @@ void VectorSurface::Resize(size_t w, size_t h, bool i){
 	}
 }
 
-std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
+std::shared_ptr<BitmapSurface> VectorSurface::RenderToCache(){
 	bool created;
 	auto cache = GetCache(created);
 	if(created || update || !Contains(cacheRect, renderRect)){
@@ -229,15 +229,20 @@ std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
 		}
 		cacheRect = renderRect;
 		update = false;
+		cache->Compress();
 	}
-	return cache->Render(100);
+	return cache;
+}
+
+std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
+	return RenderToCache()->Render(100);
 }
 
 void VectorSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h, uint32_t flags){
 	renderRect = {srcX, srcY, w, h};
-	std::shared_ptr<GD::Image> src = Render(100);
+	auto src = RenderToCache();
 	renderRect = {0, 0, 0, 0};
-	if(src) FastBlit(*src, *dst, srcX, srcY, dstX, dstY, w, h, flags);
+	if(src) src->RenderTo(dst, srcX, srcY, dstX, dstY, w, h, flags);
 }
 
 void VectorSurface::OrderOps(){

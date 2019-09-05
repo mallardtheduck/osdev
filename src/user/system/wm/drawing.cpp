@@ -166,6 +166,7 @@ shared_ptr<Surface> TitleBar::Draw(uint32_t w, const string &t, bool active, uin
 	if(active) gds_active_title = ret;
 	else gds_inactive_title = ret;
 	ret->CommitQueue();
+	ret->Compress();
 	return ret;
 }
 

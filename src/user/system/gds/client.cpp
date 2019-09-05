@@ -295,6 +295,10 @@ bool Client::HandleMessage(const Message &msg) {
 			}
 			break;
 		}
+		case gds_MsgType::Compress:{
+			if(currentSurface) currentSurface->Compress();
+			break;
+		}
 		default:{
 			DBG("GDS: Unknown request " << msg.Type() << " from PID: " << msg.From());
 			break;

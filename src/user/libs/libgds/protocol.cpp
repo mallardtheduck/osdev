@@ -223,3 +223,7 @@ extern "C" gds_TextMeasurements *GDS_MeasureText(gds_TextParameters p, const cha
 	bt_msg_ack(&measureReply);
 	return ret;
 }
+
+extern "C" void GDS_Compress(){
+	SendMessage(gds_MsgType::Compress, 0, NULL, false);
+}

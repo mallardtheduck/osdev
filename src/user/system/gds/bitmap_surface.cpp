@@ -18,7 +18,7 @@
 using namespace std;
 
 BitmapSurface::BitmapSurface(size_t w, size_t h, uint32_t cT, uint32_t scale)
-: colourType(cT)
+: colourType(cT), width(w), height(h)
 {
 	bool indexed = !(cT & gds_ColourType::True);
 	image.reset(new GD::Image((int)w, (int)h, !indexed));
@@ -27,6 +27,7 @@ BitmapSurface::BitmapSurface(size_t w, size_t h, uint32_t cT, uint32_t scale)
 }
 
 size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
+	Decompress();
 	//uint64_t op_start = bt_rtc_millis();
 	image->SetThickness(op.Common.lineWidth);
 	image->AlphaBlending(op.Common.fillStyle == gds_FillStyle::Overwrite ? gdEffectReplace : gdEffectNormal);
@@ -133,19 +134,24 @@ gds_DrawingOp BitmapSurface::GetOperation(size_t /*id*/) {
 }
 
 size_t BitmapSurface::GetWidth() {
-	return (size_t)image->Width();
+	return width;
 }
 
 size_t BitmapSurface::GetHeight() {
-	return (size_t)image->Height();
+	return height;
 }
 
 size_t BitmapSurface::GetDepth() {
-	return image->IsTrueColor() ? 32 : 8;
+	return colourType == gds_ColourType::True ? 32 : 8;
 }
 
 void BitmapSurface::Resize(size_t w, size_t h, bool indexed) {
+	width = w; height = h;
 	image.reset(new GD::Image((int)w, (int)h, !indexed));
+	if(isCompressed){
+		compressedImage.clear();
+		isCompressed = false;
+	}
 }
 
 uint32_t BitmapSurface::GetScale() {
@@ -161,15 +167,18 @@ gds_SurfaceType::Enum BitmapSurface::GetType() {
 }
 
 uint32_t BitmapSurface::GetColour(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+	Decompress();
 	return (uint32_t) image->ColorResolve(r, g, b, a);
 }
 
 std::shared_ptr<GD::Image> BitmapSurface::Render(uint32_t scale) {
+	Decompress();
 	if(scale == this->scale) return image;
 	else return std::shared_ptr<GD::Image>();
 }
 
 void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
+	Decompress();
 	if(pending_op.type != gds_DrawingOpType::None && pending_op.type == params->type){
 		switch(pending_op.type){
 			case gds_DrawingOpType::Text:{
@@ -216,7 +225,11 @@ void BitmapSurface::ReorderOp(uint32_t /*op*/, uint32_t /*ref*/, gds_ReorderMode
 }
 
 void BitmapSurface::Clear(){
-	FastBox(*image, 0, 0, image->Width(), image->Height(), 0);
+	if(isCompressed){
+		image.reset(new GD::Image(width, height, true));
+		compressedImage.clear();
+		isCompressed = false;
+	}else FastBox(*image, 0, 0, image->Width(), image->Height(), 0);
 }
 
 std::unique_ptr<gds_TextMeasurements> BitmapSurface::MeasureText(const gds_TextParameters &p, std::string text){
@@ -224,11 +237,69 @@ std::unique_ptr<gds_TextMeasurements> BitmapSurface::MeasureText(const gds_TextP
 }
 
 void BitmapSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h, uint32_t flags){
-	FastBlit(*image, *dst, srcX, srcY, dstX, dstY, w, h, flags);
+	if(isCompressed) FastBlitFromCompressed(cursor, *dst, srcX, srcY, dstX, dstY, w, h, flags);
+	else FastBlit(*image, *dst, srcX, srcY, dstX, dstY, w, h, flags);
 }
 
 std::shared_ptr<GD::Image> BitmapSurface::GetImage(){
 	return image;
+}
+
+void BitmapSurface::Compress(){
+	if(isCompressed) return;
+	if(!image->IsTrueColor()) return;
+	
+	size_t w = width, h = height;
+	gdImagePtr ptr = image->GetPtr();
+	
+	compressedImage.clear();
+	
+	std::pair<uint32_t, size_t> cur(0, 0);
+	bool first = true;
+	for(size_t y = 0; y < h; ++y){
+		for(size_t x = 0; x < w; ++x){
+			uint32_t col = gdImageTrueColorPixel(ptr, x, y);
+			if(first){
+				cur.first = col;
+				first = false;
+			}else{
+				if(col != cur.first){
+					compressedImage.push_back(cur);
+					cur = {col, 0};
+				}
+			}
+			++cur.second;
+		}
+	}
+	compressedImage.push_back(cur);
+	
+	cursor = {compressedImage, width, height};
+	isCompressed = true;
+	image.reset();
+}
+
+void BitmapSurface::Decompress(){
+	if(!isCompressed) return;
+	bt_zero("BitmapSurface::Decompress\n");
+	
+	size_t w = width, h = height;
+	
+	image.reset(new GD::Image(w, h, true));
+	gdImagePtr ptr = image->GetPtr();
+	
+	size_t pos = 0;
+	for(auto cur : compressedImage){
+		while(cur.second > 0){
+			size_t y = pos / w;
+			size_t x = pos % w;
+			gdImageTrueColorPixel(ptr, x, y) = cur.first;
+			--cur.second;
+			++pos;
+		}
+	}
+	
+	isCompressed = false;
+	compressedImage.clear();
 }
 
 BitmapSurface::~BitmapSurface() {

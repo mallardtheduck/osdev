@@ -31,6 +31,7 @@ ENUM_START(gds_MsgType)
 	ENUM_SET(gds_MsgType, ClearSurface,		13),
 	ENUM_SET(gds_MsgType, SetTextParameters,14),
 	ENUM_SET(gds_MsgType, MeasureText,		15),
+	ENUM_SET(gds_MsgType, Compress,			16),
 	
 	ENUM_SET(gds_MsgType, GetFontID,		20),
 	ENUM_SET(gds_MsgType, GetFontInfo,		21),
