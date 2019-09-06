@@ -150,6 +150,7 @@ void BitmapSurface::Resize(size_t w, size_t h, bool indexed) {
 	image.reset(new GD::Image((int)w, (int)h, !indexed));
 	if(isCompressed){
 		compressedImage.clear();
+		compressedImage.shrink_to_fit();
 		isCompressed = false;
 	}
 }
@@ -228,6 +229,7 @@ void BitmapSurface::Clear(){
 	if(isCompressed){
 		image.reset(new GD::Image(width, height, true));
 		compressedImage.clear();
+		compressedImage.shrink_to_fit();
 		isCompressed = false;
 	}else FastBox(*image, 0, 0, image->Width(), image->Height(), 0);
 }
@@ -253,6 +255,7 @@ void BitmapSurface::Compress(){
 	gdImagePtr ptr = image->GetPtr();
 	
 	compressedImage.clear();
+	compressedImage.reserve((w * h) / 2);
 	
 	std::pair<uint32_t, size_t> cur(0, 0);
 	bool first = true;
@@ -272,6 +275,7 @@ void BitmapSurface::Compress(){
 		}
 	}
 	compressedImage.push_back(cur);
+	compressedImage.shrink_to_fit();
 	
 	int32_t saving = (image->Width() * image->Height() * 4) - (compressedImage.size() * 8);
 	if(saving > 0){
@@ -280,6 +284,7 @@ void BitmapSurface::Compress(){
 		image.reset();
 	}else{
 		compressedImage.clear();
+		compressedImage.shrink_to_fit();
 		isCompressed = false;
 	}
 }
@@ -306,6 +311,7 @@ void BitmapSurface::Decompress(){
 	
 	isCompressed = false;
 	compressedImage.clear();
+	compressedImage.shrink_to_fit();
 }
 
 BitmapSurface::~BitmapSurface() {
