@@ -48,10 +48,18 @@ int main(int argc, char **argv){
 	auto statusbar = std::make_shared<gui::StatusBar>(displayFilename());
 	auto textarea = std::make_shared<gui::TextArea>(gds::Rect{1, toolbarHeight + 1, formWidth - 2, formHeight - toolbarHeight - statusbarHeight}, "", true);
 	
+	std::function<void()> save;
+
 	auto filenew = [&]{
-		filename.clear();
-		textarea->SetText("");
-		statusbar->SetText(displayFilename());
+		if(modified){
+			auto btn = gui::MessageBox("File not saved! Save file?", "New", LoadIcon("icons/question_32.png"), {"Save", "New", "Cancel"}).Show(form.get());
+			if(btn == 0) save();
+			if(btn == 2){
+				filename.clear();
+				textarea->SetText("");
+				statusbar->SetText(displayFilename());
+			}
+		}
 	};
 	
 	auto openFile = [&](const std::string &path){
@@ -74,7 +82,7 @@ int main(int argc, char **argv){
 	
 	std::function<void()> saveas;
 	
-	auto save = [&]{
+	save = [&]{
 		if(!filename.empty()){
 			std::ofstream ofs(filename);
 			std::string content = textarea->GetValue();
