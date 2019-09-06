@@ -3,4 +3,4 @@ name = Launcher
 category = Tools
 vendor = BT/OS
 icon = launcher
-mode = GUI
+mode = System

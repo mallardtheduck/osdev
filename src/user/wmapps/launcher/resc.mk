@@ -2,8 +2,8 @@ ICON_FOLDER := ../../../icons
 
 ICONS_APPS := launcher
 ICONS_FS := 
-ICONS_ACTIONS_32 := 
-ICONS_ACTIONS_16 := 
+ICONS_ACTIONS_32 := question
+ICONS_ACTIONS_16 := run exit
 
 EXTRA_RESC_FILES := app.inf icons.inf
 

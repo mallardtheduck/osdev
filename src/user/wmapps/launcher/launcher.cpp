@@ -2,26 +2,35 @@
 
 #include <gui/form.hpp>
 #include <gui/label.hpp>
-#include <gui/button.hpp>
 #include <gui/imagebutton.hpp>
+#include <gui/messagebox.hpp>
+#include <gui/inputbox.hpp>
 
 #include <gui/shell/utils.hpp>
 
 #include <wm/eventloop.hpp>
 #include <wm/libwm.h>
 
+#include <gds/libgds.h>
+
 #include <btos/table.hpp>
 #include <btos/process.hpp>
+#include <btos/resc.h>
 
 #include <algorithm>
 #include <cctype>
 #include <fstream>
 #include <functional>
 
+#include <unistd.h>
+
+#include "launcher_resc.tar.h"
+
 namespace gui = btos_api::gui;
 namespace wm = btos_api::wm;
 namespace gds = btos_api::gds;
 namespace sh = gui::shell;
+namespace resc = btos_api::resc;
 
 static const uint32_t baseFormWidth = 71;
 static const uint32_t formHeight = 64;
@@ -88,15 +97,40 @@ bool AppListChanged(const AppMap &curApps, const AppMap &apps){
 	});
 }
 
+static std::map<std::string, std::shared_ptr<gds::Surface>> loadedIcons;
+
+std::shared_ptr<gds::Surface> LoadIcon(const char *path){
+	auto i = loadedIcons.find(path);
+	if(i == loadedIcons.end()){
+		auto r = resc::Resc_LocalOpen(launcher_resc_data, launcher_resc_size);
+		auto fd = resc::Resc_OpenResc(r, path);
+		auto ret = GDS_LoadPNG(fd);
+		close(fd);
+		resc::Resc_Close(r);
+		auto s = std::make_shared<gds::Surface>(std::move(gds::Surface::Wrap(ret, true)));
+		i = loadedIcons.insert(loadedIcons.end(), std::make_pair(path, s));
+	}
+	return i->second;
+}
+
 int main(){
 	uint32_t formWidth = baseFormWidth;
+	wm::EventLoop loop;
 	
 	std::vector<std::shared_ptr<gui::IControl>> appButtons;
 	
 	auto form = std::make_shared<gui::Form>(gds::Rect{0, 0, formWidth, formHeight}, wm_WindowOptions::NoTitle | wm_WindowOptions::Unlisted, "Launcher");
 	auto timeLbl = std::make_shared<gui::Label>(gds::Rect{5, 5, 61, 21}, "12:34 PM");
-	auto exitBtn = std::make_shared<gui::Button>(gds::Rect{5, 31, 28, 28}, "X");
-	auto runBtn = std::make_shared<gui::Button>(gds::Rect{38, 31, 28, 28}, "R");
+	auto exitBtn = std::make_shared<gui::ImageButton>(gds::Rect{5, 31, 28, 28}, LoadIcon("icons/exit_16.png"));
+	auto runBtn = std::make_shared<gui::ImageButton>(gds::Rect{38, 31, 28, 28}, LoadIcon("icons/run_16.png"));
+
+	exitBtn->OnAction([&]{
+		auto btn = gui::MessageBox("Exit and end session?", "Exit", LoadIcon("icons/question_32.png"), {"Yes", "No"}).Show(form.get());
+		if(btn == 0){
+			form->Close();
+			loop.RemoveWindow(form->GetID());
+		}
+	});
 	
 	form->AddControls({timeLbl, exitBtn, runBtn});
 	
@@ -160,7 +194,6 @@ int main(){
 		updateBtns();
 	});
 	
-	wm::EventLoop loop;
 	loop.AddWindow(form);
 	form->Show();
 	loop.RunLoop();
