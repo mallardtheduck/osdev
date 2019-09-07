@@ -41,8 +41,7 @@ EventResponse Button::HandleEvent(const wm_Event &e){
 		}
 		return {false};
 	}
-	/*if(down != oldDown)*/ IControl::Paint(rect);
-	(void)oldDown;
+	if(down != oldDown) IControl::Paint(rect);
 	return {true};
 }
 
@@ -79,7 +78,7 @@ void Button::Paint(gds::Surface &s){
 	if(down) std::swap(topLeft, bottomRight);
 	
 	drawing::BevelBox(s, {rect.x + 1, rect.y + 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, topLeft, bottomRight);
-	
+
 	if(focus){
 		auto focusCol = colours::GetButtonFocus().Fix(s);
 			

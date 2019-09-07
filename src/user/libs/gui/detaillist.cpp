@@ -36,6 +36,7 @@ DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bo
 		
 		hscroll->OnChange([this] (uint32_t v) {
 			hOffset = v - (multiSelect ? checkSize : 0);
+			updateBkg = true;
 		});
 	}
 	if(multiSelect) hOffset = -checkSize;
@@ -274,8 +275,10 @@ void DetailList::Paint(gds::Surface &s){
 	uint32_t inW = rect.w - 1;
 	uint32_t inH = rect.h - 1;
 
-	if(!bkSurf){
-		bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+	if(!bkSurf || updateBkg){
+		if(!bkSurf) bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+		else bkSurf->Clear();
+
 		auto bkgCol = colours::GetBackground().Fix(*bkSurf);
 		auto txtCol = colours::GetDetailListText().Fix(*bkSurf);
 		auto border = colours::GetBorder().Fix(*bkSurf);
@@ -291,7 +294,7 @@ void DetailList::Paint(gds::Surface &s){
 		for(size_t i = 0; i < cols.size(); ++i){
 			auto &cItem = colItems[i];
 			
-			auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + i, i + iconsize + 1);
+			auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + i, i + iconsize + 3);
 			auto textX = ((int32_t)colOffset + 2) - (int32_t)hOffset;
 			auto textY = std::max<int32_t>(((fontHeight + cItem.measures.h) / 2), 0);
 			if((int32_t)colOffset + (int32_t)colWidths[i] < 0) continue;
@@ -301,14 +304,15 @@ void DetailList::Paint(gds::Surface &s){
 			bkSurf->Text({textX, textY}, text, fonts::GetDetailListFont(), fonts::GetDetailListTextSize(), txtCol);
 		}
 
-		bkSurf->Line({rect.x + 1, rect.y + (int32_t)fontHeight}, {rect.x + (int32_t)inW, rect.y + (int32_t)fontHeight}, border);
-		drawing::Border(*bkSurf, {rect.x, rect.y, inW, inH}, border);
-		drawing::BevelBox(*bkSurf, {rect.x + 1, rect.y + 1, inW - 2, inH - 2}, topLeft, bottomRight);
+		bkSurf->Line({1, (int32_t)fontHeight}, {(int32_t)inW, (int32_t)fontHeight}, border);
+		drawing::Border(*bkSurf, {0, 0, inW, inH}, border);
+		drawing::BevelBox(*bkSurf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
 
 		bkSurf->CommitQueue();
-		bkSurf->Compress();
+		if(!scrollHoriz) bkSurf->Compress();
+		updateBkg = false;
 	}
-	s.Blit(*bkSurf, rect, {0, 0, rect.w, rect.h});
+	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
 		
 	auto visibleItems = (inH / fontHeight);
 	uint32_t itemWidth = std::accumulate(colWidths.begin(), colWidths.end(), colWidths.size()) + iconsize;
@@ -359,19 +363,21 @@ void DetailList::Paint(gds::Surface &s){
 				dci.surf->Text({textX, textY}, text, fonts::GetDetailListFont(), fonts::GetDetailListTextSize(), itemTxtCol);
 			}
 			dci.surf->CommitQueue();
-			dci.surf->Compress();
+			if(i != selectedItem) dci.surf->Compress();
 		}
 		int32_t itemX = rect.x - hOffset;
 		int32_t itemY = rect.y + ((i - vOffset) + 1) * fontHeight;
-		s.Blit(*dci.surf, {0, 0, itemWidth, fontHeight}, {itemX, itemY, itemWidth, fontHeight});
-		
-		auto bkgCol = colours::GetBackground().Fix(s);
-		auto txtCol = colours::GetDetailListText().Fix(s);
+		uint32_t drawWidth = std::min(itemWidth, rect.w) - (multiSelect ? checkSize : 0) - 3;
+		uint32_t drawHeight = std::min<uint32_t>(fontHeight, (rect.h - itemY) - 4);
+		s.Blit(*dci.surf, {0, 0, drawWidth, drawHeight}, {itemX + 2, itemY + 1, drawWidth, drawHeight});
 
 		if(multiSelect){
+			auto bkgCol = colours::GetBackground().Fix(s);
+			auto txtCol = colours::GetDetailListText().Fix(s);
+			
 			int32_t chkY = rect.y + fontHeight * ((i + 1) - vOffset);
-			s.Box({rect.x + 1, rect.y + chkY, checkSize, checkSize}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-			drawing::BevelBox(s, {rect.x + 2, rect.y + chkY + 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
+			s.Box({rect.x + 1, chkY, checkSize, checkSize}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+			drawing::BevelBox(s, {rect.x + 2, chkY + 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
 			if(multiSelection[i]){
 				s.Line({rect.x + 5, chkY + 5}, {checkSize - 3, (chkY + checkSize) - 4}, txtCol, 2);
 				s.Line({rect.x + 5,  (chkY + checkSize) - 4}, {checkSize - 3, chkY + 5}, txtCol, 2);

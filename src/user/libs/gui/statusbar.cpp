@@ -38,6 +38,7 @@ void StatusBar::Paint(gds::Surface &s){
 		surf->Text({textX, textY}, text, fonts::GetStatusBarFont(), fonts::GetStatusBarTextSize(), txtCol);
 		
 		surf->CommitQueue();
+		surf->Compress();
 	}
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
 }

@@ -35,6 +35,7 @@ void Label::Paint(gds::Surface &s){
 		
 		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		surf->Text({textX, textY}, text, fonts::GetLabelFont(), fonts::GetLabelTextSize(), txtCol);
+		surf->Compress();
 	}
 	
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);

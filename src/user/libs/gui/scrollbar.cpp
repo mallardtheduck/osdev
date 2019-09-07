@@ -196,6 +196,7 @@ void Scrollbar::Paint(gds::Surface &s){
 			bkSurf->Polygon(btmArrow, true, arw, arw, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 			
 			bkSurf->CommitQueue();
+			bkSurf->Compress();
 		}
 		
 		surf->BeginQueue();

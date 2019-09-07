@@ -42,7 +42,6 @@ private:
 	size_t visibleLines = 0;
 	size_t visibleCols = 0;
 	
-	bool update = false;
 	bool hasFocus = false;
 	bool enabled = true;
 	bool fireCurrentSelection = true;

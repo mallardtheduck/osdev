@@ -81,6 +81,7 @@ void RadioButton::Paint(gds::Surface &s){
 			bkSurf->Ellipse({cx, cy, checkSize, checkSize}, border, border);
 			
 			bkSurf->CommitQueue();
+			bkSurf->Compress();
 		}
 		
 		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));

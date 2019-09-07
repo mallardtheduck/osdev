@@ -96,6 +96,7 @@ void Slider::Paint(gds::Surface &s){
 			bkSurf->Line({mid, tickTop}, {mid, (int32_t)rect.h}, tick);
 			
 			bkSurf->CommitQueue();
+			bkSurf->Compress();
 		}
 		
 		auto border = colours::GetBorder().Fix(*surf);

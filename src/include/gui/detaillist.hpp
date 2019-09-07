@@ -52,6 +52,7 @@ private:
 	bool enabled = true;
 	bool fireCurrentSelection = true;
 	bool measured = false;
+	bool updateBkg = false;
 	
 	std::unique_ptr<Scrollbar> hscroll;
 	std::unique_ptr<Scrollbar> vscroll;
