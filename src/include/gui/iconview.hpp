@@ -12,7 +12,7 @@ class IconView : public IValueControl<size_t>{
 private:
 	gds::Rect outerRect;
 	gds::Rect rect; 
-	std::unique_ptr<gds::Surface> surf;
+	std::unique_ptr<gds::Surface> bkSurf;
 	
 	std::vector<std::string> items;
 	std::vector<bool> multiSelection;

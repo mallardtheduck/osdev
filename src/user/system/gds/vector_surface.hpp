@@ -23,6 +23,7 @@ private:
 	uint64_t cacheId = 0;
 	
 	bool update = false;
+	bool isCompressed = false;
 	
 	struct Rectangle{
 		int32_t x = 0, y = 0;
@@ -71,6 +72,7 @@ public:
 	virtual std::unique_ptr<gds_TextMeasurements> MeasureText(const gds_TextParameters &p, std::string text); 
 	
 	virtual void Resize(size_t w, size_t h, bool indexed);
+	virtual void Compress();
 
 	virtual ~VectorSurface();
 };

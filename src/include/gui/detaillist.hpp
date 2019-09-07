@@ -10,8 +10,8 @@ namespace gui{
 class DetailList : public IValueControl<size_t>{
 private:
 	gds::Rect outerRect;
-	gds::Rect rect; 
-	std::unique_ptr<gds::Surface> surf;
+	gds::Rect rect;
+	std::unique_ptr<gds::Surface> bkSurf;
 	
 	std::vector<std::vector<std::string>> items;
 	std::vector<std::shared_ptr<gds::Surface>> icons;
@@ -48,7 +48,6 @@ private:
 	size_t visibleItems = 0;
 	size_t iconsize = 0;
 	
-	bool update = false;
 	bool hasFocus = false;
 	bool enabled = true;
 	bool fireCurrentSelection = true;

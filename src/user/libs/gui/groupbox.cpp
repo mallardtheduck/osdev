@@ -31,6 +31,7 @@ void GroupBox::Paint(gds::Surface &s){
 	auto bdrCol = colours::GetBorder().Fix(s);
 	drawing::Border(s, {rect.x, rect.y + (int32_t)(textMeasures.h / 2), rect.w - 1, rect.h - 1 - (textMeasures.h / 2)}, bdrCol);
 	s.Blit(*surf, {0, 0, textMeasures.w, textH}, {rect.x + textX, rect.y, textMeasures.w, textH});
+	surf->Compress();
 }
 
 gds::Rect GroupBox::GetPaintRect(){

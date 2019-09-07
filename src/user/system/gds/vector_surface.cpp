@@ -105,6 +105,7 @@ size_t VectorSurface::AddOperation(gds_DrawingOp op){
 	while(ops.find(id) != ops.end()) id = ++opCounter;
 	ops.insert({id, {ZUnspecified, op, NULL}});
 	update = true;
+	isCompressed = false;
 	OrderOps();
 	return id;
 }
@@ -113,6 +114,7 @@ void VectorSurface::RemoveOperation(size_t id){
 	if(ops.find(id) != ops.end()){
 		ops.erase(id);
 		update = true;
+		isCompressed = false;
 	}
 }
 
@@ -157,6 +159,7 @@ void VectorSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> p){
 	if(ops.find(p->op_id) != ops.end()){
 		ops[p->op_id].params = p;
 		update = true;
+		isCompressed = false;
 	}
 }
 
@@ -229,7 +232,7 @@ std::shared_ptr<BitmapSurface> VectorSurface::RenderToCache(){
 		}
 		cacheRect = renderRect;
 		update = false;
-		//cache->Compress();
+		if(isCompressed) cache->Compress();
 	}
 	return cache;
 }
@@ -261,7 +264,6 @@ void VectorSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32
 	auto src = RenderToCache();
 	renderRect = {0, 0, 0, 0};
 	if(src) src->RenderTo(dst, srcX, srcY, dstX, dstY, w, h, flags);
-	src->Compress();
 }
 
 void VectorSurface::OrderOps(){
@@ -308,11 +310,20 @@ void VectorSurface::ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum m
 	}
 	OrderOps();
 	update = true;
+	isCompressed = false;
 }
 
 void VectorSurface::Clear(){
 	ops.clear();
 	update = true;
+	isCompressed = false;
+}
+
+void VectorSurface::Compress(){
+	renderRect = {0, 0, 0, 0};
+	auto cache = RenderToCache();
+	cache->Compress();
+	isCompressed = true;
 }
 
 std::unique_ptr<gds_TextMeasurements> VectorSurface::MeasureText(const gds_TextParameters &p, std::string text){

@@ -62,6 +62,7 @@ void Checkbox::Paint(gds::Surface &s){
 			drawing::BevelBox(*bkSurf, {2, chkY + 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
 			
 			bkSurf->CommitQueue();
+			bkSurf->Compress();
 		}
 		
 		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));

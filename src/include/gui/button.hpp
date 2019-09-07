@@ -11,13 +11,10 @@ private:
 	bool down = false;
 	bool focus = false;
 	bool enabled = true;
-	bool paintDown;
-	bool paintFocus;
 
 	gds::Rect rect;
 	std::string label;
 	
-	std::unique_ptr<gds::Surface> surf;
 	std::unique_ptr<gds::Surface> bkSurf;
 	gds::TextMeasurements labelMeasures;
 	

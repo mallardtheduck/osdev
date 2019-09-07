@@ -74,6 +74,7 @@ void IconView::UpdateDisplayState(bool changePos){
 }
 
 void IconView::FitTextToWidth(DrawItem &item, size_t width){
+	auto surf = gds::Surface(gds_SurfaceType::Vector, 1, 1, 100, gds_ColourType::True);
 	if(item.fittedWidth == width) return;
 
 	const std::string suffix = "\xE2\x80\xA6";
@@ -83,7 +84,7 @@ void IconView::FitTextToWidth(DrawItem &item, size_t width){
 	item.fittedText1.clear();
 	for(; curChar < item.text.length(); ++curChar){
 		auto newLine = item.fittedText1 + item.text[curChar];
-		auto newMeasures = surf->MeasureText(newLine, fonts::GetIconViewFont(), fonts::GetIconViewTextSize());
+		auto newMeasures = surf.MeasureText(newLine, fonts::GetIconViewFont(), fonts::GetIconViewTextSize());
 		if(newMeasures.w > width) break;
 		item.fittedText1 = newLine;
 		item.measures1 = newMeasures;
@@ -91,16 +92,16 @@ void IconView::FitTextToWidth(DrawItem &item, size_t width){
 	
 	if(curChar >= item.text.length()){
 		item.fittedText2.clear();
-		item.measures2 = surf->MeasureText(item.fittedText2, fonts::GetIconViewFont(), fonts::GetIconViewTextSize());
+		item.measures2 = surf.MeasureText(item.fittedText2, fonts::GetIconViewFont(), fonts::GetIconViewTextSize());
 		return;
 	}
 	
 	item.fittedText2 = item.text.substr(curChar);
-	item.measures2 = surf->MeasureText(item.fittedText2, fonts::GetIconViewFont(), fonts::GetIconViewTextSize());
+	item.measures2 = surf.MeasureText(item.fittedText2, fonts::GetIconViewFont(), fonts::GetIconViewTextSize());
 	if(item.measures2.w < width) return;
 	
 	std::string text = item.fittedText2;
-	while((item.measures2 = surf->MeasureText(text + suffix, fonts::GetIconViewFont(), fonts::GetIconViewTextSize())).w > width){
+	while((item.measures2 = surf.MeasureText(text + suffix, fonts::GetIconViewFont(), fonts::GetIconViewTextSize())).w > width){
 		text.pop_back();
 	}
 
@@ -235,29 +236,33 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 }
 
 void IconView::Paint(gds::Surface &s){
-	if(update || !surf){
-		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		UpdateDisplayState(false);
-		
+	if(update || !bkSurf){
 		uint32_t inW = rect.w - 1;
 		uint32_t inH = rect.h - 1;
+
+		if(!bkSurf){
+			bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+			auto bkgCol = colours::GetBackground().Fix(*bkSurf);
+			auto border = colours::GetBorder().Fix(*bkSurf);
+			
+			auto topLeft = colours::GetIconViewLowLight().Fix(*bkSurf);
+			auto bottomRight = colours::GetIconViewHiLight().Fix(*bkSurf);
+
+			bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+			drawing::Border(*bkSurf, {0, 0, inW, inH}, border);
+			drawing::BevelBox(*bkSurf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
+		}
+		s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
+		UpdateDisplayState(false);
 		
-		auto bkgCol = colours::GetBackground().Fix(*surf);
-		auto border = colours::GetBorder().Fix(*surf);
-		
-		auto topLeft = colours::GetIconViewLowLight().Fix(*surf);
-		auto bottomRight = colours::GetIconViewHiLight().Fix(*surf);
-		surf->Clear();
-		surf->BeginQueue();
-		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		for(size_t line = vOffset; line < vOffset + visibleLines + 1; ++line){
-			int32_t yPos = (line - vOffset) * itemHeight;
+			int32_t yPos = rect.y + (line - vOffset) * itemHeight;
 			for(size_t col = 0; col < visibleCols; ++col){
 				size_t idx = (line * visibleCols) + col;
 				if(idx >= drawItems.size()) break;
 				auto &item = drawItems[idx];
 				
-				int32_t xPos = (col * itemWidth) + 1;
+				int32_t xPos = rect.x + (col * itemWidth) + 1;
 				
 				if(!item.surf || item.selected != (idx == selectedItem) || (item.selected && item.focussed != hasFocus)){
 					item.surf.reset(new gds::Surface(gds_SurfaceType::Vector, itemWidth, itemHeight, 100, gds_ColourType::True));
@@ -302,6 +307,7 @@ void IconView::Paint(gds::Surface &s){
 						
 						int32_t chkY = (itemHeight - checkSize);
 						if(chkY < (int32_t)rect.h){
+							auto bkgCol = colours::GetBackground().Fix(*item.surf);
 							item.surf->Box({0, chkY + 1, checkSize - 2, checkSize - 2}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 							drawing::BevelBox(*item.surf, {0, chkY + 1, checkSize - 2, checkSize - 2}, itemTopLeft, itemBottomRight);
 							if(multiSelection[idx]){
@@ -312,16 +318,11 @@ void IconView::Paint(gds::Surface &s){
 					}
 					item.surf->CommitQueue();
 				}
-				surf->Blit(*item.surf, {0, 0, itemWidth, itemHeight}, {xPos, yPos, itemWidth, itemHeight});
+				s.Blit(*item.surf, {0, 0, itemWidth, itemHeight}, {xPos, yPos, itemWidth, itemHeight});
 			}
 		}
-		drawing::Border(*surf, {0, 0, inW, inH}, border);
-		drawing::BevelBox(*surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
-		
-		surf->CommitQueue();
 		update = false;
 	}
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
 
 	if(vscroll) vscroll->Paint(s);
 	
@@ -388,7 +389,6 @@ void IconView::SetPosition(const gds::Rect &r){
 	rect = {r.x, r.y, r.w - scrollbarSize, r.h};
 	if(vscroll) vscroll->SetPosition({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h});
 	update = true;
-	surf.reset();
 }
 
 size_t IconView::GetValue(){

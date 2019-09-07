@@ -107,6 +107,8 @@ public:
 	void ClearModal();
 	
 	std::shared_ptr<Client> GetOwner();
+
+	void Compress();
 };
 
 #endif // WINDOW_HPP

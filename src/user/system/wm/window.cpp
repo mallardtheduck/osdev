@@ -608,3 +608,7 @@ void Window::ClearModal(){
 std::shared_ptr<Client> Window::GetOwner(){
 	return owner.lock();
 }
+
+void Window::Compress(){
+	content->Compress();
+}
