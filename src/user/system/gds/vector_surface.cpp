@@ -202,7 +202,7 @@ std::shared_ptr<BitmapSurface> VectorSurface::RenderToCache(){
 		}
 		size_t opsRendered = 0;
 		for(const auto &op : sops){
-			if(renderRect.w && !OpInRect(op, renderRect)) continue;
+			if(renderRect != Rectangle(0, 0, width, height) && !OpInRect(op, renderRect)) continue;
 			++opsRendered;
 			gds_DrawingOp dop = op.op;
 			shared_ptr<gds_OpParameters> p;
@@ -259,10 +259,10 @@ void VectorSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32
 		if(srcY + h > (uint32_t)height) h = height - srcY;
 		renderRect = {srcX, srcY, w, h};
 	}else{
-		renderRect = {0, 0, 0, 0};
+		renderRect = {0, 0, width, height};
 	}
 	auto src = RenderToCache();
-	renderRect = {0, 0, 0, 0};
+	renderRect = {0, 0, width, height};
 	if(src) src->RenderTo(dst, srcX, srcY, dstX, dstY, w, h, flags);
 }
 
@@ -320,7 +320,7 @@ void VectorSurface::Clear(){
 }
 
 void VectorSurface::Compress(){
-	renderRect = {0, 0, 0, 0};
+	renderRect = {0, 0, width, height};
 	auto cache = RenderToCache();
 	cache->Compress();
 	isCompressed = true;
