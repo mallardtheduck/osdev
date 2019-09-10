@@ -11,8 +11,8 @@
 namespace btos_api{
 namespace gui{
 	
-const auto scrollbarSize = 17;
-const auto checkSize = 17;
+const uint32_t scrollbarSize = 17;
+const uint32_t checkSize = 17;
 
 DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bool sH, size_t is, bool mS) : 
 	outerRect(r), 
@@ -22,7 +22,7 @@ DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bo
 	fontHeight = (info.maxH * fonts::GetDetailListTextSize()) / info.scale;
 	if(multiSelect && fontHeight < checkSize) fontHeight = checkSize;
 	
-	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
+	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - (int32_t)scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
 
 	vscroll->OnChange([this] (uint32_t v) {
 		vOffset = v;
@@ -32,7 +32,7 @@ DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bo
 	
 	if(scrollHoriz){
 		CalculateColumnWidths();
-		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
+		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - (int32_t)scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
 		
 		hscroll->OnChange([this] (uint32_t v) {
 			hOffset = v - (multiSelect ? checkSize : 0);
@@ -156,6 +156,36 @@ std::string DetailList::FitTextToCol(DrawItem &item, size_t colIndex){
 	return item.fittedText;
 }
 
+gds::Surface *DetailList::CheckBox(bool checked){
+	if(checked && checkedSurf) return checkedSurf.get();
+	if(!checked && checkSurf) return checkSurf.get();
+	
+	std::unique_ptr<gds::Surface> surf(new gds::Surface(gds_SurfaceType::Vector, checkSize, checkSize, 100, gds_ColourType::True));
+	
+	surf->BeginQueue();
+	auto topLeft = colours::GetDetailListLowLight().Fix(*surf);
+	auto bottomRight = colours::GetDetailListHiLight().Fix(*surf);
+	auto bkgCol = colours::GetBackground().Fix(*surf);
+	auto txtCol = colours::GetDetailListText().Fix(*surf);
+	
+	surf->Box({0, 0, checkSize, checkSize}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	drawing::BevelBox(*surf, {1, 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
+	if(checked){
+		surf->Line({4, 4}, {checkSize - 4, checkSize - 4}, txtCol, 2);
+		surf->Line({4,  checkSize - 4}, {checkSize - 4, 4}, txtCol, 2);
+	}
+	surf->CommitQueue();
+	surf->Compress();
+	
+	if(checked){
+		checkedSurf = std::move(surf);
+		return checkedSurf.get();
+	}else{
+		checkSurf = std::move(surf);
+		return checkSurf.get();
+	}
+}
+
 EventResponse DetailList::HandleEvent(const wm_Event &e){
 	bool handled = false;
 	bool update = true;
@@ -267,9 +297,6 @@ EventResponse DetailList::HandleEvent(const wm_Event &e){
 }
 
 void DetailList::Paint(gds::Surface &s){
-	auto topLeft = colours::GetDetailListLowLight().Fix(s);
-	auto bottomRight = colours::GetDetailListHiLight().Fix(s);
-
 	UpdateDisplayState(false);
 	
 	uint32_t inW = rect.w - 1;
@@ -368,20 +395,14 @@ void DetailList::Paint(gds::Surface &s){
 		int32_t itemX = rect.x - hOffset;
 		int32_t itemY = rect.y + ((i - vOffset) + 1) * fontHeight;
 		uint32_t drawWidth = std::min(itemWidth, rect.w) - (multiSelect ? checkSize : 0) - 3;
-		uint32_t drawHeight = std::min<uint32_t>(fontHeight, (rect.h - itemY) - 4);
+		uint32_t drawHeight = std::min<uint32_t>(fontHeight, ((rect.y + rect.h) - itemY) - 3);
 		s.Blit(*dci.surf, {0, 0, drawWidth, drawHeight}, {itemX + 2, itemY + 1, drawWidth, drawHeight});
 
 		if(multiSelect){
-			auto bkgCol = colours::GetBackground().Fix(s);
-			auto txtCol = colours::GetDetailListText().Fix(s);
-			
-			int32_t chkY = rect.y + fontHeight * ((i + 1) - vOffset);
-			s.Box({rect.x + 1, chkY, checkSize, checkSize}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-			drawing::BevelBox(s, {rect.x + 2, chkY + 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
-			if(multiSelection[i]){
-				s.Line({rect.x + 5, chkY + 5}, {checkSize - 3, (chkY + checkSize) - 4}, txtCol, 2);
-				s.Line({rect.x + 5,  (chkY + checkSize) - 4}, {checkSize - 3, chkY + 5}, txtCol, 2);
-			}
+			int32_t chkY = rect.y + 1 + fontHeight * ((i + 1) - vOffset);
+			auto checkHeight = std::min(checkSize, drawHeight);
+			auto check = CheckBox(multiSelection[i]);
+			s.Blit(*check, {0, 0, checkSize, checkHeight}, {rect.x + 2, chkY, checkSize, checkHeight});
 		}
 	}
 
@@ -448,8 +469,8 @@ bool DetailList::IsEnabled(){
 void DetailList::SetPosition(const gds::Rect &r){
 	outerRect = r;
 	rect = scrollHoriz ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h};
-	if(vscroll) vscroll->SetPosition({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)});
-	if(hscroll) hscroll->SetPosition({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize});
+	if(vscroll) vscroll->SetPosition({outerRect.x + (int32_t)outerRect.w - (int32_t)scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)});
+	if(hscroll) hscroll->SetPosition({outerRect.x, outerRect.y + (int32_t)outerRect.h - (int32_t)scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize});
 	bkSurf.reset();
 }
 

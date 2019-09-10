@@ -34,6 +34,7 @@ void ProgressBar::Paint(gds::Surface &s){
 		drawing::BevelBox(*surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
 		
 		surf->CommitQueue();
+		surf->Compress();
 	}
 	
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);

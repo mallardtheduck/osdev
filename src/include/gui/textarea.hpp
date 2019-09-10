@@ -11,7 +11,7 @@ class TextArea : public IValueControl<std::string>{
 private:
 	gds::Rect outerRect;
 	gds::Rect rect; 
-	std::unique_ptr<gds::Surface> surf;
+	std::unique_ptr<gds::Surface> bkSurf;
 	
 	std::function<bool(uint32_t)> onKeyPress;
 	
@@ -48,7 +48,6 @@ private:
 	uint32_t perferredPosPxls = 0;
 	uint32_t selPosPxls = 0;
 	
-	bool update = false;
 	bool hasFocus = false;
 	bool enabled = true;
 	
@@ -57,10 +56,12 @@ private:
 	std::unique_ptr<Scrollbar> hscroll;
 	std::unique_ptr<Scrollbar> vscroll;
 	
-	void UpdateDisplayState();
+	gds::Rect UpdateDisplayState();
 	size_t MapPosToLine(uint32_t pxlPos, const Line &line);
 	void MergeLines(size_t a, size_t b);
 	void SplitLine(size_t i, size_t pos);
+	
+	void HandleScroll(bool horiz, uint32_t v);
 public:
 	TextArea(const gds::Rect &r, const std::string &t, bool scrollbars = false);
 	

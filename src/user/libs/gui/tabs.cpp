@@ -115,6 +115,7 @@ void Tabs::Paint(gds::Surface &s){
 		}
 		
 		surf->CommitQueue();
+		surf->Compress();
 	}
 	
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);

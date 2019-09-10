@@ -50,6 +50,7 @@ void ResizeHandle::Paint(gds::Surface &s){
 			bkSurf->Box({0, 0, rect.w, rect.h}, border, border);
 			
 			bkSurf->CommitQueue();
+			bkSurf->Compress();
 			
 		}else surf->Clear();
 		
@@ -68,6 +69,7 @@ void ResizeHandle::Paint(gds::Surface &s){
 		surf->Line({15, inH - 3}, {inW - 3, 15}, fgCol);
 		
 		surf->CommitQueue();
+		surf->Compress();
 		
 		paintDown = down;
 	}

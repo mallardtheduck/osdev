@@ -141,7 +141,7 @@ void DrawWindows(const vector<Rect> &v, uint64_t above){
 		if(!aboveYet && w->id == above) aboveYet = true;
 		if(!above || aboveYet) for(const auto &r: v) if(Overlaps(r, w->GetBoundingRect())){
 			w->Draw(w==awin, r);
-			if(W != awin) w->Compress();
+			if(w != awin) w->Compress();
 		}
 	}
 	if(auto gwin = grabbedWindow.lock()) for(const auto &r: v) gwin->DrawGrabbed(r);

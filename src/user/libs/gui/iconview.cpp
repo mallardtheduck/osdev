@@ -320,7 +320,7 @@ void IconView::Paint(gds::Surface &s){
 			}
 			int32_t itemLTrim = (col == 0 ? 1 : 0);
 			int32_t itemTTrim = (line == vOffset ? 2 : 0);
-			uint32_t drawHeight = std::min<uint32_t>(itemHeight, (rect.h - yPos) - 4);
+			uint32_t drawHeight = std::min<uint32_t>(itemHeight, ((rect.y + rect.h) - yPos) - 2);
 			s.Blit(*item.surf, {itemLTrim, itemTTrim, itemWidth, drawHeight}, {xPos + itemLTrim, yPos + itemTTrim, itemWidth, drawHeight});
 		}
 	}
