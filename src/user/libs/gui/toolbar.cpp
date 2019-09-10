@@ -52,42 +52,45 @@ EventResponse Toolbar::HandleEvent(const wm_Event &evt){
 
 void Toolbar::Paint(gds::Surface &s){
 	auto containerRect = GetContainerRect();
+	if(!containerRect.w) return;
+	
 	if(rect.w != containerRect.w){
-		surf.reset();
+		bkSurf.reset();
 		rect = {0, 0, containerRect.w, height};
 	}
-	if((!surf || update) && containerRect.w){
-		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		else surf->Clear();
+	if(!bkSurf){
+		bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
 		
-		surf->BeginQueue();
+		bkSurf->BeginQueue();
 		
 		uint32_t inW = rect.w - 1;
 		uint32_t inH = rect.h - 1;
 		
-		auto bkgCol = colours::GetToolbarBackground().Fix(*surf);
-		auto bdrCol = colours::GetBorder().Fix(*surf);
+		auto bkgCol = colours::GetToolbarBackground().Fix(*bkSurf);
+		auto bdrCol = colours::GetBorder().Fix(*bkSurf);
 		
-		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		surf->Line({0, (int32_t)inH}, {(int32_t)inW, (int32_t)inH}, bdrCol);
+		bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		bkSurf->Line({0, (int32_t)inH}, {(int32_t)inW, (int32_t)inH}, bdrCol);
 		
-		int32_t margin = size / 6;
-		
-		int32_t cXpos = margin;
-		
-		for(auto &ctrl : controls){
-			ctrl->size = size;
-			ctrl->margin = margin;
-			auto width = ctrl->GetWidth();
-			
-			ctrl->rect = {cXpos, margin, width, size};
-			ctrl->Paint(*surf);
-			cXpos += width + (margin / 2);
-		}
-		
-		surf->CommitQueue();
+		bkSurf->CommitQueue();
+		bkSurf->Compress();
 	}
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, {0, 0, rect.w, rect.h});
+	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
+	
+	int32_t margin = size / 6;
+		
+	int32_t cXpos = rect.x + margin;
+	
+	for(auto &ctrl : controls){
+		ctrl->size = size;
+		ctrl->margin = margin;
+		auto width = ctrl->GetWidth();
+		
+		ctrl->rect = {cXpos, rect.y + margin, width, size};
+		ctrl->Paint(s);
+		cXpos += width + (margin / 2);
+	}
+	
 	if(!enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
 		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
@@ -133,7 +136,6 @@ std::vector<std::shared_ptr<IToolbarControlBase>> &Toolbar::Controls(){
 
 void Toolbar::Refresh(){
 	for(auto &ctrl : controls) BindToParent(*ctrl);
-	update = true;
 	IControl::Paint(rect);
 }
 
@@ -167,60 +169,49 @@ EventResponse ToolbarButton::HandleEvent(const wm_Event &e){
 }
 
 void ToolbarButton::Paint(gds::Surface &s){
-	if(!surf || down != paintDown){
-		int32_t inW = rect.w - 1;
-		int32_t inH = rect.h - 1;
-		
-		if(!surf || !bkSurf){
-			surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));               
-			bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-			
-			bkSurf->BeginQueue();
-			
-			auto bkgCol = colours::GetToolbarBackground().Fix(*bkSurf);
-			auto buttonColour = colours::GetToolbarButtonColour().Fix(*bkSurf);
-			auto border = colours::GetBorder().Fix(*bkSurf);
-			
-			bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-			bkSurf->Box({1, 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, buttonColour, buttonColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-			drawing::Border(*bkSurf, {0, 0, (uint32_t)inW, (uint32_t)inH}, border);
-			
-			if(icon){
-				int32_t imgX = margin;
-				int32_t imgY = std::max<int32_t>(((rect.h - info.h) / 2), 0);
-				bkSurf->Blit(*icon, {0, 0, info.w, info.h}, {imgX, imgY, info.w, info.h});
-			}
-			
-			if(!label.empty()){
-				int32_t labelX = margin;
-				int32_t labelY = std::max<int32_t>(((rect.h + labelMeasures.h) / 2), 0);
-			
-				if(icon) labelX += info.w + margin;
-				
-				auto textColour = colours::GetToolbarButtonText().Fix(*bkSurf);
-				bkSurf->Text({labelX, labelY}, label, fonts::GetToolbarButtonFont(), fonts::GetToolbarButtonTextSize(), textColour);
-			}
-			
-			bkSurf->CommitQueue();
-			
-		}
-		surf->Clear();
-		surf->BeginQueue();
-		
-		surf->Blit(*bkSurf, {0, 0, rect.w, rect.h}, {0, 0, rect.w, rect.h});
-		
-		auto topLeft = colours::GetToolbarButtonHiLight().Fix(*surf);
-		auto bottomRight = colours::GetToolbarButtonLowLight().Fix(*surf);
-		if(down) std::swap(topLeft, bottomRight);
-		
-		drawing::BevelBox(*surf, {1, 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, topLeft, bottomRight);
-		
-		surf->CommitQueue();
-		
-		paintDown = down;
-	}
+	int32_t inW = rect.w - 1;
+	int32_t inH = rect.h - 1;
 	
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	if(!bkSurf){
+		bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+		
+		bkSurf->BeginQueue();
+		
+		auto bkgCol = colours::GetToolbarBackground().Fix(*bkSurf);
+		auto buttonColour = colours::GetToolbarButtonColour().Fix(*bkSurf);
+		auto border = colours::GetBorder().Fix(*bkSurf);
+		
+		bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		bkSurf->Box({1, 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, buttonColour, buttonColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		drawing::Border(*bkSurf, {0, 0, (uint32_t)inW, (uint32_t)inH}, border);
+		
+		if(icon){
+			int32_t imgX = margin;
+			int32_t imgY = std::max<int32_t>(((rect.h - info.h) / 2), 0);
+			bkSurf->Blit(*icon, {0, 0, info.w, info.h}, {imgX, imgY, info.w, info.h});
+		}
+		
+		if(!label.empty()){
+			int32_t labelX = margin;
+			int32_t labelY = std::max<int32_t>(((rect.h + labelMeasures.h) / 2), 0);
+		
+			if(icon) labelX += info.w + margin;
+			
+			auto textColour = colours::GetToolbarButtonText().Fix(*bkSurf);
+			bkSurf->Text({labelX, labelY}, label, fonts::GetToolbarButtonFont(), fonts::GetToolbarButtonTextSize(), textColour);
+		}
+		
+		bkSurf->CommitQueue();
+		bkSurf->Compress();
+	}
+	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
+	
+	auto topLeft = colours::GetToolbarButtonHiLight().Fix(s);
+	auto bottomRight = colours::GetToolbarButtonLowLight().Fix(s);
+	if(down) std::swap(topLeft, bottomRight);
+	
+	drawing::BevelBox(s, {rect.x + 1, rect.y + 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, topLeft, bottomRight);
+		
 	if(!enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
 		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);

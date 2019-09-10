@@ -18,6 +18,7 @@ void Image::Paint(gds::Surface &s){
 		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		auto info = img->Info();
 		surf->Blit(*img, {0, 0, info.w, info.h}, {0, 0, info.w, info.h});
+		surf->Compress();
 	}
 	
 	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);

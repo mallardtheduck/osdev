@@ -10,8 +10,10 @@ namespace gui{
 class DetailList : public IValueControl<size_t>{
 private:
 	gds::Rect outerRect;
-	gds::Rect rect; 
-	std::unique_ptr<gds::Surface> surf;
+	gds::Rect rect;
+	std::unique_ptr<gds::Surface> bkSurf;
+	std::unique_ptr<gds::Surface> checkSurf;
+	std::unique_ptr<gds::Surface> checkedSurf;
 	
 	std::vector<std::vector<std::string>> items;
 	std::vector<std::shared_ptr<gds::Surface>> icons;
@@ -48,11 +50,11 @@ private:
 	size_t visibleItems = 0;
 	size_t iconsize = 0;
 	
-	bool update = false;
 	bool hasFocus = false;
 	bool enabled = true;
 	bool fireCurrentSelection = true;
 	bool measured = false;
+	bool updateBkg = false;
 	
 	std::unique_ptr<Scrollbar> hscroll;
 	std::unique_ptr<Scrollbar> vscroll;
@@ -66,6 +68,8 @@ private:
 	void UpdateDisplayState(bool changePos = true);
 	void CalculateColumnWidths();
 	std::string FitTextToCol(DrawItem &item, size_t colIndex);
+	
+	gds::Surface *CheckBox(bool checked);
 public:
 	DetailList(const gds::Rect &r, const std::vector<std::string> &cols, bool scrollHoriz = false, size_t iconsize = 0, bool multiSelect = false);
 	

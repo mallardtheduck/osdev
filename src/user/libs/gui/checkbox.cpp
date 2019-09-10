@@ -14,7 +14,6 @@ EventResponse Checkbox::HandleEvent(const wm_Event &e){
 	if(e.type == wm_EventType::PointerButtonUp){
 		value = !value;
 		RaiseChangeEvent();
-		update = true;
 	}
 	if(e.type == wm_EventType::Keyboard){
 		uint16_t code = KB_code(e.Key.code);
@@ -23,7 +22,6 @@ EventResponse Checkbox::HandleEvent(const wm_Event &e){
 			if(c == ' ' || c == '\n'){
 				value = !value;
 				RaiseChangeEvent();
-				update = true;
 				IControl::Paint(rect);
 				return {true};
 			}
@@ -35,69 +33,58 @@ EventResponse Checkbox::HandleEvent(const wm_Event &e){
 }
 
 void Checkbox::Paint(gds::Surface &s){
-	if(!surf || update){
-		uint32_t inW = rect.w - 1;
-		uint32_t inH = rect.h - 1;
-		int32_t chkY = std::max<int32_t>((rect.h - checkSize) / 2, 0);
+	uint32_t inW = rect.w - 1;
+	uint32_t inH = rect.h - 1;
+	int32_t chkY = std::max<int32_t>((rect.h - checkSize) / 2, 0);
+	
+	if(!bkSurf){
+		bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+		bkSurf->BeginQueue();
 		
-		if(!bkSurf){
-			bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-			bkSurf->BeginQueue();
+		textMeasures = bkSurf->MeasureText(text, fonts::GetCheckboxFont(), fonts::GetCheckboxTextSize());
+		auto bkgCol = colours::GetBackground().Fix(*bkSurf);
+		auto txtCol = colours::GetCheckboxText().Fix(*bkSurf);
 			
-			textMeasures = bkSurf->MeasureText(text, fonts::GetCheckboxFont(), fonts::GetCheckboxTextSize());
-			auto bkgCol = colours::GetBackground().Fix(*bkSurf);
-			auto txtCol = colours::GetCheckboxText().Fix(*bkSurf);
-				
-			int32_t textX = checkSize + 3;
-			int32_t textY = std::max<int32_t>(((rect.h + textMeasures.h) / 2), 0);
-			
-			bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-			bkSurf->Text({textX, textY}, text, fonts::GetCheckboxFont(), fonts::GetCheckboxTextSize(), txtCol);
-			
-			auto border = colours::GetBorder().Fix(*bkSurf);
-			drawing::Border(*bkSurf, {1, chkY, checkSize, checkSize}, border);
-			
-			auto topLeft = colours::GetCheckboxLowLight().Fix(*bkSurf);
-			auto bottomRight = colours::GetCheckboxHiLight().Fix(*bkSurf);
-			drawing::BevelBox(*bkSurf, {2, chkY + 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
-			
-			bkSurf->CommitQueue();
-		}
+		int32_t textX = checkSize + 3;
+		int32_t textY = std::max<int32_t>(((rect.h + textMeasures.h) / 2), 0);
 		
-		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		else surf->Clear();
+		bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		bkSurf->Text({textX, textY}, text, fonts::GetCheckboxFont(), fonts::GetCheckboxTextSize(), txtCol);
 		
-		surf->BeginQueue();
+		auto border = colours::GetBorder().Fix(*bkSurf);
+		drawing::Border(*bkSurf, {1, chkY, checkSize, checkSize}, border);
 		
-		surf->Blit(*bkSurf, {0, 0, rect.w, rect.h}, {0, 0, rect.w, rect.h});
+		auto topLeft = colours::GetCheckboxLowLight().Fix(*bkSurf);
+		auto bottomRight = colours::GetCheckboxHiLight().Fix(*bkSurf);
+		drawing::BevelBox(*bkSurf, {2, chkY + 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
 		
-		if(value){
-			auto chkCol = colours::GetCheckboxCheck().Fix(*surf);
-			auto chkTop = chkY;
-			auto chkBottom = chkY + checkSize;
-			
-			surf->Line({5, chkTop + 5}, {checkSize - 3, chkBottom - 4}, chkCol, 2);
-			surf->Line({5, chkBottom - 4}, {checkSize - 3, chkTop + 5}, chkCol, 2);
-		}
-		
-		if(focus){
-			auto focusCol = colours::GetCheckboxFocus().Fix(*surf);
-			
-			int32_t boxTop = std::max(std::min<int32_t>(chkY - 1, (rect.h - textMeasures.h) / 2), 0);
-			int32_t boxLeft = 0;
-			uint32_t boxWidth = textMeasures.w + checkSize + 3;
-			if(boxLeft + boxWidth > inW) boxWidth = inW - boxLeft;
-			uint32_t boxHeight = std::max<int32_t>(textMeasures.h, checkSize + 3);
-			if(boxTop + boxHeight > inH) boxHeight = inH - boxTop;
-			surf->Box({boxLeft, boxTop, boxWidth, boxHeight}, focusCol, focusCol);
-		}
-		
-		surf->CommitQueue();
-		
-		update = false;
+		bkSurf->CommitQueue();
+		bkSurf->Compress();
 	}
 	
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
+	
+	if(value){
+		auto chkCol = colours::GetCheckboxCheck().Fix(s);
+		auto chkTop = chkY;
+		auto chkBottom = chkY + checkSize;
+		
+		s.Line({rect.x + 5, rect.y + chkTop + 5}, {rect.x + checkSize - 3, rect.y +  chkBottom - 4}, chkCol, 2);
+		s.Line({rect.x + 5, rect.y +  chkBottom - 4}, {rect.x + checkSize - 3, rect.y + chkTop + 5}, chkCol, 2);
+	}
+	
+	if(focus){
+		auto focusCol = colours::GetCheckboxFocus().Fix(s);
+		
+		int32_t boxTop = std::max(std::min<int32_t>(chkY - 1, (rect.h - textMeasures.h) / 2), 0);
+		int32_t boxLeft = 0;
+		uint32_t boxWidth = textMeasures.w + checkSize + 3;
+		if(boxLeft + boxWidth > inW) boxWidth = inW - boxLeft;
+		uint32_t boxHeight = std::max<int32_t>(textMeasures.h, checkSize + 3);
+		if(boxTop + boxHeight > inH) boxHeight = inH - boxTop;
+		s.Box({rect.x + boxLeft, rect.y + boxTop, boxWidth, boxHeight}, focusCol, focusCol);
+	}
+		
 	if(!enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
 		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
@@ -129,12 +116,10 @@ uint32_t Checkbox::GetSubscribed(){
 }
 
 void Checkbox::Focus(){
-	if(!focus) update = true;
 	focus = true;
 	IControl::Paint(rect);
 }
 void Checkbox::Blur(){
-	if(focus) update = true;
 	focus = false;
 	IControl::Paint(rect);
 }
@@ -173,15 +158,12 @@ bool Checkbox::IsEnabled(){
 
 void Checkbox::SetPosition(const gds::Rect &r){
 	rect = r;
-	update = true;
-	surf.reset();
 	bkSurf.reset();
 }
 
 void Checkbox::SetValue(bool v){
 	if(value != v){
 		value = v;
-		update = true;
 		IControl::Paint(rect);
 	}
 }

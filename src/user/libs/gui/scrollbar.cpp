@@ -30,6 +30,7 @@ Scrollbar::Scrollbar(const gds::Rect &r, uint32_t l, uint32_t s, uint32_t p, uin
 
 EventResponse Scrollbar::HandleEvent(const wm_Event &e){
 	bool handled = false;
+	bool update = false;
 	uint32_t oldValue = value;
 	
 	if(e.type & wm_PointerEvents){
@@ -155,84 +156,77 @@ EventResponse Scrollbar::HandleEvent(const wm_Event &e){
 }
 
 void Scrollbar::Paint(gds::Surface &s){
-	if(!surf || update){
-		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		else surf->Clear();
+	uint32_t w = rect.w;
+	uint32_t h = rect.h;
+	swapXY(horiz, w, h);
+	int32_t x = rect.x;
+	int32_t y = rect.y;
+	swapXY(horiz, x, y);
+	uint32_t inW = rect.w - 1;
+	uint32_t inH = rect.h - 1;
+	swapXY(horiz, inW, inH);
+	int32_t sqSize = w;
+	
+	if(!bkSurf){
+		bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+		bkSurf->BeginQueue();
 		
-		uint32_t w = rect.w;
-		uint32_t h = rect.h;
-		swapXY(horiz, w, h);
-		uint32_t inW = rect.w - 1;
-		uint32_t inH = rect.h - 1;
-		swapXY(horiz, inW, inH);
-		int32_t sqSize = w;
+		auto bkgCol = colours::GetBackground().Fix(*bkSurf);
+		bkSurf->Box(swapXY(horiz, {0, 0, w, h}), bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		
-		if(!bkSurf){
-			bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-			bkSurf->BeginQueue();
-			
-			auto bkgCol = colours::GetBackground().Fix(*bkSurf);
-			bkSurf->Box(swapXY(horiz, {0, 0, w, h}), bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-			
-			auto scrCol = colours::GetScrollbarBackground().Fix(*bkSurf);
-			bkSurf->Box(swapXY(horiz, {0, sqSize - 1, w, inH - (sqSize * 2) + 3}), scrCol, scrCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-			
-			auto btn = colours::GetScrollbarButton().Fix(*bkSurf);
-			bkSurf->Box(swapXY(horiz, {0, 1, (uint32_t)sqSize, (uint32_t)sqSize - 2}), btn, btn, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-			bkSurf->Box(swapXY(horiz, {0, (int32_t)h - sqSize + 2, (uint32_t)sqSize, (uint32_t)sqSize - 3}), btn, btn, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-			
-			auto bdr = colours::GetBorder().Fix(*bkSurf);
-			drawing::Border(*bkSurf, swapXY(horiz, {0, 0, (uint32_t)sqSize - 1, (uint32_t)sqSize - 1}), bdr);
-			drawing::Border(*bkSurf, swapXY(horiz, {0, (int32_t)h - sqSize, (uint32_t)sqSize - 1, (uint32_t)sqSize - 1}), bdr);
-			
-			auto arw = colours::GetScrollbarArrow().Fix(*bkSurf);
-			int32_t half = sqSize / 2;
-			int32_t third = sqSize / 3;
-			std::vector<gds::Point> topArrow = {swapXY(horiz, {half, third}), swapXY(horiz, {2 * third + 1, 2 * third}), swapXY(horiz, {third, 2 * third})};
-			bkSurf->Polygon(topArrow, true, arw, arw, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		auto scrCol = colours::GetScrollbarBackground().Fix(*bkSurf);
+		bkSurf->Box(swapXY(horiz, {0, sqSize - 1, w, inH - (sqSize * 2) + 3}), scrCol, scrCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		
+		auto btn = colours::GetScrollbarButton().Fix(*bkSurf);
+		bkSurf->Box(swapXY(horiz, {0, 1, (uint32_t)sqSize, (uint32_t)sqSize - 2}), btn, btn, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		bkSurf->Box(swapXY(horiz, {0, (int32_t)h - sqSize + 2, (uint32_t)sqSize, (uint32_t)sqSize - 3}), btn, btn, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		
+		auto bdr = colours::GetBorder().Fix(*bkSurf);
+		drawing::Border(*bkSurf, swapXY(horiz, {0, 0, (uint32_t)sqSize - 1, (uint32_t)sqSize - 1}), bdr);
+		drawing::Border(*bkSurf, swapXY(horiz, {0, (int32_t)h - sqSize, (uint32_t)sqSize - 1, (uint32_t)sqSize - 1}), bdr);
+		
+		auto arw = colours::GetScrollbarArrow().Fix(*bkSurf);
+		int32_t half = sqSize / 2;
+		int32_t third = sqSize / 3;
+		std::vector<gds::Point> topArrow = {swapXY(horiz, {half, third}), swapXY(horiz, {2 * third + 1, 2 * third}), swapXY(horiz, {third, 2 * third})};
+		bkSurf->Polygon(topArrow, true, arw, arw, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 
-			int32_t btmTop = h - sqSize;
-			std::vector<gds::Point> btmArrow = {swapXY(horiz, {half, btmTop + (2 * third) + 1}), swapXY(horiz, {2 * third + 1, btmTop + third + 1}), swapXY(horiz, {third, btmTop + third + 1})};
-			bkSurf->Polygon(btmArrow, true, arw, arw, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-			
-			bkSurf->CommitQueue();
-		}
+		int32_t btmTop = h - sqSize;
+		std::vector<gds::Point> btmArrow = {swapXY(horiz, {half, btmTop + (2 * third) + 1}), swapXY(horiz, {2 * third + 1, btmTop + third + 1}), swapXY(horiz, {third, btmTop + third + 1})};
+		bkSurf->Polygon(btmArrow, true, arw, arw, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		
-		surf->BeginQueue();
-		surf->Blit(*bkSurf, {0, 0, rect.w, rect.h}, {0, 0, rect.w, rect.h});
-		
-		auto topLeft = colours::GetScrollbarHiLight().Fix(*surf);
-		auto bottomRight = colours::GetScrollbarLowLight().Fix(*surf);
-		
-		auto topBtnTL = topLeft;
-		auto topBtnBR = bottomRight;
-		if(topBtnDown) std::swap(topBtnTL, topBtnBR);
-		drawing::BevelBox(*surf, swapXY(horiz, {1, 1, (uint32_t)sqSize - 3, (uint32_t)sqSize - 3}), topBtnTL, topBtnBR);
-		
-		auto btmBtnTL = topLeft;
-		auto btmBtnBR = bottomRight;
-		if(btmBtnDown) std::swap(btmBtnTL, btmBtnBR);
-		drawing::BevelBox(*surf, swapXY(horiz, {1, (int32_t)(h - sqSize) + 1, (uint32_t)sqSize - 3, (uint32_t)sqSize - 3}), btmBtnTL, btmBtnBR);
-		
-		double scale = (double)(h - (3 * sqSize)) / (double)lines;
-		auto v = std::min(value, lines);
-		int32_t pos = ((double)v * scale) + sqSize;
-		
-		auto bdr = colours::GetBorder().Fix(*surf);
-		auto btn = colours::GetScrollbarButton().Fix(*surf);
-		surf->Box(swapXY(horiz, {1, pos + 1, (uint32_t)sqSize - 2, (uint32_t)sqSize - 2}), btn, btn, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		drawing::Border(*surf, swapXY(horiz, {0, pos, (uint32_t)sqSize - 1, (uint32_t)sqSize - 1}), bdr);
-		drawing::BevelBox(*surf, swapXY(horiz, {1, pos + 1, (uint32_t)sqSize - 3, (uint32_t)sqSize - 3}), topLeft, bottomRight);
-		if(focus){
-			auto fcs = colours::GetScrollbarFocus().Fix(*surf);
-			surf->Box(swapXY(horiz, {3, pos + 3, (uint32_t)sqSize - 6, (uint32_t)sqSize - 6}), fcs, fcs);
-		}
-		
-		surf->CommitQueue();
-		update = false;
+		bkSurf->CommitQueue();
+		bkSurf->Compress();
 	}
 	
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
+	
+	auto topLeft = colours::GetScrollbarHiLight().Fix(s);
+	auto bottomRight = colours::GetScrollbarLowLight().Fix(s);
+	
+	auto topBtnTL = topLeft;
+	auto topBtnBR = bottomRight;
+	if(topBtnDown) std::swap(topBtnTL, topBtnBR);
+	drawing::BevelBox(s, swapXY(horiz, {x + 1,  y + 1, (uint32_t)sqSize - 3, (uint32_t)sqSize - 3}), topBtnTL, topBtnBR);
+	
+	auto btmBtnTL = topLeft;
+	auto btmBtnBR = bottomRight;
+	if(btmBtnDown) std::swap(btmBtnTL, btmBtnBR);
+	drawing::BevelBox(s, swapXY(horiz, {x+ 1, y + (int32_t)(h - sqSize) + 1, (uint32_t)sqSize - 3, (uint32_t)sqSize - 3}), btmBtnTL, btmBtnBR);
+	
+	double scale = (double)(h - (3 * sqSize)) / (double)lines;
+	auto v = std::min(value, lines);
+	int32_t pos = ((double)v * scale) + sqSize;
+	
+	auto bdr = colours::GetBorder().Fix(s);
+	auto btn = colours::GetScrollbarButton().Fix(s);
+	s.Box(swapXY(horiz, {x + 1, y + pos + 1, (uint32_t)sqSize - 2, (uint32_t)sqSize - 2}), btn, btn, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	drawing::Border(s, swapXY(horiz, {x, y + pos, (uint32_t)sqSize - 1, (uint32_t)sqSize - 1}), bdr);
+	drawing::BevelBox(s, swapXY(horiz, {x + 1, y + pos + 1, (uint32_t)sqSize - 3, (uint32_t)sqSize - 3}), topLeft, bottomRight);
+	if(focus){
+		auto fcs = colours::GetScrollbarFocus().Fix(s);
+		s.Box(swapXY(horiz, {x + 3, y + pos + 3, (uint32_t)sqSize - 6, (uint32_t)sqSize - 6}), fcs, fcs);
+	}
 	
 	if(!enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
@@ -254,43 +248,43 @@ uint32_t Scrollbar::GetSubscribed(){
 
 void Scrollbar::Focus(){
 	if(!focus){
-		update = true;
 		focus = true;
+		IControl::Paint(rect);
 	}
 }
 
 void Scrollbar::Blur(){
 	if(focus){
-		update = true;
 		focus = false;
+		IControl::Paint(rect);
 	}
 }
 	
 void Scrollbar::SetLines(uint32_t l){
 	if(l != lines){
-		update = true;
 		lines = l;
+		IControl::Paint(rect);
 	}
 }
 
 void Scrollbar::SetStep(uint32_t s){
 	if(s != step){
-		update = true;
 		step = s;
+		IControl::Paint(rect);
 	}
 }
 
 void Scrollbar::SetPage(uint32_t p){
 	if(p != page){
-		update = true;
 		page = p;
+		IControl::Paint(rect);
 	}
 }
 
 void Scrollbar::SetValue(uint32_t v){
 	if(v != value){
-		update = true;
 		value = v;
+		IControl::Paint(rect);
 	}
 }
 
@@ -305,12 +299,14 @@ uint32_t Scrollbar::GetFlags(){
 void Scrollbar::Enable(){
 	if(!enabled){
 		enabled = true;
+		IControl::Paint(rect);
 	}
 }
 
 void Scrollbar::Disable(){
 	if(enabled){
 		enabled = false;
+		IControl::Paint(rect);
 	}
 }
 
@@ -319,14 +315,13 @@ bool Scrollbar::IsEnabled(){
 }
 
 void Scrollbar::Refresh(){
-	if(update) IControl::Paint(rect);
+	IControl::Paint(rect);
 }
 
 void Scrollbar::SetPosition(const gds::Rect &r){
 	rect = r;
-	update = true;
-	surf.reset();
 	bkSurf.reset();
+	IControl::Paint(rect);
 }
 
 }

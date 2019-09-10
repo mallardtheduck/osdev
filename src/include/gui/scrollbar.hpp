@@ -14,13 +14,11 @@ private:
 	bool horiz;
 	bool focus = false;
 	bool enabled = true;
-	bool update = false;
-	
+
 	bool topBtnDown = false;
 	bool btmBtnDown = false;
 	bool grabbed = false;
 	
-	std::shared_ptr<gds::Surface> surf;
 	std::shared_ptr<gds::Surface> bkSurf;
 public:
 	Scrollbar(const gds::Rect &r, uint32_t lines, uint32_t step, uint32_t page, uint32_t value, bool horiz = false);

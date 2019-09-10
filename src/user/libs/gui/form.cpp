@@ -46,6 +46,7 @@ bool Form::HandleEvent(const wm_Event &e){
 		return true;
 	}else if(e.type == wm_EventType::Hide){
 		Hide();
+		surf->Compress();
 	}else if(e.type == wm_EventType::Expand){
 		if(!expanded){
 			auto mode = GetScreenMode();

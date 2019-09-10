@@ -157,8 +157,25 @@ void sch_threadtest(){
 void sch_idlethread(void*){
 	sch_set_priority(0xFFFFFFFF);
 	while(true){
-		asm volatile("hlt");
-		sch_yield();
+		disable_interrupts();
+		bool yield_immediately = false;
+		for(size_t i=0; i<threads->size(); ++i){
+			sch_thread *ithread = (*threads)[i];
+			
+			if(ithread->status == sch_thread_status::Blocked && ithread->blockcheck!=NULL){
+				if(ithread->blockcheck(ithread->bc_param)) ithread->status = sch_thread_status::Runnable;
+			}
+			
+			if(ithread->status == sch_thread_status::Runnable){
+				yield_immediately = true;
+			}
+		}
+		enable_interrupts();
+		if(yield_immediately) sch_yield();
+		else{
+			asm volatile("hlt");
+			sch_yield();
+		}
 	}
 }
 
@@ -258,7 +275,7 @@ void sch_end_thread(){
 	reaper_thread->status = sch_thread_status::Runnable;
 	release_lock(sch_lock);
 	sch_yield();
-	panic("SCH: Attempt to run to_be_deleted thread!");
+	panic("SCH: Attempt to run Ending thread!");
 }
 
 inline void out_regs(const irq_regs &ctx){

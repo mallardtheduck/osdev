@@ -41,11 +41,9 @@ EventResponse Slider::HandleEvent(const wm_Event &e){
 		uint16_t code = KB_code(e.Key.code);
 		if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && value > min){
 			value -= snapTo;
-			update = true;
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && value < max){
 			value += snapTo;
-			update = true;
 			handled = true;
 		}
 	}
@@ -56,72 +54,64 @@ EventResponse Slider::HandleEvent(const wm_Event &e){
 			value += min;
 		}
 		RaiseChangeEvent();
-		update = true;
 		IControl::Paint(rect);
 	}
 	return {handled};
 }
 
 void Slider::Paint(gds::Surface &s){
-	if(!surf || update){
-		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		else surf->Clear();
+	int32_t inW = rect.w - 1;
+	auto lineTop = 5;
+	auto lineBottom = 9;
+	auto lineLeft = 4;
+	auto lineRight = inW - 4;
+	
+	if(!bkSurf){
+		bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+	
+		auto bkgCol = colours::GetBackground().Fix(*bkSurf);
+		auto bkBorder = colours::GetBorder().Fix(*bkSurf);
 		
-		int32_t inW = rect.w - 1;
-		auto lineTop = 5;
-		auto lineBottom = 9;
-		auto lineLeft = 4;
-		auto lineRight = inW - 4;
+		bkSurf->BeginQueue();
+		bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		drawing::Border(*bkSurf, {lineLeft, lineTop, (uint32_t)(lineRight - lineLeft), (uint32_t)(lineBottom - lineTop)}, bkBorder);
 		
-		if(!bkSurf){
-			bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+		auto topLeft = colours::GetSliderLineLowLight().Fix(*bkSurf);
+		auto bottomRight = colours::GetSliderLineHiLight().Fix(*bkSurf);
+		drawing::BevelBox(*bkSurf, {lineLeft + 1, lineTop + 1, (uint32_t)(lineRight - lineLeft - 2), (uint32_t)(lineBottom - lineTop - 2)}, topLeft, bottomRight);
 		
-			auto bkgCol = colours::GetBackground().Fix(*bkSurf);
-			auto bkBorder = colours::GetBorder().Fix(*bkSurf);
-			
-			bkSurf->BeginQueue();
-			bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-			drawing::Border(*bkSurf, {lineLeft, lineTop, (uint32_t)(lineRight - lineLeft), (uint32_t)(lineBottom - lineTop)}, bkBorder);
-			
-			auto topLeft = colours::GetSliderLineLowLight().Fix(*bkSurf);
-			auto bottomRight = colours::GetSliderLineHiLight().Fix(*bkSurf);
-			drawing::BevelBox(*bkSurf, {lineLeft + 1, lineTop + 1, (uint32_t)(lineRight - lineLeft - 2), (uint32_t)(lineBottom - lineTop - 2)}, topLeft, bottomRight);
-			
-			int tickTop = lineBottom + 2;
-			
-			auto tick = colours::GetSliderTick().Fix(*bkSurf);
-			bkSurf->Line({lineLeft, tickTop}, {lineLeft, (int32_t)rect.h}, tick);
-			bkSurf->Line({lineRight, tickTop}, {lineRight, (int32_t)rect.h}, tick);
-			auto mid = ((lineRight - lineLeft) / 2) + lineLeft;
-			bkSurf->Line({mid, tickTop}, {mid, (int32_t)rect.h}, tick);
-			
-			bkSurf->CommitQueue();
-		}
+		int tickTop = lineBottom + 2;
 		
-		auto border = colours::GetBorder().Fix(*surf);
-		auto slider = colours::GetSliderColour().Fix(*surf);
+		auto tick = colours::GetSliderTick().Fix(*bkSurf);
+		bkSurf->Line({lineLeft, tickTop}, {lineLeft, (int32_t)rect.h}, tick);
+		bkSurf->Line({lineRight, tickTop}, {lineRight, (int32_t)rect.h}, tick);
+		auto mid = ((lineRight - lineLeft) / 2) + lineLeft;
+		bkSurf->Line({mid, tickTop}, {mid, (int32_t)rect.h}, tick);
 		
-		surf->BeginQueue();
-		
-		surf->Blit(*bkSurf, {0, 0, rect.w, rect.h}, {0, 0, rect.w, rect.h});
-		
-		if(focus){
-			auto focusCol = colours::GetSliderFocus().Fix(*surf);
-			surf->Box({0, 0, rect.w, rect.h}, focusCol, focusCol);
-		}
-		
-		int32_t pos = lineLeft + ((double)(value - min) * (((double)(lineRight - lineLeft) / (double)(max - min))));
-		std::vector<gds::Point> points = {{pos - 4, 1}, {pos - 4, 7}, {pos, 13}, {pos + 4, 7}, {pos + 4, 1}};
-		
-		surf->Polygon(points, false, border, slider, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		surf->Line({pos - 3, 0}, {pos + 3, 0}, border);
-
-		surf->CommitQueue();
-		
-		update = false;
+		bkSurf->CommitQueue();
+		bkSurf->Compress();
 	}
 	
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	auto border = colours::GetBorder().Fix(s);
+	auto slider = colours::GetSliderColour().Fix(s);
+	
+	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
+	
+	if(focus){
+		auto focusCol = colours::GetSliderFocus().Fix(s);
+		s.Box(rect, focusCol, focusCol);
+	}
+	
+	int32_t pos = lineLeft + ((double)(value - min) * (((double)(lineRight - lineLeft) / (double)(max - min))));
+	std::vector<gds::Point> points = {{pos - 4, 1}, {pos - 4, 7}, {pos, 13}, {pos + 4, 7}, {pos + 4, 1}};
+	
+	for(auto &p : points){
+		p.x += rect.x;
+		p.y += rect.y;
+	}
+	
+	s.Polygon(points, false, border, slider, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	s.Line({rect.x + pos - 3, rect.y}, {rect.x + pos + 3, rect.y}, border);
 	
 	if(!enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
@@ -141,15 +131,17 @@ uint32_t Slider::GetSubscribed(){
 }
 
 void Slider::Focus(){
-	if(!focus) update = true;
-	focus = true;
-	IControl::Paint(rect);
+	if(!focus){
+		focus = true;
+		IControl::Paint(rect);
+	}
 }
 
 void Slider::Blur(){
-	if(focus) update = true;
-	focus = false;
-	IControl::Paint(rect);
+	if(focus){
+		focus = false;
+		IControl::Paint(rect);
+	}
 }
 
 int32_t Slider::GetValue(){
@@ -180,8 +172,6 @@ bool Slider::IsEnabled(){
 
 void Slider::SetPosition(const gds::Rect &r){
 	rect = r;
-	update = true;
-	surf.reset();
 	bkSurf.reset();
 }
 

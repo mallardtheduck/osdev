@@ -120,6 +120,7 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 				w->Draw(w == awin, r);
 			}
 			else if(!rect) w->Draw(w == awin);
+			if(w != awin) w->Compress();
 		}
 	}
 	if(!ignoreGrab){
@@ -140,6 +141,7 @@ void DrawWindows(const vector<Rect> &v, uint64_t above){
 		if(!aboveYet && w->id == above) aboveYet = true;
 		if(!above || aboveYet) for(const auto &r: v) if(Overlaps(r, w->GetBoundingRect())){
 			w->Draw(w==awin, r);
+			if(w != awin) w->Compress();
 		}
 	}
 	if(auto gwin = grabbedWindow.lock()) for(const auto &r: v) gwin->DrawGrabbed(r);

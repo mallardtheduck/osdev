@@ -10,12 +10,10 @@ class Checkbox : public IValueControl<bool> {
 private:
 	gds::Rect rect;
 	std::string text;
-	std::unique_ptr<gds::Surface> surf;
 	std::unique_ptr<gds::Surface> bkSurf;
 	
 	bool value;
 	gds::TextMeasurements textMeasures;
-	bool update = false;
 	bool focus = false;
 	bool enabled = true;
 public:

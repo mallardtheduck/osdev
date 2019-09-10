@@ -22,17 +22,11 @@ TextArea::TextArea(const gds::Rect &r, const std::string &t, bool scrollbars) :
 		vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - scrollbarSize}, 1, 1, 1, 1, false));
 		
 		hscroll->OnChange([this] (uint32_t v) {
-			if(v != textOffset){
-				update = true;
-				textOffset = v;
-			}
+			HandleScroll(true, v);
 		});
 		
 		vscroll->OnChange([this] (uint32_t v) {
-			if(v != lineOffset){
-				update = true;
-				lineOffset = v;
-			}
+			HandleScroll(false, v);
 		});
 	}
 	SetText(t);
@@ -40,17 +34,22 @@ TextArea::TextArea(const gds::Rect &r, const std::string &t, bool scrollbars) :
 	fontHeight = (info.maxH * fonts::GetTextAreaTextSize()) / info.scale;
 }
 	
-void TextArea::UpdateDisplayState(){
-	if(!surf){
-		surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		update = true;
+gds::Rect TextArea::UpdateDisplayState(){
+	bool update = false;
+	std::unique_ptr<gds::Surface> measureSurf;
+	gds::Surface *surf;
+	if(!bkSurf){
+		measureSurf.reset(new gds::Surface(gds_SurfaceType::Vector, 1, 1, 100, gds_ColourType::True));
+		surf = measureSurf.get();
+	}else{
+		surf = bkSurf.get();
 	}
 	
 	if(!lines.size()){
 		cursorPos = 0;
 		textOffset = 0;
 		lines.emplace_back(Line{""});
-		return;
+		return {0, 0, 0, 0};
 	}
 
 	uint32_t maxLength = 0;
@@ -80,6 +79,7 @@ void TextArea::UpdateDisplayState(){
 		while(cursorLine >= lineOffset + visibleLines && lineOffset < lines.size() - 1) ++lineOffset;
 		if(oldLineOffset != lineOffset) update = true;
 	}
+	if(cursorLine != lastCursorLine) update = true;
 	lastCursorLine = cursorLine;
 	
 	if(vscroll){
@@ -165,8 +165,8 @@ void TextArea::UpdateDisplayState(){
 		}
 	}
 	textOffsetPxls = round(textOffsetPxlsD);
-	cursorPosPxls = round(cursorPosPxlsD);
-	if(cursorPosPxlsD == 1.5 && cursorPos == 1 && text.length() == 1) cursorPosPxls = textMeasures.w;
+	cursorPosPxls = round(cursorPosPxlsD) + 2;
+	if(cursorPosPxlsD == 1.5 && cursorPos == 1 && text.length() == 1) cursorPosPxls = textMeasures.w + 2;
 	
 	if(haveSelection){
 		double selPosPxlsD = 0.0;
@@ -179,7 +179,13 @@ void TextArea::UpdateDisplayState(){
 		}
 		selPosPxls = round(selPosPxlsD);
 	}
-	//std::cout << "UpdateDisplayState: cursorPos: " << cursorPos << " cursorPosPxls: " << cursorPosPxls << " textOffset: " << textOffset << " textOffsetPxls: " << textOffsetPxls << " text.length(): " << text.length() << std::endl;//
+	if(update) return rect;
+	else if(cursorLine >= lineOffset && cursorLine < lineOffset + visibleLines){
+		int32_t updY = ((cursorLine - lineOffset) * fontHeight) + 2;
+		return {rect.x, rect.y + updY, fontHeight, rect.w};
+	}else{
+		return {0, 0, 0, 0};
+	}
 }
 
 size_t TextArea::MapPosToLine(uint32_t pxlPos, const TextArea::Line &line){
@@ -216,6 +222,7 @@ void TextArea::SplitLine(size_t i, size_t pos){
 }
 	
 EventResponse TextArea::HandleEvent(const wm_Event &e){
+	bool update = false;
 	bool updateCursor = false;
 	bool handled = false;
 	
@@ -465,7 +472,8 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 	
 	
 	if(update || updateCursor){
-		IControl::Paint(outerRect);
+		auto updateRect = UpdateDisplayState();
+		if(updateRect) IControl::Paint(outerRect);
 	}
 	return {handled};
 }
@@ -473,108 +481,109 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 void TextArea::Paint(gds::Surface &s){
 	UpdateDisplayState();
 	
-	if(update){
-		uint32_t inW = rect.w - 1;
-		uint32_t inH = rect.h - 1;
+	uint32_t inW = rect.w - 1;
+	uint32_t inH = rect.h - 1;
+	
+	if(!bkSurf){
+		bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+		bkSurf->BeginQueue();
 		
-		auto bkgCol = colours::GetBackground().Fix(*surf);
-		auto border = colours::GetBorder().Fix(*surf);
+		auto bkgCol = colours::GetBackground().Fix(*bkSurf);
+		auto border = colours::GetBorder().Fix(*bkSurf);
 		
-		surf->Clear();
+		bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		drawing::Border(*bkSurf, {0, 0, inW, inH}, border);
+		auto topLeft = colours::GetTextAreaLowLight().Fix(*bkSurf);
+		auto bottomRight = colours::GetTextAreaHiLight().Fix(*bkSurf);
+		drawing::BevelBox(*bkSurf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
 		
-		size_t selStartLine, selEndLine;
-		size_t selStartPos, selEndPos;
-		if(haveSelection){
-			if(selLine < cursorLine){
-				selStartLine = selLine;
-				selEndLine = cursorLine;
-				selStartPos = selPos;
-				selEndPos = cursorPos;
-			}else if(selLine > cursorLine){
-				selStartLine = cursorLine;
-				selEndLine = selLine;
-				selStartPos = cursorPos;
-				selEndPos = selPos;
-			}else{
-				selStartLine = selEndLine = selLine;
-				selStartPos = std::min(selPos, cursorPos);
-				selEndPos = std::max(selPos, cursorPos);
-			}
-		}
-		
-		surf->BeginQueue();
-		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		for(size_t i = lineOffset; i < lines.size(); ++i){
-			if((i - lineOffset) * fontHeight > rect.h) break;
-			
-			auto &m = lines[i].textMeasures;
-			bool redraw = false;
-			if(!m.w || lines[i].text != lines[i].measuredText){
-				m = surf->MeasureText(lines[i].text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize());
-				lines[i].measuredText = lines[i].text;
-				redraw = true;
-			}
-			uint32_t lsW = m.w + 2;
-			uint32_t lsH = fontHeight * 1.5;
-			
-			bool inSelectionArea = haveSelection && (i >= selStartLine && i <= selEndLine);
-			
-			if(redraw || !lines[i].surf || inSelectionArea || (lines[i].selSerial && lines[i].selSerial != selSerial)){
-				auto &ls = lines[i].surf;
-				lines[i].selSerial = inSelectionArea ? selSerial : 0;
-				ls.reset(new gds::Surface(gds_SurfaceType::Vector, lsW, lsH, 100, gds_ColourType::True));
-				ls->BeginQueue();
-				auto lsBkg = colours::GetBackground().Fix(*ls);
-				ls->Box({0, 0, lsW, lsH}, lsBkg, lsBkg, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-				if(inSelectionArea){
-					int32_t selX1 = 2; 
-					int32_t selX2 = lsW;
-					if(i == selStartLine || i == selEndLine){
-						double selX1D = 1.5, selX2D = 1.5;
-						for(size_t j = 0; j < m.charX.size(); ++j){
-							if(i == selStartLine && j < selStartPos) selX1D += m.charX[j];
-							if(i == selEndLine && j < selEndPos) selX2D += m.charX[j];
-						}
-						if(i == selStartLine) selX1 = round(selX1D);
-						if(i == selEndLine) selX2 = round(selX2D);
-					}
-					uint32_t selW = selX2 - selX1;
-					
-					if(hasFocus){
-						auto selBkg = colours::GetSelection().Fix(*ls);
-						ls->Box({selX1, 0, selW, lsH - 2}, selBkg, selBkg, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-					}else{
-						auto selBdr = colours::GetSelectionFocus().Fix(*ls);
-						ls->Box({selX1, 0, selW, lsH - 2}, selBdr, selBdr, 1, gds_LineStyle::Solid, gds_FillStyle::None);
-					}
-				}
-				auto lsTxt = colours::GetTextAreaText().Fix(*ls);
-				auto textY = std::max<int32_t>(((fontHeight + m.h) / 2), 0);
-				ls->Text({2, textY}, lines[i].text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize(), lsTxt);
-				ls->CommitQueue();
-			}
-			
-			int32_t lsX = -(int32_t)textOffsetPxls;
-			int32_t lsY = (i - lineOffset) * fontHeight;
-			surf->Blit(*lines[i].surf, {0, 0, lsW, lsH}, {lsX, lsY, lsW, lsH});
-		}
-		drawing::Border(*surf, {0, 0, inW, inH}, border);
-		
-		auto topLeft = colours::GetTextAreaLowLight().Fix(*surf);
-		auto bottomRight = colours::GetTextAreaHiLight().Fix(*surf);
-		drawing::BevelBox(*surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
-
-		surf->CommitQueue();
-		update = false;
+		bkSurf->CommitQueue();
+		bkSurf->Compress();
 	}
+	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
 	
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
-	
+	size_t selStartLine, selEndLine;
+	size_t selStartPos, selEndPos;
+	if(haveSelection){
+		if(selLine < cursorLine){
+			selStartLine = selLine;
+			selEndLine = cursorLine;
+			selStartPos = selPos;
+			selEndPos = cursorPos;
+		}else if(selLine > cursorLine){
+			selStartLine = cursorLine;
+			selEndLine = selLine;
+			selStartPos = cursorPos;
+			selEndPos = selPos;
+		}else{
+			selStartLine = selEndLine = selLine;
+			selStartPos = std::min(selPos, cursorPos);
+			selEndPos = std::max(selPos, cursorPos);
+		}
+	}
+
+	for(size_t i = lineOffset; i < lines.size(); ++i){
+		if((i - lineOffset) * fontHeight > rect.h) break;
+		
+		auto &m = lines[i].textMeasures;
+		bool redraw = false;
+		if(!m.w || lines[i].text != lines[i].measuredText){
+			m = bkSurf->MeasureText(lines[i].text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize());
+			lines[i].measuredText = lines[i].text;
+			redraw = true;
+		}
+		uint32_t lsW = m.w + 2;
+		uint32_t lsH = fontHeight * 1.5;
+		
+		bool inSelectionArea = haveSelection && (i >= selStartLine && i <= selEndLine);
+		
+		if(redraw || !lines[i].surf || inSelectionArea || (lines[i].selSerial && lines[i].selSerial != selSerial)){
+			auto &ls = lines[i].surf;
+			lines[i].selSerial = inSelectionArea ? selSerial : 0;
+			ls.reset(new gds::Surface(gds_SurfaceType::Vector, lsW, lsH, 100, gds_ColourType::True));
+			ls->BeginQueue();
+			auto lsBkg = colours::GetBackground().Fix(*ls);
+			ls->Box({0, 0, lsW, lsH}, lsBkg, lsBkg, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+			if(inSelectionArea){
+				int32_t selX1 = 2; 
+				int32_t selX2 = lsW;
+				if(i == selStartLine || i == selEndLine){
+					double selX1D = 1.5, selX2D = 1.5;
+					for(size_t j = 0; j < m.charX.size(); ++j){
+						if(i == selStartLine && j < selStartPos) selX1D += m.charX[j];
+						if(i == selEndLine && j < selEndPos) selX2D += m.charX[j];
+					}
+					if(i == selStartLine) selX1 = round(selX1D);
+					if(i == selEndLine) selX2 = round(selX2D);
+				}
+				uint32_t selW = selX2 - selX1;
+				
+				if(hasFocus){
+					auto selBkg = colours::GetSelection().Fix(*ls);
+					ls->Box({selX1, 0, selW, lsH - 2}, selBkg, selBkg, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+				}else{
+					auto selBdr = colours::GetSelectionFocus().Fix(*ls);
+					ls->Box({selX1, 0, selW, lsH - 2}, selBdr, selBdr, 1, gds_LineStyle::Solid, gds_FillStyle::None);
+				}
+			}
+			auto lsTxt = colours::GetTextAreaText().Fix(*ls);
+			auto textY = std::max<int32_t>(((fontHeight + m.h) / 2), 0);
+			ls->Text({2, textY}, lines[i].text, fonts::GetTextAreaFont(), fonts::GetTextAreaTextSize(), lsTxt);
+			ls->CommitQueue();
+			if(i != cursorLine && !inSelectionArea) ls->Compress();
+		}
+		
+		int32_t lsY = (i - lineOffset) * fontHeight;
+		uint32_t drawWidth = std::min((lsW - textOffsetPxls), rect.w - 4);
+		uint32_t drawHeight = std::min(lsH, (rect.h - lsY) - 4);
+		s.Blit(*lines[i].surf, {(int32_t)textOffsetPxls, 0, drawWidth, drawHeight}, {rect.x + 2, rect.y + lsY + 2, drawWidth, drawHeight});
+	}
+
 	if(hasFocus && cursorPos >= textOffset && cursorPosPxls < rect.w){
-		auto cursorCol = colours::GetTextCursor().Fix(*surf);
+		auto cursorCol = colours::GetTextCursor().Fix(s);
 		auto top = (cursorLine - lineOffset) * fontHeight;
 		auto bottom = top + fontHeight;
-		s.Line({(int32_t)cursorPosPxls + rect.x, (int32_t)(rect.y + top + 2)}, {(int32_t)cursorPosPxls + rect.x, (int32_t)(rect.y + bottom - 1)}, cursorCol);
+		s.Line({(int32_t)cursorPosPxls + rect.x, (int32_t)(rect.y + top + 2)}, {(int32_t)cursorPosPxls + rect.x, (int32_t)(rect.y + bottom + 1)}, cursorCol);
 	}
 	
 	if(hscroll) hscroll->Paint(s);
@@ -602,15 +611,17 @@ uint32_t TextArea::GetSubscribed(){
 }
 
 void TextArea::Focus(){
-	hasFocus = true;
-	if(haveSelection) update = true;
-	IControl::Paint(outerRect);
+	if(!hasFocus){
+		hasFocus = true;
+		IControl::Paint(rect);
+	}
 }
 
 void TextArea::Blur(){
-	hasFocus = false;
-	if(haveSelection) update = true;
-	IControl::Paint(outerRect);
+	if(hasFocus){
+		hasFocus = false;
+		IControl::Paint(rect);
+	}
 }
 	
 void TextArea::SetText(const std::string &t){
@@ -624,7 +635,6 @@ void TextArea::SetText(const std::string &t){
 	}
 	cursorLine = 0;
 	cursorPos = 0;
-	update = true;
 	IControl::Paint(outerRect);
 }
 
@@ -645,7 +655,6 @@ void TextArea::InsertText(const std::string &text){
 		}
 	}
 	
-	update = true;
 	IControl::Paint(outerRect);
 }
 
@@ -688,8 +697,7 @@ void TextArea::SetPosition(const gds::Rect &r){
 	rect = (hscroll || vscroll) ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : r;
 	if(vscroll) vscroll->SetPosition({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - scrollbarSize});
 	if(hscroll) hscroll->SetPosition({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize});
-	update = true;
-	surf.reset();
+	bkSurf.reset();
 }
 
 std::string TextArea::GetSelection(){
@@ -761,8 +769,19 @@ void TextArea::CutSelection(){
 	cursorLine = selStartLine;
 	cursorPos = selStartPos;
 	if(cursorLine > lines.size() - 1) cursorLine = lines.size() - 1;
-	update = true;
 	IControl::Paint(outerRect);
+}
+
+void TextArea::HandleScroll(bool horiz, uint32_t v){
+	if(horiz && v != textOffset){
+		textOffset = v;
+		IControl::Paint(rect);
+	}
+	
+	if(!horiz && v != lineOffset){
+		lineOffset = v;
+		IControl::Paint(rect);
+	}
 }
 
 }

@@ -15,7 +15,6 @@ EventResponse RadioButton::HandleEvent(const wm_Event &e){
 		auto oldValue = value;
 		value = true;
 		if(value != oldValue){
-			update = true;
 			RaiseChangeEvent();
 		}
 		if(getAllRects){ 
@@ -33,7 +32,6 @@ EventResponse RadioButton::HandleEvent(const wm_Event &e){
 				auto oldValue = value;
 				value = true;
 				if(value != oldValue){
-					update = true;
 					RaiseChangeEvent();
 				}
 				if(getAllRects){ 
@@ -50,72 +48,60 @@ EventResponse RadioButton::HandleEvent(const wm_Event &e){
 }
 
 void RadioButton::Paint(gds::Surface &s){
-	if(!surf || update){
-		uint32_t inW = rect.w - 1;
-		uint32_t inH = rect.h - 1;
-		int32_t chkY = std::max<int32_t>((rect.h - checkSize) / 2, 0);
+	uint32_t inW = rect.w - 1;
+	uint32_t inH = rect.h - 1;
+	int32_t chkY = std::max<int32_t>((rect.h - checkSize) / 2, 0);
+	
+	if(!bkSurf){
+		bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+		bkSurf->BeginQueue();
 		
-		if(!bkSurf){
-			bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-			bkSurf->BeginQueue();
+		textMeasures = bkSurf->MeasureText(text, fonts::GetRadioButtonFont(), fonts::GetRadioButtonTextSize());
+		auto bkgCol = colours::GetBackground().Fix(*bkSurf);
+		auto txtCol = colours::GetRadioButtonText().Fix(*bkSurf);
 			
-			textMeasures = bkSurf->MeasureText(text, fonts::GetRadioButtonFont(), fonts::GetRadioButtonTextSize());
-			auto bkgCol = colours::GetBackground().Fix(*bkSurf);
-			auto txtCol = colours::GetRadioButtonText().Fix(*bkSurf);
-				
-			int32_t textX = checkSize + 3;
-			int32_t textY = std::max<int32_t>(((rect.h + textMeasures.h) / 2), 0);
-			
-			bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-			bkSurf->Text({textX, textY}, text, fonts::GetRadioButtonFont(), fonts::GetRadioButtonTextSize(), txtCol);
-			
-			auto cx = (checkSize / 2) + 1;
-			auto cy = chkY + (checkSize / 2);
-			
-			auto topLeft = colours::GetRadioButtonLowLight().Fix(*bkSurf);
-			auto bottomRight = colours::GetRadioButtonHiLight().Fix(*bkSurf);
-			bkSurf->Arc({cx, cy, checkSize - 1, checkSize - 1}, 135, 315, topLeft, topLeft, 1);
-			bkSurf->Arc({cx, cy, checkSize - 1, checkSize - 1}, 315, 135, bottomRight, topLeft, 1);
-			
-			auto border = colours::GetBorder().Fix(*bkSurf);
-			bkSurf->Ellipse({cx, cy, checkSize, checkSize}, border, border);
-			
-			bkSurf->CommitQueue();
-		}
+		int32_t textX = checkSize + 3;
+		int32_t textY = std::max<int32_t>(((rect.h + textMeasures.h) / 2), 0);
 		
-		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		else surf->Clear();
+		bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		bkSurf->Text({textX, textY}, text, fonts::GetRadioButtonFont(), fonts::GetRadioButtonTextSize(), txtCol);
 		
-		surf->BeginQueue();
+		auto cx = (checkSize / 2) + 1;
+		auto cy = chkY + (checkSize / 2);
 		
-		surf->Blit(*bkSurf, {0, 0, rect.w, rect.h}, {0, 0, rect.w, rect.h});
+		auto topLeft = colours::GetRadioButtonLowLight().Fix(*bkSurf);
+		auto bottomRight = colours::GetRadioButtonHiLight().Fix(*bkSurf);
+		bkSurf->Arc({cx, cy, checkSize - 1, checkSize - 1}, 135, 315, topLeft, topLeft, 1);
+		bkSurf->Arc({cx, cy, checkSize - 1, checkSize - 1}, 315, 135, bottomRight, topLeft, 1);
 		
-		if(value){
-			auto chkCol = colours::GetRadioButtonCheck().Fix(*surf);
-			auto cx = (checkSize / 2) + 1;
-			auto cy = chkY + (checkSize / 2);
-			
-			surf->Ellipse({cx, cy, checkSize - 8, checkSize - 8}, chkCol, chkCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		}
+		auto border = colours::GetBorder().Fix(*bkSurf);
+		bkSurf->Ellipse({cx, cy, checkSize, checkSize}, border, border);
 		
-		if(focus){
-			auto focusCol = colours::GetRadioButtonFocus().Fix(*surf);
-			
-			int32_t boxTop = std::max(std::min<int32_t>(chkY - 1, (rect.h - textMeasures.h) / 2), 0);
-			int32_t boxLeft = 0;
-			uint32_t boxWidth = textMeasures.w + checkSize + 3;
-			if(boxLeft + boxWidth > inW) boxWidth = inW - boxLeft;
-			uint32_t boxHeight = std::max<int32_t>(textMeasures.h, checkSize + 3);
-			if(boxTop + boxHeight > inH) boxHeight = inH - boxTop;
-			surf->Box({boxLeft, boxTop, boxWidth, boxHeight}, focusCol, focusCol);
-		}
-		
-		surf->CommitQueue();
-		
-		update = false;
+		bkSurf->CommitQueue();
+		bkSurf->Compress();
 	}
 	
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
+	
+	if(value){
+		auto chkCol = colours::GetRadioButtonCheck().Fix(s);
+		auto cx = rect.x + (checkSize / 2) + 1;
+		auto cy = rect.y + chkY + (checkSize / 2);
+		
+		s.Ellipse({cx, cy, checkSize - 8, checkSize - 8}, chkCol, chkCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	}
+	
+	if(focus){
+		auto focusCol = colours::GetRadioButtonFocus().Fix(s);
+		
+		int32_t boxTop = std::max(std::min<int32_t>(chkY - 1, (rect.h - textMeasures.h) / 2), 0);
+		int32_t boxLeft = 0;
+		uint32_t boxWidth = textMeasures.w + checkSize + 3;
+		if(boxLeft + boxWidth > inW) boxWidth = inW - boxLeft;
+		uint32_t boxHeight = std::max<int32_t>(textMeasures.h, checkSize + 3);
+		if(boxTop + boxHeight > inH) boxHeight = inH - boxTop;
+		s.Box({rect.x + boxLeft, rect.y + boxTop, boxWidth, boxHeight}, focusCol, focusCol);
+	}
 	
 	if(!enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
@@ -148,12 +134,10 @@ uint32_t RadioButton::GetSubscribed(){
 }
 
 void RadioButton::Focus(){
-	if(!focus) update = true;
 	focus = true;
 	IControl::Paint(rect);
 }
 void RadioButton::Blur(){
-	if(focus) update = true;
 	focus = false;
 	IControl::Paint(rect);
 }
@@ -166,7 +150,6 @@ void RadioButton::SetText(const std::string &t){
 
 void RadioButton::SetValue(bool v){
 	value = v;
-	update = true;
 	IControl::Paint(rect);
 }
 
@@ -198,8 +181,6 @@ bool RadioButton::IsEnabled(){
 
 void RadioButton::SetPosition(const gds::Rect &r){
 	rect = r;
-	update = true;
-	surf.reset();
 	bkSurf.reset();
 }
 

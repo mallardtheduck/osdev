@@ -11,8 +11,8 @@
 namespace btos_api{
 namespace gui{
 	
-const auto scrollbarSize = 17;
-const auto checkSize = 17;
+const uint32_t scrollbarSize = 17;
+const uint32_t checkSize = 17;
 
 DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bool sH, size_t is, bool mS) : 
 	outerRect(r), 
@@ -22,10 +22,9 @@ DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bo
 	fontHeight = (info.maxH * fonts::GetDetailListTextSize()) / info.scale;
 	if(multiSelect && fontHeight < checkSize) fontHeight = checkSize;
 	
-	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
+	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - (int32_t)scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
 
 	vscroll->OnChange([this] (uint32_t v) {
-		if(v != vOffset) update = true;
 		vOffset = v;
 	});
 	
@@ -33,11 +32,11 @@ DetailList::DetailList(const gds::Rect &r, const std::vector<std::string> &c, bo
 	
 	if(scrollHoriz){
 		CalculateColumnWidths();
-		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
+		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - (int32_t)scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
 		
 		hscroll->OnChange([this] (uint32_t v) {
-			if((int32_t)v != hOffset + (multiSelect ? checkSize : 0)) update = true;
 			hOffset = v - (multiSelect ? checkSize : 0);
+			updateBkg = true;
 		});
 	}
 	if(multiSelect) hOffset = -checkSize;
@@ -60,7 +59,7 @@ void DetailList::CalculateColumnWidths(){
 }
 
 void DetailList::UpdateDisplayState(bool changePos){
-	if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+	auto surf = gds::Surface(gds_SurfaceType::Vector, 1, 1, 100, gds_ColourType::True);
 	
 	visibleItems = (rect.h / fontHeight) - 1;
 	if(changePos){
@@ -77,7 +76,7 @@ void DetailList::UpdateDisplayState(bool changePos){
 				auto &it = items[i][j];
 				if(di.text != it || !di.measures.w){
 					di.text = it;
-					di.measures = surf->MeasureText(it, fonts::GetDetailListFont(), fonts::GetDetailListTextSize());
+					di.measures = surf.MeasureText(it, fonts::GetDetailListFont(), fonts::GetDetailListTextSize());
 					di.fittedText = "";
 					di.fittedWidth = 0;
 				}
@@ -90,7 +89,7 @@ void DetailList::UpdateDisplayState(bool changePos){
 			auto &ci = cols[i];
 			if(di.text != ci || !di.measures.w){
 				di.text = ci;
-				di.measures = surf->MeasureText(ci, fonts::GetDetailListFont(), fonts::GetDetailListTextSize());
+				di.measures = surf.MeasureText(ci, fonts::GetDetailListFont(), fonts::GetDetailListTextSize());
 				di.fittedText = "";
 				di.fittedWidth = 0;
 			}
@@ -136,6 +135,7 @@ void DetailList::UpdateDisplayState(bool changePos){
 }
 
 std::string DetailList::FitTextToCol(DrawItem &item, size_t colIndex){
+	auto surf = gds::Surface(gds_SurfaceType::Vector, 1, 1, 100, gds_ColourType::True);
 	auto width = colWidths[colIndex];
 	if(item.fittedWidth == width) return item.fittedText;
 	if(item.measures.w < width){
@@ -145,9 +145,9 @@ std::string DetailList::FitTextToCol(DrawItem &item, size_t colIndex){
 	}
 	
 	std::string suffix = "\xE2\x80\xA6";
-	if(width < surf->MeasureText(suffix, fonts::GetDetailListFont(), fonts::GetDetailListTextSize()).w) suffix = "";
+	if(width < surf.MeasureText(suffix, fonts::GetDetailListFont(), fonts::GetDetailListTextSize()).w) suffix = "";
 	std::string text = item.text;
-	while(surf->MeasureText(text + suffix, fonts::GetDetailListFont(), fonts::GetDetailListTextSize()).w > width){
+	while(surf.MeasureText(text + suffix, fonts::GetDetailListFont(), fonts::GetDetailListTextSize()).w > width){
 		text.pop_back();
 	}
 	
@@ -156,8 +156,39 @@ std::string DetailList::FitTextToCol(DrawItem &item, size_t colIndex){
 	return item.fittedText;
 }
 
+gds::Surface *DetailList::CheckBox(bool checked){
+	if(checked && checkedSurf) return checkedSurf.get();
+	if(!checked && checkSurf) return checkSurf.get();
+	
+	std::unique_ptr<gds::Surface> surf(new gds::Surface(gds_SurfaceType::Vector, checkSize, checkSize, 100, gds_ColourType::True));
+	
+	surf->BeginQueue();
+	auto topLeft = colours::GetDetailListLowLight().Fix(*surf);
+	auto bottomRight = colours::GetDetailListHiLight().Fix(*surf);
+	auto bkgCol = colours::GetBackground().Fix(*surf);
+	auto txtCol = colours::GetDetailListText().Fix(*surf);
+	
+	surf->Box({0, 0, checkSize, checkSize}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	drawing::BevelBox(*surf, {1, 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
+	if(checked){
+		surf->Line({4, 4}, {checkSize - 4, checkSize - 4}, txtCol, 2);
+		surf->Line({4,  checkSize - 4}, {checkSize - 4, 4}, txtCol, 2);
+	}
+	surf->CommitQueue();
+	surf->Compress();
+	
+	if(checked){
+		checkedSurf = std::move(surf);
+		return checkedSurf.get();
+	}else{
+		checkSurf = std::move(surf);
+		return checkSurf.get();
+	}
+}
+
 EventResponse DetailList::HandleEvent(const wm_Event &e){
 	bool handled = false;
+	bool update = true;
 	if(e.type == wm_EventType::Keyboard && !(e.Key.code & KeyFlags::KeyUp)){
 		uint16_t code = KB_code(e.Key.code);
 		if(code == (KeyFlags::NonASCII | KeyCodes::DownArrow) && selectedItem < items.size() - 1){
@@ -266,110 +297,114 @@ EventResponse DetailList::HandleEvent(const wm_Event &e){
 }
 
 void DetailList::Paint(gds::Surface &s){
-	if(update || !surf){
-		UpdateDisplayState(false);
-		
-		uint32_t inW = rect.w - 1;
-		uint32_t inH = rect.h - 1;
-		
-		auto bkgCol = colours::GetBackground().Fix(*surf);
-		auto txtCol = colours::GetDetailListText().Fix(*surf);
-		auto border = colours::GetBorder().Fix(*surf);
-		auto hdrCol = colours::GetDetailListHeader().Fix(*surf);
-		
-		auto topLeft = colours::GetDetailListLowLight().Fix(*surf);
-		auto bottomRight = colours::GetDetailListHiLight().Fix(*surf);
-		surf->Clear();
-		surf->BeginQueue();
-		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	UpdateDisplayState(false);
+	
+	uint32_t inW = rect.w - 1;
+	uint32_t inH = rect.h - 1;
 
-		surf->Box({1, 1, inW, fontHeight}, hdrCol, hdrCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		
+	if(!bkSurf || updateBkg){
+		if(!bkSurf) bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+		else bkSurf->Clear();
+
+		auto bkgCol = colours::GetBackground().Fix(*bkSurf);
+		auto txtCol = colours::GetDetailListText().Fix(*bkSurf);
+		auto border = colours::GetBorder().Fix(*bkSurf);
+		auto hdrCol = colours::GetDetailListHeader().Fix(*bkSurf);
+		auto topLeft = colours::GetDetailListLowLight().Fix(*bkSurf);
+		auto bottomRight = colours::GetDetailListHiLight().Fix(*bkSurf);
+			
+		bkSurf->BeginQueue();
+
+		bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		bkSurf->Box({1, 1, inW, fontHeight}, hdrCol, hdrCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+
 		for(size_t i = 0; i < cols.size(); ++i){
 			auto &cItem = colItems[i];
 			
-			auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + i, i + iconsize + 1);
+			auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + i, i + iconsize + 3);
 			auto textX = ((int32_t)colOffset + 2) - (int32_t)hOffset;
 			auto textY = std::max<int32_t>(((fontHeight + cItem.measures.h) / 2), 0);
 			if((int32_t)colOffset + (int32_t)colWidths[i] < 0) continue;
 			
 			auto text = FitTextToCol(cItem, i);
 			
-			surf->Text({textX, textY}, text, fonts::GetDetailListFont(), fonts::GetDetailListTextSize(), txtCol);
+			bkSurf->Text({textX, textY}, text, fonts::GetDetailListFont(), fonts::GetDetailListTextSize(), txtCol);
 		}
+
+		bkSurf->Line({1, (int32_t)fontHeight}, {(int32_t)inW, (int32_t)fontHeight}, border);
+		drawing::Border(*bkSurf, {0, 0, inW, inH}, border);
+		drawing::BevelBox(*bkSurf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
+
+		bkSurf->CommitQueue();
+		if(!scrollHoriz) bkSurf->Compress();
+		updateBkg = false;
+	}
+	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
 		
-		auto visibleItems = (inH / fontHeight);
-		uint32_t itemWidth = std::accumulate(colWidths.begin(), colWidths.end(), colWidths.size()) + iconsize;
-		if(itemWidth < inW) itemWidth = inW;
-		
-		for(auto i = vOffset; i < items.size() && i < vOffset + visibleItems; ++i){
-			auto &dci = drawCache[i];
-			if(!dci.surf || dci.width != itemWidth || dci.selected != (i == selectedItem) || (dci.selected && dci.focussed != hasFocus)){
-				dci.surf.reset(new gds::Surface(gds_SurfaceType::Vector, itemWidth, fontHeight, 100, gds_ColourType::True));
-				dci.width = itemWidth;
-				dci.surf->BeginQueue();
-				
-				auto itemBkgCol = colours::GetBackground().Fix(*dci.surf);
-				
-				if(i == selectedItem){
-					auto selCol = colours::GetSelection().Fix(*dci.surf);
-					auto selFocus = colours::GetSelectionFocus().Fix(*dci.surf);
-					if(hasFocus){
-						dci.surf->Box({0, 0, itemWidth, fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-					}else{
-						dci.surf->Box({0, 0, itemWidth, fontHeight}, itemBkgCol, itemBkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-					}
-					dci.surf->Box({0, 0, itemWidth, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
-					dci.selected = true;
-					dci.focussed = hasFocus;
+	auto visibleItems = (inH / fontHeight);
+	uint32_t itemWidth = std::accumulate(colWidths.begin(), colWidths.end(), colWidths.size()) + iconsize;
+	if(itemWidth < inW) itemWidth = inW;
+	
+	for(auto i = vOffset; i < items.size() && i < vOffset + visibleItems; ++i){
+		auto &dci = drawCache[i];
+		if(!dci.surf || dci.width != itemWidth || dci.selected != (i == selectedItem) || (dci.selected && dci.focussed != hasFocus)){
+			dci.surf.reset(new gds::Surface(gds_SurfaceType::Vector, itemWidth, fontHeight, 100, gds_ColourType::True));
+			dci.width = itemWidth;
+			dci.surf->BeginQueue();
+			
+			auto itemBkgCol = colours::GetBackground().Fix(*dci.surf);
+			
+			if(i == selectedItem){
+				auto selCol = colours::GetSelection().Fix(*dci.surf);
+				auto selFocus = colours::GetSelectionFocus().Fix(*dci.surf);
+				if(hasFocus){
+					dci.surf->Box({0, 0, itemWidth, fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 				}else{
 					dci.surf->Box({0, 0, itemWidth, fontHeight}, itemBkgCol, itemBkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-					dci.selected = false;
 				}
-			
-				if(icons[i] || defaultIcon){
-					auto icon = icons[i] ? icons[i] : defaultIcon;
-					dci.surf->Blit(*icon, {0, 0, iconsize, iconsize}, {2, 0, iconsize, iconsize});
-				}	
-				
-				auto itemTxtCol = colours::GetDetailListText().Fix(*dci.surf);
-				
-				for(size_t j = 0; j < items[i].size(); ++j){
-					if(j > cols.size()) continue;
-					auto &cItem = drawItems[i][j];
-					auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + j, j + iconsize + 1);
-					
-					auto textX = ((int32_t)colOffset + 2);
-					auto textY = std::max<int32_t>(((fontHeight + cItem.measures.h) / 2), 0);
-					
-					auto text = FitTextToCol(cItem, j);
-					
-					dci.surf->Text({textX, textY}, text, fonts::GetDetailListFont(), fonts::GetDetailListTextSize(), itemTxtCol);
-				}
-				dci.surf->CommitQueue();
+				dci.surf->Box({0, 0, itemWidth, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
+				dci.selected = true;
+				dci.focussed = hasFocus;
+			}else{
+				dci.surf->Box({0, 0, itemWidth, fontHeight}, itemBkgCol, itemBkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+				dci.selected = false;
 			}
-			int32_t itemX = 0 - hOffset;
-			int32_t itemY = ((i - vOffset) + 1) * fontHeight;
-			surf->Blit(*dci.surf, {0, 0, itemWidth, fontHeight}, {itemX, itemY, itemWidth, fontHeight});
-			
-			if(multiSelect){
-				int32_t chkY = fontHeight * ((i + 1) - vOffset);
-				surf->Box({1, chkY, checkSize, checkSize}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-				drawing::BevelBox(*surf, {2, chkY + 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
-				if(multiSelection[i]){
-					surf->Line({5, chkY + 5}, {checkSize - 3, (chkY + checkSize) - 4}, txtCol, 2);
-					surf->Line({5,  (chkY + checkSize) - 4}, {checkSize - 3, chkY + 5}, txtCol, 2);
-				}
-			}
-		}
-		surf->Line({1, (int32_t)fontHeight}, {(int32_t)inW, (int32_t)fontHeight}, border);
-		drawing::Border(*surf, {0, 0, inW, inH}, border);
-		drawing::BevelBox(*surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
 		
-		surf->CommitQueue();
-		update = false;
+			if(icons[i] || defaultIcon){
+				auto icon = icons[i] ? icons[i] : defaultIcon;
+				dci.surf->Blit(*icon, {0, 0, iconsize, iconsize}, {2, 0, iconsize, iconsize});
+			}	
+			
+			auto itemTxtCol = colours::GetDetailListText().Fix(*dci.surf);
+			
+			for(size_t j = 0; j < items[i].size(); ++j){
+				if(j > cols.size()) continue;
+				auto &cItem = drawItems[i][j];
+				auto colOffset = std::accumulate(colWidths.begin(), colWidths.begin() + j, j + iconsize + 1);
+				
+				auto textX = ((int32_t)colOffset + 2);
+				auto textY = std::max<int32_t>(((fontHeight + cItem.measures.h) / 2), 0);
+				
+				auto text = FitTextToCol(cItem, j);
+				
+				dci.surf->Text({textX, textY}, text, fonts::GetDetailListFont(), fonts::GetDetailListTextSize(), itemTxtCol);
+			}
+			dci.surf->CommitQueue();
+			if(i != selectedItem) dci.surf->Compress();
+		}
+		int32_t itemX = rect.x - hOffset;
+		int32_t itemY = rect.y + ((i - vOffset) + 1) * fontHeight;
+		uint32_t drawWidth = std::min(itemWidth, rect.w) - (multiSelect ? checkSize : 0) - 3;
+		uint32_t drawHeight = std::min<uint32_t>(fontHeight, ((rect.y + rect.h) - itemY) - 3);
+		s.Blit(*dci.surf, {0, 0, drawWidth, drawHeight}, {itemX + 2, itemY + 1, drawWidth, drawHeight});
+
+		if(multiSelect){
+			int32_t chkY = rect.y + 1 + fontHeight * ((i + 1) - vOffset);
+			auto checkHeight = std::min(checkSize, drawHeight);
+			auto check = CheckBox(multiSelection[i]);
+			s.Blit(*check, {0, 0, checkSize, checkHeight}, {rect.x + 2, chkY, checkSize, checkHeight});
+		}
 	}
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
 
 	if(hscroll) hscroll->Paint(s);
 	if(vscroll) vscroll->Paint(s);
@@ -397,7 +432,6 @@ uint32_t DetailList::GetSubscribed(){
 
 void DetailList::Focus(){
 	if(!hasFocus){
-		update = true;
 		hasFocus = true;
 		IControl::Paint(outerRect);
 	}
@@ -405,7 +439,6 @@ void DetailList::Focus(){
 
 void DetailList::Blur(){
 	if(hasFocus){
-		update = true;
 		hasFocus = false;
 		IControl::Paint(outerRect);
 	}
@@ -436,10 +469,9 @@ bool DetailList::IsEnabled(){
 void DetailList::SetPosition(const gds::Rect &r){
 	outerRect = r;
 	rect = scrollHoriz ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h};
-	if(vscroll) vscroll->SetPosition({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)});
-	if(hscroll) hscroll->SetPosition({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize});
-	update = true;
-	surf.reset();
+	if(vscroll) vscroll->SetPosition({outerRect.x + (int32_t)outerRect.w - (int32_t)scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)});
+	if(hscroll) hscroll->SetPosition({outerRect.x, outerRect.y + (int32_t)outerRect.h - (int32_t)scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize});
+	bkSurf.reset();
 }
 
 size_t DetailList::GetValue(){
@@ -450,7 +482,6 @@ void DetailList::SetValue(size_t idx){
 	if(selectedItem == idx) return;
 	selectedItem = idx;
 	UpdateDisplayState(true);
-	update = true;
 	fireCurrentSelection = true;
 }
 
@@ -471,7 +502,6 @@ std::vector<uint32_t> &DetailList::ColumnWidths(){
 }
 
 void DetailList::Refresh(){
-	update = true;
 	colWidths.resize(cols.size());
 	icons.resize(items.size());
 	multiSelection.resize(items.size());
@@ -479,6 +509,7 @@ void DetailList::Refresh(){
 	drawCache.clear();
 	drawCache.resize(items.size());
 	measured = false;
+	bkSurf.reset();
 	IControl::Paint(outerRect);
 }
 
