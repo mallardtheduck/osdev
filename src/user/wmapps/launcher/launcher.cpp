@@ -34,7 +34,7 @@ namespace resc = btos_api::resc;
 
 static const uint32_t baseFormWidth = 71;
 static const uint32_t formHeight = 64;
-static const uint32_t appBtnSize = 64;
+static const uint32_t appBtnSize = 54;
 static const uint32_t margin = 5;
 
 static std::vector<std::string> pinnedApps = {"HDD:/GUI/APPVIEW.ELX", "HDD:/GUI/FOLDER.ELX", "HDD:/BTOS/BIN/TERMWIN.ELX"};
@@ -161,7 +161,7 @@ int main(){
 	updateBtns = [&]{
 		auto apps = GetAppsAndWindows();
 		if(AppListChanged(apps, curApps)){
-			formWidth = baseFormWidth + (apps.size() * appBtnSize);
+			formWidth = baseFormWidth + (apps.size() * (appBtnSize + margin)) + margin;
 			
 			form->Resize(formWidth, formHeight);
 			
@@ -170,8 +170,8 @@ int main(){
 			
 			size_t appBtnCount = 0;
 			for(auto &a : apps){
-				int32_t xPos = baseFormWidth + (appBtnCount * appBtnSize) + margin;
-				auto btn = std::make_shared<gui::ImageButton>(gds::Rect{xPos, margin, 54, 54}, sh::GetPathIcon(a.first, 32));
+				int32_t xPos = baseFormWidth + (appBtnCount * (appBtnSize + margin)) + margin;
+				auto btn = std::make_shared<gui::ImageButton>(gds::Rect{xPos, margin, appBtnSize, appBtnSize}, sh::GetPathIcon(a.first, 32));
 				btn->OnAction([=]{
 					appBtnClick(a.first);
 				});
