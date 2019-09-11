@@ -35,7 +35,7 @@ void Form::SetSubscribed(uint32_t subs){
 }
 
 bool Form::HandleEvent(const wm_Event &e){
-	if(!(GetOptions() & wm_WindowOptions::Visible)) return true;
+	if(!(GetOptions() & wm_WindowOptions::Visible) && !(e.type & wm_GlobalEvents)) return true;
 	
 	if(e.type == wm_EventType::Close){
 		if(!onClose || !onClose()){

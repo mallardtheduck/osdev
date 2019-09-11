@@ -289,8 +289,8 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			UnGrab();
 			dragMode = DragMode::None;
 			RefreshRectEdges({pos.x, pos.y, GetWidth() + last_drag_pos.x, GetHeight() + last_drag_pos.y}, GetMetric(BorderWidth));
-			if(last_drag_pos.x || last_drag_pos.y) Resize(gds_info.w + last_drag_pos.x, gds_info.h + last_drag_pos.y);
-			else PointerInput(pevent);
+			/*if(last_drag_pos.x || last_drag_pos.y)*/ Resize(gds_info.w + last_drag_pos.x, gds_info.h + last_drag_pos.y);
+			//else PointerInput(pevent);
 			last_drag_pos = {0, 0};
 		}
 	}else{
@@ -513,6 +513,7 @@ void Window::Move(Point newpos){
 }
 
 void Window::Resize(uint32_t w, uint32_t h){
+	SetVisible(true, false);
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::Resize)){
 		wm_Event e;
