@@ -49,16 +49,21 @@ int main(int argc, char **argv){
 	auto textarea = std::make_shared<gui::TextArea>(gds::Rect{1, toolbarHeight + 1, formWidth - 2, formHeight - toolbarHeight - statusbarHeight}, "", true);
 	
 	std::function<void()> save;
+	
+	auto modifiedConfirm = [&](const std::string option) -> bool{
+		if(modified){
+			auto btn = gui::MessageBox("File not saved! Save file?", option, LoadIcon("icons/question_32.png"), {"Save", option, "Cancel"}).Show(form.get());
+			if(btn == 0) save();
+			if(btn == 2) return false;
+		}
+		return true;
+	};
 
 	auto filenew = [&]{
-		if(modified){
-			auto btn = gui::MessageBox("File not saved! Save file?", "New", LoadIcon("icons/question_32.png"), {"Save", "New", "Cancel"}).Show(form.get());
-			if(btn == 0) save();
-			if(btn == 2){
-				filename.clear();
-				textarea->SetText("");
-				statusbar->SetText(displayFilename());
-			}
+		if(modifiedConfirm("New")){
+			filename.clear();
+			textarea->SetText("");
+			statusbar->SetText(displayFilename());
 		}
 	};
 	
@@ -73,10 +78,12 @@ int main(int argc, char **argv){
 	};
 	
 	auto open = [&]{
-		sh::FileOpenDialog dlg("", sh::FileExtensionPredicate({".txt", ".cmd", ".ini", ".inf"}));
-		auto path = dlg.Show(form.get());
-		if(!path.empty()){
-			openFile(path);
+		if(modifiedConfirm("Open")){
+			sh::FileOpenDialog dlg("", sh::FileExtensionPredicate({".txt", ".cmd", ".ini", ".inf"}));
+			auto path = dlg.Show(form.get());
+			if(!path.empty()){
+				openFile(path);
+			}
 		}
 	};
 	
@@ -165,12 +172,7 @@ int main(int argc, char **argv){
 	});
 	
 	form->OnClose([&]{
-		if(modified){
-			auto btn = gui::MessageBox("File not saved! Save file?", "Close", LoadIcon("icons/question_32.png"), {"Save", "Close", "Cancel"}).Show(form.get());
-			if(btn == 0) save();
-			if(btn == 2) return true;
-		}
-		return false;
+		return !modifiedConfirm("Close");
 	});
 	
 	auto menuHandler = [&](int action) -> bool{

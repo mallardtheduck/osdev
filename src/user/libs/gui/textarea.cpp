@@ -182,7 +182,8 @@ gds::Rect TextArea::UpdateDisplayState(){
 	if(update) return rect;
 	else if(cursorLine >= lineOffset && cursorLine < lineOffset + visibleLines){
 		int32_t updY = ((cursorLine - lineOffset) * fontHeight) + 2;
-		return {rect.x, rect.y + updY, fontHeight, rect.w};
+		uint32_t updH = std::min(fontHeight, rect.h - updY);
+		return {rect.x, rect.y + updY, updH, rect.w};
 	}else{
 		return {0, 0, 0, 0};
 	}
@@ -574,9 +575,13 @@ void TextArea::Paint(gds::Surface &s){
 		}
 		
 		int32_t lsY = (i - lineOffset) * fontHeight;
-		uint32_t drawWidth = std::min((lsW - textOffsetPxls), rect.w - 4);
-		uint32_t drawHeight = std::min(lsH, (rect.h - lsY) - 4);
-		s.Blit(*lines[i].surf, {(int32_t)textOffsetPxls, 0, drawWidth, drawHeight}, {rect.x + 2, rect.y + lsY + 2, drawWidth, drawHeight});
+		if((uint32_t)lsY < rect.h - 4){
+			uint32_t drawWidth = std::min((lsW - textOffsetPxls), rect.w - 4);
+			uint32_t drawHeight = std::min(lsH, (rect.h - lsY) - 4);
+			s.Blit(*lines[i].surf, {(int32_t)textOffsetPxls, 0, drawWidth, drawHeight}, {rect.x + 2, rect.y + lsY + 2, drawWidth, drawHeight});
+		}else{
+			break;
+		}
 	}
 
 	if(hasFocus && cursorPos >= textOffset && cursorPosPxls < rect.w){
