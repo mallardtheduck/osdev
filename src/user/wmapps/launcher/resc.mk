@@ -5,7 +5,7 @@ ICONS_FS :=
 ICONS_ACTIONS_32 := question
 ICONS_ACTIONS_16 := run exit
 
-EXTRA_RESC_FILES := app.inf icons.inf
+EXTRA_RESC_FILES := app.inf icons.inf session.ini
 
 $(shell mkdir -p resc/icons)
 

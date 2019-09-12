@@ -17,7 +17,7 @@ namespace sm = btos_api::sm;
 
 static const std::string ServicesPath = btos_api::EnvInterpolate("$systemdrive$:/BTOS/CONFIG/SESSIONS/SERVICES/");
 
-char char_tolower(char ch){
+static char char_tolower(char ch){
     return static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
 }
 

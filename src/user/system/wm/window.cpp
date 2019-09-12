@@ -347,21 +347,23 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 
 void Window::DrawGrabbed(const Rect &r){
 	if(!Overlaps(r, GetBoundingRect())) return;
-	if(GetMetric(FullWindowDrag)){
-		Rect dstRect = Intersection(r, GetBoundingRect());
-		Rect srcRect = Reoriginate(dstRect, pos);
-		DBG("WM: dstRect: (" << dstRect.x << ", " << dstRect.y << ") " << dstRect.w << " x " << dstRect.h);
-		DBG("WM: srcRect: (" << srcRect.x << ", " << srcRect.y << ") " << srcRect.w << " x " << srcRect.h);
-		if(!dragImage){
-			dragImage = make_shared<Surface>(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h, 100, gds_info.colourType);
-			Draw(active, true, dragImage);
-			SetVisible(false, false);
+	if(dragMode == DragMode::Move){
+		if(GetMetric(FullWindowDrag)){
+			Rect dstRect = Intersection(r, GetBoundingRect());
+			Rect srcRect = Reoriginate(dstRect, pos);
+			DBG("WM: dstRect: (" << dstRect.x << ", " << dstRect.y << ") " << dstRect.w << " x " << dstRect.h);
+			DBG("WM: srcRect: (" << srcRect.x << ", " << srcRect.y << ") " << srcRect.w << " x " << srcRect.h);
+			if(!dragImage){
+				dragImage = make_shared<Surface>(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h, 100, gds_info.colourType);
+				Draw(active, true, dragImage);
+				SetVisible(false, false);
+			}
+			Screen.Blit(*dragImage, {srcRect.x, srcRect.y, srcRect.w, srcRect.h}, {dstRect.x, dstRect.y, dstRect.w, dstRect.h});
+			RefreshScreen(r);
+		}else{
+			DrawBorder(Screen, {pos.x, pos.y, gds_info.w + GetWidth(), GetHeight()});
+			RefreshRectEdges({pos.x, pos.y, GetWidth(), GetHeight()}, GetMetric(BorderWidth));
 		}
-		Screen.Blit(*dragImage, {srcRect.x, srcRect.y, srcRect.w, srcRect.h}, {dstRect.x, dstRect.y, dstRect.w, dstRect.h});
-		RefreshScreen(r);
-	}else{
-		DrawBorder(Screen, {pos.x, pos.y, gds_info.w + GetWidth(), GetHeight()});
-		RefreshRectEdges({pos.x, pos.y, GetWidth(), GetHeight()}, GetMetric(BorderWidth));
 	}
 }
 

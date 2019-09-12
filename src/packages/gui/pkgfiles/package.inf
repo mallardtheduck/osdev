@@ -47,18 +47,18 @@ type = sysapp
 
 [feature-launcher]
 
-name = gui.app.launcher
+name = gui.sysapp.launcher
 description = Launcher
 path = /
 file = launcher.elx
-type = app
+type = sysapp
 
 [feature-ses-launcher]
 
 name = gui.ses.wmmenu
 description = GUI (Launcher) session type
 path = /
-file = launcher.ini
+file = launcher.elx
 type = sm.ses
 
 [filetype-txt]
