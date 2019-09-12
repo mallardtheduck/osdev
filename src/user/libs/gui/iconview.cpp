@@ -34,8 +34,8 @@ IconView::IconView(const gds::Rect &r, size_t iS, bool mS) :
 }
 
 void IconView::UpdateDisplayState(bool changePos){
-	visibleLines = (rect.h / itemHeight);
-	visibleCols = rect.w / itemWidth;
+	visibleLines = (rect.h - 4) / itemHeight;
+	visibleCols = (rect.w - 4) / itemWidth;
 	if(changePos){
 		auto selectionLine = selectedItem / visibleCols; 
 		if(selectionLine < vOffset) vOffset = selectionLine;

@@ -71,7 +71,7 @@ gds::Rect TextArea::UpdateDisplayState(){
 	auto &textMeasures = lines[cursorLine].textMeasures;
 
 	auto oldLineOffset = lineOffset;
-	size_t visibleLines = rect.h / fontHeight;
+	size_t visibleLines = (rect.h - 4) / fontHeight;
 	bool cursorMoved = false;
 	if(cursorLine != lastCursorLine || cursorPos != lastCursorPos) cursorMoved = true;
 	if(cursorMoved){
