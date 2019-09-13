@@ -2,6 +2,7 @@
 #include "../ministl.hpp"
 #include <util/asprintf.h>
 #include "../locks.hpp"
+#include "../rtc/rtc.hpp"
 
 using namespace btos_api::hwpnp;
 
@@ -115,6 +116,7 @@ void pnp_enum_devices(){
 void pnp_set_root_device(IRootDevice *dev){
 	if(!rootDev) rootDev = dev;
 	pnp_enum_devices();
+	rtc_configure();
 }
 
 btos_api::hwpnp::IRootDevice *pnp_get_root_device(){

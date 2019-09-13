@@ -76,8 +76,6 @@ char *msec_infofs(){
 	return buf;
 }
 
-
-
 void rtc_init_real(void*){
 	sch_setblock(&timer_ready_blockcheck, nullptr);
 	datetime dt=current_datetime();
