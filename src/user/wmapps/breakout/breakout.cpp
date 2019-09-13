@@ -24,7 +24,7 @@ enum class gamestate{
 
 int main(){
     auto surface = make_shared<Surface>(gds_SurfaceType::Bitmap, 320, 240);
-	auto win = make_shared<Window>(Point{100, 100}, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close, *surface, "Breakout");
+	auto win = make_shared<Window>(Point{100, 100}, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close | wm_EventType::Hide, *surface, "Breakout");
 	font = Font::Get("DejaVu Sans", gds_FontStyle::Bold);
 	surface->BeginQueue();
 	DrawBackground(surface);
@@ -33,8 +33,16 @@ int main(){
 	win->Update();
 	auto timer = make_shared<Timer>(100);
 	gamestate state = gamestate::Title;
+	auto eventLoop = make_shared<EventLoop>();
+	MessageLoop msgLoop;
 	win->SetEventHandler([&](const wm_Event &e)->bool{
-		if(e.type == wm_EventType::Close) return false;
+		if(e.type == wm_EventType::Close){
+			eventLoop->RemoveWindow(win->GetID());
+			msgLoop.Terminate();
+			return false;
+		}else if(e.type == wm_EventType::Hide){
+			win->Hide();
+		}
 		switch(state){
 			case gamestate::Title:{
 				if(e.type == wm_EventType::Keyboard) state = gamestate::GameStart;
@@ -79,9 +87,7 @@ int main(){
 		}
 		return true;
 	});
-	auto eventLoop = make_shared<EventLoop>();
 	eventLoop->AddWindow(win);
-	MessageLoop msgLoop;
 	msgLoop.AddHandler(eventLoop);
 	msgLoop.AddHandler(timer);
 	msgLoop.RunLoop();

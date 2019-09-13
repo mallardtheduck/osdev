@@ -16,6 +16,8 @@ namespace btos_api{
 		std::vector<std::shared_ptr<IMessageHandler>> handlers;
 		std::function<bool(const Message&)> criticalHandler;
 		std::function<bool(const Message&)> previewer;
+
+		bool terminate = false;
 	public:
 		MessageLoop() = default;
 		void AddHandler(std::shared_ptr<IMessageHandler> h);
@@ -30,6 +32,8 @@ namespace btos_api{
 		void RunLoop();
 		bool HandleMessage(const Message &msg) override;
 		const Message &GetCurrent() const;
+
+		void Terminate();
 	};
 	
 }

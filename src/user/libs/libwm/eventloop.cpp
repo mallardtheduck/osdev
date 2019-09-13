@@ -91,12 +91,15 @@ namespace wm{
 		bt_unlock(lock);
 	}
 
-	EventLoop::EventLoop() : eventThread(&EventThread, (void*) this) {
+	void EventLoop::StartEventThread(){
+		if(!eventThread) eventThread.reset(new Thread(&EventThread, (void*)this));
+	}
+
+	EventLoop::EventLoop() {
 		AddLoop(this);
 	}
 	
-	EventLoop::EventLoop(const vector<shared_ptr<Window>> &wins, const vector<shared_ptr<Menu>> &ms) :
-	eventThread(&EventThread, (void*) this)
+	EventLoop::EventLoop(const vector<shared_ptr<Window>> &wins, const vector<shared_ptr<Menu>> &ms)
 	{
 		AddLoop(this);
 		for(auto w : wins){
@@ -109,7 +112,7 @@ namespace wm{
 	
 	EventLoop::~EventLoop(){
 		quitAtom.Modify(AtomValue = 2);
-		eventThread.Wait();
+		if(eventThread) eventThread->Wait();
 		RemoveLoop(this);
 	}
 
@@ -141,6 +144,7 @@ namespace wm{
 	}
 
 	void EventLoop::RunLoop(){
+		StartEventThread();
 		quitAtom.WaitFor(AtomValue != 0);
 	}
 	

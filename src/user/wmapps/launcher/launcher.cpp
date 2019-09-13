@@ -16,6 +16,8 @@
 #include <btos/table.hpp>
 #include <btos/process.hpp>
 #include <btos/resc.h>
+#include <btos/messageloop.hpp>
+#include <btos/timer.hpp>
 
 #include <algorithm>
 #include <cctype>
@@ -23,8 +25,11 @@
 #include <functional>
 
 #include <unistd.h>
+#include <time.h>
 
 #include "launcher_resc.tar.h"
+
+#include <util/tinyformat.hpp>
 
 namespace gui = btos_api::gui;
 namespace wm = btos_api::wm;
@@ -115,8 +120,9 @@ std::shared_ptr<gds::Surface> LoadIcon(const char *path){
 
 int main(){
 	uint32_t formWidth = baseFormWidth;
-	wm::EventLoop loop;
-	
+	btos_api::MessageLoop msgLoop;
+	auto loop = std::make_shared<wm::EventLoop>();
+
 	std::vector<std::shared_ptr<gui::IControl>> appButtons;
 	
 	auto form = std::make_shared<gui::Form>(gds::Rect{0, 0, formWidth, formHeight}, wm_WindowOptions::NoTitle | wm_WindowOptions::Unlisted, "Launcher");
@@ -128,7 +134,8 @@ int main(){
 		auto btn = gui::MessageBox("Exit and end session?", "Exit", LoadIcon("icons/question_32.png"), {"Yes", "No"}).Show(form.get());
 		if(btn == 0){
 			form->Close();
-			loop.RemoveWindow(form->GetID());
+			loop->RemoveWindow(form->GetID());
+			msgLoop.Terminate();
 		}
 	});
 	
@@ -193,10 +200,28 @@ int main(){
 	form->OnGlobal([&](const wm_Event &){
 		updateBtns();
 	});
+
+	auto updateClock = [&]{
+		time_t rawtime;
+		time(&rawtime);
+		auto timeinfo = localtime(&rawtime);
+		std::string timeStr = asctime(timeinfo);
+		timeLbl->SetText(timeStr);
+		btos_api::bt_zero(tfm::format("LAUNCHER: %s\n", timeStr).c_str());
+	};
+
+	auto timer = std::make_shared<btos_api::Timer>(500);
+	timer->SetHandler([&](btos_api::Timer &)->bool{
+		updateClock();
+		return true;
+	});
+	updateClock();
 	
-	loop.AddWindow(form);
+	loop->AddWindow(form);
 	form->Show();
-	loop.RunLoop();
+	msgLoop.AddHandler(loop);
+	msgLoop.AddHandler(timer);
+	msgLoop.RunLoop();
 	
 	return 0;
 }

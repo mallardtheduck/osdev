@@ -30,7 +30,7 @@ namespace wm{
 		
 		std::map<uint64_t, std::deque<wm_Event>> eventQueues;
 		std::vector<Thread> threads;
-		Thread eventThread;
+		std::unique_ptr<Thread> eventThread;
 		
 		Atom eventSerial = 0;
 		bt_handle_t lock = bt_create_lock();
@@ -40,6 +40,7 @@ namespace wm{
 		friend void EventThread(void *);
 		
 		void SetupWindow(std::shared_ptr<Window> win, bool independent);
+		void StartEventThread();
 	public:
 		EventLoop();
 		EventLoop(const std::vector<std::shared_ptr<Window>> &windows, const std::vector<std::shared_ptr<Menu>> &menus = std::vector<std::shared_ptr<Menu>>());
