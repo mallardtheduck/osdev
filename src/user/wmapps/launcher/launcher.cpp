@@ -126,7 +126,7 @@ int main(){
 	std::vector<std::shared_ptr<gui::IControl>> appButtons;
 	
 	auto form = std::make_shared<gui::Form>(gds::Rect{0, 0, formWidth, formHeight}, wm_WindowOptions::NoTitle | wm_WindowOptions::Unlisted, "Launcher");
-	auto timeLbl = std::make_shared<gui::Label>(gds::Rect{5, 5, 61, 21}, "12:34 PM");
+	auto timeLbl = std::make_shared<gui::Label>(gds::Rect{5, 5, 61, 21}, "--:-- XX");
 	auto exitBtn = std::make_shared<gui::ImageButton>(gds::Rect{5, 31, 28, 28}, LoadIcon("icons/exit_16.png"));
 	auto runBtn = std::make_shared<gui::ImageButton>(gds::Rect{38, 31, 28, 28}, LoadIcon("icons/run_16.png"));
 
@@ -205,17 +205,19 @@ int main(){
 		time_t rawtime;
 		time(&rawtime);
 		auto timeinfo = localtime(&rawtime);
-		std::string timeStr = asctime(timeinfo);
-		timeLbl->SetText(timeStr);
-		btos_api::bt_zero(tfm::format("LAUNCHER: %s\n", timeStr).c_str());
+		std::unique_ptr<char[]> buf(new char[1024]);
+		strftime(buf.get(), 1024, "%l:%M %p", timeinfo);
+		timeLbl->SetText(buf.get());
 	};
 
 	auto timer = std::make_shared<btos_api::Timer>(500);
-	timer->SetHandler([&](btos_api::Timer &)->bool{
+	timer->SetHandler([&](btos_api::Timer &t)->bool{
+		t.Reset();
 		updateClock();
 		return true;
 	});
 	updateClock();
+	timer->Reset();
 	
 	loop->AddWindow(form);
 	form->Show();

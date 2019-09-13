@@ -485,8 +485,10 @@ struct group *getgrnam(const char *name){
 int _gettimeofday(struct timeval *__restrict tv, void *__restrict tz){
 	(void)tz;
 	uint64_t time = bt_rtc_get_time();
-	tv->tv_sec = (time / 1000) + 946684800; //Seconds between 1/1/1970 and 1/1/2000.
-	tv->tv_usec = (time % 1000) * 1000;
+	uint64_t timeSecs = time / 1000;
+	uint64_t timeMillis = time % 1000;
+	tv->tv_sec = timeSecs + 946684800; //Seconds between 1/1/1970 and 1/1/2000.
+	tv->tv_usec = timeMillis * 1000;
 	return 0;
 }
 
