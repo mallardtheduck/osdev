@@ -144,9 +144,17 @@ namespace wm{
 	}
 
 	void EventLoop::RunLoop(){
-		StartEventThread();
-		quitAtom.WaitFor(AtomValue != 0);
+		RunLoopAsync();
+		Wait();
 	}
+
+	void EventLoop::RunLoopAsync(){
+		StartEventThread();
+	}
+
+	void EventLoop::Wait(){
+		quitAtom.WaitFor(AtomValue != 0);
+	}	
 	
 	void EventLoop::RunModal(std::shared_ptr<Window> modal){
 		SetupWindow(modal, false);

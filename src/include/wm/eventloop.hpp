@@ -55,6 +55,8 @@ namespace wm{
 		void RemoveMenu(uint64_t id);
 
 		void RunLoop();
+		void RunLoopAsync();
+		void Wait();
 		void RunModal(std::shared_ptr<Window> modal);
 		void RunWindow(uint64_t id);
 		bool HandleMessage(const Message &msg) override;

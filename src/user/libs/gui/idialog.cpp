@@ -40,7 +40,9 @@ maybe_owned_ptr<wm::EventLoop> DialogEventLoop(wm::Window *parent){
 	wm::EventLoop *loop = nullptr;
 	if(parent) loop = wm::EventLoop::GetFor(*parent);
 	if(!loop){
-		return maybe_owned_ptr<wm::EventLoop>(new wm::EventLoop(), true);
+		auto ret = maybe_owned_ptr<wm::EventLoop>(new wm::EventLoop(), true);
+		ret->RunLoopAsync();
+		return ret;
 	}else{
 		return maybe_owned_ptr<wm::EventLoop>(loop, false);
 	}
