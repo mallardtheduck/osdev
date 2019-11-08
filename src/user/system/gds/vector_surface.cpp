@@ -184,7 +184,8 @@ void VectorSurface::Resize(size_t w, size_t h, bool i){
 std::shared_ptr<BitmapSurface> VectorSurface::RenderToCache(){
 	bool created;
 	auto cache = GetCache(created);
-	if(created || update || !Contains(cacheRect, renderRect)){
+	if(!isRendering && (created || update || !Contains(cacheRect, renderRect))){
+		isRendering = true;
 		OrderOps();
 		vector<VectorOp> sops;
 		for(const auto &op : ops){
@@ -229,6 +230,7 @@ std::shared_ptr<BitmapSurface> VectorSurface::RenderToCache(){
 			dop.Common.fillColour = fillColour;
 			bsurf.AddOperation(dop);
 			if(p) bsurf.SetOpParameters(p);
+			isRendering = false;
 		}
 		cacheRect = renderRect;
 		update = false;

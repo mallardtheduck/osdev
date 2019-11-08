@@ -24,6 +24,7 @@ private:
 	
 	bool update = false;
 	bool isCompressed = false;
+	bool isRendering = false;
 	
 	struct Rectangle{
 		int32_t x = 0, y = 0;
