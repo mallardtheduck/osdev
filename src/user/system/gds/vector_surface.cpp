@@ -182,6 +182,7 @@ void VectorSurface::Resize(size_t w, size_t h, bool i){
 }
 
 std::shared_ptr<BitmapSurface> VectorSurface::RenderToCache(){
+	if(isRendering) bt_zero("GDS: Already rendering this surface!\n");
 	bool created;
 	auto cache = GetCache(created);
 	if(!isRendering && (created || update || !Contains(cacheRect, renderRect))){
@@ -230,11 +231,11 @@ std::shared_ptr<BitmapSurface> VectorSurface::RenderToCache(){
 			dop.Common.fillColour = fillColour;
 			bsurf.AddOperation(dop);
 			if(p) bsurf.SetOpParameters(p);
-			isRendering = false;
 		}
 		cacheRect = renderRect;
 		update = false;
 		if(isCompressed) cache->Compress();
+		isRendering = false;
 	}
 	return cache;
 }
