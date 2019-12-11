@@ -12,6 +12,7 @@ ICON_SRC_template = $(addsuffix .png, $(addprefix $(ICON_FOLDER)/$(2)/$(3)/, $(1
 
 define ICON_template=
 $(call ICON_DST_template,$(1),$(2),$(3)): $(call ICON_SRC_template,$(1),$(2),$(3))
+	mkdir -p libresc/icons/
 	cp $$< $$@
 
 $(LIBRESC-TAR-NAME): $(call ICON_DST_template,$(1),$(2),$(3))
