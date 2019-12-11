@@ -2,12 +2,12 @@ BUILD-AS := i686-pc-btos-as
 BUILD-AS-OPTIONS := -g
 BUILD-CPP := i686-pc-btos-g++
 BUILD-CPP-FLAGS :=  -c
-BUILD-CPP-OPTIONS := -ffreestanding -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -I../include -DKERNEL -std=gnu++11
+BUILD-CPP-OPTIONS := -ffreestanding -Og -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -I../include -DKERNEL -std=gnu++11
 BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
-BUILD-C-OPTIONS := -ffreestanding -O2 -Wall -Wextra -Werror -g -I../include -DKERNEL
+BUILD-C-OPTIONS := -ffreestanding -Og -Wall -Wextra -Werror -g -I../include -DKERNEL
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -T linker.ld -o btos.bin -ffreestanding -O2 -nostdlib -g
+LINK-FLAGS := -T linker.ld -o btos.bin -ffreestanding -Og -nostdlib -g
 LINK-OPTIONS := -lgcc
 
 BOOTFILE := boot.o

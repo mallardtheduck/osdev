@@ -169,9 +169,9 @@ size_t msg_getcontent(bt_msg_header &msg, void *buffer, size_t buffersize){
 		//panic("(MSG) Content request for non-existent message!");
 		return 0;
 	}
-    size_t size=buffersize>r.length?r.length:buffersize;
+    size_t size = buffersize > r.length ? r.length : buffersize;
     //dbgpf("MSG: Copying %i bytes of content (out of %i total, %i requested) for message %i.\n", (int)size, (int)r.length, (int)buffersize, (int)r.id);
-    memcpy(buffer, r.content, size);
+    if(size) memcpy(buffer, r.content, size);
     return size;
 }
 

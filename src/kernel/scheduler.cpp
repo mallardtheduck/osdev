@@ -474,6 +474,16 @@ void sch_setpid(pid_t pid){
 	current_thread->pid=pid;
 }
 
+bt_pid_t sch_getpid(uint64_t ext_id){
+	bt_pid_t pid = -1;
+	hold_lock hl(sch_lock);
+	sch_thread *thread = sch_get(ext_id);
+	if(thread){
+		pid = thread->pid;
+	}
+	return pid;
+}
+
 void sch_setblock(sch_blockcheck check, void *param){
 	if(check(param)) return;
 	current_thread->blockcheck=check;
