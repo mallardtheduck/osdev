@@ -64,6 +64,22 @@ namespace wm{
 		
 		static EventLoop *GetFor(const Window &win);
 		static EventLoop *GetFor(const Menu &menu);
+
+		class LockHolder{
+		private:
+			friend class EventLoop;
+			bt_handle_t *lock;
+
+			explicit LockHolder(bt_handle_t &l);
+		public:
+			LockHolder(LockHolder &&other);
+			LockHolder &operator=(LockHolder &&other);
+
+			void Unlock();
+			~LockHolder();
+		};
+
+		LockHolder Lock();
 	};
 
 }

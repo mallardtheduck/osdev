@@ -265,5 +265,32 @@ namespace wm{
 		bt_unlock(activeLoopsLock);
 		return ret;
 	}
+
+	EventLoop::LockHolder::LockHolder(bt_handle_t &l) : lock(&l){
+		bt_lock(*lock);
+	}
+
+	EventLoop::LockHolder::LockHolder(LockHolder &&other) : lock(other.lock){
+		other.lock = nullptr;
+	}
+
+	EventLoop::LockHolder &EventLoop::LockHolder::operator=(LockHolder &&other){
+		lock = other.lock;
+		other.lock = nullptr;
+		return *this;
+	}
+
+	void EventLoop::LockHolder::Unlock(){
+		if(lock) bt_unlock(*lock);
+		lock = nullptr;
+	}
+
+	EventLoop::LockHolder::LockHolder::~LockHolder(){
+		if(lock) bt_unlock(*lock);
+	}
+
+	EventLoop::LockHolder EventLoop::Lock(){
+		return LockHolder(lock);
+	}
 }
 }

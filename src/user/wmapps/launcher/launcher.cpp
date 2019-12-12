@@ -201,13 +201,18 @@ int main(){
 		updateBtns();
 	});
 
+	std::string curTime;
 	auto updateClock = [&]{
 		time_t rawtime;
 		time(&rawtime);
 		auto timeinfo = localtime(&rawtime);
 		std::unique_ptr<char[]> buf(new char[1024]);
 		strftime(buf.get(), 1024, "%l:%M %p", timeinfo);
-		timeLbl->SetText(buf.get());
+		if(curTime != buf.get()){
+			auto _ = loop->Lock();
+			timeLbl->SetText(buf.get());
+			curTime = buf.get();
+		}
 	};
 
 	auto timer = std::make_shared<btos_api::Timer>(500);
