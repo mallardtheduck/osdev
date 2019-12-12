@@ -17,6 +17,86 @@
 
 using namespace std;
 
+static inline uint32_t murmur_32_scramble(uint32_t k) {
+    k *= 0xcc9e2d51;
+    k = (k << 15) | (k >> 17);
+    k *= 0x1b873593;
+    return k;
+}
+
+static uint32_t murmur3_32(const uint8_t* key, size_t len, uint32_t seed){
+	uint32_t h = seed;
+    uint32_t k;
+    /* Read in groups of 4. */
+    for (size_t i = len >> 2; i; i--) {
+        // Here is a source of differing results across endiannesses.
+        // A swap here has no effects on hash properties though.
+        k = *((uint32_t*)key);
+        key += sizeof(uint32_t);
+        h ^= murmur_32_scramble(k);
+        h = (h << 13) | (h >> 19);
+        h = h * 5 + 0xe6546b64;
+    }
+    /* Read the rest. */
+    k = 0;
+    for (size_t i = len & 3; i; i--) {
+        k <<= 8;
+        k |= key[i - 1];
+    }
+    // A swap is *not* necessary here because the preceeding loop already
+    // places the low bytes in the low places according to whatever endianess
+    // we use. Swaps only apply when the memory is copied in a chunk.
+    h ^= murmur_32_scramble(k);
+    /* Finalize. */
+	h ^= len;
+	h ^= h >> 16;
+	h *= 0x85ebca6b;
+	h ^= h >> 13;
+	h *= 0xc2b2ae35;
+	h ^= h >> 16;
+	return h;
+}
+
+static uint32_t HashImage(const CompressedImage &img){
+	return murmur3_32(
+		reinterpret_cast<const uint8_t*>(img.data()),
+		img.size() * sizeof(img[0]),
+		0x1234
+	);
+}
+
+std::shared_ptr<CompressedImage> CompressedImageRegistry::AddImage(CompressedImage &&theImg){
+	auto img = std::move(theImg);
+	Refresh();
+	uint32_t imghash = 0;
+	for(auto &e : entries){
+		auto eimage = e.image.lock();
+		if(eimage && eimage->size() == img.size()){
+			if(!e.hash)	e.hash = HashImage(*eimage);
+			if(!imghash) imghash = HashImage(img);
+			if(e.hash == imghash && std::equal(eimage->begin(), eimage->end(), img.begin())){
+				return eimage;
+			}
+		}
+	}
+	auto imgPtr = std::make_shared<CompressedImage>(std::move(img));
+	Entry e;
+	e.image = imgPtr;
+	entries.push_back(e);
+	return imgPtr;
+}
+
+void CompressedImageRegistry::Refresh(){
+	entries.erase(std::remove_if(entries.begin(), entries.end(), [](const Entry &e){
+		return e.image.expired();
+	}), entries.end());
+}
+
+CompressedImageRegistry &CompressedImageRegistry::Get(){
+	static CompressedImageRegistry reg;
+	return reg;
+}
+
 BitmapSurface::BitmapSurface(size_t w, size_t h, uint32_t cT, uint32_t scale)
 : colourType(cT), width(w), height(h)
 {
@@ -149,8 +229,8 @@ void BitmapSurface::Resize(size_t w, size_t h, bool indexed) {
 	width = w; height = h;
 	image.reset(new GD::Image((int)w, (int)h, !indexed));
 	if(isCompressed){
-		compressedImage.clear();
-		compressedImage.shrink_to_fit();
+		compressedImage.reset();
+		CompressedImageRegistry::Get().Refresh();
 		isCompressed = false;
 	}
 }
@@ -228,8 +308,8 @@ void BitmapSurface::ReorderOp(uint32_t /*op*/, uint32_t /*ref*/, gds_ReorderMode
 void BitmapSurface::Clear(){
 	if(isCompressed){
 		image.reset(new GD::Image(width, height, true));
-		compressedImage.clear();
-		compressedImage.shrink_to_fit();
+		compressedImage.reset();
+		CompressedImageRegistry::Get().Refresh();
 		isCompressed = false;
 	}else FastBox(*image, 0, 0, image->Width(), image->Height(), 0);
 }
@@ -254,8 +334,8 @@ void BitmapSurface::Compress(){
 	size_t w = width, h = height;
 	gdImagePtr ptr = image->GetPtr();
 	
-	compressedImage.clear();
-	compressedImage.reserve((w * h) / 2);
+	CompressedImage cmpImg;
+	cmpImg.reserve((w * h) / 2);
 	
 	std::pair<uint32_t, size_t> cur(0, 0);
 	bool first = true;
@@ -267,24 +347,24 @@ void BitmapSurface::Compress(){
 				first = false;
 			}else{
 				if(col != cur.first){
-					compressedImage.push_back(cur);
+					cmpImg.push_back(cur);
 					cur = {col, 0};
 				}
 			}
 			++cur.second;
 		}
 	}
-	compressedImage.push_back(cur);
-	compressedImage.shrink_to_fit();
+	cmpImg.push_back(cur);
+	cmpImg.shrink_to_fit();
 	
-	int32_t saving = (image->Width() * image->Height() * 4) - (compressedImage.size() * 8);
+	int32_t saving = (image->Width() * image->Height() * 4) - (cmpImg.size() * 8);
 	if(saving > 0){
+		compressedImage = CompressedImageRegistry::Get().AddImage(std::move(cmpImg));
 		cursor = {compressedImage, width, height};
 		isCompressed = true;
 		image.reset();
 	}else{
-		compressedImage.clear();
-		compressedImage.shrink_to_fit();
+		compressedImage.reset();
 		isCompressed = false;
 	}
 }
@@ -299,7 +379,7 @@ void BitmapSurface::Decompress(){
 	gdImagePtr ptr = image->GetPtr();
 	
 	size_t pos = 0;
-	for(auto cur : compressedImage){
+	for(auto cur : *compressedImage){
 		while(cur.second > 0){
 			size_t y = pos / w;
 			size_t x = pos % w;
@@ -310,8 +390,8 @@ void BitmapSurface::Decompress(){
 	}
 	
 	isCompressed = false;
-	compressedImage.clear();
-	compressedImage.shrink_to_fit();
+	compressedImage.reset();
+	CompressedImageRegistry::Get().Refresh();
 }
 
 BitmapSurface::~BitmapSurface() {

@@ -5,9 +5,27 @@
 #include "surface.hpp"
 #include "drawingop.hpp"
 
+typedef std::vector<std::pair<uint32_t, size_t>> CompressedImage;
+
+class CompressedImageRegistry{
+private:
+	struct Entry{
+		std::weak_ptr<CompressedImage> image;
+		uint32_t hash = 0;
+	};
+	std::vector<Entry> entries;
+
+	CompressedImageRegistry() = default;
+public:
+	std::shared_ptr<CompressedImage> AddImage(CompressedImage &&img);
+	void Refresh();
+
+	static CompressedImageRegistry &Get();
+};
+
 class CompressedImageCursor{
 private:
-	const std::vector<std::pair<uint32_t, size_t>> *s;
+	std::shared_ptr<CompressedImage> s;
 	std::pair<uint32_t, size_t> cur;
 	size_t idx = 0;
 	size_t pos = 0;
@@ -18,8 +36,8 @@ private:
 public:
 	CompressedImageCursor() = default;
 	
-	CompressedImageCursor(const std::vector<std::pair<uint32_t, size_t>> &src, size_t width, size_t height) : 
-	s(&src), w(width), h(height), max(w * h), size(s->size()){
+	CompressedImageCursor(std::shared_ptr<CompressedImage> &src, size_t width, size_t height) : 
+	s(src), w(width), h(height), max(w * h), size(s->size()){
 		cur = (*s)[idx];
 		++idx;
 	}
@@ -76,7 +94,7 @@ public:
 class BitmapSurface : public Surface{
 protected:
 	std::shared_ptr<GD::Image> image;
-	std::vector<std::pair<uint32_t, size_t>> compressedImage;
+	std::shared_ptr<CompressedImage> compressedImage;
 	CompressedImageCursor cursor;
 	
 	bool isCompressed = false;
