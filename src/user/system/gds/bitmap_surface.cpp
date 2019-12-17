@@ -75,6 +75,7 @@ std::shared_ptr<CompressedImage> CompressedImageRegistry::AddImage(CompressedIma
 			if(!e.hash)	e.hash = HashImage(*eimage);
 			if(!imghash) imghash = HashImage(img);
 			if(e.hash == imghash && std::equal(eimage->begin(), eimage->end(), img.begin())){
+				//DBG("GDS: Image with hash " << imghash << " shared. " << (img.size() * sizeof(img[0])) << " bytes saved.");
 				return eimage;
 			}
 		}
@@ -82,6 +83,7 @@ std::shared_ptr<CompressedImage> CompressedImageRegistry::AddImage(CompressedIma
 	auto imgPtr = std::make_shared<CompressedImage>(std::move(img));
 	Entry e;
 	e.image = imgPtr;
+	e.hash = imghash;
 	entries.push_back(e);
 	return imgPtr;
 }
