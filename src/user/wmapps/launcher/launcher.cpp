@@ -28,6 +28,7 @@
 #include <time.h>
 
 #include "launcher_resc.tar.h"
+#include "run.hpp"
 
 #include <util/tinyformat.hpp>
 
@@ -137,6 +138,10 @@ int main(){
 			loop->RemoveWindow(form->GetID());
 			msgLoop.Terminate();
 		}
+	});
+
+	runBtn->OnAction([&]{
+		Run().Show(form.get());
 	});
 	
 	form->AddControls({timeLbl, exitBtn, runBtn});
