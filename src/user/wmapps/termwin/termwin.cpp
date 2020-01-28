@@ -13,6 +13,9 @@
 #include <btos/table.hpp>
 #include <btos/message.hpp>
 #include <btos/atom.hpp>
+#include <btos/process.hpp>
+#include <btos/envvars.hpp>
+#include <util/tinyformat.hpp>
 #include "dev/rtc.h"
 #include "lrucache.hpp"
 
@@ -68,20 +71,6 @@ struct glyph_holder{
 	}
 };
 static cache::lru_cache<uint16_t, shared_ptr<glyph_holder>> glyphcache(1024);
-
-string get_env(const string &name){
-	char value[128];
-	string ret;
-	size_t size=bt_getenv(name.c_str(), value, 128);
-	ret=value;
-	if(size>128){
-		char *buf=new char[size];
-		bt_getenv(name.c_str(), value, size);
-		ret=buf;
-	}
-	if(size) return ret;
-	else return "";
-}
 
 template<typename T> void send_reply(const Message &msg, const T &content){
 	msg.SendReply(content);
@@ -423,6 +412,20 @@ void mainthread(void*){
 	kill_children();
 }
 
+void terminal_exec(bt_handle_t terminal, const std::vector<std::string> &command){
+	const std::string termIdVar = "TERMID";
+	auto curTermId = GetEnv(termIdVar);
+	auto id = bt_terminal_get_id(terminal);
+	SetEnv(termIdVar, tfm::format("%s", id));
+	auto path = command.front();
+	std::vector<std::string> args;
+	for(size_t i = 1; i < command.size(); ++i){
+		args.push_back(command[i]);
+	}
+	Process::Spawn(path, args);
+	SetEnv(termIdVar, curTermId);
+}
+
 int main(int argc, char **argv){
 	vector<string> args(argv, argv + argc);
 	clear_screen();
@@ -438,13 +441,15 @@ int main(int argc, char **argv){
 	while(!ready) bt_yield();
 	terminal_handle = bt_terminal_create_terminal(backend_handle);
 	bt_terminal_read_buffer(terminal_handle, buffer_size, buffer);
-	string shell;
+	std::vector<std::string> shell;
 	if(args.size() < 2){
-		shell = get_env("SHELL");
+		shell.push_back(GetEnv("SHELL"));
 	}else{
-		shell = args[1];
+		for(int i = 1; i < argc; ++i){
+			shell.push_back(args[i]);
+		}
 	}
-	bt_terminal_run(terminal_handle, shell.c_str());
+	terminal_exec(terminal_handle, shell);
 	bt_wait_thread(thread);
 	return 0;
 }
