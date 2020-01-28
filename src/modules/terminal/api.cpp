@@ -169,6 +169,7 @@ void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 					regs->eax = (uint32_t)vt->getpos();
 				}
 			}
+			break;
 		}
 		case bt_terminal_api::GetTerminalTitle:{
 			bt_handle_info handle = get_user_handle((bt_handle_t)regs->ebx, getpid());
@@ -180,6 +181,15 @@ void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 					regs->eax = strlen(vt->get_title());
 				}
 			}
+			break;
+		}
+		case bt_terminal_api::GetTerminalID:{
+			bt_handle_info handle = get_user_handle((bt_handle_t)regs->ebx, getpid());
+			if(handle.type == terminal_handle_type){
+				uint64_t termid = *(uint64_t*)handle.value;
+				regs->eax = (uint32_t)termid;
+			}
+			break;
 		}
 	}
 }

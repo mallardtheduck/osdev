@@ -190,6 +190,7 @@ ENUM_START(bt_terminal_api)
 	ENUM_SET(bt_terminal_api, TerminalRun, 4),
 	ENUM_SET(bt_terminal_api, GetTerminalPos, 5),
 	ENUM_SET(bt_terminal_api, GetTerminalTitle, 6),
+	ENUM_SET(bt_terminal_api, GetTerminalID, 7),
 ENUM_END
 ENUM_TYPE(bt_terminal_api);
 
@@ -213,6 +214,7 @@ EXTERN_C void bt_terminal_queue_event(bt_handle_t terminal, bt_terminal_event *e
 EXTERN_C bt_pid_t bt_terminal_run(bt_handle_t terminal, const char *command);
 EXTERN_C size_t bt_terminal_get_pos(bt_handle_t terminal);
 EXTERN_C size_t bt_terminal_get_title(bt_handle_t terminal, size_t size, char *buf);
+EXTERN_C uint32_t bt_terminal_get_id(bt_handle_t terminal);
 
 #ifdef __cplusplus
 }

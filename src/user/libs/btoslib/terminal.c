@@ -42,3 +42,7 @@ size_t bt_terminal_get_pos(bt_handle_t terminal){
 size_t bt_terminal_get_title(bt_handle_t terminal, size_t size, char *buf){
 	return bt_terminal_api_call(ENUM_GET(bt_terminal_api, GetTerminalTitle), terminal, size, (uint32_t)buf);
 }
+
+uint32_t bt_terminal_get_id(bt_handle_t terminal){
+	return bt_terminal_api_call(ENUM_GET(bt_terminal_api, GetTerminalID), terminal, 0, 0);
+}
