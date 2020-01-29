@@ -78,6 +78,10 @@ import-files:=\
  data/btos/lib/gui.ell \
  data/btos/lib/resc.ell \
  data/btos/cmd/rescutil.elx \
+ data/btos/lib/shell.ell \
+ data/btos/system/clipboard.elx \
+ data/btos/lib/clipboard.ell \
+ data/btos/cmd/cliputil.elx \
  
 pkg-files:= $(shell find pkgfiles -type f)
 
@@ -317,6 +321,18 @@ data/btos/lib/resc.ell: ../../user/libs/resc/resc.ell
 	cp $< $@
 
 data/btos/cmd/rescutil.elx: ../../user/cmds/rescutil/rescutil.elx
+	cp $< $@
+
+data/btos/lib/shell.ell: ../../user/libs/shell/shell.ell
+	cp $< $@
+
+data/btos/system/clipboard.elx: ../../user/system/clipboard/clipboard.elx
+	cp $< $@
+	
+data/btos/cmd/cliputil.elx: ../../user/libs/clipboard/cliputil.elx
+	cp $< $@
+
+data/btos/lib/clipboard.ell: ../../user/libs/clipboard/clipboard.ell
 	cp $< $@
 
 create.directories: Makefile

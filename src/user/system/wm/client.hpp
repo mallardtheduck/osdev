@@ -35,6 +35,8 @@ public:
 	bool HandleMessage(const Message &msg) override;
 	void SendEvent(const wm_Event &e);
 	void SendNextEvent();
+	
+	bt_pid_t GetPID();
 };
 
 #endif // _CLIENT_HPP

@@ -7,11 +7,12 @@
 
 #include <cstring>
 #include <malloc.h>
+#include <unistd.h>
 
 using namespace btos_api::gds;
 
 extern "C" uint64_t GDS_LoadPNG(int fd){
-	FILE *file = fdopen(fd, "rb");
+	FILE *file = fdopen(dup(fd), "rb");
 	ok_png *image = ok_png_read(file, OK_PNG_INFO_ONLY);
 	if(image && file){
 		size_t width = image->width;
@@ -30,13 +31,15 @@ extern "C" uint64_t GDS_LoadPNG(int fd){
 		
 		auto mapping = SHMMapping(shmRegion, (void*)data, 0, pages, bt_shm_flags::Normal);
 		image = ok_png_read_to_buffer(file, data, 0, OK_PNG_COLOR_FORMAT_BGRA);
-		ok_png_free(image);
 		fclose(file);
 		
 		Surface shmSurf(gds_SurfaceType::Memory, width, height, 100, gds_ColourType::True | gds_ColourType::SHM_Alpha255, shmRegion, 0);
 		uint64_t bmpSurf = GDS_NewSurface(gds_SurfaceType::Bitmap, width, height, 100, gds_ColourType::True);
 		GDS_SelectSurface(bmpSurf);
 		GDS_Blit(shmSurf.GetID(), 0, 0, width, height, 0, 0, width, height, 100, gds_BlitFlags::Overwrite);
+		GDS_Compress();
+		//This also frees 'data'
+		ok_png_free(image);
 		return bmpSurf;
 	}else{
 		if(file) fclose(file);

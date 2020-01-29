@@ -34,7 +34,7 @@ namespace btos_api{
 		bt_msg_filter filter;
 		filter.flags = bt_msg_filter_flags::NonReply;
 		auto msg = Message::RecieveFiltered(filter);
-		while(HandleMessage(msg)) msg.Next();
+		while(!terminate && HandleMessage(msg) && !terminate) msg.Next();
 	}
 
 	bool MessageLoop::HandleMessage(const Message &msg){
@@ -51,5 +51,16 @@ namespace btos_api{
 	
 	const Message &MessageLoop::GetCurrent() const{
 		return *current;
+	}
+
+	void MessageLoop::Terminate(){
+		terminate = true;
+		bt_msg_header msg;
+		msg.flags = 0;
+		msg.to = bt_getpid();
+		msg.type = -1;
+		msg.length = 0;
+		msg.content = nullptr;
+		msg.id = bt_send(msg);
 	}
 }

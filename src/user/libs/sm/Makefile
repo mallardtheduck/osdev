@@ -17,7 +17,7 @@ LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L.
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared
 AR-FLAGS := rcs -o $(LIBRARY-NAME)
 LINK-OPTIONS := -lsm -lgcc_s -lstdc++ -lbtoscore -lm 
-LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib
+LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lbtoscore -lm -lbtoslib -lregistry -lresc
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")

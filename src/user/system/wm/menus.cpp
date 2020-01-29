@@ -6,12 +6,14 @@
 #include <sstream>
 #include <gds/screen.hpp>
 
-#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
+//#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
+#define DBG(x)
 
 using namespace std;
 using namespace gds;
 
 static vector<shared_ptr<Menu>> currentMenus;
+static map<uint64_t, weak_ptr<Menu>> allMenus;
 
 MenuItem::MenuItem(const wm_MenuItem &i) :
 	MenuItem(i.text, i.flags, GetMenu(i.childMenu), i.image ? make_shared<Surface>(Surface::Wrap(i.image, true)) : nullptr, ((i.flags & wm_MenuItemFlags::ChildMenu) ? MenuActionType::ChildMenu : ((i.flags & wm_MenuItemFlags::Separator) ? MenuActionType::None : MenuActionType::Custom)), i.actionID) {}
@@ -271,6 +273,10 @@ map<uint32_t, shared_ptr<MenuItem>> Menu::GetItems(){
 	return items;
 }
 
+Menu::~Menu(){
+	allMenus.erase(id);
+}
+
 bool MenuPointerInput(const bt_terminal_pointer_event &pevent){
 	bool handled = false;
 	vector<shared_ptr<Menu>> toBeClosed;
@@ -291,12 +297,14 @@ bool MenuPointerInput(const bt_terminal_pointer_event &pevent){
 }
 
 void OpenMenu(std::shared_ptr<Menu> menu, std::weak_ptr<Window> win, const Point &p){
-	currentMenus.push_back(menu);
-	menu->SetWindow(win);
-	Screen.BeginQueue();
-	menu->Draw(p, {0, 0}, true);
-	Screen.CommitQueue();
-	RefreshScreen(menu->GetBoundingRect());
+	if(menu){
+		currentMenus.push_back(menu);
+		menu->SetWindow(win);
+		Screen.BeginQueue();
+		menu->Draw(p, {0, 0}, true);
+		Screen.CommitQueue();
+		RefreshScreen(menu->GetBoundingRect());
+	}
 }
 
 void CloseMenu(std::shared_ptr<Menu> menu){
@@ -315,8 +323,11 @@ void CloseMenu(std::shared_ptr<Menu> menu){
 	RefreshScreen(refreshList);	
 }
 
-shared_ptr<Menu> GetMenu(uint64_t /*id*/){
-	return NULL;
+shared_ptr<Menu> GetMenu(uint64_t id){
+	auto it = allMenus.find(id);
+	if(it != allMenus.end()){
+		return it->second.lock();
+	}else return nullptr;
 }
 
 shared_ptr<Menu> GetDefaultWindowMenu(){
@@ -343,7 +354,9 @@ shared_ptr<Menu> GetWindowMenuTemplate(){
 shared_ptr<Menu> CreateMenu(uint64_t id){
 	static uint64_t id_counter = 0;
 	if(id == UINT64_MAX) id = ++id_counter;
-	return make_shared<Menu>(id);
+	auto ret = make_shared<Menu>(id);
+	allMenus[id] = ret;
+	return ret;
 }
 
 void RedrawMenus(const Rect &r){

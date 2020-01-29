@@ -80,7 +80,7 @@ void set_palette(){
 		palette[i] = e;
 	}
 	VBE_SetPalette(palette);
-	delete palette;
+	delete[] palette;
 }
 
 bt_video_palette_entry get_palette_entry(uint8_t entry){

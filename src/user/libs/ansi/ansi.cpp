@@ -380,7 +380,7 @@ extern "C" void end_ansi(){
 		btos_set_specific_filenum_virt(fileno(stdout), real_stdout);
 		btos_set_specific_filenum_virt(fileno(stdin), real_stdin);
 		free(real_stdout);
-		free(real_stdout);
+		free(real_stdin);
 		ansi_on = false;
 		SetEnv("TERM", "", (1 << 3));
 	}

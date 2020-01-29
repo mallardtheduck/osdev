@@ -88,6 +88,7 @@ public:
 	void MenuAction(uint64_t menu, uint32_t action);
 	void Move(gds::Point newpos);
 	void Resize(uint32_t w, uint32_t h);
+	void GlobalEvent(wm_EventType::Enum e, std::shared_ptr<Window> win);
 	
 	void SetVisible(bool v, bool update = true);
 	bool GetVisible();
@@ -104,6 +105,10 @@ public:
 	
 	void SetModal(std::weak_ptr<Window> win);
 	void ClearModal();
+	
+	std::shared_ptr<Client> GetOwner();
+
+	void Compress();
 };
 
 #endif // WINDOW_HPP

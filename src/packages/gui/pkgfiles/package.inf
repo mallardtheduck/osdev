@@ -13,3 +13,105 @@ path = /
 file = calc.elx
 type = app
 
+[feature-folder]
+
+name = gui.app.folder
+description = Folder View
+path = /
+file = folder.elx
+type = app
+
+[feature-notepad]
+
+name = gui.app.notepad
+description = Notepad
+path = /
+file = notepad.elx
+type = app
+
+[feature-appview]
+
+name = gui.app.appview
+description = Application View
+path = /
+file = appview.elx
+type = app
+
+[feature-elxrun]
+
+name = gui.sysapp.elxrun
+description = ELX launcher
+path = /
+file = elxrun.elx
+type = sysapp
+
+[feature-launcher]
+
+name = gui.sysapp.launcher
+description = Launcher
+path = /
+file = launcher.elx
+type = sysapp
+
+[feature-ses-launcher]
+
+name = gui.ses.wmmenu
+description = GUI (Launcher) session type
+path = /
+file = launcher.elx
+type = sm.ses
+
+[filetype-txt]
+
+extension = .txt
+mimetype = text/plain
+
+[filetype-ini]
+
+extension = .ini
+mimetype = text/plain
+
+[filetype-inf]
+
+extension = .inf
+mimetype = text/plain
+
+[filetype-cmd]
+
+extension = .cmd
+mimetype = application/x-cmd
+
+[assoc-txt]
+
+filetype = filetype-txt
+feature = feature-notepad
+description = Text file
+
+[assoc-ini]
+
+filetype = filetype-ini
+feature = feature-notepad
+description = INI file
+
+[assoc-inf]
+
+filetype = filetype-inf
+feature = feature-notepad
+description = INF file
+
+[assoc-cmd]
+
+filetype = filetype-cmd
+feature = feature-notepad
+description = Command script
+
+[filetype-elx]
+
+extension = .elx
+mimetype = application/x-elx
+
+[assoc-elx]
+
+filetype = filetype-elx
+feature = feature-elxrun
+description = Executable

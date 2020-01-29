@@ -10,7 +10,7 @@ BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -std=gnu99
 LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME)
-LINK-OPTIONS := -lc -lgcc_s -lbtoscore -lstdc++
+LINK-OPTIONS := -lc -lgcc_s -lbtoscore -lstdc++ -lwm
 
 ASFILES := $(shell find . -type f -name "*.s")
 CFILES := $(shell find . -type f -name "*.c")

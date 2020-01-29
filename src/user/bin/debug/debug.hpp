@@ -32,7 +32,7 @@ void debug_peek_string(char *dst, pid_t pid, uint32_t src, size_t max_size);
 void debug_poke(pid_t pid, uint32_t dst, void *src, size_t size);
 void debug_stop(pid_t pid);
 void debug_continue(pid_t pid);
-bool debug_setbreakpoint(uint64_t thread, intptr_t addr);
+bool debug_setbreakpoint(uint64_t thread, intptr_t addr, uint8_t type);
 bool debug_clearbreakpoint(uint64_t thread, intptr_t addr);
 uint32_t debug_getbpinfo(uint64_t thread);
 

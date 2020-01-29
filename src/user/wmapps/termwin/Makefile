@@ -1,4 +1,6 @@
 OUTPUT-NAME := termwin.elx
+RESC-TAR-NAME := termwin_resc.tar
+RESC-VAR-NAME := termwin_resc
 
 BUILD-AS := i686-pc-btos-as
 BUILD-AS-OPTIONS := -g -fPIC -c
@@ -34,8 +36,8 @@ dummy.delete:
 	-@$(RM) *.o
 	-@$(RM) $(OUTPUT-NAME)
 
-$(OUTPUT-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile
-	$(LINK) $(LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LINK-OPTIONS)
+$(OUTPUT-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile $(RESC-TAR-NAME).o
+	$(LINK) $(LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(RESC-TAR-NAME).o $(LINK-OPTIONS)
 
 .s.o: %.s Makefile
 	$(BUILD-AS) $< -o $@ $(BUILD-AS-OPTIONS)
@@ -45,3 +47,11 @@ $(OUTPUT-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile
 
 .cpp.o: %.cpp Makefile
 	$(BUILD-CPP) -MMD -MP $(BUILD-CPP-FLAGS) $< -o $@ $(BUILD-CPP-OPTIONS)
+
+$(RESC-TAR-NAME).h $(RESC-TAR-NAME).o: $(RESC-TAR-NAME)
+	../../../scripts/elfembed.sh $(RESC-TAR-NAME) resc $(RESC-VAR-NAME)
+	
+$(RESC-TAR-NAME): $(RESCFILES)
+	tar cf $@ -C resc .
+	
+include resc.mk

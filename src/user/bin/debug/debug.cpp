@@ -76,8 +76,8 @@ void debug_continue(pid_t pid){
 	call_debug(bt_debug_function::ContinueProcess, (uint32_t)pid, 0, 0);
 }
 
-bool debug_setbreakpoint(uint64_t thread, intptr_t addr){
-	return !!call_debug(bt_debug_function::SetBreakpoint, (uint32_t)&thread, addr, 0);
+bool debug_setbreakpoint(uint64_t thread, intptr_t addr, uint8_t type){
+	return !!call_debug(bt_debug_function::SetBreakpoint, (uint32_t)&thread, addr, (uint32_t)type);
 }
 
 bool debug_clearbreakpoint(uint64_t thread, intptr_t addr){

@@ -27,6 +27,8 @@ private:
 	
 	std::shared_ptr<IControl> resizeHandle;
 	
+	uint32_t curSubs;
+	
 	gds::Surface &GetSurface();
 	gds::Rect GetBoundingRect();
 
@@ -38,10 +40,12 @@ private:
 	std::function<void(const gds::Rect&)> onResize;
 	std::function<void()> onExpand;
 	std::function<void(const gds::Rect&)> onMove;
+	std::function<void(const wm_Event &e)> onGlobal;
 	
 	bool HandleEvent(const wm_Event &e);
 	void CreateResizeHandle();
 	void PerformResize();
+	
 public:
 	Form(const gds::Rect &r, uint32_t options, const std::string &title);
 	
@@ -49,6 +53,9 @@ public:
 	void OnResize(std::function<void(const gds::Rect&)> oR);
 	void OnExpand(std::function<void()> oX);
 	void OnMove(std::function<void(const gds::Rect&)> oM);
+	void OnGlobal(std::function<void(const wm_Event &e)> oG);
+	
+	void Resize(uint32_t w, uint32_t h);
 };
 	
 }

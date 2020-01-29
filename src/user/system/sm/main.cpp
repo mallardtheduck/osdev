@@ -3,6 +3,7 @@
 #include <vector>
 #include <tuple>
 #include <sstream>
+#include <algorithm>
 
 #include <btos/processlist.hpp>
 #include <btos/envvars.hpp>
@@ -48,35 +49,13 @@ void kill_children(){
 }
 
 std::pair<bool, SessionType> GetSessionType(string &name){
-	auto sessionFilePath = SessionsPath + name + ".ini";
-	auto entry = bt_stat(sessionFilePath.c_str());
-	if(!entry.valid || entry.type != FS_File){
-		auto feat = reg::GetFeatureByName(name);
-		std::stringstream ss;
-		ss << "\'" << name << "\' is a feature." << std::endl;
-		ss << feat.description << std::endl;
-		bt_zero(ss.str().c_str());
-		if(feat.type == "sm.ses"){
-			auto pkg = reg::GetPackageById(feat.package);
-			sessionFilePath = pkg.path + feat.path + feat.file;
-			entry = bt_stat(sessionFilePath.c_str());
-		}
-	}
-	if(entry.valid && entry.type == FS_File){
-		auto file = ReadIniFile(sessionFilePath);
-		auto section = file["session"];
-		auto name = section["name"];
-		auto leadElx = EnvInterpolate(section["lead"]);
-		vector<string> svcs;
-		if(file.find("services") != file.end()){
-			auto services = file["services"];
-			for(auto s : services){
-				svcs.push_back(s.second);
-			}
-		}
-		return {true, SessionType{name, leadElx, svcs}};
-	}
-	return {false, {}};
+	auto sessions = GetSessionTypes();
+	
+	auto ses = std::find_if(sessions.begin(), sessions.end(), [&](const SessionType &s){
+		return s.GetID() == name;
+	});
+	if(ses != sessions.end()) return {true, *ses};
+	else return {false, {}};
 }
 
 

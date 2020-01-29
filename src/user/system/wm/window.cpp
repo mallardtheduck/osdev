@@ -86,9 +86,6 @@ void Window::SetPosition(Point p){
 		DrawAndRefreshWindows({oldrect, newrect});
 		//DrawAndRefreshWindows(newrect, id);
 	}
-	stringstream ss;
-	ss << "WM: Window '" << title << "' moved to (" << p.x << ", " << p.y << ")."<< endl;
-	bt_zero(ss.str().c_str());
 }
 
 Point Window::GetPosition(){
@@ -101,10 +98,12 @@ Point Window::GetContentPosition(){
 
 void Window::SetTitle(string ntitle){
 	title=ntitle;
-	RefreshTitleBar(true);
-	Rect r = GetBoundingRect();
-	r.h = GetMetric(TitleBarSize);
-	DrawAndRefreshWindows(r);
+	if(HasTitleBar()){
+		RefreshTitleBar(true);
+		Rect r = GetBoundingRect();
+		r.h = GetMetric(TitleBarSize);
+		DrawAndRefreshWindows(r);
+	}
 }
 
 std::string Window::GetTitle(){
@@ -180,7 +179,7 @@ bool Window::HasTitleBar(){
 }
 
 bool Window::HasBorder(){
-	return !(options & wm_WindowOptions::NoFrame);
+	return (options & wm_WindowOptions::NoFrame) != wm_WindowOptions::NoFrame;
 }
 
 void Window::KeyInput(uint32_t key){
@@ -236,7 +235,9 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			if(firstFrame || newpos.x != pos.x || newpos.y != pos.y){
 				Rect oldrect = GetBoundingRect();
 				DrawWindows(oldrect, 0, true);
-				Screen.Blit(*dragImage, {0, 0, oldrect.w, oldrect.h + GetMetric(TitleBarSize)}, {newpos.x, newpos.y, oldrect.w, oldrect.h + GetMetric(TitleBarSize)});
+				auto h = oldrect.h;
+				if(HasTitleBar()) h += GetMetric(TitleBarSize);
+				Screen.Blit(*dragImage, {0, 0, oldrect.w, h}, {newpos.x, newpos.y, oldrect.w, h});
 				pos = newpos;
 				Rect newrect = GetBoundingRect();
 				RefreshScreen(TileRects(oldrect, newrect));
@@ -288,8 +289,8 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			UnGrab();
 			dragMode = DragMode::None;
 			RefreshRectEdges({pos.x, pos.y, GetWidth() + last_drag_pos.x, GetHeight() + last_drag_pos.y}, GetMetric(BorderWidth));
-			if(last_drag_pos.x || last_drag_pos.y) Resize(gds_info.w + last_drag_pos.x, gds_info.h + last_drag_pos.y);
-			else PointerInput(pevent);
+			/*if(last_drag_pos.x || last_drag_pos.y)*/ Resize(gds_info.w + last_drag_pos.x, gds_info.h + last_drag_pos.y);
+			//else PointerInput(pevent);
 			last_drag_pos = {0, 0};
 		}
 	}else{
@@ -332,7 +333,7 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 			else if(pevent.type == bt_terminal_pointer_event_type::Move) e.type = wm_EventType::PointerMove;
 			else return;
 			shared_ptr<Client> client = owner.lock();
-			if(client && (e.type & event_subs) == e.type){
+			if(client && (e.type & event_subs) == (uint32_t)e.type){
 				Point cpoint = Reoriginate(epoint, GetContentOffset());
 				e.window_id = id;
 				e.Pointer.x = cpoint.x;
@@ -346,28 +347,27 @@ void Window::PointerInput(const bt_terminal_pointer_event &pevent){
 
 void Window::DrawGrabbed(const Rect &r){
 	if(!Overlaps(r, GetBoundingRect())) return;
-	if(GetMetric(FullWindowDrag)){
-		Rect dstRect = Intersection(r, GetBoundingRect());
-		Rect srcRect = Reoriginate(dstRect, pos);
-		DBG("WM: dstRect: (" << dstRect.x << ", " << dstRect.y << ") " << dstRect.w << " x " << dstRect.h);
-		DBG("WM: srcRect: (" << srcRect.x << ", " << srcRect.y << ") " << srcRect.w << " x " << srcRect.h);
-		if(!dragImage){
-			dragImage = make_shared<Surface>(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h, 100, gds_info.colourType);
-			Draw(active, true, dragImage);
-			SetVisible(false, false);
+	if(dragMode == DragMode::Move){
+		if(GetMetric(FullWindowDrag)){
+			Rect dstRect = Intersection(r, GetBoundingRect());
+			Rect srcRect = Reoriginate(dstRect, pos);
+			DBG("WM: dstRect: (" << dstRect.x << ", " << dstRect.y << ") " << dstRect.w << " x " << dstRect.h);
+			DBG("WM: srcRect: (" << srcRect.x << ", " << srcRect.y << ") " << srcRect.w << " x " << srcRect.h);
+			if(!dragImage){
+				dragImage = make_shared<Surface>(gds_SurfaceType::Bitmap, GetBoundingRect().w, GetBoundingRect().h, 100, gds_info.colourType);
+				Draw(active, true, dragImage);
+				SetVisible(false, false);
+			}
+			Screen.Blit(*dragImage, {srcRect.x, srcRect.y, srcRect.w, srcRect.h}, {dstRect.x, dstRect.y, dstRect.w, dstRect.h});
+			RefreshScreen(r);
+		}else{
+			DrawBorder(Screen, {pos.x, pos.y, gds_info.w + GetWidth(), GetHeight()});
+			RefreshRectEdges({pos.x, pos.y, GetWidth(), GetHeight()}, GetMetric(BorderWidth));
 		}
-		Screen.Blit(*dragImage, {srcRect.x, srcRect.y, srcRect.w, srcRect.h}, {dstRect.x, dstRect.y, dstRect.w, dstRect.h});
-		RefreshScreen(r);
-	}else{
-		DrawBorder(Screen, {pos.x, pos.y, gds_info.w + GetWidth(), GetHeight()});
-		RefreshRectEdges({pos.x, pos.y, GetWidth(), GetHeight()}, GetMetric(BorderWidth));
 	}
 }
 
 void Window::PointerEnter(){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' pointer enter."<< endl;
-	bt_zero(ss.str().c_str());
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::PointerEnter)){
 		wm_Event e;
@@ -378,9 +378,6 @@ void Window::PointerEnter(){
 }
 
 void Window::PointerLeave(){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' pointer leave."<< endl;
-	bt_zero(ss.str().c_str());
 	if(pressed != WindowArea::None){
 		pressed = WindowArea::None;
 		RefreshTitleBar();
@@ -415,7 +412,9 @@ WindowArea Window::GetWindowArea(Point p){
 	if(p.x >= GetMetric(BorderWidth) && p.x < GetMetric(BorderWidth) + (int32_t)info.w){
 		if(p.y >= GetMetric(BorderWidth)){
 			if(p.y >= GetMetric(TitleBarSize) || !HasTitleBar()){
-				if(p.y < GetMetric(TitleBarSize) + (int32_t)info.h) return WindowArea::Content;
+				int32_t h = info.h;
+				if(HasTitleBar()) h += GetMetric(TitleBarSize);
+				if(p.y < h) return WindowArea::Content;
 				else return WindowArea::Border;
 			}else{
 				if(p.x < GetMetric(MenuButtonWidth) + GetMetric(BorderWidth)) return WindowArea::MenuButton;
@@ -449,9 +448,6 @@ bool Window::UpdateTitleBar(bool force){
 }
 
 void Window::OpenMenu(){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' open menu." << endl;
-	bt_zero(ss.str().c_str());
 	if(windowMenu){
 		auto t = GetWindowMenuTemplate();
 		auto m = MergeMenus(t, windowMenu, windowMenu->id);
@@ -463,8 +459,6 @@ void Window::OpenMenu(){
 }
 
 void Window::Close(){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' close."<< endl;
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::Close)){
 		wm_Event e;
@@ -475,9 +469,6 @@ void Window::Close(){
 }
 
 void Window::Hide(){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' hide."<< endl;
-	bt_zero(ss.str().c_str());
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::Hide)){
 		wm_Event e;
@@ -488,9 +479,6 @@ void Window::Hide(){
 }
 
 void Window::Expand(){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' expand."<< endl;
-	bt_zero(ss.str().c_str());
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::Expand)){
 		wm_Event e;
@@ -501,9 +489,6 @@ void Window::Expand(){
 }
 
 void Window::MenuAction(uint64_t menu, uint32_t action){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' menu action: " << action << endl;
-	bt_zero(ss.str().c_str());
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::MenuSelection)){
 		wm_Event e;
@@ -516,9 +501,6 @@ void Window::MenuAction(uint64_t menu, uint32_t action){
 }
 
 void Window::Move(Point newpos){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' move."<< endl;
-	bt_zero(ss.str().c_str());
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::Move)){
 		wm_Event e;
@@ -533,9 +515,7 @@ void Window::Move(Point newpos){
 }
 
 void Window::Resize(uint32_t w, uint32_t h){
-	stringstream ss;
-	ss << "WM: Window '" << title << "' resize."<< endl;
-	bt_zero(ss.str().c_str());
+	SetVisible(true, false);
 	shared_ptr<Client> client = owner.lock();
 	if(client && (event_subs & wm_EventType::Resize)){
 		wm_Event e;
@@ -545,6 +525,17 @@ void Window::Resize(uint32_t w, uint32_t h){
 		e.MoveResize.y = pos.y;
 		e.MoveResize.w = w;
 		e.MoveResize.h = h;
+		client->SendEvent(e);
+	}
+}
+
+void Window::GlobalEvent(wm_EventType::Enum et, std::shared_ptr<Window> win){
+	auto client = owner.lock();
+	if(client && (event_subs & et)){
+		wm_Event e;
+		e.window_id = id;
+		e.type = et;
+		e.Global.window_id = win->id;
 		client->SendEvent(e);
 	}
 }
@@ -562,6 +553,8 @@ uint32_t Window::Subscribe(){
 }
 
 void Window::SetOptions(uint32_t opts){
+	if((opts & wm_WindowOptions::Unlisted) && !(options & wm_WindowOptions::Unlisted)) SendGlobalEvent(wm_EventType::GlobalRemove, shared_from_this());
+	if(!(opts & wm_WindowOptions::Unlisted) && (options & wm_WindowOptions::Unlisted)) SendGlobalEvent(wm_EventType::GlobalAdd, shared_from_this());
 	options = opts;
 	if(GetVisible()) DrawWindows(GetBoundingRect(), id);
 	else DrawWindows(GetBoundingRect());
@@ -613,4 +606,12 @@ void Window::SetModal(std::weak_ptr<Window> win){
 
 void Window::ClearModal(){
 	modal.reset();
+}
+
+std::shared_ptr<Client> Window::GetOwner(){
+	return owner.lock();
+}
+
+void Window::Compress(){
+	content->Compress();
 }

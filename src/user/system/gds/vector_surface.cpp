@@ -4,12 +4,16 @@
 #include "fonts.hpp"
 #include <gd.h>
 #include <dev/rtc.h>
+#include <util/lrucache.hpp>
 
 #include <limits>
 
 using namespace std;
 
+static uint64_t cacheIdCounter = 0;
 static const size_t ZUnspecified = SIZE_MAX;
+
+static cache::lru_cache<uint64_t, std::shared_ptr<BitmapSurface>> renderCache(128);
 
 bool operator==(const VectorSurface::Rectangle &r1, const VectorSurface::Rectangle &r2){
 	return r1.x == r2.x && r1.y == r2.y && r1.w == r2.w && r1.h == r2.h;
@@ -25,7 +29,7 @@ bool VectorSurface::Contains(const Rectangle &outer, const Rectangle &inner){
 }
 
 bool VectorSurface::InRect(int32_t x, int32_t y, const Rectangle &r){
-	if(x >= r.x && x < (r.x + (int32_t)r.w) && y >= r.y && y < (r.y + (int32_t)r.h)) return true;
+	if(x >= r.x && x <= (r.x + (int32_t)r.w) && y >= r.y && y <= (r.y + (int32_t)r.h)) return true;
 	else return false;
 }
 
@@ -73,15 +77,35 @@ bool VectorSurface::OpInRect(const VectorOp &vop, const VectorSurface::Rectangle
 	}
 }
 
+std::shared_ptr<BitmapSurface> VectorSurface::GetCache(bool &created){
+	if(cacheId && renderCache.exists(cacheId)){
+		created = false;
+		return renderCache.get(cacheId);
+	}else{
+		created = true;
+		cacheId = ++cacheIdCounter;
+		auto ret = make_shared<BitmapSurface>(width, height, colourType);
+		renderCache.put(cacheId, ret);
+		return ret;
+	}
+}
+
+void VectorSurface::DropCache(){
+	if(cacheId && renderCache.exists(cacheId)) renderCache.drop(cacheId);
+}
+
 VectorSurface::VectorSurface(size_t w, size_t h, uint32_t cT, uint32_t /*scale*/) : width(w), height(h), colourType(cT) {}
 
-VectorSurface::~VectorSurface() {}
+VectorSurface::~VectorSurface() {
+	DropCache();
+}
 
 size_t VectorSurface::AddOperation(gds_DrawingOp op){
 	uint32_t id = ++opCounter;
 	while(ops.find(id) != ops.end()) id = ++opCounter;
 	ops.insert({id, {ZUnspecified, op, NULL}});
 	update = true;
+	isCompressed = false;
 	OrderOps();
 	return id;
 }
@@ -90,6 +114,7 @@ void VectorSurface::RemoveOperation(size_t id){
 	if(ops.find(id) != ops.end()){
 		ops.erase(id);
 		update = true;
+		isCompressed = false;
 	}
 }
 
@@ -134,6 +159,7 @@ void VectorSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> p){
 	if(ops.find(p->op_id) != ops.end()){
 		ops[p->op_id].params = p;
 		update = true;
+		isCompressed = false;
 	}
 }
 
@@ -155,19 +181,22 @@ void VectorSurface::Resize(size_t w, size_t h, bool i){
 	}
 }
 
-std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){	
-	if(!cache || update || !Contains(cacheRect, renderRect)){
+std::shared_ptr<BitmapSurface> VectorSurface::RenderToCache(){
+	if(isRendering) bt_zero("GDS: Already rendering this surface!\n");
+	bool created;
+	auto cache = GetCache(created);
+	if(!isRendering && (created || update || !Contains(cacheRect, renderRect))){
+		isRendering = true;
 		OrderOps();
 		vector<VectorOp> sops;
 		for(const auto &op : ops){
 			sops.push_back(op.second);
 		}
 		sort(sops.begin(), sops.end(), [](const VectorOp &a, const VectorOp &b){return a.zOrder < b.zOrder;});
-		if(!cache || cache->GetWidth() != width || cache->GetHeight() != height){
-			bt_zero("GDS: vector_surface cache allocate.\n");
-			cache.reset(new BitmapSurface(width, height, colourType));
+		if(cache->GetWidth() != width || cache->GetHeight() != height){
+			DropCache();
+			cache = GetCache(created);
 		}else cache->Clear();
-		if(!cache) return nullptr;
 		
 		auto &bsurf = *cache;
 		if(renderRect.w){
@@ -175,7 +204,7 @@ std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
 		}
 		size_t opsRendered = 0;
 		for(const auto &op : sops){
-			if(renderRect.w && !OpInRect(op, renderRect)) continue;
+			if(renderRect != Rectangle(0, 0, width, height) && !OpInRect(op, renderRect)) continue;
 			++opsRendered;
 			gds_DrawingOp dop = op.op;
 			shared_ptr<gds_OpParameters> p;
@@ -205,15 +234,39 @@ std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
 		}
 		cacheRect = renderRect;
 		update = false;
+		if(isCompressed) cache->Compress();
+		isRendering = false;
 	}
-	return cache->Render(100);
+	return cache;
+}
+
+std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
+	return RenderToCache()->Render(100);
 }
 
 void VectorSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h, uint32_t flags){
-	renderRect = {srcX, srcY, w, h};
-	std::shared_ptr<GD::Image> src = Render(100);
-	renderRect = {0, 0, 0, 0};
-	if(src) FastBlit(*src, *dst, srcX, srcY, dstX, dstY, w, h, flags);
+	if(update){
+		if(srcX < 0){
+			if(w < (uint32_t)-srcX) return;
+			w += srcX;
+			dstX -= srcX;
+			srcX = 0;
+		}
+		if(srcY < 0){
+			if(h < (uint32_t)-srcY) return;
+			h += srcY;
+			dstY -= srcY;
+			srcY = 0;
+		}
+		if(srcX + w > (uint32_t)width) w = width - srcX;
+		if(srcY + h > (uint32_t)height) h = height - srcY;
+		renderRect = {srcX, srcY, w, h};
+	}else{
+		renderRect = {0, 0, width, height};
+	}
+	auto src = RenderToCache();
+	renderRect = {0, 0, width, height};
+	if(src) src->RenderTo(dst, srcX, srcY, dstX, dstY, w, h, flags);
 }
 
 void VectorSurface::OrderOps(){
@@ -260,11 +313,20 @@ void VectorSurface::ReorderOp(uint32_t op, uint32_t ref, gds_ReorderMode::Enum m
 	}
 	OrderOps();
 	update = true;
+	isCompressed = false;
 }
 
 void VectorSurface::Clear(){
 	ops.clear();
 	update = true;
+	isCompressed = false;
+}
+
+void VectorSurface::Compress(){
+	renderRect = {0, 0, width, height};
+	auto cache = RenderToCache();
+	cache->Compress();
+	isCompressed = true;
 }
 
 std::unique_ptr<gds_TextMeasurements> VectorSurface::MeasureText(const gds_TextParameters &p, std::string text){

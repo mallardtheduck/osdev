@@ -36,7 +36,7 @@ namespace btos_api{
 		char *buf = new char[size];
 		IOCtl(bt_terminal_ioctl::GetTitle, size, (char*)buf);
 		std::string ret = buf;
-		delete buf;
+		delete[] buf;
 		return ret;
 	}
 

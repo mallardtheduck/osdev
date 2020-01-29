@@ -1,0 +1,6 @@
+[app]
+name = Calculator
+category = Tools
+vendor = BT/OS
+icon = calculator
+mode = GUI

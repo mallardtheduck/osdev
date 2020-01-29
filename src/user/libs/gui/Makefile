@@ -5,7 +5,6 @@ RESC-VAR-NAME := guitest_resc
 LIBRESC-TAR-NAME := gui_resc.tar
 LIBRESC-VAR-NAME := gui_resc
 
-
 DESTINATION := $(HOME)/Projects/os/cross/i686-pc-btos
 
 BUILD-AS := i686-pc-btos-as

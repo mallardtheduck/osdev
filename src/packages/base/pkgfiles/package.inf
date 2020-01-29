@@ -42,6 +42,14 @@ path = /system/sessions/services/
 file = wm.ini
 type = sm.svc
 
+[feature-svc-clipboard]
+
+name = base.svc.clipboard
+description = Clipboard service
+path = /system/
+file = clipboard.elx
+type = sm.svc
+
 [feature-ses-cmd]
 
 name = base.ses.cmd

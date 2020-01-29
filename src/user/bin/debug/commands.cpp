@@ -249,6 +249,38 @@ void ldsyms_command(){
 	cout << "Done." << endl;
 }
 
+template<class Elem, class Traits>
+static void hex_dump(std::function<char(size_t)> getter, size_t offset, size_t aLength, std::basic_ostream<Elem, Traits>& aStream, size_t aWidth = 16){
+	size_t line = 0;
+	while (line != aLength)	{
+		aStream << "0x";
+		aStream.width(4);
+		aStream.fill('0');
+		aStream << std::hex << std::uppercase << line + offset << " : ";
+		std::size_t lineLength = std::min(aWidth, static_cast<size_t>(aLength - line));
+		for (std::size_t pass = 1; pass <= 2; ++pass)		{	
+			for (size_t next = line; next != aLength && next != line + aWidth; ++next){
+				char ch = getter(next);
+				switch(pass){
+				case 1:
+					aStream << (ch < 32 ? '.' : ch);
+					break;
+				case 2:
+					if(next != line && next != (line + lineLength)) aStream << " ";
+					aStream.width(2);
+					aStream.fill('0');
+					aStream << std::hex << std::uppercase << static_cast<int>(static_cast<unsigned char>(ch));
+					break;
+				}
+			}
+			if (pass == 1 && lineLength != aWidth) aStream << std::string(aWidth - lineLength, ' ');
+			aStream << " ";
+		}
+		aStream << std::endl;
+		line = line + lineLength;
+	}
+}
+
 void dump_command(const vector<string> &args){
 	if(!selected_pid){
 		cout << "No process selected." << endl;
@@ -264,13 +296,13 @@ void dump_command(const vector<string> &args){
 		return;
 	}
 	cout << "Symbol: " << sym.name << " At: 0x" << hex << sym.address << " In: " << sym.file << endl;
-	for(size_t i = 0; i < sym.size; ++i){
+	auto getter = [&](size_t i){ 
 		intptr_t addr = sym.address + i;
 		uint8_t c;
 		debug_peek(&c, selected_pid, addr, 1);
-		cout << hex << setfill('0') << setw(2) << (unsigned)c << ' ';
-	}
-	cout << endl;
+		return (char)c;
+	};
+	hex_dump(getter, sym.address, sym.size, std::cout);
 	cout.copyfmt(ios(NULL));
 }
 
@@ -311,11 +343,36 @@ void setbp_command(const vector<string> &args){
 		return;
 	}
 	
-	bool result = debug_setbreakpoint(selected_thread, sym.address);
+	bool result = debug_setbreakpoint(selected_thread, sym.address, 0);
 	if(!result){
 		cout << "Breakpoint could not be set." << endl;
 	}else{
 		cout << "Breakpoint set at: 0x" << hex << sym.address << endl;
+	}
+	cout.copyfmt(ios(NULL));
+}
+
+void setwp_command(const vector<string> &args){
+	if(!selected_thread){
+		cout << "No thread selected." << endl;
+		return;
+	}
+	
+	if(args.size() != 2){
+		cout << "No symbol specified." << endl;
+		return;
+	}
+	symbol sym = get_best_symbol(args[1]);
+	if(sym.address == 0){
+		cout << "Symbol not found." << endl;
+		return;
+	}
+	
+	bool result = debug_setbreakpoint(selected_thread, sym.address, 0xD);
+	if(!result){
+		cout << "Watchpoint could not be set." << endl;
+	}else{
+		cout << "Watchpoint set at: 0x" << hex << sym.address << endl;
 	}
 	cout.copyfmt(ios(NULL));
 }
@@ -465,6 +522,8 @@ bool do_command(string cmd){
 			disas_command(line);
 		}else if(line[0] == "setbp"){
 			setbp_command(line);
+		}else if(line[0] == "setwp"){
+			setwp_command(line);
 		}else if(line[0] == "clearbp"){
 			clearbp_command(line);
 		}else if(line[0] == "bpstat"){

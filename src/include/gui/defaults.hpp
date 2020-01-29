@@ -174,7 +174,11 @@ namespace icons{
 	std::shared_ptr<gds::Surface> GetTreeViewDefaultNoChildren();
 	std::shared_ptr<gds::Surface> GetTreeViewDefaultOpen();
 	std::shared_ptr<gds::Surface> GetMessageBoxDefault();
+	std::shared_ptr<gds::Surface> GetInputBoxDefault();
 }
+
+uint64_t GetDoubleClickTime();
+bool IsDoubleClick();
 
 }
 }

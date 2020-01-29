@@ -7,6 +7,7 @@
 #include <util/asprintf.h>
 
 static const uint32_t default_userspace_priority=100;
+static const size_t user_thread_kernel_stack_size=16384;
 
 extern "C" void proc_run_usermode(void *stack, proc_entry entry, int argc, char **argv);
 
@@ -264,26 +265,24 @@ void proc_end(pid_t pid) {
 		}
 	}
 	bool cont = true;
-	while (cont) {
-		cont = false;
-		for (map<handle_t, bt_handle_info>::iterator i = proc->handles.rbegin(); i != proc->handles.rend(); --i) {
-			if (i->second.type == kernel_handle_types::thread) {
- 				uint64_t thread_id = *(uint64_t *) i->second.value;
-				if (thread_id != sch_get_id()) {
-					sch_abort(thread_id);
-					proc_remove_thread(thread_id, pid);
-					cont = true;
-					break;
-				}else{
-					proc_remove_handle(i->first, pid);
-					cont = true;
-					break;
-				}
-			}
+	vector<bt_handle_t> thread_handles;
+	for(auto i = proc->handles.rbegin(); i != proc->handles.rend(); --i){
+		if(i->second.type == kernel_handle_types::thread){
+			thread_handles.push_back(i->first);
 		}
-		release_lock(proc->ulock);
-		sch_yield();
-		take_lock_exclusive(proc->ulock);
+	}
+	for(auto h : thread_handles){
+		auto info = proc_get_handle(h, pid);
+		auto thread_id = *(uint64_t*)info.value;
+		if(sch_getpid(thread_id) != pid){
+			panic("(PROC) Process ending unowned thread!");
+		}
+		if(thread_id != sch_get_id()){
+			sch_abort(thread_id);
+			proc_remove_thread(thread_id, pid);
+		}else{
+			proc_remove_handle(h, pid);
+		}
 	}
 	if(sch_get_pid_threadcount(pid, true) > 0){
 		proc_threads_blockcheck_params params = {pid, sch_get_id()};
@@ -440,7 +439,7 @@ pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
 	info->entry=proc.entry;
     info->stackptr=NULL;
     debug_event_notify(ret, 0, bt_debug_event::ProgramStart);
-	sch_new_thread(&proc_start, (void*)info, 8192);
+	sch_new_thread(&proc_start, (void*)info, user_thread_kernel_stack_size);
 	msg_send_event(btos_api::bt_kernel_messages::ProcessStart, (void*)&ret, sizeof(ret));
 	return ret;
 }
@@ -451,7 +450,7 @@ uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t 
     info->entry=entry;
     info->stackptr=stack;
     //TODO: parameter...
-    uint64_t thread_id=sch_new_thread(&proc_start, (void*)info, 4096);
+    uint64_t thread_id=sch_new_thread(&proc_start, (void*)info, user_thread_kernel_stack_size);
     proc_add_thread(thread_id);
     return thread_id;
 }
@@ -680,6 +679,7 @@ proc_status::Enum proc_get_status(pid_t pid){
 void proc_free_message_buffer(pid_t topid, pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return;
+	if(!proc->msg_buffers.has_key(topid)) return;
 	void *ptr=proc->msg_buffers[topid];
 	proc->msg_buffers.erase(topid);
 	release_lock(proc->ulock);
@@ -697,9 +697,14 @@ extern lock msg_lock;
 
 uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 	if(header.flags & btos_api::bt_msg_flags::Reply){
-		void *content = malloc(header.length);
-		if(header.length) memcpy(content, header.content, header.length);
-		header.content = content;
+		if(header.content && header.length){
+			void *content = malloc(header.length);
+			memcpy(content, header.content, header.length);
+			header.content = content;
+		}else{
+			header.content = nullptr;
+			header.length = 0;
+		}
 		return msg_send(header);
 	}
 	bool again=false;
@@ -731,6 +736,10 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 			proc->msg_buffers[header.to]=malloc(header.length);
 			memcpy(proc->msg_buffers[header.to], header.content, header.length);
 			header.content=proc->msg_buffers[header.to];
+		}else{
+			proc->msg_buffers.erase(header.to);
+			header.content = nullptr;
+			header.length = 0;
 		}
 		uint64_t ret = msg_send(header);
 		release_lock(proc->ulock);

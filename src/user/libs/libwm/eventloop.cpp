@@ -10,7 +10,20 @@ using namespace std;
 namespace btos_api{
 namespace wm{
 	
-	EventLoop *EventLoop::current = nullptr;
+	static std::vector<EventLoop*> activeLoops;
+	static bt_handle_t activeLoopsLock = bt_create_lock();
+	
+	static void AddLoop(EventLoop *loop){
+		bt_lock(activeLoopsLock);
+		activeLoops.push_back(loop);
+		bt_unlock(activeLoopsLock);
+	}
+	
+	static void RemoveLoop(EventLoop *loop){
+		bt_lock(activeLoopsLock);
+		activeLoops.erase(std::remove(activeLoops.begin(), activeLoops.end(), loop), activeLoops.end());
+		bt_unlock(activeLoopsLock);
+	}
 	
 	void EventThread(void *ptr){
 		EventLoop *evt = (EventLoop*)ptr;
@@ -56,7 +69,7 @@ namespace wm{
 		ThreadArgs *a = (ThreadArgs*)ptr;
 		EventLoop *evt = a->evt;
 		uint64_t winId = a->winId;
-		tfm::printf("WinEventThread: ID: %s\n", winId);
+		//tfm::printf("WinEventThread: ID: %s\n", winId);
 		a->running.Modify(AtomValue = 1);
 		evt->RunWindow(winId);
 	}
@@ -64,7 +77,7 @@ namespace wm{
 	void EventLoop::SetupWindow(std::shared_ptr<Window> win, bool independent){
 		bt_lock(lock);
 		auto id = win->GetID();
-		tfm::printf("EventLoop::SetupWindow %s %s\n", id, independent);
+		//tfm::printf("EventLoop::SetupWindow %s %s\n", id, independent);
 		windows.insert(make_pair(id, win));
 		winCountAtom.Modify(AtomValue = windows.size());
 		eventQueues[id] = {};
@@ -78,11 +91,17 @@ namespace wm{
 		bt_unlock(lock);
 	}
 
-	EventLoop::EventLoop() : eventThread(&EventThread, (void*) this) {}
+	void EventLoop::StartEventThread(){
+		if(!eventThread) eventThread.reset(new Thread(&EventThread, (void*)this));
+	}
+
+	EventLoop::EventLoop() {
+		AddLoop(this);
+	}
 	
-	EventLoop::EventLoop(const vector<shared_ptr<Window>> &wins, const vector<shared_ptr<Menu>> &ms) :
-	eventThread(&EventThread, (void*) this)
+	EventLoop::EventLoop(const vector<shared_ptr<Window>> &wins, const vector<shared_ptr<Menu>> &ms)
 	{
+		AddLoop(this);
 		for(auto w : wins){
 			AddWindow(w);
 		}
@@ -93,7 +112,8 @@ namespace wm{
 	
 	EventLoop::~EventLoop(){
 		quitAtom.Modify(AtomValue = 2);
-		eventThread.Wait();
+		if(eventThread) eventThread->Wait();
+		RemoveLoop(this);
 	}
 
 	void EventLoop::SetPreviewer(std::function<bool(const wm_Event&)> &fn){
@@ -124,8 +144,17 @@ namespace wm{
 	}
 
 	void EventLoop::RunLoop(){
-		quitAtom.WaitFor(AtomValue != 0);
+		RunLoopAsync();
+		Wait();
 	}
+
+	void EventLoop::RunLoopAsync(){
+		StartEventThread();
+	}
+
+	void EventLoop::Wait(){
+		quitAtom.WaitFor(AtomValue != 0);
+	}	
 	
 	void EventLoop::RunModal(std::shared_ptr<Window> modal){
 		SetupWindow(modal, false);
@@ -140,9 +169,8 @@ namespace wm{
 			while(eventQueues.find(id) != eventQueues.end() && windows.find(id) != windows.end() && !eventQueues[id].empty()){
 				auto win = windows[id];
 				auto event = eventQueues[id].front();
-				eventQueues[id].pop();
+				eventQueues[id].pop_front();
 				bt_unlock(lock);
-				current = this;
 				auto res = win->Event(event);
 				if(res && event.type == wm_EventType::MenuSelection){
 					bt_lock(lock);
@@ -152,7 +180,6 @@ namespace wm{
 						res = menu->Event(event.Menu.action);
 					}else bt_unlock(lock);
 				}
-				current = nullptr;
 				if(!res) quitAtom.Modify(AtomValue = 1);
 				bt_lock(lock);
 				for(auto w : winRemoveList) windows.erase(w);
@@ -163,12 +190,12 @@ namespace wm{
 				if(windows.size() == 0) quitAtom.Modify(AtomValue = 1);
 			}
 			if(windows.find(id) == windows.end()){
-				tfm::printf("EventLoop::RunWindow: window %s not in collection. Quitting.\n", id);
+				//tfm::printf("EventLoop::RunWindow: window %s not in collection. Quitting.\n", id);
 				quit = true;
 			}
 			bt_unlock(lock);
 			if(quitAtom.Read()){
-				tfm::printf("EventLoop::RunWindow: quitAtom activated. Quitting.\n", id);
+				//tfm::printf("EventLoop::RunWindow: quitAtom activated. Quitting.\n");
 				quit = true;
 			}
 			if(!quit) serial = eventSerial.WaitFor(AtomValue != serial);
@@ -191,15 +218,79 @@ namespace wm{
 		}
 		bt_lock(lock);
 		if(ret && windows.find(e.window_id) != windows.end()){
-			eventQueues[e.window_id].push(e);
+			auto &eventQ = eventQueues[e.window_id];
+			if(e.type == wm_EventType::PointerMove){
+				auto i = find_if(eventQ.begin(), eventQ.end(), [](const wm_Event &e){return e.type == wm_EventType::PointerMove;});
+				if(i != eventQ.end()) eventQ.erase(i);
+			}
+			eventQ.push_back(e);
 			eventSerial.Modify(++AtomValue);
 		}
 		bt_unlock(lock);
 		return ret;
 	}
 	
-	EventLoop *EventLoop::GetCurrent(){
-		return current;
+	EventLoop *EventLoop::GetFor(const Window &win){
+		typedef decltype(EventLoop::windows)::value_type wins_element;
+		
+		EventLoop *ret = nullptr;
+		bt_lock(activeLoopsLock);
+		for(auto loop : activeLoops){
+			auto &wins = loop->windows;
+			if(std::any_of(wins.begin(), wins.end(), [&](wins_element &w){
+				return w.second->GetID() == win.GetID();
+			})){
+				ret = loop;
+				break;
+			}
+		}
+		bt_unlock(activeLoopsLock);
+		return ret;
+	}
+	
+	EventLoop *EventLoop::GetFor(const Menu &menu){
+		typedef decltype(EventLoop::menus)::value_type menus_element;
+		
+		EventLoop *ret = nullptr;
+		bt_lock(activeLoopsLock);
+		for(auto loop : activeLoops){
+			auto &menus = loop->menus;
+			if(std::any_of(menus.begin(), menus.end(), [&](menus_element &w){
+				return w.second->GetID() == menu.GetID();
+			})){
+				ret = loop;
+				break;
+			}
+		}
+		bt_unlock(activeLoopsLock);
+		return ret;
+	}
+
+	EventLoop::LockHolder::LockHolder(bt_handle_t &l) : lock(&l){
+		bt_lock(*lock);
+	}
+
+	EventLoop::LockHolder::LockHolder(LockHolder &&other) : lock(other.lock){
+		other.lock = nullptr;
+	}
+
+	EventLoop::LockHolder &EventLoop::LockHolder::operator=(LockHolder &&other){
+		lock = other.lock;
+		other.lock = nullptr;
+		return *this;
+	}
+
+	void EventLoop::LockHolder::Unlock(){
+		if(lock) bt_unlock(*lock);
+		lock = nullptr;
+	}
+
+	EventLoop::LockHolder::LockHolder::~LockHolder(){
+		if(lock) bt_unlock(*lock);
+	}
+
+	EventLoop::LockHolder EventLoop::Lock(){
+		return LockHolder(lock);
 	}
 }
 }

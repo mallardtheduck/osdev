@@ -78,6 +78,6 @@ string output_message(bt_msg_header &msg) {
     bt_msg_content(&msg, data, msg.length);
     cout << "Data: \"" << data << "\"" << endl;
     string ret=data;
-    delete data;
+    delete[] data;
     return ret;
 }

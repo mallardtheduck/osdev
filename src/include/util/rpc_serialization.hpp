@@ -1,6 +1,9 @@
 #ifndef _RPC_SERIALIZATION_HPP
 #define _RPC_SERIALIZATION_HPP
 
+#include <tuple>
+#include <iostream>
+
 namespace rpc{
 	template<typename T> void serialize(std::ostream &os, const T &val){
         static_assert(std::is_fundamental<T>::value, "Non-fundamental types need custom serialization!");
@@ -55,19 +58,27 @@ namespace rpc{
         }
 	}
 	
-	template<typename T> auto deserializeAll(std::istream &is){
-		typename std::remove_cv<typename std::remove_reference<T>::type>::type v;
+	template<typename T> 
+	std::tuple<typename std::decay<T>::type> 
+	deserializeAll(std::istream &is){
+		typename std::decay<T>::type v;
         deserialize(is, v);
         return std::make_tuple(v);
     }
 
-    template<typename T, typename Ta, typename ...Ts> auto deserializeAll(std::istream &is){
-        typename std::remove_cv<typename std::remove_reference<T>::type>::type v;
+    template<typename T, typename Ta, typename ...Ts>
+    std::tuple<
+        typename std::decay<T>::type, 
+        typename std::decay<Ta>::type, 
+        typename std::decay<Ts>::type...
+    >
+    deserializeAll(std::istream &is){
+        typename std::decay<T>::type v;
         deserialize(is, v);
         return std::tuple_cat(std::make_tuple(v), deserializeAll<Ta, Ts...>(is));
     }
 
-	inline auto deserializeAll(std::istream &){
+	inline std::tuple<> deserializeAll(std::istream &){
 		return std::make_tuple();
 	}	
 }

@@ -19,6 +19,17 @@ static uint64_t surfaceCounter = 0;
 
 static map<bt_pid_t, shared_ptr<Client>> allClients;
 
+static int32_t surfaceDeleteCounter = 0;
+static const int32_t surfaceDeleteThreshold = 16;
+
+static void PruneSurfaces(){
+	for(auto i = allSurfaces.begin(), last = allSurfaces.end(); i != last; ){
+		if(i->second.expired()) i = allSurfaces.erase(i);
+		else ++i;
+	}
+	surfaceDeleteCounter = 0;
+}
+
 template<typename T> static void SendReply(const Message &msg, const T &content) {
 	msg.SendReply(content, 0);
 }
@@ -27,6 +38,8 @@ Client::Client(bt_pid_t p) : pid(p) {
 }
 
 Client::~Client() {
+	surfaces.clear();
+	PruneSurfaces();
 }
 
 bool Client::HandleMessage(const Message &msg) {
@@ -76,6 +89,8 @@ bool Client::HandleMessage(const Message &msg) {
 			if(currentSurface) {
 				surfaces.erase(currentSurface);
 				currentSurface.reset();
+				++surfaceDeleteCounter;
+				if(surfaceDeleteCounter > surfaceDeleteThreshold) PruneSurfaces();
 			}
 			break;
 		}
@@ -239,7 +254,7 @@ bool Client::HandleMessage(const Message &msg) {
 					reply.length = mops->count * sizeof(uint32_t);
 					reply.content = (void*)ids;
 					bt_send(reply);
-					delete ids;
+					delete[] ids;
 				}
 				free(mops);
 			}else{
@@ -278,6 +293,10 @@ bool Client::HandleMessage(const Message &msg) {
 				reply.content = ret.get();
 				bt_send(reply);
 			}
+			break;
+		}
+		case gds_MsgType::Compress:{
+			if(currentSurface) currentSurface->Compress();
 			break;
 		}
 		default:{

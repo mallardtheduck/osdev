@@ -51,11 +51,14 @@ uint64_t AddWindow(shared_ptr<Window> win){
 	shared_ptr<Window> awin = activeWindow.lock();
 	if(!awin) activeWindow = win;
 	win->id = id;
+	if(!(win->GetOptions() & wm_WindowOptions::Unlisted)) SendGlobalEvent(wm_EventType::GlobalAdd, win);
 	return id;
 }
 
 void RemoveWindow(uint64_t id){
-	Rect bounds = GetWindow(id)->GetBoundingRect();
+	auto win = GetWindow(id);
+	if(!(win->GetOptions() & wm_WindowOptions::Unlisted)) SendGlobalEvent(wm_EventType::GlobalRemove, win);
+	Rect bounds = win->GetBoundingRect();
 	windows.erase(id);
 	DrawAndRefreshWindows(bounds);
 }
@@ -117,10 +120,11 @@ void DrawWindows(const Rect &r, uint64_t above, bool ignoreGrab){
 				w->Draw(w == awin, r);
 			}
 			else if(!rect) w->Draw(w == awin);
+			if(w != awin) w->Compress();
 		}
 	}
 	if(!ignoreGrab){
-		if(auto gwin = grabbedWindow.lock())gwin->DrawGrabbed(r);
+		if(auto gwin = grabbedWindow.lock()) gwin->DrawGrabbed(r);
 	}
 	Screen.CommitQueue();
 	RedrawMenus(r);
@@ -137,8 +141,10 @@ void DrawWindows(const vector<Rect> &v, uint64_t above){
 		if(!aboveYet && w->id == above) aboveYet = true;
 		if(!above || aboveYet) for(const auto &r: v) if(Overlaps(r, w->GetBoundingRect())){
 			w->Draw(w==awin, r);
+			if(w != awin) w->Compress();
 		}
 	}
+	if(auto gwin = grabbedWindow.lock()) for(const auto &r: v) gwin->DrawGrabbed(r);
 	Screen.CommitQueue();
 }
 
@@ -159,12 +165,12 @@ void RefreshScreen(const vector<Rect> &v){
 	for(const auto &t: tiles) RefreshScreen(t);
 }
 
-shared_ptr<Window> GetWindowAt(uint32_t x, uint32_t y){
+shared_ptr<Window> GetWindowAt(uint32_t x, uint32_t y, bool visibleOnly){
 	shared_ptr<Window> ret;
 	for(auto w = sortedWindows.rbegin(); w != sortedWindows.rend(); ++w){
 		shared_ptr<Window> win = w->lock();
 		if(!win) continue;
-		if(!win->GetVisible()) continue;
+		if(visibleOnly && !win->GetVisible()) continue;
 		Rect wrect = win->GetBoundingRect();
 		if(InRect(x, y, wrect)) return win;
 	}
@@ -208,7 +214,7 @@ void HandleInput(const bt_terminal_event &event){
 	else if(event.type == bt_terminal_event_type::Pointer){
 		if(event.pointer.type == bt_terminal_pointer_event_type::Move && event.pointer.x == (uint32_t)curpos.x && event.pointer.y == (uint32_t)curpos.y) return;
 		curpos.x = event.pointer.x; curpos.y = event.pointer.y;
-		shared_ptr<Window> win = GetWindowAt(event.pointer.x, event.pointer.y);
+		shared_ptr<Window> win = GetWindowAt(event.pointer.x, event.pointer.y, true);
 		shared_ptr<Window> pwin = pointerWindow.lock();
 		if(win != pwin){
 			if(pwin) pwin->PointerLeave();
@@ -245,6 +251,7 @@ static vector<Rect> ReduceRect(const Rect &r, uint64_t above){
 	vector<shared_ptr<Window>> wins = SortWindows();
 	bool aboveYet = false;
 	for(auto &w : wins){
+		if(!w->GetVisible()) continue;
 		if(!aboveYet){
 			if(w->id == above) aboveYet = true;
 		}else{
@@ -264,4 +271,20 @@ void DrawAndRefreshWindows(const Rect &r, uint64_t above){
 void DrawAndRefreshWindows(const vector<Rect> &v){
 	DrawWindows(v);
 	RefreshScreen(v);
+}
+
+void SendGlobalEvent(wm_EventType::Enum event, std::shared_ptr<Window> win){
+	for(auto &w : windows){
+		if((w.second->Subscribe() & event)){
+			w.second->GlobalEvent(event, win);
+		}
+	}
+}
+
+std::vector<uint64_t> GetValidWindowIDs(){
+	std::vector<uint64_t> ret;
+	for(auto &w : windows){
+		if(!(w.second->GetOptions() & wm_WindowOptions::Unlisted)) ret.push_back(w.second->id);
+	}
+	return ret;
 }

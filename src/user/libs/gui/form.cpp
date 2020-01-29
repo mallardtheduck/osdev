@@ -29,19 +29,24 @@ void Form::Update(){
 
 void Form::SetSubscribed(uint32_t subs){
 	uint32_t formSubs = wm_FrameEvents | wm_EventType::MenuSelection;
-	wm::Window::SetSubscribed(subs | formSubs);
+	if(onGlobal) formSubs |= wm_GlobalEvents;
+	curSubs = subs;
+	wm::Window::SetSubscribed(formSubs | subs);
 }
 
 bool Form::HandleEvent(const wm_Event &e){
-	if(!(GetOptions() & wm_WindowOptions::Visible)) return true;
+	if(!(GetOptions() & wm_WindowOptions::Visible) && !(e.type & wm_GlobalEvents)) return true;
 	
 	if(e.type == wm_EventType::Close){
 		if(!onClose || !onClose()){
 			Close();
-			auto el = wm::EventLoop::GetCurrent();
+			auto el = wm::EventLoop::GetFor(*this);
 			if(el) el->RemoveWindow(GetID());
 		}
 		return true;
+	}else if(e.type == wm_EventType::Hide){
+		Hide();
+		surf->Compress();
 	}else if(e.type == wm_EventType::Expand){
 		if(!expanded){
 			auto mode = GetScreenMode();
@@ -76,6 +81,8 @@ bool Form::HandleEvent(const wm_Event &e){
 			PerformResize();
 		}
 		if(onMove) onMove(rect);
+	}else if((e.type & wm_GlobalEvents)){
+		if(onGlobal) onGlobal(e);
 	}
 	
 	return Container::HandleEvent(e);
@@ -103,13 +110,18 @@ void Form::CreateResizeHandle(){
 }
 
 void Form::PerformResize(){
+	Resize(rect.w, rect.h);
+}
+
+void Form::Resize(uint32_t w, uint32_t h){
+	rect.w = w; rect.h = h;
 	enableUpdate = false;
 	surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
 	if(onResize) onResize(rect);
 	if(resizeHandle){
 		resizeHandle->SetPosition({(int32_t)rect.w - handleSize, (int32_t)rect.h - handleSize, handleSize, handleSize});
 	}
-	Paint();
+	Paint({0, 0, w, h});
 	SetSurface(*surf);
 	enableUpdate = true;
 }
@@ -128,6 +140,11 @@ void Form::OnExpand(std::function<void()> oX){
 
 void Form::OnMove(std::function<void(const gds::Rect &)> oM){
 	onMove = oM;
+}
+
+void Form::OnGlobal(std::function<void(const wm_Event &e)> oG){
+	onGlobal = oG;
+	SetSubscribed(curSubs);
 }
 
 }

@@ -1,0 +1,6 @@
+[app]
+name = GUI Controls Test
+category = Tests
+vendor = BT/OS
+icon = guitest
+mode = GUI

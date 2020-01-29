@@ -13,6 +13,9 @@
 #include <btos/table.hpp>
 #include <btos/message.hpp>
 #include <btos/atom.hpp>
+#include <btos/process.hpp>
+#include <btos/envvars.hpp>
+#include <util/tinyformat.hpp>
 #include "dev/rtc.h"
 #include "lrucache.hpp"
 
@@ -68,20 +71,6 @@ struct glyph_holder{
 	}
 };
 static cache::lru_cache<uint16_t, shared_ptr<glyph_holder>> glyphcache(1024);
-
-string get_env(const string &name){
-	char value[128];
-	string ret;
-	size_t size=bt_getenv(name.c_str(), value, 128);
-	ret=value;
-	if(size>128){
-		char *buf=new char[size];
-		bt_getenv(name.c_str(), value, size);
-		ret=buf;
-	}
-	if(size) return ret;
-	else return "";
-}
 
 template<typename T> void send_reply(const Message &msg, const T &content){
 	msg.SendReply(content);
@@ -145,6 +134,7 @@ uint64_t get_glyph(uint8_t attr, uint8_t ch){
 	GDS_Box(0, 0, font_width, font_height, bg, bg, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	GDS_TextChar(0, font_height - (font_height / 5), ch, font, fontSize, fg);
 	glyphcache.put(key, make_shared<glyph_holder>(id));
+	GDS_Compress();
 	GDS_SelectSurface(surf);
 	return id;
 }
@@ -304,7 +294,7 @@ void mainthread(void*){
 	size_t cpos  = 0;
 	size_t refcount = 0;
 	surf = GDS_NewSurface(gds_SurfaceType::Bitmap, terminal_mode.width * font_width, terminal_mode.height * font_height);
-	/*uint64_t win =*/ WM_NewWindow(50, 50, wm_WindowOptions::Default, wm_EventType::Keyboard | wm_EventType::Close, surf, "Terminal Window");
+	/*uint64_t win =*/ WM_NewWindow(50, 50, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, wm_EventType::Keyboard | wm_EventType::Close | wm_EventType::Hide, surf, "Terminal Window");
 	ready = true;
 	bt_msg_filter filter;
 	filter.flags = bt_msg_filter_flags::NonReply;
@@ -400,7 +390,10 @@ void mainthread(void*){
 			bt_msg_header head = msg.Header();
 			wm_Event e = WM_ParseMessage(&head);
 			if(e.type == wm_EventType::Close) break;
-			else if(e.type == wm_EventType::Keyboard){
+			else if(e.type == wm_EventType::Hide){
+				auto info = WM_WindowInfo();
+				WM_ChangeOptions(info.options & ~wm_WindowOptions::Visible);	
+			}else if(e.type == wm_EventType::Keyboard){
 				if(terminal_handle){
 					bt_terminal_event te;
 					te.type = bt_terminal_event_type::Key;
@@ -419,7 +412,22 @@ void mainthread(void*){
 	kill_children();
 }
 
-int main(){
+void terminal_exec(bt_handle_t terminal, const std::vector<std::string> &command){
+	const std::string termIdVar = "TERMID";
+	auto curTermId = GetEnv(termIdVar);
+	auto id = bt_terminal_get_id(terminal);
+	SetEnv(termIdVar, tfm::format("%s", id));
+	auto path = command.front();
+	std::vector<std::string> args;
+	for(size_t i = 1; i < command.size(); ++i){
+		args.push_back(command[i]);
+	}
+	Process::Spawn(path, args);
+	SetEnv(termIdVar, curTermId);
+}
+
+int main(int argc, char **argv){
+	vector<string> args(argv, argv + argc);
 	clear_screen();
 	buffer_lock = bt_create_lock();
 	font = GDS_GetFontID(fontName.c_str(), gds_FontStyle::Normal);
@@ -433,8 +441,15 @@ int main(){
 	while(!ready) bt_yield();
 	terminal_handle = bt_terminal_create_terminal(backend_handle);
 	bt_terminal_read_buffer(terminal_handle, buffer_size, buffer);
-	string shell = get_env("SHELL");
-	bt_terminal_run(terminal_handle, shell.c_str());
+	std::vector<std::string> shell;
+	if(args.size() < 2){
+		shell.push_back(GetEnv("SHELL"));
+	}else{
+		for(int i = 1; i < argc; ++i){
+			shell.push_back(args[i]);
+		}
+	}
+	terminal_exec(terminal_handle, shell);
 	bt_wait_thread(thread);
 	return 0;
 }

@@ -11,12 +11,9 @@ private:
 	bool down = false;
 	bool focus = false;
 	bool enabled = true;
-	bool paintDown;
-	bool paintFocus;
 
 	gds::Rect rect;
 	
-	std::unique_ptr<gds::Surface> surf;
 	std::unique_ptr<gds::Surface> bkSurf;
 	std::shared_ptr<gds::Surface> img;
 	gds_SurfaceInfo info;

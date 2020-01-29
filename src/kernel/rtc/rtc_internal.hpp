@@ -7,6 +7,7 @@
 #define FORMAT "%02i-%02i-%02i %02i:%02i:%02i"
 
 extern uint16_t extension_id;
+extern uint64_t boot_msec;
 
 struct datetime{
 	int day, month, year;

@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source $DIR/env-os.sh
+
 make ${@} 2>&1 | perl -wln -M'Term::ANSIColor' -e '
 m/Building|gcc|g\+\+|\bCC\b|\bcc\b/ and print "\e[1;32m", "$_", "\e[0m"
 or

@@ -5,6 +5,8 @@
 #include <wm/wm.h>
 #include <gds/surface.hpp>
 
+#include <type_traits>
+
 #include "eventresponse.hpp"
 
 namespace btos_api{
@@ -93,16 +95,32 @@ public:
 	virtual ~IActionControl() {}
 };
 
+template<typename T, bool Q> struct const_ref{};
+
+template<typename T> struct const_ref<T, true>{
+	typedef typename std::add_lvalue_reference<typename std::add_const<T>::type>::type type;
+};
+
+template<typename T> struct const_ref<T, false>{
+	typedef T type;
+};
+
+template<typename T> struct const_ref_if_nonscalar{
+	typedef typename std::remove_cv<typename std::remove_reference<T>::type>::type baseT;
+	typedef typename const_ref<baseT, !std::is_scalar<baseT>::value>::type type;
+};
+
 template<typename T> 
 class IValueControl : public virtual IControl{
 private:
-	std::function<void(const T&)> onChangeFn;
+	typedef typename const_ref_if_nonscalar<T>::type constRefT;
+	std::function<void(constRefT)> onChangeFn;
 protected:
 	void RaiseChangeEvent(){
 		if(onChangeFn) onChangeFn(GetValue());
 	}
 public:
-	virtual void OnChange(const std::function<void(const T&)> &fn){
+	virtual void OnChange(const std::function<void(constRefT)> &fn){
 		onChangeFn = fn;
 	}
 	

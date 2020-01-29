@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iostream>
 #include <cstring>
+#include <memory>
 #include <sm/sm.h>
 
 using namespace std;
@@ -237,4 +238,21 @@ extern "C" void WM_SetModal(uint64_t id){
 
 extern "C" void WM_ClearModal(){
 	SendMessage(wm_RequestType::ClearModal, 0, NULL, false);
+}
+
+extern "C" size_t WM_GetValidWindowIDs(uint64_t *buf, size_t size){
+	bt_msg_header reply = SendMessage(wm_RequestType::GetValidWindowIDs, 0, NULL, true);
+	size_t count = reply.length / sizeof(uint64_t);
+	bt_msg_content(&reply, buf, size);
+	return count;
+}
+
+std::vector<uint64_t> WM_GetValidWindowIDs(){
+	std::unique_ptr<uint64_t[]> buf(new uint64_t[512]);
+	size_t count = WM_GetValidWindowIDs(buf.get(), 4096);
+	return {buf.get(), buf.get() + count};
+}
+
+extern "C" void WM_RaiseWindow(){
+	SendMessage(wm_RequestType::RaiseWindow, 0, NULL, false);
 }

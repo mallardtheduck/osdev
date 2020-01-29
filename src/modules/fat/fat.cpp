@@ -119,7 +119,6 @@ bool fat_unmount(void *mountdata){
 
 void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 	if(mounted && mountdata==fatmagic){
-        take_fat_lock();
 		fat_file_handle *ret=new fat_file_handle();
 		ret->debug = false;
 		ret->mode=mode;
@@ -137,6 +136,7 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		if(mode==(FS_Write | FS_Read | FS_AtEnd | FS_Create)) modifiers="a+";
 		if(mode==(FS_Read | FS_Write | FS_Create)) modifiers = "a+";
 		dbgpf("FAT: Encoded flags: %s\n", modifiers);
+		take_fat_lock();
 		void *flh=fl_fopen(spath, modifiers);
 		if(flh && mode==(FS_Read | FS_Write | FS_Create)){
 			fl_fclose(flh);
@@ -145,7 +145,7 @@ void *fat_open(void *mountdata, fs_path *path, fs_mode_flags mode){
 		if(flh){
 			ret->flh=flh;
 		}else{
-			free(ret);
+			delete ret;
             release_fat_lock();
 			return NULL;
 		}
@@ -253,7 +253,7 @@ void *fat_open_dir(void *mountdata, fs_path *path, fs_mode_flags mode){
 		}
 		if(!res){
 			free(ret->fld);
-			free(ret);
+			delete ret;
             release_fat_lock();
 			return NULL;
 		}
@@ -286,14 +286,16 @@ directory_entry fat_read_dir(void *dirdata){
         take_fat_lock();
 		directory_entry ret;
 		fl_dirent ent;
-		if(!fl_readdir(dir->fld, &ent)){
+		int err = 0;
+		while(!(err = fl_readdir(dir->fld, &ent)) && (strcmp(ent.filename, ".") == 0 || strcmp(ent.filename, "..") == 0));
+		if(!err){
 			ret.valid=true;
 			strncpy(ret.filename, ent.filename, 255);
 			ret.type=(ent.is_dir)?FS_Directory:FS_File;
 			ret.size=ent.size;
 			ret.id=ent.cluster;
             release_fat_lock();
-			return ret;
+            return ret;
 		} else {
             release_fat_lock();
             return invalid_directory_entry;

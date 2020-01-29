@@ -20,8 +20,11 @@ private:
 	uint32_t height;
 	uint32_t colourType;
 	
-	std::shared_ptr<BitmapSurface> cache;
+	uint64_t cacheId = 0;
+	
 	bool update = false;
+	bool isCompressed = false;
+	bool isRendering = false;
 	
 	struct Rectangle{
 		int32_t x = 0, y = 0;
@@ -43,6 +46,11 @@ private:
 	bool OpInRect(const VectorOp &op, const Rectangle &rect);
 	
 	void OrderOps();
+	
+	std::shared_ptr<BitmapSurface> GetCache(bool &created);
+	void DropCache();
+	
+	std::shared_ptr<BitmapSurface> RenderToCache();
 public:
 	VectorSurface(size_t w, size_t h, uint32_t colourType, uint32_t scale = 100);
 
@@ -65,6 +73,7 @@ public:
 	virtual std::unique_ptr<gds_TextMeasurements> MeasureText(const gds_TextParameters &p, std::string text); 
 	
 	virtual void Resize(size_t w, size_t h, bool indexed);
+	virtual void Compress();
 
 	virtual ~VectorSurface();
 };

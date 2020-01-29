@@ -1,0 +1,12 @@
+[app]
+name = Notepad
+category = Tools
+vendor = BT/OS
+icon = notepad
+mode = GUI
+
+[fileicons]
+default = txt
+.ini = source
+.inf = source
+.cmd = script

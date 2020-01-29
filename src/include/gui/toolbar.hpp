@@ -37,8 +37,7 @@ public:
 class Toolbar : public IControl{
 private:
 	gds::Rect rect;
-	std::unique_ptr<gds::Surface> surf;
-	bool update = false;
+	std::unique_ptr<gds::Surface> bkSurf;
 	bool enabled = true;
 	
 	uint32_t size;
@@ -72,12 +71,10 @@ class ToolbarButton : public IActionControl<void>, public IToolbarControl{
 private:
 	bool down = false;
 	bool enabled = true;
-	bool paintDown;
 
 	std::shared_ptr<gds::Surface> icon;
 	std::string label;
 	
-	std::unique_ptr<gds::Surface> surf;
 	std::unique_ptr<gds::Surface> bkSurf;
 	gds::TextMeasurements labelMeasures;
 	gds_SurfaceInfo info;

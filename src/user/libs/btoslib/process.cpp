@@ -16,7 +16,7 @@ namespace btos_api{
 		}
 
 		Process ret = Process::Spawn(path.c_str(), args.size(), argv);
-		delete argv;
+		delete[] argv;
 		return ret;
 	}
 

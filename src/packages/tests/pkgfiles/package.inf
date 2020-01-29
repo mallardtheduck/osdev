@@ -39,3 +39,11 @@ description = GUI Controls Test
 path = /
 file = guitest.elx
 type = app
+
+[feature-app-shelltest]
+
+name = tests.app.shelltest
+description = Shell Library Test
+path = /
+file = shelltest.elx
+type = app

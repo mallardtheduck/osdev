@@ -58,7 +58,7 @@ namespace gds{
 
 		Surface(Surface &&s);
 		
-		~Surface();
+		virtual ~Surface();
 
 		static Surface Wrap(uint64_t id, bool own);
 
@@ -78,6 +78,8 @@ namespace gds{
 		
 		void SetScale(uint32_t scale);
 		uint32_t GetScale() const;
+		
+		void Compress();
 
 		Colour GetColour(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0) const;
 		uint32_t Dot(const Point &p, const Colour &c, uint8_t size = 1);

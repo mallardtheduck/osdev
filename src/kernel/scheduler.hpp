@@ -32,6 +32,7 @@ void sch_unblock(uint64_t ext_id);
 void sch_set_priority(uint32_t pri);
 bool sch_active();
 void sch_setpid(pid_t pid);
+bt_pid_t sch_getpid(uint64_t ext_id=sch_get_id());
 void sch_setblock(sch_blockcheck check, void *param);
 void sch_setblock(sch_blockcheck check, void *param, pid_t to);
 void sch_clearblock();

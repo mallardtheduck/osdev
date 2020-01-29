@@ -45,26 +45,32 @@ public:
 
 class SessionType{
 private:
+	std::string id;
 	std::string name;
 	std::string leadElx;
 	std::vector<std::string> autoServices;
 	
 public:
 	SessionType() = default;
-	SessionType(const std::string &n, const std::string &l, const std::vector<std::string> &s);
+	SessionType(const std::string &id, const std::string &n, const std::string &l, const std::vector<std::string> &s);
 
-	std::string GetName();
+	std::string GetID() const;
+	void SetID(const std::string &id);
+	
+	std::string GetName() const;
 	void SetName(const std::string &n);
 
-	std::string GetLeadElx();
+	std::string GetLeadElx() const;
 	void SetLeadElx(const std::string &l);
 
 	void AddAutoService(const std::string &name);
 	void SetAutoServices(const std::vector<std::string> &svcs);
-	std::vector<std::string> GetAutoServices();
+	std::vector<std::string> GetAutoServices() const;
 
 	Session Start();
 };
+
+std::vector<SessionType> GetSessionTypes();
 
 }
 }

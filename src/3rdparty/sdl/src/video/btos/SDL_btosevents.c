@@ -198,13 +198,18 @@ static void _BTOS_HandlePointerEvent(wm_Event *event){
 }
 
 static void _BTOS_HandleFrameEvent(wm_Event *event){
-		SDL_Window *win = _BTOS_GetSDLWindow(event->window_id);
+	SDL_Window *win = _BTOS_GetSDLWindow(event->window_id);
 	if(win){
 		switch(event->type){
 			case wm_EventType_Close:
 				SDL_SendWindowEvent(win, SDL_WINDOWEVENT_CLOSE, 0, 0);
 				break;
 			default: break;
+			case wm_EventType_Hide:
+				WM_SelectWindow(event->window_id);
+				wm_WindowInfo info = WM_WindowInfo();
+				WM_ChangeOptions(info.options & ~wm_WindowOptions_Visible);
+				break;
 		}
 	}
 }

@@ -14,9 +14,88 @@ static char *argsptr[ARGC_MAX]={0};
 static virtual_handle **filehandles=NULL;
 static size_t fh_count=0;
 
+struct dup{
+	virtual_handle *vh;
+	size_t count;
+	bool pend_close;
+};
+
+static struct dup **dups = NULL;
+static size_t dups_count = 0;
+
 static bool std_streams_open = false;
 
 static virtual_handle null_virt_handle = {HANDLE_NULL};
+
+virtual_handle *btos_dup(virtual_handle *vh){
+	size_t idx = -1;
+	size_t zidx = -1;
+	for(size_t i = 0; i < dups_count; ++i){
+		if(!dups[i]) zidx = i;
+		else if(dups[i]->vh == vh){
+			idx = i;
+			break;
+		}
+	}
+	if(idx == (size_t)-1){
+		if(zidx == (size_t)-1){
+			idx = dups_count++;
+			dups = realloc(dups, dups_count * sizeof(struct dup*));
+		}else{
+			idx = zidx;
+		}
+		dups[idx] = malloc(sizeof(struct dup));
+		dups[idx]->vh = vh;
+		dups[idx]->count = 0;
+		dups[idx]->pend_close = false;
+	}
+	dups[idx]->count++;
+	virtual_handle *ret = malloc(sizeof(virtual_handle));
+	ret->dup.parent = vh;
+	ret->type = HANDLE_DUP;
+	return ret;
+}
+
+int btos_close(virtual_handle *vh){
+	if(vh->type == HANDLE_NULL){
+    	return 0;
+    }else if(vh->type != HANDLE_DUP){
+    	bool can_close = true;
+		for(size_t i = 0; i < dups_count; ++i){
+			if(dups[i] && dups[i]->vh == vh){
+				can_close = false;
+				dups[i]->pend_close = true;
+				break;
+			}
+		}
+		if(can_close){
+		    if(vh->type == HANDLE_OS){
+				bt_handle_t h = vh->os.handle;
+				int ret=bt_fclose(h);
+				return ret;
+			}else{
+				int ret=vh->virt.close(vh->virt.data);
+				return ret;
+			}
+		}else{
+			return 0;
+		}
+    }else{
+    	for(size_t i = 0; i < dups_count; ++i){
+    		if(dups[i]->vh == vh->dup.parent){
+    			dups[i]->count--;
+    			if(dups[i]->count == 0){
+    				struct dup *ptr = dups[i];
+    				dups[i] = NULL;
+    				if(ptr->pend_close) btos_close(ptr->vh);
+    				free(ptr);
+    			}
+    			return 1;
+    		}
+    	}
+    }
+    return 0;
+}
 
 static void *memdup(void *ptr, size_t size){
 	void *ret = malloc(size);

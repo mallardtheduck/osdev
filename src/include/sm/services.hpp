@@ -20,11 +20,12 @@ private:
 	std::string name;
 	std::string path;
 	std::string cleanupCmd;
+	bool sticky;
 	
 	std::vector<bt_pid_t> refs;
 
 public:
-	Service(const std::string &n, const std::string &p, const std::string &c);
+	Service(const std::string &n, const std::string &p, const std::string &c, bool sticky = false);
 	Service() = default;
 
 	ServiceInstance Start();
@@ -32,6 +33,7 @@ public:
 	std::string Name();
 	std::string Path();
 	std::string CleanupCmd();
+	bool IsSticky();
 	
 	sm_ServiceInfo Info();
 };

@@ -66,7 +66,7 @@ void ServiceInstance::Stop(){
 	cleanup.Wait();
 }
 
-Service::Service(const string &n, const string &p, const string &c) : name(n), path(p), cleanupCmd(c) {}
+Service::Service(const string &n, const string &p, const string &c, bool s) : name(n), path(p), cleanupCmd(c), sticky(s) {}
 
 ServiceInstance Service::Start(){
 	auto c = ParseCmd(path);
@@ -83,6 +83,10 @@ string Service::Path(){
 
 string Service::CleanupCmd(){
 	return cleanupCmd;
+}
+
+bool Service::IsSticky(){
+	return sticky;
 }
 
 sm_ServiceInfo Service::Info(){

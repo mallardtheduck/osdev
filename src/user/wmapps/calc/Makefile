@@ -13,7 +13,7 @@ BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -std=gnu99
 LINK := i686-pc-btos-gcc
 LINK-FLAGS := -o $(OUTPUT-NAME) -O2
-LINK-OPTIONS := -Wl,-rpath-link,../../../3rdparty/install/btos/lib -lgcc_s -lstdc++ -lm  -lbtoscore -lbtoslib -lresc -lgds -lwm -lgui
+LINK-OPTIONS := -lgcc_s -lstdc++ -lm  -lbtoscore -lbtoslib -lresc -lgds -lwm -lgui -lclipboard
 
 RESCFILES-16-ACTIONS := \
 	calc_standard.png \
@@ -26,7 +26,7 @@ RESCFILES-APP-ICON := \
 	resc/$(APP-ICON-NAME)_16.png \
 	resc/$(APP-ICON-NAME)_32.png \
 
-RESCFILES-EXTRA :=
+RESCFILES-EXTRA := resc/app.inf resc/icons.inf
 
 BOOTFILE := boot.o
 ASFILES := $(shell find . -type f -name "*.s")
@@ -85,4 +85,10 @@ resc/$(APP-ICON-NAME)_16.png: ../../../icons/16/apps/$(APP-ICON-NAME).png
 
 resc/$(APP-ICON-NAME)_32.png: ../../../icons/32/apps/$(APP-ICON-NAME).png
 	@mkdir -p $(@D)
+	cp $< $@
+	
+resc/app.inf: app.inf
+	cp $< $@
+
+resc/icons.inf: icons.inf
 	cp $< $@

@@ -81,7 +81,7 @@ pair<bool, shared_ptr<ServiceInstance>> Session::StartService(const string &name
 		if(r.first){
 			auto s = r.second;
 			auto i = make_shared<ServiceInstance>(s.Start());
-			i->SetSticky(sticky);
+			i->SetSticky(sticky || s.IsSticky());
 			services.insert(make_pair(name, i));
 			return {true, i};
 		}
@@ -210,10 +210,19 @@ void Session::End(){
 	procs.clear();
 }
 
-SessionType::SessionType(const string &n, const string &l, const vector<string> &s) : name(n), leadElx(l), autoServices(s)
+SessionType::SessionType(const string &i, const string &n, const string &l, const vector<string> &s) :
+	id(i), name(n), leadElx(l), autoServices(s)
 {}
 
-string SessionType::GetName(){
+string SessionType::GetID() const{
+	return id;
+}
+
+void SessionType::SetID(const string &i){
+	id = i;
+}
+
+string SessionType::GetName() const{
 	return name;
 }
 
@@ -221,7 +230,7 @@ void SessionType::SetName(const string &n){
 	name = n;
 }
 
-string SessionType::GetLeadElx(){
+string SessionType::GetLeadElx() const{
 	return leadElx;
 }
 
@@ -245,7 +254,7 @@ void SessionType::AddAutoService(const string &name){
 void SessionType::SetAutoServices(const vector<string> &svcs){
 	autoServices = svcs;
 }
-vector<string> SessionType::GetAutoServices(){
+vector<string> SessionType::GetAutoServices() const{
 	return autoServices;
 }
 

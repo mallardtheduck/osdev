@@ -23,3 +23,10 @@ datetime current_datetime(){
 	auto time = timer->GetTime();
 	return epoch2datetime(time);
 }
+
+void rtc_configure(){
+	auto timer = get_timer();
+	if(timer){
+		boot_msec = timer->GetTime();
+	}
+}

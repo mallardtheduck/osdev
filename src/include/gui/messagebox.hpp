@@ -7,10 +7,12 @@
 #include <memory>
 #include <string>
 
+#include <gui/idialog.hpp>
+
 namespace btos_api{
 namespace gui{
 
-class MessageBox{
+class MessageBox : public IDialog<size_t>{
 private:
 	std::string message;
 	std::string title;
@@ -20,7 +22,7 @@ public:
 	MessageBox();
 	MessageBox(const std::string &message, const std::string &title, std::shared_ptr<gds::Surface> icon = nullptr, std::vector<std::string> buttons = {"OK"});
 	
-	size_t Show(wm::Window *parent = nullptr);
+	size_t Show(wm::Window *parent) override;
 	
 	void SetMessage(const std::string &msg);
 	void SetTitle(const std::string &title);

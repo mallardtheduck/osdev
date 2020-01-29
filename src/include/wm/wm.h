@@ -50,6 +50,9 @@ ENUM_START(wm_EventType)
 	ENUM_SET(wm_EventType, MenuSelection,		1 << 13),
 	ENUM_SET(wm_EventType, Move,				1 << 14),
 	ENUM_SET(wm_EventType, Resize,				1 << 15),
+	
+	ENUM_SET(wm_EventType, GlobalAdd,			1 << 30),
+	ENUM_SET(wm_EventType, GlobalRemove,		1 << 31),
 ENUM_END
 ENUM_TYPE(wm_EventType);
 
@@ -60,6 +63,7 @@ static const int wm_PointerEvents = ENUM_GET(wm_EventType, PointerMove) | ENUM_G
 	| ENUM_GET(wm_EventType, Click) | ENUM_GET(wm_EventType, DoubleClick);
 static const int wm_FrameEvents = ENUM_GET(wm_EventType, Close) | ENUM_GET(wm_EventType, Hide) | ENUM_GET(wm_EventType, Expand)
 	 | ENUM_GET(wm_EventType, MenuSelection) | ENUM_GET(wm_EventType, Move) | ENUM_GET(wm_EventType, Resize);
+static const int wm_GlobalEvents = ENUM_GET(wm_EventType, GlobalAdd) | ENUM_GET(wm_EventType, GlobalRemove);
 
 struct wm_WindowInfo{
 	int32_t x, y;
@@ -67,6 +71,7 @@ struct wm_WindowInfo{
 	uint32_t options;
 	uint32_t subscriptions;
 	uint64_t gds_id;
+	CPP_ONLY(btos_api::) bt_pid_t owner;
 	char title[WM_TITLE_MAX+1];
 };
 BT_STRUCT_TYPE(wm_WindowInfo);
@@ -96,6 +101,9 @@ struct wm_Event{
 			int32_t x, y;
 			uint32_t w, h;
 		} MoveResize;
+		struct{
+			uint64_t window_id;
+		} Global;
 	};
 };
 BT_STRUCT_TYPE(wm_Event);
@@ -133,6 +141,9 @@ ENUM_START(wm_RequestType)
 	
 	ENUM_SET(wm_RequestType, StartResize,		60),
 	ENUM_SET(wm_RequestType, StartDrag,			61),
+	
+	ENUM_SET(wm_RequestType, GetValidWindowIDs, 70),
+	ENUM_SET(wm_RequestType, RaiseWindow,		71),
 ENUM_END
 ENUM_TYPE(wm_RequestType);
 
