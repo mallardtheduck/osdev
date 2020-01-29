@@ -2,7 +2,7 @@ ICON_FOLDER := ../../../icons
 
 ICONS_APPS := launcher
 ICONS_FS := 
-ICONS_ACTIONS_32 := question error
+ICONS_ACTIONS_32 := question error run
 ICONS_ACTIONS_16 := run exit
 
 EXTRA_RESC_FILES := app.inf icons.inf session.ini

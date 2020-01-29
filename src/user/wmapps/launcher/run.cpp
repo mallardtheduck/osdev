@@ -9,6 +9,7 @@
 #include <gui/button.hpp>
 #include <gui/label.hpp>
 #include <gui/textbox.hpp>
+#include <gui/image.hpp>
 #include <gui/messagebox.hpp>
 #include <gui/shell/fileopendialog.hpp>
 #include <gui/shell/utils.hpp>
@@ -23,12 +24,13 @@ namespace sh = gui::shell;
 extern std::shared_ptr<gds::Surface> LoadIcon(const char *path);
 
 void Run::Show(wm::Window *parent){
-    auto form = std::make_shared<gui::Form>(gds::Rect{0, 0, 350, 120}, gui::FormOptions::ClosedFixed | wm_WindowOptions::NoHide, "Run...");
-    auto label = std::make_shared<gui::Label>(gds::Rect{10, 10, 280, 20}, "Select a program file to run");
-    auto text = std::make_shared<gui::TextBox>(gds::Rect{10, 40, 240, 30});
-    auto browse = std::make_shared<gui::Button>(gds::Rect{260, 40, 80, 30}, "Browse...");
-    auto cancel = std::make_shared<gui::Button>(gds::Rect{210, 80, 60, 30}, "Cancel");
-    auto run = std::make_shared<gui::Button>(gds::Rect{280, 80, 60, 30}, "Run");
+    auto form = std::make_shared<gui::Form>(gds::Rect{0, 0, 350, 132}, gui::FormOptions::ClosedFixed | wm_WindowOptions::NoHide, "Run...");
+    auto image = std::make_shared<gui::Image>(gds::Rect{10, 10, 32, 32}, LoadIcon("icons/run_32.png"));
+    auto label = std::make_shared<gui::Label>(gds::Rect{52, 15, 200, 20}, "Select a file to open or run");
+    auto text = std::make_shared<gui::TextBox>(gds::Rect{10, 52, 240, 30});
+    auto browse = std::make_shared<gui::Button>(gds::Rect{260, 52, 80, 30}, "Browse...");
+    auto cancel = std::make_shared<gui::Button>(gds::Rect{210, 92, 60, 30}, "Cancel");
+    auto run = std::make_shared<gui::Button>(gds::Rect{280, 92, 60, 30}, "Run");
 
     auto loop = gui::DialogEventLoop(parent);
 
@@ -62,7 +64,7 @@ void Run::Show(wm::Window *parent){
         }
     });
 
-    form->AddControls({label, text, browse, cancel, run});
+    form->AddControls({label, image, text, browse, cancel, run});
     form->SetPosition(gui::DialogPosition(parent, *form));
     form->Show();
     loop->RunModal(form);
