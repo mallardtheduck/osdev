@@ -60,7 +60,7 @@ void map_fb(){
 	size_t pages = fb_sz / Page_Size;
 	if(pages * Page_Size < fb_sz) ++pages;
 	fb = (char*)map_physical_pages(modeinfo.PhysBasePtr, pages);
-	dbgpf("VGA: Mapped VBE LFB from %x at %p. Size: %i (%i pages).\n", modeinfo.PhysBasePtr, fb, (int)fb_sz, (int)pages);
+	dbgpf("VGA: Mapped VBE LFB from %lx at %p. Size: %i (%i pages).\n", modeinfo.PhysBasePtr, fb, (int)fb_sz, (int)pages);
 }
 
 void unmap_fb(){

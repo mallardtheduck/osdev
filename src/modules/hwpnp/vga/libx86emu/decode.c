@@ -37,6 +37,7 @@
 *
 ****************************************************************************/
 
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 
 #include "include/x86emu_int.h"
 //#include <time.h>

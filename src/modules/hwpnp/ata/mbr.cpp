@@ -28,7 +28,7 @@ static bool mbr_parse(MBRVolume *vol, btos_api::hwpnp::IBlockDevice *dev){
 		part_entry &p=part_table[i];
 		if(p.boot == 0x80) ++active;
 		else if(p.boot !=0) goto fail;
-		dbgpf("ATA: MBR parition %i: %x, %x, %i,+%i\n", (int)i, (int)p.boot, (int)p.system, p.start_lba, (int)p.sectors);
+		dbgpf("ATA: MBR parition %i: %x, %x, %lu,+%lu\n", (int)i, (int)p.boot, (int)p.system, p.start_lba, p.sectors);
 		bt_filesize_t startByte = p.start_lba * secSize;
 		bt_filesize_t endByte = startByte + (p.sectors * secSize);
 		if(endByte > devSize){

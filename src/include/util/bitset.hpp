@@ -15,6 +15,7 @@
  */
 
 //ALTERED FOR BT/OS KERNEL COMPATIBILITY!
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
 
 // #include <cstring>  // for memcpy
 // #include <ostream>

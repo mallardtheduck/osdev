@@ -13,8 +13,4 @@
 #endif
 #include "btos/core.h"
 
-#if defined(__cplusplus) && !defined(BTOS_NO_USING)
-using namespace btos_api;
-#endif
-
 #endif

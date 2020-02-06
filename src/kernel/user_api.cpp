@@ -2,6 +2,7 @@
 #include <btos/btos_api.h>
 #include "locks.hpp"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 
 void userapi_handler(int, isr_regs*);
 void userapi_syscall(uint16_t fn, isr_regs *regs);
@@ -48,7 +49,7 @@ bool is_safe_ptr(uint32_t ptr, size_t size, pid_t pid){
 			i += res;
 			if(!res){ 
 				proc_switch(cur_pid);
-				dbgpf("UAPI: Verification of pointer %x (%i) for %i failed.\n", ptr, (int)size, (int)pid);
+				dbgpf("UAPI: Verification of pointer %lx (%i) for %i failed.\n", ptr, (int)size, (int)pid);
 				return false;
 			}
 		}
@@ -61,7 +62,7 @@ bool is_safe_string(uint32_t ptr, pid_t pid){
 	char c = 0xFF;
 	for(size_t i = 0; c != '\0'; ++i){
 		if(!is_safe_ptr(ptr + i, 1, pid)){
-			dbgpf("UAPI: Verification of string pointer %x failed after %lu chars.\n", ptr, i);
+			dbgpf("UAPI: Verification of string pointer %lx failed after %lu chars.\n", ptr, i);
 			return false;
 		}
 		c = ((char*)ptr)[i];

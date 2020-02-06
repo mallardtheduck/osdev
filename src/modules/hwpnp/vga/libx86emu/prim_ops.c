@@ -96,6 +96,7 @@
 * By inspection, one gets:  bc = a'b +  r(a' + b)
 *
 ****************************************************************************/
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 
 #include "include/x86emu_int.h"
 

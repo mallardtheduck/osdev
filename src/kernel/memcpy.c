@@ -50,7 +50,10 @@
  **
  *******************************************************************/
 
+// BT/OS-specific modifications
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 void panic(char *msg) __attribute__ ((noreturn));
+// end BT/OS-specific modification
 
 #undef memcpy
 

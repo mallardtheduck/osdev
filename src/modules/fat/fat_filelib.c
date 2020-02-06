@@ -40,6 +40,7 @@
 #include "fat_format.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wformat"
 
 //-----------------------------------------------------------------------------
 // Locals

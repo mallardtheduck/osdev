@@ -150,13 +150,13 @@ bt_vidmode VGAVideoDevice::GetMode(size_t idx){
 
 void VGAVideoDevice::SetMode(const bt_vidmode &mode){
 	hold_lock hl(&device_lock);
-	dbgpf("VGA: Request for mode %x\n", mode.id);
+	dbgpf("VGA: Request for mode %lx\n", mode.id);
 	if(mode.id == vbe_current_mode){
 		dbgout("VGA: Already in mode. Nothing to do.\n");
 		return;
 	}
 	if(is_vbe_mode(mode.id)){
-		dbgpf("VGA: Setting VBE mode %x\n", mode.id);
+		dbgpf("VGA: Setting VBE mode %lx\n", mode.id);
 		unmap_fb();
 		modeinfo = (*vbe_modes)[mode.id];
 		if(!modeinfo.PhysBasePtr) return;
@@ -173,7 +173,7 @@ void VGAVideoDevice::SetMode(const bt_vidmode &mode){
 		}
 		auto vidmode = mode;
 		vidmode.id -= 0xF0000;
-		dbgpf("VGA: Setting VGA mode %x\n", mode.id);
+		dbgpf("VGA: Setting VGA mode %lx\n", mode.id);
 		graphics_end();
         vga_mode *vgamode=NULL;
         for(size_t i=0; i<vga_mode_count; ++i){

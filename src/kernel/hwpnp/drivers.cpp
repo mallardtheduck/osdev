@@ -27,7 +27,7 @@ static char *pnp_drivers_infofs(){
 	asprintf(&buffer, "# id, devid, description, priority\n");
 	for(auto d : *drivers){
 		auto devid = d->GetDeviceID();
-		reasprintf_append(&buffer, "%p, %s, \"%s\", %i\n", 
+		reasprintf_append(&buffer, "%p, %s, \"%s\", %lu\n", 
 			d, deviceIDtoString(devid).c_str(),
 			d->GetDescription(),
 			d->GetPriority()

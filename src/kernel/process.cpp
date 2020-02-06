@@ -379,7 +379,7 @@ struct proc_info{
 void *proc_alloc_stack(size_t size){
 	size_t pages=(size/MM2::MM2_Page_Size);
 	uint32_t baseaddr=0-(pages*MM2::MM2_Page_Size);
-	dbgpf("PROC: %i pages of stack at %x.\n", (int)pages, baseaddr);
+	dbgpf("PROC: %i pages of stack at %lx.\n", (int)pages, baseaddr);
 	MM2::current_pagedir->alloc_pages_at(pages, (void*)baseaddr);
 	memset((void*)baseaddr, 0, size);
 	//Stack pointer starts 4 bytes below top, just in case something tries to read the top-level return address.

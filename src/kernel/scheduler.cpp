@@ -78,7 +78,7 @@ char *sch_threads_infofs(){
 	{hold_lock hl(sch_lock);
 		for(size_t i=0; i<threads->size(); ++i){
 			sch_thread *t=(*threads)[i];
-			reasprintf_append(&buffer, "%i, %i, %i, %x, %i, %i, %i\n", (int)t->ext_id, (int)t->pid, t->priority, t->eip,
+			reasprintf_append(&buffer, "%llu, %llu, %lu, %lx, %i, %i, %li\n", t->ext_id, t->pid, t->priority, t->eip,
 				(int)t->status, t->abortlevel, t->modifier);
 		}
     }
@@ -279,11 +279,11 @@ void sch_end_thread(){
 }
 
 inline void out_regs(const irq_regs &ctx){
-	dbgpf("SCH: INTERRUPT %x\n", ctx.int_no);
-	dbgpf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
-	dbgpf("EDI: %x ESI: %x EBP: %x ESP: %x\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
-	dbgpf("EIP: %x CS: %x SS: %x\n", ctx.eip, ctx.cs, ctx.ss);
-	dbgpf("EFLAGS: %x ORESP: %x\n", ctx.eflags, ctx.useresp);
+	dbgpf("SCH: INTERRUPT %lx\n", ctx.int_no);
+	dbgpf("EAX: %lx EBX: %lx ECX: %lx EDX: %lx\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
+	dbgpf("EDI: %lx ESI: %lx EBP: %lx ESP: %lx\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
+	dbgpf("EIP: %lx CS: %lx SS: %lx\n", ctx.eip, ctx.cs, ctx.ss);
+	dbgpf("EFLAGS: %lx ORESP: %lx\n", ctx.eflags, ctx.useresp);
 }
 
 

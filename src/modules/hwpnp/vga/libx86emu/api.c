@@ -1,4 +1,5 @@
 #include "include/x86emu_int.h"
+#pragma GCC diagnostic ignored "-Wformat"
 
 #define LINE_LEN 16
 

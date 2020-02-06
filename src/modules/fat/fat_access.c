@@ -37,6 +37,7 @@
 #include "fat_misc.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wformat"
 
 //-----------------------------------------------------------------------------
 // fatfs_init: Load FAT Parameters
