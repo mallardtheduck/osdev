@@ -1,1 +1,0 @@
-#libgcc-s-objects += crtbegin.o crtend.o

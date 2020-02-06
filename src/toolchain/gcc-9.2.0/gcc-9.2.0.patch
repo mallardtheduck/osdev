@@ -1,0 +1,170 @@
+diff -rupN gcc-original/gcc-9.2.0/config.sub gcc-9.2.0/config.sub
+--- gcc-original/gcc-9.2.0/config.sub	2019-01-03 11:28:27.000000000 +0000
++++ gcc-9.2.0/config.sub	2020-02-05 22:02:12.933524240 +0000
+@@ -1363,7 +1363,8 @@ case $os in
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+-	     | midnightbsd* | amdhsa* | unleashed* | emscripten*)
++	     | midnightbsd* | amdhsa* | unleashed* | emscripten* \
++		 | btos* )
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	qnx*)
+diff -rupN gcc-original/gcc-9.2.0/gcc/config/btos.h gcc-9.2.0/gcc/config/btos.h
+--- gcc-original/gcc-9.2.0/gcc/config/btos.h	1970-01-01 00:00:00.000000000 +0000
++++ gcc-9.2.0/gcc/config/btos.h	2020-02-05 22:22:48.274120867 +0000
+@@ -0,0 +1,32 @@
++/* Useful if you wish to make target-specific gcc changes. */
++#undef TARGET_BTOS
++#define TARGET_BTOS 1
++
++/* Additional predefined macros. */
++#undef TARGET_OS_CPP_BUILTINS
++#define TARGET_OS_CPP_BUILTINS()      \
++  do {                                \
++    builtin_define ("__btos__");      \
++    builtin_define ("__unix__");      \
++    builtin_assert ("system=btos");   \
++    builtin_assert ("system=unix");   \
++    builtin_assert ("system=posix");   \
++  } while(0);
++
++#undef STARTFILE_SPEC
++#define STARTFILE_SPEC "%{!shared: %{!pg:crt0.o%s}} crti.o%s crtbegin.o%s"
++
++#undef ENDFILE_SPEC
++#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
++
++#undef LINK_SPEC
++#define LINK_SPEC "\
++  %{shared:-shared} \
++  %{!shared: \
++    %{!static: \
++      %{rdynamic:-export-dynamic} \
++      -dynamic-linker ELOADER.ELX} \
++      %{static:-static}}"
++      
++#undef LINK_EH_SPEC
++#define LINK_EH_SPEC ""
+diff -rupN gcc-original/gcc-9.2.0/gcc/config.gcc gcc-9.2.0/gcc/config.gcc
+--- gcc-original/gcc-9.2.0/gcc/config.gcc	2019-08-03 20:16:22.000000000 +0000
++++ gcc-9.2.0/gcc/config.gcc	2020-02-05 23:08:01.609161342 +0000
+@@ -975,9 +975,20 @@ case ${target} in
+   default_use_cxa_atexit=yes
+   use_gcc_stdint=wrap
+   ;;
++*-*-btos*)
++   extra_parts="crtbegin.o crtend.o"
++   gas=yes
++   gnu_ld=yes
++   default_use_cxa_atexit=yes
++   ;;
+ esac
+ 
+ case ${target} in
++i[3-7]86-*-btos*)
++   tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h btos.h newlib-stdint.h"
++   tmake_file="i386/t-i386elf t-svr4"
++   use_fixproto=yes
++   ;;
+ aarch64*-*-elf | aarch64*-*-fuchsia* | aarch64*-*-rtems*)
+ 	tm_file="${tm_file} dbxelf.h elfos.h newlib-stdint.h"
+ 	tm_file="${tm_file} aarch64/aarch64-elf.h aarch64/aarch64-elf-raw.h"
+@@ -1977,6 +1988,12 @@ x86_64-*-fuchsia*)
+ 	tmake_file="${tmake_file} i386/t-x86_64-elf"
+ 	tm_file="${tm_file} i386/unix.h i386/att.h elfos.h newlib-stdint.h i386/i386elf.h i386/x86-64.h fuchsia.h"
+ 	;;
++*-*-btos*)
++   extra_parts="crtbegin.o crtend.o"
++   gas=yes
++   gnu_ld=yes
++   default_use_cxa_atexit=yes
++   ;;
+ ia64*-*-elf*)
+ 	tm_file="${tm_file} dbxelf.h elfos.h newlib-stdint.h ia64/sysv4.h ia64/elf.h"
+ 	tmake_file="ia64/t-ia64"
+diff -rupN gcc-original/gcc-9.2.0/libgcc/config/i386/t-btos gcc-9.2.0/libgcc/config/i386/t-btos
+--- gcc-original/gcc-9.2.0/libgcc/config/i386/t-btos	1970-01-01 00:00:00.000000000 +0000
++++ gcc-9.2.0/libgcc/config/i386/t-btos	2020-02-05 21:59:14.748476804 +0000
+@@ -0,0 +1 @@
++#libgcc-s-objects += crtbegin.o crtend.o
+diff -rupN gcc-original/gcc-9.2.0/libgcc/config.host gcc-9.2.0/libgcc/config.host
+--- gcc-original/gcc-9.2.0/libgcc/config.host	2019-01-17 12:29:13.000000000 +0000
++++ gcc-9.2.0/libgcc/config.host	2020-02-05 21:59:14.748476804 +0000
+@@ -1414,6 +1414,10 @@ nvptx-*)
+ 	tmake_file="$tmake_file nvptx/t-nvptx"
+ 	extra_parts="crt0.o"
+ 	;;
++i[3-7]86-*-btos*)
++     extra_parts="crtbegin.o crtend.o"
++     tmake_file="$tmake_file i386/t-crtstuff i386/t-btos"
++     ;;
+ *)
+ 	echo "*** Configuration ${host} not supported" 1>&2
+ 	exit 1
+diff -rupN gcc-original/gcc-9.2.0/libstdc++-v3/configure gcc-9.2.0/libstdc++-v3/configure
+--- gcc-original/gcc-9.2.0/libstdc++-v3/configure	2019-07-03 21:09:13.000000000 +0000
++++ gcc-9.2.0/libstdc++-v3/configure	2020-02-05 22:15:45.003190710 +0000
+@@ -11389,6 +11389,16 @@ uts4*)
+   shlibpath_var=LD_LIBRARY_PATH
+   ;;
+ 
++btos*)
++  libname_spec='$name'
++  shrext_cmds=".ell"
++  need_lib_prefix=no
++  library_names_spec='$libname${shared_ext} $libname.a'
++  dynamic_linker="$host_os ELOADER"
++  shlibpath_var=LIBPATH
++  soname_spec='$libname${shared_ext}.$major'
++  ;;
++
+ *)
+   dynamic_linker=no
+   ;;
+@@ -78614,7 +78624,7 @@ done
+ 
+     ;;
+   *)
+-    as_fn_error $? "No support for this host/target combination." "$LINENO" 5
++    #as_fn_error $? "No support for this host/target combination." "$LINENO" 5
+    ;;
+ esac
+ 
+diff -rupN gcc-original/gcc-9.2.0/libstdc++-v3/crossconfig.m4 gcc-9.2.0/libstdc++-v3/crossconfig.m4
+--- gcc-original/gcc-9.2.0/libstdc++-v3/crossconfig.m4	2019-03-11 16:28:11.000000000 +0000
++++ gcc-9.2.0/libstdc++-v3/crossconfig.m4	2020-02-05 21:59:14.768477381 +0000
+@@ -300,6 +300,13 @@ case "${host}" in
+     AC_DEFINE(HAVE_TANF)
+     AC_DEFINE(HAVE_TANHF)
+     ;;
++  *-btos*)
++    GLIBCXX_CHECK_LINKER_FEATURES
++    AC_CHECK_HEADERS([sys/types.h locale.h float.h])
++    GLIBCXX_CHECK_BUILTIN_MATH_SUPPORT
++    GLIBCXX_CHECK_COMPLEX_MATH_SUPPORT
++    GLIBCXX_CHECK_STDLIB_SUPPORT
++   ;;
+   *)
+     AC_MSG_ERROR([No support for this host/target combination.])
+    ;;
+diff -rupN gcc-original/gcc-9.2.0/libtool.m4 gcc-9.2.0/libtool.m4
+--- gcc-original/gcc-9.2.0/libtool.m4	2018-10-31 17:03:16.000000000 +0000
++++ gcc-9.2.0/libtool.m4	2020-02-05 21:59:14.772477496 +0000
+@@ -2678,6 +2678,15 @@ uts4*)
+   shlibpath_var=LD_LIBRARY_PATH
+   ;;
+ 
++btos*)
++  libname_spec='$name'
++  shrext_cmds=".ell"
++  need_lib_prefix=no
++  library_names_spec='$libname${shared_ext}'
++  dynamic_linker="$host_os ld.ell"
++  shlibpath_var=LIBPATH
++  ;;
++
+ *)
+   dynamic_linker=no
+   ;;

@@ -13,16 +13,16 @@ then
 	fi
 	tar xvfz binutils-2.23.tar.gz
 	
-	rm -rf gcc-4.8.1
-	if [ ! -f gcc-4.8.1.tar.bz2 ];
+	rm -rf gcc-9.2.0
+	if [ ! -f gcc-9.2.0.tar.xz ];
 	then
-		wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/gcc-4.8.1.tar.bz2
+		wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/gcc-9.2.0.tar.xz
 	fi
-	tar xvfj gcc-4.8.1.tar.bz2
+	tar xvf gcc-9.2.0.tar.xz
 	
 	cp -Rv toolchain/binutils-2.23/* ./binutils-2.23  && \
-	cp -Rv toolchain/gcc-4.8.1/* ./gcc-4.8.1  && \
-	rm ./gcc-4.8.1/gcc/cp/cfns.h && \
+	cd gcc-9.2.0/ &&
+	patch -p1 < ../toolchain/gcc-9.2.0/gcc-9.2.0.patch
 	
 	if [ "$1" == "download" ];  
 	then 
@@ -56,7 +56,7 @@ esac
 case "$run" in
 	*1*)
 
-	pushd gcc-4.8.1/libstdc++-v3 && \
+	pushd gcc-9.2.0/libstdc++-v3 && \
 	autoconf2.64 && \
 	popd && \
 	\
@@ -79,7 +79,7 @@ case "$run" in
 	rm -rf build-gcc
 	mkdir build-gcc && \
 	cd build-gcc && \
-	../gcc-4.8.1/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers --with-newlib --disable-multilib --enable-shared=libgcc,libstdc++ --enable-initfini-array && \
+	../gcc-9.2.0/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers --with-newlib --disable-multilib --enable-shared=libgcc,libstdc++ --enable-initfini-array && \
 	make all-gcc && \
 	make install-gcc && \
 	cd $HOME/Projects/os/src
