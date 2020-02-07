@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <unistd.h>
 
+using namespace btos_api;
 using namespace btos_api::gds;
 
 extern "C" uint64_t GDS_LoadPNG(int fd){

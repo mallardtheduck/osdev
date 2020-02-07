@@ -14,13 +14,13 @@ public:
 	static const uint32_t y = 200;
 	static const uint32_t speed = 15;
 
-	Paddle(std::shared_ptr<gds::Surface> s) : Sprite(s) {}	
+	Paddle(std::shared_ptr<btos_api::gds::Surface> s) : Sprite(s) {}	
 
 	void Draw();
 	void Left();
 	void Right();
 	bool Step();
-	gds::Rect GetBoundingRect();
+	btos_api::gds::Rect GetBoundingRect();
 	uint32_t GetZOrder();
 	
 	void Input(const wm_Event &e);

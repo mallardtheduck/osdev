@@ -13,6 +13,7 @@
 #include <dev/rtc.h>
 
 using std::string;
+using namespace btos_api;
 
 static TopWin *top_win;
 static TextWin *text_win;

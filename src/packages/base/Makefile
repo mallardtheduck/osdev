@@ -16,7 +16,6 @@ import-files:=\
  data/btos/bin/debug.elx \
  data/btos/system/wm.elx \
  data/btos/bin/wmmenu.elx \
- data/btos/bin/startwm.elx \
  data/btos/bin/termwin.elx \
  data/btos/bin/breakout.elx \
  data/btos/cmd/sleep.elx \
@@ -132,9 +131,6 @@ data/btos/system/wm.elx: ../../user/system/wm/wm.elx create.directories
 	cp $< $@
 
 data/btos/bin/wmmenu.elx: ../../user/wmapps/wmmenu/wmmenu.elx create.directories
-	cp $< $@
-
-data/btos/bin/startwm.elx: ../../user/bin/startwm/startwm.elx create.directories
 	cp $< $@
 
 data/btos/bin/termwin.elx: ../../user/wmapps/termwin/termwin.elx create.directories

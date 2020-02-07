@@ -9,6 +9,7 @@
 #include <limits>
 
 using namespace std;
+using namespace btos_api;
 
 static uint64_t cacheIdCounter = 0;
 static const size_t ZUnspecified = SIZE_MAX;

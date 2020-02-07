@@ -46,6 +46,7 @@ clean: dummy.delete
 dummy.delete:
 	-@$(RM) *.o
 	-@$(RM) $(OUTPUT-NAME)
+	-@$(RM) $(LIBRARY-NAME)
 
 $(LIBRARY-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile
 	$(LINK) $(LIB-LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LIB-LINK-OPTIONS)

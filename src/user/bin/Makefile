@@ -1,4 +1,4 @@
-PROGS := debug startwm install
+PROGS := debug install
 
 all: dummy.file
 	for dir in $(PROGS); do \

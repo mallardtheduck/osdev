@@ -57,7 +57,8 @@ FontManager::FontManager(){
 				shared_ptr<Font> f {new Font()};
 				f->file = fullPath;
 				f->info->fontID = ++counter;
-				strncpy(f->info->name, face->family_name, FONT_NAME_MAX);
+				memset((void*)f->info->name, 0, FONT_NAME_MAX);
+				strncpy(f->info->name, face->family_name, FONT_NAME_MAX - 1);
 				switch(face->style_flags){
 					case FT_STYLE_FLAG_ITALIC:
 						f->info->fontStyle = gds_FontStyle::Italic;

@@ -5,6 +5,8 @@
 #include "surface.hpp"
 #include "drawingop.hpp"
 
+#include <vector>
+
 typedef std::vector<std::pair<uint32_t, size_t>> CompressedImage;
 
 class CompressedImageRegistry{

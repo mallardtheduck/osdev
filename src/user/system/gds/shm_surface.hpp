@@ -7,7 +7,7 @@
 
 class SHMSurface : public Surface{
 private:
-	bt_handle_t shm_handle;
+	btos_api::bt_handle_t shm_handle;
 	uint32_t width;
 	uint32_t height;
 	uint32_t colourType;

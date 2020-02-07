@@ -54,7 +54,7 @@ struct bt_debug_event_msg{
 };
 
 struct bt_debug_copy_params{
-	bt_pid_t pid;
+	BTOS_API_NS bt_pid_t pid;
 	void *addr;
 	size_t size;
 };

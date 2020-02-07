@@ -4,7 +4,7 @@
 #include "paddle.hpp"
 #include "game.hpp"
 
-using namespace gds;
+using namespace btos_api::gds;
 
 void Paddle::Draw(){
 	Colour colour = surf->GetColour(128, 128, 128);

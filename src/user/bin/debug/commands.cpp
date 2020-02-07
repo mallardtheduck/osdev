@@ -13,6 +13,7 @@
 #include <iomanip>
 #include <fstream>
 #include <algorithm>
+#include <functional>
 #include <unistd.h>
 
 #include <udis86.h>
@@ -23,6 +24,7 @@
 #include "symbols.hpp"
 
 using namespace std;
+using namespace btos_api;
 
 volatile bt_pid_t selected_pid;
 volatile uint64_t selected_thread;

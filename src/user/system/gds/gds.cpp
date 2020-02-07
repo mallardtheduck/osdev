@@ -5,6 +5,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace btos_api;
 
 char dbgbuf[128];
 

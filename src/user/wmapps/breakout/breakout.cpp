@@ -12,6 +12,7 @@
 #include "game.hpp"
 
 using namespace std;
+using namespace btos_api;
 using namespace gds;
 using namespace wm;
 

@@ -53,6 +53,7 @@ clean: dummy.delete
 dummy.delete:
 	-@$(RM) *.o
 	-@$(RM) $(OUTPUT-NAME)
+	-@$(RM) $(LIBRARY-NAME)
 
 $(LIBRARY-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) $(LIBRESC-TAR-NAME).o Makefile
 	$(LINK) $(LIB-LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LIBRESC-TAR-NAME).o $(LIB-LINK-OPTIONS)

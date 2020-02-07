@@ -22,7 +22,7 @@ getoldopt(argc, argv, optstring)
 	extern int	optind;		/* Global argv index */
 	static char	*key;		/* Points to next keyletter */
 	static char	use_getopt;	/* !=0 if argv[1][0] was '-' */
-	extern char	*index();
+	extern char	*index(const char *s, int c);
 	char		c;
 	char		*place;
 

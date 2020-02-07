@@ -675,3 +675,6 @@ int ftruncate(int fd, off_t length){
 	}else return -1;
 }
 
+long pathconf(char *path, int name){
+	return -1;
+}

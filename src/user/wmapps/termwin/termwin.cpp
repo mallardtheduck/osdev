@@ -20,6 +20,7 @@
 #include "lrucache.hpp"
 
 using namespace std;
+using namespace btos_api;
 
 //#define DEBUG
 

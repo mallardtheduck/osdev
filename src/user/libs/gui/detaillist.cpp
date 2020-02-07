@@ -5,6 +5,7 @@
 
 #include <cctype>
 #include <algorithm>
+#include <numeric>
 
 #include <util/tinyformat.hpp>
 

@@ -5,6 +5,7 @@
 #include <malloc.h>
 
 using namespace std;
+using namespace btos_api;
 
 static inline uint32_t getPixelTrueColour(char *ptr, uint32_t w, uint32_t x, uint32_t y, uint32_t colourType){
 	if(!(colourType & gds_ColourType::SHM_Alpha255)){

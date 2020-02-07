@@ -59,7 +59,7 @@ namespace btos_api{
 		table ret;
 		string header;
 		getline(file, header);
-		if(!header[0]=='#') return ret;
+		if(header[0] != '#') return ret;
 		header=header.substr(2);
 		ret.headers=splitcsv(header);
 		string line;

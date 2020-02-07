@@ -1,6 +1,8 @@
 #include "elf.hpp"
 #include "liballoc.h"
 
+using namespace btos_api;
+
 Elf32_Ehdr elf_read_header(bt_handle_t file){
 	Elf32_Ehdr ret;
 	bt_fseek(file, 0, FS_Set);

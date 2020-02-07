@@ -8,7 +8,7 @@
 
 #include "tables.hpp"
 
-extern MessageLoop msgloop;
+extern btos_api::MessageLoop msgloop;
 
 Feature GetAssociation(const std::string &path);
 

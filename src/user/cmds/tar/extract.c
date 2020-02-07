@@ -26,7 +26,7 @@
 #include "stubs.h"
 
 extern int errno;			/* From libc.a */
-extern char *index();			/* From libc.a or port.c */
+extern char *index(const char *s, int c);		/* From libc.a or port.c */
 
 #include "tar.h"
 

@@ -123,7 +123,7 @@ int main(int argc, char **argv){
 			    break;
 			}
 			case Command::Help:{
-			   	auto fmt = doc_formatting{}.start_column(2).alternatives_min_split_size(1);
+			   	auto fmt = doc_formatting{}.first_column(2).alternatives_min_split_size(1);
 				std::cout << make_man_page(cli, argv[0], fmt);
 				break;
 			}

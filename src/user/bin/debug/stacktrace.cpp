@@ -3,6 +3,7 @@
 #include <sstream>
 
 using namespace std;
+using namespace btos_api;
 
 static bt_pid_t curpid = 0;
 static vector<symbol> symbols;

@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <dev/rtc.h>
 #include <algorithm>
+#include <cmath>
 
 void FastBlit(const GD::Image &src, GD::Image &dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h, uint32_t flags){
 	bool overwrite = (flags & gds_BlitFlags::Overwrite);

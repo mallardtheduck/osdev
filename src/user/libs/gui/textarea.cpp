@@ -126,7 +126,7 @@ gds::Rect TextArea::UpdateDisplayState(){
 			}
 		}
 		if(cursorMoved){
-			if(overflow && cursorPos > textOffset + std::max((int32_t)visibleChars - 2, 0)){
+			if(overflow && cursorPos > textOffset + std::max<int32_t>((int32_t)visibleChars - 2, 0)){
 				++textOffset;
 				if(textOffset >= text.length()) break;
 			}else if(underflow && cursorPos < textOffset + 1){

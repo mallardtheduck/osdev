@@ -4,7 +4,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace sm;
+using namespace btos_api::sm;
 
 vector<string> argv_to_vec(int argc, char **argv){
 	vector<string> ret;

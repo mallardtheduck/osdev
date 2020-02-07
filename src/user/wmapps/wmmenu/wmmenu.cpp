@@ -7,6 +7,7 @@
 #include <btos/registry.hpp>
 
 using namespace std;
+using namespace btos_api;
 
 namespace reg = btos_api::registry;
 

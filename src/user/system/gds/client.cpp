@@ -11,6 +11,7 @@
 #include "fonts.hpp"
 
 using namespace std;
+using namespace btos_api;
 
 const size_t MaxSurfaceSize = 32768;
 
@@ -273,6 +274,7 @@ bool Client::HandleMessage(const Message &msg) {
 			if(currentSurface){
 				currentSurface->Clear();
 			}
+			break;
 		}
 		case gds_MsgType::SetTextParameters:{
 			txtParams = msg.Content<gds_TextParameters>();

@@ -1,6 +1,8 @@
 #include "util.hpp"
 #include "el_malloc.hpp"
 
+using namespace btos_api;
+
 static const char *LIBPATH_ENV = "LIBPATH";
 
 bt_handle_t open_lib(const char *name, char **fullpath){

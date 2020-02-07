@@ -22,8 +22,8 @@ then
 	
 	cp -Rv toolchain/binutils-2.23/* ./binutils-2.23  && \
 	cd gcc-9.2.0/ &&
-	patch -p1 < ../toolchain/gcc-9.2.0/gcc-9.2.0.patch
-	
+	patch -p1 < ../toolchain/gcc-9.2.0/gcc-9.2.0.patch & \
+	cd ..
 	if [ "$1" == "download" ];  
 	then 
 		exit
@@ -56,16 +56,6 @@ esac
 case "$run" in
 	*1*)
 
-	pushd gcc-9.2.0/libstdc++-v3 && \
-	autoconf2.64 && \
-	popd && \
-	\
-	# pushd newlib-2.1.0/newlib/libc/sys && \
-	# autoconf && \
-	# cd btos && \
-	# autoreconf && \
-	# popd && \
-	# \
 	cd $HOME/Projects/os/src
 	rm -rf build-binutils
 	mkdir build-binutils && \
@@ -74,7 +64,7 @@ case "$run" in
 	make && \
 	make install && \
 	\
-	rm -rf "$PREFIX/lib/gcc/i686-pc-btos/4.8.1" && \
+	rm -rf "$PREFIX/lib/gcc/i686-pc-btos/9.2.0" && \
 	cd $HOME/Projects/os/src && \
 	rm -rf build-gcc
 	mkdir build-gcc && \
@@ -96,6 +86,7 @@ case "$run" in
 	SHLIB_LINK="i686-pc-btos-gcc -O2 -fPIC -shared @shlib_objs@ -o @shlib_base_name@.ell" make all-target-libgcc && \
 	make install-target-libgcc && \
 	find i686-pc-btos/libgcc -name \*.ell -exec cp {} ../../cross/i686-pc-btos/lib \;
+	cd ..
 	;;
 esac
 
@@ -113,6 +104,8 @@ case "$run" in
 	cd build-gcc && \
 	cd $HOME/Projects/os/src/build-gcc && \
 	mkdir -p i686-pc-btos/libstdc++-v3 && \
+	cp ../toolchain/misc/libtool i686-pc-btos/libstdc++-v3 && \
+	make
 	cp ../toolchain/misc/libtool i686-pc-btos/libstdc++-v3 && \
 	make && \
 	make install

@@ -23,6 +23,7 @@ using std::map;
 using std::cout;
 using std::endl;
 
+using namespace btos_api;
 namespace reg = btos_api::registry;
 
 bool starts_with(const string &str, const string &start){

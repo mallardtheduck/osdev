@@ -214,14 +214,14 @@ const int STN_UNDEF=0;
 #define DO_386_32(S, A)	((S) + (A))
 #define DO_386_PC32(S, A, P)	((S) + (A) - (P))
 
-Elf32_Ehdr elf_read_header(bt_handle_t file);
-Elf32_Shdr elf_read_sectionheader(bt_handle_t file, const Elf32_Ehdr &header, size_t index);
-Elf32_Phdr elf_read_progheader(bt_handle_t file, const Elf32_Ehdr &header, size_t index);
-size_t elf_get_stringoffset(bt_handle_t file, const Elf32_Ehdr &header);
-Elf32_Rel elf_read_rel(bt_handle_t file, const Elf32_Shdr &section, size_t index);
-bool elf_getstring(bt_handle_t file, const Elf32_Ehdr &header, size_t offset, char *buf, size_t bufsize);
+Elf32_Ehdr elf_read_header(btos_api::bt_handle_t file);
+Elf32_Shdr elf_read_sectionheader(btos_api::bt_handle_t file, const Elf32_Ehdr &header, size_t index);
+Elf32_Phdr elf_read_progheader(btos_api::bt_handle_t file, const Elf32_Ehdr &header, size_t index);
+size_t elf_get_stringoffset(btos_api::bt_handle_t file, const Elf32_Ehdr &header);
+Elf32_Rel elf_read_rel(btos_api::bt_handle_t file, const Elf32_Shdr &section, size_t index);
+bool elf_getstring(btos_api::bt_handle_t file, const Elf32_Ehdr &header, size_t offset, char *buf, size_t bufsize);
 size_t get_dynamic_entry_idx(Elf32_Dyn *dynamic, Elf32_Sword tag, size_t start = 0);
-Elf32_Dyn* load_dynamic_section(bt_handle_t file, Elf32_Ehdr header, int phnum);
+Elf32_Dyn* load_dynamic_section(btos_api::bt_handle_t file, Elf32_Ehdr header, int phnum);
 size_t elf_hash(const char *name);
 
 #endif

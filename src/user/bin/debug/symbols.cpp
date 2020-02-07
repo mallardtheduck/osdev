@@ -15,6 +15,7 @@
 #include <util/lrucache.hpp>
 
 using namespace std;
+using namespace btos_api;
 
 cache::lru_cache<string, vector<symbol>> symbol_cache(32);
 
