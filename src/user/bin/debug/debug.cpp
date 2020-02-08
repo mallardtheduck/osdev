@@ -10,7 +10,7 @@ using namespace btos_api;
 
 uint16_t debug_ext_id;
 
-const size_t thread_stack_size = 16 * 1024;
+const size_t thread_stack_size = 128 * 1024;
 
 bool init_debug(){
     debug_ext_id = bt_query_extension("DEBUG");
