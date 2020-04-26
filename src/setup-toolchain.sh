@@ -61,7 +61,7 @@ case "$run" in
 	mkdir build-binutils && \
 	cd build-binutils && \
 	../binutils-2.23/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --disable-werror && \
-	make && \
+	make -j4 && \
 	make install && \
 	\
 	rm -rf "$PREFIX/lib/gcc/i686-pc-btos/9.2.0" && \
@@ -69,9 +69,9 @@ case "$run" in
 	rm -rf build-gcc
 	mkdir build-gcc && \
 	cd build-gcc && \
-	../gcc-9.2.0/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers --with-newlib --disable-multilib --enable-shared=libgcc,libstdc++ --enable-initfini-array && \
-	make all-gcc && \
-	make install-gcc && \
+	../gcc-9.2.0/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers --with-newlib --disable-multilib --enable-shared=libgcc,libstdc++ --enable-initfini-array --enable-sjlj-exceptions && \
+	make -j4 all-gcc && \
+	make -j4 install-gcc && \
 	cd $HOME/Projects/os/src
 	;;
 esac
@@ -81,10 +81,10 @@ case "$run" in
 
 	cd build-gcc && \
 	make -C ../user/libs/newlib/libc startfiles && \
-	make all-target-libgcc && \
+	make -j4 all-target-libgcc && \
 	cp i686-pc-btos/libgcc/libgcc.a "$PREFIX/i686-pc-btos/lib" && \
 	SHLIB_LINK="i686-pc-btos-gcc -O2 -fPIC -shared @shlib_objs@ -o @shlib_base_name@.ell" make all-target-libgcc && \
-	make install-target-libgcc && \
+	make -j4 install-target-libgcc && \
 	find i686-pc-btos/libgcc -name \*.ell -exec cp {} ../../cross/i686-pc-btos/lib \;
 	cd ..
 	;;
@@ -94,7 +94,7 @@ case "$run" in
 	*3*)
 	
 	make -C user/libs/newlib/libc copy-includes && \
-	make newlib
+	make -j4 newlib
 	;;
 esac
 
@@ -107,7 +107,7 @@ case "$run" in
 	cp ../toolchain/misc/libtool i686-pc-btos/libstdc++-v3 && \
 	make
 	cp ../toolchain/misc/libtool i686-pc-btos/libstdc++-v3 && \
-	make && \
+	make -j4 && \
 	make install
 	;;
 esac
