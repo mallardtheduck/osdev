@@ -167,10 +167,12 @@ namespace gds{
 						for(auto t : tiles){
 							out->push_back(t);
 						}
-						auto q = i;
-						i--;
-						in->erase(q);
+						// auto q = i;
+						// bool ibegin = (i == in->begin());
+						// if(!ibegin) --i;
+						// in->erase(q);
 						in->erase(j);
+						// if(ibegin) i = in->begin();
 						break;
 					}
 				}
