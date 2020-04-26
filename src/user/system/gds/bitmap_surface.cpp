@@ -267,7 +267,7 @@ void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
 			case gds_DrawingOpType::Text:{
 					image->AlphaBlending(!(pending_op.Common.lineStyle & gds_TextStyle::PixelOverwrite));
 					gdFTStringExtra ftex;
-					ftex.flags = gdFTEX_RESOLUTION;
+					ftex.flags = gdFTEX_RESOLUTION | gdFTEX_FONTPATHNAME;
 					ftex.vdpi = 72;
 					ftex.hdpi = 72;
 					string fontfile = GetFontManager()->GetFontFile(pending_op.Text.fontID);

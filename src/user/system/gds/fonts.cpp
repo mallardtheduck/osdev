@@ -117,7 +117,7 @@ gds_GlyphInfo FontManager::GetGlyphInfo(uint32_t fontID, size_t size, char c){
 	if(!size || fontFile == "") return gds_GlyphInfo();
 	char chstring[] = {c, 0};
 	gdFTStringExtra ftex;
-	ftex.flags = gdFTEX_RESOLUTION;
+	ftex.flags = gdFTEX_RESOLUTION | gdFTEX_FONTPATHNAME;
 	ftex.vdpi = 72;
 	ftex.hdpi = 72;
 	gdImageStringFTEx(NULL, brect, 0, (char*)fontFile.c_str(), size, 0, 0, 0, chstring, &ftex);

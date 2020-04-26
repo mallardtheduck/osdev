@@ -259,13 +259,14 @@ std::unique_ptr<gds_TextMeasurements> MeasureText(const gds_TextParameters &p, s
 	static std::unique_ptr<GD::Image> image {new GD::Image(1, 1, false)};
 	
 	gdFTStringExtra ftex;
-	ftex.flags = gdFTEX_RESOLUTION | gdFTEX_XSHOW | gdFTEX_NORENDER;
+	ftex.flags = gdFTEX_RESOLUTION | gdFTEX_XSHOW | gdFTEX_NORENDER | gdFTEX_FONTPATHNAME;
 	ftex.vdpi = 72;
 	ftex.hdpi = 72;
 	std::string fontfile = GetFontManager()->GetFontFile(p.fontID);
-	auto info = GetFontManager()->GetFont(p.fontID);
 	int brect[] = {0, 0, 0, 0, 0, 0, 0, 0};
 	if(fontfile != "") image->StringFT(brect, 0, (char*)fontfile.c_str(), p.size, 0, 0, 0, text, &ftex);
+	else return nullptr;
+	
 	std::vector<double> xshowVec;
 	xshowVec.reserve(text.length());
 	if(ftex.xshow){
