@@ -176,8 +176,8 @@ void get_proc_info(){
 	auto threadstbl = parsecsv(threadsfile);
 	for(auto thread : threadstbl.rows){
 		auto load = strtol(thread["load"].c_str(), nullptr, 10);
-		auto priority = strtol(thread["priority"].c_str(), nullptr, 10);
-		if(priority > 0){
+		auto priority = strtoul(thread["priority"].c_str(), nullptr, 10);
+		if(priority < 4294967295){
 			auto pid = strtoul(thread["PID"].c_str(), nullptr, 10);
 			totalload += load;
 			auto proc = procs_info.find(pid);
