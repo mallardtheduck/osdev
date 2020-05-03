@@ -211,12 +211,12 @@ int main(){
 		time_t rawtime;
 		time(&rawtime);
 		auto timeinfo = localtime(&rawtime);
-		std::unique_ptr<char[]> buf(new char[1024]);
-		strftime(buf.get(), 1024, "%l:%M %p", timeinfo);
-		if(curTime != buf.get()){
+		std::array<char, 1204> buf;
+		strftime(buf.data(), 1024, "%l:%M %p", timeinfo);
+		if(curTime != buf.data()){
 			auto _ = loop->Lock();
-			timeLbl->SetText(buf.get());
-			curTime = buf.get();
+			timeLbl->SetText(buf.data());
+			curTime = buf.data();
 		}
 	};
 
