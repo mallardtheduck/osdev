@@ -536,6 +536,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 				uint16_t keycode = *(uint16_t*)buf;
 				if(backend) backend->register_global_shortcut(keycode, id);
 			}
+			break;
 		}case bt_terminal_ioctl::WaitActive:{
 			if(!backend || !backend->is_active(id)){
 				active_blockcheck_params p;
@@ -545,6 +546,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 				thread_setblock(&active_blockcheck, (void*)&p);
 				take_lock(&term_lock);
 			}
+			break;
 		}case bt_terminal_ioctl::TakeExclusive:{
 			if(check_exclusive()) return 0;
 			exclusive_pid = getpid();

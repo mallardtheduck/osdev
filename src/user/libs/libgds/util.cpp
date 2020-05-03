@@ -2,6 +2,7 @@
 #include "libgds_internal.hpp"
 
 using namespace std;
+using namespace btos_api;
 
 namespace libgds_internal{
 	string get_env(const string &name){

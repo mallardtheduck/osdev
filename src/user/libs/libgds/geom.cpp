@@ -167,9 +167,6 @@ namespace gds{
 						for(auto t : tiles){
 							out->push_back(t);
 						}
-						auto q = i;
-						i--;
-						in->erase(q);
 						in->erase(j);
 						break;
 					}

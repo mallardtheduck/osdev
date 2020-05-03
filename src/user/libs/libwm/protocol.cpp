@@ -10,6 +10,7 @@
 #include <sm/sm.h>
 
 using namespace std;
+using namespace btos_api;
 
 static bt_pid_t wm_pid = 0;
 

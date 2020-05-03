@@ -6,6 +6,7 @@
 #include <gds/surface.hpp>
 
 #include <type_traits>
+#include <functional>
 
 #include "eventresponse.hpp"
 

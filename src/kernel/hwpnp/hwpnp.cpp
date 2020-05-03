@@ -11,9 +11,7 @@ void hwpnp_init(){
 
 string uint64ToString(uint64_t i){
 	char buf[17] = {0};
-	if(i < 0x10) sprintf(buf, "0%x", Lower(i));
-	else if(i < 0x100000000) sprintf(buf, "%x", Lower(i));
-	else sprintf(buf, "%x%x", Upper(i), Lower(i));
+	sprintf(buf, "%llx", i);
 	return buf;
 }
 

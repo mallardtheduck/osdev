@@ -22,7 +22,7 @@ Menu make_menu(const string &title, const vector<pair<string, size_t>> &in){
 	int h = in.size() + 2;
 	int w = [&]()->int{
 		int ret = title.length();
-		for(auto i : in){
+		for(auto &i : in){
 			if((int)i.first.length() > ret) ret = i.first.length();
 		}
 		return ret + 3;
@@ -38,7 +38,7 @@ Menu::Menu(int y, int x, int h, int w, const string &title, const vector<pair<st
 
     // Compose list of menu items.
     itemList.reserve(items.size() + 1U);
-    for(auto i : items) {
+    for(auto &i : items) {
         itemList.push_back(new IdentifiedMenuItem(i.first.c_str(), i.second));
     }
     itemList.push_back(new NCursesMenuItem());

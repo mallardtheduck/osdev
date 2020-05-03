@@ -13,17 +13,17 @@ then
 	fi
 	tar xvfz binutils-2.23.tar.gz
 	
-	rm -rf gcc-4.8.1
-	if [ ! -f gcc-4.8.1.tar.bz2 ];
+	rm -rf gcc-9.2.0
+	if [ ! -f gcc-9.2.0.tar.xz ];
 	then
-		wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/gcc-4.8.1.tar.bz2
+		wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/gcc-9.2.0.tar.xz
 	fi
-	tar xvfj gcc-4.8.1.tar.bz2
+	tar xvf gcc-9.2.0.tar.xz
 	
 	cp -Rv toolchain/binutils-2.23/* ./binutils-2.23  && \
-	cp -Rv toolchain/gcc-4.8.1/* ./gcc-4.8.1  && \
-	rm ./gcc-4.8.1/gcc/cp/cfns.h && \
-	
+	cd gcc-9.2.0/ &&
+	patch -p1 < ../toolchain/gcc-9.2.0/gcc-9.2.0.patch & \
+	cd ..
 	if [ "$1" == "download" ];  
 	then 
 		exit
@@ -56,32 +56,22 @@ esac
 case "$run" in
 	*1*)
 
-	pushd gcc-4.8.1/libstdc++-v3 && \
-	autoconf2.64 && \
-	popd && \
-	\
-	# pushd newlib-2.1.0/newlib/libc/sys && \
-	# autoconf && \
-	# cd btos && \
-	# autoreconf && \
-	# popd && \
-	# \
 	cd $HOME/Projects/os/src
 	rm -rf build-binutils
 	mkdir build-binutils && \
 	cd build-binutils && \
 	../binutils-2.23/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --disable-werror && \
-	make && \
+	make -j4 && \
 	make install && \
 	\
-	rm -rf "$PREFIX/lib/gcc/i686-pc-btos/4.8.1" && \
+	rm -rf "$PREFIX/lib/gcc/i686-pc-btos/9.2.0" && \
 	cd $HOME/Projects/os/src && \
 	rm -rf build-gcc
 	mkdir build-gcc && \
 	cd build-gcc && \
-	../gcc-4.8.1/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers --with-newlib --disable-multilib --enable-shared=libgcc,libstdc++ --enable-initfini-array && \
-	make all-gcc && \
-	make install-gcc && \
+	../gcc-9.2.0/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers --with-newlib --disable-multilib --enable-shared=libgcc,libstdc++ --enable-initfini-array --enable-sjlj-exceptions && \
+	make -j4 all-gcc && \
+	make -j4 install-gcc && \
 	cd $HOME/Projects/os/src
 	;;
 esac
@@ -91,11 +81,12 @@ case "$run" in
 
 	cd build-gcc && \
 	make -C ../user/libs/newlib/libc startfiles && \
-	make all-target-libgcc && \
+	make -j4 all-target-libgcc && \
 	cp i686-pc-btos/libgcc/libgcc.a "$PREFIX/i686-pc-btos/lib" && \
 	SHLIB_LINK="i686-pc-btos-gcc -O2 -fPIC -shared @shlib_objs@ -o @shlib_base_name@.ell" make all-target-libgcc && \
-	make install-target-libgcc && \
+	make -j4 install-target-libgcc && \
 	find i686-pc-btos/libgcc -name \*.ell -exec cp {} ../../cross/i686-pc-btos/lib \;
+	cd ..
 	;;
 esac
 
@@ -103,7 +94,7 @@ case "$run" in
 	*3*)
 	
 	make -C user/libs/newlib/libc copy-includes && \
-	make newlib
+	make -j4 newlib
 	;;
 esac
 
@@ -114,7 +105,9 @@ case "$run" in
 	cd $HOME/Projects/os/src/build-gcc && \
 	mkdir -p i686-pc-btos/libstdc++-v3 && \
 	cp ../toolchain/misc/libtool i686-pc-btos/libstdc++-v3 && \
-	make && \
+	make
+	cp ../toolchain/misc/libtool i686-pc-btos/libstdc++-v3 && \
+	make -j4 && \
 	make install
 	;;
 esac

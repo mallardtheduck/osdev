@@ -70,6 +70,7 @@ bool Client::HandleMessage(const Message &msg){
 				currentWindow.reset();
 				windows.erase(id);
 			}
+			break;
 		}
 		case wm_RequestType::WindowInfo:{
 			wm_WindowInfo info;
@@ -227,6 +228,7 @@ bool Client::HandleMessage(const Message &msg){
 		}
 		case wm_RequestType::GetScreenMode:{
 			SendReply(msg, Terminal().GetCurrentScreenMode());
+			break;
 		}
 		case wm_RequestType::StartResize:{
 			if(currentWindow) currentWindow->StartResize();

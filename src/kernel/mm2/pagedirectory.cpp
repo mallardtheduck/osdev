@@ -243,7 +243,7 @@ namespace MM2{
 	
 	void PageDirectory::create_table(size_t tableno){
 		physical_page *page = physical_alloc();
-		dbgpf("MM2: Creating table %i at %x.\n", (int)tableno, (uint32_t)page->address());
+		dbgpf("MM2: Creating table %i at %lx.\n", (int)tableno, (uint32_t)page->address());
 		uint32_t flags = MM2_TableFlags::Present | MM2_TableFlags::Writable;
 		if(tableno >= MM2_Kernel_Tables) flags |= MM2_TableFlags::Usermode;
 		directory[tableno] = page->address() | flags;
@@ -258,7 +258,6 @@ namespace MM2{
 	
 	void PageDirectory::copy_kernelspace(const PageDirectory &pdir){
 		if(!directory) panic("(MM2) Copy to NULL page directory.");
-		if(!&pdir) panic("(MM2) Copy from NULL object.");
 		if(!pdir.directory) panic("(MM2) Copy from NULL page directory.");
     	memcpy(directory, pdir.directory, MM2_Kernel_Tables * sizeof(uint32_t));
 		klowfree = pdir.klowfree;

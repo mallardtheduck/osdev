@@ -13,7 +13,7 @@ namespace btos_api{
 	private:
 		bt_msg_header header;
 		bt_msg_filter filter;
-		mutable std::unique_ptr<void> content;
+		mutable std::unique_ptr<char[]> content;
 	public:
 		static Message Recieve();
 		static Message RecieveFiltered(const bt_msg_filter &filter);

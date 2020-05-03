@@ -207,11 +207,11 @@ void IDT_init()
 }
 
 void out_int_info(const isr_regs ctx){
-	dbgpf("INTERRUPT %x ERRCODE: %x\n", ctx.interrupt_number, ctx.error_code);
-	dbgpf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
-	dbgpf("EDI: %x ESI: %x EBP: %x ESP: %x\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
-	dbgpf("EIP: %x CS: %x SS*: %x\n", ctx.eip, ctx.cs, get_ss());
-	dbgpf("EFLAGS: %x UESP: %x\n", ctx.eflags, ctx.useresp);
+	dbgpf("INTERRUPT %lx ERRCODE: %lx\n", ctx.interrupt_number, ctx.error_code);
+	dbgpf("EAX: %lx EBX: %lx ECX: %lx EDX: %lx\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
+	dbgpf("EDI: %lx ESI: %lx EBP: %lx ESP: %lx\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
+	dbgpf("EIP: %lx CS: %lx SS*: %lx\n", ctx.eip, ctx.cs, get_ss());
+	dbgpf("EFLAGS: %lx UESP: %lx\n", ctx.eflags, ctx.useresp);
 }
 
 extern size_t current_thread;
@@ -228,8 +228,8 @@ extern "C" void isr_handler(isr_regs *ctx){
     }
 	if(handlers[ctx->interrupt_number]) handlers[ctx->interrupt_number](ctx->interrupt_number, ctx);
 	else if(ctx->interrupt_number==0x06){
-		dbgpf("\nInterrupt %i at %x!\n", (int)ctx->interrupt_number, (int)ctx->eip);
-		dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
+		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
+		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, sch_get_id());
 		out_int_info(*ctx);
 		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Invalid opcode.");
         else {
@@ -238,8 +238,8 @@ extern "C" void isr_handler(isr_regs *ctx){
         }
 	}
 	else if(ctx->interrupt_number==0x0D){
-		dbgpf("\nInterrupt %i at %x!\n", (int)ctx->interrupt_number, (int)ctx->eip);
-		dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
+		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
+		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, sch_get_id());
 		out_int_info(*ctx);
         if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("General Protection Fault.");
         else {
@@ -248,14 +248,14 @@ extern "C" void isr_handler(isr_regs *ctx){
         }
 	}
 	else if(ctx->interrupt_number==0x08){
-		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
+		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
+		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, sch_get_id());
 		out_int_info(*ctx);
         if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Double fault.");
         else proc_terminate();
 	}else if(ctx->interrupt_number==0x00){
-        dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
-        dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
+        dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
+        dbgpf("Current thread: %i (%llu)\n", (int)current_thread, sch_get_id());
         out_int_info(*ctx);
         if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Devide by zero!");
         else{
@@ -263,8 +263,8 @@ extern "C" void isr_handler(isr_regs *ctx){
             proc_terminate();
         }
     }else{
-		dbgpf("\nInterrupt %i at %x!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%i)\n", (int)current_thread, (int)(uint32_t)sch_get_id());
+		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
+		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, sch_get_id());
 		out_int_info(*ctx);
 	}
     disable_interrupts();
@@ -293,11 +293,11 @@ void irq_ack_if_needed(size_t irqno){
 }
 
 inline void out_regs(const irq_regs ctx){
-	dbgpf("INTERRUPT %x\n", ctx.int_no);
-	dbgpf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
-	dbgpf("EDI: %x ESI: %x EBP: %x ESP: %x\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
-	dbgpf("EIP: %x CS: %x SS: %x\n", ctx.eip, ctx.cs, ctx.ss);
-	dbgpf("EFLAGS: %x ORESP: %x\n", ctx.eflags, ctx.useresp);
+	dbgpf("INTERRUPT %lx\n", ctx.int_no);
+	dbgpf("EAX: %lx EBX: %lx ECX: %lx EDX: %lx\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
+	dbgpf("EDI: %lx ESI: %lx EBP: %lx ESP: %lx\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
+	dbgpf("EIP: %lx CS: %lx SS: %lx\n", ctx.eip, ctx.cs, ctx.ss);
+	dbgpf("EFLAGS: %lx ORESP: %lx\n", ctx.eflags, ctx.useresp);
 }
 
 extern "C" void irq_handler(irq_regs *r) {

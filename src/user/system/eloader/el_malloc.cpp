@@ -1,6 +1,8 @@
 #include "el_malloc.hpp"
 #include "util.hpp"
 
+using namespace btos_api;
+
 const size_t Heap_Base = 0xE0000000;
 const size_t Heap_Size = 16 * 1024 * 1024;
 const size_t Heap_Pages = Heap_Size / Page_Size;

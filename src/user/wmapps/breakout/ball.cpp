@@ -4,7 +4,7 @@
 #include "ball.hpp"
 #include <cmath>
 
-using namespace gds;
+using namespace btos_api::gds;
 
 void Ball::Launch(){
 	if(!launched){

@@ -6,6 +6,8 @@
 #include <dev/terminal.h>
 #include <btos/directory.hpp>
 
+using namespace btos_api;
+
 extern "C" bt_handle btos_get_handle(int fd);
 
 class global_test{

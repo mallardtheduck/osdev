@@ -41,7 +41,7 @@ void write_serial(const char a) {
 	//if(!try_take_lock_exclusive(ser_lock)) return;
     bool interrupts= are_interrupts_enabled();
     disable_interrupts();
-    while (is_transmit_empty() == 0);
+    while (is_transmit_empty() == 0) {};
 	outb(PORT, a);
     if(interrupts)enable_interrupts();
 	//release_lock(ser_lock);

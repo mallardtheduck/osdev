@@ -10,6 +10,7 @@
 #include "pointers.hpp"
 
 using namespace std;
+using namespace btos_api;
 
 bt_filehandle open_device(){
     bt_filehandle stdout_fh=btos_get_handle(fileno(stdout));

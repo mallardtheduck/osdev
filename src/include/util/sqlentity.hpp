@@ -433,7 +433,7 @@ template<typename T> T GetWhere(sqlitepp::db &db, const std::string &where,
 }
 
 template<typename T> std::vector<T> GetAllWhere(sqlitepp::db &db, const std::string &where,
-    std::map<std::string, std::string> vars = std::map<std::string, std::string>()
+    std::map<std::string, std::string> vars
 ){
     static_assert(std::is_base_of<BoundEntity, T>::value, "Type is not a BoundEntity!");
     static_assert(std::is_default_constructible<T>::value, "Type not default constructible!");

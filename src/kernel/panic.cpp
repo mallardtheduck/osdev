@@ -154,7 +154,7 @@ void kernel_debug_stacktrace(isr_regs *ctx){
 	uint32_t bp = 0;
 	uint32_t stack[2] = {ctx->ebp, ctx->eip};
 	for(int count = 0; count < 100; ++count){
-		dbgpf("STACK TRACE: %i : %x (EBP: %x)\n", count, stack[1], stack[0]);
+		dbgpf("STACK TRACE: %i : %lx (EBP: %lx)\n", count, stack[1], stack[0]);
 		if(stack[0] != bp){ 
 			bp = stack[0];
 			if(bp < 4096){

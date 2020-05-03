@@ -8,6 +8,7 @@
 
 #include <queue>
 #include <stack>
+#include <cmath>
 
 namespace gds = btos_api::gds;
 namespace gui = btos_api::gui;

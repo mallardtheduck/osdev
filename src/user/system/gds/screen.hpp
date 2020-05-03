@@ -17,14 +17,13 @@ private:
 		bool hide_pointer;
 	};
 	bt_vidmode original_mode, current_mode;
-	bt_filehandle fh;
+	btos_api::bt_filehandle fh;
 	uint8_t *buffer;
 	size_t buffersize;
 	bool cursor_on;
-	bt_terminal_pointer_bitmap cursor_bmp_info;
-	std::unique_ptr<Thread> update_thread;
-	Atom sync_atom = 0;
-	bt_handle_t update_q_lock;
+	std::unique_ptr<btos_api::Thread> update_thread;
+	btos_api::Atom sync_atom = 0;
+	btos_api::bt_handle_t update_q_lock;
 	std::deque<update> update_q;
 	bool pixel_conversion_required;
 
@@ -51,6 +50,10 @@ public:
 	void RestoreMode();
 	
 	gds_SurfaceType::Enum GetType() override;
+	
+private:
+	//This must be last!
+	bt_terminal_pointer_bitmap cursor_bmp_info;
 };
 
 std::shared_ptr<Screen> GetScreen();

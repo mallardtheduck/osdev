@@ -28,6 +28,7 @@ extern "C" {
 #define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
 
 using namespace std;
+using namespace btos_api;
 
 static const size_t thread_stack_size = (4 * 1024);
 static char keythread_stack[thread_stack_size];

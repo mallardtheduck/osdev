@@ -5,6 +5,7 @@
 #include <dev/terminal_ioctl.h>
 
 using namespace std;
+using namespace btos_api;
 
 static const size_t thread_stack_size = (4 * 1024);
 
@@ -291,8 +292,8 @@ void Screen::UpdateScreen(uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 		int32_t sypos = pointer_info.y;
 		sxpos -= cursor_bmp_info.spot_x;
 		sypos -= cursor_bmp_info.spot_y;
-		uint32_t x1 = max(0, sxpos);
-		uint32_t y1 = max(0, sypos);
+		uint32_t x1 = max<uint32_t>(0, sxpos);
+		uint32_t y1 = max<uint32_t>(0, sypos);
 		uint32_t x2 = x1 + cursor_bmp_info.w;
 		uint32_t y2 = y1 + cursor_bmp_info.h;
 		if(x1 < x && x2 < x) hide_cursor = false; 

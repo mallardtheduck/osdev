@@ -228,7 +228,7 @@ size_t user_backend::display_write(size_t bytes, char *buf){
 	return bytes;
 }
 size_t user_backend::display_seek(size_t pos, uint32_t flags){
-	struct {
+	struct __attribute__((packed)) {
 		size_t pos;
 		uint32_t flags;
 	}seek_params = {pos, flags};

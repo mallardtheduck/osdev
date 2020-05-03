@@ -4,6 +4,7 @@
 #include "game.hpp"
 
 using namespace std;
+using namespace btos_api;
 
 void Block::Draw(){
 	surf->Box({(int32_t)x, (int32_t)y, width, height}, colour, colour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);

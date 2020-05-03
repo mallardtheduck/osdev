@@ -12,7 +12,6 @@ BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -Wall -Wextra -Werror -g -c -I../../../include -std=gnu99
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -o $(OUTPUT-NAME) -O2 -L.
 LIB-LINK-FLAGS := -o $(LIBRARY-NAME) -O2 -fPIC -shared -L.
 LINK-OPTIONS := -lgcc_s -lc
 LIB-LINK-OPTIONS := -lgcc_s -lstdc++ -lc -lbtoscore
@@ -42,7 +41,7 @@ clean: dummy.delete
 
 dummy.delete:
 	-@$(RM) *.o
-	-@$(RM) $(OUTPUT-NAME)
+	-@$(RM) $(LIBRARY-NAME)
 
 
 $(LIBRARY-NAME): $(ASOBJS) $(COBJS) $(CPPOBJS) Makefile

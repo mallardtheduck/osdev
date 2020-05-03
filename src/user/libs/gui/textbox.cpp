@@ -42,7 +42,7 @@ void TextBox::UpdateDisplayState(){
 			}
 		}
 		
-		if(overflow && cursorPos > textOffset + std::max((int32_t)vchars - 2, 0)){
+		if(overflow && cursorPos > textOffset + std::max<int32_t>((int32_t)vchars - 2, 0)){
 			++textOffset;
 			update = true;
 			if(textOffset >= text.length()) break;

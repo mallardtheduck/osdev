@@ -8,6 +8,7 @@
 #define EXTERN_C_END }
 #define EXTERN_C extern "C"
 #define CPP_ONLY(x) x
+#define BTOS_API_NS btos_api::
 #else
 #define NS_BEGIN(x)
 #define NS_END
@@ -15,6 +16,7 @@
 #define EXTERN_C_END
 #define EXTERN_C
 #define CPP_ONLY(x)
+#define BTOS_API_NS
 #endif
 
 #ifdef __cplusplus

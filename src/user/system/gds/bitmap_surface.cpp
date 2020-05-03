@@ -112,7 +112,7 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 	Decompress();
 	//uint64_t op_start = bt_rtc_millis();
 	image->SetThickness(op.Common.lineWidth);
-	image->AlphaBlending(op.Common.fillStyle == gds_FillStyle::Overwrite ? gdEffectReplace : gdEffectNormal);
+	image->AlphaBlending(op.Common.fillStyle != gds_FillStyle::Overwrite);
 	switch(op.type) {
 		case gds_DrawingOpType::Dot:
 			image->SetPixel(op.Dot.x, op.Dot.y, op.Common.lineColour);
@@ -265,9 +265,9 @@ void BitmapSurface::SetOpParameters(std::shared_ptr<gds_OpParameters> params){
 	if(pending_op.type != gds_DrawingOpType::None && pending_op.type == params->type){
 		switch(pending_op.type){
 			case gds_DrawingOpType::Text:{
-					image->AlphaBlending((pending_op.Common.lineStyle & gds_TextStyle::PixelOverwrite) ? gdEffectReplace : gdEffectNormal);
+					image->AlphaBlending(!(pending_op.Common.lineStyle & gds_TextStyle::PixelOverwrite));
 					gdFTStringExtra ftex;
-					ftex.flags = gdFTEX_RESOLUTION;
+					ftex.flags = gdFTEX_RESOLUTION | gdFTEX_FONTPATHNAME;
 					ftex.vdpi = 72;
 					ftex.hdpi = 72;
 					string fontfile = GetFontManager()->GetFontFile(pending_op.Text.fontID);
@@ -373,7 +373,7 @@ void BitmapSurface::Compress(){
 
 void BitmapSurface::Decompress(){
 	if(!isCompressed) return;
-	bt_zero("BitmapSurface::Decompress\n");
+	btos_api::bt_zero("BitmapSurface::Decompress\n");
 	
 	size_t w = width, h = height;
 	

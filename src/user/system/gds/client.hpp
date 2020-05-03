@@ -17,18 +17,18 @@ namespace btos_api{
 
 class Client : public btos_api::IMessageHandler{
 private:
-	bt_pid_t pid;
+	btos_api::bt_pid_t pid;
 	std::set<std::shared_ptr<Surface>> surfaces;
 	std::shared_ptr<Surface> currentSurface;
 	
 	gds_TextParameters txtParams;
 public:
-	Client(bt_pid_t pid);
+	Client(btos_api::bt_pid_t pid);
 	~Client();
 	
-	bool HandleMessage(const Message &msg) override;
+	bool HandleMessage(const btos_api::Message &msg) override;
 };
 
-void Service(bt_pid_t root_pid);
+void Service(btos_api::bt_pid_t root_pid);
 
 #endif // CLIENT_HPP

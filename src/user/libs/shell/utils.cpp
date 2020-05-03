@@ -3,6 +3,7 @@
 #include <cctype>
 #include <fstream>
 #include <cstring>
+#include <functional>
 
 #define BTOS_NO_USING
 #include <btos.h>

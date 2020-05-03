@@ -3,8 +3,8 @@
 
 #include <btos.h>
 
-extern bt_handle stdin_handle;
+extern btos_api::bt_handle stdin_handle;
 
-void Service(bt_pid_t root);
+void Service(btos_api::bt_pid_t root);
 
 #endif

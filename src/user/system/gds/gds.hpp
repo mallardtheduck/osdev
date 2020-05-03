@@ -18,8 +18,8 @@
 #include "drawingop.hpp"
 #include "client.hpp"
 
-#define dbgpf(...) do{snprintf(dbgbuf, 128, __VA_ARGS__); bt_zero(dbgbuf);}while(false)
-#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; bt_zero(dbgss.str().c_str());}while(0)
+#define dbgpf(...) do{snprintf(dbgbuf, 128, __VA_ARGS__); btos_api::bt_zero(dbgbuf);}while(false)
+#define DBG(x) do{std::stringstream dbgss; dbgss << x << std::endl; btos_api::bt_zero(dbgss.str().c_str());}while(0)
 
 extern char dbgbuf[128];
 

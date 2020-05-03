@@ -5,8 +5,6 @@
 #error This file is for kernel use only.
 #endif
 
-#pragma GCC diagnostic ignored "-Wstrict-prototypes"
-
 #include "module/module_api.h"
 #include "module/drivers.h"
 #include "module/extension.h"

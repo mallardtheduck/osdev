@@ -9,17 +9,17 @@
 class Block : public Sprite{
 private:
 	uint32_t x, y;
-	gds::Colour colour;
+	btos_api::gds::Colour colour;
 	
 public:
 	static const uint32_t width = 40;
 	static const uint32_t height = 20;
 
-	Block(std::shared_ptr<gds::Surface> s, gds::Point p, gds::Colour col): Sprite(s), x(p.x), y(p.y), colour(col) {}
+	Block(std::shared_ptr<btos_api::gds::Surface> s, btos_api::gds::Point p, btos_api::gds::Colour col): Sprite(s), x(p.x), y(p.y), colour(col) {}
 	
 	void Draw();
 	bool Step();
-	gds::Rect GetBoundingRect();
+	btos_api::gds::Rect GetBoundingRect();
 };
 
 #endif

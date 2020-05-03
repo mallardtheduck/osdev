@@ -129,8 +129,8 @@ static bool ata_device_init(struct ata_device * dev) {
 	ptr[39] = '\0';
 	
 	dbgpf("ATA: Device Name:  %s\n", dev->identity.model);
-	dbgpf("ATA: Sectors (48): %d\n", (uint32_t)dev->identity.sectors_48);
-	dbgpf("ATA: Sectors (28): %d\n", dev->identity.sectors_28);
+	dbgpf("ATA: Sectors (48): %llu\n", dev->identity.sectors_48);
+	dbgpf("ATA: Sectors (28): %lu\n", dev->identity.sectors_28);
 	if(dev->identity.sectors_48 != 0) dev->length = dev->identity.sectors_48;
 	else dev->length = dev->identity.sectors_28;
 	dbgpf("ATA: Length: %i\n", (int)dev->length);
@@ -197,7 +197,7 @@ try_again:
 	bus->OutByte(index, ATA_REG_COMMAND, ATA_CMD_READ_PIO);
 
 	if (ata_wait(bus, index, 1)) {
-		dbgpf("ATA: Error during ATA read of lba block %d\n", lba);
+		dbgpf("ATA: Error during ATA read of lba block %lu\n", lba);
 		errors++;
 		if (errors > 4) {
 			dbgpf("ATA: -- Too many errors trying to read this block. Bailing.\n");

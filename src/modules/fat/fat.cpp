@@ -360,7 +360,7 @@ bool fat_format(char *device, void*){
 	}
 	bt_filesize_t fsize = fseek(fh, 0, FS_Backwards);
 	uint32_t sectors = fsize / 512;
-	dbgpf("FAT: Formatting %s, %i blocks (%i bytes).\n", device, sectors, (int)fsize);
+	dbgpf("FAT: Formatting %s, %lu blocks (%i bytes).\n", device, sectors, (int)fsize);
 	fl_attach_media(&fat_device_read, &fat_device_write);
 	fl_format(sectors, "BT/OS FAT");
     release_fat_lock();

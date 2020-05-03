@@ -14,6 +14,7 @@
 #include "switcherapp.hpp"
 
 using namespace std;
+using namespace btos_api;
 
 vector<term> get_term_list(){
     vector<term> ret;

@@ -20,6 +20,7 @@
 #include "lrucache.hpp"
 
 using namespace std;
+using namespace btos_api;
 
 //#define DEBUG
 
@@ -47,7 +48,7 @@ static uint8_t buffer[buffer_size];
 static uint8_t tempbuffer[buffer_size];
 static bt_handle_t buffer_lock;
 static bool dirtyBuffer[buffer_size];
-static const size_t thread_stack_size = 16 * 1024;
+static const size_t thread_stack_size = 128 * 1024;
 static bt_handle_t terminal_handle = 0;
 static volatile bool ready = false;
 static bt_handle_t renderthread = 0;
@@ -73,7 +74,7 @@ struct glyph_holder{
 static cache::lru_cache<uint16_t, shared_ptr<glyph_holder>> glyphcache(1024);
 
 template<typename T> void send_reply(const Message &msg, const T &content){
-	msg.SendReply(content);
+	msg.SendReply(content, 0);
 }
 
 template<typename T> void send_reply(const Message &msg, const T *content, size_t size){
@@ -314,7 +315,7 @@ void mainthread(void*){
 					break;
 				}
 				case bt_terminal_backend_operation_type::DisplaySeek:{
-					struct sp{
+					struct __attribute__((packed)) sp{
 						size_t pos;
 						uint32_t flags;
 					};

@@ -1,3 +1,5 @@
+#pragma GCC diagnostic ignored "-Wattributes"
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -10,6 +12,7 @@
 #include <btos.h>
 
 using namespace std;
+using namespace btos_api;
 
 string human_size(uint64_t size){
 	stringstream ss;
@@ -113,7 +116,7 @@ partition_info select_partition(){
 			try{
 				ret = selectmap.at(partno);
 				break;	
-			}catch(out_of_range){}
+			}catch(out_of_range&){}
 		}
 	}
 	if(ret.fs != "fat16" && ret.fs != "fat32"){

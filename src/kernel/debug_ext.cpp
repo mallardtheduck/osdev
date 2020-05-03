@@ -149,8 +149,8 @@ module_api::kernel_extension debug_extension = {
 };
 
 static void debug_isr(int i, isr_regs *r){
-	dbgpf("DEBUG: ISR (%i) from PID: %i.\n", i, (int)proc_current_pid);
-	dbgpf("DEBUG: DR6: %x\n", debug_getdr(6));
+	dbgpf("DEBUG: ISR (%i) from PID: %llu.\n", i, proc_current_pid);
+	dbgpf("DEBUG: DR6: %lx\n", debug_getdr(6));
 	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Breakpoint);
 	r->eflags |= (1 << 16);
 }
@@ -245,7 +245,7 @@ static bool debug_setbreakpoint(uint64_t thread_id, uint32_t addr, uint8_t type)
 			state[debug_dridx(i)] = addr;
 			configure_dr7(i, true, type, dr7);
 			ret = true;
-			dbgpf("DEBUG: Set breakpoint %lu at %p for thread %llu (DR7: %x).\n", i, (void*)addr, thread_id, dr7);
+			dbgpf("DEBUG: Set breakpoint %lu at %p for thread %llu (DR7: %lx).\n", i, (void*)addr, thread_id, dr7);
 			break;
 		}
 	}

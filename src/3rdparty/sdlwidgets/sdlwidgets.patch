@@ -1,45 +1,6 @@
-Binary files SDL2-widgets-2.1/bouncy-tune/bouncy-tune and originals/SDL2-widgets-2.1/bouncy-tune/bouncy-tune differ
-diff -rupN SDL2-widgets-2.1/bouncy-tune/Makefile originals/SDL2-widgets-2.1/bouncy-tune/Makefile
---- SDL2-widgets-2.1/bouncy-tune/Makefile	2018-09-11 12:06:51.374186691 +0100
-+++ originals/SDL2-widgets-2.1/bouncy-tune/Makefile	2014-05-30 09:51:05.000000000 +0100
-@@ -1,7 +1,8 @@
--CC := i686-pc-btos-gcc
--CFLAGS := -g -O -std=gnu++11 -Wall -Wuninitialized -Wshadow\
--  -Wno-non-virtual-dtor -Wno-delete-non-virtual-dtor -Wno-multichar -I../../install/btos/include/SDL2
--LFLAGS := -lm -lstdc++ -lfreetype -L../../install/btos/lib -lSDL2 -lSDL2_ttf -lbtoslib
-+CC := g++
-+# CFLAGS := -g $$(sdl2-config --cflags) -I.. -std=c++11 -O0 -Wno-multichar -fmax-errors=3
-+CFLAGS := -g $$(sdl2-config --cflags) -I.. -std=c++11 -O \
-+  -Wuninitialized -Wshadow -Wall -Wno-non-virtual-dtor -Wno-delete-non-virtual-dtor -Wno-multichar
-+LFLAGS := $$(sdl2-config --libs) -lSDL2_ttf
- OBJ := bouncy-tune.o ../make-waves/dump-wave.o ../sdl-widgets.a
- 
- .SUFFIXES=
-diff -rupN SDL2-widgets-2.1/config.h originals/SDL2-widgets-2.1/config.h
---- SDL2-widgets-2.1/config.h	2018-09-11 10:20:54.554247325 +0100
-+++ originals/SDL2-widgets-2.1/config.h	1970-01-01 01:00:00.000000000 +0100
-@@ -1,2 +0,0 @@
--const char* FONTPATH="/BTOS/FONTS/Resagnicto.ttf";
--const char* FONTPATH_MONO="/BTOS/FONTS/DejaVuSansMono.ttf";
-Binary files SDL2-widgets-2.1/hello/hello and originals/SDL2-widgets-2.1/hello/hello differ
-diff -rupN SDL2-widgets-2.1/hello/Makefile originals/SDL2-widgets-2.1/hello/Makefile
---- SDL2-widgets-2.1/hello/Makefile	2018-09-11 12:07:02.326186661 +0100
-+++ originals/SDL2-widgets-2.1/hello/Makefile	2014-05-30 09:51:05.000000000 +0100
-@@ -1,8 +1,6 @@
--CC := i686-pc-btos-gcc
--CFLAGS := -g -O -std=gnu++11 -Wall -Wuninitialized -Wshadow\
--  -Wno-non-virtual-dtor -Wno-delete-non-virtual-dtor -Wno-multichar -I../../install/btos/include/SDL2
--LFLAGS := -lm -lstdc++ -lfreetype -L../../install/btos/lib -lSDL2 -lSDL2_ttf -lbtoslib
--OBJ := shapes.o sdl-widgets.o testsw.o
-+CC := g++
-+CFLAGS := -g $(shell sdl2-config --cflags) -std=c++11
-+LFLAGS := $(shell sdl2-config --libs) -lSDL2_ttf
- 
- .SUFFIXES=
- 
 diff -rupN SDL2-widgets-2.1/Makefile originals/SDL2-widgets-2.1/Makefile
---- SDL2-widgets-2.1/Makefile	2018-09-11 12:02:02.642186008 +0100
-+++ originals/SDL2-widgets-2.1/Makefile	2014-06-28 14:13:04.000000000 +0100
+--- SDL2-widgets-2.1/Makefile	2020-02-07 16:33:12.501355712 +0000
++++ originals/SDL2-widgets-2.1/Makefile	2014-06-28 13:13:04.000000000 +0000
 @@ -1,15 +1,14 @@
 -CC := i686-pc-btos-gcc
 +CC := g++
@@ -85,9 +46,46 @@ diff -rupN SDL2-widgets-2.1/Makefile originals/SDL2-widgets-2.1/Makefile
 -
 -testsw: testsw.o SDL2_widgets.ell
 -	$(CC) $< -o $@ $(LFLAGS)
+diff -rupN SDL2-widgets-2.1/bouncy-tune/Makefile originals/SDL2-widgets-2.1/bouncy-tune/Makefile
+--- SDL2-widgets-2.1/bouncy-tune/Makefile	2020-02-07 16:33:12.506355750 +0000
++++ originals/SDL2-widgets-2.1/bouncy-tune/Makefile	2014-05-30 08:51:05.000000000 +0000
+@@ -1,7 +1,8 @@
+-CC := i686-pc-btos-gcc
+-CFLAGS := -g -O -std=gnu++11 -Wall -Wuninitialized -Wshadow\
+-  -Wno-non-virtual-dtor -Wno-delete-non-virtual-dtor -Wno-multichar -I../../install/btos/include/SDL2
+-LFLAGS := -lm -lstdc++ -lfreetype -L../../install/btos/lib -lSDL2 -lSDL2_ttf -lbtoslib
++CC := g++
++# CFLAGS := -g $$(sdl2-config --cflags) -I.. -std=c++11 -O0 -Wno-multichar -fmax-errors=3
++CFLAGS := -g $$(sdl2-config --cflags) -I.. -std=c++11 -O \
++  -Wuninitialized -Wshadow -Wall -Wno-non-virtual-dtor -Wno-delete-non-virtual-dtor -Wno-multichar
++LFLAGS := $$(sdl2-config --libs) -lSDL2_ttf
+ OBJ := bouncy-tune.o ../make-waves/dump-wave.o ../sdl-widgets.a
+ 
+ .SUFFIXES=
+diff -rupN SDL2-widgets-2.1/config.h originals/SDL2-widgets-2.1/config.h
+--- SDL2-widgets-2.1/config.h	2020-02-07 16:33:12.511355789 +0000
++++ originals/SDL2-widgets-2.1/config.h	1970-01-01 00:00:00.000000000 +0000
+@@ -1,2 +0,0 @@
+-const char* FONTPATH="/BTOS/FONTS/Resagnicto.ttf";
+-const char* FONTPATH_MONO="/BTOS/FONTS/DejaVuSansMono.ttf";
+diff -rupN SDL2-widgets-2.1/hello/Makefile originals/SDL2-widgets-2.1/hello/Makefile
+--- SDL2-widgets-2.1/hello/Makefile	2020-02-07 16:33:12.514355812 +0000
++++ originals/SDL2-widgets-2.1/hello/Makefile	2014-05-30 08:51:05.000000000 +0000
+@@ -1,8 +1,6 @@
+-CC := i686-pc-btos-gcc
+-CFLAGS := -g -O -std=gnu++11 -Wall -Wuninitialized -Wshadow\
+-  -Wno-non-virtual-dtor -Wno-delete-non-virtual-dtor -Wno-multichar -I../../install/btos/include/SDL2
+-LFLAGS := -lm -lstdc++ -lfreetype -L../../install/btos/lib -lSDL2 -lSDL2_ttf -lbtoslib
+-OBJ := shapes.o sdl-widgets.o testsw.o
++CC := g++
++CFLAGS := -g $(shell sdl2-config --cflags) -std=c++11
++LFLAGS := $(shell sdl2-config --libs) -lSDL2_ttf
+ 
+ .SUFFIXES=
+ 
 diff -rupN SDL2-widgets-2.1/make-waves/Makefile originals/SDL2-widgets-2.1/make-waves/Makefile
---- SDL2-widgets-2.1/make-waves/Makefile	2018-09-11 12:07:12.250186635 +0100
-+++ originals/SDL2-widgets-2.1/make-waves/Makefile	2014-09-09 08:18:22.000000000 +0100
+--- SDL2-widgets-2.1/make-waves/Makefile	2020-02-07 16:33:12.518355843 +0000
++++ originals/SDL2-widgets-2.1/make-waves/Makefile	2014-09-09 07:18:22.000000000 +0000
 @@ -1,7 +1,8 @@
 -CC := i686-pc-btos-gcc
 -CFLAGS := -g -O -std=gnu++11 -Wall -Wuninitialized -Wshadow\
@@ -110,10 +108,9 @@ diff -rupN SDL2-widgets-2.1/make-waves/Makefile originals/SDL2-widgets-2.1/make-
  
  %.o: %.cpp
  	$(CC) -c $< $(CFLAGS)
-Binary files SDL2-widgets-2.1/make-waves/make-waves and originals/SDL2-widgets-2.1/make-waves/make-waves differ
 diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widgets.cpp
---- SDL2-widgets-2.1/sdl-widgets.cpp	2018-09-11 12:05:55.970186847 +0100
-+++ originals/SDL2-widgets-2.1/sdl-widgets.cpp	2014-08-19 09:24:41.000000000 +0100
+--- SDL2-widgets-2.1/sdl-widgets.cpp	2020-02-07 16:33:12.527355913 +0000
++++ originals/SDL2-widgets-2.1/sdl-widgets.cpp	2014-08-19 08:24:41.000000000 +0000
 @@ -28,12 +28,6 @@
  #include "sdl-widgets.h"
  #include "sw-pixmaps.h"
@@ -305,8 +302,8 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.cpp originals/SDL2-widgets-2.1/sdl-widge
  #ifdef __MINGW32__
      if (!isDirentInoOK(dir)) { alert("d_ino?"); continue; }
 diff -rupN SDL2-widgets-2.1/sdl-widgets.h originals/SDL2-widgets-2.1/sdl-widgets.h
---- SDL2-widgets-2.1/sdl-widgets.h	2018-09-11 10:20:54.558247325 +0100
-+++ originals/SDL2-widgets-2.1/sdl-widgets.h	2014-05-30 09:51:05.000000000 +0100
+--- SDL2-widgets-2.1/sdl-widgets.h	2020-02-07 16:33:12.534355967 +0000
++++ originals/SDL2-widgets-2.1/sdl-widgets.h	2014-05-30 08:51:05.000000000 +0000
 @@ -76,7 +76,7 @@ struct Style {
  };
  
@@ -316,10 +313,9 @@ diff -rupN SDL2-widgets-2.1/sdl-widgets.h originals/SDL2-widgets-2.1/sdl-widgets
    SDL_Surface *chars[dim+1];
    int ch_wid[dim];
    TTF_Font *ttf_font;
-Binary files SDL2-widgets-2.1/testsw and originals/SDL2-widgets-2.1/testsw differ
 diff -rupN SDL2-widgets-2.1/testsw.cpp originals/SDL2-widgets-2.1/testsw.cpp
---- SDL2-widgets-2.1/testsw.cpp	2018-09-11 10:20:54.558247325 +0100
-+++ originals/SDL2-widgets-2.1/testsw.cpp	2014-08-14 11:06:49.000000000 +0100
+--- SDL2-widgets-2.1/testsw.cpp	2020-02-07 16:34:38.885024712 +0000
++++ originals/SDL2-widgets-2.1/testsw.cpp	2014-08-14 10:06:49.000000000 +0000
 @@ -15,8 +15,7 @@
      You should have received a copy of the GNU Lesser General Public
      License along with this program.
@@ -330,3 +326,21 @@ diff -rupN SDL2-widgets-2.1/testsw.cpp originals/SDL2-widgets-2.1/testsw.cpp
  #include "sdl-widgets.h"
  
  int col_R,col_G,col_B;
+@@ -112,7 +111,7 @@ namespace spin {
+   
+   void init() {
+     start_but=new Button(bgwin,0,Rect(100,80,32,16),"stop",
+-      [](Button *but) {
++      [&](Button *but) {
+         run=!run;
+         but->label= !run ? "start" : "stop";
+         if (run) SDL_CreateThread(thread_fun,"thread_fun", 0);
+@@ -349,7 +348,7 @@ void otw_cmd(Button *but) {
+ int th_fun(void *arg) {
+   static int n=0; // output should be: 'th_fun: n=0' 'th_fun: n=1'
+   while (n<2) {
+-    //send_uev([=](int) { printf("th_fun: n=%d\n",n); },0);
++    send_uev([=](int) { printf("th_fun: n=%d\n",n); },0);
+     ++n;
+   }
+   return 0;

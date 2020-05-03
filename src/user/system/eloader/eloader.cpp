@@ -3,6 +3,8 @@
 #include "elf.hpp"
 #include "el_load_elf.hpp"
 
+using namespace btos_api;
+
 char stdout_path[BT_MAX_PATH];
 bt_handle_t stdout;
 

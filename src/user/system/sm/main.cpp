@@ -19,7 +19,7 @@ using namespace std;
 using namespace btos_api::sm;
 namespace reg = btos_api::registry;
 
-static const string SessionsPath = EnvInterpolate("$systemdrive$:/BTOS/CONFIG/SESSIONS/");
+static const string SessionsPath = btos_api::EnvInterpolate("$systemdrive$:/BTOS/CONFIG/SESSIONS/");
 
 extern void RegTest();
 
@@ -32,12 +32,12 @@ vector<string> argv_to_vec(int argc, char **argv){
 }
 
 void kill_children(){
-	auto pid = bt_getpid();
+	auto pid = btos_api::bt_getpid();
 	bool found = true;
 
 	while(found){
 		found = false;
-		ProcessList procs;
+		btos_api::ProcessList procs;
 		for(auto proc : procs){
 			if(proc.Parent() == pid){
 				found = true;
@@ -71,7 +71,7 @@ int main(int argc, char **argv){
 	auto sessionType = GetSessionType(args[1]);
 
 	if(sessionType.first){
-		Terminal().SetTitle(sessionType.second.GetName());
+		btos_api::Terminal().SetTitle(sessionType.second.GetName());
 		auto s = sessionType.second.Start();
 		s.SetServiceResolver(make_shared<SessionServiceResolver>());
 		s.Run();

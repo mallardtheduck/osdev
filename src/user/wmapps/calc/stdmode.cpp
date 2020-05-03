@@ -9,6 +9,7 @@
 
 #include <cstdlib>
 #include <exception>
+#include <cmath>
 
 namespace gui = btos_api::gui;
 namespace gds = btos_api::gds;
@@ -90,7 +91,7 @@ void StandardMode::HandleClearEntry(){
 }
 
 void StandardMode::HandleSqrt(){
-	curTotal = sqrt(GetCurrentValue());
+	curTotal = std::sqrt(GetCurrentValue());
 	output->SetText(tfm::format("%s", curTotal));
 	opState = OpState::Default;
 	curValue = curTotal;

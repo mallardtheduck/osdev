@@ -6,6 +6,7 @@
 #include <cstdlib>
 
 using namespace std;
+using namespace btos_api;
 
 string output_message(bt_msg_header &msg);
 

@@ -57,7 +57,8 @@ FontManager::FontManager(){
 				shared_ptr<Font> f {new Font()};
 				f->file = fullPath;
 				f->info->fontID = ++counter;
-				strncpy(f->info->name, face->family_name, FONT_NAME_MAX);
+				memset((void*)f->info->name, 0, FONT_NAME_MAX);
+				strncpy(f->info->name, face->family_name, FONT_NAME_MAX - 1);
 				switch(face->style_flags){
 					case FT_STYLE_FLAG_ITALIC:
 						f->info->fontStyle = gds_FontStyle::Italic;
@@ -116,7 +117,7 @@ gds_GlyphInfo FontManager::GetGlyphInfo(uint32_t fontID, size_t size, char c){
 	if(!size || fontFile == "") return gds_GlyphInfo();
 	char chstring[] = {c, 0};
 	gdFTStringExtra ftex;
-	ftex.flags = gdFTEX_RESOLUTION;
+	ftex.flags = gdFTEX_RESOLUTION | gdFTEX_FONTPATHNAME;
 	ftex.vdpi = 72;
 	ftex.hdpi = 72;
 	gdImageStringFTEx(NULL, brect, 0, (char*)fontFile.c_str(), size, 0, 0, 0, chstring, &ftex);

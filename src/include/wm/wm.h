@@ -71,7 +71,7 @@ struct wm_WindowInfo{
 	uint32_t options;
 	uint32_t subscriptions;
 	uint64_t gds_id;
-	CPP_ONLY(btos_api::) bt_pid_t owner;
+	BTOS_API_NS bt_pid_t owner;
 	char title[WM_TITLE_MAX+1];
 };
 BT_STRUCT_TYPE(wm_WindowInfo);

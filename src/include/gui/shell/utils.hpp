@@ -4,6 +4,7 @@
 #include <btos.h>
 #include <memory>
 #include <string>
+#include <functional>
 #include <gds/surface.hpp>
 
 namespace btos_api{

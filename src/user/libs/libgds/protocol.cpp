@@ -9,6 +9,7 @@
 #include <sm/sm.h>
 
 using namespace std;
+using namespace btos_api;
 
 static bt_pid_t gds_pid = 0;
 static uint64_t current_surface = 0;

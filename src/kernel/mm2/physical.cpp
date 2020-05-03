@@ -75,10 +75,10 @@ namespace MM2{
 		
 		total_memory = total_pages * MM2_Page_Size;
 		free_pages = total_pages;
-		dbgpf("MM2: PMM: %i pages (%i bytes RAM).\n", (int)total_pages, (int)total_memory);
+		dbgpf("MM2: PMM: %lu pages (%lu bytes RAM).\n", (uint32_t)total_pages, (uint32_t)total_memory);
 		physical_pages = (physical_page*)mm2_init_alloc(sizeof(physical_page) * total_pages);
 		
-		dbgpf("MM2: PMM: physical_pages array at %x.\n", (uint32_t)physical_pages);
+		dbgpf("MM2: PMM: physical_pages array at %lx.\n", (uint32_t)physical_pages);
 		size_t current_page = 0;
 		
 		mmap = (memory_map_t*)mbt->mmap_addr;

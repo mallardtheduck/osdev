@@ -1,5 +1,7 @@
 #include "util.hpp"
 
+using namespace btos_api;
+
 #define swap(x,y) { x = x + y; y = x - y; x = x - y; }
 
 int strlen(const char *s){

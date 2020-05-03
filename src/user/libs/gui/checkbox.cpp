@@ -76,7 +76,7 @@ void Checkbox::Paint(gds::Surface &s){
 	if(focus){
 		auto focusCol = colours::GetCheckboxFocus().Fix(s);
 		
-		int32_t boxTop = std::max(std::min<int32_t>(chkY - 1, (rect.h - textMeasures.h) / 2), 0);
+		int32_t boxTop = std::max<int32_t>(std::min<int32_t>(chkY - 1, (rect.h - textMeasures.h) / 2), 0);
 		int32_t boxLeft = 0;
 		uint32_t boxWidth = textMeasures.w + checkSize + 3;
 		if(boxLeft + boxWidth > inW) boxWidth = inW - boxLeft;
@@ -101,7 +101,7 @@ gds::Rect Checkbox::GetInteractRect(){
 		uint32_t inH = rect.h - 1;
 		int32_t chkY = std::max<int32_t>((rect.h - checkSize) / 2, 0);
 		
-		int32_t boxTop = std::max(std::min<int32_t>(chkY - 1, (rect.h - textMeasures.h) / 2), 0);
+		int32_t boxTop = std::max<int32_t>(std::min<int32_t>(chkY - 1, (rect.h - textMeasures.h) / 2), 0);
 		int32_t boxLeft = 0;
 		uint32_t boxWidth = textMeasures.w + checkSize + 3;
 		if(boxLeft + boxWidth > inW) boxWidth = inW - boxLeft;

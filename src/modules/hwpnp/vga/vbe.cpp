@@ -5,6 +5,8 @@
 #include <module/io.h>
 #include <util/ministl.hpp>
 
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 static map<uint32_t, void*> *page_mappings;
 static map<uint32_t, void*> *mapping_cache;
 
@@ -89,7 +91,7 @@ bt_video_palette_entry VBE_GetPaletteEntry(uint8_t index){
 	uint32_t *entry = (uint32_t*)0x40000;
 	*entry = 0;
 	call_int10h(0x4F09, 1, 1, index, 0x4000, 0);
-	dbgpf("VGA: VBE Palette entry %i: %x\n", index, *entry); 
+	dbgpf("VGA: VBE Palette entry %i: %lx\n", index, *entry); 
 	bt_video_palette_entry ret;
 	ret.index = index;
 	ret.r = (*entry & 0xFF0000) >> 14;
@@ -237,7 +239,7 @@ static bool is_vbe_usable(){
 	Real_Pointer &int10hvec = page_zero[0x10];
 	uint32_t int10hlin = (uint32_t)RealPtr<void>(int10hvec);
 	free_pages(page_zero, 1);
-	dbgpf("VGA: Int 10h vector: %x\n", int10hlin);
+	dbgpf("VGA: Int 10h vector: %lx\n", int10hlin);
 	if(int10hlin > 0xC0000 && int10hlin < 0xD0000){
 		VBE_Info info = VBE_GetInfo();
 		if(verify_vesa_signature(info.Signature)){

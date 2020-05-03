@@ -2,6 +2,8 @@
 #include "libpath.hpp"
 #include <eloader/eloader.h>
 
+using namespace btos_api;
+
 static loaded_module *getmodule(uint32_t id){
 	for(size_t i = 0; i < loaded_module_count; ++i){
 		if(loaded_modules[i].id == id) return &loaded_modules[i];

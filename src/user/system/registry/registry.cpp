@@ -18,6 +18,7 @@ using std::shared_ptr;
 
 using namespace sqlentity;
 using namespace clipp;
+using namespace btos_api;
 
 MessageLoop msgloop;
 

@@ -3,6 +3,8 @@
 #include "el_malloc.hpp"
 #include "libpath.hpp"
 
+using namespace btos_api;
+
 const size_t Kernel_Boundary = 1024*1024*1024;
 
 struct symbol_override{

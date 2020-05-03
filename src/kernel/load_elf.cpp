@@ -201,7 +201,7 @@ loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
 		}
 	}
 	ret.entry=(proc_entry)(header.entry);
-	dbgpf("ELF: Entry point: %x\n", header.entry);
+	dbgpf("ELF: Entry point: %lx\n", header.entry);
 	proc_switch(oldpid);
 	return ret;
 }

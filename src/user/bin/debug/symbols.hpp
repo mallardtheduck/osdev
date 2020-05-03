@@ -25,12 +25,12 @@ struct module{
 	size_t limit;
 };
 
-std::vector<module> get_modules(bt_pid_t pid);
-std::vector<symbol> get_symbols(bt_pid_t pid);
+std::vector<module> get_modules(btos_api::bt_pid_t pid);
+std::vector<symbol> get_symbols(btos_api::bt_pid_t pid);
 symbol get_symbol(const std::vector<symbol> &symbols, intptr_t addr);
 symbol get_symbol_by_name(const std::vector<symbol> &symbols, const std::string &name);
 std::vector<symbol> get_symbols_by_name(const std::vector<symbol> &symbols, const std::string &name);
-std::vector<symbol> load_symbols(bt_pid_t pid, bool force_reload = false);
-std::vector<symbol> stack_symbols(bt_pid_t pid, context ctx);
+std::vector<symbol> load_symbols(btos_api::bt_pid_t pid, bool force_reload = false);
+std::vector<symbol> stack_symbols(btos_api::bt_pid_t pid, context ctx);
 
 #endif

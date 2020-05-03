@@ -6,10 +6,11 @@
 #include "commands.hpp"
 
 using namespace std;
+using namespace btos_api;
 
 uint16_t debug_ext_id;
 
-const size_t thread_stack_size = 16 * 1024;
+const size_t thread_stack_size = 128 * 1024;
 
 bool init_debug(){
     debug_ext_id = bt_query_extension("DEBUG");
@@ -26,12 +27,12 @@ void debug_register(){
 }
 
 void out_context(const context ctx){
-	printf("INTERRUPT %x ERRCODE: %x\n", ctx.interrupt_number, ctx.error_code);
-	printf("EAX: %x EBX: %x ECX: %x EDX: %x\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
-	printf("EDI: %x ESI: %x EBP: %x KESP: %x\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
-	printf("EIP: %x CS: %x SS*: %x\n", ctx.eip, ctx.cs, ctx.userss);
-	printf("UESP: %x\n", ctx.useresp);
-	printf("EFLAGS: %x\n", ctx.eflags);
+	printf("INTERRUPT %lx ERRCODE: %lx\n", ctx.interrupt_number, ctx.error_code);
+	printf("EAX: %lx EBX: %lx ECX: %lx EDX: %lx\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
+	printf("EDI: %lx ESI: %lx EBP: %lx KESP: %lx\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
+	printf("EIP: %lx CS: %lx SS*: %lx\n", ctx.eip, ctx.cs, ctx.userss);
+	printf("UESP: %lx\n", ctx.useresp);
+	printf("EFLAGS: %lx\n", ctx.eflags);
 }
 
 context get_context(uint64_t thread){

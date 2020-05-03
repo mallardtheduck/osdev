@@ -14,6 +14,7 @@
 #include <util/tinyformat.hpp>
 
 using namespace std;
+using namespace btos_api;
 using namespace clipp;
 
 vector<string> args_to_vec(int argc, char **argv){

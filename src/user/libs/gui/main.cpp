@@ -36,27 +36,27 @@
 #include <unistd.h>
 #include "guitest_resc.tar.h"
 
-std::shared_ptr<gds::Surface> load_png_resc(const char *path){
+std::shared_ptr<btos_api::gds::Surface> load_png_resc(const char *path){
 	auto r = btos_api::resc::Resc_LocalOpen(guitest_resc_data, guitest_resc_size);
 	auto fd = btos_api::resc::Resc_OpenResc(r, path);
 	auto ret = GDS_LoadPNG(fd);
 	close(fd);
 	btos_api::resc::Resc_Close(r);
-	return std::make_shared<gds::Surface>(std::move(gds::Surface::Wrap(ret, true)));
+	return std::make_shared<btos_api::gds::Surface>(std::move(btos_api::gds::Surface::Wrap(ret, true)));
 }
 
 void MoreForm(btos_api::wm::EventLoop &eloop){
-	auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{200, 50, 600, 500}, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, "More Controls");
-	auto lst = std::make_shared<btos_api::gui::ListBox>(gds::Rect{10, 10, 150, 200}, true);
-	auto lst2 = std::make_shared<btos_api::gui::ListBox>(gds::Rect{240, 10, 150, 200}, false, true);
-	auto tst = std::make_shared<btos_api::gui::TestControl>(gds::Rect{170, 10, 50, 50});
-	auto dls = std::make_shared<btos_api::gui::DetailList>(gds::Rect{10, 220, 280, 200}, std::vector<std::string>{"Col 1", "Col 2", "Col 3"}, true, 16, true);
-	auto icv = std::make_shared<btos_api::gui::IconView>(gds::Rect{300, 220, 280, 200}, 32, false);
+	auto frm = std::make_shared<btos_api::gui::Form>(btos_api::gds::Rect{200, 50, 600, 500}, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, "More Controls");
+	auto lst = std::make_shared<btos_api::gui::ListBox>(btos_api::gds::Rect{10, 10, 150, 200}, true);
+	auto lst2 = std::make_shared<btos_api::gui::ListBox>(btos_api::gds::Rect{240, 10, 150, 200}, false, true);
+	auto tst = std::make_shared<btos_api::gui::TestControl>(btos_api::gds::Rect{170, 10, 50, 50});
+	auto dls = std::make_shared<btos_api::gui::DetailList>(btos_api::gds::Rect{10, 220, 280, 200}, std::vector<std::string>{"Col 1", "Col 2", "Col 3"}, true, 16, true);
+	auto icv = std::make_shared<btos_api::gui::IconView>(btos_api::gds::Rect{300, 220, 280, 200}, 32, false);
 	auto png = load_png_resc("logo.png");
-	auto img = std::make_shared<btos_api::gui::Image>(gds::Rect{10, 430, 170, 60}, png);
+	auto img = std::make_shared<btos_api::gui::Image>(btos_api::gds::Rect{10, 430, 170, 60}, png);
 	auto png2 = load_png_resc("button_img.png");
-	auto igb = std::make_shared<btos_api::gui::ImageButton>(gds::Rect{190, 430, 50, 50}, png2);
-	auto trv = std::make_shared<btos_api::gui::TreeView>(gds::Rect{400, 10, 150, 200}, true);
+	auto igb = std::make_shared<btos_api::gui::ImageButton>(btos_api::gds::Rect{190, 430, 50, 50}, png2);
+	auto trv = std::make_shared<btos_api::gui::TreeView>(btos_api::gds::Rect{400, 10, 150, 200}, true);
 	tst->OnEvent([] (const wm_Event &e){
 		tfm::printf("More Test: EventType: %s\n", e.type);
 		return true;
@@ -131,7 +131,7 @@ void MoreForm(btos_api::wm::EventLoop &eloop){
 }
 
 void EvenMoreForm(btos_api::wm::EventLoop &eloop){
-	auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{100, 100, 400, 300}, wm_WindowOptions::Default | wm_WindowOptions::Resizable, "Even More Controls");
+	auto frm = std::make_shared<btos_api::gui::Form>(btos_api::gds::Rect{100, 100, 400, 300}, wm_WindowOptions::Default | wm_WindowOptions::Resizable, "Even More Controls");
 	auto tbar = std::make_shared<btos_api::gui::Toolbar>();
 	
 	auto tb1icon = load_png_resc("tb1_icon.png");
@@ -145,7 +145,7 @@ void EvenMoreForm(btos_api::wm::EventLoop &eloop){
 	tbar->Controls().push_back(tb3);
 	tbar->Refresh();
 	
-	auto tabs = std::make_shared<btos_api::gui::Tabs>(gds::Rect{10, 40, 380, 230});
+	auto tabs = std::make_shared<btos_api::gui::Tabs>(btos_api::gds::Rect{10, 40, 380, 230});
 	auto t1c = std::make_shared<btos_api::gui::Label>(tabs->GetContentRect(), "Tab 1 content");
 	tabs->TabItems().push_back({"Tab 1", t1c});
 	auto t2c = std::make_shared<btos_api::gui::Label>(tabs->GetContentRect(), "Tab 2 content");
@@ -161,7 +161,7 @@ void EvenMoreForm(btos_api::wm::EventLoop &eloop){
 		sbar->SetText("New status.");
 	});
 	
-	frm->OnResize([=](const gds::Rect &size){
+	frm->OnResize([=](const btos_api::gds::Rect &size){
 		tabs->SetPosition({10, 40, size.w - 20, size.h - 70});
 		t1c->SetPosition(tabs->GetContentRect());
 		t2c->SetPosition(tabs->GetContentRect());
@@ -176,17 +176,17 @@ void EvenMoreForm(btos_api::wm::EventLoop &eloop){
 
 int main(){
 	try{
-		auto frm = std::make_shared<btos_api::gui::Form>(gds::Rect{200, 200, 500, 300}, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, "GUI Controls Test");
-		auto lbl1 = std::make_shared<btos_api::gui::Label>(gds::Rect{120, 10, 100, 20}, "A Label");
-		auto lbl2 = std::make_shared<btos_api::gui::Label>(gds::Rect{120, 30, 100, 20}, "Nothing");
-		auto btn1 = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 1");
+		auto frm = std::make_shared<btos_api::gui::Form>(btos_api::gds::Rect{200, 200, 500, 300}, wm_WindowOptions::Default | wm_WindowOptions::NoExpand, "GUI Controls Test");
+		auto lbl1 = std::make_shared<btos_api::gui::Label>(btos_api::gds::Rect{120, 10, 100, 20}, "A Label");
+		auto lbl2 = std::make_shared<btos_api::gui::Label>(btos_api::gds::Rect{120, 30, 100, 20}, "Nothing");
+		auto btn1 = std::make_shared<btos_api::gui::Button>(btos_api::gds::Rect{10, 10, 100, 30}, "Button 1");
 		btn1->OnAction([&] {
 			btos_api::gui::InputBox box("Please enter some text.", "Input");
 			auto val = box.Show(frm.get());
 			lbl2->SetText(val);
 			
 		});
-		auto btn2 = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 50, 100, 30}, "Button 2");
+		auto btn2 = std::make_shared<btos_api::gui::Button>(btos_api::gds::Rect{10, 50, 100, 30}, "Button 2");
 		btn2->OnAction([&] {
 			lbl2->SetText("Button 2");
 			if(btn1->IsEnabled()){
@@ -195,17 +195,17 @@ int main(){
 				btn1->Enable();
 			}
 		});
-		auto txt = std::make_shared<btos_api::gui::TextBox>(gds::Rect{220, 10, 100, 20}, "An editable textbox");
-		auto sld = std::make_shared<btos_api::gui::Slider>(gds::Rect{340, 10, 140, 20}, 0, 100, 50, 5);
-		auto chk = std::make_shared<btos_api::gui::Checkbox>(gds::Rect{120, 55, 100, 20}, "A checkbox", true);
-		auto rd1 = std::make_shared<btos_api::gui::RadioButton>(gds::Rect{220, 35, 100, 20}, "Radio 1", false);
-		auto rd2 = std::make_shared<btos_api::gui::RadioButton>(gds::Rect{220, 60, 100, 20}, "Radio 2", false);
-		auto rd3 = std::make_shared<btos_api::gui::RadioButton>(gds::Rect{220, 85, 100, 20}, "Radio 3", true);
-		auto sch = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{340, 35, 140, 17}, 100, 1, 10, 0, true);
-		auto scv = std::make_shared<btos_api::gui::Scrollbar>(gds::Rect{463, 60, 17, 140}, 100, 1, 10, 100, false);
-		auto txa = std::make_shared<btos_api::gui::TextArea>(gds::Rect{10, 100, 150, 100}, "A multi-line editable text area.\nWith some lines of text.\nAnother line.\nA further line.\nAn additional line.\nAn extra line.\nA superflous line.", true);
-		auto grp = std::make_shared<btos_api::gui::GroupBox>(gds::Rect{165, 110, 170, 110}, "Subformy within");
-		auto tst1 = std::make_shared<btos_api::gui::TestControl>(gds::Rect{350, 110, 100, 30});
+		auto txt = std::make_shared<btos_api::gui::TextBox>(btos_api::gds::Rect{220, 10, 100, 20}, "An editable textbox");
+		auto sld = std::make_shared<btos_api::gui::Slider>(btos_api::gds::Rect{340, 10, 140, 20}, 0, 100, 50, 5);
+		auto chk = std::make_shared<btos_api::gui::Checkbox>(btos_api::gds::Rect{120, 55, 100, 20}, "A checkbox", true);
+		auto rd1 = std::make_shared<btos_api::gui::RadioButton>(btos_api::gds::Rect{220, 35, 100, 20}, "Radio 1", false);
+		auto rd2 = std::make_shared<btos_api::gui::RadioButton>(btos_api::gds::Rect{220, 60, 100, 20}, "Radio 2", false);
+		auto rd3 = std::make_shared<btos_api::gui::RadioButton>(btos_api::gds::Rect{220, 85, 100, 20}, "Radio 3", true);
+		auto sch = std::make_shared<btos_api::gui::Scrollbar>(btos_api::gds::Rect{340, 35, 140, 17}, 100, 1, 10, 0, true);
+		auto scv = std::make_shared<btos_api::gui::Scrollbar>(btos_api::gds::Rect{463, 60, 17, 140}, 100, 1, 10, 100, false);
+		auto txa = std::make_shared<btos_api::gui::TextArea>(btos_api::gds::Rect{10, 100, 150, 100}, "A multi-line editable text area.\nWith some lines of text.\nAnother line.\nA further line.\nAn additional line.\nAn extra line.\nA superflous line.", true);
+		auto grp = std::make_shared<btos_api::gui::GroupBox>(btos_api::gds::Rect{165, 110, 170, 110}, "Subformy within");
+		auto tst1 = std::make_shared<btos_api::gui::TestControl>(btos_api::gds::Rect{350, 110, 100, 30});
 		tst1->OnEvent([] (const wm_Event &e){
 			tfm::printf("Test: EventType: %s\n", e.type);
 			return true;
@@ -216,25 +216,25 @@ int main(){
 		rgrp.AddButton(rd2, 2);
 		rgrp.AddButton(rd3, 3);
 		
-		auto sfrm = std::make_shared<btos_api::gui::SubForm>(gds::Rect{170, 130, 150, 80});
-		auto sbtn = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 10, 100, 30}, "Button 3");
+		auto sfrm = std::make_shared<btos_api::gui::SubForm>(btos_api::gds::Rect{170, 130, 150, 80});
+		auto sbtn = std::make_shared<btos_api::gui::Button>(btos_api::gds::Rect{10, 10, 100, 30}, "Button 3");
 		sbtn->OnAction([&] {
 			lbl2->SetText("Button 3");
 			btos_api::gui::MessageBox("Test message", "Hello", nullptr, {"Yes", "No", "Potato"}).Show(frm.get());
 		});
-		auto tst2 = std::make_shared<btos_api::gui::TestControl>(gds::Rect{10, 50, 100, 30});
+		auto tst2 = std::make_shared<btos_api::gui::TestControl>(btos_api::gds::Rect{10, 50, 100, 30});
 		tst2->OnEvent([] (const wm_Event &e){
 			tfm::printf("Subform Test: EventType: %s\n", e.type);
 			return true;
 		});
 		sfrm->AddControls({sbtn, tst2});
 		
-		auto mBtn = std::make_shared<btos_api::gui::Button>(gds::Rect{10, 260, 100, 30}, "More...");
-		auto m2Btn = std::make_shared<btos_api::gui::Button>(gds::Rect{120, 260, 100, 30}, "Even more...");
+		auto mBtn = std::make_shared<btos_api::gui::Button>(btos_api::gds::Rect{10, 260, 100, 30}, "More...");
+		auto m2Btn = std::make_shared<btos_api::gui::Button>(btos_api::gds::Rect{120, 260, 100, 30}, "Even more...");
 		
-		auto pBar1 = std::make_shared<btos_api::gui::ProgressBar>(gds::Rect{230, 230, 100, 20}, 50);
-		auto pBar2 = std::make_shared<btos_api::gui::ProgressBar>(gds::Rect{230, 260, 100, 20}, 0);
-		auto pBar3 = std::make_shared<btos_api::gui::ProgressBar>(gds::Rect{230, 290, 100, 20}, 100);
+		auto pBar1 = std::make_shared<btos_api::gui::ProgressBar>(btos_api::gds::Rect{230, 230, 100, 20}, 50);
+		auto pBar2 = std::make_shared<btos_api::gui::ProgressBar>(btos_api::gds::Rect{230, 260, 100, 20}, 0);
+		auto pBar3 = std::make_shared<btos_api::gui::ProgressBar>(btos_api::gds::Rect{230, 290, 100, 20}, 100);
 		
 		frm->AddControls({
 			btn1, btn2, lbl1, lbl2, txt, sld, chk, rd1, rd2, rd3, sch, scv, txa, grp, sfrm, 

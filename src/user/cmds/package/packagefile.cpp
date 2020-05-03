@@ -18,6 +18,7 @@ using std::stringstream;
 using std::vector;
 using std::ofstream;
 
+using namespace btos_api;
 namespace reg = btos_api::registry;
 
 const size_t MaxInfSize = 1 * 1024 * 1024;

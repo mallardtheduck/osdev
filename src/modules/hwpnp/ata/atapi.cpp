@@ -70,8 +70,8 @@ bool atapi_device_init(ata_device *dev){
 	}
 
 	dbgpf("ATA: Device Name:  %s\n", dev->identity.model);
-	dbgpf("ATA: Sectors (48): %d\n", (uint32_t)dev->identity.sectors_48);
-	dbgpf("ATA: Sectors (24): %d\n", dev->identity.sectors_28);
+	dbgpf("ATA: Sectors (48): %llu\n", dev->identity.sectors_48);
+	dbgpf("ATA: Sectors (24): %lu\n", dev->identity.sectors_28);
 	
 	dev->atapi_packet_size = 0xFF;
 	if((dev->identity.flags & 0x03) == 0) dev->atapi_packet_size = 12;

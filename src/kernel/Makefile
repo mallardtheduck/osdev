@@ -32,6 +32,9 @@ rebuild: clean all
 
 dummy.delete:
 	-@$(RM) *.o
+	-@$(RM) mm2/*.o
+	-@$(RM) hwpnp/*.o
+	-@$(RM) rtc/*.o
 	-@$(RM) btos.bin
 
 btos.bin: boot.o $(ASOBJS) $(COBJS) $(CPPOBJS) linker.ld

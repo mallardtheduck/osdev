@@ -15,6 +15,7 @@
 #include <util/lrucache.hpp>
 
 using namespace std;
+using namespace btos_api;
 
 cache::lru_cache<string, vector<symbol>> symbol_cache(32);
 
@@ -232,7 +233,7 @@ symbol get_symbol_by_name(const vector<symbol> &symbols, const string &name){
 
 symbol get_symbol(const vector<symbol> &symbols, intptr_t addr){
 	symbol ret = null_symbol;
-	for(auto sym : symbols){
+	for(auto &sym : symbols){
 		if(ret.address < sym.address && sym.address <= addr){
 			ret = sym;
 		}
