@@ -1,6 +1,6 @@
-diff -rupN libelf-0.8.9/config.sub originals/libelf-0.8.9/config.sub
---- libelf-0.8.9/config.sub	2017-01-12 09:50:31.691494410 +0000
-+++ originals/libelf-0.8.9/config.sub	2005-05-21 16:28:37.000000000 +0100
+diff -rupN libelf-0.8.13/config.sub originals/libelf-0.8.13/config.sub
+--- libelf-0.8.13/config.sub	2020-05-10 14:58:48.043368832 +0000
++++ originals/libelf-0.8.13/config.sub	2005-05-21 15:28:37.000000000 +0000
 @@ -1167,7 +1167,7 @@ case $os in
  	      | -storm-chaos* | -tops10* | -tenex* | -tops20* | -its* \
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
@@ -10,10 +10,10 @@ diff -rupN libelf-0.8.9/config.sub originals/libelf-0.8.9/config.sub
  	# Remember, each alternative MUST END IN *, to match a version number.
  		;;
  	-qnx*)
-diff -rupN libelf-0.8.9/configure originals/libelf-0.8.9/configure
---- libelf-0.8.9/configure	2017-01-12 10:00:12.305651568 +0000
-+++ originals/libelf-0.8.9/configure	2006-04-21 18:17:51.000000000 +0100
-@@ -3354,14 +3354,6 @@ echo "$ac_t""$mr_cv_target_elf" 1>&6
+diff -rupN libelf-0.8.13/configure originals/libelf-0.8.13/configure
+--- libelf-0.8.13/configure	2020-05-10 14:58:48.045368851 +0000
++++ originals/libelf-0.8.13/configure	2008-05-23 08:18:03.000000000 +0000
+@@ -3445,14 +3445,6 @@ echo "$ac_t""$mr_cv_target_elf" 1>&6
  	LINK_SHLIB='$(LD) -G -z text -h $(SONAME)'
  	INSTALL_SHLIB='$(INSTALL_PROGRAM)'
  	;;
@@ -28,25 +28,3 @@ diff -rupN libelf-0.8.9/configure originals/libelf-0.8.9/configure
        *)
  	echo "configure: warning: shared libraries not supported for $host" 1>&2
  	mr_enable_shared=no
-diff -rupN libelf-0.8.9/lib/elf_repl.h originals/libelf-0.8.9/lib/elf_repl.h
---- libelf-0.8.9/lib/elf_repl.h	2017-01-10 10:52:33.314009876 +0000
-+++ originals/libelf-0.8.9/lib/elf_repl.h	2006-07-07 23:16:15.000000000 +0100
-@@ -973,8 +973,6 @@ typedef struct {
-     } c_un;
- } Elf32_Cap;
- 
--#if __LIBELF64
--
- typedef struct {
-     Elf64_Xword     	c_tag;
-     union {
-@@ -983,8 +981,6 @@ typedef struct {
-     } c_un;
- } Elf64_Cap;
- 
--#endif /* __LIBELF64 */
--
- #define CA_SUNW_NULL	0	/* c_un ignored */
- #define CA_SUNW_HW_1	1	/* c_un.c_val */
- #define CA_SUNW_SF_1	2	/* c_un.c_val */
- 
