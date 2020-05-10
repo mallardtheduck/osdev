@@ -26,7 +26,7 @@ extern std::shared_ptr<gds::Surface> LoadIcon(const char *path);
 void Run::Show(wm::Window *parent){
     auto form = std::make_shared<gui::Form>(gds::Rect{0, 0, 350, 132}, gui::FormOptions::ClosedFixed | wm_WindowOptions::NoHide, "Run...");
     auto image = std::make_shared<gui::Image>(gds::Rect{10, 10, 32, 32}, LoadIcon("icons/run_32.png"));
-    auto label = std::make_shared<gui::Label>(gds::Rect{52, 15, 200, 20}, "Select a file to open or run");
+    auto label = std::make_shared<gui::Label>(gds::Rect{52, 15, 280, 20}, "Select a file or program to open or run.");
     auto text = std::make_shared<gui::TextBox>(gds::Rect{10, 52, 240, 30});
     auto browse = std::make_shared<gui::Button>(gds::Rect{260, 52, 80, 30}, "Browse...");
     auto cancel = std::make_shared<gui::Button>(gds::Rect{210, 92, 60, 30}, "Cancel");
