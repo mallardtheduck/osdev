@@ -91,4 +91,10 @@ void proc_set_cur_msg(btos_api::bt_msg_header *msg, pid_t pid=proc_current_pid);
 void proc_set_cur_msg_nolock(btos_api::bt_msg_header *msg, pid_t pid=proc_current_pid);
 btos_api::bt_msg_header *proc_get_cur_msg(pid_t pid=proc_current_pid);
 
+uint64_t proc_get_perms(uint16_t ext, pid_t pid=proc_current_pid);
+void proc_set_perms(uint16_t ext, uint64_t pers, pid_t pid=proc_current_pid);
+uint64_t proc_get_uid(pid_t pid=proc_current_pid);
+void proc_set_uid(uint64_t uid, pid_t pid=proc_current_pid);
+uint64_t proc_get_uid_nolock(pid_t pid=proc_current_pid);
+
 #endif

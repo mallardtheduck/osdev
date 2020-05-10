@@ -58,6 +58,9 @@ void out_event(const bt_debug_event_msg &event){
 			case bt_exception::InvalidArg:
 				cout << "InvalidArg" << endl;
 				break;
+			case bt_exception::SecurityException:
+				cout << "SecurityException" << endl;
+				break;
 		}
 	}
 }

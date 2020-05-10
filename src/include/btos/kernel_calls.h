@@ -103,6 +103,10 @@ EXTERN_C bt_handle_t bt_make_wait_any(bt_handle_t *h, size_t count);
 EXTERN_C bt_handle_t bt_make_wait_all(bt_handle_t *h, size_t count);
 EXTERN_C size_t bt_wait_index(bt_handle_t h);
 
+EXTERN_C bool bt_set_uid(uint64_t uid);
+EXTERN_C uint64_t bt_get_uid();
+EXTERN_C uint64_t bt_getset_perms(uint16_t ext, uint64_t pmask);
+
 EXTERN_C uint16_t bt_query_extension(const char *name);
 
 EXTERN_C void bt_multi_call(bt_syscall_item *items, size_t count);

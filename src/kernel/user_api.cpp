@@ -696,6 +696,29 @@ USERAPI_HANDLER(BT_WAIT_INDEX){
 	}
 }
 
+USERAPI_HANDLER(BT_SET_UID){
+	if(is_safe_ptr(regs->ebx, sizeof(uint64_t))){
+		uint64_t nuid = *(uint64_t*)regs->ebx;
+		regs->eax = switch_uid(nuid);
+	}else RAISE_US_ERROR();
+}
+
+USERAPI_HANDLER(BT_GET_UID){
+	if(is_safe_ptr(regs->ebx, sizeof(uint64_t))){
+		uint64_t *uid = (uint64_t*)regs->ebx;
+		*uid = proc_get_uid();
+	}else RAISE_US_ERROR();
+}
+
+USERAPI_HANDLER(BT_GETSET_PERMS){
+	if(is_safe_ptr(regs->ecx, sizeof(uint64_t))){
+		uint16_t ext = (uint16_t)regs->ebx;
+		uint64_t *perms = (uint64_t*)regs->ecx;
+		dbgpf("UAPI: BT_GETSET_PERMS %u, %llu\n", ext, *perms);
+		*perms = set_perms(ext, *perms);
+	}else RAISE_US_ERROR();
+}
+
 void userapi_syscall(uint16_t fn, isr_regs *regs){
 	switch(fn){
 		case 0:
@@ -800,6 +823,11 @@ void userapi_syscall(uint16_t fn, isr_regs *regs){
 		USERAPI_HANDLE_CALL(BT_MAKE_WAITALL);
 		USERAPI_HANDLE_CALL(BT_MAKE_WAITANY);
 		USERAPI_HANDLE_CALL(BT_WAIT_INDEX);
+
+		//Security
+		USERAPI_HANDLE_CALL(BT_SET_UID);
+		USERAPI_HANDLE_CALL(BT_GET_UID);
+		USERAPI_HANDLE_CALL(BT_GETSET_PERMS);
 
 		//Extensions
 		USERAPI_HANDLE_CALL(BT_QUERY_EXT);

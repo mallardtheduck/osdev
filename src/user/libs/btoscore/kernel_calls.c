@@ -349,6 +349,22 @@ size_t bt_wait_index(bt_handle_t h){
 	return btos_call(BT_WAIT_INDEX, (uint32_t)h, 0, 0);
 }
 
+bool bt_set_uid(uint64_t uid){
+	return !!btos_call(BT_SET_UID, (uint32_t)&uid, 0, 0);
+}
+
+uint64_t bt_get_uid(){
+	uint64_t ret;
+	btos_call(BT_GET_UID, (uint32_t)&ret, 0, 0);
+	return ret;
+}
+
+uint64_t bt_getset_perms(uint16_t ext, uint64_t pmask){
+	uint64_t ret = pmask;
+	btos_call(BT_GETSET_PERMS, ext, (uint32_t)&ret, 0);
+	return ret;
+}
+
 uint16_t bt_query_extension(const char *name){
 	return btos_call(BT_QUERY_EXT, (uint32_t)name, 0, 0);
 }

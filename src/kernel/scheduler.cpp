@@ -73,11 +73,17 @@ static pid_t preferred_next_pid = 0;
 static pid_t preferred_return_pid = 0;
 
 char *sch_threads_infofs(){
+	bool showall = has_perm(0, kperm::SeeAllProcs);
+	uint64_t uid = proc_get_uid();
 	char *buffer=nullptr;
 	asprintf(&buffer, "# ID, PID, priority, addr, status, alevel, load\n");
 	{hold_lock hl(sch_lock);
 		for(size_t i=0; i<threads->size(); ++i){
 			sch_thread *t=(*threads)[i];
+			if(!showall){
+				uint64_t tuid = proc_get_uid_nolock(t->pid);
+				if(tuid != uid) continue;
+			}
 			reasprintf_append(&buffer, "%llu, %llu, %lu, %lx, %i, %i, %li\n", t->ext_id, t->pid, t->priority, t->eip,
 				(int)t->status, t->abortlevel, t->modifier);
 		}

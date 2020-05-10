@@ -96,6 +96,10 @@ namespace MM2{
 			dbgpf("MM2: Offset (%i) is not a multiple of page size.\n", (int)offset);
 			return 0;
 		}
+		if(!has_perm(0, kperm::SHMAnyUser) && proc_get_uid((*spaces)[id]->owner) != proc_get_uid()){
+			dbgpf("MM2: Permission to map SHM denied.\n");
+			return 0;
+		}
 		
 		uint64_t ret = ++mapping_id_counter;
 		

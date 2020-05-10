@@ -55,12 +55,15 @@ struct proc_process{
     vector<btos_api::bt_msg_header*> msg_q;
     btos_api::bt_msg_header *cur_msg = NULL;
 
+	map<uint16_t, uint64_t> perms;
+	uint64_t uid = 0;
+
 	proc_process() : pid(++curpid) {
 		init_lock(ulock);
 	}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
 		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(new MM2::PageDirectory),
-		 handlecounter(0), status(proc_status::Starting) {
+		 handlecounter(0), status(proc_status::Starting), perms(parent_proc->perms), uid(parent_proc->uid) {
 		init_lock(ulock);
     }
 };
@@ -69,19 +72,22 @@ proc_process *proc_get(pid_t pid);
 proc_process *proc_get_lock(pid_t pid);
 
 char *proc_infofs(){
+	bool showall = has_perm(0, kperm::SeeAllProcs);
+	uint64_t uid = proc_get_uid();
 	bool done = false;
 	size_t bufferSize = 4096;
 	char *buffer;
 	while(!done){
 		done = true;
 		buffer=(char*)malloc(bufferSize);
-		snprintf(buffer, bufferSize, "# PID, path, memory, parent\n");
+		snprintf(buffer, bufferSize, "# PID, path, memory, parent, uid\n");
 		size_t kmem=MM2::current_pagedir->get_kernel_used();
 		{hold_lock hl(proc_lock);
 			for(size_t i=0; i<proc_processes->size(); ++i){
 	            proc_process *cur=(*proc_processes)[i];
-				auto count = snprintf(buffer, bufferSize, "%s%i, \"%s\", %i, %i\n", buffer, (int)(cur->pid), cur->name.c_str(),
-					(int)((cur->pid)?cur->pagedir->get_user_used():kmem), (int)(cur->parent));
+				if(!showall && cur->uid != uid) continue;
+				auto count = snprintf(buffer, bufferSize, "%s%i, \"%s\", %i, %llu, %llu\n", buffer, (int)(cur->pid), cur->name.c_str(),
+					(int)((cur->pid)?cur->pagedir->get_user_used():kmem), cur->parent, cur->uid);
 				if((size_t)count > bufferSize){
 					free(buffer);
 					buffer = nullptr;
@@ -883,3 +889,42 @@ void proc_set_cur_msg_nolock(btos_api::bt_msg_header *msg, pid_t pid){
 	proc->cur_msg = msg;
 }
 
+uint64_t proc_get_perms(uint16_t ext, pid_t pid){
+	if(pid == 0) return 0;
+	proc_process *proc = proc_get_lock(pid);
+	if(!proc) return (uint64_t)-1;
+	uint64_t ret = proc->perms[ext];
+	release_lock(proc->ulock);
+	return ret;
+}
+
+void proc_set_perms(uint16_t ext, uint64_t perms, pid_t pid){
+	if(pid == 0) return;
+	proc_process *proc = proc_get_lock(pid);
+	if(!proc) return;
+	proc->perms[ext] = perms;
+	release_lock(proc->ulock);
+}
+
+uint64_t proc_get_uid(pid_t pid){
+	if(pid == 0) return 0;
+	proc_process *proc = proc_get_lock(pid);
+	if(!proc) return (uint64_t)-1;
+	uint64_t ret = proc->uid;
+	release_lock(proc->ulock);
+	return ret;
+}
+
+void proc_set_uid(uint64_t uid, pid_t pid){
+	if(pid == 0) return;
+	proc_process *proc = proc_get_lock(pid);
+	if(!proc) return;
+	proc->uid = uid;
+	release_lock(proc->ulock);
+}
+
+uint64_t proc_get_uid_nolock(pid_t pid){
+	proc_process *proc = proc_get(pid);
+	if (!proc) return 0;
+	return proc->uid;
+}

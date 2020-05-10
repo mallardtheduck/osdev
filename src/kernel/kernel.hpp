@@ -59,6 +59,7 @@ extern "C"{
 #include "hwpnp_kernel.hpp"
 #include "rtc/rtc.hpp"
 #include "waiting.hpp"
+#include "perms.hpp"
 
 void GDT_init();
 void IDT_init();

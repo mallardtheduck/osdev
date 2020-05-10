@@ -9,6 +9,7 @@
 #include <sstream>
 #include <dev/rtc.h>
 #include <btos/process.hpp>
+#include <cstdlib>
 
 namespace btos_api{
 namespace cmd{
@@ -329,6 +330,37 @@ void bg_command(const command &cmd){
 	}
 }
 
+void perms_command(const command &cmd){
+	vector<string> commandline=cmd.args;
+	if(commandline.size() < 3){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " ext_id perms" << endl;
+	}else{
+		uint16_t extid = strtoul(commandline[1].c_str(), nullptr, 0);
+		uint64_t perms = strtoull(commandline[2].c_str(), nullptr, 0);
+		perms = bt_getset_perms(extid, perms);
+		cmd.OutputStream() << perms << endl;
+	}
+}
+
+void getuid_command(const command &cmd){
+	cmd.OutputStream() << bt_get_uid() << endl;
+}
+
+void setuid_command(const command &cmd){
+	vector<string> commandline=cmd.args;
+	if(commandline.size() < 2){
+		cout << "Usage:" << endl;
+		cout << commandline[0] << " uid" << endl;
+	}else{
+		uint64_t uid = strtoull(commandline[1].c_str(), nullptr, 0);
+		bool res = bt_set_uid(uid);
+		if(!res){
+			std::cout << "Set UID failed!" << std::endl;
+		}
+	}
+}
+
 unordered_map<string, command_fn> builtin_commands={
 	{"ls", &ls_command},
 	{"dir", &ls_command},
@@ -366,6 +398,9 @@ unordered_map<string, command_fn> builtin_commands={
 	{"arr", &arr_command},
 	{"tab", &tab_command},
 	{"bg", &bg_command},
+	{"perms", &perms_command},
+	{"getuid", &getuid_command},
+	{"setuid", &setuid_command},
 };
 
 bool run_builtin(const command &cmd){
