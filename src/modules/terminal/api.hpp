@@ -48,6 +48,8 @@ public:
 	void switch_terminal(uint64_t id);
 	bool can_create();
 	void refresh();
+
+	char *desc();
 };
 
 #endif

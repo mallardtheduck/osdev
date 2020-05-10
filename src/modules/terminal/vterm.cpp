@@ -940,7 +940,7 @@ char *terms_infofs()
 	vterm_list *t=terminals;
 	asprintf(&buffer, "# ID, title, backend\n");
 	for(size_t i=0; i<t->terminals.size(); ++i) {
-		reasprintf_append(&buffer, "%i, \"%s\", %p\n", (int)t->terminals[i]->get_id(), t->terminals[i]->get_title(), t->terminals[i]->get_backend());
+		reasprintf_append(&buffer, "%i, \"%s\", %s\n", (int)t->terminals[i]->get_id(), t->terminals[i]->get_title(), t->terminals[i]->get_backend()->desc());
 	}
 	return buffer;
 }

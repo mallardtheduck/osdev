@@ -339,3 +339,7 @@ uint32_t user_backend::get_pointer_speed(){
 
 void user_backend::set_pointer_speed(uint32_t /*speed*/){
 }
+
+char *user_backend::desc(){
+	return "user";
+}

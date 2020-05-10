@@ -42,6 +42,8 @@ public:
 	virtual bool can_create() = 0;
 	virtual void refresh() = 0;
 
+	virtual char *desc() = 0;
+
     virtual ~i_backend(){};
 };
 

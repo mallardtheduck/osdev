@@ -414,3 +414,7 @@ uint32_t console_backend::get_pointer_speed(){
 void console_backend::set_pointer_speed(uint32_t speed){
 	pointer_speed = speed;
 }
+
+char *console_backend::desc(){
+    return "console";
+}
