@@ -2,10 +2,15 @@
 
 #define dbgout serial_writestring
 #define dbgpf(...) do{sprintf(dbgbuf, __VA_ARGS__); dbgout(dbgbuf);}while(0)
+#define INFO
+
+#undef printf
+#define printf(...) dbgpf(__VA_ARGS__)
+#pragma GCC diagnostic ignored "-Wformat"
 
 /**  Durand's Amazing Super Duper Memory functions.  */
 
-#define VERSION 	"1.1"
+#define VERSION 	"1.1-btos-kernel"
 #define ALIGNMENT	16ul//4ul				///< This is the byte alignment that memory must be allocated on. IMPORTANT for GTK and other stuff.
 
 #define ALIGN_TYPE		char ///unsigned char[16] /// unsigned short
@@ -55,7 +60,8 @@
 //#include <stdio.h>
 //#include <stdlib.h>
 
-#define FLUSH()		fflush( stdout )
+#define FLUSH()		//fflush( stdout )
+#define atexit(x)
 
 #endif
 
@@ -579,7 +585,7 @@ void *PREFIX(malloc)(size_t req_size)
 	FLUSH();
 	#endif
 	#if defined DEBUG || defined INFO
-	printf( "liballoc: WARNING: PREFIX(malloc)( %i ) returning NULL.\n", size);
+	printf( "liballoc: WARNING: malloc( %i ) returning NULL.\n", size);
 	liballoc_dump();
 	FLUSH();
 	#endif
@@ -603,7 +609,7 @@ void PREFIX(free)(void *ptr)
 	{
 		l_warningCount += 1;
 		#if defined DEBUG || defined INFO
-		printf( "liballoc: WARNING: PREFIX(free)( NULL ) called from %x\n",
+		printf( "liballoc: WARNING: free( NULL ) called from %x\n",
 							__builtin_return_address(0) );
 		FLUSH();
 		#endif
