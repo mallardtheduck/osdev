@@ -83,7 +83,8 @@ AppMap GetAppsAndWindows(){
 	
 	auto ids = WM_GetValidWindowIDs();
 	for(auto wid : ids){
-		WM_SelectWindow(wid);
+		auto actual_wid = WM_SelectWindow(wid);
+		if(actual_wid != wid) continue;
 		auto info = WM_WindowInfo();
 		auto path = procs[info.owner];
 		auto retIt = std::find_if(ret.begin(), ret.end(), [&](const AppMap::value_type &r){

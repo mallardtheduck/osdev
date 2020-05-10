@@ -47,14 +47,14 @@ vector<symbol> load_symbols(bt_pid_t pid, bool force_reload){
 	return symbols;
 }
 
-void do_stacktrace(bt_pid_t pid, context ctx){
+void do_stacktrace(bt_pid_t pid, context ctx, size_t limit){
 	if(pid != curpid){
 		symbols = get_symbols(pid);
 		curpid = pid;
 	}
 	uint32_t bp = 0;
 	uint32_t stack[2] = {ctx.ebp, ctx.eip};
-	for(int count = 0; count < 100; ++count){
+	for(size_t count = 0; count < limit; ++count){
 		if(stack[1] == 0) break;
 		symbol sym = get_symbol(symbols, stack[1]);
 		printf("%p : %s in %s\n", (void*)stack[1], sym.name.c_str(), sym.file.c_str());

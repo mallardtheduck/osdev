@@ -18,6 +18,7 @@
 
 #include <udis86.h>
 #include <btos/table.hpp>
+#include <util/tinyformat.hpp>
 
 #include "debug.hpp"
 #include "commands.hpp"
@@ -29,6 +30,7 @@ using namespace btos_api;
 volatile bt_pid_t selected_pid;
 volatile uint64_t selected_thread;
 static volatile bool watch_enabled;
+static volatile uint32_t watch_events = 0b001100; //Breakpoints and Exceptions only
 
 static uint16_t terminal_ext_id = 0xFFFF;
 
@@ -61,7 +63,7 @@ void watch_thread(void *){
     while(true){
         if(msg.From() == 0 && msg.Source() == debug_ext_id) {
             bt_debug_event_msg content = msg.Content<bt_debug_event_msg>();
-            if(watch_enabled && (selected_pid == 0 || content.pid == selected_pid)){
+            if(watch_enabled && (selected_pid == 0 || content.pid == selected_pid) && ((1 << content.event) & watch_events)){
 				out_event(content);
 				if(content.event == bt_debug_event::Exception || content.event == bt_debug_event::ThreadEnd || content.event == bt_debug_event::Breakpoint){
 					context ctx = get_context(content.thread);
@@ -94,6 +96,14 @@ void watch_command(){
 	}
 	end_event_mode();
 	watch_enabled=false;
+}
+
+void watchevents_command(const vector<string> &args){
+	if(args.size() < 2){
+		tfm::printf("Watching events: %x\n", (uint32_t)watch_events);
+	}else{
+		watch_events = strtoul(args[1].c_str(), nullptr, 0);
+	}
 }
 
 void proc_command(const vector<string> &args){
@@ -217,15 +227,17 @@ void threads_command(){
 	}
 }
 
-void stat_command(){
+void stat_command(const vector<string> &args){
 	if(!selected_thread){
 		cout << "No thread selected." << endl;
 		return;
 	}
+	size_t limit = 100;
+	if(args.size() == 2) limit = strtoul(args[1].c_str(), nullptr, 0);
 	debug_stop(selected_pid);
 	context ctx = get_context(selected_thread);
 	out_context(ctx);
-	do_stacktrace(selected_pid, ctx);
+	do_stacktrace(selected_pid, ctx, limit);
 	debug_continue(selected_pid);
 }
 
@@ -509,7 +521,7 @@ bool do_command(string cmd){
 		}else if(line[0] == "threads"){
 			threads_command();
 		}else if(line[0] == "stat"){
-			stat_command();
+			stat_command(line);
 		}else if(line[0] == "modules"){
 			modules_command();
 		}else if(line[0] == "ldsyms"){
@@ -532,6 +544,8 @@ bool do_command(string cmd){
 			bpstat_command();
 		}else if(line[0] == "print"){
 			print_command(line);
+		}else if(line[0] == "watchevents"){
+			watchevents_command(line);
 		}else if(line[0] == "quit"){
 			return false;
 		}else{

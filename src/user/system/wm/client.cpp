@@ -43,8 +43,9 @@ bool Client::HandleMessage(const Message &msg){
 			auto win = GetWindow(id);
 			if(win){
 				currentWindow = win;
-				SendReply(msg, id);
 			}
+			id = (currentWindow) ? currentWindow->id : 0;
+			SendReply(msg, id);
 			break;
 		}
 		case wm_RequestType::CreateWindow:{

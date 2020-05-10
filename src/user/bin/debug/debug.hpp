@@ -36,7 +36,7 @@ bool debug_setbreakpoint(uint64_t thread, intptr_t addr, uint8_t type);
 bool debug_clearbreakpoint(uint64_t thread, intptr_t addr);
 uint32_t debug_getbpinfo(uint64_t thread);
 
-void do_stacktrace(btos_api::bt_pid_t pid, context ctx);
+void do_stacktrace(btos_api::bt_pid_t pid, context ctx, size_t limit = 100);
 void out_event(const bt_debug_event_msg &event);
 void test_symbols(std::string filename);
 

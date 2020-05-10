@@ -57,6 +57,7 @@ uint64_t AddWindow(shared_ptr<Window> win){
 
 void RemoveWindow(uint64_t id){
 	auto win = GetWindow(id);
+	if(!win) return;
 	if(!(win->GetOptions() & wm_WindowOptions::Unlisted)) SendGlobalEvent(wm_EventType::GlobalRemove, win);
 	Rect bounds = win->GetBoundingRect();
 	windows.erase(id);
@@ -64,7 +65,9 @@ void RemoveWindow(uint64_t id){
 }
 
 shared_ptr<Window> GetWindow(uint64_t id){
-	return windows[id];
+	auto win = windows.find(id);
+	if(win != windows.end()) return win->second;
+	else return {};
 }
 
 shared_ptr<Window> GetActiveWindow(){
