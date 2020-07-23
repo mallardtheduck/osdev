@@ -15,6 +15,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs);
 #define USERAPI_HANDLER(name) static void name ## _call(isr_regs *regs)
 
 #define RAISE_US_ERROR() uapi_raise_us_error(__FUNCTION__) 
+#define RAISE_SECURITY_ERROR() uapi_raise_security_error(__FUNCTION__) 
 
 void userapi_init(){
 	dbgpf("UAPI: Init\n");
@@ -72,8 +73,14 @@ bool is_safe_string(uint32_t ptr, pid_t pid){
 
 static void uapi_raise_us_error(const char *fn){
 	dbgpf("UAPI: PID %llu error in call: %s\n", proc_current_pid, fn);
-    debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::InvalidArg);
-    proc_terminate();
+	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::InvalidArg);
+	proc_terminate();
+}
+
+static void uapi_raise_security_error(const char *fn){
+	dbgpf("UAPI: PID %llu error in call: %s\n", proc_current_pid, fn);
+	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::SecurityException);
+	proc_terminate();
 }
 
 USERAPI_HANDLER(zero){
@@ -226,13 +233,15 @@ USERAPI_HANDLER(BT_READ_ATOM){
 
 USERAPI_HANDLER(BT_MOUNT){
 	if(is_safe_string(regs->ebx) && is_safe_string(regs->ecx) && is_safe_string(regs->edx)){
-		regs->eax=fs_mount((char*)regs->ebx, (char*)regs->ecx, (char*)regs->edx);
+		if(has_perm(0, kperm::MountFS)) regs->eax=fs_mount((char*)regs->ebx, (char*)regs->ecx, (char*)regs->edx);
+		else regs->eax = 0;
 	}else RAISE_US_ERROR();
 }
 
 USERAPI_HANDLER(BT_UNMOUNT){
 	if(is_safe_string(regs->ebx)){
-		regs->eax=fs_unmount((char*)regs->ebx);
+		if(has_perm(0, kperm::UnMountFS)) regs->eax=fs_unmount((char*)regs->ebx);
+		else regs->eax = 0;
 	}else RAISE_US_ERROR();
 }
 
@@ -399,8 +408,10 @@ USERAPI_HANDLER(BT_FORMAT){
 
 USERAPI_HANDLER(BT_LOAD_MODULE){
 	if(is_safe_string(regs->ebx)){
-        char *params=is_safe_string(regs->ecx)?(char*)regs->ecx:NULL;
-		load_module((char*)regs->ebx, params);
+		if(has_perm(0, kperm::LoadModule)){
+			char *params=is_safe_string(regs->ecx)?(char*)regs->ecx:NULL;
+			load_module((char*)regs->ebx, params);
+		}
 	}else RAISE_US_ERROR();
 }
 
@@ -443,6 +454,7 @@ USERAPI_HANDLER(BT_WAIT){
 }
 
 USERAPI_HANDLER(BT_KILL){
+	if(!has_perm(0, kperm::KillAll) && proc_get_uid(regs->ebx) != proc_get_uid()) return;
 	proc_end(regs->ebx);
 }
 
