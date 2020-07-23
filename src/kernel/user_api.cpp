@@ -77,6 +77,7 @@ static void uapi_raise_us_error(const char *fn){
 	proc_terminate();
 }
 
+[[maybe_unused]]
 static void uapi_raise_security_error(const char *fn){
 	dbgpf("UAPI: PID %llu error in call: %s\n", proc_current_pid, fn);
 	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::SecurityException);
