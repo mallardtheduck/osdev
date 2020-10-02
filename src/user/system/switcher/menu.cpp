@@ -1,3 +1,5 @@
+#pragma GCC diagnostic ignored "-Wdeprecated"
+
 #include "menu.hpp"
 
 using namespace std;

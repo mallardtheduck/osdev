@@ -1,3 +1,5 @@
+#pragma GCC diagnostic ignored "-Wdeprecated"
+
 #include <fstream>
 #include <cstdlib>
 #include <cstdint>

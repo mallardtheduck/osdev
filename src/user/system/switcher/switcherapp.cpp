@@ -1,3 +1,4 @@
+#pragma GCC diagnostic ignored "-Wdeprecated"
 #define BTOS_NO_USING
 
 #include "switcherapp.hpp"
