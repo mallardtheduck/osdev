@@ -19,7 +19,7 @@ void userapi_syscall(uint16_t fn, isr_regs *regs);
 
 void userapi_init(){
 	dbgpf("UAPI: Init\n");
-	int_handle(0x80, &userapi_handler);
+	GetHAL().HandleInterrupt(0x80, &userapi_handler);
 }
 
 void userapi_handler(int, isr_regs *regs){

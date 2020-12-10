@@ -130,7 +130,7 @@ bool devfs_format(char*, void*){
 	return false;
 }
 
-fs_driver devfs_driver = {true, "DEVFS", false, devfs_mount, devfs_unmount,
+fs_driver devfs_driver = {true, (char*)"DEVFS", false, devfs_mount, devfs_unmount,
 							devfs_open, devfs_close, devfs_read, devfs_write, devfs_seek, devfs_setsize, devfs_ioctl, devfs_flush,
 							devfs_open_dir, devfs_close_dir, devfs_read_dir, devfs_write_dir, devfs_dirseek,
 							devfs_stat, devfs_format};

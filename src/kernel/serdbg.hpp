@@ -3,7 +3,7 @@
 
 #include "kernel.hpp"
 
-void init_serial();
+void init_serial_debug();
 extern "C" void serial_writestring(const char *str);
 
 extern "C" char dbgbuf[256];

@@ -19,7 +19,7 @@ extern char dbgbuf[256];
 
 #define dbgpf(...) do{snprintf(dbgbuf, 256, __VA_ARGS__); dbgout(dbgbuf);}while(false)
 
-inline static void panic(char *msg){
+inline static void panic(const char *msg){
 	SYSCALL_TABLE->panic(msg);
 }
 inline static void *malloc(size_t bytes){

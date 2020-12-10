@@ -107,7 +107,7 @@ regs Kusti, 23.10.2004
 
 /* Set this to 0 if you do not want to provide tfp_printf */
 #ifndef TINYPRINTF_DEFINE_TFP_PRINTF
-# define TINYPRINTF_DEFINE_TFP_PRINTF 1
+# define TINYPRINTF_DEFINE_TFP_PRINTF 0
 #endif
 
 /* Set this to 0 if you do not want to provide
@@ -173,7 +173,7 @@ int tfp_sprintf(char *str, const char *fmt, ...) \
 
 #if TINYPRINTF_DEFINE_TFP_PRINTF
 void init_printf(void *putp, putcf putf);
-void tfp_printf(char *fmt, ...) _TFP_SPECIFY_PRINTF_FMT(1, 2);
+void tfp_printf(const char *fmt, ...) _TFP_SPECIFY_PRINTF_FMT(1, 2);
 # if TINYPRINTF_OVERRIDE_LIBC
 #  define printf tfp_printf
 # endif

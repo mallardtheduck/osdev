@@ -109,13 +109,13 @@ void set_vga_background(uint8_t colour){
     }
 }
 
-void write_string_at(size_t row, size_t col, char *string, uint8_t attr=0){
+void write_string_at(size_t row, size_t col, const char *str, uint8_t attr=0){
     size_t i=0;
     for(size_t r=row; r<25; ++r){
         for(size_t c=col; c<80; ++c){
-            if(!string[i]) return;
-            if(string[i]=='\n') string[i]=' ';
-            ((char*)0xB8000)[((r*80)+c)*2] = string[i];
+            if(!str[i]) return;
+            char ch = str[i] == '\n' ? ' ' : str[i];
+            ((char*)0xB8000)[((r*80)+c)*2] = ch;
             if(attr) ((uint8_t*)0xB8000)[(((r*80)+c)*2)+1] = attr;
             ++i;
         }
@@ -123,7 +123,7 @@ void write_string_at(size_t row, size_t col, char *string, uint8_t attr=0){
     }
 }
 
-void panic(char *msg){
+void panic(const char *msg){
     char buf[32]={0};
     dbgout("PANIC: ");dbgout(msg);
     disable_interrupts();

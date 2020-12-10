@@ -30,8 +30,10 @@
 
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 
-#include "printf.h"
+#include "../../printf.h"
 #include <stddef.h>
+
+#define printf(...)
 
 /* Required Declarations */
 int do_intel(void);

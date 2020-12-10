@@ -1,5 +1,7 @@
-#ifndef _IDT_HPP
-#define _IDT_HPP
+#ifndef KERNEL_HAL_X86_32_IDT_HPP
+#define KERNEL_HAL_X86_32_IDT_HPP
+
+#include "../../kernel.hpp"
 #include <module/drivers.h>
 
 extern "C" uint32_t syscall(uint32_t fn);

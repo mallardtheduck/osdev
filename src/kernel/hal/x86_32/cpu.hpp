@@ -1,7 +1,7 @@
 #ifndef _CPU_HPP
 #define _CPU_HPP
 
-#include "kernel.hpp"
+#include "../../kernel.hpp"
 
 enum {
     CPUID_FEAT_ECX_SSE3         = 1 << 0, 
@@ -71,7 +71,7 @@ char *cpu_brandstring();
 extern uint8_t default_fpu_xmm_data[512];
 
 void save_fpu_xmm_data(uint8_t *data);
-void restore_fpu_xmm_data(uint8_t *data);
+void restore_fpu_xmm_data(const uint8_t *data);
 void reset_fpu();
 void fpu_switch();
 

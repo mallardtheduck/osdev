@@ -24,7 +24,7 @@ static void dmi_extension_uapi(uint16_t fn, isr_regs *regs){
 }
 
 static module_api::kernel_extension dmi_extension = {
-	"DMI", NULL, &dmi_extension_uapi
+	(char*)"DMI", NULL, &dmi_extension_uapi
 };
 
 void pnp_dmi_init(){

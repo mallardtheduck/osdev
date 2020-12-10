@@ -9,11 +9,9 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	if(are_interrupts_enabled()){
 		panic("Interrupts not disabled at kernel load!\n");
 	}
-	init_serial();
-	terminal_initialize();
-	printf("%s %s (Build ID:%s)\n%s\n", KERNEL_OS_NAME, KERNEL_VERSION_STRING, kernel_buildid, KERNEL_COPYRIGHT);
-	GDT_init();
-	IDT_init();
+	init_serial_debug();
+	dbgpf("%s %s (Build ID:%s)\n%s\n", KERNEL_OS_NAME, KERNEL_VERSION_STRING, kernel_buildid, KERNEL_COPYRIGHT);
+	HAL_Init();
 	init_cpu();
 	mm2_init(mbt);
 	disable_pic();
@@ -24,7 +22,6 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	sch_init();
 	sch_yield();
 	drv_init();
-	terminal_add_device();
 	fs_init();
 	infofs_init();
 	init_modules();

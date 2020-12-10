@@ -55,7 +55,7 @@ void rtc_uapi(uint16_t id,isr_regs *regs){
 	}
 }
 
-module_api::kernel_extension rtc_extension{RTC_EXTENSION_NAME, (void*)&calltable, &rtc_uapi};
+module_api::kernel_extension rtc_extension{(char*)RTC_EXTENSION_NAME, (void*)&calltable, &rtc_uapi};
 
 void init_api(){
 	init_timer();

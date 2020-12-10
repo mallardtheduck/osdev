@@ -5,8 +5,6 @@
 #include <stdint.h>
 
 #include <btos/btos_api.h>
-
-#pragma GCC diagnostic ignored "-Wwrite-strings"
  
 /* Check if the compiler thinks if we are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -18,9 +16,7 @@
 #error "This OS needs to be compiled with a ix86-elf compiler"
 #endif
 
-#include "console.hpp"
 #include "io.hpp"
-#include "cpu.hpp"
 #include "serdbg.hpp"
 
 #include "filesystems.hpp"
@@ -32,14 +28,14 @@ extern "C"{
 #define PRINTF_LONG_SUPPORT
 #include "printf.h"
 #include "liballoc.h"
-#include "memcpy.h"
 
 }
 
-#include "util.hpp"
+#include "utils.hpp"
+
 #include "panic.hpp"
 #include "mm2.hpp"
-#include "idt.hpp"
+#include "hal/abstract.hpp"
 #include "pic.hpp"
 #include "handles.hpp"
 #include "kvars.hpp"

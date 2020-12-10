@@ -10,7 +10,7 @@ map<string, fs_driver> *fs_drivers;
 
 lock fs_lock;
 
-static const fs_driver invalid_fs_driver={false, "", false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+static const fs_driver invalid_fs_driver={false, (char*)"", false, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL};
 static const fs_mountpoint invalid_mountpoint={false, "", "", invalid_fs_driver, NULL};
 

@@ -145,7 +145,7 @@ static inline uint32_t debug_getdr(char dr){
 }
 
 module_api::kernel_extension debug_extension = {
-	"DEBUG", NULL, &debug_extension_uapi
+	(char*)"DEBUG", NULL, &debug_extension_uapi
 };
 
 static void debug_isr(int i, isr_regs *r){

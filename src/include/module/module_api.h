@@ -48,7 +48,7 @@ struct kernel_extension;
 #define ENV_NoInherit 	(1<<3) //Do not copy from parent to child
 
 struct syscall_table{
-	void (*panic)(char *msg);
+	void (*panic)(const char *msg);
 	void *(*malloc)(size_t bytes);
 	void (*free)(void *ptr);
 	void *(*realloc)(void *ptr, size_t new_size);

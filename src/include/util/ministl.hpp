@@ -358,9 +358,11 @@ public:
 		return *this;
 	}
 	
-	void erase(iterator i){
-		_Alloc().destroy(i);
-		memmove(i, i + 1, sizeof(value_type) * ( size_ - ( i - begin())));
+	void erase(iterator it){
+		for(size_t i = 0; i < size_ - (it - begin()); ++i){
+			_Alloc().destroy(it + i);
+			_Alloc().construct(it + i, it[i + 1]);
+		}
 		size_--;
 	}
 

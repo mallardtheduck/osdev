@@ -153,7 +153,7 @@ bool infofs_format(char*, void*){
 	return false;
 }
 
-fs_driver infofs_driver={true, "INFOFS", false, infofs_mount, infofs_unmount, infofs_open, infofs_close, infofs_read,
+fs_driver infofs_driver={true, (char*)"INFOFS", false, infofs_mount, infofs_unmount, infofs_open, infofs_close, infofs_read,
 	infofs_write, infofs_seek, infofs_setsize, infofs_ioctl, infofs_flush, infofs_open_dir, infofs_close_dir, infofs_read_dir, infofs_write_dir,
 	infofs_dirseek, infofs_stat, infofs_format};
 
@@ -170,7 +170,7 @@ char *info_kernel(){
 
 char *info_cpu(){
 	char* buffer=(char*)malloc(256);
-	sprintf(buffer, "%s %s\n", cpu_idstring(), cpu_brandstring());
+	sprintf(buffer, "%s %s\n", GetHAL().CPUIDString(), "");//cpu_brandstring());
 	return buffer;
 }
 

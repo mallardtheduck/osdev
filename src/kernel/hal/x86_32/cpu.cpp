@@ -1,4 +1,6 @@
-#include "kernel.hpp"
+#include "../../kernel.hpp"
+#include "cpu.hpp"
+#include "idt.hpp"
 extern "C"{
 	#include "cpuid.h"
 }
@@ -21,7 +23,7 @@ void init_cpu(){
 	char *idstring=cpu_idstring();
 	uint64_t speed=cpu_get_speed();	
 	char *brandstring=get_brandstring();
-	printf("CPU: %s %s. Speed: %i UMIPS.\n", idstring, brandstring, (int)(speed/1000000));
+	dbgpf("CPU: %s %s. Speed: %i UMIPS.\n", idstring, brandstring, (int)(speed/1000000));
 	uint32_t a, b, c, d;
 	cpuid(1, a, b, c, d);
 	if(d & cpu_features::CPUID_FEAT_EDX_FPU) {
@@ -122,7 +124,7 @@ void save_fpu_xmm_data(uint8_t *data){
 	memcpy(data, fpu_xmm_data_region, 512);
 }
 
-void restore_fpu_xmm_data(uint8_t *data){
+void restore_fpu_xmm_data(const uint8_t *data){
 	memcpy(fpu_xmm_data_region, data, 512);
 	if(sse_available){
 		asm volatile("fxrstor %0" :: "m"(fpu_xmm_data_region));

@@ -6,7 +6,7 @@
 char dbgbuf[256];
 lock ser_lock;
 
-void init_serial() {
+void init_serial_debug() {
 	init_lock(ser_lock);
 	outb(PORT + 1, 0x00);    // Disable all interrupts
 	outb(PORT + 3, 0x80);    // Enable DLAB (set baud rate divisor)

@@ -95,8 +95,8 @@ void sch_init(){
 	dbgout("SCH: Init\n");
 	init_lock(sch_lock);
 	uint8_t sch_freq = 50;
-	if(cpu_get_umips() < 1000) sch_freq = 30;
-	if(cpu_get_umips() < 500) sch_freq = 20;
+	if(GetHAL().GetCPUUMIPS() < 1000) sch_freq = 30;
+	if(GetHAL().GetCPUUMIPS() < 500) sch_freq = 20;
     uint16_t value=193182 / sch_freq;
     dbgpf("SCH: Scheduler frequency: %i\n", (int)sch_freq);
 	outb(0x43, 0x36);
@@ -117,7 +117,7 @@ void sch_init(){
 	mainthread->pid=0;
 	mainthread->sch_cycle=0;
 	mainthread->msgstatus=thread_msg_status::Normal;
-	memcpy(mainthread->fpu_xmm_data, default_fpu_xmm_data, 512);
+	memcpy(mainthread->fpu_xmm_data, GetHAL().GetDefaultFPUState(), 512);
 	current_thread_id=mainthread->ext_id=++cur_ext_id;
 	threads->push_back(mainthread);
 	current_thread=(*threads)[threads->size()-1];
@@ -130,34 +130,11 @@ void sch_init(){
 	current_thread->next=prescheduler_thread;
 	//sch_threadtest();
 	//irq_handle(0, &sch_isr);
-	irq_handle_raw(0, (void*)&sch_isr_asm);
+	GetHAL().RawHandleIRQ(0, (void*)&sch_isr_asm);
 	sch_inited=true;
 	IRQ_clear_mask(0);
 	dbgout("SCH: Init complete.\n");
 	infofs_register("THREADS", &sch_threads_infofs);
-}
-
-void test_priority(void *params){
-	uint32_t *p=(uint32_t*)params;
-	char c=(char)(p[0]);
-	uint32_t priority=p[1];
-	current_thread->priority=priority;
-	free(params);
-	while(true){
-		printf("%c", c);
-		sch_yield();
-	}
-}
-
-void sch_threadtest(){
-	uint32_t* p1=(uint32_t*)malloc(sizeof(uint32_t)*2);
-	p1[0]='.';
-	p1[1]=200;
-	sch_new_thread(&test_priority, (void*)p1);
-	uint32_t* p2=(uint32_t*)malloc(sizeof(uint32_t)*2);
-	p2[0]='!';
-	p2[1]=400;
-	sch_new_thread(&test_priority, (void*)p2);
 }
 
 void sch_idlethread(void*){
@@ -237,7 +214,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	newthread->next=NULL;
 	newthread->sch_cycle=0;
 	newthread->msgstatus=thread_msg_status::Normal;
-	memcpy(newthread->fpu_xmm_data, default_fpu_xmm_data, 512);
+	memcpy(newthread->fpu_xmm_data, GetHAL().GetDefaultFPUState(), 512);
 	memset(newthread->debug_state, 0, Debug_DRStateSize * sizeof(uint32_t));
     take_lock_exclusive(sch_lock);
 	newthread->ext_id=++cur_ext_id;
@@ -284,13 +261,13 @@ void sch_end_thread(){
 	panic("SCH: Attempt to run Ending thread!");
 }
 
-inline void out_regs(const irq_regs &ctx){
-	dbgpf("SCH: INTERRUPT %lx\n", ctx.int_no);
-	dbgpf("EAX: %lx EBX: %lx ECX: %lx EDX: %lx\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
-	dbgpf("EDI: %lx ESI: %lx EBP: %lx ESP: %lx\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
-	dbgpf("EIP: %lx CS: %lx SS: %lx\n", ctx.eip, ctx.cs, ctx.ss);
-	dbgpf("EFLAGS: %lx ORESP: %lx\n", ctx.eflags, ctx.useresp);
-}
+// inline void out_regs(const irq_regs &ctx){
+// 	dbgpf("SCH: INTERRUPT %lx\n", ctx.int_no);
+// 	dbgpf("EAX: %lx EBX: %lx ECX: %lx EDX: %lx\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
+// 	dbgpf("EDI: %lx ESI: %lx EBP: %lx ESP: %lx\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
+// 	dbgpf("EIP: %lx CS: %lx SS: %lx\n", ctx.eip, ctx.cs, ctx.ss);
+// 	dbgpf("EFLAGS: %lx ORESP: %lx\n", ctx.eflags, ctx.useresp);
+// }
 
 
 static int sch_precycle(){
@@ -394,7 +371,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	//If there is no next, run the prescheduler instead
 	if(!torun) torun=prescheduler_thread;
 	debug_getdrstate(current_thread->debug_state);
-	save_fpu_xmm_data(current_thread->fpu_xmm_data);
+	GetHAL().SaveFPUState(current_thread->fpu_xmm_data);
 	current_thread=torun;
 	curstack=current_thread->stack;
 	if(!torun->ext_id) panic("(SCH) Thread with no ID?");
@@ -402,7 +379,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	current_thread_id=torun->ext_id;
 	proc_switch_sch(current_thread->pid);
 	gdt_set_kernel_stack(current_thread->stackbase);
-	fpu_switch();
+	GetHAL().InvalidateFPUState();
 	debug_setdrstate(torun->debug_state);
 	sch_deferred=false;
 	return &curstack;
@@ -431,7 +408,7 @@ extern "C" void sch_isr_c(){
 			//current_thread->eip = eip;
             release_lock(sch_lock);
             enable_interrupts();
-            irq_ack_if_needed(0);
+			GetHAL().AcknowlegdeIRQIfPending(0);
             sch_yield();
             disable_interrupts();
             sch_abortable(true);
@@ -439,7 +416,7 @@ extern "C" void sch_isr_c(){
             release_lock(sch_lock);
         }
 	}
-	irq_ack_if_needed(0);
+	GetHAL().AcknowlegdeIRQIfPending(0);
 }
 
 const volatile uint64_t &sch_get_id(){

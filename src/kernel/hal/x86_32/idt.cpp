@@ -1,6 +1,6 @@
-#include "kernel.hpp"
+#include "../../kernel.hpp"
 #include "idt.hpp"
-#include "locks.hpp"
+#include "../../locks.hpp"
 
 const int IRQ_BASE=32;
 volatile unsigned int imode=0;

@@ -203,7 +203,7 @@ bool initfs_format(char*, void*){
 	return false;
 }
 
-fs_driver initfs_driver = {true, "INITFS", false,
+fs_driver initfs_driver = {true, (char*)"INITFS", false,
 	initfs_mount, initfs_unmount,
 	initfs_open, initfs_close, initfs_read, initfs_write, initfs_seek, initfs_seek, initfs_ioctl, initfs_flush,
 	initfs_open_dir, initfs_close_dir, initfs_read_dir, initfs_write_dir, initfs_dirseek,
