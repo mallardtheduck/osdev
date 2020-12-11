@@ -322,4 +322,6 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&pnp_set_root_device,
 	&pnp_get_parent,
 	&pnp_get_node_name,
+
+	&GetModuleAPI,
 };

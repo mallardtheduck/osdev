@@ -44,6 +44,7 @@ extern "C"{
 #include "devfs.hpp"
 #include "load_elf.hpp"
 #include "extensions.hpp"
+#include "module.hpp"
 #include "syscalls.hpp"
 #include "modules.hpp"
 #include "user_api.hpp"

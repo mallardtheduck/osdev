@@ -13,9 +13,15 @@
 #include "../btos/bt_msg.h"
 #include "handle.h"
 
-#if defined(__cplusplus) && defined(KERNEL)
+#ifdef __cplusplus
+
+#include "module_api.hpp"
+
+#ifdef KERNEL
 	#define MODAPI_NS module_api::
 	namespace module_api{
+#endif
+
 #endif
 
 typedef void(*thread_func)(void*);
@@ -170,6 +176,7 @@ struct syscall_table{
 	void (*pnp_set_root_device)(btos_api::hwpnp::IRootDevice *dev);
 	btos_api::hwpnp::IDevice *(*pnp_get_parent)(btos_api::hwpnp::IDevice *dev);
 	const char *(*pnp_get_node_name)(btos_api::hwpnp::IDeviceNode *node);
+	IModuleAPI &(*GetNewAPI)();
 	#else
 	void *pnp_register_driver;
 	void *pnp_unregister_driver;
@@ -179,6 +186,8 @@ struct syscall_table{
 	void *pnp_set_root_device;
 	void *pnp_get_parent;
 	void *pnp_get_node_name;
+
+	void *GetNewAPI;
 	#endif
 };
 
