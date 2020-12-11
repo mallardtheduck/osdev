@@ -98,8 +98,13 @@ struct syscall_table{
 	int (*devioctl)(void *handle, int fn, size_t bytes, char *buffer);
 	int (*devtype)(const char *name);
 	char *(*devdesc)(const char *name);
-	void (*handle_int)(size_t intno, int_handler handler);
-	void (*handle_irq)(size_t irqno, int_handler handler);
+	#ifdef __cplusplus
+	void (*handle_int)(size_t intno, ISR_Routine handler);
+	void (*handle_irq)(size_t irqno, ISR_Routine handler);
+	#else
+	void *handle_int;
+	void *handle_irq;
+	#endif
 	void (*mask_irq)(size_t irqno);
 	void (*unmask_irq)(size_t irqno);
 	void (*irq_ack)(size_t irq_no);

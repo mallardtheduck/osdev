@@ -1,12 +1,14 @@
 #include "../../kernel.hpp"
 #include "cpu.hpp"
 #include "idt.hpp"
+#include "io.hpp"
+
 extern "C"{
 	#include "cpuid.h"
 }
 
 void init_fpu_xmm();
-void fpu_nm_handler(int, isr_regs*);
+void fpu_nm_handler(ICPUState&);
 
 static bool fpu_exists=false;
 static bool sse_available=false;
@@ -133,7 +135,7 @@ void restore_fpu_xmm_data(const uint8_t *data){
 	}
 }
 
-void fpu_nm_handler(int, isr_regs *){
+void fpu_nm_handler(ICPUState &){
 	fpu_ready();
 	restore_fpu_xmm_data(sch_get_fpu_xmm_data());
 }

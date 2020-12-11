@@ -12,60 +12,60 @@ static bool debug_setbreakpoint(uint64_t thread_id, uint32_t addr, uint8_t type)
 static bool debug_clearbreakpoint(uint64_t thread_id, uint32_t addr);
 static uint32_t debug_getbpinfo(uint64_t thread_id);
 
-void debug_extension_uapi(uint16_t fn, isr_regs *regs) {
+void debug_extension_uapi(uint16_t fn, ICPUState &state) {
 	switch(fn) {
 		case bt_debug_function::Query:
-			regs->eax = (uint32_t) debugger_pid;
+			state.Get32BitRegister(Generic_Register::GP_Register_A) = (uint32_t) debugger_pid;
 			break;
 		case bt_debug_function::Register:
 			debugger_pid = proc_current_pid;
-			regs->eax = 1;
+			state.Get32BitRegister(Generic_Register::GP_Register_A) = 1;
 			break;
 		case bt_debug_function::StopProcess:
-			if(regs->ebx && proc_get_status(regs->ebx) != proc_status::DoesNotExist) sch_debug_stop(regs->ebx);
+			if(state.Get32BitRegister(Generic_Register::GP_Register_B) && proc_get_status(state.Get32BitRegister(Generic_Register::GP_Register_B)) != proc_status::DoesNotExist) sch_debug_stop(state.Get32BitRegister(Generic_Register::GP_Register_B));
 			break;
 		case bt_debug_function::ContinueProcess:
-			if(regs->ebx && proc_get_status(regs->ebx) != proc_status::DoesNotExist) sch_debug_resume(regs->ebx);
+			if(state.Get32BitRegister(Generic_Register::GP_Register_B) && proc_get_status(state.Get32BitRegister(Generic_Register::GP_Register_B)) != proc_status::DoesNotExist) sch_debug_resume(state.Get32BitRegister(Generic_Register::GP_Register_B));
 			break;
 		case bt_debug_function::Peek:
-			if(is_safe_ptr(regs->ebx, 0) && is_safe_ptr(regs->ecx, sizeof(bt_debug_copy_params))) {
-				bt_debug_copy_params *p = (bt_debug_copy_params*)regs->ecx;
+			if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), 0) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(bt_debug_copy_params))) {
+				bt_debug_copy_params *p = (bt_debug_copy_params*)state.Get32BitRegister(Generic_Register::GP_Register_C);
 				if(p->pid && proc_get_status(p->pid) != proc_status::DoesNotExist && is_safe_ptr((uint32_t)p->addr, p->size, p->pid) && p->size <= DEBUG_COPYLIMT) {
-					debug_copymem(p->pid, p->addr, proc_current_pid, (void*)regs->ebx, p->size);
+					debug_copymem(p->pid, p->addr, proc_current_pid, (void*)state.Get32BitRegister(Generic_Register::GP_Register_B), p->size);
 				}
 			}
 			break;
 		case bt_debug_function::Poke:
-			if(is_safe_ptr(regs->ebx, 0) && is_safe_ptr(regs->ecx, sizeof(bt_debug_copy_params))) {
-				bt_debug_copy_params *p = (bt_debug_copy_params*)regs->ecx;
+			if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), 0) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(bt_debug_copy_params))) {
+				bt_debug_copy_params *p = (bt_debug_copy_params*)state.Get32BitRegister(Generic_Register::GP_Register_C);
 				if(p->pid && proc_get_status(p->pid) != proc_status::DoesNotExist && is_safe_ptr((uint32_t)p->addr, p->size, p->pid) && p->size <= DEBUG_COPYLIMT) {
-					debug_copymem(proc_current_pid, (void*)regs->ebx, p->pid, p->addr, p->size);
+					debug_copymem(proc_current_pid, (void*)state.Get32BitRegister(Generic_Register::GP_Register_B), p->pid, p->addr, p->size);
 				}
 			}
 			break;
 		case bt_debug_function::GetContext:
-			if(is_safe_ptr(regs->ecx, sizeof(isr_regs))){
-				void *dst = (void*)regs->ecx;
-				void *src = sch_get_usercontext(regs->ebx);
+			if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(isr_regs))){
+				void *dst = (void*)state.Get32BitRegister(Generic_Register::GP_Register_C);
+				void *src = sch_get_usercontext(state.Get32BitRegister(Generic_Register::GP_Register_B));
 				if(src) memcpy(dst, src, sizeof(isr_regs));
 			}
 			break;
 		case bt_debug_function::SetBreakpoint:
-			if(is_safe_ptr(regs->ebx, sizeof(uint64_t))){
-				uint64_t thread_id = *(uint64_t*)regs->ebx;
-				regs->eax = debug_setbreakpoint(thread_id, regs->ecx, regs->edx);
+			if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(uint64_t))){
+				uint64_t thread_id = *(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_B);
+				state.Get32BitRegister(Generic_Register::GP_Register_A) = debug_setbreakpoint(thread_id, state.Get32BitRegister(Generic_Register::GP_Register_C), state.Get32BitRegister(Generic_Register::GP_Register_D));
 			}
 			break;
 		case bt_debug_function::ClearBreakpoint:
-			if(is_safe_ptr(regs->ebx, sizeof(uint64_t))){
-				uint64_t thread_id = *(uint64_t*)regs->ebx;
-				regs->eax = debug_clearbreakpoint(thread_id, regs->ecx);
+			if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(uint64_t))){
+				uint64_t thread_id = *(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_B);
+				state.Get32BitRegister(Generic_Register::GP_Register_A) = debug_clearbreakpoint(thread_id, state.Get32BitRegister(Generic_Register::GP_Register_C));
 			}
 			break;
 		case bt_debug_function::GetBPInfo:
-			if(is_safe_ptr(regs->ebx, sizeof(uint64_t))){
-				uint64_t thread_id = *(uint64_t*)regs->ebx;
-				regs->eax = debug_getbpinfo(thread_id);
+			if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(uint64_t))){
+				uint64_t thread_id = *(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_B);
+				state.Get32BitRegister(Generic_Register::GP_Register_A) = debug_getbpinfo(thread_id);
 			}
 			break;
 		default:
@@ -148,11 +148,11 @@ module_api::kernel_extension debug_extension = {
 	(char*)"DEBUG", NULL, &debug_extension_uapi
 };
 
-static void debug_isr(int i, isr_regs *r){
-	dbgpf("DEBUG: ISR (%i) from PID: %llu.\n", i, proc_current_pid);
+static void debug_isr(ICPUState &state){
+	dbgpf("DEBUG: ISR (%li) from PID: %llu.\n", state.GetInterruptNo(), proc_current_pid);
 	dbgpf("DEBUG: DR6: %lx\n", debug_getdr(6));
 	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Breakpoint);
-	r->eflags |= (1 << 16);
+	state.BreakpointResume();
 }
 
 void init_debug_extension() {
@@ -161,8 +161,8 @@ void init_debug_extension() {
 	cr4 |= CR4_DE;
 	asm volatile("mov %0, %%cr4":: "b"(cr4));
 	debug_ext_id = add_extension(&debug_extension);
-	int_handle(1, &debug_isr);
-	int_handle(3, &debug_isr);
+	GetHAL().HandleHWBreakpoint(&debug_isr);
+	GetHAL().HandleSWBreakpoint(&debug_isr);
 	debug_setdr(7, 0xF00);
 }
 

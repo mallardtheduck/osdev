@@ -676,7 +676,7 @@ proc_status::Enum proc_get_status(pid_t pid){
     //proc_status::Enum ret = proc->status;
     //release_lock(proc->ulock);
 	//return ret;
-	interrupt_lock il;
+	auto il = GetHAL().LockInterrupts();
 	proc_process *proc = proc_get(pid);
 	if(!proc) return proc_status::DoesNotExist;
 	else return proc->status;

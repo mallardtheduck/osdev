@@ -97,11 +97,7 @@ void sch_init(){
 	uint8_t sch_freq = 50;
 	if(GetHAL().GetCPUUMIPS() < 1000) sch_freq = 30;
 	if(GetHAL().GetCPUUMIPS() < 500) sch_freq = 20;
-    uint16_t value=193182 / sch_freq;
-    dbgpf("SCH: Scheduler frequency: %i\n", (int)sch_freq);
-	outb(0x43, 0x36);
-	outb(0x40, value & 0xFF);
-	outb(0x40, (value >> 8) & 0xFF);
+	GetHAL().SetSchedulerFrequency(sch_freq);
 	threads=new vector<sch_thread*>();
 	sch_stack=(char*)malloc(4096)+4096;
 	sch_thread *mainthread=new sch_thread();
@@ -130,9 +126,9 @@ void sch_init(){
 	current_thread->next=prescheduler_thread;
 	//sch_threadtest();
 	//irq_handle(0, &sch_isr);
-	GetHAL().RawHandleIRQ(0, (void*)&sch_isr_asm);
+	GetHAL().RawHandleIRQ(GetHAL().GetSchedulerIRQ(), (void*)&sch_isr_asm);
 	sch_inited=true;
-	IRQ_clear_mask(0);
+	GetHAL().EnableIRQ(GetHAL().GetSchedulerIRQ());
 	dbgout("SCH: Init complete.\n");
 	infofs_register("THREADS", &sch_threads_infofs);
 }
@@ -140,7 +136,7 @@ void sch_init(){
 void sch_idlethread(void*){
 	sch_set_priority(0xFFFFFFFF);
 	while(true){
-		disable_interrupts();
+		GetHAL().DisableInterrupts();
 		bool yield_immediately = false;
 		for(size_t i=0; i<threads->size(); ++i){
 			sch_thread *ithread = (*threads)[i];
@@ -153,7 +149,7 @@ void sch_idlethread(void*){
 				yield_immediately = true;
 			}
 		}
-		enable_interrupts();
+		GetHAL().EnableInterrupts();
 		if(yield_immediately) sch_yield();
 		else{
 			asm volatile("hlt");
@@ -188,7 +184,7 @@ uint64_t sch_new_thread(void (*ptr)(void*), void *param, size_t stack_size){
 	if(newthread->stackpages * MM2::MM2_Page_Size < stack_size) ++newthread->stackpages;
 	uint32_t stack = (uint32_t)mm2_virtual_alloc(newthread->stackpages + 1);
 	{
-		interrupt_lock il;
+		auto il = GetHAL().LockInterrupts();
 		mm2_virtual_free((void*)stack, 1);
 		MM2::current_pagedir->guard_page_at((void*)stack);
 	}
@@ -268,7 +264,6 @@ void sch_end_thread(){
 // 	dbgpf("EIP: %lx CS: %lx SS: %lx\n", ctx.eip, ctx.cs, ctx.ss);
 // 	dbgpf("EFLAGS: %lx ORESP: %lx\n", ctx.eflags, ctx.useresp);
 // }
-
 
 static int sch_precycle(){
 	int nrunnables=0;
@@ -354,7 +349,7 @@ static bool sch_find_thread(sch_thread *&torun, uint32_t cycle){
 }
 
 extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
-	if(!are_interrupts_enabled()) panic("(SCH) Interrupts disabled in scheduler!\n");
+	if(!GetHAL().AreInterruptsEnabled()) panic("(SCH) Interrupts disabled in scheduler!\n");
 	if(get_lock_owner(sch_lock)!=current_thread_id) panic("(SCH) Bad scheduler locking detected!\n");
 	
 	//Save current thread's state
@@ -386,7 +381,7 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 }
 
 extern "C" uint32_t sch_dolock(){
-    if(!are_interrupts_enabled()) enable_interrupts();//panic("(SCH) Attempt to yield while interrupts are disabled!");
+    if(!GetHAL().AreInterruptsEnabled()) GetHAL().EnableInterrupts();//panic("(SCH) Attempt to yield while interrupts are disabled!");
 	if(!try_take_lock_exclusive(sch_lock)){
 		//dbgout("SCH: Scheduler run while locked!\n");
 		return 0;
@@ -407,10 +402,10 @@ extern "C" void sch_isr_c(){
             sch_abortable(false);
 			//current_thread->eip = eip;
             release_lock(sch_lock);
-            enable_interrupts();
+            GetHAL().EnableInterrupts();
 			GetHAL().AcknowlegdeIRQIfPending(0);
             sch_yield();
-            disable_interrupts();
+            GetHAL().DisableInterrupts();
             sch_abortable(true);
         }else{
             release_lock(sch_lock);

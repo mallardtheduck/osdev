@@ -1,7 +1,7 @@
 #ifndef _IO_HPP
 #define _IO_HPP
 
-#include "kernel.hpp"
+#include "../../kernel.hpp"
 
 static inline void outb(uint16_t port, uint8_t val)
 {

@@ -1,7 +1,9 @@
 #ifndef _DRIVERS_H
 #define _DRIVERS_H
 
-#ifndef __cplusplus
+#ifdef __cplusplus
+#include "hal.hpp"
+#else
 #include <stdbool.h>
 #endif
 

@@ -16,7 +16,6 @@
 #error "This OS needs to be compiled with a ix86-elf compiler"
 #endif
 
-#include "io.hpp"
 #include "serdbg.hpp"
 
 #include "filesystems.hpp"
@@ -36,7 +35,6 @@ extern "C"{
 #include "panic.hpp"
 #include "mm2.hpp"
 #include "hal/abstract.hpp"
-#include "pic.hpp"
 #include "handles.hpp"
 #include "kvars.hpp"
 #include "messaging.hpp"

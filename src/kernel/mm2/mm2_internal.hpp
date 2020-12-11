@@ -84,7 +84,7 @@ namespace MM2{
 	void mm2_virtual_free(void *ptr, size_t pages);
 	
 	void *get_kernel_end();
-	void page_fault_handler(int, isr_regs *regs);
+	void page_fault_handler(ICPUState &state);
 	
 	void init_mmap();
 	void init_shm();

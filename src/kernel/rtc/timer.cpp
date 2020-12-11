@@ -105,9 +105,9 @@ void close_timer(void *vt){
 	delete t;
 }
 
-void create_timer(isr_regs *regs){
+void create_timer(ICPUState &state){
 	timer_info *t=new timer_info();
-	t->duration = regs->ebx;
+	t->duration = state.Get32BitRegister(Generic_Register::GP_Register_B);
 	t->pid = proc_current_pid;
 	t->active = false;
 	take_lock_exclusive(timer_lock);
@@ -120,11 +120,11 @@ void create_timer(isr_regs *regs){
 	handle.open = true;
 	t->handle_id = proc_add_handle(handle, t->pid);
 	(*timers)[t->timer_id] = t;
-	*(bt_handle_t*)regs->ecx = t->handle_id;
+	*(bt_handle_t*)state.Get32BitRegister(Generic_Register::GP_Register_C) = t->handle_id;
 }
 
-void reset_timer(isr_regs *regs){
-	bt_handle_info handle = proc_get_handle(regs->ebx, proc_current_pid);
+void reset_timer(ICPUState &state){
+	bt_handle_info handle = proc_get_handle(state.Get32BitRegister(Generic_Register::GP_Register_B), proc_current_pid);
 	if(handle.open){
 		timer_info *t = (timer_info*)handle.value;
 		if(!t->active){

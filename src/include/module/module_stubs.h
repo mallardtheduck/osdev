@@ -214,13 +214,15 @@ inline static char *devdesc(char *name){
 	return SYSCALL_TABLE->devdesc(name);
 }
 
-inline static void handle_int(int intno, int_handler handler){
+#ifdef __cplusplus
+inline static void handle_int(int intno, ISR_Routine handler){
 	SYSCALL_TABLE->handle_int(intno, handler);
 }
 
-inline static void handle_irq(int irqno, int_handler handler){
+inline static void handle_irq(int irqno, ISR_Routine handler){
 	SYSCALL_TABLE->handle_irq(irqno, handler);
 }
+#endif
 
 inline static void mask_irq(size_t irqno){
 	SYSCALL_TABLE->mask_irq(irqno);

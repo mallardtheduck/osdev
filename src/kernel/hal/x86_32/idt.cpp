@@ -1,6 +1,9 @@
 #include "../../kernel.hpp"
 #include "idt.hpp"
 #include "../../locks.hpp"
+#include "hal.hpp"
+#include "io.hpp"
+#include "pic.hpp"
 
 const int IRQ_BASE=32;
 volatile unsigned int imode=0;
@@ -21,7 +24,7 @@ struct idt_ptr
     uint32_t base;
 } __attribute__((packed));
 
-int_handler handlers[256]={NULL};
+ISR_Routine handlers[256]={NULL};
 
 /* Declare an IDT of 256 entries. Although we will only use the
 *  first 32 entries in this tutorial, the rest exists as a bit
@@ -206,7 +209,7 @@ void IDT_init()
 	idt_flush();
 }
 
-void out_int_info(const isr_regs ctx){
+void out_int_info(const isr_regs &ctx){
 	dbgpf("INTERRUPT %lx ERRCODE: %lx\n", ctx.interrupt_number, ctx.error_code);
 	dbgpf("EAX: %lx EBX: %lx ECX: %lx EDX: %lx\n", ctx.eax, ctx.ebx, ctx.ecx, ctx.edx);
 	dbgpf("EDI: %lx ESI: %lx EBP: %lx ESP: %lx\n", ctx.edi, ctx.esi, ctx.ebp, ctx.esp);
@@ -226,7 +229,10 @@ extern "C" void isr_handler(isr_regs *ctx){
 			sch_update_usercontext(ctx);
 		}
     }
-	if(handlers[ctx->interrupt_number]) handlers[ctx->interrupt_number](ctx->interrupt_number, ctx);
+	if(handlers[ctx->interrupt_number]){
+        CPUState_x86_32 state(ctx);
+        handlers[ctx->interrupt_number](state);
+    }
 	else if(ctx->interrupt_number==0x06){
 		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
 		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, sch_get_id());
@@ -311,7 +317,10 @@ extern "C" void irq_handler(irq_regs *r) {
     }
 	//out_regs(*r);
 	int irq=r->int_no-IRQ_BASE;
-	if(handlers[r->int_no]) handlers[r->int_no](r->int_no - 32, (isr_regs*)r);
+	if(handlers[r->int_no]){
+        CPUState_x86_32 state((isr_regs*)r);
+        handlers[r->int_no](state);
+    }
     disable_interrupts();
     irq_ack(irq);
     if(sch_can_lock()) {
@@ -330,11 +339,11 @@ irq_regs isr_regs2irq_regs(const isr_regs &r){
 	return ret;
 }
 
-void int_handle(size_t intno, int_handler handler){
+void int_handle(size_t intno, ISR_Routine handler){
 	handlers[intno]=handler;
 }
 
-void irq_handle(size_t irqno, int_handler handler){
+void irq_handle(size_t irqno, ISR_Routine handler){
 	handlers[irqno+IRQ_BASE]=handler;
 }
 

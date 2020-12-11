@@ -37,11 +37,11 @@ uint16_t get_extension_id(const char *name){
     return 0;
 }
 
-void user_call_extension(uint16_t ext_id, uint16_t fn, isr_regs *regs){
+void user_call_extension(uint16_t ext_id, uint16_t fn, ICPUState &state){
     if(extensions->has_key(ext_id) && (*extensions)[ext_id]->uapi_handler){
-        (*extensions)[ext_id]->uapi_handler(fn, regs);
+        (*extensions)[ext_id]->uapi_handler(fn, state);
     }else{
-		dbgpf("EXT: Unknown API extension: %i (PID: %i, EIP:%lx)!\n", (int)ext_id, (int)proc_current_pid, regs->eip);
-        regs->eax=(uint32_t)-1;
+		dbgpf("EXT: Unknown API extension: %i (PID: %i, EIP:%lx)!\n", (int)ext_id, (int)proc_current_pid, state.Get32BitRegister(Generic_Register::Instruction_Pointer));
+        state.Get32BitRegister(Generic_Register::GP_Register_A)=(uint32_t)-1;
     }
 }

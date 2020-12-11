@@ -63,8 +63,8 @@ namespace MM2{
 		asm volatile("mov %0, %%cr0":: "b"(cr0));
 		dbgout("Done.\n");
 		gdt_set_df_cr3((uint32_t)init_kernel_pagedir);
+		GetHAL().HandlePageFault(&page_fault_handler);
 		
-		int_handle(0x0e, &page_fault_handler);
 		current_pagedir = kernel_pagedir = new(&kpd_place) PageDirectory(init_kernel_pagedir);
 		init_lock(table_frame_lock);
 		current_pagedir->guard_page_at(NULL);
@@ -96,12 +96,11 @@ namespace MM2{
 	}
 	
 	void mm2_switch(PageDirectory *newdir){
-		disable_interrupts();
+		auto il = GetHAL().LockInterrupts();
 		kernel_pagedir->copy_kernelspace(*current_pagedir);
 		newdir->copy_kernelspace(*kernel_pagedir);
 		newdir->activate();
 		current_pagedir=newdir;
-		enable_interrupts();
 	}
 	
 	bool interrupts = false;

@@ -134,11 +134,11 @@ void mod_kill(pid_t pid){
 }
 
 void mask_irq(size_t irqno){
-	IRQ_set_mask(irqno);
+	GetHAL().DisableIRQ(irqno);
 }
 
 void unmask_irq(size_t irqno){
-	IRQ_clear_mask(irqno);
+	GetHAL().EnableIRQ(irqno);
 }
 
 bool setpid(pid_t pid){

@@ -30,26 +30,26 @@ uint64_t rtc_get_time(){
 
 rtc_calltable calltable = {&rtc_sleep, &rtc_millis};
 
-void rtc_uapi(uint16_t id,isr_regs *regs){
+void rtc_uapi(uint16_t id,ICPUState &state){
 	switch(id){
 		case bt_rtc_api::Sleep:{
-			rtc_sleep(regs->ebx);
+			rtc_sleep(state.Get32BitRegister(Generic_Register::GP_Register_B));
 			break;
 		}
 		case bt_rtc_api::Millis:{
-			*(uint64_t*)regs->ebx = rtc_millis();
+			*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_B) = rtc_millis();
 			break;
 		}
 		case bt_rtc_api::CreateTimer:{
-			create_timer(regs);
+			create_timer(state);
 			break;
 		}
 		case bt_rtc_api::ResetTimer:{
-			reset_timer(regs);
+			reset_timer(state);
 			break;
 		}
 		case bt_rtc_api::GetTime:{
-			*(uint64_t*)regs->ebx = rtc_get_time();
+			*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_B) = rtc_get_time();
 			break;
 		}
 	}

@@ -1,5 +1,4 @@
-#include "panic.hpp"
-#include "io.hpp"
+#include "kernel.hpp"
 
 #define	VGA_AC_INDEX		0x3C0
 #define	VGA_AC_WRITE		0x3C0
@@ -50,54 +49,54 @@ void write_regs(unsigned char *regs)
     unsigned i;
 
 /* write MISCELLANEOUS reg */
-    outb(VGA_MISC_WRITE, *regs);
+    GetHAL().IOOutByte(VGA_MISC_WRITE, *regs);
     regs++;
 /* write SEQUENCER regs */
     for(i = 0; i < VGA_NUM_SEQ_REGS; i++)
     {
-        outb(VGA_SEQ_INDEX, i);
-        outb(VGA_SEQ_DATA, *regs);
+        GetHAL().IOOutByte(VGA_SEQ_INDEX, i);
+        GetHAL().IOOutByte(VGA_SEQ_DATA, *regs);
         regs++;
     }
 /* unlock CRTC registers */
-    outb(VGA_CRTC_INDEX, 0x03);
-    outb(VGA_CRTC_DATA, inb(VGA_CRTC_DATA) | 0x80);
-    outb(VGA_CRTC_INDEX, 0x11);
-    outb(VGA_CRTC_DATA, inb(VGA_CRTC_DATA) & ~0x80);
+    GetHAL().IOOutByte(VGA_CRTC_INDEX, 0x03);
+    GetHAL().IOOutByte(VGA_CRTC_DATA, GetHAL().IOInByte(VGA_CRTC_DATA) | 0x80);
+    GetHAL().IOOutByte(VGA_CRTC_INDEX, 0x11);
+    GetHAL().IOOutByte(VGA_CRTC_DATA, GetHAL().IOInByte(VGA_CRTC_DATA) & ~0x80);
 /* make sure they remain unlocked */
     regs[0x03] |= 0x80;
     regs[0x11] &= ~0x80;
 /* write CRTC regs */
     for(i = 0; i < VGA_NUM_CRTC_REGS; i++)
     {
-        outb(VGA_CRTC_INDEX, i);
-        outb(VGA_CRTC_DATA, *regs);
+        GetHAL().IOOutByte(VGA_CRTC_INDEX, i);
+        GetHAL().IOOutByte(VGA_CRTC_DATA, *regs);
         regs++;
     }
 /* write GRAPHICS CONTROLLER regs */
     for(i = 0; i < VGA_NUM_GC_REGS; i++)
     {
-        outb(VGA_GC_INDEX, i);
-        outb(VGA_GC_DATA, *regs);
+        GetHAL().IOOutByte(VGA_GC_INDEX, i);
+        GetHAL().IOOutByte(VGA_GC_DATA, *regs);
         regs++;
     }
 /* write ATTRIBUTE CONTROLLER regs */
     for(i = 0; i < VGA_NUM_AC_REGS; i++)
     {
-        (void)inb(VGA_INSTAT_READ);
-        outb(VGA_AC_INDEX, i);
-        outb(VGA_AC_WRITE, *regs);
+        (void)GetHAL().IOInByte(VGA_INSTAT_READ);
+        GetHAL().IOOutByte(VGA_AC_INDEX, i);
+        GetHAL().IOOutByte(VGA_AC_WRITE, *regs);
         regs++;
     }
 /* lock 16-color palette and unblank display */
-    (void)inb(VGA_INSTAT_READ);
-    outb(VGA_AC_INDEX, 0x20);
+    (void)GetHAL().IOInByte(VGA_INSTAT_READ);
+    GetHAL().IOOutByte(VGA_AC_INDEX, 0x20);
 }
 
 void reset_vga(){
     write_regs(g_80x25_text);
-    outb(0x3D4, 0x0A);
-    outb(0x3D5, (1 << 5));
+    GetHAL().IOOutByte(0x3D4, 0x0A);
+    GetHAL().IOOutByte(0x3D5, (1 << 5));
     memset((char*)0xB8000, 0, 32768);
 }
 
@@ -126,7 +125,7 @@ void write_string_at(size_t row, size_t col, const char *str, uint8_t attr=0){
 void panic(const char *msg){
     char buf[32]={0};
     dbgout("PANIC: ");dbgout(msg);
-    disable_interrupts();
+    GetHAL().DisableInterrupts();
     reset_vga();
     set_vga_background(1<<4);
     write_string_at(2, 33, " SYSTEM ERROR ", 0xF0);
@@ -148,21 +147,4 @@ void panic(const char *msg){
     write_string_at(17, 24, " Please restart your computer. ", 0xF0);
 	//vmm_debug_check();
     while(true) asm volatile("hlt");
-}
-
-void kernel_debug_stacktrace(isr_regs *ctx){
-	uint32_t bp = 0;
-	uint32_t stack[2] = {ctx->ebp, ctx->eip};
-	for(int count = 0; count < 100; ++count){
-		dbgpf("STACK TRACE: %i : %lx (EBP: %lx)\n", count, stack[1], stack[0]);
-		if(stack[0] != bp){ 
-			bp = stack[0];
-			if(bp < 4096){
-				dbgout("STACK CORRUPT.\n");
-				break;
-			}
-			memcpy((void*)stack, (void*)bp, sizeof(stack));
-		}
-		else break;
-	}
 }

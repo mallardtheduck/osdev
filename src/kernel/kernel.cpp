@@ -6,17 +6,11 @@ multiboot_info_t *mbt;
 extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 {
 	mbt = mbd;
-	if(are_interrupts_enabled()){
-		panic("Interrupts not disabled at kernel load!\n");
-	}
 	init_serial_debug();
 	dbgpf("%s %s (Build ID:%s)\n%s\n", KERNEL_OS_NAME, KERNEL_VERSION_STRING, kernel_buildid, KERNEL_COPYRIGHT);
 	HAL_Init();
-	init_cpu();
 	mm2_init(mbt);
-	disable_pic();
-	PIC_init();
-	enable_interrupts();
+	GetHAL().EnableInterrupts();
 	init_kvars();
 	proc_init();
 	sch_init();
