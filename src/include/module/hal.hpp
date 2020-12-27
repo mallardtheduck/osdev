@@ -3,6 +3,8 @@
 
 #include <cstddef>
 
+class IScheduler;
+
 enum class Generic_Register{
 	GP_Register_A, GP_Register_B, GP_Register_C, GP_Register_D,
 	Instruction_Pointer
@@ -66,12 +68,15 @@ public:
 	virtual void InvalidateFPUState() = 0;
 
 	virtual void SetSchedulerFrequency(int hz) = 0;
-	virtual int GetSchedulerIRQ() = 0;
+	virtual void RegisterScheduler(IScheduler &sch);
+	virtual void YieldToScheduler();
 
 	virtual const ICPUState &GetDefaultCPUState() = 0;
 
 	virtual void IOOutByte(uint16_t port, uint8_t val) = 0;
 	virtual uint8_t IOInByte(uint16_t port) = 0;
+
+	virtual void HaltCPU() = 0;
 
 	virtual ~IHAL() { panic("HAL Destroyed!"); }
 };

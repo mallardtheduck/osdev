@@ -39,7 +39,7 @@ extern "C"{
 #include "kvars.hpp"
 #include "messaging.hpp"
 #include "process.hpp"
-#include "scheduler.hpp"
+#include "scheduler/abstract.hpp"
 #include "drivermgr.hpp"
 #include "devfs.hpp"
 #include "load_elf.hpp"

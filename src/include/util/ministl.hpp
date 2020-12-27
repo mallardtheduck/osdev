@@ -202,6 +202,14 @@ class vector
 			return data + dataSize;
 		}
 
+		T &front(){
+			return *data;
+		}
+
+		T &back(){
+			return data[dataSize - 1];
+		}
+
 
 }; //class vector
 

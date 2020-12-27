@@ -186,8 +186,12 @@ public:
 		outb(0x40, (value >> 8) & 0xFF);
 	}
 
-	int GetSchedulerIRQ() override{
-		return 1;
+	void RegisterScheduler(IScheduler *sch) override{
+		return;
+	}
+
+	void YieldToScheduler() override{
+		return;
 	}
 
 	const ICPUState &GetDefaultCPUState() override{
@@ -200,6 +204,10 @@ public:
 
 	virtual uint8_t IOInByte(uint16_t port) override{
 		return inb(port);
+	}
+
+	virtual void HaltCPU() override{
+		asm volatile("hlt");
 	}
 };
 
