@@ -22,10 +22,10 @@ void debug_extension_uapi(uint16_t fn, ICPUState &state) {
 			state.Get32BitRegister(Generic_Register::GP_Register_A) = 1;
 			break;
 		case bt_debug_function::StopProcess:
-			if(state.Get32BitRegister(Generic_Register::GP_Register_B) && proc_get_status(state.Get32BitRegister(Generic_Register::GP_Register_B)) != proc_status::DoesNotExist) sch_debug_stop(state.Get32BitRegister(Generic_Register::GP_Register_B));
+			if(state.Get32BitRegister(Generic_Register::GP_Register_B) && proc_get_status(state.Get32BitRegister(Generic_Register::GP_Register_B)) != proc_status::DoesNotExist) GetScheduler().DebugStopThreadsByPID(state.Get32BitRegister(Generic_Register::GP_Register_B));
 			break;
 		case bt_debug_function::ContinueProcess:
-			if(state.Get32BitRegister(Generic_Register::GP_Register_B) && proc_get_status(state.Get32BitRegister(Generic_Register::GP_Register_B)) != proc_status::DoesNotExist) sch_debug_resume(state.Get32BitRegister(Generic_Register::GP_Register_B));
+			if(state.Get32BitRegister(Generic_Register::GP_Register_B) && proc_get_status(state.Get32BitRegister(Generic_Register::GP_Register_B)) != proc_status::DoesNotExist) GetScheduler().DebugResumeThreadsByPID(state.Get32BitRegister(Generic_Register::GP_Register_B));
 			break;
 		case bt_debug_function::Peek:
 			if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), 0) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(bt_debug_copy_params))) {
@@ -44,11 +44,12 @@ void debug_extension_uapi(uint16_t fn, ICPUState &state) {
 			}
 			break;
 		case bt_debug_function::GetContext:
-			if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(isr_regs))){
-				void *dst = (void*)state.Get32BitRegister(Generic_Register::GP_Register_C);
-				void *src = sch_get_usercontext(state.Get32BitRegister(Generic_Register::GP_Register_B));
-				if(src) memcpy(dst, src, sizeof(isr_regs));
-			}
+			//TODO: Fix for HAL ICPUContext
+			// if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(isr_regs))){
+			// 	void *dst = (void*)state.Get32BitRegister(Generic_Register::GP_Register_C);
+			// 	void *src = sch_get_usercontext(state.Get32BitRegister(Generic_Register::GP_Register_B));
+			// 	if(src) memcpy(dst, src, sizeof(isr_regs));
+			// }
 			break;
 		case bt_debug_function::SetBreakpoint:
 			if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(uint64_t))){
@@ -151,7 +152,7 @@ module_api::kernel_extension debug_extension = {
 static void debug_isr(ICPUState &state){
 	dbgpf("DEBUG: ISR (%li) from PID: %llu.\n", state.GetInterruptNo(), proc_current_pid);
 	dbgpf("DEBUG: DR6: %lx\n", debug_getdr(6));
-	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Breakpoint);
+	debug_event_notify(proc_current_pid, CurrentThread().ID(), bt_debug_event::Breakpoint);
 	state.BreakpointResume();
 }
 
@@ -237,7 +238,9 @@ static void configure_dr7(size_t i, bool enable, uint8_t type, uint32_t &dr7){
 
 static bool debug_setbreakpoint(uint64_t thread_id, uint32_t addr, uint8_t type){
 	bool ret = false;
-	uint32_t *state = sch_getdebugstate(thread_id);
+	auto thread = GetScheduler().GetByID(thread_id);
+	if(!thread) return false;
+	uint32_t *state = thread->GetDebugState(thread_id);
 	if(!state) return false;
 	uint32_t dr7 = state[debug_dridx(7)];
 	for(size_t i = 0; i < 4; ++i){
@@ -255,7 +258,9 @@ static bool debug_setbreakpoint(uint64_t thread_id, uint32_t addr, uint8_t type)
 
 static bool debug_clearbreakpoint(uint64_t thread_id, uint32_t addr){
 	bool ret = false;
-	uint32_t *state = sch_getdebugstate(thread_id);
+	auto thread = GetScheduler().GetByID(thread_id);
+	if(!thread) return false;
+	uint32_t *state = thread->GetDebugState();
 	if(!state) return false;
 	uint32_t dr7 = state[debug_dridx(7)];
 	for(size_t i = 0; i < 4; ++i){
@@ -271,7 +276,9 @@ static bool debug_clearbreakpoint(uint64_t thread_id, uint32_t addr){
 }
 
 static uint32_t debug_getbpinfo(uint64_t thread_id){
-	uint32_t *state = sch_getdebugstate(thread_id);
+	auto thread = GetScheduler().GetByID(thread_id);
+	if(!thread) return false;
+	uint32_t *state = thread->GetDebugState();
 	if(!state) return 0;
 	return state[debug_dridx(6)];
 }

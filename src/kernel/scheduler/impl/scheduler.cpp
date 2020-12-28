@@ -5,10 +5,29 @@
 #include "scheduler.hpp"
 
 static char schedulerBuffer[sizeof(Scheduler)];
-static Scheduler *theScheduler = nullptr;
+Scheduler *theScheduler = nullptr;
+
+// char *sch_threads_infofs(){
+// 	bool showall = has_perm(0, kperm::SeeAllProcs);
+// 	uint64_t uid = proc_get_uid();
+// 	char *buffer=nullptr;
+// 	asprintf(&buffer, "# ID, PID, priority, addr, status, alevel, load\n");
+// 	{hold_lock hl(sch_lock);
+// 		for(size_t i=0; i<threads->size(); ++i){
+// 			sch_thread *t=(*threads)[i];
+// 			if(!showall){
+// 				uint64_t tuid = proc_get_uid_nolock(t->pid);
+// 				if(tuid != uid) continue;
+// 			}
+// 			reasprintf_append(&buffer, "%llu, %llu, %lu, %lx, %i, %i, %li\n", t->ext_id, t->pid, t->priority, t->eip,
+// 				(int)t->status, t->abortlevel, t->modifier);
+// 		}
+//     }
+//     return buffer;
+// }
 
 void Scheduler::TheIdleThread(void*){
-	Thread *myThread = (Thread*)theScheduler->current;
+	Thread *myThread = theScheduler->current;
 	while(true){
 		bool yield_immediately = false;
 		{
@@ -31,7 +50,7 @@ void Scheduler::TheIdleThread(void*){
 }
 
 void Scheduler::TheReaperThread(void*){
-    Thread *myThread = (Thread*)theScheduler->current;
+    Thread *myThread = theScheduler->current;
 	myThread->SetPriority(1);
 	while(true){
 		bool changed=true;
@@ -41,12 +60,16 @@ void Scheduler::TheReaperThread(void*){
 			for(size_t i = 0; i < theScheduler->threads.size(); ++i){
 				auto thread = theScheduler->threads[i];
 				if(thread->status == ThreadStatus::Ending){
+					if(thread->refCount > 0){
+						thread->awaitingDestruction = true;
+						continue;
+					}
 					auto id = thread->id;
                     void *stackptr = thread->stackPointer;
 					size_t stackpages = thread->stackPages;
 					theScheduler->threads.erase(i);
                     release_lock(theScheduler->lock);
-                    mm2_virtual_free(stackptr, stackpages);
+                    mm2_virtual_free(stackptr, stackpages + 1);
 					delete thread;
                     take_lock_exclusive(theScheduler->lock);
 					changed=true;
@@ -70,21 +93,21 @@ Scheduler::Scheduler(){
 	GetHAL().RegisterScheduler(*this);
 }
 
-IThread &Scheduler::NewThread(ThreadEntryFunction fn, void *param, size_t stackSize){
+ThreadPointer Scheduler::NewThread(ThreadEntryFunction fn, void *param, size_t stackSize){
 	auto thread = new Thread(fn, param, stackSize);
 	{
 		hold_lock hl(lock);
 		thread->id = idCounter++;
 		threads.push_back(thread);
 	}
-	return *threads.back();
+	return threads.back();
 }
 
 IThread &Scheduler::CurrentThread(){
 	return *(IThread*)current;
 }
 
-IThread *Scheduler::GetByID(uint64_t id){
+ThreadPointer Scheduler::GetByID(uint64_t id){
 	hold_lock hl(lock);
 	for(auto thread : threads){
 		if(thread->id == id) return thread;

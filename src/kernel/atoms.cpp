@@ -11,7 +11,7 @@ bt_atom *atom_create(uint64_t ini_val){
 void atom_destroy(bt_atom *a){
 	take_lock_exclusive(a->lk);
 	delete a;
-	sch_abortable(true);
+	CurrentThread().SetAbortable(true);
 }
 
 uint64_t atom_modify(bt_atom *a, bt_atom_modify::Enum mod, uint64_t value){
@@ -69,7 +69,7 @@ uint64_t atom_wait(bt_atom *a, bt_atom_compare::Enum cmp, uint64_t value){
 	p.a = a;
 	p.cmp = cmp;
 	p.value = value;
-	sch_setblock(&atom_wait_lockcheck, (void*)&p);
+	CurrentThread().SetBlock(&atom_wait_lockcheck, (void*)p);
 	return atom_read(a);
 }
 

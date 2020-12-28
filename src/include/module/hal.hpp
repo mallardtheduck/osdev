@@ -78,6 +78,8 @@ public:
 
 	virtual void HaltCPU() = 0;
 
+	virtual uint64_t GenerateStackToken(intptr_t addr) = 0;
+
 	virtual ~IHAL() { panic("HAL Destroyed!"); }
 };
 

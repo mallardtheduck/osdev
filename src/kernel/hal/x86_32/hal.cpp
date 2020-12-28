@@ -209,6 +209,10 @@ public:
 	virtual void HaltCPU() override{
 		asm volatile("hlt");
 	}
+
+	uint64_t GenerateStackToken(intptr_t addr){
+		return (0x10 << 32) | addr;
+	}
 };
 
 HAL_x86_32 theHAL;

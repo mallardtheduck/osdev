@@ -13,8 +13,8 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	GetHAL().EnableInterrupts();
 	init_kvars();
 	proc_init();
-	sch_init();
-	sch_yield();
+	Scheduler_Init();
+	GetHAL().YieldToScheduler();
 	drv_init();
 	fs_init();
 	infofs_init();
@@ -29,6 +29,6 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	
 	load_module("INIT:/BOOT.SYS");
 	//printf("Ready.");
-	while(true)sch_block();
+	while(true) CurrentThread().Block();
 	panic("Kernel endpoint reached!\n");
 }

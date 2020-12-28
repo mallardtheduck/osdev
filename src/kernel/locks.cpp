@@ -3,7 +3,7 @@
 extern lock sch_lock;
 
 static void lock_raise_us_error(){
-    debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::BadLocking);
+    debug_event_notify(proc_current_pid, CurrentThread().ID(), bt_debug_event::Exception, bt_exception::BadLocking);
     proc_terminate();
 }
 
@@ -25,9 +25,9 @@ uint64_t get_lock_owner(lock &l){
 
 void lock_transfer(lock &l, uint64_t to, uint64_t from){
     if(l.lockval!=from) panic("(LOCK) Attempt to transfer unowned lock!");
-	if(&l != &sch_lock) sch_abortable(true, from);
+	if(&l != &sch_lock) CurrentThread().SetAbortable(true/*, from*/);
     l.lockval=to;
-	if(&l != &sch_lock) sch_abortable(false, to);
+	if(&l != &sch_lock) CurrentThread().SetAbortable(false/*, to*/);
     if(l.lockval==0) panic("(LOCK) Something bad happened!");
 }
 

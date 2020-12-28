@@ -5,12 +5,12 @@ class Scheduler : public IScheduler{
 private:
 	friend class Thread;
 	friend void Scheduler_Init();
-	
+
 	static void TheIdleThread(void*);
 	static void TheReaperThread(void*);
 
 	vector<Thread*> threads;
-	volatile Thread *current = nullptr;
+	Thread * volatile current = nullptr;
 	uint64_t idCounter = 0;
 	uint32_t scheduleCyle = 0;
 
@@ -23,10 +23,10 @@ private:
 
 	Thread *PlanCycle();
 public:
-	IThread &NewThread(ThreadEntryFunction fn, void *param, size_t stackSize) override;
+	ThreadPointer NewThread(ThreadEntryFunction fn, void *param, size_t stackSize) override;
 
 	IThread &CurrentThread() override;
-	IThread *GetByID(uint64_t id) override;
+	ThreadPointer GetByID(uint64_t id) override;
 	size_t GetPIDThreadCount(uint64_t pid) override;
 
 	void DebugStopThreadsByPID(uint64_t pid) override;
