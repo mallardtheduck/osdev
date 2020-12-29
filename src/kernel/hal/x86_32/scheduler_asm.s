@@ -1,6 +1,6 @@
 .extern sch_inited
 .extern sch_stack
-.extern sch_new_stack
+
 .extern sch_update_eip
 .extern sch_isr_c
 

@@ -93,6 +93,8 @@ public:
 	}
 };
 
+class SchedulerLock;
+
 class IScheduler{
 public:
 	virtual ThreadPointer NewThread(ThreadEntryFunction fn, void *param, size_t stackSize = DefaultStackSize) = 0;
@@ -105,19 +107,55 @@ public:
 	virtual void HoldThreadsByPID(uint64_t pid) = 0;
 	virtual void UnHoldThreadsByPID(uint64_t pid) = 0;
 	
-	virtual bool IsActive() = 0;
 	virtual bool CanLock() = 0;
 
 	virtual uint64_t Schedule(uint64_t stackToken) = 0;
+
+	virtual void EnableScheduler() = 0;
+	virtual bool DisableScheduler() = 0;
+
+	SchedulerLock LockScheduler();
 
 	virtual ~IScheduler() {}
 };
 
 void Scheduler_Init();
+bool Scheduler_Ready();
 IScheduler &GetScheduler();
 
 inline IThread &CurrentThread(){
 	return GetScheduler().CurrentThread();
+}
+
+
+class SchedulerLock{
+private:
+	IScheduler &sch;
+	bool enable;
+public:
+	SchedulerLock(IScheduler &s) : sch(s), enable(true){
+		sch.DisableScheduler();
+	}
+
+	SchedulerLock(SchedulerLock &&other) : sch(other.sch), enable(true){
+		other.enable = false;
+	}
+
+	SchedulerLock &operator=(SchedulerLock &&other){
+		new (this) SchedulerLock((SchedulerLock &&)other);
+		return *this;
+	}
+
+	SchedulerLock(const SchedulerLock&) = delete;
+	SchedulerLock &operator=(const SchedulerLock&) = delete;
+
+	~SchedulerLock(){
+		if(enable)sch.EnableScheduler();
+	}
+};
+
+inline SchedulerLock IScheduler::LockScheduler(){
+	return SchedulerLock(*this);
 }
 
 #endif

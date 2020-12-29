@@ -34,10 +34,12 @@ public:
 	void HoldThreadsByPID(uint64_t pid) override;
 	void UnHoldThreadsByPID(uint64_t pid) override;
 	
-	bool IsActive() override;
 	bool CanLock() override;
 
 	uint64_t Schedule(uint64_t stackToken) override;
+
+	void EnableScheduler() override;
+	bool DisableScheduler() override;
 };
 
 #endif

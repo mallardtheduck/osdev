@@ -7,12 +7,18 @@
 
 void GDT_init();
 
+extern void HAL_sch_init();
+extern void sch_yield();
+bool sch_inited = false;
+extern char sch_isr_asm;
+
 void HAL_Init(){
 	GDT_init();
 	IDT_init();
 	init_cpu();
 	disable_pic();
 	PIC_init();
+	HAL_sch_init();
 }
 
 const CPUState_x86_32 theDefaultCPUState({});
@@ -184,14 +190,12 @@ public:
 		outb(0x43, 0x36);
 		outb(0x40, value & 0xFF);
 		outb(0x40, (value >> 8) & 0xFF);
-	}
-
-	void RegisterScheduler(IScheduler *sch) override{
-		return;
+		sch_inited = true;
+		RawHandleIRQ(0, (void*)&sch_isr_asm);
 	}
 
 	void YieldToScheduler() override{
-		return;
+		sch_yield();
 	}
 
 	const ICPUState &GetDefaultCPUState() override{

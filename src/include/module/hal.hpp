@@ -34,6 +34,7 @@ public:
 typedef void (*ISR_Routine)(ICPUState&);
 
 class InterruptLock;
+class SchedulerLock;
 
 class IHAL{
 public:
@@ -68,8 +69,7 @@ public:
 	virtual void InvalidateFPUState() = 0;
 
 	virtual void SetSchedulerFrequency(int hz) = 0;
-	virtual void RegisterScheduler(IScheduler &sch);
-	virtual void YieldToScheduler();
+	virtual void YieldToScheduler() = 0;
 
 	virtual const ICPUState &GetDefaultCPUState() = 0;
 

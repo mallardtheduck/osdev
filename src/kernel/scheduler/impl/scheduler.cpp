@@ -184,10 +184,6 @@ void Scheduler::UnHoldThreadsByPID(uint64_t pid){
 	}
 }
 
-bool Scheduler::IsActive(){
-	return true;
-}
-
 bool Scheduler::CanLock(){
 	bool ret = try_take_lock_exclusive(lock);
 	if(ret) release_lock(lock);
@@ -233,6 +229,10 @@ uint64_t Scheduler::Schedule(uint64_t stackToken){
 	++current->loadModifier;
 	current->dynamicPriority = current->staticPriority + current->loadModifier;
 	return next->stackToken;
+}
+
+bool Scheduler_Ready(){
+	return theScheduler;
 }
 
 void Scheduler_Init(){

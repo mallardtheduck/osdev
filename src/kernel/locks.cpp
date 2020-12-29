@@ -32,7 +32,7 @@ void lock_transfer(lock &l, uint64_t to, uint64_t from){
 }
 
 void take_lock_exclusive(lock &l, uint64_t thread, bool us){
-    if(!sch_active()) return;
+    if(!Scheduler_Ready()) return;
     if(l.lockval==thread && thread!=0){
         if(us) lock_raise_us_error();
         else panic("(LOCK) Attempt to take lock that's already held!\n");
