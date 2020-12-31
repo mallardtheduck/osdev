@@ -68,5 +68,5 @@ static bool wait_handle_blockcheck(void *h){
 }
 
 void wait_handle(bt_handle_info &handle){
-    sch_setblock(&wait_handle_blockcheck, (void*)&handle);
+    CurrentThread().SetBlock(&wait_handle_blockcheck, (void*)&handle);
 }

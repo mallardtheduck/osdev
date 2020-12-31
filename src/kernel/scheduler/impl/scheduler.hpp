@@ -14,7 +14,7 @@ private:
 	uint64_t idCounter = 0;
 	uint32_t scheduleCyle = 0;
 
-	lock lock;
+	ILock *lock;
 
 	Thread *idleThread;
 	Thread *reaperThread;

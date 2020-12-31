@@ -76,6 +76,7 @@ void Thread::Block(){
 		case ThreadStatus::HeldRunnable:
 			status = ThreadStatus::HeldBlocked;
 			break;
+		default: break;
 	}
 	if(theScheduler->current == this) Yield(nullptr);
 }
@@ -91,6 +92,7 @@ void Thread::Unblock(){
 		case ThreadStatus::HeldBlocked:
 			status = ThreadStatus::HeldRunnable;
 			break;
+		default: break;
 	}
 }
 

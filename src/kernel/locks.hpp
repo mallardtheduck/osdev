@@ -1,38 +1,71 @@
-#ifndef _LOCKS_HPP
-#define _LOCKS_HPP
+#ifndef KERNEL_LOCKS_HPP
+#define KERNEL_LOCKS_HPP
 
 #include "kernel.hpp"
-#include <module/locktype.h>
 
-bool lock_blockcheck(void *p);
+class LockLock;
 
-void init_lock(lock &l);
-void take_lock_exclusive(lock &l, uint64_t thread = sch_get_id(), bool us = false);
-void take_lock_recursive(lock &l, uint64_t thread = sch_get_id());
-bool try_take_lock_exclusive(lock &l, uint64_t thread = sch_get_id());
-bool try_take_lock_recursive(lock &l, uint64_t thread = sch_get_id());
-void release_lock(lock &l, uint64_t thread=sch_get_id(), bool us = false);
-void lock_transfer(lock &l, uint64_t to, uint64_t from = sch_get_id());
-uint64_t get_lock_owner(lock &l);
-
-class hold_lock{
-private:
-	lock *l;
-
+class ILock{
 public:
-	hold_lock(lock &lck, bool exclusive=true): l(&lck) {
-        if(exclusive) take_lock_exclusive(*l);
-        else take_lock_recursive(*l);
-    }
-	~hold_lock() { release_lock(*l);}
+	virtual void TakeExclusive(bool forUserspace = false) = 0;
+	virtual void TakeRecursive() = 0;
+
+	virtual bool TryTakeExclusive() = 0;
+	virtual bool TryTakeRecursive() = 0;
+
+	virtual void Release(bool forUserspace = false) = 0;
+
+	virtual uint64_t GetOwningThreadID() = 0;
+
+	virtual bool IsLocked() = 0;
+
+	operator bool(){
+		return IsLocked();
+	}
+
+	LockLock LockExclusive();
+
+	LockLock LockRecursive();
+
+	virtual ~ILock() {}
 };
 
-template<typename T> T atomic_increment(T& var){
-	return __sync_add_and_fetch(&var, 1);
+class LockLock{
+private:
+	ILock &theLock;
+	bool release = true;
+public:
+	LockLock(ILock &lock) : theLock(lock) {};
+	LockLock(LockLock &&other) : theLock(other.theLock){
+		other.release = false;
+	}
+
+	LockLock &operator=(LockLock &&other){
+		if(this != &other){
+			if(release) theLock.Release();
+			new (this) LockLock((LockLock &&)other);
+		}
+		return *this;
+	}
+
+	LockLock(const LockLock&) = delete;
+	LockLock &operator=(const LockLock&) = delete;
+
+	~LockLock(){
+		if(release) theLock.Release();
+	}
+};
+
+inline LockLock ILock::LockExclusive(){
+	TakeExclusive();
+	return LockLock(*this);
 }
 
-template<typename T> T atomic_decrement(T& var){
-	return __sync_sub_and_fetch(&var, 1);
+inline LockLock ILock::LockRecursive(){
+	TakeRecursive();
+	return LockLock(*this);
 }
+
+ILock *NewLock();
 
 #endif

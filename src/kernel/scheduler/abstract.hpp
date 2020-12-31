@@ -91,6 +91,10 @@ public:
 	IThread *operator->(){
 		return theThread;
 	}
+
+	IThread *get(){
+		return theThread;
+	}
 };
 
 class SchedulerLock;

@@ -55,6 +55,7 @@ extern "C"{
 #include "rtc/rtc.hpp"
 #include "waiting.hpp"
 #include "perms.hpp"
+#include "locks.hpp"
 
 void GDT_init();
 void IDT_init();

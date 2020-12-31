@@ -7,6 +7,8 @@
 static char schedulerBuffer[sizeof(Scheduler)];
 Scheduler *theScheduler = nullptr;
 
+constexpr auto MaxLoadModifier = 128;
+
 // char *sch_threads_infofs(){
 // 	bool showall = has_perm(0, kperm::SeeAllProcs);
 // 	uint64_t uid = proc_get_uid();
@@ -31,7 +33,7 @@ void Scheduler::TheIdleThread(void*){
 	while(true){
 		bool yield_immediately = false;
 		{
-			hold_lock hl(theScheduler->lock);
+			auto hl = theScheduler->lock->LockExclusive();
 			for(auto thread : theScheduler->threads){			
 				if(thread->status == ThreadStatus::Blocked && thread->blockCheck){
 					auto il = GetHAL().LockInterrupts();
@@ -55,7 +57,7 @@ void Scheduler::TheReaperThread(void*){
 	while(true){
 		bool changed=true;
 		while(changed){
-			hold_lock lck(theScheduler->lock);
+			auto hl = theScheduler->lock->LockExclusive();
 			changed=false;
 			for(size_t i = 0; i < theScheduler->threads.size(); ++i){
 				auto thread = theScheduler->threads[i];
@@ -68,10 +70,10 @@ void Scheduler::TheReaperThread(void*){
                     void *stackptr = thread->stackPointer;
 					size_t stackpages = thread->stackPages;
 					theScheduler->threads.erase(i);
-                    release_lock(theScheduler->lock);
+                    theScheduler->lock->Release();
                     mm2_virtual_free(stackptr, stackpages + 1);
 					delete thread;
-                    take_lock_exclusive(theScheduler->lock);
+                    theScheduler->lock->TakeExclusive();
 					changed=true;
 					dbgpf("SCH: Reaped %i (%i) [%p].\n", (int)i, (int)id, stackptr);
 					break;
@@ -83,20 +85,22 @@ void Scheduler::TheReaperThread(void*){
 }
 
 Scheduler::Scheduler(){
-	init_lock(lock);
+	lock = NewLock();
 	auto mainThread = new Thread();
 	threads.push_back(mainThread);
-	idleThread = dynamic_cast<Thread*>(&NewThread(TheIdleThread, nullptr, DefaultStackSize));
+	auto idleThreadPointer = NewThread(TheIdleThread, nullptr, DefaultStackSize);
+	idleThread = static_cast<Thread*>(idleThreadPointer.get());
 	idleThread->status = ThreadStatus::Special;
-	reaperThread = dynamic_cast<Thread*>(&NewThread(TheReaperThread, nullptr, DefaultStackSize));
+	auto reaperThreadPointer = NewThread(TheReaperThread, nullptr, DefaultStackSize);
+	reaperThread = static_cast<Thread*>(reaperThreadPointer.get());
 
-	GetHAL().RegisterScheduler(*this);
+	GetHAL().SetSchedulerFrequency(30);
 }
 
 ThreadPointer Scheduler::NewThread(ThreadEntryFunction fn, void *param, size_t stackSize){
 	auto thread = new Thread(fn, param, stackSize);
 	{
-		hold_lock hl(lock);
+		auto hl = theScheduler->lock->LockExclusive();
 		thread->id = idCounter++;
 		threads.push_back(thread);
 	}
@@ -108,7 +112,7 @@ IThread &Scheduler::CurrentThread(){
 }
 
 ThreadPointer Scheduler::GetByID(uint64_t id){
-	hold_lock hl(lock);
+	auto hl = theScheduler->lock->LockExclusive();
 	for(auto thread : threads){
 		if(thread->id == id) return thread;
 	}
@@ -116,7 +120,7 @@ ThreadPointer Scheduler::GetByID(uint64_t id){
 }
 
 size_t Scheduler::GetPIDThreadCount(uint64_t pid){
-	hold_lock hl(lock);
+	auto hl = theScheduler->lock->LockExclusive();
 	size_t ret = 0;
 	for(auto thread : threads){
 		if(thread->pid == pid) ++ret;
@@ -128,7 +132,7 @@ void Scheduler::DebugStopThreadsByPID(uint64_t pid){
 	if(current->pid == pid){
 		panic("(SCH) Cannot debug-stop current PID!");
 	}else{
-		hold_lock hl(lock);
+		auto hl = theScheduler->lock->LockExclusive();
 		for(auto thread : threads){
 			if(thread->pid == pid){
 				if(thread->status == ThreadStatus::Runnable){
@@ -142,7 +146,7 @@ void Scheduler::DebugStopThreadsByPID(uint64_t pid){
 }
 
 void Scheduler::DebugResumeThreadsByPID(uint64_t pid){
-	hold_lock hl(lock);
+	auto hl = theScheduler->lock->LockExclusive();
 	for(auto thread : threads){
 		if(thread->pid == pid){
 			if(thread->status == ThreadStatus::DebugStopped){
@@ -158,7 +162,7 @@ void Scheduler::HoldThreadsByPID(uint64_t pid){
 	if(current->pid == pid){
 		panic("(SCH) Cannot hold current PID!");
 	}else{
-		hold_lock hl(lock);
+		auto hl = theScheduler->lock->LockExclusive();
 		for(auto thread : threads){
 			if(thread->pid == pid){
 				if(thread->status == ThreadStatus::Runnable){
@@ -172,7 +176,7 @@ void Scheduler::HoldThreadsByPID(uint64_t pid){
 }
 
 void Scheduler::UnHoldThreadsByPID(uint64_t pid){
-	hold_lock hl(lock);
+	auto hl = theScheduler->lock->LockExclusive();
 	for(auto thread : threads){
 		if(thread->pid == pid){
 			if(thread->status == ThreadStatus::HeldRunnable){
@@ -185,8 +189,8 @@ void Scheduler::UnHoldThreadsByPID(uint64_t pid){
 }
 
 bool Scheduler::CanLock(){
-	bool ret = try_take_lock_exclusive(lock);
-	if(ret) release_lock(lock);
+	bool ret = lock->TryTakeExclusive();
+	if(ret) lock->Release();
 	return ret;
 }
 
@@ -226,7 +230,7 @@ uint64_t Scheduler::Schedule(uint64_t stackToken){
 	}
 	if(!next) next = PlanCycle();
 	current = next;
-	++current->loadModifier;
+	if(current->loadModifier < MaxLoadModifier) ++current->loadModifier;
 	current->dynamicPriority = current->staticPriority + current->loadModifier;
 	return next->stackToken;
 }
