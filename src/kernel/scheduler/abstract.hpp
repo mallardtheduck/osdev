@@ -32,7 +32,7 @@ public:
 	virtual int GetAbortLevel() = 0;
 	virtual void Abort() = 0;
 	virtual bool ShouldAbortAtUserBoundary() = 0;
-	virtual void UpdateUserState(ICPUState &state) = 0;
+	virtual void UpdateUserState(const ICPUState &state) = 0;
 	virtual ICPUState &GetUserState() = 0;
 	virtual uint32_t *GetDebugState() = 0;
 
@@ -44,6 +44,11 @@ public:
 
 	virtual void IncrementRefCount() = 0;
 	virtual void DecrementRefCount() = 0;
+
+	virtual uint8_t *GetFPUState() = 0;
+
+	virtual void SetDiagnosticInstructionPointer(intptr_t eip) = 0;
+	virtual intptr_t GetDiagnosticInstructionPointer() = 0; 
 
 	virtual ~IThread() {}
 };

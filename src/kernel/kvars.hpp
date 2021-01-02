@@ -1,7 +1,7 @@
 #ifndef _KVARS_HPP
 #define _KVARS_HPP
 
-#include "string.hpp"
+#include "utils/string.hpp"
 
 class string;
 

@@ -137,5 +137,5 @@ void restore_fpu_xmm_data(const uint8_t *data){
 
 void fpu_nm_handler(ICPUState &){
 	fpu_ready();
-	restore_fpu_xmm_data(sch_get_fpu_xmm_data());
+	restore_fpu_xmm_data(CurrentThread().GetFPUState());
 }

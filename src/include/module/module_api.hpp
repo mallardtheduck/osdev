@@ -4,8 +4,8 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "hal.hpp"
-#include "extension.hpp"
+#include "kernelsys/hal.hpp"
+#include "kernelsys/extension.hpp"
 
 typedef void(*threadFn)(void*);
 typedef char* (*infoFn)();

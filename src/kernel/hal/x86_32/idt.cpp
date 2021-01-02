@@ -11,17 +11,17 @@ volatile unsigned int imode=0;
 /* Defines an IDT entry */
 struct idt_entry
 {
-    uint16_t base_lo;
-    uint16_t sel;        /* Our kernel segment goes here! */
-    uint8_t always0;     /* This will ALWAYS be set to 0! */
-    uint8_t flags;       /* Set using the above table! */
-    uint16_t base_hi;
+	uint16_t base_lo;
+	uint16_t sel;        /* Our kernel segment goes here! */
+	uint8_t always0;     /* This will ALWAYS be set to 0! */
+	uint8_t flags;       /* Set using the above table! */
+	uint16_t base_hi;
 } __attribute__((packed));
 
 struct idt_ptr
 {
-    uint16_t limit;
-    uint32_t base;
+	uint16_t limit;
+	uint32_t base;
 } __attribute__((packed));
 
 ISR_Routine handlers[256]={NULL};
@@ -105,105 +105,105 @@ void IDT_init()
 	idt_set_gate(31, (uint32_t)isr31, 0x08, 0x8E);
 
 	idt_set_gate(48, (uint32_t)isr48, 0x08, 0x8E);
-    idt_set_gate(49, (uint32_t)isr49, 0x08, 0x8E);
-    idt_set_gate(50, (uint32_t)isr50, 0x08, 0x8E);
-    idt_set_gate(51, (uint32_t)isr51, 0x08, 0x8E);
-    idt_set_gate(52, (uint32_t)isr52, 0x08, 0x8E);
-    idt_set_gate(53, (uint32_t)isr53, 0x08, 0x8E);
-    idt_set_gate(54, (uint32_t)isr54, 0x08, 0x8E);
-    idt_set_gate(55, (uint32_t)isr55, 0x08, 0x8E);
-    idt_set_gate(56, (uint32_t)isr56, 0x08, 0x8E);
-    idt_set_gate(57, (uint32_t)isr57, 0x08, 0x8E);
-    idt_set_gate(58, (uint32_t)isr58, 0x08, 0x8E);
-    idt_set_gate(59, (uint32_t)isr59, 0x08, 0x8E);
-    idt_set_gate(60, (uint32_t)isr60, 0x08, 0x8E);
-    idt_set_gate(61, (uint32_t)isr61, 0x08, 0x8E);
-    idt_set_gate(62, (uint32_t)isr62, 0x08, 0x8E);
-    idt_set_gate(63, (uint32_t)isr63, 0x08, 0x8E);
-    idt_set_gate(64, (uint32_t)isr64, 0x08, 0x8E);
-    idt_set_gate(65, (uint32_t)isr65, 0x08, 0x8E);
-    idt_set_gate(66, (uint32_t)isr66, 0x08, 0x8E);
-    idt_set_gate(67, (uint32_t)isr67, 0x08, 0x8E);
-    idt_set_gate(68, (uint32_t)isr68, 0x08, 0x8E);
-    idt_set_gate(69, (uint32_t)isr69, 0x08, 0x8E);
-    idt_set_gate(70, (uint32_t)isr70, 0x08, 0x8E);
-    idt_set_gate(71, (uint32_t)isr71, 0x08, 0x8E);
-    idt_set_gate(72, (uint32_t)isr72, 0x08, 0x8E);
-    idt_set_gate(73, (uint32_t)isr73, 0x08, 0x8E);
-    idt_set_gate(74, (uint32_t)isr74, 0x08, 0x8E);
-    idt_set_gate(75, (uint32_t)isr75, 0x08, 0x8E);
-    idt_set_gate(76, (uint32_t)isr76, 0x08, 0x8E);
-    idt_set_gate(77, (uint32_t)isr77, 0x08, 0x8E);
-    idt_set_gate(78, (uint32_t)isr78, 0x08, 0x8E);
-    idt_set_gate(79, (uint32_t)isr79, 0x08, 0x8E);
-    idt_set_gate(80, (uint32_t)isr80, 0x08, 0x8E);
-    idt_set_gate(81, (uint32_t)isr81, 0x08, 0x8E);
-    idt_set_gate(82, (uint32_t)isr82, 0x08, 0x8E);
-    idt_set_gate(83, (uint32_t)isr83, 0x08, 0x8E);
-    idt_set_gate(84, (uint32_t)isr84, 0x08, 0x8E);
-    idt_set_gate(85, (uint32_t)isr85, 0x08, 0x8E);
-    idt_set_gate(86, (uint32_t)isr86, 0x08, 0x8E);
-    idt_set_gate(87, (uint32_t)isr87, 0x08, 0x8E);
-    idt_set_gate(88, (uint32_t)isr88, 0x08, 0x8E);
-    idt_set_gate(89, (uint32_t)isr89, 0x08, 0x8E);
-    idt_set_gate(90, (uint32_t)isr90, 0x08, 0x8E);
-    idt_set_gate(91, (uint32_t)isr91, 0x08, 0x8E);
-    idt_set_gate(92, (uint32_t)isr92, 0x08, 0x8E);
-    idt_set_gate(93, (uint32_t)isr93, 0x08, 0x8E);
-    idt_set_gate(94, (uint32_t)isr94, 0x08, 0x8E);
-    idt_set_gate(95, (uint32_t)isr95, 0x08, 0x8E);
-    idt_set_gate(96, (uint32_t)isr96, 0x08, 0x8E);
-    idt_set_gate(97, (uint32_t)isr97, 0x08, 0x8E);
-    idt_set_gate(98, (uint32_t)isr98, 0x08, 0x8E);
-    idt_set_gate(99, (uint32_t)isr99, 0x08, 0x8E);
-    idt_set_gate(100, (uint32_t)isr100, 0x08, 0x8E);
-    idt_set_gate(101, (uint32_t)isr101, 0x08, 0x8E);
-    idt_set_gate(102, (uint32_t)isr102, 0x08, 0x8E);
-    idt_set_gate(103, (uint32_t)isr103, 0x08, 0x8E);
-    idt_set_gate(104, (uint32_t)isr104, 0x08, 0x8E);
-    idt_set_gate(105, (uint32_t)isr105, 0x08, 0x8E);
-    idt_set_gate(106, (uint32_t)isr106, 0x08, 0x8E);
-    idt_set_gate(107, (uint32_t)isr107, 0x08, 0x8E);
-    idt_set_gate(108, (uint32_t)isr108, 0x08, 0x8E);
-    idt_set_gate(109, (uint32_t)isr109, 0x08, 0x8E);
-    idt_set_gate(110, (uint32_t)isr110, 0x08, 0x8E);
-    idt_set_gate(111, (uint32_t)isr111, 0x08, 0x8E);
-    idt_set_gate(112, (uint32_t)isr112, 0x08, 0x8E);
-    idt_set_gate(113, (uint32_t)isr113, 0x08, 0x8E);
-    idt_set_gate(114, (uint32_t)isr114, 0x08, 0x8E);
-    idt_set_gate(115, (uint32_t)isr115, 0x08, 0x8E);
-    idt_set_gate(116, (uint32_t)isr116, 0x08, 0x8E);
-    idt_set_gate(117, (uint32_t)isr117, 0x08, 0x8E);
-    idt_set_gate(118, (uint32_t)isr118, 0x08, 0x8E);
-    idt_set_gate(119, (uint32_t)isr119, 0x08, 0x8E);
-    idt_set_gate(120, (uint32_t)isr120, 0x08, 0x8E);
-    idt_set_gate(121, (uint32_t)isr121, 0x08, 0x8E);
-    idt_set_gate(122, (uint32_t)isr122, 0x08, 0x8E);
-    idt_set_gate(123, (uint32_t)isr123, 0x08, 0x8E);
-    idt_set_gate(124, (uint32_t)isr124, 0x08, 0x8E);
-    idt_set_gate(125, (uint32_t)isr125, 0x08, 0x8E);
-    idt_set_gate(126, (uint32_t)isr126, 0x08, 0x8E);
-    idt_set_gate(127, (uint32_t)isr127, 0x08, 0x8E);
+	idt_set_gate(49, (uint32_t)isr49, 0x08, 0x8E);
+	idt_set_gate(50, (uint32_t)isr50, 0x08, 0x8E);
+	idt_set_gate(51, (uint32_t)isr51, 0x08, 0x8E);
+	idt_set_gate(52, (uint32_t)isr52, 0x08, 0x8E);
+	idt_set_gate(53, (uint32_t)isr53, 0x08, 0x8E);
+	idt_set_gate(54, (uint32_t)isr54, 0x08, 0x8E);
+	idt_set_gate(55, (uint32_t)isr55, 0x08, 0x8E);
+	idt_set_gate(56, (uint32_t)isr56, 0x08, 0x8E);
+	idt_set_gate(57, (uint32_t)isr57, 0x08, 0x8E);
+	idt_set_gate(58, (uint32_t)isr58, 0x08, 0x8E);
+	idt_set_gate(59, (uint32_t)isr59, 0x08, 0x8E);
+	idt_set_gate(60, (uint32_t)isr60, 0x08, 0x8E);
+	idt_set_gate(61, (uint32_t)isr61, 0x08, 0x8E);
+	idt_set_gate(62, (uint32_t)isr62, 0x08, 0x8E);
+	idt_set_gate(63, (uint32_t)isr63, 0x08, 0x8E);
+	idt_set_gate(64, (uint32_t)isr64, 0x08, 0x8E);
+	idt_set_gate(65, (uint32_t)isr65, 0x08, 0x8E);
+	idt_set_gate(66, (uint32_t)isr66, 0x08, 0x8E);
+	idt_set_gate(67, (uint32_t)isr67, 0x08, 0x8E);
+	idt_set_gate(68, (uint32_t)isr68, 0x08, 0x8E);
+	idt_set_gate(69, (uint32_t)isr69, 0x08, 0x8E);
+	idt_set_gate(70, (uint32_t)isr70, 0x08, 0x8E);
+	idt_set_gate(71, (uint32_t)isr71, 0x08, 0x8E);
+	idt_set_gate(72, (uint32_t)isr72, 0x08, 0x8E);
+	idt_set_gate(73, (uint32_t)isr73, 0x08, 0x8E);
+	idt_set_gate(74, (uint32_t)isr74, 0x08, 0x8E);
+	idt_set_gate(75, (uint32_t)isr75, 0x08, 0x8E);
+	idt_set_gate(76, (uint32_t)isr76, 0x08, 0x8E);
+	idt_set_gate(77, (uint32_t)isr77, 0x08, 0x8E);
+	idt_set_gate(78, (uint32_t)isr78, 0x08, 0x8E);
+	idt_set_gate(79, (uint32_t)isr79, 0x08, 0x8E);
+	idt_set_gate(80, (uint32_t)isr80, 0x08, 0x8E);
+	idt_set_gate(81, (uint32_t)isr81, 0x08, 0x8E);
+	idt_set_gate(82, (uint32_t)isr82, 0x08, 0x8E);
+	idt_set_gate(83, (uint32_t)isr83, 0x08, 0x8E);
+	idt_set_gate(84, (uint32_t)isr84, 0x08, 0x8E);
+	idt_set_gate(85, (uint32_t)isr85, 0x08, 0x8E);
+	idt_set_gate(86, (uint32_t)isr86, 0x08, 0x8E);
+	idt_set_gate(87, (uint32_t)isr87, 0x08, 0x8E);
+	idt_set_gate(88, (uint32_t)isr88, 0x08, 0x8E);
+	idt_set_gate(89, (uint32_t)isr89, 0x08, 0x8E);
+	idt_set_gate(90, (uint32_t)isr90, 0x08, 0x8E);
+	idt_set_gate(91, (uint32_t)isr91, 0x08, 0x8E);
+	idt_set_gate(92, (uint32_t)isr92, 0x08, 0x8E);
+	idt_set_gate(93, (uint32_t)isr93, 0x08, 0x8E);
+	idt_set_gate(94, (uint32_t)isr94, 0x08, 0x8E);
+	idt_set_gate(95, (uint32_t)isr95, 0x08, 0x8E);
+	idt_set_gate(96, (uint32_t)isr96, 0x08, 0x8E);
+	idt_set_gate(97, (uint32_t)isr97, 0x08, 0x8E);
+	idt_set_gate(98, (uint32_t)isr98, 0x08, 0x8E);
+	idt_set_gate(99, (uint32_t)isr99, 0x08, 0x8E);
+	idt_set_gate(100, (uint32_t)isr100, 0x08, 0x8E);
+	idt_set_gate(101, (uint32_t)isr101, 0x08, 0x8E);
+	idt_set_gate(102, (uint32_t)isr102, 0x08, 0x8E);
+	idt_set_gate(103, (uint32_t)isr103, 0x08, 0x8E);
+	idt_set_gate(104, (uint32_t)isr104, 0x08, 0x8E);
+	idt_set_gate(105, (uint32_t)isr105, 0x08, 0x8E);
+	idt_set_gate(106, (uint32_t)isr106, 0x08, 0x8E);
+	idt_set_gate(107, (uint32_t)isr107, 0x08, 0x8E);
+	idt_set_gate(108, (uint32_t)isr108, 0x08, 0x8E);
+	idt_set_gate(109, (uint32_t)isr109, 0x08, 0x8E);
+	idt_set_gate(110, (uint32_t)isr110, 0x08, 0x8E);
+	idt_set_gate(111, (uint32_t)isr111, 0x08, 0x8E);
+	idt_set_gate(112, (uint32_t)isr112, 0x08, 0x8E);
+	idt_set_gate(113, (uint32_t)isr113, 0x08, 0x8E);
+	idt_set_gate(114, (uint32_t)isr114, 0x08, 0x8E);
+	idt_set_gate(115, (uint32_t)isr115, 0x08, 0x8E);
+	idt_set_gate(116, (uint32_t)isr116, 0x08, 0x8E);
+	idt_set_gate(117, (uint32_t)isr117, 0x08, 0x8E);
+	idt_set_gate(118, (uint32_t)isr118, 0x08, 0x8E);
+	idt_set_gate(119, (uint32_t)isr119, 0x08, 0x8E);
+	idt_set_gate(120, (uint32_t)isr120, 0x08, 0x8E);
+	idt_set_gate(121, (uint32_t)isr121, 0x08, 0x8E);
+	idt_set_gate(122, (uint32_t)isr122, 0x08, 0x8E);
+	idt_set_gate(123, (uint32_t)isr123, 0x08, 0x8E);
+	idt_set_gate(124, (uint32_t)isr124, 0x08, 0x8E);
+	idt_set_gate(125, (uint32_t)isr125, 0x08, 0x8E);
+	idt_set_gate(126, (uint32_t)isr126, 0x08, 0x8E);
+	idt_set_gate(127, (uint32_t)isr127, 0x08, 0x8E);
 	idt_set_gate(128, (uint32_t)isr128, 0x08, 0xEE);
 
 	idt_set_gate(32, (uint32_t)irq0 , 0x08, 0x8E);
-    idt_set_gate(33, (uint32_t)irq1 , 0x08, 0x8E);
-    idt_set_gate(34, (uint32_t)irq2 , 0x08, 0x8E);
-    idt_set_gate(35, (uint32_t)irq3 , 0x08, 0x8E);
-    idt_set_gate(36, (uint32_t)irq4 , 0x08, 0x8E);
-    idt_set_gate(37, (uint32_t)irq5 , 0x08, 0x8E);
-    idt_set_gate(38, (uint32_t)irq6 , 0x08, 0x8E);
-    idt_set_gate(39, (uint32_t)irq7 , 0x08, 0x8E);
-    idt_set_gate(40, (uint32_t)irq8 , 0x08, 0x8E);
-    idt_set_gate(41, (uint32_t)irq9 , 0x08, 0x8E);
-    idt_set_gate(42, (uint32_t)irq10 , 0x08, 0x8E);
-    idt_set_gate(43, (uint32_t)irq11 , 0x08, 0x8E);
-    idt_set_gate(44, (uint32_t)irq12 , 0x08, 0x8E);
-    idt_set_gate(45, (uint32_t)irq13 , 0x08, 0x8E);
-    idt_set_gate(46, (uint32_t)irq14 , 0x08, 0x8E);
-    idt_set_gate(47, (uint32_t)irq15 , 0x08, 0x8E);
+	idt_set_gate(33, (uint32_t)irq1 , 0x08, 0x8E);
+	idt_set_gate(34, (uint32_t)irq2 , 0x08, 0x8E);
+	idt_set_gate(35, (uint32_t)irq3 , 0x08, 0x8E);
+	idt_set_gate(36, (uint32_t)irq4 , 0x08, 0x8E);
+	idt_set_gate(37, (uint32_t)irq5 , 0x08, 0x8E);
+	idt_set_gate(38, (uint32_t)irq6 , 0x08, 0x8E);
+	idt_set_gate(39, (uint32_t)irq7 , 0x08, 0x8E);
+	idt_set_gate(40, (uint32_t)irq8 , 0x08, 0x8E);
+	idt_set_gate(41, (uint32_t)irq9 , 0x08, 0x8E);
+	idt_set_gate(42, (uint32_t)irq10 , 0x08, 0x8E);
+	idt_set_gate(43, (uint32_t)irq11 , 0x08, 0x8E);
+	idt_set_gate(44, (uint32_t)irq12 , 0x08, 0x8E);
+	idt_set_gate(45, (uint32_t)irq13 , 0x08, 0x8E);
+	idt_set_gate(46, (uint32_t)irq14 , 0x08, 0x8E);
+	idt_set_gate(47, (uint32_t)irq15 , 0x08, 0x8E);
 
-    idt_set_gate(166, (uint32_t)irq14, 0x08, 0x8E);
+	idt_set_gate(166, (uint32_t)irq14, 0x08, 0x8E);
 
 	/* Points the processor's internal register to the new IDT */
 	idt_flush();
@@ -220,70 +220,67 @@ void out_int_info(const isr_regs &ctx){
 extern size_t current_thread;
 
 extern "C" void isr_handler(isr_regs *ctx){
-    imode++;
-    //debug_setbreaks(false);
-    if(sch_can_lock()) {
-        sch_update_eip(ctx->eip);
-        sch_abortable(false);
-		if(ctx->cs == 0x1B){
-			sch_update_usercontext(ctx);
-		}
-    }
+	imode++;
+
+	auto &currentThread = CurrentThread();
+	currentThread.SetDiagnosticInstructionPointer(ctx->eip);
+	currentThread.SetAbortable(false);
+	if(ctx->cs == 0x1B) currentThread.UpdateUserState(CPUState_x86_32(ctx));
+
 	if(handlers[ctx->interrupt_number]){
-        CPUState_x86_32 state(ctx);
-        handlers[ctx->interrupt_number](state);
-    }
+		CPUState_x86_32 state(ctx);
+		handlers[ctx->interrupt_number](state);
+	}
 	else if(ctx->interrupt_number==0x06){
 		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, sch_get_id());
+		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, currentThread.ID());
 		out_int_info(*ctx);
 		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Invalid opcode.");
-        else {
-            debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::InvalidOpCode);
-            proc_terminate();
-        }
+		else {
+			debug_event_notify(proc_current_pid, currentThread.ID(), bt_debug_event::Exception, bt_exception::InvalidOpCode);
+			proc_terminate();
+		}
 	}
 	else if(ctx->interrupt_number==0x0D){
 		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, sch_get_id());
+		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, currentThread.ID());
 		out_int_info(*ctx);
-        if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("General Protection Fault.");
-        else {
-            debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::ProtectionFault);
-            proc_terminate();
-        }
+		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("General Protection Fault.");
+		else {
+			debug_event_notify(proc_current_pid, currentThread.ID(), bt_debug_event::Exception, bt_exception::ProtectionFault);
+			proc_terminate();
+		}
 	}
 	else if(ctx->interrupt_number==0x08){
 		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, sch_get_id());
+		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, currentThread.ID());
 		out_int_info(*ctx);
-        if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Double fault.");
-        else proc_terminate();
+		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Double fault.");
+		else proc_terminate();
 	}else if(ctx->interrupt_number==0x00){
-        dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
-        dbgpf("Current thread: %i (%llu)\n", (int)current_thread, sch_get_id());
-        out_int_info(*ctx);
-        if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Devide by zero!");
-        else{
-            debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::DivideByZero);
-            proc_terminate();
-        }
-    }else{
 		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, sch_get_id());
+		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, currentThread.ID());
+		out_int_info(*ctx);
+		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Devide by zero!");
+		else{
+			debug_event_notify(proc_current_pid, currentThread.ID(), bt_debug_event::Exception, bt_exception::DivideByZero);
+			proc_terminate();
+		}
+	}else{
+		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
+		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, currentThread.ID());
 		out_int_info(*ctx);
 	}
-    disable_interrupts();
-    if(sch_can_lock()) {
-        sch_abortable(true);
-        if(sch_get_abortlevel() == 0) proc_hold();
-    }
-    imode--;
-    //debug_setbreaks(!imode);
+	disable_interrupts();
+
+	currentThread.SetAbortable(true);
+	if(currentThread.GetAbortLevel() == 0) proc_hold();
+
+	imode--;
 }
 
 void irq_ack(size_t irq_no) {
-    PIC_sendEOI(irq_no);
+	PIC_sendEOI(irq_no);
 }
 
 void irq_ack_if_needed(size_t irqno){
@@ -307,27 +304,24 @@ inline void out_regs(const irq_regs ctx){
 }
 
 extern "C" void irq_handler(irq_regs *r) {
-    imode++;
-    if(sch_can_lock()) {
-        sch_update_eip(r->eip);
-        sch_abortable(false);
-		if(r->cs == 0x1B){
-			sch_update_usercontext((isr_regs*)r);
-		}
-    }
-	//out_regs(*r);
+	imode++;
+
+	auto &currentThread = CurrentThread();
+	currentThread.SetDiagnosticInstructionPointer(r->eip);
+	currentThread.SetAbortable(false);
+	if(r->cs == 0x1B) currentThread.UpdateUserState(CPUState_x86_32((isr_regs*)r));
+
 	int irq=r->int_no-IRQ_BASE;
 	if(handlers[r->int_no]){
-        CPUState_x86_32 state((isr_regs*)r);
-        handlers[r->int_no](state);
-    }
-    disable_interrupts();
-    irq_ack(irq);
-    if(sch_can_lock()) {
-        sch_abortable(true);
-        if(sch_get_abortlevel() == 0) proc_hold();
-    }
-    imode--;
+		CPUState_x86_32 state((isr_regs*)r);
+		handlers[r->int_no](state);
+	}
+	disable_interrupts();
+	irq_ack(irq);
+
+	currentThread.SetAbortable(true);
+	if(currentThread.GetAbortLevel() == 0) proc_hold();
+	imode--;
 }
 
 irq_regs isr_regs2irq_regs(const isr_regs &r){
@@ -356,5 +350,5 @@ void irq_handle_raw(size_t irqno, void *handler){
 }
 
 bool is_imode(){
-    return imode;
+	return imode;
 }

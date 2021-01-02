@@ -141,7 +141,7 @@ void panic(const char *msg){
     itoa(CurrentThread().ID(), buf, 10);
     write_string_at(12, 31, buf, 0x1C);
     write_string_at(12, 38, "Stored EIP:", 0x1F);
-    itoa(CurrentThread().GetUserState().Get32BitRegister(Generic_Register::Instruction_Pointer), buf, 16);
+    itoa(CurrentThread().GetDiagnosticInstructionPointer(), buf, 16);
     write_string_at(12, 50, buf, 0x1C);
     write_string_at(14, 2, "Additional information may be available in the error log (if enabled).", 0x1F);
     write_string_at(17, 24, " Please restart your computer. ", 0xF0);

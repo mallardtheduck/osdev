@@ -27,6 +27,7 @@ public:
 	virtual void *GetRAW() = 0;
 
 	virtual ICPUState *Clone() const = 0;
+	virtual void Copy(const ICPUState &other) = 0;
 
 	virtual ~ICPUState() {}
 };

@@ -2,6 +2,7 @@
 #define KERNEL_SCHEDULER_IMPL_THREAD_HPP
 
 #include "../../kernel.hpp"
+#include <module/utils/unique_ptr.hpp>
 
 constexpr uint32_t DefaultThreadPriority = 10;
 
@@ -39,15 +40,15 @@ private:
 	thread_msg_status::Enum messagingStatus = thread_msg_status::Normal;
 	uint8_t fpuState[512];
 	uint32_t debugState[Debug_DRStateSize] = {0};
-	ICPUState *userState = nullptr;
+	unique_ptr<ICPUState> userState {GetHAL().GetDefaultCPUState().Clone()};
 
 	uint32_t refCount = 0;
 	bool awaitingDestruction = false;
 
+	intptr_t diagnosticInstructionPointer = 0;
+
 	Thread(ThreadEntryFunction fn, void *param, size_t stackSize);
 	Thread();
-
-	~Thread();
 
 	void End();
 public:
@@ -65,7 +66,7 @@ public:
 	int GetAbortLevel() override;
 	void Abort() override;
 	bool ShouldAbortAtUserBoundary() override;
-	void UpdateUserState(ICPUState &state) override;
+	void UpdateUserState(const ICPUState &state) override;
 	ICPUState &GetUserState() override;
 	uint32_t *GetDebugState() override;
 
@@ -77,6 +78,11 @@ public:
 
 	void IncrementRefCount() override;
 	void DecrementRefCount() override;
+
+	uint8_t *GetFPUState() override;
+
+	void SetDiagnosticInstructionPointer(intptr_t eip) override;
+	intptr_t GetDiagnosticInstructionPointer() override; 
 };
 
 #endif

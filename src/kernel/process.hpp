@@ -2,8 +2,7 @@
 #define _PROCESS_HPP
 
 #include "kernel.hpp"
-#include "string.hpp"
-#include <module/locktype.h>
+#include "utils/string.hpp"
 
 typedef uint64_t pid_t;
 typedef pid_t bt_pid_t;

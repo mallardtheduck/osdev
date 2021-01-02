@@ -95,6 +95,10 @@ ICPUState *CPUState_x86_32::Clone() const{
 	return new CPUState_x86_32(*this);
 }
 
+void CPUState_x86_32::Copy(const ICPUState &other){
+	regs = static_cast<const CPUState_x86_32&>(other).regs;
+}
+
 class HAL_x86_32 : public IHAL{
 public:
 	const char *HWDescription() override{
@@ -215,7 +219,7 @@ public:
 	}
 
 	uint64_t GenerateStackToken(intptr_t addr){
-		return (0x10 << 32) | addr;
+		return (0x10ll << 32) | addr;
 	}
 };
 

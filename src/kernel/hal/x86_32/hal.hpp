@@ -23,7 +23,9 @@ public:
 
 	void *GetRAW() override;
 
-	ICPUState *Clone() const;
+	ICPUState *Clone() const override;
+
+	void Copy(const ICPUState &other) override;
 };
 
 #endif

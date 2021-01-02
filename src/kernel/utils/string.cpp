@@ -1,55 +1,205 @@
-#include "../kernel.hpp"
-#define swap(x,y) { x = x + y; y = x - y; x = x - y; }
+/* $Id: my_string.cpp 16 2007-12-07 17:43:41Z csl $
+ *
+ * Copyright (C) Christian Stigen Larsen, 2007
+ * Placed in the Public Domain by the author.
+ *
+ * Bug reports or suggestions to <csl@sublevel3.org>
+ *
+ * IMPLEMENTATION NOTES
+ *
+ * My goal was to create a small, and conceptually simple
+ * string class.  I allocate unique memory for every object
+ * created, instead of doing anything fancy.
+ *
+ * I've taken care about the order in which I free memory,
+ * in case we are copying overlapping regions.
+ *
+ * I should also have thrown some exceptions, feel free to
+ * add that yourself (and send me the patch).
+ *
+ * I don't check if realloc returns NULL, though.
+ *
+ */
 
-static void reverse(char str[], int length)
+#include "string.hpp"
+
+const string::size_type string::npos = static_cast<size_t>(-1);
+
+/*
+ * Like new, we want to guarantee that we NEVER
+ * return NULL.  Loop until there is free memory.
+ *
+ */
+static char* malloc_never_null(const size_t b)
 {
-    int start = 0;
-    int end = length -1;
-    while (start < end)
-    {
-        swap(*(str+start), *(str+end));
-        start++;
-        end--;
-    }
+	char *p;
+
+	do {
+		p = static_cast<char*>(malloc(b));
+	} while ( p == NULL );
+
+	return p;
 }
 
-char* itoa(int num, char* str, int base)
+static char* strdup_never_null(const char* s)
 {
-    int i = 0;
-    bool isNegative = false;
- 
-    /* Handle 0 explicitely, otherwise empty string is printed for 0 */
-    if (num == 0)
-    {
-        str[i++] = '0';
-        str[i] = '\0';
-        return str;
-    }
- 
-    // In standard itoa(), negative numbers are handled only with 
-    // base 10. Otherwise numbers are considered unsigned.
-    if (num < 0 && base == 10)
-    {
-        isNegative = true;
-        num = -num;
-    }
- 
-    // Process individual digits
-    while (num != 0)
-    {
-        int rem = num % base;
-        str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
-        num = num/base;
-    }
- 
-    // If number is negative, append '-'
-    if (isNegative)
-        str[i++] = '-';
- 
-    str[i] = '\0'; // Append string terminator
- 
-    // Reverse the string
-    reverse(str, i);
- 
-    return str;
+	const size_t len = strlen(s)+1;
+	char *p = malloc_never_null(len);
+	memcpy(p, s, len);
+	return p;
 }
+
+string::string() : p(strdup_never_null(""))
+{
+}
+
+string::~string()
+{
+	free(p);
+}
+
+string::string(const string& s) : p(strdup_never_null(s.p))
+{
+}
+
+string::string(const char* s) : p(strdup_never_null(s))
+{
+}
+
+string::string(const char c) : p(strdup_never_null("*"))
+{
+	p[0]=c;
+}
+
+string& string::operator=(const char* s)
+{
+	if ( p != s ) {
+		// this should work with overlapping memory
+		char *copy = strdup_never_null(s);
+		free(p);
+		p = copy;
+	}
+
+	return *this;
+}
+
+string& string::operator=(const string& s)
+{
+	return operator=(s.p);
+}
+
+string& string::operator+=(const string& s)
+{
+	const size_type lenp = strlen(p);
+	const size_type lens = strlen(s.p) + 1;
+	p = static_cast<char*>(realloc(p, lenp + lens)); // could return NULL
+	memmove(p+lenp, s.p, lens); // p and s.p MAY overlap
+	return *this;
+}
+
+bool string::operator==(const char* s) const
+{
+	return !strcmp(p, s);
+}
+
+bool string::operator==(const string& s) const
+{
+	return !strcmp(p, s.p);
+}
+
+bool string::operator!=(const char* s) const
+{
+	return !(*this==s);
+}
+
+bool string::operator!=(const string& s) const
+{
+	return !(*this==s);
+}
+
+void string::clear()
+{
+	free(p);
+	p = strdup_never_null("");
+}
+
+string operator+(const string& lhs, const string& rhs)
+{
+	return string(lhs) += rhs;
+}
+
+string::size_type string::size() const
+{
+	return strlen(p);
+}
+
+string::size_type string::length() const
+{
+	return strlen(p);
+}
+
+bool string::empty() const
+{
+	return *p == '\0';
+}
+
+const char* string::c_str() const
+{
+	return p;
+}
+
+string string::substr(const size_type start, const size_type len_orig) const
+{
+	string s;
+	size_type len = strlen(p);
+
+	if ( start > len )
+		panic("STRING: Out of range (substr).");//throw std::out_of_range("my::string::substr");
+
+	if ( len > len_orig )
+		len = len_orig;
+
+	free(s.p);
+	s.p = malloc_never_null(len+1);
+	memcpy(s.p, p + start, len);
+	s.p[len] = '\0';
+
+	return s;
+}
+
+// unchecked access
+char string::operator[](const size_type n) const
+{
+	return p[n];
+}
+
+// checked access
+char string::at(const size_type n) const
+{
+	if ( n > strlen(p) )
+		panic("STRING: Out of range (at).");//throw std::out_of_range("my::string::at()");
+
+	return p[n];
+}
+
+string& string::erase(size_type pos, size_type len)
+{
+	size_type s = size();
+
+	if ( pos > s )
+		panic("STRING: Out of range (erase).");//throw std::out_of_range("my::string::erase");
+
+	s -= pos;
+	if ( len > s )
+		len = s;
+	++s;
+
+	// erase by overwriting
+	memmove(p + pos, p + pos + len, s);
+
+	// remove unused space
+	p = static_cast<char*>(realloc(p, s+pos));
+
+	return *this;
+}
+

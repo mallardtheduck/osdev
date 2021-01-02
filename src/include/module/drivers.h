@@ -2,7 +2,7 @@
 #define _DRIVERS_H
 
 #ifdef __cplusplus
-#include "hal.hpp"
+#include "kernelsys/hal.hpp"
 #else
 #include <stdbool.h>
 #endif

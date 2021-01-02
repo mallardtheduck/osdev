@@ -42,10 +42,6 @@ Thread::Thread(){
 	memcpy(fpuState, GetHAL().GetDefaultFPUState(), 512);
 }
 
-Thread::~Thread(){
-	if(userState) delete userState;
-}
-
 void Thread::End(){
 	status = ThreadStatus::Ending;
 	theScheduler->reaperThread->Unblock();
@@ -142,9 +138,8 @@ bool Thread::ShouldAbortAtUserBoundary(){
 	return userAbort;
 }
 
-void Thread::UpdateUserState(ICPUState &state){
-	if(userState) delete userState;
-	userState = state.Clone();
+void Thread::UpdateUserState(const ICPUState &state){
+	userState->Copy(state);
 }
 
 ICPUState &Thread::GetUserState(){
@@ -182,4 +177,16 @@ void Thread::DecrementRefCount(){
 	if(refCount == 0 && awaitingDestruction){
 		theScheduler->reaperThread->Unblock();
 	}
+}
+
+uint8_t *Thread::GetFPUState(){
+	return fpuState;
+}
+
+void Thread::SetDiagnosticInstructionPointer(intptr_t eip){
+	diagnosticInstructionPointer = eip;
+}
+
+intptr_t Thread::GetDiagnosticInstructionPointer(){
+	return diagnosticInstructionPointer;
 }

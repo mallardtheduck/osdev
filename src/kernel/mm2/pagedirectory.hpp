@@ -1,6 +1,6 @@
 #ifndef PAGEDIRECTORY_HPP
 #define PAGEDIRECTORY_HPP
-#include "../ministl.hpp"
+#include "../utils/ministl.hpp"
 
 struct lock;
 

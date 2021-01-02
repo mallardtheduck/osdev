@@ -9,7 +9,6 @@
 
 #include "drivers.h"
 #include "../btos/fs_interface.h"
-#include "locktype.h"
 #include "../btos/bt_msg.h"
 #include "handle.h"
 

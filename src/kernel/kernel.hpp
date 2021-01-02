@@ -30,7 +30,8 @@ extern "C"{
 
 }
 
-#include "utils.hpp"
+#include "utils/utils.hpp"
+#include "locks.hpp"
 
 #include "panic.hpp"
 #include "mm2.hpp"
@@ -55,7 +56,6 @@ extern "C"{
 #include "rtc/rtc.hpp"
 #include "waiting.hpp"
 #include "perms.hpp"
-#include "locks.hpp"
 
 void GDT_init();
 void IDT_init();

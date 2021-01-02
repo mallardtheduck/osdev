@@ -1,7 +1,7 @@
 #ifndef KERNEL_HAL_ABSTRACT_HPP
 #define KERNEL_HAL_ABSTRACT_HPP
 
-#include <module/hal.hpp>
+#include <module/kernelsys/hal.hpp>
 
 void HAL_Init();
 

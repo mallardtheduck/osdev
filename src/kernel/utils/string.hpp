@@ -34,7 +34,7 @@
  *
  */
 
-#include "kernel.hpp"
+#include "../kernel.hpp"
 
 class string {
 	char* p;

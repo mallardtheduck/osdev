@@ -1,63 +1,68 @@
 #include "kernel.hpp"
 #include "locks.hpp"
-#include "ministl.hpp"
 #include <util/asprintf.h>
-#include "strutil.hpp"
 
-lock mod_lock;
+class ModuleManager : public IModuleManager{
+private:
+	ILock *lock;
 
-struct kernel_module{
-	string filename;
-	string params;
-	loaded_elf_module elf;
-    file_handle file;
+	struct Module{
+		string filename;
+		string params;
+		loaded_elf_module elf;
+		file_handle file;
+	};
+
+	vector<Module> modules;
+
+	static char *InfoFS();
+public:
+	ModuleManager(){
+		lock = NewLock();
+		infofs_register("MODULES", &InfoFS);
+	}
+
+	void LoadModule(const char *path, char *params = nullptr) override{
+		Module mod;
+		{
+			auto hl = lock->LockExclusive();
+			for(auto &m : modules){
+				if(to_upper(m.filename) == to_upper(path)){
+					dbgpf("MOD: Module '%s' already loaded!\n", path);
+					return;
+				}
+			}
+			file_handle file=fs_open(path, FS_Read);
+			if(!file.valid){
+				dbgpf("MOD: Could not open '%s'!\n", path);
+				return;
+			}
+			mod.filename = path;
+			mod.params = (params) ? params : "";
+			mod.elf = elf_load_module(file);
+			mod.file = file;
+			modules.push_back(mod);
+		}
+		mod.elf.entry(&MODULE_SYSCALL_TABLE, params);
+	}
 };
 
-vector<kernel_module> *loaded_modules;
+static char moduleManagerBuffer[sizeof(ModuleManager)] = {0};
+ModuleManager *theModuleManager = nullptr;
 
-char *modules_infofs(){
+char *ModuleManager::InfoFS(){
 	char *buffer=nullptr;
 	asprintf(&buffer, "# address, path, parameters\n");
-	for(size_t i=0; i<loaded_modules->size(); ++i){
-		reasprintf_append(&buffer, "%p, \"%s\", \"%s\"\n", (*loaded_modules)[i].elf.mem.aligned, (*loaded_modules)[i].filename.c_str(),
-			(*loaded_modules)[i].params.c_str());
+	for(auto &mod : theModuleManager->modules){
+		reasprintf_append(&buffer, "%p, \"%s\", \"%s\"\n", mod.elf.mem.aligned, mod.filename.c_str(), mod.params.c_str());
 	}
 	return buffer;
 }
 
-void init_modules(){
-	init_lock(mod_lock);
-	loaded_modules=new vector<kernel_module>();
-	infofs_register("MODULES", &modules_infofs);
+void Modules_Init(){
+	theModuleManager = new(moduleManagerBuffer) ModuleManager();
 }
 
-/*void module_thread_start(void *p){
-	((module_entry)p)(&MODULE_SYSCALL_TABLE);
-}*/
-
-void load_module(const char *path, char *params){
-    take_lock_exclusive(mod_lock);
-    for(auto &m : *loaded_modules){
-    	if(to_upper(m.filename) == to_upper(path)){
-    		dbgpf("MOD: Module '%s' already loaded!\n", path);
-    		release_lock(mod_lock);
-    		return;
-    	}
-    }
-	file_handle file=fs_open(path, FS_Read);
-	if(!file.valid){
-		dbgpf("MOD: Could not open '%s'!\n", path);
-        release_lock(mod_lock);
-		return;
-	}
-	kernel_module mod;
-	mod.filename=path;
-	mod.params=(params)?params:"";
-	mod.elf=elf_load_module(file);
-    mod.file=file;
-	loaded_modules->push_back(mod);
-	release_lock(mod_lock);
-	//sch_new_thread(&module_thread_start, (void*)mod.elf.entry);
-	//if(!mod.elf.entry) panic("(MOD) Module has no entry point!");
-	mod.elf.entry(&MODULE_SYSCALL_TABLE, params);
+IModuleManager &GetModuleManager(){
+	return *theModuleManager;
 }

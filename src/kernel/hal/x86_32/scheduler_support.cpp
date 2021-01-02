@@ -17,7 +17,7 @@ void HAL_sch_init(){
 
 extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	auto &sch = GetScheduler();
-	uint64_t token = (ss << 32) | esp;
+	uint64_t token = ((uint64_t)ss << 32) | esp;
 	token = sch.Schedule(token);
 	curstack.ss = (token >> 32);
 	curstack.esp = (uint32_t)token;
