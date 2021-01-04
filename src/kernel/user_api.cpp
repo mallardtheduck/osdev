@@ -40,7 +40,7 @@ void userapi_handler(ICPUState &state){
     if(sch_user_abort() || proc_get_status() == proc_status::Ending) sch_end_thread();
 }
 
-bool is_safe_ptr(uint32_t ptr, size_t size, pid_t pid){
+bool is_safe_ptr(uint32_t ptr, size_t size, bt_pid_t pid){
 	if(ptr >= MM2::MM2_Kernel_Boundary){
 		pid_t cur_pid = proc_current_pid;
 		proc_switch(pid);
@@ -59,7 +59,7 @@ bool is_safe_ptr(uint32_t ptr, size_t size, pid_t pid){
 	}else return false;
 }
 
-bool is_safe_string(uint32_t ptr, pid_t pid){
+bool is_safe_string(uint32_t ptr, bt_pid_t pid){
 	char c = 0xFF;
 	for(size_t i = 0; c != '\0'; ++i){
 		if(!is_safe_ptr(ptr + i, 1, pid)){
@@ -483,8 +483,8 @@ USERAPI_HANDLER(BT_GETPID){
 }
 
 USERAPI_HANDLER(BT_PROCSTATUS){
-	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(pid_t))){
-		state.Get32BitRegister(Generic_Register::GP_Register_A) = proc_get_status(*(pid_t*)state.Get32BitRegister(Generic_Register::GP_Register_B));
+	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(bt_pid_t))){
+		state.Get32BitRegister(Generic_Register::GP_Register_A) = proc_get_status(*(bt_pid_t*)state.Get32BitRegister(Generic_Register::GP_Register_B));
 	}else RAISE_US_ERROR();
 }
 

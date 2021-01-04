@@ -1,6 +1,8 @@
 #ifndef KERNEL_SCHEDULER_ABSTRACT_HPP
 #define KERNEL_SCHEDULER_ABSTRACT_HPP
 
+#include "../utils/refcountpointer.hpp"
+
 constexpr size_t DefaultStackSize = 16 * 1024;
 typedef void(*ThreadEntryFunction)(void*);
 typedef bool (*BlockCheckFunction)(void*);
@@ -53,54 +55,7 @@ public:
 	virtual ~IThread() {}
 };
 
-class ThreadPointer{
-private:
-	IThread *theThread;
-public:
-	ThreadPointer(IThread *ptr) : theThread(ptr){
-		theThread->IncrementRefCount();
-	}
-
-	ThreadPointer(const ThreadPointer &other) : ThreadPointer(other.theThread) {}
-
-	ThreadPointer(ThreadPointer &&other) : theThread(other.theThread){
-		other.theThread = nullptr;
-	}
-
-	~ThreadPointer(){
-		if(theThread) theThread->DecrementRefCount();
-	}
-
-	ThreadPointer &operator=(const ThreadPointer &other){
-		if(&other != this){
-			if(theThread) theThread->DecrementRefCount();
-			theThread = other.theThread;
-			if(theThread) theThread->IncrementRefCount();
-		}
-		return *this;
-	}
-
-	ThreadPointer &operator=(ThreadPointer &&other){
-		if(&other != this){
-			if(theThread) theThread->DecrementRefCount();
-			theThread = other.theThread;
-			other.theThread = nullptr;
-		}
-		return *this;
-	}
-
-	operator bool(){
-		return theThread;
-	}
-
-	IThread *operator->(){
-		return theThread;
-	}
-
-	IThread *get(){
-		return theThread;
-	}
-};
+typedef RefCountPointer<IThread> ThreadPointer;
 
 class SchedulerLock;
 

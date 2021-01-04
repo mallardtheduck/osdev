@@ -24,7 +24,6 @@ public:
 	}
 
 	[[nodiscard]] LockLock LockExclusive();
-
 	[[nodiscard]] LockLock LockRecursive();
 
 	virtual ~ILock() {}

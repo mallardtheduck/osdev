@@ -107,11 +107,11 @@ bool dirseek(dir_handle *handle, size_t pos, uint32_t flags){
 	return fs_seek_dir(*handle, pos, flags);
 }
 
-void setenv(const char *name, char *value, uint8_t flags, pid_t pid){
+void setenv(const char *name, char *value, uint8_t flags, bt_pid_t pid){
 	proc_setenv(name, value, flags, pid);
 }
 
-char *getenv(const char *name, pid_t pid){
+char *getenv(const char *name, bt_pid_t pid){
 	const string &ret=proc_getenv(name, pid);
 	if(ret=="") return NULL;
 	else return (char*)ret.c_str();
@@ -125,11 +125,11 @@ pid_t mod_spawn(const char *exec, size_t argc, char **argv){
 	return proc_spawn(exec, argc, argv);
 }
 
-void mod_wait(pid_t pid){
+void mod_wait(bt_pid_t pid){
 	proc_wait(pid);
 }
 
-void mod_kill(pid_t pid){
+void mod_kill(bt_pid_t pid){
     proc_terminate(pid);
 }
 
@@ -141,7 +141,7 @@ void unmask_irq(size_t irqno){
 	GetHAL().EnableIRQ(irqno);
 }
 
-bool setpid(pid_t pid){
+bool setpid(bt_pid_t pid){
 	if(proc_get_status(pid) != proc_status::DoesNotExist){
 		proc_switch(pid);
 		if(proc_current_pid != pid) return false;
@@ -201,7 +201,7 @@ void mod_unlock_low_memory(){
 	MM2::unlock_low_memory();	
 }
 
-int mod_get_proc_status(pid_t pid){
+int mod_get_proc_status(bt_pid_t pid){
 	return (int)proc_get_status(pid);
 }
 

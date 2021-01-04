@@ -3,97 +3,84 @@
 
 #include "kernel.hpp"
 #include "utils/string.hpp"
+#include "utils/refcountpointer.hpp"
 
-typedef uint64_t pid_t;
-typedef pid_t bt_pid_t;
+typedef uint64_t bt_pid_t;
 typedef uint32_t handle_t;
 
-namespace proc_env_flags{
-	enum {
-		Global		= (1<<0), //Use PID 0 (kernel) value instead
-		ReadOnly	= (1<<1), //Not changeable by user-mode code
-		Private		= (1<<2), //Not visible to user-mode code
-		NoInherit	= (1<<3), //Do not copy from parent to child
-	};
-}
+typedef void (*ProcessEntryPoint)(void *);
 
-#define proc_status btos_api::bt_proc_status
+enum class EnvironemntVariableFlags{
+	Global		= (1<<0), //Use PID 0 (kernel) value instead
+	ReadOnly	= (1<<1), //Not changeable by user-mode code
+	Private		= (1<<2), //Not visible to user-mode code
+	NoInherit	= (1<<3), //Do not copy from parent to child
+};
 
-struct proc_process;
-class string;
+class IProcess{
+public:
+	virtual void End() = 0;
+	virtual void Terminate() = 0;
+	virtual void Hold() = 0;
 
-extern proc_process *volatile proc_current_process;
-extern volatile pid_t proc_current_pid;
+	virtual void SetEnvironmentVariable(const char *name, const char *value, uint8_t flags = 0, bool userspace = false)  = 0;
+	virtual const char *GetEnvironmentVariable(const char *name, bool userspace = false) = 0;
 
-#include "load_elf.hpp"
+	virtual IThread *NewUserThread(ProcessEntryPoint p, void *param, void *stack) = 0;
 
-void proc_init();
-bool proc_switch(pid_t pid);
-void proc_switch_sch(pid_t pid);
-pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent=proc_current_pid);
-void proc_end(pid_t pid=proc_current_pid);
-void proc_hold();
+	virtual handle_t AddHandle(IHandle *handle) = 0;
+	virtual IHandle *GetHandle(handle_t h) = 0;
+	virtual void RemoveHandle(handle_t h) = 0;
+	
+	virtual void SetExitCode(int value) = 0;
 
-void proc_setenv(const pid_t pid, const string &name, const string &value, const uint8_t flags=0, bool userspace=false);
-void proc_setenv(const string &name, const string &value, const uint8_t flags=0, bool userspace=true);
-const string &proc_getenv(const pid_t pid, const string &name, bool userspace=false);
-const string &proc_getenv(const string &name, bool userspace=true);
-pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent=proc_current_pid);
-uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t pid=proc_current_pid);
+	virtual void Wait() = 0;
 
-handle_t proc_add_lock(lock *l, pid_t pid=proc_current_pid);
-lock *proc_get_lock(handle_t h, pid_t pid=proc_current_pid);
-void proc_remove_lock(handle_t h, pid_t pid=proc_current_pid);
+	virtual size_t GetArgumentCount() = 0;
+	virtual size_t GetArgument(size_t index, char *buf, size_t size);
 
-handle_t proc_add_handle(bt_handle_info handle, pid_t pid=proc_current_pid);
-bt_handle_info proc_get_handle(handle_t h, pid_t pid=proc_current_pid);
-void proc_remove_handle(handle_t h, pid_t pid=proc_current_pid);
+	virtual void SetStatus(proc_status::Enum status) = 0;
+	virtual proc_status::Enum GetStatus() = 0;
 
-handle_t proc_add_file(file_handle *file, pid_t pid=proc_current_pid);
-file_handle *proc_get_file(handle_t h, pid_t pid=proc_current_pid);
-void proc_remove_file(handle_t h, pid_t pid=proc_current_pid);
+	virtual void SetPermissions(uint16_t extensionID, uint64_t permissions) = 0;
+	virtual uint64_t GetPermissions(uint16_t extensionID) = 0;
+	virtual void SetUserID(uint64_t uid) = 0;
+	virtual uint64_t GetUID() = 0;
 
-handle_t proc_add_dir(dir_handle *dir, pid_t pid=proc_current_pid);
-dir_handle *proc_get_dir(handle_t h, pid_t pid=proc_current_pid);
-void proc_remove_dir(handle_t h, pid_t pid=proc_current_pid);
+	void AddMessage(btos_api::bt_msg_header *msg) = 0;
+	void RemoveMessage(btos_api::bt_msg_header *msg) = 0;
+	btos_api::bt_msg_header *GetMessage(size_t index) = 0;
+	btos_api::bt_msg_header *GetMessageByID(uint64_t id) = 0;
+	btos_api::bt_msg_header *GetMessageMatch(const btos_api::bt_msg_filter &filter) = 0;
+	void SetCurrentMessage(btos_api::bt_msg_header *msg) = 0;
+	btos_api::bt_msg_header *GetCurrentMessage() = 0;
 
-void proc_setreturn(int ret, pid_t pid=proc_current_pid);
-int proc_wait(pid_t pid);
+	virtual void IncrementRefCount() = 0;
+	virtual void DecrementRefCount() = 0;
 
-size_t proc_get_argc(pid_t pid=proc_current_pid);
-size_t proc_get_arg(size_t i, char *buf, size_t size, pid_t pid=proc_current_pid);
+	virtual ~IProcess() {}
+};
 
-void proc_remove_thread(uint64_t thread_id, pid_t pid=proc_current_pid);
-handle_t proc_add_thread(uint64_t thread_id, pid_t pid=proc_current_pid);
-uint64_t proc_get_thread(handle_t h, pid_t pid=proc_current_pid);
-handle_t proc_get_thread_handle(uint64_t id, pid_t pid=proc_current_pid);
+typedef RefCountPointer<IProcess> ProcessPointer;
 
-void proc_terminate(pid_t pid=proc_current_pid);
+class IProcessManager{
+public:
+	virtual bool SwitchProcess(bt_pid_t pid) = 0;
+	virtual void SwitchProcessFromScheduler(bt_pid_t pid) = 0;
+	virtual ProcessPointer NewProcess(const char *name, size_t argc char **argv) = 0;
+	virtual ProcessPointer Spawn(const char *name, size_t argc, char **argv) = 0;
 
-void proc_set_status(proc_status::Enum status, pid_t pid=proc_current_pid);
-proc_status::Enum proc_get_status(pid_t pid=proc_current_pid);
+	virtual void SetGlobalEnvironmentVariable(const char *name, const char *value, uint8_t flags = EnvironmentVariableFlags::Global) = 0;
+	virtual const char *GetGlobalEnvironmentVariable(const char *name) = 0;
 
-void proc_free_message_buffer(pid_t topid, pid_t pid);
-uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid=proc_current_pid);
-void proc_message_wait(pid_t pid=proc_current_pid);
+	virtual IProcess &CurrentProcess() = 0;
+	virtual ProcessPointer GetByID(bt_pid_t pid) = 0;
 
-void proc_add_msg(btos_api::bt_msg_header *msg);
-void proc_remove_msg(btos_api::bt_msg_header *msg);
-btos_api::bt_msg_header *proc_get_msg(size_t index, pid_t pid=proc_current_pid);
-btos_api::bt_msg_header *proc_get_msg_nolock(size_t index, pid_t pid=proc_current_pid);
-btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id);
-btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id, pid_t pid);
-btos_api::bt_msg_header *proc_get_msg_match(btos_api::bt_msg_filter &filt, pid_t pid);
-btos_api::bt_msg_header *proc_get_msg_match_nolock(btos_api::bt_msg_filter &filt, pid_t pid);
+	virtual ~IProcessManager() {}
+};
 
-void proc_set_cur_msg(btos_api::bt_msg_header *msg, pid_t pid=proc_current_pid);
-void proc_set_cur_msg_nolock(btos_api::bt_msg_header *msg, pid_t pid=proc_current_pid);
-btos_api::bt_msg_header *proc_get_cur_msg(pid_t pid=proc_current_pid);
-
-uint64_t proc_get_perms(uint16_t ext, pid_t pid=proc_current_pid);
-void proc_set_perms(uint16_t ext, uint64_t pers, pid_t pid=proc_current_pid);
-uint64_t proc_get_uid(pid_t pid=proc_current_pid);
-void proc_set_uid(uint64_t uid, pid_t pid=proc_current_pid);
-uint64_t proc_get_uid_nolock(pid_t pid=proc_current_pid);
+void Processes_Init();
+IProcessManager &GetProcessManager();
+IProcess &CurrentProcess();
 
 #endif

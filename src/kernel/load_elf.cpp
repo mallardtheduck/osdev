@@ -194,7 +194,7 @@ loaded_elf_module elf_load_module(IFileHandle &file){
 	return ret;
 }
 
-loaded_elf_proc elf_load_proc(pid_t pid, IFileHandle &file){
+loaded_elf_proc elf_load_proc(bt_pid_t pid, IFileHandle &file){
 	loaded_elf_proc ret;
 	pid_t oldpid=proc_current_pid;
 	if(!proc_switch(pid)){

@@ -5,9 +5,9 @@ static const size_t DEBUG_COPYLIMT=4096*1024;
 static const uint32_t CR4_DE=(1 << 3);
 
 static uint16_t debug_ext_id;
-static pid_t debugger_pid=0;
+static bt_pid_t debugger_pid=0;
 
-static void debug_copymem(pid_t fpid, void *faddr, pid_t tpid, void *taddr, size_t size);
+static void debug_copymem(bt_pid_t fpid, void *faddr, bt_pid_t tpid, void *taddr, size_t size);
 static bool debug_setbreakpoint(uint64_t thread_id, uint32_t addr, uint8_t type);
 static bool debug_clearbreakpoint(uint64_t thread_id, uint32_t addr);
 static uint32_t debug_getbpinfo(uint64_t thread_id);
@@ -74,7 +74,7 @@ void debug_extension_uapi(uint16_t fn, ICPUState &state) {
 	}
 }
 
-void debug_event_notify(pid_t pid, uint64_t thread, bt_debug_event::Enum event, bt_exception::Enum error) {
+void debug_event_notify(bt_pid_t pid, uint64_t thread, bt_debug_event::Enum event, bt_exception::Enum error) {
 	if(debugger_pid && debugger_pid != pid && proc_get_status(pid) == proc_status::Running && proc_get_status(debugger_pid) == proc_status::Running) {
 		btos_api::bt_msg_header msg;
 		msg.from = 0;
@@ -167,7 +167,7 @@ void init_debug_extension() {
 	debug_setdr(7, 0xF00);
 }
 
-static void debug_copymem(pid_t fpid, void *faddr, pid_t tpid, void *taddr, size_t size) {
+static void debug_copymem(bt_pid_t fpid, void *faddr, bt_pid_t tpid, void *taddr, size_t size) {
 	if((uint32_t)faddr + size < MM2::MM2_Kernel_Boundary || (uint32_t)taddr + size < MM2::MM2_Kernel_Boundary) return;
 	void *buffer = malloc(size);
 	if(!buffer) return;

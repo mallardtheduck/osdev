@@ -12,7 +12,7 @@ static const size_t user_thread_kernel_stack_size=16384;
 extern "C" void proc_run_usermode(void *stack, proc_entry entry, int argc, char **argv);
 
 proc_process *volatile proc_current_process;
-volatile pid_t proc_current_pid;
+volatile bt_pid_t proc_current_pid;
 vector<proc_process*> *proc_processes;
 
 extern lock sch_lock;
@@ -68,8 +68,8 @@ struct proc_process{
     }
 };
 
-proc_process *proc_get(pid_t pid);
-proc_process *proc_get_lock(pid_t pid);
+proc_process *proc_get(bt_pid_t pid);
+proc_process *proc_get_lock(bt_pid_t pid);
 
 char *proc_infofs(){
 	bool showall = has_perm(0, kperm::SeeAllProcs);
@@ -145,7 +145,7 @@ void proc_init(){
 	blank_string=new string("");
 }
 
-proc_process *proc_get(pid_t pid){
+proc_process *proc_get(bt_pid_t pid){
 	if(proc_current_process && pid == proc_current_pid) return proc_current_process;
 	{
 		hold_lock hl(proc_lock, false);
@@ -158,7 +158,7 @@ proc_process *proc_get(pid_t pid){
 	}
 }
 
-proc_process *proc_get_lock(pid_t pid){
+proc_process *proc_get_lock(bt_pid_t pid){
 	if(proc_current_process && pid == proc_current_pid){
 		take_lock_recursive(proc_current_process->ulock);
 		return proc_current_process;
@@ -180,7 +180,7 @@ proc_process *proc_get_lock(pid_t pid){
 }
 
 //Note: Called from scheduler. No locking, memory allocation, etc. available!
-void proc_switch_sch(pid_t pid){
+void proc_switch_sch(bt_pid_t pid){
 	//sch_setpid(pid);
 	if(pid!=proc_current_pid){
 		proc_process *newproc=NULL;
@@ -195,7 +195,7 @@ void proc_switch_sch(pid_t pid){
 	}
 }
 
-bool proc_switch(pid_t pid){
+bool proc_switch(bt_pid_t pid){
 	sch_setpid(pid);
 	if(pid!=proc_current_pid){
 		proc_process *newproc=proc_get(pid);
@@ -212,7 +212,7 @@ bool proc_switch(pid_t pid){
     return true;
 }
 
-pid_t proc_new(const string &name, size_t argc, char **argv, pid_t parent, file_handle *file){
+pid_t proc_new(const string &name, size_t argc, char **argv, bt_pid_t parent, file_handle *file){
 	proc_process *parent_proc=proc_get(parent);
 	proc_process *newproc=new proc_process(parent_proc, name);
     if(file) newproc->file=*file;
@@ -237,7 +237,7 @@ static bool proc_threads_blockcheck(void *p){
     return sch_get_pid_threadcount(params.pid, true, params.tid) == 0;
 }
 
-void proc_end(pid_t pid) {
+void proc_end(bt_pid_t pid) {
     if(pid==0) return;
 	if(proc_get_status(pid) == proc_status::Ended) return;
 	//This is not in the "right" place, but cannot be done once we have the lock.
@@ -328,7 +328,7 @@ void proc_end(pid_t pid) {
 	msg_send_event(btos_api::bt_kernel_messages::ProcessEnd, (void*)&pid, sizeof(pid));
 }
 
-void proc_setenv(const pid_t pid, const string &oname, const string &value, const uint8_t flags, bool userspace){
+void proc_setenv(const bt_pid_t pid, const string &oname, const string &value, const uint8_t flags, bool userspace){
 	hold_lock hl(env_lock);
 	string name=to_upper(oname);
 	env_t &env=(flags & proc_env_flags::Global) ? proc_get(0)->environment : proc_get(pid)->environment;
@@ -347,7 +347,7 @@ void proc_setenv(const string &name, const string &value, const uint8_t flags, b
 	proc_setenv(proc_current_pid, name, value, flags, userspace);
 }
 
-const string &proc_getenv(const pid_t pid, const string &oname, bool userspace){
+const string &proc_getenv(const bt_pid_t pid, const string &oname, bool userspace){
 	hold_lock hl(env_lock);
 	string name=to_upper(oname);
 	env_t &kenv=proc_get(0)->environment;
@@ -424,7 +424,7 @@ void proc_start(void *ptr){
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 
-pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
+pid_t proc_spawn(const string &path, size_t argc, char **argv, bt_pid_t parent){
 	file_handle file;
 	if(!is_kvar_set("LOADER")){
 		file=fs_open((char*)path.c_str(), FS_Read);
@@ -433,7 +433,7 @@ pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
 		dbgpf("PROC: Using program loader: %s\n", loader.c_str());
 		file=fs_open((char*)loader.c_str(), FS_Read);
 	}
-    pid_t ret=proc_new(path, argc, argv, parent, &file);
+    bt_pid_t ret=proc_new(path, argc, argv, parent, &file);
 	if(!file.valid){
         proc_end(ret);
         return 0;
@@ -450,7 +450,7 @@ pid_t proc_spawn(const string &path, size_t argc, char **argv, pid_t parent){
 	return ret;
 }
 
-uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t pid){
+uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, bt_pid_t pid){
     proc_info *info=new proc_info();
     info->pid=pid;
     info->entry=entry;
@@ -461,7 +461,7 @@ uint64_t proc_new_user_thread(proc_entry entry, void *param, void *stack, pid_t 
     return thread_id;
 }
 
-handle_t proc_add_handle(bt_handle_info handle, pid_t pid){
+handle_t proc_add_handle(bt_handle_info handle, bt_pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return 0;
     //~ for(auto i = proc->handles.begin(); i!=proc->handles.end(); ++i){
@@ -474,7 +474,7 @@ handle_t proc_add_handle(bt_handle_info handle, pid_t pid){
     return ret;
 }
 
-bt_handle_info proc_get_handle(handle_t h, pid_t pid){
+bt_handle_info proc_get_handle(handle_t h, bt_pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return invalid_handle;
 	bt_handle_info ret;
@@ -484,7 +484,7 @@ bt_handle_info proc_get_handle(handle_t h, pid_t pid){
 	return ret;
 }
 
-void proc_remove_handle(handle_t h, pid_t pid){;
+void proc_remove_handle(handle_t h, bt_pid_t pid){;
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return;
     proc->handles.erase(h);
@@ -495,18 +495,18 @@ static void close_lock_handle(void *l){
     delete (lock*)l;
 }
 
-handle_t proc_add_lock(lock *l, pid_t pid){
+handle_t proc_add_lock(lock *l, bt_pid_t pid){
     bt_handle_info handle=create_handle(kernel_handle_types::lock, (void*)l, &close_lock_handle);
     return proc_add_handle(handle, pid);
 }
 
-lock *proc_get_lock(handle_t h, pid_t pid){
+lock *proc_get_lock(handle_t h, bt_pid_t pid){
     bt_handle_info handle=proc_get_handle(h, pid);
     if(handle.type==kernel_handle_types::lock) return (lock*)handle.value;
     else return NULL;
 }
 
-void proc_remove_lock(handle_t h, pid_t pid){
+void proc_remove_lock(handle_t h, bt_pid_t pid){
     proc_remove_handle(h, pid);
 }
 
@@ -516,18 +516,18 @@ static void close_file_handle(void *f){
     delete file;
 }
 
-handle_t proc_add_file(file_handle *file, pid_t pid){
+handle_t proc_add_file(file_handle *file, bt_pid_t pid){
     bt_handle_info handle=create_handle(kernel_handle_types::file, (void*)file, &close_file_handle);
     return proc_add_handle(handle, pid);
 }
 
-file_handle *proc_get_file(handle_t h, pid_t pid){
+file_handle *proc_get_file(handle_t h, bt_pid_t pid){
     bt_handle_info handle=proc_get_handle(h, pid);
     if(handle.type==kernel_handle_types::file) return (file_handle*)handle.value;
     else return NULL;
 }
 
-void proc_remove_file(handle_t h, pid_t pid){
+void proc_remove_file(handle_t h, bt_pid_t pid){
     proc_remove_handle(h, pid);
 }
 
@@ -537,22 +537,22 @@ static void close_dir_handle(void *d){
     delete dir;
 }
 
-handle_t proc_add_dir(dir_handle *dir, pid_t pid){
+handle_t proc_add_dir(dir_handle *dir, bt_pid_t pid){
     bt_handle_info handle=create_handle(kernel_handle_types::directory, (void*)dir, &close_dir_handle);
     return proc_add_handle(handle, pid);
 }
 
-dir_handle *proc_get_dir(handle_t h, pid_t pid){
+dir_handle *proc_get_dir(handle_t h, bt_pid_t pid){
     bt_handle_info handle=proc_get_handle(h, pid);
     if(handle.type==kernel_handle_types::directory) return (dir_handle*)handle.value;
     else return NULL;
 }
 
-void proc_remove_dir(handle_t h, pid_t pid){
+void proc_remove_dir(handle_t h, bt_pid_t pid){
     proc_remove_handle(h, pid);
 }
 
-void proc_setreturn(int ret, pid_t pid){
+void proc_setreturn(int ret, bt_pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return;
 	if(proc && proc->status == proc_status::Running) proc->retval=ret;
@@ -560,7 +560,7 @@ void proc_setreturn(int ret, pid_t pid){
 }
 
 bool proc_wait_blockcheck(void *p){
-	pid_t &pid=*(pid_t*)p;
+	pid_t &pid=*(bt_pid_t*)p;
     for(size_t i=0; i<proc_processes->size(); ++i){
         proc_process *cur=(*proc_processes)[i];
 		if(cur->pid==pid) return false;
@@ -568,7 +568,7 @@ bool proc_wait_blockcheck(void *p){
 	return true;
 }
 
-int proc_wait(pid_t pid){
+int proc_wait(bt_pid_t pid){
 	while(proc_get(pid)){
 		sch_setblock(&proc_wait_blockcheck, (void*)&pid);
 	}
@@ -579,7 +579,7 @@ int proc_wait(pid_t pid){
     }
 }
 
-size_t proc_get_argc(pid_t pid){
+size_t proc_get_argc(bt_pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return 0;
 	size_t ret = proc->args.size();
@@ -587,7 +587,7 @@ size_t proc_get_argc(pid_t pid){
 	return ret;
 }
 
-size_t proc_get_arg(size_t i, char *buf, size_t size, pid_t pid){
+size_t proc_get_arg(size_t i, char *buf, size_t size, bt_pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return 0;
 	strncpy(buf, proc->args[i].c_str(), size);
@@ -607,7 +607,7 @@ static void close_thread_handle(void *t){
     }
 }
 
-void proc_remove_thread(uint64_t thread_id, pid_t pid){
+void proc_remove_thread(uint64_t thread_id, bt_pid_t pid){
     handle_t h=proc_get_thread_handle(thread_id, pid);
     if(h) {
         bt_handle_info handle_info=proc_get_handle(h, pid);
@@ -616,11 +616,11 @@ void proc_remove_thread(uint64_t thread_id, pid_t pid){
     }
 }
 
-void proc_remove_thread_handle(handle_t h, pid_t pid){
+void proc_remove_thread_handle(handle_t h, bt_pid_t pid){
     proc_remove_handle(h, pid);
 }
 
-handle_t proc_add_thread(uint64_t thread_id, pid_t pid){
+handle_t proc_add_thread(uint64_t thread_id, bt_pid_t pid){
     handle_t ret=proc_get_thread_handle(thread_id, pid);
     if(ret) return ret;
     if(proc_get_status(pid) == proc_status::Ending) return 0;
@@ -628,13 +628,13 @@ handle_t proc_add_thread(uint64_t thread_id, pid_t pid){
     return proc_add_handle(handle, pid);
 }
 
-uint64_t proc_get_thread(handle_t h, pid_t pid){
+uint64_t proc_get_thread(handle_t h, bt_pid_t pid){
     bt_handle_info handle=proc_get_handle(h, pid);
     if(handle.type==kernel_handle_types::thread) return *(uint64_t*)handle.value;
     else return 0;
 }
 
-handle_t proc_get_thread_handle(uint64_t thread_id, pid_t pid){
+handle_t proc_get_thread_handle(uint64_t thread_id, bt_pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return 0;
 	handle_t ret = 0;
@@ -650,7 +650,7 @@ handle_t proc_get_thread_handle(uint64_t thread_id, pid_t pid){
     return ret;
 }
 
-void proc_terminate(pid_t pid){
+void proc_terminate(bt_pid_t pid){
     dbgpf("PROC: Terminating PID: %i\n", (int)pid);
     if(pid==0) return; // panic("(PROC) Request to terminate kernel!");
     proc_setreturn(-1, pid);
@@ -664,13 +664,13 @@ void proc_terminate(pid_t pid){
     if(current) sch_end_thread();
 }
 
-void proc_set_status(proc_status::Enum status, pid_t pid){
+void proc_set_status(proc_status::Enum status, bt_pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return;
     proc->status=status;
 	release_lock(proc->ulock);
 }
-proc_status::Enum proc_get_status(pid_t pid){
+proc_status::Enum proc_get_status(bt_pid_t pid){
     //proc_process *proc=proc_get_lock(pid);
     //if(!proc) return proc_status::DoesNotExist;
     //proc_status::Enum ret = proc->status;
@@ -682,7 +682,7 @@ proc_status::Enum proc_get_status(pid_t pid){
 	else return proc->status;
 }
 
-void proc_free_message_buffer(pid_t topid, pid_t pid){
+void proc_free_message_buffer(bt_pid_t topid, bt_pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return;
 	if(!proc->msg_buffers.has_key(topid)) return;
@@ -701,7 +701,7 @@ static bool proc_msg_blockcheck(void *p){
 
 extern lock msg_lock;
 
-uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
+uint64_t proc_send_message(btos_api::bt_msg_header &header, bt_pid_t pid) {
 	if(header.flags & btos_api::bt_msg_flags::Reply){
 		if(header.content && header.length){
 			void *content = malloc(header.length);
@@ -758,13 +758,13 @@ uint64_t proc_send_message(btos_api::bt_msg_header &header, pid_t pid) {
 }
 
 static bool proc_msg_wait_blockcheck(void *p){
-    pid_t pid=*(pid_t*)p;
+    bt_pid_t pid=*(bt_pid_t*)p;
     proc_process *proc=proc_get(pid);
     if(!proc) return false;
     return !proc->msg_buffers.size();
 }
 
-void proc_message_wait(pid_t pid){
+void proc_message_wait(bt_pid_t pid){
     proc_process *proc = proc_get_lock(pid);
 	if (!proc) return;
 	if (!proc->msg_buffers.size()){
@@ -794,7 +794,7 @@ void proc_remove_msg(btos_api::bt_msg_header *msg){
 	release_lock(proc->ulock);
 }
 
-btos_api::bt_msg_header *proc_get_msg(size_t index, pid_t pid){
+btos_api::bt_msg_header *proc_get_msg(size_t index, bt_pid_t pid){
 	proc_process *proc = proc_get_lock(pid);
 	if (!proc) return NULL;
 	btos_api::bt_msg_header *msg;
@@ -804,7 +804,7 @@ btos_api::bt_msg_header *proc_get_msg(size_t index, pid_t pid){
 	return msg;
 }
 
-btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id, pid_t pid){
+btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id, bt_pid_t pid){
 	proc_process *proc = proc_get_lock(pid);
 	if (!proc) return NULL;
 	btos_api::bt_msg_header *msg = nullptr;
@@ -818,7 +818,7 @@ btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id, pid_t pid){
 	return msg;
 }
 
-btos_api::bt_msg_header *proc_get_msg_match(btos_api::bt_msg_filter &filt, pid_t pid){
+btos_api::bt_msg_header *proc_get_msg_match(btos_api::bt_msg_filter &filt, bt_pid_t pid){
 	proc_process *proc = proc_get_lock(pid);
 	if (!proc) return NULL;
 	btos_api::bt_msg_header *msg = nullptr;
@@ -832,7 +832,7 @@ btos_api::bt_msg_header *proc_get_msg_match(btos_api::bt_msg_filter &filt, pid_t
 	return msg;
 }
 
-btos_api::bt_msg_header *proc_get_msg_match_nolock(btos_api::bt_msg_filter &filt, pid_t pid){
+btos_api::bt_msg_header *proc_get_msg_match_nolock(btos_api::bt_msg_filter &filt, bt_pid_t pid){
 	proc_process *proc = proc_get(pid);
 	if (!proc) return nullptr;
 	for(auto &m : proc->msg_q){
@@ -843,7 +843,7 @@ btos_api::bt_msg_header *proc_get_msg_match_nolock(btos_api::bt_msg_filter &filt
 	return nullptr;
 }
 
-btos_api::bt_msg_header *proc_get_msg_nolock(size_t index, pid_t pid){
+btos_api::bt_msg_header *proc_get_msg_nolock(size_t index, bt_pid_t pid){
 	proc_process *proc = proc_get(pid);
 	if (!proc) return NULL;
 	btos_api::bt_msg_header *msg;
@@ -868,14 +868,14 @@ btos_api::bt_msg_header *proc_get_msg_by_id(uint64_t id){
 	return ret;
 }
 
-void proc_set_cur_msg(btos_api::bt_msg_header *msg, pid_t pid){
+void proc_set_cur_msg(btos_api::bt_msg_header *msg, bt_pid_t pid){
 	proc_process *proc = proc_get_lock(pid);
 	if (!proc) return;
 	proc->cur_msg = msg;
 	release_lock(proc->ulock);
 }
 
-btos_api::bt_msg_header *proc_get_cur_msg(pid_t pid){
+btos_api::bt_msg_header *proc_get_cur_msg(bt_pid_t pid){
 	proc_process *proc = proc_get_lock(pid);
 	if (!proc) return NULL;
 	btos_api::bt_msg_header *ret = proc->cur_msg;
@@ -883,13 +883,13 @@ btos_api::bt_msg_header *proc_get_cur_msg(pid_t pid){
 	return ret;
 }
 
-void proc_set_cur_msg_nolock(btos_api::bt_msg_header *msg, pid_t pid){
+void proc_set_cur_msg_nolock(btos_api::bt_msg_header *msg, bt_pid_t pid){
 	proc_process *proc = proc_get(pid);
 	if (!proc) return;
 	proc->cur_msg = msg;
 }
 
-uint64_t proc_get_perms(uint16_t ext, pid_t pid){
+uint64_t proc_get_perms(uint16_t ext, bt_pid_t pid){
 	if(pid == 0) return 0;
 	proc_process *proc = proc_get_lock(pid);
 	if(!proc) return (uint64_t)-1;
@@ -898,7 +898,7 @@ uint64_t proc_get_perms(uint16_t ext, pid_t pid){
 	return ret;
 }
 
-void proc_set_perms(uint16_t ext, uint64_t perms, pid_t pid){
+void proc_set_perms(uint16_t ext, uint64_t perms, bt_pid_t pid){
 	if(pid == 0) return;
 	proc_process *proc = proc_get_lock(pid);
 	if(!proc) return;
@@ -906,7 +906,7 @@ void proc_set_perms(uint16_t ext, uint64_t perms, pid_t pid){
 	release_lock(proc->ulock);
 }
 
-uint64_t proc_get_uid(pid_t pid){
+uint64_t proc_get_uid(bt_pid_t pid){
 	if(pid == 0) return 0;
 	proc_process *proc = proc_get_lock(pid);
 	if(!proc) return (uint64_t)-1;
@@ -915,7 +915,7 @@ uint64_t proc_get_uid(pid_t pid){
 	return ret;
 }
 
-void proc_set_uid(uint64_t uid, pid_t pid){
+void proc_set_uid(uint64_t uid, bt_pid_t pid){
 	if(pid == 0) return;
 	proc_process *proc = proc_get_lock(pid);
 	if(!proc) return;
@@ -923,7 +923,7 @@ void proc_set_uid(uint64_t uid, pid_t pid){
 	release_lock(proc->ulock);
 }
 
-uint64_t proc_get_uid_nolock(pid_t pid){
+uint64_t proc_get_uid_nolock(bt_pid_t pid){
 	proc_process *proc = proc_get(pid);
 	if (!proc) return 0;
 	return proc->uid;
