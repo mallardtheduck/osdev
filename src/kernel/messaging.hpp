@@ -2,7 +2,6 @@
 #define _MESSAGING_HPP
 
 #include <btos/bt_msg.h>
-#include "process.hpp"
 
 namespace thread_msg_status{
     enum Enum{

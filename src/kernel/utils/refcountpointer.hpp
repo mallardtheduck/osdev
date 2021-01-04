@@ -6,7 +6,7 @@ class RefCountPointer{
 private:
 	T *theObject;
 public:
-	RefCountPointer(IThread *ptr) : theObject(ptr){
+	RefCountPointer(T *ptr) : theObject(ptr){
 		theObject->IncrementRefCount();
 	}
 

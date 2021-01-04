@@ -39,21 +39,21 @@ public:
 	virtual size_t GetArgumentCount() = 0;
 	virtual size_t GetArgument(size_t index, char *buf, size_t size);
 
-	virtual void SetStatus(proc_status::Enum status) = 0;
-	virtual proc_status::Enum GetStatus() = 0;
+	virtual void SetStatus(btos_api::proc_status::Enum status) = 0;
+	virtual btos_api::proc_status::Enum GetStatus() = 0;
 
 	virtual void SetPermissions(uint16_t extensionID, uint64_t permissions) = 0;
 	virtual uint64_t GetPermissions(uint16_t extensionID) = 0;
 	virtual void SetUserID(uint64_t uid) = 0;
 	virtual uint64_t GetUID() = 0;
 
-	void AddMessage(btos_api::bt_msg_header *msg) = 0;
-	void RemoveMessage(btos_api::bt_msg_header *msg) = 0;
-	btos_api::bt_msg_header *GetMessage(size_t index) = 0;
-	btos_api::bt_msg_header *GetMessageByID(uint64_t id) = 0;
-	btos_api::bt_msg_header *GetMessageMatch(const btos_api::bt_msg_filter &filter) = 0;
-	void SetCurrentMessage(btos_api::bt_msg_header *msg) = 0;
-	btos_api::bt_msg_header *GetCurrentMessage() = 0;
+	virtual void AddMessage(btos_api::bt_msg_header *msg) = 0;
+	virtual void RemoveMessage(btos_api::bt_msg_header *msg) = 0;
+	virtual btos_api::bt_msg_header *GetMessage(size_t index) = 0;
+	virtual btos_api::bt_msg_header *GetMessageByID(uint64_t id) = 0;
+	virtual btos_api::bt_msg_header *GetMessageMatch(const btos_api::bt_msg_filter &filter) = 0;
+	virtual void SetCurrentMessage(btos_api::bt_msg_header *msg) = 0;
+	virtual btos_api::bt_msg_header *GetCurrentMessage() = 0;
 
 	virtual void IncrementRefCount() = 0;
 	virtual void DecrementRefCount() = 0;
