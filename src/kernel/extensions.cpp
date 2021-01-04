@@ -1,5 +1,5 @@
 #include "kernel.hpp"
-#include "ministl.hpp"
+#include "utils/ministl.hpp"
 #include <util/asprintf.h>
 
 static map<uint16_t, module_api::kernel_extension*> *extensions;

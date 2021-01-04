@@ -18,9 +18,6 @@
 
 #include "serdbg.hpp"
 
-#include "filesystems.hpp"
-#include "initfs.hpp"
-
 extern "C"{
 
 #include "multiboot.h"
@@ -38,6 +35,8 @@ extern "C"{
 #include "hal/abstract.hpp"
 #include "handles.hpp"
 #include "kvars.hpp"
+#include "filesystems.hpp"
+#include "initfs.hpp"
 #include "messaging.hpp"
 #include "process.hpp"
 #include "scheduler/abstract.hpp"
@@ -65,11 +64,11 @@ void gdt_set_kernel_stack(void* ptr);
 #define MACRO_STR(a) #a
 
 #define KERNEL_VERSION_MAJOR 0
-#define KERNEL_VERSION_MINOR 1
-#define KERNEL_REVISION "D"
+#define KERNEL_VERSION_MINOR 2
+#define KERNEL_REVISION "A"
 #define KERNEL_VERSION_STRING "v" MACRO_XSTR(KERNEL_VERSION_MAJOR) "." MACRO_XSTR(KERNEL_VERSION_MINOR) KERNEL_REVISION
 #define KERNEL_OS_NAME "BT/OS"
-#define KERNEL_COPYRIGHT "(c) 2014-2020 Stuart Brockman"
+#define KERNEL_COPYRIGHT "(c) 2014-2021 S. Brockman"
 extern char *kernel_buildid;
 
 extern multiboot_info_t *mbt;

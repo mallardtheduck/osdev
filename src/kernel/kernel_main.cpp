@@ -11,14 +11,14 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	HAL_Init();
 	mm2_init(mbt);
 	GetHAL().EnableInterrupts();
-	init_kvars();
+	KernelConfigVariables_Init();
 	proc_init();
 	Scheduler_Init();
 	GetHAL().YieldToScheduler();
 	drv_init();
 	fs_init();
 	infofs_init();
-	init_modules();
+	Modules_Init();
 	init_handles();
 	userapi_init();
     init_extensions();
@@ -27,7 +27,7 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	hwpnp_init();
 	rtc_init();
 	
-	load_module("INIT:/BOOT.SYS");
+	GetModuleManager().LoadModule("INIT:/BOOT.SYS");
 	//printf("Ready.");
 	while(true) CurrentThread().Block();
 	panic("Kernel endpoint reached!\n");

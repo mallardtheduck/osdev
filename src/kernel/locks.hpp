@@ -10,8 +10,8 @@ public:
 	virtual void TakeExclusive(bool forUserspace = false) = 0;
 	virtual void TakeRecursive() = 0;
 
-	virtual bool TryTakeExclusive() = 0;
-	virtual bool TryTakeRecursive() = 0;
+	[[nodiscard]] virtual bool TryTakeExclusive() = 0;
+	[[nodiscard]] virtual bool TryTakeRecursive() = 0;
 
 	virtual void Release(bool forUserspace = false) = 0;
 
@@ -23,9 +23,9 @@ public:
 		return IsLocked();
 	}
 
-	LockLock LockExclusive();
+	[[nodiscard]] LockLock LockExclusive();
 
-	LockLock LockRecursive();
+	[[nodiscard]] LockLock LockRecursive();
 
 	virtual ~ILock() {}
 };
