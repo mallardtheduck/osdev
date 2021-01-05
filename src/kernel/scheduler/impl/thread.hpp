@@ -37,7 +37,7 @@ private:
 	Thread *next = nullptr;
 	uint32_t scheduleCycle = 0;
 
-	thread_msg_status::Enum messagingStatus = thread_msg_status::Normal;
+	btos_api::thread_msg_status::Enum messagingStatus = btos_api::thread_msg_status::Normal;
 	uint8_t fpuState[512];
 	uint32_t debugState[Debug_DRStateSize] = {0};
 	unique_ptr<ICPUState> userState {GetHAL().GetDefaultCPUState().Clone()};
@@ -70,8 +70,8 @@ public:
 	ICPUState &GetUserState() override;
 	uint32_t *GetDebugState() override;
 
-	void SetMessagingStatus(thread_msg_status::Enum v) override;
-	thread_msg_status::Enum GetMessagingStatus() override;
+	void SetMessagingStatus(btos_api::thread_msg_status::Enum v) override;
+	btos_api::thread_msg_status::Enum GetMessagingStatus() override;
 
 	void SetStatus(ThreadStatus s) override;
 	ThreadStatus GetStatus() override;

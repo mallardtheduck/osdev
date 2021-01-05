@@ -150,11 +150,11 @@ uint32_t *Thread::GetDebugState(){
 	return debugState;
 }
 
-void Thread::SetMessagingStatus(thread_msg_status::Enum v){
+void Thread::SetMessagingStatus(btos_api::thread_msg_status::Enum v){
 	messagingStatus = v;
 }
 
-thread_msg_status::Enum Thread::GetMessagingStatus(){
+btos_api::thread_msg_status::Enum Thread::GetMessagingStatus(){
 	return messagingStatus;
 }
 
