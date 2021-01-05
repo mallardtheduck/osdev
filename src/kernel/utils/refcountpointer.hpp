@@ -22,9 +22,10 @@ public:
 
 	RefCountPointer &operator=(const RefCountPointer &other){
 		if(&other != this){
-			if(theObject) theObject->DecrementRefCount();
+			auto oldObject = theObject;
 			theObject = other.theObject;
 			if(theObject) theObject->IncrementRefCount();
+			if(oldObject) theObject->DecrementRefCount();
 		}
 		return *this;
 	}

@@ -118,7 +118,7 @@ char *getenv(const char *name, bt_pid_t pid){
 }
 
 pid_t getpid(){
-	return proc_current_pid;
+	return CurrentProcess().ID();
 }
 
 pid_t mod_spawn(const char *exec, size_t argc, char **argv){
@@ -142,9 +142,9 @@ void unmask_irq(size_t irqno){
 }
 
 bool setpid(bt_pid_t pid){
-	if(proc_get_status(pid) != proc_status::DoesNotExist){
+	if(proc_get_status(pid) != btos_api::bt_proc_status::DoesNotExist){
 		proc_switch(pid);
-		if(proc_current_pid != pid) return false;
+		if(CurrentProcess().ID() != pid) return false;
 		return true;
 	}else{
 		return false;
@@ -201,7 +201,7 @@ void mod_unlock_low_memory(){
 	MM2::unlock_low_memory();	
 }
 
-int mod_get_proc_status(bt_pid_t pid){
+int mod_get_btos_api::bt_proc_status(bt_pid_t pid){
 	return (int)proc_get_status(pid);
 }
 
@@ -294,7 +294,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&mod_spawn,
 	&mod_wait,
     &mod_kill,
-    &mod_get_proc_status,
+    &mod_get_btos_api::bt_proc_status,
 
 	&infofs_register,
     &add_extension,

@@ -108,7 +108,7 @@ void close_timer(void *vt){
 void create_timer(ICPUState &state){
 	timer_info *t=new timer_info();
 	t->duration = state.Get32BitRegister(Generic_Register::GP_Register_B);
-	t->pid = proc_current_pid;
+	t->pid = CurrentProcess().ID();
 	t->active = false;
 	take_lock_exclusive(timer_lock);
 	t->timer_id = ++timer_id_counter;
@@ -124,14 +124,14 @@ void create_timer(ICPUState &state){
 }
 
 void reset_timer(ICPUState &state){
-	bt_handle_info handle = proc_get_handle(state.Get32BitRegister(Generic_Register::GP_Register_B), proc_current_pid);
+	bt_handle_info handle = proc_get_handle(state.Get32BitRegister(Generic_Register::GP_Register_B), CurrentProcess().ID());
 	if(handle.open){
 		timer_info *t = (timer_info*)handle.value;
 		if(!t->active){
 			t->active = true;
 			timer_event *e = new timer_event();
 			e->cancel = false;
-			e->pid = proc_current_pid;
+			e->pid = CurrentProcess().ID();
 			e->time = get_msecs() + t->duration;
 			e->timer_id = t->timer_id;
 			take_lock_exclusive(timer_lock);

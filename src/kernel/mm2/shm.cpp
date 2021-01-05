@@ -30,7 +30,7 @@ namespace MM2{
 		uint64_t id = ++space_id_counter;
 		shm_space *space = new shm_space();
 		space->flags = flags;
-		space->owner = proc_current_pid;
+		space->owner = CurrentProcess().ID();
 		(*spaces)[id] = space;
 		dbgpf("MM2: Created SHM space %i\n", (int)id);
 		return id;
@@ -75,7 +75,7 @@ namespace MM2{
 		void *addr_page = (void*)((uint32_t)addr & MM2_Address_Mask);
 		//dbgpf("MM2: Mapping shared page %p from SHM mapping %i at address %p.\n", (void*)page->address(), (int)id, addr_page);
 		uint32_t pageflags = MM2_PageFlags::Present | MM2_PageFlags::Usermode;
-		if((space->owner == proc_current_pid || !(space->flags & btos_api::bt_shm_flags::ReadOnly)) && !(mapping->flags & btos_api::bt_shm_flags::ReadOnly)){
+		if((space->owner == CurrentProcess().ID() || !(space->flags & btos_api::bt_shm_flags::ReadOnly)) && !(mapping->flags & btos_api::bt_shm_flags::ReadOnly)){
 			pageflags |= MM2_PageFlags::Writable;
 		}
 		current_pagedir->map_page_at(addr_page, page, MM2_PageFlags::Present | MM2_PageFlags::Writable | MM2_PageFlags::Usermode);
@@ -113,7 +113,7 @@ namespace MM2{
 		mapping->addr = addr;
 		mapping->offset = offset;
 		mapping->pages = pages;
-		mapping->pid = proc_current_pid;
+		mapping->pid = CurrentProcess().ID();
 		(*mappings)[ret] = mapping;
 		dbgpf("MM2: Mapped %i pages from SHM space %i offset %x to address %p as mapping ID: %i\n", (int)pages, (int)id, (unsigned)offset, addr, (int)ret);
 		return ret;
@@ -124,7 +124,7 @@ namespace MM2{
 		
 		if(mappings->has_key(id)){
 			shm_mapping *mapping = (*mappings)[id];
-			bt_pid_t pid = proc_current_pid;
+			bt_pid_t pid = CurrentProcess().ID();
 			proc_switch(mapping->pid);
 			current_pagedir->remove_region(mapping->addr);
 			void *addr = mapping->addr;

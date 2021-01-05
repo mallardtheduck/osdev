@@ -24,7 +24,7 @@ void userapi_init(){
 
 void userapi_handler(ICPUState &state){
 	GetHAL().EnableInterrupts();
-	if(proc_get_status() == proc_status::Ending) sch_end_thread();
+	if(proc_get_status() == btos_api::bt_proc_status::Ending) sch_end_thread();
 	uint16_t *id=(uint16_t*)(&state.Get32BitRegister(Generic_Register::GP_Register_A));
 	uint16_t ext=id[1], fn=id[0];
 	//dbgpf("UAPI: Extension: %x, Function: %x\n", (int)ext, (int)fn);
@@ -37,12 +37,12 @@ void userapi_handler(ICPUState &state){
 		dbgpf("UAPI: Abortlevel: %i, ext: %i fn: %x\n", sch_get_abortlevel(), (int)ext, (int)fn);
 		panic("(UAPI) Non-zero abortlevel on return to userspace!\n");
 	}
-    if(sch_user_abort() || proc_get_status() == proc_status::Ending) sch_end_thread();
+    if(sch_user_abort() || proc_get_status() == btos_api::bt_proc_status::Ending) sch_end_thread();
 }
 
 bool is_safe_ptr(uint32_t ptr, size_t size, bt_pid_t pid){
 	if(ptr >= MM2::MM2_Kernel_Boundary){
-		pid_t cur_pid = proc_current_pid;
+		pid_t cur_pid = CurrentProcess().ID();
 		proc_switch(pid);
 		size_t i = 0;
 		while(i<size){
@@ -72,15 +72,15 @@ bool is_safe_string(uint32_t ptr, bt_pid_t pid){
 }
 
 static void uapi_raise_us_error(const char *fn){
-	dbgpf("UAPI: PID %llu error in call: %s\n", proc_current_pid, fn);
-	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::InvalidArg);
+	dbgpf("UAPI: PID %llu error in call: %s\n", CurrentProcess().ID(), fn);
+	debug_event_notify(CurrentProcess().ID(), sch_get_id(), bt_debug_event::Exception, bt_exception::InvalidArg);
 	proc_terminate();
 }
 
 [[maybe_unused]]
 static void uapi_raise_security_error(const char *fn){
-	dbgpf("UAPI: PID %llu error in call: %s\n", proc_current_pid, fn);
-	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::Exception, bt_exception::SecurityException);
+	dbgpf("UAPI: PID %llu error in call: %s\n", CurrentProcess().ID(), fn);
+	debug_event_notify(CurrentProcess().ID(), sch_get_id(), bt_debug_event::Exception, bt_exception::SecurityException);
 	proc_terminate();
 }
 
@@ -470,16 +470,16 @@ USERAPI_HANDLER(BT_PRIORITIZE){
 }
 
 USERAPI_HANDLER(BT_EXIT){
-	pid_t pid=proc_current_pid;
+	pid_t pid=CurrentProcess().ID();
 	proc_setreturn(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadEnd);
+	debug_event_notify(CurrentProcess().ID(), sch_get_id(), bt_debug_event::ThreadEnd);
 	//proc_switch(0);
 	proc_end(pid);
 	sch_end_thread();
 }
 
 USERAPI_HANDLER(BT_GETPID){
-	state.Get32BitRegister(Generic_Register::GP_Register_A)=(uint32_t)proc_current_pid;
+	state.Get32BitRegister(Generic_Register::GP_Register_A)=(uint32_t)CurrentProcess().ID();
 }
 
 USERAPI_HANDLER(BT_PROCSTATUS){
@@ -489,7 +489,7 @@ USERAPI_HANDLER(BT_PROCSTATUS){
 }
 
 USERAPI_HANDLER(BT_NEW_THREAD){
-    if(proc_get_status()==proc_status::Ending){
+    if(proc_get_status()==btos_api::bt_proc_status::Ending){
         state.Get32BitRegister(Generic_Register::GP_Register_A)=0;
         return;
     }
@@ -522,7 +522,7 @@ USERAPI_HANDLER(BT_WAIT_THREAD){
 }
 
 USERAPI_HANDLER(BT_END_THREAD){
-	debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadEnd);
+	debug_event_notify(CurrentProcess().ID(), sch_get_id(), bt_debug_event::ThreadEnd);
     sch_end_thread();
 }
 
@@ -544,7 +544,7 @@ USERAPI_HANDLER(BT_SEND){
 		if(header.length && !is_safe_ptr((uint32_t)header.content, header.length)) return;
 		uint64_t &ret=*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_C);
 		header.flags=header.flags | btos_api::bt_msg_flags::UserSpace;
-		header.from=proc_current_pid;
+		header.from=CurrentProcess().ID();
 		header.critical=false;
 		if(header.length > btos_api::BT_MSG_MAX) return;
 		ret=proc_send_message(header);
@@ -596,7 +596,7 @@ USERAPI_HANDLER(BT_UNSUBSCRIBE){
 
 USERAPI_HANDLER(BT_RECVFILTERED){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(btos_api::bt_msg_filter)) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(btos_api::bt_msg_header))){
-		(*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_C)) = msg_recv_filtered(*(btos_api::bt_msg_filter*)state.Get32BitRegister(Generic_Register::GP_Register_B), proc_current_pid, (bool)state.Get32BitRegister(Generic_Register::GP_Register_D));
+		(*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_C)) = msg_recv_filtered(*(btos_api::bt_msg_filter*)state.Get32BitRegister(Generic_Register::GP_Register_B), CurrentProcess().ID(), (bool)state.Get32BitRegister(Generic_Register::GP_Register_D));
 	}else RAISE_US_ERROR();
 }
 

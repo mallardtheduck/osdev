@@ -25,7 +25,7 @@
 
 typedef void(*thread_func)(void*);
 typedef uint64_t thread_id_t;
-typedef uint64_t pid_t;
+typedef uint64_t bt_pid_t;
 typedef uint32_t bt_handle_t;
 
 typedef char* (*info_function)();
@@ -81,7 +81,7 @@ struct syscall_table{
 	thread_id_t (*new_thread)(thread_func entry, void *param);
 	void (*block)();
 	void (*yield)();
-	void (*yield_to)(pid_t pid);
+	void (*yield_to)(bt_pid_t pid);
 	thread_id_t (*thread_id)();
 	void (*thread_priority)(uint32_t p_);
 	void (*end_thread)();
@@ -138,15 +138,15 @@ struct syscall_table{
 
 	void (*module_load)(const char *path, char *params);
 
-	void (*setenv)(const char *name, char *value, uint8_t flags, pid_t pid);
-	char *(*getenv)(const char *name, pid_t pid);
+	void (*setenv)(const char *name, char *value, uint8_t flags, bt_pid_t pid);
+	char *(*getenv)(const char *name, bt_pid_t pid);
 
-	pid_t (*getpid)();
-    bool (*setpid)(pid_t pid);
-	pid_t (*spawn)(const char *exec, size_t argc, char **argv);
-	void (*wait)(pid_t pid);
-    void (*kill)(pid_t pid);
-    int (*get_proc_status)(pid_t pid);
+	bt_pid_t (*getpid)();
+    bool (*setpid)(bt_pid_t pid);
+	bt_pid_t (*spawn)(const char *exec, size_t argc, char **argv);
+	void (*wait)(bt_pid_t pid);
+    void (*kill)(bt_pid_t pid);
+    int (*get_proc_status)(bt_pid_t pid);
 
 	void (*infofs_register)(const char *name, info_function fn);
 
@@ -161,8 +161,8 @@ struct syscall_table{
 	API_NS bt_msg_header (*msg_recv_reply_block)(uint64_t msg_id);
 	bool (*msg_query_recieved)(uint64_t id);
 	
-	bt_handle_t (*add_user_handle)(bt_handle_info info, pid_t pid);
-	bt_handle_info (*get_user_handle)(bt_handle_t h, pid_t pid);
+	bt_handle_t (*add_user_handle)(bt_handle_info info, bt_pid_t pid);
+	bt_handle_info (*get_user_handle)(bt_handle_t h, bt_pid_t pid);
 	void (*set_kvar)(const char *name, const char *value);
 	size_t (*get_kvar)(const char *name, char *buffer, size_t size);
 	

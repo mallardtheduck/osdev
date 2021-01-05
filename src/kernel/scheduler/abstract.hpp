@@ -38,8 +38,8 @@ public:
 	virtual ICPUState &GetUserState() = 0;
 	virtual uint32_t *GetDebugState() = 0;
 
-	virtual void SetMessagingStatus(thread_msg_status::Enum v) = 0;
-	virtual thread_msg_status::Enum GetMessagingStatus() = 0;
+	virtual void SetMessagingStatus(btos_api::thread_msg_status::Enum v) = 0;
+	virtual btos_api::thread_msg_status::Enum GetMessagingStatus() = 0;
 
 	virtual void SetStatus(ThreadStatus s) = 0;
 	virtual ThreadStatus GetStatus() = 0;

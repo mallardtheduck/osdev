@@ -44,7 +44,7 @@ struct proc_process{
 
 	MM2::PageDirectory *pagedir;
 	handle_t handlecounter;
-    proc_status::Enum status;
+    btos_api::bt_proc_status::Enum status;
 
     map<handle_t, bt_handle_info> handles;
 	map<pid_t, int> child_returns;
@@ -63,7 +63,7 @@ struct proc_process{
 	}
 	proc_process(proc_process *parent_proc, const string &n) : pid(++curpid), parent(parent_proc->pid),
 		environment(proc_copyenv(parent_proc->environment)), name(n), pagedir(new MM2::PageDirectory),
-		 handlecounter(0), status(proc_status::Starting), perms(parent_proc->perms), uid(parent_proc->uid) {
+		 handlecounter(0), status(btos_api::bt_proc_status::Starting), perms(parent_proc->perms), uid(parent_proc->uid) {
 		init_lock(ulock);
     }
 };
@@ -131,7 +131,7 @@ void proc_init(){
 	curpid--;
 	kproc->parent=0;
 	kproc->pagedir=MM2::current_pagedir;
-	kproc->status=proc_status::Running;
+	kproc->status=btos_api::bt_proc_status::Running;
 	proc_processes->push_back(kproc);
 	proc_current_process=proc_get(0);
 	proc_current_pid=0;
@@ -239,7 +239,7 @@ static bool proc_threads_blockcheck(void *p){
 
 void proc_end(bt_pid_t pid) {
     if(pid==0) return;
-	if(proc_get_status(pid) == proc_status::Ended) return;
+	if(proc_get_status(pid) == btos_api::bt_proc_status::Ended) return;
 	//This is not in the "right" place, but cannot be done once we have the lock.
 	debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
 	take_lock_exclusive(proc_lock);
@@ -249,14 +249,14 @@ void proc_end(bt_pid_t pid) {
 	}
 	pid_t curpid = proc_current_pid;
 	if (curpid == pid) curpid = 0;
-	if (proc_get_status(pid) == proc_status::Ending) {
+	if (proc_get_status(pid) == btos_api::bt_proc_status::Ending) {
 		dbgpf("PROC: Process %i is already ending.\n", (int) pid);
 		release_lock(proc_lock);
 		proc_wait(pid);
 		return;
 	}
 	dbgpf("PROC: Ending process %i.\n", (int) pid);
-	proc_set_status(proc_status::Ending, pid);
+	proc_set_status(btos_api::bt_proc_status::Ending, pid);
 	proc_process *proc = proc_get(pid);
 	if (!proc) return;
 	take_lock_exclusive(proc->ulock);
@@ -395,11 +395,11 @@ void *proc_alloc_stack(size_t size){
 static bool proc_start_hold_blockcheck(void *p){
 	bt_pid_t &pid = *(bt_pid_t*)p;
 	proc_process *proc=proc_get(pid);
-	return proc && proc->status != proc_status::Held;
+	return proc && proc->status != btos_api::bt_proc_status::Held;
 }
 
 void proc_hold(){
-	if(proc_get_status() == proc_status::Held){
+	if(proc_get_status() == btos_api::bt_proc_status::Held){
 		bt_pid_t pid = proc_current_pid;
 		sch_setblock(&proc_start_hold_blockcheck, (void*)&pid);
 	}
@@ -420,7 +420,7 @@ void proc_start(void *ptr){
     debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);
 	if(sch_get_abortlevel()) panic("(PROC) Entering userspace with non-zero abortlevel.");
 	proc_hold();
-	proc_set_status(proc_status::Running);
+	proc_set_status(btos_api::bt_proc_status::Running);
 	proc_run_usermode(stackptr, entry, 0, NULL);
 }
 
@@ -555,7 +555,7 @@ void proc_remove_dir(handle_t h, bt_pid_t pid){
 void proc_setreturn(int ret, bt_pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return;
-	if(proc && proc->status == proc_status::Running) proc->retval=ret;
+	if(proc && proc->status == btos_api::bt_proc_status::Running) proc->retval=ret;
 	release_lock(proc->ulock);
 }
 
@@ -623,7 +623,7 @@ void proc_remove_thread_handle(handle_t h, bt_pid_t pid){
 handle_t proc_add_thread(uint64_t thread_id, bt_pid_t pid){
     handle_t ret=proc_get_thread_handle(thread_id, pid);
     if(ret) return ret;
-    if(proc_get_status(pid) == proc_status::Ending) return 0;
+    if(proc_get_status(pid) == btos_api::bt_proc_status::Ending) return 0;
     bt_handle_info handle=create_handle(kernel_handle_types::thread, new uint64_t(thread_id), &close_thread_handle);
     return proc_add_handle(handle, pid);
 }
@@ -664,21 +664,21 @@ void proc_terminate(bt_pid_t pid){
     if(current) sch_end_thread();
 }
 
-void proc_set_status(proc_status::Enum status, bt_pid_t pid){
+void proc_set_status(btos_api::bt_proc_status::Enum status, bt_pid_t pid){
     proc_process *proc=proc_get_lock(pid);
     if(!proc) return;
     proc->status=status;
 	release_lock(proc->ulock);
 }
-proc_status::Enum proc_get_status(bt_pid_t pid){
+btos_api::bt_proc_status::Enum proc_get_status(bt_pid_t pid){
     //proc_process *proc=proc_get_lock(pid);
-    //if(!proc) return proc_status::DoesNotExist;
-    //proc_status::Enum ret = proc->status;
+    //if(!proc) return btos_api::bt_proc_status::DoesNotExist;
+    //btos_api::bt_proc_status::Enum ret = proc->status;
     //release_lock(proc->ulock);
 	//return ret;
 	auto il = GetHAL().LockInterrupts();
 	proc_process *proc = proc_get(pid);
-	if(!proc) return proc_status::DoesNotExist;
+	if(!proc) return btos_api::bt_proc_status::DoesNotExist;
 	else return proc->status;
 }
 

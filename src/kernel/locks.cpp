@@ -1,7 +1,7 @@
 #include "locks.hpp"
 
 static void RaiseUserLockingError(){
-	debug_event_notify(proc_current_pid, CurrentThread().ID(), bt_debug_event::Exception, bt_exception::BadLocking);
+	debug_event_notify(CurrentProcess().ID(), CurrentThread().ID(), bt_debug_event::Exception, bt_exception::BadLocking);
 	proc_terminate();
 }
 

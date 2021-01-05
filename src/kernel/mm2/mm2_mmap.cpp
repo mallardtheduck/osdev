@@ -55,7 +55,7 @@ namespace MM2{
 	}
 	
 	static void flush_mapping(mmapping &m){
-		pid_t curpid = proc_current_pid;
+		pid_t curpid = CurrentProcess().ID();
 		proc_switch(m.pid);
 		bt_filesize_t pos = fs_seek(m.file, 0, FS_Relative);
 		
@@ -127,7 +127,7 @@ namespace MM2{
 		m.file = file;
 		m.offset = offset;
 		m.size = size;
-		m.pid = proc_current_pid;
+		m.pid = CurrentProcess().ID();
 		
 		size_t asize = 0;
 		if((uint32_t)ptr % MM2_Page_Size){
@@ -192,7 +192,7 @@ namespace MM2{
 		hold_lock hl(mmap_lock, false);
 		if(mmappings->has_key(id)){
 			mmapping m = (*mmappings)[id];
-			pid_t curpid = proc_current_pid;
+			pid_t curpid = CurrentProcess().ID();
 			proc_switch(m.pid);
 			flush_mapping(m);
 			if(m.size > MM2_Page_Size){

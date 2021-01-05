@@ -10,6 +10,11 @@ typedef uint32_t handle_t;
 
 typedef void (*ProcessEntryPoint)(void *);
 
+namespace btos_api{
+	struct bt_msg_header;
+	struct bt_msg_filter;
+}
+
 enum class EnvironemntVariableFlags{
 	Global		= (1<<0), //Use PID 0 (kernel) value instead
 	ReadOnly	= (1<<1), //Not changeable by user-mode code
@@ -19,6 +24,8 @@ enum class EnvironemntVariableFlags{
 
 class IProcess{
 public:
+	virtual uint64_t ID() = 0;
+	
 	virtual void End() = 0;
 	virtual void Terminate() = 0;
 	virtual void Hold() = 0;
@@ -39,8 +46,8 @@ public:
 	virtual size_t GetArgumentCount() = 0;
 	virtual size_t GetArgument(size_t index, char *buf, size_t size);
 
-	virtual void SetStatus(btos_api::proc_status::Enum status) = 0;
-	virtual btos_api::proc_status::Enum GetStatus() = 0;
+	virtual void SetStatus(btos_api::bt_proc_status::Enum status) = 0;
+	virtual btos_api::bt_proc_status::Enum GetStatus() = 0;
 
 	virtual void SetPermissions(uint16_t extensionID, uint64_t permissions) = 0;
 	virtual uint64_t GetPermissions(uint16_t extensionID) = 0;
@@ -67,10 +74,10 @@ class IProcessManager{
 public:
 	virtual bool SwitchProcess(bt_pid_t pid) = 0;
 	virtual void SwitchProcessFromScheduler(bt_pid_t pid) = 0;
-	virtual ProcessPointer NewProcess(const char *name, size_t argc char **argv) = 0;
+	virtual ProcessPointer NewProcess(const char *name, size_t argc, char **argv) = 0;
 	virtual ProcessPointer Spawn(const char *name, size_t argc, char **argv) = 0;
 
-	virtual void SetGlobalEnvironmentVariable(const char *name, const char *value, uint8_t flags = EnvironmentVariableFlags::Global) = 0;
+	virtual void SetGlobalEnvironmentVariable(const char *name, const char *value, uint8_t flags = (uint8_t)EnvironemntVariableFlags::Global) = 0;
 	virtual const char *GetGlobalEnvironmentVariable(const char *name) = 0;
 
 	virtual IProcess &CurrentProcess() = 0;

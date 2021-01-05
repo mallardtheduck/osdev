@@ -237,7 +237,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		out_int_info(*ctx);
 		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Invalid opcode.");
 		else {
-			debug_event_notify(proc_current_pid, currentThread.ID(), bt_debug_event::Exception, bt_exception::InvalidOpCode);
+			debug_event_notify(CurrentProcess().ID(), currentThread.ID(), bt_debug_event::Exception, bt_exception::InvalidOpCode);
 			proc_terminate();
 		}
 	}
@@ -247,7 +247,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		out_int_info(*ctx);
 		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("General Protection Fault.");
 		else {
-			debug_event_notify(proc_current_pid, currentThread.ID(), bt_debug_event::Exception, bt_exception::ProtectionFault);
+			debug_event_notify(CurrentProcess().ID(), currentThread.ID(), bt_debug_event::Exception, bt_exception::ProtectionFault);
 			proc_terminate();
 		}
 	}
@@ -263,7 +263,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		out_int_info(*ctx);
 		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Devide by zero!");
 		else{
-			debug_event_notify(proc_current_pid, currentThread.ID(), bt_debug_event::Exception, bt_exception::DivideByZero);
+			debug_event_notify(CurrentProcess().ID(), currentThread.ID(), bt_debug_event::Exception, bt_exception::DivideByZero);
 			proc_terminate();
 		}
 	}else{

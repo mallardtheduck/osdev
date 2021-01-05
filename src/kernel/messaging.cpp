@@ -7,7 +7,7 @@ using namespace btos_api;
 static uint64_t id_counter=0;
 ILock *msg_lock;
 
-static bool msg_get(uint64_t id, bt_msg_header &msg, bt_pid_t pid = proc_current_pid);
+static bool msg_get(uint64_t id, bt_msg_header &msg, bt_pid_t pid = CurrentProcess().ID());
 static void msg_send_receipt(const bt_msg_header &omsg);
 
 typedef map<pid_t, vector<bt_kernel_messages::Enum> > msg_subscribers_list;
@@ -59,7 +59,7 @@ void msg_init(){
 }
 
 uint64_t msg_send(bt_msg_header &msg){
-    if(msg.to != 0 && proc_get_status(msg.to) == proc_status::DoesNotExist){
+    if(msg.to != 0 && proc_get_status(msg.to) == btos_api::bt_proc_status::DoesNotExist){
 		dbgpf("MSG: Attempted to send message to non-existent process!\n");
 		return 0;
 	 }
@@ -428,7 +428,7 @@ static bool msg_recv_handle_wait(void *ptr){
 
 bt_handle_info msg_create_recv_handle(bt_msg_filter filter){
 	auto value = new msg_recv_handle();
-	value->pid = proc_current_pid;
+	value->pid = CurrentProcess().ID();
 	value->filter = filter;
 	value->msg.valid = false;
 	return create_handle(kernel_handle_types::msg_recv, (void*)value, &msg_recv_handle_close, &msg_recv_handle_wait);
