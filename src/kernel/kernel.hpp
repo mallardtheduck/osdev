@@ -38,7 +38,7 @@ extern "C"{
 #include "kvars.hpp"
 #include "filesystems.hpp"
 #include "initfs.hpp"
-#include "process.hpp"
+#include "processes/abstract.hpp"
 #include "messaging.hpp"
 #include "drivermgr.hpp"
 #include "devfs.hpp"

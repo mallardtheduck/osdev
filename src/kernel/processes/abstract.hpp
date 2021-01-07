@@ -1,9 +1,9 @@
-#ifndef _PROCESS_HPP
-#define _PROCESS_HPP
+#ifndef KERNEL_PROCESSES_ABSTRACT_HPP
+#define KERNEL_PROCESSES_ABSTRACT_HPP
 
-#include "kernel.hpp"
-#include "utils/string.hpp"
-#include "utils/refcountpointer.hpp"
+#include "../kernel.hpp"
+#include "../utils/string.hpp"
+#include "../utils/refcountpointer.hpp"
 
 typedef uint64_t bt_pid_t;
 typedef uint32_t handle_t;
@@ -72,7 +72,7 @@ typedef RefCountPointer<IProcess> ProcessPointer;
 
 class IProcessManager{
 public:
-	virtual bool SwitchProcess(bt_pid_t pid) = 0;
+	[[nodiscard]] virtual bool SwitchProcess(bt_pid_t pid) = 0;
 	virtual void SwitchProcessFromScheduler(bt_pid_t pid) = 0;
 	virtual ProcessPointer NewProcess(const char *name, size_t argc, char **argv) = 0;
 	virtual ProcessPointer Spawn(const char *name, size_t argc, char **argv) = 0;
