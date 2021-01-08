@@ -108,7 +108,6 @@ void Thread::SetBlock(BlockCheckFunction fn, IThread */*to*/){
 void Thread::ClearBlock(){
 	Unblock();
 	blockCheck = nullptr;
-	blockCheckParam = nullptr;
 }
 
 void Thread::Join(){

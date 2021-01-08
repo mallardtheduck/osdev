@@ -3,7 +3,7 @@
 
 template<typename T> class unique_ptr{
 private:
-	template<typename R> friend R *moveout(unique_ptr<R> &uptr);
+	template<typename R> friend R *unique_ptr_private_moveout(unique_ptr<R> &uptr);
 
 	T* thePointer = nullptr;
 public:
@@ -13,7 +13,7 @@ public:
 	unique_ptr(const unique_ptr<T>&) = delete;
 
 	template<typename R>
-	unique_ptr(unique_ptr<R> &&other) : thePointer(moveout(other)){
+	unique_ptr(unique_ptr<R> &&other) : thePointer(unique_ptr_private_moveout(other)){
 	}
 
 	unique_ptr<T> &operator=(const unique_ptr<T>&) = delete;
@@ -21,7 +21,7 @@ public:
 	template<typename R>
 	unique_ptr<T> &operator=(unique_ptr<R> &&other){
 		if(this != &other){
-			thePointer = moveout(other);
+			thePointer = unique_ptr_private_moveout(other);
 			other.thePointer = nullptr;
 		}
 	}
@@ -65,7 +65,7 @@ public:
 };
 
 template<typename T>
-T *moveout(unique_ptr<T> &uptr){
+T *unique_ptr_private_moveout(unique_ptr<T> &uptr){
 	T *ptr = uptr.thePointer;
 	uptr.thePointer = nullptr;
 	return ptr;

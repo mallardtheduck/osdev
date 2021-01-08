@@ -8,11 +8,17 @@ class function;
 
 template <typename ReturnValue, typename... Args>
 class function<ReturnValue(Args...)> {
+private:
+	typedef function<ReturnValue(Args...)> this_t;
 public:
 	template<typename T> function(T t) : callable_(make_unique<CallableT<T>>(t)){
 	}
 
 	function(std::nullptr_t) {}
+
+	function(const this_t &other){
+		if(other.callable_) callable_.reset(other.callable_->Clone());
+	}
 
 	template <typename T>
 	function& operator=(T t) {
@@ -21,12 +27,20 @@ public:
 	}
 
 	function &operator=(std::nullptr_t){
-		callable_ = nullptr;
+		callable_.reset(nullptr);
+		return *this;
+	}
+
+	function &operator=(const this_t &other){
+		if(this != &other){
+			if(other.callable_) callable_.reset(other.callable_->Clone());
+			else callable_.reset(nullptr);
+		}
 		return *this;
 	}
 
 	ReturnValue operator()(Args... args) const {
-		if(!callable_) panic("(FUNCTION) Call to void!");
+		if(!callable_) panic("(FUNCTION) Call to nullptr!");
 		return callable_->Invoke(args...);
 	}
 
@@ -39,6 +53,7 @@ private:
 	public:
 		virtual ~ICallable() = default;
 		virtual ReturnValue Invoke(Args...) const = 0;
+		virtual ICallable *Clone() const = 0;
 	};
 
 	template <typename T>
@@ -52,6 +67,10 @@ private:
 
 		ReturnValue Invoke(Args... args) const override {
 			return t_(args...);
+		}
+
+		ICallable *Clone() const{
+			return new CallableT<T>(*this);
 		}
 
 	private:
