@@ -100,8 +100,7 @@ void Thread::SetPID(uint64_t p){
 	pid = p;
 }
 
-void Thread::SetBlock(BlockCheckFunction fn, void *param, IThread */*to*/){
-	blockCheckParam = param;
+void Thread::SetBlock(BlockCheckFunction fn, IThread */*to*/){
 	blockCheck = fn;
 	Block();
 }

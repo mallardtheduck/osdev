@@ -3,7 +3,6 @@
 #include "ministl.hpp"
 #include "string.hpp"
 #include "locks.hpp"
-#include "strutil.hpp"
 #include <util/asprintf.h>
 
 static const uint32_t default_userspace_priority=100;

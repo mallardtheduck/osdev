@@ -3,6 +3,8 @@
 
 template<typename T> class unique_ptr{
 private:
+	template<typename R> friend R *moveout(unique_ptr<R> &uptr);
+
 	T* thePointer = nullptr;
 public:
 	unique_ptr() {}
@@ -10,15 +12,16 @@ public:
 
 	unique_ptr(const unique_ptr<T>&) = delete;
 
-	unique_ptr(unique_ptr<T> &&other) : thePointer(other.thePointer){
-		other.thePointer = nullptr;
+	template<typename R>
+	unique_ptr(unique_ptr<R> &&other) : thePointer(moveout(other)){
 	}
 
 	unique_ptr<T> &operator=(const unique_ptr<T>&) = delete;
 
-	unique_ptr<T> &operator=(unique_ptr<T> &&other){
+	template<typename R>
+	unique_ptr<T> &operator=(unique_ptr<R> &&other){
 		if(this != &other){
-			thePointer = other.thePointer;
+			thePointer = moveout(other);
 			other.thePointer = nullptr;
 		}
 	}
@@ -40,19 +43,19 @@ public:
 		thePointer = ptr;
 	}
 
-	T *get(){
+	T *get() const{
 		return thePointer;
 	}
 
-	operator bool(){
+	operator bool() const{
 		return thePointer;
 	}
 
-	T &operator*(){
+	T &operator*() const{
 		return *thePointer;
 	}
 
-	T *operator->(){
+	T *operator->() const{
 		return thePointer;
 	}
 
@@ -60,5 +63,17 @@ public:
 		if(thePointer) delete thePointer;
 	}
 };
+
+template<typename T>
+T *moveout(unique_ptr<T> &uptr){
+	T *ptr = uptr.thePointer;
+	uptr.thePointer = nullptr;
+	return ptr;
+}
+
+template<typename T, typename... Args>
+unique_ptr<T> make_unique(Args... args){
+	return unique_ptr<T>(new T(args...));
+}
 
 #endif

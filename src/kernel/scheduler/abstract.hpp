@@ -1,11 +1,12 @@
 #ifndef KERNEL_SCHEDULER_ABSTRACT_HPP
 #define KERNEL_SCHEDULER_ABSTRACT_HPP
 
+#include <module/utils/function.hpp>
 #include "../utils/refcountpointer.hpp"
 
 constexpr size_t DefaultStackSize = 16 * 1024;
 typedef void(*ThreadEntryFunction)(void*);
-typedef bool (*BlockCheckFunction)(void*);
+typedef function<bool()> BlockCheckFunction;
 
 enum class ThreadStatus{
 	Runnable = 0,
@@ -27,7 +28,7 @@ public:
 	virtual void Unblock() = 0;
 	virtual void SetPriority(uint32_t p) = 0;
 	virtual void SetPID(uint64_t pid) = 0;
-	virtual void SetBlock(BlockCheckFunction fn, void *param, IThread *to = nullptr) = 0;
+	virtual void SetBlock(BlockCheckFunction fn, IThread *to = nullptr) = 0;
 	virtual void ClearBlock() = 0;
 	virtual void Join() = 0;
 	virtual void SetAbortable(bool a) = 0;

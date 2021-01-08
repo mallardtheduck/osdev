@@ -13,8 +13,7 @@ private:
 		uint64_t value;
 	};
 
-	static bool WaitBlockCheck(void *vp){
-		WaitOptions &p = *(WaitOptions*)vp;
+	static bool WaitBlockCheck(WaitOptions &p){
 		if(!p.a->lock->TryTakeExclusive()) return false;
 		bool ret = false;
 		switch(p.cmp){
@@ -40,7 +39,7 @@ private:
 	}
 
 	static bool WaitHandleWait(void *ptr){
-		return WaitBlockCheck(ptr);
+		return WaitBlockCheck(*(WaitOptions*)ptr);
 	}
 	
 public:
@@ -78,12 +77,12 @@ public:
 		p.a = this;
 		p.cmp = cmp;
 		p.value = value;
-		CurrentThread().SetBlock(&WaitBlockCheck, (void*)&p);
+		CurrentThread().SetBlock([&](){ return WaitBlockCheck(p); }, (void*)&p);
 		return Read();
 	}
 	uint64_t CompareExchange(uint64_t cmp, uint64_t xchg) override{
 		auto hl = lock->LockExclusive();
-		if(value == cmp) a->value = xchg;
+		if(value == cmp) value = xchg;
 		return value;
 	}
 

@@ -37,7 +37,7 @@ void Scheduler::TheIdleThread(void*){
 			for(auto thread : theScheduler->threads){			
 				if(thread->status == ThreadStatus::Blocked && thread->blockCheck){
 					auto il = GetHAL().LockInterrupts();
-					thread->status = thread->blockCheck(thread->blockCheckParam) ? ThreadStatus::Runnable : ThreadStatus::Blocked;
+					thread->status = thread->blockCheck() ? ThreadStatus::Runnable : ThreadStatus::Blocked;
 				}
 				
 				yield_immediately = (thread->status == ThreadStatus::Runnable);
@@ -200,7 +200,7 @@ Thread *Scheduler::PlanCycle(){
 	for(auto thread : threads){
 		if(thread->loadModifier > 0) --thread->loadModifier;
 		if(thread->status == ThreadStatus::Blocked && thread->blockCheck){
-			thread->status = thread->blockCheck(thread->blockCheckParam) ? ThreadStatus::Runnable : ThreadStatus::Blocked;
+			thread->status = thread->blockCheck() ? ThreadStatus::Runnable : ThreadStatus::Blocked;
 		}
 		if(thread->status == ThreadStatus::Runnable && thread->dynamicPriority < minPriority) minPriority = thread->dynamicPriority;
 	}
