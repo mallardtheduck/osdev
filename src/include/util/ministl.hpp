@@ -81,14 +81,17 @@ class vector
             }
         }
 
+		void swap(vector<T> &other){
+			::swap(dataSize, other.dataSize);
+			::swap(reserved, other.reserved);
+			::swap(data, other.data);
+		}
+
         const vector<T>& operator= (vector<T> x)
         {
             // use copy and swap idiom.
             // Note the pass by value to initiate the copy
-            swap(dataSize, x.dataSize);
-            swap(reserved, x.reserved);
-            swap(data,     x.data);
-
+            swap(x);
             return *this;
         }
 
@@ -108,7 +111,7 @@ class vector
                 // Use placement new to copy the data
                 new (&newData[loop]) T(data[loop]);
             }
-            swap(data, newData);
+            ::swap(data, newData);
             reserved    = new_size;
 
             for(unsigned int loop = 0; loop < dataSize; ++loop)
@@ -131,6 +134,7 @@ class vector
         }
 
         unsigned int  size() const  {return dataSize;}
+		unsigned int  capacity() const {return reserved;}
         bool          empty() const {return dataSize == 0;}
 
         // Operator[] should NOT check the value of i

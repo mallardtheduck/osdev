@@ -72,6 +72,16 @@ public:
 
 	virtual IFilesystemNode *GetNode(const char *path) = 0;
 
+	IFileHandle *OpenFile(const char *path, fs_mode_flags mode){
+		auto node = GetNode(path);
+		if(node){
+			auto ret = node->OpenFile(mode);
+			delete node;
+			return ret;
+		}
+		return nullptr;
+	}
+
 	virtual ~IVirtualFilesystem() {}
 };
 

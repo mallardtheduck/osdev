@@ -25,6 +25,7 @@ enum class EnvironemntVariableFlags{
 class IProcess{
 public:
 	virtual uint64_t ID() = 0;
+	virtual const char *GetName() = 0;
 	
 	virtual void End() = 0;
 	virtual void Terminate() = 0;
@@ -70,12 +71,14 @@ public:
 
 typedef RefCountPointer<IProcess> ProcessPointer;
 
+IProcess &CurrentProcess();
+
 class IProcessManager{
 public:
 	[[nodiscard]] virtual bool SwitchProcess(bt_pid_t pid) = 0;
 	virtual void SwitchProcessFromScheduler(bt_pid_t pid) = 0;
-	virtual ProcessPointer NewProcess(const char *name, size_t argc, char **argv) = 0;
-	virtual ProcessPointer Spawn(const char *name, size_t argc, char **argv) = 0;
+	virtual ProcessPointer NewProcess(const char *name, size_t argc, char **argv, IProcess &parent = ::CurrentProcess()) = 0;
+	virtual ProcessPointer Spawn(const char *name, size_t argc, char **argv, IProcess &parent = ::CurrentProcess()) = 0;
 
 	virtual void SetGlobalEnvironmentVariable(const char *name, const char *value, uint8_t flags = (uint8_t)EnvironemntVariableFlags::Global) = 0;
 	virtual const char *GetGlobalEnvironmentVariable(const char *name) = 0;
@@ -88,6 +91,5 @@ public:
 
 void Processes_Init();
 IProcessManager &GetProcessManager();
-IProcess &CurrentProcess();
 
 #endif

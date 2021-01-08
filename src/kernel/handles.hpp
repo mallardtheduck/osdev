@@ -16,6 +16,7 @@ namespace kernel_handle_types{
 	static const uint32_t wait=9;
 	static const uint32_t atomwait=10;
 	static const uint32_t msg_recv=11;
+    static const uint32_t elf = 12;
 };
 
 void init_handles();

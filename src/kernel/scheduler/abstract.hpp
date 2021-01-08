@@ -61,8 +61,19 @@ typedef RefCountPointer<IThread> ThreadPointer;
 class SchedulerLock;
 
 class IScheduler{
+private:
+	static void FunctionStart(void *fn){
+		auto func = (function<void()>*)fn;
+		(*func)();
+		delete func;
+	}
 public:
 	virtual ThreadPointer NewThread(ThreadEntryFunction fn, void *param, size_t stackSize = DefaultStackSize) = 0;
+	ThreadPointer NewThread(const function<void()> &fn, size_t stackSize = DefaultStackSize){
+		auto func = new function<void()>(fn);
+		return NewThread(&FunctionStart, (void*)func, stackSize);
+	}
+
 	virtual IThread &CurrentThread() = 0;
 	virtual ThreadPointer GetByID(uint64_t id) = 0;
 	virtual size_t GetPIDThreadCount(uint64_t pid) = 0;
@@ -79,7 +90,7 @@ public:
 	virtual void EnableScheduler() = 0;
 	virtual bool DisableScheduler() = 0;
 
-	SchedulerLock LockScheduler();
+	[[nodiscard]] SchedulerLock LockScheduler();
 
 	virtual ~IScheduler() {}
 };

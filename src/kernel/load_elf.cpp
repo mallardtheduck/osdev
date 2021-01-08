@@ -238,6 +238,14 @@ public:
 	void Execute(const char *mod_params = nullptr) override{
 		mod.entry(SYSCALL_TABLE, (char*)mod_params);
 	};
+
+	ProcessEntryPoint GetEntryPoint(){
+		return nullptr;
+	}
+
+	~ElfModule(){
+		al_free(mod.mem);
+	}
 };
 
 ILoadedElf *LoadElfModule(IFileHandle &file){
@@ -251,8 +259,12 @@ public:
 	ElfProcess(bt_pid_t pid, IFileHandle &file) : proc(elf_load_proc(pid, file)) {}
 
 	void Execute(const char */*mod_params*/ = nullptr) override{
-		proc.entry();
+		//Do nothing
 	};
+
+	ProcessEntryPoint GetEntryPoint() override{
+		return (ProcessEntryPoint)proc.entry;
+	}
 };
 
 

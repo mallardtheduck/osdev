@@ -6,16 +6,20 @@
 class Process : public IProcess{
 private:
 	friend class ProcessManager;
-
+	
+	string name;
 	unique_ptr<MM2::PageDirectory> pageDirectory;
 public:
+	Process(const char *name, size_t argc, char **argv, IProcess &parent);
+
 	uint64_t ID() override;
+	const char *GetName() override;
 	
 	void End() override;
 	void Terminate() override;
 	void Hold() override;
 
-	void SetEnvironmentVariable(const char *name, const char *value, uint8_t flags override, bool userspace = false)  override;
+	void SetEnvironmentVariable(const char *name, const char *value, uint8_t flags = 0, bool userspace = false)  override;
 	const char *GetEnvironmentVariable(const char *name, bool userspace = false) override;
 
 	IThread *NewUserThread(ProcessEntryPoint p, void *param, void *stack) override;

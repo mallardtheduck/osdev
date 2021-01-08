@@ -7,7 +7,7 @@ private:
 	T *theObject;
 public:
 	RefCountPointer(T *ptr) : theObject(ptr){
-		theObject->IncrementRefCount();
+		if(theObject) theObject->IncrementRefCount();
 	}
 
 	RefCountPointer(const RefCountPointer &other) : RefCountPointer(other.theObject) {}
