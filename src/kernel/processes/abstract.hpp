@@ -63,6 +63,9 @@ public:
 	virtual void SetCurrentMessage(btos_api::bt_msg_header *msg) = 0;
 	virtual btos_api::bt_msg_header *GetCurrentMessage() = 0;
 
+	virtual void SetReturnValue(int returnValue) = 0;
+	virtual int GetChildReturnValue(bt_pid_t childPid) = 0;
+
 	virtual void IncrementRefCount() = 0;
 	virtual void DecrementRefCount() = 0;
 
@@ -77,8 +80,8 @@ class IProcessManager{
 public:
 	[[nodiscard]] virtual bool SwitchProcess(bt_pid_t pid) = 0;
 	virtual void SwitchProcessFromScheduler(bt_pid_t pid) = 0;
-	virtual ProcessPointer NewProcess(const char *name, size_t argc, char **argv, IProcess &parent = ::CurrentProcess()) = 0;
-	virtual ProcessPointer Spawn(const char *name, size_t argc, char **argv, IProcess &parent = ::CurrentProcess()) = 0;
+	virtual ProcessPointer NewProcess(const char *name, const vector<const char*> &args, IProcess &parent = ::CurrentProcess()) = 0;
+	virtual ProcessPointer Spawn(const char *name, const vector<const char*> &args, IProcess &parent = ::CurrentProcess()) = 0;
 
 	virtual void SetGlobalEnvironmentVariable(const char *name, const char *value, uint8_t flags = (uint8_t)EnvironemntVariableFlags::Global) = 0;
 	virtual const char *GetGlobalEnvironmentVariable(const char *name) = 0;

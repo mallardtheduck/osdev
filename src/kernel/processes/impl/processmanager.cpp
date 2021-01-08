@@ -3,13 +3,24 @@
 #include "processmanager.hpp"
 #include "process.hpp"
 
+ProcessManager::ProcessManager(){
+	kernelProcess = Process::CreateKernelProcess();
+	vector<Process*> newProcList;
+	newProcList.push_back(kernelProcess);
+	{
+		auto sl = GetScheduler().LockScheduler();
+		newProcList.swap(processes);
+	}
+}
+
 bool ProcessManager::SwitchProcess(bt_pid_t pid) {
-	if(!currentProcess) return false;
-	if(pid != currentProcess->ID()){
+	if(!currentProcess || pid != currentProcess->ID()){
+		if(currentProcess) currentProcess->DecrementRefCount();
 		auto proc = GetByID(pid);
 		if(proc){
 			CurrentThread().SetPID(pid);
 			currentProcess = (Process*)proc.get();
+			currentProcess->IncrementRefCount();
 			MM2::mm2_switch(currentProcess->pageDirectory.get());
 			return true;
 		}
@@ -32,8 +43,9 @@ void ProcessManager::SwitchProcessFromScheduler(bt_pid_t pid) {
 	}
 }
 
-ProcessPointer ProcessManager::NewProcess(const char *name, size_t argc, char **argv, IProcess &parent) {
-	auto *proc = new Process(name, argc, argv, parent);
+ProcessPointer ProcessManager::NewProcess(const char *name, const vector<const char*> &args, IProcess &parent) {
+	auto proc = new Process(name, args, parent);
+	proc->pid = pidCounter++;
 	{
 		auto hl = lock->LockExclusive();
 		vector<Process*> newProcList = processes;
@@ -46,8 +58,8 @@ ProcessPointer ProcessManager::NewProcess(const char *name, size_t argc, char **
 	return proc;
 }
 
-ProcessPointer ProcessManager::Spawn(const char *name, size_t argc, char **argv, IProcess &parent) {
-	auto proc = NewProcess(name, argc, argv, parent);
+ProcessPointer ProcessManager::Spawn(const char *name, const vector<const char*> &args, IProcess &parent) {
+	auto proc = NewProcess(name, args, parent);
 	auto pid = proc->ID();
 	IFileHandle *file;
 	if(!GetKernelConfigVariables().IsVariableSet("LOADER")){
@@ -70,19 +82,11 @@ ProcessPointer ProcessManager::Spawn(const char *name, size_t argc, char **argv,
 
 void ProcessManager::SetGlobalEnvironmentVariable(const char *name, const char *value, uint8_t flags) {
 	if(!(flags & (uint8_t)EnvironemntVariableFlags::Global)) return;
-	EnvironmentVariable env;
-	env.value = value;
-	env.flags = flags;
-	{
-		auto hl = lock->LockExclusive();
-		globalEnvironment[name] = env;
-	}
+	kernelProcess->SetEnvironmentVariable(name, value, flags);
 }
 
 const char *ProcessManager::GetGlobalEnvironmentVariable(const char *name) {
-	auto hl = lock->LockExclusive();
-	if(!globalEnvironment.has_key(name)) return nullptr;
-	return globalEnvironment[name].value.c_str();
+	return kernelProcess->GetEnvironmentVariable(name);
 }
 
 IProcess &ProcessManager::CurrentProcess() {

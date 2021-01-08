@@ -7,12 +7,35 @@ class Process : public IProcess{
 private:
 	friend class ProcessManager;
 	
+	bt_pid_t pid;
+	bt_pid_t parent;
 	string name;
-	unique_ptr<MM2::PageDirectory> pageDirectory;
-public:
-	Process(const char *name, size_t argc, char **argv, IProcess &parent);
+	vector<string> args;
+	int returnValue = 0;
 
-	uint64_t ID() override;
+	map<bt_pid_t, int> childReturns;
+
+	unique_ptr<MM2::PageDirectory> pageDirectory;
+	unique_ptr<ILock> lock { NewLock() };
+
+	map<bt_handle_t, IHandle*> handles;
+
+	struct EnvironmentVariable{
+		string value;
+		uint8_t flags;
+	};
+	map<string, EnvironmentVariable> environment;
+
+	uint32_t refCount = 0;
+
+	static Process *CreateKernelProcess();
+	static map<string, EnvironmentVariable> CopyEnvironment(const IProcess &parent);
+
+	void CleanupProcess();
+public:
+	Process(const char *name, const vector<const char*> &args, IProcess &parent);
+
+	bt_pid_t ID() override;
 	const char *GetName() override;
 	
 	void End() override;
@@ -50,6 +73,9 @@ public:
 	btos_api::bt_msg_header *GetMessageMatch(const btos_api::bt_msg_filter &filter) override;
 	void SetCurrentMessage(btos_api::bt_msg_header *msg) override;
 	btos_api::bt_msg_header *GetCurrentMessage() override;
+
+	void SetReturnValue(int returnValue) override;
+	int GetChildReturnValue(bt_pid_t childPid) override;
 
 	void IncrementRefCount() override;
 	void DecrementRefCount() override;
