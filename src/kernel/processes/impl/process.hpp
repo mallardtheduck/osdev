@@ -19,6 +19,7 @@ private:
 	unique_ptr<ILock> lock { NewLock() };
 
 	map<bt_handle_t, IHandle*> handles;
+	handle_t handleCounter = 0;
 
 	struct EnvironmentVariable{
 		string value;
@@ -30,7 +31,9 @@ private:
 
 	static Process *CreateKernelProcess();
 	static map<string, EnvironmentVariable> CopyEnvironment(const IProcess &parent);
+	static intptr_t AllocateStack(size_t size);
 
+	void GetEnvironmentVariable(const char *name, char *&value, uint8_t &flags);
 	void CleanupProcess();
 public:
 	Process(const char *name, const vector<const char*> &args, IProcess &parent);
@@ -49,7 +52,7 @@ public:
 
 	handle_t AddHandle(IHandle *handle) override;
 	IHandle *GetHandle(handle_t h) override;
-	void RemoveHandle(handle_t h) override;
+	void CloseAndRemoveHandle(handle_t h) override;
 	
 	void SetExitCode(int value) override;
 

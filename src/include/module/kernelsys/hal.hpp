@@ -81,6 +81,8 @@ public:
 
 	virtual uint64_t GenerateStackToken(intptr_t addr) = 0;
 
+	virtual void RunUsermode(intptr_t stackPointer, ProcessEntryPoint entryPoint) = 0;
+
 	virtual ~IHAL() { panic("HAL Destroyed!"); }
 };
 

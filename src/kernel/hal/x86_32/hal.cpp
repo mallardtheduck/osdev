@@ -8,9 +8,11 @@
 void GDT_init();
 
 extern void HAL_sch_init();
-extern void sch_yield();
+extern "C" void sch_yield();
 bool sch_inited = false;
 extern char sch_isr_asm;
+
+extern "C" void proc_run_usermode(intptr_t stack, ProcessEntryPoint entry);
 
 void HAL_Init(){
 	GDT_init();
@@ -220,6 +222,10 @@ public:
 
 	uint64_t GenerateStackToken(intptr_t addr){
 		return (0x10ll << 32) | addr;
+	}
+
+	void RunUsermode(intptr_t stackPointer, ProcessEntryPoint entryPoint){
+		proc_run_usermode(stackPointer, entryPoint);
 	}
 };
 

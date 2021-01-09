@@ -27,16 +27,10 @@ public:
 	ProcessPointer Spawn(const char *name, const vector<const char*> &args, IProcess &parent = ::CurrentProcess()) override;
 
 	void SetGlobalEnvironmentVariable(const char *name, const char *value, uint8_t flags = (uint8_t)EnvironemntVariableFlags::Global) override;
-	const char *GetGlobalEnvironmentVariable(const char *name) override;
+	const char *GetGlobalEnvironmentVariable(const char *name, uint8_t *flags = nullptr) override;
 
 	IProcess &CurrentProcess() override;
 	ProcessPointer GetByID(bt_pid_t pid) override;
-
-	btos_api::bt_proc_status::Enum GetProcessStatusByID(bt_pid_t pid){
-		auto ptr = GetByID(pid);
-		if(!ptr) return btos_api::bt_proc_status::DoesNotExist;
-		else return ptr->GetStatus();
-	}
 };
 
 #endif

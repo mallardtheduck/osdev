@@ -2,12 +2,25 @@
 #include "process.hpp"
 #include "processmanager.hpp"
 
+constexpr auto DefaultUserspaceStackSize = 65536;
+constexpr auto UserThreadKernelStackSize = 16384;
+
+constexpr auto DefaultUserspaceThreadPriority = 100;
+
 Process *Process::CreateKernelProcess(){
 	auto kernelProcess = new Process();
 	kernelProcess->name = "KERNEL";
 	kernelProcess->pid = pidCounter++;
 	kernelProcess->parent = 0;
 	return kernelProcess;
+}
+
+intptr_t Process::AllocateStack(size_t size){
+	size_t pages = size / MM2::MM2_Page_Size;
+	intptr_t baseAddress = 0 - (pages * MM2::MM2_Page_Size);
+	MM2::current_pagedir->alloc_pages_at(pages, (void*)baseAddress);
+	memset((void*)baseAddress, 0, size));
+	return 0 - sizeof(void*);
 }
 
 map<string, EnvironmentVariable> Process::CopyEnvironment(const IProcess &parent){
@@ -48,6 +61,15 @@ void Process::CleanUpProcess(){
 		msg_send_event(btos_api::bt_kernel_messages::ProcessEnd, (void*)&pid, sizeof(pid));
 	}
 	delete this;
+}
+
+void Process::GetEnvironmentVariable(const char *name, char *&value, uint8_t &flags){
+	auto upperName = to_upper(name);
+	auto hl = lock->LockExclusive();
+	if(environment.has_key(upperName)){
+		value = environment[upperName].value.c_str();
+		flags = environment[upperName].flags;
+	}
 }
 
 uint64_t Process::ID(){
@@ -96,8 +118,9 @@ void Process::SetEnvironmentVariable(const char *name, const char *value, uint8_
 		GetProcessManager().SetGlobalEnvironmentVariable(name, valaue, flags);
 		return;
 	}
-	auto hl = lock->LockExclusive();
 	auto upperName = to_upper(name);
+
+	auto hl = lock->LockExclusive();
 	if(userspace){
 		if((flags & EnvironemntVariableFlags::Private)) return;
 		if(environment.has_key(upperName)){
@@ -115,23 +138,94 @@ void Process::SetEnvironmentVariable(const char *name, const char *value, uint8_
 	}else if(environment.has_key(upperName)) environment.erase(upperName);
 }
 
-const char *Process::GetEnvironmentVariable(const char *name, bool userspace = false);
+const char *Process::GetEnvironmentVariable(const char *name, bool userspace = false){
+	auto upperName = to_upper(name);
 
-IThread *Process::NewUserThread(ProcessEntryPoint p, void *param, void *stack);
+	uint8_t globalFlags = 0;
+	auto global = GetProcessManager().GetGlobalEnvironmentVariable(upperName, globalFlags);
+	if(userspace && (flags & (uint8_t)EnvironemntVariableFlags::Private)) return nullptr;
+	
+	auto hl = lock->LockExclusive();
+	if(environment.has_key(upperName)){
+		auto &evar = environment[upperName];
+		if(userspace && (evar.flags & (uint8_t)EnvironemntVariableFlags::Private)) return nullptr;
+		return evar.value.c_str();
+	}
+	return nullptr;
+}
 
-handle_t Process::AddHandle(IHandle *handle);
-IHandle *Process::GetHandle(handle_t h);
-void Process::RemoveHandle(handle_t h);
+IThread *Process::NewUserThread(ProcessEntryPoint p, void *param, void *stack){
+	GetScheduler().NewThread([=](){
+		if(!GetProcessManager().SwitchProcess(pid)) return;
+		auto stackPointer = AllocateStack(DefaultUserspaceStackSize);
+		CurrentThread().SetPriority(DefaultUserspaceThreadPriority);
+		//Deliberately twice.
+		CurrentThread().SetAbortable(true);
+		CurrentThread().SetAbortable(true);
+		debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);
+		CurrentProcess().SetStatus(btos_api::bt_proc_status::Running);
+		GetHAL().RunUsermode(stackPointer, p);
+	}, UserThreadKernelStackSize);
+}
 
-void Process::SetExitCode(int value);
+handle_t Process::AddHandle(IHandle *handle){
+	auto hl = lock->LockExclusive();
+	handles[++handleCounter] = handle;
+	return handleCounter;
+}
 
-void Process::Wait();
+IHandle *Process::GetHandle(handle_t h){
+	auto hl = lock->LockExclusive();
+	if(handles.has_key(h)) return handles[h];
+	return nullptr;
+}
 
-size_t Process::GetArgumentCount();
-size_t Process::GetArgument(size_t index, char *buf, size_t size);
+void Process::CloseAndRemoveHandle(handle_t h){
+	auto hl = lock->LockExclusive();
+	if(handles.has_key(h)){
+		auto handle = handles[h];
+		handles.erase(h);
+		handle->Close();
+		delete handle;
+	}
+}
 
-void Process::SetStatus(btos_api::bt_proc_status::Enum status);
-btos_api::bt_proc_status::Enum Process::GetStatus();
+void Process::SetExitCode(int value){
+	auto hl = lock->LockExclusive();
+	returnValue = value;
+}
+
+void Process::Wait(){
+	CurrentThread().SetBlock([=](){
+		auto status = GetProcessManager().GetProcessStatusByID(pid);
+		return status == btos_api::bt_proc_status::DoesNotExist || status == btos_api::bt_proc_status::Ending;
+	});
+}
+
+size_t Process::GetArgumentCount(){
+	auto hl = lock->LockExclusive();
+	return args.size();
+}
+
+size_t Process::GetArgument(size_t index, char *buf, size_t size){
+	auto hl = lock->LockExclusive();
+	if(index < args.size()){
+		strncpy(buf, args[index].c_str(), size - 1);
+		buf[size - 1] = '\0';
+		return args[index].size();
+	}
+	return 0;
+}
+
+void Process::SetStatus(btos_api::bt_proc_status::Enum s){
+	auto hl = lock->LockExclusive();
+	status = s;
+}
+
+btos_api::bt_proc_status::Enum Process::GetStatus(){
+	//Can't lock, since this may be called from the scheduler (via Wait)
+	return status;
+}
 
 void Process::SetPermissions(uint16_t extensionID, uint64_t permissions);
 uint64_t Process::GetPermissions(uint16_t extensionID);

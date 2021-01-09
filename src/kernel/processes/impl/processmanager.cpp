@@ -85,8 +85,15 @@ void ProcessManager::SetGlobalEnvironmentVariable(const char *name, const char *
 	kernelProcess->SetEnvironmentVariable(name, value, flags);
 }
 
-const char *ProcessManager::GetGlobalEnvironmentVariable(const char *name) {
-	return kernelProcess->GetEnvironmentVariable(name);
+const char *ProcessManager::GetGlobalEnvironmentVariable(const char *name, uint8_t *flagsPtr) {
+	char *value = nullptr;
+	uint8_t flags = 0;
+	kernelProcess->GetEnvironmentVariable(name, value, flags);
+	if((flags & (uint8_t)EnvironemntVariableFlags::Global)){
+		if(flagsPtr) *flagsPtr = flags;
+		return value;
+	}
+	return nullptr;
 }
 
 IProcess &ProcessManager::CurrentProcess() {
@@ -94,7 +101,6 @@ IProcess &ProcessManager::CurrentProcess() {
 }
 
 ProcessPointer ProcessManager::GetByID(bt_pid_t pid) {
-	auto hl = lock->LockExclusive();
 	for(auto &proc : processes){
 		if(proc->ID() == pid) return proc;
 	}

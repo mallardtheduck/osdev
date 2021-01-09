@@ -38,7 +38,7 @@ public:
 
 	virtual handle_t AddHandle(IHandle *handle) = 0;
 	virtual IHandle *GetHandle(handle_t h) = 0;
-	virtual void RemoveHandle(handle_t h) = 0;
+	virtual void CloseAndRemoveHandle(handle_t h) = 0;
 	
 	virtual void SetExitCode(int value) = 0;
 
@@ -84,10 +84,16 @@ public:
 	virtual ProcessPointer Spawn(const char *name, const vector<const char*> &args, IProcess &parent = ::CurrentProcess()) = 0;
 
 	virtual void SetGlobalEnvironmentVariable(const char *name, const char *value, uint8_t flags = (uint8_t)EnvironemntVariableFlags::Global) = 0;
-	virtual const char *GetGlobalEnvironmentVariable(const char *name) = 0;
+	virtual *GetGlobalEnvironmentVariable(const char *name, uint8_t *flags = nullptr) = 0;
 
 	virtual IProcess &CurrentProcess() = 0;
 	virtual ProcessPointer GetByID(bt_pid_t pid) = 0;
+
+	btos_api::bt_proc_status::Enum GetProcessStatusByID(bt_pid_t pid){
+		auto ptr = GetByID(pid);
+		if(!ptr) return btos_api::bt_proc_status::DoesNotExist;
+		else return ptr->GetStatus();
+	}
 
 	virtual ~IProcessManager() {}
 };

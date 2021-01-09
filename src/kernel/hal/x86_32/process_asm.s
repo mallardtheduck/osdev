@@ -10,8 +10,6 @@ proc_run_usermode:
 	popl %eax
 	popl %eax
 	popl %ebx
-	popl %ecx
-	popl %edx
 	pushl $0x23
 	pushl %eax
 	pushf
