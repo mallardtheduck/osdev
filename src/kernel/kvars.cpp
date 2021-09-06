@@ -11,7 +11,7 @@ private:
 	static char *InfoFS();
 public:
 	KernelConfigVariables(){
-		infofs_register("KVARS", &InfoFS);
+		InfoRegister("KVARS", &InfoFS);
 	}
 
 	void SetVariable(const char *name, const char *value) override{
