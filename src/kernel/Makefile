@@ -2,7 +2,7 @@ BUILD-AS := i686-pc-btos-as
 BUILD-AS-OPTIONS := -g
 BUILD-CPP := i686-pc-btos-g++
 BUILD-CPP-FLAGS :=  -c
-BUILD-CPP-OPTIONS := -ffreestanding -fno-builtin -Og -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -I../include -DKERNEL -std=gnu++11
+BUILD-CPP-OPTIONS := -ffreestanding -fno-builtin -Og -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -I../include -DKERNEL -std=gnu++17
 BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -ffreestanding -fno-builtin -Og -Wall -Wextra -Werror -g -I../include -DKERNEL
