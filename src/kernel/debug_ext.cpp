@@ -22,15 +22,15 @@ void debug_extension_uapi(uint16_t fn, ICPUState &state) {
 			state.Get32BitRegister(Generic_Register::GP_Register_A) = 1;
 			break;
 		case bt_debug_function::StopProcess:
-			if(state.Get32BitRegister(Generic_Register::GP_Register_B) && proc_get_status(state.Get32BitRegister(Generic_Register::GP_Register_B)) != btos_api::bt_proc_status::DoesNotExist) GetScheduler().DebugStopThreadsByPID(state.Get32BitRegister(Generic_Register::GP_Register_B));
+			if(state.Get32BitRegister(Generic_Register::GP_Register_B) && GetProcessManager().GetProcessStatusByID(state.Get32BitRegister(Generic_Register::GP_Register_B)) != btos_api::bt_proc_status::DoesNotExist) GetScheduler().DebugStopThreadsByPID(state.Get32BitRegister(Generic_Register::GP_Register_B));
 			break;
 		case bt_debug_function::ContinueProcess:
-			if(state.Get32BitRegister(Generic_Register::GP_Register_B) && proc_get_status(state.Get32BitRegister(Generic_Register::GP_Register_B)) != btos_api::bt_proc_status::DoesNotExist) GetScheduler().DebugResumeThreadsByPID(state.Get32BitRegister(Generic_Register::GP_Register_B));
+			if(state.Get32BitRegister(Generic_Register::GP_Register_B) && GetProcessManager().GetProcessStatusByID(state.Get32BitRegister(Generic_Register::GP_Register_B)) != btos_api::bt_proc_status::DoesNotExist) GetScheduler().DebugResumeThreadsByPID(state.Get32BitRegister(Generic_Register::GP_Register_B));
 			break;
 		case bt_debug_function::Peek:
 			if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), 0) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(bt_debug_copy_params))) {
 				bt_debug_copy_params *p = (bt_debug_copy_params*)state.Get32BitRegister(Generic_Register::GP_Register_C);
-				if(p->pid && proc_get_status(p->pid) != btos_api::bt_btos_api::bt_proc_status::DoesNotExist && is_safe_ptr((uint32_t)p->addr, p->size, p->pid) && p->size <= DEBUG_COPYLIMT) {
+				if(p->pid && GetProcessManager().GetProcessStatusByID(p->pid) != btos_api::bt_proc_status::DoesNotExist && is_safe_ptr((uint32_t)p->addr, p->size, p->pid) && p->size <= DEBUG_COPYLIMT) {
 					debug_copymem(p->pid, p->addr, CurrentProcess().ID(), (void*)state.Get32BitRegister(Generic_Register::GP_Register_B), p->size);
 				}
 			}
@@ -38,7 +38,7 @@ void debug_extension_uapi(uint16_t fn, ICPUState &state) {
 		case bt_debug_function::Poke:
 			if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), 0) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(bt_debug_copy_params))) {
 				bt_debug_copy_params *p = (bt_debug_copy_params*)state.Get32BitRegister(Generic_Register::GP_Register_C);
-				if(p->pid && proc_get_status(p->pid) != btos_api::bt_btos_api::bt_proc_status::DoesNotExist && is_safe_ptr((uint32_t)p->addr, p->size, p->pid) && p->size <= DEBUG_COPYLIMT) {
+				if(p->pid && GetProcessManager().GetProcessStatusByID(p->pid) != btos_api::bt_proc_status::DoesNotExist && is_safe_ptr((uint32_t)p->addr, p->size, p->pid) && p->size <= DEBUG_COPYLIMT) {
 					debug_copymem(CurrentProcess().ID(), (void*)state.Get32BitRegister(Generic_Register::GP_Register_B), p->pid, p->addr, p->size);
 				}
 			}
@@ -75,7 +75,7 @@ void debug_extension_uapi(uint16_t fn, ICPUState &state) {
 }
 
 void debug_event_notify(bt_pid_t pid, uint64_t thread, bt_debug_event::Enum event, bt_exception::Enum error) {
-	if(debugger_pid && debugger_pid != pid && proc_get_status(pid) == btos_api::bt_proc_status::Running && proc_get_status(debugger_pid) == btos_api::bt_proc_status::Running) {
+	if(debugger_pid && debugger_pid != pid && GetProcessManager().GetProcessStatusByID(pid) == btos_api::bt_proc_status::Running && GetProcessManager().GetProcessStatusByID(debugger_pid) == btos_api::bt_proc_status::Running) {
 		btos_api::bt_msg_header msg;
 		msg.from = 0;
 		msg.source = debug_ext_id;
@@ -171,12 +171,12 @@ static void debug_copymem(bt_pid_t fpid, void *faddr, bt_pid_t tpid, void *taddr
 	if((uint32_t)faddr + size < MM2::MM2_Kernel_Boundary || (uint32_t)taddr + size < MM2::MM2_Kernel_Boundary) return;
 	void *buffer = malloc(size);
 	if(!buffer) return;
-	pid_t cpid = CurrentProcess().ID();
-	proc_switch(fpid);
+	bt_pid_t cpid = CurrentProcess().ID();
+	GetProcessManager().SwitchProcess(fpid);
 	memcpy(buffer, faddr, size);
-	proc_switch(tpid);
+	GetProcessManager().SwitchProcess(tpid);
 	memcpy(taddr, buffer, size);
-	proc_switch(cpid);
+	GetProcessManager().SwitchProcess(cpid);
 	free(buffer);
 }
 
@@ -240,7 +240,7 @@ static bool debug_setbreakpoint(uint64_t thread_id, uint32_t addr, uint8_t type)
 	bool ret = false;
 	auto thread = GetScheduler().GetByID(thread_id);
 	if(!thread) return false;
-	uint32_t *state = thread->GetDebugState(thread_id);
+	uint32_t *state = thread->GetDebugState();
 	if(!state) return false;
 	uint32_t dr7 = state[debug_dridx(7)];
 	for(size_t i = 0; i < 4; ++i){
