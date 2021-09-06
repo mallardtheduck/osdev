@@ -1,0 +1,22 @@
+{
+    "editor.fontFamily": "Fira Code",
+    "files.exclude": {
+        "**/*.d": true,
+        "**/*.o": true,
+    },
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/*/**": true,
+        "**/.hg/store/**": true,
+        "${workspaceFolder}/src/binutils-*": true,
+        "${workspaceFolder}/src/gcc-*": true,
+        "${workspaceFolder}/src/build-*": true,
+        "${workspaceFolder}/src/3rdparty/originals": true,
+    },
+    "files.associations": {
+        "*.inf": "ini",
+        "*.hpp": "cpp",
+        "type_traits": "cpp"
+    }
+}
