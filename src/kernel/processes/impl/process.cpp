@@ -7,6 +7,8 @@ constexpr auto UserThreadKernelStackSize = 16384;
 
 constexpr auto DefaultUserspaceThreadPriority = 100;
 
+static uint64_t pidCounter = 0;
+
 Process *Process::CreateKernelProcess(){
 	auto kernelProcess = new Process();
 	kernelProcess->name = "KERNEL";
@@ -19,16 +21,16 @@ intptr_t Process::AllocateStack(size_t size){
 	size_t pages = size / MM2::MM2_Page_Size;
 	intptr_t baseAddress = 0 - (pages * MM2::MM2_Page_Size);
 	MM2::current_pagedir->alloc_pages_at(pages, (void*)baseAddress);
-	memset((void*)baseAddress, 0, size));
+	memset((void*)baseAddress, 0, size);
 	return 0 - sizeof(void*);
 }
 
-map<string, EnvironmentVariable> Process::CopyEnvironment(const IProcess &parent){
+map<string, Process::EnvironmentVariable> Process::CopyEnvironment(const IProcess &parent){
 	map<string, EnvironmentVariable> newEnvironment;
-	auto realParent = static_cast<Process&>(parent);
+	auto& realParent = static_cast<const Process&>(parent);
 	auto parentLock = realParent.lock->LockExclusive();
 	for(auto &e : realParent.environment){
-		if(!(e.second.flags & proc_env_flags::NoInherit) && !(e.second.flags & proc_env_flags::Global){
+		if(!(e.second.flags & to_underlying(EnvironemntVariableFlags::NoInherit)) && !(e.second.flags & to_underlying(EnvironemntVariableFlags::Global))){
 			newEnvironment[e.first] = e.second;
 		}
 	}
@@ -36,13 +38,13 @@ map<string, EnvironmentVariable> Process::CopyEnvironment(const IProcess &parent
 }
 
 Process::Process(const char *n, const vector<const char *> &a, IProcess &p)
-:name(name), parent(p.ID()), pageDirectory(new MM2::PageDirectory()), environment(CopyEnvironment(p)) {
+:parent(p.ID()), name(n), pageDirectory(new MM2::PageDirectory()), environment(CopyEnvironment(p)) {
 	for(auto &arg : a){
 		args.push_back(arg);
 	}
 }
 
-void Process::CleanUpProcess(){
+void Process::CleanupProcess(){
 	{
 		auto hl = lock->LockRecursive();
 		for(auto &h : handles){
@@ -53,10 +55,10 @@ void Process::CleanUpProcess(){
 		if(parent){
 			auto parentProcess = GetProcessManager().GetByID(parent);
 			if(parentProcess){
-				parentProcess.SetChildReturnValue(returnValue);
+				parentProcess->SetChildReturnValue(pid, returnValue);
 			}
 		}
-		static_cast<ProcessManager&>(GetProcessManager()).RemoveProccess(this);
+		static_cast<ProcessManager&>(GetProcessManager()).RemoveProcess(this);
 		msg_clear(pid);
 		msg_send_event(btos_api::bt_kernel_messages::ProcessEnd, (void*)&pid, sizeof(pid));
 	}
@@ -67,7 +69,7 @@ void Process::GetEnvironmentVariable(const char *name, char *&value, uint8_t &fl
 	auto upperName = to_upper(name);
 	auto hl = lock->LockExclusive();
 	if(environment.has_key(upperName)){
-		value = environment[upperName].value.c_str();
+		value = const_cast<char*>(environment[upperName].value.c_str());
 		flags = environment[upperName].flags;
 	}
 }
@@ -114,19 +116,19 @@ void Process::Hold(){
 }
 
 void Process::SetEnvironmentVariable(const char *name, const char *value, uint8_t flags, bool userspace){
-	if(pid != 0 && (flags & EnvironemntVariableFlags::Global)){
-		GetProcessManager().SetGlobalEnvironmentVariable(name, valaue, flags);
+	if(pid != 0 && (flags & to_underlying(EnvironemntVariableFlags::Global))){
+		GetProcessManager().SetGlobalEnvironmentVariable(name, value, flags);
 		return;
 	}
 	auto upperName = to_upper(name);
 
 	auto hl = lock->LockExclusive();
 	if(userspace){
-		if((flags & EnvironemntVariableFlags::Private)) return;
+		if((flags & to_underlying(EnvironemntVariableFlags::Private))) return;
 		if(environment.has_key(upperName)){
 			auto &existingVariable = environment[upperName];
-			if((existingVariable.flags & EnvironemntVariableFlags::Private)) return;
-			if((existingVariable.flags & EnvironemntVariableFlags::ReadOnly)) return;
+			if((existingVariable.flags & to_underlying(EnvironemntVariableFlags::Private))) return;
+			if((existingVariable.flags & to_underlying(EnvironemntVariableFlags::ReadOnly))) return;
 		}
 	}
 	string stringValue = value;
@@ -138,31 +140,32 @@ void Process::SetEnvironmentVariable(const char *name, const char *value, uint8_
 	}else if(environment.has_key(upperName)) environment.erase(upperName);
 }
 
-const char *Process::GetEnvironmentVariable(const char *name, bool userspace = false){
+const char *Process::GetEnvironmentVariable(const char *name, bool userspace){
 	auto upperName = to_upper(name);
 
 	uint8_t globalFlags = 0;
-	auto global = GetProcessManager().GetGlobalEnvironmentVariable(upperName, globalFlags);
-	if(userspace && (flags & (uint8_t)EnvironemntVariableFlags::Private)) return nullptr;
+	auto global = GetProcessManager().GetGlobalEnvironmentVariable(upperName.c_str(), &globalFlags);
+	if(userspace && (globalFlags & to_underlying(EnvironemntVariableFlags::Private))) return nullptr;
+	else if(global) return global;
 	
 	auto hl = lock->LockExclusive();
 	if(environment.has_key(upperName)){
 		auto &evar = environment[upperName];
-		if(userspace && (evar.flags & (uint8_t)EnvironemntVariableFlags::Private)) return nullptr;
+		if(userspace && (evar.flags & to_underlying(EnvironemntVariableFlags::Private))) return nullptr;
 		return evar.value.c_str();
 	}
 	return nullptr;
 }
 
-IThread *Process::NewUserThread(ProcessEntryPoint p, void *param, void *stack){
-	GetScheduler().NewThread([=](){
+ThreadPointer Process::NewUserThread(ProcessEntryPoint p, void *param, void *stack){
+	return GetScheduler().NewThread([=](){
 		if(!GetProcessManager().SwitchProcess(pid)) return;
 		auto stackPointer = AllocateStack(DefaultUserspaceStackSize);
 		CurrentThread().SetPriority(DefaultUserspaceThreadPriority);
 		//Deliberately twice.
 		CurrentThread().SetAbortable(true);
 		CurrentThread().SetAbortable(true);
-		debug_event_notify(proc_current_pid, sch_get_id(), bt_debug_event::ThreadStart);
+		debug_event_notify(pid, CurrentThread().ID(), bt_debug_event::ThreadStart);
 		CurrentProcess().SetStatus(btos_api::bt_proc_status::Running);
 		GetHAL().RunUsermode(stackPointer, p);
 	}, UserThreadKernelStackSize);
@@ -227,27 +230,88 @@ btos_api::bt_proc_status::Enum Process::GetStatus(){
 	return status;
 }
 
-void Process::SetPermissions(uint16_t extensionID, uint64_t permissions);
-uint64_t Process::GetPermissions(uint16_t extensionID);
-void Process::SetUserID(uint64_t uid);
-uint64_t Process::GetUID();
+void Process::SetPermissions(uint16_t extensionID, uint64_t permission){
+	auto hl = lock->LockExclusive();
+	permissions[extensionID] = permission;
+}
 
-void Process::AddMessage(btos_api::bt_msg_header *msg);
-void Process::RemoveMessage(btos_api::bt_msg_header *msg);
-btos_api::bt_msg_header *Process::GetMessage(size_t index);
-btos_api::bt_msg_header *Process::GetMessageByID(uint64_t id);
-btos_api::bt_msg_header *Process::GetMessageMatch(const btos_api::bt_msg_filter &filter);
-void Process::SetCurrentMessage(btos_api::bt_msg_header *msg);
-btos_api::bt_msg_header *Process::GetCurrentMessage();
+uint64_t Process::GetPermissions(uint16_t extensionID){
+	auto hl = lock->LockExclusive();
+	if(permissions.has_key(extensionID)) return permissions[extensionID];
+	else return 0;
+}
+
+void Process::SetUserID(uint64_t u){
+	auto hl = lock->LockExclusive();
+	uid = u;
+}
+
+uint64_t Process::GetUID(){
+	auto hl = lock->LockExclusive();
+	return uid;
+}
+
+void Process::AddMessage(btos_api::bt_msg_header *msg){
+	auto hl = lock->LockExclusive();
+	messages.push_back(msg);
+}
+
+void Process::RemoveMessage(btos_api::bt_msg_header *msg){
+	auto hl = lock->LockExclusive();
+	for(size_t i = 0; i < messages.size(); ++i){
+		if(messages[i] == msg){
+			messages.erase(i);
+			return;
+		}
+	}
+}
+
+btos_api::bt_msg_header *Process::GetMessage(size_t index){
+	auto hl = lock->LockExclusive();
+	if(index >= messages.size()) return nullptr;
+	return messages[index];
+}
+
+btos_api::bt_msg_header *Process::GetMessageByID(uint64_t id){
+	auto hl = lock->LockExclusive();
+	for(auto &m : messages){
+		if(m->id == id) return m;
+	}
+	return nullptr;
+}
+
+btos_api::bt_msg_header *Process::GetMessageMatch(const btos_api::bt_msg_filter &filter){
+	auto hl = lock->LockExclusive();
+	for(auto &m : messages){
+		if(msg_is_match(*m, filter)) return m;
+	}
+	return nullptr;
+}
+
+void Process::SetCurrentMessage(btos_api::bt_msg_header *msg){
+	auto hl = lock->LockExclusive();
+	currentMessage = msg;
+}
+
+btos_api::bt_msg_header *Process::GetCurrentMessage(){
+	auto hl = lock->LockExclusive();
+	return currentMessage;
+}
 
 void Process::SetReturnValue(int rV){
 	auto hl = lock->LockExclusive();
 	returnValue = rV;
 }
+
 int Process::GetChildReturnValue(bt_pid_t childPid){
 	auto hl = lock->LockExclusive();
 	if(childReturns.has_key(childPid)) return childReturns[pid];
 	else return 0;
+}
+
+void Process::SetChildReturnValue(bt_pid_t childPid, int returnValue){
+	auto hl = lock->LockExclusive();
+	childReturns[childPid] = returnValue;
 }
 
 void Process::IncrementRefCount(){

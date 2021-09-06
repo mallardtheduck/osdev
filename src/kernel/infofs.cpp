@@ -1,5 +1,5 @@
 #include "kernel.hpp"
-#include "ministl.hpp"
+#include <util/ministl.hpp>
 
 void* const infofs_magic=(void*)0x14F0F5;
 

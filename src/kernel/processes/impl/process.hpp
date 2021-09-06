@@ -12,6 +12,7 @@ private:
 	string name;
 	vector<string> args;
 	int returnValue = 0;
+	btos_api::bt_proc_status::Enum status = btos_api::bt_proc_status::DoesNotExist;
 
 	map<bt_pid_t, int> childReturns;
 
@@ -26,6 +27,11 @@ private:
 		uint8_t flags;
 	};
 	map<string, EnvironmentVariable> environment;
+	map<uint16_t, uint64_t> permissions;
+	uint64_t uid = 0;
+
+	vector<btos_api::bt_msg_header*> messages;
+	btos_api::bt_msg_header *currentMessage;
 
 	uint32_t refCount = 0;
 
@@ -35,6 +41,7 @@ private:
 
 	void GetEnvironmentVariable(const char *name, char *&value, uint8_t &flags);
 	void CleanupProcess();
+	Process();
 public:
 	Process(const char *name, const vector<const char*> &args, IProcess &parent);
 
@@ -48,7 +55,7 @@ public:
 	void SetEnvironmentVariable(const char *name, const char *value, uint8_t flags = 0, bool userspace = false)  override;
 	const char *GetEnvironmentVariable(const char *name, bool userspace = false) override;
 
-	IThread *NewUserThread(ProcessEntryPoint p, void *param, void *stack) override;
+	ThreadPointer NewUserThread(ProcessEntryPoint p, void *param, void *stack) override;
 
 	handle_t AddHandle(IHandle *handle) override;
 	IHandle *GetHandle(handle_t h) override;
@@ -79,6 +86,7 @@ public:
 
 	void SetReturnValue(int returnValue) override;
 	int GetChildReturnValue(bt_pid_t childPid) override;
+	void SetChildReturnValue(bt_pid_t childPid, int returnValue) override;
 
 	void IncrementRefCount() override;
 	void DecrementRefCount() override;

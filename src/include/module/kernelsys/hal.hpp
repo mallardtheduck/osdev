@@ -3,6 +3,8 @@
 
 #include <cstddef>
 
+typedef void (*ProcessEntryPoint)(void *);
+
 class IScheduler;
 
 enum class Generic_Register{

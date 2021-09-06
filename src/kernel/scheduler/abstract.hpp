@@ -103,6 +103,12 @@ inline IThread &CurrentThread(){
 	return GetScheduler().CurrentThread();
 }
 
+inline ThreadPointer GetThread(uint64_t id){
+	auto ptr = GetScheduler().GetByID(id);
+	if(!ptr) panic("(THREAD) Thread does not exist!");
+	return ptr;
+}
+
 
 class SchedulerLock{
 private:

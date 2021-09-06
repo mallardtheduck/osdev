@@ -225,7 +225,9 @@ loaded_elf_proc elf_load_proc(bt_pid_t pid, IFileHandle &file){
 	}
 	ret.entry=(proc_entry)(header.entry);
 	dbgpf("ELF: Entry point: %lx\n", header.entry);
-	proc_switch(oldpid);
+	if(!GetProcessManager().SwitchProcess(oldpid)){
+		panic("(LOAD) Process swtich failed!");
+	}
 	return ret;
 }
 
@@ -236,7 +238,7 @@ public:
 	ElfModule(IFileHandle &file) : mod(elf_load_module(file)) {}
 
 	void Execute(const char *mod_params = nullptr) override{
-		mod.entry(SYSCALL_TABLE, (char*)mod_params);
+		mod.entry(nullptr /*SYSCALL_TABLE*/, (char*)mod_params);
 	};
 
 	ProcessEntryPoint GetEntryPoint(){

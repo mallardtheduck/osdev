@@ -8,6 +8,7 @@
 #endif
 
 #include <cstdint>
+#include <type_traits>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -212,6 +213,14 @@ class vector
 
 		T &back(){
 			return data[dataSize - 1];
+		}
+
+		const T *begin() const{
+			return data;
+		}
+		
+		const T *end() const{
+			return data + dataSize;
 		}
 
 
@@ -482,6 +491,16 @@ public:
 		return &data_[size_];
 	}
 
+	const_iterator begin() const
+	{
+		return &data_[0];
+	}
+
+	const_iterator end() const
+	{
+		return &data_[size_];
+	}
+
 	const_iterator cbegin() const
 	{
 		return &data_[0];
@@ -504,5 +523,9 @@ private:
 	size_type size_, capacity_;
 	pointer data_;
 };
+
+template<typename T> typename std::underlying_type<T>::type to_underlying(T a){
+	return static_cast<typename std::underlying_type<T>::type>(a);
+}
 
 #endif

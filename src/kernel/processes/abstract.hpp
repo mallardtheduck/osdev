@@ -8,8 +8,6 @@
 typedef uint64_t bt_pid_t;
 typedef uint32_t handle_t;
 
-typedef void (*ProcessEntryPoint)(void *);
-
 namespace btos_api{
 	struct bt_msg_header;
 	struct bt_msg_filter;
@@ -34,7 +32,7 @@ public:
 	virtual void SetEnvironmentVariable(const char *name, const char *value, uint8_t flags = 0, bool userspace = false)  = 0;
 	virtual const char *GetEnvironmentVariable(const char *name, bool userspace = false) = 0;
 
-	virtual IThread *NewUserThread(ProcessEntryPoint p, void *param, void *stack) = 0;
+	virtual ThreadPointer NewUserThread(ProcessEntryPoint p, void *param, void *stack) = 0;
 
 	virtual handle_t AddHandle(IHandle *handle) = 0;
 	virtual IHandle *GetHandle(handle_t h) = 0;
@@ -65,6 +63,7 @@ public:
 
 	virtual void SetReturnValue(int returnValue) = 0;
 	virtual int GetChildReturnValue(bt_pid_t childPid) = 0;
+	virtual void SetChildReturnValue(bt_pid_t childPid, int returnValue) = 0;
 
 	virtual void IncrementRefCount() = 0;
 	virtual void DecrementRefCount() = 0;
@@ -83,8 +82,10 @@ public:
 	virtual ProcessPointer NewProcess(const char *name, const vector<const char*> &args, IProcess &parent = ::CurrentProcess()) = 0;
 	virtual ProcessPointer Spawn(const char *name, const vector<const char*> &args, IProcess &parent = ::CurrentProcess()) = 0;
 
+	virtual void RemoveProcess(const IProcess &proc) = 0;
+
 	virtual void SetGlobalEnvironmentVariable(const char *name, const char *value, uint8_t flags = (uint8_t)EnvironemntVariableFlags::Global) = 0;
-	virtual *GetGlobalEnvironmentVariable(const char *name, uint8_t *flags = nullptr) = 0;
+	virtual const char *GetGlobalEnvironmentVariable(const char *name, uint8_t *flags = nullptr) = 0;
 
 	virtual IProcess &CurrentProcess() = 0;
 	virtual ProcessPointer GetByID(bt_pid_t pid) = 0;
@@ -100,5 +101,11 @@ public:
 
 void Processes_Init();
 IProcessManager &GetProcessManager();
+
+inline ProcessPointer GetProcess(bt_pid_t pid){
+	auto ptr = GetProcessManager().GetByID(pid);
+	if(!ptr) panic("(PROC) Process does not exist!");
+	return ptr;
+}
 
 #endif

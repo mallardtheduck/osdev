@@ -42,7 +42,7 @@ public:
     virtual void Close() = 0;
     virtual bool Wait() = 0;
 
-    ~IHandle(){}
+    virtual ~IHandle(){}
 };
 
 bt_handle_info create_handle(IHandle *c);

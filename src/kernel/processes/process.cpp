@@ -1,8 +1,10 @@
-#include "kernel.hpp"
-#include "list.hpp"
-#include "ministl.hpp"
-#include "string.hpp"
-#include "locks.hpp"
+#if 0
+
+#include "../kernel.hpp"
+#include "../list.hpp"
+#include <util/ministl.hpp>
+#include "../utils/string.hpp"
+#include "../locks.hpp"
 #include <util/asprintf.h>
 
 static const uint32_t default_userspace_priority=100;
@@ -927,3 +929,5 @@ uint64_t proc_get_uid_nolock(bt_pid_t pid){
 	if (!proc) return 0;
 	return proc->uid;
 }
+
+#endif
