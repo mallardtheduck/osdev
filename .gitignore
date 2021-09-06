@@ -35,7 +35,7 @@ src/kernel/isodir/*
 qemu-launch-opts.txt
 src/3rdparty/freetype-2.7.1
 src/3rdparty/install
-src/3rdparty/libelf-0.8.9
+src/3rdparty/libelf-0.8.13
 src/3rdparty/libgd-2.1.0
 src/3rdparty/libiconv-1.14
 src/3rdparty/libuuid-1.0.3
@@ -62,6 +62,9 @@ src/packages/*/data
 .fuse_hidden*
 *.tar.h
 src/user/wmapps/*/resc/
+src/user/system/*/resc/
 src/user/libs/shell/libresc/icons/*
 *.marker_file
-
+._*
+.DS_Store
+core
