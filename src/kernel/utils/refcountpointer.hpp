@@ -3,7 +3,7 @@
 
 template<typename T>
 class RefCountPointer{
-private:
+protected:
 	T *theObject;
 public:
 	RefCountPointer(T *ptr) : theObject(ptr){
@@ -49,6 +49,11 @@ public:
 
 	T *get(){
 		return theObject;
+	}
+
+	template<typename R> operator RefCountPointer<R>(){
+		static_assert(!std::is_convertible_v<T*, R*>, "No convesion available.");
+		return RefCountPointer<R>(theObject);
 	}
 };
 
