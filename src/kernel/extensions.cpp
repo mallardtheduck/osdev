@@ -15,7 +15,7 @@ char *extensions_infofs(){
 
 void init_extensions(){
     extensions=new map<uint16_t, module_api::kernel_extension*>();
-	infofs_register("EXTENSIONS", &extensions_infofs);
+	InfoRegister("EXTENSIONS", &extensions_infofs);
 }
 
 uint16_t add_extension(module_api::kernel_extension *ext){

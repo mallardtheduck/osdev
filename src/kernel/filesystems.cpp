@@ -53,7 +53,7 @@ public:
 		return mounts[name];
 	}
 
-	IFilesystemNode *GetNode(const char *path) override{
+	FilesystemNodePointer GetNode(const char *path) override{
 		string pathString = path;
 		string mountName;
 		auto pathPtr = path;
@@ -142,4 +142,13 @@ char *FilesystemManager::InfoFS(){
 		reasprintf_append(&buffer, "%s, %p\n", fs.first.c_str(), fs.second);
 	}
 	return buffer;
+}
+
+void IFilesystemNode::IncrementRefCount(){
+	refcount++;
+}
+
+void IFilesystemNode::DecrementRefCount(){
+	refcount--;
+	if(refcount == 0) delete this;
 }

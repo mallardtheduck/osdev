@@ -5,9 +5,14 @@
 #include <btos/fs_interface.h>
 
 class IFilesystemNode;
+typedef RefCountPointer<IFilesystemNode> FilesystemNodePointer;
 
 class IFileHandle : public IHandle{
 public:
+	virtual uint32_t GetType(){
+		return kernel_handle_types::file;
+	}
+
 	virtual size_t Read(size_t bytes, char *buffer) = 0;
 	virtual size_t Write(size_t bytes, const char *buffer) = 0;
 
@@ -18,23 +23,29 @@ public:
 
 	virtual void Flush() = 0;
 
-	virtual IFilesystemNode *GetNode() = 0;
+	virtual FilesystemNodePointer GetNode() = 0;
 
 	virtual ~IFileHandle() {}
 };
 
 class IDirectoryHandle : public IHandle{
 public:
+	virtual uint32_t GetType(){
+		return kernel_handle_types::directory;
+	}
+
 	virtual fs_item_types ReadType() = 0;
-	virtual IFilesystemNode *Read() = 0;
+	virtual FilesystemNodePointer Read() = 0;
 	virtual bool Write(IFilesystemNode &node) = 0;
 	virtual size_t Seek(size_t pos, uint32_t flags) = 0;
-	virtual IFilesystemNode *GetNode() = 0;
+	virtual FilesystemNodePointer GetNode() = 0;
 
 	virtual ~IDirectoryHandle() {}
 };
 
 class IFilesystemNode{
+private:
+	size_t refcount = 0;
 public:
 	virtual IFileHandle *OpenFile(fs_mode_flags mode) = 0;
 	virtual IDirectoryHandle *OpenDirectory(fs_mode_flags mode) = 0;
@@ -44,12 +55,15 @@ public:
 	virtual bt_filesize_t GetSize() = 0;
 	virtual fs_item_types GetType() = 0;
 
+	virtual void IncrementRefCount();
+	virtual void DecrementRefCount();
+
 	virtual ~IFilesystemNode() {}
 };
 
 class IMountedFilesystem{
 public:
-	virtual IFilesystemNode *GetNode(const char *path) = 0;
+	virtual FilesystemNodePointer GetNode(const char *path) = 0;
 	virtual void Flush() = 0;
 	virtual bool Unmount() = 0;
 
@@ -70,13 +84,12 @@ public:
 	virtual IMountedFilesystem *Detach(const char *name) = 0;
 	virtual IMountedFilesystem *GetByName(const char *name) = 0;
 
-	virtual IFilesystemNode *GetNode(const char *path) = 0;
+	virtual FilesystemNodePointer GetNode(const char *path) = 0;
 
 	IFileHandle *OpenFile(const char *path, fs_mode_flags mode){
 		auto node = GetNode(path);
 		if(node){
 			auto ret = node->OpenFile(mode);
-			delete node;
 			return ret;
 		}
 		return nullptr;

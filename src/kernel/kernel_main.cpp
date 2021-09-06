@@ -17,7 +17,7 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	GetHAL().YieldToScheduler();
 	drv_init();
 	fs_init();
-	infofs_init();
+	Info_Init();
 	Modules_Init();
 	init_handles();
 	userapi_init();
