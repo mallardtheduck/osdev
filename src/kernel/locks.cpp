@@ -10,8 +10,7 @@ class Lock : public ILock{
 	uint32_t recursionCount = 0;
 	bool waiting = false;
 
-	static bool BlockCheck(void *p){
-		Lock *thisLock = (Lock*)p;
+	static bool BlockCheck(Lock *thisLock){
 		thisLock->waiting = true;
 		return thisLock->owningThreadID == 0;
 	}
@@ -25,7 +24,11 @@ public:
 		}
 		while(owningThreadID != currentThreadID) {
 			while (!__sync_bool_compare_and_swap(&owningThreadID, 0, currentThreadID)) {
-				CurrentThread().SetBlock(&BlockCheck, (void*)this);
+				CurrentThread().SetBlock(
+					[&](){
+						return BlockCheck(this);
+					}
+				);
 			}
 		}
 		waiting = false;
@@ -82,8 +85,13 @@ public:
 		return owningThreadID;
 	}
 
-	virtual bool IsLocked(){
+	bool IsLocked() override{
 		return owningThreadID != 0;
+	}
+
+	~Lock(){
+		if(owningThreadID == CurrentThread().ID()) panic("(LOCK) Attempting to destory held lock!");
+		TakeExclusive();
 	}
 };
 
