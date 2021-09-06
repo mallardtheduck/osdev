@@ -10,11 +10,16 @@ template <typename ReturnValue, typename... Args>
 class function<ReturnValue(Args...)> {
 private:
 	typedef function<ReturnValue(Args...)> this_t;
+	typedef ReturnValue(*fnPtr)(Args...);
 public:
 	template<typename T> function(T t) : callable_(make_unique<CallableT<T>>(t)){
 	}
 
+	function(fnPtr ptr) : callable_(make_unique<CallableT<fnPtr>>(ptr)) {}
+
 	function(std::nullptr_t) {}
+
+	function() : function(nullptr) {}
 
 	function(const this_t &other){
 		if(other.callable_) callable_.reset(other.callable_->Clone());
