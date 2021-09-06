@@ -43,6 +43,9 @@ enum fs_mode_flags{
 	FS_Delete	= 1 << 4,
 	FS_Exclude	= 1 << 5,
 	FS_Truncate = 1 << 6,
+
+	FS_WriteFlags = FS_Write | FS_Truncate | FS_Delete | FS_Create,
+	FS_ReadOnlyFlags = ~FS_WriteFlags,
 };
 
 #ifndef __cplusplus
