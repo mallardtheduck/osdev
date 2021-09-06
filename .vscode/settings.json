@@ -17,6 +17,7 @@
     "files.associations": {
         "*.inf": "ini",
         "*.hpp": "cpp",
-        "type_traits": "cpp"
+        "type_traits": "cpp",
+        "local_type_traits": "cpp"
     }
 }
