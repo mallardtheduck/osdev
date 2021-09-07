@@ -51,6 +51,10 @@ public:
 		return theObject;
 	}
 
+	T &operator*(){
+		return *theObject;
+	}
+
 	template<typename R> operator RefCountPointer<R>(){
 		static_assert(!std::is_convertible_v<T*, R*>, "No convesion available.");
 		return RefCountPointer<R>(theObject);
