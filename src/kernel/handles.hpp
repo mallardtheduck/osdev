@@ -71,8 +71,8 @@ public:
 	virtual ~GenericHandle() {}
 };
 
-template<typename T>
-GenericHandle<T> *MakeGenericHandle(uint32_t type, T data, function<void(T)> close = nullptr, function<bool(T)> wait = nullptr){
+template<typename T, typename Tclose = nullptr_t, typename Twait = nullptr_t>
+GenericHandle<T> *MakeGenericHandle(uint32_t type, T data, Tclose close = nullptr, Twait wait = nullptr){
 	return GenericHandle<T>(type, data, close, wait);
 }
 
