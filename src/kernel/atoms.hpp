@@ -10,7 +10,7 @@ public:
 	virtual uint64_t Wait(bt_atom_compare::Enum cmp, uint64_t value) = 0;
 	virtual uint64_t CompareExchange(uint64_t cmp, uint64_t xchg) = 0;
 
-	virtual bt_handle_info MakeWaitHandle(bt_atom_compare::Enum cmp, uint64_t value) = 0;
+	virtual IHandle *MakeWaitHandle(bt_atom_compare::Enum cmp, uint64_t value) = 0;
 
 	virtual uint64_t Read() = 0;
 

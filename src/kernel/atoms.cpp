@@ -34,12 +34,12 @@ private:
 		return ret;
 	}
 
-	static void WaitHandleClose(void *ptr){
-		delete (WaitOptions*)ptr;
+	static void WaitHandleClose(WaitOptions *ptr){
+		delete ptr;
 	}
 
-	static bool WaitHandleWait(void *ptr){
-		return WaitBlockCheck(*(WaitOptions*)ptr);
+	static bool WaitHandleWait(WaitOptions *ptr){
+		return WaitBlockCheck(*ptr);
 	}
 	
 public:
@@ -86,12 +86,12 @@ public:
 		return value;
 	}
 
-	bt_handle_info MakeWaitHandle(bt_atom_compare::Enum cmp, uint64_t value) override{
+	IHandle *MakeWaitHandle(bt_atom_compare::Enum cmp, uint64_t value) override{
 		WaitOptions *p = new WaitOptions();
 		p->a = this;
 		p->cmp = cmp;
 		p->value = value;
-		return create_handle(kernel_handle_types::atomwait, (void*)p, &WaitHandleClose, &WaitHandleWait);
+		return MakeGenericHandle(kernel_handle_types::atomwait, p, &WaitHandleClose, &WaitHandleWait);
 	}
 
 	~Atom(){
