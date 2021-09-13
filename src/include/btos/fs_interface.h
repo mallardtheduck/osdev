@@ -66,92 +66,10 @@ struct BT_DE_NAME{
 	fs_item_types type;
 };
 
-#ifndef __cplusplus
-typedef struct BT_DE_NAME BT_DE_NAME;
-#endif
-
-static const BT_DE_NAME invalid_directory_entry={false, 0, "", 0, FS_Invalid};
-
-#undef BT_DE_NAME
-
-struct fs_path{
-	char *str;
-	struct fs_path *next;
-};
-
-#ifndef __cplusplus
-typedef struct fs_path fs_path;
-#endif
-
 enum fs_seek_flags{
 	FS_Set			= 0,
 	FS_Relative 	= 1,
 	FS_Backwards 	= 1 << 1,
 };
-
-#if defined(KERNEL) || defined(KERNEL_MODULE)
-
-struct fs_driver{
-	bool valid;
-	char *name;
-	bool needs_device;
-	void *(*mount)(char *device);
-	bool (*unmount)(void *mountdata);
-	void *(*open)(void *mountdata, fs_path *path, fs_mode_flags mode);
-	bool (*close)(void *filedata);
-	size_t (*read)(void *filedata, size_t bytes, char *buf);
-	size_t (*write)(void *filedata, size_t bytes, char *buf);
-	bt_filesize_t (*seek)(void *filedata, bt_filesize_t pos, uint32_t flags);
-	bool (*setsize)(void *filedata, bt_filesize_t size);
-	int (*ioctl)(void *filedata, int fn, size_t bytes, char *buf);
-    void (*flush)(void *filedata);
-	void *(*open_dir)(void *mountdata, fs_path *path, fs_mode_flags mode);
-	bool (*close_dir)(void *dirdata);
-	directory_entry (*read_dir)(void *dirdata);
-	bool (*write_dir)(void *dirdata, directory_entry entry);
-	size_t (*dirseek)(void *dirdata, size_t pos, uint32_t flags);
-	directory_entry (*stat)(void *mountdata, fs_path *path);
-	bool (*format)(char *device, void *options);
-};
-
-#ifndef __cplusplus
-typedef struct fs_driver fs_driver;
-#endif
-
-struct fs_mountpoint{
-	bool valid;
-	char name[9];
-	char device[255];
-	fs_driver driver;
-	void *mountdata;
-};
-
-#ifndef __cplusplus
-typedef struct fs_mountpoint fs_mountpoint;
-#endif
-
-struct file_handle{
-	bool valid;
-	fs_mountpoint *mount;
-	void *filedata;
-	fs_mode_flags mode;
-};
-
-#ifndef __cplusplus
-typedef struct file_handle file_handle;
-#endif
-
-struct dir_handle{
-	bool valid;
-	fs_mountpoint *mount;
-	void *dirdata;
-	fs_mode_flags mode;
-};
-
-#ifndef __cplusplus
-typedef struct dir_handle dir_handle;
-#endif
-
-#endif
 
 #endif
