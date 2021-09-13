@@ -26,6 +26,23 @@
         "io_context": "cpp",
         "socket": "cpp",
         "timer": "cpp",
-        "*.inc": "cpp"
+        "*.inc": "cpp",
+        "array": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "deque": "cpp",
+        "forward_list": "cpp",
+        "list": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "rope": "cpp",
+        "slist": "cpp",
+        "initializer_list": "cpp",
+        "regex": "cpp",
+        "valarray": "cpp",
+        "internet": "cpp",
+        "string_view": "cpp"
     }
 }
