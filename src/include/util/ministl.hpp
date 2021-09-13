@@ -429,18 +429,32 @@ public:
 
 	value_type &get(const key_type &Key){
 		if (has_key(Key))
+		{
+			for (iterator i = begin(); i != end(); ++i)
 			{
-				for (iterator i = begin(); i != end(); ++i)
+				if (i->first == Key)
 				{
-					if (i->first == Key)
-					{
-						return *i;
-					}
+					return *i;
 				}
 			}
-			size_type op = size_;
-			insert(value_type(Key, mapped_type()));
-			return data_[op];
+		}
+		size_type op = size_;
+		insert(value_type(Key, mapped_type()));
+		return data_[op];
+	}
+
+	value_type get(const key_type &Key) const{
+		if (has_key(Key))
+		{
+			for (auto i = begin(); i != end(); ++i)
+			{
+				if (i->first == Key)
+				{
+					return *i;
+				}
+			}
+		}
+		return value_type();
 	}
 
 	_Myt &reserve(size_type _Capacity)
