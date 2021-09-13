@@ -110,9 +110,13 @@ void Process::Terminate(){
 
 }
 
-void Process::Hold(){
-	//Don't think this is actually used?!?
-	panic("Process::Hold()");
+void Process::HoldBeforeUserspace(){
+	//Prevents threads from returning to userspace, used by the memory manager
+	if(status == btos_api::bt_proc_status::Held){
+		CurrentThread().SetBlock([&]{
+			return status != btos_api::bt_proc_status::Held;
+		});
+	}
 }
 
 void Process::SetEnvironmentVariable(const char *name, const char *value, uint8_t flags, bool userspace){

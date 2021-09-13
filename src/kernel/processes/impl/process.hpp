@@ -51,7 +51,7 @@ public:
 	
 	void End() override;
 	void Terminate() override;
-	void Hold() override;
+	void HoldBeforeUserspace() override;
 
 	void SetEnvironmentVariable(const char *name, const char *value, uint8_t flags = 0, bool userspace = false)  override;
 	const char *GetEnvironmentVariable(const char *name, bool userspace = false) override;

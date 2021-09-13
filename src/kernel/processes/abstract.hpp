@@ -27,7 +27,8 @@ public:
 	
 	virtual void End() = 0;
 	virtual void Terminate() = 0;
-	virtual void Hold() = 0;
+
+	virtual void HoldBeforeUserspace() = 0;
 
 	virtual void SetEnvironmentVariable(const char *name, const char *value, uint8_t flags = 0, bool userspace = false)  = 0;
 	virtual const char *GetEnvironmentVariable(const char *name, bool userspace = false) = 0;
