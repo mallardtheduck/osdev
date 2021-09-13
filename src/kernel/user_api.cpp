@@ -42,7 +42,7 @@ void userapi_handler(ICPUState &state){
 	if(currentThread.ShouldAbortAtUserBoundary() || currentProcess.GetStatus() == btos_api::bt_proc_status::Ending) CurrentThread().Abort();
 }
 
-bool is_safe_ptr(uint32_t ptr, size_t size, bt_pid_t pid = CurrentProcess().ID()){
+bool is_safe_ptr(uint32_t ptr, size_t size, bt_pid_t pid){
 	if(ptr >= MM2::MM2_Kernel_Boundary){
 		bt_pid_t cur_pid = CurrentProcess().ID();
 		GetProcessManager().SwitchProcess(pid);
@@ -61,7 +61,7 @@ bool is_safe_ptr(uint32_t ptr, size_t size, bt_pid_t pid = CurrentProcess().ID()
 	}else return false;
 }
 
-bool is_safe_string(uint32_t ptr, bt_pid_t pid = CurrentProcess().ID()){
+bool is_safe_string(uint32_t ptr, bt_pid_t pid){
 	char c = 0xFF;
 	for(size_t i = 0; c != '\0'; ++i){
 		if(!is_safe_ptr(ptr + i, 1, pid)){
@@ -118,15 +118,14 @@ static void close_shm_space_handle(uint64_t id){
 
 USERAPI_HANDLER(BT_CREATE_SHM){
 	uint64_t id = MM2::shm_create(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	auto handle = MakeGenericHandle(kernel_handle_types::shm_space, id, &close_shm_space_handle);
+	auto handle = MakeKernelGenericHandle<KernelHandles::SHMSpace>(id, &close_shm_space_handle);
 	state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(handle);
 }
 
 USERAPI_HANDLER(BT_SHM_ID){
 	auto h = CurrentProcess().GetHandle((handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(uint64_t*))){
-		if(h && h->GetType() == kernel_handle_types::shm_space){
-			auto handle = static_cast<GenericHandle<uint64_t>*>(h);
+		if(auto handle = KernelHandleCast<KernelHandles::SHMSpace>(h)){
 			*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_C) = handle->GetData();
 		}
 	}else RAISE_US_ERROR();
@@ -141,7 +140,7 @@ USERAPI_HANDLER(BT_SHM_MAP){
 		btos_api::bt_shm_mapping *mapping = (btos_api::bt_shm_mapping*)state.Get32BitRegister(Generic_Register::GP_Register_B);
 		if(is_safe_ptr((uint32_t)mapping->addr, mapping->pages * MM2::MM2_Page_Size)){
 			uint64_t id = MM2::shm_map(mapping->id, mapping->addr, mapping->offset, mapping->pages, mapping->flags);
-			auto handle = MakeGenericHandle(kernel_handle_types::shm_mapping, id, &close_shm_map_handle);
+			auto handle = MakeKernelGenericHandle<KernelHandles::SHMMapping>(id, &close_shm_map_handle);
 			state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(handle);
 		}else RAISE_US_ERROR();
 	}else RAISE_US_ERROR();	
@@ -162,7 +161,7 @@ USERAPI_HANDLER(BT_GET_ARG){
 
 USERAPI_HANDLER(BT_CREATE_LOCK){
 	auto lock = NewLock();
-	auto handle = MakeGenericHandle(kernel_handle_types::lock, lock, 
+	auto handle = MakeKernelGenericHandle<KernelHandles::Lock>(lock, 
 		[](ILock *l){
 			delete l;
 		},
@@ -176,8 +175,7 @@ USERAPI_HANDLER(BT_CREATE_LOCK){
 
 USERAPI_HANDLER(BT_LOCK){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::lock) {
-		auto handle = static_cast<GenericHandle<ILock*>*>(h);
+	if(auto handle = KernelHandleCast<KernelHandles::Lock>(h)) {
 		auto lock = handle->GetData();
 		lock->TakeExclusive(true);
 		CurrentThread().SetAbortable(true);
@@ -186,8 +184,7 @@ USERAPI_HANDLER(BT_LOCK){
 
 USERAPI_HANDLER(BT_TRY_LOCK){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::lock){
-		auto handle = static_cast<GenericHandle<ILock*>*>(h);
+	if(auto handle = KernelHandleCast<KernelHandles::Lock>(h)){
 		auto lock = handle->GetData();
 		if(lock->TryTakeExclusive()){
 			state.Get32BitRegister(Generic_Register::GP_Register_A) = 1;
@@ -200,8 +197,7 @@ USERAPI_HANDLER(BT_TRY_LOCK){
 
 USERAPI_HANDLER(BT_UNLOCK){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::lock){
-		auto handle = static_cast<GenericHandle<ILock*>*>(h);
+	if(auto handle = KernelHandleCast<KernelHandles::Lock>(h)){
 		auto lock = handle->GetData();
 		lock->Release(true);
 		CurrentThread().SetAbortable(false);
@@ -215,7 +211,7 @@ USERAPI_HANDLER(BT_DESTROY_LOCK){
 USERAPI_HANDLER(BT_CREATE_ATOM){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(uint64_t))){
 		auto atom = NewAtom(*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_B));
-		auto handle = MakeGenericHandle(kernel_handle_types::atom, atom,
+		auto handle = MakeKernelGenericHandle<KernelHandles::Atom>(atom,
 			[](IAtom *a){
 				delete a;
 			}
@@ -226,38 +222,42 @@ USERAPI_HANDLER(BT_CREATE_ATOM){
 
 USERAPI_HANDLER(BT_MODIFY_ATOM){
 	auto h = CurrentProcess().GetHandle((handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::atom && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_D), sizeof(uint64_t))){
-		auto handle = static_cast<GenericHandle<IAtom*>*>(h);
-		*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_D) = handle->GetData()->Modify(
-			(bt_atom_modify::Enum)state.Get32BitRegister(Generic_Register::GP_Register_C), 
-			*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_D));
-		state.Get32BitRegister(Generic_Register::GP_Register_A) = 1;
+	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_D), sizeof(uint64_t))){
+		if(auto handle = KernelHandleCast<KernelHandles::Atom>(h)){
+			*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_D) = handle->GetData()->Modify(
+				(bt_atom_modify::Enum)state.Get32BitRegister(Generic_Register::GP_Register_C), 
+				*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_D));
+			state.Get32BitRegister(Generic_Register::GP_Register_A) = 1;
+		}
 	}else RAISE_US_ERROR();
 }
 
 USERAPI_HANDLER(BT_MAKE_WAIT_ATOM){
 	auto h = CurrentProcess().GetHandle((handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::atom && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_D), sizeof(uint64_t))){
-		auto handle = static_cast<GenericHandle<IAtom*>*>(h);
-		auto wait = handle->GetData()->MakeWaitHandle((bt_atom_compare::Enum)state.Get32BitRegister(Generic_Register::GP_Register_C), *(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_D));
-		state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(wait);
+	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_D), sizeof(uint64_t))){
+		if(auto handle = KernelHandleCast<KernelHandles::Atom>(h)){
+			auto wait = handle->GetData()->MakeWaitHandle((bt_atom_compare::Enum)state.Get32BitRegister(Generic_Register::GP_Register_C), *(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_D));
+			state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(wait);
+		}
 	}else RAISE_US_ERROR();
 }
 
 USERAPI_HANDLER(BT_CMPXCHG_ATOM){
 	auto h = CurrentProcess().GetHandle((handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::atom && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(uint64_t)) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_D), sizeof(uint64_t))){
-		auto handle = static_cast<GenericHandle<IAtom*>*>(h);
-		*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_D) = handle->GetData()->CompareExchange(*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_C), *(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_D));
-		state.Get32BitRegister(Generic_Register::GP_Register_A) = 1;
+	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(uint64_t)) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_D), sizeof(uint64_t))){
+		if(auto handle = KernelHandleCast<KernelHandles::Atom>(h)){
+			*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_D) = handle->GetData()->CompareExchange(*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_C), *(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_D));
+			state.Get32BitRegister(Generic_Register::GP_Register_A) = 1;
+		}else{
+			state.Get32BitRegister(Generic_Register::GP_Register_A) = 0;
+		}
 	}else RAISE_US_ERROR();
 }
 
 USERAPI_HANDLER(BT_READ_ATOM){
 	auto h = CurrentProcess().GetHandle((handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::atom && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(uint64_t))){
-		auto handle = static_cast<GenericHandle<IAtom*>*>(h);
-		*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_C) = handle->GetData()->Read();
+	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(uint64_t))){
+		if(auto handle = KernelHandleCast<KernelHandles::Atom>(h)) *(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_C) = handle->GetData()->Read();
 	}else RAISE_US_ERROR();
 }
 
@@ -317,8 +317,7 @@ USERAPI_HANDLER(BT_FCLOSE){
 
 USERAPI_HANDLER(BT_FWRITE){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::file){
-		auto handle = static_cast<IFileHandle*>(h);
+	if(auto handle = KernelHandleCast<KernelHandles::File>(h)){
 		if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_D), state.Get32BitRegister(Generic_Register::GP_Register_C))){
 			state.Get32BitRegister(Generic_Register::GP_Register_A) = handle->Write(state.Get32BitRegister(Generic_Register::GP_Register_C), (char*)state.Get32BitRegister(Generic_Register::GP_Register_D));
 		}else RAISE_US_ERROR();
@@ -327,8 +326,7 @@ USERAPI_HANDLER(BT_FWRITE){
 
 USERAPI_HANDLER(BT_FREAD){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::file){
-		auto handle = static_cast<IFileHandle*>(h);
+	if(auto handle = KernelHandleCast<KernelHandles::File>(h)){
 		if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_D), state.Get32BitRegister(Generic_Register::GP_Register_C))){
 			state.Get32BitRegister(Generic_Register::GP_Register_A) = handle->Read(state.Get32BitRegister(Generic_Register::GP_Register_C), (char*)state.Get32BitRegister(Generic_Register::GP_Register_D));
 		}else RAISE_US_ERROR();
@@ -337,8 +335,7 @@ USERAPI_HANDLER(BT_FREAD){
 
 USERAPI_HANDLER(BT_FIOCTL){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::file){
-		auto handle = static_cast<IFileHandle*>(h);
+	if(auto handle = KernelHandleCast<KernelHandles::File>(h)){
 		if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_D), sizeof(btos_api::bt_fioctl_buffer))){
 			btos_api::bt_fioctl_buffer *buf=(btos_api::bt_fioctl_buffer*)state.Get32BitRegister(Generic_Register::GP_Register_D);
 			if(buf->size==0 || is_safe_ptr((uint32_t)buf->buffer, buf->size)){
@@ -350,8 +347,7 @@ USERAPI_HANDLER(BT_FIOCTL){
 
 USERAPI_HANDLER(BT_FSEEK){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::file){
-		auto handle = static_cast<IFileHandle*>(h);
+	if(auto handle = KernelHandleCast<KernelHandles::File>(h)){
 		if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(bt_filesize_t))){
 			bt_filesize_t *pos = (bt_filesize_t*)state.Get32BitRegister(Generic_Register::GP_Register_C);
 			*pos = handle->Seek(*pos, state.Get32BitRegister(Generic_Register::GP_Register_D));
@@ -362,8 +358,7 @@ USERAPI_HANDLER(BT_FSEEK){
 
 USERAPI_HANDLER(BT_FSETSIZE){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::file){
-		auto handle = static_cast<IFileHandle*>(h);
+	if(auto handle = KernelHandleCast<KernelHandles::File>(h)){
 		if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(bt_filesize_t))){
 			bt_filesize_t *size = (bt_filesize_t*)state.Get32BitRegister(Generic_Register::GP_Register_C);
 			state.Get32BitRegister(Generic_Register::GP_Register_A) = handle->Resize(*size);
@@ -373,10 +368,7 @@ USERAPI_HANDLER(BT_FSETSIZE){
 
 USERAPI_HANDLER(BT_FFLUSH){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::file){
-		auto handle = static_cast<IFileHandle*>(h);
-		handle->Flush();
-	}
+	if(auto handle = KernelHandleCast<KernelHandles::File>(h)) handle->Flush();
 }
 
 static void close_filemap_handle(uint64_t f){
@@ -385,14 +377,13 @@ static void close_filemap_handle(uint64_t f){
 
 USERAPI_HANDLER(BT_MMAP){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::file){
-		auto handle = static_cast<IFileHandle*>(h);
+	if(auto handle = KernelHandleCast<KernelHandles::File>(h)){
 		if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_D), sizeof(btos_api::bt_mmap_buffer))){
 			btos_api::bt_mmap_buffer *buffer=(btos_api::bt_mmap_buffer*)state.Get32BitRegister(Generic_Register::GP_Register_D);
 			if(!is_safe_ptr((uint32_t)buffer->buffer, buffer->size)) return;
 
-			auto id =MM2::mm2_mmap(buffer->buffer, *handle, state.Get32BitRegister(Generic_Register::GP_Register_C), buffer->size);
-			auto newHandle = MakeGenericHandle(kernel_handle_types::memory_mapping, id, &close_filemap_handle);
+			auto id = MM2::mm2_mmap(buffer->buffer, *handle, state.Get32BitRegister(Generic_Register::GP_Register_C), buffer->size);
+			auto newHandle = MakeKernelGenericHandle<KernelHandles::MemoryMapping>(id, &close_filemap_handle);
 			state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(newHandle);
 			return;
 		}else RAISE_US_ERROR();
@@ -401,7 +392,6 @@ USERAPI_HANDLER(BT_MMAP){
 }
 
 USERAPI_HANDLER(BT_DOPEN){
-   //TODO: Flags...
 	if(is_safe_string(state.Get32BitRegister(Generic_Register::GP_Register_B))){
 		auto path = (char*)state.Get32BitRegister(Generic_Register::GP_Register_B);
 		auto flags = (fs_mode_flags)state.Get32BitRegister(Generic_Register::GP_Register_C);
@@ -423,20 +413,19 @@ USERAPI_HANDLER(BT_DCLOSE){
 
 USERAPI_HANDLER(BT_DWRITE){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::directory){
-		auto handle = static_cast<IDirectoryHandle*>(h);
+	if(auto handle = KernelHandleCast<KernelHandles::Directory>(h)){
 		if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(directory_entry))){
 			directory_entry *entry=(directory_entry*)state.Get32BitRegister(Generic_Register::GP_Register_C);
-			//handle->Write();
-			//fs_write_dir(*dir, *entry);
+			//TODO: Currently, DWRITE can only be used to rename files. Is that enough?
+			auto node = handle->Read();
+			if(node) node->Rename(entry->filename);
 		}else RAISE_US_ERROR();
 	}
 }
 
 USERAPI_HANDLER(BT_DREAD){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::directory){
-		auto handle = static_cast<IDirectoryHandle*>(h);
+	if(auto handle = KernelHandleCast<KernelHandles::Directory>(h)){
 		if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(directory_entry))){
 			directory_entry *entry=(directory_entry*)state.Get32BitRegister(Generic_Register::GP_Register_C);
 			auto node = handle->Read();
@@ -453,8 +442,7 @@ USERAPI_HANDLER(BT_DREAD){
 
 USERAPI_HANDLER(BT_DSEEK){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h && h->GetType() == kernel_handle_types::directory){
-		auto handle = static_cast<IDirectoryHandle*>(h);
+	if(auto handle = KernelHandleCast<KernelHandles::Directory>(h)){
 		state.Get32BitRegister(Generic_Register::GP_Register_A) = handle->Seek(state.Get32BitRegister(Generic_Register::GP_Register_C), state.Get32BitRegister(Generic_Register::GP_Register_D));
 	}
 }
@@ -575,7 +563,7 @@ USERAPI_HANDLER(BT_NEW_THREAD){
 	}
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(ProcessEntryPoint)) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_D), 0) && (!state.Get32BitRegister(Generic_Register::GP_Register_C) || is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), 0))){
 		auto id = CurrentProcess().NewUserThread((ProcessEntryPoint)state.Get32BitRegister(Generic_Register::GP_Register_B), (void*)state.Get32BitRegister(Generic_Register::GP_Register_C), (void*)state.Get32BitRegister(Generic_Register::GP_Register_D));
-		auto handle = MakeGenericHandle(kernel_handle_types::thread, id, [](uint64_t id){
+		auto handle = MakeKernelGenericHandle<KernelHandles::Thread>(id, [](uint64_t id){
 			GetThread(id)->Abort();
 		});
 		state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(handle);
@@ -583,54 +571,64 @@ USERAPI_HANDLER(BT_NEW_THREAD){
 }
 
 USERAPI_HANDLER(BT_BLOCK_THREAD){
-	sch_abortable(true);
-	sch_block();
-	sch_abortable(false);
+	CurrentThread().SetAbortable(true);
+	CurrentThread().Block();
+	CurrentThread().SetAbortable(false);
 }
 
 USERAPI_HANDLER(BT_UNBLOCK_THREAD){
-	uint64_t id=proc_get_thread(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	sch_unblock(id);
+	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
+	if(auto handle = KernelHandleCast<KernelHandles::Thread>(h)){
+		auto thread = GetThread(handle->GetData());
+		if(thread) thread->Unblock();
+	}
 }
 
 USERAPI_HANDLER(BT_GET_THREAD){
-	state.Get32BitRegister(Generic_Register::GP_Register_A)=proc_get_thread_handle(CurrentThread().ID());
+	auto &currentProcess = CurrentProcess();
+	auto currentThreadId = CurrentThread().ID();
+	auto threadHandles = currentProcess.GetHandlesByType(KernelHandles::Thread::id);
+	for(auto &hId : threadHandles){
+		auto h = currentProcess.GetHandle(hId);
+		if(auto handle = KernelHandleCast<KernelHandles::Thread>(h)){
+			if(handle->GetData() == currentThreadId){
+				state.Get32BitRegister(Generic_Register::GP_Register_A) = hId;
+				return;
+			}
+		}
+	}
+	state.Get32BitRegister(Generic_Register::GP_Register_A) = 0;
 }
 
 USERAPI_HANDLER(BT_WAIT_THREAD){
-	uint64_t id=proc_get_thread(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(id){
-		sch_wait(id);
-	}
+	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
+	if(auto handle = KernelHandleCast<KernelHandles::Thread>(h)) handle->GetData()->Join();
 }
 
 USERAPI_HANDLER(BT_END_THREAD){
 	debug_event_notify(CurrentProcess().ID(), CurrentThread().ID(), bt_debug_event::ThreadEnd);
-	sch_end_thread();
+	CurrentThread().Abort();
 }
 
 USERAPI_HANDLER(BT_YIELD){
-	sch_yield();
+	CurrentThread().Yield();
 }
 
 USERAPI_HANDLER(BT_THREAD_ABORT){
-	uint64_t id=proc_get_thread(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(id){
-		proc_remove_thread(id);
-		sch_abort(id);
-	}
+	CurrentProcess().CloseAndRemoveHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
 }
 
 USERAPI_HANDLER(BT_SEND){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(btos_api::bt_msg_header)) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(uint64_t))){
 		btos_api::bt_msg_header header=*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_B);
 		if(header.length && !is_safe_ptr((uint32_t)header.content, header.length)) return;
-		uint64_t &ret=*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_C);
+		//uint64_t &ret=*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_C);
 		header.flags=header.flags | btos_api::bt_msg_flags::UserSpace;
 		header.from=CurrentProcess().ID();
 		header.critical=false;
 		if(header.length > btos_api::BT_MSG_MAX) return;
-		ret=proc_send_message(header);
+		//TODO: Implement once messaging is fully refactored!
+		//ret=proc_send_message(header);
 	}else RAISE_US_ERROR();
 }
 
@@ -666,7 +664,8 @@ USERAPI_HANDLER(BT_ACK){
 }
 
 USERAPI_HANDLER(BT_MSGWAIT){
-	proc_message_wait();
+	//TODO: Implement once messaging is fully refactored!
+	//proc_message_wait();
 }
 
 USERAPI_HANDLER(BT_SUBSCRIBE){
@@ -698,15 +697,17 @@ USERAPI_HANDLER(BT_MSGQUERY){
 
 USERAPI_HANDLER(BT_MAKE_MSG_WAIT){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(btos_api::bt_msg_filter))){
-		bt_handle_info h = msg_create_recv_handle(*(btos_api::bt_msg_filter*)state.Get32BitRegister(Generic_Register::GP_Register_B));
-		state.Get32BitRegister(Generic_Register::GP_Register_A) = proc_add_handle(h);
+		//TODO: Implement once messaging is fully refactored!
+		//bt_handle_info h = msg_create_recv_handle(*(btos_api::bt_msg_filter*)state.Get32BitRegister(Generic_Register::GP_Register_B));
+		//state.Get32BitRegister(Generic_Register::GP_Register_A) = proc_add_handle(h);
 	}else RAISE_US_ERROR();
 }
 
 USERAPI_HANDLER(BT_READ_MSG_WAIT){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(btos_api::bt_msg_header))){
-		bt_handle_info h = proc_get_handle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-		*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_C) = msg_read_recv_handle(h);
+		//TODO: Implement once messaging is fully refactored!
+		//bt_handle_info h = proc_get_handle(state.Get32BitRegister(Generic_Register::GP_Register_B));
+		//*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_C) = msg_read_recv_handle(h);
 	}else RAISE_US_ERROR();
 }
 
@@ -735,16 +736,12 @@ USERAPI_HANDLER(BT_MULTI_CALL){
 }
 
 USERAPI_HANDLER(BT_CLOSEHANDLE){
-	bt_handle_info h=proc_get_handle((handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h.open && h.type!=kernel_handle_types::invalid){
-		close_handle(h);
-		proc_remove_handle((handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
-	}
+	CurrentProcess().CloseAndRemoveHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
 }
 
 USERAPI_HANDLER(BT_QUERYHANDLE){
-	bt_handle_info h=proc_get_handle((handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h.open && h.type!=kernel_handle_types::invalid){
+	auto h = CurrentProcess().GetHandle((handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
+	if(h && h->GetType() != KernelHandles::Invald::id){
 		state.Get32BitRegister(Generic_Register::GP_Register_A) = 1;
 	}else{
 		state.Get32BitRegister(Generic_Register::GP_Register_A) = 0;
@@ -752,26 +749,21 @@ USERAPI_HANDLER(BT_QUERYHANDLE){
 }
 
 USERAPI_HANDLER(BT_WAITHANDLE){
-	bt_handle_info h = proc_get_handle((handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h.open && h.type != kernel_handle_types::invalid){
-		wait_handle(h);
-	}
+	auto h = CurrentProcess().GetHandle((handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
+	if(h) WaitOnHandle(h);
 }
 
 USERAPI_HANDLER(BT_MAKE_WAITALL){
 	size_t size = state.Get32BitRegister(Generic_Register::GP_Register_C);
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), size * sizeof(bt_handle_t))){
 		bt_handle_t *sarr = (bt_handle_t*)state.Get32BitRegister(Generic_Register::GP_Register_B);
-		auto harr = new bt_handle_info[size];
+		vector<IHandle*> harr;
 		for(size_t i = 0; i < size; ++i){
-			harr[i] = proc_get_handle(sarr[i]);
-			if(!harr[i].open || harr[i].type == kernel_handle_types::invalid){
-				delete[] harr;
-				return;
-			}
+			auto handle = CurrentProcess().GetHandle(sarr[i]);
+			if(handle) harr.push_back(handle);
 		}
-		auto hdl = create_wait_all_handle(harr, size);
-		state.Get32BitRegister(Generic_Register::GP_Register_A) = proc_add_handle(hdl);
+		auto hdl = MakeWaitAllHandle(harr);
+		state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(hdl);
 	}else RAISE_US_ERROR();
 }
 
@@ -779,23 +771,20 @@ USERAPI_HANDLER(BT_MAKE_WAITANY){
 	size_t size = state.Get32BitRegister(Generic_Register::GP_Register_C);
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), size * sizeof(bt_handle_t))){
 		bt_handle_t *sarr = (bt_handle_t*)state.Get32BitRegister(Generic_Register::GP_Register_B);
-		auto harr = new bt_handle_info[size];
+		vector<IHandle*> harr;
 		for(size_t i = 0; i < size; ++i){
-			harr[i] = proc_get_handle(sarr[i]);
-			if(!harr[i].open || harr[i].type == kernel_handle_types::invalid){
-				delete[] harr;
-				return;
-			}
+			auto handle = CurrentProcess().GetHandle(sarr[i]);
+			if(handle) harr.push_back(handle);
 		}
-		auto hdl = create_wait_any_handle(harr, size);
-		state.Get32BitRegister(Generic_Register::GP_Register_A) = proc_add_handle(hdl);
+		auto hdl = MakeWaitAnyHandle(harr);
+		state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(hdl);
 	}else RAISE_US_ERROR();
 }
 
 USERAPI_HANDLER(BT_WAIT_INDEX){
-	bt_handle_info h = proc_get_handle((handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(h.open && h.type == kernel_handle_types::wait){
-		state.Get32BitRegister(Generic_Register::GP_Register_A) = get_wait_index(h);
+	auto h = CurrentProcess().GetHandle((handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
+	if(auto handle = KernelHandleCast<KernelHandles::Wait>(h)){
+		state.Get32BitRegister(Generic_Register::GP_Register_A) = GetWaitIndex(handle);
 	}
 }
 
@@ -809,7 +798,7 @@ USERAPI_HANDLER(BT_SET_UID){
 USERAPI_HANDLER(BT_GET_UID){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(uint64_t))){
 		uint64_t *uid = (uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_B);
-		*uid = proc_get_uid();
+		*uid = CurrentProcess().GetUID();
 	}else RAISE_US_ERROR();
 }
 

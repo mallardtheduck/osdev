@@ -37,6 +37,7 @@ public:
 	virtual handle_t AddHandle(IHandle *handle) = 0;
 	virtual IHandle *GetHandle(handle_t h) = 0;
 	virtual void CloseAndRemoveHandle(handle_t h) = 0;
+	virtual vector<handle_t> GetHandlesByType(uint32_t type) = 0;
 	
 	virtual void SetExitCode(int value) = 0;
 

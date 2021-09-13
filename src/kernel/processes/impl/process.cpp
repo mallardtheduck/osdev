@@ -187,10 +187,39 @@ void Process::CloseAndRemoveHandle(handle_t h){
 	auto hl = lock->LockExclusive();
 	if(handles.has_key(h)){
 		auto handle = handles[h];
-		handles.erase(h);
-		handle->Close();
-		delete handle;
+		if(HandleDependencyCheck(handle) == HandleDependencyCheckResult::Absent){
+			handles.erase(h);
+			handle->Close();
+			delete handle;
+			vector<bt_handle_t> successfullyClosedHandles;
+			for(auto pendingHandleId : pendingHandleCloses){
+				if(handles.has_key(pendingHandleId)){
+					auto pendingHandle = handles[pendingHandleId];
+					if(HandleDependencyCheck(pendingHandle) == HandleDependencyCheckResult::Absent){
+						handles.erase(pendingHandleId);
+						pendingHandle->Close();
+						delete pendingHandle;
+						successfullyClosedHandles.push_back(pendingHandleId);
+					}
+				}
+			}
+			for(auto closedHandleId : successfullyClosedHandles){
+				auto index = pendingHandleCloses.find(closedHandleId);
+				pendingHandleCloses.erase(index);
+			}
+		}else{
+			pendingHandleCloses.push_back(h);
+		}
 	}
+}
+
+vector<handle_t> Process::GetHandlesByType(uint32_t type){
+	vector<handle_t> ret;
+	auto hl = lock->LockExclusive();
+	for(auto &h : handles){
+		if(!type || h.second->GetType() == type) ret.push_back(h.first);
+	}
+	return ret;
 }
 
 void Process::SetExitCode(int value){

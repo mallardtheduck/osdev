@@ -8,11 +8,10 @@
 #include "module/module_api.h"
 #include "module/drivers.h"
 #include "module/extension.h"
-#include "module/handle.h"
+#include "module/handle.hpp"
 #ifndef BTOS_MODULE_NO_IO
 #include "module/io.h"
 #endif
-#include "module/locktype.h"
 #include "module/module_stubs.h"
 
 #ifdef __cplusplus

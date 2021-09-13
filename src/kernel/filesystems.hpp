@@ -10,7 +10,7 @@ typedef RefCountPointer<IFilesystemNode> FilesystemNodePointer;
 class IFileHandle : public IHandle{
 public:
 	virtual uint32_t GetType(){
-		return kernel_handle_types::file;
+		return KernelHandles::File::id;
 	}
 
 	virtual size_t Read(size_t bytes, char *buffer) = 0;
@@ -31,7 +31,7 @@ public:
 class IDirectoryHandle : public IHandle{
 public:
 	virtual uint32_t GetType(){
-		return kernel_handle_types::directory;
+		return KernelHandles::Directory::id;
 	}
 
 	virtual fs_item_types ReadType() = 0;

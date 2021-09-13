@@ -55,4 +55,12 @@ template<typename T>  T max(T a, T b){
 	return (a > b) ? a : b;
 }
 
+template<typename T> void New(T *&var){
+	var = new T();
+}
+
+template<typename T, typename ...Tp> void New(T *&var, Tp... params){
+	var = new T(params...);
+}
+
 #endif

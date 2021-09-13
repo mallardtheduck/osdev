@@ -10,7 +10,7 @@
 #include "drivers.h"
 #include "../btos/fs_interface.h"
 #include "../btos/bt_msg.h"
-#include "handle.h"
+#include "handle.hpp"
 
 #ifdef __cplusplus
 
@@ -161,8 +161,8 @@ struct syscall_table{
 	API_NS bt_msg_header (*msg_recv_reply_block)(uint64_t msg_id);
 	bool (*msg_query_recieved)(uint64_t id);
 	
-	bt_handle_t (*add_user_handle)(bt_handle_info info, bt_pid_t pid);
-	bt_handle_info (*get_user_handle)(bt_handle_t h, bt_pid_t pid);
+	//bt_handle_t (*add_user_handle)(bt_handle_info info, bt_pid_t pid);
+	//bt_handle_info (*get_user_handle)(bt_handle_t h, bt_pid_t pid);
 	void (*set_kvar)(const char *name, const char *value);
 	size_t (*get_kvar)(const char *name, char *buffer, size_t size);
 	

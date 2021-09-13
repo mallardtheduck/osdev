@@ -21,6 +21,7 @@ private:
 
 	map<bt_handle_t, IHandle*> handles;
 	handle_t handleCounter = 0;
+	vector<bt_handle_t> pendingHandleCloses;
 
 	struct EnvironmentVariable{
 		string value;
@@ -60,6 +61,7 @@ public:
 	handle_t AddHandle(IHandle *handle) override;
 	IHandle *GetHandle(handle_t h) override;
 	void CloseAndRemoveHandle(handle_t h) override;
+	vector<handle_t> GetHandlesByType(uint32_t type) override;
 	
 	void SetExitCode(int value) override;
 

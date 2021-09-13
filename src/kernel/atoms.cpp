@@ -2,16 +2,18 @@
 #include "locks.hpp"
 #include <module/utils/unique_ptr.hpp>
 
+class Atom;
+
+struct WaitOptions{
+	Atom *a;
+	bt_atom_compare::Enum cmp;
+	uint64_t value;
+};
+
 class Atom : public IAtom{
 private:
 	uint64_t value;
 	unique_ptr<ILock> lock {NewLock()};
-
-	struct WaitOptions{
-		Atom *a;
-		bt_atom_compare::Enum cmp;
-		uint64_t value;
-	};
 
 	static bool WaitBlockCheck(WaitOptions &p){
 		if(!p.a->lock->TryTakeExclusive()) return false;
@@ -77,7 +79,7 @@ public:
 		p.a = this;
 		p.cmp = cmp;
 		p.value = value;
-		CurrentThread().SetBlock([&](){ return WaitBlockCheck(p); }, (void*)&p);
+		CurrentThread().SetBlock([&](){ return WaitBlockCheck(p); });
 		return Read();
 	}
 	uint64_t CompareExchange(uint64_t cmp, uint64_t xchg) override{
@@ -91,7 +93,7 @@ public:
 		p->a = this;
 		p->cmp = cmp;
 		p->value = value;
-		return MakeGenericHandle(kernel_handle_types::atomwait, p, &WaitHandleClose, &WaitHandleWait);
+		return MakeKernelGenericHandle<KernelHandles::AtomWait>(p, &WaitHandleClose, &WaitHandleWait);
 	}
 
 	~Atom(){
