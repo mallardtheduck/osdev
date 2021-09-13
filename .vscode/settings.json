@@ -18,6 +18,14 @@
         "*.inf": "ini",
         "*.hpp": "cpp",
         "type_traits": "cpp",
-        "local_type_traits": "cpp"
+        "local_type_traits": "cpp",
+        "thread": "cpp",
+        "charconv": "cpp",
+        "condition_variable": "cpp",
+        "future": "cpp",
+        "io_context": "cpp",
+        "socket": "cpp",
+        "timer": "cpp",
+        "*.inc": "cpp"
     }
 }
