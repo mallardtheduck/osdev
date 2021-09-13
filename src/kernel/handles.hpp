@@ -16,7 +16,7 @@ namespace kernel_handle_types{
 	//static const uint32_t atom=8;
 	//static const uint32_t wait=9;
 	//static const uint32_t atomwait=10;
-	static const uint32_t msg_recv=11;
+	//static const uint32_t msg_recv=11;
 	static const uint32_t elf = 12;
 };
 
@@ -24,6 +24,7 @@ class IDirectoryHandle;
 class IAtom;
 class WaitList;
 class WaitOptions;
+class msg_recv_handle;
 
 namespace KernelHandles{
 	template<uint32_t ID, typename HandleT> struct HandleMapping{
@@ -43,7 +44,7 @@ namespace KernelHandles{
 	using Atom =			HandleMapping<8, GenericHandle<IAtom*>>;
 	using Wait = 			HandleMapping<9, GenericHandle<WaitList*>>;
 	using AtomWait =		HandleMapping<10, GenericHandle<WaitOptions*>>;
-	using MessageRecive	=	HandleMapping<11, nullptr_t>;
+	using MessageRecive	=	HandleMapping<11, GenericHandle<msg_recv_handle*>>;
 	using Elf =				HandleMapping<12, nullptr_t>;
 };
 
