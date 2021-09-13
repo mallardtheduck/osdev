@@ -17,6 +17,8 @@ public:
 		return kernel_handle_types::elf;
 	};
 
+	virtual intptr_t GetBaseAddress() = 0;
+
 	virtual ~ILoadedElf() {}
 };
 

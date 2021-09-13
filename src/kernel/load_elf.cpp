@@ -241,8 +241,12 @@ public:
 		mod.entry(nullptr /*SYSCALL_TABLE*/, (char*)mod_params);
 	};
 
-	ProcessEntryPoint GetEntryPoint(){
+	ProcessEntryPoint GetEntryPoint() override{
 		return nullptr;
+	}
+
+	intptr_t GetBaseAddress() override{
+		return (intptr_t)mod.mem.aligned;
 	}
 
 	~ElfModule(){
@@ -266,6 +270,10 @@ public:
 
 	ProcessEntryPoint GetEntryPoint() override{
 		return (ProcessEntryPoint)proc.entry;
+	}
+
+	intptr_t GetBaseAddress() override{
+		return (intptr_t)proc.mem;
 	}
 };
 
