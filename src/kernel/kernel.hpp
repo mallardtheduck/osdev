@@ -40,7 +40,7 @@ extern "C"{
 #include "initfs.hpp"
 #include "processes/abstract.hpp"
 #include "messaging.hpp"
-#include "drivermgr.hpp"
+#include "devices.hpp"
 #include "devfs.hpp"
 #include "load_elf.hpp"
 #include "extensions.hpp"
