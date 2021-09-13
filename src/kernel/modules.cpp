@@ -9,8 +9,8 @@ private:
 	struct Module{
 		string filename;
 		string params;
-		loaded_elf_module elf;
-		file_handle file;
+		ILoadedElf *elf;
+		IFileHandle *file;
 	};
 
 	vector<Module> modules;
@@ -19,7 +19,7 @@ private:
 public:
 	ModuleManager(){
 		lock = NewLock();
-		infofs_register("MODULES", &InfoFS);
+		InfoRegister("MODULES", &InfoFS);
 	}
 
 	void LoadModule(const char *path, char *params = nullptr) override{
@@ -32,18 +32,20 @@ public:
 					return;
 				}
 			}
-			file_handle file=fs_open(path, FS_Read);
-			if(!file.valid){
+			auto node = GetVirtualFilesystem().GetNode(path);
+			IFileHandle *file = nullptr;
+			if(node) file = node->OpenFile(FS_Read);
+			if(!node || !file){
 				dbgpf("MOD: Could not open '%s'!\n", path);
 				return;
 			}
 			mod.filename = path;
 			mod.params = (params) ? params : "";
-			mod.elf = elf_load_module(file);
+			mod.elf = LoadElfModule(*file);
 			mod.file = file;
 			modules.push_back(mod);
 		}
-		mod.elf.entry(&MODULE_SYSCALL_TABLE, params);
+		mod.elf->Execute(params);
 	}
 };
 
@@ -54,7 +56,7 @@ char *ModuleManager::InfoFS(){
 	char *buffer=nullptr;
 	asprintf(&buffer, "# address, path, parameters\n");
 	for(auto &mod : theModuleManager->modules){
-		reasprintf_append(&buffer, "%p, \"%s\", \"%s\"\n", mod.elf.mem.aligned, mod.filename.c_str(), mod.params.c_str());
+		reasprintf_append(&buffer, "%lx, \"%s\", \"%s\"\n", mod.elf->GetBaseAddress(), mod.filename.c_str(), mod.params.c_str());
 	}
 	return buffer;
 }

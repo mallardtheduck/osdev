@@ -32,7 +32,7 @@ void pnp_dmi_init(){
 }
 
 static void dmi_notify(bt_dm_event::Enum event, const hwpnp::DeviceID &dev){
-	if(!dmi_pid || proc_get_status(dmi_pid) != btos_api::bt_proc_status::Running) return;
+	if(!dmi_pid || GetProcessManager().GetProcessStatusByID(dmi_pid) != btos_api::bt_proc_status::Running) return;
 	btos_api::bt_msg_header msg;
 	msg.from = 0;
 	msg.source = dmi_ext_id;

@@ -20,7 +20,7 @@ namespace MM2{
 	
 		uint32_t *directory;
 		uint32_t directory_physical = 0;
-		lock *directory_lock;
+		ILock *directory_lock;
 		uint32_t current_table = 0;
 		
 		size_t klowfree = 0;

@@ -5,7 +5,7 @@
 extern void gdt_set_df_cr3(uint32_t cr3);
 
 namespace MM2{
-	static lock virtual_lock;
+	static ILock *virtual_lock;
 
 	static const uint32_t CR0_Paging_Enabled = 0x80000000;
 
@@ -14,7 +14,7 @@ namespace MM2{
 	PageDirectory *kernel_pagedir;
 	PageDirectory *current_pagedir;
 	
-	lock table_frame_lock;
+	ILock *table_frame_lock;
 
 	static void idmap_page(size_t pageno){
 		size_t tableno = pageno / MM2_Table_Entries;
@@ -32,7 +32,7 @@ namespace MM2{
 	}
 
 	void mm2_virtual_init(){
-		init_lock(virtual_lock);
+		virtual_lock = NewLock();
 		dbgout("MM2: Virtual memory manager init.\n");
 		memset(&init_kernel_pagedir, 0, sizeof(init_kernel_pagedir));
 		size_t pages_to_idmap = div_ceil((uint32_t)get_kernel_end(), MM2_Page_Size);
@@ -66,7 +66,7 @@ namespace MM2{
 		GetHAL().HandlePageFault(&page_fault_handler);
 		
 		current_pagedir = kernel_pagedir = new(&kpd_place) PageDirectory(init_kernel_pagedir);
-		init_lock(table_frame_lock);
+		table_frame_lock = NewLock();
 		current_pagedir->guard_page_at(NULL);
 		kernel_pagedir->kernel_pagedir_late_init();
 	}
@@ -106,10 +106,10 @@ namespace MM2{
 	bool interrupts = false;
 	
 	void mm2_liballoc_lock(){
-		take_lock_exclusive(virtual_lock);
+		virtual_lock->TakeExclusive();
 	}
 	
 	void mm2_liballoc_unlock(){
-		release_lock(virtual_lock);
+		virtual_lock->Release();
 	}
 }

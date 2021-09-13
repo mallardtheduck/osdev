@@ -1,5 +1,5 @@
 #include "hwpnp_internal.hpp"
-#include "../ministl.hpp"
+#include "../utils/ministl.hpp"
 #include <util/asprintf.h>
 #include "../locks.hpp"
 #include "../rtc/rtc.hpp"

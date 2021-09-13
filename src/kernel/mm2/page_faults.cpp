@@ -17,11 +17,11 @@ namespace MM2{
 			dbgpf("MM2: Page fault on %lx at %lx (ec: %lx)!\n", addr, state.Get32BitRegister(Generic_Register::Instruction_Pointer), state.GetErrorCode());
 			//dbgpf("MM2: Page fault on %x at %x!\n", addr, regs->eip);
 			state.DebugOutput();
-			debug_event_notify(CurrentProcess().ID(), sch_get_id(), bt_debug_event::Exception, bt_exception::UnresolvedPageFault);
+			debug_event_notify(CurrentProcess().ID(), CurrentThread().ID(), bt_debug_event::Exception, bt_exception::UnresolvedPageFault);
 			//If a process kills itself, the thread will be assigned PID 0 and will #PF when attempting to return to userspace
 			//Therefore, if we encounter a userspace #PF on PID 0, end the thread.
-			if(CurrentProcess().ID()) proc_terminate();
-			else sch_end_thread();
+			if(CurrentProcess().ID()) CurrentProcess().Terminate();
+			else CurrentThread().Abort();
 		}else{
 			state.DebugOutput();
 			dbgpf("MM2: Page fault on %lx at %lx!\n", addr, state.Get32BitRegister(Generic_Register::Instruction_Pointer));

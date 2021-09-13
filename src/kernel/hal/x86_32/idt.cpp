@@ -238,7 +238,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Invalid opcode.");
 		else {
 			debug_event_notify(CurrentProcess().ID(), currentThread.ID(), bt_debug_event::Exception, bt_exception::InvalidOpCode);
-			proc_terminate();
+			CurrentProcess().Terminate();
 		}
 	}
 	else if(ctx->interrupt_number==0x0D){
@@ -248,7 +248,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("General Protection Fault.");
 		else {
 			debug_event_notify(CurrentProcess().ID(), currentThread.ID(), bt_debug_event::Exception, bt_exception::ProtectionFault);
-			proc_terminate();
+			CurrentProcess().Terminate();
 		}
 	}
 	else if(ctx->interrupt_number==0x08){
@@ -256,7 +256,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, currentThread.ID());
 		out_int_info(*ctx);
 		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Double fault.");
-		else proc_terminate();
+		else CurrentProcess().Terminate();
 	}else if(ctx->interrupt_number==0x00){
 		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
 		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, currentThread.ID());
@@ -264,7 +264,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Devide by zero!");
 		else{
 			debug_event_notify(CurrentProcess().ID(), currentThread.ID(), bt_debug_event::Exception, bt_exception::DivideByZero);
-			proc_terminate();
+			CurrentProcess().Terminate();
 		}
 	}else{
 		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
@@ -274,7 +274,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 	disable_interrupts();
 
 	currentThread.SetAbortable(true);
-	if(currentThread.GetAbortLevel() == 0) proc_hold();
+	if(currentThread.GetAbortLevel() == 0) CurrentProcess().HoldBeforeUserspace();
 
 	imode--;
 }
@@ -320,7 +320,7 @@ extern "C" void irq_handler(irq_regs *r) {
 	irq_ack(irq);
 
 	currentThread.SetAbortable(true);
-	if(currentThread.GetAbortLevel() == 0) proc_hold();
+	if(currentThread.GetAbortLevel() == 0) CurrentProcess().HoldBeforeUserspace();
 	imode--;
 }
 

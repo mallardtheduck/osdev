@@ -1,14 +1,14 @@
 #include "../kernel.hpp"
 #include "mm2_internal.hpp"
-#include "../ministl.hpp"
+#include "../utils/ministl.hpp"
 
 namespace MM2{
-	static lock shm_lock;
+	static ILock *shm_lock;
 	
 	struct shm_space{
 		map<uint32_t, physical_page*> pages;
 		uint32_t flags;
-		pid_t owner;
+		bt_pid_t owner;
 	};
 	
 	struct shm_mapping{
@@ -26,7 +26,7 @@ namespace MM2{
 	static uint64_t mapping_id_counter = 0;
 	
 	uint64_t shm_create(uint32_t flags){
-		hold_lock hl(shm_lock);
+		auto hl = shm_lock->LockExclusive();
 		uint64_t id = ++space_id_counter;
 		shm_space *space = new shm_space();
 		space->flags = flags;
@@ -37,7 +37,7 @@ namespace MM2{
 	}
 	
 	void shm_close(uint64_t id){
-		hold_lock hl(shm_lock);
+		auto hl = shm_lock->LockExclusive();
 		shm_space *space = (*spaces)[id];
 		bool cont = true;
 		while(cont){
@@ -58,7 +58,7 @@ namespace MM2{
 	
 	static void shm_pf_handler(uint64_t id, void *addr){
 		//dbgpf("MM2: SHM mapping %i PF at %p.\n", (int)id, addr);
-		hold_lock hl(shm_lock);
+		auto hl = shm_lock->LockExclusive();
 		
 		if(!mappings->has_key(id)) panic("(MM2) Invalid mapping!");
 		shm_mapping *mapping = (*mappings)[id];
@@ -82,7 +82,7 @@ namespace MM2{
 	}
 	
 	uint64_t shm_map(uint64_t id, void *addr, uint32_t offset, size_t pages, uint32_t flags){
-		hold_lock hl(shm_lock);
+		auto hl = shm_lock->LockExclusive();
 		dbgout("MM2: Creating SHM mapping.\n");
 		if(!spaces->has_key(id)) {
 			dbgpf("MM2: No such SHM space %i\n", (int)id);
@@ -96,7 +96,7 @@ namespace MM2{
 			dbgpf("MM2: Offset (%i) is not a multiple of page size.\n", (int)offset);
 			return 0;
 		}
-		if(!has_perm(0, kperm::SHMAnyUser) && proc_get_uid((*spaces)[id]->owner) != proc_get_uid()){
+		if(!has_perm(0, kperm::SHMAnyUser) && GetProcess((*spaces)[id]->owner)->GetUID() != CurrentProcess().GetUID()){
 			dbgpf("MM2: Permission to map SHM denied.\n");
 			return 0;
 		}
@@ -120,12 +120,12 @@ namespace MM2{
 	}
 	
 	void shm_close_map(uint64_t id){
-		hold_lock(shm_lock, false);
+		auto hl = shm_lock->LockRecursive();
 		
 		if(mappings->has_key(id)){
 			shm_mapping *mapping = (*mappings)[id];
 			bt_pid_t pid = CurrentProcess().ID();
-			proc_switch(mapping->pid);
+			if(!GetProcessManager().SwitchProcess(mapping->pid)) panic("(MM2) Cannot switch to process!");
 			current_pagedir->remove_region(mapping->addr);
 			void *addr = mapping->addr;
 			for(uint32_t i = (uint32_t)addr; i < (uint32_t)addr + (mapping->pages * MM2_Page_Size); i += MM2_Page_Size){
@@ -133,13 +133,13 @@ namespace MM2{
 			}
 			delete mapping;
 			mappings->erase(id);
-			proc_switch(pid);
+			if(!GetProcessManager().SwitchProcess(pid)) panic("(MM2) Cannot switch to process!");
 		}
 	}
 	
 	void init_shm(){
-		spaces = new map<uint64_t, shm_space*>();
-		mappings = new map<uint64_t, shm_mapping*>();
-		init_lock(shm_lock);
+		New(spaces);
+		New(mappings);
+		shm_lock = NewLock();
 	}
 }
