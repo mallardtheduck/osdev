@@ -12,11 +12,11 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	mm2_init(mbt);
 	GetHAL().EnableInterrupts();
 	KernelConfigVariables_Init();
-	proc_init();
+	Processes_Init();
 	Scheduler_Init();
 	GetHAL().YieldToScheduler();
-	drv_init();
-	fs_init();
+	Devices_Init();
+	Filesystem_Init();
 	Info_Init();
 	Modules_Init();
 	init_handles();
