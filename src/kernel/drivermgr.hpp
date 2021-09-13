@@ -1,3 +1,5 @@
+#if 0
+
 #ifndef _DRIVERMGR_HPP
 #define _DRIVERMGR_HPP
 
@@ -20,4 +22,5 @@ int drv_get_type(void *instance);
 char *drv_get_desc(const char *driver);
 char *drv_get_desc(void *instance);
 
+#endif
 #endif

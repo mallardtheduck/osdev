@@ -1,3 +1,5 @@
+#if 0
+
 #include "kernel.hpp"
 #include "ministl.hpp"
 #include "string.hpp"
@@ -133,3 +135,5 @@ void *drv_nextdevice(void *i, char **p){
 	if(ret>=devices->end()) return NULL;
 	else return (void*)ret;
 }
+
+#endif
