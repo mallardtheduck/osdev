@@ -3,6 +3,6 @@
 
 #include "kernel.hpp"
 
-fs_driver devfs_getdriver();
+IFilesystem *DevFSGet();
 
 #endif

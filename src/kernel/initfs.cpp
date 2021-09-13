@@ -1,6 +1,5 @@
 #include "initfs.hpp"
-#include "ministl.hpp"
-#include "strutil.hpp"
+#include "kernel.hpp"
 
 #define isspace(c) ((c) == ' ')
 #define isodigit(c) ((c) >= '0' && (c) <= '7')
@@ -9,6 +8,60 @@ struct initfs_file{
 	string name;
 	unsigned char *data;
 	size_t size;
+};
+
+vector<initfs_file> *initfs_data = nullptr;
+
+class InitFSNode : public IFilesystemNode{
+private:
+	initfs_file *file;
+public:
+	InitFSNode(initfs_file *f) : file(f) {}
+
+	IFileHandle *OpenFile(fs_mode_flags mode) override;
+
+	IDirectoryHandle *OpenDirectory(fs_mode_flags mode) override;
+
+	const char *GetName() override{
+		return file->name.c_str();
+	}
+
+	void Rename(const char *) override{}
+
+	bt_filesize_t GetSize() override{
+		return file->size;
+	}
+
+	fs_item_types GetType() override{
+		return FS_File;
+	}
+};
+
+class MountedInitFS : public IMountedFilesystem{
+public:
+	FilesystemNodePointer GetNode(const char *path) override{
+		if(string(path) == "") return new InitFSNode(nullptr);
+		for(auto &file : *initfs_data){
+			if(file.name == path) return new InitFSNode(&file);
+		}
+		return nullptr;
+	}
+
+	void Flush() override{}
+	bool Unmount() override{
+		return true;
+	}
+};
+
+class InitFS : public IFilesystem{
+public:
+	IMountedFilesystem *Mount(const IFilesystemNode &node) override{
+		return new MountedInitFS();
+	}
+
+	bool Format(const IFilesystemNode &node, void *options) override{
+		return false;
+	}
 };
 
 struct tar_header{
@@ -22,16 +75,14 @@ struct tar_header{
     char typeflag[1];
 };
 
-vector<initfs_file> *initfs_data;
-
 struct initfs_handle{
 	size_t fileindex;
 	size_t pos;
 	initfs_handle(size_t index, size_t p=0) : fileindex(index), pos(p) {}
 };
 
-long from_oct(register int digs, register const char *where){
-	register long	value;
+long from_oct(int digs, const char *where){
+	long	value;
 
 	while (isspace((unsigned)*where)) {		/* Skip spaces */
 		where++;
@@ -53,6 +104,38 @@ long from_oct(register int digs, register const char *where){
 size_t tar_size(const char *in){
 	return from_oct(12, in);
 }
+
+InitFS *theInitFS = nullptr;
+
+IFilesystem *InitFSGet(){
+	if(!initfs_data){
+		New(initfs_data);
+		multiboot_info_t *mbi = mbt;
+		if(mbi->mods_count > 0){
+			module_t *mod = (module_t *)mbi->mods_addr;
+			tar_header *th = (tar_header*)mod->mod_start;
+			dbgpf("INITFS: Module starts at %x and ends at %x\n", (int)mod->mod_start, (int)mod->mod_end);
+			while((uint32_t)th < mod->mod_end){
+				if(th->filename[0] == '\0') break;
+				unsigned char *data = (unsigned char*)((uint32_t)th + 512);
+				size_t size = tar_size(th->size);
+				dbgpf("INITFS: %s, %x, %i\n", th->filename, (int)data, (int)size);
+				initfs_file file;
+				file.data = data;
+				file.name = th->filename;
+				file.size = size;
+				initfs_data->push_back(file);
+				th = (tar_header*)((uint32_t) data + (512 * (size % 512 ? (size / 512) + 1 : size / 512)));
+			}
+		}else{
+			panic("(INITFS) No tar module loaded!");
+		}
+	}
+	if(!theInitFS) New(theInitFS);
+	return theInitFS;
+}
+
+#if 0
 
 #define fdata ((initfs_handle*)filedata)
 
@@ -235,3 +318,4 @@ fs_driver initfs_getdriver(){
 	}
 	return initfs_driver;
 }
+#endif
