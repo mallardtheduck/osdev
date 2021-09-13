@@ -54,6 +54,14 @@ char* itoa(int num, char* str, int base)
     return str;
 }
 
+string itoa(int num, int base = 10){
+    vector<char> buffer;
+    size_t bufferSize = 5; //To account for any prefix, - sign, null terminator, etc.
+    for(auto n = num; (n /= base) != 0; ++bufferSize);
+    buffer.reserve(bufferSize);
+    return itoa(num, &buffer[0], base);
+}
+
 
 string to_upper(const string &str){
 	size_t buflen=str.length()+1;

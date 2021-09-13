@@ -11,6 +11,8 @@ string to_upper(const string &str);
 bool starts_with(const string &str, const string &cmp);
 vector<string> split_string(const string &str, const char c);
 
+string itoa(int num, int base = 10);
+
 //C++ new/delete operators
 inline void *operator new(size_t size)
 {
