@@ -116,25 +116,25 @@ struct syscall_table{
 	void (*handle_int_raw)(size_t intno, void *handler);
 	void (*handle_irq_raw)(size_t irqno, void *handler);
 
-	void (*add_filesystem)(fs_driver *fs);
-	bool (*mount)(const char *name, const char *device, const char *fs);
-	bool (*unmount)(const char *name);
+	// void (*add_filesystem)(fs_driver *fs);
+	// bool (*mount)(const char *name, const char *device, const char *fs);
+	// bool (*unmount)(const char *name);
 
-	file_handle *(*fopen)(const char *path, fs_mode_flags mode);
-	bool (*fclose)(file_handle *handle);
-	size_t (*fread)(file_handle *handle, size_t bytes, char *buf);
-	size_t (*fwrite)(file_handle *handle, size_t bytes, char *buf);
-	bt_filesize_t (*fseek)(file_handle *handle, bt_filesize_t pos, uint32_t flags);
-	bool (*fsetsize)(file_handle *handle, bt_filesize_t size);
-	int (*fioctl)(file_handle *handle, int fn, size_t bytes, char *buf);
-    void (*fflush)(file_handle *handle);
+	// file_handle *(*fopen)(const char *path, fs_mode_flags mode);
+	// bool (*fclose)(file_handle *handle);
+	// size_t (*fread)(file_handle *handle, size_t bytes, char *buf);
+	// size_t (*fwrite)(file_handle *handle, size_t bytes, char *buf);
+	// bt_filesize_t (*fseek)(file_handle *handle, bt_filesize_t pos, uint32_t flags);
+	// bool (*fsetsize)(file_handle *handle, bt_filesize_t size);
+	// int (*fioctl)(file_handle *handle, int fn, size_t bytes, char *buf);
+    // void (*fflush)(file_handle *handle);
 
-	dir_handle *(*diropen)(const char *path, fs_mode_flags mode);
-	bool (*dirclose)(dir_handle *handle);
-	directory_entry (*dirread)(dir_handle *handle);
-	bool (*dirwrite)(dir_handle *handle, directory_entry entry);
-	bool (*dirseek)(dir_handle *handle, size_t pos, uint32_t flags);
-	directory_entry (*stat)(const char *path);
+	// dir_handle *(*diropen)(const char *path, fs_mode_flags mode);
+	// bool (*dirclose)(dir_handle *handle);
+	// directory_entry (*dirread)(dir_handle *handle);
+	// bool (*dirwrite)(dir_handle *handle, directory_entry entry);
+	// bool (*dirseek)(dir_handle *handle, size_t pos, uint32_t flags);
+	// directory_entry (*stat)(const char *path);
 
 	void (*module_load)(const char *path, char *params);
 
