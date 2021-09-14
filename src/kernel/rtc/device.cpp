@@ -7,7 +7,7 @@ static btos_api::hwpnp::ITimerDevice *get_timer(){
 	else return rootDev->GetSysTimer();
 }
 
-bool timer_ready_blockcheck(void*){
+bool is_timer_ready(){
 	return get_timer() != nullptr;
 }
 

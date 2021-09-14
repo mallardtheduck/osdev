@@ -5,19 +5,11 @@
 uint16_t extension_id;
 uint64_t boot_msec;
 
-struct rtc_sleep_params{
-	uint64_t start;
-	uint32_t duration;
-};
-
-bool rtc_sleep_blockcheck(void *p){
-	rtc_sleep_params &params = *(rtc_sleep_params*)p;
-	return (get_msecs() - params.start >= params.duration);
-}
-
 void rtc_sleep(uint32_t msec){
-	rtc_sleep_params p = {get_msecs(), msec};
-	sch_setblock(&rtc_sleep_blockcheck, (void*)&p);
+	auto start = get_msecs();
+	CurrentThread().SetBlock([&]{
+		return (get_msecs() - start >= msec);
+	});
 }
 
 uint64_t rtc_millis(){
@@ -76,17 +68,17 @@ char *msec_infofs(){
 	return buf;
 }
 
-void rtc_init_real(void*){
-	sch_setblock(&timer_ready_blockcheck, nullptr);
+void rtc_init_real(){
+	CurrentThread().SetBlock(&is_timer_ready);
 	datetime dt=current_datetime();
 	char buf[128];
 	sprintf(buf, FORMAT, dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
-	proc_setenv("BOOT_TIME", buf, ENV_Global, 0);
-	infofs_register("RTC", &rtc_infofs);
-	infofs_register("MSEC", &msec_infofs);
+	CurrentProcess().SetEnvironmentVariable("BOOT_TIME", buf, ENV_Global, 0);
+	InfoRegister("RTC", &rtc_infofs);
+	InfoRegister("MSEC", &msec_infofs);
 	init_api();
 }
 
 void rtc_init(){
-	sch_new_thread(&rtc_init_real, nullptr);
+	GetScheduler().NewThread(&rtc_init_real);
 }

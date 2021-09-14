@@ -24,6 +24,6 @@ void reset_timer(ICPUState &state);
 datetime epoch2datetime(uint64_t ep);
 uint64_t datetime2epoch(const datetime &dt);
 
-bool timer_ready_blockcheck(void*);
+bool is_timer_ready();
 
 #endif
