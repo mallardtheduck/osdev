@@ -111,13 +111,13 @@ public:
 	}
 
 	void SetKernelVariable(const char *name, const char *value) override {
-		set_kvar(name, value);
+		GetKernelConfigVariables().SetVariable(name, value);
 	}
 	size_t GetKernelVariable(const char *name, char *buffer, size_t size) override {
-		auto value = get_kvar(name);
-		strncpy(buffer, value.c_str(), size - 1);
+		auto value = GetKernelConfigVariables().GetVariable(name);
+		strncpy(buffer, value, size - 1);
 		buffer[size - 1] = 0;
-		return value.size();
+		return strlen(value);
 	}
 
 	void *GetPnPManager() override {
@@ -125,8 +125,9 @@ public:
 	}
 };
 
-ModuleAPI theModuleAPI;
+static StaticAlloc<ModuleAPI> theModuleAPI;
 
 IModuleAPI &GetModuleAPI(){
-	return theModuleAPI;
+	if(!theModuleAPI) theModuleAPI.Init();
+	return *theModuleAPI;
 }
