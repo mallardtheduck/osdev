@@ -13,6 +13,11 @@ typedef char* (*infoFn)();
 typedef uint64_t bt_pid_t;
 typedef uint32_t bt_handle_t;
 
+constexpr auto ENV_Global = 	(1<<0); //Use PID 0 (kernel) value instead
+constexpr auto ENV_ReadOnly =	(1<<1); //Not changeable by user-mode code
+constexpr auto ENV_Private =	(1<<2); //Not visible to user-mode code
+constexpr auto ENV_NoInherit = 	(1<<3); //Do not copy from parent to child
+
 class IModuleAPI{
 public:
 	virtual void Panic(const char *msg) = 0;

@@ -18,7 +18,7 @@ namespace hwpnp{
 		}
 		
 		int GetType() {
-			return driver_types::TIMER;
+			return module_api::driver_types::TIMER;
 		}
 	
 		virtual ~ITimerDevice() {}

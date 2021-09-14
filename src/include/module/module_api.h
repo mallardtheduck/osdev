@@ -1,3 +1,5 @@
+#if 0
+
 #ifndef _MODULE_API_H
 #define	_MODULE_API_H
 
@@ -200,6 +202,8 @@ extern syscall_table *SYSCALL_TABLE;
 
 #ifdef MODAPI_NS
 }
+#endif
+
 #endif
 
 #endif

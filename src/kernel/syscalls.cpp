@@ -1,3 +1,5 @@
+#if 0
+
 #include "kernel.hpp"
 #include "locks.hpp"
 
@@ -325,3 +327,5 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 
 	&GetModuleAPI,
 };
+
+#endif
