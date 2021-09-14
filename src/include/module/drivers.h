@@ -1,5 +1,5 @@
-#ifndef _DRIVERS_H
-#define _DRIVERS_H
+#ifndef MODULE_DRIVERS_H
+#define MODULE_DRIVERS_H
 
 #ifdef __cplusplus
 #include "kernelsys/hal.hpp"

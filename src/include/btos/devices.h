@@ -1,5 +1,5 @@
-#if !defined(_DEVICES_H) && !defined(BTOS_NO_DEVICES)
-#define _DEVICES_H
+#if !defined(BTOS_DEVICES_H) && !defined(BTOS_NO_DEVICES)
+#define BTOS_DEVICES_H
 
 #ifdef __cplusplus
 namespace driver_types{
