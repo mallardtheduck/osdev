@@ -110,4 +110,8 @@ inline ProcessPointer GetProcess(bt_pid_t pid){
 	return ptr;
 }
 
+inline IProcess &CurrentProcess(){
+	return GetProcessManager().CurrentProcess();
+}
+
 #endif
