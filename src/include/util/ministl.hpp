@@ -143,6 +143,16 @@ class vector
         const T& operator[] (unsigned i) const      {return data[i];}
         T&       operator[] (unsigned i)            {return data[i];}
 
+		const T& at(unsigned i) const{
+			if(i >= dataSize) panic("(VECTOR) Overrun!");
+			return data[i];
+		}
+
+		T& at(unsigned i){
+			if(i >= dataSize) panic("(VECTOR) Overrun!");
+			return data[i];
+		}
+
         void insert(unsigned int pos, const T& value)
         {
             if (pos >= dataSize)         { throw int(1);}
