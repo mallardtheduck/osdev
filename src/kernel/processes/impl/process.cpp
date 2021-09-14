@@ -14,6 +14,8 @@ Process *Process::CreateKernelProcess(){
 	kernelProcess->name = "KERNEL";
 	kernelProcess->pid = pidCounter++;
 	kernelProcess->parent = 0;
+	//Thankfully, since the kernel process never ends, this should never try to delete the kernel page directory!
+	kernelProcess->pageDirectory.reset(MM2::kernel_pagedir);
 	return kernelProcess;
 }
 
@@ -43,6 +45,8 @@ Process::Process(const char *n, const vector<const char *> &a, IProcess &p)
 		args.push_back(arg);
 	}
 }
+
+Process::Process() {}
 
 void Process::CleanupProcess(){
 	{

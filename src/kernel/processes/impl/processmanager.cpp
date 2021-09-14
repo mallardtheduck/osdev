@@ -3,6 +3,11 @@
 #include "processmanager.hpp"
 #include "process.hpp"
 
+void ProcessManager::RemoveProcess(const Process *p){
+	auto index = processes.find(const_cast<Process*>(p));
+	processes.erase(index);
+}
+
 ProcessManager::ProcessManager(){
 	kernelProcess = Process::CreateKernelProcess();
 	vector<Process*> newProcList;
@@ -80,6 +85,10 @@ ProcessPointer ProcessManager::Spawn(const char *name, const vector<const char*>
 	return proc;
 }
 
+void ProcessManager::RemoveProcess(const IProcess &proc){
+	RemoveProcess(static_cast<const Process*>(&proc));
+}
+
 void ProcessManager::SetGlobalEnvironmentVariable(const char *name, const char *value, uint8_t flags) {
 	if(!(flags & (uint8_t)EnvironemntVariableFlags::Global)) return;
 	kernelProcess->SetEnvironmentVariable(name, value, flags);
@@ -105,4 +114,14 @@ ProcessPointer ProcessManager::GetByID(bt_pid_t pid) {
 		if(proc->ID() == pid) return proc;
 	}
 	return nullptr;
+}
+
+StaticAlloc<ProcessManager> theProcessManager;
+
+void Processes_Init(){
+	theProcessManager.Init();
+}
+
+IProcessManager &GetProcessManager(){
+	return *theProcessManager;
 }

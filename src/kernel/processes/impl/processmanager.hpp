@@ -19,7 +19,7 @@ private:
 	static char *ProcsInfoFS();
 	static char *EnvInfoFS();
 
-	void RemoveProcess(Process *p);
+	void RemoveProcess(const Process *p);
 public:
 	ProcessManager();
 
