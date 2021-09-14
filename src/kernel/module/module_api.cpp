@@ -72,7 +72,7 @@ public:
 	}
 
 	void LoadModule(const char *path, const char *params) override {
-		load_module(path, (char*)params);
+		GetModuleManager().LoadModule(path, (char*)params);
 	}
 
 	void *NewProcess(const char *exec, size_t argc, char **argv) override {
@@ -86,7 +86,7 @@ public:
 	}
 	
 	void AddInfoFSItem(const char *name, infoFn fn) override {
-		infofs_register(name, fn);
+		InfoRegister(name, fn);
 	}
 
 	void *GetExtensionManager() override {
