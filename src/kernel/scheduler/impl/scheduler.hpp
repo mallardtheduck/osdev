@@ -19,10 +19,10 @@ private:
 	Thread *idleThread;
 	Thread *reaperThread;
 
-	Scheduler();
-
 	Thread *PlanCycle();
 public:
+	Scheduler();
+
 	ThreadPointer NewThread(ThreadEntryFunction fn, void *param, size_t stackSize) override;
 
 	IThread &CurrentThread() override;
@@ -41,5 +41,7 @@ public:
 	void EnableScheduler() override;
 	bool DisableScheduler() override;
 };
+
+extern StaticAlloc<Scheduler> theScheduler;
 
 #endif

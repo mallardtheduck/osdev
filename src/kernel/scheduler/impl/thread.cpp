@@ -2,8 +2,6 @@
 #include "thread.hpp"
 #include "scheduler.hpp"
 
-extern Scheduler *theScheduler;
-
 void Thread::ThreadWrapper(){
 	Thread *myThread = theScheduler->current;
 
