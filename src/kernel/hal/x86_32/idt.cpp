@@ -217,8 +217,6 @@ void out_int_info(const isr_regs &ctx){
 	dbgpf("EFLAGS: %lx UESP: %lx\n", ctx.eflags, ctx.useresp);
 }
 
-extern size_t current_thread;
-
 extern "C" void isr_handler(isr_regs *ctx){
 	imode++;
 
@@ -233,7 +231,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 	}
 	else if(ctx->interrupt_number==0x06){
 		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, currentThread.ID());
+		dbgpf("Current thread: %i (%llu)\n", (int)currentThread.ID(), currentThread.ID());
 		out_int_info(*ctx);
 		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Invalid opcode.");
 		else {
@@ -243,7 +241,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 	}
 	else if(ctx->interrupt_number==0x0D){
 		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, currentThread.ID());
+		dbgpf("Current thread: %i (%llu)\n", (int)currentThread.ID(), currentThread.ID());
 		out_int_info(*ctx);
 		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("General Protection Fault.");
 		else {
@@ -253,13 +251,13 @@ extern "C" void isr_handler(isr_regs *ctx){
 	}
 	else if(ctx->interrupt_number==0x08){
 		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, currentThread.ID());
+		dbgpf("Current thread: %i (%llu)\n", (int)currentThread.ID(), currentThread.ID());
 		out_int_info(*ctx);
 		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Double fault.");
 		else CurrentProcess().Terminate();
 	}else if(ctx->interrupt_number==0x00){
 		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, currentThread.ID());
+		dbgpf("Current thread: %i (%llu)\n", (int)currentThread.ID(), currentThread.ID());
 		out_int_info(*ctx);
 		if(ctx->eip < MM2::MM2_Kernel_Boundary) panic("Devide by zero!");
 		else{
@@ -268,7 +266,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 		}
 	}else{
 		dbgpf("\nInterrupt %li at %lx!\n", ctx->interrupt_number, ctx->eip);
-		dbgpf("Current thread: %i (%llu)\n", (int)current_thread, currentThread.ID());
+		dbgpf("Current thread: %i (%llu)\n", (int)currentThread.ID(), currentThread.ID());
 		out_int_info(*ctx);
 	}
 	disable_interrupts();
