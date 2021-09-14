@@ -44,7 +44,7 @@ namespace MM2{
 	
 	void mm2_switch(PageDirectory *newdir);
 	
-	uint64_t mm2_mmap(char *ptr, IFileHandle &file, bt_filesize_t offset, size_t size);
+	uint64_t mm2_mmap(char *ptr, IFileHandle *file, bt_filesize_t offset, size_t size);
 	void mm2_flush(IFileHandle &file);
 	void mm2_close(IFileHandle &file);
 	void mm2_closemap(uint64_t id);

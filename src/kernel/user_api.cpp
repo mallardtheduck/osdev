@@ -382,7 +382,7 @@ USERAPI_HANDLER(BT_MMAP){
 			btos_api::bt_mmap_buffer *buffer=(btos_api::bt_mmap_buffer*)state.Get32BitRegister(Generic_Register::GP_Register_D);
 			if(!is_safe_ptr((uint32_t)buffer->buffer, buffer->size)) return;
 
-			auto id = MM2::mm2_mmap(buffer->buffer, *handle, state.Get32BitRegister(Generic_Register::GP_Register_C), buffer->size);
+			auto id = MM2::mm2_mmap(buffer->buffer, handle, state.Get32BitRegister(Generic_Register::GP_Register_C), buffer->size);
 			auto newHandle = MakeKernelGenericHandle<KernelHandles::MemoryMapping>(id, &close_filemap_handle);
 			state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(newHandle);
 			return;
