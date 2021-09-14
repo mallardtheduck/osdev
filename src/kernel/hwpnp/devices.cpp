@@ -22,7 +22,7 @@ struct KnownDevice{
 static vector<KnownDevice> *known_devices;
 static map<IDeviceNode*, string> *device_nodes;
 
-lock rescan_lock;
+ILock *rescan_lock;
 
 static char *pnp_devices_infofs(){
 	char *buffer=nullptr;
@@ -44,7 +44,7 @@ static char *pnp_devices_infofs(){
 		reasprintf_append(&buffer, "%p, %p, %i, %s, %x, \"%s\", %p, %s\n",
 			d.device, d.parent, (int)d.index,
 			deviceIDtoString(devid).c_str(),
-			(d.device ? d.device->GetType() : driver_types::UNKNOWN),
+			(d.device ? d.device->GetType() : module_api::driver_types::UNKNOWN),
 			(d.device ? d.device->GetDescription() : "Unknown device"),
 			(d.device ? d.device->GetDriver() : nullptr),
 			nodeName
@@ -56,8 +56,8 @@ static char *pnp_devices_infofs(){
 void pnp_init_devices(){
 	known_devices = new vector<KnownDevice>();
 	device_nodes = new map<IDeviceNode*, string>();
-	init_lock(rescan_lock);
-	infofs_register("PNPDEVICES", &pnp_devices_infofs);
+	rescan_lock = NewLock();
+	InfoRegister("PNPDEVICES", &pnp_devices_infofs);
 }
 
 void pnp_add_device(IDevice *parent, const DeviceID &id, size_t idx){
@@ -82,11 +82,11 @@ IDevice *pnp_resolve_device(IDevice *parent, const DeviceID &id, size_t idx){
 }
 
 void pnp_rescan_devices(){
-	if(!try_take_lock_exclusive(rescan_lock)) return;
+	if(!rescan_lock->TryTakeExclusive()) return;
 	for(auto &d : *known_devices){
 		if(!d.device) d.device = pnp_create_device(d.parent, d.index, d.id);
 	}
-	release_lock(rescan_lock);
+	rescan_lock->Release();
 }
 
 void pnp_enum_subdevices(IDevice *dev){
@@ -123,66 +123,77 @@ btos_api::hwpnp::IRootDevice *pnp_get_root_device(){
 	return rootDev;
 }
 
-struct node_instance{
+class PnpNodeInstance : public IVisibleDeviceInstance{
+private:
 	IDeviceNode *node;
-	void *h;
+	void *handle;
+public:
+	PnpNodeInstance(IDeviceNode *n, void *h) : node(n), handle(h) {}
+
+	size_t Read(size_t bytes, char *buffer) override{
+		return node->Read(handle, bytes, buffer);
+	}
+	size_t Write(size_t bytes, const char *buffer) override{
+		return node->Write(handle, bytes, buffer);
+	}
+
+	bt_filesize_t Seek(bt_filesize_t pos, uint32_t flags) override{
+		return node->Seek(handle, pos, flags);
+	}
+
+	int IOCtl(int fn, size_t bytes, char *buffer) override{
+		return node->IOCtl(handle, fn, bytes, buffer);
+	}
+
+	int GetType() override{
+		return node->GetType();
+	}
+
+	const char *GetDescription() override{
+		return node->GetDescription();
+	}
+
+	bool Close() override{
+		return node->Close(handle);
+	}
 };
 
-static void *pnp_node_open(void *id){
-	IDeviceNode *node = (IDeviceNode*)id;
-	void *h = node->Open();
-	if(h){
-		node_instance *inst = new node_instance();
-		inst->node = node;
-		inst->h = h;
-		return inst;
-	}else{
-		return nullptr;
+class PnpNodeDevice : public IVisibleDevice{
+private:
+	string name;
+	IDeviceNode *node;
+public:
+	PnpNodeDevice(IDeviceNode *no) : name(no->GetBaseName()), node(no) {}
+
+	IVisibleDeviceInstance *Open() override{
+		auto h = node->Open();
+		if(h){
+			return new PnpNodeInstance(node, h);
+		}else{
+			return nullptr;
+		}
 	}
-}
 
-static bool pnp_node_close(void *instance){
-	node_instance *inst = (node_instance*)instance;
-	if(inst->node->Close(inst->h)){
-		delete inst;
-		return true;
-	}else return false;
-}
+	int GetType() override{
+		return node->GetType();
+	}
 
-static size_t pnp_node_read(void *instance, size_t bytes, char *buf){
-	node_instance *inst = (node_instance*)instance;
-	return inst->node->Read(inst->h, bytes, buf);
-}
+	const char *GetDescription() override{
+		return node->GetDescription();
+	}
+	const char *GetName() override{
+		return name.c_str();
+	}
 
-static size_t pnp_node_write(void *instance, size_t bytes, char *buf){
-	node_instance *inst = (node_instance*)instance;
-	return inst->node->Write(inst->h, bytes, buf);
-}
-
-static bt_filesize_t pnp_node_seek(void *instance, bt_filesize_t pos, uint32_t flags){
-	node_instance *inst = (node_instance*)instance;
-	return inst->node->Seek(inst->h, pos, flags);
-}
-
-static int pnp_node_ioctl(void *instance, int fn, size_t bytes, char *buf){
-	node_instance *inst = (node_instance*)instance;
-	return inst->node->IOCtl(inst->h, fn, bytes, buf);
-}
-
-static int pnp_node_type(void *id){
-	IDeviceNode *node = (IDeviceNode*)id;
-	return node->GetType();
-}
-
-static char *pnp_node_desc(void *id){
-	IDeviceNode *node = (IDeviceNode*)id;
-	return (char*)node->GetDescription();
-}
-
-drv_driver nodeAdaptor = {pnp_node_open, pnp_node_close, pnp_node_read, pnp_node_write, pnp_node_seek, pnp_node_ioctl, pnp_node_type, pnp_node_desc};
+	void SetName(const char *n) override{
+		name = n;
+	}
+};
 
 void pnp_node_add(IDeviceNode *node){
-	auto name = drv_add_device(node->GetBaseName(), &nodeAdaptor, node);
+	auto nodeDevice = new PnpNodeDevice(node);
+	GetVisibleDeviceManager().AddVisibleDevice(nodeDevice);
+	auto name = nodeDevice->GetName();
 	(*device_nodes)[node] = name;
 }
 

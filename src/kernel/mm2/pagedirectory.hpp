@@ -1,8 +1,9 @@
 #ifndef PAGEDIRECTORY_HPP
 #define PAGEDIRECTORY_HPP
+#include "../kernel.hpp"
 #include "../utils/ministl.hpp"
 
-struct lock;
+class ILock;
 
 namespace MM2{
 	struct physical_page;

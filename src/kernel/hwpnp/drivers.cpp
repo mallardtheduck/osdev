@@ -1,5 +1,5 @@
 #include "hwpnp_internal.hpp"
-#include "../ministl.hpp"
+#include "../utils/ministl.hpp"
 #include <util/asprintf.h>
 
 using namespace btos_api::hwpnp;
@@ -39,7 +39,7 @@ static char *pnp_drivers_infofs(){
 void pnp_init_drivers(){
 	drivers = new vector<IDriver*>();
 	bad_combos = new vector<bad_combo>();
-	infofs_register("DRIVERS", &pnp_drivers_infofs);
+	InfoRegister("DRIVERS", &pnp_drivers_infofs);
 }
 
 void pnp_register_driver(IDriver *driver){

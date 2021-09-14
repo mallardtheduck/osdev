@@ -27,7 +27,7 @@ private:
 	static char *InfoFS();
 public:
 	VirtualFilesystem(){
-		infofs_register("MOUNTS", &InfoFS);
+		InfoRegister("MOUNTS", &InfoFS);
 	}
 
 	bool Attach(const char *name, IMountedFilesystem *mount) override{
@@ -78,7 +78,7 @@ private:
 	static char *InfoFS();
 public:
 	FilesystemManager(){
-		infofs_register("FILESYSTEMS", &InfoFS);
+		InfoRegister("FILESYSTEMS", &InfoFS);
 	}
 
 	void RegisterFilesystem(const char *name, IFilesystem *fs) override{
