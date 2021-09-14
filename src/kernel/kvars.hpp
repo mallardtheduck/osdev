@@ -3,7 +3,7 @@
 
 #include "utils/string.hpp"
 
-class IKernelConfigVariables{
+class IKernelConfigVariables : private nonmovable{
 public:
 	virtual void SetVariable(const char *name, const char *value) = 0;
 	virtual const char *GetVariable(const char *name) = 0;

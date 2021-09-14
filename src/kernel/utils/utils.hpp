@@ -4,6 +4,7 @@
 #include "gcc_builtins.h"
 #include "string.hpp"
 #include "ministl.hpp"
+#include <util/noncopyable.hpp>
 
 //String
 class string;
@@ -69,7 +70,7 @@ template<typename T, typename ...Tp> void New(T *&var, Tp... params){
 	var = new T(params...);
 }
 
-template<typename T> class StaticAlloc{
+template<typename T> class StaticAlloc : private nonmovable{
 private:
 	alignas(T) char buffer[sizeof(T)];
 	T *ptr = nullptr;

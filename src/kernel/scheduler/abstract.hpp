@@ -19,7 +19,7 @@ enum class ThreadStatus{
 	HeldBlocked = 7
 };
 
-class IThread{
+class IThread : private nonmovable{
 public:
 	virtual void Yield(IThread *to = nullptr) = 0;
 	virtual void YieldIfPending() = 0;
@@ -60,7 +60,7 @@ typedef RefCountPointer<IThread> ThreadPointer;
 
 class SchedulerLock;
 
-class IScheduler{
+class IScheduler : private nonmovable{
 private:
 	static void FunctionStart(void *fn){
 		auto func = (function<void()>*)fn;
@@ -110,7 +110,7 @@ inline ThreadPointer GetThread(uint64_t id){
 }
 
 
-class SchedulerLock{
+class SchedulerLock : private noncopyable{
 private:
 	IScheduler &sch;
 	bool enable;
@@ -127,9 +127,6 @@ public:
 		new (this) SchedulerLock((SchedulerLock &&)other);
 		return *this;
 	}
-
-	SchedulerLock(const SchedulerLock&) = delete;
-	SchedulerLock &operator=(const SchedulerLock&) = delete;
 
 	~SchedulerLock(){
 		if(enable)sch.EnableScheduler();

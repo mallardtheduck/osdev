@@ -20,7 +20,7 @@ enum class EnvironemntVariableFlags{
 	NoInherit	= (1<<3), //Do not copy from parent to child
 };
 
-class IProcess{
+class IProcess : private nonmovable{
 public:
 	virtual uint64_t ID() = 0;
 	virtual const char *GetName() = 0;
@@ -77,7 +77,7 @@ typedef RefCountPointer<IProcess> ProcessPointer;
 
 IProcess &CurrentProcess();
 
-class IProcessManager{
+class IProcessManager : private nonmovable{
 public:
 	[[nodiscard]] virtual bool SwitchProcess(bt_pid_t pid) = 0;
 	virtual void SwitchProcessFromScheduler(bt_pid_t pid) = 0;

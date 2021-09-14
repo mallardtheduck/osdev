@@ -8,7 +8,7 @@ namespace module_api{
 	struct syscall_table;
 };
 
-class ILoadedElf{
+class ILoadedElf : private nonmovable{
 public:
 	virtual void Execute(const char *mod_params = nullptr) = 0;
 	virtual ProcessEntryPoint GetEntryPoint() = 0;

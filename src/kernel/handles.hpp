@@ -31,6 +31,9 @@ namespace KernelHandles{
 		static_assert(std::is_convertible<HandleT*, IHandle*>::value || std::is_null_pointer<HandleT>::value, "HandleT is not a handle?!?");
 		static constexpr uint32_t id = ID;
 		using handleType = HandleT;
+
+		private:
+			HandleMapping();
 	};
 
 	using Invald =			HandleMapping<0, nullptr_t>;

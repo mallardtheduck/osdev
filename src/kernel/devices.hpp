@@ -1,7 +1,7 @@
 #ifndef KERNEL_DEVICES_HPP
 #define KERNEL_DEVICES_HPP
 
-class IVisibleDeviceInstance{
+class IVisibleDeviceInstance : private nonmovable{
 public:
 	virtual size_t Read(size_t bytes, char *buffer) = 0;
 	virtual size_t Write(size_t bytes, const char *buffer) = 0;
@@ -18,7 +18,7 @@ public:
 	virtual ~IVisibleDeviceInstance() {}
 };
 
-class IVisibleDevice{
+class IVisibleDevice : private nonmovable{
 public:
 	virtual IVisibleDeviceInstance *Open() = 0;
 	virtual int GetType() = 0;
@@ -29,7 +29,7 @@ public:
 	virtual ~IVisibleDevice() {}
 };
 
-class IVisibleDeviceIterator{
+class IVisibleDeviceIterator : private nonmovable{
 public:
 	virtual IVisibleDevice &Get() const = 0;
 	virtual void Increment() = 0;
@@ -109,9 +109,13 @@ public:
 	bool operator!=(const VisibleDeviceIteratorWrapper &o) const{
 		return !(*this == o);
 	}
+
+	~VisibleDeviceIteratorWrapper(){
+		if(it) delete it;
+	}
 };
 
-class IVisibleDeviceManager{
+class IVisibleDeviceManager : private nonmovable{
 public:
 	virtual void AddVisibleDevice(IVisibleDevice *device) = 0;
 	virtual IVisibleDevice *GetVisibleDevice(const char *name) = 0;

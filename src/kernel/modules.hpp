@@ -3,7 +3,7 @@
 
 #include "kernel.hpp"
 
-class IModuleManager{
+class IModuleManager : private nonmovable{
 public:
 	virtual void LoadModule(const char *path, char *params = nullptr) = 0;
 

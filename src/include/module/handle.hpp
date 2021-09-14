@@ -3,16 +3,17 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <util/noncopyable.hpp>
 #include "utils/function.hpp"
 
-class IHandle{
+class IHandle : private nonmovable{
 public:
 	virtual uint32_t GetType() = 0;
 
 	virtual void Close() = 0;
 	virtual bool Wait() = 0;
 
-	virtual ~IHandle(){}
+	virtual ~IHandle() {}
 };
 
 template<typename T>

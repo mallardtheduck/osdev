@@ -8,7 +8,7 @@ class ILock;
 namespace MM2{
 	struct physical_page;
 
-	class PageDirectory{
+	class PageDirectory : private nonmovable{
 	private:
 		struct region{
 			void *addr;

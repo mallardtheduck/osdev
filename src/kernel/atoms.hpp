@@ -4,7 +4,7 @@
 #include "kernel.hpp"
 #include <btos/atoms.h>
 
-class IAtom{
+class IAtom : private nonmovable{
 public:
 	virtual uint64_t Modify(bt_atom_modify::Enum mod, uint64_t value) = 0;
 	virtual uint64_t Wait(bt_atom_compare::Enum cmp, uint64_t value) = 0;

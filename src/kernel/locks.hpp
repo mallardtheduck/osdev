@@ -5,7 +5,7 @@
 
 class LockLock;
 
-class ILock{
+class ILock : private nonmovable{
 public:
 	virtual void TakeExclusive(bool forUserspace = false) = 0;
 	virtual void TakeRecursive() = 0;
@@ -29,7 +29,7 @@ public:
 	virtual ~ILock() {}
 };
 
-class LockLock{
+class LockLock : private noncopyable{
 private:
 	ILock &theLock;
 	bool release = true;
@@ -46,9 +46,6 @@ public:
 		}
 		return *this;
 	}
-
-	LockLock(const LockLock&) = delete;
-	LockLock &operator=(const LockLock&) = delete;
 
 	~LockLock(){
 		if(release) theLock.Release();

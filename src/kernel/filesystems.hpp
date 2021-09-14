@@ -43,7 +43,7 @@ public:
 	virtual ~IDirectoryHandle() {}
 };
 
-class IFilesystemNode{
+class IFilesystemNode : private nonmovable{
 private:
 	size_t refcount = 0;
 public:
@@ -61,7 +61,7 @@ public:
 	virtual ~IFilesystemNode() {}
 };
 
-class IMountedFilesystem{
+class IMountedFilesystem : private nonmovable{
 public:
 	virtual FilesystemNodePointer GetNode(const char *path) = 0;
 	virtual void Flush() = 0;
@@ -70,7 +70,7 @@ public:
 	virtual ~IMountedFilesystem() {}
 };
 
-class IFilesystem{
+class IFilesystem : private nonmovable{
 public:
 	virtual IMountedFilesystem *Mount(const IFilesystemNode &node) = 0;
 	virtual bool Format(const IFilesystemNode &node, void *options) = 0;
@@ -78,7 +78,7 @@ public:
 	virtual ~IFilesystem() {}
 };
 
-class IVirtualFilesystem{
+class IVirtualFilesystem : private nonmovable{
 public:
 	virtual bool Attach(const char *name, IMountedFilesystem *mount) = 0;
 	virtual IMountedFilesystem *Detach(const char *name) = 0;
@@ -98,7 +98,7 @@ public:
 	virtual ~IVirtualFilesystem() {}
 };
 
-class IFilesystemManager{
+class IFilesystemManager : private nonmovable{
 public:
 	virtual void RegisterFilesystem(const char *name, IFilesystem *fs) = 0;
 	virtual IFilesystem *UnRegisterFileystem(const char *name) = 0;

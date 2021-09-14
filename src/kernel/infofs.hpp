@@ -3,7 +3,7 @@
 
 #include <module/utils/function.hpp>
 
-class IInfoFS{
+class IInfoFS : private nonmovable{
 	public:
 	virtual void Register(const char *name, function<char*()> fn) = 0;
 
