@@ -52,6 +52,11 @@ GenericHandle<T> *MakeGenericHandle(uint32_t type, T data, Tclose close = nullpt
 	return new GenericHandle<T>(type, data, close, wait);
 }
 
+template<typename T> GenericHandle<T> *GenericHandleCast(uint32_t type, IHandle *handle){
+	if(handle && handle->GetType() == type) return static_cast<GenericHandle<T>*>(handle);
+	else return nullptr;
+}
+
 template<typename>
 struct IsGenericHandle : public std::false_type {};
 
