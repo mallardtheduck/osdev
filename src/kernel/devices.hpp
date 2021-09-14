@@ -11,8 +11,10 @@ public:
 	virtual int IOCtl(int fn, size_t bytes, char *buffer) = 0;
 
 	virtual int GetType() = 0;
-
 	virtual const char *GetDescription() = 0;
+
+	virtual bool Close() = 0;
+
 	virtual ~IVisibleDeviceInstance() {}
 };
 
