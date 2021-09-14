@@ -27,7 +27,8 @@ namespace MM2{
 			dbgpf("MM2: Page fault on %lx at %lx!\n", addr, state.Get32BitRegister(Generic_Register::Instruction_Pointer));
 			dbgpf("MM2: Physical address: %lx\n", physaddr);
 			state.DebugStackTrace();
-			dbgout(modules_infofs());
+			//TODO: Reinstate this somehow...
+			//dbgout(modules_infofs());
 			if (addr < MM2_Page_Size) {
 				panic("(MM2) Probable NULL pointer dereference!");
 			} else panic("(MM2) Page fault!");
