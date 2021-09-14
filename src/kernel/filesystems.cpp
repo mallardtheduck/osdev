@@ -104,15 +104,12 @@ public:
 	}
 };
 
-static char virtualFilesystemBuffer[sizeof(VirtualFilesystem)];
-static VirtualFilesystem *theVirtualFilesystem;
+static StaticAlloc<VirtualFilesystem> theVirtualFilesystem;
+static StaticAlloc<FilesystemManager> theFilesystemManager;
 
-static char filesystemManagerBuffer[sizeof(FilesystemManager)];
-static FilesystemManager *theFilesystemManager;
-
-void Filesystems_Init(){
-	theVirtualFilesystem = new(virtualFilesystemBuffer) VirtualFilesystem();
-	theFilesystemManager = new(filesystemManagerBuffer) FilesystemManager();
+void Filesystem_Init(){
+	theFilesystemManager.Init();
+	theVirtualFilesystem.Init();
 }
 
 IVirtualFilesystem &GetVirtualFilesystem(){

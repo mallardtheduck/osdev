@@ -4,8 +4,7 @@
 #include "thread.hpp"
 #include "scheduler.hpp"
 
-static char schedulerBuffer[sizeof(Scheduler)];
-Scheduler *theScheduler = nullptr;
+StaticAlloc<Scheduler> theScheduler;
 
 constexpr auto MaxLoadModifier = 128;
 
@@ -235,12 +234,21 @@ uint64_t Scheduler::Schedule(uint64_t stackToken){
 	return next->stackToken;
 }
 
+void Scheduler::EnableScheduler(){
+	auto il = GetHAL().LockInterrupts();
+	if(lock->IsLocked() && lock->GetOwningThreadID() == current->ID()) lock->Release();
+}
+
+bool Scheduler::DisableScheduler(){
+	return lock->TryTakeExclusive();
+}
+
 bool Scheduler_Ready(){
 	return theScheduler;
 }
 
 void Scheduler_Init(){
-	theScheduler = new(schedulerBuffer) Scheduler();
+	theScheduler.Init();
 }
 
 IScheduler &GetScheduler(){

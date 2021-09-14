@@ -153,9 +153,9 @@ public:
 	}
 };
 
-DevFS *theDevFS = nullptr;
+static StaticAlloc<DevFS> theDevFS;
 
 IFilesystem *DevFSGet(){
-	if(!theDevFS) New(theDevFS);
+	if(!theDevFS) theDevFS.Init();
 	return theDevFS;
 }

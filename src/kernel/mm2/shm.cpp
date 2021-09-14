@@ -20,8 +20,8 @@ namespace MM2{
 		bt_pid_t pid;
 	};
 	
-	static map<uint64_t, shm_space* > *spaces;
-	static map<uint64_t, shm_mapping* > *mappings;
+	static StaticAlloc<map<uint64_t, shm_space*>> spaces;
+	static StaticAlloc<map<uint64_t, shm_mapping*>> mappings;
 	static uint64_t space_id_counter = 0;
 	static uint64_t mapping_id_counter = 0;
 	
@@ -138,8 +138,8 @@ namespace MM2{
 	}
 	
 	void init_shm(){
-		New(spaces);
-		New(mappings);
+		spaces.Init();
+		mappings.Init();
 		shm_lock = NewLock();
 	}
 }

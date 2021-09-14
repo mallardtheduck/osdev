@@ -93,12 +93,12 @@ VisibleDeviceIteratorWrapper VisibleDeviceManager::end() const{
 	return new VisibleDeviceIterator(*this, "");
 }
 
-VisibleDeviceManager *vdm;
+StaticAlloc<VisibleDeviceManager> vdm;
 
 IVisibleDeviceManager &GetVisibleDeviceManager(){
 	return *vdm;
 }
 
 void Devices_Init(){
-	New(vdm);
+	vdm.Init();
 }

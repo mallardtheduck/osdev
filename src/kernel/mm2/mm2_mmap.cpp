@@ -17,7 +17,7 @@ namespace MM2{
 		bt_pid_t pid;
 	};
 	
-	static map<uint64_t, mmapping> *mmappings;
+	static StaticAlloc<map<uint64_t, mmapping>> mmappings;
 	static uint64_t counter = 0;
 	
 	static ILock *mmap_lock;
@@ -220,6 +220,6 @@ namespace MM2{
 	
 	void init_mmap(){
 		mmap_lock = NewLock();
-		New(mmappings);
+		mmappings.Init();
 	}
 }

@@ -30,11 +30,10 @@ public:
 	}
 };
 
-static char kernelConfigVariablesBuffer[sizeof(KernelConfigVariables)];
-static KernelConfigVariables *theKernelConfigVariables = nullptr;
+static StaticAlloc<KernelConfigVariables> theKernelConfigVariables;
 
 void KernelConfigVariables_Init(){
-	theKernelConfigVariables = new(kernelConfigVariablesBuffer) KernelConfigVariables();
+	theKernelConfigVariables.Init();
 }
 
 IKernelConfigVariables &GetKernelConfigVariables(){
