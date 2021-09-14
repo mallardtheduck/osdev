@@ -2,7 +2,7 @@
 
 static void RaiseUserLockingError(){
 	debug_event_notify(CurrentProcess().ID(), CurrentThread().ID(), bt_debug_event::Exception, bt_exception::BadLocking);
-	proc_terminate();
+	CurrentProcess().Terminate();
 }
 
 class Lock : public ILock{
@@ -45,7 +45,7 @@ public:
 	}
 
 	bool TryTakeExclusive() override{
-		if(!Scheduler_Ready()) return;
+		if(!Scheduler_Ready()) return false;
 		auto currentThreadID = CurrentThread().ID();
 		if(owningThreadID != 0 && owningThreadID == currentThreadID) return false;
 		if(!__sync_bool_compare_and_swap(&owningThreadID, 0, currentThreadID)) return false;
@@ -57,7 +57,7 @@ public:
 	}
 
 	bool TryTakeRecursive() override{
-		if(!Scheduler_Ready()) return;
+		if(!Scheduler_Ready()) return false;
 		auto currentThreadID = CurrentThread().ID();
 		if(owningThreadID == currentThreadID){
 			++recursionCount;
