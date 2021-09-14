@@ -6,6 +6,8 @@
 #include "ministl.hpp"
 
 //String
+class string;
+
 char* itoa(int num, char* str, int base=10);
 string to_upper(const string &str);
 bool starts_with(const string &str, const string &cmp);

@@ -54,7 +54,7 @@ char* itoa(int num, char* str, int base)
     return str;
 }
 
-string itoa(int num, int base = 10){
+string itoa(int num, int base){
     vector<char> buffer;
     size_t bufferSize = 5; //To account for any prefix, - sign, null terminator, etc.
     for(auto n = num; (n /= base) != 0; ++bufferSize);
