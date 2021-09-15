@@ -1,15 +1,22 @@
-#ifndef _EXTENSIONS_HPP
-#define _EXTENSIONS_HPP
+#ifndef KERNEL_EXTENSIONS_HPP
+#define KERNEL_EXTENSIONS_HPP
 
 #include "kernel.hpp"
 namespace module_api {
-#include <module/extension.h>
+#include <module/extension.hpp>
 }
 
-void init_extensions();
-uint16_t add_extension(module_api::kernel_extension *ext);
-module_api::kernel_extension *get_extension(uint16_t ext);
-uint16_t get_extension_id(const char *name);
-void user_call_extension(uint16_t ext_id, uint16_t fn, ICPUState &state);
+class IKernelExensionManager : private nonmovable{
+public:
+	virtual uint16_t AddExtension(module_api::IKernelExtension *ext) = 0;
+	virtual module_api::IKernelExtension *GetExtension(uint16_t id) = 0;
+	virtual uint16_t GetExtensionID(const char *name) = 0;
+	virtual void ExtensionUserCall(uint16_t id, uint16_t fn, ICPUState &state) = 0;
+
+	virtual ~IKernelExensionManager() {}
+};
+
+void Extensions_Init();
+IKernelExensionManager &GetKernelExtensionManager();
 
 #endif

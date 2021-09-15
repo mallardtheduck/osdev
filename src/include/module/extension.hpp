@@ -4,12 +4,12 @@
 #include "module_api.h"
 #include "drivers.h"
 
-typedef void (*uapi_hanlder_fn)(uint16_t,ICPUState&);
+class IKernelExtension{
+public:
+	virtual const char *GetName() = 0;
+	virtual void UserAPIHandler(uint16_t fn, ICPUState &state);
 
-struct kernel_extension{
-	char *name;
-	void *calltable;
-	uapi_hanlder_fn uapi_handler;
+	virtual ~IKernelExtension() {}
 };
 
 #ifndef __cplusplus
