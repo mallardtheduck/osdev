@@ -44,5 +44,6 @@
         "valarray": "cpp",
         "internet": "cpp",
         "string_view": "cpp"
-    }
+    },
+    "editor.fontLigatures": true
 }
