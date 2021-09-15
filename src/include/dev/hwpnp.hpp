@@ -108,7 +108,7 @@ namespace hwpnp{
 	public:
 		virtual ITimerDevice *GetSysTimer() = 0;
 		virtual int GetType() {
-			return module_api::driver_types::COMPUTER;
+			return driver_types::COMPUTER;
 		}
 		virtual IDeviceNode *GetDeviceNode(){
 			return nullptr;

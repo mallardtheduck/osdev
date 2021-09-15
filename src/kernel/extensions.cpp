@@ -4,7 +4,7 @@
 
 class KernelExensionManager : public IKernelExensionManager{
 private:
-	map<uint16_t, module_api::IKernelExtension*> extensions;
+	map<uint16_t, IKernelExtension*> extensions;
 
 	char *InfoFS(){
 		char *buffer=nullptr;
@@ -21,14 +21,14 @@ public:
 		});
 	}
 	
-	uint16_t AddExtension(module_api::IKernelExtension *ext) override{
+	uint16_t AddExtension(IKernelExtension *ext) override{
 		uint16_t ret=1;
 		while(extensions.has_key(ret)) ++ret;
 		extensions[ret] = ext;
 		return ret;
 	}
 
-	module_api::IKernelExtension *GetExtension(uint16_t id) override{
+	IKernelExtension *GetExtension(uint16_t id) override{
 		if(extensions.has_key(id)) return extensions[id];
 		else return nullptr;
 	}

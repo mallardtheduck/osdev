@@ -9,7 +9,7 @@ bool has_perm(uint16_t ext, uint8_t p, bt_pid_t pid){
 }
 
 uint64_t set_perms(uint16_t ext, uint64_t pmask, bt_pid_t pid){
-	if(ext && !get_extension(ext)) return 0;
+	if(ext && !GetKernelExtensionManager().GetExtension(ext)) return 0;
 	auto proc = GetProcess(pid);
 	uint64_t perms = proc->GetPermissions(ext);
 	perms |= pmask;

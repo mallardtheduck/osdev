@@ -33,7 +33,7 @@ void userapi_handler(ICPUState &state){
 	if(ext==0){
 		userapi_syscall(fn, state);
 	}else{
-		user_call_extension(ext, fn, state);
+		GetKernelExtensionManager().ExtensionUserCall(ext, fn, state);
 	}
 	if(currentThread.GetAbortLevel() != 1){
 		dbgpf("UAPI: Abortlevel: %i, ext: %i fn: %x\n", currentThread.GetAbortLevel(), (int)ext, (int)fn);
@@ -713,7 +713,7 @@ USERAPI_HANDLER(BT_READ_MSG_WAIT){
 
 USERAPI_HANDLER(BT_QUERY_EXT){
 	if(is_safe_string(state.Get32BitRegister(Generic_Register::GP_Register_B))){
-		state.Get32BitRegister(Generic_Register::GP_Register_A) = get_extension_id((char*)state.Get32BitRegister(Generic_Register::GP_Register_B));
+		state.Get32BitRegister(Generic_Register::GP_Register_A) = GetKernelExtensionManager().GetExtensionID((char*)state.Get32BitRegister(Generic_Register::GP_Register_B));
 	}else RAISE_US_ERROR();
 }
 

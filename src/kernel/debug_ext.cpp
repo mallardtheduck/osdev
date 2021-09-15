@@ -107,8 +107,15 @@ void debug_event_notify(bt_pid_t pid, uint64_t thread, bt_debug_event::Enum even
 	}
 }
 
-module_api::kernel_extension debug_extension = {
-	(char*)"DEBUG", NULL, &debug_extension_uapi
+class DebugExtension : public IKernelExtension{
+public:
+	const char *GetName() override{
+		return "DEBUG";
+	}
+
+	void UserAPIHandler(uint16_t fn, ICPUState &state) override{
+		debug_extension_uapi(fn, state);
+	}
 };
 
 static void debug_isr(ICPUState &state){
@@ -120,7 +127,7 @@ static void debug_isr(ICPUState &state){
 
 void init_debug_extension() {
 	debugDriver = &GetHAL().GetDebugDriver();
-	debug_ext_id = add_extension(&debug_extension);
+	debug_ext_id = GetKernelExtensionManager().AddExtension(new DebugExtension());
 	GetHAL().HandleHWBreakpoint(&debug_isr);
 	GetHAL().HandleSWBreakpoint(&debug_isr);
 }

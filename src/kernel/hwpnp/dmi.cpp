@@ -23,12 +23,19 @@ static void dmi_extension_uapi(uint16_t fn, ICPUState &state){
 	}
 }
 
-static module_api::kernel_extension dmi_extension = {
-	(char*)"DMI", NULL, &dmi_extension_uapi
+class DMIExtension : public IKernelExtension{
+public:
+	const char *GetName() override{
+		return "DMI";
+	}
+
+	void UserAPIHandler(uint16_t fn, ICPUState &state) override{
+		dmi_extension_uapi(fn, state);
+	}
 };
 
 void pnp_dmi_init(){
-	dmi_ext_id = add_extension(&dmi_extension);
+	dmi_ext_id = GetKernelExtensionManager().AddExtension(new DMIExtension());
 }
 
 static void dmi_notify(bt_dm_event::Enum event, const hwpnp::DeviceID &dev){

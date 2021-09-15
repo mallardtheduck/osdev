@@ -4,8 +4,6 @@
 #include "../../kernel.hpp"
 #include <module/drivers.h>
 
-using isr_regs = module_api::isr_regs;
-
 extern "C" uint32_t syscall(uint32_t fn);
 
 /* CPU-generated interrupt handler stubs; declared in interrupt.s */

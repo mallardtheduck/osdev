@@ -1,5 +1,5 @@
 #include "rtc_internal.hpp"
-#include <dev/rtc.h>
+#include <dev/rtc.hpp>
 #include <util/asprintf.h>
 
 uint16_t extension_id;
@@ -47,11 +47,24 @@ void rtc_uapi(uint16_t id,ICPUState &state){
 	}
 }
 
-module_api::kernel_extension rtc_extension{(char*)RTC_EXTENSION_NAME, (void*)&calltable, &rtc_uapi};
+const char *RTCExtension::GetName(){
+	return RTC_EXTENSION_NAME;
+}
+void RTCExtension::UserAPIHandler(uint16_t fn, ICPUState &state){
+	return rtc_uapi(fn, state);
+}
+
+void RTCExtension::Sleep(uint32_t msec){
+	return rtc_sleep(msec);
+}
+
+uint64_t RTCExtension::Millis(){
+	return rtc_millis();
+}
 
 void init_api(){
 	init_timer();
-	extension_id = add_extension(&rtc_extension);
+	extension_id = GetKernelExtensionManager().AddExtension(new RTCExtension());
 }
 
 char *rtc_infofs(){
