@@ -116,7 +116,7 @@ ProcessPointer ProcessManager::GetByID(bt_pid_t pid) {
 	return nullptr;
 }
 
-StaticAlloc<ProcessManager> theProcessManager;
+ManualStaticAlloc<ProcessManager> theProcessManager;
 
 void Processes_Init(){
 	theProcessManager.Init();

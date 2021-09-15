@@ -125,7 +125,7 @@ public:
 	}
 };
 
-static StaticAlloc<ModuleAPI> theModuleAPI;
+static ManualStaticAlloc<ModuleAPI> theModuleAPI;
 
 IModuleAPI &GetModuleAPI(){
 	if(!theModuleAPI) theModuleAPI.Init();

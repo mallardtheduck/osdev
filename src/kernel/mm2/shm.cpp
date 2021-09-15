@@ -20,8 +20,8 @@ namespace MM2{
 		bt_pid_t pid;
 	};
 	
-	static StaticAlloc<map<uint64_t, shm_space*>> spaces;
-	static StaticAlloc<map<uint64_t, shm_mapping*>> mappings;
+	static ManualStaticAlloc<map<uint64_t, shm_space*>> spaces;
+	static ManualStaticAlloc<map<uint64_t, shm_mapping*>> mappings;
 	static uint64_t space_id_counter = 0;
 	static uint64_t mapping_id_counter = 0;
 	

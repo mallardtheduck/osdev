@@ -104,8 +104,8 @@ public:
 	}
 };
 
-static StaticAlloc<VirtualFilesystem> theVirtualFilesystem;
-static StaticAlloc<FilesystemManager> theFilesystemManager;
+static ManualStaticAlloc<VirtualFilesystem> theVirtualFilesystem;
+static ManualStaticAlloc<FilesystemManager> theFilesystemManager;
 
 void Filesystem_Init(){
 	theFilesystemManager.Init();

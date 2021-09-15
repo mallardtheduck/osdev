@@ -93,7 +93,7 @@ VisibleDeviceIteratorWrapper VisibleDeviceManager::end() const{
 	return new VisibleDeviceIterator(*this, "");
 }
 
-StaticAlloc<VisibleDeviceManager> vdm;
+ManualStaticAlloc<VisibleDeviceManager> vdm;
 
 IVisibleDeviceManager &GetVisibleDeviceManager(){
 	return *vdm;

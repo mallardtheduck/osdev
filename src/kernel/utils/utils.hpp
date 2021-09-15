@@ -1,6 +1,8 @@
 #ifndef KERNEL_UTILS_HPP
 #define KERNEL_UTILS_HP
 
+#include "new.hpp"
+#include "../locks.hpp"
 #include "gcc_builtins.h"
 #include "string.hpp"
 #include "ministl.hpp"
@@ -15,44 +17,6 @@ bool starts_with(const string &str, const string &cmp);
 vector<string> split_string(const string &str, const char c);
 
 string itoa(int num, int base = 10);
-
-#ifndef VSCODE //VSCode reports spruious errors here...
-//C++ new/delete operators
-inline void *operator new(size_t size)
-{
-	return malloc(size);
-}
- 
-inline void *operator new[](size_t size)
-{
-	return malloc(size);
-}
- 
-inline void operator delete(void *p)
-{
-	free(p);
-}
-
-inline void operator delete(void *p, size_t)
-{
-	free(p);
-}
- 
-inline void operator delete[](void *p)
-{
-	free(p);
-}
-
-inline void operator delete[](void *p, size_t)
-{
-	free(p);
-}
-
-template<typename T> void *operator new (size_t, T* ptr)
-{
-	return ptr;
-}
-#endif
 
 template<typename T> T min(T a, T b){
 	return (a < b) ? a : b;
@@ -70,23 +34,68 @@ template<typename T, typename ...Tp> void New(T *&var, Tp... params){
 	var = new T(params...);
 }
 
-template<typename T> class StaticAlloc : private nonmovable{
+class ILock;
+ILock *NewLock();
+
+namespace StaticAllocInitPolicies{
+	namespace Private{
+		void TakeLock(ILock *lock);
+		void ReleaseLock(ILock *lock);
+	}
+
+	template<typename T> struct Manually{
+		void CheckInit(T *ptr, char (&)[sizeof(T)]){
+			if(!ptr) panic("(SA) Use before allocation!");
+		}
+
+		void Init(T *ptr, char (&buffer)[sizeof(T)]){
+			if(ptr) panic("(SA) Duplicate initialisation!");
+			ptr = new(buffer) T();
+		}
+
+		template<typename... Ts>
+		void Init(T *ptr, char (&buffer)[sizeof(T)], Ts... params){
+			if(ptr) panic("(SA) Duplicate initialisation!");
+			ptr = new(buffer) T(params...);
+		}
+	};
+
+	template<typename T> struct OnDemand{
+		ILock *initLock;
+		OnDemand() : initLock(NewLock()) {}
+
+		void CheckInit(T *ptr, char (&buffer)[sizeof(T)]){
+			if(!ptr){
+				Private::TakeLock(initLock);
+				if(!ptr) ptr = new(buffer) T();
+				Private::ReleaseLock(initLock);
+			}
+		}
+
+		void Init(T*, char (&)[sizeof(T)]){
+		}
+	};
+};
+
+template<typename T, typename InitPolicy> class StaticAlloc : private nonmovable{
 private:
 	alignas(T) char buffer[sizeof(T)];
 	T *ptr = nullptr;
+
+	InitPolicy initer;
 public:
 	T& operator*(){
-		if(!ptr) panic("(SA) Use before allocation!");
+		initer.CheckInit(ptr, buffer);
 		return *ptr;
 	}
 
 	T *operator->(){
-		if(!ptr) panic("(SA) Use before allocation!");
+		initer.CheckInit(ptr, buffer);
 		return ptr;
 	}
 
 	operator T*(){
-		if(!ptr) panic("(SA) Use before allocation!");
+		initer.CheckInit(ptr, buffer);
 		return ptr;
 	}
 
@@ -95,13 +104,16 @@ public:
 	}
 
 	void Init(){
-		ptr = new(buffer) T();
+		initer.Init(ptr, buffer);
 	}
 
 	template<typename... Ts>
 	void Init(Ts... params){
-		ptr = new(buffer) T(params...);
+		initer.Init(ptr, buffer, params...);
 	}
 };
+
+template<typename T> using ManualStaticAlloc = StaticAlloc<T, StaticAllocInitPolicies::Manually<T>>;
+template<typename T> using OnDemandStaticAlloc = StaticAlloc<T, StaticAllocInitPolicies::OnDemand<T>>;
 
 #endif

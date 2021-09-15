@@ -11,7 +11,7 @@ struct initfs_file{
 	size_t size;
 };
 
-StaticAlloc<vector<initfs_file>> initfs_data;
+ManualStaticAlloc<vector<initfs_file>> initfs_data;
 
 class InitFSNode : public IFilesystemNode{
 private:
@@ -208,7 +208,7 @@ size_t tar_size(const char *in){
 	return from_oct(12, in);
 }
 
-static StaticAlloc<InitFS> theInitFS;
+static ManualStaticAlloc<InitFS> theInitFS;
 
 IFilesystem *InitFSGet(){
 	if(!initfs_data){

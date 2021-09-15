@@ -17,7 +17,7 @@ namespace MM2{
 		bt_pid_t pid;
 	};
 	
-	static StaticAlloc<map<uint64_t, mmapping>> mmappings;
+	static ManualStaticAlloc<map<uint64_t, mmapping>> mmappings;
 	static uint64_t counter = 0;
 	
 	static ILock *mmap_lock;

@@ -4,7 +4,7 @@
 #include "thread.hpp"
 #include "scheduler.hpp"
 
-StaticAlloc<Scheduler> theScheduler;
+ManualStaticAlloc<Scheduler> theScheduler;
 
 constexpr auto MaxLoadModifier = 128;
 

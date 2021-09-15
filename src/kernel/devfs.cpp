@@ -153,7 +153,7 @@ public:
 	}
 };
 
-static StaticAlloc<DevFS> theDevFS;
+static ManualStaticAlloc<DevFS> theDevFS;
 
 IFilesystem *DevFSGet(){
 	if(!theDevFS) theDevFS.Init();

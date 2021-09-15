@@ -30,7 +30,7 @@ public:
 	}
 };
 
-static StaticAlloc<KernelConfigVariables> theKernelConfigVariables;
+static ManualStaticAlloc<KernelConfigVariables> theKernelConfigVariables;
 
 void KernelConfigVariables_Init(){
 	theKernelConfigVariables.Init();

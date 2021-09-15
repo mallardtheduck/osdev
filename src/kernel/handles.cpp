@@ -1,11 +1,10 @@
 #include "kernel.hpp"
 #include "locks.hpp"
 
-static StaticAlloc<vector<IHandle*>> handlesWithDependencies;
+static OnDemandStaticAlloc<vector<IHandle*>> handlesWithDependencies;
 static ILock *handleDepenciesLock;
 
 void init_handles(){
-	handlesWithDependencies.Init();
 	handleDepenciesLock = NewLock();
 }
 

@@ -42,6 +42,6 @@ public:
 	bool DisableScheduler() override;
 };
 
-extern StaticAlloc<Scheduler> theScheduler;
+extern ManualStaticAlloc<Scheduler> theScheduler;
 
 #endif
