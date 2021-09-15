@@ -2,7 +2,7 @@
 #define MODULE_HAL_HPP
 
 #include <cstddef>
-#include <module/utils/refcountpointer.hpp>
+#include <module/kernelsys/scheduler.hpp>
 
 typedef void (*ProcessEntryPoint)(void *);
 
@@ -42,9 +42,6 @@ public:
 };
 
 typedef void (*ISR_Routine)(ICPUState&);
-
-class IThread;
-using ThreadPointer = RefCountPointer<IThread>;
 
 class IDebugDriver : private nonmovable{
 public:

@@ -38,8 +38,8 @@ public:
 		return nullptr;
 	}
 
-	void *NewLock() override {
-		return nullptr;
+	ILock *NewLock() override {
+		return ::NewLock();
 	}
 
 	void DebugOutput(const char *msg) override {
@@ -52,45 +52,56 @@ public:
 		return vsnprintf(str, size, fmt, ap);
 	}
 
-	void *NewThread(threadFn entry, void *param) override {
-		return nullptr;
-	}
-	void *CurrentThread() override {
-		return nullptr;
+	IScheduler &GetScheduler() override{
+		return ::GetScheduler();
 	}
 
-	void *GetDeviceManager() override {
-		return nullptr;
+	IThread &CurrentThread() override{
+		return ::CurrentThread();
+	}
+
+	ThreadPointer GetThread(uint64_t id) override{
+		return ::GetThread(id);
+	}
+
+	IVisibleDeviceManager &GetVisibleDeviceManager() override{
+		return ::GetVisibleDeviceManager();
 	}
 
 	IHAL &GetHAL() override {
 		return GetHAL();
 	}
 
-	void *GetFilesystem() override {
-		return nullptr;
+	IVirtualFilesystem &GetVirtualFilesystem() override{
+		return ::GetVirtualFilesystem();
+	}
+
+	IFilesystemManager &GetFilesystemManager() override{
+		return ::GetFilesystemManager();
 	}
 
 	void LoadModule(const char *path, const char *params) override {
 		GetModuleManager().LoadModule(path, (char*)params);
 	}
 
-	void *NewProcess(const char *exec, size_t argc, char **argv) override {
-		return nullptr;
-	}
-	void *CurrentProcess() override {
-		return nullptr;
-	}
-	void *GetProcess(bt_pid_t pid) override {
-		return nullptr;
-	}
-	
-	void AddInfoFSItem(const char *name, infoFn fn) override {
-		InfoRegister(name, fn);
+	IProcessManager &GetProcessManager() override{
+		return ::GetProcessManager();
 	}
 
-	void *GetExtensionManager() override {
-		return nullptr;
+	IProcess &CurrentProcess() override{
+		return ::CurrentProcess();
+	}
+
+	ProcessPointer GetProcess(bt_pid_t pid) override{
+		return ::GetProcess(pid);
+	}
+	
+	void InfoRegister(const char *name, function<char*()> fn) override{
+		::InfoRegister(name, fn);
+	}
+
+	IKernelExensionManager &GetKernelExtensionManager() override{
+		return ::GetKernelExtensionManager();
 	}
 
 	void *SendMessage(void *message) override {
@@ -103,21 +114,8 @@ public:
 		return nullptr;
 	}
 
-	bt_handle_t NewHandle(void *handle, void *process) override {
-		return 0;
-	}
-	void *GetHandle(bt_handle_t, void *process) override {
-		return nullptr;
-	}
-
-	void SetKernelVariable(const char *name, const char *value) override {
-		GetKernelConfigVariables().SetVariable(name, value);
-	}
-	size_t GetKernelVariable(const char *name, char *buffer, size_t size) override {
-		auto value = GetKernelConfigVariables().GetVariable(name);
-		strncpy(buffer, value, size - 1);
-		buffer[size - 1] = 0;
-		return strlen(value);
+	IKernelConfigVariables &GetKernelConfigVariables() override{
+		return ::GetKernelConfigVariables();
 	}
 
 	void *GetPnPManager() override {

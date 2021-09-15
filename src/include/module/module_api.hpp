@@ -5,7 +5,12 @@
 #include <cstdint>
 
 #include "kernelsys/hal.hpp"
+#include "kernelsys/scheduler.hpp"
 #include "kernelsys/extension.hpp"
+#include "kernelsys/process.hpp"
+#include "kernelsys/filesystems.hpp"
+#include "kernelsys/locks.hpp"
+#include "kernelsys/kvars.hpp"
 
 typedef void(*threadFn)(void*);
 typedef char* (*infoFn)();
@@ -35,40 +40,38 @@ public:
 
 	virtual void *GetMemoryManager() = 0;
 
-	virtual void *NewLock() = 0;
+	virtual ILock *NewLock() = 0;
 
 	virtual void DebugOutput(const char *msg) = 0;
 	virtual int VStrPrintF(char *str, const char *fmt, __builtin_va_list ap) = 0;
 	virtual int VStrPrintF(char *str, size_t size, const char *fmt, __builtin_va_list ap) = 0;
 
-	virtual void *NewThread(threadFn entry, void *param) = 0;
-	virtual void *CurrentThread() = 0;
+	virtual IScheduler &GetScheduler() = 0;
+	virtual IThread &CurrentThread() = 0;
+	virtual ThreadPointer GetThread(uint64_t id) = 0;
 
-	virtual void *GetDeviceManager() = 0;
+	virtual IVisibleDeviceManager &GetVisibleDeviceManager() = 0;
 
 	virtual IHAL &GetHAL() = 0;
 
-	virtual void *GetFilesystem() = 0;
+	virtual IVirtualFilesystem &GetVirtualFilesystem() = 0;
+	virtual IFilesystemManager &GetFilesystemManager() = 0;
 
 	virtual void LoadModule(const char *path, const char *params) = 0;
 
-	virtual void *NewProcess(const char *exec, size_t argc, char **argv) = 0;
-	virtual void *CurrentProcess() = 0;
-	virtual void *GetProcess(bt_pid_t pid) = 0;
+	virtual IProcessManager &GetProcessManager() = 0;
+	virtual IProcess &CurrentProcess() = 0;
+	virtual ProcessPointer GetProcess(bt_pid_t pid) = 0;
 	
-	virtual void AddInfoFSItem(const char *name, infoFn fn) = 0;
+	virtual void InfoRegister(const char *name, function<char*()> fn) = 0;
 
-	virtual void *GetExtensionManager() = 0;
+	virtual IKernelExensionManager &GetKernelExtensionManager() = 0;
 
 	virtual void *SendMessage(void *message) = 0;
 	virtual bool RecieveMessageReply(void *message, void *reply) = 0;
 	virtual void *RecieveMessageReply(void *message) = 0;
 
-	virtual bt_handle_t NewHandle(void *handle, void *process) = 0;
-	virtual void *GetHandle(bt_handle_t, void *process) = 0;
-
-	virtual void SetKernelVariable(const char *name, const char *value) = 0;
-	virtual size_t GetKernelVariable(const char *name, char *buffer, size_t size) = 0;
+	virtual IKernelConfigVariables &GetKernelConfigVariables() = 0;
 
 	virtual void *GetPnPManager() = 0;
 
