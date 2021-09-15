@@ -3,7 +3,7 @@
 
 #include "../kernel.hpp"
 #include "../utils/string.hpp"
-#include "../utils/refcountpointer.hpp"
+#include <module/utils/refcountpointer.hpp>
 
 typedef uint64_t bt_pid_t;
 typedef uint32_t handle_t;

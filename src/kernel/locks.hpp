@@ -2,6 +2,7 @@
 #define KERNEL_LOCKS_HPP
 
 #include "kernel.hpp"
+#include <util/noncopyable.hpp>
 
 class LockLock;
 
@@ -31,24 +32,25 @@ public:
 
 class LockLock : private noncopyable{
 private:
-	ILock &theLock;
+	ILock *theLock;
 	bool release = true;
 public:
-	LockLock(ILock &lock) : theLock(lock) {};
+	LockLock(ILock &lock) : theLock(&lock) {};
 	LockLock(LockLock &&other) : theLock(other.theLock){
 		other.release = false;
 	}
 
 	LockLock &operator=(LockLock &&other){
 		if(this != &other){
-			if(release) theLock.Release();
-			new (this) LockLock((LockLock &&)other);
+			if(release) theLock->Release();
+			theLock = other.theLock;
+			other.release = false;
 		}
 		return *this;
 	}
 
 	~LockLock(){
-		if(release) theLock.Release();
+		if(release) theLock->Release();
 	}
 };
 

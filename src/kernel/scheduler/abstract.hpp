@@ -2,7 +2,7 @@
 #define KERNEL_SCHEDULER_ABSTRACT_HPP
 
 #include <module/utils/function.hpp>
-#include "../utils/refcountpointer.hpp"
+#include <module/utils/refcountpointer.hpp>
 
 constexpr size_t DefaultStackSize = 16 * 1024;
 typedef void(*ThreadEntryFunction)(void*);
@@ -56,7 +56,7 @@ public:
 	virtual ~IThread() {}
 };
 
-typedef RefCountPointer<IThread> ThreadPointer;
+using ThreadPointer = RefCountPointer<IThread>;
 
 class SchedulerLock;
 
@@ -112,11 +112,11 @@ inline ThreadPointer GetThread(uint64_t id){
 
 class SchedulerLock : private noncopyable{
 private:
-	IScheduler &sch;
+	IScheduler *sch;
 	bool enable;
 public:
-	SchedulerLock(IScheduler &s) : sch(s), enable(true){
-		sch.DisableScheduler();
+	SchedulerLock(IScheduler &s) : sch(&s), enable(true){
+		sch->DisableScheduler();
 	}
 
 	SchedulerLock(SchedulerLock &&other) : sch(other.sch), enable(true){
@@ -124,12 +124,16 @@ public:
 	}
 
 	SchedulerLock &operator=(SchedulerLock &&other){
-		new (this) SchedulerLock((SchedulerLock &&)other);
+		if(this != &other){
+			sch = other.sch;
+			enable = true;
+			other.enable = false;
+		}
 		return *this;
 	}
 
 	~SchedulerLock(){
-		if(enable)sch.EnableScheduler();
+		if(enable)sch->EnableScheduler();
 	}
 };
 

@@ -2,6 +2,7 @@
 #define MODULE_HAL_HPP
 
 #include <cstddef>
+#include <module/utils/refcountpointer.hpp>
 
 typedef void (*ProcessEntryPoint)(void *);
 
@@ -13,6 +14,12 @@ enum class Generic_Register{
 };
 
 class ICPUState{
+protected:
+	ICPUState() = default;
+	ICPUState(const ICPUState &) = default;
+	ICPUState(ICPUState &&) = default;
+	ICPUState &operator=(const ICPUState&) = default;
+	ICPUState &operator=(ICPUState &&) = default;
 public:
 	virtual void DebugOutput() = 0;
 	virtual void DebugStackTrace() const = 0;
@@ -36,10 +43,27 @@ public:
 
 typedef void (*ISR_Routine)(ICPUState&);
 
+class IThread;
+using ThreadPointer = RefCountPointer<IThread>;
+
+class IDebugDriver : private nonmovable{
+public:
+	virtual bool SetBreakpoint(ThreadPointer thread, intptr_t address, uint8_t type) = 0;
+	virtual bool ClearBreakpoint(ThreadPointer thread, intptr_t address) = 0;
+	virtual intptr_t GetBreakAddress(ThreadPointer thread) = 0;
+	virtual bool SingleStep(ThreadPointer thread) = 0;
+	virtual void Continue(ThreadPointer thread) = 0;
+
+	virtual void GetDebugState(uint32_t *buffer) = 0;
+	virtual void SetDebugState(const uint32_t *buffer) = 0;
+
+	virtual ~IDebugDriver() {}
+};
+
 class InterruptLock;
 class SchedulerLock;
 
-class IHAL{
+class IHAL : private nonmovable{
 public:
 	virtual const char *HWDescription() = 0;
 	virtual const char *CPUIDString() = 0;
@@ -85,16 +109,18 @@ public:
 
 	virtual void RunUsermode(intptr_t stackPointer, ProcessEntryPoint entryPoint) = 0;
 
+	virtual IDebugDriver &GetDebugDriver() = 0;
+
 	virtual ~IHAL() { panic("HAL Destroyed!"); }
 };
 
-class InterruptLock{
+class InterruptLock : private noncopyable{
 private:
-	IHAL &hal;
+	IHAL *hal;
 	bool enable;
 public:
-	InterruptLock(IHAL &h) : hal(h), enable(true){
-		hal.DisableInterrupts();
+	InterruptLock(IHAL &h) : hal(&h), enable(true){
+		hal->DisableInterrupts();
 	}
 
 	InterruptLock(InterruptLock &&other) : hal(other.hal), enable(true){
@@ -102,7 +128,11 @@ public:
 	}
 
 	InterruptLock &operator=(InterruptLock &&other){
-		new (this) InterruptLock((InterruptLock &&)other);
+		if(this != &other){
+			hal = other.hal;
+			enable = true;
+			other.enable = false;
+		}
 		return *this;
 	}
 
@@ -110,7 +140,7 @@ public:
 	InterruptLock &operator=(const InterruptLock&) = delete;
 
 	~InterruptLock(){
-		if(enable)hal.EnableInterrupts();
+		if(enable) hal->EnableInterrupts();
 	}
 };
 

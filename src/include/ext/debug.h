@@ -47,6 +47,17 @@ ENUM_START(bt_debug_function)
 ENUM_END
 ENUM_TYPE(bt_debug_function);
 
+ENUM_START(bt_breakpoint_type)
+	ENUM_SET(bt_breakpoint_type, Execution, 		0b0000),
+	ENUM_SET(bt_breakpoint_type, DataRead, 			0b0000),
+	ENUM_SET(bt_breakpoint_type, DataWrite, 		0b0000),
+	ENUM_SET(bt_breakpoint_type, OneByte,	 		0b0000),
+	ENUM_SET(bt_breakpoint_type, TwoByte, 			0b0100),
+	ENUM_SET(bt_breakpoint_type, FourByte, 			0b1100),
+	ENUM_SET(bt_breakpoint_type, EightByte, 		0b1000),
+ENUM_END
+ENUM_TYPE(bt_breakpoint_type)
+
 struct bt_debug_event_msg{
 	ENUM_NAME(bt_debug_event) event;
 	ENUM_NAME(bt_exception) error;

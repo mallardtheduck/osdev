@@ -3,6 +3,9 @@
 
 #include "../../kernel.hpp"
 
+void DebugDriver_Init();
+IDebugDriver &GetDebugDriver();
+
 class CPUState_x86_32 : public ICPUState{
 private:
 	isr_regs *regs;

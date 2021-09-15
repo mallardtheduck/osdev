@@ -227,10 +227,15 @@ public:
 	void RunUsermode(intptr_t stackPointer, ProcessEntryPoint entryPoint){
 		proc_run_usermode(stackPointer, entryPoint);
 	}
+
+	IDebugDriver &GetDebugDriver(){
+		return ::GetDebugDriver();
+	}
 };
 
 HAL_x86_32 theHAL;
 
 IHAL &GetHAL(){
+	DebugDriver_Init();
 	return theHAL;
 }
