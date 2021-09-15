@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <util/noncopyable.hpp>
 
+constexpr size_t LockSize = 20;
+
 class LockLock;
 
 class ILock : private nonmovable{

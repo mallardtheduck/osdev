@@ -98,3 +98,9 @@ public:
 ILock *NewLock(){
 	return new Lock();
 }
+
+ILock *PlaceNewLock(char (&buffer)[LockSize]){
+	return new(buffer) Lock();
+}
+
+static_assert(LockSize >= sizeof(Lock));
