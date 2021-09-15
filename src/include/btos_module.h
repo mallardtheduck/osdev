@@ -7,7 +7,7 @@
 
 #include "module/module_api.h"
 #include "module/drivers.h"
-#include "module/extension.h"
+#include "module/kernelsys/extension.hpp"
 #include "module/handle.hpp"
 #ifndef BTOS_MODULE_NO_IO
 #include "module/io.h"

@@ -190,4 +190,8 @@ namespace MM2{
 	void unlock_low_memory(){
 		mm2_low_memory_lock->Release();
 	}
+
+	ILock *get_low_memory_lock(){
+		return mm2_low_memory_lock;
+	}
 }

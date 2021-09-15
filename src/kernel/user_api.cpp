@@ -113,11 +113,11 @@ USERAPI_HANDLER(BT_FREE_PAGES){
 }
 
 static void close_shm_space_handle(uint64_t id){
-	MM2::shm_close(id);
+	GetMemoryManager().DestroySharedMemorySpace(id);
 }
 
 USERAPI_HANDLER(BT_CREATE_SHM){
-	uint64_t id = MM2::shm_create(state.Get32BitRegister(Generic_Register::GP_Register_B));
+	uint64_t id = GetMemoryManager().CreateSharedMemorySpace(state.Get32BitRegister(Generic_Register::GP_Register_B));
 	auto handle = MakeKernelGenericHandle<KernelHandles::SHMSpace>(id, &close_shm_space_handle);
 	state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(handle);
 }
@@ -132,14 +132,14 @@ USERAPI_HANDLER(BT_SHM_ID){
 }
 
 static void close_shm_map_handle(uint64_t id){
-	MM2::shm_close_map(id);
+	GetMemoryManager().UnMapSharedMemory(id);
 }
 
 USERAPI_HANDLER(BT_SHM_MAP){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(btos_api::bt_shm_mapping*))){
 		btos_api::bt_shm_mapping *mapping = (btos_api::bt_shm_mapping*)state.Get32BitRegister(Generic_Register::GP_Register_B);
 		if(is_safe_ptr((uint32_t)mapping->addr, mapping->pages * MM2::MM2_Page_Size)){
-			uint64_t id = MM2::shm_map(mapping->id, mapping->addr, mapping->offset, mapping->pages, mapping->flags);
+			uint64_t id = GetMemoryManager().MapSharedMemory(mapping->id, mapping->addr, mapping->offset, mapping->pages, mapping->flags);
 			auto handle = MakeKernelGenericHandle<KernelHandles::SHMMapping>(id, &close_shm_map_handle);
 			state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(handle);
 		}else RAISE_US_ERROR();
@@ -372,7 +372,7 @@ USERAPI_HANDLER(BT_FFLUSH){
 }
 
 static void close_filemap_handle(uint64_t f){
-	MM2::mm2_closemap(f);
+	GetMemoryManager().UnMapFile(f);
 }
 
 USERAPI_HANDLER(BT_MMAP){
@@ -382,7 +382,7 @@ USERAPI_HANDLER(BT_MMAP){
 			btos_api::bt_mmap_buffer *buffer=(btos_api::bt_mmap_buffer*)state.Get32BitRegister(Generic_Register::GP_Register_D);
 			if(!is_safe_ptr((uint32_t)buffer->buffer, buffer->size)) return;
 
-			auto id = MM2::mm2_mmap(buffer->buffer, handle, state.Get32BitRegister(Generic_Register::GP_Register_C), buffer->size);
+			auto id = GetMemoryManager().MemoryMapFile(buffer->buffer, handle, state.Get32BitRegister(Generic_Register::GP_Register_C), buffer->size);
 			auto newHandle = MakeKernelGenericHandle<KernelHandles::MemoryMapping>(id, &close_filemap_handle);
 			state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(newHandle);
 			return;

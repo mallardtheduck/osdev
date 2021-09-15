@@ -26,7 +26,7 @@ bool ProcessManager::SwitchProcess(bt_pid_t pid) {
 			CurrentThread().SetPID(pid);
 			currentProcess = (Process*)proc.get();
 			currentProcess->IncrementRefCount();
-			MM2::mm2_switch(currentProcess->pageDirectory.get());
+			GetMemoryManager().SwitchPageDirectory(currentProcess->pageDirectory.get());
 			return true;
 		}
 		return false;
@@ -40,7 +40,7 @@ void ProcessManager::SwitchProcessFromScheduler(bt_pid_t pid) {
 			if(proc->ID() == pid){
 				CurrentThread().SetPID(pid);
 				currentProcess = proc;
-				MM2::mm2_switch(currentProcess->pageDirectory.get());
+				GetMemoryManager().SwitchPageDirectory(currentProcess->pageDirectory.get());
 				return;
 			}
 		}
