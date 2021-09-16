@@ -5,7 +5,7 @@
 extern void gdt_set_df_cr3(uint32_t cr3);
 
 namespace MM2{
-	static ILock *virtual_lock;
+	static StaticAllocLock virtual_lock;
 
 	static const uint32_t CR0_Paging_Enabled = 0x80000000;
 
@@ -32,7 +32,6 @@ namespace MM2{
 	}
 
 	void mm2_virtual_init(){
-		virtual_lock = NewLock();
 		dbgout("MM2: Virtual memory manager init.\n");
 		memset(&init_kernel_pagedir, 0, sizeof(init_kernel_pagedir));
 		size_t pages_to_idmap = div_ceil((uint32_t)get_kernel_end(), MM2_Page_Size);

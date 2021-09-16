@@ -5,7 +5,7 @@
 
 namespace MM2{
 	
-	static ILock *kdir_lock;
+	static StaticAllocLock kdir_lock;
 	static uint32_t table_frame[MM2_Table_Entries] __attribute__((aligned(0x1000)));
 	size_t PageDirectory::kpages;
 
@@ -60,7 +60,6 @@ namespace MM2{
 	}
 
 	PageDirectory::PageDirectory(uint32_t *a){
-		directory_lock = kdir_lock;
 		directory_lock = NewLock();
 		directory = a;
 		directory_physical = (uint32_t)a;
@@ -258,7 +257,7 @@ namespace MM2{
 	void PageDirectory::copy_kernelspace(const PageDirectory &pdir){
 		if(!directory) panic("(MM2) Copy to NULL page directory.");
 		if(!pdir.directory) panic("(MM2) Copy from NULL page directory.");
-		memcpy(directory, pdir.directory, MM2_Kernel_Tables * sizeof(uint32_t));
+    	memcpy(directory, pdir.directory, MM2_Kernel_Tables * sizeof(uint32_t));
 		klowfree = pdir.klowfree;
 	}
 	
