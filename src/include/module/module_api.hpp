@@ -10,6 +10,7 @@
 #include "kernelsys/process.hpp"
 #include "kernelsys/filesystems.hpp"
 #include "kernelsys/locks.hpp"
+#include "kernelsys/atoms.hpp"
 #include "kernelsys/kvars.hpp"
 
 typedef void(*threadFn)(void*);
@@ -38,9 +39,10 @@ public:
 	virtual int StrCompare(char *a, char *b) = 0;
 	virtual void StrCopy(char *dst, char *src, size_t size) = 0;
 
-	virtual void *GetMemoryManager() = 0;
+	virtual IMemoryManager &GetMemoryManager() = 0;
 
 	virtual ILock *NewLock() = 0;
+	virtual IAtom *NewAtom(uint64_t value = 0) = 0;
 
 	virtual void DebugOutput(const char *msg) = 0;
 	virtual int VStrPrintF(char *str, const char *fmt, __builtin_va_list ap) = 0;

@@ -34,12 +34,16 @@ public:
 		strncpy(dst, src, size);
 	}
 
-	void *GetMemoryManager() override {
-		return nullptr;
+	IMemoryManager &GetMemoryManager() override {
+		return ::GetMemoryManager();
 	}
 
 	ILock *NewLock() override {
 		return ::NewLock();
+	}
+
+	IAtom *NewAtom(uint64_t value = 0) override{
+		return ::NewAtom(value);
 	}
 
 	void DebugOutput(const char *msg) override {
