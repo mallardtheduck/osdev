@@ -170,7 +170,7 @@ namespace MM2{
 		InfoRegister("FREEMEM", &freemem_infofs);
 	}
 	
-	physical_page *physical_get_io_page(intptr_t addr){
+	physical_page *physical_get_io_page(uintptr_t addr){
 		addr = addr & MM2_Address_Mask;
 		physical_page *page = find_page(addr);
 		if(!page){

@@ -23,12 +23,12 @@ Thread::Thread(ThreadEntryFunction fn, void *param, size_t stackSize){
 	mm2_virtual_free(stackPointer, 1);
 
 	MM2::current_pagedir->guard_page_at(stackPointer);
-	intptr_t stackAddr = (intptr_t)stackPointer;
+	uintptr_t stackAddr = (uintptr_t)stackPointer;
 
 	stackAddr += MM2::MM2_Page_Size;
 	stackAddr += stackSize;
 	stackAddr -= sizeof(void*);
-	*(intptr_t*)stackAddr = (intptr_t)&ThreadWrapper;
+	*(uintptr_t*)stackAddr = (uintptr_t)&ThreadWrapper;
 	stackBase = (void*)stackAddr;
 	stackToken = GetHAL().GenerateStackToken(stackAddr);
 
@@ -179,10 +179,10 @@ uint8_t *Thread::GetFPUState(){
 	return fpuState;
 }
 
-void Thread::SetDiagnosticInstructionPointer(intptr_t eip){
+void Thread::SetDiagnosticInstructionPointer(uintptr_t eip){
 	diagnosticInstructionPointer = eip;
 }
 
-intptr_t Thread::GetDiagnosticInstructionPointer(){
+uintptr_t Thread::GetDiagnosticInstructionPointer(){
 	return diagnosticInstructionPointer;
 }

@@ -6,7 +6,7 @@
 struct EL_Module{
 	uint32_t id;
 	char *name;
-	intptr_t base;
+	uintptr_t base;
 	size_t limit;
 };
 

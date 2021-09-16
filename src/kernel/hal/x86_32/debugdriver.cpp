@@ -90,7 +90,7 @@ static void debug_clearbpinfo(ThreadPointer thread){
 
 class DebugDriver_x86_32 : public IDebugDriver{
 public:
-	bool SetBreakpoint(ThreadPointer thread, intptr_t address, uint8_t type) override{
+	bool SetBreakpoint(ThreadPointer thread, uintptr_t address, uint8_t type) override{
 		bool ret = false;
 		if(!thread) return false;
 		uint32_t *state = thread->GetDebugState();
@@ -109,7 +109,7 @@ public:
 		return ret;
 	}
 
-	bool ClearBreakpoint(ThreadPointer thread, intptr_t address) override{
+	bool ClearBreakpoint(ThreadPointer thread, uintptr_t address) override{
 		bool ret = false;
 		if(!thread) return false;
 		uint32_t *state = thread->GetDebugState();
@@ -127,7 +127,7 @@ public:
 		return ret;
 	}
 
-	intptr_t GetBreakAddress(ThreadPointer thread) override{	
+	uintptr_t GetBreakAddress(ThreadPointer thread) override{	
 		auto info = debug_getbpinfo(thread);
 		if(info < 4){
 			auto state = thread->GetDebugState();

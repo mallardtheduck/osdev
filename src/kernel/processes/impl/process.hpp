@@ -38,7 +38,7 @@ private:
 
 	static Process *CreateKernelProcess();
 	static map<string, EnvironmentVariable> CopyEnvironment(const IProcess &parent);
-	static intptr_t AllocateStack(size_t size);
+	static uintptr_t AllocateStack(size_t size);
 
 	void GetEnvironmentVariable(const char *name, char *&value, uint8_t &flags);
 	void CleanupProcess();

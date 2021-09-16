@@ -29,7 +29,7 @@ public:
 	
 	virtual uint32_t GetInterruptNo() const = 0;
 	virtual uint32_t GetErrorCode() const = 0;
-	virtual intptr_t GetPageFaultAddress() const = 0;
+	virtual uintptr_t GetPageFaultAddress() const = 0;
 
 	virtual void BreakpointResume() = 0;
 
@@ -45,9 +45,9 @@ typedef void (*ISR_Routine)(ICPUState&);
 
 class IDebugDriver : private nonmovable{
 public:
-	virtual bool SetBreakpoint(ThreadPointer thread, intptr_t address, uint8_t type) = 0;
-	virtual bool ClearBreakpoint(ThreadPointer thread, intptr_t address) = 0;
-	virtual intptr_t GetBreakAddress(ThreadPointer thread) = 0;
+	virtual bool SetBreakpoint(ThreadPointer thread, uintptr_t address, uint8_t type) = 0;
+	virtual bool ClearBreakpoint(ThreadPointer thread, uintptr_t address) = 0;
+	virtual uintptr_t GetBreakAddress(ThreadPointer thread) = 0;
 	virtual bool SingleStep(ThreadPointer thread) = 0;
 	virtual void Continue(ThreadPointer thread) = 0;
 
@@ -102,9 +102,9 @@ public:
 
 	virtual void HaltCPU() = 0;
 
-	virtual uint64_t GenerateStackToken(intptr_t addr) = 0;
+	virtual uint64_t GenerateStackToken(uintptr_t addr) = 0;
 
-	virtual void RunUsermode(intptr_t stackPointer, ProcessEntryPoint entryPoint) = 0;
+	virtual void RunUsermode(uintptr_t stackPointer, ProcessEntryPoint entryPoint) = 0;
 
 	virtual IDebugDriver &GetDebugDriver() = 0;
 

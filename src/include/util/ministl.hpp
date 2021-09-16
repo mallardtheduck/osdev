@@ -540,7 +540,7 @@ public:
 	}
 
 	iterator rend(){
-		intptr_t data_addr = (intptr_t)data_;
+		uintptr_t data_addr = (uintptr_t)data_;
 		return (iterator)(data_addr - sizeof(value_type));
 	}
 private:

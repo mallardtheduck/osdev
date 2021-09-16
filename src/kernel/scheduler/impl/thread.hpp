@@ -44,7 +44,7 @@ private:
 	uint32_t refCount = 0;
 	bool awaitingDestruction = false;
 
-	intptr_t diagnosticInstructionPointer = 0;
+	uintptr_t diagnosticInstructionPointer = 0;
 
 	Thread(ThreadEntryFunction fn, void *param, size_t stackSize);
 	Thread();
@@ -80,8 +80,8 @@ public:
 
 	uint8_t *GetFPUState() override;
 
-	void SetDiagnosticInstructionPointer(intptr_t eip) override;
-	intptr_t GetDiagnosticInstructionPointer() override; 
+	void SetDiagnosticInstructionPointer(uintptr_t eip) override;
+	uintptr_t GetDiagnosticInstructionPointer() override; 
 };
 
 #endif

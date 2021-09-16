@@ -58,8 +58,8 @@ public:
 
 	virtual uint8_t *GetFPUState() = 0;
 
-	virtual void SetDiagnosticInstructionPointer(intptr_t eip) = 0;
-	virtual intptr_t GetDiagnosticInstructionPointer() = 0; 
+	virtual void SetDiagnosticInstructionPointer(uintptr_t eip) = 0;
+	virtual uintptr_t GetDiagnosticInstructionPointer() = 0; 
 
 	virtual ~IThread() {}
 };

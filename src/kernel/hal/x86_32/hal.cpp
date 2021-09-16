@@ -12,7 +12,7 @@ extern "C" void sch_yield();
 bool sch_inited = false;
 extern char sch_isr_asm;
 
-extern "C" void proc_run_usermode(intptr_t stack, ProcessEntryPoint entry);
+extern "C" void proc_run_usermode(uintptr_t stack, ProcessEntryPoint entry);
 
 void HAL_Init(){
 	GDT_init();
@@ -79,8 +79,8 @@ uint32_t CPUState_x86_32::GetErrorCode() const{
 	return regs->error_code;
 }
 
-intptr_t CPUState_x86_32::GetPageFaultAddress() const{
-	intptr_t addr;
+uintptr_t CPUState_x86_32::GetPageFaultAddress() const{
+uintptr_t addr;
 	asm volatile("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
 	return addr;
 }
@@ -220,11 +220,11 @@ public:
 		asm volatile("hlt");
 	}
 
-	uint64_t GenerateStackToken(intptr_t addr){
+	uint64_t GenerateStackToken(uintptr_t addr){
 		return (0x10ll << 32) | addr;
 	}
 
-	void RunUsermode(intptr_t stackPointer, ProcessEntryPoint entryPoint){
+	void RunUsermode(uintptr_t stackPointer, ProcessEntryPoint entryPoint){
 		proc_run_usermode(stackPointer, entryPoint);
 	}
 

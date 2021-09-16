@@ -19,9 +19,9 @@ Process *Process::CreateKernelProcess(){
 	return kernelProcess;
 }
 
-intptr_t Process::AllocateStack(size_t size){
+uintptr_t Process::AllocateStack(size_t size){
 	size_t pages = size / MM2::MM2_Page_Size;
-	intptr_t baseAddress = 0 - (pages * MM2::MM2_Page_Size);
+	uintptr_t baseAddress = 0 - (pages * MM2::MM2_Page_Size);
 	MM2::current_pagedir->alloc_pages_at(pages, (void*)baseAddress);
 	memset((void*)baseAddress, 0, size);
 	return 0 - sizeof(void*);

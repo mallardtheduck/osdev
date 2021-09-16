@@ -31,7 +31,7 @@ public:
 		MM2::shm_close(id);
 	}
 
-	uint64_t MapSharedMemory(uint64_t id, void *addr, intptr_t offset, size_t pages, uint32_t flags = btos_api::bt_shm_flags::Normal) override{
+	uint64_t MapSharedMemory(uint64_t id, void *addr, uintptr_t offset, size_t pages, uint32_t flags = btos_api::bt_shm_flags::Normal) override{
 		return MM2::shm_map(id, addr, offset, pages, flags);
 	}
 
@@ -39,7 +39,7 @@ public:
 		MM2::shm_close_map(id);
 	}
 
-	void *MapPhysicalMemory(intptr_t address, size_t pages) override{
+	void *MapPhysicalMemory(uintptr_t address, size_t pages) override{
 		return MM2::mm2_map_physical(address, pages);
 	}
 

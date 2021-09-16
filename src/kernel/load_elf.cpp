@@ -246,8 +246,8 @@ public:
 		return nullptr;
 	}
 
-	intptr_t GetBaseAddress() override{
-		return (intptr_t)mod.mem.aligned;
+	uintptr_t GetBaseAddress() override{
+		return (uintptr_t)mod.mem.aligned;
 	}
 
 	~ElfModule(){
@@ -273,8 +273,8 @@ public:
 		return (ProcessEntryPoint)proc.entry;
 	}
 
-	intptr_t GetBaseAddress() override{
-		return (intptr_t)proc.mem;
+	uintptr_t GetBaseAddress() override{
+		return (uintptr_t)proc.mem;
 	}
 };
 

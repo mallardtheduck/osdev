@@ -20,7 +20,7 @@ public:
 
 	uint32_t GetInterruptNo() const override;
 	uint32_t GetErrorCode() const override;
-	intptr_t GetPageFaultAddress() const override;
+	uintptr_t GetPageFaultAddress() const override;
 
 	void BreakpointResume() override;
 

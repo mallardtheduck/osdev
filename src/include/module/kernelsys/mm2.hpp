@@ -59,10 +59,10 @@ public:
 
 	virtual uint64_t CreateSharedMemorySpace(uint32_t flags = btos_api::bt_shm_flags::Normal) = 0;
 	virtual void DestroySharedMemorySpace(uint64_t id) = 0;
-	virtual uint64_t MapSharedMemory(uint64_t id, void *addr, intptr_t offset, size_t pages, uint32_t flags = btos_api::bt_shm_flags::Normal) = 0;
+	virtual uint64_t MapSharedMemory(uint64_t id, void *addr, uintptr_t offset, size_t pages, uint32_t flags = btos_api::bt_shm_flags::Normal) = 0;
 	virtual void UnMapSharedMemory(uint64_t id) = 0;
 
-	virtual void *MapPhysicalMemory(intptr_t address, size_t pages) = 0;
+	virtual void *MapPhysicalMemory(uintptr_t address, size_t pages) = 0;
 	virtual ILock *GetLowMemoryLock() = 0;
 
 	virtual ~IMemoryManager() {}
