@@ -66,7 +66,7 @@ namespace MM2{
 		LargePages		= 1 << 6;
 	};
 
-	extern ILock *table_frame_lock;
+	extern StaticAllocLock table_frame_lock;
 
 	void *mm2_init_alloc(size_t size);
 	void *mm2_init_page_alloc();

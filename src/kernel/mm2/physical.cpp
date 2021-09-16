@@ -14,8 +14,8 @@ namespace MM2{
 	static size_t total_memory;
 	static size_t free_pages;
 	
-	static ILock *mm2_pmm_lock;
-	static ILock *mm2_low_memory_lock;
+	static StaticAllocLock mm2_pmm_lock;
+	static StaticAllocLock mm2_low_memory_lock;
 	
 	static char *totalmem_infofs(){
 		char *ret = nullptr;
@@ -98,8 +98,6 @@ namespace MM2{
 			mmap = (memory_map_t*) ( (unsigned int)mmap + mmap->size + sizeof(unsigned int) );
 		}
 		init_account();
-		mm2_pmm_lock = NewLock();
-		mm2_low_memory_lock = NewLock();
 	}
 
 	physical_page *physical_alloc(size_t max_addr){
@@ -192,6 +190,6 @@ namespace MM2{
 	}
 
 	ILock *get_low_memory_lock(){
-		return mm2_low_memory_lock;
+		return mm2_low_memory_lock.get();
 	}
 }

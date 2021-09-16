@@ -20,7 +20,7 @@ namespace MM2{
 	static ManualStaticAlloc<map<uint64_t, mmapping>> mmappings;
 	static uint64_t counter = 0;
 	
-	static ILock *mmap_lock;
+	static StaticAllocLock mmap_lock;
 	
 	static void do_mapping(mmapping &m){
 		bt_filesize_t pos = m.file->Seek(0, FS_Relative);
@@ -219,7 +219,6 @@ namespace MM2{
 	}
 	
 	void init_mmap(){
-		mmap_lock = NewLock();
 		mmappings.Init();
 	}
 }

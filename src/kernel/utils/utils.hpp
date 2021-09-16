@@ -41,7 +41,7 @@ namespace StaticAllocInitPolicies{
 	namespace Private{
 		void TakeLock(ILock *lock);
 		void ReleaseLock(ILock *lock);
-	}
+	};
 
 	template<typename T> struct Manually{
 		void CheckInit(T *ptr, char (&)[sizeof(T)]){

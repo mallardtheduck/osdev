@@ -14,7 +14,7 @@ namespace MM2{
 	PageDirectory *kernel_pagedir;
 	PageDirectory *current_pagedir;
 	
-	ILock *table_frame_lock;
+	StaticAllocLock table_frame_lock;
 
 	static void idmap_page(size_t pageno){
 		size_t tableno = pageno / MM2_Table_Entries;
@@ -66,7 +66,6 @@ namespace MM2{
 		GetHAL().HandlePageFault(&page_fault_handler);
 		
 		current_pagedir = kernel_pagedir = new(&kpd_place) PageDirectory(init_kernel_pagedir);
-		table_frame_lock = NewLock();
 		current_pagedir->guard_page_at(NULL);
 		kernel_pagedir->kernel_pagedir_late_init();
 	}

@@ -3,7 +3,7 @@
 #include "../utils/ministl.hpp"
 
 namespace MM2{
-	static ILock *shm_lock;
+	static StaticAllocLock shm_lock;
 	
 	struct shm_space{
 		map<uint32_t, physical_page*> pages;
@@ -140,6 +140,5 @@ namespace MM2{
 	void init_shm(){
 		spaces.Init();
 		mappings.Init();
-		shm_lock = NewLock();
 	}
 }

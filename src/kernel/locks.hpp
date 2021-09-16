@@ -5,6 +5,8 @@
 
 #include <module/kernelsys/locks.hpp>
 
+constexpr size_t LockSize = 32;
+
 ILock *NewLock();
 ILock *PlaceNewLock(char (&buffer)[LockSize]);
 
@@ -25,6 +27,10 @@ public:
 
 	~StaticAllocLock(){
 		lock->~ILock();
+	}
+
+	ILock *get(){
+		return lock;
 	}
 };
 

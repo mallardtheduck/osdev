@@ -22,7 +22,7 @@ struct timer_info{
 
 vector<timer_event*> *events;
 map<uint64_t, timer_info*> *timers;
-ILock *timer_lock;
+StaticAllocLock timer_lock;
 timer_event *next_event = nullptr;
 
 bool events_blockcheck(){
@@ -90,7 +90,6 @@ void timer_thread(){
 void init_timer(){
 	events = new vector<timer_event*>();
 	timers = new map<uint64_t, timer_info*>();
-	timer_lock = NewLock();
 	timer_handle_id = ((extension_id) << 16) + 1;
 	GetScheduler().NewThread(&timer_thread);
 }

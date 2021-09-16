@@ -2,10 +2,9 @@
 #include "locks.hpp"
 
 static OnDemandStaticAlloc<vector<IHandle*>> handlesWithDependencies;
-static ILock *handleDepenciesLock;
+static StaticAllocLock handleDepenciesLock;
 
 void init_handles(){
-	handleDepenciesLock = NewLock();
 }
 
 void AddHandleDependencyOn(IHandle *h){
