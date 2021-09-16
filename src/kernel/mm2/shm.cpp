@@ -138,6 +138,7 @@ namespace MM2{
 	}
 	
 	void init_shm(){
+		shm_lock.Init();
 		spaces.Init();
 		mappings.Init();
 	}

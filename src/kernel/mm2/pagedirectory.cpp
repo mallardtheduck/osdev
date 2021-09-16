@@ -60,6 +60,7 @@ namespace MM2{
 	}
 
 	PageDirectory::PageDirectory(uint32_t *a){
+		kdir_lock.Init();
 		directory_lock = NewLock();
 		directory = a;
 		directory_physical = (uint32_t)a;

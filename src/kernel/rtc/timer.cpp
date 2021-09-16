@@ -88,6 +88,7 @@ void timer_thread(){
 }
 
 void init_timer(){
+	timer_lock.Init();
 	events = new vector<timer_event*>();
 	timers = new map<uint64_t, timer_info*>();
 	timer_handle_id = ((extension_id) << 16) + 1;

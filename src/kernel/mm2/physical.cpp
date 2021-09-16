@@ -98,6 +98,8 @@ namespace MM2{
 			mmap = (memory_map_t*) ( (unsigned int)mmap + mmap->size + sizeof(unsigned int) );
 		}
 		init_account();
+		mm2_pmm_lock.Init();
+		mm2_low_memory_lock.Init();
 	}
 
 	physical_page *physical_alloc(size_t max_addr){

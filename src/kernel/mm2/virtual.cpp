@@ -32,6 +32,7 @@ namespace MM2{
 	}
 
 	void mm2_virtual_init(){
+		virtual_lock.Init();
 		dbgout("MM2: Virtual memory manager init.\n");
 		memset(&init_kernel_pagedir, 0, sizeof(init_kernel_pagedir));
 		size_t pages_to_idmap = div_ceil((uint32_t)get_kernel_end(), MM2_Page_Size);
@@ -65,6 +66,7 @@ namespace MM2{
 		GetHAL().HandlePageFault(&page_fault_handler);
 		
 		current_pagedir = kernel_pagedir = new(&kpd_place) PageDirectory(init_kernel_pagedir);
+		table_frame_lock.Init();
 		current_pagedir->guard_page_at(NULL);
 		kernel_pagedir->kernel_pagedir_late_init();
 	}

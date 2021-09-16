@@ -219,6 +219,7 @@ namespace MM2{
 	}
 	
 	void init_mmap(){
+		mmap_lock.Init();
 		mmappings.Init();
 	}
 }

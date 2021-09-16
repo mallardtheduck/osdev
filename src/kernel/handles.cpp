@@ -5,6 +5,7 @@ static OnDemandStaticAlloc<vector<IHandle*>> handlesWithDependencies;
 static StaticAllocLock handleDepenciesLock;
 
 void init_handles(){
+	handleDepenciesLock.Init();
 }
 
 void AddHandleDependencyOn(IHandle *h){

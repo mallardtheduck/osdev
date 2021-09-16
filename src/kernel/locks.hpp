@@ -15,7 +15,9 @@ private:
 	ILock *lock;
 	char buffer[LockSize];
 public:
-	StaticAllocLock() : lock(PlaceNewLock(buffer)) {}
+	void Init(){
+		lock = PlaceNewLock(buffer);
+	}
 
 	ILock &operator*(){
 		return *lock;
