@@ -12,14 +12,16 @@ http://code.google.com/p/inih/
 
 #include <btos_module.h>
 
-typedef file_handle FILE;
+typedef void FILE;
 
 /* Make this header file easier to include in C++ code */
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-//#include <stdio.h>
+void *fopen(const char *filename, fs_mode_flags flags);
+void fclose(FILE *stream);
+char *fgets(char *str, int num, FILE *stream);
 
 /* Parse given INI-style file. May have [section]s, name=value pairs
    (whitespace stripped), and comments starting with ';' (semicolon). Section
