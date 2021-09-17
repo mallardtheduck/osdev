@@ -39,7 +39,7 @@ static char *pnp_devices_infofs(){
 		const char *nodeName = "-";
 		IDeviceNode *node = nullptr;
 		if(d.device && (node = d.device->GetDeviceNode())){
-			nodeName = pnp_get_node_name(node);
+			nodeName = GetHwPnpManager().GetNodeName(node);
 		}
 		reasprintf_append(&buffer, "%p, %p, %i, %s, %x, \"%s\", %p, %s\n",
 			d.device, d.parent, (int)d.index,

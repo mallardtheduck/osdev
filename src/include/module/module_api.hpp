@@ -13,6 +13,7 @@
 #include "kernelsys/atoms.hpp"
 #include "kernelsys/kvars.hpp"
 #include "kernelsys/messaging.hpp"
+#include "kernelsys/hwpnp.hpp"
 
 typedef void(*threadFn)(void*);
 typedef char* (*infoFn)();
@@ -74,7 +75,7 @@ public:
 
 	virtual IKernelConfigVariables &GetKernelConfigVariables() = 0;
 
-	virtual void *GetPnPManager() = 0;
+	virtual IHwPnpManager &GetHwPnPManager() = 0;
 
 	~IModuleAPI() {}
 };

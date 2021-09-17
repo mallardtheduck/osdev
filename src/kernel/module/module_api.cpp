@@ -116,8 +116,8 @@ public:
 		return ::GetKernelConfigVariables();
 	}
 
-	void *GetPnPManager() override {
-		return nullptr;
+	IHwPnpManager &GetHwPnPManager() override {
+		return ::GetHwPnpManager();
 	}
 };
 
