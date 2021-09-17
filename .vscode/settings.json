@@ -43,7 +43,9 @@
         "regex": "cpp",
         "valarray": "cpp",
         "internet": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "*.x": "cpp",
+        "variant": "cpp"
     },
     "editor.fontLigatures": true
 }
