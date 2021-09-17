@@ -1,6 +1,8 @@
 #ifndef KERNEL_UTILS_RECOUNTPOINTER_HPP
 #define KERNEL_UTILS_RECOUNTPOINTER_HPP
 
+#include <type_traits>
+
 template<typename T>
 class RefCountPointer{
 protected:

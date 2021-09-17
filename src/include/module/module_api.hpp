@@ -4,19 +4,10 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "kernelsys/hal.hpp"
-#include "kernelsys/scheduler.hpp"
-#include "kernelsys/extension.hpp"
-#include "kernelsys/process.hpp"
-#include "kernelsys/filesystems.hpp"
-#include "kernelsys/locks.hpp"
-#include "kernelsys/atoms.hpp"
-#include "kernelsys/kvars.hpp"
-#include "kernelsys/messaging.hpp"
-#include "kernelsys/hwpnp.hpp"
+#include <module/utils/module_meta.hpp>
 
-typedef void(*threadFn)(void*);
-typedef char* (*infoFn)();
+// typedef void(*threadFn)(void*);
+// typedef char* (*infoFn)();
 
 typedef uint64_t bt_pid_t;
 typedef uint32_t bt_handle_t;
@@ -25,6 +16,22 @@ constexpr auto ENV_Global = 	(1<<0); //Use PID 0 (kernel) value instead
 constexpr auto ENV_ReadOnly =	(1<<1); //Not changeable by user-mode code
 constexpr auto ENV_Private =	(1<<2); //Not visible to user-mode code
 constexpr auto ENV_NoInherit = 	(1<<3); //Do not copy from parent to child
+
+class IModuleAPI;
+MODULE_ONLY(extern IModuleAPI *API);
+
+#include "kernelsys/hal.hpp"
+#include "kernelsys/extension.hpp"
+#include "kernelsys/scheduler.hpp"
+#include "kernelsys/process.hpp"
+#include "kernelsys/filesystems.hpp"
+#include "kernelsys/locks.hpp"
+#include "kernelsys/atoms.hpp"
+#include "kernelsys/kvars.hpp"
+#include "kernelsys/messaging.hpp"
+#include "kernelsys/hwpnp.hpp"
+#include "kernelsys/mm2.hpp"
+#include "kernelsys/devices.hpp"
 
 class IModuleAPI{
 public:

@@ -3,20 +3,29 @@
 
 inline void *operator new(size_t size)
 {
-    return malloc(size);
+	return malloc(size);
 }
 
 inline void *operator new[](size_t size)
 {
-    return malloc(size);
+	return malloc(size);
 }
 
 inline void operator delete(void *p)
 {
-    free(p);
+	free(p);
+}
+
+void operator delete(void *p, size_t){
+	free(p);
 }
 
 inline void operator delete[](void *p)
+{
+	free(p);
+}
+
+inline void operator delete[](void *p, size_t)
 {
     free(p);
 }
@@ -28,7 +37,7 @@ template<typename T> void *operator new (size_t, T* ptr)
 
 #define USE_PURE_VIRTUAL extern "C" void __cxa_pure_virtual() \
 { \
-    panic("Pure virtual function call!"); \
+	panic("Pure virtual function call!"); \
 }
 
 #define USE_STATIC_INIT extern "C" int __cxa_atexit(void (*/*func*/) (void *), void * /*arg*/, void * /*dso_handle*/) {return 0;} void *__dso_handle

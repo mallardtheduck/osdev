@@ -73,16 +73,14 @@ public:
 
 typedef RefCountPointer<IProcess> ProcessPointer;
 
-#ifdef KERNEL
 IProcess &CurrentProcess();
-#endif
 
 class IProcessManager : private nonmovable{
 public:
 	[[nodiscard]] virtual bool SwitchProcess(bt_pid_t pid) = 0;
 	virtual void SwitchProcessFromScheduler(bt_pid_t pid) = 0;
-	virtual ProcessPointer NewProcess(const char *name, const vector<const char*> &args, IProcess &parent KERNEL_ONLY(= ::CurrentProcess())) = 0;
-	virtual ProcessPointer Spawn(const char *name, const vector<const char*> &args, IProcess &parent KERNEL_ONLY(= ::CurrentProcess())) = 0;
+	virtual ProcessPointer NewProcess(const char *name, const vector<const char*> &args, IProcess &parent = ::CurrentProcess()) = 0;
+	virtual ProcessPointer Spawn(const char *name, const vector<const char*> &args, IProcess &parent = ::CurrentProcess()) = 0;
 
 	virtual void RemoveProcess(const IProcess &proc) = 0;
 

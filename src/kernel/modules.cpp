@@ -49,8 +49,7 @@ public:
 	}
 };
 
-static char moduleManagerBuffer[sizeof(ModuleManager)] = {0};
-ModuleManager *theModuleManager = nullptr;
+static ManualStaticAlloc<ModuleManager> theModuleManager;
 
 char *ModuleManager::InfoFS(){
 	char *buffer=nullptr;
@@ -62,7 +61,7 @@ char *ModuleManager::InfoFS(){
 }
 
 void Modules_Init(){
-	theModuleManager = new(moduleManagerBuffer) ModuleManager();
+	theModuleManager.Init();
 }
 
 IModuleManager &GetModuleManager(){

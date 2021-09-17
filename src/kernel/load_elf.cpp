@@ -6,11 +6,7 @@ struct aligned_memory{
 	void *aligned;
 };
 
-namespace module_api{
-	struct syscall_table;
-};
-
-typedef int (*module_entry)(module_api::syscall_table*, char*);
+typedef int (*module_entry)(IModuleAPI*, char*);
 
 struct loaded_elf_module{
 	aligned_memory mem;

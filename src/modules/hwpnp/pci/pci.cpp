@@ -1,7 +1,7 @@
 #include "pci.hpp"
 
-syscall_table *SYSCALL_TABLE;
-char dbgbuf[256];
+#include <module/module.inc>
+
 USE_PURE_VIRTUAL;
 USE_STATIC_INIT;
 
@@ -37,9 +37,9 @@ void write_config32(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uin
     out32(CONFIG_DATA, value);
 }
 
-extern "C" int module_main(syscall_table *systbl, char *params){
-	SYSCALL_TABLE=systbl;
-	pnp_register_driver(GetPCIBusDriver());
+extern "C" int module_main(IModuleAPI *api, char *params){
+	ModuleInit(api);
+	API->GetHwPnPManager().RegisterDriver(GetPCIBusDriver());
     return 0;
 }
 
@@ -85,15 +85,15 @@ PCIBusDevice::PCIDevice PCIBusDevice::ScanDevice(uint8_t bus, uint8_t slot, uint
 }
 
 void PCIBusDevice::Lock(){
-	take_lock(&bus_lock);
+	bus_lock->TakeExclusive();
 }
 
 void PCIBusDevice::Unlock(){
-	release_lock(&bus_lock);
+	bus_lock->Release();
 }
 
 PCIBusDevice::PCIBusDevice(){
-	init_lock(&bus_lock);
+	bus_lock = API->NewLock();
 	ScanBus(0);
 }
 
