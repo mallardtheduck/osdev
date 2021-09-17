@@ -45,8 +45,8 @@ public:
 	virtual void *MemCopy(void *dst, const void *src, size_t size) = 0;
 	virtual void *MemMove(void *dst, void *src, size_t size) = 0;
 
-	virtual int StrCompare(char *a, char *b) = 0;
-	virtual void StrCopy(char *dst, char *src, size_t size) = 0;
+	virtual int StrCompare(const char *a, const char *b) = 0;
+	virtual void StrCopy(char *dst, const char *src, size_t size) = 0;
 
 	virtual IMemoryManager &GetMemoryManager() = 0;
 

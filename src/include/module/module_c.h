@@ -10,27 +10,29 @@
 #include <stddef.h>
 #endif
 
-extern "C" void panic(const char *msg);
+#include <util/bt_enum.h>
 
-extern "C" void *malloc(size_t bytes);
-extern "C" void free(void *ptr);
-extern "C" void *realloc(void *ptr, size_t new_size);
+EXTERN_C void panic(const char *msg);
 
-extern "C" void *memset(void *ptr, int value, size_t num);
-extern "C" void *memcpy(void *dst, const void *src, size_t size);
-extern "C" void *memmove(void *dst, void *src, size_t size);
+EXTERN_C void *malloc(size_t bytes);
+EXTERN_C void free(void *ptr);
+EXTERN_C void *realloc(void *ptr, size_t new_size);
 
-extern "C" int strcmp(char *a, char *b);
-extern "C" void strncpy(char *dst, char *src, size_t size);
+EXTERN_C void *memset(void *ptr, int value, size_t num);
+EXTERN_C void *memcpy(void *dst, const void *src, size_t size);
+EXTERN_C void *memmove(void *dst, void *src, size_t size);
 
-extern "C" void dbgout(const char *msg);
+EXTERN_C int strcmp(const char *a, const char *b);
+EXTERN_C void strncpy(char *dst, const char *src, size_t size);
 
-extern "C" int vsprintf(char *str, const char *fmt, __builtin_va_list ap);
-extern "C" int vsnprintf(char *str, size_t size, const char *fmt, __builtin_va_list ap);
+EXTERN_C void dbgout(const char *msg);
 
-extern "C" int sprintf(char *str, const char *fmt, ...);
-extern "C" int snprintf(char *str, size_t size, const char *fmt, ...);
+EXTERN_C int vsprintf(char *str, const char *fmt, __builtin_va_list ap);
+EXTERN_C int vsnprintf(char *str, size_t size, const char *fmt, __builtin_va_list ap);
 
-extern "C" int dbgprintf(const char *fmt, ...);
+EXTERN_C int sprintf(char *str, const char *fmt, ...);
+EXTERN_C int snprintf(char *str, size_t size, const char *fmt, ...);
+
+EXTERN_C int dbgprintf(const char *fmt, ...);
 
 #endif

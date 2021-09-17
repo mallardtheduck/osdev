@@ -27,10 +27,10 @@ public:
 		return memmove(dst, src, size);
 	}
 
-	int StrCompare(char *a, char *b) override {
+	int StrCompare(const char *a, const char *b) override {
 		return strcmp(a, b);
 	}
-	void StrCopy(char *dst, char *src, size_t size) override{
+	void StrCopy(char *dst, const char *src, size_t size) override{
 		strncpy(dst, src, size);
 	}
 
