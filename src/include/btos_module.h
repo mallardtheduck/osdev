@@ -9,6 +9,7 @@
 #include "module/io.h"
 #endif
 
+#include "btos/fs_interface.h"
 #include "module/module_c.h"
 
 #ifdef __cplusplus

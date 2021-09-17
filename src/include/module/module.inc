@@ -35,11 +35,11 @@ extern "C" void *memmove(void *dst, void *src, size_t size){
 	return API->MemMove(dst, src, size);
 }
 
-extern "C" int strcmp(char *a, char *b){
+extern "C" int strcmp(const char *a, const char *b){
 	return API->StrCompare(a, b);
 }
 
-extern "C" void strncpy(char *dst, char *src, size_t size){
+extern "C" void strncpy(char *dst, const char *src, size_t size){
 	return API->StrCopy(dst, src, size);
 }
 
@@ -71,7 +71,7 @@ extern "C" int snprintf(char *str, size_t size, const char *fmt, ...){
 	return ret;
 }
 
-extern "C" int dbgprintf(const char *fmt, ...){
+extern "C" int dbgpf(const char *fmt, ...){
 	char dbgbuf[256] = {0};
 	va_list va;
 	va_start(va, fmt);
@@ -84,3 +84,13 @@ extern "C" int dbgprintf(const char *fmt, ...){
 IProcess &CurrentProcess(){
 	return API->CurrentProcess();
 }
+
+extern "C" void __cxa_pure_virtual()
+{
+	panic("Pure virtual function call!");
+}
+
+extern "C" int __cxa_atexit(void (* /*func*/) (void *), void * /*arg*/, void * /*dso_handle*/) {
+	return 0;
+} 
+void *__dso_handle;
