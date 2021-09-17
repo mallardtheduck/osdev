@@ -63,8 +63,8 @@ void Process::CleanupProcess(){
 			}
 		}
 		static_cast<ProcessManager&>(GetProcessManager()).RemoveProcess(this);
-		msg_clear(pid);
-		msg_send_event(btos_api::bt_kernel_messages::ProcessEnd, (void*)&pid, sizeof(pid));
+		GetMessageManager().ClearMessages(*this);
+		GetMessageManager().SendKernelEvent(btos_api::bt_kernel_messages::ProcessEnd, pid);
 	}
 	delete this;
 }
@@ -288,51 +288,14 @@ uint64_t Process::GetUID(){
 	return uid;
 }
 
-void Process::AddMessage(btos_api::bt_msg_header *msg){
+void Process::SetCurrentMessageID(uint64_t id){
 	auto hl = lock->LockExclusive();
-	messages.push_back(msg);
+	currentMessageId = id;
 }
 
-void Process::RemoveMessage(btos_api::bt_msg_header *msg){
+uint64_t Process::GetCurrentMessageID(){
 	auto hl = lock->LockExclusive();
-	for(size_t i = 0; i < messages.size(); ++i){
-		if(messages[i] == msg){
-			messages.erase(i);
-			return;
-		}
-	}
-}
-
-btos_api::bt_msg_header *Process::GetMessage(size_t index){
-	auto hl = lock->LockExclusive();
-	if(index >= messages.size()) return nullptr;
-	return messages[index];
-}
-
-btos_api::bt_msg_header *Process::GetMessageByID(uint64_t id){
-	auto hl = lock->LockExclusive();
-	for(auto &m : messages){
-		if(m->id == id) return m;
-	}
-	return nullptr;
-}
-
-btos_api::bt_msg_header *Process::GetMessageMatch(const btos_api::bt_msg_filter &filter){
-	auto hl = lock->LockExclusive();
-	for(auto &m : messages){
-		if(msg_is_match(*m, filter)) return m;
-	}
-	return nullptr;
-}
-
-void Process::SetCurrentMessage(btos_api::bt_msg_header *msg){
-	auto hl = lock->LockExclusive();
-	currentMessage = msg;
-}
-
-btos_api::bt_msg_header *Process::GetCurrentMessage(){
-	auto hl = lock->LockExclusive();
-	return currentMessage;
+	return currentMessageId;
 }
 
 void Process::SetReturnValue(int rV){

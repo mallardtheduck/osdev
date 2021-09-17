@@ -10,6 +10,8 @@ public:
 		if(theObject) theObject->IncrementRefCount();
 	}
 
+	RefCountPointer() : RefCountPointer(nullptr) {}
+
 	RefCountPointer(const RefCountPointer &other) : RefCountPointer(other.theObject) {}
 
 	RefCountPointer(RefCountPointer &&other) : theObject(other.theObject){

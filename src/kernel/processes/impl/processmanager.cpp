@@ -81,7 +81,7 @@ ProcessPointer ProcessManager::Spawn(const char *name, const vector<const char*>
 	debug_event_notify(pid, 0, bt_debug_event::ProgramStart);
 	proc->AddHandle(file);
 	proc->NewUserThread(elf->GetEntryPoint(), nullptr, nullptr);
-	msg_send_event(btos_api::bt_kernel_messages::ProcessStart, (void*)&pid, sizeof(pid));
+	GetMessageManager().SendKernelEvent(btos_api::bt_kernel_messages::ProcessStart, pid);
 	return proc;
 }
 

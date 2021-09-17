@@ -12,6 +12,7 @@
 #include "kernelsys/locks.hpp"
 #include "kernelsys/atoms.hpp"
 #include "kernelsys/kvars.hpp"
+#include "kernelsys/messaging.hpp"
 
 typedef void(*threadFn)(void*);
 typedef char* (*infoFn)();
@@ -69,9 +70,7 @@ public:
 
 	virtual IKernelExensionManager &GetKernelExtensionManager() = 0;
 
-	virtual void *SendMessage(void *message) = 0;
-	virtual bool RecieveMessageReply(void *message, void *reply) = 0;
-	virtual void *RecieveMessageReply(void *message) = 0;
+	virtual IMessageManager &GetMessageManager() = 0;
 
 	virtual IKernelConfigVariables &GetKernelConfigVariables() = 0;
 

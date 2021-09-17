@@ -10,7 +10,7 @@ class IDirectoryHandle;
 class IAtom;
 class WaitList;
 class WaitOptions;
-class msg_recv_handle;
+class IMessageRecieveHandle;
 
 namespace KernelHandles{
 	template<uint32_t ID, typename HandleT> struct HandleMapping{
@@ -33,7 +33,7 @@ namespace KernelHandles{
 	using Atom =			HandleMapping<8, GenericHandle<IAtom*>>;
 	using Wait = 			HandleMapping<9, GenericHandle<WaitList*>>;
 	using AtomWait =		HandleMapping<10, GenericHandle<WaitOptions*>>;
-	using MessageRecive	=	HandleMapping<11, GenericHandle<msg_recv_handle*>>;
+	using MessageRecive	=	HandleMapping<11, IMessageRecieveHandle>;
 	using Elf =				HandleMapping<12, nullptr_t>;
 };
 

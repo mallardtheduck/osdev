@@ -31,8 +31,7 @@ private:
 	map<uint16_t, uint64_t> permissions;
 	uint64_t uid = 0;
 
-	vector<btos_api::bt_msg_header*> messages;
-	btos_api::bt_msg_header *currentMessage;
+	uint64_t currentMessageId;
 
 	uint32_t refCount = 0;
 
@@ -78,13 +77,8 @@ public:
 	void SetUserID(uint64_t uid) override;
 	uint64_t GetUID() override;
 
-	void AddMessage(btos_api::bt_msg_header *msg) override;
-	void RemoveMessage(btos_api::bt_msg_header *msg) override;
-	btos_api::bt_msg_header *GetMessage(size_t index) override;
-	btos_api::bt_msg_header *GetMessageByID(uint64_t id) override;
-	btos_api::bt_msg_header *GetMessageMatch(const btos_api::bt_msg_filter &filter) override;
-	void SetCurrentMessage(btos_api::bt_msg_header *msg) override;
-	btos_api::bt_msg_header *GetCurrentMessage() override;
+	void SetCurrentMessageID(uint64_t id) override;
+	uint64_t GetCurrentMessageID() override;
 
 	void SetReturnValue(int returnValue) override;
 	int GetChildReturnValue(bt_pid_t childPid) override;

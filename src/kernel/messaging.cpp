@@ -2,445 +2,445 @@
 #include "utils/ministl.hpp"
 #include "locks.hpp"
 
-using namespace btos_api;
+namespace bt_msg_flags = btos_api::bt_msg_flags;
+namespace bt_msg_filter_flags = btos_api::bt_msg_filter_flags;
+namespace thread_msg_status = btos_api::thread_msg_status;
+namespace bt_kernel_messages = btos_api::bt_kernel_messages;
 
-static uint64_t id_counter=0;
-ILock *msg_lock;
+using bt_msg_header = btos_api::bt_msg_header;
+using bt_msg_filter = btos_api::bt_msg_filter;
 
-static bool msg_get(uint64_t id, bt_msg_header &msg, bt_pid_t pid = CurrentProcess().ID());
-static void msg_send_receipt(const bt_msg_header &omsg);
+struct MessageContent : private nonmovable{
+private:
+	size_t refcount = 0;
+	vector<char> content;
+public:
 
-typedef map<bt_pid_t, vector<bt_kernel_messages::Enum> > msg_subscribers_list;
-static msg_subscribers_list *msg_subscribers;
-
-static const size_t pool_min = 16;
-static const size_t pool_max = pool_min * 2;
-//static vector<void*> buffer_pool;
-static vector<bt_msg_header*> *header_pool;
-
-static bt_msg_header *GetMessageFromProcess(bt_pid_t pid, uint64_t id){
-	auto proc = GetProcess(pid);
-	if(proc) return proc->GetMessageByID(id);
-	else return nullptr;
-}
-
-static bt_msg_header *copy_msg_header(const bt_msg_header &h){
-	if(!header_pool->size()){
-		for(size_t i = 0; i < pool_min; ++i){
-			header_pool->push_back((bt_msg_header*)malloc(sizeof(bt_msg_header)));
+	MessageContent() = default;
+	MessageContent(const btos_api::bt_msg_header &header){
+		if(header.length){
+			content.reserve(header.length);
+			memcpy(&content[0], header.content, header.length);
 		}
 	}
-	
-	size_t backindex = header_pool->size() - 1;
-	bt_msg_header *ret = (*header_pool)[backindex];
-	header_pool->erase(backindex);
-	*ret = h;
-	return ret;
-}
 
-static void release_msg_header(bt_msg_header *h){
-	if(header_pool->size() >= pool_max){
-		free(h);
-		for(size_t i = header_pool->size() - 1; i > pool_min; --i){
-			free((*header_pool)[i]);
-			header_pool->erase(i);
-		}
-		return;
+	void IncrementRefCount(){
+		++refcount;
 	}
-	header_pool->push_back(h);
-}
 
-void msg_init(){
-	dbgout("MSG: Init messaging...\n");
-	msg_lock = NewLock();
-	msg_subscribers=new msg_subscribers_list();
-	
-	//buffer_pool	= new vector<void*>();
-	header_pool = new vector<bt_msg_header*>();
-	
-	for(size_t i = 0; i < pool_min; ++i){
-		//buffer_pool.push_back(malloc(BT_MSG_MAX));
-		header_pool->push_back((bt_msg_header*)malloc(sizeof(bt_msg_header)));
+	void DecrementRefCount(){
+		if(--refcount == 0) delete this;
 	}
-}
 
-uint64_t msg_send(bt_msg_header &msg){
-	if(msg.to != 0 && GetProcessManager().GetProcessStatusByID(msg.to) == btos_api::bt_proc_status::DoesNotExist){
-		dbgpf("MSG: Attempted to send message to non-existent process!\n");
-		return 0;
-	 }
-	if(msg.flags & bt_msg_flags::Reply){
-		bt_msg_header prev;
-		if(!msg_get(msg.reply_id, prev)) {
-			dbgout("MSG: Attempted reply to non-existent message!\n");
-			return 0;
+	char *GetPtr(){
+		return &content[0];
+	}
+
+	vector<char> &GetVector(){
+		return content;
+	}
+
+	size_t GetSize(){
+		return content.size();
+	}
+};
+
+struct Message{
+	bt_msg_header header;
+	RefCountPointer<MessageContent> content;
+
+	Message() = default;
+	Message(const btos_api::bt_msg_header &h) : header(h), content(new MessageContent(h)){
+		if(header.length) header.content = content->GetPtr();
+		else header.content = nullptr;
+	}
+};
+
+class MessageManager : public IMessageManager{
+private:
+	friend class MessageRecieveHandle;
+
+	vector<Message> messages;
+	ILock *messageLock = NewLock();
+	
+	uint64_t idCounter = 0;
+
+	vector<pair<bt_pid_t, bt_kernel_messages::Enum>> subscribers;
+
+	uint64_t NextID(){
+		auto hl = messageLock->LockRecursive();
+		return ++idCounter;
+	}
+
+	bool GetMessage(uint64_t id, Message &msg){
+		auto hl = messageLock->LockRecursive();
+		for(auto &m : messages){
+			if(m.header.id == id){
+				msg = m;
+				return true;
+			}
 		}
-		if(prev.to != msg.from || prev.from != msg.to) {
-			dbgout("MSG: Reply to/from mismatch!\n");
-			dbgpf("Expected from: %i to: %i, got from: %i to: %i\n", (int)prev.to, (int)prev.from, (int)msg.from, (int)msg.to);
-			return 0;
+		return false;
+	}
+
+	bool HaveMessage(uint64_t id){
+		auto hl = messageLock->LockRecursive();
+		for(auto &m : messages){
+			if(m.header.id == id) return true;
 		}
-		if(prev.replied){
-			return 0;
-		}
-		{
-			auto hl = msg_lock->LockRecursive();
-			bt_msg_header *h = CurrentProcess().GetCurrentMessage();
-			if(h && h->id == prev.id) h->replied = true;
-			else{
-				bt_msg_header *omsg = GetMessageFromProcess(msg.from, prev.id);
-				if (omsg) {
-					omsg->replied = true;
+		return false;
+	}
+
+	void AddMessage(const Message &msg){
+		bool added = false;
+		while(!added){
+			bool wait = false;
+			{
+				auto hl = messageLock->LockRecursive();
+				if(msg.header.from != 0 && !(msg.header.flags & bt_msg_flags::Reply)){
+					for(auto &m : messages){
+						if(m.header.from == msg.header.from && m.header.to == msg.header.to){
+							wait = true;
+							break;
+						}
+					}
+				}
+				if(!wait){
+					if(GetProcessManager().GetProcessStatusByID(msg.header.to) != btos_api::bt_proc_status::DoesNotExist){
+						messages.push_back(msg);
+					}
+					added = true;
 				}
 			}
+			if(wait) CurrentThread().SetBlock([&]{
+				if(!messageLock->TryTakeExclusive()) return false;
+				for(auto &m : messages){
+					if(m.header.from == msg.header.from && m.header.to == msg.header.to) return false;
+				}
+				messageLock->Release();
+				return true;
+			});
 		}
 	}
-	{
-		auto hl = msg_lock->LockRecursive();
-		msg.id = ++id_counter;
-		msg.valid = true;
-		msg.recieved = msg.replied = false;
-		bt_msg_header *ptr = copy_msg_header(msg);
-		CurrentProcess().AddMessage(ptr);
-	}
-	//dbgpf("MSG: Sent message ID %i from PID %i to PID %i.\n", (int)msg.id, (int)msg.from, (int)msg.to);
-	//sch_yield_to(msg.to);
-	CurrentThread().Yield();
-	return msg.id;
-}
 
-bool msg_recv(bt_msg_header &msg, bt_pid_t pid){
-	auto hl = msg_lock->LockExclusive();
-	for(size_t i = 0; bt_msg_header *cmsg = GetMessageFromProcess(pid, i); ++i){
-		msg=*cmsg;
-		cmsg->recieved = true;
-		CurrentProcess().SetCurrentMessage(cmsg);
-		CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
-		return true;
-	}
-	return false;
-}
-
-static bool msg_recv_nolock(bt_msg_header &msg, bt_pid_t pid){
-	if(msg_lock->IsLocked()) return false;
-	//TODO: Non-locking code?
-	for(size_t i = 0; bt_msg_header *cmsg = GetMessageFromProcess(pid, i); ++i){
-		CurrentProcess().SetCurrentMessage(cmsg);
-		msg=*cmsg;
-		cmsg->recieved = true;
-		return true;
-	}
-	return false;
-}
-
-bt_msg_header msg_recv_block(bt_pid_t pid){
-	bt_msg_header ret;
-	auto &currentThread = CurrentThread();
-	if(!msg_recv(ret, pid)){
-		currentThread.SetMessagingStatus(thread_msg_status::Waiting);
-		currentThread.SetBlock([&]{
-			return msg_recv_nolock(ret, pid);
-		});
-	}
-	currentThread.SetMessagingStatus(thread_msg_status::Processing);
-	return ret;
-}
-
-static bool msg_get(uint64_t id, bt_msg_header &msg, bt_pid_t pid){
-	auto hl = msg_lock->LockRecursive();
-	bt_msg_header *h = CurrentProcess().GetCurrentMessage();
-	if(h && h->id == id){
-		msg = *h;
-		return true;
-	}else{
-		auto msg_ptr = GetMessageFromProcess(pid, id);
-		if(msg_ptr){
-			msg = *msg_ptr;
-			return true;	
+	void RemoveMessage(uint64_t id){
+		auto hl = messageLock->LockRecursive();
+		size_t index = SIZE_MAX;
+		for(size_t i = 0; i < messages.size(); ++i){
+			if(messages[i].header.id == id){
+				index = i;
+				break;
+			}
 		}
-		else return false;
+		if(index != SIZE_MAX) messages.erase(index);
 	}
-}
 
-size_t msg_getcontent(bt_msg_header &msg, void *buffer, size_t buffersize){
-	bt_msg_header r;
-	if(!msg_get(msg.id, r, msg.to)){
-		//panic("(MSG) Content request for non-existent message!");
-		return 0;
-	}
-	size_t size = buffersize > r.length ? r.length : buffersize;
-	//dbgpf("MSG: Copying %i bytes of content (out of %i total, %i requested) for message %i.\n", (int)size, (int)r.length, (int)buffersize, (int)r.id);
-	if(size) memcpy(buffer, r.content, size);
-	return size;
-}
-
-void msg_acknowledge(bt_msg_header &msg, bool set_status){
-	void *found = NULL;
-	{
-		auto hl = msg_lock->LockRecursive();
-		bt_msg_header *h = CurrentProcess().GetCurrentMessage();
-		if(h && h->id == msg.id){
-			found = h->content;
-			CurrentProcess().RemoveMessage(h);
-			release_msg_header(h);
-			CurrentProcess().SetCurrentMessage(nullptr);
-		}else{
-			auto msg_ptr = GetMessageFromProcess(msg.to, msg.id);
-			if(msg_ptr){
-				bt_msg_header &header = *msg_ptr;
-				msg = header;
-				found = header.content;
-				CurrentProcess().RemoveMessage(msg_ptr);
-				release_msg_header(msg_ptr);
+	void SendMessageReciept(const bt_msg_header &header){
+		auto hl = messageLock->LockRecursive();
+		for(auto &sub : subscribers){
+			if(sub.first == header.from && sub.second == bt_kernel_messages::MessageReceipt){
+				bt_msg_header msg;
+				msg.type = bt_kernel_messages::MessageReceipt;
+				msg.to = sub.first;
+				msg.content = (void*)&header;
+				msg.source = 0;
+				msg.from = 0;
+				msg.flags = 0;
+				msg.critical = false;
+				msg.length = sizeof(bt_msg_header);
+				((bt_msg_header*)msg.content)->length = 0;
+				((bt_msg_header*)msg.content)->content = nullptr;
+				//dbgpf("MSG: Sending reciept for %i sent to %i.\n", (int)((bt_msg_header*)msg.content)->id, (int)((bt_msg_header*)msg.content)->to);
+				SendMessage(msg);
 			}
 		}
 	}
-	if(found){
-		if(!(msg.flags & bt_msg_flags::Reply) && (msg.flags & bt_msg_flags::UserSpace)){
-			//TODO: Fix???
-			//proc_free_message_buffer(msg.to, msg.from);
-		}else{
-			free(found);
+public:
+
+	uint64_t SendMessage(bt_msg_header &msgHeader) override{
+		Message msg = msgHeader;
+		if(msg.header.to != 0 && GetProcessManager().GetProcessStatusByID(msg.header.to) == btos_api::bt_proc_status::DoesNotExist){
+			dbgpf("MSG: Attempted to send message to non-existent process!\n");
+			return 0;
 		}
-		if(set_status) CurrentThread().SetMessagingStatus(thread_msg_status::Normal);
-		msg_send_receipt(msg);
-	}
-	//else dbgpf("MSG: Attempt to acknowlegde non-existent message %i\n", (int)msg.id);
-}
-
-void msg_nextmessage(bt_msg_header &msg){
-	msg_acknowledge(msg, false);
-	msg=msg_recv_block();
-}
-
-void msg_clear(bt_pid_t pid){
-	auto hl = msg_lock->LockExclusive();
-	for(size_t i = 0; bt_msg_header *cmsg = GetMessageFromProcess(pid, i); ++i){
-		bt_msg_header &header=*cmsg;
-		//if(header.to==pid || (header.from==pid && !header.recieved)){
-			msg_acknowledge(header, false);
-		//}
-	}
-	if(msg_subscribers->has_key(pid)) msg_subscribers->erase(pid);
-}
-
-void msg_subscribe(bt_kernel_messages::Enum message, bt_pid_t pid){
-	auto hl = msg_lock->LockExclusive();
-	if(!msg_subscribers->has_key(pid)){
-		(*msg_subscribers)[pid]=vector<bt_kernel_messages::Enum>();
-	}
-	if((*msg_subscribers)[pid].find(message) == (*msg_subscribers)[pid].npos){
-		(*msg_subscribers)[pid].push_back(message);
-		dbgpf("MSG: Pid %i subscribed to %i.\n", (int)pid, (int)message);
-	}
-}
-
-void msg_unsubscribe(bt_kernel_messages::Enum message, bt_pid_t pid){
-	auto hl = msg_lock->LockExclusive();
-	if(!msg_subscribers->has_key(pid)) return;
-	if((*msg_subscribers)[pid].find(message) != (*msg_subscribers)[pid].npos){
-		(*msg_subscribers)[pid].erase((*msg_subscribers)[pid].find(message));
-	}
-}
-
-void msg_send_event(bt_kernel_messages::Enum message, void *content, size_t size){
-	auto hl = msg_lock->LockExclusive();
-	for(msg_subscribers_list::iterator i=msg_subscribers->begin(); i!=msg_subscribers->end(); ++i){
-		if(i->second.find(message)!=i->second.npos){
-			bt_msg_header msg;
-			msg.type=message;
-			msg.to=i->first;
-			msg.content=malloc(size);
-			msg.length = size;
-			msg.source=0;
-			msg.from=0;
-			msg.flags=0;
-			msg.critical=false;
-			memcpy(msg.content, content, size);
-			msg_send(msg);
+		if(msg.header.flags & bt_msg_flags::Reply){
+			Message prev;
+			if(!GetMessage(msg.header.reply_id, prev)) {
+				dbgout("MSG: Attempted reply to non-existent message!\n");
+				return 0;
+			}
+			if(prev.header.to != msg.header.from || prev.header.from != msg.header.to) {
+				dbgout("MSG: Reply to/from mismatch!\n");
+				dbgpf("Expected from: %i to: %i, got from: %i to: %i\n", (int)prev.header.to, (int)prev.header.from, (int)msg.header.from, (int)msg.header.to);
+				return 0;
+			}
+			if(prev.header.replied)	return 0;
+			{
+				auto hl = messageLock->LockRecursive();
+				Message omsg;
+				if (GetMessage(msg.header.from, omsg)) omsg.header.replied = true;
+			}
 		}
-	}
-}
 
-static void msg_send_receipt(const bt_msg_header &omsg){
-	auto hl = msg_lock->LockExclusive();
-	for(msg_subscribers_list::iterator i=msg_subscribers->begin(); i!=msg_subscribers->end(); ++i){
-		if(i->first == omsg.from && i->second.find(bt_kernel_messages::MessageReceipt) != i->second.npos){
-			bt_msg_header msg;
-			msg.type=bt_kernel_messages::MessageReceipt;
-			msg.to=i->first;
-			msg.content=malloc(sizeof(bt_msg_header));
-			msg.source=0;
-			msg.from=0;
-			msg.flags=0;
-			msg.critical=false;
-			msg.length = sizeof(bt_msg_header);
-			memcpy(msg.content, &omsg, sizeof(bt_msg_header));
-			((bt_msg_header*)msg.content)->content=0;
-			//dbgpf("MSG: Sending reciept for %i sent to %i.\n", (int)((bt_msg_header*)msg.content)->id, (int)((bt_msg_header*)msg.content)->to);
-			msg_send(msg);
-		}
+		msg.header.id = NextID();
+		AddMessage(msg);
+		//dbgpf("MSG: Sent message ID %i from PID %i to PID %i.\n", (int)msg.id, (int)msg.from, (int)msg.to);
+		//sch_yield_to(msg.to);
+		CurrentThread().Yield();
+		return msg.header.id;
 	}
-}
 
-bool msg_recv_reply(btos_api::bt_msg_header &msg, uint64_t msg_id){
-	auto hl = msg_lock->LockExclusive();
-	for(size_t i = 0; bt_msg_header *cmsg = CurrentProcess().GetMessageByID(i); ++i){
-		if(cmsg->to==0 && (cmsg->flags & btos_api::bt_msg_flags::Reply) && cmsg->reply_id == msg_id){
-			CurrentProcess().SetCurrentMessage(cmsg);
-			msg=*cmsg;
-			cmsg->recieved = true;
+	bool RecieveMessage(bt_msg_header &msg, IProcess &proc = CurrentProcess()) override{
+		auto hl = messageLock->LockRecursive();
+		auto cid = proc.GetCurrentMessageID();
+		Message cmsg;
+		if(GetMessage(cid, cmsg)){
+			msg = cmsg.header;
 			CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
 			return true;
 		}
-	}
-	return false;
-}
-
-static bool msg_recv_reply_nolock(bt_msg_header &msg, uint64_t msg_id){
-	if(msg_lock->IsLocked()) return false;
-	//TODO: Non-locking code???
-	for(size_t i = 0; bt_msg_header *cmsg = CurrentProcess().GetMessageByID(i); ++i){
-		if(cmsg->to==0 && (cmsg->flags & btos_api::bt_msg_flags::Reply) && cmsg->reply_id == msg_id){
-			CurrentProcess().SetCurrentMessage(cmsg);
-			msg=*cmsg;
-			cmsg->recieved = true;
-			return true;
+		for(auto &m : messages){
+			if(m.header.to == proc.ID()){
+				proc.SetCurrentMessageID(m.header.id);
+				msg = m.header;
+				CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
+				return true;
+			}
 		}
-	}
-	return false;
-}
-
-bt_msg_header msg_recv_reply_block(uint64_t msg_id){
-	bt_msg_header ret;
-	auto &currentThread = CurrentThread();
-	if(!msg_recv_reply(ret, msg_id)){
-		currentThread.SetMessagingStatus(thread_msg_status::Waiting);
-		currentThread.SetBlock([&]{
-			return msg_recv_reply_nolock(ret, msg_id);
-		});
-	}
-	currentThread.SetMessagingStatus(thread_msg_status::Processing);
-	return ret;
-}
-
-bool msg_is_match(const bt_msg_header &msg, const bt_msg_filter &filter){
-	if(msg.critical) return true;
-	bool ret = true;
-	if((filter.flags & bt_msg_filter_flags::NonReply) && (msg.flags & bt_msg_flags::Reply)) ret = false;
-	if((filter.flags & bt_msg_filter_flags::From) && msg.from != filter.pid) ret = false;
-	if((filter.flags & bt_msg_filter_flags::Reply) && msg.reply_id != filter.reply_to) ret = false;
-	if((filter.flags & bt_msg_filter_flags::Type) && msg.type != filter.type) ret = false;
-	if((filter.flags & bt_msg_filter_flags::Source) && msg.source != filter.source) ret = false;
-	if((filter.flags & bt_msg_filter_flags::Invert)) ret = !ret;
-	return ret;
-}
-
-struct msg_filter_blockcheck_params{
-	bt_pid_t pid;
-	bt_msg_filter filter;
-};
-
-bool msg_filter_blockcheck(msg_filter_blockcheck_params &params){
-	//TODO: Non-locking code!
-	if(msg_lock->IsLocked()) return false;
-	auto proc = GetProcess(params.pid);
-	if(!proc) return false;
-	bt_msg_header *cmsg = proc->GetMessageMatch(params.filter);
-	if(cmsg){
-		proc->SetCurrentMessage(cmsg);
-		return true;
-	}
-	return false;
-}
-
-bt_msg_header msg_recv_filtered(bt_msg_filter filter, bt_pid_t pid, bool block){
-	auto hl = msg_lock->LockExclusive();
-	auto &currentThread = CurrentThread();
-	auto proc = GetProcess(pid);
-	if(!proc){
-		bt_msg_header ret;
-		ret.valid = false;
-		return ret;
-	}
-	while(true){
-		bt_msg_header *cmsg = proc->GetMessageMatch(filter);
-		if(cmsg){
-			bt_msg_header &msg=*cmsg;
-			proc->SetCurrentMessage(cmsg);
-			currentThread.SetMessagingStatus(thread_msg_status::Processing);
-			return msg;
-		}
-		if(block){
-			msg_lock->Release();
-			currentThread.SetMessagingStatus(thread_msg_status::Waiting);
-			msg_filter_blockcheck_params p = {pid, filter};
-			currentThread.SetBlock([&]{
-				return msg_filter_blockcheck(p);
-			});
-			msg_lock->TakeExclusive();
-		}else{
-			bt_msg_header ret;
-			ret.valid = false;
-			return ret;
-		}
-	}
-}
-
-void msg_nextmessage_filtered(bt_msg_filter filter, bt_msg_header &msg){
-	msg_acknowledge(msg, false);
-	msg=msg_recv_filtered(filter);
-}
-
-bool msg_query_recieved(uint64_t id){
-	auto hl = msg_lock->LockExclusive();
-	bt_msg_header *msg = CurrentProcess().GetMessageByID(id);
-	if(msg){
 		return false;
 	}
-	return true;
-}
 
-struct msg_recv_handle{
+	bool RecieveMessage(bt_msg_header &msg, const bt_msg_filter &filter, IProcess &proc = CurrentProcess()) override{
+		auto hl = messageLock->LockRecursive();
+		auto cid = proc.GetCurrentMessageID();
+		Message cmsg;
+		if(GetMessage(cid, cmsg) && DoesMessageMatch(cmsg.header, filter)){
+			msg = cmsg.header;
+			CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
+			return true;
+		}
+		for(auto &m : messages){
+			if(m.header.to == proc.ID() && DoesMessageMatch(m.header, filter)){
+				proc.SetCurrentMessageID(m.header.id);
+				msg = m.header;
+				CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bt_msg_header AwaitMessage(IProcess &proc = CurrentProcess()) override{
+		bt_msg_header ret;
+		while(!RecieveMessage(ret, proc)){
+			CurrentThread().SetMessagingStatus(thread_msg_status::Waiting);
+			CurrentThread().SetBlock([&]{
+				if(!messageLock->TryTakeExclusive()) return false;
+				for(auto &m : messages){
+					if(m.header.to == proc.ID()) return true;
+				}
+				messageLock->Release();
+				return false;
+			});
+		}
+		return ret;
+	}
+
+	bt_msg_header AwaitMessage(const bt_msg_filter &filter, IProcess &proc = CurrentProcess()) override{
+		auto cid = proc.GetCurrentMessageID();
+		Message cmsg;
+		if(GetMessage(cid, cmsg) && DoesMessageMatch(cmsg.header, filter)) return cmsg.header;
+		while(true){
+			{
+				auto hl = messageLock->LockRecursive();
+				for(auto &m : messages){
+					if(m.header.to == proc.ID() && DoesMessageMatch(m.header, filter)){
+						CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
+						return m.header;
+					}
+				}
+			}
+			CurrentThread().SetMessagingStatus(thread_msg_status::Waiting);
+			CurrentThread().SetBlock([&]{
+				if(!messageLock->TryTakeExclusive()) return false;
+				for(auto &m : messages){
+					if(m.header.to == proc.ID() && DoesMessageMatch(m.header, filter)) return true;
+				}
+				messageLock->Release();
+				return false;
+			});
+		}
+	}
+	
+	vector<char> MessageContent(bt_msg_header &msg) override{
+		Message message;
+		if(GetMessage(msg.id, message)){
+			return message.content->GetVector();
+		}
+		return {};
+	}
+
+	void AcknowledgeMessage(bt_msg_header &msg, bool setStatus = true) override{
+		{
+			messageLock->TakeRecursive();
+			if(!HaveMessage(msg.id)) return;
+			if(CurrentProcess().GetCurrentMessageID() == msg.id) CurrentProcess().SetCurrentMessageID(0);
+			RemoveMessage(msg.id);
+			if(setStatus) CurrentThread().SetMessagingStatus(thread_msg_status::Normal);
+		}
+		SendMessageReciept(msg);
+	}
+
+	void AwaitNextMessage(bt_msg_header &msg) override{
+		AcknowledgeMessage(msg, false);
+		msg = AwaitMessage();
+	}
+
+	void AwaitNextMessage(const bt_msg_filter &filter, bt_msg_header &msg) override{
+		AcknowledgeMessage(msg, false);
+		msg = AwaitMessage(filter);
+	}
+
+	void ClearMessages(IProcess &proc = CurrentProcess()) override{
+		auto pid = proc.ID();
+		messageLock->TakeRecursive();
+		bool found = false;
+		do{
+			for(size_t i = 0; i < messages.size(); ++i){
+				auto msg = messages[i].header;
+				if(msg.to == pid || msg.from == pid){
+					messages.erase(i);
+					if(msg.to == pid) SendMessageReciept(msg);
+					found = true;
+					break;
+				}
+			}
+			found = false;
+		}while(found);
+		do{
+			for(size_t i = 0; i < subscribers.size(); ++i){
+				if(subscribers[i].first == pid){
+					subscribers.erase(i);
+					found = true;
+					break;
+				}
+			}
+			found = false;
+		}while(found);
+	}
+
+	bool RecieveMessageReply(bt_msg_header &msg, uint64_t msg_id) override{
+		bt_msg_filter filter;
+		filter.flags = bt_msg_filter_flags::Reply;
+		filter.reply_to = msg_id;
+		return RecieveMessage(msg, filter);
+	}
+
+	bt_msg_header AwaitMessageReply(uint64_t msg_id) override{
+		bt_msg_filter filter;
+		filter.flags = bt_msg_filter_flags::Reply;
+		filter.reply_to = msg_id;
+		return AwaitMessage(filter);
+	}
+
+	bool HasMessageBeenProcessed(uint64_t msg_id) override{
+		return !HaveMessage(msg_id);
+	}
+
+	bool DoesMessageMatch(const bt_msg_header &msg, const bt_msg_filter &filter) override{
+		if(msg.critical) return true;
+		bool ret = true;
+		if((filter.flags & bt_msg_filter_flags::NonReply) && (msg.flags & bt_msg_flags::Reply)) ret = false;
+		if((filter.flags & bt_msg_filter_flags::From) && msg.from != filter.pid) ret = false;
+		if((filter.flags & bt_msg_filter_flags::Reply) && msg.reply_id != filter.reply_to) ret = false;
+		if((filter.flags & bt_msg_filter_flags::Type) && msg.type != filter.type) ret = false;
+		if((filter.flags & bt_msg_filter_flags::Source) && msg.source != filter.source) ret = false;
+		if((filter.flags & bt_msg_filter_flags::Invert)) ret = !ret;
+		return ret;
+	}
+
+	IMessageRecieveHandle* CreateRecieveHandle(const bt_msg_filter &filter) override;
+
+	void Subscribe(btos_api::bt_kernel_messages::Enum message, IProcess &proc = CurrentProcess()) override{
+		auto pid = proc.ID();
+		auto hl = messageLock->LockExclusive();
+		for(auto &sub : subscribers){
+			if(sub.first == pid && sub.second == message) return;
+		}
+		subscribers.push_back({pid, message});
+	}
+
+	void UnSubscribe(btos_api::bt_kernel_messages::Enum message, IProcess &proc = CurrentProcess()) override{
+		auto pid = proc.ID();
+		auto hl = messageLock->LockExclusive();
+		for(size_t i = 0; i < subscribers.size(); ++i){
+			auto &sub = subscribers[i];
+			if(sub.first == pid && sub.second == message){
+				subscribers.erase(i);
+				return;
+			}
+		}
+	}
+
+	void SendKernelEvent(btos_api::bt_kernel_messages::Enum message, const void *content, size_t size) override{
+		auto hl = messageLock->LockRecursive();
+		for(auto &sub : subscribers){
+			if(sub.second == message){
+				bt_msg_header msg;
+				msg.type = message;
+				msg.to = sub.first;
+				msg.content = malloc(size);
+				msg.length = size;
+				msg.source = 0;
+				msg.from = 0;
+				msg.flags = 0;
+				msg.critical = false;
+				memcpy(msg.content, content, size);
+				SendMessage(msg);
+			}
+		}
+	}
+};
+
+class MessageRecieveHandle : public IMessageRecieveHandle{
+private:
+	MessageManager &manager;
+
 	bt_pid_t pid;
 	bt_msg_filter filter;
 	bt_msg_header msg;
+public:
+	MessageRecieveHandle(MessageManager &m, bt_pid_t p, bt_msg_filter f) : manager(m), pid(p), filter(f) {
+		msg.valid = false;
+	}
+
+	void Close() override{}
+
+	bool Wait() override{
+		if(msg.valid) return true;
+		auto proc = GetProcess(pid);
+		if(!proc || !manager.messageLock->TryTakeExclusive()) return false;
+		manager.RecieveMessage(msg, filter, *proc);
+		manager.messageLock->Release();
+		return false;
+	}
+
+	bt_msg_header Read() override{
+		return msg;
+	}
 };
 
-static void msg_recv_handle_close(msg_recv_handle *ptr){
-	delete ptr;
+IMessageRecieveHandle* MessageManager::CreateRecieveHandle(const bt_msg_filter &filter){
+	return new MessageRecieveHandle(*this, CurrentProcess().ID(), filter);
 }
 
-static bool msg_recv_handle_wait(msg_recv_handle *h){
-	//TODO: Non-locking code!
-	if(h->msg.valid) return true;
-	if(!msg_lock->IsLocked()){
-		auto proc = GetProcess(h->pid);
-		if(!proc) return false;
-		bt_msg_header *cmsg = proc->GetMessageMatch(h->filter);
-		if(cmsg){
-			h->msg = *cmsg;
-			proc->SetCurrentMessage(cmsg);
-			return true;
-		}
-	}
-	return false;
+static ManualStaticAlloc<MessageManager> theMessageManager;
+
+void Messaging_Init(){
+	dbgout("MSG: Init messaging...\n");
+	theMessageManager.Init();
 }
 
-IHandle *msg_create_recv_handle(bt_msg_filter filter){
-	auto value = new msg_recv_handle();
-	value->pid = CurrentProcess().ID();
-	value->filter = filter;
-	value->msg.valid = false;
-	return MakeKernelGenericHandle<KernelHandles::MessageRecive>(value, &msg_recv_handle_close, &msg_recv_handle_wait);
-}
-
-bt_msg_header msg_read_recv_handle(IHandle *h){
-	bt_msg_header ret;
-	if(auto handle = KernelHandleCast<KernelHandles::MessageRecive>(h)){
-		auto v = handle->GetData();
-		ret = v->msg;
-		v->msg.valid = false;
-	}else ret.valid = false;
-	return ret;
+IMessageManager &GetMessageManager(){
+	return *theMessageManager;
 }

@@ -76,7 +76,7 @@ void timer_thread(){
 				timer_info *timer = (*timers)[next_event->timer_id];
 				*(bt_handle_t*)msg.content = timer->handle_id;
 				timer->active = false;
-				msg_send(msg);
+				GetMessageManager().SendMessage(msg);
 			}
 			events->erase(events->find(next_event));
 			last_event = next_event;

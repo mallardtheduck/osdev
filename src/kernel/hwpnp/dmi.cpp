@@ -48,9 +48,10 @@ static void dmi_notify(bt_dm_event::Enum event, const hwpnp::DeviceID &dev){
 	msg.type = event;
 	msg.content = (void*)&dev;
 	msg.length = sizeof(dev);
-	uint64_t msg_id = msg_send(msg);
-	btos_api::bt_msg_header reply = msg_recv_reply_block(msg_id);
-	msg_acknowledge(reply, true);
+	auto &messageManager = GetMessageManager();
+	uint64_t msg_id = messageManager.SendMessage(msg);
+	btos_api::bt_msg_header reply = messageManager.AwaitMessageReply(msg_id);
+	messageManager.AcknowledgeMessage(reply, true);
 }
 
 void pnp_dmi_notify_device_found(const hwpnp::DeviceID &dev){

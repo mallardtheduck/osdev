@@ -101,9 +101,10 @@ void debug_event_notify(bt_pid_t pid, uint64_t thread, bt_debug_event::Enum even
 		content.error = error;
 		msg.length = sizeof(content);
 		msg.content = (void*)&content;
-		uint64_t msg_id = msg_send(msg);
-		btos_api::bt_msg_header reply = msg_recv_reply_block(msg_id);
-		msg_acknowledge(reply, true);
+		auto &messageManager = GetMessageManager();
+		uint64_t msg_id = messageManager.SendMessage(msg);
+		btos_api::bt_msg_header reply = messageManager.AwaitMessageReply(msg_id);
+		messageManager.AcknowledgeMessage(reply, true);
 	}
 }
 

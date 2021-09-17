@@ -628,7 +628,7 @@ USERAPI_HANDLER(BT_SEND){
 		header.critical=false;
 		if(header.length > btos_api::BT_MSG_MAX) return;
 		//TODO: Implement once messaging is fully refactored!
-		//ret=proc_send_message(header);
+		GetMessageManager().SendMessage(header);
 	}else RAISE_US_ERROR();
 }
 
@@ -636,30 +636,35 @@ USERAPI_HANDLER(BT_RECV){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(btos_api::bt_msg_header))){
 		btos_api::bt_msg_header &header=*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_B);
 		if(state.Get32BitRegister(Generic_Register::GP_Register_C)){
-			header=msg_recv_block();
-			header.content=NULL;
+			header = GetMessageManager().AwaitMessage();
+			header.content = nullptr;
 		}else{
-			state.Get32BitRegister(Generic_Register::GP_Register_A)=(uint32_t)msg_recv(header);
+			state.Get32BitRegister(Generic_Register::GP_Register_A) = (uint32_t)GetMessageManager().RecieveMessage(header);
 		}
 	}else RAISE_US_ERROR();
 }
 
 USERAPI_HANDLER(BT_NEXTMSG){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(btos_api::bt_msg_header))){
-		btos_api::bt_msg_header &header=*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_B);
-		msg_nextmessage(header);
+		auto &header=*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_B);
+		GetMessageManager().AwaitNextMessage(header);
 	}else RAISE_US_ERROR();
 }
 
 USERAPI_HANDLER(BT_CONTENT){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(btos_api::bt_msg_header)) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), state.Get32BitRegister(Generic_Register::GP_Register_D))){
-		state.Get32BitRegister(Generic_Register::GP_Register_A)=msg_getcontent(*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_B), (void*)state.Get32BitRegister(Generic_Register::GP_Register_C), state.Get32BitRegister(Generic_Register::GP_Register_D));
+		auto &header = *(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_B);
+		auto buffer = (void*)state.Get32BitRegister(Generic_Register::GP_Register_C);
+		size_t size = state.Get32BitRegister(Generic_Register::GP_Register_D);
+		auto content = GetMessageManager().MessageContent(header);
+		if(!content.empty()) memcpy(buffer, &content[0], min(size, content.size()));
+		state.Get32BitRegister(Generic_Register::GP_Register_A) = content.size();
 	}else RAISE_US_ERROR();
 }
 
 USERAPI_HANDLER(BT_ACK){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(btos_api::bt_msg_header))){
-		msg_acknowledge(*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_B));
+		GetMessageManager().AcknowledgeMessage(*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_B));
 	}else RAISE_US_ERROR();
 }
 
@@ -669,29 +674,36 @@ USERAPI_HANDLER(BT_MSGWAIT){
 }
 
 USERAPI_HANDLER(BT_SUBSCRIBE){
-	msg_subscribe((btos_api::bt_kernel_messages::Enum)state.Get32BitRegister(Generic_Register::GP_Register_B));
+	GetMessageManager().Subscribe((btos_api::bt_kernel_messages::Enum)state.Get32BitRegister(Generic_Register::GP_Register_B));
 }
 
 USERAPI_HANDLER(BT_UNSUBSCRIBE){
-	msg_unsubscribe((btos_api::bt_kernel_messages::Enum)state.Get32BitRegister(Generic_Register::GP_Register_B));
+	GetMessageManager().UnSubscribe((btos_api::bt_kernel_messages::Enum)state.Get32BitRegister(Generic_Register::GP_Register_B));
 }
 
 USERAPI_HANDLER(BT_RECVFILTERED){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(btos_api::bt_msg_filter)) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(btos_api::bt_msg_header))){
-		(*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_C)) = msg_recv_filtered(*(btos_api::bt_msg_filter*)state.Get32BitRegister(Generic_Register::GP_Register_B), CurrentProcess().ID(), (bool)state.Get32BitRegister(Generic_Register::GP_Register_D));
+		auto &header = (*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_C));
+		auto filter = *(btos_api::bt_msg_filter*)state.Get32BitRegister(Generic_Register::GP_Register_B);
+		if(state.Get32BitRegister(Generic_Register::GP_Register_D)){
+			header = GetMessageManager().AwaitMessage(filter, CurrentProcess());
+		}else{
+			header.valid = false;
+			GetMessageManager().RecieveMessage(header, filter, CurrentProcess());
+		}
 	}else RAISE_US_ERROR();
 }
 
 USERAPI_HANDLER(BT_NEXTMSGFILTERED){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(btos_api::bt_msg_filter)) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(btos_api::bt_msg_header))){
 		btos_api::bt_msg_header &header=*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_C);
-		msg_nextmessage_filtered(*(btos_api::bt_msg_filter*)state.Get32BitRegister(Generic_Register::GP_Register_B), header);
+		GetMessageManager().AwaitNextMessage(*(btos_api::bt_msg_filter*)state.Get32BitRegister(Generic_Register::GP_Register_B), header);
 	}else RAISE_US_ERROR();
 }
 
 USERAPI_HANDLER(BT_MSGQUERY){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(uint64_t))){
-		state.Get32BitRegister(Generic_Register::GP_Register_A) = msg_query_recieved(*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_B));
+		state.Get32BitRegister(Generic_Register::GP_Register_A) = GetMessageManager().HasMessageBeenProcessed(*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_B));
 	}else RAISE_US_ERROR();
 }
 

@@ -29,15 +29,15 @@ template <typename T>
 class vector
 {
     private:
-        unsigned int dataSize;
-        unsigned int reserved;
+        size_t dataSize;
+        size_t reserved;
         T*           data;
 
     public:
 		static const size_t npos=0xFFFFFFFF;
         ~vector()
         {
-            for(unsigned int loop = 0; loop < dataSize; ++loop)
+            for(size_t loop = 0; loop < dataSize; ++loop)
             {
                 // Because we use placement new we must explicitly destroy all members.
                 data[loop].~T();
@@ -59,7 +59,7 @@ class vector
         {
             reserve(reserved);
             dataSize = reserved;
-            for(unsigned int loop=0;loop < dataSize;++loop)
+            for(size_t loop = 0; loop < dataSize; ++loop)
             {
                 // Because we are using malloc/free
                 // We need to use placement new to add items to the data
@@ -68,14 +68,14 @@ class vector
             }
         }
 
-        vector(unsigned int init_num)
+        vector(size_t init_num)
             : dataSize(0)
             , reserved(init_num)
             , data(NULL)
         {
             reserve(reserved);
             dataSize = reserved;
-            for(unsigned int loop;loop < dataSize;++loop)
+            for(size_t loop = 0; loop < dataSize; ++loop)
             {
                 // See above
                 new (&data[loop]) T();
@@ -96,7 +96,7 @@ class vector
             return *this;
         }
 
-        void reserve(unsigned int new_size)
+        void reserve(size_t new_size)
         {
             if (new_size < reserved)
             {    return;
@@ -107,7 +107,7 @@ class vector
             {    panic("STL: Error 2.\n");//throw int(2);
             }
 
-            for(unsigned int loop = 0; loop < dataSize; ++loop)
+            for(size_t loop = 0; loop < dataSize; ++loop)
             {
                 // Use placement new to copy the data
                 new (&newData[loop]) T(data[loop]);
@@ -115,7 +115,7 @@ class vector
             ::swap(data, newData);
             reserved    = new_size;
 
-            for(unsigned int loop = 0; loop < dataSize; ++loop)
+            for(size_t loop = 0; loop < dataSize; ++loop)
             {
                 // Call the destructor on old data before freeing the container.
                 // Remember we just did a swap.
@@ -134,8 +134,8 @@ class vector
             new (&data[dataSize++]) T(item);
         }
 
-        unsigned int  size() const  {return dataSize;}
-		unsigned int  capacity() const {return reserved;}
+        size_t  		size() const  {return dataSize;}
+		size_t  capacity() const {return reserved;}
         bool          empty() const {return dataSize == 0;}
 
         // Operator[] should NOT check the value of i
@@ -143,17 +143,17 @@ class vector
         const T& operator[] (unsigned i) const      {return data[i];}
         T&       operator[] (unsigned i)            {return data[i];}
 
-		const T& at(unsigned i) const{
+		const T& at(size_t i) const{
 			if(i >= dataSize) panic("(VECTOR) Overrun!");
 			return data[i];
 		}
 
-		T& at(unsigned i){
+		T& at(size_t i){
 			if(i >= dataSize) panic("(VECTOR) Overrun!");
 			return data[i];
 		}
 
-        void insert(unsigned int pos, const T& value)
+        void insert(size_t pos, const T& value)
         {
             if (pos >= dataSize)         { throw int(1);}
 
@@ -166,7 +166,7 @@ class vector
             {
                 new (&data[dataSize])  T(data[dataSize-1]);
             }
-            for(unsigned int loop = dataSize - 1; loop > pos; --loop)
+            for(auto loop = dataSize - 1; loop > pos; --loop)
             {
                 data[loop]  = data[loop-1];
             }
@@ -178,8 +178,8 @@ class vector
         }
 
         void clear()                                        { erase(0, dataSize);}
-        void erase(unsigned int erase_index)                { erase(erase_index,erase_index+1);}
-        void erase(unsigned int start, unsigned int end)    /* end NOT inclusive so => [start, end) */
+        void erase(size_t erase_index)                { erase(erase_index,erase_index+1);}
+        void erase(size_t start, size_t end)    /* end NOT inclusive so => [start, end) */
 		{
 			if (end > dataSize) {
 				end = dataSize;
@@ -187,13 +187,13 @@ class vector
 			if (start > end) {
 				start = end;
 			}
-			unsigned int dst = start;
-			unsigned int src = end;
+			auto dst = start;
+			auto src = end;
 			for (; (src < dataSize) /*&& (dst < end)*/; ++dst, ++src) {
 				// Move Elements down;
 				data[dst] = data[src];
 			}
-			unsigned int count = end - start;
+			auto count = end - start;
 			for (; count != 0; --count) {
 				// Remove old Elements
 				--dataSize;
@@ -202,7 +202,7 @@ class vector
 			}
 		}
 
-		unsigned int find(const T &item){
+		size_t find(const T &item){
 			for(size_t i=0; i<dataSize; ++i){
 				if(data[i] == item) return i;
 			}
@@ -244,14 +244,13 @@ template <class T1, class T2> struct pair{
 	second_type second;
 
 	pair() : first(), second() {};
-	pair(const pair<T1, T2> &other):
-		first(other.first),
-		second(other.second)
-	{}
+	pair(const pair<T1, T2> &other) = default;
 	pair(const first_type &a, const second_type &b):
 		first(a),
 		second(b)
 	{}
+
+	pair<T1, T2> &operator=(const pair<T1, T2> &other) = default;
 };
 
 template <class T1,class T2>pair<T1,T2> make_pair (T1 x, T2 y)

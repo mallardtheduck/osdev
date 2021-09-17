@@ -108,14 +108,8 @@ public:
 		return ::GetKernelExtensionManager();
 	}
 
-	void *SendMessage(void *message) override {
-		return nullptr;
-	}
-	bool RecieveMessageReply(void *message, void *reply) override {
-		return false;
-	}
-	void *RecieveMessageReply(void *message) override {
-		return nullptr;
+	IMessageManager &GetMessageManager() override{
+		return ::GetMessageManager();
 	}
 
 	IKernelConfigVariables &GetKernelConfigVariables() override{

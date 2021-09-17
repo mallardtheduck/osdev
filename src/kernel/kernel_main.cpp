@@ -22,7 +22,7 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	init_handles();
 	userapi_init();
     Extensions_Init();
-    msg_init();
+    Messaging_Init();
 	init_debug_extension();
 	hwpnp_init();
 	rtc_init();
