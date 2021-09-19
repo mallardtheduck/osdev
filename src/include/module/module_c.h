@@ -33,6 +33,6 @@ EXTERN_C int vsnprintf(char *str, size_t size, const char *fmt, __builtin_va_lis
 EXTERN_C int sprintf(char *str, const char *fmt, ...);
 EXTERN_C int snprintf(char *str, size_t size, const char *fmt, ...);
 
-EXTERN_C int dbgprintf(const char *fmt, ...);
+EXTERN_C int dbgpf(const char *fmt, ...);
 
 #endif
