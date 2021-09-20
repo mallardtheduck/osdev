@@ -1,0 +1,1 @@
+ENTRY(module_main)
