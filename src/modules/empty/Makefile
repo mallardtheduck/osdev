@@ -1,13 +1,15 @@
+OUTPUT := empty.sys
+
 BUILD-AS := i686-pc-btos-as
 BUILD-AS-OPTIONS := -g -fPIC -c
 BUILD-CPP := i686-pc-btos-g++
 BUILD-CPP-FLAGS :=  -c
-BUILD-CPP-OPTIONS := -ffreestanding -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -c -I../../include -DKERNEL_MODULE
+BUILD-CPP-OPTIONS := -ffreestanding -Wall -Wextra -Werror -fno-exceptions -fno-rtti -std=gnu++11 -g -c -I../../include -DKERNEL_MODULE -std=gnu++17
 BUILD-C := i686-pc-btos-gcc
 BUILD-C-FLAGS := -c
 BUILD-C-OPTIONS := -ffreestanding -Wall -Wextra -Werror -g -c -I../../include -DKERNEL_MODULE
 LINK := i686-pc-btos-gcc
-LINK-FLAGS := -T linker.ld -o empty.sys -ffreestanding -O2 -nostdlib -fPIC -Xlinker -q
+LINK-FLAGS := -T linker.ld -o $(OUTPUT) -ffreestanding -O2 -nostdlib -fPIC -Xlinker -q
 LINK-OPTIONS := -lgcc
 
 BOOTFILE := boot.o
@@ -22,7 +24,7 @@ CPPOBJS := $(CPPFILES:.cpp=.o)
 CDEPFILES := $(patsubst %.c,%.d,$(CFILES))
 CPPDEPFILES := $(patsubst %.cpp,%.d,$(CPPFILES))
 
-all: empty.sys
+all: $(OUTPUT)
 
 -include $(CDEPFILES) $(CPPDEPFILES)
 
@@ -30,9 +32,9 @@ clean: dummy.delete
 
 dummy.delete:
 	-@$(RM) *.o
-	-@$(RM) empty.sys
+	-@$(RM) $(OUTPUT)
 
-empty.sys: $(ASOBJS) $(COBJS) $(CPPOBJS) linker.ld Makefile
+$(OUTPUT): $(ASOBJS) $(COBJS) $(CPPOBJS) linker.ld Makefile
 	$(LINK) $(LINK-FLAGS) $(ASOBJS) $(CPPOBJS) $(COBJS) $(LINK-OPTIONS)
 
 .s.o: %.s Makefile
