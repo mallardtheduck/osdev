@@ -2,11 +2,6 @@
 
 #include <module/module.inc>
 
-USE_PURE_VIRTUAL;
-USE_STATIC_INIT;
-
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-
 static const uint32_t CONFIG_ADDRESS=0xCF8;
 static const uint32_t CONFIG_DATA=0xCFC;
 
@@ -37,8 +32,7 @@ void write_config32(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uin
     out32(CONFIG_DATA, value);
 }
 
-extern "C" int module_main(IModuleAPI *api, char *params){
-	ModuleInit(api);
+int module_main(char *){
 	API->GetHwPnPManager().RegisterDriver(GetPCIBusDriver());
     return 0;
 }

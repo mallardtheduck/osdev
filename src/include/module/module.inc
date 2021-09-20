@@ -94,3 +94,10 @@ extern "C" int __cxa_atexit(void (* /*func*/) (void *), void * /*arg*/, void * /
 	return 0;
 } 
 void *__dso_handle;
+
+int module_main(char *);
+
+EXTERN_C int module_main(IModuleAPI *api, char *params){
+	ModuleInit(api);
+	return module_main(params);
+};

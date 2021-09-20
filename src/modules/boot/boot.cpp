@@ -5,8 +5,6 @@ const char *current_section = "default";
 #include "ini.h"
 #include "cmdline.hpp"
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-
 size_t strlen(const char* str)
 {
 	size_t ret = 0;
@@ -187,8 +185,7 @@ void boot_thread(){
 	}
 }
 
-extern "C" int module_main(IModuleAPI *api, char *params){
-	ModuleInit(api);
+int module_main(char *){
 	API->GetScheduler().NewThread(&boot_thread);
 	return 0;
 }

@@ -1,5 +1,5 @@
 #include <module/module.inc>
 
-void module_main(IModuleAPI *api, char *){
-	ModuleInit(api);
+int module_main(char *){
+	return 0;
 }
