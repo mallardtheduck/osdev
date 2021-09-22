@@ -19,9 +19,9 @@ private:
 public:
 	InitFSNode(initfs_file *f) : file(f) {}
 
-	IFileHandle *OpenFile(fs_mode_flags mode) override;
+	IFileHandle *OpenFile(uint32_t mode) override;
 
-	IDirectoryHandle *OpenDirectory(fs_mode_flags mode) override;
+	IDirectoryHandle *OpenDirectory(uint32_t mode) override;
 
 	const char *GetName() override{
 		return file->name.c_str();
@@ -130,12 +130,12 @@ public:
 	}
 };
 
-IFileHandle *InitFSNode::OpenFile(fs_mode_flags mode){
+IFileHandle *InitFSNode::OpenFile(uint32_t mode){
 	if(file) return new InitFSFileHandle(file, this);
 	else return nullptr;
 }
 
-IDirectoryHandle *InitFSNode::OpenDirectory(fs_mode_flags mode){
+IDirectoryHandle *InitFSNode::OpenDirectory(uint32_t mode){
 	if(!file) return new InitFSDirectoryHandle();
 	else return nullptr;
 }
@@ -158,7 +158,7 @@ public:
 
 class InitFS : public IFilesystem{
 public:
-	IMountedFilesystem *Mount(const IFilesystemNode &node) override{
+	IMountedFilesystem *Mount(FilesystemNodePointer node) override{
 		return new MountedInitFS();
 	}
 

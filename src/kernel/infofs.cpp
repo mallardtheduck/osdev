@@ -87,7 +87,7 @@ private:
 
 	InfoFSNode(function<char*()> f, string n, bool iD) : fn(f), name(n), isDirectory(iD) {}
 public:
-	IFileHandle *OpenFile(fs_mode_flags mode) override{
+	IFileHandle *OpenFile(uint32_t mode) override{
 		if(isDirectory) return nullptr;
 		if(mode & FS_WriteFlags) return nullptr;
 
@@ -97,7 +97,7 @@ public:
 		return new InfoFSHandle(data, size, pos, this);
 	}
 
-	IDirectoryHandle *OpenDirectory(fs_mode_flags mode) override;
+	IDirectoryHandle *OpenDirectory(uint32_t mode) override;
 
 	const char *GetName() override{
 		return name.c_str();
@@ -159,7 +159,7 @@ public:
 	}
 };
 
-IDirectoryHandle *InfoFSNode::OpenDirectory(fs_mode_flags mode){
+IDirectoryHandle *InfoFSNode::OpenDirectory(uint32_t mode){
 	if(mode & FS_WriteFlags) return nullptr;
 
 	if(isDirectory) return new InfoFSDirectory();

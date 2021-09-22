@@ -140,12 +140,3 @@ char *FilesystemManager::InfoFS(){
 	}
 	return buffer;
 }
-
-void IFilesystemNode::IncrementRefCount(){
-	refcount++;
-}
-
-void IFilesystemNode::DecrementRefCount(){
-	refcount--;
-	if(refcount == 0) delete this;
-}

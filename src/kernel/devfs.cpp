@@ -94,13 +94,13 @@ private:
 public:
 	DevFSNode(IVisibleDevice *d) : device(d) {}
 
-	IFileHandle *OpenFile(fs_mode_flags mode) override{
+	IFileHandle *OpenFile(uint32_t mode) override{
 		auto inst = device->Open();
 		if(inst) return new DevFSFileHandle(this, inst);
 		else return nullptr;
 	}
 
-	IDirectoryHandle *OpenDirectory(fs_mode_flags mode) override{
+	IDirectoryHandle *OpenDirectory(uint32_t mode) override{
 		if(device == nullptr) return new DevFSDirectoryHandle(this);
 		else return nullptr;
 	}
@@ -144,7 +144,7 @@ public:
 
 class DevFS : public IFilesystem{
 public:
-	IMountedFilesystem *Mount(const IFilesystemNode &node) override{
+	IMountedFilesystem *Mount(FilesystemNodePointer node) override{
 		return new MountedDevFS();
 	}
 

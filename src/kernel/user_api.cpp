@@ -270,7 +270,7 @@ USERAPI_HANDLER(BT_MOUNT){
 			auto fs = GetFilesystemManager().GetByName(fsName);
 			auto node = (devicePath && strlen(devicePath)) ? GetVirtualFilesystem().GetNode(devicePath) : nullptr;
 			if(fs && strlen(mountPoint)){
-				auto mountedFs = fs->Mount(*node);
+				auto mountedFs = fs->Mount(node);
 				if(mountedFs) state.Get32BitRegister(Generic_Register::GP_Register_A) = GetVirtualFilesystem().Attach(mountPoint, mountedFs);
 				return;
 			}
