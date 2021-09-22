@@ -136,7 +136,7 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 				auto filesystem = API->GetFilesystemManager().GetByName(fs);
 				auto node = API->GetVirtualFilesystem().GetNode(path);
 				if(filesystem && (strcmp(path, "") == 0 || node)){
-					auto mount = filesystem->Mount(*node);
+					auto mount = filesystem->Mount(node);
 					if(mount){
 						API->GetVirtualFilesystem().Attach(name, mount);
 					}else{
