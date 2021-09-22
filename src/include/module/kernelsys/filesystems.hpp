@@ -46,16 +46,21 @@ class IFilesystemNode : private nonmovable{
 private:
 	size_t refcount = 0;
 public:
-	virtual IFileHandle *OpenFile(fs_mode_flags mode) = 0;
-	virtual IDirectoryHandle *OpenDirectory(fs_mode_flags mode) = 0;
+	virtual IFileHandle *OpenFile(uint32_t mode) = 0;
+	virtual IDirectoryHandle *OpenDirectory(uint32_t mode) = 0;
 
 	virtual const char *GetName() = 0;
 	virtual void Rename(const char *newName) = 0;
 	virtual bt_filesize_t GetSize() = 0;
 	virtual fs_item_types GetType() = 0;
 
-	virtual void IncrementRefCount();
-	virtual void DecrementRefCount();
+	virtual void IncrementRefCount(){
+		++refcount;
+	}
+
+	virtual void DecrementRefCount(){
+		if(--refcount == 0) delete this;
+	}
 
 	virtual ~IFilesystemNode() {}
 };
@@ -71,7 +76,7 @@ public:
 
 class IFilesystem : private nonmovable{
 public:
-	virtual IMountedFilesystem *Mount(const IFilesystemNode &node) = 0;
+	virtual IMountedFilesystem *Mount(FilesystemNodePointer node) = 0;
 	virtual bool Format(const IFilesystemNode &node, void *options) = 0;
 
 	virtual ~IFilesystem() {}

@@ -345,7 +345,7 @@ int fatfs_lfn_create_sfn(char *sfn_output, char *filename)
 //-----------------------------------------------------------------------------
 // fatfs_itoa:
 //-----------------------------------------------------------------------------
-static void fatfs_itoa(uint32 num, char *s)
+void fatfs_itoa(uint32 num, char *s)
 {
     char* cp;
     char outbuf[12];
