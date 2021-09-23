@@ -45,7 +45,15 @@
         "internet": "cpp",
         "string_view": "cpp",
         "*.x": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "functional": "cpp",
+        "ratio": "cpp",
+        "system_error": "cpp",
+        "tuple": "cpp",
+        "utility": "cpp",
+        "optional": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp"
     },
     "editor.fontLigatures": true
 }
