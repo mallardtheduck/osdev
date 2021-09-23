@@ -8,7 +8,7 @@
 class IKernelExtension{
 public:
 	virtual const char *GetName() = 0;
-	virtual void UserAPIHandler(uint16_t fn, ICPUState &state);
+	virtual void UserAPIHandler(uint16_t fn, ICPUState &state) = 0;
 
 	virtual ~IKernelExtension() {}
 };

@@ -34,7 +34,7 @@ private:
     uint8_t textcolour;
     bool echo;
     uint32_t refcount;
-    lock term_lock;
+    ILock *term_lock;
     bool pointer_enabled;
 	bool pointer_autohide;
     bt_terminal_pointer_bitmap *pointer_bitmap;
@@ -45,14 +45,14 @@ private:
 
     circular_buffer<uint32_t, 128> keyboard_buffer;
     circular_buffer<bt_terminal_pointer_event, 512> pointer_buffer{zero_event};
-    lock input_lock;
+    ILock *input_lock;
 
-    pid_t curpid;
-	pid_t events_pid;
+    bt_pid_t curpid;
+	bt_pid_t events_pid;
 	bt_terminal_event_mode::Enum event_mode;
 	bool event_mode_enabled;
 	
-	pid_t exclusive_pid;
+	bt_pid_t exclusive_pid;
 	bool exclusive_mode_enabled;
 
     void putchar(char c);
@@ -86,7 +86,7 @@ public:
     void activate();
     void deactivate();
 
-    size_t write(vterm_options &opts, size_t size, char *buf);
+    size_t write(vterm_options &opts, size_t size, const char *buf);
     size_t read(vterm_options &opts, size_t size, char *buf);
     size_t seek(vterm_options &opts, size_t pos, uint32_t flags);
     int ioctl(vterm_options &opts, int fn, size_t size, char *buf);
@@ -115,7 +115,7 @@ class vterm_list{
 private:
 	vector<vterm*> terminals;
     uint64_t id;
-    lock vtl_lock;
+    ILock *vtl_lock;
 
 public:
     vterm_list();

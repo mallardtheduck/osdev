@@ -29,6 +29,13 @@ public:
 	virtual bt_msg_header AwaitMessage(const bt_msg_filter &filter, IProcess &proc = ::CurrentProcess()) = 0;
 	
 	virtual vector<char> MessageContent(bt_msg_header &msg) = 0;
+	template<typename T> bool MessageContent(bt_msg_header &msg, T &value){
+		auto content = MessageContent(msg);
+		if(content.size() == sizeof(T)){
+			memcpy(&value, content.begin(), sizeof(T));
+			return true;
+		}else return false;
+	}
 
 	virtual void AcknowledgeMessage(bt_msg_header &msg, bool setStatus = true) = 0;
 	virtual void AwaitNextMessage(bt_msg_header &msg) = 0;

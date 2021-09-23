@@ -36,8 +36,7 @@
 
 #include <btos_module.h>
 
-
-static size_t strlen(const char *s){
+inline static size_t string_strlen(const char *s){
     const char *p = s;
     while (*s) ++s;
     return s - p;
@@ -61,7 +60,7 @@ static char* malloc_never_null(const size_t b)
 
 static char* strdup_never_null(const char* s)
 {
-	const size_t len = strlen(s)+1;
+	const size_t len = string_strlen(s)+1;
 	char *p = malloc_never_null(len);
 	memcpy(p, s, len);
 	return p;
@@ -98,8 +97,8 @@ public:
 	}
 
 	string& operator+=(const string& s){
-		const size_type lenp = strlen(p);
-		const size_type lens = strlen(s.p) + 1;
+		const size_type lenp = string_strlen(p);
+		const size_type lens = string_strlen(s.p) + 1;
 		p = static_cast<char*>(realloc(p, lenp + lens)); // could return NULL
 		memmove(p+lenp, s.p, lens); // p and s.p MAY overlap
 		return *this;
@@ -129,10 +128,10 @@ public:
 	}
 
 	size_type size() const{
-		return strlen(p);
+		return string_strlen(p);
 	}
 	size_type length() const{
-		return strlen(p);
+		return string_strlen(p);
 	}
 
 	bool empty() const{
@@ -145,7 +144,7 @@ public:
 
 	string substr(const size_type start, const size_type len_orig) const{
 		string s;
-		size_type len = strlen(p);
+		size_type len = string_strlen(p);
 
 		if ( start > len )
 			panic("STRING: Out of range (substr).");//throw std::out_of_range("my::string::substr");
@@ -165,7 +164,7 @@ public:
 		return p[n];
 	}
 	char at(const size_type n) const{
-		if ( n > strlen(p) )
+		if ( n > string_strlen(p) )
 			panic("STRING: Out of range (at).");//throw std::out_of_range("my::string::at()");
 
 		return p[n];

@@ -2,7 +2,7 @@
 #define _DEVICE_HPP
 
 void init_device();
-extern lock term_lock;
+extern ILock *term_lock;
 
 extern const char *terminal_var;
 uint64_t atoi64(char *str);

@@ -10,7 +10,7 @@
 
 using namespace btos_api;
 
-template<typename P> uint64_t send_request(pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type, P *param, size_t size){
+template<typename P> uint64_t send_request(bt_pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type, P *param, size_t size){
 	size_t totalsize = sizeof(bt_terminal_backend_operation) + size;
 	bt_terminal_backend_operation *op = (bt_terminal_backend_operation*)malloc(totalsize);
 	op->handle = handle;
@@ -24,109 +24,95 @@ template<typename P> uint64_t send_request(pid_t pid, bt_handle_t handle, bt_ter
 	msg.type = bt_terminal_message_type::BackendOperation;
 	msg.content = op;
 	msg.length = totalsize;
-	return msg_send(&msg);
+	return API->GetMessageManager().SendMessage(msg);
 }
 
-template<typename P> uint64_t send_request(pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type, P param){
+template<typename P> uint64_t send_request(bt_pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type, P param){
 	return send_request(pid, handle, type, &param, sizeof(P));
 }
 
-uint64_t send_request(pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type){
+uint64_t send_request(bt_pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type){
 	return send_request(pid, handle, type, (void*)NULL, 0);
 }
 
-template<typename R, typename P> R send_request_get_reply(pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type, P param){
+template<typename R, typename P> R send_request_get_reply(bt_pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type, P param){
 	btos_api::bt_msg_header msg;
 	uint64_t msgid = send_request(pid, handle, type, param);
-	msg = msg_recv_reply_block(msgid);
+	msg = API->GetMessageManager().AwaitMessageReply(msgid);
 	R ret;
-	msg_getcontent(&msg, (void*)&ret, sizeof(R));
-	msg_acknowledge(&msg, false);
+	auto content = API->GetMessageManager().MessageContent(msg);
+	if(content.size() == sizeof(ret)) memcpy(&ret, content.begin(), sizeof(ret));
+	API->GetMessageManager().AcknowledgeMessage(msg, false);
 	return ret;
 }
 
-template<typename R> R send_request_get_reply(pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type){
+template<typename R> R send_request_get_reply(bt_pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type){
 	btos_api::bt_msg_header msg;
 	uint64_t msgid = send_request(pid, handle, type);
-	msg = msg_recv_reply_block(msgid);
+	msg = API->GetMessageManager().AwaitMessageReply(msgid);
 	R ret;
-	msg_getcontent(&msg, (void*)&ret, sizeof(R));
-	msg_acknowledge(&msg, false);
+	auto content = API->GetMessageManager().MessageContent(msg);
+	if(content.size() == sizeof(ret)) memcpy(&ret, content.begin(), sizeof(ret));
+	API->GetMessageManager().AcknowledgeMessage(msg, false);
 	return ret;
 }
 
-void close_backend(void *p){
-	user_backend *back = (user_backend*)p;
+void close_backend(i_backend *back){
 	terminals->delete_backend(back);
 	delete back;
 }
 
-void close_terminal(void *p){
-	uint64_t *termid = (uint64_t*)p;
-	vterm *vt = terminals->get(*termid);
+void close_terminal(uint64_t termid){
+	vterm *vt = terminals->get(termid);
 	if(vt) vt->set_backend(NULL);
 }
 
-static bool null_wait(void*){
-	return true;
-}
-
-void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
+void terminal_uapi_fn(uint16_t fn, ICPUState &state){
 	uint32_t backend_handle_type = (terminal_extension_id << 16) | 0x01;
 	uint32_t terminal_handle_type = (terminal_extension_id << 16) | 0x02;
 	switch(fn){
 		case bt_terminal_api::RegisterBackend:{
-			bt_handle_info handle;
-			handle.open = true;
-			handle.close = &close_backend;
-			handle.wait = &null_wait;
-			handle.type = backend_handle_type;
-			user_backend *backend = new user_backend(getpid());
-			handle.value = (void*)backend;
-			bt_handle_t handle_id = add_user_handle(handle, getpid());
+			user_backend *backend = new user_backend(CurrentProcess().ID());
+			auto handle = MakeGenericHandle(backend_handle_type, backend, &close_backend);
+			bt_handle_t handle_id = CurrentProcess().AddHandle(handle);
 			backend->set_handlde_id(handle_id);
-			regs->eax = handle_id;
+			state.Get32BitRegister(Generic_Register::GP_Register_A) = handle_id;
 			break;
 		}
 		case bt_terminal_api::CreateTerminal:{
-			bt_handle_t backend_id = regs->ebx;
-			bt_handle_info backend_handle = get_user_handle(backend_id, getpid());
-			if(backend_handle.type == backend_handle_type){
-				uint64_t terminal_id = terminals->create_terminal((i_backend*)backend_handle.value);
+			bt_handle_t backend_id = state.Get32BitRegister(Generic_Register::GP_Register_B);
+			auto backend_h = CurrentProcess().GetHandle(backend_id);
+			if(auto backend_handle = GenericHandleCast<i_backend*>(backend_handle_type, backend_h)){
+				uint64_t terminal_id = terminals->create_terminal(backend_handle->GetData());
 				if(terminal_id){
 					vterm *vt = terminals->get(terminal_id);
 					vt->sync(false);
 					vt->activate();
-					bt_handle_info terminal_handle;
-					terminal_handle.open = true;
-					terminal_handle.close = &close_terminal;
-					terminal_handle.wait = &null_wait;
-					terminal_handle.type = terminal_handle_type;
-					terminal_handle.value = (void*)new uint64_t(terminal_id);
-					bt_handle_t handle_id = add_user_handle(terminal_handle, getpid());
-					regs->eax = handle_id;
+					auto terminal_handle = MakeGenericHandle(terminal_handle_type, terminal_id, &close_terminal);
+					auto handle_id = CurrentProcess().AddHandle(terminal_handle);
+					state.Get32BitRegister(Generic_Register::GP_Register_A) = handle_id;
 				}else{
-					regs->eax = 0;
+					state.Get32BitRegister(Generic_Register::GP_Register_A) = 0;
 				}
 			}
 			break;
 		}
 		case bt_terminal_api::ReadBuffer:{
-			bt_handle_info handle = get_user_handle((bt_handle_t)regs->ebx, getpid());
-			if(handle.type == terminal_handle_type){
-				uint64_t termid = *(uint64_t*)handle.value;
+			auto h = CurrentProcess().GetHandle((bt_handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
+			if(auto handle = GenericHandleCast<uint64_t>(terminal_handle_type, h)){
+				uint64_t termid = handle->GetData();
 				vterm *vt = terminals->get(termid);
-				if(vt) vt->read_buffer((size_t)regs->ecx, (uint8_t*)regs->edx);
+				if(vt) vt->read_buffer((size_t)state.Get32BitRegister(Generic_Register::GP_Register_C), (uint8_t*)state.Get32BitRegister(Generic_Register::GP_Register_D));
 			}
 			break;
 		}
 		case bt_terminal_api::QueueEvent:{
-			bt_handle_info handle = get_user_handle((bt_handle_t)regs->ebx, getpid());
-			if(handle.type == terminal_handle_type){
-				uint64_t termid = *(uint64_t*)handle.value;
+			auto h = CurrentProcess().GetHandle((bt_handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
+			if(auto handle = GenericHandleCast<uint64_t>(terminal_handle_type, h)){
+				uint64_t termid = handle->GetData();
 				vterm *vt = terminals->get(termid);
 				if(vt){
-					bt_terminal_event *e = (bt_terminal_event*)regs->ecx;
+					bt_terminal_event *e = (bt_terminal_event*)state.Get32BitRegister(Generic_Register::GP_Register_C);
 					switch(e->type){
 						case bt_terminal_event_type::Pointer:{
 							vt->queue_pointer(e->pointer);
@@ -142,87 +128,88 @@ void terminal_uapi_fn(uint16_t fn, isr_regs *regs){
 			break;
 		}
 		case bt_terminal_api::TerminalRun:{
-			bt_handle_info handle = get_user_handle((bt_handle_t)regs->ebx, getpid());
-			if(handle.type == terminal_handle_type){
-				uint64_t termid = *(uint64_t*)handle.value;
+			auto h = CurrentProcess().GetHandle((bt_handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
+			if(auto handle = GenericHandleCast<uint64_t>(terminal_handle_type, h)){
+				uint64_t termid = handle->GetData();
 				vterm *vt = terminals->get(termid);
 				if(vt){
-					char *command = (char*)regs->ecx;
-					char old_terminal_id[128]="0";
-					strncpy(old_terminal_id, getenv(terminal_var, getpid()), 128);
+					char *command = (char*)state.Get32BitRegister(Generic_Register::GP_Register_C);
+					char old_terminal_id[128] = "0";
+					strncpy(old_terminal_id, CurrentProcess().GetEnvironmentVariable(terminal_var), 128);
 					char new_terminal_id[128]= {0};
 					i64toa(vt->get_id(), new_terminal_id, 10);
-					setenv(terminal_var, new_terminal_id, 0, getpid());
-					pid_t pid=spawn(command, 0, NULL);
-					setenv(terminal_var, old_terminal_id, 0, getpid());
-					*(pid_t*)regs->edx = pid;
+					CurrentProcess().SetEnvironmentVariable(terminal_var, new_terminal_id);
+					bt_pid_t pid = API->GetProcessManager().Spawn(command, {});
+					CurrentProcess().SetEnvironmentVariable(terminal_var, old_terminal_id);
+					*(bt_pid_t*)state.Get32BitRegister(Generic_Register::GP_Register_D) = pid;
 				}
 			}
 			break;
 		}
 		case bt_terminal_api::GetTerminalPos:{
-			bt_handle_info handle = get_user_handle((bt_handle_t)regs->ebx, getpid());
-			if(handle.type == terminal_handle_type){
-				uint64_t termid = *(uint64_t*)handle.value;
+			auto h = CurrentProcess().GetHandle((bt_handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
+			if(auto handle = GenericHandleCast<uint64_t>(terminal_handle_type, h)){
+				uint64_t termid = handle->GetData();
 				vterm *vt = terminals->get(termid);
 				if(vt){
-					regs->eax = (uint32_t)vt->getpos();
+					state.Get32BitRegister(Generic_Register::GP_Register_A) = (uint32_t)vt->getpos();
 				}
 			}
 			break;
 		}
 		case bt_terminal_api::GetTerminalTitle:{
-			bt_handle_info handle = get_user_handle((bt_handle_t)regs->ebx, getpid());
-			if(handle.type == terminal_handle_type){
-				uint64_t termid = *(uint64_t*)handle.value;
+			auto h = CurrentProcess().GetHandle((bt_handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
+			if(auto handle = GenericHandleCast<uint64_t>(terminal_handle_type, h)){
+				uint64_t termid = handle->GetData();
 				vterm *vt = terminals->get(termid);
-				if(vt && regs->edx && regs->ecx){
-					strncpy((char*)regs->edx, vt->get_title(), regs->ecx);
-					regs->eax = strlen(vt->get_title());
+				if(vt && state.Get32BitRegister(Generic_Register::GP_Register_D) && state.Get32BitRegister(Generic_Register::GP_Register_C)){
+					strncpy((char*)state.Get32BitRegister(Generic_Register::GP_Register_D), vt->get_title(), state.Get32BitRegister(Generic_Register::GP_Register_C));
+					state.Get32BitRegister(Generic_Register::GP_Register_A) = strlen(vt->get_title());
 				}
 			}
 			break;
 		}
 		case bt_terminal_api::GetTerminalID:{
-			bt_handle_info handle = get_user_handle((bt_handle_t)regs->ebx, getpid());
-			if(handle.type == terminal_handle_type){
-				uint64_t termid = *(uint64_t*)handle.value;
-				regs->eax = (uint32_t)termid;
+			auto h = CurrentProcess().GetHandle((bt_handle_t)state.Get32BitRegister(Generic_Register::GP_Register_B));
+			if(auto handle = GenericHandleCast<uint64_t>(terminal_handle_type, h)){
+				uint64_t termid = handle->GetData();
+				state.Get32BitRegister(Generic_Register::GP_Register_A) = (uint32_t)termid;
 			}
 			break;
 		}
 	}
 }
 
-user_backend::user_backend(pid_t p) : pid(p), handle_id(0), active_id(0) {}
+user_backend::user_backend(bt_pid_t p) : pid(p), handle_id(0), active_id(0) {}
 
 void user_backend::set_handlde_id(bt_handle_t h){
 	handle_id = h;
 }
 
 size_t user_backend::display_read(size_t bytes, char *buf){
-	for(size_t i=0; i<bytes; i+=BT_MSG_MAX){
+	for(size_t i = 0; i<bytes; i += BT_MSG_MAX){
 		size_t partsize = MIN(i + BT_MSG_MAX, bytes) - i;
 		uint64_t msgid = send_request(pid, handle_id, bt_terminal_backend_operation_type::DisplayRead, partsize);
 		bt_msg_header msg;
-		msg = msg_recv_reply_block(msgid);
+		msg = API->GetMessageManager().AwaitMessageReply(msgid);
 		size_t readsize = msg.length;
-		msg_getcontent(&msg, (void*)(buf + i), readsize);
-		msg_acknowledge(&msg, false);
+		auto content = API->GetMessageManager().MessageContent(msg);
+		memcpy(buf + i, content.begin(), readsize);
+		API->GetMessageManager().AcknowledgeMessage(msg, false);
 		if(readsize != partsize) return i + readsize;
 	}
 	return bytes;
 }
 
-size_t user_backend::display_write(size_t bytes, char *buf){
+size_t user_backend::display_write(size_t bytes, const char *buf){
 	for(size_t i=0; i<bytes; i+=(BT_MSG_MAX - sizeof(bt_terminal_backend_operation))){
 		size_t partsize = MIN(i + BT_MSG_MAX, bytes) - i;
 		uint64_t msgid = send_request(pid, handle_id, bt_terminal_backend_operation_type::DisplayWrite, (buf + i), partsize);
 		bt_msg_header msg;
-		msg = msg_recv_reply_block(msgid);
+		msg = API->GetMessageManager().AwaitMessageReply(msgid);
 		size_t readsize = 0;
-		msg_getcontent(&msg, (void*)&readsize, sizeof(readsize));
-		msg_acknowledge(&msg, false);
+		API->GetMessageManager().MessageContent(msg, readsize);
+		API->GetMessageManager().AcknowledgeMessage(msg, false);
 		if(readsize != partsize) return i + readsize;
 	}
 	return bytes;
@@ -340,6 +327,6 @@ uint32_t user_backend::get_pointer_speed(){
 void user_backend::set_pointer_speed(uint32_t /*speed*/){
 }
 
-char *user_backend::desc(){
+const char *user_backend::desc(){
 	return "user";
 }

@@ -3,48 +3,48 @@
 #include <dev/video_dev.h>
 #include "terminal.hpp"
 
-void draw_cursor_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, uint8_t *data, bt_vidmode &mode);
-uint8_t *get_background_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, bt_vidmode &mode);
+void draw_cursor_4bpp(IFileHandle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, uint8_t *data, bt_vidmode &mode);
+uint8_t *get_background_4bpp(IFileHandle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, bt_vidmode &mode);
 
-uint8_t *get_background_nbpp(file_handle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, bt_vidmode &mode);
-void draw_cursor_nbpp(file_handle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, uint8_t *data, bt_vidmode &mode);
+uint8_t *get_background_nbpp(IFileHandle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, bt_vidmode &mode);
+void draw_cursor_nbpp(IFileHandle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, uint8_t *data, bt_vidmode &mode);
 
 static bool bmemcmp(const void *p1, const void *p2, size_t n) {
-    unsigned char *s1=(unsigned char*)p1, *s2=(unsigned char*)p2;
-    unsigned char u1, u2;
+	unsigned char *s1=(unsigned char*)p1, *s2=(unsigned char*)p2;
+	unsigned char u1, u2;
 
-    for (; n--; s1++, s2++) {
-        u1 = *(unsigned char *) s1;
-        u2 = *(unsigned char *) s2;
-        if (u1 != u2) {
-            return false;
-        }
-    }
-    return true;
+	for (; n--; s1++, s2++) {
+		u1 = *(unsigned char *) s1;
+		u2 = *(unsigned char *) s2;
+		if (u1 != u2) {
+			return false;
+		}
+	}
+	return true;
 }
 
-void draw_graphics_pointer(file_handle *file, uint32_t x, uint32_t y, bt_terminal_pointer_bitmap *bitmap, uint8_t *data){
-    if(!bitmap) return;
-    if(!data) data=bitmap->data;
-    bt_vidmode mode;
-    fioctl(file, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
-    if(mode.bpp != bitmap->bpp) return;
-    if(mode.bpp == 4){
-        draw_cursor_4bpp(file, x, y, bitmap, data, mode);
-    }else{
+void draw_graphics_pointer(IFileHandle *file, uint32_t x, uint32_t y, bt_terminal_pointer_bitmap *bitmap, uint8_t *data){
+	if(!bitmap) return;
+	if(!data) data=bitmap->data;
+	bt_vidmode mode;
+	file->IOCtl(bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
+	if(mode.bpp != bitmap->bpp) return;
+	if(mode.bpp == 4){
+		draw_cursor_4bpp(file, x, y, bitmap, data, mode);
+	}else{
 		draw_cursor_nbpp(file, x, y, bitmap, data, mode);
 	}
 }
 
-void draw_cursor_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, uint8_t *data, bt_vidmode &mode) {
+void draw_cursor_4bpp(IFileHandle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, uint8_t *data, bt_vidmode &mode) {
 	const size_t staticbuffersize = 32;
 	static uint8_t static_linebuffer[staticbuffersize];
 	static uint8_t static_gbuffer[staticbuffersize];
 	bool freebuffers = false;
-    int x=left - bitmap->spot_x;
-    int y=top - bitmap->spot_y;
-    bool enable_transp = (bitmap->data == data);
-    size_t pos=fseek(file, 0, true);
+	int x=left - bitmap->spot_x;
+	int y=top - bitmap->spot_y;
+	bool enable_transp = (bitmap->data == data);
+	size_t pos = file->Seek(0, fs_seek_flags::FS_Relative);
 	uint8_t transp = (bitmap->transparent & 0x0F) | ((bitmap->transparent << 4) & 0xF0);
 	size_t buffersize = (bitmap->w / 2) + 1;
 	uint8_t *linebuffer = static_linebuffer;
@@ -54,8 +54,8 @@ void draw_cursor_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_termina
 		gbuffer = (uint8_t*)malloc(buffersize);
 		freebuffers = true;
 	}
-    for(int ypos=y; ypos < (int)(y+bitmap->h); ++ypos){
-        if(ypos < 0 || ypos >= (int)(mode.height)) continue;
+	for(int ypos=y; ypos < (int)(y+bitmap->h); ++ypos){
+		if(ypos < 0 || ypos >= (int)(mode.height)) continue;
 		uint8_t *linedata;
 		size_t dsize = 0;
 		if(left % 2){
@@ -77,8 +77,8 @@ void draw_cursor_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_termina
 		size_t outpos = (ypos * mode.width) + (x) + (offset * 2);
 		size_t oindex = outpos / 2;
 		if(enable_transp){
-			fseek(file, oindex, false);
-			fread(file, dsize - offset, (char*)gdata+offset);
+			file->Seek(oindex, fs_seek_flags::FS_Set);
+			file->Read(dsize - offset, (char*)gdata+offset);
 			for(size_t i=0; i<dsize; ++i){
 				int fxpos;
 				int sxpos;
@@ -98,8 +98,8 @@ void draw_cursor_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_termina
 		}else{
 			if(left % 2) memcpy(gdata, linedata, dsize);
 			else{
-				fseek(file, oindex, false);
-				fread(file, dsize - offset, (char*)gdata+offset);
+				file->Seek(oindex, fs_seek_flags::FS_Set);
+				file->Read(dsize - offset, (char*)gdata+offset);
 				for(size_t i=0; i<dsize; ++i){
 					if(i == 0) gdata[i] = (gdata[i] & 0xF0) | (linedata[i] & 0x0F);
 					else if(i == dsize - 1) gdata[i] = (gdata[i] & 0x0F) | (linedata[i] & 0xF0);
@@ -107,74 +107,74 @@ void draw_cursor_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_termina
 				}
 			}
 		}
-		fseek(file, oindex, false);
-		fwrite(file, dsize - offset, (char*)gdata+offset);
-    }
-    fseek(file, pos, false);
+		file->Seek(oindex, fs_seek_flags::FS_Set);
+		file->Write(dsize - offset, (char*)gdata+offset);
+	}
+	file->Seek(pos, fs_seek_flags::FS_Set);
 	if(freebuffers){
 		free(gbuffer);
 		free(linebuffer);
 	}
 }
 
-void draw_cursor_nbpp(file_handle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, uint8_t *data, bt_vidmode &mode) {
-    int x=left - bitmap->spot_x;
-    int y=top - bitmap->spot_y;
-    size_t pos=fseek(file, 0, true);
-    size_t depth=mode.bpp/8;
-    for(int ypos=y; ypos < (int)(y+bitmap->h); ++ypos){
+void draw_cursor_nbpp(IFileHandle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, uint8_t *data, bt_vidmode &mode) {
+	int x=left - bitmap->spot_x;
+	int y=top - bitmap->spot_y;
+	size_t pos = file->Seek(0, fs_seek_flags::FS_Relative);
+	size_t depth=mode.bpp/8;
+	for(int ypos=y; ypos < (int)(y+bitmap->h); ++ypos){
 		if(ypos < 0 || ypos >= (int)(mode.height)) continue;
-            for(int xpos=x; xpos < (int)(x+bitmap->w); ++xpos) {
-                if(xpos < 0 || xpos >= (int)(mode.width)) continue;
-                uint32_t by = (uint32_t)(ypos - y);
-                uint32_t bx = (uint32_t)(xpos - x);
-                size_t datapos = (by * bitmap->w * depth) + (bx * depth);
-                if(datapos+depth > bitmap->datasize) return;
-                size_t outpos = (ypos * mode.bytesPerLine) + (xpos * depth);
-                if (data!=bitmap->data || !bmemcmp((void *) &data[datapos], (void *) &bitmap->transparent, depth)) {
-                    fseek(file, outpos, false);
-                    fwrite(file, depth, (char *) &data[datapos]);
-                }
-            }
-        }
-    fseek(file, pos, false);
+			for(int xpos=x; xpos < (int)(x+bitmap->w); ++xpos) {
+				if(xpos < 0 || xpos >= (int)(mode.width)) continue;
+				uint32_t by = (uint32_t)(ypos - y);
+				uint32_t bx = (uint32_t)(xpos - x);
+				size_t datapos = (by * bitmap->w * depth) + (bx * depth);
+				if(datapos+depth > bitmap->datasize) return;
+				size_t outpos = (ypos * mode.bytesPerLine) + (xpos * depth);
+				if (data!=bitmap->data || !bmemcmp((void *) &data[datapos], (void *) &bitmap->transparent, depth)) {
+					file->Seek(outpos, fs_seek_flags::FS_Set);
+					file->Write(depth, (char *) &data[datapos]);
+				}
+			}
+		}
+	file->Seek(pos, fs_seek_flags::FS_Set);
 }
 
-uint8_t *get_graphics_pointer_background(file_handle *file, uint32_t x, uint32_t y, bt_terminal_pointer_bitmap *bitmap) {
-    if(!bitmap) return NULL;
-    bt_vidmode mode;
-    fioctl(file, bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
-    if(mode.bpp != bitmap->bpp) return NULL;
-	if(mode.bpp==4){
-        return get_background_4bpp(file, x, y, bitmap, mode);
-    }else{
+uint8_t *get_graphics_pointer_background(IFileHandle *file, uint32_t x, uint32_t y, bt_terminal_pointer_bitmap *bitmap) {
+	if(!bitmap) return NULL;
+	bt_vidmode mode;
+	file->IOCtl(bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
+	if(mode.bpp != bitmap->bpp) return NULL;
+	if(mode.bpp == 4){
+		return get_background_4bpp(file, x, y, bitmap, mode);
+	}else{
 		return get_background_nbpp(file, x, y, bitmap, mode);
 	}
-    return NULL;
+	return NULL;
 }
 
-uint8_t *get_background_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, bt_vidmode &mode) {
+uint8_t *get_background_4bpp(IFileHandle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, bt_vidmode &mode) {
 	const size_t staticbuffersize = 32;
 	static uint8_t static_linebuffer[staticbuffersize];
 	bool freebuffer = false;
-    int x=left - bitmap->spot_x;
-    int y=top - bitmap->spot_y;
-    size_t pos=fseek(file, 0, true);
-    uint8_t *ret=(uint8_t*)malloc(bitmap->datasize);
-    memset(ret, 0, bitmap->datasize);
+	int x=left - bitmap->spot_x;
+	int y=top - bitmap->spot_y;
+	size_t pos = file->Seek(0, fs_seek_flags::FS_Relative);
+	uint8_t *ret = (uint8_t*)malloc(bitmap->datasize);
+	memset(ret, 0, bitmap->datasize);
 	size_t buffersize = (bitmap->w / 2) + 1;
 	uint8_t *linebuffer = static_linebuffer;
 	if(buffersize > staticbuffersize){
 		linebuffer = (uint8_t*)malloc(buffersize);
 		freebuffer = true;
 	}
-    for(int ypos=y; ypos < (int)(y+bitmap->h); ++ypos){
-        if(ypos < 0 || ypos >= (int)(mode.height)) continue;
+	for(int ypos=y; ypos < (int)(y+bitmap->h); ++ypos){
+		if(ypos < 0 || ypos >= (int)(mode.height)) continue;
 		size_t offset = 0;
 		if(y <= 0 && ypos == 0 && x < 0) offset = ((-x) / 2) + ((-x) % 2);
 		size_t outpos = (ypos * mode.width) + (x) + (offset * 2);
 		size_t oindex = outpos / 2;
-        size_t dsize = 0;
+		size_t dsize = 0;
 		uint8_t *linedata;
 		if(left % 2){
 			dsize = bitmap->w / 2;
@@ -183,39 +183,39 @@ uint8_t *get_background_4bpp(file_handle *file, uint32_t left, uint32_t top, bt_
 			dsize = (bitmap->w / 2) + 1;
 			linedata = linebuffer;
 		}
-		fseek(file, oindex, false);
-		fread(file, dsize - offset, (char*)linedata+offset);
+		file->Seek(oindex, fs_seek_flags::FS_Set);
+		file->Read(dsize - offset, (char*)linedata+offset);
 		if(!(left % 2)){
 			uint8_t *dest = (ret + (((ypos - y) * bitmap->w) / 2));
 			for(size_t i=0; i<dsize - 1; ++i){
 				dest[i] = ((linedata[i + 1] >> 4) & 0x0F) | ((linedata[i] << 4) & 0xF0);
 			}
 		}
-    }
-    fseek(file, pos, false);
+	}
+	file->Seek(pos, fs_seek_flags::FS_Set);
 	if(freebuffer) free(linebuffer);
-    return ret;
+	return ret;
 }
 
-uint8_t *get_background_nbpp(file_handle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, bt_vidmode &mode) {
-    int x=left - bitmap->spot_x;
-    int y=top - bitmap->spot_y;
-    size_t pos=fseek(file, 0, true);
-    size_t depth=mode.bpp/8;
-    uint8_t *ret=(uint8_t*)malloc(bitmap->datasize);
-    memset(ret, 0, bitmap->datasize);
-    for(int ypos=y; ypos < (int)(y+bitmap->h); ++ypos){
-        if(ypos < 0 || ypos >= (int)(mode.height)) continue;
-        for(int xpos=x; xpos < (int)(x+bitmap->w); ++xpos) {
-            if(xpos < 0 || xpos >= (int)(mode.width)) continue;
-            uint32_t by = (uint32_t)(ypos - y);
-            uint32_t bx = (uint32_t)(xpos - x);
-            size_t datapos = (by * bitmap->w * depth) + (bx * depth);
-            size_t outpos = (ypos * mode.bytesPerLine) + (xpos * depth);
-            fseek(file, outpos, false);
-            fread(file, depth, (char*)&ret[datapos]);
-        }
-    }
-    fseek(file, pos, false);
-    return ret;
+uint8_t *get_background_nbpp(IFileHandle *file, uint32_t left, uint32_t top, bt_terminal_pointer_bitmap *bitmap, bt_vidmode &mode) {
+	int x=left - bitmap->spot_x;
+	int y=top - bitmap->spot_y;
+	size_t pos = file->Seek(0, fs_seek_flags::FS_Relative);
+	size_t depth=mode.bpp/8;
+	uint8_t *ret=(uint8_t*)malloc(bitmap->datasize);
+	memset(ret, 0, bitmap->datasize);
+	for(int ypos=y; ypos < (int)(y+bitmap->h); ++ypos){
+		if(ypos < 0 || ypos >= (int)(mode.height)) continue;
+		for(int xpos=x; xpos < (int)(x+bitmap->w); ++xpos) {
+			if(xpos < 0 || xpos >= (int)(mode.width)) continue;
+			uint32_t by = (uint32_t)(ypos - y);
+			uint32_t bx = (uint32_t)(xpos - x);
+			size_t datapos = (by * bitmap->w * depth) + (bx * depth);
+			size_t outpos = (ypos * mode.bytesPerLine) + (xpos * depth);
+			file->Seek(outpos, fs_seek_flags::FS_Set);
+			file->Read(depth, (char*)&ret[datapos]);
+		}
+	}
+	file->Seek(pos, fs_seek_flags::FS_Set);
+	return ret;
 }

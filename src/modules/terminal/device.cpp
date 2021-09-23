@@ -1,135 +1,138 @@
 #include <btos_module.h>
-#include <util/holdlock.hpp>
+#include <module/utils/string.hpp>
 #include "vterm.hpp"
 
-lock term_lock;
+ILock *term_lock;
 
 const char *terminal_var="TERMID";
 
-struct term_instance{
-    vterm *terminal;
-    vterm_options opts;
-};
+uint64_t atoi64(const char *str) {
+	uint64_t res = 0;
+	for (int i = 0; str[i] != '\0'; ++i) res = res*10 + str[i] - '0';
 
-uint64_t atoi64(char *str) {
-    uint64_t res = 0;
-    for (int i = 0; str[i] != '\0'; ++i) res = res*10 + str[i] - '0';
-
-    return res;
+	return res;
 }
 
 void reverse(char str[], int length) {
-    int start = 0;
-    int end = length -1;
-    while (start < end) {
-        char tmp=*(str+start);
-        *(str+start)=*(str+end);
-        *(str+end)=tmp;
-        start++;
-        end--;
-    }
+	int start = 0;
+	int end = length -1;
+	while (start < end) {
+		char tmp=*(str+start);
+		*(str+start)=*(str+end);
+		*(str+end)=tmp;
+		start++;
+		end--;
+	}
 }
 
 char* i64toa(uint64_t num, char* str, int base){
-    int i = 0;
+	int i = 0;
 
-    if (num == 0) {
-        str[i++] = '0';
-        str[i] = '\0';
-        return str;
-    }
+	if (num == 0) {
+		str[i++] = '0';
+		str[i] = '\0';
+		return str;
+	}
 
-    while (num != 0) {
-        uint64_t rem = num % base;
-        str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
-        num = num/base;
-    }
+	while (num != 0) {
+		uint64_t rem = num % base;
+		str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
+		num = num/base;
+	}
 
-    str[i] = '\0';
-    reverse(str, i);
-    return str;
+	str[i] = '\0';
+	reverse(str, i);
+	return str;
 }
 
-void *term_open(void */*id*/){
-    hold_lock hl(&term_lock);
-    term_instance *ret=new term_instance();
-    uint64_t termid=0;
-    if(getenv(terminal_var, getpid())){
-        termid=atoi64(getenv(terminal_var, getpid()));
-    }
-    ret->terminal=terminals->get(termid);
-    if(!ret->terminal) {
-        dbgpf("TERM: Could not locate terminal %i!\n", (int)termid);
-        ret->terminal = terminals->get(0);
-    }
-    if(!ret->terminal) return NULL;
-    ret->terminal->open();
-    char termidvalue[128]={0};
-    i64toa(ret->terminal->get_id(), termidvalue, 10);
-    setenv(terminal_var, termidvalue, 0, getpid());
-    return ret;
-}
+class TerminalDeviceHandle : public IVisibleDeviceInstance{
+private:
+	vterm *terminal = nullptr;
+	vterm_options opts;
+public:
+	TerminalDeviceHandle(){
+		auto hl = term_lock->LockExclusive();
+		uint64_t termid=0;
+		if(CurrentProcess().GetEnvironmentVariable(terminal_var)){
+			termid = atoi64(CurrentProcess().GetEnvironmentVariable(terminal_var));
+		}
+		terminal = terminals->get(termid);
+		if(!terminal){
+			dbgpf("TERM: Could not locate terminal %i!\n", (int)termid);
+			terminal = terminals->get(0);
+		}
+		if(!terminal) return;
+		terminal->open();
+		char termidvalue[128]={0};
+		i64toa(terminal->get_id(), termidvalue, 10);
+		CurrentProcess().SetEnvironmentVariable(terminal_var, termidvalue);
+	}
 
-bool term_close(void *instance){
-    if(instance){
-        term_instance *inst=(term_instance*)instance;
-        inst->terminal->close(inst->opts);
-        delete inst;
-        return true;
-    }
-    return false;
-}
+	size_t Read(size_t bytes, char *buffer) override{
+		if(terminal) return terminal->read(opts, bytes, buffer);
+		else return 0;
+	}
+	size_t Write(size_t bytes, const char *buffer) override{
+		if(terminal) return terminal->write(opts, bytes, buffer);
+		else return 0;
+	}
 
-size_t term_read(void *instance, size_t bytes, char *buf){
-    if(instance) {
-        term_instance *inst=(term_instance*)instance;
-        return inst->terminal->read(inst->opts, bytes, buf);
-    }
-    return 0;
-}
+	bt_filesize_t Seek(bt_filesize_t pos, uint32_t flags) override{
+		if(terminal) return terminal->seek(opts, pos, flags);
+		else return 0;
+	}
 
-size_t term_write(void *instance, size_t bytes, char *buf){
-    if(instance) {
-        term_instance *inst=(term_instance*)instance;
-        return inst->terminal->write(inst->opts, bytes, buf);
-    }
-    return 0;
-}
+	int IOCtl(int fn, size_t bytes, char *buffer) override{
+		if(terminal) return terminal->ioctl(opts, fn, bytes, buffer);
+		else return 0;
+	}
 
-bt_filesize_t term_seek(void *instance, bt_filesize_t pos, uint32_t flags){
-    if(instance) {
-        //hold_lock hl(&term_lock);
-        term_instance *inst=(term_instance*)instance;
-        return inst->terminal->seek(inst->opts, pos, flags);
-    }
-    return 0;
-}
+	int GetType() override{
+		return driver_types::TERMINAL;
+	}
+	const char *GetDescription() override{
+		return "Terminal device.";
+	}
 
-int term_ioctl(void *instance, int fn, size_t bytes, char *buf){
-    if(instance) {
-        term_instance *inst=(term_instance*)instance;
-        return inst->terminal->ioctl(inst->opts, fn, bytes, buf);
-    }
-    return 0;
-}
+	bool Close() override{
+		if(terminal) {
+			terminal->close(opts);
+			return true;
+		}else return false;
+	}
+};
 
-int term_type(void*){
-    return driver_types::TERMINAL;
-}
+class TerminalDevice : public IVisibleDevice{
+private:
+	string name = "TERM";
+public:
+	IVisibleDeviceInstance *Open() override{
+		return new TerminalDeviceHandle();
+	}
 
-char *term_desc(void*){
-    return (char*)"Terminal device.";
-}
-
-drv_driver term_driver={&term_open, &term_close, &term_read, &term_write, &term_seek, &term_ioctl, &term_type, &term_desc};
+	int GetType() override{
+		return driver_types::TERMINAL;
+	}
+	const char *GetDescription() override{
+		return "Terminal device.";
+	}
+	const char *GetName() override{
+		return name.c_str();
+	}
+	void SetName(const char *n) override{
+		name = n;
+	}
+};
 
 void init_device(){
-    init_lock(&term_lock);
-    const char *node = add_device("TERM", &term_driver, NULL);
-    char devname[BT_MAX_PATH];
-    sprintf(devname, "DEV:/%s", node);
-    setenv("STDOUT", devname, 0, 0);
-    setenv("STDIN", devname, 0, 0);
-    setenv("STDERR", devname, 0, 0);
-    setenv(terminal_var, "0", 0 ,0);
+	term_lock = API->NewLock();
+	auto device = new TerminalDevice();
+	API->GetVisibleDeviceManager().AddVisibleDevice(device);
+	const char *node = device->GetName();
+	char devname[BT_MAX_PATH];
+	sprintf(devname, "DEV:/%s", node);
+	CurrentProcess().SetEnvironmentVariable("STDOUT", devname);
+	CurrentProcess().SetEnvironmentVariable("STDIN", devname);
+	CurrentProcess().SetEnvironmentVariable("STDERR", devname);
+	CurrentProcess().SetEnvironmentVariable(terminal_var, "0");
 }
