@@ -1,64 +1,174 @@
-#include <btos_module.h>
+#include <module/module.inc>
+#include <module/utils/string.hpp>
 #include <util/scoped_ptr.hpp>
 
 extern "C"{
 	#include "lib9660.h"
 }
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-struct iso9660_mountdata{
-	l9660_fs fs;
-	file_handle *fh;
+constexpr size_t block_size = 2048;
+
+ILock *iso9660_lock;
+
+class ISOFileHandle : public IFileHandle{
+private:
+	l9660_file *file;
+	FilesystemNodePointer node;
+public:
+	size_t Read(size_t bytes, char *buffer) override{
+		if(file){
+			auto hl = iso9660_lock->LockExclusive();
+			size_t ret = 0;
+			size_t left = bytes;
+			while(ret < bytes){
+				size_t read = 0;
+				l9660_status status = l9660_read(file, buffer, left, &read);
+				if(status != L9660_OK || read == 0) break;
+				left -= read;
+				buffer += read;
+				ret += read;
+			}
+			return ret;
+		}
+		return 0;
+	}
+	size_t Write(size_t, const char *) override{
+		return 0;
+	}
+
+	bt_filesize_t Seek(bt_filesize_t pos, uint32_t flags) override{
+		size_t ret = 0;
+		if(file){
+			auto hl = iso9660_lock->LockExclusive();
+			int32_t offset = pos;
+			int whence = L9660_SEEK_SET;
+			if((flags & FS_Backwards)) offset = -pos;
+			if((flags & FS_Relative)) whence = L9660_SEEK_CUR;
+			l9660_status status = l9660_seek(file, whence, offset);
+			if(status != L9660_OK) panic("(ISO9660) Seek failure.");
+			ret = l9660_tell(file);
+		}
+		return ret;
+	}
+
+	bool Resize(bt_filesize_t) override{
+		return false;
+	}
+
+	int IOCtl(int, size_t, char *) override{
+		return 0;
+	}
+
+	void Flush() override{}
+
+	FilesystemNodePointer GetNode() override{
+		return node;
+	}
 };
 
-syscall_table *SYSCALL_TABLE;
-char dbgbuf[256];
+class ISODirectoryHandle : public IDirectoryHandle{
+private:
+	l9660_dir *dir;
+public:
+	fs_item_types ReadType() override{}
 
-lock iso9660_lock;
-const size_t block_size = 2048;
-char path_buffer[BT_MAX_PATH] = {0};
-
-static bool in_string(char c, const char *s){
-	while(s && *s){
-		if(*s == c) return true;
-		++s;
+	FilesystemNodePointer Read() override{
+		if(dir){
+			dbgout("ISO9660: Reading directory.\n");
+			FilesystemNodePointer ret;
+			auto hl = iso9660_lock->LockExclusive();
+			l9660_dirent *pent;
+			do{
+				l9660_readdir(dir, &pent);
+			}while(pent && (pent->name[0] == '\0' || pent->name[0] == '\1'));
+			if(pent){
+				l9660_dirent &ent = *pent;
+				ret.valid=true;
+				dbgpf("ISO9660: Filename '%s' Length: %i\n", ent.name, ent.name_len);
+				memset(ret.filename, 0, BT_MAX_SEGLEN);
+				strncpy(ret.filename, ent.name, ent.name_len + 1);
+				replace_char(ret.filename, ';', '\0');
+				ret.type=(ent.flags & 0x02)?FS_Directory:FS_File;
+				ret.size=dual_to_le(ent.size);
+				ret.id=dual_to_le(ent.sector);
+			}else{
+				ret.valid = false;
+			}
+			return ret;
+		}
+		return nullptr;
 	}
+	
+	bool Write(IFilesystemNode &node) override{}
+	size_t Seek(size_t pos, uint32_t flags) override{}
+	FilesystemNodePointer GetNode() override{}
+
+	void Close() override{}
+	bool Wait() override{}
+};
+
+class ISOFilesystemNode : public IFilesystemNode{
+private:
+public:
+	IFileHandle *OpenFile(uint32_t mode) override{}
+	IDirectoryHandle *OpenDirectory(uint32_t mode) override{}
+
+	const char *GetName() override{}
+	void Rename(const char *newName) override{}
+	bt_filesize_t GetSize() override{}
+	fs_item_types GetType() override{}
+};
+
+class ISOMountedFilesystem : public IMountedFilesystem{
+private:
+	l9660_fs fs;
+	IFileHandle *fh;
+public:
+	FilesystemNodePointer GetNode(const char *path) override{}
+	void Flush() override{}
+	bool Unmount() override{}
+};
+
+class ISOFilesystem : public IFilesystem{
+public:
+	IMountedFilesystem *Mount(FilesystemNodePointer node) override{}
+	bool Format(const IFilesystemNode &node, void *options) override{}
+};
+
+static bool in_string(char c, const string &s){
+	for(auto sc : s) if(sc == c) return true;
 	return false;
 }
 
-static void shorten(char *fname){
-	char *oname = fname;
-	char name[13];
-	memset(name, 0, 13);
+static string shorten(const string &fname){
 	size_t prelen = 0;
-	while(fname && *fname && *fname != '.') ++prelen, ++fname;
-	size_t extstart = prelen;
-	while(fname && *fname && *fname == '.') ++extstart, ++fname;
+	size_t extstart = 0;
 	size_t extlen = 0;
-	while(fname && *fname) ++extlen, ++fname;
-	memcpy(name, oname, prelen > 8 ? 8 : prelen);
-	if(extlen){
-		size_t extput = prelen > 8 ? 8 : prelen;
-		name[extput] = '.';
-		++extput;
-		memcpy(&name[extput], &oname[extstart], extlen > 3 ? 3 : extlen);
+	bool inext = false;
+	for(auto c : fname){
+		if(!inext && c == '.'){
+			extstart = prelen;
+		}else{ 
+			if(inext) ++extlen;
+			else ++prelen;
+		}
 	}
-	size_t newlen = (prelen > 8 ? 8 : prelen) + (extlen ? ((extlen > 3 ? 3 : extlen) + 1) : 0);
-	//dbgpf("ISO9660: Shorten '%s' to '%s' (%i, %i, %i)\n", oname, name, (int)prelen, (int)extstart, (int)extlen);
-	memcpy(oname, name, newlen);
-	oname[newlen] = 0;
+	auto name = fname.substr(0, prelen > 8 ? 8 : prelen);
+	if(extlen){
+		auto ext = fname.substr(extstart, extlen > 3 ? 3 : extlen);
+		name += ext;
+	}
+	return name;
 }
 
-static void filter_chars(char *path){
-	const char *allowed_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_.+";
+static void filter_chars(string &path){
+	const string allowed_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_.+";
 	const char replacement = '_';
-	while(path && *path){
-		if(*path >= 'a' && *path <= 'z') *path += ('A' - 'a');
-		if(!in_string(*path, allowed_chars)) *path = replacement;
-		++path;
+	for(auto &pc : path){
+		if(pc >= 'a' && pc <= 'z') pc += ('A' - 'a');
+		if(!in_string(pc, allowed_chars)) pc = replacement;
 	}
 }
 
@@ -68,27 +178,33 @@ size_t strlen(const char *s) {
 	return i;
 }
 
-void fs_path_to_string(fs_path *path, char *buf){
-	buf[0] = '\0';
-	bool first = true;
-	while(path){
-		filter_chars(path->str);
-		shorten(path->str);
-		//dbgpf("ISO9660: Path segment: '%s'\n", path->str);
-		if(first){
-			strncpy(buf, path->str, BT_MAX_SEGLEN);
-			first = false;
-		}else sprintf(&buf[strlen(buf)], "/%s", path->str);
-		path=path->next;
+string convert_path(const string &path){
+	string ret;
+	string cur_seg;
+	for(auto c : path){
+		if(c == '/' && !cur_seg.empty()){
+			filter_chars(cur_seg);
+			ret += '/';
+			ret += shorten(cur_seg);
+			cur_seg.clear();
+		}else{
+			cur_seg += c;
+		}
 	}
-	dbgpf("ISO9660: Path: %s\n", buf);
+	if(!cur_seg.empty()){
+			filter_chars(cur_seg);
+			ret += shorten(cur_seg);
+	}
+	return ret;
 }
 
-fs_path *fs_path_last_part(fs_path *path){
-	while(true){
-		if(path->next) path=path->next;
-		else return path;
+string path_leaf(const string &path){
+	string ret;
+	for(auto c : path){
+		if(c == '/') ret.clear();
+		else ret += c;
 	}
+	return ret;
 }
 
 l9660_dir *get_parent(iso9660_mountdata *mount, fs_path *path){
@@ -192,58 +308,6 @@ bool iso9660_close(void *filedata){
 		return true;
 	}
 	return false;
-}
-
-size_t iso9660_read(void *filedata, size_t bytes, char *buf){
-	l9660_file *file = (l9660_file*)filedata;
-	if(file){
-		take_lock(&iso9660_lock);
-		size_t ret = 0;
-		size_t left = bytes;
-		while(ret < bytes){
-			size_t read = 0;
-			l9660_status status = l9660_read(file, buf, left, &read);
-			if(status != L9660_OK || read == 0) break;
-			left-=read;
-			buf+=read;
-			ret+=read;
-		}
-		release_lock(&iso9660_lock);
-		return ret;
-	}
-	return 0;
-}
-
-size_t iso9660_write(void *filedata, size_t bytes, char *buf){
-	return 0;
-}
-
-bt_filesize_t iso9660_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
-	l9660_file *file = (l9660_file*)filedata;
-	size_t ret = 0;
-	if(file){
-		take_lock(&iso9660_lock);
-		int32_t offset = pos;
-		int whence = L9660_SEEK_SET;
-		if((flags & FS_Backwards)) offset = -pos;
-		if((flags & FS_Relative)) whence = L9660_SEEK_CUR;
-		l9660_status status = l9660_seek(file, whence, offset);
-		if(status != L9660_OK) panic("(ISO9660) Seek failure.");
-		ret = l9660_tell(file);
-		release_lock(&iso9660_lock);
-	}
-	return ret;
-}
-
-bool iso9660_setsize(void *filedata, bt_filesize_t size){
-	return false;
-}
-
-int iso9660_ioctl(void *filedata, int fn, size_t bytes, char *buf){
-	return 0;
-}
-
-void iso9660_flush(void *){
 }
 
 void *iso9660_open_dir(void *mountdata, fs_path *path, fs_mode_flags flags){
@@ -384,9 +448,8 @@ fs_driver iso9660_driver = {true, "iso9660", false, iso9660_mount, iso9660_unmou
 							iso9660_stat, iso9660_format};
 
 
-extern "C" int module_main(syscall_table *systbl, char *params){
-		SYSCALL_TABLE=systbl;
+int module_main(char *params){
 		init_lock(&iso9660_lock);
 		add_filesystem(&iso9660_driver);
-    	return 0;
+		return 0;
 }

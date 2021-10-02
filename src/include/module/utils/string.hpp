@@ -189,6 +189,22 @@ public:
 
 		return *this;
 	}
+
+	char *begin(){
+		return p;
+	}
+
+	const char *begin() const{
+		return p;
+	}
+
+	char *end(){
+		return &p[string_strlen(p)];
+	}
+
+	const char *end() const{
+		return &p[string_strlen(p)];
+	}
 };
 
 #endif
