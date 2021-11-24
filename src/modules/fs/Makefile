@@ -1,4 +1,4 @@
-MODULES := boot fs terminal hwpnp cache
+MODULES := fatfs iso9660
 
 all: dummy.file
 	for dir in $(MODULES); do \
