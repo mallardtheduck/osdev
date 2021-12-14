@@ -130,11 +130,11 @@ static void program_rtc(){
 	outb(RTC_Index, 0x8B);
 	outb(RTC_Data, regB);
 	enable_interrupts();
-	unmask_irq(RTC_IRQ);
+	API->GetHAL().EnableIRQ(RTC_IRQ);
 }
 
 void init_interrupt(){
-	handle_irq_raw(RTC_IRQ, (void*)&rtc_irq_handler);
+	API->GetHAL().RawHandleIRQ(RTC_IRQ, (void*)&rtc_irq_handler);
 	program_rtc();
 	
 	auto start = get_msecs();
