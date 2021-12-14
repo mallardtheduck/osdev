@@ -1,11 +1,6 @@
-#include <btos_module.h>
+#include <module/module.inc>
 #include <dev/hwpnp.hpp>
 #include <dev/hwpnp/timerdevice.hpp>
-
-USE_SYSCALL_TABLE;
-USE_DEBUG_PRINTF;
-USE_PURE_VIRTUAL;
-USE_STATIC_INIT;
 
 static const btos_api::hwpnp::DeviceID PCRTCDeviceID = {
 		btos_api::hwpnp::PNPBUS::PCBUS,
@@ -71,10 +66,9 @@ btos_api::hwpnp::ITimerDevice *StdPC::GetSysTimer(){
 
 static StdPC theDevice;
 
-extern "C" int module_main(syscall_table *systbl, char */*params*/){
-	SYSCALL_TABLE=systbl;
-	sysTimer = (btos_api::hwpnp::ITimerDevice*)pnp_resolve_device(&theDevice, PCRTCDeviceID, 0);
+int module_main(char */*params*/){
+	sysTimer = (btos_api::hwpnp::ITimerDevice*)API->GetHwPnPManager().ResolveDevice(&theDevice, PCRTCDeviceID, 0);
 	if(!sysTimer) panic("(STDPC) Could not resolve timer device!");
-	pnp_set_root_device(&theDevice);
+	API->GetHwPnPManager().SetRootDevice(&theDevice);
 	return 0;
 }
