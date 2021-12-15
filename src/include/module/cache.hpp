@@ -14,9 +14,10 @@ namespace btos_api{
 		virtual ~ICache() {}
 	};
 	
-	struct CacheCallTable{
-		ICache *(*CreateCache)(size_t blockSize, size_t maxBlocks);
-		void (*DestroyCache)(ICache *cache);
+	class ICacheExtension : public IKernelExtension{
+	public:
+		virtual ICache *CreateCache(size_t blockSize, size_t maxBlocks) = 0;
+		virtual void DestroyCache(ICache *cache) = 0;
 	};
 	
 	inline static bool IsCacheLoaded(){
@@ -28,7 +29,7 @@ namespace btos_api{
 	inline static ICache *CreateCache(size_t blockSize, size_t maxBlocks){
 		uint16_t extid = API->GetKernelExtensionManager().GetExtensionID("CACHE");
 		if(!extid) return nullptr;
-		CacheCallTable *calltable = (CacheCallTable*)API->GetKernelExtensionManager().GetExtension(extid);
+		ICacheExtension *calltable = static_cast<ICacheExtension*>(API->GetKernelExtensionManager().GetExtension(extid));
 		if(!calltable) return nullptr;
 		return calltable->CreateCache(blockSize, maxBlocks);
 	}
@@ -36,7 +37,7 @@ namespace btos_api{
 	inline static void DestroyCache(ICache *cache){
 		uint16_t extid = API->GetKernelExtensionManager().GetExtensionID("CACHE");
 		if(!extid) return;
-		CacheCallTable *calltable = (CacheCallTable*)API->GetKernelExtensionManager().GetExtension(extid);
+		ICacheExtension *calltable = static_cast<ICacheExtension*>(API->GetKernelExtensionManager().GetExtension(extid));
 		if(!calltable) return;
 		calltable->DestroyCache(cache);
 	}
