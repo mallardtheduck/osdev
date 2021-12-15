@@ -9,10 +9,12 @@ sch_stackinfo curstack;
 
 void *sch_stack;
 
+static char sch_stack_buffer[4096];
+
 extern "C" void sch_yield();
 
 void HAL_sch_init(){
-	sch_stack=(char*)malloc(4096) + 4096;
+	sch_stack=(char*)sch_stack_buffer + 4096;
 }
 
 extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){

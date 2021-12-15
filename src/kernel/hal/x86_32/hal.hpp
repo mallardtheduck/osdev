@@ -8,9 +8,10 @@ IDebugDriver &GetDebugDriver();
 
 class CPUState_x86_32 : public ICPUState{
 private:
-	isr_regs *regs;
+	isr_regs *regs = nullptr;
 public:
 	CPUState_x86_32(isr_regs *r);
+	CPUState_x86_32() = default;
 
 	void DebugOutput() override;
 	void DebugStackTrace() const override;

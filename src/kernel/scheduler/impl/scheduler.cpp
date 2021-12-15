@@ -99,7 +99,7 @@ Scheduler::Scheduler(){
 ThreadPointer Scheduler::NewThread(ThreadEntryFunction fn, void *param, size_t stackSize){
 	auto thread = new Thread(fn, param, stackSize);
 	{
-		auto hl = theScheduler->lock->LockExclusive();
+		auto hl = lock->LockExclusive();
 		thread->id = idCounter++;
 		threads.push_back(thread);
 	}
@@ -111,7 +111,7 @@ IThread &Scheduler::CurrentThread(){
 }
 
 ThreadPointer Scheduler::GetByID(uint64_t id){
-	auto hl = theScheduler->lock->LockExclusive();
+	auto hl = lock->LockExclusive();
 	for(auto thread : threads){
 		if(thread->id == id) return thread;
 	}
@@ -119,7 +119,7 @@ ThreadPointer Scheduler::GetByID(uint64_t id){
 }
 
 size_t Scheduler::GetPIDThreadCount(uint64_t pid){
-	auto hl = theScheduler->lock->LockExclusive();
+	auto hl = lock->LockExclusive();
 	size_t ret = 0;
 	for(auto thread : threads){
 		if(thread->pid == pid) ++ret;
@@ -131,7 +131,7 @@ void Scheduler::DebugStopThreadsByPID(uint64_t pid){
 	if(current->pid == pid){
 		panic("(SCH) Cannot debug-stop current PID!");
 	}else{
-		auto hl = theScheduler->lock->LockExclusive();
+		auto hl = lock->LockExclusive();
 		for(auto thread : threads){
 			if(thread->pid == pid){
 				if(thread->status == ThreadStatus::Runnable){
@@ -145,7 +145,7 @@ void Scheduler::DebugStopThreadsByPID(uint64_t pid){
 }
 
 void Scheduler::DebugResumeThreadsByPID(uint64_t pid){
-	auto hl = theScheduler->lock->LockExclusive();
+	auto hl = lock->LockExclusive();
 	for(auto thread : threads){
 		if(thread->pid == pid){
 			if(thread->status == ThreadStatus::DebugStopped){
@@ -161,7 +161,7 @@ void Scheduler::HoldThreadsByPID(uint64_t pid){
 	if(current->pid == pid){
 		panic("(SCH) Cannot hold current PID!");
 	}else{
-		auto hl = theScheduler->lock->LockExclusive();
+		auto hl = lock->LockExclusive();
 		for(auto thread : threads){
 			if(thread->pid == pid){
 				if(thread->status == ThreadStatus::Runnable){
@@ -175,7 +175,7 @@ void Scheduler::HoldThreadsByPID(uint64_t pid){
 }
 
 void Scheduler::UnHoldThreadsByPID(uint64_t pid){
-	auto hl = theScheduler->lock->LockExclusive();
+	auto hl = lock->LockExclusive();
 	for(auto thread : threads){
 		if(thread->pid == pid){
 			if(thread->status == ThreadStatus::HeldRunnable){

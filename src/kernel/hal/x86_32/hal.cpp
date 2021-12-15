@@ -23,7 +23,7 @@ void HAL_Init(){
 	HAL_sch_init();
 }
 
-const CPUState_x86_32 theDefaultCPUState({});
+const CPUState_x86_32 theDefaultCPUState;
 
 CPUState_x86_32::CPUState_x86_32(isr_regs *r) : regs(r) {}
 
@@ -80,7 +80,7 @@ uint32_t CPUState_x86_32::GetErrorCode() const{
 }
 
 uintptr_t CPUState_x86_32::GetPageFaultAddress() const{
-uintptr_t addr;
+	uintptr_t addr;
 	asm volatile("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
 	return addr;
 }

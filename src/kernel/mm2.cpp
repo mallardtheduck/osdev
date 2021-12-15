@@ -5,10 +5,11 @@ void mm2_init(multiboot_info_t *mbt){
 	dbgout("MM2: Init.\n");
 	MM2::mm2_physical_init(mbt);
 	MM2::mm2_virtual_init();
-	MM2::physical_infofs_register();
 	MM2::init_mmap();
 	MM2::init_shm();
 	MM2::init_class();
+	MM2::physical_infofs_register();
+	dbgout("MM2: Ready.\n");
 }
 
 void *mm2_virtual_alloc(size_t pages, uint32_t mode){

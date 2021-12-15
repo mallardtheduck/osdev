@@ -12,8 +12,8 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	mm2_init(mbt);
 	GetHAL().EnableInterrupts();
 	KernelConfigVariables_Init();
-	Processes_Init();
 	Scheduler_Init();
+	Processes_Init();
 	GetHAL().YieldToScheduler();
 	Devices_Init();
 	Filesystem_Init();

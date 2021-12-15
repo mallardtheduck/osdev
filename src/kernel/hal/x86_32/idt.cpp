@@ -220,6 +220,15 @@ void out_int_info(const isr_regs &ctx){
 extern "C" void isr_handler(isr_regs *ctx){
 	imode++;
 
+	//out_int_info(*ctx);
+
+	if(ctx->interrupt_number == 0x0E){
+		dbgout("(IDT) Page fault!\n");
+		uintptr_t addr;
+		asm volatile("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
+		dbgpf("(IDT) PF address: %lx EIP:%lx\n", addr, ctx->eip);
+	}
+
 	auto &currentThread = CurrentThread();
 	currentThread.SetDiagnosticInstructionPointer(ctx->eip);
 	currentThread.SetAbortable(false);

@@ -35,6 +35,7 @@ namespace MM2{
 		virtual_lock.Init();
 		dbgout("MM2: Virtual memory manager init.\n");
 		memset(&init_kernel_pagedir, 0, sizeof(init_kernel_pagedir));
+		dbgpf("MM2: VMM: Kernel End: %p\n", get_kernel_end());
 		size_t pages_to_idmap = div_ceil((uint32_t)get_kernel_end(), MM2_Page_Size);
 		size_t tables_needed = div_ceil(pages_to_idmap, MM2_Table_Entries);
 		dbgpf("MM2: VMM: Pages to identity map: %i, tables needed: %i\n", (int)pages_to_idmap, (int)tables_needed);

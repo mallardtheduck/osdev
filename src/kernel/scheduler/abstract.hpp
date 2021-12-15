@@ -7,7 +7,10 @@ void Scheduler_Init();
 bool Scheduler_Ready();
 IScheduler &GetScheduler();
 
+IThread &GetNullThread();
+
 inline IThread &CurrentThread(){
+	if(!Scheduler_Ready()) return GetNullThread();
 	return GetScheduler().CurrentThread();
 }
 

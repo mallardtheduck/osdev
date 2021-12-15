@@ -22,6 +22,7 @@ namespace MM2{
 		uint32_t *directory;
 		uint32_t directory_physical = 0;
 		ILock *directory_lock;
+		char directory_lock_buffer[LockSize];
 		uint32_t current_table = 0;
 		
 		size_t klowfree = 0;

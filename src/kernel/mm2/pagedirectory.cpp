@@ -25,7 +25,7 @@ namespace MM2{
 	}
 
 	PageDirectory::PageDirectory(){
-		directory_lock = NewLock();
+		directory_lock = PlaceNewLock(directory_lock_buffer);
 		directory = (uint32_t*)mm2_virtual_alloc(1);
 		memset(directory, 0, MM2_Page_Size);
 		directory_physical = MM2::current_pagedir->virt2phys(directory);
@@ -61,7 +61,7 @@ namespace MM2{
 
 	PageDirectory::PageDirectory(uint32_t *a){
 		kdir_lock.Init();
-		directory_lock = NewLock();
+		directory_lock = PlaceNewLock(directory_lock_buffer);
 		directory = a;
 		directory_physical = (uint32_t)a;
 		regions = NULL;

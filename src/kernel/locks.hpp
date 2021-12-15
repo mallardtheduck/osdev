@@ -1,11 +1,12 @@
 #ifndef KERNEL_LOCKS_HPP
 #define KERNEL_LOCKS_HPP
 
+#include <cstddef>
+constexpr size_t LockSize = 32;
+
 #include "kernel.hpp"
 
 #include <module/kernelsys/locks.hpp>
-
-constexpr size_t LockSize = 32;
 
 ILock *NewLock();
 ILock *PlaceNewLock(char (&buffer)[LockSize]);
