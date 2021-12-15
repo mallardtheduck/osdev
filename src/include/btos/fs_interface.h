@@ -66,6 +66,10 @@ struct BT_DE_NAME{
 	fs_item_types type;
 };
 
+#ifndef __cplusplus
+typedef struct BT_DE_NAME BT_DE_NAME;
+#endif
+
 enum fs_seek_flags{
 	FS_Set			= 0,
 	FS_Relative 	= 1,

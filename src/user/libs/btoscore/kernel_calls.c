@@ -234,19 +234,19 @@ bool bt_setenv(const char *name, const char *value, uint32_t flags){
 	return btos_call(BT_SETENV, (uint32_t)name, (uint32_t)value, flags);
 }
 
-bt_pid bt_spawn(const char *path, size_t argc, char **argv){
+bt_pid_t bt_spawn(const char *path, size_t argc, char **argv){
 	return btos_call(BT_SPAWN, (uint32_t)path, argc, (uint32_t)argv);
 }
 
-int bt_wait(bt_pid pid){
+int bt_wait(bt_pid_t pid){
 	return btos_call(BT_WAIT, pid, 0, 0);
 }
 
-bool bt_kill(bt_pid pid){
+bool bt_kill(bt_pid_t pid){
 	return btos_call(BT_KILL, pid, 0, 0);
 }
 
-bt_priority bt_prioritize(bt_pid pid, bt_priority priority){
+bt_priority bt_prioritize(bt_pid_t pid, bt_priority priority){
 	return btos_call(BT_PRIORITIZE, pid, priority, 0);
 }
 
@@ -254,11 +254,11 @@ void bt_exit(int retval){
 	btos_call(BT_EXIT, (uint32_t)retval, 0, 0);
 }
 
-bt_pid bt_getpid(){
+bt_pid_t bt_getpid(){
 	return btos_call(BT_GETPID, 0, 0, 0);
 }
 
-bt_proc_status bt_get_proc_status(bt_pid pid){
+bt_proc_status bt_get_proc_status(bt_pid_t pid){
 	return (bt_proc_status)btos_call(BT_PROCSTATUS, (uint32_t)&pid, 0, 0);
 }
 

@@ -74,13 +74,13 @@ EXTERN_C bool bt_load_module(const char *path, const char *params);
 EXTERN_C size_t bt_getenv(const char *name, char *buffer, size_t size);
 EXTERN_C bool bt_setenv(const char *name, const char *value, uint32_t flags);
 
-EXTERN_C bt_pid bt_spawn(const char *path, size_t argc, char **argv);
-EXTERN_C int bt_wait(bt_pid pid);
-EXTERN_C bool bt_kill(bt_pid pid);
-EXTERN_C bt_priority bt_prioritize(bt_pid pid, bt_priority priority);
+EXTERN_C bt_pid_t bt_spawn(const char *path, size_t argc, char **argv);
+EXTERN_C int bt_wait(bt_pid_t pid);
+EXTERN_C bool bt_kill(bt_pid_t pid);
+EXTERN_C bt_priority bt_prioritize(bt_pid_t pid, bt_priority priority);
 EXTERN_C void bt_exit(int retval);
-EXTERN_C bt_pid bt_getpid();
-EXTERN_C ENUM_NAME(bt_proc_status) bt_get_proc_status(bt_pid pid);
+EXTERN_C bt_pid_t bt_getpid();
+EXTERN_C ENUM_NAME(bt_proc_status) bt_get_proc_status(bt_pid_t pid);
 
 EXTERN_C uint64_t bt_send(bt_msg_header msg);
 EXTERN_C bt_msg_header bt_recv(bool block);
