@@ -7,7 +7,7 @@ import-files:= \
   data/content/initfs/stdpc.sys \
   data/content/initfs/ata.sys \
   data/content/initfs/spawn.elx \
-  data/content/initfs/fat.sys \
+  data/content/initfs/fatfs.sys \
   data/content/initfs/eloader.elx \
   data/content/grub/splash.tga \
   data/content/grub/grub.pf2 \
@@ -34,7 +34,7 @@ data/content/initfs/ata.sys: ../../modules/hwpnp/ata/ata.sys create.directories
 data/content/initfs/spawn.elx: ../../user/system/spawn/spawn.elx create.directories
 	cp $< $@
 
-data/content/initfs/fat.sys: ../../modules/fat/fat.sys create.directories
+data/content/initfs/fatfs.sys: ../../modules/fatfs/fatfs.sys create.directories
 	cp $< $@
 
 data/content/initfs/eloader.elx: ../../user/system/eloader/eloader.elx create.directories
