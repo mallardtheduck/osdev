@@ -1,5 +1,5 @@
 #include "rtc_internal.hpp"
-#include <dev/rtc.hpp>
+#include <dev/rtc.h>
 #include <util/asprintf.h>
 
 uint16_t extension_id;

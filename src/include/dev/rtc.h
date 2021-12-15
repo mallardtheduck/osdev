@@ -2,7 +2,6 @@
 #define DEV_RTC_HPP
 
 #include <util/bt_enum.h>
-#include <module/kernelsys/extension.hpp>
 
 #define RTC_EXTENSION_NAME "RTC"
 
@@ -15,7 +14,8 @@ ENUM_START(bt_rtc_api)
 ENUM_END;
 ENUM_TYPE(bt_rtc_api);
 
-#if defined(KERNEL) || defined(KERNEL_MODULE)
+#if defined(__cplusplus) && (defined(KERNEL) || defined(KERNEL_MODULE))
+#include <module/kernelsys/extension.hpp>
 
 #ifdef KERNEL_MODULE
 #include <btos_module.h>

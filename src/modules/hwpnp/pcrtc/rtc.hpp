@@ -4,7 +4,7 @@
 #include <btos_module.h>
 
 #define RTC_NO_STUBS
-#include <dev/rtc.hpp>
+#include <dev/rtc.h>
 
 struct datetime{
 	int day, month, year;
