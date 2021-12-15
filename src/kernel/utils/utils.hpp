@@ -48,15 +48,17 @@ namespace StaticAllocInitPolicies{
 			if(!ptr) panic("(SA) Use before allocation!");
 		}
 
-		void Init(T *ptr, char (&buffer)[sizeof(T)]){
+		void Init(T *&ptr, char (&buffer)[sizeof(T)]){
 			if(ptr) panic("(SA) Duplicate initialisation!");
 			ptr = new(buffer) T();
+			if(!ptr) panic("(SA) Init failed!");
 		}
 
 		template<typename... Ts>
-		void Init(T *ptr, char (&buffer)[sizeof(T)], Ts... params){
+		void Init(T *&ptr, char (&buffer)[sizeof(T)], Ts... params){
 			if(ptr) panic("(SA) Duplicate initialisation!");
 			ptr = new(buffer) T(params...);
+			if(!ptr) panic("(SA) Init failed!");
 		}
 	};
 
