@@ -134,7 +134,7 @@ void panic(const char *msg){
 	write_string_at(8, 2, "Any unsaved work may have been lost.", 0x1F);
 	write_string_at(10, 2, "The technical description of the error was:", 0x1F);
 	write_string_at(11, 4, msg, 0x1C);
-	if(Scheduler_Ready()){
+	if(Scheduler_Ready() && Processes_Ready()){
 		write_string_at(12, 2, "Proccess ID:", 0x1F);
 		itoa(CurrentProcess().ID(), buf, 10);
 		write_string_at(12, 15, buf, 0x1C);

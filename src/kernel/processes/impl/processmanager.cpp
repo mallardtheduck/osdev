@@ -122,6 +122,10 @@ void Processes_Init(){
 	theProcessManager.Init();
 }
 
+bool Processes_Ready(){
+	return theProcessManager;
+}
+
 IProcessManager &GetProcessManager(){
 	return *theProcessManager;
 }
