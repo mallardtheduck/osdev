@@ -4,3 +4,7 @@
 #define __btos__
 
 #define VSCODE
+
+#ifdef __INTELLISENSE__
+    #pragma diag_suppress 384
+#endif
