@@ -1,8 +1,5 @@
 #include "ps2.hpp"
 
-USE_PURE_VIRTUAL;
-USE_STATIC_INIT;
-
 template<typename DeviceType, typename ParentType, uint32_t priority> 
 class DriverTemplate : public btos_api::hwpnp::IDriver{
 public:

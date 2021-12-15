@@ -10,13 +10,13 @@ static circular_buffer<bt_mouse_packet, 512> mouse_buffer{zero_packet};
 static circular_buffer<uint8_t, 48> pre_buffer{0};
 
 static uint8_t irq;
-static thread_id_t mouse_thread_id;
-static lock buf_lock;
+static uint64_t mouse_thread_id;
+static ILock *buf_lock;
 
 static btos_api::hwpnp::IPS2Bus *theBus;
 static size_t theIndex;
 
-static void mouse_handler(int irq, isr_regs *regs){
+static void mouse_handler(ICPUState &){
 	uint8_t ps2_byte = theBus->ReadDataWithoutStatusCheck();
 	pre_buffer.add_item(ps2_byte);
 	input_available = true;
@@ -27,27 +27,30 @@ static void mouse_handler(int irq, isr_regs *regs){
 	}*/
 }
 
-bool input_blockcheck(void*){
-	return !!pre_buffer.count();
-}
-
-void mouse_thread(void*){
-	thread_priority(1);
+void mouse_thread(){
+	auto &currentThread = API->CurrentThread();
+	currentThread.SetPriority(1);
 	while(true){
 		uint8_t byte1=0, byte2=0, byte3=0;
 		while(!(byte1 & (1 << 3))) {
-			thread_setblock(&input_blockcheck, NULL);
+			currentThread.SetBlock([]{
+					return !!pre_buffer.count();
+				});
 			disable_interrupts();
 			byte1 = pre_buffer.read_item();
 			input_available = false;
 			enable_interrupts();
 		}
-		thread_setblock(&input_blockcheck, NULL);
+		currentThread.SetBlock([]{
+				return !!pre_buffer.count();
+			});
 		disable_interrupts();
 		byte2=pre_buffer.read_item();
 		input_available=false;
 		enable_interrupts();
-		thread_setblock(&input_blockcheck, NULL);
+		currentThread.SetBlock([]{
+				return !!pre_buffer.count();
+			});
 		disable_interrupts();
 		byte3=pre_buffer.read_item();
 		input_available=false;
@@ -63,10 +66,10 @@ void mouse_thread(void*){
 			pre_buffer.clear();
 			input_available=false;
 			enable_interrupts();
-			mask_irq(irq);
+			API->GetHAL().DisableIRQ(irq);
 			theBus->WritePort(theIndex, Device_Command::Reset);
 			theBus->WritePort(theIndex, Device_Command::EnableReporting);
-			unmask_irq(irq);
+			API->GetHAL().EnableIRQ(irq);
 			continue;
 		}
 
@@ -77,14 +80,10 @@ void mouse_thread(void*){
 		packet.flags = MouseFlags::Valid | (button1?MouseFlags::Button1:0) | (button2?MouseFlags::Button2:0) | (button3?MouseFlags::Button3:0);
 		packet.x_motion=mouse_x;
 		packet.y_motion=mouse_y;
-		take_lock(&buf_lock);
+		buf_lock->TakeExclusive();
 		mouse_buffer.add_item(packet);
-		release_lock(&buf_lock);
+		buf_lock->Release();
 	}
-}
-
-bool mouseread_lockcheck(void *p){
-	return mouse_buffer.count() >= *(size_t*)p;
 }
 
 size_t mouse_read(btos_api::hwpnp::IPS2Bus *bus, size_t index, size_t bytes, char *cbuf){
@@ -94,23 +93,25 @@ size_t mouse_read(btos_api::hwpnp::IPS2Bus *bus, size_t index, size_t bytes, cha
 	if(values > mouse_buffer.max_size()) values=mouse_buffer.max_size();
 	while(true){
 		if(mouse_buffer.count() < values){
-			thread_setblock(&mouseread_lockcheck, (void*)&values);
+			API->CurrentThread().SetBlock([&]{
+				return mouse_buffer.count() >= values;
+			});
 		}
-		take_lock(&buf_lock);
+		buf_lock->TakeExclusive();
 		if(mouse_buffer.count() >= values) break;
-		release_lock(&buf_lock);
+		buf_lock->Release();
 	}
 	for(size_t i=0; i<values; ++i){
 		bt_mouse_packet buffervalue=mouse_buffer.read_item();
 		buf[i]=buffervalue;
 	}
-	release_lock(&buf_lock);
+	buf_lock->Release();
 	return bytes;
 }
 
 void init_mouse(btos_api::hwpnp::IPS2Bus *bus, size_t index){
 	auto busLock = bus->GetLock();
-	init_lock(&buf_lock);
+	buf_lock = API->NewLock();
 	irq = bus->GetIRQ(index);
 	bus->EnableDevice(index);
 	
@@ -121,10 +122,10 @@ void init_mouse(btos_api::hwpnp::IPS2Bus *bus, size_t index){
 	bus->WritePort(index, Device_Command::DisableReporting);
 
 	pre_buffer.clear();
-	handle_irq(irq, &mouse_handler);
-	mouse_thread_id=new_thread(&mouse_thread, NULL);
+	API->GetHAL().HandleIRQ(irq, &mouse_handler);
+	mouse_thread_id = API->GetScheduler().NewThread(&mouse_thread);
 	bus->WritePort(index, Device_Command::EnableReporting);
-	unmask_irq(irq);
+	API->GetHAL().EnableIRQ(irq);
 }
 
 PS2MouseDevice::PS2MouseDevice(btos_api::hwpnp::IPS2Bus *b, size_t i) : bus(b), index(i), node(this) {
@@ -162,9 +163,9 @@ size_t PS2MouseDevice::Read(size_t bytes, char *buf){
 }
 
 void PS2MouseDevice::ClearBuffer(){
-	take_lock(&buf_lock);
+	buf_lock->TakeExclusive();
 	mouse_buffer.clear();
-	release_lock(&buf_lock);
+	buf_lock->Release();
 }
 
 PS2MouseDeviceNode::PS2MouseDeviceNode(btos_api::hwpnp::IMouse *d) : btos_api::hwpnp::MouseDeviceNode(d) {}
