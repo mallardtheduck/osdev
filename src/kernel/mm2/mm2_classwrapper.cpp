@@ -50,6 +50,10 @@ public:
 	void FreePages(void *addr, size_t pages) override{
 		return MM2::current_pagedir->free_pages(addr, pages);
 	}
+
+	uintptr_t GetPhysicalAddress(void *virt) override{
+		return MM2::current_pagedir->virt2phys(virt);
+	}
 };
 
 ManualStaticAlloc<MemoryManager> theMemoryManager;
