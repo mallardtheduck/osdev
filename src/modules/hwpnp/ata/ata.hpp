@@ -166,14 +166,11 @@ struct atapi_capacity{
 	uint32_t block_size;
 };
 
-extern lock ata_lock, ata_drv_lock;
+extern ILock *ata_lock, *ata_drv_lock;
 
 bool ata_device_read_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf);
 bool ata_device_read_sector_pio(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf);
-//void ata_device_write_sector_retry(struct ata_device * dev, uint32_t lba, uint8_t * buf);
 void init_queue();
-//void ata_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
-//void ata_queued_write(ata_device *dev, uint32_t lba, uint8_t *buf);
 
 size_t atapi_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf);
 
@@ -185,10 +182,7 @@ int ata_wait(btos_api::hwpnp::IATABus *bus, size_t index, int advanced);
 #define ATAPI_SECTOR_SIZE 2048
 
 void preinit_dma();
-//bool init_dma();
-//void dma_read_sector(ata_device *dev, uint32_t lba, uint8_t *buf);
 
-extern drv_driver atapi_driver;
 bool atapi_device_init(ata_device *dev);
 void ata_io_wait(struct ata_device * dev);
 int atapi_device_read(ata_device *dev, uint32_t lba, uint8_t *buf);

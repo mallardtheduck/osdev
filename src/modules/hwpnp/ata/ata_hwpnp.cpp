@@ -1,12 +1,6 @@
-#include <btos_module.h>
+#include <module/module.inc>
 #include <dev/hwpnp.hpp>
 #include "ata.hpp"
-
-USE_SYSCALL_TABLE;
-USE_DEBUG_PRINTF;
-USE_PURE_VIRTUAL;
-USE_STATIC_INIT;
-
 
 template<typename DeviceType, typename ParentType, uint32_t priority> 
 class DriverTemplate : public btos_api::hwpnp::IDriver{
@@ -172,13 +166,12 @@ btos_api::hwpnp::IDriver *GetATAPIDriver(){
 	return &atapiDriver;
 }
 
-extern "C" int module_main(syscall_table *systbl, char *params){
-	SYSCALL_TABLE=systbl;
-	pnp_register_driver(&ataDriver);
-	pnp_register_driver(&ataHDDDriver);
-	pnp_register_driver(&mbrVolumeDriver);
-	pnp_register_driver(&partitionDriver);
-	pnp_register_driver(&atapiDriver);
-	pnp_rescan_devices();
+int module_main(char *){
+	API->GetHwPnPManager().RegisterDriver(&ataDriver);
+	API->GetHwPnPManager().RegisterDriver(&ataHDDDriver);
+	API->GetHwPnPManager().RegisterDriver(&mbrVolumeDriver);
+	API->GetHwPnPManager().RegisterDriver(&partitionDriver);
+	API->GetHwPnPManager().RegisterDriver(&atapiDriver);
+	API->GetHwPnPManager().RescanDevices();
 	return 0;
 }

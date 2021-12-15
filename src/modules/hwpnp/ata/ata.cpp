@@ -1,14 +1,11 @@
 #include <btos_module.h>
-#include <util/holdlock.hpp>
 #include "ata.hpp"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-drv_driver ata_driver;
-
-lock ata_lock, ata_drv_lock;
+ILock *ata_lock, *ata_drv_lock;
 
 void out_bytes(char *bytes, size_t count){
 	for(size_t i=0; i<count; ++i){
@@ -31,24 +28,24 @@ int ata_wait(struct ata_device * dev, int advanced) {
 	ata_io_wait(dev);
 
 	while ((status = inb(dev->io_base + ATA_REG_STATUS)) & ATA_SR_BSY) {
-        //dbgpf("ATA: Status: %x\n", inb(dev->io_base + ATA_REG_STATUS));
-        yield();
-    }
+		//dbgpf("ATA: Status: %x\n", inb(dev->io_base + ATA_REG_STATUS));
+		API->CurrentThread().Yield();
+	}
 
 	if (advanced) {
 		status = inb(dev->io_base + ATA_REG_STATUS);
 		if (status   & ATA_SR_ERR) {
-            dbgpf("ATA: ATA_SR_ERR\n");
-            return 1;
-        }
+			dbgpf("ATA: ATA_SR_ERR\n");
+			return 1;
+		}
 		if (status   & ATA_SR_DF)   {
-            dbgpf("ATA: ATA_SR_DF\n");
-            return 1;
-        }
+			dbgpf("ATA: ATA_SR_DF\n");
+			return 1;
+		}
 		if (!(status & ATA_SR_DRQ)) {
-            dbgpf("ATA: ATA_SR_DRQ\n");
-            return 1;
-        }
+			dbgpf("ATA: ATA_SR_DRQ\n");
+			return 1;
+		}
 	}
 
 	return 0;
@@ -63,24 +60,24 @@ int ata_wait(btos_api::hwpnp::IATABus *bus, size_t index, int advanced) {
 	bus->ReadControlByte(index);
 
 	while ((status = bus->InByte(index, ATA_REG_STATUS)) & ATA_SR_BSY) {
-        //dbgpf("ATA: Status: %x\n", inb(dev->io_base + ATA_REG_STATUS));
-        yield();
-    }
+		//dbgpf("ATA: Status: %x\n", inb(dev->io_base + ATA_REG_STATUS));
+		API->CurrentThread().Yield();
+	}
 
 	if (advanced) {
 		status = bus->InByte(index, ATA_REG_STATUS);
 		if (status   & ATA_SR_ERR) {
-            dbgpf("ATA: ATA_SR_ERR\n");
-            return 1;
-        }
+			dbgpf("ATA: ATA_SR_ERR\n");
+			return 1;
+		}
 		if (status   & ATA_SR_DF)   {
-            dbgpf("ATA: ATA_SR_DF\n");
-            return 1;
-        }
+			dbgpf("ATA: ATA_SR_DF\n");
+			return 1;
+		}
 		if (!(status & ATA_SR_DRQ)) {
-            dbgpf("ATA: ATA_SR_DRQ\n");
-            return 1;
-        }
+			dbgpf("ATA: ATA_SR_DRQ\n");
+			return 1;
+		}
 	}
 
 	return 0;
@@ -168,14 +165,14 @@ static int ata_device_detect(struct ata_device * dev, ATABusDevice *parent) {
 }
 
 bool ata_device_read_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf){
-    //take_lock(&ata_lock);
-    /*if(init_dma()){
-        dma_read_sector(bus, index, lba, buf);
-    }else{*/
-        auto ret = ata_device_read_sector_pio(bus, index, lba, buf);
-    //}
-    //release_lock(&ata_lock);
-    return ret;
+	//take_lock(&ata_lock);
+	/*if(init_dma()){
+		dma_read_sector(bus, index, lba, buf);
+	}else{*/
+		auto ret = ata_device_read_sector_pio(bus, index, lba, buf);
+	//}
+	//release_lock(&ata_lock);
+	return ret;
 }
 
 bool ata_device_read_sector_pio(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf) {
@@ -214,10 +211,10 @@ try_again:
 
 bool ata_device_write_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t * buf) {
 	//if(lba > dev->length) return;
-    //take_lock(&ata_lock);
-    int slave = bus->IsSlave(index);
+	//take_lock(&ata_lock);
+	int slave = bus->IsSlave(index);
 
-    //if(init_dma()){} //TODO: Use DMA
+	//if(init_dma()){} //TODO: Use DMA
 
 	bus->WriteControlByte(index, 0);
 
@@ -240,29 +237,6 @@ bool ata_device_write_sector(btos_api::hwpnp::IATABus *bus, size_t index, uint32
 	return true;
 }
 
-/*static int buffer_compare(uint32_t * ptr1, uint32_t * ptr2, size_t size) {
-	if(size % 4) panic("ATA");
-	size_t i = 0;
-	while (i < size) {
-		if (*ptr1 != *ptr2) return 1;
-		ptr1++;
-		ptr2++;
-		i += sizeof(uint32_t);
-	}
-	return 0;
-}*/
-
-/*void ata_device_write_sector_retry(struct ata_device * dev, uint32_t lba, uint8_t * buf) {
-	uint8_t *read_buf = (uint8_t*) malloc(ATA_SECTOR_SIZE);
-	disable_interrupts();
-	do {
-		ata_device_write_sector(dev, lba, buf);
-		ata_device_read_sector(dev, lba, read_buf);
-	} while (buffer_compare((uint32_t *)buf, (uint32_t *)read_buf, ATA_SECTOR_SIZE));
-	enable_interrupts();
-	free(read_buf);
-}*/
-
 static struct ata_device ata_primary_master   = {.io_base = 0x1F0, .control = 0x3F6, .slave = 0};
 static struct ata_device ata_primary_slave    = {.io_base = 0x1F0, .control = 0x3F6, .slave = 1};
 static struct ata_device ata_secondary_master = {.io_base = 0x170, .control = 0x376, .slave = 0};
@@ -280,39 +254,21 @@ static int ata_initialize(ATABusDevice *parent) {
 	return 0;
 }
 
-/*static int ata_finalize(void) {
-
-	return 0;
-}*/
-
-/*extern "C" int module_main(syscall_table *systbl, char *params){
-	drv_driver driver={ata_open, ata_close, ata_read, ata_write, ata_seek, ata_ioctl, ata_type, ata_desc};
-	ata_driver=driver;
-	SYSCALL_TABLE=systbl;
-    dbgout("ATA: Init...\n");
-	init_lock(&ata_lock);
-    init_lock(&ata_drv_lock);
-    init_queue();
-	preinit_dma();
-	ata_initialize();
-    return 0;
-}*/
-
 ATABusDevice::ATABusDevice(){
 	dbgout("ATA: Init...\n");
-	init_lock(&ata_lock);
-    init_lock(&ata_drv_lock);
-    //init_queue();
-	preinit_dma();
+	ata_lock = API->NewLock();
+	ata_drv_lock = API->NewLock();
+	//init_queue();
+	//preinit_dma();
 	ata_initialize(this);
 }
 
 void ATABusDevice::Lock(){
-	take_lock(&ata_lock);
+	ata_lock->TakeExclusive();
 }
 
 void ATABusDevice::Unlock(){
-	release_lock(&ata_lock);
+	ata_lock->Release();
 }
 
 btos_api::hwpnp::DeviceID ATABusDevice::GetID(){

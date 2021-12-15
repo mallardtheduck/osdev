@@ -1,7 +1,6 @@
 #include "ata.hpp"
-#include <util/holdlock.hpp>
 
-static bool dma_init=false;
+//static bool dma_init=false;
 /*
 pci_call_table *PCI_CALL_TABLE;
 
@@ -19,11 +18,12 @@ struct prd{
     prd() : reserved((1 << 15)) {}
 } __attribute__((packed));
 
-prd bus0prd __attribute__((aligned(8))), bus1prd __attribute__((aligned(8)));*/
-lock dma_lock, dma_init_lock;
+prd bus0prd __attribute__((aligned(8))), bus1prd __attribute__((aligned(8)));
+lock dma_lock, dma_init_lock;*/
 
 uint32_t bmr;
 volatile bool bus0done, bus1done;
+#if 0
 
 void dma_int_handler(int irq, isr_regs *){
 	//dbgpf("ATA: IRQ %i\n", irq);
@@ -56,6 +56,8 @@ void dma_int_handler(int irq, isr_regs *){
     yield();*/
 }
 
+#endif
+
 bool dma_blockcheck(void *q){
     return *(bool*)q;
 }
@@ -79,8 +81,12 @@ void ata_wait_irq(uint32_t bus){
 	}else{
 		panic("ATA: Unknown device!");
 	}
-	thread_setblock(&dma_blockcheck, blockptr);
+	API->CurrentThread().SetBlock([&]{
+        return dma_blockcheck(blockptr);
+    });
 }
+
+#if 0
 /*
 void set_bus0_prdt(uint32_t bmr, prd *prd){
     uint32_t phys=physaddr((void*)prd);
@@ -205,3 +211,5 @@ void preinit_dma(){
 	unmask_irq(15);
     init_lock(&dma_init_lock);
 }
+
+#endif
