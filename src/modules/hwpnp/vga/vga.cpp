@@ -3,7 +3,8 @@
 #include "device.hpp"
 #include "vbe.hpp"
 
-syscall_table *SYSCALL_TABLE;
+#include <module/module.inc>
+
 char dbgbuf[256];
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -18,8 +19,7 @@ struct int_lock{
 	~int_lock() { enable_interrupts(); }
 };
 
-extern "C" int module_main(syscall_table *systbl, char *params){
-	SYSCALL_TABLE=systbl;
+int module_main(char *){
 	//dump_regs();
 	init_modes();
 	vbe_init();

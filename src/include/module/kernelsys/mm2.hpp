@@ -65,6 +65,10 @@ public:
 	virtual void *MapPhysicalMemory(uintptr_t address, size_t pages) = 0;
 	virtual ILock *GetLowMemoryLock() = 0;
 
+	virtual void FreePages(void *addr, size_t pages) = 0;
+
+	virtual uintptr_t GetPhysicalAddress(void *virt) = 0;
+
 	virtual ~IMemoryManager() {}
 };
 

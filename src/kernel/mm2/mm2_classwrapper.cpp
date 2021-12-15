@@ -46,6 +46,10 @@ public:
 	ILock *GetLowMemoryLock() override{
 		return MM2::get_low_memory_lock();
 	}
+
+	void FreePages(void *addr, size_t pages) override{
+		return MM2::current_pagedir->free_pages(addr, pages);
+	}
 };
 
 ManualStaticAlloc<MemoryManager> theMemoryManager;
