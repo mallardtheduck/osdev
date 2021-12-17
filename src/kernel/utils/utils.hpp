@@ -62,15 +62,16 @@ namespace StaticAllocInitPolicies{
 		}
 	};
 
-	template<typename T> struct OnDemand{
-		ILock *initLock;
-		OnDemand() : initLock(NewLock()) {}
+	extern StaticAllocLock initLock;
 
-		void CheckInit(T *ptr, char (&buffer)[sizeof(T)]){
+	template<typename T> struct OnDemand{
+
+		void CheckInit(T *&ptr, char (&buffer)[sizeof(T)]){
 			if(!ptr){
-				Private::TakeLock(initLock);
+				Private::TakeLock(initLock.get());
 				if(!ptr) ptr = new(buffer) T();
-				Private::ReleaseLock(initLock);
+				Private::ReleaseLock(initLock.get());
+				if(!ptr) panic("(SA) Init failed!");
 			}
 		}
 
@@ -117,5 +118,7 @@ public:
 
 template<typename T> using ManualStaticAlloc = StaticAlloc<T, StaticAllocInitPolicies::Manually<T>>;
 template<typename T> using OnDemandStaticAlloc = StaticAlloc<T, StaticAllocInitPolicies::OnDemand<T>>;
+
+void Utils_Init();
 
 #endif

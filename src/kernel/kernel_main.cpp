@@ -6,6 +6,7 @@ multiboot_info_t *mbt;
 extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 {
 	mbt = mbd;
+	Utils_Init();
 	init_serial_debug();
 	dbgpf("%s %s (Build ID:%s)\n%s\n", KERNEL_OS_NAME, KERNEL_VERSION_STRING, kernel_buildid, KERNEL_COPYRIGHT);
 	HAL_Init();
