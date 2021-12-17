@@ -4,11 +4,10 @@
 #define PORT 0x3f8   /* COM1 */
 
 char dbgbuf[256];
-ILock *ser_lock;
-char ser_lock_buffer[LockSize];
+StaticAllocLock ser_lock;
 
 void init_serial_debug() {
-	ser_lock = PlaceNewLock(ser_lock_buffer);
+	ser_lock.Init();
 	GetHAL().IOOutByte(PORT + 1, 0x00);    // Disable all interrupts
 	GetHAL().IOOutByte(PORT + 3, 0x80);    // Enable DLAB (set baud rate divisor)
 	GetHAL().IOOutByte(PORT + 0, 0x03);    // Set divisor to 3 (lo byte) 38400 baud
