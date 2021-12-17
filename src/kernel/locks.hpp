@@ -4,8 +4,6 @@
 #include <cstddef>
 constexpr size_t LockSize = 32;
 
-#include "kernel.hpp"
-
 #include <module/kernelsys/locks.hpp>
 
 ILock *NewLock();
@@ -36,5 +34,7 @@ public:
 		return lock;
 	}
 };
+
+#include "kernel.hpp"
 
 #endif
