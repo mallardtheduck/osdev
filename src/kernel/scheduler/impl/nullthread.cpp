@@ -41,8 +41,9 @@ public:
 	uintptr_t GetDiagnosticInstructionPointer() override {return 0;}
 };
 
-NullThread theNullThread;
+ManualStaticAlloc<NullThread> theNullThread;
 
 IThread &GetNullThread(){
-	return theNullThread;
+	theNullThread.Init();
+	return *theNullThread;
 }
