@@ -86,12 +86,14 @@ void Scheduler::TheReaperThread(void*){
 Scheduler::Scheduler(){
 	lock = NewLock();
 	auto mainThread = new Thread();
+	mainThread->id = ++idCounter;
 	threads.push_back(mainThread);
 	auto idleThreadPointer = NewThread(TheIdleThread, nullptr, DefaultStackSize);
 	idleThread = static_cast<Thread*>(idleThreadPointer.get());
 	idleThread->status = ThreadStatus::Special;
 	auto reaperThreadPointer = NewThread(TheReaperThread, nullptr, DefaultStackSize);
 	reaperThread = static_cast<Thread*>(reaperThreadPointer.get());
+	current = mainThread;
 
 	GetHAL().SetSchedulerFrequency(30);
 }
@@ -100,7 +102,7 @@ ThreadPointer Scheduler::NewThread(ThreadEntryFunction fn, void *param, size_t s
 	auto thread = new Thread(fn, param, stackSize);
 	{
 		auto hl = lock->LockExclusive();
-		thread->id = idCounter++;
+		thread->id = ++idCounter;
 		threads.push_back(thread);
 	}
 	return threads.back();
