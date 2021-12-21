@@ -44,6 +44,7 @@ public:
 ManualStaticAlloc<NullThread> theNullThread;
 
 IThread &GetNullThread(){
+	panic("GetNullThread!");
 	theNullThread.Init();
 	return *theNullThread;
 }
