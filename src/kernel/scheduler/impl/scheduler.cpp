@@ -94,7 +94,7 @@ Scheduler::Scheduler(){
 	auto reaperThreadPointer = NewThread(TheReaperThread, nullptr, DefaultStackSize);
 	reaperThread = static_cast<Thread*>(reaperThreadPointer.get());
 	current = mainThread;
-
+	
 	GetHAL().SetSchedulerFrequency(30);
 }
 
@@ -230,6 +230,7 @@ uint64_t Scheduler::Schedule(uint64_t stackToken){
 		next = next->next;
 	}
 	if(!next) next = PlanCycle();
+	lock->Transfer(next->id);
 	current = next;
 	if(current->loadModifier < MaxLoadModifier) ++current->loadModifier;
 	current->dynamicPriority = current->staticPriority + current->loadModifier;
