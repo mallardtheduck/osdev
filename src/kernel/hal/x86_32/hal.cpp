@@ -21,6 +21,7 @@ void HAL_Init(){
 	disable_pic();
 	PIC_init();
 	HAL_sch_init();
+	DebugDriver_Init();
 }
 
 const CPUState_x86_32 theDefaultCPUState;
@@ -236,6 +237,5 @@ public:
 HAL_x86_32 theHAL;
 
 IHAL &GetHAL(){
-	DebugDriver_Init();
 	return theHAL;
 }
