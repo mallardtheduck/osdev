@@ -4,10 +4,10 @@ class ThreadsCommand (gdb.Command):
 		super (ThreadsCommand, self).__init__ ("btos-threadinfo", gdb.COMMAND_USER)
 		
 	def pid_to_name(self, pid):
-		procCount = gdb.parse_and_eval("proc_processes.dataSize")
-		for pix in range(procCount):
-			cpid = gdb.parse_and_eval("proc_processes.data[%s]->pid" % pix)
-			if cpid == pid: return gdb.parse_and_eval("proc_processes.data[%s]->name.p" % pix)
+		# procCount = gdb.parse_and_eval("proc_processes.dataSize")
+		# for pix in range(procCount):
+		# 	cpid = gdb.parse_and_eval("proc_processes.data[%s]->pid" % pix)
+		# 	if cpid == pid: return gdb.parse_and_eval("proc_processes.data[%s]->name.p" % pix)
 		return "Unknown PID"
 		
 	def addr_to_module(self, addr):
@@ -26,19 +26,22 @@ class ThreadsCommand (gdb.Command):
 		return ret
 
 	def invoke (self, arg, from_tty):
-		threadCount = gdb.parse_and_eval("threads.dataSize")
+		current = gdb.parse_and_eval("theScheduler.ptr->current")
+		print("Current thread: %s" % current)
+		threadCount = gdb.parse_and_eval("theScheduler.ptr->threads.dataSize")
 		for tix in range(threadCount):
-			tid = gdb.parse_and_eval("threads.data[%s]->ext_id" % tix)
-			pid = gdb.parse_and_eval("threads.data[%s]->pid" % tix)
-			status = gdb.parse_and_eval("threads.data[%s]->status" % tix)
-			bc = gdb.parse_and_eval("threads.data[%s]->blockcheck" % tix)
+			ptr = gdb.parse_and_eval("theScheduler.ptr->threads.data[%s]" % tix)
+			tid = gdb.parse_and_eval("theScheduler.ptr->threads.data[%s]->id" % tix)
+			pid = gdb.parse_and_eval("theScheduler.ptr->threads.data[%s]->pid" % tix)
+			status = gdb.parse_and_eval("theScheduler.ptr->threads.data[%s]->status" % tix)
+			# bc = gdb.parse_and_eval("theScheduler.ptr->threads.data[%s]->blockCheck" % tix)
 			blockinfo = ""
-			if bc != 0:
-				modname = self.addr_to_module(bc)
-				bcp = gdb.parse_and_eval("threads.data[%s]->bc_param" % tix)
-				blockinfo = "(%s :: %s (%s))" % (modname, bc, bcp)
+			# if bc != 0:
+			# 	modname = self.addr_to_module(bc)
+			# 	bcp = gdb.parse_and_eval("threads.data[%s]->bc_param" % tix)
+			# 	blockinfo = "(%s :: %s (%s))" % (modname, bc, bcp)
 			name = self.pid_to_name(pid)
-			print("%s: TID: %s PID: %s (%s) Status: %s %s" % (tix, tid, pid, name, status, blockinfo))
+			print("%s (%s): TID: %s PID: %s (%s) Status: %s %s" % (tix, ptr, tid, pid, name, status, blockinfo))
 
 ThreadsCommand ()
 
@@ -85,6 +88,6 @@ class ThreadCommand (gdb.Command):
 	
 	def invoke (self, arg, from_tty):
 		tix = arg
-		print(gdb.parse_and_eval("*threads.data[%s]" % tix))
+		print(gdb.parse_and_eval("*theScheduler.ptr->threads.data[%s]" % tix))
 	  
 ThreadCommand ()
