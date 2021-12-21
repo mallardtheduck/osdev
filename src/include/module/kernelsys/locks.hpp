@@ -17,6 +17,7 @@ public:
 	virtual void Release(bool forUserspace = false) = 0;
 
 	virtual uint64_t GetOwningThreadID() = 0;
+	virtual void Transfer(uint64_t tid) = 0;
 
 	virtual bool IsLocked() = 0;
 

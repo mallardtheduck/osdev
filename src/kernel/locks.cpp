@@ -59,7 +59,7 @@ public:
 	bool TryTakeRecursive() override{
 		if(!Scheduler_Ready()) return false;
 		auto currentThreadID = CurrentThread().ID();
-		if(owningThreadID == currentThreadID){
+		if(owningThreadID != 0 && owningThreadID == currentThreadID){
 			++recursionCount;
 			return true;
 		}
@@ -75,7 +75,7 @@ public:
 		}
 		--recursionCount;
 		if(recursionCount == 0){
-			__sync_bool_compare_and_swap(&owningThreadID, currentThreadID, 0);
+			while(!__sync_bool_compare_and_swap(&owningThreadID, currentThreadID, 0));
 			if(waiting) CurrentThread().Yield();
 			CurrentThread().YieldIfPending();
 		}
@@ -83,6 +83,12 @@ public:
 
 	uint64_t GetOwningThreadID() override{
 		return owningThreadID;
+	}
+
+	void Transfer(uint64_t tid) override{
+		auto currentThreadID = CurrentThread().ID();
+		if(owningThreadID != currentThreadID) panic("(LOCK) Improper transfer!");
+		while(!__sync_bool_compare_and_swap(&owningThreadID, currentThreadID, tid));
 	}
 
 	bool IsLocked() override{
