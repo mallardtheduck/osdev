@@ -14,7 +14,7 @@ public:
 	[[nodiscard]] virtual bool TryTakeExclusive() = 0;
 	[[nodiscard]] virtual bool TryTakeRecursive() = 0;
 
-	virtual void Release(bool forUserspace = false) = 0;
+	virtual void Release(bool forUserspace = false, bool allowYield = true) = 0;
 
 	virtual uint64_t GetOwningThreadID() = 0;
 	virtual void Transfer(uint64_t tid) = 0;

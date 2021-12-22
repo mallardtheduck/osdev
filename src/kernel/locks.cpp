@@ -66,7 +66,7 @@ public:
 		else return TryTakeExclusive();
 	}
 
-	void Release(bool forUserspace = false) override{
+	void Release(bool forUserspace = false, bool allowYield = true) override{
 		if(!Scheduler_Ready()) return;
 		auto currentThreadID = CurrentThread().ID();
 		if(owningThreadID != currentThreadID){
@@ -76,8 +76,10 @@ public:
 		--recursionCount;
 		if(recursionCount == 0){
 			while(!__sync_bool_compare_and_swap(&owningThreadID, currentThreadID, 0));
-			if(waiting) CurrentThread().Yield();
-			CurrentThread().YieldIfPending();
+			if(allowYield){
+				if(waiting) CurrentThread().Yield();
+				CurrentThread().YieldIfPending();
+			}
 		}
 	}
 
