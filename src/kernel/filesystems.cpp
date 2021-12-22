@@ -57,7 +57,7 @@ public:
 		string pathString = path;
 		string mountName;
 		auto pathPtr = path;
-		while(pathPtr && *pathPtr && *pathPtr != ':'){
+		for(; pathPtr && *pathPtr && *pathPtr != ':'; ++pathPtr){
 			mountName += *pathPtr;
 		}
 		if(*pathPtr != ':' || IsNameValid(mountName.c_str())) return nullptr;
