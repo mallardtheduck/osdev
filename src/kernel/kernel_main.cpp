@@ -19,6 +19,7 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	Devices_Init();
 	Filesystem_Init();
 	Info_Init();
+	InitFS_Init();
 	Modules_Init();
 	init_handles();
 	userapi_init();
