@@ -60,11 +60,20 @@ public:
 		for(; pathPtr && *pathPtr && *pathPtr != ':'; ++pathPtr){
 			mountName += *pathPtr;
 		}
-		if(*pathPtr != ':' || IsNameValid(mountName.c_str())) return nullptr;
-		if(pathString.length() < mountName.length() + 2) return nullptr;
+		if(*pathPtr != ':' || !IsNameValid(mountName.c_str())){
+			dbgpf("FS: GetNode: Invalid path (mount name coud not be parsed): %s\n", path);
+			return nullptr;
+		}
+		if(pathString.length() < mountName.length() + 2){
+			dbgpf("FS: GetNode: Invalid path (too short): %s\n", path);
+			return nullptr;
+		}
 		auto pathPart = pathString.substr(mountName.length() + 1, pathString.length() - mountName.length() - 1);
 		auto hl = lock->LockExclusive();
-		if(!mounts.has_key(mountName.c_str())) return nullptr;
+		if(!mounts.has_key(mountName.c_str())){
+			dbgpf("FS: GetNode: Mount not found: %s\n", mountName.c_str());
+			return nullptr;
+		}
 		auto mount = mounts[mountName];
 		return mount->GetNode(pathPart.c_str());
 	}
