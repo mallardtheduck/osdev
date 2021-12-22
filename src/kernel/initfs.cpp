@@ -140,12 +140,27 @@ IDirectoryHandle *InitFSNode::OpenDirectory(uint32_t mode){
 	else return nullptr;
 }
 
+bool IsMatch(const string &a, const string &b){
+	size_t aPos = 0, bPos = 0;
+	while(a.size() > aPos && a[aPos] == '/') ++aPos;
+	while(b.size() > bPos && b[bPos] == '/') ++bPos;
+	while(a.size() > aPos && b.size() > bPos && to_upper(a[aPos]) == to_upper(b[bPos])){
+		++aPos;
+		++bPos;
+	}
+	dbgpf("a: '%s' (%lu) b: '%s' (%lu) aPos: %lu bPos: %lu\n", a.c_str(), a.size(), b.c_str(), b.size(), aPos, bPos);
+	return (a.size() == aPos && b.size() == bPos);
+}
+
 class MountedInitFS : public IMountedFilesystem{
 public:
 	FilesystemNodePointer GetNode(const char *path) override{
-		if(string(path) == "") return new InitFSNode(nullptr);
+		dbgpf("INITFS: GetNode: %s\n", path);
+		string spath = path;
+		dbgpf("%i %i\n", (int)(spath == ""), (int)(spath == "/"));
+		if(spath == "" || spath == "/") return new InitFSNode(nullptr);
 		for(auto &file : *initfs_data){
-			if(file.name == path) return new InitFSNode(&file);
+			if(IsMatch(file.name, spath)) return new InitFSNode(&file);
 		}
 		return nullptr;
 	}
@@ -176,12 +191,6 @@ struct tar_header{
 	char mtime[12];
 	char chksum[8];
 	char typeflag[1];
-};
-
-struct initfs_handle{
-	size_t fileindex;
-	size_t pos;
-	initfs_handle(size_t index, size_t p=0) : fileindex(index), pos(p) {}
 };
 
 long from_oct(int digs, const char *where){
@@ -238,161 +247,7 @@ IFilesystem *InitFSGet(){
 	return theInitFS;
 }
 
-#if 0
-
-#define fdata ((initfs_handle*)filedata)
-
-struct initfs_dirhandle{
-	size_t pos;
-	initfs_dirhandle(size_t p=0) : pos(p) {}
-};
-
-#define ddata ((initfs_dirhandle*)dirdata)
-
-size_t initfs_getfilecount(){
-	return initfs_data->size();
+void InitFS_Init(){
+	auto mount = InitFSGet()->Mount(nullptr);
+	GetVirtualFilesystem().Attach("INIT", mount);
 }
-
-initfs_file initfs_getfile(int index){
-	return (*initfs_data)[index];
-}
-
-void *initfs_mount(char *){
-	dbgout("INITFS: Mounted.\n");
-	return (void*)1;
-}
-
-bool initfs_unmount(void *){
-	return true;
-}
-
-void *initfs_open(void *, fs_path *path, fs_mode_flags){
-	dbgpf("INITFS: Open %s.\n", path->str);
-	int files=initfs_getfilecount();
-	for(int i=0; i<files; ++i){
-		initfs_file file=initfs_getfile(i);
-		if(to_upper(file.name) == to_upper(path->str)){
-			return (void*)new initfs_handle(i);
-		}
-	}
-	return NULL;
-}
-
-
-
-void *initfs_open_dir(void *, fs_path *path, fs_mode_flags){
-	if(path->next != NULL) return NULL;
-	return (void*)new initfs_dirhandle;
-}
-bool initfs_close_dir(void *dirdata){
-	delete (initfs_dirhandle*)ddata;
-	return true;
-}
-
-directory_entry initfs_read_dir(void *dirdata){
-	directory_entry ret;
-	if(ddata->pos>=initfs_getfilecount()){
-		ret.valid=false;
-		dbgout("INITFS: No such directory entry.\n");
-		return ret;
-	}
-	initfs_file file=initfs_getfile(ddata->pos);
-	strncpy(ret.filename, file.name.c_str(), 255);
-	ret.id = (uint64_t)file.data;
-	ret.size=file.size;
-	ret.type=FS_File;
-	ret.valid=true;
-	ddata->pos++;
-	return ret;
-}
-
-bool initfs_write_dir(void *, directory_entry){
-	return false;
-}
-
-directory_entry initfs_stat(void *, fs_path *path){
-	dbgpf("INITFS: Stat '%s'.\n",path->str);
-	if(*(path->str)=='\0'){
-		dbgout("INITFS: Stat root.\n");
-		directory_entry ret;
-		ret.filename[0]='\0';
-		ret.id = 0;
-		ret.size=initfs_getfilecount();
-		ret.type=FS_Directory;
-		ret.valid=true;
-		return ret;
-	}else{
-		int files=initfs_getfilecount();
-		for(int i=0; i<files; ++i){
-			initfs_file file=initfs_getfile(i);
-			if(to_upper(file.name) == to_upper(path->str)){
-				initfs_dirhandle dh(i);
-				return initfs_read_dir(&dh);
-			}
-		}
-		directory_entry ret;
-		ret.valid=false;
-		return ret;
-	}
-}
-
-bt_filesize_t initfs_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
-	if(flags & FS_Relative) fdata->pos+=pos;
-	else if(flags & FS_Backwards){
-		initfs_file file=initfs_getfile(fdata->fileindex);
-		fdata->pos = file.size - pos;
-	} else if(flags == (FS_Backwards | FS_Relative)) fdata->pos-=pos;
-	else fdata->pos=pos;
-	return fdata->pos;
-}
-
-bool initfs_seek(void *filedata, bt_filesize_t size){
-	return false;
-}
-
-size_t initfs_dirseek(void *dirdata, size_t pos, uint32_t flags){
-	if(flags & FS_Relative) ddata->pos+=pos;
-	else if(flags & FS_Backwards){
-		ddata->pos = initfs_getfilecount() - pos;
-	} else if(flags == (FS_Backwards | FS_Relative)) ddata->pos-=pos;
-	else ddata->pos=pos;
-	return ddata->pos;
-}
-
-bool initfs_format(char*, void*){
-	return false;
-}
-
-fs_driver initfs_driver = {true, (char*)"INITFS", false,
-	initfs_mount, initfs_unmount,
-	initfs_open, initfs_close, initfs_read, initfs_write, initfs_seek, initfs_seek, initfs_ioctl, initfs_flush,
-	initfs_open_dir, initfs_close_dir, initfs_read_dir, initfs_write_dir, initfs_dirseek,
-	initfs_stat, initfs_format};
-
-fs_driver initfs_getdriver(){
-	if(!initfs_data){
-		initfs_data = new vector<initfs_file>();
-		multiboot_info_t *mbi = mbt;
-		if(mbi->mods_count > 0){
-			module_t *mod = (module_t *)mbi->mods_addr;
-			tar_header *th = (tar_header*)mod->mod_start;
-			dbgpf("INITFS: Module starts at %x and ends at %x\n", (int)mod->mod_start, (int)mod->mod_end);
-			while((uint32_t)th < mod->mod_end){
-				if(th->filename[0] == '\0') break;
-				unsigned char *data = (unsigned char*)((uint32_t)th + 512);
-				size_t size = tar_size(th->size);
-				dbgpf("INITFS: %s, %x, %i\n", th->filename, (int)data, (int)size);
-				initfs_file file;
-				file.data = data;
-				file.name = th->filename;
-				file.size = size;
-				initfs_data->push_back(file);
-				th = (tar_header*)((uint32_t) data + (512 * (size % 512 ? (size / 512) + 1 : size / 512)));
-			}
-		}else{
-			panic("(INITFS) No tar module loaded!");
-		}
-	}
-	return initfs_driver;
-}
-#endif
