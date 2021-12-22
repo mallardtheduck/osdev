@@ -42,7 +42,6 @@ sch_yield:
 	mov %ax, %fs
 	mov %ax, %gs
 	mov %esp, %eax
-	// Call C++ scheduler
 	call sch_switchstack
 	popl %gs
 	popl %fs
@@ -59,10 +58,10 @@ sch_switchstack:
 	mov sch_stack, %esp
 	push %ebx
 	push %eax
+	// Call C++ scheduler
 	call sch_schedule
-	pop %eax
-	pop %ebx
-	mov $curstack, %eax
+	pop %edx
+	pop %edx
 	mov (%eax), %ebx
 	mov %ebx, %ss
 	mov 4(%eax), %ebx
