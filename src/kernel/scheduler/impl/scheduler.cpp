@@ -239,7 +239,7 @@ uint64_t Scheduler::Schedule(uint64_t stackToken){
 
 void Scheduler::EnableScheduler(){
 	auto il = GetHAL().LockInterrupts();
-	if(lock->IsLocked() && lock->GetOwningThreadID() == current->ID()) lock->Release();
+	if(lock->IsLocked() && lock->GetOwningThreadID() == current->ID()) lock->Release(false, false);
 }
 
 bool Scheduler::DisableScheduler(){
