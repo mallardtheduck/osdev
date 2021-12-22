@@ -49,10 +49,10 @@ char *strncpy(char *dest, const char *src, size_t count){
 	return dest;
 }
 
-int strcmp(const char *lhs, const char *rhs){
-	int diff = 0;
-	for(size_t i = 0; diff == 0 && rhs[i] && lhs[i]; ++i){
-		diff = rhs[i] - lhs[i];
-	}
-	return diff;
+int strcmp(const char *s1, const char *s2){
+	while(*s1 && (*s1 == *s2))    {
+        s1++;
+        s2++;
+    }
+    return *(const unsigned char*)s1 - *(const unsigned char*)s2;
 }

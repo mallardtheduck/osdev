@@ -63,13 +63,18 @@ string itoa(int num, int base){
 }
 
 
+char to_upper(const char c){
+    if(c >= 'a' && c <= 'z') return c-'a'+'A';
+    else return c;
+}
+
 string to_upper(const string &str){
 	size_t buflen=str.length()+1;
 	char *buf=(char*)malloc(buflen);
 	memset(buf, 0, buflen);
 	strncpy(buf, str.c_str(), buflen);
 	for(size_t i=0; i<buflen; ++i){
-		if(buf[i] >= 'a' && buf[i] <= 'z') buf[i]=buf[i]-'a'+'A';
+        buf[i] = to_upper(buf[i]);
 	}
 	string ret(buf);
 	free(buf);

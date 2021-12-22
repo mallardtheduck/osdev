@@ -12,6 +12,7 @@
 class string;
 
 char* itoa(int num, char* str, int base=10);
+char to_upper(const char c);
 string to_upper(const string &str);
 bool starts_with(const string &str, const string &cmp);
 vector<string> split_string(const string &str, const char c);
