@@ -23,6 +23,8 @@ extern "C" sch_stackinfo *sch_schedule(uint32_t ss, uint32_t esp){
 	token = sch.Schedule(token);
 	curstack.ss = (token >> 32);
 	curstack.esp = (uint32_t)token;
+	//dbgpf("curstack: %lx:%lx\n", curstack.ss, curstack.esp);
+	if(curstack.esp < 1024 * 1024) panic("(HAL) Invalid stack!");
 	return &curstack;
 }
 
@@ -64,6 +66,6 @@ extern "C" void sch_isr_c(){
 	hal.AcknowlegdeIRQIfPending(0);
 }
 
-extern "C" void sch_update_eip(uint32_t /*eip*/){
-	//Do nothing for now...
+extern "C" void sch_update_eip(uint32_t eip){
+	CurrentThread().SetDiagnosticInstructionPointer(eip);
 }
