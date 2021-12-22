@@ -51,8 +51,7 @@ char *strncpy(char *dest, const char *src, size_t count){
 
 int strcmp(const char *lhs, const char *rhs){
 	int diff = 0;
-	size_t i = 0;
-	while(diff == 0 && rhs[i] && lhs[i]){
+	for(size_t i = 0; diff == 0 && rhs[i] && lhs[i]; ++i){
 		diff = rhs[i] - lhs[i];
 	}
 	return diff;
