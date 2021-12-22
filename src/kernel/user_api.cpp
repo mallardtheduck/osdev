@@ -669,8 +669,8 @@ USERAPI_HANDLER(BT_ACK){
 }
 
 USERAPI_HANDLER(BT_MSGWAIT){
-	//TODO: Implement once messaging is fully refactored!
-	//proc_message_wait();
+	auto &msg = GetMessageManager();
+	msg.AwaitMessage();
 }
 
 USERAPI_HANDLER(BT_SUBSCRIBE){
@@ -709,17 +709,18 @@ USERAPI_HANDLER(BT_MSGQUERY){
 
 USERAPI_HANDLER(BT_MAKE_MSG_WAIT){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(btos_api::bt_msg_filter))){
-		//TODO: Implement once messaging is fully refactored!
-		//bt_handle_info h = msg_create_recv_handle(*(btos_api::bt_msg_filter*)state.Get32BitRegister(Generic_Register::GP_Register_B));
-		//state.Get32BitRegister(Generic_Register::GP_Register_A) = proc_add_handle(h);
+		auto h = GetMessageManager().CreateRecieveHandle(*(btos_api::bt_msg_filter*)state.Get32BitRegister(Generic_Register::GP_Register_B));
+		if(h) state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(h);
+		else state.Get32BitRegister(Generic_Register::GP_Register_A) = 0;
 	}else RAISE_US_ERROR();
 }
 
 USERAPI_HANDLER(BT_READ_MSG_WAIT){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(btos_api::bt_msg_header))){
-		//TODO: Implement once messaging is fully refactored!
-		//bt_handle_info h = proc_get_handle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-		//*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_C) = msg_read_recv_handle(h);
+		auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
+		if(auto handle = KernelHandleCast<KernelHandles::MessageRecive>(h)){
+			*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_C) = handle->Read();
+		}
 	}else RAISE_US_ERROR();
 }
 
