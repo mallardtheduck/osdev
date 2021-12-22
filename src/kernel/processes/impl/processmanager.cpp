@@ -16,6 +16,7 @@ ProcessManager::ProcessManager(){
 		auto sl = GetScheduler().LockScheduler();
 		newProcList.swap(processes);
 	}
+	currentProcess = kernelProcess;
 }
 
 bool ProcessManager::SwitchProcess(bt_pid_t pid) {
