@@ -121,7 +121,7 @@ class vector
 				// Remember we just did a swap.
 				newData[loop].~T();
 			}
-			free(newData);
+			if(newData) free(newData);
 		}
 
 		void push_back(const T &item)
@@ -304,7 +304,7 @@ public:
 		return (pointer)malloc(n*sizeof(value_type));
 	}
 	void deallocate (pointer p, size_type n){
-		free(p);
+		if(p) free(p);
 	}
 
 	size_t max_size() const throw(){
