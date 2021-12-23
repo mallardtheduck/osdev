@@ -235,7 +235,7 @@ public:
 	ElfModule(IFileHandle &file) : mod(elf_load_module(file)) {}
 
 	void Execute(const char *mod_params = nullptr) override{
-		mod.entry(nullptr /*SYSCALL_TABLE*/, (char*)mod_params);
+		mod.entry(&GetModuleAPI(), (char*)mod_params);
 	};
 
 	ProcessEntryPoint GetEntryPoint() override{
