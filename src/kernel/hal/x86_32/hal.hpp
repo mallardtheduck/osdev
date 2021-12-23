@@ -20,6 +20,7 @@ public:
 	uint64_t &Get64BitRegister(Generic_Register /*reg*/) override;
 
 	uint32_t GetInterruptNo() const override;
+	uint32_t GetIRQNo() const override;
 	uint32_t GetErrorCode() const override;
 	uintptr_t GetPageFaultAddress() const override;
 

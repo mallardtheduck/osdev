@@ -28,6 +28,7 @@ public:
 	virtual uint64_t &Get64BitRegister(Generic_Register reg) = 0;
 	
 	virtual uint32_t GetInterruptNo() const = 0;
+	virtual uint32_t GetIRQNo() const = 0;
 	virtual uint32_t GetErrorCode() const = 0;
 	virtual uintptr_t GetPageFaultAddress() const = 0;
 

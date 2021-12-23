@@ -72,6 +72,10 @@ uint64_t &CPUState_x86_32::Get64BitRegister(Generic_Register /*reg*/){
 	return unused;
 }
 
+uint32_t CPUState_x86_32::GetIRQNo() const{
+	return regs->interrupt_number - IRQ_BASE;
+}
+
 uint32_t CPUState_x86_32::GetInterruptNo() const{
 	return regs->interrupt_number;
 }
