@@ -167,6 +167,7 @@ btos_api::hwpnp::IDriver *GetATAPIDriver(){
 }
 
 int module_main(char *){
+	preinit_dma();
 	API->GetHwPnPManager().RegisterDriver(&ataDriver);
 	API->GetHwPnPManager().RegisterDriver(&ataHDDDriver);
 	API->GetHwPnPManager().RegisterDriver(&mbrVolumeDriver);
