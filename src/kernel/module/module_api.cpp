@@ -73,7 +73,7 @@ public:
 	}
 
 	IHAL &GetHAL() override {
-		return GetHAL();
+		return ::GetHAL();
 	}
 
 	IVirtualFilesystem &GetVirtualFilesystem() override{
