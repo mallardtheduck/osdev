@@ -5,7 +5,6 @@
 #include "io.hpp"
 #include "pic.hpp"
 
-const int IRQ_BASE=32;
 volatile unsigned int imode=0;
 
 /* Defines an IDT entry */

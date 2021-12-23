@@ -4,6 +4,8 @@
 #include "../../kernel.hpp"
 #include <module/drivers.h>
 
+constexpr int IRQ_BASE=32;
+
 extern "C" uint32_t syscall(uint32_t fn);
 
 /* CPU-generated interrupt handler stubs; declared in interrupt.s */
