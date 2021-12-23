@@ -18,6 +18,7 @@ extern "C" void kernel_main(multiboot_info_t *mbd, unsigned int /*magic*/)
 	GetHAL().YieldToScheduler();
 	Devices_Init();
 	Filesystem_Init();
+	DevFS_Init();
 	Info_Init();
 	InitFS_Init();
 	Modules_Init();

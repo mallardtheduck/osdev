@@ -4,5 +4,6 @@
 #include "kernel.hpp"
 
 IFilesystem *DevFSGet();
+void DevFS_Init();
 
 #endif

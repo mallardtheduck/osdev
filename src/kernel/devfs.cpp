@@ -159,3 +159,8 @@ IFilesystem *DevFSGet(){
 	if(!theDevFS) theDevFS.Init();
 	return theDevFS;
 }
+
+void DevFS_Init(){
+	auto mount = DevFSGet()->Mount(nullptr);
+	GetVirtualFilesystem().Attach("DEV", mount);
+}
