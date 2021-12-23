@@ -11,12 +11,12 @@ class ThreadsCommand (gdb.Command):
 		return "Unknown PID"
 		
 	def addr_to_module(self, addr):
-		modCount = gdb.parse_and_eval("loaded_modules.dataSize")
+		modCount = gdb.parse_and_eval("theModuleManager.ptr->modules.dataSize")
 		ret = "KERNEL"
 		modules = []
 		for mix in range(modCount):
-			base = gdb.parse_and_eval("loaded_modules.data[%s].elf.mem.aligned" % mix)
-			name = gdb.parse_and_eval("loaded_modules.data[%s].filename.p" % mix)
+			base = gdb.parse_and_eval("((ElfModule*)(theModuleManager.ptr->modules.data[%s].elf))->mod.mem.aligned" % mix)
+			name = gdb.parse_and_eval("theModuleManager.ptr->modules.data[%s].filename.p" % mix)
 			modules.append({'base': base, 'name': name})
 		modules.sort(key=lambda x: x['base'])
 
@@ -50,10 +50,10 @@ class ModsCommand (gdb.Command):
 	   super (ModsCommand, self).__init__ ("btos-modinfo", gdb.COMMAND_USER)
 	
 	def invoke (self, arg, from_tty):
-		modCount = gdb.parse_and_eval("loaded_modules.dataSize")
+		modCount = gdb.parse_and_eval("theModuleManager.ptr->modules.dataSize")
 		for mix in range(modCount):
-			base = gdb.parse_and_eval("loaded_modules.data[%s].elf.mem.aligned" % mix)
-			name = gdb.parse_and_eval("loaded_modules.data[%s].filename.p" % mix)
+			base = gdb.parse_and_eval("((ElfModule*)(theModuleManager.ptr->modules.data[%s].elf))->mod.mem.aligned" % mix)
+			name = gdb.parse_and_eval("theModuleManager.ptr->modules.data[%s].filename.p" % mix)
 			print("%s: Module: %s Addr: %s" % (mix, name, base))
 
 ModsCommand ()
