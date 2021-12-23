@@ -37,7 +37,7 @@ private:
 		}
 
 	private:
-		T &t_;
+		T t_;
 	};
 
 	static constexpr size_t callableBufferSize = 32;
