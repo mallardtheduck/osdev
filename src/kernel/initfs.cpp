@@ -148,16 +148,14 @@ bool IsMatch(const string &a, const string &b){
 		++aPos;
 		++bPos;
 	}
-	dbgpf("a: '%s' (%lu) b: '%s' (%lu) aPos: %lu bPos: %lu\n", a.c_str(), a.size(), b.c_str(), b.size(), aPos, bPos);
 	return (a.size() == aPos && b.size() == bPos);
 }
 
 class MountedInitFS : public IMountedFilesystem{
 public:
 	FilesystemNodePointer GetNode(const char *path) override{
-		dbgpf("INITFS: GetNode: %s\n", path);
+		//dbgpf("INITFS: GetNode: %s\n", path);
 		string spath = path;
-		dbgpf("%i %i\n", (int)(spath == ""), (int)(spath == "/"));
 		if(spath == "" || spath == "/") return new InitFSNode(nullptr);
 		for(auto &file : *initfs_data){
 			if(IsMatch(file.name, spath)) return new InitFSNode(&file);
