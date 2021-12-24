@@ -22,6 +22,7 @@ Process *Process::CreateKernelProcess(){
 uintptr_t Process::AllocateStack(size_t size){
 	size_t pages = size / MM2::MM2_Page_Size;
 	uintptr_t baseAddress = 0 - (pages * MM2::MM2_Page_Size);
+	dbgpf("PROC: Allocating initial process stack at %lx (%lu pages)\n", baseAddress, pages);
 	MM2::current_pagedir->alloc_pages_at(pages, (void*)baseAddress);
 	memset((void*)baseAddress, 0, size);
 	return 0 - sizeof(void*);
@@ -51,11 +52,31 @@ Process::Process() {}
 void Process::CleanupProcess(){
 	{
 		auto hl = lock->LockRecursive();
+		vector<ThreadPointer> threads;
 		for(auto &h : handles){
-			h.second->Close();
-			delete h.second;
+			auto handle = KernelHandleCast<KernelHandles::Thread>(h.second);
+			if(handle){
+				threads.push_back(handle->GetData());
+				h.second->Close();
+				delete h.second;
+				h.second = nullptr;
+			}
 		}
-		if(GetScheduler().GetPIDThreadCount(pid) > 0) panic("(PROC) Thread count inconsistency!");
+		for(auto &t : threads){
+			t->Abort();
+			t->Join();
+		}
+		threads.clear();
+		for(auto &h : handles){
+			if(h.second){
+				h.second->Close();
+				delete h.second;
+			}
+		}
+		if(GetScheduler().GetPIDThreadCount(pid) > 0){
+			dbgpf("PROC: ThreadCount: %lu\n", GetScheduler().GetPIDThreadCount(pid));
+			panic("(PROC) Thread count inconsistency!");
+		}
 		if(parent){
 			auto parentProcess = GetProcessManager().GetByID(parent);
 			if(parentProcess){
@@ -89,7 +110,7 @@ const char *Process::GetName(){
 void Process::End(){
 	if(pid == 0) panic("(PROC) Kernel process attempting to end!");
 	{
-		auto hl = lock->LockExclusive();
+		auto hl = lock->LockRecursive();
 		if(status != btos_api::bt_proc_status::Ending){
 			debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
 			status = btos_api::bt_proc_status::Ending;
@@ -100,18 +121,17 @@ void Process::End(){
 
 void Process::Terminate(){
 	if(pid == 0) panic("(PROC) Kernel process terminate request!");
+	bool endCurrentThread = false;
 	{
 		auto hl = lock->LockExclusive();
 		returnValue = -1;
-		bool endCurrentThread = false;
 		if(&CurrentProcess() == this){
 			GetProcessManager().SwitchProcess(0);
 			endCurrentThread = true;
 		}
 		End();
-		if(endCurrentThread) CurrentThread().Abort();
 	}
-
+	if(endCurrentThread) CurrentThread().Abort();
 }
 
 void Process::HoldBeforeUserspace(){
@@ -149,6 +169,7 @@ void Process::SetEnvironmentVariable(const char *name, const char *value, uint8_
 }
 
 const char *Process::GetEnvironmentVariable(const char *name, bool userspace){
+	dbgpf("PROC: GetEnvironmentVariable: '%s' (%i)\n", name, (int)userspace);
 	auto upperName = to_upper(name);
 
 	uint8_t globalFlags = 0;
@@ -175,6 +196,7 @@ ThreadPointer Process::NewUserThread(ProcessEntryPoint p, void *param, void *sta
 		CurrentThread().SetAbortable(true);
 		debug_event_notify(pid, CurrentThread().ID(), bt_debug_event::ThreadStart);
 		CurrentProcess().SetStatus(btos_api::bt_proc_status::Running);
+		dbgpf("PROC: Starting user thread at %p with stack %lx.\n", p, stackPointer);
 		GetHAL().RunUsermode(stackPointer, p);
 	}, UserThreadKernelStackSize);
 }
@@ -320,7 +342,7 @@ void Process::IncrementRefCount(){
 }
 
 void Process::DecrementRefCount(){
-	auto hl = lock->LockExclusive();
+	auto hl = lock->LockRecursive();
 	if(refCount > 0) --refCount;
 	if(!refCount && status == btos_api::bt_proc_status::Ending) CleanupProcess();
 }

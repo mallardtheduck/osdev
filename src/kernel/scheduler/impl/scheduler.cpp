@@ -160,17 +160,14 @@ void Scheduler::DebugResumeThreadsByPID(uint64_t pid){
 }
 
 void Scheduler::HoldThreadsByPID(uint64_t pid){
-	if(current->pid == pid){
-		panic("(SCH) Cannot hold current PID!");
-	}else{
-		auto hl = lock->LockExclusive();
-		for(auto thread : threads){
-			if(thread->pid == pid){
-				if(thread->status == ThreadStatus::Runnable){
-					thread->status = ThreadStatus::HeldRunnable;
-				}else if(thread->status == ThreadStatus::Blocked){
-					thread->status = ThreadStatus::HeldBlocked;
-				}
+	auto hl = lock->LockExclusive();
+	for(auto thread : threads){
+		if(thread == current) continue;
+		if(thread->pid == pid){
+			if(thread->status == ThreadStatus::Runnable){
+				thread->status = ThreadStatus::HeldRunnable;
+			}else if(thread->status == ThreadStatus::Blocked){
+				thread->status = ThreadStatus::HeldBlocked;
 			}
 		}
 	}
@@ -231,9 +228,12 @@ uint64_t Scheduler::Schedule(uint64_t stackToken){
 	}
 	if(!next) next = PlanCycle();
 	lock->Transfer(next->id);
+	current->SetAbortable(true);
+	next->SetAbortable(false);
 	current = next;
 	if(current->loadModifier < MaxLoadModifier) ++current->loadModifier;
 	current->dynamicPriority = current->staticPriority + current->loadModifier;
+	GetHAL().SetKernelStack(current->stackBase);
 	return next->stackToken;
 }
 

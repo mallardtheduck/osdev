@@ -126,6 +126,7 @@ void Thread::Abort(){
 	if(abortlevel == 0){
 		status = ThreadStatus::Ending;
 		theScheduler->reaperThread->Unblock();
+		Yield(nullptr);
 	}
 	else userAbort = true;
 }
