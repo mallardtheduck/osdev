@@ -451,11 +451,15 @@ USERAPI_HANDLER(BT_STAT){
 	if(is_safe_string(state.Get32BitRegister(Generic_Register::GP_Register_B)) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(directory_entry))){
 		directory_entry *entry=(directory_entry*)state.Get32BitRegister(Generic_Register::GP_Register_C);
 		auto node = GetVirtualFilesystem().GetNode((char*)state.Get32BitRegister(Generic_Register::GP_Register_B));
-		strncpy(entry->filename, node->GetName(), BT_MAX_SEGLEN - 1);
-		entry->id = (uint64_t)node.get();
-		entry->size = node->GetSize();
-		entry->type = node->GetType();
-		entry->valid = true;
+		if(node){
+			strncpy(entry->filename, node->GetName(), BT_MAX_SEGLEN - 1);
+			entry->id = (uint64_t)node.get();
+			entry->size = node->GetSize();
+			entry->type = node->GetType();
+			entry->valid = true;
+		}else{
+			entry->valid = false;
+		}
 	}else RAISE_US_ERROR();
 }
 
