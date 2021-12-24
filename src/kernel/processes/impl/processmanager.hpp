@@ -10,7 +10,7 @@ private:
 	friend class Process;
 
 	bt_pid_t pidCounter = 0;
-	vector<Process*> processes;
+	vector<ProcessPointer> processes;
 	Process *currentProcess = nullptr;
 	Process *kernelProcess = nullptr;
 	

@@ -10,7 +10,7 @@ void ProcessManager::RemoveProcess(const Process *p){
 
 ProcessManager::ProcessManager(){
 	kernelProcess = Process::CreateKernelProcess();
-	vector<Process*> newProcList;
+	vector<ProcessPointer> newProcList;
 	newProcList.push_back(kernelProcess);
 	{
 		auto sl = GetScheduler().LockScheduler();
@@ -40,7 +40,7 @@ void ProcessManager::SwitchProcessFromScheduler(bt_pid_t pid) {
 		for(auto &proc : processes){
 			if(proc->ID() == pid){
 				CurrentThread().SetPID(pid);
-				currentProcess = proc;
+				currentProcess = (Process*)proc.get();
 				GetMemoryManager().SwitchPageDirectory(currentProcess->pageDirectory.get());
 				return;
 			}
@@ -54,7 +54,7 @@ ProcessPointer ProcessManager::NewProcess(const char *name, const vector<const c
 	proc->pid = ++pidCounter;
 	{
 		auto hl = lock->LockExclusive();
-		vector<Process*> newProcList = processes;
+		vector<ProcessPointer> newProcList = processes;
 		newProcList.push_back(proc);
 		{
 			auto sl = GetScheduler().LockScheduler();
