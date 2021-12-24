@@ -64,6 +64,11 @@ public:
 	char operator[](const size_type n) const;
 	char at(const size_type n) const;
 	string& erase(size_type pos, size_type len);
+
+	char *begin();
+	const char *begin() const;
+
+	const char *end() const;
 };
 
 #endif

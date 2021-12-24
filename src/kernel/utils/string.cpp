@@ -43,6 +43,7 @@ static char* malloc_never_null(const size_t b)
 
 static char* strdup_never_null(const char* s)
 {
+	if(!s) s = "";
 	const size_t len = strlen(s)+1;
 	char *p = malloc_never_null(len);
 	memcpy(p, s, len);
@@ -203,3 +204,14 @@ string& string::erase(size_type pos, size_type len)
 	return *this;
 }
 
+char *string::begin(){
+	return p;
+}
+
+const char *string::begin() const{
+	return p;
+}
+
+const char *string::end() const{
+	return p + size();
+}
