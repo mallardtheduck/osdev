@@ -44,7 +44,11 @@ void CPUState_x86_32::DebugStackTrace() const{
 				dbgout("STACK CORRUPT.\n");
 				break;
 			}
-			memcpy((void*)stack, (void*)bp, sizeof(stack));
+			if(is_safe_ptr(bp, sizeof(stack))) memcpy((void*)stack, (void*)bp, sizeof(stack));
+			else{
+				dbgout("STACK UNREACHABLE.\n");
+				break;
+			}
 		}
 		else break;
 	}
