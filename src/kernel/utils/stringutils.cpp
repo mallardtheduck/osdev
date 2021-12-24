@@ -69,16 +69,11 @@ char to_upper(const char c){
 }
 
 string to_upper(const string &str){
-	size_t buflen=str.length()+1;
-	char *buf=(char*)malloc(buflen);
-	memset(buf, 0, buflen);
-	strncpy(buf, str.c_str(), buflen);
-	for(size_t i=0; i<buflen; ++i){
-        buf[i] = to_upper(buf[i]);
-	}
-	string ret(buf);
-	free(buf);
-	return ret;
+    string ret = str;
+    for(auto &c : ret){
+        c = to_upper(c);
+    }
+    return ret;
 }
 
 bool starts_with(const string &str, const string &cmp){
