@@ -76,6 +76,7 @@ public:
 		--recursionCount;
 		if(recursionCount == 0){
 			while(!__sync_bool_compare_and_swap(&owningThreadID, currentThreadID, 0));
+			CurrentThread().SetAbortable(true);
 			if(allowYield){
 				if(waiting) CurrentThread().Yield();
 				CurrentThread().YieldIfPending();
