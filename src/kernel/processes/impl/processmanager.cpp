@@ -51,7 +51,7 @@ void ProcessManager::SwitchProcessFromScheduler(bt_pid_t pid) {
 
 ProcessPointer ProcessManager::NewProcess(const char *name, const vector<const char*> &args, IProcess &parent) {
 	auto proc = new Process(name, args, parent);
-	proc->pid = pidCounter++;
+	proc->pid = ++pidCounter;
 	{
 		auto hl = lock->LockExclusive();
 		vector<Process*> newProcList = processes;
