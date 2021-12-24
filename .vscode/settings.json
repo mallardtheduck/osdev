@@ -54,7 +54,8 @@
         "optional": "cpp",
         "istream": "cpp",
         "ostream": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "*.def": "cpp"
     },
     "editor.fontLigatures": true
 }
