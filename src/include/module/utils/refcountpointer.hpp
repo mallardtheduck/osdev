@@ -43,7 +43,7 @@ public:
 		return *this;
 	}
 
-	operator bool(){
+	operator bool() const{
 		return theObject;
 	}
 
@@ -57,6 +57,14 @@ public:
 
 	T &operator*(){
 		return *theObject;
+	}
+
+	bool operator==(const RefCountPointer &other) const{
+		return theObject == other.theObject;
+	}
+
+	bool operator!=(const RefCountPointer &other) const{
+		return theObject != other.theObject;
 	}
 
 	template<typename R> operator RefCountPointer<R>(){
