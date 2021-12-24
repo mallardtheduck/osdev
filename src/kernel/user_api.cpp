@@ -39,7 +39,7 @@ void userapi_handler(ICPUState &state){
 		dbgpf("UAPI: Abortlevel: %i, ext: %i fn: %x\n", currentThread.GetAbortLevel(), (int)ext, (int)fn);
 		panic("(UAPI) Non-zero abortlevel on return to userspace!\n");
 	}
-	if(currentThread.ShouldAbortAtUserBoundary() || currentProcess.GetStatus() == btos_api::bt_proc_status::Ending) CurrentThread().Abort();
+	if(currentThread.ShouldAbortAtUserBoundary() || currentProcess.GetStatus() == btos_api::bt_proc_status::Ending) currentThread.Abort();
 }
 
 bool is_safe_ptr(uint32_t ptr, size_t size, bt_pid_t pid){
