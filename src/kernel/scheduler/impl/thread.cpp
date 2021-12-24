@@ -122,7 +122,7 @@ int Thread::GetAbortLevel(){
 }
 
 void Thread::Abort(){
-	if(theScheduler->current == this) panic("(SCH) Thread attempting to abort itself!");
+	if(theScheduler->current == this && abortlevel > 1) panic("(SCH) Thread attempting to abort itself while not abortable!");
 	if(abortlevel == 0){
 		status = ThreadStatus::Ending;
 		theScheduler->reaperThread->Unblock();
