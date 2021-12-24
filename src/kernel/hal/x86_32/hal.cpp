@@ -233,6 +233,10 @@ public:
 		proc_run_usermode(stackPointer, entryPoint);
 	}
 
+	void SetKernelStack(void *stackBase) override{
+		gdt_set_kernel_stack(stackBase);
+	}
+
 	IDebugDriver &GetDebugDriver(){
 		return ::GetDebugDriver();
 	}

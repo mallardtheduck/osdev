@@ -106,6 +106,7 @@ public:
 	virtual uint64_t GenerateStackToken(uintptr_t addr) = 0;
 
 	virtual void RunUsermode(uintptr_t stackPointer, ProcessEntryPoint entryPoint) = 0;
+	virtual void SetKernelStack(void *stackBase) = 0;
 
 	virtual IDebugDriver &GetDebugDriver() = 0;
 
