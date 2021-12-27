@@ -60,15 +60,16 @@ ModsCommand ()
 
 class ProcsCommand (gdb.Command):
 	def __init__ (self):
-	   super (ProcsCommand, self).__init__ ("btos-procinfo", gdb.COMMAND_USER)
+		super (ProcsCommand, self).__init__ ("btos-procinfo", gdb.COMMAND_USER)
 	
 	def invoke (self, arg, from_tty):
-	  	procCount = gdb.parse_and_eval("proc_processes.dataSize")
-	  	for pix in range(procCount):
-	  		pid = gdb.parse_and_eval("proc_processes.data[%s]->pid" % pix)
-	  		name = gdb.parse_and_eval("proc_processes.data[%s]->name.p" % pix)
-	  		status = gdb.parse_and_eval("proc_processes.data[%s]->status" % pix)
-	  		print("%s: PID: %s Name: %s Status: %s" % (pix, pid, name, status))
+		procCount = gdb.parse_and_eval("theProcessManager.ptr->processes.dataSize")
+		for pix in range(procCount):
+			ptr = gdb.parse_and_eval("((Process*)theProcessManager.ptr->processes.data[%s].theObject)" % pix)
+			pid = gdb.parse_and_eval("((Process*)theProcessManager.ptr->processes.data[%s].theObject)->pid" % pix)
+			name = gdb.parse_and_eval("((Process*)theProcessManager.ptr->processes.data[%s].theObject)->name.p" % pix)
+			status = gdb.parse_and_eval("((Process*)theProcessManager.ptr->processes.data[%s].theObject)->status" % pix)
+			print("%s (%s): PID: %s Name: %s Status: %s" % (pix, ptr, pid, name, status))
 
 ProcsCommand ()
 
@@ -78,8 +79,8 @@ class ProcCommand (gdb.Command):
 	
 	def invoke (self, arg, from_tty):
 		pix = arg
-		print(gdb.parse_and_eval("*proc_processes.data[%s]" % pix))
-	  
+		print(gdb.parse_and_eval("*((Process*)theProcessManager.ptr->processes.data[%s].theObject)" % pix))
+	
 ProcCommand ()
 
 class ThreadCommand (gdb.Command):
@@ -89,5 +90,5 @@ class ThreadCommand (gdb.Command):
 	def invoke (self, arg, from_tty):
 		tix = arg
 		print(gdb.parse_and_eval("*theScheduler.ptr->threads.data[%s]" % tix))
-	  
+	
 ThreadCommand ()
