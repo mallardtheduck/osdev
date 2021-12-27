@@ -640,6 +640,7 @@ void PREFIX(free)(void *ptr)
 			printf( "liballoc: ERROR: Possible 1-3 byte overrun for magic %x != %x\n",
 								min->magic,
 								LIBALLOC_MAGIC );
+			panic("(LIBALLOC) Kernel memory error!");
 			FLUSH();
 			#endif
 		}
@@ -651,6 +652,7 @@ void PREFIX(free)(void *ptr)
 			printf( "liballoc: ERROR: multiple PREFIX(free)() attempt on %x from %x.\n", 
 									ptr,
 									__builtin_return_address(0) );
+			panic("(LIBALLOC) Kernel memory error!");
 			FLUSH();
 			#endif
 		}
@@ -660,6 +662,7 @@ void PREFIX(free)(void *ptr)
 			printf( "liballoc: ERROR: Bad PREFIX(free)( %x ) called from %x\n",
 								ptr,
 								__builtin_return_address(0) );
+			panic("(LIBALLOC) Kernel memory error!");
 			FLUSH();
 			#endif
 		}
@@ -786,6 +789,7 @@ void*   PREFIX(realloc)(void *p, size_t size)
 				printf( "liballoc: ERROR: Possible 1-3 byte overrun for magic %x != %x\n",
 									min->magic,
 									LIBALLOC_MAGIC );
+				panic("(LIBALLOC) Kernel memory error!");
 				FLUSH();
 				#endif
 			}
@@ -797,6 +801,7 @@ void*   PREFIX(realloc)(void *p, size_t size)
 				printf( "liballoc: ERROR: multiple PREFIX(free)() attempt on %x from %x.\n", 
 										ptr,
 										__builtin_return_address(0) );
+				panic("(LIBALLOC) Kernel memory error!");
 				FLUSH();
 				#endif
 			}
@@ -806,6 +811,7 @@ void*   PREFIX(realloc)(void *p, size_t size)
 				printf( "liballoc: ERROR: Bad PREFIX(free)( %x ) called from %x\n",
 									ptr,
 									__builtin_return_address(0) );
+				panic("(LIBALLOC) Kernel memory error!");
 				FLUSH();
 				#endif
 			}
