@@ -90,11 +90,7 @@ public:
 	virtual IProcess &CurrentProcess() = 0;
 	virtual ProcessPointer GetByID(bt_pid_t pid) = 0;
 
-	btos_api::bt_proc_status::Enum GetProcessStatusByID(bt_pid_t pid){
-		auto ptr = GetByID(pid);
-		if(!ptr) return btos_api::bt_proc_status::DoesNotExist;
-		else return ptr->GetStatus();
-	}
+	virtual btos_api::bt_proc_status::Enum GetProcessStatusByID(bt_pid_t pid) = 0;
 
 	virtual ~IProcessManager() {}
 };

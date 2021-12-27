@@ -117,6 +117,13 @@ ProcessPointer ProcessManager::GetByID(bt_pid_t pid) {
 	return nullptr;
 }
 
+btos_api::bt_proc_status::Enum ProcessManager::GetProcessStatusByID(bt_pid_t pid){
+	for(auto &proc : processes){
+		if(proc->ID() == pid) return proc->GetStatus();
+	}
+	return btos_api::bt_proc_status::DoesNotExist;
+}
+
 ManualStaticAlloc<ProcessManager> theProcessManager;
 
 void Processes_Init(){

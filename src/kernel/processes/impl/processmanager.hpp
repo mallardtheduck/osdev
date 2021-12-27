@@ -35,6 +35,8 @@ public:
 
 	IProcess &CurrentProcess() override;
 	ProcessPointer GetByID(bt_pid_t pid) override;
+
+	btos_api::bt_proc_status::Enum GetProcessStatusByID(bt_pid_t pid) override;
 };
 
 #endif
