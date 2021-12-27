@@ -231,6 +231,8 @@ uint64_t Scheduler::Schedule(uint64_t stackToken){
 	current->SetAbortable(true);
 	next->SetAbortable(false);
 	current = next;
+	if(Processes_Ready()) GetProcessManager().SwitchProcessFromScheduler(next->pid);
+	else if(next->pid != 0) panic("(SCH) PID != 0 before processes!");
 	if(current->loadModifier < MaxLoadModifier) ++current->loadModifier;
 	current->dynamicPriority = current->staticPriority + current->loadModifier;
 	GetHAL().SetKernelStack(current->stackBase);
