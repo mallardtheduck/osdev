@@ -26,6 +26,7 @@ void userapi_handler(ICPUState &state){
 	GetHAL().EnableInterrupts();
 	auto &currentThread = CurrentThread();
 	auto &currentProcess = CurrentProcess();
+	if(currentProcess.ID() == 0) panic("(UAPI) Userspace PID 0!");
 	if(currentProcess.GetStatus() == btos_api::bt_proc_status::Ending) currentThread.Abort();
 	uint16_t *id=(uint16_t*)(&state.Get32BitRegister(Generic_Register::GP_Register_A));
 	uint16_t ext=id[1], fn=id[0];
@@ -626,13 +627,12 @@ USERAPI_HANDLER(BT_SEND){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(btos_api::bt_msg_header)) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(uint64_t))){
 		btos_api::bt_msg_header header=*(btos_api::bt_msg_header*)state.Get32BitRegister(Generic_Register::GP_Register_B);
 		if(header.length && !is_safe_ptr((uint32_t)header.content, header.length)) return;
-		//uint64_t &ret=*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_C);
+		uint64_t &ret=*(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_C);
 		header.flags=header.flags | btos_api::bt_msg_flags::UserSpace;
 		header.from=CurrentProcess().ID();
 		header.critical=false;
 		if(header.length > btos_api::BT_MSG_MAX) return;
-		//TODO: Implement once messaging is fully refactored!
-		GetMessageManager().SendMessage(header);
+		ret = GetMessageManager().SendMessage(header);
 	}else RAISE_US_ERROR();
 }
 
