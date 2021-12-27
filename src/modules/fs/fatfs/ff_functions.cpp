@@ -30,19 +30,19 @@ EXTERN_C void init_disk(uint8_t drive){
 
 EXTERN_C int read_sector(uint8_t drive, char *buffer, uint64_t sector, size_t count){
 	auto drv = GetDrive(drive);
-	if(drive) return drv->read_sector(buffer, sector, count);
+	if(drv) return drv->read_sector(buffer, sector, count);
 	else return 0;
 }
 
 EXTERN_C int write_sector(uint8_t drive, const char *buffer, uint64_t sector, size_t count){
 	auto drv = GetDrive(drive);
-	if(drive) return drv->write_sector(buffer, sector, count);
+	if(drv) return drv->write_sector(buffer, sector, count);
 	else return 0;
 }
 
 EXTERN_C void sync(uint8_t drive){
 	auto drv = GetDrive(drive);
-	if(drive) drv->sync();
+	if(drv) drv->sync();
 }
 
 EXTERN_C size_t get_block_size(uint8_t drive){

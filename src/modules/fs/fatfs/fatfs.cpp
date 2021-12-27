@@ -56,7 +56,8 @@ public:
 		if(mode & fs_mode_flags::FS_Truncate) fmode |= FA_CREATE_ALWAYS;
 
 		if(mode & fs_mode_flags::FS_AtEnd) fmode |= FA_OPEN_APPEND;
-		f_open(&fp, path.c_str(), fmode);
+		auto res = f_open(&fp, path.c_str(), fmode);
+		dbgpf("FATFS: Open: %s mode: %lu (%i) Result: %i\n", path.c_str(), mode, (int)fmode, res);
 		if(mode & fs_mode_flags::FS_Delete) del = true;
 	}
 	size_t Read(size_t bytes, char *buffer) override{
@@ -210,16 +211,18 @@ public:
 	FatFSMountedFilesystem(IFileHandle *h) : handle(h){
 		drvId = NewDrive(handle);
 		char buf[12] = {0};
-		drvNo = buf;
 		itoa(drvId, buf);
-		f_mount(&fs, drvNo.c_str(), 2);
+		drvNo = buf;
+		auto res = f_mount(&fs, drvNo.c_str(), 2);
+		if(res != FR_OK) dbgpf("FATFS: Mount failed (%i)\n", res);
 	}
 
 	FilesystemNodePointer GetNode(const char *p) override{
-		string path = drvNo + ":/" + p;
+		string path = drvNo + ":" + p;
 		FILINFO fno;
 		auto res = f_stat(path.c_str(), &fno);
-		if(res == FR_OK && fno.fname[0] != 0)return new FatFSFilesystemNode(path);
+		dbgpf("FATFS: GetNode(%s) -> %s : %i\n", p, path.c_str(), res);
+		if(res == FR_OK && fno.fname[0] != 0) return new FatFSFilesystemNode(path);
 		else return nullptr;
 	}
 
