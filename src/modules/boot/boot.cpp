@@ -141,9 +141,13 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 						API->GetVirtualFilesystem().Attach(name, mount);
 					}else{
 						char errormsg[128];
-						sprintf(errormsg, "(BOOT) Could not mount %s.\n", path);
+						sprintf(errormsg, "(BOOT) Could not mount %s (mount failed).\n", path);
 						panic(errormsg);
 					}
+				}else{
+					char errormsg[128];
+					sprintf(errormsg, "(BOOT) Could not mount %s (fs: %p node: %p).\n", path, filesystem, node.get());
+					panic(errormsg);
 				}
 				free(name);
 				free(fs);
