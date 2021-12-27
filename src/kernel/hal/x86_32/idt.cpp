@@ -221,12 +221,12 @@ extern "C" void isr_handler(isr_regs *ctx){
 
 	//out_int_info(*ctx);
 
-	if(ctx->interrupt_number == 0x0E){
-		dbgout("(IDT) Page fault!\n");
-		uintptr_t addr;
-		asm volatile("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
-		dbgpf("(IDT) PF address: %lx EIP:%lx\n", addr, ctx->eip);
-	}
+	// if(ctx->interrupt_number == 0x0E){
+	// 	dbgout("(IDT) Page fault!\n");
+	// 	uintptr_t addr;
+	// 	asm volatile("mov %%cr2, %%eax\r\n mov %%eax,%0": "=m"(addr): : "eax");
+	// 	dbgpf("(IDT) PF address: %lx EIP:%lx\n", addr, ctx->eip);
+	// }
 
 	auto &currentThread = CurrentThread();
 	currentThread.SetDiagnosticInstructionPointer(ctx->eip);
