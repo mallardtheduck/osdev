@@ -140,7 +140,7 @@ IDirectoryHandle *InitFSNode::OpenDirectory(uint32_t mode){
 	else return nullptr;
 }
 
-bool IsMatch(const string &a, const string &b){
+static bool IsMatch(const string &a, const string &b){
 	size_t aPos = 0, bPos = 0;
 	while(a.size() > aPos && a[aPos] == '/') ++aPos;
 	while(b.size() > bPos && b[bPos] == '/') ++bPos;

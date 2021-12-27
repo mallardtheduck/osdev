@@ -126,12 +126,23 @@ FilesystemNodePointer DevFSDirectoryHandle::Read(){
 	++it;
 }
 
+static bool IsMatch(const string &a, const string &b){
+	size_t aPos = 0, bPos = 0;
+	while(a.size() > aPos && a[aPos] == '/') ++aPos;
+	while(b.size() > bPos && b[bPos] == '/') ++bPos;
+	while(a.size() > aPos && b.size() > bPos && to_upper(a[aPos]) == to_upper(b[bPos])){
+		++aPos;
+		++bPos;
+	}
+	return (a.size() == aPos && b.size() == bPos);
+}
+
 class MountedDevFS : public IMountedFilesystem{
 public:
 	FilesystemNodePointer GetNode(const char *path) override{
 		if(string(path) == "") return new DevFSNode(nullptr);
 		for(auto &device : GetVisibleDeviceManager()){
-			if(device.GetName() == path) return new DevFSNode(&device);
+			if(IsMatch(device.GetName(), path)) return new DevFSNode(&device);
 		}
 		return nullptr;
 	}
