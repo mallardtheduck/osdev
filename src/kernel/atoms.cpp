@@ -97,7 +97,6 @@ public:
 	}
 
 	~Atom(){
-		lock->TakeExclusive();
 		CurrentThread().SetAbortable(true);
 	}
 };
