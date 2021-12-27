@@ -14,6 +14,7 @@ Process *Process::CreateKernelProcess(){
 	kernelProcess->name = "KERNEL";
 	kernelProcess->pid = pidCounter++;
 	kernelProcess->parent = 0;
+	kernelProcess->status = btos_api::bt_proc_status::Running;
 	//Thankfully, since the kernel process never ends, this should never try to delete the kernel page directory!
 	kernelProcess->pageDirectory.reset(MM2::kernel_pagedir);
 	return kernelProcess;
@@ -42,9 +43,11 @@ map<string, Process::EnvironmentVariable> Process::CopyEnvironment(const IProces
 
 Process::Process(const char *n, const vector<const char *> &a, IProcess &p)
 :parent(p.ID()), name(n), pageDirectory(new MM2::PageDirectory()), environment(CopyEnvironment(p)) {
+	args.push_back(name);
 	for(auto &arg : a){
 		args.push_back(arg);
 	}
+	status = btos_api::bt_proc_status::Starting;
 }
 
 Process::Process() {}
@@ -169,7 +172,7 @@ void Process::SetEnvironmentVariable(const char *name, const char *value, uint8_
 }
 
 const char *Process::GetEnvironmentVariable(const char *name, bool userspace){
-	dbgpf("PROC: GetEnvironmentVariable: '%s' (%i)\n", name, (int)userspace);
+	//dbgpf("PROC: GetEnvironmentVariable: '%s' (%i)\n", name, (int)userspace);
 	auto upperName = to_upper(name);
 
 	uint8_t globalFlags = 0;
@@ -197,6 +200,7 @@ ThreadPointer Process::NewUserThread(ProcessEntryPoint p, void *param, void *sta
 		debug_event_notify(pid, CurrentThread().ID(), bt_debug_event::ThreadStart);
 		CurrentProcess().SetStatus(btos_api::bt_proc_status::Running);
 		dbgpf("PROC: Starting user thread at %p with stack %lx.\n", p, stackPointer);
+		status = btos_api::bt_proc_status::Running;
 		GetHAL().RunUsermode(stackPointer, p);
 	}, UserThreadKernelStackSize);
 }
