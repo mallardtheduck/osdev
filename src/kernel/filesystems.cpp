@@ -33,23 +33,25 @@ public:
 	bool Attach(const char *name, IMountedFilesystem *mount) override{
 		if(!IsNameValid(name)) return false;
 		auto hl = lock->LockExclusive();
-		if(mounts.has_key(name)) return false;
-		mounts[name] = mount;
+		string sname = to_upper(name);
+		if(mounts.has_key(sname)) return false;
+		mounts[sname] = mount;
 		return true;
 	}
 
 	IMountedFilesystem *Detach(const char *name) override{
 		auto hl = lock->LockExclusive();
-		if(!mounts.has_key(name)) return nullptr;
-		auto mount = mounts[name];
-		mounts.erase(name);
+		string sname = to_upper(name);
+		if(!mounts.has_key(sname)) return nullptr;
+		auto mount = mounts[sname];
+		mounts.erase(sname);
 		return mount;
 	}
 
 	IMountedFilesystem *GetByName(const char *name) override{
 		if(!IsNameValid(name)) return nullptr;
 		auto hl = lock->LockExclusive();
-		if(!mounts.has_key(name)) return nullptr;
+		if(!mounts.has_key(to_upper(name))) return nullptr;
 		return mounts[name];
 	}
 
@@ -70,11 +72,12 @@ public:
 		}
 		auto pathPart = pathString.substr(mountName.length() + 1, pathString.length() - mountName.length() - 1);
 		auto hl = lock->LockExclusive();
-		if(!mounts.has_key(mountName.c_str())){
+		auto upperMountName = to_upper(mountName);
+		if(!mounts.has_key(upperMountName)){
 			dbgpf("FS: GetNode: Mount not found: %s\n", mountName.c_str());
 			return nullptr;
 		}
-		auto mount = mounts[mountName];
+		auto mount = mounts[upperMountName];
 		return mount->GetNode(pathPart.c_str());
 	}
 };
