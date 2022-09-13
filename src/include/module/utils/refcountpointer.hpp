@@ -14,7 +14,9 @@ public:
 
 	RefCountPointer() : RefCountPointer(nullptr) {}
 
-	RefCountPointer(const RefCountPointer &other) : RefCountPointer(other.theObject) {}
+	RefCountPointer(const RefCountPointer &other) : RefCountPointer(other.theObject) {
+		if(theObject) theObject->IncrementRefCount();
+	}
 
 	RefCountPointer(RefCountPointer &&other) : theObject(other.theObject){
 		other.theObject = nullptr;
@@ -28,8 +30,10 @@ public:
 		if(&other != this){
 			auto oldObject = theObject;
 			theObject = other.theObject;
-			if(theObject) theObject->IncrementRefCount();
-			if(oldObject) theObject->DecrementRefCount();
+			if(theObject != oldObject){
+				if(theObject) theObject->IncrementRefCount();
+				if(oldObject) theObject->DecrementRefCount();
+			}
 		}
 		return *this;
 	}
