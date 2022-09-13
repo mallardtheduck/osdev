@@ -48,6 +48,8 @@ private:
 public:
 	virtual IFileHandle *OpenFile(uint32_t mode) = 0;
 	virtual IDirectoryHandle *OpenDirectory(uint32_t mode) = 0;
+	virtual IFileHandle *CreateFile(const char *name, uint32_t mode) = 0;
+	virtual IDirectoryHandle *CreateDirectory(const char *name, uint32_t mode) = 0;
 
 	virtual const char *GetName() = 0;
 	virtual void Rename(const char *newName) = 0;
@@ -82,6 +84,20 @@ public:
 	virtual ~IFilesystem() {}
 };
 
+class IPath : private nonmovable{
+public:
+	virtual const char *GetPath() = 0;
+
+	virtual const char *GetParent() = 0;
+	virtual const char *GetLeaf() = 0;
+
+	virtual IPath *GetParentPath() = 0;
+
+	virtual FilesystemNodePointer GetNode() = 0;
+
+	virtual ~IPath() {}
+};
+
 class IVirtualFilesystem : private nonmovable{
 public:
 	virtual bool Attach(const char *name, IMountedFilesystem *mount) = 0;
@@ -89,6 +105,8 @@ public:
 	virtual IMountedFilesystem *GetByName(const char *name) = 0;
 
 	virtual FilesystemNodePointer GetNode(const char *path) = 0;
+
+	virtual IPath *MakePath(const char *path) = 0;
 
 	IFileHandle *OpenFile(const char *path, fs_mode_flags mode){
 		auto node = GetNode(path);

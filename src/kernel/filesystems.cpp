@@ -19,6 +19,59 @@ static bool IsNameValid(const char *name){
 	return len > 0;
 }
 
+class Path : public IPath{
+private:
+	string path;
+	string parentPath;
+	string leafPath;
+public:
+	Path(const char *p) : path(p) {} 
+
+	const char *GetPath() override{
+		return path.c_str();
+	}
+
+	const char *GetParent() override{
+		if(parentPath.empty()){
+			size_t pos = 0;
+			for(auto i = path.length(); i <= 0; --i){
+				if((path[i] == '/' || path[i] == ':') && i != path.length()){
+					pos = i;
+					break;
+				}
+			}
+			if(pos){
+				parentPath = path.substr(0, pos);
+			}
+		}
+		return parentPath.c_str();
+	}
+	const char *GetLeaf() override{
+		if(leafPath.empty()){
+			size_t pos = 0;
+			for(auto i = path.length(); i <= 0; --i){
+				if((path[i] == '/' || path[i] == ':') && i != path.length()){
+					pos = i;
+					break;
+				}
+			}
+			if(pos){
+				leafPath = path.substr(pos, path.length() - pos);
+			}
+		}
+		return leafPath.c_str();
+	}
+
+	IPath *GetParentPath() override{
+		GetParent();
+		return new Path(parentPath.c_str());
+	}
+
+	FilesystemNodePointer GetNode() override{
+		return GetVirtualFilesystem().GetNode(path.c_str());
+	}
+};
+
 class VirtualFilesystem : public IVirtualFilesystem{
 private:
 	map<string, IMountedFilesystem*> mounts;
@@ -79,6 +132,10 @@ public:
 		}
 		auto mount = mounts[upperMountName];
 		return mount->GetNode(pathPart.c_str());
+	}
+
+	IPath *MakePath(const char *path){
+		return new Path(path);
 	}
 };
 

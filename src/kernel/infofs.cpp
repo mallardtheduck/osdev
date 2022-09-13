@@ -97,6 +97,14 @@ public:
 		return new InfoFSHandle(data, size, pos, this);
 	}
 
+	IFileHandle *CreateFile(const char *, uint32_t) override{
+		return nullptr;
+	}
+
+	IDirectoryHandle *CreateDirectory(const char *, uint32_t) override{
+		return nullptr;
+	}
+
 	IDirectoryHandle *OpenDirectory(uint32_t mode) override;
 
 	const char *GetName() override{

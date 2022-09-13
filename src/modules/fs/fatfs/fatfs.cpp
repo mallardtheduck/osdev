@@ -181,6 +181,36 @@ public:
 		else return nullptr;
 	}
 
+	IFileHandle *CreateFile(const char *name, uint32_t mode) override{
+		if(fno.fattrib & AM_DIR){
+			auto fullPath = path + '/' + name;
+			FIL fp;
+			auto r = f_open(&fp, fullPath.c_str(), FA_READ | FA_CREATE_NEW);
+			if(r == FR_OK){
+				f_close(&fp);
+				auto node = API->GetVirtualFilesystem().GetNode(fullPath.c_str());
+				if(node){
+					return node->OpenFile(mode);
+				}
+			}
+		}
+		return nullptr;
+	}
+
+	IDirectoryHandle *CreateDirectory(const char *name, uint32_t mode) override{
+		if(fno.fattrib & AM_DIR){
+			auto fullPath = path + '/' + name;
+			auto r = f_mkdir(fullPath.c_str());
+			if(r == FR_OK){
+				auto node = API->GetVirtualFilesystem().GetNode(fullPath.c_str());
+				if(node){
+					return node->OpenDirectory(mode);
+				}
+			}
+		}
+		return nullptr;
+	}
+
 	const char *GetName() override{
 		return fno.fname;
 	}

@@ -105,6 +105,14 @@ public:
 		else return nullptr;
 	}
 
+	IFileHandle *CreateFile(const char *, uint32_t) override{
+		return nullptr;
+	}
+
+	IDirectoryHandle *CreateDirectory(const char *, uint32_t) override{
+		return nullptr;
+	}
+
 	const char *GetName() override{
 		return device->GetName();
 	}
