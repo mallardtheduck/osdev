@@ -19,7 +19,7 @@ public:
 	MessageContent() = default;
 	MessageContent(const btos_api::bt_msg_header &header){
 		if(header.length){
-			content.reserve(header.length);
+			content.resize(header.length);
 			memcpy(&content[0], header.content, header.length);
 		}
 	}
@@ -114,11 +114,15 @@ private:
 			}
 			if(wait) CurrentThread().SetBlock([&]{
 				if(!messageLock->TryTakeExclusive()) return false;
+				bool ret = true;
 				for(auto &m : messages){
-					if(m.header.from == msg.header.from && m.header.to == msg.header.to) return false;
+					if(m.header.from == msg.header.from && m.header.to == msg.header.to){
+						ret = false;
+						break;
+					}
 				}
 				messageLock->Release();
-				return true;
+				return ret;
 			});
 		}
 	}
@@ -158,6 +162,9 @@ private:
 public:
 
 	uint64_t SendMessage(bt_msg_header &msgHeader) override{
+		msgHeader.recieved = false;
+		msgHeader.replied = false;
+
 		Message msg = msgHeader;
 		if(msg.header.to != 0 && GetProcessManager().GetProcessStatusByID(msg.header.to) == btos_api::bt_proc_status::DoesNotExist){
 			dbgpf("MSG: Attempted to send message to non-existent process!\n");
@@ -187,6 +194,7 @@ public:
 		//dbgpf("MSG: Sent message ID %i from PID %i to PID %i.\n", (int)msg.id, (int)msg.from, (int)msg.to);
 		//sch_yield_to(msg.to);
 		CurrentThread().Yield();
+		dbgpf("MSG: Message %llu sent by PID %llu.\n", msg.header.id, CurrentProcess().ID());
 		return msg.header.id;
 	}
 
@@ -197,6 +205,7 @@ public:
 		if(GetMessage(cid, cmsg)){
 			msg = cmsg.header;
 			CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
+			dbgpf("MSG: Message %llu recieved by PID %llu.\n", msg.id, CurrentProcess().ID());
 			return true;
 		}
 		for(auto &m : messages){
@@ -204,6 +213,7 @@ public:
 				proc.SetCurrentMessageID(m.header.id);
 				msg = m.header;
 				CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
+				dbgpf("MSG: Message %llu recieved by PID %llu.\n", msg.id, CurrentProcess().ID());
 				return true;
 			}
 		}
@@ -217,6 +227,7 @@ public:
 		if(GetMessage(cid, cmsg) && DoesMessageMatch(cmsg.header, filter)){
 			msg = cmsg.header;
 			CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
+			dbgpf("MSG: Message %llu recieved by PID %llu.\n", msg.id, CurrentProcess().ID());
 			return true;
 		}
 		for(auto &m : messages){
@@ -224,6 +235,7 @@ public:
 				proc.SetCurrentMessageID(m.header.id);
 				msg = m.header;
 				CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
+				dbgpf("MSG: Message %llu recieved by PID %llu.\n", msg.id, CurrentProcess().ID());
 				return true;
 			}
 		}
@@ -236,38 +248,52 @@ public:
 			CurrentThread().SetMessagingStatus(thread_msg_status::Waiting);
 			CurrentThread().SetBlock([&]{
 				if(!messageLock->TryTakeExclusive()) return false;
+				auto ret = false;
 				for(auto &m : messages){
-					if(m.header.to == proc.ID()) return true;
+					if(m.header.to == proc.ID()){
+						ret = true;
+						break;
+					}
 				}
 				messageLock->Release();
-				return false;
+				return ret;
 			});
 		}
+		dbgpf("MSG: Message %llu recieved by PID %llu.\n", ret.id, CurrentProcess().ID());
 		return ret;
 	}
 
 	bt_msg_header AwaitMessage(const bt_msg_filter &filter, IProcess &proc = CurrentProcess()) override{
 		auto cid = proc.GetCurrentMessageID();
 		Message cmsg;
-		if(GetMessage(cid, cmsg) && DoesMessageMatch(cmsg.header, filter)) return cmsg.header;
+		if(GetMessage(cid, cmsg) && DoesMessageMatch(cmsg.header, filter)){
+			dbgpf("MSG: Message %llu recieved by PID %llu.\n", cmsg.header.id, CurrentProcess().ID());
+			return cmsg.header;
+		}
 		while(true){
 			{
 				auto hl = messageLock->LockRecursive();
 				for(auto &m : messages){
 					if(m.header.to == proc.ID() && DoesMessageMatch(m.header, filter)){
 						CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
+						dbgpf("MSG: Message %llu recieved by PID %llu.\n", m.header.id, CurrentProcess().ID());
 						return m.header;
 					}
 				}
 			}
 			CurrentThread().SetMessagingStatus(thread_msg_status::Waiting);
+			auto filterCopy = filter;
 			CurrentThread().SetBlock([&]{
 				if(!messageLock->TryTakeExclusive()) return false;
+				auto ret = false;
 				for(auto &m : messages){
-					if(m.header.to == proc.ID() && DoesMessageMatch(m.header, filter)) return true;
+					if(m.header.to == proc.ID() && DoesMessageMatch(m.header, filterCopy)){
+						ret = true;
+						break;
+					}
 				}
 				messageLock->Release();
-				return false;
+				return ret;
 			});
 		}
 	}
@@ -282,7 +308,7 @@ public:
 
 	void AcknowledgeMessage(bt_msg_header &msg, bool setStatus = true) override{
 		{
-			messageLock->TakeRecursive();
+			auto hl = messageLock->LockRecursive();
 			if(!HaveMessage(msg.id)) return;
 			if(CurrentProcess().GetCurrentMessageID() == msg.id) CurrentProcess().SetCurrentMessageID(0);
 			RemoveMessage(msg.id);
@@ -303,7 +329,7 @@ public:
 
 	void ClearMessages(IProcess &proc = CurrentProcess()) override{
 		auto pid = proc.ID();
-		messageLock->TakeRecursive();
+		auto hl = messageLock->LockRecursive();
 		bool found = false;
 		do{
 			for(size_t i = 0; i < messages.size(); ++i){
