@@ -124,6 +124,12 @@ class vector
 			if(newData) free(newData);
 		}
 
+		void resize(size_t new_size){
+			while(dataSize > new_size) erase(dataSize - 1);
+			reserve(new_size);
+			while(dataSize < new_size) push_back({});
+		}
+
 		void push_back(const T &item)
 		{
 			if (dataSize == reserved)
