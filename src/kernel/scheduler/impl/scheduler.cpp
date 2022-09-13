@@ -68,13 +68,19 @@ void Scheduler::TheReaperThread(void*){
 					auto id = thread->id;
                     void *stackptr = thread->stackPointer;
 					size_t stackpages = thread->stackPages;
+					for(auto n = theScheduler->current; n != nullptr; n = n->next){
+						if(n->next && n->next == thread){
+							if(n->next->next) n->next = n->next->next;
+							else n->next = nullptr;
+						}
+					}
 					theScheduler->threads.erase(i);
                     theScheduler->lock->Release();
                     mm2_virtual_free(stackptr, stackpages + 1);
 					delete thread;
                     theScheduler->lock->TakeExclusive();
 					changed=true;
-					dbgpf("SCH: Reaped %i (%i) [%p].\n", (int)i, (int)id, stackptr);
+					dbgpf("SCH: Reaped %i (%i) [thread: %p stack: %p].\n", (int)i, (int)id, thread, stackptr);
 					break;
 				}
 			}
@@ -212,6 +218,7 @@ Thread *Scheduler::PlanCycle(){
 				++current->loadModifier;
 				if(!head) head = thread;
 				if(last) last->next = thread;
+				thread->next = nullptr;
 				last = thread;
 			}
 		}
