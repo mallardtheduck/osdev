@@ -298,16 +298,30 @@ USERAPI_HANDLER(BT_UNMOUNT){
 
 USERAPI_HANDLER(BT_FOPEN){
 	if(is_safe_string(state.Get32BitRegister(Generic_Register::GP_Register_B))){
+		auto &fs = GetVirtualFilesystem();
 		auto path = (char*)state.Get32BitRegister(Generic_Register::GP_Register_B);
 		auto flags = (fs_mode_flags)state.Get32BitRegister(Generic_Register::GP_Register_C);
-		auto node = GetVirtualFilesystem().GetNode(path);
+		auto node = fs.GetNode(path);
+		IFileHandle *handle = nullptr;
 		if(node){
-			auto handle = node->OpenFile(flags);
-			if(handle){
-				state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(handle);
-				return;
+			handle = node->OpenFile(flags);
+		}else if((flags & fs_mode_flags::FS_Create)){
+			auto pathObject = to_unique(fs.MakePath(path));
+			if(pathObject){
+				auto parentPath = to_unique(pathObject->GetParentPath());
+				auto fileName = pathObject->GetLeaf();
+				if(parentPath){
+					auto parentNode = parentPath->GetNode();
+					if(parentNode){
+						handle = parentNode->CreateFile(fileName, flags);
+					}
+				}
 			}
-		} 
+		}
+		if(handle){
+			state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(handle);
+			return;
+		}
 		state.Get32BitRegister(Generic_Register::GP_Register_A) = 0;
 	}else RAISE_US_ERROR();
 }
@@ -394,15 +408,29 @@ USERAPI_HANDLER(BT_MMAP){
 
 USERAPI_HANDLER(BT_DOPEN){
 	if(is_safe_string(state.Get32BitRegister(Generic_Register::GP_Register_B))){
+		auto &fs = GetVirtualFilesystem();
 		auto path = (char*)state.Get32BitRegister(Generic_Register::GP_Register_B);
 		auto flags = (fs_mode_flags)state.Get32BitRegister(Generic_Register::GP_Register_C);
 		auto node = GetVirtualFilesystem().GetNode(path);
+		IDirectoryHandle *handle = nullptr;
 		if(node){
-			auto handle = node->OpenDirectory(flags);
-			if(handle){
-				state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(handle);
-				return;
+			handle = node->OpenDirectory(flags);
+		}else if((flags & fs_mode_flags::FS_Create)){
+			auto pathObject = to_unique(fs.MakePath(path));
+			if(pathObject){
+				auto parentPath = to_unique(pathObject->GetParentPath());
+				auto dirName = pathObject->GetLeaf();
+				if(parentPath){
+					auto parentNode = parentPath->GetNode();
+					if(parentNode){
+						handle = parentNode->CreateDirectory(dirName, flags);
+					}
+				}
 			}
+		}
+		if(handle){
+			state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(handle);
+			return;
 		}
 		state.Get32BitRegister(Generic_Register::GP_Register_A) = 0;
 	}else RAISE_US_ERROR();
@@ -520,7 +548,8 @@ USERAPI_HANDLER(BT_SPAWN){
 		auto argv = (char**)state.Get32BitRegister(Generic_Register::GP_Register_D);
 		vector<const char*> args;
 		for(size_t i = 0; i < argc; ++i) args.push_back(argv[i]);
-		state.Get32BitRegister(Generic_Register::GP_Register_A) = GetProcessManager().Spawn((char*)state.Get32BitRegister(Generic_Register::GP_Register_B), args);
+		auto proc = GetProcessManager().Spawn((char*)state.Get32BitRegister(Generic_Register::GP_Register_B), args);
+		state.Get32BitRegister(Generic_Register::GP_Register_A) = proc ? proc->ID() : 0;
 	}else RAISE_US_ERROR();
 }
 
