@@ -8,6 +8,9 @@
 #define printf(...) dbgpf(__VA_ARGS__)
 #pragma GCC diagnostic ignored "-Wformat"
 
+#define xstr(a) str(a)
+#define str(a) #a
+
 /**  Durand's Amazing Super Duper Memory functions.  */
 
 #define VERSION 	"1.1-btos-kernel"
@@ -311,7 +314,7 @@ void *PREFIX(malloc)(size_t req_size)
 
 
 	#ifdef DEBUG
-	printf( "liballoc: %x PREFIX(malloc)( %i ): ", 
+	printf( "liballoc: %x "x str(PREFIX(malloc)) "( %i ): ", 
 					__builtin_return_address(0),
 					size );
 	FLUSH();
@@ -649,7 +652,7 @@ void PREFIX(free)(void *ptr)
 		if ( min->magic == LIBALLOC_DEAD )
 		{
 			#if defined DEBUG || defined INFO
-			printf( "liballoc: ERROR: multiple PREFIX(free)() attempt on %x from %x.\n", 
+			printf( "liballoc: ERROR: multiple " xstr(PREFIX(free)) "() attempt on %x from %x.\n", 
 									ptr,
 									__builtin_return_address(0) );
 			panic("(LIBALLOC) Kernel memory error!");
@@ -659,7 +662,7 @@ void PREFIX(free)(void *ptr)
 		else
 		{
 			#if defined DEBUG || defined INFO
-			printf( "liballoc: ERROR: Bad PREFIX(free)( %x ) called from %x\n",
+			printf( "liballoc: ERROR: Bad " xstr(PREFIX(free)) "( %x ) called from %x\n",
 								ptr,
 								__builtin_return_address(0) );
 			panic("(LIBALLOC) Kernel memory error!");
@@ -673,7 +676,7 @@ void PREFIX(free)(void *ptr)
 	}
 
 	#ifdef DEBUG
-	printf( "liballoc: %x PREFIX(free)( %x ): ", 
+	printf( "liballoc: %x " xstr(PREFIX(free)) "( %x ): ", 
 				__builtin_return_address( 0 ),
 				ptr );
 	FLUSH();
@@ -798,7 +801,7 @@ void*   PREFIX(realloc)(void *p, size_t size)
 			if ( min->magic == LIBALLOC_DEAD )
 			{
 				#if defined DEBUG || defined INFO
-				printf( "liballoc: ERROR: multiple PREFIX(free)() attempt on %x from %x.\n", 
+				printf( "liballoc: ERROR: multiple " xstr(PREFIX(free)) "() attempt on %x from %x.\n", 
 										ptr,
 										__builtin_return_address(0) );
 				panic("(LIBALLOC) Kernel memory error!");
@@ -808,7 +811,7 @@ void*   PREFIX(realloc)(void *p, size_t size)
 			else
 			{
 				#if defined DEBUG || defined INFO
-				printf( "liballoc: ERROR: Bad PREFIX(free)( %x ) called from %x\n",
+				printf( "liballoc: ERROR: Bad " xstr(PREFIX(free)) "( %x ) called from %x\n",
 									ptr,
 									__builtin_return_address(0) );
 				panic("(LIBALLOC) Kernel memory error!");
