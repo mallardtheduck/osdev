@@ -155,6 +155,7 @@ namespace MM2{
 	}
 	
 	uint32_t PageDirectory::entrycache_get(size_t pageindex){
+		if(pageindex == 0) return 0;
 		size_t pos = entrycache_size;
 		for(size_t i = 0; i < entrycache_size; ++i){
 			if(entrycache[i].index == pageindex){
