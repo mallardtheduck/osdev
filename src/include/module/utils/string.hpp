@@ -49,11 +49,11 @@ inline static size_t string_strlen(const char *s){
  */
 static char* malloc_never_null(const size_t b)
 {
-	char *p;
+	char *p = nullptr;
 
-	do {
+	do{
 		p = static_cast<char*>(malloc(b));
-	} while ( p == NULL );
+	}while(!p);
 
 	return p;
 }
