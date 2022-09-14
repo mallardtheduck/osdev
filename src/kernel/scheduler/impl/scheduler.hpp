@@ -40,6 +40,8 @@ public:
 
 	void EnableScheduler() override;
 	bool DisableScheduler() override;
+
+	bool CanYield();
 };
 
 extern ManualStaticAlloc<Scheduler> theScheduler;

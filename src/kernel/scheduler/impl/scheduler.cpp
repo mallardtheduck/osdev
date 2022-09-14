@@ -255,6 +255,10 @@ bool Scheduler::DisableScheduler(){
 	return lock->TryTakeExclusive();
 }
 
+bool Scheduler::CanYield(){
+	return !lock->IsLocked();
+}
+
 bool Scheduler_Ready(){
 	return theScheduler;
 }

@@ -48,10 +48,12 @@ void Thread::End(){
 }
 
 void Thread::Yield(IThread */*to*/){
+	if(!theScheduler->CanYield()) return;
 	GetHAL().YieldToScheduler();
 }
 
 void Thread::YieldIfPending(){
+	if(!theScheduler->CanYield()) return;
 	GetHAL().YieldToScheduler();
 }
 
@@ -72,7 +74,10 @@ void Thread::Block(){
 			break;
 		default: break;
 	}
-	if(theScheduler->current == this) Yield(nullptr);
+	if(theScheduler->current == this){
+		if(!theScheduler->CanYield()) panic("(SCH) Attempt to block while holding scheduler lock!");
+		Yield(nullptr);
+	}
 }
 
 void Thread::Unblock(){
@@ -165,6 +170,7 @@ ThreadStatus Thread::GetStatus(){
 
 void Thread::IncrementRefCount(){
 	++refCount;
+	if(refCount > UINT32_MAX / 2) panic("(SCH) Thread refcount implausible!");
 }
 
 void Thread::DecrementRefCount(){
@@ -174,6 +180,7 @@ void Thread::DecrementRefCount(){
 	if(refCount == 0 && awaitingDestruction){
 		theScheduler->reaperThread->Unblock();
 	}
+	if(refCount > UINT32_MAX / 2) panic("(SCH) Thread refcount implausible!");
 }
 
 uint8_t *Thread::GetFPUState(){
