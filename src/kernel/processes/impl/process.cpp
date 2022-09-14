@@ -50,6 +50,10 @@ Process::Process(const char *n, const vector<const char *> &a, IProcess &p)
 	status = btos_api::bt_proc_status::Starting;
 }
 
+bool Process::IsReadyForCleanup(){
+	return readyForCleanup && status == btos_api::bt_proc_status::Ending;
+}
+
 Process::Process() {}
 
 void Process::CleanupProcess(){
@@ -341,12 +345,29 @@ void Process::SetChildReturnValue(bt_pid_t childPid, int returnValue){
 }
 
 void Process::IncrementRefCount(){
-	auto hl = lock->LockExclusive();
+	auto hl = lock->LockRecursive();
 	++refCount;
+	if(refCount > UINT32_MAX / 2) panic("(PROC) Process node refcount implausible!");
 }
 
 void Process::DecrementRefCount(){
 	auto hl = lock->LockRecursive();
 	if(refCount > 0) --refCount;
-	if(!refCount && status == btos_api::bt_proc_status::Ending) CleanupProcess();
+	if(!refCount && status == btos_api::bt_proc_status::Ending){
+		readyForCleanup = true;
+		static_cast<ProcessManager&>(GetProcessManager()).ScheduleCleanup();
+	}
+}
+
+void Process::IncrementRefCountFromScheduler(){
+	++refCount;
+	if(refCount > UINT32_MAX / 2) panic("(PROC) Process node refcount implausible!");
+}
+
+void Process::DecrementRefCountFromScheduler(){
+	if(refCount > 0) --refCount;
+	if(!refCount && status == btos_api::bt_proc_status::Ending){
+		readyForCleanup = true;
+		static_cast<ProcessManager&>(GetProcessManager()).ScheduleCleanup();
+	}
 }

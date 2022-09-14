@@ -13,6 +13,8 @@ private:
 	vector<ProcessPointer> processes;
 	Process *currentProcess = nullptr;
 	Process *kernelProcess = nullptr;
+
+	ThreadPointer cleanupThread;
 	
 	ILock *lock = NewLock();
 
@@ -20,6 +22,9 @@ private:
 	static char *EnvInfoFS();
 
 	void RemoveProcess(const Process *p);
+	void ScheduleCleanup();
+
+	friend void CleanupThread(ProcessManager *that);
 public:
 	ProcessManager();
 

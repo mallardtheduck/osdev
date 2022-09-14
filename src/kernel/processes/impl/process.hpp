@@ -3,6 +3,8 @@
 
 #include "../../kernel.hpp"
 
+class ProcessManager;
+
 class Process : public IProcess{
 private:
 	friend class ProcessManager;
@@ -35,13 +37,19 @@ private:
 
 	uint32_t refCount = 0;
 
+	bool readyForCleanup = false;
+
 	static Process *CreateKernelProcess();
 	static map<string, EnvironmentVariable> CopyEnvironment(const IProcess &parent);
 	static uintptr_t AllocateStack(size_t size);
 
 	void GetEnvironmentVariable(const char *name, char *&value, uint8_t &flags);
 	void CleanupProcess();
+
+	bool IsReadyForCleanup();
 	Process();
+
+	friend void CleanupThread(ProcessManager *that);
 public:
 	Process(const char *name, const vector<const char*> &args, IProcess &parent);
 
@@ -86,6 +94,9 @@ public:
 
 	void IncrementRefCount() override;
 	void DecrementRefCount() override;
+
+	void IncrementRefCountFromScheduler();
+	void DecrementRefCountFromScheduler();
 };
 
 #endif

@@ -3,9 +3,33 @@
 #include "processmanager.hpp"
 #include "process.hpp"
 
+void CleanupThread(ProcessManager *that){
+	auto &myThread = CurrentThread();
+	myThread.SetPriority(1);
+	while(true){
+		vector<ProcessPointer> cleanUps;
+		{
+			auto hl = that->lock->LockExclusive();
+			for(auto &p : that->processes){
+				auto proc = static_cast<Process*>(p.get());
+				if(proc->IsReadyForCleanup()) cleanUps.push_back(p);
+			}
+		}
+		for(auto &p : cleanUps){
+			auto proc = static_cast<Process*>(p.get());
+			proc->CleanupProcess();
+		}
+		myThread.Block();
+	}
+}
+
 void ProcessManager::RemoveProcess(const Process *p){
 	auto index = processes.find(const_cast<Process*>(p));
 	processes.erase(index);
+}
+
+void ProcessManager::ScheduleCleanup(){
+	cleanupThread->Unblock();
 }
 
 ProcessManager::ProcessManager(){
@@ -17,6 +41,9 @@ ProcessManager::ProcessManager(){
 		newProcList.swap(processes);
 	}
 	currentProcess = kernelProcess;
+	cleanupThread = GetScheduler().NewThread([&]{
+		CleanupThread(this);
+	});
 }
 
 bool ProcessManager::SwitchProcess(bt_pid_t pid) {
@@ -37,10 +64,12 @@ bool ProcessManager::SwitchProcess(bt_pid_t pid) {
 
 void ProcessManager::SwitchProcessFromScheduler(bt_pid_t pid) {
 	if(!currentProcess || pid != currentProcess->ID()){
+		if(currentProcess) currentProcess->DecrementRefCountFromScheduler();
 		for(auto &proc : processes){
 			if(proc->ID() == pid){
 				CurrentThread().SetPID(pid);
 				currentProcess = (Process*)proc.get();
+				currentProcess->IncrementRefCountFromScheduler();
 				GetMemoryManager().SwitchPageDirectory(currentProcess->pageDirectory.get());
 				return;
 			}
