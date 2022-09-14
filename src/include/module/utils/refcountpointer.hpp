@@ -14,9 +14,7 @@ public:
 
 	RefCountPointer() : RefCountPointer(nullptr) {}
 
-	RefCountPointer(const RefCountPointer &other) : RefCountPointer(other.theObject) {
-		if(theObject) theObject->IncrementRefCount();
-	}
+	RefCountPointer(const RefCountPointer &other) : RefCountPointer(other.theObject) {}
 
 	RefCountPointer(RefCountPointer &&other) : theObject(other.theObject){
 		other.theObject = nullptr;
@@ -24,6 +22,7 @@ public:
 
 	~RefCountPointer(){
 		if(theObject) theObject->DecrementRefCount();
+		theObject = nullptr;
 	}
 
 	RefCountPointer &operator=(const RefCountPointer &other){
@@ -32,7 +31,7 @@ public:
 			theObject = other.theObject;
 			if(theObject != oldObject){
 				if(theObject) theObject->IncrementRefCount();
-				if(oldObject) theObject->DecrementRefCount();
+				if(oldObject) oldObject->DecrementRefCount();
 			}
 		}
 		return *this;
@@ -52,14 +51,17 @@ public:
 	}
 
 	T *operator->(){
+		if(!theObject) panic("(RCP) nullptr deference!");
 		return theObject;
 	}
 
 	T *get(){
+		if(!theObject) panic("(RCP) nullptr deference!");
 		return theObject;
 	}
 
 	T &operator*(){
+		if(!theObject) panic("(RCP) nullptr deference!");
 		return *theObject;
 	}
 
@@ -72,7 +74,7 @@ public:
 	}
 
 	template<typename R> operator RefCountPointer<R>(){
-		static_assert(!std::is_convertible_v<T*, R*>, "No convesion available.");
+		static_assert(!std::is_convertible_v<T*, R*>, "No conversion available.");
 		return RefCountPointer<R>(theObject);
 	}
 };
