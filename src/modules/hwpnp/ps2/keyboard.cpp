@@ -36,6 +36,7 @@ static void keyboard_handler(ICPUState &){
 
 static void keyboard_thread(){
 	auto &currentThread = API->CurrentThread();
+	currentThread.SetName("Keyboard");
 	currentThread.SetPriority(1);
 	while(true){
 		currentThread.SetBlock([]{

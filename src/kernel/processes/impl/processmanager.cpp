@@ -42,6 +42,7 @@ ProcessManager::ProcessManager(){
 	}
 	currentProcess = kernelProcess;
 	cleanupThread = GetScheduler().NewThread([&]{
+		CurrentThread().SetName("Process Cleanup");
 		CleanupThread(this);
 	});
 }

@@ -56,6 +56,7 @@ void update_next_event(){
 }
 
 void timer_thread(){
+	CurrentThread().SetName("Timer");
 	CurrentThread().SetPriority(2);
 	while(true){
 		CurrentThread().SetBlock(&events_blockcheck);

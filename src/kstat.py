@@ -4,10 +4,10 @@ class ThreadsCommand (gdb.Command):
 		super (ThreadsCommand, self).__init__ ("btos-threadinfo", gdb.COMMAND_USER)
 		
 	def pid_to_name(self, pid):
-		# procCount = gdb.parse_and_eval("proc_processes.dataSize")
-		# for pix in range(procCount):
-		# 	cpid = gdb.parse_and_eval("proc_processes.data[%s]->pid" % pix)
-		# 	if cpid == pid: return gdb.parse_and_eval("proc_processes.data[%s]->name.p" % pix)
+		procCount = gdb.parse_and_eval("theProcessManager.ptr->processes.dataSize")
+		for pix in range(procCount):
+		 	cpid = gdb.parse_and_eval("((Process*)theProcessManager.ptr->processes.data[%s].theObject)->pid" % pix)
+		 	if cpid == pid: return gdb.parse_and_eval("((Process*)theProcessManager.ptr->processes.data[%s].theObject)->name.p" % pix)
 		return "Unknown PID"
 		
 	def addr_to_module(self, addr):
@@ -33,6 +33,7 @@ class ThreadsCommand (gdb.Command):
 			ptr = gdb.parse_and_eval("theScheduler.ptr->threads.data[%s]" % tix)
 			tid = gdb.parse_and_eval("theScheduler.ptr->threads.data[%s]->id" % tix)
 			pid = gdb.parse_and_eval("theScheduler.ptr->threads.data[%s]->pid" % tix)
+			tname = gdb.parse_and_eval("theScheduler.ptr->threads.data[%s]->name.p" % tix)
 			status = gdb.parse_and_eval("theScheduler.ptr->threads.data[%s]->status" % tix)
 			# bc = gdb.parse_and_eval("theScheduler.ptr->threads.data[%s]->blockCheck" % tix)
 			blockinfo = ""
@@ -41,7 +42,7 @@ class ThreadsCommand (gdb.Command):
 			# 	bcp = gdb.parse_and_eval("threads.data[%s]->bc_param" % tix)
 			# 	blockinfo = "(%s :: %s (%s))" % (modname, bc, bcp)
 			name = self.pid_to_name(pid)
-			print("%s (%s): TID: %s PID: %s (%s) Status: %s %s" % (tix, ptr, tid, pid, name, status, blockinfo))
+			print("%s (%s) Name: %s: TID: %s PID: %s (%s) Status: %s %s" % (tix, ptr, tname, tid, pid, name, status, blockinfo))
 
 ThreadsCommand ()
 
@@ -79,7 +80,10 @@ class ProcCommand (gdb.Command):
 	
 	def invoke (self, arg, from_tty):
 		pix = arg
-		print(gdb.parse_and_eval("*((Process*)theProcessManager.ptr->processes.data[%s].theObject)" % pix))
+		if pix == '':
+			print(gdb.parse_and_eval("*((Process*)theProcessManager.ptr->currentProcess)" % pix))
+		else:
+			print(gdb.parse_and_eval("*((Process*)theProcessManager.ptr->processes.data[%s].theObject)" % pix))
 	
 ProcCommand ()
 
@@ -89,6 +93,9 @@ class ThreadCommand (gdb.Command):
 	
 	def invoke (self, arg, from_tty):
 		tix = arg
-		print(gdb.parse_and_eval("*theScheduler.ptr->threads.data[%s]" % tix))
+		if tix == '':
+			print(gdb.parse_and_eval("*theScheduler.ptr->current"))
+		else:
+			print(gdb.parse_and_eval("*theScheduler.ptr->threads.data[%s]" % tix))
 	
 ThreadCommand ()

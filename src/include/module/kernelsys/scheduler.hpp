@@ -59,7 +59,10 @@ public:
 	virtual uint8_t *GetFPUState() = 0;
 
 	virtual void SetDiagnosticInstructionPointer(uintptr_t eip) = 0;
-	virtual uintptr_t GetDiagnosticInstructionPointer() = 0; 
+	virtual uintptr_t GetDiagnosticInstructionPointer() = 0;
+
+	virtual const char *GetName() = 0;
+	virtual void SetName(const char *name) = 0;
 
 	virtual ~IThread() {}
 };

@@ -28,6 +28,7 @@ uint32_t msb32(uint32_t x)
 
 void console_backend_input_thread(void *p){
 	console_backend *backend=(console_backend*)p;
+	API->CurrentThread().SetName("Console Input");
 	API->CurrentThread().SetPriority(2);
 	while(true){
 		uint32_t key=0;
@@ -53,6 +54,7 @@ void console_backend_input_thread(void *p){
 }
 void console_backend_pointer_thread(void *p){
 	console_backend *backend=(console_backend*)p;
+	API->CurrentThread().SetName("Console Pointer");
 	API->CurrentThread().SetPriority(2);
 	while(true){
 		bt_mouse_packet packet;
@@ -111,6 +113,7 @@ void console_backend_pointer_thread(void *p){
 	}
 }
 void console_backend_pointer_draw_thread(void *p){
+	API->CurrentThread().SetName("Console Pointer Draw");
 	API->CurrentThread().SetPriority(1000);
 	console_backend *backend=(console_backend*)p;
 	while(true){

@@ -29,6 +29,7 @@ constexpr auto MaxLoadModifier = 128;
 
 void Scheduler::TheIdleThread(void*){
 	Thread *myThread = theScheduler->current;
+	myThread->SetName("IDLE");
 	while(true){
 		bool yield_immediately = false;
 		{
@@ -52,6 +53,7 @@ void Scheduler::TheIdleThread(void*){
 
 void Scheduler::TheReaperThread(void*){
     Thread *myThread = theScheduler->current;
+	myThread->SetName("Thread Reaper");
 	myThread->SetPriority(1);
 	while(true){
 		bool changed=true;
@@ -92,6 +94,7 @@ void Scheduler::TheReaperThread(void*){
 Scheduler::Scheduler(){
 	lock = NewLock();
 	auto mainThread = new Thread();
+	mainThread->SetName("Main");
 	mainThread->id = ++idCounter;
 	threads.push_back(mainThread);
 	auto idleThreadPointer = NewThread(TheIdleThread, nullptr, DefaultStackSize);

@@ -38,6 +38,7 @@ private:
 	}
 
 	void operation_queue_process_thread() {
+		API->CurrentThread().SetName("Operation Queue");
 		while(true){
 			opT *operation=get();
 			if(!proccessFn(operation)) break;

@@ -194,3 +194,11 @@ void Thread::SetDiagnosticInstructionPointer(uintptr_t eip){
 uintptr_t Thread::GetDiagnosticInstructionPointer(){
 	return diagnosticInstructionPointer;
 }
+
+const char *Thread::GetName(){
+	return name.c_str();
+}
+
+void Thread::SetName(const char *n){
+	name = n;
+}

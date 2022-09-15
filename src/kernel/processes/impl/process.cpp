@@ -196,6 +196,7 @@ const char *Process::GetEnvironmentVariable(const char *name, bool userspace){
 ThreadPointer Process::NewUserThread(ProcessEntryPoint p, void *param, void *stack){
 	return GetScheduler().NewThread([=](){
 		if(!GetProcessManager().SwitchProcess(pid)) return;
+		CurrentThread().SetName("Userspace");
 		auto stackPointer = AllocateStack(DefaultUserspaceStackSize);
 		CurrentThread().SetPriority(DefaultUserspaceThreadPriority);
 		//Deliberately twice.

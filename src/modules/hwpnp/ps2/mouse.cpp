@@ -29,6 +29,7 @@ static void mouse_handler(ICPUState &){
 
 void mouse_thread(){
 	auto &currentThread = API->CurrentThread();
+	currentThread.SetName("Mouse");
 	currentThread.SetPriority(1);
 	while(true){
 		uint8_t byte1=0, byte2=0, byte3=0;

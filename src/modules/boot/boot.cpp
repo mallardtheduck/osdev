@@ -183,6 +183,7 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 }
 
 void boot_thread(){
+	API->CurrentThread().SetName("Boot");
 	dbgout("BOOT: Boot manager loaded.\n");
 	if (ini_parse("INIT:/config.ini", &handler, nullptr) < 0) {
 			panic("(BOOT) Can't load 'config.ini'!\n");

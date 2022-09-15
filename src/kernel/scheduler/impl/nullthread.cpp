@@ -39,6 +39,9 @@ public:
 
 	void SetDiagnosticInstructionPointer(uintptr_t) override {}
 	uintptr_t GetDiagnosticInstructionPointer() override {return 0;}
+
+	const char *GetName() override {return "NULL";}
+	void SetName(const char*) override {}
 };
 
 ManualStaticAlloc<NullThread> theNullThread;

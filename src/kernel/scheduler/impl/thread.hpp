@@ -46,6 +46,8 @@ private:
 
 	uintptr_t diagnosticInstructionPointer = 0;
 
+	string name;
+
 	Thread(ThreadEntryFunction fn, void *param, size_t stackSize);
 	Thread();
 
@@ -82,6 +84,9 @@ public:
 
 	void SetDiagnosticInstructionPointer(uintptr_t eip) override;
 	uintptr_t GetDiagnosticInstructionPointer() override; 
+
+	const char *GetName() override;
+	void SetName(const char *name) override;
 };
 
 #endif

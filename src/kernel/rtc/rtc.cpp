@@ -82,6 +82,7 @@ char *msec_infofs(){
 }
 
 void rtc_init_real(){
+	CurrentThread().SetName("RTC Init");
 	CurrentThread().SetBlock(&is_timer_ready);
 	datetime dt=current_datetime();
 	char buf[128];
