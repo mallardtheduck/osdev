@@ -33,24 +33,29 @@ void CPUState_x86_32::DebugOutput(){
 }
 
 void CPUState_x86_32::DebugStackTrace() const{
+	struct stackframe {
+		struct stackframe* ebp;
+		uint32_t eip;
+	} *stk;
 	isr_regs *ctx = regs;
-	uint32_t bp = 0;
-	uint32_t stack[2] = {ctx->ebp, ctx->eip};
-	for(int count = 0; count < 100; ++count){
-		dbgpf("STACK TRACE: %i : %lx (EBP: %lx)\n", count, stack[1], stack[0]);
-		if(stack[0] != bp){ 
-			bp = stack[0];
-			if(bp < 4096){
-				dbgout("STACK CORRUPT.\n");
-				break;
-			}
-			if(is_safe_ptr(bp, sizeof(stack))) memcpy((void*)stack, (void*)bp, sizeof(stack));
-			else{
-				dbgout("STACK UNREACHABLE.\n");
-				break;
-			}
-		}
+	stk = reinterpret_cast<stackframe*>(ctx->ebp);
+	for(int count = 0; stk && count < 100; ++count){
+		dbgpf("STACK TRACE: %i : %lx (EBP: %p)\n", count, stk->eip, stk->ebp);
+		if(is_safe_ptr((uint32_t)stk->ebp, sizeof(stackframe))) stk = stk->ebp;
 		else break;
+		// if(stack[0] != bp){ 
+		// 	bp = stack[0];
+		// 	if(bp < 4096){
+		// 		dbgout("STACK CORRUPT.\n");
+		// 		break;
+		// 	}
+		// 	if(is_safe_ptr(bp, sizeof(stack))) memcpy((void*)stack, (void*)bp, sizeof(stack));
+		// 	else{
+		// 		dbgout("STACK UNREACHABLE.\n");
+		// 		break;
+		// 	}
+		// }
+		// else break;
 	}
 }
 
