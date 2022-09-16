@@ -74,10 +74,19 @@ void Process::CleanupProcess(){
 			t->Join();
 		}
 		threads.clear();
-		for(auto &h : handles){
-			if(h.second){
-				h.second->Close();
-				delete h.second;
+		bool pendingHandles = true;
+		while(pendingHandles){
+			pendingHandles = false;
+			for(auto &h : handles){
+				if(h.second){
+					if(HandleDependencyCheck(h.second) != HandleDependencyCheckResult::Absent){
+						pendingHandles = true;
+						continue;
+					}
+					h.second->Close();
+					delete h.second;
+					h.second = nullptr;
+				}
 			}
 		}
 		if(GetScheduler().GetPIDThreadCount(pid) > 0){
@@ -138,6 +147,7 @@ void Process::Terminate(){
 		}
 		End();
 	}
+	GetScheduler().AbortThreadsByPID(pid);
 	if(endCurrentThread) CurrentThread().Abort();
 }
 
@@ -199,13 +209,11 @@ ThreadPointer Process::NewUserThread(ProcessEntryPoint p, void *param, void *sta
 		CurrentThread().SetName("Userspace");
 		auto stackPointer = AllocateStack(DefaultUserspaceStackSize);
 		CurrentThread().SetPriority(DefaultUserspaceThreadPriority);
-		//Deliberately twice.
-		CurrentThread().SetAbortable(true);
-		CurrentThread().SetAbortable(true);
 		debug_event_notify(pid, CurrentThread().ID(), bt_debug_event::ThreadStart);
 		CurrentProcess().SetStatus(btos_api::bt_proc_status::Running);
 		dbgpf("PROC: Starting user thread at %p with stack %lx.\n", p, stackPointer);
 		status = btos_api::bt_proc_status::Running;
+		if(CurrentThread().GetLockCount() != 0) panic("PROC: Starting user thread with non-zero lock count!");
 		GetHAL().RunUsermode(stackPointer, p);
 	}, UserThreadKernelStackSize);
 }

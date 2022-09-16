@@ -33,6 +33,7 @@ public:
 	void DebugResumeThreadsByPID(uint64_t pid) override;
 	void HoldThreadsByPID(uint64_t pid) override;
 	void UnHoldThreadsByPID(uint64_t pid) override;
+	void AbortThreadsByPID(uint64_t pid) override;
 	
 	bool CanLock() override;
 

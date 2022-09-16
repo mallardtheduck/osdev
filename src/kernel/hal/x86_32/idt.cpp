@@ -230,7 +230,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 
 	auto &currentThread = CurrentThread();
 	currentThread.SetDiagnosticInstructionPointer(ctx->eip);
-	currentThread.SetAbortable(false);
+	currentThread.IncrementLockCount();
 	if(ctx->cs == 0x1B) currentThread.UpdateUserState(CPUState_x86_32(ctx));
 
 	if(handlers[ctx->interrupt_number]){
@@ -279,8 +279,12 @@ extern "C" void isr_handler(isr_regs *ctx){
 	}
 	disable_interrupts();
 
-	currentThread.SetAbortable(true);
-	if(currentThread.GetAbortLevel() == 0) CurrentProcess().HoldBeforeUserspace();
+	currentThread.DecrementLockCount();
+	if(currentThread.GetLockCount() == 0){
+		CurrentProcess().HoldBeforeUserspace();
+		if(currentThread.ShouldAbortAtUserBoundary()) currentThread.End();
+	}
+	
 
 	imode--;
 }
@@ -314,7 +318,7 @@ extern "C" void irq_handler(irq_regs *r) {
 
 	auto &currentThread = CurrentThread();
 	currentThread.SetDiagnosticInstructionPointer(r->eip);
-	currentThread.SetAbortable(false);
+	currentThread.IncrementLockCount();
 	if(r->cs == 0x1B) currentThread.UpdateUserState(CPUState_x86_32((isr_regs*)r));
 
 	int irq=r->int_no-IRQ_BASE;
@@ -325,8 +329,8 @@ extern "C" void irq_handler(irq_regs *r) {
 	disable_interrupts();
 	irq_ack(irq);
 
-	currentThread.SetAbortable(true);
-	if(currentThread.GetAbortLevel() == 0) CurrentProcess().HoldBeforeUserspace();
+	currentThread.DecrementLockCount();
+	if(currentThread.GetLockCount() == 0) CurrentProcess().HoldBeforeUserspace();
 	imode--;
 }
 

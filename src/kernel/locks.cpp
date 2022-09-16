@@ -34,7 +34,7 @@ public:
 		waiting = false;
 		if(recursionCount != 0) panic("(LOCK) Newly acquired lock with non-zero recursionCount!");
 		++recursionCount;
-		CurrentThread().SetAbortable(false);
+		CurrentThread().IncrementLockCount();
 	}
 
 	void TakeRecursive() override{
@@ -52,7 +52,7 @@ public:
 		waiting = false;
 		if(recursionCount != 0) panic("(LOCK) Newly acquired lock with non-zero recursionCount!");
 		++recursionCount;
-		CurrentThread().SetAbortable(false);
+		CurrentThread().IncrementLockCount();
 		return true;
 	}
 
@@ -76,7 +76,7 @@ public:
 		--recursionCount;
 		if(recursionCount == 0){
 			while(!__sync_bool_compare_and_swap(&owningThreadID, currentThreadID, 0));
-			CurrentThread().SetAbortable(true);
+			CurrentThread().DecrementLockCount();
 			if(allowYield){
 				if(waiting) CurrentThread().Yield();
 				CurrentThread().YieldIfPending();
@@ -88,10 +88,12 @@ public:
 		return owningThreadID;
 	}
 
-	void Transfer(uint64_t tid) override{
+	void Transfer(IThread *to) override{
 		auto currentThreadID = CurrentThread().ID();
 		if(owningThreadID != currentThreadID) panic("(LOCK) Improper transfer!");
-		while(!__sync_bool_compare_and_swap(&owningThreadID, currentThreadID, tid));
+		CurrentThread().DecrementLockCount();
+		while(!__sync_bool_compare_and_swap(&owningThreadID, currentThreadID, to->ID()));
+		to->IncrementLockCount();
 	}
 
 	bool IsLocked() override{
@@ -101,6 +103,7 @@ public:
 	~Lock(){
 		if(owningThreadID == CurrentThread().ID()) panic("(LOCK) Attempting to destory held lock!");
 		TakeExclusive();
+		CurrentThread().DecrementLockCount();
 	}
 };
 

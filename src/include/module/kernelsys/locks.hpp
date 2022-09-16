@@ -5,6 +5,7 @@
 #include <util/noncopyable.hpp>
 
 class LockLock;
+class IThread;
 
 class ILock : private nonmovable{
 public:
@@ -17,7 +18,7 @@ public:
 	virtual void Release(bool forUserspace = false, bool allowYield = true) = 0;
 
 	virtual uint64_t GetOwningThreadID() = 0;
-	virtual void Transfer(uint64_t tid) = 0;
+	virtual void Transfer(IThread *to) = 0;
 
 	virtual bool IsLocked() = 0;
 

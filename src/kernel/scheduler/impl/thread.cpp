@@ -32,7 +32,6 @@ Thread::Thread(ThreadEntryFunction fn, void *param, size_t stackSize){
 	stackBase = (void*)stackAddr;
 	stackToken = GetHAL().GenerateStackToken(stackAddr);
 
-	abortlevel = 2;
 	memcpy(fpuState, GetHAL().GetDefaultFPUState(), 512);
 }
 
@@ -41,6 +40,8 @@ Thread::Thread(){
 }
 
 void Thread::End(){
+	if(lockCount != 0) panic("(SCH) Ending thread with non-zero lock count!");
+	if(pid) GetProcessManager().SwitchProcess(0);
 	status = ThreadStatus::Ending;
 	theScheduler->reaperThread->Unblock();
 	Yield(nullptr);
@@ -80,6 +81,13 @@ void Thread::Block(){
 	}
 }
 
+bool Thread::AbortableBlock(){
+	SetBlock([&]{
+		return userAbort;
+	}, nullptr);
+	return !userAbort;
+}
+
 void Thread::Unblock(){
 	switch(status){
 		case ThreadStatus::Blocked:
@@ -108,6 +116,13 @@ void Thread::SetBlock(BlockCheckFunction fn, IThread */*to*/){
 	Block();
 }
 
+bool Thread::SetAbortableBlock(BlockCheckFunction fn, IThread *to){
+	SetBlock([&]{
+		return userAbort || fn();
+	}, to);
+	return !userAbort;
+}
+
 void Thread::ClearBlock(){
 	Unblock();
 	blockCheck = nullptr;
@@ -117,23 +132,22 @@ void Thread::Join(){
 
 }
 
-void Thread::SetAbortable(bool a){
-	if(a && abortlevel > 0) --abortlevel;
-	else if(!a) ++abortlevel;
+void Thread::IncrementLockCount(){
+	++lockCount;
+	//if(id == 8) dbgpf("%s called from %p on thread %llu (%i)\n", __PRETTY_FUNCTION__,  __builtin_return_address(0), id, lockCount);
 }
 
-int Thread::GetAbortLevel(){
-	return abortlevel;
+void Thread::DecrementLockCount(){
+	--lockCount;
+	//if(id == 8) dbgpf("%s called from %p on thread %llu (%i)\n", __PRETTY_FUNCTION__,  __builtin_return_address(0), id, lockCount);
+}
+
+int Thread::GetLockCount(){
+	return lockCount;
 }
 
 void Thread::Abort(){
-	if(theScheduler->current == this && abortlevel > 1) panic("(SCH) Thread attempting to abort itself while not abortable!");
-	if(theScheduler->current == this || abortlevel == 0){
-		status = ThreadStatus::Ending;
-		theScheduler->reaperThread->Unblock();
-		Yield(nullptr);
-	}
-	else userAbort = true;
+	userAbort = true;
 }
 
 bool Thread::ShouldAbortAtUserBoundary(){

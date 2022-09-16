@@ -160,6 +160,8 @@ namespace MM2{
 				current_pagedir->add_region(m.page_addr, m.pages * MM2_Page_Size, &mmap_read, id);
 			}
 		}
+
+		AddHandleDependencyOn(file);
 		
 		return id;
 	}
@@ -212,6 +214,7 @@ namespace MM2{
 					current_pagedir->remove_region(m.page_addr);
 				}
 			}
+			RemoveHandleDependencyOn(m.file);
 			mmappings->erase(id);
 			if(mmappings->has_key(id)) panic("(MM2) Mapping removal failed!");
 			if(!GetProcessManager().SwitchProcess(curpid)) panic("(MM2) Could not switch process!");

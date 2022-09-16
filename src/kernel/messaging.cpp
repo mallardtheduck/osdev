@@ -244,9 +244,10 @@ public:
 
 	bt_msg_header AwaitMessage(IProcess &proc = CurrentProcess()) override{
 		bt_msg_header ret;
+		auto &currentThread = CurrentThread();
 		while(!RecieveMessage(ret, proc)){
-			CurrentThread().SetMessagingStatus(thread_msg_status::Waiting);
-			CurrentThread().SetBlock([&]{
+			currentThread.SetMessagingStatus(thread_msg_status::Waiting);
+			auto unBlocked = currentThread.SetAbortableBlock([&]{
 				if(!messageLock->TryTakeExclusive()) return false;
 				auto ret = false;
 				for(auto &m : messages){
@@ -258,6 +259,7 @@ public:
 				messageLock->Release();
 				return ret;
 			});
+			if(!unBlocked) return {};
 		}
 		dbgpf("MSG: Message %llu recieved by PID %llu.\n", ret.id, CurrentProcess().ID());
 		return ret;
@@ -281,9 +283,10 @@ public:
 					}
 				}
 			}
-			CurrentThread().SetMessagingStatus(thread_msg_status::Waiting);
+			auto &currentThread = CurrentThread();
+			currentThread.SetMessagingStatus(thread_msg_status::Waiting);
 			auto filterCopy = filter;
-			CurrentThread().SetBlock([&]{
+			auto unBlocked = currentThread.SetAbortableBlock([&]{
 				if(!messageLock->TryTakeExclusive()) return false;
 				auto ret = false;
 				for(auto &m : messages){
@@ -295,6 +298,7 @@ public:
 				messageLock->Release();
 				return ret;
 			});
+			if(!unBlocked) return {};
 		}
 	}
 	

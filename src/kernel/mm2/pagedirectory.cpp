@@ -56,7 +56,7 @@ namespace MM2{
 			}
 			mm2_virtual_free((void*)directory, 1);
 		}
-		delete directory_lock;
+		directory_lock->~ILock();
 	}
 
 	PageDirectory::PageDirectory(uint32_t *a){

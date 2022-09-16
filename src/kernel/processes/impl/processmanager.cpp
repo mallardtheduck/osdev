@@ -7,25 +7,31 @@ void CleanupThread(ProcessManager *that){
 	auto &myThread = CurrentThread();
 	myThread.SetPriority(1);
 	while(true){
-		vector<ProcessPointer> cleanUps;
 		{
-			auto hl = that->lock->LockExclusive();
-			for(auto &p : that->processes){
-				auto proc = static_cast<Process*>(p.get());
-				if(proc->IsReadyForCleanup()) cleanUps.push_back(p);
+			vector<Process*> cleanUps;
+			{
+				auto hl = that->lock->LockExclusive();
+				for(auto &p : that->processes){
+					auto proc = static_cast<Process*>(p.get());
+					if(proc->IsReadyForCleanup()) cleanUps.push_back(static_cast<Process*>(p.get()));
+				}
 			}
-		}
-		for(auto &p : cleanUps){
-			auto proc = static_cast<Process*>(p.get());
-			proc->CleanupProcess();
+			for(auto &proc : cleanUps){
+				auto hl = that->lock->LockExclusive();
+				proc->CleanupProcess();
+			}
 		}
 		myThread.Block();
 	}
 }
 
 void ProcessManager::RemoveProcess(const Process *p){
+	auto hl = lock->LockRecursive();
 	auto index = processes.find(const_cast<Process*>(p));
-	processes.erase(index);
+	if(index){
+		auto hl2 = GetScheduler().LockScheduler();
+		processes.erase(index);
+	}
 }
 
 void ProcessManager::ScheduleCleanup(){

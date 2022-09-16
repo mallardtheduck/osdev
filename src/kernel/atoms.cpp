@@ -96,9 +96,7 @@ public:
 		return MakeKernelGenericHandle<KernelHandles::AtomWait>(p, &WaitHandleClose, &WaitHandleWait);
 	}
 
-	~Atom(){
-		CurrentThread().SetAbortable(true);
-	}
+	~Atom() {}
 };
 
 IAtom *NewAtom(uint64_t value){

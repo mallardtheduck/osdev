@@ -36,11 +36,11 @@ void userapi_handler(ICPUState &state){
 	}else{
 		GetKernelExtensionManager().ExtensionUserCall(ext, fn, state);
 	}
-	if(currentThread.GetAbortLevel() != 1){
-		dbgpf("UAPI: Abortlevel: %i, ext: %i fn: %x\n", currentThread.GetAbortLevel(), (int)ext, (int)fn);
-		panic("(UAPI) Non-zero abortlevel on return to userspace!\n");
+	if(currentThread.GetLockCount() != 1){
+		dbgpf("UAPI: Lock count: %i, ext: %i fn: %x\n", currentThread.GetLockCount(), (int)ext, (int)fn);
+		panic("(UAPI) Non-zero lock count on return to userspace!\n");
 	}
-	if(currentThread.ShouldAbortAtUserBoundary() || currentProcess.GetStatus() == btos_api::bt_proc_status::Ending) currentThread.Abort();
+	if(currentProcess.GetStatus() == btos_api::bt_proc_status::Ending) currentThread.Abort();
 }
 
 bool is_safe_ptr(uint32_t ptr, size_t size, bt_pid_t pid){
@@ -179,7 +179,7 @@ USERAPI_HANDLER(BT_LOCK){
 	if(auto handle = KernelHandleCast<KernelHandles::Lock>(h)) {
 		auto lock = handle->GetData();
 		lock->TakeExclusive(true);
-		CurrentThread().SetAbortable(true);
+		CurrentThread().DecrementLockCount();
 	}else RAISE_US_ERROR();
 }
 
@@ -189,7 +189,7 @@ USERAPI_HANDLER(BT_TRY_LOCK){
 		auto lock = handle->GetData();
 		if(lock->TryTakeExclusive()){
 			state.Get32BitRegister(Generic_Register::GP_Register_A) = 1;
-			CurrentThread().SetAbortable(true);
+			CurrentThread().DecrementLockCount();
 			return;
 		}
 	}
@@ -200,8 +200,8 @@ USERAPI_HANDLER(BT_UNLOCK){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
 	if(auto handle = KernelHandleCast<KernelHandles::Lock>(h)){
 		auto lock = handle->GetData();
+		CurrentThread().IncrementLockCount();
 		lock->Release(true);
-		CurrentThread().SetAbortable(false);
 	}else RAISE_US_ERROR();
 }
 
@@ -464,6 +464,8 @@ USERAPI_HANDLER(BT_DREAD){
 				entry->size = node->GetSize();
 				entry->type = node->GetType();
 				entry->valid = true;
+			}else{
+				entry->valid = false;
 			}
 		}else RAISE_US_ERROR();
 	}
@@ -605,9 +607,7 @@ USERAPI_HANDLER(BT_NEW_THREAD){
 }
 
 USERAPI_HANDLER(BT_BLOCK_THREAD){
-	CurrentThread().SetAbortable(true);
-	CurrentThread().Block();
-	CurrentThread().SetAbortable(false);
+	CurrentThread().AbortableBlock();
 }
 
 USERAPI_HANDLER(BT_UNBLOCK_THREAD){

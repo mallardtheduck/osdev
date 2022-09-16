@@ -195,6 +195,13 @@ void Scheduler::UnHoldThreadsByPID(uint64_t pid){
 	}
 }
 
+void Scheduler::AbortThreadsByPID(uint64_t pid){
+	auto hl = lock->LockExclusive();
+	for(auto thread : threads){
+		if(thread->pid == pid) thread->Abort();
+	}
+}
+
 bool Scheduler::CanLock(){
 	bool ret = lock->TryTakeExclusive();
 	if(ret) lock->Release();
@@ -206,8 +213,9 @@ Thread *Scheduler::PlanCycle(){
 	uint32_t minPriority = UINT32_MAX;
 	for(auto thread : threads){
 		if(thread->loadModifier > 0) --thread->loadModifier;
-		if(thread->status == ThreadStatus::Blocked && thread->blockCheck){
-			thread->status = thread->blockCheck() ? ThreadStatus::Runnable : ThreadStatus::Blocked;
+		if(thread->status == ThreadStatus::Blocked && thread->blockCheck && thread->blockCheck()){
+			thread->status = ThreadStatus::Runnable;
+			thread->blockCheck = nullptr;
 		}
 		if(thread->status == ThreadStatus::Runnable && thread->dynamicPriority < minPriority) minPriority = thread->dynamicPriority;
 	}
@@ -237,9 +245,7 @@ uint64_t Scheduler::Schedule(uint64_t stackToken){
 		next = next->next;
 	}
 	if(!next) next = PlanCycle();
-	lock->Transfer(next->id);
-	current->SetAbortable(true);
-	next->SetAbortable(false);
+	lock->Transfer(next);
 	current = next;
 	if(Processes_Ready()) GetProcessManager().SwitchProcessFromScheduler(next->pid);
 	else if(next->pid != 0) panic("(SCH) PID != 0 before processes!");

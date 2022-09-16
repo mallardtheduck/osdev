@@ -213,7 +213,10 @@ loaded_elf_proc elf_load_proc(bt_pid_t pid, IFileHandle &file){
 			MM2::current_pagedir->alloc_pages_at(pages, (void*)base);
 			memset((void*)prog.vaddr, 0, prog.memsz);
 			//size_t b=file.Read(prog.filesz, (char*)prog.vaddr);
-            memoryManager.MemoryMapFile((char*)prog.vaddr, &file, p, prog.filesz);
+            auto mapId = memoryManager.MemoryMapFile((char*)prog.vaddr, &file, p, prog.filesz);
+			CurrentProcess().AddHandle(MakeKernelGenericHandle<KernelHandles::MemoryMapping>(mapId, [](uint64_t f){
+				GetMemoryManager().UnMapFile(f);
+			}));
 			/*if(b!=prog.filesz){
 				dbgpf("ELF: Read failure - expected: %i, got %i.\n", (int)prog.filesz, (int)b);
 				panic("(ELF) Read failed during program load!");

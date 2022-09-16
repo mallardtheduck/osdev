@@ -81,8 +81,10 @@ class ProcCommand (gdb.Command):
 	def invoke (self, arg, from_tty):
 		pix = arg
 		if pix == '':
-			print(gdb.parse_and_eval("*((Process*)theProcessManager.ptr->currentProcess)" % pix))
+			print(gdb.parse_and_eval("((Process*)theProcessManager.ptr->currentProcess)"))
+			print(gdb.parse_and_eval("*((Process*)theProcessManager.ptr->currentProcess)"))
 		else:
+			print(gdb.parse_and_eval("((Process*)theProcessManager.ptr->processes.data[%s].theObject)" % pix))
 			print(gdb.parse_and_eval("*((Process*)theProcessManager.ptr->processes.data[%s].theObject)" % pix))
 	
 ProcCommand ()
@@ -94,8 +96,10 @@ class ThreadCommand (gdb.Command):
 	def invoke (self, arg, from_tty):
 		tix = arg
 		if tix == '':
+			print(gdb.parse_and_eval("theScheduler.ptr->current"))
 			print(gdb.parse_and_eval("*theScheduler.ptr->current"))
 		else:
+			print(gdb.parse_and_eval("theScheduler.ptr->threads.data[%s]" % tix))
 			print(gdb.parse_and_eval("*theScheduler.ptr->threads.data[%s]" % tix))
 	
 ThreadCommand ()

@@ -33,15 +33,19 @@ public:
 	virtual void YieldIfPending() = 0;
 	virtual uint64_t ID() = 0;
 	virtual void Block() = 0;
+	virtual bool AbortableBlock() = 0;
 	virtual void Unblock() = 0;
 	virtual void SetPriority(uint32_t p) = 0;
 	virtual void SetPID(uint64_t pid) = 0;
 	virtual void SetBlock(BlockCheckFunction fn, IThread *to = nullptr) = 0;
+	[[nodiscard]] virtual bool SetAbortableBlock(BlockCheckFunction fn, IThread *to = nullptr) = 0;
 	virtual void ClearBlock() = 0;
 	virtual void Join() = 0;
-	virtual void SetAbortable(bool a) = 0;
-	virtual int GetAbortLevel() = 0;
+	virtual void IncrementLockCount() = 0;
+	virtual void DecrementLockCount() = 0;
+	virtual int GetLockCount() = 0;
 	virtual void Abort() = 0;
+	virtual void End() = 0;
 	virtual bool ShouldAbortAtUserBoundary() = 0;
 	virtual void UpdateUserState(const ICPUState &state) = 0;
 	virtual ICPUState &GetUserState() = 0;
@@ -93,6 +97,7 @@ public:
 	virtual void DebugResumeThreadsByPID(uint64_t pid) = 0;
 	virtual void HoldThreadsByPID(uint64_t pid) = 0;
 	virtual void UnHoldThreadsByPID(uint64_t pid) = 0;
+	virtual void AbortThreadsByPID(uint64_t pid) = 0;
 	
 	virtual bool CanLock() = 0;
 

@@ -12,15 +12,19 @@ public:
 	void YieldIfPending() override {}
 	uint64_t ID() override {return 0;}
 	void Block() override {}
+	bool AbortableBlock() override {return true;}
 	void Unblock() override {}
 	void SetPriority(uint32_t) override {}
 	void SetPID(uint64_t pid) override {}
 	void SetBlock(BlockCheckFunction, IThread *) override {}
+	bool SetAbortableBlock(BlockCheckFunction, IThread *) override {return true;}
 	void ClearBlock() override {}
 	void Join() override {}
-	void SetAbortable(bool a) override {}
-	int GetAbortLevel() override {return 1;}
+	void IncrementLockCount() override {}
+	void DecrementLockCount() override {}
+	int GetLockCount() override {return 0;}
 	void Abort() override {}
+	void End() override {}
 	bool ShouldAbortAtUserBoundary() override {return false;}
 	void UpdateUserState(const ICPUState &) override {}
 	ICPUState &GetUserState() override { return const_cast<ICPUState&>(GetHAL().GetDefaultCPUState()); }

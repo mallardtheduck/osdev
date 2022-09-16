@@ -30,7 +30,7 @@ private:
 	
 	BlockCheckFunction blockCheck = nullptr;
 
-	int abortlevel = 0;
+	int lockCount = 0;
     bool userAbort = false;
 
 	Thread *next = nullptr;
@@ -51,21 +51,24 @@ private:
 	Thread(ThreadEntryFunction fn, void *param, size_t stackSize);
 	Thread();
 
-	void End();
 public:
 	void Yield(IThread *to) override;
 	void YieldIfPending() override;
 	uint64_t ID() override;
 	void Block() override;
+	bool AbortableBlock() override;
 	void Unblock() override;
 	void SetPriority(uint32_t p) override;
 	void SetPID(uint64_t pid) override;
 	void SetBlock(BlockCheckFunction fn, IThread *to) override;
+	bool SetAbortableBlock(BlockCheckFunction fn, IThread *to) override;
 	void ClearBlock() override;
 	void Join() override;
-	void SetAbortable(bool a) override;
-	int GetAbortLevel() override;
+	void IncrementLockCount() override;
+	void DecrementLockCount() override;
+	int GetLockCount() override;
 	void Abort() override;
+	void End() override;
 	bool ShouldAbortAtUserBoundary() override;
 	void UpdateUserState(const ICPUState &state) override;
 	ICPUState &GetUserState() override;

@@ -55,13 +55,13 @@ extern "C" void sch_isr_c(){
 	auto &thread = CurrentThread();
 
 	if(sch.DisableScheduler()){
-		thread.SetAbortable(true);
+		thread.IncrementLockCount();
 		sch.EnableScheduler();
 		hal.EnableInterrupts();
 		hal.AcknowlegdeIRQIfPending(0);
 		sch_yield();
 		hal.DisableInterrupts();
-		thread.SetAbortable(false);
+		thread.DecrementLockCount();
 	}
 	hal.AcknowlegdeIRQIfPending(0);
 }
