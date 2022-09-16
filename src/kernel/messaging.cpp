@@ -194,7 +194,7 @@ public:
 		//dbgpf("MSG: Sent message ID %i from PID %i to PID %i.\n", (int)msg.id, (int)msg.from, (int)msg.to);
 		//sch_yield_to(msg.to);
 		CurrentThread().Yield();
-		dbgpf("MSG: Message %llu sent by PID %llu.\n", msg.header.id, CurrentProcess().ID());
+		//dbgpf("MSG: Message %llu sent by PID %llu.\n", msg.header.id, CurrentProcess().ID());
 		return msg.header.id;
 	}
 
@@ -205,7 +205,7 @@ public:
 		if(GetMessage(cid, cmsg)){
 			msg = cmsg.header;
 			CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
-			dbgpf("MSG: Message %llu recieved by PID %llu.\n", msg.id, CurrentProcess().ID());
+			//dbgpf("MSG: Message %llu recieved by PID %llu.\n", msg.id, CurrentProcess().ID());
 			return true;
 		}
 		for(auto &m : messages){
@@ -213,7 +213,7 @@ public:
 				proc.SetCurrentMessageID(m.header.id);
 				msg = m.header;
 				CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
-				dbgpf("MSG: Message %llu recieved by PID %llu.\n", msg.id, CurrentProcess().ID());
+				//dbgpf("MSG: Message %llu recieved by PID %llu.\n", msg.id, CurrentProcess().ID());
 				return true;
 			}
 		}
@@ -227,7 +227,7 @@ public:
 		if(GetMessage(cid, cmsg) && DoesMessageMatch(cmsg.header, filter)){
 			msg = cmsg.header;
 			CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
-			dbgpf("MSG: Message %llu recieved by PID %llu.\n", msg.id, CurrentProcess().ID());
+			//dbgpf("MSG: Message %llu recieved by PID %llu.\n", msg.id, CurrentProcess().ID());
 			return true;
 		}
 		for(auto &m : messages){
@@ -235,7 +235,7 @@ public:
 				proc.SetCurrentMessageID(m.header.id);
 				msg = m.header;
 				CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
-				dbgpf("MSG: Message %llu recieved by PID %llu.\n", msg.id, CurrentProcess().ID());
+				//dbgpf("MSG: Message %llu recieved by PID %llu.\n", msg.id, CurrentProcess().ID());
 				return true;
 			}
 		}
@@ -261,7 +261,7 @@ public:
 			});
 			if(!unBlocked) return {};
 		}
-		dbgpf("MSG: Message %llu recieved by PID %llu.\n", ret.id, CurrentProcess().ID());
+		//dbgpf("MSG: Message %llu recieved by PID %llu.\n", ret.id, CurrentProcess().ID());
 		return ret;
 	}
 
@@ -269,7 +269,7 @@ public:
 		auto cid = proc.GetCurrentMessageID();
 		Message cmsg;
 		if(GetMessage(cid, cmsg) && DoesMessageMatch(cmsg.header, filter)){
-			dbgpf("MSG: Message %llu recieved by PID %llu.\n", cmsg.header.id, CurrentProcess().ID());
+			//dbgpf("MSG: Message %llu recieved by PID %llu.\n", cmsg.header.id, CurrentProcess().ID());
 			return cmsg.header;
 		}
 		while(true){
@@ -278,7 +278,7 @@ public:
 				for(auto &m : messages){
 					if(m.header.to == proc.ID() && DoesMessageMatch(m.header, filter)){
 						CurrentThread().SetMessagingStatus(thread_msg_status::Processing);
-						dbgpf("MSG: Message %llu recieved by PID %llu.\n", m.header.id, CurrentProcess().ID());
+						//dbgpf("MSG: Message %llu recieved by PID %llu.\n", m.header.id, CurrentProcess().ID());
 						return m.header;
 					}
 				}
