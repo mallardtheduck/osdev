@@ -168,8 +168,13 @@ private:
 	string path;
 	FILINFO fno;
 public:
-	FatFSFilesystemNode(const string &p) : path(p){
-		f_stat(path.c_str(), &fno);
+	FatFSFilesystemNode(const string &p, bool rootDir = false) : path(p){
+		if(rootDir){
+			memset(&fno, 0, sizeof(fno));
+			fno.fattrib = AM_DIR;
+		}else{
+			f_stat(path.c_str(), &fno);
+		}
 	}
 
 	IFileHandle *OpenFile(uint32_t mode) override{
@@ -249,10 +254,13 @@ public:
 
 	FilesystemNodePointer GetNode(const char *p) override{
 		string path = drvNo + ":" + p;
+		bool rootDir = false;
+		string pStr = p;
+		if(pStr == "" || pStr == "/") rootDir = true;
 		FILINFO fno;
-		auto res = f_stat(path.c_str(), &fno);
+		auto res = rootDir ? FR_OK : f_stat(path.c_str(), &fno);
 		dbgpf("FATFS: GetNode(%s) -> %s : %i\n", p, path.c_str(), res);
-		if(res == FR_OK && fno.fname[0] != 0) return new FatFSFilesystemNode(path);
+		if(res == FR_OK && (rootDir || fno.fname[0] != 0)) return new FatFSFilesystemNode(path, rootDir);
 		else return nullptr;
 	}
 
