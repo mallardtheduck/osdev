@@ -15,7 +15,7 @@ ManualStaticAlloc<vector<initfs_file>> initfs_data;
 
 class InitFSNode : public IFilesystemNode{
 private:
-	initfs_file *file;
+	initfs_file *file = nullptr;
 public:
 	InitFSNode(initfs_file *f) : file(f) {}
 
@@ -32,16 +32,19 @@ public:
 	}
 
 	const char *GetName() override{
+		if(!file) return "";
 		return file->name.c_str();
 	}
 
 	void Rename(const char *) override{}
 
 	bt_filesize_t GetSize() override{
+		if(!file) return 0;
 		return file->size;
 	}
 
 	fs_item_types GetType() override{
+		if(!file) return FS_Directory;
 		return FS_File;
 	}
 };
