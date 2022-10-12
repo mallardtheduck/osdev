@@ -1,0 +1,28 @@
+def merge(vectors){
+	var ret = Vector();
+	for(v: vectors){
+		for(e: v){
+			if(!ret.contains(e)){
+				ret.push_back(e);
+			}
+		}
+	}
+	return ret;
+}
+
+def addIfNeeded(name, vector){
+	if(!vector.contains(name)){
+		vector.push_back(name);
+	}
+	return vector;
+}
+
+def ensureFirst(name, vector){
+	var ret = [name];
+	for(v : vector){
+		if(v != name){
+			ret.push_back(v);
+		}
+	}
+	return ret;
+}

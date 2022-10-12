@@ -1,0 +1,55 @@
+var projectpath = getenv("PROJECTPATH");
+
+include("${projectpath}/src/build/btos.bk");
+
+var asfiles = Glob(".", "*.s", true);
+var cfiles = Glob(".", "*.c", true);
+var cppfiles = Glob(".", "*.cpp", true);
+
+targets: asfiles [] MustExist
+targets: cfiles [] MustExist
+targets: cppfiles [] MustExist
+
+cfiles = addIfNeeded("./buildid.c", cfiles);
+asfiles = ensureFirst("./boot.s", asfiles);
+
+var asobjs = ReplaceExtensions("o", asfiles);
+var cobjs = ReplaceExtensions("o", cfiles);
+var cppobjs = ReplaceExtensions("o", cppfiles);
+
+global allobjs = merge([asobjs, cobjs, cppobjs]);
+
+target: Bakefile [] MustExist
+target: linker.ld [] MustExist
+
+target: all [btos.bin, Bakefile] AlwaysBuild
+
+target: clean [] AlwaysBuild{
+	DeleteFiles(allobjs);
+	DeleteFile("buildid.c");
+	DeleteFile("btos.bin");
+}
+
+target: btos.bin [linker.ld, Bakefile] FileBuild {
+	link_kernel(allobjs, target);
+}
+AddDependencies("btos.bin", allobjs);
+
+pattern: asobjs {ReplaceExtension("s", target)} [Bakefile] FileBuild{
+	btos_build_as(deps[0], target);
+}
+
+pattern: cobjs {ReplaceExtension("c", target)} [Bakefile] FileBuild{
+	btos_build_c(deps[0], target, ["KERNEL"]);
+}
+
+pattern: cppobjs {ReplaceExtension("cpp", target)} [Bakefile] FileBuild{
+	btos_build_cpp(deps[0], target, ["KERNEL"]);
+}
+
+target: ../../.git/HEAD [] MustExist
+target: ../../.git/index [] MustExist
+
+target: ./buildid.c [../../.git/HEAD, ../../.git/index] FileBuild{
+	RunCommand("./buildid.sh");
+}

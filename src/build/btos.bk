@@ -1,0 +1,40 @@
+global projectpath = getenv("PROJECTPATH");
+
+include("${projectpath}/src/build/functions.bk");
+
+def btos_build_as(src, obj){
+	var command = "i686-pc-btos-as ${src} -o ${obj} -g";
+	print(command);
+	RunCommand(command);
+}
+
+def append_defs(cmd, defs){
+	for(d : defs){
+		cmd += " -D${d}";
+	}
+	return cmd;
+}
+
+def btos_build_cpp(src, obj, defs){
+	var command = "i686-pc-btos-g++ -MMD -MP -c ${src} -o ${obj} -ffreestanding -fno-builtin -Og -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -I${projectpath}/src/include -std=gnu++17";
+	command = append_defs(command, defs);
+	print(command);
+	RunCommand(command);
+}
+
+def btos_build_c(src, obj, defs){
+	var command  = "i686-pc-btos-gcc -MMD -MP -c ${src} -o ${obj} -ffreestanding -fno-builtin -Og -Wall -Wextra -Werror -g -I${projectpath}/src/include";
+	command = append_defs(command, defs);
+	print(command);
+	RunCommand(command);
+}
+
+def link_kernel(objs, bin){
+	var command = "i686-pc-btos-gcc -T linker.ld -o ${bin} -ffreestanding -Og -nostdlib -g"
+	for(o : objs){
+		command += " ${o}";
+	}
+	command += " -lgcc";
+	print(command);
+	RunCommand(command);
+}
