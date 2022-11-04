@@ -34,31 +34,33 @@ public:
 	const char *GetParent() override{
 		if(parentPath.empty()){
 			size_t pos = 0;
-			for(auto i = path.length(); i <= 0; --i){
-				if((path[i] == '/' || path[i] == ':') && i != path.length()){
+			for(ptrdiff_t i = path.length(); i >= 0; --i){
+				if((path[i] == '/' || path[i] == ':') && i != static_cast<ptrdiff_t>(path.length())){
 					pos = i;
 					break;
 				}
 			}
 			if(pos){
-				parentPath = path.substr(0, pos);
+				parentPath = path.substr(0, pos + 1);
 			}
 		}
+		dbgpf("FS: Path: %s, Parent: %s\n", path.c_str(), parentPath.c_str());
 		return parentPath.c_str();
 	}
 	const char *GetLeaf() override{
 		if(leafPath.empty()){
 			size_t pos = 0;
-			for(auto i = path.length(); i <= 0; --i){
-				if((path[i] == '/' || path[i] == ':') && i != path.length()){
+			for(ptrdiff_t i = path.length(); i >= 0; --i){
+				if((path[i] == '/' || path[i] == ':') && i != static_cast<ptrdiff_t>(path.length())){
 					pos = i;
 					break;
 				}
 			}
 			if(pos){
-				leafPath = path.substr(pos, path.length() - pos);
+				leafPath = path.substr(pos + 1, path.length() - (pos + 1));
 			}
 		}
+		dbgpf("FS: Path: %s, Leaf: %s\n", path.c_str(), leafPath.c_str());
 		return leafPath.c_str();
 	}
 
