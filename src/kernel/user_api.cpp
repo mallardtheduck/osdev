@@ -430,9 +430,9 @@ USERAPI_HANDLER(BT_DOPEN){
 		}
 		if(handle){
 			state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(handle);
-			return;
+		}else{
+			state.Get32BitRegister(Generic_Register::GP_Register_A) = 0;
 		}
-		state.Get32BitRegister(Generic_Register::GP_Register_A) = 0;
 	}else RAISE_US_ERROR();
 }
 
