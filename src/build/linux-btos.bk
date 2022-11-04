@@ -15,26 +15,28 @@ def append_defs(cmd, defs){
 	return cmd;
 }
 
-def btos_build_cpp(src, obj, defs){
+def btos_build_cpp_kernel(src, obj, defs){
 	var command = "i686-pc-btos-g++ -MMD -MP -c ${src} -o ${obj} -ffreestanding -fno-builtin -Og -Wall -Wextra -Werror -fno-exceptions -fno-rtti -g -I${projectpath}/src/include -std=gnu++17";
 	command = append_defs(command, defs);
 	print(command);
 	RunCommand(command);
 }
 
-def btos_build_c(src, obj, defs){
+def btos_build_c_kernel(src, obj, defs){
 	var command  = "i686-pc-btos-gcc -MMD -MP -c ${src} -o ${obj} -ffreestanding -fno-builtin -Og -Wall -Wextra -Werror -g -I${projectpath}/src/include";
 	command = append_defs(command, defs);
 	print(command);
 	RunCommand(command);
 }
 
-def link_kernel(objs, bin){
+def link_kernel(objs, bin, libs){
 	var command = "i686-pc-btos-gcc -T linker.ld -o ${bin} -ffreestanding -Og -nostdlib -g"
 	for(o : objs){
 		command += " ${o}";
 	}
-	command += " -lgcc";
+	for(l : libs){
+		command += " -l${l}";
+	}
 	print(command);
 	RunCommand(command);
 }
