@@ -6,7 +6,10 @@
 
 #include "ff.h"
 
-static FilesystemNodePointer CreateNode(const string &path);
+class FatFSMountedFilesystem;
+
+static FilesystemNodePointer CreateNode(FilesystemNodePointer node, const string &path);
+FilesystemNodePointer GetNodeLocal(FatFSMountedFilesystem *mount, const char *path);
 
 static string PathConcat(const string &stem, const string &leaf){
 	if(stem.empty()) return leaf;
@@ -52,7 +55,7 @@ public:
 		if(mode & fs_mode_flags::FS_Read) fmode |= FA_READ;
 		if(mode & fs_mode_flags::FS_Write) fmode |= FA_WRITE;
 
-		if(mode & fs_mode_flags::FS_Create) fmode |= FA_CREATE_NEW;
+		if(mode & fs_mode_flags::FS_Create) fmode |= FA_OPEN_ALWAYS;
 		if(mode & fs_mode_flags::FS_Truncate) fmode |= FA_CREATE_ALWAYS;
 
 		if(mode & fs_mode_flags::FS_AtEnd) fmode |= FA_OPEN_APPEND;
@@ -116,8 +119,10 @@ private:
 
 	FilesystemNodePointer node;
 	bt_filesize_t cpos = 0;
+	bool del = false;
 public:
 	FatFSDirectoryHandle(const string &p, uint32_t mode, IFilesystemNode *n) : path(p), node(n){
+		if(mode & fs_mode_flags::FS_Delete) del = true;
 		f_opendir(&dp, path.c_str());
 	}
 
@@ -131,7 +136,7 @@ public:
 		if(res != FR_OK || fno.fname[0] == 0) return nullptr;
 		else{
 			++cpos;
-			return CreateNode(PathConcat(path, fno.fname));
+			return CreateNode(node, PathConcat(path, fno.fname));
 		}
 	}
 
@@ -156,6 +161,7 @@ public:
 
 	void Close() override{
 		f_closedir(&dp);
+		if(del) f_rmdir(path.c_str());
 	}
 
 	bool Wait() override{
@@ -165,10 +171,11 @@ public:
 
 class FatFSFilesystemNode : public IFilesystemNode{
 private:
+	FatFSMountedFilesystem *mount;
 	string path;
 	FILINFO fno;
 public:
-	FatFSFilesystemNode(const string &p, bool rootDir = false) : path(p){
+	FatFSFilesystemNode(FatFSMountedFilesystem *m, const string &p, bool rootDir = false) : mount(m), path(p){
 		if(rootDir){
 			memset(&fno, 0, sizeof(fno));
 			fno.fattrib = AM_DIR;
@@ -187,13 +194,14 @@ public:
 	}
 
 	IFileHandle *CreateFile(const char *name, uint32_t mode) override{
+		dbgpf("FATFS: CreateFile(\"%s\", %x)\n", name, mode);
 		if(fno.fattrib & AM_DIR){
 			auto fullPath = path + '/' + name;
 			FIL fp;
 			auto r = f_open(&fp, fullPath.c_str(), FA_READ | FA_CREATE_NEW);
 			if(r == FR_OK){
 				f_close(&fp);
-				auto node = API->GetVirtualFilesystem().GetNode(fullPath.c_str());
+				auto node = GetNodeLocal(mount, fullPath.c_str());
 				if(node){
 					return node->OpenFile(mode);
 				}
@@ -203,11 +211,12 @@ public:
 	}
 
 	IDirectoryHandle *CreateDirectory(const char *name, uint32_t mode) override{
+		dbgpf("FATFS: CreateDirectory(\"%s\", %x)\n", name, mode);
 		if(fno.fattrib & AM_DIR){
 			auto fullPath = path + '/' + name;
 			auto r = f_mkdir(fullPath.c_str());
 			if(r == FR_OK){
-				auto node = API->GetVirtualFilesystem().GetNode(fullPath.c_str());
+				auto node = GetNodeLocal(mount, fullPath.c_str());
 				if(node){
 					return node->OpenDirectory(mode);
 				}
@@ -229,10 +238,15 @@ public:
 		if(fno.fattrib & AM_DIR) return fs_item_types::FS_Directory;
 		else return fs_item_types::FS_File;
 	}
+
+	FatFSMountedFilesystem *GetMount(){
+		return mount;
+	}
 };
 
-static FilesystemNodePointer CreateNode(const string &path){
-	return new FatFSFilesystemNode(path);
+static FilesystemNodePointer CreateNode(FilesystemNodePointer node, const string &path){
+	auto fatfsNode = static_cast<FatFSFilesystemNode*>(node.get());
+	return new FatFSFilesystemNode(fatfsNode->GetMount(), path);
 }
 
 class FatFSMountedFilesystem : public IMountedFilesystem{
@@ -260,7 +274,18 @@ public:
 		FILINFO fno;
 		auto res = rootDir ? FR_OK : f_stat(path.c_str(), &fno);
 		dbgpf("FATFS: GetNode(%s) -> %s : %i\n", p, path.c_str(), res);
-		if(res == FR_OK && (rootDir || fno.fname[0] != 0)) return new FatFSFilesystemNode(path, rootDir);
+		if(res == FR_OK && (rootDir || fno.fname[0] != 0)) return new FatFSFilesystemNode(this, path, rootDir);
+		else return nullptr;
+	}
+
+	FilesystemNodePointer GetNodeLocal(const char *path){
+		bool rootDir = false;
+		string pStr = path;
+		if(pStr == "" || pStr == "/") rootDir = true;
+		FILINFO fno;
+		auto res = rootDir ? FR_OK : f_stat(path, &fno);
+		dbgpf("FATFS: GetNodeLocal(%s) : %i\n", path, res);
+		if(res == FR_OK && (rootDir || fno.fname[0] != 0)) return new FatFSFilesystemNode(this, path, rootDir);
 		else return nullptr;
 	}
 
@@ -272,6 +297,10 @@ public:
 		return true;
 	}
 };
+
+FilesystemNodePointer GetNodeLocal(FatFSMountedFilesystem *mount, const char *path){
+	return mount->GetNodeLocal(path);
+}
 
 class FatFSFilesystem : public IFilesystem{
 public:
