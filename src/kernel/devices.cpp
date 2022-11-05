@@ -1,4 +1,5 @@
 #include "kernel.hpp"
+#include <util/asprintf.h>
 
 class VisibleDeviceIterator;
 
@@ -99,6 +100,20 @@ IVisibleDeviceManager &GetVisibleDeviceManager(){
 	return *vdm;
 }
 
+char *Devices_InfoFS(){
+	char *buffer=nullptr;
+	asprintf(&buffer, "# name, type, description\n");
+	for(auto &dev : *vdm){
+		auto name = dev.GetName();
+		auto type = dev.GetType();
+		auto desc = dev.GetDescription();
+		reasprintf_append(&buffer, "%s, %x, \"%s\"\n", name, type, desc);
+	}
+	return buffer;
+}
+
+
 void Devices_Init(){
 	vdm.Init();
+	InfoRegister("DEVICES", &Devices_InfoFS);
 }
