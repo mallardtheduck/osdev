@@ -32,7 +32,10 @@ public:
 	void Close() override{
 		size = 0;
 		pos = 0;
-		free(data);
+		if(data){
+			free(data);
+			data = nullptr;
+		}
 	}
 
 	bool Wait() override{
@@ -40,7 +43,7 @@ public:
 	}
 
 	size_t Read(size_t bytes, char *buffer){
-		auto readsize = min(pos + bytes, size);
+		auto readsize = min(bytes, size - pos);
 		memcpy(buffer, data + pos, readsize);
 		pos += readsize;
 		return readsize;
@@ -144,8 +147,9 @@ public:
 
 	FilesystemNodePointer Read() override{
 		if(pos != infoItems.end()){
-			return new InfoFSNode(pos->second, pos->first, false);
+			auto ret = new InfoFSNode(pos->second, pos->first, false);
 			++pos;
+			return ret;
 		}else return nullptr;
 	}
 
@@ -155,7 +159,7 @@ public:
 
 	size_t Seek(size_t p, uint32_t flags) override{
 		size_t idx = 0;
-		for(auto it = infoItems.begin(); it != pos && it != infoItems.end(); ++it);
+		for(auto it = infoItems.begin(); it != pos && it != infoItems.end(); ++it, ++idx);
 		auto npos = FSHelpers::SeekPosition(p, flags, idx, infoItems.size());
 		pos = infoItems.begin();
 		for(size_t i = 0; i < npos; ++i, ++pos);
@@ -172,17 +176,24 @@ IDirectoryHandle *InfoFSNode::OpenDirectory(uint32_t mode){
 
 	if(isDirectory) return new InfoFSDirectory();
 	else return nullptr;
-} 
+}
+
+static bool IsMatch(const string &file, string query){
+	if(!query.length()) return false;
+	if(query[0] == '/') query = query.substr(1, query.length() - 1);
+	return to_upper(file) == to_upper(query);
+}
 
 class InfoFSMount : public IMountedFilesystem{
 private:
 public:
 	FilesystemNodePointer GetNode(const char *path) override{
+		dbgpf("INFOFS: GetNode(\"%s\")\n", path);
 		string p = path;
-		if(p == "") return new InfoFSNode(nullptr, "", true);
+		if(p == "" || p == "/") return new InfoFSNode(nullptr, "", true);
 		else{
 			for(auto &info : infoItems){
-				if(info.first == p){
+				if(IsMatch(info.first, p)){
 					return new InfoFSNode(info.second, info.first, false);
 				}
 			}

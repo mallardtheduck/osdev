@@ -101,7 +101,7 @@ public:
 	}
 
 	IDirectoryHandle *OpenDirectory(uint32_t mode) override{
-		if(device == nullptr) return new DevFSDirectoryHandle(this);
+		if(!device) return new DevFSDirectoryHandle(this);
 		else return nullptr;
 	}
 
@@ -114,7 +114,8 @@ public:
 	}
 
 	const char *GetName() override{
-		return device->GetName();
+		if(!device) return "";
+		else return device->GetName();
 	}
 
 	void Rename(const char *) override{}
@@ -124,14 +125,16 @@ public:
 	}
 
 	fs_item_types GetType() override{
-		return FS_Device;
+		if(!device) return FS_Directory;
+		else return FS_Device;
 	}
 };
 
 FilesystemNodePointer DevFSDirectoryHandle::Read(){
-	if(it != GetVisibleDeviceManager().end()) return new DevFSNode(it);
+	if(it != GetVisibleDeviceManager().end()){
+		return new DevFSNode(it++);
+	}
 	else return nullptr;
-	++it;
 }
 
 static bool IsMatch(const string &a, const string &b){
@@ -148,7 +151,8 @@ static bool IsMatch(const string &a, const string &b){
 class MountedDevFS : public IMountedFilesystem{
 public:
 	FilesystemNodePointer GetNode(const char *path) override{
-		if(string(path) == "") return new DevFSNode(nullptr);
+		string p = path;
+		if(p == "" || p == "/") return new DevFSNode(nullptr);
 		for(auto &device : GetVisibleDeviceManager()){
 			if(IsMatch(device.GetName(), path)) return new DevFSNode(&device);
 		}
