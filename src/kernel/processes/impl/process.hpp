@@ -97,6 +97,9 @@ public:
 
 	void IncrementRefCountFromScheduler();
 	void DecrementRefCountFromScheduler();
+
+	size_t GetMemoryUsage() override;
+	uint64_t ParentID() override;
 };
 
 #endif

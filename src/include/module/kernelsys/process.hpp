@@ -68,6 +68,9 @@ public:
 	virtual void IncrementRefCount() = 0;
 	virtual void DecrementRefCount() = 0;
 
+	virtual size_t GetMemoryUsage() = 0;
+	virtual uint64_t ParentID() = 0;
+
 	virtual ~IProcess() {}
 };
 

@@ -3,6 +3,8 @@
 #include "processmanager.hpp"
 #include "process.hpp"
 
+ManualStaticAlloc<ProcessManager> theProcessManager;
+
 void CleanupThread(ProcessManager *that){
 	auto &myThread = CurrentThread();
 	myThread.SetPriority(1);
@@ -34,6 +36,43 @@ void ProcessManager::RemoveProcess(const Process *p){
 	}
 }
 
+char *ProcessManager::ProcsInfoFS(){
+	auto &that = *theProcessManager;
+	bool done = false;
+	size_t bufferSize = 4096;
+	char *buffer;
+	while(!done){
+		done = true;
+		buffer=(char*)malloc(bufferSize);
+		snprintf(buffer, bufferSize, "# PID, path, memory, parent\n");
+		size_t kmem=MM2::current_pagedir->get_kernel_used();
+		{auto hl = that.lock->LockExclusive();
+			for(auto &proc : that.processes){
+				auto pid = proc->ID();
+				auto path = proc->GetName();
+				auto memory = proc->GetMemoryUsage();
+				auto parent = proc->ParentID();
+
+				auto count = snprintf(buffer, bufferSize, "%s%llu, \"%s\", %lu, %llu\n", buffer,
+					pid, path, (pid == 0) ? kmem : memory, parent);
+
+				if((size_t)count > bufferSize){
+					free(buffer);
+					buffer = nullptr;
+					bufferSize *= 2;
+					done = false;
+					break;
+				}
+			}
+	    }
+	}
+    return buffer;
+}
+
+char *ProcessManager::EnvInfoFS(){
+	return nullptr;
+}
+
 void ProcessManager::ScheduleCleanup(){
 	cleanupThread->Unblock();
 }
@@ -51,6 +90,7 @@ ProcessManager::ProcessManager(){
 		CurrentThread().SetName("Process Cleanup");
 		CleanupThread(this);
 	});
+	InfoRegister("PROCS", &ProcsInfoFS);
 }
 
 bool ProcessManager::SwitchProcess(bt_pid_t pid) {
@@ -159,8 +199,6 @@ btos_api::bt_proc_status::Enum ProcessManager::GetProcessStatusByID(bt_pid_t pid
 	}
 	return btos_api::bt_proc_status::DoesNotExist;
 }
-
-ManualStaticAlloc<ProcessManager> theProcessManager;
 
 void Processes_Init(){
 	theProcessManager.Init();

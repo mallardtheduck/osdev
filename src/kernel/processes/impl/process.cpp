@@ -380,3 +380,10 @@ void Process::DecrementRefCountFromScheduler(){
 		static_cast<ProcessManager&>(GetProcessManager()).ScheduleCleanup();
 	}
 }
+
+size_t Process::GetMemoryUsage(){
+	return pageDirectory->get_user_used();
+}
+uint64_t Process::ParentID(){
+	return parent;
+}
