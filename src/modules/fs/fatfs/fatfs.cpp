@@ -59,8 +59,8 @@ public:
 		if(mode & fs_mode_flags::FS_Truncate) fmode |= FA_CREATE_ALWAYS;
 
 		if(mode & fs_mode_flags::FS_AtEnd) fmode |= FA_OPEN_APPEND;
-		auto res = f_open(&fp, path.c_str(), fmode);
-		dbgpf("FATFS: Open: %s mode: %lu (%i) Result: %i\n", path.c_str(), mode, (int)fmode, res);
+		/*auto res =*/ f_open(&fp, path.c_str(), fmode);
+		//dbgpf("FATFS: Open: %s mode: %lu (%i) Result: %i\n", path.c_str(), mode, (int)fmode, res);
 		if(mode & fs_mode_flags::FS_Delete) del = true;
 	}
 	size_t Read(size_t bytes, char *buffer) override{
@@ -194,7 +194,7 @@ public:
 	}
 
 	IFileHandle *CreateFile(const char *name, uint32_t mode) override{
-		dbgpf("FATFS: CreateFile(\"%s\", %x)\n", name, mode);
+		//dbgpf("FATFS: CreateFile(\"%s\", %x)\n", name, mode);
 		if(fno.fattrib & AM_DIR){
 			auto fullPath = path + '/' + name;
 			FIL fp;
@@ -211,7 +211,7 @@ public:
 	}
 
 	IDirectoryHandle *CreateDirectory(const char *name, uint32_t mode) override{
-		dbgpf("FATFS: CreateDirectory(\"%s\", %x)\n", name, mode);
+		//dbgpf("FATFS: CreateDirectory(\"%s\", %x)\n", name, mode);
 		if(fno.fattrib & AM_DIR){
 			auto fullPath = path + '/' + name;
 			auto r = f_mkdir(fullPath.c_str());
@@ -273,7 +273,7 @@ public:
 		if(pStr == "" || pStr == "/") rootDir = true;
 		FILINFO fno;
 		auto res = rootDir ? FR_OK : f_stat(path.c_str(), &fno);
-		dbgpf("FATFS: GetNode(%s) -> %s : %i\n", p, path.c_str(), res);
+		//dbgpf("FATFS: GetNode(%s) -> %s : %i\n", p, path.c_str(), res);
 		if(res == FR_OK && (rootDir || fno.fname[0] != 0)) return new FatFSFilesystemNode(this, path, rootDir);
 		else return nullptr;
 	}
@@ -284,7 +284,7 @@ public:
 		if(pStr == "" || pStr == "/") rootDir = true;
 		FILINFO fno;
 		auto res = rootDir ? FR_OK : f_stat(path, &fno);
-		dbgpf("FATFS: GetNodeLocal(%s) : %i\n", path, res);
+		//dbgpf("FATFS: GetNodeLocal(%s) : %i\n", path, res);
 		if(res == FR_OK && (rootDir || fno.fname[0] != 0)) return new FatFSFilesystemNode(this, path, rootDir);
 		else return nullptr;
 	}

@@ -121,7 +121,7 @@ namespace MM2{
 	}
 	
 	uint64_t mm2_mmap(char *ptr, IFileHandle *file, bt_filesize_t offset, size_t size){
-		dbgpf("MM2: Mapping %i bytes from file offset %i at %p.\n", (int)size, (int)offset, (void*)ptr);
+		//dbgpf("MM2: Mapping %i bytes from file offset %i at %p.\n", (int)size, (int)offset, (void*)ptr);
 		mmapping m;
 		m.addr = ptr;
 		m.file = file;

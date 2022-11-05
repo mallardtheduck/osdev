@@ -44,7 +44,7 @@ public:
 				parentPath = path.substr(0, pos + 1);
 			}
 		}
-		dbgpf("FS: Path: %s, Parent: %s\n", path.c_str(), parentPath.c_str());
+		//dbgpf("FS: Path: %s, Parent: %s\n", path.c_str(), parentPath.c_str());
 		return parentPath.c_str();
 	}
 	const char *GetLeaf() override{
@@ -60,7 +60,7 @@ public:
 				leafPath = path.substr(pos + 1, path.length() - (pos + 1));
 			}
 		}
-		dbgpf("FS: Path: %s, Leaf: %s\n", path.c_str(), leafPath.c_str());
+		//dbgpf("FS: Path: %s, Leaf: %s\n", path.c_str(), leafPath.c_str());
 		return leafPath.c_str();
 	}
 
