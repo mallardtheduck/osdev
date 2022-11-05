@@ -173,6 +173,14 @@ public:
 		if(filesystems.has_key(name)) return filesystems[name];
 		return nullptr;
 	}
+
+	const char *FilesystemName(IFilesystem *fs) override{
+		for(auto &f : filesystems){
+			if(fs == f.second) return f.first.c_str();
+		}
+		return "Unknown";
+	}
+
 };
 
 static ManualStaticAlloc<VirtualFilesystem> theVirtualFilesystem;
@@ -191,13 +199,15 @@ IFilesystemManager &GetFilesystemManager(){
 	return *theFilesystemManager;
 }
 
-
 char *VirtualFilesystem::InfoFS(){
 	auto hl = theVirtualFilesystem->lock->LockExclusive();
 	char *buffer=nullptr;
 	asprintf(&buffer, "# name, device, filesystem\n");
 	for(auto &mount : theVirtualFilesystem->mounts){
-		reasprintf_append(&buffer, "%s, %s, %s\n", mount.first.c_str(), "???", "NEWFS");
+		auto name = mount.first.c_str();
+		auto device = mount.second->Device();
+		auto filesystem = theFilesystemManager->FilesystemName(mount.second->FileSystem());
+		reasprintf_append(&buffer, "%s, %s, %s\n", name, device, filesystem);
 	}
 	return buffer;
 }

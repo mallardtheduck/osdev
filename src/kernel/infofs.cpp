@@ -188,7 +188,6 @@ class InfoFSMount : public IMountedFilesystem{
 private:
 public:
 	FilesystemNodePointer GetNode(const char *path) override{
-		dbgpf("INFOFS: GetNode(\"%s\")\n", path);
 		string p = path;
 		if(p == "" || p == "/") return new InfoFSNode(nullptr, "", true);
 		else{
@@ -204,6 +203,13 @@ public:
 	void Flush() override {}
 	bool Unmount(){
 		return false;
+	}
+
+	IFilesystem *FileSystem(){
+		return nullptr;
+	}
+	const char *Device(){
+		return "N/A";
 	}
 };
 

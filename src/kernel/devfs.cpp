@@ -163,6 +163,13 @@ public:
 	bool Unmount() override{
 		return true;
 	}
+
+	IFilesystem *FileSystem(){
+		return nullptr;
+	}
+	const char *Device(){
+		return "N/A";
+	}
 };
 
 class DevFS : public IFilesystem{

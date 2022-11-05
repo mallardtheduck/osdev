@@ -8,6 +8,9 @@ extern "C"{
 	#include "lib9660.h"
 }
 
+class ISOFilesystem;
+ISOFilesystem *theFilesystem = nullptr;
+
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 constexpr size_t block_size = 2048;
@@ -300,6 +303,8 @@ private:
 		ISOMountedFilesystem *thisPtr;
 		IFileHandle *fh;
 	} data;
+
+	string deviceName;
 public:
 	ISOMountedFilesystem(FilesystemNodePointer node){
 		data.thisPtr = this;
@@ -316,6 +321,7 @@ public:
 			});
 			if(status != L9660_OK) data.fh->Close();
 		}
+		deviceName = node->GetName();
 	}
 
 	FilesystemNodePointer GetNode(const char *path) override{
@@ -347,6 +353,12 @@ public:
 		data.fh = nullptr;
 		return true;
 	}
+
+	IFilesystem *FileSystem();
+
+	const char *Device(){
+		return deviceName.c_str();
+	}
 };
 
 class ISOFilesystem : public IFilesystem{
@@ -359,6 +371,10 @@ public:
 		return false;
 	}
 };
+
+IFilesystem *ISOMountedFilesystem::FileSystem(){
+	return theFilesystem;
+}
 
 size_t strlen(const char *s) {
 	size_t i;
@@ -387,6 +403,7 @@ string convert_path(const string &path){
 }
 
 int module_main(char *){
-	API->GetFilesystemManager().RegisterFilesystem("ISO9660", new ISOFilesystem());
+	theFilesystem = new ISOFilesystem();
+	API->GetFilesystemManager().RegisterFilesystem("ISO9660", theFilesystem);
 	return 0;
 }

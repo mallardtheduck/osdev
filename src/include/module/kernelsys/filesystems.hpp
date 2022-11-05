@@ -4,6 +4,7 @@
 #include <module/kernelsys/handles.hpp>
 
 class IFilesystemNode;
+class IFilesystem;
 using FilesystemNodePointer = RefCountPointer<IFilesystemNode>;
 
 class IFileHandle : public IHandle{
@@ -72,6 +73,8 @@ public:
 	virtual FilesystemNodePointer GetNode(const char *path) = 0;
 	virtual void Flush() = 0;
 	virtual bool Unmount() = 0;
+	virtual IFilesystem *FileSystem() = 0;
+	virtual const char *Device() = 0;
 
 	virtual ~IMountedFilesystem() {}
 };
@@ -125,6 +128,7 @@ public:
 	virtual void RegisterFilesystem(const char *name, IFilesystem *fs) = 0;
 	virtual IFilesystem *UnRegisterFileystem(const char *name) = 0;
 	virtual IFilesystem *GetByName(const char *name) = 0;
+	virtual const char *FilesystemName(IFilesystem *fs) = 0;
 
 	virtual ~IFilesystemManager() {}
 };

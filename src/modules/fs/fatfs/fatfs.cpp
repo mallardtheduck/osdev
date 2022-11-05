@@ -7,6 +7,9 @@
 #include "ff.h"
 
 class FatFSMountedFilesystem;
+class FatFSFilesystem;
+
+FatFSFilesystem *theFilesystem;
 
 static FilesystemNodePointer CreateNode(FilesystemNodePointer node, const string &path);
 FilesystemNodePointer GetNodeLocal(FatFSMountedFilesystem *mount, const char *path);
@@ -256,6 +259,7 @@ private:
 	uint8_t drvId;
 	string drvNo;
 	IFileHandle *handle;
+	string deviceName;
 public:
 	FatFSMountedFilesystem(IFileHandle *h) : handle(h){
 		drvId = NewDrive(handle);
@@ -264,6 +268,7 @@ public:
 		drvNo = buf;
 		auto res = f_mount(&fs, drvNo.c_str(), 2);
 		if(res != FR_OK) dbgpf("FATFS: Mount failed (%i)\n", res);
+		deviceName = h->GetNode()->GetName();
 	}
 
 	FilesystemNodePointer GetNode(const char *p) override{
@@ -296,6 +301,11 @@ public:
 		DeleteDrive(drvId);
 		return true;
 	}
+
+	IFilesystem *FileSystem();
+	const char *Device(){
+		return deviceName.c_str();
+	}
 };
 
 FilesystemNodePointer GetNodeLocal(FatFSMountedFilesystem *mount, const char *path){
@@ -317,7 +327,12 @@ public:
 	}
 };
 
+IFilesystem *FatFSMountedFilesystem::FileSystem(){
+	return theFilesystem;
+}
+
 int module_main(char *){
-	API->GetFilesystemManager().RegisterFilesystem("FAT", new FatFSFilesystem());
+	theFilesystem = new FatFSFilesystem();
+	API->GetFilesystemManager().RegisterFilesystem("FAT", theFilesystem);
 	return 0;
 }
