@@ -5,6 +5,30 @@
 
 class ProcessManager;
 
+class Environment : public IEnvironment{
+private:
+	unique_ptr<ILock> lock { NewLock() };
+
+	struct EnvironmentVariable{
+		string value;
+		uint8_t flags;
+	};
+	map<string, EnvironmentVariable> environment;
+public:
+	bt_pid_t *pid = nullptr;
+
+	void GetEnvironmentVariable(const char *name, char *&value, uint8_t &flags);
+
+	void SetEnvironmentVariable(const char *name, const char *value, uint8_t flags = 0, bool userspace = false) override;
+	const char *GetEnvironmentVariable(const char *name, bool userspace = false) override;
+
+	size_t GetSize() override;
+	EnvironmentVariableInfo GetVariableInfo(size_t index) override;
+
+	void CopyIn(IEnvironment &env);
+};
+
+
 class Process : public IProcess{
 private:
 	friend class ProcessManager;
@@ -25,11 +49,7 @@ private:
 	handle_t handleCounter = 0;
 	vector<bt_handle_t> pendingHandleCloses;
 
-	struct EnvironmentVariable{
-		string value;
-		uint8_t flags;
-	};
-	map<string, EnvironmentVariable> environment;
+	Environment environment;
 	map<uint16_t, uint64_t> permissions;
 	uint64_t uid = 0;
 
@@ -40,7 +60,6 @@ private:
 	bool readyForCleanup = false;
 
 	static Process *CreateKernelProcess();
-	static map<string, EnvironmentVariable> CopyEnvironment(const IProcess &parent);
 	static uintptr_t AllocateStack(size_t size);
 
 	void GetEnvironmentVariable(const char *name, char *&value, uint8_t &flags);
@@ -62,6 +81,7 @@ public:
 
 	void SetEnvironmentVariable(const char *name, const char *value, uint8_t flags = 0, bool userspace = false)  override;
 	const char *GetEnvironmentVariable(const char *name, bool userspace = false) override;
+	IEnvironment &GetEnvironment() override;
 
 	ThreadPointer NewUserThread(ProcessEntryPoint p, void *param, void *stack) override;
 

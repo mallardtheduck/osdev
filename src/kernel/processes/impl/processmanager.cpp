@@ -2,6 +2,7 @@
 
 #include "processmanager.hpp"
 #include "process.hpp"
+#include <util/asprintf.h>
 
 ManualStaticAlloc<ProcessManager> theProcessManager;
 
@@ -64,13 +65,32 @@ char *ProcessManager::ProcsInfoFS(){
 					break;
 				}
 			}
-	    }
+		}
 	}
-    return buffer;
+	return buffer;
 }
 
 char *ProcessManager::EnvInfoFS(){
-	return nullptr;
+	auto &that = *theProcessManager;
+	char *buffer=nullptr;
+	asprintf(&buffer, "# name, value, flags\n");
+	{
+		auto &kenv = that.kernelProcess->GetEnvironment();
+		for(size_t i = 0; i < kenv.GetSize(); ++i){
+			auto ev = kenv.GetVariableInfo(i);
+			if(ev.flags & (uint8_t)EnvironemntVariableFlags::Global){
+				reasprintf_append(&buffer, "\"%s\", \"%s\", %x\n", ev.name, ev.value, (int)ev.flags);
+			}
+		}
+		auto &penv = that.currentProcess->GetEnvironment();
+		for(size_t i = 0; i < penv.GetSize(); ++i) {
+			auto ev = penv.GetVariableInfo(i);
+			if (!(ev.flags & (uint8_t)EnvironemntVariableFlags::Private)) {
+				reasprintf_append(&buffer, "\"%s\", \"%s\", %x\n", ev.name, ev.value, (int)ev.flags);
+			}
+		}
+	}
+	return buffer;
 }
 
 void ProcessManager::ScheduleCleanup(){
@@ -91,6 +111,7 @@ ProcessManager::ProcessManager(){
 		CleanupThread(this);
 	});
 	InfoRegister("PROCS", &ProcsInfoFS);
+	InfoRegister("ENV", &EnvInfoFS);
 }
 
 bool ProcessManager::SwitchProcess(bt_pid_t pid) {

@@ -23,6 +23,21 @@ enum class EnvironemntVariableFlags{
 	NoInherit	= (1<<3), //Do not copy from parent to child
 };
 
+class IEnvironment : private nonmovable{
+public:
+	struct EnvironmentVariableInfo{
+		const char *name;
+		const char *value;
+		uint8_t flags;
+	};
+
+	virtual void SetEnvironmentVariable(const char *name, const char *value, uint8_t flags = 0, bool userspace = false)  = 0;
+	virtual const char *GetEnvironmentVariable(const char *name, bool userspace = false) = 0;
+
+	virtual size_t GetSize() = 0;
+	virtual EnvironmentVariableInfo GetVariableInfo(size_t index) = 0;
+};
+
 class IProcess : private nonmovable{
 public:
 	virtual uint64_t ID() = 0;
@@ -35,6 +50,7 @@ public:
 
 	virtual void SetEnvironmentVariable(const char *name, const char *value, uint8_t flags = 0, bool userspace = false)  = 0;
 	virtual const char *GetEnvironmentVariable(const char *name, bool userspace = false) = 0;
+	virtual IEnvironment &GetEnvironment() = 0;
 
 	virtual ThreadPointer NewUserThread(ProcessEntryPoint p, void *param, void *stack) = 0;
 

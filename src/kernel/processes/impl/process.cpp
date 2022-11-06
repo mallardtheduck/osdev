@@ -9,6 +9,82 @@ constexpr auto DefaultUserspaceThreadPriority = 100;
 
 static uint64_t pidCounter = 0;
 
+void Environment::SetEnvironmentVariable(const char *name, const char *value, uint8_t flags, bool userspace){
+	if(*pid != 0 && (flags & to_underlying(EnvironemntVariableFlags::Global))){
+		GetProcessManager().SetGlobalEnvironmentVariable(name, value, flags);
+		return;
+	}
+	auto upperName = to_upper(name);
+
+	auto hl = lock->LockExclusive();
+	if(userspace){
+		if((flags & to_underlying(EnvironemntVariableFlags::Private))) return;
+		if(environment.has_key(upperName)){
+			auto &existingVariable = environment[upperName];
+			if((existingVariable.flags & to_underlying(EnvironemntVariableFlags::Private))) return;
+			if((existingVariable.flags & to_underlying(EnvironemntVariableFlags::ReadOnly))) return;
+		}
+	}
+	string stringValue = value;
+	if(stringValue.length()){
+		EnvironmentVariable evar;
+		evar.value = stringValue;
+		evar.flags = flags;
+		environment[upperName] = evar;
+	}else if(environment.has_key(upperName)) environment.erase(upperName);
+}
+
+void Environment::GetEnvironmentVariable(const char *name, char *&value, uint8_t &flags){
+	auto upperName = to_upper(name);
+	auto hl = lock->LockExclusive();
+	if(environment.has_key(upperName)){
+		value = const_cast<char*>(environment[upperName].value.c_str());
+		flags = environment[upperName].flags;
+	}
+}
+
+const char *Environment::GetEnvironmentVariable(const char *name, bool userspace){
+	//dbgpf("PROC: GetEnvironmentVariable: '%s' (%i)\n", name, (int)userspace);
+	auto upperName = to_upper(name);
+
+	uint8_t globalFlags = 0;
+	auto global = GetProcessManager().GetGlobalEnvironmentVariable(upperName.c_str(), &globalFlags);
+	if(userspace && (globalFlags & to_underlying(EnvironemntVariableFlags::Private))) return nullptr;
+	else if(global) return global;
+	
+	auto hl = lock->LockExclusive();
+	if(environment.has_key(upperName)){
+		auto &evar = environment[upperName];
+		if(userspace && (evar.flags & to_underlying(EnvironemntVariableFlags::Private))) return nullptr;
+		return evar.value.c_str();
+	}
+	return nullptr;
+}
+
+size_t Environment::GetSize(){
+	return environment.size();
+}
+
+IEnvironment::EnvironmentVariableInfo Environment::GetVariableInfo(size_t index){
+	auto it = environment.begin();
+	for(size_t i = 0; it != environment.end() && i < index; ++it, ++i);
+	if(it == environment.end())	return {"", "", 0};
+	EnvironmentVariableInfo info;
+	info.name = it->first.c_str();
+	info.value = it->second.value.c_str();
+	info.flags = it->second.flags;
+	return info;
+}
+
+void Environment::CopyIn(IEnvironment &env){
+	auto realEnv = static_cast<Environment*>(&env);
+	for(auto &e : realEnv->environment){
+		if(!(e.second.flags & to_underlying(EnvironemntVariableFlags::NoInherit)) && !(e.second.flags & to_underlying(EnvironemntVariableFlags::Global))){
+			environment[e.first] = e.second;
+		}
+	}
+}
+
 Process *Process::CreateKernelProcess(){
 	auto kernelProcess = new Process();
 	kernelProcess->name = "KERNEL";
@@ -29,20 +105,10 @@ uintptr_t Process::AllocateStack(size_t size){
 	return 0 - sizeof(void*);
 }
 
-map<string, Process::EnvironmentVariable> Process::CopyEnvironment(const IProcess &parent){
-	map<string, EnvironmentVariable> newEnvironment;
-	auto& realParent = static_cast<const Process&>(parent);
-	auto parentLock = realParent.lock->LockExclusive();
-	for(auto &e : realParent.environment){
-		if(!(e.second.flags & to_underlying(EnvironemntVariableFlags::NoInherit)) && !(e.second.flags & to_underlying(EnvironemntVariableFlags::Global))){
-			newEnvironment[e.first] = e.second;
-		}
-	}
-	return newEnvironment;
-}
-
 Process::Process(const char *n, const vector<const char *> &a, IProcess &p)
-:parent(p.ID()), name(n), pageDirectory(new MM2::PageDirectory()), environment(CopyEnvironment(p)) {
+:parent(p.ID()), name(n), pageDirectory(new MM2::PageDirectory()) {
+	environment.pid = &pid;
+	environment.CopyIn(p.GetEnvironment());
 	args.push_back(name);
 	for(auto &arg : a){
 		args.push_back(arg);
@@ -54,7 +120,9 @@ bool Process::IsReadyForCleanup(){
 	return readyForCleanup && status == btos_api::bt_proc_status::Ending;
 }
 
-Process::Process() {}
+Process::Process() {
+	environment.pid = &pid;
+}
 
 void Process::CleanupProcess(){
 	{
@@ -107,12 +175,7 @@ void Process::CleanupProcess(){
 }
 
 void Process::GetEnvironmentVariable(const char *name, char *&value, uint8_t &flags){
-	auto upperName = to_upper(name);
-	auto hl = lock->LockExclusive();
-	if(environment.has_key(upperName)){
-		value = const_cast<char*>(environment[upperName].value.c_str());
-		flags = environment[upperName].flags;
-	}
+	environment.GetEnvironmentVariable(name, value, flags);
 }
 
 uint64_t Process::ID(){
@@ -161,46 +224,15 @@ void Process::HoldBeforeUserspace(){
 }
 
 void Process::SetEnvironmentVariable(const char *name, const char *value, uint8_t flags, bool userspace){
-	if(pid != 0 && (flags & to_underlying(EnvironemntVariableFlags::Global))){
-		GetProcessManager().SetGlobalEnvironmentVariable(name, value, flags);
-		return;
-	}
-	auto upperName = to_upper(name);
-
-	auto hl = lock->LockExclusive();
-	if(userspace){
-		if((flags & to_underlying(EnvironemntVariableFlags::Private))) return;
-		if(environment.has_key(upperName)){
-			auto &existingVariable = environment[upperName];
-			if((existingVariable.flags & to_underlying(EnvironemntVariableFlags::Private))) return;
-			if((existingVariable.flags & to_underlying(EnvironemntVariableFlags::ReadOnly))) return;
-		}
-	}
-	string stringValue = value;
-	if(stringValue.length()){
-		EnvironmentVariable evar;
-		evar.value = stringValue;
-		evar.flags = flags;
-		environment[upperName] = evar;
-	}else if(environment.has_key(upperName)) environment.erase(upperName);
+	environment.SetEnvironmentVariable(name, value, flags, userspace);
 }
 
 const char *Process::GetEnvironmentVariable(const char *name, bool userspace){
-	//dbgpf("PROC: GetEnvironmentVariable: '%s' (%i)\n", name, (int)userspace);
-	auto upperName = to_upper(name);
+	return environment.GetEnvironmentVariable(name, userspace);
+}
 
-	uint8_t globalFlags = 0;
-	auto global = GetProcessManager().GetGlobalEnvironmentVariable(upperName.c_str(), &globalFlags);
-	if(userspace && (globalFlags & to_underlying(EnvironemntVariableFlags::Private))) return nullptr;
-	else if(global) return global;
-	
-	auto hl = lock->LockExclusive();
-	if(environment.has_key(upperName)){
-		auto &evar = environment[upperName];
-		if(userspace && (evar.flags & to_underlying(EnvironemntVariableFlags::Private))) return nullptr;
-		return evar.value.c_str();
-	}
-	return nullptr;
+IEnvironment &Process::GetEnvironment(){
+	return environment;
 }
 
 ThreadPointer Process::NewUserThread(ProcessEntryPoint p, void *param, void *stack){
