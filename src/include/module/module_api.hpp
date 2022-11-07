@@ -32,6 +32,7 @@ MODULE_ONLY(extern IModuleAPI *API);
 #include "kernelsys/hwpnp.hpp"
 #include "kernelsys/mm2.hpp"
 #include "kernelsys/devices.hpp"
+#include "kernelsys/perms.hpp"
 
 class IModuleAPI{
 public:
@@ -83,6 +84,8 @@ public:
 	virtual IKernelConfigVariables &GetKernelConfigVariables() = 0;
 
 	virtual IHwPnpManager &GetHwPnPManager() = 0;
+
+	virtual IPermissionManager &GetPermissionManager() = 0;
 
 	~IModuleAPI() {}
 };

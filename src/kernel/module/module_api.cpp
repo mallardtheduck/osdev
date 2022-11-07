@@ -119,6 +119,10 @@ public:
 	IHwPnpManager &GetHwPnPManager() override {
 		return ::GetHwPnpManager();
 	}
+
+	IPermissionManager &GetPermissionManager() override {
+		return ::GetPermissionManager();
+	}
 };
 
 static ManualStaticAlloc<ModuleAPI> theModuleAPI;

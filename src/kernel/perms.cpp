@@ -1,24 +1,29 @@
 #include "kernel.hpp"
 
-bool has_perm(uint16_t ext, uint8_t p, bt_pid_t pid){
-	if(!(ext == 0 && p == kperm::SuperPerm) && has_perm(0, kperm::SuperPerm, pid)) return true;
+bool PermissionManager::HasPermission(uint16_t ext, uint8_t p, IProcess &proc){
+	if(!(ext == 0 && p == kperm::SuperPerm) && HasPermission(0, kperm::SuperPerm, proc)) return true;
 
-	uint64_t perms = GetProcess(pid)->GetPermissions(ext);
+	uint64_t perms = proc.GetPermissions(ext);
 	if(((1 << p) & perms) == 0) return true;
 	else return false;
 }
 
-uint64_t set_perms(uint16_t ext, uint64_t pmask, bt_pid_t pid){
+uint64_t PermissionManager::SetPermissions(uint16_t ext, uint64_t pmask, IProcess &proc){
 	if(ext && !GetKernelExtensionManager().GetExtension(ext)) return 0;
-	auto proc = GetProcess(pid);
-	uint64_t perms = proc->GetPermissions(ext);
+	uint64_t perms = proc.GetPermissions(ext);
 	perms |= pmask;
-	proc->SetPermissions(ext, perms);
+	proc.SetPermissions(ext, perms);
 	return perms;
 }
 
-bool switch_uid(uint64_t uid, bt_pid_t pid){
-	if(!has_perm(0, kperm::SwitchUID, pid)) return false;
-	GetProcess(pid)->SetUserID(uid);
+bool PermissionManager::SwitchUID(uint64_t uid, IProcess &proc){
+	if(!HasPermission(0, kperm::SwitchUID, proc)) return false;
+	proc.SetUserID(uid);
 	return true;
+}
+
+static OnDemandStaticAlloc<PermissionManager> thePermissionManager;
+
+IPermissionManager &GetPermissionManager(){
+	return *thePermissionManager;
 }

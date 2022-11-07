@@ -264,7 +264,7 @@ USERAPI_HANDLER(BT_READ_ATOM){
 
 USERAPI_HANDLER(BT_MOUNT){
 	if(is_safe_string(state.Get32BitRegister(Generic_Register::GP_Register_B)) && is_safe_string(state.Get32BitRegister(Generic_Register::GP_Register_C)) && is_safe_string(state.Get32BitRegister(Generic_Register::GP_Register_D))){
-		if(has_perm(0, kperm::MountFS)){
+		if(GetPermissionManager().HasPermission(0, kperm::MountFS)){
 			auto fsName = (char*)state.Get32BitRegister(Generic_Register::GP_Register_D);
 			auto devicePath = (char*)state.Get32BitRegister(Generic_Register::GP_Register_C);
 			auto mountPoint = (char*)state.Get32BitRegister(Generic_Register::GP_Register_B);
@@ -282,7 +282,7 @@ USERAPI_HANDLER(BT_MOUNT){
 
 USERAPI_HANDLER(BT_UNMOUNT){
 	if(is_safe_string(state.Get32BitRegister(Generic_Register::GP_Register_B))){
-		if(has_perm(0, kperm::UnMountFS)){
+		if(GetPermissionManager().HasPermission(0, kperm::UnMountFS)){
 			auto mountPoint = (char*)state.Get32BitRegister(Generic_Register::GP_Register_B);
 			if(strlen(mountPoint)){
 				auto mountedFs = GetVirtualFilesystem().Detach(mountPoint);
@@ -509,7 +509,7 @@ USERAPI_HANDLER(BT_FORMAT){
 
 USERAPI_HANDLER(BT_LOAD_MODULE){
 	if(is_safe_string(state.Get32BitRegister(Generic_Register::GP_Register_B))){
-		if(has_perm(0, kperm::LoadModule)){
+		if(GetPermissionManager().HasPermission(0, kperm::LoadModule)){
 			char *params=is_safe_string(state.Get32BitRegister(Generic_Register::GP_Register_C))?(char*)state.Get32BitRegister(Generic_Register::GP_Register_C):NULL;
 			GetModuleManager().LoadModule((char*)state.Get32BitRegister(Generic_Register::GP_Register_B), params);
 		}
@@ -565,7 +565,7 @@ USERAPI_HANDLER(BT_WAIT){
 
 USERAPI_HANDLER(BT_KILL){
 	auto process = GetProcessManager().GetByID(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(!has_perm(0, kperm::KillAll) && process && process->GetUID() != CurrentProcess().GetUID()) return;
+	if(!GetPermissionManager().HasPermission(0, kperm::KillAll) && process && process->GetUID() != CurrentProcess().GetUID()) return;
 	process->End();
 }
 
@@ -837,7 +837,7 @@ USERAPI_HANDLER(BT_WAIT_INDEX){
 USERAPI_HANDLER(BT_SET_UID){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(uint64_t))){
 		uint64_t nuid = *(uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_B);
-		state.Get32BitRegister(Generic_Register::GP_Register_A) = switch_uid(nuid);
+		state.Get32BitRegister(Generic_Register::GP_Register_A) = GetPermissionManager().SwitchUID(nuid);
 	}else RAISE_US_ERROR();
 }
 
@@ -853,7 +853,7 @@ USERAPI_HANDLER(BT_GETSET_PERMS){
 		uint16_t ext = (uint16_t)state.Get32BitRegister(Generic_Register::GP_Register_B);
 		uint64_t *perms = (uint64_t*)state.Get32BitRegister(Generic_Register::GP_Register_C);
 		dbgpf("UAPI: BT_GETSET_PERMS %u, %llu\n", ext, *perms);
-		*perms = set_perms(ext, *perms);
+		*perms = GetPermissionManager().SetPermissions(ext, *perms);
 	}else RAISE_US_ERROR();
 }
 

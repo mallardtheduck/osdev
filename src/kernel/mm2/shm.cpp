@@ -96,7 +96,7 @@ namespace MM2{
 			dbgpf("MM2: Offset (%i) is not a multiple of page size.\n", (int)offset);
 			return 0;
 		}
-		if(!has_perm(0, kperm::SHMAnyUser) && GetProcess((*spaces)[id]->owner)->GetUID() != CurrentProcess().GetUID()){
+		if(!GetPermissionManager().HasPermission(0, kperm::SHMAnyUser) && GetProcess((*spaces)[id]->owner)->GetUID() != CurrentProcess().GetUID()){
 			dbgpf("MM2: Permission to map SHM denied.\n");
 			return 0;
 		}
