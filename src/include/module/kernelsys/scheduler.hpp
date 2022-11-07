@@ -37,6 +37,7 @@ public:
 	virtual void Unblock() = 0;
 	virtual void SetPriority(uint32_t p) = 0;
 	virtual void SetPID(uint64_t pid) = 0;
+	virtual uint64_t GetPID() = 0;
 	virtual void SetBlock(BlockCheckFunction fn, IThread *to = nullptr) = 0;
 	[[nodiscard]] virtual bool SetAbortableBlock(BlockCheckFunction fn, IThread *to = nullptr) = 0;
 	virtual void ClearBlock() = 0;

@@ -16,6 +16,7 @@ public:
 	void Unblock() override {}
 	void SetPriority(uint32_t) override {}
 	void SetPID(uint64_t pid) override {}
+	uint64_t GetPID() override {return 0;}
 	void SetBlock(BlockCheckFunction, IThread *) override {}
 	bool SetAbortableBlock(BlockCheckFunction, IThread *) override {return true;}
 	void ClearBlock() override {}

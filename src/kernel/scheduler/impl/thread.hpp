@@ -60,6 +60,7 @@ public:
 	void Unblock() override;
 	void SetPriority(uint32_t p) override;
 	void SetPID(uint64_t pid) override;
+	uint64_t GetPID() override;
 	void SetBlock(BlockCheckFunction fn, IThread *to) override;
 	bool SetAbortableBlock(BlockCheckFunction fn, IThread *to) override;
 	void ClearBlock() override;

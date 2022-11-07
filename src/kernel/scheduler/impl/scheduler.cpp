@@ -4,28 +4,35 @@
 #include "thread.hpp"
 #include "scheduler.hpp"
 
+#include <util/asprintf.h>
+
 ManualStaticAlloc<Scheduler> theScheduler;
 
 constexpr auto MaxLoadModifier = 128;
 
-// char *sch_threads_infofs(){
-// 	bool showall = has_perm(0, kperm::SeeAllProcs);
-// 	uint64_t uid = proc_get_uid();
-// 	char *buffer=nullptr;
-// 	asprintf(&buffer, "# ID, PID, priority, addr, status, alevel, load\n");
-// 	{hold_lock hl(sch_lock);
-// 		for(size_t i=0; i<threads->size(); ++i){
-// 			sch_thread *t=(*threads)[i];
-// 			if(!showall){
-// 				uint64_t tuid = proc_get_uid_nolock(t->pid);
-// 				if(tuid != uid) continue;
-// 			}
-// 			reasprintf_append(&buffer, "%llu, %llu, %lu, %lx, %i, %i, %li\n", t->ext_id, t->pid, t->priority, t->eip,
-// 				(int)t->status, t->abortlevel, t->modifier);
-// 		}
-//     }
-//     return buffer;
-// }
+char *Scheduler::ThreadsInfoFS(){
+	auto &that = *theScheduler;
+
+	bool showall = GetPermissionManager().HasPermission(0, kperm::SeeAllProcs);
+	auto uid = CurrentProcess().GetUID();
+
+	char *buffer = nullptr;
+	asprintf(&buffer, "# ID, PID, priority, name, status, load\n");
+	{ auto hl = that.lock->LockExclusive();
+		for(auto t : that.threads){
+			auto pid = t->GetPID();
+			if(!showall){
+				auto proc = GetProcess(pid);
+				uint64_t tuid = proc->GetUID();
+				if(tuid != uid) continue;
+			}
+			reasprintf_append(&buffer, "%llu, %llu, %lu, %s, %i, %li\n",
+				t->ID(), pid, t->staticPriority, t->GetName(),
+				(int)t->GetStatus(), t->loadModifier);
+		}
+	}
+	return buffer;
+}
 
 void Scheduler::TheIdleThread(void*){
 	Thread *myThread = theScheduler->current;
@@ -52,7 +59,7 @@ void Scheduler::TheIdleThread(void*){
 }
 
 void Scheduler::TheReaperThread(void*){
-    Thread *myThread = theScheduler->current;
+	Thread *myThread = theScheduler->current;
 	myThread->SetName("Thread Reaper");
 	myThread->SetPriority(1);
 	while(true){
@@ -68,7 +75,7 @@ void Scheduler::TheReaperThread(void*){
 						continue;
 					}
 					auto id = thread->id;
-                    void *stackptr = thread->stackPointer;
+					void *stackptr = thread->stackPointer;
 					size_t stackpages = thread->stackPages;
 					for(auto n = theScheduler->current; n != nullptr; n = n->next){
 						if(n->next && n->next == thread){
@@ -77,10 +84,10 @@ void Scheduler::TheReaperThread(void*){
 						}
 					}
 					theScheduler->threads.erase(i);
-                    theScheduler->lock->Release();
-                    mm2_virtual_free(stackptr, stackpages + 1);
+					theScheduler->lock->Release();
+					mm2_virtual_free(stackptr, stackpages + 1);
 					delete thread;
-                    theScheduler->lock->TakeExclusive();
+					theScheduler->lock->TakeExclusive();
 					changed=true;
 					dbgpf("SCH: Reaped %i (%i) [thread: %p stack: %p].\n", (int)i, (int)id, thread, stackptr);
 					break;
@@ -105,6 +112,8 @@ Scheduler::Scheduler(){
 	current = mainThread;
 	
 	GetHAL().SetSchedulerFrequency(30);
+
+	InfoRegister("THREADS", &ThreadsInfoFS);
 }
 
 ThreadPointer Scheduler::NewThread(ThreadEntryFunction fn, void *param, size_t stackSize){

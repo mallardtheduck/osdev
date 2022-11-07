@@ -20,6 +20,8 @@ private:
 	Thread *reaperThread;
 
 	Thread *PlanCycle();
+
+	static char *ThreadsInfoFS();
 public:
 	Scheduler();
 

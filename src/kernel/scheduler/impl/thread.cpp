@@ -111,6 +111,10 @@ void Thread::SetPID(uint64_t p){
 	pid = p;
 }
 
+uint64_t Thread::GetPID(){
+	return pid;
+}
+
 void Thread::SetBlock(BlockCheckFunction fn, IThread */*to*/){
 	blockCheck = fn;
 	Block();
