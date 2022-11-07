@@ -112,6 +112,7 @@ ProcessManager::ProcessManager(){
 	});
 	InfoRegister("PROCS", &ProcsInfoFS);
 	InfoRegister("ENV", &EnvInfoFS);
+	GetScheduler().AddIdleHook([&]{ScheduleCleanup();});
 }
 
 bool ProcessManager::SwitchProcess(bt_pid_t pid) {

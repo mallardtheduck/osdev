@@ -52,6 +52,7 @@ void Scheduler::TheIdleThread(void*){
 		}
 		if(yield_immediately) myThread->Yield(nullptr);
 		else{
+			for(auto &h : theScheduler->idleHooks) h();
 			GetHAL().HaltCPU();
 			myThread->Yield(nullptr);
 		}
@@ -275,6 +276,15 @@ bool Scheduler::DisableScheduler(){
 
 bool Scheduler::CanYield(){
 	return !lock->IsLocked();
+}
+
+void Scheduler::AddIdleHook(function<void()> fn){
+	idleHooks.push_back(fn);
+}
+
+void Scheduler::RemoveIdleHook(function<void()> fn){
+	auto i = idleHooks.find(fn);
+	idleHooks.erase(i);
 }
 
 bool Scheduler_Ready(){

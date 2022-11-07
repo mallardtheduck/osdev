@@ -19,6 +19,8 @@ private:
 	Thread *idleThread;
 	Thread *reaperThread;
 
+	vector<function<void()>> idleHooks;
+
 	Thread *PlanCycle();
 
 	static char *ThreadsInfoFS();
@@ -45,6 +47,10 @@ public:
 	bool DisableScheduler() override;
 
 	bool CanYield();
+
+	void AddIdleHook(function<void()> fn);
+	void RemoveIdleHook(function<void()> fn);
+
 };
 
 extern ManualStaticAlloc<Scheduler> theScheduler;

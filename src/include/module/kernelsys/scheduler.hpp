@@ -108,6 +108,9 @@ public:
 	virtual bool DisableScheduler() = 0;
 
 	[[nodiscard]] SchedulerLock LockScheduler();
+	
+	virtual void AddIdleHook(function<void()> fn) = 0;
+	virtual void RemoveIdleHook(function<void()> fn) = 0;
 
 	virtual ~IScheduler() {}
 };
