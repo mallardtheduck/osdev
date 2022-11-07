@@ -239,7 +239,7 @@ ThreadPointer Process::NewUserThread(ProcessEntryPoint p, void *param, void *sta
 	return GetScheduler().NewThread([=](){
 		if(!GetProcessManager().SwitchProcess(pid)) return;
 		CurrentThread().SetName("Userspace");
-		auto stackPointer = AllocateStack(DefaultUserspaceStackSize);
+		auto stackPointer = stack ? (uintptr_t)stack : AllocateStack(DefaultUserspaceStackSize);
 		CurrentThread().SetPriority(DefaultUserspaceThreadPriority);
 		debug_event_notify(pid, CurrentThread().ID(), bt_debug_event::ThreadStart);
 		CurrentProcess().SetStatus(btos_api::bt_proc_status::Running);
