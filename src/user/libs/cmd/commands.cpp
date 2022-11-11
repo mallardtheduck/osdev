@@ -42,9 +42,9 @@ void print_os_version(ostream &output=cout){
 void display_file(const string &path, ostream &output){
 	ifstream file(path);
 	if(file.is_open()){
-    	string line;
-    	while(getline(file, line)) output << line << endl;
-    }
+		string line;
+		while(getline(file, line)) output << line << endl;
+	}
 }
 
 void list_files(string path, ostream &out, char sep){
@@ -65,26 +65,26 @@ void list_files(string path, ostream &out, char sep){
 }
 
 void display_command(const command &cmd){
-    const vector<string> &commandline=cmd.args;
-    ostream &output=cmd.OutputStream();
+	const vector<string> &commandline=cmd.args;
+	ostream &output=cmd.OutputStream();
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
 	}
-    if(commandline[1] != "-") {
-        vector<string> files = glob(commandline[1]);
-        for (const string &file : files) {
-            display_file(parse_path(file), output);
-        }
-    }else{
-        string line;
-        while(getline(cmd.InputStream(), line)) output << line << endl;
-    }
+	if(commandline[1] != "-") {
+		vector<string> files = glob(commandline[1]);
+		for (const string &file : files) {
+			display_file(parse_path(file), output);
+		}
+	}else{
+		string line;
+		while(getline(cmd.InputStream(), line)) output << line << endl;
+	}
 }
 
 void ls_command(const command &cmd){
-    const vector<string> &commandline=cmd.args;
-    ostream &output=cmd.OutputStream();
+	const vector<string> &commandline=cmd.args;
+	ostream &output=cmd.OutputStream();
 	string path;
 	bool tabmode = false;
 	size_t pathIdx = 1;
@@ -105,7 +105,7 @@ void ls_command(const command &cmd){
 }
 
 void cd_command(const command &cmd){
-    const vector<string> &commandline=cmd.args;
+	const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 2){
 		cout << get_cwd() << endl;
 	}else{
@@ -118,7 +118,7 @@ void cd_command(const command &cmd){
 }
 
 void path_command(const command &cmd){
-    const vector<string> &commandline=cmd.args;
+	const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 2){
 		cout << get_cwd() << endl;
 	}else{
@@ -127,7 +127,7 @@ void path_command(const command &cmd){
 }
 
 void touch_command(const command &cmd){
-    const vector<string> &commandline=cmd.args;
+	const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
@@ -145,7 +145,7 @@ void touch_command(const command &cmd){
 }
 
 void mkdir_command(const command &cmd){
-    const vector<string> &commandline=cmd.args;
+	const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " dirname" << endl;
@@ -158,7 +158,7 @@ void mkdir_command(const command &cmd){
 }
 
 void del_command(const command &cmd){
-    const vector<string> &commandline=cmd.args;
+	const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " filename" << endl;
@@ -173,7 +173,7 @@ void del_command(const command &cmd){
 }
 
 void rmdir_command(const command &cmd){
-    const vector<string> &commandline=cmd.args;
+	const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " dirname" << endl;
@@ -183,15 +183,15 @@ void rmdir_command(const command &cmd){
 		if(dh) bt_dclose(dh);
 		else cout << "Could not open directory." << endl;
 		dh=bt_dopen(path.c_str(), FS_Read);
-        if(dh){
-            cout << "Could not remove directory." << endl;
-            bt_dclose(dh);
-        }
+		if(dh){
+			cout << "Could not remove directory." << endl;
+			bt_dclose(dh);
+		}
 	}
 }
 
 void copy_command(const command &cmd){
-    const vector<string> &commandline=cmd.args;
+	const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 3){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " from to" << endl;
@@ -257,7 +257,7 @@ void copy_command(const command &cmd){
 }
 
 void move_command(const command &cmd){
-    const vector<string> &commandline=cmd.args;
+	const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 3){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " from to" << endl;
@@ -268,14 +268,14 @@ void move_command(const command &cmd){
 }
 
 void ver_command(const command &cmd){
-    ostream &output=cmd.OutputStream();
+	ostream &output=cmd.OutputStream();
 	output << "BT/OS CMD" << endl;
 	print_os_version(output);
 }
 
 void list_command(const command &cmd){
-    const vector<string> &commandline=cmd.args;
-    ostream &output=cmd.OutputStream();
+	const vector<string> &commandline=cmd.args;
+	ostream &output=cmd.OutputStream();
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " pattern" << endl;
@@ -288,7 +288,7 @@ void list_command(const command &cmd){
 }
 
 void setenv_command(const command &cmd){
-    const vector<string> &commandline=cmd.args;
+	const vector<string> &commandline=cmd.args;
 	if(commandline.size() < 2){
 		cout << "Usage:" << endl;
 		cout << commandline[0] << " name [value]" << endl;
@@ -404,49 +404,49 @@ unordered_map<string, command_fn> builtin_commands={
 };
 
 bool run_builtin(const command &cmd){
-    vector<string> commandline=cmd.args;
+	vector<string> commandline=cmd.args;
 	const string command=to_lower(commandline[0]);
 	if(builtin_commands.find(command)!=builtin_commands.end()){
 		builtin_commands[command](cmd);
 		return true;
-     }
-    return false;
+	 }
+	return false;
 }
 
 bool run_program(const command &cmd, bool bg) {
-    vector<string> commandline=cmd.args;
-    const string command = to_lower(commandline[0]);
-    string path = parse_path(command);
-    if (!ends_with(to_lower(path), ".elx")) path += ".elx";
-    vector<string> possibles;
-    if (command.find('/') == string::npos) {
-        vector<string> paths = get_paths();
-        for (const string &p : paths) {
-            string possible = parse_path(p + "/" + command);
-            if (possible.length()) {
-                if (!ends_with(to_lower(possible), ".elx")) possible += ".elx";
-                possibles.push_back(possible);
-            }
-        }
-    } else {
-        if (path.length()) possibles.push_back(path);
-    }
-    if (!possibles.size()) return false;
-    for (const string &p : possibles) {
-        bt_directory_entry ent = bt_stat(p.c_str());
-        if (ent.valid && ent.type == FS_File) {
-            vector<string> args=commandline;
-            args.erase(args.begin());
-            string std_in=get_env("STDIN");
-            string std_out=get_env("STDOUT");
+	vector<string> commandline=cmd.args;
+	const string command = to_lower(commandline[0]);
+	string path = parse_path(command);
+	if (!ends_with(to_lower(path), ".elx")) path += ".elx";
+	vector<string> possibles;
+	if (command.find('/') == string::npos) {
+		vector<string> paths = get_paths();
+		for (const string &p : paths) {
+			string possible = parse_path(p + "/" + command);
+			if (possible.length()) {
+				if (!ends_with(to_lower(possible), ".elx")) possible += ".elx";
+				possibles.push_back(possible);
+			}
+		}
+	} else {
+		if (path.length()) possibles.push_back(path);
+	}
+	if (!possibles.size()) return false;
+	for (const string &p : possibles) {
+		bt_directory_entry ent = bt_stat(p.c_str());
+		if (ent.valid && ent.type == FS_File) {
+			vector<string> args=commandline;
+			args.erase(args.begin());
+			string std_in=get_env("STDIN");
+			string std_out=get_env("STDOUT");
 			cmd.CloseStreams();
-            set_env("STDIN", cmd.InputPath());
-            set_env("STDOUT", cmd.OutputPath());
+			set_env("STDIN", cmd.InputPath());
+			set_env("STDOUT", cmd.OutputPath());
 			Process proc = Process::Spawn(p, args);
-            set_env("STDIN", std_in);
-            set_env("STDOUT", std_out);
-            int ret = 0;
-            if (proc.GetPID()){
+			set_env("STDIN", std_in);
+			set_env("STDOUT", std_out);
+			int ret = 0;
+			if (proc.GetPID()){
 				if(bg){
 					ostream &output=cmd.OutputStream();
 					ret = 0;
@@ -454,11 +454,11 @@ bool run_program(const command &cmd, bool bg) {
 				}else ret = proc.Wait();
 			}
 			else cout << "Could not launch " << p << endl;
-            if (ret == -1) cout << p << " crashed." << endl;
-            return true;
+			if (ret == -1) cout << p << " crashed." << endl;
+			return true;
 
-        }
-    }
+		}
+	}
 	return false;
 }
 
@@ -478,8 +478,8 @@ command::~command(){
 }
 
 void command::SetInputPath(const string &path) {
-    input_path=path;
-    input_mode = IOMode::Path;
+	input_path=path;
+	input_mode = IOMode::Path;
 }
 
 void command::SetInputTemp(shared_ptr<istream> stream){
@@ -488,8 +488,8 @@ void command::SetInputTemp(shared_ptr<istream> stream){
 }
 
 void command::SetOutputPath(const string &path) {
-    output_path=path;
-    output_mode = IOMode::Path;
+	output_path=path;
+	output_mode = IOMode::Path;
 }
 
 void command::SetOutputTemp(shared_ptr<ostream> stream){
@@ -500,8 +500,8 @@ void command::SetOutputTemp(shared_ptr<ostream> stream){
 istream &command::InputStream() const{
 	if(!input){
 		if(input_mode == IOMode::Path){
-		    input=new ifstream(input_path);
-		    input_ptr.reset(input);
+			input=new ifstream(input_path);
+			input_ptr.reset(input);
 		}else if(input_mode == IOMode::Temp){
 			input = temp_input_stream.get();
 			input_ptr = temp_input_stream;
@@ -518,8 +518,8 @@ istream &command::InputStream() const{
 ostream &command::OutputStream() const{
 	if(!output){
 		if(output_mode == IOMode::Path){
-		    output=new ofstream(output_path, ios_base::app);
-		    output_ptr.reset(output);
+			output=new ofstream(output_path, ios_base::app);
+			output_ptr.reset(output);
 		}else if(output_mode == IOMode::Temp){
 			output = temp_output_stream.get();
 			output_ptr = temp_output_stream;
@@ -593,10 +593,10 @@ command::IOMode command::GetOutputMode(){
 }
 
 void command::CloseStreams() const{
-    if(output) output->flush();
-    input_ptr.reset();
+	if(output) output->flush();
+	input_ptr.reset();
 	input = nullptr;
-    output_ptr.reset();
+	output_ptr.reset();
 	output = nullptr;
 }
 
