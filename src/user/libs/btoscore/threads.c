@@ -1,6 +1,7 @@
 #include <btos.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 
 static const size_t reaper_stack_size = 4096;
 static bt_threadhandle reaper_thread = 0;
@@ -35,7 +36,9 @@ static void init_reaper(){
 	if(reaper_thread) return;
 	reaper_atom = bt_create_atom(0);
 	char *stack = (char*)malloc(reaper_stack_size);
+	//dbgpf("CORE: Starting reaper thread (%p %p)\n", &reaper, stack);
 	reaper_thread = bt_new_thread(&reaper, NULL, stack + reaper_stack_size);
+	//dbgpf("CORE: Reaper started.\n");
 }
 
 static void thread_start(void *d){

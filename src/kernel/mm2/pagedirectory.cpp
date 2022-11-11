@@ -144,7 +144,7 @@ namespace MM2{
 		{
 			auto hl = table_frame_lock->LockExclusive();
 			if(!(directory[tableno] && MM2_PageFlags::Present) || !map_table(directory[tableno])){
-				dbgpf("MM2: Creating page table %i.\n", (int)tableno);
+				dbgpf("MM2: Creating page table %i (%p = %lx).\n", (int)tableno, this, directory_physical);
 				create_table(tableno);
 				map_table(directory[tableno]);
 				memset(table_frame, 0, MM2_Page_Size);
@@ -309,6 +309,7 @@ namespace MM2{
 	
 	void PageDirectory::activate(){
 		if(!directory_physical) panic("(MM2) Page directory is NULL!");
+		//dbgpf("MM2: Activate %lx\n", directory_physical);
 		asm volatile("mov %0, %%cr3":: "b"(directory_physical));
 	}
 	
