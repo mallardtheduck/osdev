@@ -15,6 +15,8 @@
         "${workspaceFolder}/src/3rdparty/originals": true,
     },
     "files.associations": {
+        "*.bk": "chaiscript",
+        "Bakefile": "chaiscript",
         "*.inf": "ini",
         "*.hpp": "cpp",
         "type_traits": "cpp",
@@ -93,7 +95,8 @@
         "iterator": "cpp",
         "memory": "cpp",
         "memory_resource": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "dynamic_bitset": "cpp"
     },
     "editor.fontLigatures": true
 }
