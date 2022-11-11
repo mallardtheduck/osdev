@@ -34,7 +34,7 @@ data/content/initfs/ata.sys: ../../modules/hwpnp/ata/ata.sys create.directories
 data/content/initfs/spawn.elx: ../../user/system/spawn/spawn.elx create.directories
 	cp $< $@
 
-data/content/initfs/fatfs.sys: ../../modules/fatfs/fatfs.sys create.directories
+data/content/initfs/fatfs.sys: ../../modules/fs/fatfs/fatfs.sys create.directories
 	cp $< $@
 
 data/content/initfs/eloader.elx: ../../user/system/eloader/eloader.elx create.directories
