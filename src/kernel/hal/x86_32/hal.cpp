@@ -103,8 +103,12 @@ void CPUState_x86_32::BreakpointResume(){
 	regs->eflags |= (1 << 16);
 }
 
-void *CPUState_x86_32::GetRAW(){
+void *CPUState_x86_32::GetRaw(){
 	return (void*)regs;
+}
+
+size_t CPUState_x86_32::GetRawSize(){
+	return sizeof(isr_regs);
 }
 
 ICPUState *CPUState_x86_32::Clone() const{
@@ -205,11 +209,13 @@ public:
 	}
 
 	void SetSchedulerFrequency(int hz) override{
-		uint16_t value=193182 / hz;
-		dbgpf("SCH: Scheduler frequency: %i\n", (int)hz);
+		uint16_t value = 1193182 / hz;
+		dbgpf("SCH: Scheduler frequency: %i reload value: %i\n", (int)hz, (int)value);
+		disable_interrupts();
 		outb(0x43, 0x36);
 		outb(0x40, value & 0xFF);
 		outb(0x40, (value >> 8) & 0xFF);
+		enable_interrupts();
 		sch_inited = true;
 		RawHandleIRQ(0, (void*)&sch_isr_asm);
 	}

@@ -41,12 +41,17 @@ void debug_extension_uapi(uint16_t fn, ICPUState &state) {
 			}
 			break;
 		case bt_debug_function::GetContext:
-			//TODO: Fix for HAL ICPUContext
-			// if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(isr_regs))){
-			// 	void *dst = (void*)state.Get32BitRegister(Generic_Register::GP_Register_C);
-			// 	void *src = sch_get_usercontext(state.Get32BitRegister(Generic_Register::GP_Register_B));
-			// 	if(src) memcpy(dst, src, sizeof(isr_regs));
-			// }
+			if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), sizeof(state.GetRawSize()))){
+				void *dst = (void*)state.Get32BitRegister(Generic_Register::GP_Register_C);
+				uint64_t tid = state.Get32BitRegister(Generic_Register::GP_Register_B);
+				auto thread = GetThread(tid);
+				if(thread){
+					auto hl = GetScheduler().LockScheduler();
+					auto &tstate = thread->GetUserState();
+					auto src = tstate.GetRaw();
+					if(src) memcpy(dst, src, tstate.GetRawSize());
+				}
+			}
 			break;
 		case bt_debug_function::SetBreakpoint:
 			if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(uint64_t))){

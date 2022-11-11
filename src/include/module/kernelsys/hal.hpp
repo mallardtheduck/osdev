@@ -34,7 +34,8 @@ public:
 
 	virtual void BreakpointResume() = 0;
 
-	virtual void *GetRAW() = 0;
+	virtual void *GetRaw() = 0;
+	virtual size_t GetRawSize() = 0;
 
 	virtual ICPUState *Clone() const = 0;
 	virtual void Copy(const ICPUState &other) = 0;
