@@ -150,7 +150,7 @@ void elf_do_reloc_module(IFileHandle &file, const Elf32_Ehdr &header, Elf32_Shdr
 			case R_386_32:
 				newval=*ref+(size_t)base;
 				//dbgpf("ELF: Value %x (originally %x) at %x\n", newval, *ref, ref);
-                *ref=newval;
+				*ref=newval;
 				break;
 			case R_386_PC32:
 				newval=*ref;
@@ -171,7 +171,7 @@ loaded_elf_module elf_load_module(IFileHandle &file){
 	for(int i=0; i<header.phnum; ++i){
 		Elf32_Phdr prog=elf_read_progheader(file, header, i);
 		if(prog.type==PT_LOAD){
-            //amm_mmap((char*)ret.mem.aligned+prog.vaddr, file, prog.offset, prog.filesz);
+			//amm_mmap((char*)ret.mem.aligned+prog.vaddr, file, prog.offset, prog.filesz);
 			file.Seek(prog.offset, FS_Set);
 			file.Read(prog.filesz, (char*)ret.mem.aligned+prog.vaddr);
 		}
@@ -193,9 +193,10 @@ loaded_elf_module elf_load_module(IFileHandle &file){
 loaded_elf_proc elf_load_proc(bt_pid_t pid, IFileHandle &file){
 	loaded_elf_proc ret;
 	bt_pid_t oldpid=CurrentProcess().ID();
+	if(oldpid == pid) panic("(ELF) Load into current process!?");
 	if(!GetProcessManager().SwitchProcess(pid)){
-        panic("(ELF) Proccess not found during executable load!");
-    }
+		panic("(ELF) Proccess not found during executable load!");
+	}
 	Elf32_Ehdr header=elf_read_header(file);
 	auto &memoryManager = GetMemoryManager();
 	//TODO: Better RAM allocation...
@@ -213,7 +214,7 @@ loaded_elf_proc elf_load_proc(bt_pid_t pid, IFileHandle &file){
 			MM2::current_pagedir->alloc_pages_at(pages, (void*)base);
 			memset((void*)prog.vaddr, 0, prog.memsz);
 			//size_t b=file.Read(prog.filesz, (char*)prog.vaddr);
-            auto mapId = memoryManager.MemoryMapFile((char*)prog.vaddr, &file, p, prog.filesz);
+			auto mapId = memoryManager.MemoryMapFile((char*)prog.vaddr, &file, p, prog.filesz);
 			CurrentProcess().AddHandle(MakeKernelGenericHandle<KernelHandles::MemoryMapping>(mapId, [](uint64_t f){
 				GetMemoryManager().UnMapFile(f);
 			}));
