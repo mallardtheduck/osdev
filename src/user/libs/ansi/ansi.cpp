@@ -339,6 +339,11 @@ extern "C" void init_ansi(){
 	if(!isatty(fileno(stdout))) return;
 	real_stdout = btos_get_handle_virt(fileno(stdout));
 	real_stdin = btos_get_handle_virt(fileno(stdin));
+	if(!real_stdin || !real_stdout){
+		DBG("ANSI: real_stdin " << real_stdin << " real_stdout " << real_stdout);
+		cerr << "Could not query standard streams!" << endl;
+		exit(-1);
+	}
 	bt_term_handle(real_stdout->os.handle);
 	bt_vidmode mode = bt_term_QueryScreenMode();
 	if(!mode.textmode) return;
