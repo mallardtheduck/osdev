@@ -3,6 +3,7 @@
 
 #define LINE_LEN 16
 
+#define FREE(x) do{if((x)){free((x)); (x) = NULL;}}while(0)
 
 x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm)
 {
@@ -29,16 +30,16 @@ x86emu_t *x86emu_done(x86emu_t *emu)
   if(emu) {
     emu_mem_free(emu->mem);
 
-    free(emu->log.buf);
+    FREE(emu->log.buf);
 
-    free(emu->io.map);
-    free(emu->io.stats_i);
-    free(emu->io.stats_o);
+    FREE(emu->io.map);
+    FREE(emu->io.stats_i);
+    FREE(emu->io.stats_o);
 
-    free(emu->x86.msr);
-    free(emu->x86.msr_perm);
+    FREE(emu->x86.msr);
+    FREE(emu->x86.msr_perm);
 
-    free(emu);
+    FREE(emu);
   }
 
   return NULL;
@@ -78,8 +79,8 @@ void x86emu_reset(x86emu_t *emu)
 {
   x86emu_regs_t *x86 = &emu->x86;
 
-  free(x86->msr);
-  free(x86->msr_perm);
+  FREE(x86->msr);
+  FREE(x86->msr_perm);
 
   memset(x86, 0, sizeof *x86);
 
@@ -222,7 +223,7 @@ void x86emu_write_dword(x86emu_t *emu, unsigned addr, unsigned val)
 void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flush)
 {
   if(emu) {
-    if(emu->log.buf) free(emu->log.buf);
+    if(emu->log.buf) FREE(emu->log.buf);
     emu->log.size = buffer_size;
     emu->log.buf = buffer_size ? calloc(1, buffer_size) : NULL;
     emu->log.ptr = emu->log.buf;
