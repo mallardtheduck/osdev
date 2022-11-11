@@ -51,6 +51,7 @@ public:
 	void AddIdleHook(function<void()> fn);
 	void RemoveIdleHook(function<void()> fn);
 
+	void JoinThread(uint64_t id) override;
 };
 
 extern ManualStaticAlloc<Scheduler> theScheduler;

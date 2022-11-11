@@ -183,11 +183,7 @@ void Scheduler::HoldThreadsByPID(uint64_t pid){
 	for(auto thread : threads){
 		if(thread == current) continue;
 		if(thread->pid == pid){
-			if(thread->status == ThreadStatus::Runnable){
-				thread->status = ThreadStatus::HeldRunnable;
-			}else if(thread->status == ThreadStatus::Blocked){
-				thread->status = ThreadStatus::HeldBlocked;
-			}
+			thread->hold = true;
 		}
 	}
 }
@@ -196,11 +192,7 @@ void Scheduler::UnHoldThreadsByPID(uint64_t pid){
 	auto hl = lock->LockExclusive();
 	for(auto thread : threads){
 		if(thread->pid == pid){
-			if(thread->status == ThreadStatus::HeldRunnable){
-				thread->status = ThreadStatus::Runnable;
-			}else if(thread->status == ThreadStatus::HeldBlocked){
-				thread->status = ThreadStatus::Blocked;
-			}
+			thread->hold = false;
 		}
 	}
 }
@@ -249,6 +241,12 @@ Thread *Scheduler::PlanCycle(){
 }
 
 uint64_t Scheduler::Schedule(uint64_t stackToken){
+	static int count = 0;
+	++count;
+	if(count >= 10000){
+		dbgout("SCH: 10000\n");
+		count = 0;
+	}
 	current->stackToken = stackToken;
 	auto next = current->next;
 	while(next && next->status != ThreadStatus::Runnable){
@@ -256,9 +254,9 @@ uint64_t Scheduler::Schedule(uint64_t stackToken){
 	}
 	if(!next) next = PlanCycle();
 	lock->Transfer(next);
-	current = next;
 	if(Processes_Ready()) GetProcessManager().SwitchProcessFromScheduler(next->pid);
 	else if(next->pid != 0) panic("(SCH) PID != 0 before processes!");
+	current = next;
 	if(current->loadModifier < MaxLoadModifier) ++current->loadModifier;
 	current->dynamicPriority = current->staticPriority + current->loadModifier;
 	GetHAL().SetKernelStack(current->stackBase);
@@ -285,6 +283,15 @@ void Scheduler::AddIdleHook(function<void()> fn){
 void Scheduler::RemoveIdleHook(function<void()> fn){
 	auto i = idleHooks.find(fn);
 	idleHooks.erase(i);
+}
+
+void Scheduler::JoinThread(uint64_t id){
+	CurrentThread().SetBlock([=]{
+		for(auto thread : threads){
+			if(thread->ID() == id) return false;
+		}
+		return true;
+	});
 }
 
 bool Scheduler_Ready(){

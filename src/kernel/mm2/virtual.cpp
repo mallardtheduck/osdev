@@ -97,6 +97,8 @@ namespace MM2{
 	}
 	
 	void mm2_switch(PageDirectory *newdir){
+		if(newdir == current_pagedir) return;
+		//dbgpf("MM2: Switching pagedir from %p to %p\n", current_pagedir, newdir);
 		auto il = GetHAL().LockInterrupts();
 		kernel_pagedir->copy_kernelspace(*current_pagedir);
 		newdir->copy_kernelspace(*kernel_pagedir);

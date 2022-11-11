@@ -32,6 +32,8 @@ private:
 
 	int lockCount = 0;
     bool userAbort = false;
+	bool hold = false;
+	bool yieldPending = false;
 
 	Thread *next = nullptr;
 	uint32_t scheduleCycle = 0;
@@ -64,13 +66,13 @@ public:
 	void SetBlock(BlockCheckFunction fn, IThread *to) override;
 	bool SetAbortableBlock(BlockCheckFunction fn, IThread *to) override;
 	void ClearBlock() override;
-	void Join() override;
 	void IncrementLockCount() override;
 	void DecrementLockCount() override;
 	int GetLockCount() override;
 	void Abort() override;
 	void End() override;
 	bool ShouldAbortAtUserBoundary() override;
+	void HoldBeforeUserspace() override;
 	void UpdateUserState(const ICPUState &state) override;
 	ICPUState &GetUserState() override;
 	uint32_t *GetDebugState() override;
@@ -91,6 +93,8 @@ public:
 
 	const char *GetName() override;
 	void SetName(const char *name) override;
+
+	WeakThreadRef GetWeakReference() override;
 };
 
 #endif

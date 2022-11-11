@@ -44,18 +44,24 @@ void Thread::End(){
 	if(pid) GetProcessManager().SwitchProcess(0);
 	status = ThreadStatus::Ending;
 	theScheduler->reaperThread->Unblock();
-	Yield(nullptr);
+	Yield(theScheduler->reaperThread);
 	panic("(SCH) Running ended thread!");
 }
 
 void Thread::Yield(IThread */*to*/){
-	if(!theScheduler->CanYield()) return;
+	if(!theScheduler->CanYield()){
+		yieldPending = true;
+		return;
+	}
 	GetHAL().YieldToScheduler();
 }
 
 void Thread::YieldIfPending(){
 	if(!theScheduler->CanYield()) return;
-	GetHAL().YieldToScheduler();
+	if(yieldPending){
+		GetHAL().YieldToScheduler();
+		yieldPending = false;
+	}
 }
 
 uint64_t Thread::ID(){
@@ -69,9 +75,6 @@ void Thread::Block(){
 			break;
 		case ThreadStatus::DebugStopped:
 			status = ThreadStatus::DebugBlocked;
-			break;
-		case ThreadStatus::HeldRunnable:
-			status = ThreadStatus::HeldBlocked;
 			break;
 		default: break;
 	}
@@ -95,9 +98,6 @@ void Thread::Unblock(){
 			break;
 		case ThreadStatus::DebugBlocked:
 			status = ThreadStatus::DebugStopped;
-			break;
-		case ThreadStatus::HeldBlocked:
-			status = ThreadStatus::HeldRunnable;
 			break;
 		default: break;
 	}
@@ -132,10 +132,6 @@ void Thread::ClearBlock(){
 	blockCheck = nullptr;
 }
 
-void Thread::Join(){
-
-}
-
 void Thread::IncrementLockCount(){
 	++lockCount;
 	//if(id == 8) dbgpf("%s called from %p on thread %llu (%i)\n", __PRETTY_FUNCTION__,  __builtin_return_address(0), id, lockCount);
@@ -156,6 +152,12 @@ void Thread::Abort(){
 
 bool Thread::ShouldAbortAtUserBoundary(){
 	return userAbort;
+}
+
+void Thread::HoldBeforeUserspace(){
+	if(hold) SetBlock([&]{
+		return !hold;
+	}, nullptr);
 }
 
 void Thread::UpdateUserState(const ICPUState &state){
@@ -189,6 +191,7 @@ ThreadStatus Thread::GetStatus(){
 void Thread::IncrementRefCount(){
 	++refCount;
 	if(refCount > UINT32_MAX / 2) panic("(SCH) Thread refcount implausible!");
+	//dbgpf("SCH: %llu Thread::IncrementRefCount: %lu\n", id, refCount);
 }
 
 void Thread::DecrementRefCount(){
@@ -199,6 +202,7 @@ void Thread::DecrementRefCount(){
 		theScheduler->reaperThread->Unblock();
 	}
 	if(refCount > UINT32_MAX / 2) panic("(SCH) Thread refcount implausible!");
+	//dbgpf("SCH: %llu Thread::DecrementRefCount: %lu\n", id, refCount);
 }
 
 uint8_t *Thread::GetFPUState(){
@@ -219,4 +223,10 @@ const char *Thread::GetName(){
 
 void Thread::SetName(const char *n){
 	name = n;
+}
+
+WeakThreadRef Thread::GetWeakReference(){
+	return WeakThreadRef([=]{
+		return GetScheduler().GetByID(id);
+	});
 }

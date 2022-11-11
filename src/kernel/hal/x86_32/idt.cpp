@@ -283,6 +283,7 @@ extern "C" void isr_handler(isr_regs *ctx){
 	if(currentThread.GetLockCount() == 0){
 		CurrentProcess().HoldBeforeUserspace();
 		if(currentThread.ShouldAbortAtUserBoundary()) currentThread.End();
+		currentThread.HoldBeforeUserspace();
 	}
 	
 

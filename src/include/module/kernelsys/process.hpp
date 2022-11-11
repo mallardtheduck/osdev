@@ -61,8 +61,6 @@ public:
 	
 	virtual void SetExitCode(int value) = 0;
 
-	virtual void Wait() = 0;
-
 	virtual size_t GetArgumentCount() = 0;
 	virtual size_t GetArgument(size_t index, char *buf, size_t size);
 
@@ -107,9 +105,10 @@ public:
 	virtual const char *GetGlobalEnvironmentVariable(const char *name, uint8_t *flags = nullptr) = 0;
 
 	virtual IProcess &CurrentProcess() = 0;
-	virtual ProcessPointer GetByID(bt_pid_t pid) = 0;
+	virtual ProcessPointer GetByID(bt_pid_t pid, bool includeEnding = false) = 0;
 
 	virtual btos_api::bt_proc_status::Enum GetProcessStatusByID(bt_pid_t pid) = 0;
+	virtual void WaitProcess(bt_pid_t pid) = 0;
 
 	virtual ~IProcessManager() {}
 };

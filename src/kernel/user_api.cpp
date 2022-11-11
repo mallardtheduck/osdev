@@ -88,7 +88,11 @@ static void uapi_raise_security_error(const char *fn){
 }
 
 USERAPI_HANDLER(zero){
-	dbgout((char*)state.Get32BitRegister(Generic_Register::GP_Register_B));
+	static bool nl = true;
+	if(nl) dbgpf("USER (%llu|%llu): ", CurrentProcess().ID(), CurrentThread().ID());
+	string outputstr = (char*)state.Get32BitRegister(Generic_Register::GP_Register_B);
+	dbgout(outputstr.c_str());
+	nl = outputstr[outputstr.length() - 1] == '\n';
 }
 
 USERAPI_HANDLER(BT_ALLOC_PAGES){
@@ -545,7 +549,7 @@ USERAPI_HANDLER(BT_SPAWN){
 				}
 			}
 		}
-		dbgpf("UAPI:Spawning %s\n", (char*)state.Get32BitRegister(Generic_Register::GP_Register_B));
+		dbgpf("UAPI: Spawning %s\n", (char*)state.Get32BitRegister(Generic_Register::GP_Register_B));
 		auto argc = state.Get32BitRegister(Generic_Register::GP_Register_C);
 		auto argv = (char**)state.Get32BitRegister(Generic_Register::GP_Register_D);
 		vector<const char*> args;
@@ -556,11 +560,8 @@ USERAPI_HANDLER(BT_SPAWN){
 }
 
 USERAPI_HANDLER(BT_WAIT){
-	auto process = GetProcessManager().GetByID(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(process){
-		process->Wait();
-		state.Get32BitRegister(Generic_Register::GP_Register_A) = 1;
-	}else state.Get32BitRegister(Generic_Register::GP_Register_A) = 0;
+	GetProcessManager().WaitProcess(state.Get32BitRegister(Generic_Register::GP_Register_B));
+	state.Get32BitRegister(Generic_Register::GP_Register_A) = 1;
 }
 
 USERAPI_HANDLER(BT_KILL){
@@ -599,8 +600,9 @@ USERAPI_HANDLER(BT_NEW_THREAD){
 	}
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), sizeof(ProcessEntryPoint)) && is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_D), 0) && (!state.Get32BitRegister(Generic_Register::GP_Register_C) || is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_C), 0))){
 		auto id = CurrentProcess().NewUserThread((ProcessEntryPoint)state.Get32BitRegister(Generic_Register::GP_Register_B), (void*)state.Get32BitRegister(Generic_Register::GP_Register_C), (void*)state.Get32BitRegister(Generic_Register::GP_Register_D));
-		auto handle = MakeKernelGenericHandle<KernelHandles::Thread>(id, [](uint64_t id){
-			GetThread(id)->Abort();
+		auto handle = MakeKernelGenericHandle<KernelHandles::Thread>(id->GetWeakReference(), [](WeakThreadRef &t){
+			auto thread = t.Lock();
+			if(thread) thread->Abort();
 		});
 		state.Get32BitRegister(Generic_Register::GP_Register_A) = CurrentProcess().AddHandle(handle);
 	}else RAISE_US_ERROR();
@@ -613,19 +615,19 @@ USERAPI_HANDLER(BT_BLOCK_THREAD){
 USERAPI_HANDLER(BT_UNBLOCK_THREAD){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
 	if(auto handle = KernelHandleCast<KernelHandles::Thread>(h)){
-		auto thread = GetThread(handle->GetData());
+		auto thread = handle->GetData().Lock();
 		if(thread) thread->Unblock();
 	}
 }
 
 USERAPI_HANDLER(BT_GET_THREAD){
 	auto &currentProcess = CurrentProcess();
-	auto currentThreadId = CurrentThread().ID();
+	auto &currentThread = CurrentThread();
 	auto threadHandles = currentProcess.GetHandlesByType(KernelHandles::Thread::id);
 	for(auto &hId : threadHandles){
 		auto h = currentProcess.GetHandle(hId);
 		if(auto handle = KernelHandleCast<KernelHandles::Thread>(h)){
-			if(handle->GetData() == currentThreadId){
+			if(handle->GetData() == currentThread){
 				state.Get32BitRegister(Generic_Register::GP_Register_A) = hId;
 				return;
 			}
@@ -636,7 +638,15 @@ USERAPI_HANDLER(BT_GET_THREAD){
 
 USERAPI_HANDLER(BT_WAIT_THREAD){
 	auto h = CurrentProcess().GetHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
-	if(auto handle = KernelHandleCast<KernelHandles::Thread>(h)) handle->GetData()->Join();
+	bool found = false;
+	uint64_t id = 0;
+	if(auto handle = KernelHandleCast<KernelHandles::Thread>(h)){
+		if(auto thread = handle->GetData().Lock()){
+			found = true;
+			id = handle->GetData()->ID();
+		}
+	}
+	if(found) GetScheduler().JoinThread(id);
 }
 
 USERAPI_HANDLER(BT_END_THREAD){
@@ -767,17 +777,16 @@ USERAPI_HANDLER(BT_MULTI_CALL){
 	if(is_safe_ptr(state.Get32BitRegister(Generic_Register::GP_Register_B), state.Get32BitRegister(Generic_Register::GP_Register_C) * sizeof(btos_api::bt_syscall_item))){
 		//dbgpf("UAPI: BT_MULTI_CALL: %i calls.\n", (int)state.Get32BitRegister(Generic_Register::GP_Register_C));
 		btos_api::bt_syscall_item *items = (btos_api::bt_syscall_item*)state.Get32BitRegister(Generic_Register::GP_Register_B);
-		ICPUState *fake_state = GetHAL().GetDefaultCPUState().Clone();
-		for(size_t i = 0; i < state.Get32BitRegister(Generic_Register::GP_Register_C); ++i){
-			//dbgpf("UAPI: BT_MULTI_CALL %i - %x\n", (int)i, items[i].call_id);
-			fake_state->Get32BitRegister(Generic_Register::GP_Register_A) = items[i].call_id;
-			fake_state->Get32BitRegister(Generic_Register::GP_Register_B) = items[i].p1;
-			fake_state->Get32BitRegister(Generic_Register::GP_Register_C) = items[i].p2;
-			fake_state->Get32BitRegister(Generic_Register::GP_Register_D) = items[i].p3;
-			userapi_handler(*fake_state);
-			items[i].call_id = fake_state->Get32BitRegister(Generic_Register::GP_Register_A);
+		auto count = state.Get32BitRegister(Generic_Register::GP_Register_C);
+		for(size_t i = 0; i < count; ++i){
+			//dbgpf("UAPI: BT_MULTI_CALL %i - %lx\n", (int)i, items[i].call_id);
+			state.Get32BitRegister(Generic_Register::GP_Register_A) = items[i].call_id;
+			state.Get32BitRegister(Generic_Register::GP_Register_B) = items[i].p1;
+			state.Get32BitRegister(Generic_Register::GP_Register_C) = items[i].p2;
+			state.Get32BitRegister(Generic_Register::GP_Register_D) = items[i].p3;
+			userapi_handler(state);
+			items[i].call_id = state.Get32BitRegister(Generic_Register::GP_Register_A);
 		}
-		delete fake_state;
 	}else RAISE_US_ERROR();
 }
 

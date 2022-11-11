@@ -2,6 +2,7 @@
 #define KERNEL_UTILS_RECOUNTPOINTER_HPP
 
 #include <type_traits>
+#include "function.hpp"
 
 template<typename T>
 class RefCountPointer{
@@ -76,6 +77,39 @@ public:
 	template<typename R> operator RefCountPointer<R>(){
 		static_assert(!std::is_convertible_v<T*, R*>, "No conversion available.");
 		return RefCountPointer<R>(theObject);
+	}
+};
+
+template<typename T> class WeakReference{
+private:
+	function<RefCountPointer<T>()> getter;
+public:
+	WeakReference(function<RefCountPointer<T>()> g) : getter(g) {}
+	WeakReference(const WeakReference<T> &) = default;
+	WeakReference<T> &operator=(const WeakReference<T> &) = default;
+
+	RefCountPointer<T> Lock(){
+		return getter();
+	}
+
+	RefCountPointer<T> operator->(){
+		return getter();
+	}
+
+	bool operator==(const RefCountPointer<T> &rcp) const{
+		return rcp == getter();
+	}
+	
+	bool operator!=(const RefCountPointer<T> &rcp) const{
+		return !(*this == rcp);
+	}
+
+	bool operator==(const T &t) const{
+		return &t == getter().get();
+	}
+
+	bool operator!=(const T &t) const{
+		return !(*this == t);
 	}
 };
 

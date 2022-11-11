@@ -112,18 +112,28 @@ ProcessManager::ProcessManager(){
 	});
 	InfoRegister("PROCS", &ProcsInfoFS);
 	InfoRegister("ENV", &EnvInfoFS);
-	GetScheduler().AddIdleHook([&]{ScheduleCleanup();});
+	GetScheduler().AddIdleHook([&]{
+		for(auto &p : processes){
+			auto proc = static_cast<Process*>(p.get());
+			if(proc->IsReadyForCleanup()){
+				ScheduleCleanup();
+				break;
+			}
+		}
+	});
 }
 
 bool ProcessManager::SwitchProcess(bt_pid_t pid) {
 	if(!currentProcess || pid != currentProcess->ID()){
-		if(currentProcess) currentProcess->DecrementRefCount();
-		auto proc = GetByID(pid);
+		//dbgpf("PROC: Switching thread %llu from process %llu to %llu\n", CurrentThread().ID(), currentProcess->ID(), pid);
+		auto proc = GetByID(pid, true);
 		if(proc){
-			CurrentThread().SetPID(pid);
+			auto hl = GetScheduler().LockScheduler();
+			if(currentProcess) currentProcess->DecrementRefCountFromScheduler();
 			currentProcess = (Process*)proc.get();
-			currentProcess->IncrementRefCount();
+			currentProcess->IncrementRefCountFromScheduler();
 			GetMemoryManager().SwitchPageDirectory(currentProcess->pageDirectory.get());
+			CurrentThread().SetPID(pid);
 			return true;
 		}
 		return false;
@@ -133,10 +143,10 @@ bool ProcessManager::SwitchProcess(bt_pid_t pid) {
 
 void ProcessManager::SwitchProcessFromScheduler(bt_pid_t pid) {
 	if(!currentProcess || pid != currentProcess->ID()){
-		if(currentProcess) currentProcess->DecrementRefCountFromScheduler();
+		//dbgpf("PROC: Switching from process %llu to %llu\n", currentProcess->ID(), pid);
 		for(auto &proc : processes){
 			if(proc->ID() == pid){
-				CurrentThread().SetPID(pid);
+				if(currentProcess) currentProcess->DecrementRefCountFromScheduler();
 				currentProcess = (Process*)proc.get();
 				currentProcess->IncrementRefCountFromScheduler();
 				GetMemoryManager().SwitchPageDirectory(currentProcess->pageDirectory.get());
@@ -179,7 +189,12 @@ ProcessPointer ProcessManager::Spawn(const char *name, const vector<const char*>
 	unique_ptr<ILoadedElf> elf { LoadElfProcess(pid, *file) };
 	debug_event_notify(pid, 0, bt_debug_event::ProgramStart);
 	proc->AddHandle(file);
-	proc->NewUserThread(elf->GetEntryPoint(), nullptr, nullptr);
+	auto thread = proc->NewUserThread(elf->GetEntryPoint(), nullptr, nullptr);
+	auto handle = MakeKernelGenericHandle<KernelHandles::Thread>(thread->GetWeakReference(), [](WeakThreadRef &t){
+			auto thread = t.Lock();
+			if(thread) thread->Abort();
+		});
+	proc->AddHandle(handle);
 	GetMessageManager().SendKernelEvent(btos_api::bt_kernel_messages::ProcessStart, pid);
 	return proc;
 }
@@ -208,9 +223,12 @@ IProcess &ProcessManager::CurrentProcess() {
 	return *currentProcess;
 }
 
-ProcessPointer ProcessManager::GetByID(bt_pid_t pid) {
+ProcessPointer ProcessManager::GetByID(bt_pid_t pid, bool includeEnding) {
 	for(auto &proc : processes){
-		if(proc->ID() == pid) return proc;
+		if(proc->ID() == pid){
+			if(!includeEnding && proc->GetStatus() == btos_api::bt_proc_status::Ending) return nullptr;
+			return proc;
+		}
 	}
 	return nullptr;
 }
@@ -220,6 +238,13 @@ btos_api::bt_proc_status::Enum ProcessManager::GetProcessStatusByID(bt_pid_t pid
 		if(proc->ID() == pid) return proc->GetStatus();
 	}
 	return btos_api::bt_proc_status::DoesNotExist;
+}
+
+void ProcessManager::WaitProcess(bt_pid_t pid){
+	CurrentThread().SetBlock([&](){
+		auto status = GetProcessStatusByID(pid);
+		return status == btos_api::bt_proc_status::DoesNotExist;
+	});
 }
 
 void Processes_Init(){

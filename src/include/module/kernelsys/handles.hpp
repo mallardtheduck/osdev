@@ -26,7 +26,7 @@ namespace KernelHandles{
 	using Lock = 			HandleMapping<1, GenericHandle<ILock*>>;
 	using File = 			HandleMapping<2, IFileHandle>;
 	using Directory = 		HandleMapping<3, IDirectoryHandle>;
-	using Thread = 			HandleMapping<4, GenericHandle<ThreadPointer>>;
+	using Thread = 			HandleMapping<4, GenericHandle<WeakThreadRef>>;
 	using MemoryMapping = 	HandleMapping<5, GenericHandle<uint64_t>>;
 	using SHMSpace =		HandleMapping<6, GenericHandle<uint64_t>>;
 	using SHMMapping =		HandleMapping<7, GenericHandle<uint64_t>>;

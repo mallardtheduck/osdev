@@ -99,7 +99,7 @@ Process *Process::CreateKernelProcess(){
 uintptr_t Process::AllocateStack(size_t size){
 	size_t pages = size / MM2::MM2_Page_Size;
 	uintptr_t baseAddress = 0 - (pages * MM2::MM2_Page_Size);
-	dbgpf("PROC: Allocating initial process stack at %lx (%lu pages)\n", baseAddress, pages);
+	dbgpf("PROC: Allocating initial process stack at %lx (%lu pages) for PID: %llu\n", baseAddress, pages, CurrentProcess().ID());
 	MM2::current_pagedir->alloc_pages_at(pages, (void*)baseAddress);
 	memset((void*)baseAddress, 0, size);
 	return 0 - sizeof(void*);
@@ -126,22 +126,22 @@ Process::Process() {
 
 void Process::CleanupProcess(){
 	{
+		dbgpf("PROC: Cleaning up process: %llu\n", pid);
 		auto hl = lock->LockRecursive();
-		vector<ThreadPointer> threads;
+		vector<uint64_t> threads;
 		for(auto &h : handles){
 			auto handle = KernelHandleCast<KernelHandles::Thread>(h.second);
 			if(handle){
-				threads.push_back(handle->GetData());
+				auto thread = handle->GetData().Lock();
+				if(thread) threads.push_back(thread->ID());
 				h.second->Close();
 				delete h.second;
 				h.second = nullptr;
 			}
 		}
-		for(auto &t : threads){
-			t->Abort();
-			t->Join();
+		for(auto &tid : threads){
+			GetScheduler().JoinThread(tid);
 		}
-		threads.clear();
 		bool pendingHandles = true;
 		while(pendingHandles){
 			pendingHandles = false;
@@ -193,6 +193,7 @@ void Process::End(){
 		if(status != btos_api::bt_proc_status::Ending){
 			debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
 			status = btos_api::bt_proc_status::Ending;
+			dbgpf("PROC: Ending process: %llu\n", pid);
 		}
 	}
 	if(&CurrentProcess() == this) GetProcessManager().SwitchProcess(0);
@@ -238,14 +239,17 @@ IEnvironment &Process::GetEnvironment(){
 ThreadPointer Process::NewUserThread(ProcessEntryPoint p, void *param, void *stack){
 	return GetScheduler().NewThread([=](){
 		if(!GetProcessManager().SwitchProcess(pid)) return;
-		CurrentThread().SetName("Userspace");
 		auto stackPointer = stack ? (uintptr_t)stack : AllocateStack(DefaultUserspaceStackSize);
-		CurrentThread().SetPriority(DefaultUserspaceThreadPriority);
-		debug_event_notify(pid, CurrentThread().ID(), bt_debug_event::ThreadStart);
-		CurrentProcess().SetStatus(btos_api::bt_proc_status::Running);
-		dbgpf("PROC: Starting user thread at %p with stack %lx.\n", p, stackPointer);
-		status = btos_api::bt_proc_status::Running;
-		if(CurrentThread().GetLockCount() != 0) panic("PROC: Starting user thread with non-zero lock count!");
+		{
+			auto &thread = CurrentThread();
+			thread.SetName("Userspace");
+			thread.SetPriority(DefaultUserspaceThreadPriority);
+			debug_event_notify(pid, thread.ID(), bt_debug_event::ThreadStart);
+			CurrentProcess().SetStatus(btos_api::bt_proc_status::Running);
+			dbgpf("PROC: Starting user thread at %p with stack %lx.\n", p, stackPointer);
+			status = btos_api::bt_proc_status::Running;
+			if(thread.GetLockCount() != 0) panic("PROC: Starting user thread with non-zero lock count!");
+		}
 		GetHAL().RunUsermode(stackPointer, p);
 	}, UserThreadKernelStackSize);
 }
@@ -304,13 +308,6 @@ vector<handle_t> Process::GetHandlesByType(uint32_t type){
 void Process::SetExitCode(int value){
 	auto hl = lock->LockExclusive();
 	returnValue = value;
-}
-
-void Process::Wait(){
-	CurrentThread().SetBlock([=](){
-		auto status = GetProcessManager().GetProcessStatusByID(pid);
-		return status == btos_api::bt_proc_status::DoesNotExist || status == btos_api::bt_proc_status::Ending;
-	});
 }
 
 size_t Process::GetArgumentCount(){
@@ -394,10 +391,11 @@ void Process::IncrementRefCount(){
 void Process::DecrementRefCount(){
 	auto hl = lock->LockRecursive();
 	if(refCount > 0) --refCount;
-	if(!refCount && status == btos_api::bt_proc_status::Ending){
+	else if(pid) panic("(PROC) DecrementRefCount already 0!");
+	if(refCount <=1 && status == btos_api::bt_proc_status::Ending){
 		readyForCleanup = true;
 		static_cast<ProcessManager&>(GetProcessManager()).ScheduleCleanup();
-	}
+	}else if(pid && !refCount) panic("Q");
 }
 
 void Process::IncrementRefCountFromScheduler(){
@@ -407,10 +405,11 @@ void Process::IncrementRefCountFromScheduler(){
 
 void Process::DecrementRefCountFromScheduler(){
 	if(refCount > 0) --refCount;
-	if(!refCount && status == btos_api::bt_proc_status::Ending){
+	else if(pid) panic("(PROC) DecrementRefCountFromScheduler already 0!");
+	if(refCount <= 1 && status == btos_api::bt_proc_status::Ending){
 		readyForCleanup = true;
 		static_cast<ProcessManager&>(GetProcessManager()).ScheduleCleanup();
-	}
+	}else if(pid && !refCount) panic("Q");
 }
 
 size_t Process::GetMemoryUsage(){

@@ -20,13 +20,13 @@ public:
 	void SetBlock(BlockCheckFunction, IThread *) override {}
 	bool SetAbortableBlock(BlockCheckFunction, IThread *) override {return true;}
 	void ClearBlock() override {}
-	void Join() override {}
 	void IncrementLockCount() override {}
 	void DecrementLockCount() override {}
 	int GetLockCount() override {return 0;}
 	void Abort() override {}
 	void End() override {}
 	bool ShouldAbortAtUserBoundary() override {return false;}
+	void HoldBeforeUserspace() override {}
 	void UpdateUserState(const ICPUState &) override {}
 	ICPUState &GetUserState() override { return const_cast<ICPUState&>(GetHAL().GetDefaultCPUState()); }
 	uint32_t *GetDebugState() override { return debugState; }
@@ -47,6 +47,10 @@ public:
 
 	const char *GetName() override {return "NULL";}
 	void SetName(const char*) override {}
+
+	virtual WeakThreadRef GetWeakReference(){
+		return WeakThreadRef([]{return nullptr;});
+	}
 };
 
 ManualStaticAlloc<NullThread> theNullThread;

@@ -92,8 +92,6 @@ public:
 	
 	void SetExitCode(int value) override;
 
-	void Wait() override;
-
 	size_t GetArgumentCount() override;
 	size_t GetArgument(size_t index, char *buf, size_t size);
 

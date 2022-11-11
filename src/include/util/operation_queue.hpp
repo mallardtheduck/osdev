@@ -74,7 +74,7 @@ public:
 	}
 	
 	void wait_for_end(){
-		API->GetScheduler().GetByID(thread)->Join();
+		API->GetScheduler().JoinThread(thread);
 		thread = 0;
 	}
 };

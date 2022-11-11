@@ -23,9 +23,11 @@ enum class ThreadStatus{
 	DebugBlocked = 3,
 	Ending = 4,
 	Special = 5,
-	HeldRunnable = 6,
-	HeldBlocked = 7
 };
+
+class IThread;
+using ThreadPointer = RefCountPointer<IThread>;
+using WeakThreadRef = WeakReference<IThread>;
 
 class IThread : private nonmovable{
 public:
@@ -41,13 +43,13 @@ public:
 	virtual void SetBlock(BlockCheckFunction fn, IThread *to = nullptr) = 0;
 	[[nodiscard]] virtual bool SetAbortableBlock(BlockCheckFunction fn, IThread *to = nullptr) = 0;
 	virtual void ClearBlock() = 0;
-	virtual void Join() = 0;
 	virtual void IncrementLockCount() = 0;
 	virtual void DecrementLockCount() = 0;
 	virtual int GetLockCount() = 0;
 	virtual void Abort() = 0;
 	virtual void End() = 0;
 	virtual bool ShouldAbortAtUserBoundary() = 0;
+	virtual void HoldBeforeUserspace() = 0;
 	virtual void UpdateUserState(const ICPUState &state) = 0;
 	virtual ICPUState &GetUserState() = 0;
 	virtual uint32_t *GetDebugState() = 0;
@@ -69,10 +71,10 @@ public:
 	virtual const char *GetName() = 0;
 	virtual void SetName(const char *name) = 0;
 
+	virtual WeakThreadRef GetWeakReference() = 0;
+
 	virtual ~IThread() {}
 };
-
-using ThreadPointer = RefCountPointer<IThread>;
 
 class SchedulerLock;
 
@@ -111,6 +113,8 @@ public:
 	
 	virtual void AddIdleHook(function<void()> fn) = 0;
 	virtual void RemoveIdleHook(function<void()> fn) = 0;
+
+	virtual void JoinThread(uint64_t id) = 0;
 
 	virtual ~IScheduler() {}
 };

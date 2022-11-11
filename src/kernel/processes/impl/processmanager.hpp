@@ -39,9 +39,10 @@ public:
 	const char *GetGlobalEnvironmentVariable(const char *name, uint8_t *flags = nullptr) override;
 
 	IProcess &CurrentProcess() override;
-	ProcessPointer GetByID(bt_pid_t pid) override;
+	ProcessPointer GetByID(bt_pid_t pid, bool includeEnding = false) override;
 
 	btos_api::bt_proc_status::Enum GetProcessStatusByID(bt_pid_t pid) override;
+	void WaitProcess(bt_pid_t pid) override;
 };
 
 #endif

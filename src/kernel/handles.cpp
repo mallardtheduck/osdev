@@ -38,7 +38,7 @@ HandleDependencyCheckResult HandleDependencyCheck(IHandle *h){
 
 void WaitOnHandle(IHandle *handle){
 	AddHandleDependencyOn(handle);
-	CurrentThread().SetBlock([&](){
+	CurrentThread().SetAbortableBlock([&](){
 		if(handle) return handle->Wait();
 		else return true;
 	});

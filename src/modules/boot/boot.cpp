@@ -104,9 +104,13 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 		cmdLine cmd = parse_cmd(value);
 		vector<const char*> args;
 		for(size_t i = 0; i < cmd.argc; ++i) args.push_back(cmd.argv[i]);
-		auto proc = API->GetProcessManager().Spawn(cmd.cmd, args);
+		bt_pid_t pid = 0;
+		{
+			auto proc = API->GetProcessManager().Spawn(cmd.cmd, args);
+			pid = proc->ID();
+		}
 		free_cmd(cmd);
-		if(proc) proc->Wait();
+		if(pid) API->GetProcessManager().WaitProcess(pid);
 	}else if(MATCH(current_section, "spawn")){
 		vector<const char*> args;
 		args.push_back(value);
