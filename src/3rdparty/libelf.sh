@@ -1,7 +1,7 @@
 #!/bin/bash
 
-rm -rf libelf-0.8.9
-if [ ! -f libelf-0.8.9.tar.gz ];
+rm -rf libelf-0.8.13
+if [ ! -f libelf-0.8.13.tar.gz ];
 then
 	wget https://github.com/mallardtheduck/btos-3rdparty-prereqs/raw/master/libelf-0.8.13.tar.gz
 fi
