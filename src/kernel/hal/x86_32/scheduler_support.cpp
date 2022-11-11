@@ -58,7 +58,7 @@ extern "C" void sch_isr_c(){
 		thread.IncrementLockCount();
 		sch.EnableScheduler();
 		hal.EnableInterrupts();
-		hal.AcknowlegdeIRQIfPending(0);
+		//hal.AcknowlegdeIRQIfPending(0);
 		sch_yield();
 		hal.DisableInterrupts();
 		thread.DecrementLockCount();
