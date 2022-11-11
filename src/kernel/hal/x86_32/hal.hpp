@@ -26,7 +26,8 @@ public:
 
 	void BreakpointResume() override;
 
-	void *GetRAW() override;
+	void *GetRaw() override;
+	size_t GetRawSize() override;
 
 	ICPUState *Clone() const override;
 
