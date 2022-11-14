@@ -37,14 +37,14 @@ public:
 		}else return false;
 	}
 
-	virtual void AcknowledgeMessage(bt_msg_header &msg, bool setStatus = true) = 0;
+	virtual void AcknowledgeMessage(bt_msg_header &msg, bool setStatus = true, IProcess &proc = ::CurrentProcess()) = 0;
 	virtual void AwaitNextMessage(bt_msg_header &msg) = 0;
 	virtual void AwaitNextMessage(const bt_msg_filter &filter, bt_msg_header &msg) = 0;
 
 	virtual void ClearMessages(IProcess &proc = ::CurrentProcess()) = 0;
 
 	virtual bool RecieveMessageReply(bt_msg_header &msg, uint64_t msg_id) = 0;
-	virtual bt_msg_header AwaitMessageReply(uint64_t msg_id) = 0;
+	virtual bt_msg_header AwaitMessageReply(uint64_t msg_id, IProcess &proc = ::CurrentProcess()) = 0;
 
 	virtual bool HasMessageBeenProcessed(uint64_t msg_id) = 0;
 	virtual bool DoesMessageMatch(const bt_msg_header &msg, const bt_msg_filter &filter) = 0;

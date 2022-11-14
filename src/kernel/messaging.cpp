@@ -162,6 +162,7 @@ private:
 public:
 
 	uint64_t SendMessage(bt_msg_header &msgHeader) override{
+		msgHeader.valid = true;
 		msgHeader.recieved = false;
 		msgHeader.replied = false;
 
@@ -190,6 +191,7 @@ public:
 		}
 
 		msg.header.id = NextID();
+		msgHeader.id = msg.header.id;
 		AddMessage(msg);
 		//dbgpf("MSG: Sent message ID %i from PID %i to PID %i.\n", (int)msg.id, (int)msg.from, (int)msg.to);
 		//sch_yield_to(msg.to);
@@ -310,11 +312,11 @@ public:
 		return {};
 	}
 
-	void AcknowledgeMessage(bt_msg_header &msg, bool setStatus = true) override{
+	void AcknowledgeMessage(bt_msg_header &msg, bool setStatus = true, IProcess &proc = CurrentProcess()) override{
 		{
 			auto hl = messageLock->LockRecursive();
 			if(!HaveMessage(msg.id)) return;
-			if(CurrentProcess().GetCurrentMessageID() == msg.id) CurrentProcess().SetCurrentMessageID(0);
+			if(proc.GetCurrentMessageID() == msg.id) proc.SetCurrentMessageID(0);
 			RemoveMessage(msg.id);
 			if(setStatus) CurrentThread().SetMessagingStatus(thread_msg_status::Normal);
 		}
@@ -366,11 +368,11 @@ public:
 		return RecieveMessage(msg, filter);
 	}
 
-	bt_msg_header AwaitMessageReply(uint64_t msg_id) override{
+	bt_msg_header AwaitMessageReply(uint64_t msg_id, IProcess &proc = CurrentProcess()) override{
 		bt_msg_filter filter;
 		filter.flags = bt_msg_filter_flags::Reply;
 		filter.reply_to = msg_id;
-		return AwaitMessage(filter);
+		return AwaitMessage(filter, proc);
 	}
 
 	bool HasMessageBeenProcessed(uint64_t msg_id) override{
@@ -447,12 +449,12 @@ public:
 	void Close() override{}
 
 	bool Wait() override{
-		if(msg.valid) return true;
+		msg.valid = false;
 		auto proc = GetProcess(pid);
 		if(!proc || !manager.messageLock->TryTakeExclusive()) return false;
 		manager.RecieveMessage(msg, filter, *proc);
 		manager.messageLock->Release();
-		return false;
+		return msg.valid;
 	}
 
 	bt_msg_header Read() override{
