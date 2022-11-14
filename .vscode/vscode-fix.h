@@ -1,5 +1,6 @@
 #undef __linux__
 #undef __x86_64__
+#undef __STRICT_ANSI__
 
 #define __btos__
 
