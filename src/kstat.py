@@ -1,7 +1,7 @@
 class ThreadsCommand (gdb.Command):
 
 	def __init__ (self):
-		super (ThreadsCommand, self).__init__ ("btos-threadinfo", gdb.COMMAND_USER)
+		super (ThreadsCommand, self).__init__ ("btos-threads", gdb.COMMAND_USER)
 		
 	def pid_to_name(self, pid):
 		procCount = gdb.parse_and_eval("theProcessManager.ptr->processes.dataSize")
@@ -48,7 +48,7 @@ ThreadsCommand ()
 
 class ModsCommand (gdb.Command):
 	def __init__ (self):
-	   super (ModsCommand, self).__init__ ("btos-modinfo", gdb.COMMAND_USER)
+	   super (ModsCommand, self).__init__ ("btos-modules", gdb.COMMAND_USER)
 	
 	def invoke (self, arg, from_tty):
 		modCount = gdb.parse_and_eval("theModuleManager.ptr->modules.dataSize")
@@ -61,7 +61,7 @@ ModsCommand ()
 
 class ProcsCommand (gdb.Command):
 	def __init__ (self):
-		super (ProcsCommand, self).__init__ ("btos-procinfo", gdb.COMMAND_USER)
+		super (ProcsCommand, self).__init__ ("btos-procs", gdb.COMMAND_USER)
 	
 	def invoke (self, arg, from_tty):
 		procCount = gdb.parse_and_eval("theProcessManager.ptr->processes.dataSize")
@@ -103,3 +103,38 @@ class ThreadCommand (gdb.Command):
 			print(gdb.parse_and_eval("*theScheduler.ptr->threads.data[%s]" % tix))
 	
 ThreadCommand ()
+
+class MessagesCommand (gdb.Command):
+	def __init__ (self):
+		super (MessagesCommand, self).__init__ ("btos-messages", gdb.COMMAND_USER)
+	
+	def invoke (self, arg, from_tty):
+		msgCount = gdb.parse_and_eval("theMessageManager.ptr->messages.dataSize")
+		for mix in range(msgCount):
+			ptr = gdb.parse_and_eval("&theMessageManager.ptr->messages.data[%s]" % mix)
+			msgId = gdb.parse_and_eval("theMessageManager.ptr->messages.data[%s].header.id" % mix)
+			msgFrom = gdb.parse_and_eval("theMessageManager.ptr->messages.data[%s].header.from" % mix)
+			msgTo = gdb.parse_and_eval("theMessageManager.ptr->messages.data[%s].header.to" % mix)
+			reply = gdb.parse_and_eval("theMessageManager.ptr->messages.data[%s].header.reply_id" % mix)
+			msgType = gdb.parse_and_eval("theMessageManager.ptr->messages.data[%s].header.type" % mix)
+			msgLen = gdb.parse_and_eval("theMessageManager.ptr->messages.data[%s].header.length" % mix)
+			print("%s (%s): ID: %s From: %s To: %s Reply: %s Type: %s Len: %s" % (mix, ptr, msgId, msgFrom, msgTo, reply, msgType, msgLen))
+
+MessagesCommand ()
+
+class BlockCommand (gdb.Command):
+	def __init__ (self):
+		super (BlockCommand, self).__init__ ("btos-block", gdb.COMMAND_USER)
+	
+	def invoke (self, arg, from_tty):
+		tix = arg
+		if tix == '':
+			addr = gdb.parse_and_eval("theScheduler.ptr->current")
+		else:
+			addr = gdb.parse_and_eval("theScheduler.ptr->threads.data[%s]" % tix)
+		fnAddr = gdb.parse_and_eval("&({Thread}%s).blockCheck" % addr)
+		print(fnAddr)
+		print(gdb.parse_and_eval("({function<bool()>}%s)" % fnAddr))
+		print(gdb.parse_and_eval("{void*}({function<bool()>}%s).callableBuffer" % fnAddr))
+
+BlockCommand ()
