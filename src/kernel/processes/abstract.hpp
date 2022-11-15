@@ -14,7 +14,6 @@ bool Processes_Ready();
 
 inline ProcessPointer GetProcess(bt_pid_t pid){
 	auto ptr = GetProcessManager().GetByID(pid);
-	if(!ptr) panic("(PROC) Process does not exist!");
 	return ptr;
 }
 
