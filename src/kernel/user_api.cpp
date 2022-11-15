@@ -567,7 +567,7 @@ USERAPI_HANDLER(BT_WAIT){
 USERAPI_HANDLER(BT_KILL){
 	auto process = GetProcessManager().GetByID(state.Get32BitRegister(Generic_Register::GP_Register_B));
 	if(!GetPermissionManager().HasPermission(0, kperm::KillAll) && process && process->GetUID() != CurrentProcess().GetUID()) return;
-	process->End();
+	if(process) process->End();
 }
 
 USERAPI_HANDLER(BT_PRIORITIZE){
