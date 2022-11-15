@@ -41,7 +41,7 @@ symbol get_best_symbol(const string &name){
 	vector<symbol> syms = get_symbols_by_name(proc_symbols, name);
 	remove_if(syms.begin(), syms.end(), [](const symbol &s){ return s.size == 0; });
 	if(syms.size() == 0){
-		return null_symbol;
+		return get_null_symbol();
 	}
 	return syms[0];
 }
@@ -311,7 +311,7 @@ void dump_command(const vector<string> &args){
 	}
 	cout << "Symbol: " << sym.name << " At: 0x" << hex << sym.address << " In: " << sym.file << endl;
 	auto getter = [&](size_t i){ 
-		intptr_t addr = sym.address + i;
+		uintptr_t addr = sym.address + i;
 		uint8_t c;
 		debug_peek(&c, selected_pid, addr, 1);
 		return (char)c;
@@ -452,7 +452,7 @@ void disas_command(const vector<string> &args){
 	vector<uint8_t> mem;
 	cout << "Symbol: " << sym.name << " At: 0x" << hex << sym.address << " In: " << sym.file << endl;
 	for(size_t i = 0; i < sym.size; ++i){
-		intptr_t addr = sym.address + i;
+		uintptr_t addr = sym.address + i;
 		uint8_t c;
 		debug_peek(&c, selected_pid, addr, 1);
 		mem.push_back(c);
@@ -465,11 +465,11 @@ void disas_command(const vector<string> &args){
 	ud_set_input_buffer(&ud_obj, mem.data(), mem.size());
 	ud_set_syntax(&ud_obj, UD_SYN_ATT);
 	while(ud_disassemble(&ud_obj)){
-		cout << hex << "0x" << setfill('0') << setw(8) << (intptr_t)ud_insn_off(&ud_obj) << " - " << ud_insn_hex(&ud_obj);
+		cout << hex << "0x" << setfill('0') << setw(8) << (uintptr_t)ud_insn_off(&ud_obj) << " - " << ud_insn_hex(&ud_obj);
 		cout << " - " << ud_insn_asm(&ud_obj);
 		const ud_operand *op = ud_insn_opr(&ud_obj, 0);
 		if(op && op->type == UD_OP_JIMM){ 
-			intptr_t addr = (intptr_t)(ud_insn_off(&ud_obj) + ud_insn_len(&ud_obj) + op->lval.udword);
+			uintptr_t addr = (uintptr_t)(ud_insn_off(&ud_obj) + ud_insn_len(&ud_obj) + op->lval.udword);
 			symbol sym = get_symbol(load_symbols(selected_pid), addr);
 			cout << " <" << sym.name << ">";
 		}
@@ -487,7 +487,7 @@ void symbol_command(const vector<string> &line){
 		cout << "No address specified." << endl;
 		return;
 	}
-	intptr_t addr = strtoul(line[1].c_str(), NULL, 0);
+	uintptr_t addr = strtoul(line[1].c_str(), NULL, 0);
 	symbol sym = get_symbol(load_symbols(selected_pid), addr);
 	if(sym.address == 0){
 		cout << "Symbol not found." << endl;

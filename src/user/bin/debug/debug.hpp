@@ -17,10 +17,10 @@ struct context {
 
 struct el_loaded_module{
 	uint32_t id;
-	intptr_t name;
-	intptr_t full_path;
-	intptr_t dynamic;
-	intptr_t base;
+	uintptr_t name;
+	uintptr_t full_path;
+	uintptr_t dynamic;
+	uintptr_t base;
 	size_t limit;
 	bool is_dynamic;
 };
