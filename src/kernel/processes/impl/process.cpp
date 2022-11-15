@@ -139,8 +139,10 @@ void Process::CleanupProcess(){
 				h.second = nullptr;
 			}
 		}
-		for(auto &tid : threads){
-			GetScheduler().JoinThread(tid);
+		while(GetScheduler().GetPIDThreadCount(pid) > 0){
+			for(auto &tid : threads){
+				GetScheduler().JoinThread(tid);
+			}
 		}
 		bool pendingHandles = true;
 		while(pendingHandles){
