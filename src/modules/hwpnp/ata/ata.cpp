@@ -383,6 +383,16 @@ void ATABusDevice::WaitInt(size_t i){
 
 ATAHDDDeviceNode::ATAHDDDeviceNode(ATAHDDDevice *dev) : btos_api::hwpnp::BlockDeviceNode(dev) {}
 
+ATAHDDDevice::ATAHDDDevice(btos_api::hwpnp::IATABus *b, size_t i) : bus(b), index(i), node(this) {
+	API->GetScheduler().AddIdleHook([&]{
+		if(nextBlock && cache){
+			uint8_t buf[ATA_SECTOR_SIZE];
+			ReadSector(nextBlock, buf);
+			nextBlock = 0;
+		}
+	});
+}
+
 const char *ATAHDDDeviceNode::GetBaseName(){
 	return "ATA";
 }
@@ -420,6 +430,7 @@ bool ATAHDDDevice::ReadSector(uint64_t lba, uint8_t *buf){
 	auto lock = bus->GetLock();
 	auto ret = ata_device_read_sector(bus, index, lba, buf);
 	if(ret && cache) cache->Store(lba, (char*)buf);
+	nextBlock = lba + 1;
 	return ret;
 }
 

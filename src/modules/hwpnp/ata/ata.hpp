@@ -240,8 +240,9 @@ private:
 	size_t index;
 	ATAHDDDeviceNode node;
 	btos_api::ICache *cache = nullptr;
+	uint64_t nextBlock = 0;
 public:
-	ATAHDDDevice(btos_api::hwpnp::IATABus *b, size_t i) : bus(b), index(i), node(this) {}
+	ATAHDDDevice(btos_api::hwpnp::IATABus *b, size_t i);
 
 	btos_api::hwpnp::DeviceID GetID();
 	const char *GetDescription();
