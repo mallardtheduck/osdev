@@ -517,7 +517,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf){
 			if(!backend || !backend->is_active(id)){
 				auto lactive = activecounter;
 				term_lock->Release();
-				API->CurrentThread().SetBlock([&]{
+				API->CurrentThread().SetAbortableBlock([&]{
 					return activecounter != lactive;
 				});
 				term_lock->TakeExclusive();
@@ -726,12 +726,12 @@ uint32_t vterm::get_input(){
 	auto hl = input_lock->LockExclusive();
 	while(!keyboard_buffer.count()) {
 		input_lock->Release();
-		API->CurrentThread().SetBlock([&]{
+		API->CurrentThread().SetAbortableBlock([&]{
 			return keyboard_buffer.count() > 0;
 		});
 		input_lock->TakeExclusive();
 	}
-	uint32_t ret=keyboard_buffer.read_item();
+	uint32_t ret = keyboard_buffer.count() > 0 ? keyboard_buffer.read_item() : 0;
 	return ret;
 }
 
@@ -739,12 +739,12 @@ bt_terminal_pointer_event vterm::get_pointer(){
 	auto hl = input_lock->LockExclusive();
 	while(!pointer_buffer.count()) {
 		input_lock->Release();
-		API->CurrentThread().SetBlock([&]{
+		API->CurrentThread().SetAbortableBlock([&]{
 			return pointer_buffer.count() > 0;
 		});
 		input_lock->TakeExclusive();
 	}
-	bt_terminal_pointer_event ret=pointer_buffer.read_item();
+	bt_terminal_pointer_event ret = pointer_buffer.count() > 0 ? pointer_buffer.read_item() : bt_terminal_pointer_event();
 	return ret;
 }
 
