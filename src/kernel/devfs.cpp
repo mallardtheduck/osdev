@@ -47,6 +47,7 @@ public:
 	}
 
 	void Close() override{
+		inst->Close();
 		delete inst;
 	}
 
