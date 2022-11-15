@@ -40,6 +40,22 @@ public:
 			_cache_items_list.pop_back();
 		}
 	}
+
+	void put(const key_t& key, value_t&& value) {
+		auto it = _cache_items_map.find(key);
+		_cache_items_list.emplace_front(key_value_pair_t(key, std::move(value)));
+		if (it != _cache_items_map.end()) {
+			_cache_items_list.erase(it->second);
+			_cache_items_map.erase(it);
+		}
+		_cache_items_map[key] = _cache_items_list.begin();
+		
+		if (_cache_items_map.size() > _max_size) {
+			auto &last = _cache_items_list.back();
+			_cache_items_map.erase(last.first);
+			_cache_items_list.pop_back();
+		}
+	}
 	
 	const value_t& get(const key_t& key) {
 		auto it = _cache_items_map.find(key);
