@@ -99,7 +99,7 @@ private:
 				auto hl = messageLock->LockRecursive();
 				if(msg.header.from != 0 && !(msg.header.flags & bt_msg_flags::Reply)){
 					for(auto &m : messages){
-						if(m.header.from == msg.header.from && m.header.to == msg.header.to){
+						if(!(m.header.flags &bt_msg_flags::Reply) && m.header.from == msg.header.from && m.header.to == msg.header.to){
 							wait = true;
 							break;
 						}
@@ -116,7 +116,7 @@ private:
 				if(!messageLock->TryTakeExclusive()) return false;
 				bool ret = true;
 				for(auto &m : messages){
-					if(m.header.from == msg.header.from && m.header.to == msg.header.to){
+					if(!(m.header.flags &bt_msg_flags::Reply) &&m.header.from == msg.header.from && m.header.to == msg.header.to){
 						ret = false;
 						break;
 					}
