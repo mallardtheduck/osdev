@@ -38,7 +38,8 @@ uint64_t send_request(bt_pid_t pid, bt_handle_t handle, bt_terminal_backend_oper
 template<typename R, typename P> R send_request_get_reply(bt_pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type, P param){
 	btos_api::bt_msg_header msg;
 	uint64_t msgid = send_request(pid, handle, type, param);
-	msg = API->GetMessageManager().AwaitMessageReply(msgid);
+	auto kproc = API->GetProcess(0);
+	msg = API->GetMessageManager().AwaitMessageReply(msgid, *kproc);
 	R ret;
 	auto content = API->GetMessageManager().MessageContent(msg);
 	if(content.size() == sizeof(ret)) memcpy(&ret, content.begin(), sizeof(ret));
@@ -49,7 +50,8 @@ template<typename R, typename P> R send_request_get_reply(bt_pid_t pid, bt_handl
 template<typename R> R send_request_get_reply(bt_pid_t pid, bt_handle_t handle, bt_terminal_backend_operation_type::Enum type){
 	btos_api::bt_msg_header msg;
 	uint64_t msgid = send_request(pid, handle, type);
-	msg = API->GetMessageManager().AwaitMessageReply(msgid);
+	auto kproc = API->GetProcess(0);
+	msg = API->GetMessageManager().AwaitMessageReply(msgid, *kproc);
 	R ret;
 	auto content = API->GetMessageManager().MessageContent(msg);
 	if(content.size() == sizeof(ret)) memcpy(&ret, content.begin(), sizeof(ret));
@@ -191,7 +193,8 @@ size_t user_backend::display_read(size_t bytes, char *buf){
 		size_t partsize = MIN(i + BT_MSG_MAX, bytes) - i;
 		uint64_t msgid = send_request(pid, handle_id, bt_terminal_backend_operation_type::DisplayRead, partsize);
 		bt_msg_header msg;
-		msg = API->GetMessageManager().AwaitMessageReply(msgid);
+		auto kproc = API->GetProcess(0);
+		msg = API->GetMessageManager().AwaitMessageReply(msgid, *kproc);
 		size_t readsize = msg.length;
 		auto content = API->GetMessageManager().MessageContent(msg);
 		memcpy(buf + i, content.begin(), readsize);
@@ -206,7 +209,8 @@ size_t user_backend::display_write(size_t bytes, const char *buf){
 		size_t partsize = MIN(i + BT_MSG_MAX, bytes) - i;
 		uint64_t msgid = send_request(pid, handle_id, bt_terminal_backend_operation_type::DisplayWrite, (buf + i), partsize);
 		bt_msg_header msg;
-		msg = API->GetMessageManager().AwaitMessageReply(msgid);
+		auto kproc = API->GetProcess(0);
+		msg = API->GetMessageManager().AwaitMessageReply(msgid, *kproc);
 		size_t readsize = 0;
 		API->GetMessageManager().MessageContent(msg, readsize);
 		API->GetMessageManager().AcknowledgeMessage(msg, false);

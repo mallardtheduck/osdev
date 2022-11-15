@@ -108,8 +108,9 @@ void debug_event_notify(bt_pid_t pid, uint64_t thread, bt_debug_event::Enum even
 		msg.content = (void*)&content;
 		auto &messageManager = GetMessageManager();
 		uint64_t msg_id = messageManager.SendMessage(msg);
-		btos_api::bt_msg_header reply = messageManager.AwaitMessageReply(msg_id);
-		messageManager.AcknowledgeMessage(reply, true);
+		auto kproc = GetProcess(0);
+		btos_api::bt_msg_header reply = messageManager.AwaitMessageReply(msg_id, *kproc);
+		messageManager.AcknowledgeMessage(reply, true, *kproc);
 	}
 }
 
