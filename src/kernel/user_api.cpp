@@ -627,7 +627,8 @@ USERAPI_HANDLER(BT_GET_THREAD){
 	for(auto &hId : threadHandles){
 		auto h = currentProcess.GetHandle(hId);
 		if(auto handle = KernelHandleCast<KernelHandles::Thread>(h)){
-			if(handle->GetData() == currentThread){
+			auto thread = handle->GetData().Lock();
+			if(thread && thread.get() == &currentThread){
 				state.Get32BitRegister(Generic_Register::GP_Register_A) = hId;
 				return;
 			}
