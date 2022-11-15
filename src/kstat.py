@@ -1,14 +1,14 @@
+def pid_to_name(pid):
+	procCount = gdb.parse_and_eval("theProcessManager.ptr->processes.dataSize")
+	for pix in range(procCount):
+		cpid = gdb.parse_and_eval("((Process*)theProcessManager.ptr->processes.data[%s].theObject)->pid" % pix)
+		if cpid == pid: return gdb.parse_and_eval("((Process*)theProcessManager.ptr->processes.data[%s].theObject)->name.p" % pix)
+	return "Unknown PID"
+
 class ThreadsCommand (gdb.Command):
 
 	def __init__ (self):
 		super (ThreadsCommand, self).__init__ ("btos-threads", gdb.COMMAND_USER)
-		
-	def pid_to_name(self, pid):
-		procCount = gdb.parse_and_eval("theProcessManager.ptr->processes.dataSize")
-		for pix in range(procCount):
-		 	cpid = gdb.parse_and_eval("((Process*)theProcessManager.ptr->processes.data[%s].theObject)->pid" % pix)
-		 	if cpid == pid: return gdb.parse_and_eval("((Process*)theProcessManager.ptr->processes.data[%s].theObject)->name.p" % pix)
-		return "Unknown PID"
 		
 	def addr_to_module(self, addr):
 		modCount = gdb.parse_and_eval("theModuleManager.ptr->modules.dataSize")
@@ -41,7 +41,7 @@ class ThreadsCommand (gdb.Command):
 			# 	modname = self.addr_to_module(bc)
 			# 	bcp = gdb.parse_and_eval("threads.data[%s]->bc_param" % tix)
 			# 	blockinfo = "(%s :: %s (%s))" % (modname, bc, bcp)
-			name = self.pid_to_name(pid)
+			name = pid_to_name(pid)
 			print("%s (%s) Name: %s: TID: %s PID: %s (%s) Status: %s %s" % (tix, ptr, tname, tid, pid, name, status, blockinfo))
 
 ThreadsCommand ()
@@ -114,11 +114,16 @@ class MessagesCommand (gdb.Command):
 			ptr = gdb.parse_and_eval("&theMessageManager.ptr->messages.data[%s]" % mix)
 			msgId = gdb.parse_and_eval("theMessageManager.ptr->messages.data[%s].header.id" % mix)
 			msgFrom = gdb.parse_and_eval("theMessageManager.ptr->messages.data[%s].header.from" % mix)
+			fromName = pid_to_name(msgFrom)
 			msgTo = gdb.parse_and_eval("theMessageManager.ptr->messages.data[%s].header.to" % mix)
+			toName = pid_to_name(msgTo)
 			reply = gdb.parse_and_eval("theMessageManager.ptr->messages.data[%s].header.reply_id" % mix)
 			msgType = gdb.parse_and_eval("theMessageManager.ptr->messages.data[%s].header.type" % mix)
 			msgLen = gdb.parse_and_eval("theMessageManager.ptr->messages.data[%s].header.length" % mix)
-			print("%s (%s): ID: %s From: %s To: %s Reply: %s Type: %s Len: %s" % (mix, ptr, msgId, msgFrom, msgTo, reply, msgType, msgLen))
+			flags = gdb.parse_and_eval("theMessageManager.ptr->messages.data[%s].header.flags" % mix)
+			print("%s (%s): ID: %s From: %s (%s) To: %s (%s) Reply: %s Type: %s Len: %s Flags: %s" % 
+				(mix, ptr, msgId, msgFrom, fromName, msgTo, toName, reply, msgType, msgLen, hex(flags))
+			)
 
 MessagesCommand ()
 
