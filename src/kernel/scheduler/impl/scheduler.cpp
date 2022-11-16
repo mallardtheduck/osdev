@@ -236,7 +236,10 @@ Thread *Scheduler::PlanCycle(){
 			}
 		}
 	}
-	if(!head) head = idleThread;
+	if(!head){
+		head = idleThread;
+		++idleThread->loadModifier;
+	}
 	return head;
 }
 
