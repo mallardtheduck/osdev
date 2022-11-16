@@ -85,6 +85,8 @@ public:
 	virtual size_t GetMemoryUsage() = 0;
 	virtual uint64_t ParentID() = 0;
 
+	virtual bool CanLock() = 0;
+
 	virtual ~IProcess() {}
 };
 

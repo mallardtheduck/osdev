@@ -118,6 +118,8 @@ public:
 
 	size_t GetMemoryUsage() override;
 	uint64_t ParentID() override;
+
+	bool CanLock() override;
 };
 
 #endif

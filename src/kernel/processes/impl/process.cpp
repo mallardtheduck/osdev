@@ -146,6 +146,7 @@ void Process::CleanupProcess(){
 		}
 		bool pendingHandles = true;
 		while(pendingHandles){
+			vector<IHandle*> handlesToClose;
 			pendingHandles = false;
 			for(auto &h : handles){
 				if(h.second){
@@ -153,11 +154,16 @@ void Process::CleanupProcess(){
 						pendingHandles = true;
 						continue;
 					}
-					h.second->Close();
-					delete h.second;
+					handlesToClose.push_back(h.second);
 					h.second = nullptr;
 				}
 			}
+			lock->Release();
+			for(auto handleToClose : handlesToClose){
+				handleToClose->Close();
+				delete handleToClose;
+			}
+			lock->TakeExclusive();
 		}
 		if(GetScheduler().GetPIDThreadCount(pid) > 0){
 			dbgpf("PROC: ThreadCount: %lu\n", GetScheduler().GetPIDThreadCount(pid));
@@ -195,6 +201,7 @@ void Process::End(){
 		if(status != btos_api::bt_proc_status::Ending){
 			debug_event_notify(pid, 0, bt_debug_event::ProgramEnd);
 			status = btos_api::bt_proc_status::Ending;
+			if(refCount <= 1) readyForCleanup = true;
 			dbgpf("PROC: Ending process: %llu\n", pid);
 		}
 	}
@@ -274,21 +281,26 @@ void Process::CloseAndRemoveHandle(handle_t h){
 		auto handle = handles[h];
 		if(HandleDependencyCheck(handle) == HandleDependencyCheckResult::Absent){
 			handles.erase(h);
-			handle->Close();
-			delete handle;
-			vector<bt_handle_t> successfullyClosedHandles;
+			vector<IHandle*> handlesToClose;
+			handlesToClose.push_back(handle);
+			vector<bt_handle_t> closedHandles;
 			for(auto pendingHandleId : pendingHandleCloses){
 				if(handles.has_key(pendingHandleId)){
 					auto pendingHandle = handles[pendingHandleId];
 					if(HandleDependencyCheck(pendingHandle) == HandleDependencyCheckResult::Absent){
 						handles.erase(pendingHandleId);
-						pendingHandle->Close();
-						delete pendingHandle;
-						successfullyClosedHandles.push_back(pendingHandleId);
+						handlesToClose.push_back(pendingHandle);
+						closedHandles.push_back(pendingHandleId);
 					}
 				}
 			}
-			for(auto closedHandleId : successfullyClosedHandles){
+			lock->Release();
+			for(auto handleToClose : handlesToClose){
+				handleToClose->Close();
+				delete handleToClose;
+			}
+			lock->TakeExclusive();
+			for(auto closedHandleId : closedHandles){
 				auto index = pendingHandleCloses.find(closedHandleId);
 				pendingHandleCloses.erase(index);
 			}
@@ -397,7 +409,7 @@ void Process::DecrementRefCount(){
 	if(refCount <=1 && status == btos_api::bt_proc_status::Ending){
 		readyForCleanup = true;
 		static_cast<ProcessManager&>(GetProcessManager()).ScheduleCleanup();
-	}else if(pid && !refCount) panic("Q");
+	}
 }
 
 void Process::IncrementRefCountFromScheduler(){
@@ -411,7 +423,7 @@ void Process::DecrementRefCountFromScheduler(){
 	if(refCount <= 1 && status == btos_api::bt_proc_status::Ending){
 		readyForCleanup = true;
 		static_cast<ProcessManager&>(GetProcessManager()).ScheduleCleanup();
-	}else if(pid && !refCount) panic("Q");
+	}
 }
 
 size_t Process::GetMemoryUsage(){
@@ -419,4 +431,8 @@ size_t Process::GetMemoryUsage(){
 }
 uint64_t Process::ParentID(){
 	return parent;
+}
+
+bool Process::CanLock(){
+	return !lock->IsLocked();
 }
