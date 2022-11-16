@@ -174,5 +174,6 @@ int module_main(char *){
 	API->GetHwPnPManager().RegisterDriver(&partitionDriver);
 	API->GetHwPnPManager().RegisterDriver(&atapiDriver);
 	API->GetHwPnPManager().RescanDevices();
+	init_queue();
 	return 0;
 }

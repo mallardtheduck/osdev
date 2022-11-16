@@ -199,7 +199,12 @@ bool ATAPIDevice::ReadSector(uint64_t lba, uint8_t *buf){
 	}
 	if(cache && cache->Retrieve(lba, (char*)buf)) return true;
 	auto lock = bus->GetLock();
-	auto ret = atapi_device_read(bus, index, lba, buf) == ATAPI_SECTOR_SIZE;
+	bool ret;
+	if(queueReady){
+		ret = atapi_queued_read(bus, index, lba, buf) == ATAPI_SECTOR_SIZE;
+	}else{
+		ret = atapi_device_read(bus, index, lba, buf) == ATAPI_SECTOR_SIZE;
+	}
 	if(ret && cache) cache->Store(lba, (char*)buf);
 	return ret;
 }
