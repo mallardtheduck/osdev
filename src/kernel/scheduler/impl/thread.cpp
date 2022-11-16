@@ -94,10 +94,17 @@ bool Thread::AbortableBlock(){
 void Thread::Unblock(){
 	switch(status){
 		case ThreadStatus::Blocked:
-			status = ThreadStatus::Runnable;
+			if(blockCheck){
+				if(blockCheck()){
+					status = ThreadStatus::Runnable;
+					blockCheck = nullptr;
+				}
+			}else{
+				status = ThreadStatus::Runnable;
+			}
 			break;
 		case ThreadStatus::DebugBlocked:
-			status = ThreadStatus::DebugStopped;
+			if(!blockCheck)	status = ThreadStatus::DebugStopped;
 			break;
 		default: break;
 	}
