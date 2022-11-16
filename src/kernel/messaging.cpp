@@ -451,7 +451,7 @@ public:
 	bool Wait() override{
 		msg.valid = false;
 		auto proc = GetProcess(pid);
-		if(!proc || !manager.messageLock->TryTakeExclusive()) return false;
+		if(!proc || !proc->CanLock() || !manager.messageLock->TryTakeExclusive()) return false;
 		manager.RecieveMessage(msg, filter, *proc);
 		manager.messageLock->Release();
 		return msg.valid;
