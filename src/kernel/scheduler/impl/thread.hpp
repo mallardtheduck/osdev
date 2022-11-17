@@ -53,6 +53,7 @@ private:
 	Thread(ThreadEntryFunction fn, void *param, size_t stackSize);
 	Thread();
 
+	ThreadStatus CheckStatus();
 public:
 	void Yield(IThread *to) override;
 	void YieldIfPending() override;

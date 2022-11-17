@@ -210,16 +210,26 @@ bool Scheduler::CanLock(){
 	return ret;
 }
 
+bool Scheduler::ShouldYield(){
+	auto hl = lock->LockExclusive();
+	if(current->status != ThreadStatus::Runnable) return true;
+	for(auto thread : threads){
+		if(thread == current) continue;
+		if(thread->CheckStatus() == ThreadStatus::Runnable) return true;
+	}
+	return false;
+}
+
 Thread *Scheduler::PlanCycle(){
 	scheduleCyle++;
 	uint32_t minPriority = UINT32_MAX;
+	bool anyRunnable = false;
 	for(auto thread : threads){
 		if(thread->loadModifier > 0) --thread->loadModifier;
-		if(thread->status == ThreadStatus::Blocked && thread->blockCheck && thread->blockCheck()){
-			thread->status = ThreadStatus::Runnable;
-			thread->blockCheck = nullptr;
+		if(thread->status == ThreadStatus::Runnable){
+			anyRunnable = true;
+			if(thread->dynamicPriority < minPriority) minPriority = thread->dynamicPriority;
 		}
-		if(thread->status == ThreadStatus::Runnable && thread->dynamicPriority < minPriority) minPriority = thread->dynamicPriority;
 	}
 	Thread *head = nullptr;
 	Thread *last = nullptr;
@@ -237,6 +247,7 @@ Thread *Scheduler::PlanCycle(){
 		}
 	}
 	if(!head){
+		if(anyRunnable) panic("(SCH) Going idle with runnable threads?!");
 		head = idleThread;
 		++idleThread->loadModifier;
 	}
@@ -255,7 +266,22 @@ uint64_t Scheduler::Schedule(uint64_t stackToken){
 	while(next && next->status != ThreadStatus::Runnable){
 		next = next->next;
 	}
-	if(!next) next = PlanCycle();
+	if(!next){
+		bool shouldSchedule = !(current->status == ThreadStatus::Runnable);
+		for(auto thread : threads){
+			if(thread->status == ThreadStatus::Blocked && thread->blockCheck && thread->blockCheck()){
+				thread->status = ThreadStatus::Runnable;
+				thread->blockCheck = nullptr;
+			}
+			if(thread->status == ThreadStatus::Runnable && current != thread) shouldSchedule = true;
+		}
+		if(!shouldSchedule){
+			if(current->loadModifier < MaxLoadModifier) ++current->loadModifier;
+			current->dynamicPriority = current->staticPriority + current->loadModifier;
+			return stackToken;
+		}
+		next = PlanCycle();
+	}
 	lock->Transfer(next);
 	if(Processes_Ready()) GetProcessManager().SwitchProcessFromScheduler(next->pid);
 	else if(next->pid != 0) panic("(SCH) PID != 0 before processes!");

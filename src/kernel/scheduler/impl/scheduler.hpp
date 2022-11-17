@@ -22,6 +22,7 @@ private:
 	vector<function<void()>> idleHooks;
 
 	Thread *PlanCycle();
+	bool ShouldYield();
 
 	static char *ThreadsInfoFS();
 public:

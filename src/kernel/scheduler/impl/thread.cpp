@@ -39,6 +39,16 @@ Thread::Thread(){
 	memcpy(fpuState, GetHAL().GetDefaultFPUState(), 512);
 }
 
+ThreadStatus Thread::CheckStatus(){
+	if(status == ThreadStatus::Blocked && blockCheck){
+		if(blockCheck()){
+			status = ThreadStatus::Runnable;
+			blockCheck = nullptr;
+		}
+	}
+	return status;
+}
+
 void Thread::End(){
 	if(lockCount != 0) panic("(SCH) Ending thread with non-zero lock count!");
 	if(pid) GetProcessManager().SwitchProcess(0);
@@ -53,13 +63,13 @@ void Thread::Yield(IThread */*to*/){
 		yieldPending = true;
 		return;
 	}
-	GetHAL().YieldToScheduler();
+	if(theScheduler->ShouldYield()) GetHAL().YieldToScheduler();
 }
 
 void Thread::YieldIfPending(){
 	if(!theScheduler->CanYield()) return;
 	if(yieldPending){
-		GetHAL().YieldToScheduler();
+		if(theScheduler->ShouldYield()) GetHAL().YieldToScheduler();
 		yieldPending = false;
 	}
 }
@@ -69,6 +79,7 @@ uint64_t Thread::ID(){
 }
 
 void Thread::Block(){
+	if(theScheduler->idleThread == this) panic("(SCH) Attempt to block idle thread!");
 	switch(status){
 		case ThreadStatus::Runnable:
 			status = ThreadStatus::Blocked;
@@ -123,6 +134,7 @@ uint64_t Thread::GetPID(){
 }
 
 void Thread::SetBlock(BlockCheckFunction fn, IThread */*to*/){
+	if(theScheduler->idleThread == this) panic("(SCH) Attempt to block idle thread!");
 	blockCheck = fn;
 	Block();
 }
@@ -135,8 +147,8 @@ bool Thread::SetAbortableBlock(BlockCheckFunction fn, IThread *to){
 }
 
 void Thread::ClearBlock(){
-	Unblock();
 	blockCheck = nullptr;
+	Unblock();
 }
 
 void Thread::IncrementLockCount(){

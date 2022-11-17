@@ -45,7 +45,7 @@ char *ProcessManager::ProcsInfoFS(){
 	while(!done){
 		done = true;
 		buffer=(char*)malloc(bufferSize);
-		snprintf(buffer, bufferSize, "# PID, path, memory, parent\n");
+		snprintf(buffer, bufferSize, "# PID, path, memory, parent, stage\n");
 		size_t kmem=MM2::current_pagedir->get_kernel_used();
 		{auto hl = that.lock->LockExclusive();
 			for(auto &proc : that.processes){
@@ -53,9 +53,10 @@ char *ProcessManager::ProcsInfoFS(){
 				auto path = proc->GetName();
 				auto memory = proc->GetMemoryUsage();
 				auto parent = proc->ParentID();
+				auto stage = proc->GetProcStage();
 
-				auto count = snprintf(buffer, bufferSize, "%s%llu, \"%s\", %lu, %llu\n", buffer,
-					pid, path, (pid == 0) ? kmem : memory, parent);
+				auto count = snprintf(buffer, bufferSize, "%s%llu, \"%s\", %lu, %llu, %lu\n", buffer,
+					pid, path, (pid == 0) ? kmem : memory, parent, stage);
 
 				if((size_t)count > bufferSize){
 					free(buffer);
