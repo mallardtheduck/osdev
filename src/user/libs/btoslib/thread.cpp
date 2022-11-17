@@ -25,4 +25,8 @@ namespace btos_api{
 		bt_thread_abort(handle);
 	}
 
+	void Thread::SetName(const char *name){
+		bt_set_thread_name(name);
+	}
+
 }

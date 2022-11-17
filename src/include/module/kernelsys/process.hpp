@@ -87,6 +87,9 @@ public:
 
 	virtual bool CanLock() = 0;
 
+	virtual void SetProcStage(size_t v) = 0;
+	virtual size_t GetProcStage() = 0;
+
 	virtual ~IProcess() {}
 };
 

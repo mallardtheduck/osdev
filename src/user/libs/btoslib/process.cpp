@@ -46,6 +46,14 @@ namespace btos_api{
 		return bt_get_proc_status(pid);
 	}
 
+	void Process::SetProcStage(size_t v){
+		if(pid == bt_getpid()) bt_set_procstage(v);
+	}
+
+	size_t Process::GetProcStage() const{
+		return bt_get_procstage(pid);
+	}
+
 	pair<string, vector<string>> ParseCmd(const string &cmd){
 		vector<string> tokens;
 		stringstream current;

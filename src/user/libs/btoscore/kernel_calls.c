@@ -65,6 +65,10 @@ size_t bt_get_arg(size_t index, char *buf, size_t size){
 	return btos_call(BT_GET_ARG, index, (uint32_t)buf, size);
 }
 
+void bt_set_procstage(size_t value){
+	btos_call(BT_SET_PROCSTAGE, value, 0, 0);
+}
+
 bt_lockhandle bt_create_lock(){
 	return (bt_lockhandle)btos_call(BT_CREATE_LOCK, 0, 0, 0);
 }
@@ -140,6 +144,10 @@ void bt_yield(){
 
 void bt_thread_abort(bt_threadhandle thread){
     btos_call(BT_THREAD_ABORT, thread, 0, 0);
+}
+
+void bt_set_thread_name(const char *name){
+	btos_call(BT_SET_THREAD_NAME, (uint32_t)name, 0, 0);
 }
 
 bool bt_mount(const char *name, const char *device, const char *filesystem){
@@ -260,6 +268,10 @@ bt_pid_t bt_getpid(){
 
 bt_proc_status bt_get_proc_status(bt_pid_t pid){
 	return (bt_proc_status)btos_call(BT_PROCSTATUS, (uint32_t)&pid, 0, 0);
+}
+
+size_t bt_get_procstage(bt_pid_t pid){
+	return btos_call(BT_GET_PROCSTAGE, pid, 0, 0);
 }
 
 uint64_t bt_send(bt_msg_header msg){

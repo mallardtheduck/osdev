@@ -59,6 +59,8 @@ private:
 
 	bool readyForCleanup = false;
 
+	size_t procStage = 0;
+
 	static Process *CreateKernelProcess();
 	static uintptr_t AllocateStack(size_t size);
 
@@ -120,6 +122,9 @@ public:
 	uint64_t ParentID() override;
 
 	bool CanLock() override;
+
+	void SetProcStage(size_t v) override;
+	size_t GetProcStage() override;
 };
 
 #endif

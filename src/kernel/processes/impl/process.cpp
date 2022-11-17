@@ -436,3 +436,11 @@ uint64_t Process::ParentID(){
 bool Process::CanLock(){
 	return !lock->IsLocked();
 }
+
+void Process::SetProcStage(size_t v){
+	if(v > procStage) procStage = v;
+}
+
+size_t Process::GetProcStage(){
+	return procStage;
+}

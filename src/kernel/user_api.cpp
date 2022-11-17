@@ -164,6 +164,10 @@ USERAPI_HANDLER(BT_GET_ARG){
 	}else RAISE_US_ERROR();
 }
 
+USERAPI_HANDLER(BT_SET_PROCSTAGE){
+	CurrentProcess().SetProcStage(state.Get32BitRegister(Generic_Register::GP_Register_B));
+}
+
 USERAPI_HANDLER(BT_CREATE_LOCK){
 	auto lock = NewLock();
 	auto handle = MakeKernelGenericHandle<KernelHandles::Lock>(lock, 
@@ -574,6 +578,13 @@ USERAPI_HANDLER(BT_PRIORITIZE){
 	//TODO: Implement...
 }
 
+USERAPI_HANDLER(BT_GET_PROCSTAGE){
+	auto process = GetProcessManager().GetByID(state.Get32BitRegister(Generic_Register::GP_Register_B));
+	if(process){
+		state.Get32BitRegister(Generic_Register::GP_Register_A) = process->GetProcStage();
+	}
+}
+
 USERAPI_HANDLER(BT_EXIT){
 	auto &process = CurrentProcess();
 	process.SetReturnValue(state.Get32BitRegister(Generic_Register::GP_Register_B));
@@ -661,6 +672,14 @@ USERAPI_HANDLER(BT_YIELD){
 
 USERAPI_HANDLER(BT_THREAD_ABORT){
 	CurrentProcess().CloseAndRemoveHandle(state.Get32BitRegister(Generic_Register::GP_Register_B));
+}
+
+USERAPI_HANDLER(BT_SET_THREAD_NAME){
+	if(is_safe_string(state.Get32BitRegister(Generic_Register::GP_Register_B))){
+		const char *name = (const char*)state.Get32BitRegister(Generic_Register::GP_Register_B);
+		auto fullname = string("User: ") + name;
+		CurrentThread().SetName(fullname.c_str());
+	}
 }
 
 USERAPI_HANDLER(BT_SEND){
@@ -886,6 +905,7 @@ void userapi_syscall(uint16_t fn, ICPUState &state){
 
 		USERAPI_HANDLE_CALL(BT_GET_ARGC);
 		USERAPI_HANDLE_CALL(BT_GET_ARG);
+		USERAPI_HANDLE_CALL(BT_SET_PROCSTAGE);
 
 		//Locking
 		USERAPI_HANDLE_CALL(BT_CREATE_LOCK);
@@ -910,6 +930,7 @@ void userapi_syscall(uint16_t fn, ICPUState &state){
 		USERAPI_HANDLE_CALL(BT_YIELD);
 		//USERAPI_HANDLE_CALL(BT_THREAD_PRIORITIZE);
 		USERAPI_HANDLE_CALL(BT_THREAD_ABORT);
+		USERAPI_HANDLE_CALL(BT_SET_THREAD_NAME);
 
 		//VFS
 		USERAPI_HANDLE_CALL(BT_MOUNT);
@@ -948,6 +969,7 @@ void userapi_syscall(uint16_t fn, ICPUState &state){
 		USERAPI_HANDLE_CALL(BT_EXIT);
 		USERAPI_HANDLE_CALL(BT_GETPID);
 		USERAPI_HANDLE_CALL(BT_PROCSTATUS);
+		USERAPI_HANDLE_CALL(BT_GET_PROCSTAGE);
 
 		//Messaging
 		USERAPI_HANDLE_CALL(BT_SEND);

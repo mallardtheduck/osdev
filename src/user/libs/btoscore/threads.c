@@ -20,6 +20,7 @@ typedef struct{
 static void reaper(void *param){
 	(void)param;
 	//dbgpf("CORE: Reaper running!\n");
+	bt_set_thread_name("Reaper");
 	while(true){
 		bt_wait_atom(reaper_atom, bt_atom_compare_NotEqual, 0);
 		thread_details *details = (thread_details*)(uint32_t)bt_read_atom(reaper_atom);

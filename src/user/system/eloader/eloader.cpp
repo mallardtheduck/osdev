@@ -33,7 +33,11 @@ int main(){
 	
 	program_file = bt_fopen(program_path, FS_Read);
 	entrypoint e = load_elf_proc(program_file, program_path);
-	if(e) e();
+	if(e){
+		bt_set_thread_name("MAIN");
+		bt_set_procstage(1);
+		e();
+	}
 
     return 0;
 }

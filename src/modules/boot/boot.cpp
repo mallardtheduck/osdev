@@ -51,6 +51,13 @@ void dputs(IVisibleDeviceInstance *handle, const char *s){
 	free(buf);
 }
 
+uint64_t atoi64(const char *str) {
+	uint64_t res = 0;
+	for (int i = 0; str[i] != '\0'; ++i) res = res*10 + str[i] - '0';
+
+	return res;
+}
+
 void displaywrite(const char *s, const char *dev){
 	auto device = API->GetVisibleDeviceManager().GetVisibleDevice(dev);
 	if(device){
@@ -163,11 +170,29 @@ extern "C" int handler(void *c, const char* section, const char* name, const cha
 		API->CurrentProcess().SetEnvironmentVariable(value, "-", ENV_Global);
 	}else if(MATCH(current_section, "waitfor")){
 		const char *v = API->CurrentProcess().GetEnvironmentVariable(value);
+		API->CurrentThread().SetPriority(1000);
 		while(strlen(v) <= 1){
 			API->CurrentThread().Yield();
+			asm volatile("pause");
 			v = API->CurrentProcess().GetEnvironmentVariable(value);
 		}
+		API->CurrentThread().SetPriority(10);
 		API->CurrentProcess().SetEnvironmentVariable(value, "");
+	}else if(MATCH(current_section, "waitstage")){
+		char *pidVar, *stageStr;
+		if(split(value, ' ', &pidVar, &stageStr)){
+			const char *pidStr = API->CurrentProcess().GetEnvironmentVariable(pidVar);
+			bt_pid_t pid = atoi64(pidStr);
+			size_t stage = atoi64(stageStr);
+			dbgpf("BOOT: Waiting for proc %llu to reach stage %lu\n", pid, stage);
+			API->CurrentThread().SetBlock([&]{
+				auto proc = API->GetProcess(pid);
+				if(!proc) return true;
+				return proc->GetProcStage() >= stage;
+			});
+			free(pidVar);
+			free(stageStr);
+		}
 	}else if(strcmp(section, current_section) == 0 && starts_with("set ", name)){
 		char *set, *varname;
 		if(split(name, ' ', &set, &varname)){
