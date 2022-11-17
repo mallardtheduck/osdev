@@ -42,10 +42,10 @@ private:
 
 protected:
 	bool Process(ATAOperation *op) override{
-		API->CurrentThread().SetPriority(100);
 		if(!op) return true;
 		auto &processManager = API->GetProcessManager();
 		if(op != &idleOp){
+			API->CurrentThread().SetPriority(10);
 			lastOperation = *op;
 			if(
 				op->type == ATAOperationType::Read && idleOp.status == ATAOperationStatus::Complete
@@ -57,6 +57,8 @@ protected:
 				processManager.SwitchProcess(0);
 				return true;
 			}
+		}else{
+			API->CurrentThread().SetPriority(100);
 		}
 
 		if(processManager.SwitchProcess(op->pid)){
@@ -113,6 +115,7 @@ protected:
 	bool Batch(ATAOperation **batch, size_t size) override{
 		size_t done = 0;
 		while(done < size){
+			API->CurrentThread().SetPriority(10);
 			ATAOperation *next = nullptr;
 			for(size_t i = 0; i < size; ++i){
 				if(batch[i]->status != ATAOperationStatus::Pending) continue;

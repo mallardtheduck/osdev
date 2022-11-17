@@ -27,14 +27,14 @@ int ata_wait(struct ata_device * dev, int advanced) {
 
 	ata_io_wait(dev);
 
-	int count = 0;
+	// int count = 0;
 	while ((status = inb(dev->io_base + ATA_REG_STATUS)) & ATA_SR_BSY) {
 		//dbgpf("ATA: Status: %x\n", inb(dev->io_base + ATA_REG_STATUS));
-		++count;
-		if(count >= 100){
-			API->CurrentThread().Yield();
-			count = 0;
-		}
+		// ++count;
+		// if(count >= 1000){
+		// 	API->CurrentThread().Yield();
+		// 	count = 0;
+		// }
 		asm volatile ("pause");
 	}
 
@@ -65,16 +65,18 @@ int ata_wait(btos_api::hwpnp::IATABus *bus, size_t index, int advanced) {
 	bus->ReadControlByte(index);
 	bus->ReadControlByte(index);
 
-	int count = 0;
+	// uint64_t totalCount = 0;
+	// int count = 0;
 	while ((status = bus->InByte(index, ATA_REG_STATUS)) & ATA_SR_BSY) {
 		//dbgpf("ATA: Status: %x\n", inb(dev->io_base + ATA_REG_STATUS));
-		++count;
-		if(count >= 100){
-			API->CurrentThread().Yield();
-			count = 0;
-		}
+		// ++count; ++totalCount;
+		// if(count >= 1000){
+		// 	API->CurrentThread().Yield();
+		// 	count = 0;
+		// }
 		asm volatile ("pause");
 	}
+	// dbgpf("ATA: Total Count: %llu\n", totalCount);
 
 	if (advanced) {
 		status = bus->InByte(index, ATA_REG_STATUS);
