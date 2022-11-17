@@ -38,24 +38,9 @@ void Scheduler::TheIdleThread(void*){
 	Thread *myThread = theScheduler->current;
 	myThread->SetName("IDLE");
 	while(true){
-		bool yield_immediately = false;
-		{
-			auto hl = theScheduler->lock->LockExclusive();
-			for(auto thread : theScheduler->threads){			
-				if(thread->status == ThreadStatus::Blocked && thread->blockCheck){
-					auto il = GetHAL().LockInterrupts();
-					thread->status = thread->blockCheck() ? ThreadStatus::Runnable : ThreadStatus::Blocked;
-				}
-				
-				yield_immediately = (thread->status == ThreadStatus::Runnable);
-			}
-		}
-		if(yield_immediately) myThread->Yield(nullptr);
-		else{
-			for(auto &h : theScheduler->idleHooks) h();
-			GetHAL().HaltCPU();
-			myThread->Yield(nullptr);
-		}
+		myThread->Yield(nullptr);
+		for(auto &h : theScheduler->idleHooks) h();
+		GetHAL().HaltCPU();
 	}
 }
 
