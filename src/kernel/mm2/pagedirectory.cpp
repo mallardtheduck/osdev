@@ -144,7 +144,7 @@ namespace MM2{
 		{
 			auto hl = table_frame_lock->LockExclusive();
 			if(!(directory[tableno] && MM2_PageFlags::Present) || !map_table(directory[tableno])){
-				dbgpf("MM2: Creating page table %i (%p = %lx).\n", (int)tableno, this, directory_physical);
+				dbgpf("MM2: Creating page table %i (Directory: %p).\n", (int)tableno, directory);
 				create_table(tableno);
 				map_table(directory[tableno]);
 				memset(table_frame, 0, MM2_Page_Size);
