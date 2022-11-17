@@ -224,9 +224,11 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf){
 			uint32_t input = 0;
 			char c = 0;
 			while(!input || !c) {
+				bool abort = false;
 				term_lock->Release();
-				input = get_input();
+				input = get_input(abort);
 				term_lock->TakeExclusive();
+				if(abort) return 0;
 				if((input & KeyFlags::Control) && !(input & KeyFlags::KeyUp) && ((char) input == 'c' || (char) input == 'C')) {
 					term_lock->Release();
 					CurrentProcess().Terminate();
@@ -722,14 +724,15 @@ void vterm::queue_pointer(bt_terminal_pointer_event event){
 	input_lock->Release();
 }
 
-uint32_t vterm::get_input(){
+uint32_t vterm::get_input(bool &abort){
 	auto hl = input_lock->LockExclusive();
 	while(!keyboard_buffer.count()) {
 		input_lock->Release();
-		API->CurrentThread().SetAbortableBlock([&]{
+		abort = !API->CurrentThread().SetAbortableBlock([&]{
 			return keyboard_buffer.count() > 0;
 		});
 		input_lock->TakeExclusive();
+		if(abort) return 0;
 	}
 	uint32_t ret = keyboard_buffer.count() > 0 ? keyboard_buffer.read_item() : 0;
 	return ret;
@@ -749,7 +752,8 @@ bt_terminal_pointer_event vterm::get_pointer(){
 }
 
 char vterm::get_char(){
-	return KB_char(get_input());
+	bool _ = false;
+	return KB_char(get_input(_));
 }
 
 void vterm::update_current_pid(){

@@ -62,7 +62,7 @@ private:
     void scroll();
     void do_infoline();
     char get_char();
-    uint32_t get_input();
+    uint32_t get_input(bool &abort);
     bt_terminal_pointer_event get_pointer();
     void create_terminal(char *command);
 	uint64_t send_event(const bt_terminal_event &e);
