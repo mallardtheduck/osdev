@@ -63,7 +63,10 @@ void Thread::Yield(IThread */*to*/){
 		yieldPending = true;
 		return;
 	}
-	if(theScheduler->ShouldYield()) GetHAL().YieldToScheduler();
+	if(theScheduler->ShouldYield()) {
+		if(status == ThreadStatus::Runnable) theScheduler->yieldSchedule = true;
+		GetHAL().YieldToScheduler();
+	}
 }
 
 void Thread::YieldIfPending(){

@@ -198,11 +198,12 @@ bool Scheduler::CanLock(){
 bool Scheduler::ShouldYield(){
 	auto hl = lock->LockExclusive();
 	if(current->status != ThreadStatus::Runnable) return true;
+	bool ret = false;
 	for(auto thread : threads){
 		if(thread == current) continue;
-		if(thread->CheckStatus() == ThreadStatus::Runnable) return true;
+		if(thread->CheckStatus() == ThreadStatus::Runnable) ret = true;
 	}
-	return false;
+	return ret;
 }
 
 Thread *Scheduler::PlanCycle(){
@@ -246,24 +247,28 @@ uint64_t Scheduler::Schedule(uint64_t stackToken){
 		dbgout("SCH: 10000\n");
 		count = 0;
 	}
+	bool wasYieldSchedule = yieldSchedule;
+	yieldSchedule = false;
 	current->stackToken = stackToken;
 	auto next = current->next;
 	while(next && next->status != ThreadStatus::Runnable){
 		next = next->next;
 	}
 	if(!next){
-		bool shouldSchedule = !(current->status == ThreadStatus::Runnable);
-		for(auto thread : threads){
-			if(thread->status == ThreadStatus::Blocked && thread->blockCheck && thread->blockCheck()){
-				thread->status = ThreadStatus::Runnable;
-				thread->blockCheck = nullptr;
+		if(!wasYieldSchedule){
+			bool shouldSchedule = !(current->status == ThreadStatus::Runnable);
+			for(auto thread : threads){
+				if(thread->status == ThreadStatus::Blocked && thread->blockCheck && thread->blockCheck()){
+					thread->status = ThreadStatus::Runnable;
+					thread->blockCheck = nullptr;
+				}
+				if(thread->status == ThreadStatus::Runnable && current != thread) shouldSchedule = true;
 			}
-			if(thread->status == ThreadStatus::Runnable && current != thread) shouldSchedule = true;
-		}
-		if(!shouldSchedule){
-			if(current->loadModifier < MaxLoadModifier) ++current->loadModifier;
-			current->dynamicPriority = current->staticPriority + current->loadModifier;
-			return stackToken;
+			if(!shouldSchedule){
+				if(current->loadModifier < MaxLoadModifier) ++current->loadModifier;
+				current->dynamicPriority = current->staticPriority + current->loadModifier;
+				return stackToken;
+			}
 		}
 		next = PlanCycle();
 	}

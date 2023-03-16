@@ -13,6 +13,7 @@ private:
 	Thread * volatile current = nullptr;
 	uint64_t idCounter = 0;
 	uint32_t scheduleCyle = 0;
+	bool yieldSchedule = false;
 
 	ILock *lock;
 
