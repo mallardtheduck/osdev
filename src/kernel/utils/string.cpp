@@ -32,11 +32,8 @@ const string::size_type string::npos = static_cast<size_t>(-1);
  */
 static char* malloc_never_null(const size_t b)
 {
-	char *p;
-
-	do {
-		p = static_cast<char*>(malloc(b));
-	} while ( p == NULL );
+	char *p = static_cast<char*>(malloc(b));
+	if(!p) panic("(STRING) malloc failed.");
 
 	return p;
 }
