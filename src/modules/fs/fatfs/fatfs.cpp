@@ -62,18 +62,20 @@ public:
 		if(mode & fs_mode_flags::FS_Truncate) fmode |= FA_CREATE_ALWAYS;
 
 		if(mode & fs_mode_flags::FS_AtEnd) fmode |= FA_OPEN_APPEND;
-		/*auto res =*/ f_open(&fp, path.c_str(), fmode);
-		//dbgpf("FATFS: Open: %s mode: %lu (%i) Result: %i\n", path.c_str(), mode, (int)fmode, res);
+		auto res = f_open(&fp, path.c_str(), fmode);
+		dbgpf("FATFS: Open: %s mode: %lu (%i) Result: %i\n", path.c_str(), mode, (int)fmode, res);
 		if(mode & fs_mode_flags::FS_Delete) del = true;
 	}
 	size_t Read(size_t bytes, char *buffer) override{
 		unsigned int read = 0;
-		f_read(&fp, buffer, bytes, &read);
+		auto res = f_read(&fp, buffer, bytes, &read);
+		if(res != FR_OK) dbgpf("FATFS: Read failure (\"%s\", %i, %i)!\n", path.c_str(), bytes, res);
 		return read;
 	}
 	size_t Write(size_t bytes, const char *buffer) override{
 		unsigned int written = 0;
-		f_write(&fp, buffer, bytes, &written);
+		/*auto res =*/ f_write(&fp, buffer, bytes, &written);
+		//if(res != FR_OK) dbgpf("FATFS: Write failure (\"%s\", %i, %i)!\n", path.c_str(), bytes, res);
 		return written;
 	}
 
@@ -197,17 +199,25 @@ public:
 	}
 
 	IFileHandle *CreateFile(const char *name, uint32_t mode) override{
-		//dbgpf("FATFS: CreateFile(\"%s\", %x)\n", name, mode);
+		dbgpf("FATFS: CreateFile(\"%s\" / \"%s\", %x, %x)\n", path.c_str(), name, mode, fno.fattrib);
 		if(fno.fattrib & AM_DIR){
 			auto fullPath = path + '/' + name;
 			FIL fp;
-			auto r = f_open(&fp, fullPath.c_str(), FA_READ | FA_CREATE_NEW);
+			auto r = f_open(&fp, fullPath.c_str(), FA_READ | FA_WRITE | FA_CREATE_NEW);
 			if(r == FR_OK){
-				f_close(&fp);
+				//unsigned int written = 0;
+				// auto cra = f_write(&fp, "AAA", 3, &written);
+				// f_lseek(&fp, 0);
+				// f_truncate(&fp);
+				auto cr = f_close(&fp);
 				auto node = GetNodeLocal(mount, fullPath.c_str());
 				if(node){
 					return node->OpenFile(mode);
+				}else{
+					dbgpf("FATFS: CreateFile could not retrieve node (\"%s\", %i, %i, %i)!\n", fullPath.c_str(), cr, 0, 0);// written, cra);
 				}
+			}else{
+				dbgpf("FATFS: CreateFile failed (\"%s\", %i)!\n", name, (int)r);
 			}
 		}
 		return nullptr;
@@ -289,7 +299,7 @@ public:
 		if(pStr == "" || pStr == "/") rootDir = true;
 		FILINFO fno;
 		auto res = rootDir ? FR_OK : f_stat(path, &fno);
-		//dbgpf("FATFS: GetNodeLocal(%s) : %i\n", path, res);
+		dbgpf("FATFS: GetNodeLocal(%s) : %i\n", path, res);
 		if(res == FR_OK && (rootDir || fno.fname[0] != 0)) return new FatFSFilesystemNode(this, path, rootDir);
 		else return nullptr;
 	}
