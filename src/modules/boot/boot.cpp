@@ -14,18 +14,21 @@ size_t strlen(const char* str)
 }
 
 char *strdup(const char *s){
-	char *ret=(char*)malloc(strlen(s)+1);
-	strncpy(ret, s, strlen(s)+1);
+	size_t size = strlen(s) + 1;
+	char *ret = (char*)malloc(size);
+	strncpy(ret, s, size);
 	return ret;
 }
 
-bool split(const char *string, char c, char **before, char **after){
-	for(size_t i=0; string && string[i]; ++i){
-		if(string[i]==c){
-			*before=(char*)malloc(i+1);
-			memset((void*)*before, 0, i+1);
-			memcpy((void*)*before, (void*)string, i);
-			*after=strdup(&string[i+1]);
+bool split(const char *str, char c, char **before, char **after){
+	for(size_t i = 0; str && str[i]; ++i){
+		if(str[i]==c){
+			size_t beforeSize = i + 1;
+			*before = (char*)malloc(beforeSize);
+			memset((void*)*before, 0, beforeSize);
+			memcpy((void*)*before, (void*)str, i);
+			if(str[beforeSize]) *after = strdup(&str[beforeSize]);
+			else after = nullptr;
 			return true;
 		}
 	}
@@ -33,17 +36,22 @@ bool split(const char *string, char c, char **before, char **after){
 }
 
 bool starts_with(const char *s, const char *str){
-	if(strlen(str)<strlen(s)) return false;
-	for(size_t i=0; i<strlen(s); ++i){
-		if(s[i]!=str[i]) return false;
+	if(strlen(str) < strlen(s)) return false;
+	for(size_t i = 0; i < strlen(s); ++i){
+		if(s[i] != str[i]) return false;
 	}
 	return true;
 }
 
 void dputs(IVisibleDeviceInstance *handle, const char *s){
-	size_t buflen = (strlen(s) * 2);
+	// (void)handle; (void)s;
+	// return;
+	dbgpf("dputs(%p, %p \"%s\")\n", handle, s, s);
+	size_t slen = strlen(s);
+	size_t buflen = slen * 2;
 	char *buf = (char*)malloc(buflen);
-	for(size_t i = 0; i < buflen; ++i){
+	dbgpf("buf: %p buflen: %lu\n", buf, buflen);
+	for(size_t i = 0; i < slen; ++i){
 		buf[i * 2] = s[i];
 		buf[(i * 2) + 1] = 0x07;
 	}
