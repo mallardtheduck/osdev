@@ -12,7 +12,7 @@ private:
 	typedef function<ReturnValue(Args...)> this_t;
 	typedef ReturnValue(*fnPtr)(Args...);
 
-		class ICallable {
+	class ICallable {
 	public:
 		virtual ~ICallable() = default;
 		virtual ReturnValue Invoke(Args...) const = 0;
@@ -77,6 +77,7 @@ public:
 
 	function &operator=(const this_t &other){
 		if(this != &other){
+			if(callable_) callable_->~ICallable();
 			if(other.callable_) callable_ = other.callable_->Clone(callableBuffer);
 			else callable_= nullptr;
 		}
