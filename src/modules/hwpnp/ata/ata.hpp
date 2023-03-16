@@ -178,6 +178,10 @@ bool ata_queued_read(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, 
 bool ata_queued_write(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t *buf);
 size_t atapi_queued_read(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t *buf);
 
+void *ata_enqueue_read(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t *buf);
+void *ata_enqueue_write(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t *buf);
+bool ata_await(void *op);
+
 int ata_wait(struct ata_device * dev, int advanced);
 int ata_wait(btos_api::hwpnp::IATABus *bus, size_t index, int advanced);
 
@@ -259,6 +263,10 @@ public:
 	bool WriteSector(uint64_t lba, const uint8_t *buf);
 	size_t GetSectorSize();
 	bt_filesize_t GetSize();
+
+	uint64_t AsyncReadSector(uint64_t lba, uint8_t *buf);
+	uint64_t AsyncWriteSector(uint64_t lba, const uint8_t *buf);
+	bool Await(uint64_t id);
 };
 
 btos_api::hwpnp::IDriver *GetATAHDDDriver();

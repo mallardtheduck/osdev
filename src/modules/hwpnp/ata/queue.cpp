@@ -207,3 +207,42 @@ size_t atapi_queued_read(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t l
 	});
 	return op.retval;
 }
+
+void *ata_enqueue_read(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t *buf){
+	auto *op = new ATAOperation();
+	op->status = ATAOperationStatus::Pending;
+	op->bus = bus;
+	op->busIndex = index;
+	op->lba = lba;
+	op->buf = buf;
+	op->pid = API->CurrentProcess().ID();
+	op->tid = API->CurrentThread().ID();
+	op->readSize = ATA_SECTOR_SIZE;
+	op->type = ATAOperationType::Read;
+	queue->Add(op);
+	return op;
+}
+
+void *ata_enqueue_write(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t *buf){
+	auto *op = new ATAOperation();
+	op->status = ATAOperationStatus::Pending;
+	op->bus = bus;
+	op->busIndex = index;
+	op->lba = lba;
+	op->buf = buf;
+	op->pid = API->CurrentProcess().ID();
+	op->tid = API->CurrentThread().ID();
+	op->type = ATAOperationType::ATAPIRead;
+	queue->Add(op);
+	return op;
+}
+
+bool ata_await(void *o){
+	auto op = (ATAOperation*)o;
+	API->CurrentThread().SetBlock([&]{
+		return operation_blockcheck(*op);
+	});
+	auto ret = (op->status == ATAOperationStatus::Complete);
+	delete op;
+	return ret;
+}

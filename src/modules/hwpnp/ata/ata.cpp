@@ -451,6 +451,35 @@ bool ATAHDDDevice::WriteSector(uint64_t lba, const uint8_t *buf){
 	}
 }
 
+uint64_t ATAHDDDevice::AsyncReadSector(uint64_t lba, uint8_t *buf){
+	if(!cache){
+		if(btos_api::IsCacheLoaded()) cache = btos_api::CreateCache(ATA_SECTOR_SIZE, 8192);
+	}
+	if(cache && cache->Retrieve(lba, (char*)buf)) return 0;
+	if(queueReady){
+		void *op = ata_enqueue_read(bus, index, lba, buf);
+		return (uint64_t)op;
+	}else{
+		auto lock = bus->GetLock();
+		return ata_device_read_sector(bus, index, lba, buf);
+	}
+}
+uint64_t ATAHDDDevice::AsyncWriteSector(uint64_t lba, const uint8_t *buf){
+	if(cache) cache->Drop(lba);
+	if(queueReady){
+		void * op = ata_enqueue_write(bus, index, lba, (uint8_t*)buf);
+		return (uint64_t)op;
+	}else{
+		auto lock = bus->GetLock();
+		return ata_device_write_sector(bus, index, lba, (uint8_t*)buf);
+	}
+}
+
+bool ATAHDDDevice::Await(uint64_t id){
+	if(id < 2) return (bool)id;
+	return ata_await((void*)id);
+}
+
 size_t ATAHDDDevice::GetSectorSize(){
 	return ATA_SECTOR_SIZE;
 }
