@@ -75,7 +75,12 @@ void Cache::Store(uint64_t id, const char *buf){
 	for(auto &e : entries){
 		if(e.id == id){
 			memcpy(e.buf, buf, blockSize);
-			e.usage = 0;
+			if(e.usage < maxBlocks) ++e.usage;
+			else{
+				for(auto &f : entries){
+					if(&e != &f && f.usage > 0) --f.usage;
+				}
+			}
 			return;
 		}
 	}
@@ -84,26 +89,31 @@ void Cache::Store(uint64_t id, const char *buf){
 	e.id = id;
 	e.buf = (char*)malloc(blockSize);
 	memcpy(e.buf, buf, blockSize);
-	e.usage = 0;
+	e.usage = 1;
 	entries.push_back(e);
 	//dbgpf("CACHE: Stored entry %i for ID: %i\n", (int)entries.size() - 1, (int)id);
 }
 
 bool Cache::Retrieve(uint64_t id, char *buf){
-	bool ret = false;
+	CacheEntry *found = nullptr;
 	for(auto &e : entries){
-		if(!ret && e.id == id){
+		if(e.id == id){
+			found = &e;
 			memcpy(buf, e.buf, blockSize);
-			e.usage = maxBlocks;
+			if(e.usage < maxBlocks) ++e.usage;
+			else{
+				for(auto &f : entries){
+					if(&e != &f && f.usage > 0) --f.usage;
+				}
+			}
 			//dbgpf("CACHE: Retrieved entry for ID: %i\n", (int)id);
 			++hits;
-		}else{
-			if(e.usage > 0) --e.usage;
+			break;
 		}
 	}
-	if(ret) ++hits;
+	if(found) ++hits;
 	else ++misses;
-	return ret;
+	return (bool)found;
 }
 
 void Cache::Drop(uint64_t id){
