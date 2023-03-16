@@ -205,16 +205,16 @@ public:
 			FIL fp;
 			auto r = f_open(&fp, fullPath.c_str(), FA_READ | FA_WRITE | FA_CREATE_NEW);
 			if(r == FR_OK){
-				//unsigned int written = 0;
-				// auto cra = f_write(&fp, "AAA", 3, &written);
-				// f_lseek(&fp, 0);
-				// f_truncate(&fp);
+				unsigned int written = 0;
+				auto cra = f_write(&fp, "AAA", 3, &written);
+				f_lseek(&fp, 0);
+				f_truncate(&fp);
 				auto cr = f_close(&fp);
 				auto node = GetNodeLocal(mount, fullPath.c_str());
 				if(node){
 					return node->OpenFile(mode);
 				}else{
-					dbgpf("FATFS: CreateFile could not retrieve node (\"%s\", %i, %i, %i)!\n", fullPath.c_str(), cr, 0, 0);// written, cra);
+					dbgpf("FATFS: CreateFile could not retrieve node (\"%s\", %i, %i, %i)!\n", fullPath.c_str(), cr, written, cra);
 				}
 			}else{
 				dbgpf("FATFS: CreateFile failed (\"%s\", %i)!\n", name, (int)r);
