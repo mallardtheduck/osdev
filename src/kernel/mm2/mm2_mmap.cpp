@@ -56,6 +56,7 @@ namespace MM2{
 	
 	static void flush_mapping(mmapping &m){
 		auto curpid = CurrentProcess().ID();
+		if(!(m.file->GetMode() & FS_Write)) return;
 		if(!GetProcessManager().SwitchProcess(m.pid)) panic("(MM2) Could not switch process!");
 		bt_filesize_t pos = m.file->Seek(0, FS_Relative);
 		
