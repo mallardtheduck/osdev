@@ -853,9 +853,12 @@ size_t vterm_list::get_count(){
 char *terms_infofs(){
 	char *buffer=nullptr;
 	vterm_list *t=terminals;
+	auto hl = t->vtl_lock->LockExclusive();
 	asprintf(&buffer, "# ID, title, backend\n");
 	for(size_t i=0; i<t->terminals.size(); ++i) {
-		reasprintf_append(&buffer, "%i, \"%s\", %s\n", (int)t->terminals[i]->get_id(), t->terminals[i]->get_title(), t->terminals[i]->get_backend()->desc());
+		const char *backendDesc = "NULL";
+		if(t->terminals[i]->get_backend()) backendDesc = t->terminals[i]->get_backend()->desc();
+		reasprintf_append(&buffer, "%i, \"%s\", %s\n", (int)t->terminals[i]->get_id(), t->terminals[i]->get_title(), backendDesc);
 	}
 	return buffer;
 }
