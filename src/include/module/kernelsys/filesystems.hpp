@@ -24,6 +24,7 @@ public:
 	virtual void Flush() = 0;
 
 	virtual FilesystemNodePointer GetNode() = 0;
+	virtual uint32_t GetMode() = 0;
 
 	virtual ~IFileHandle() {}
 };

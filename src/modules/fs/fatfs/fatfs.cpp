@@ -52,8 +52,9 @@ private:
 	string path;
 	FilesystemNodePointer node;
 	bool del = false;
+	uint32_t mode;
 public:
-	FatFSFileHandle(const string &p, uint32_t mode, IFilesystemNode *n) : path(p), node(n){
+	FatFSFileHandle(const string &p, uint32_t m, IFilesystemNode *n) : path(p), node(n), mode(m){
 		uint8_t fmode = 0;
 		if(mode & fs_mode_flags::FS_Read) fmode |= FA_READ;
 		if(mode & fs_mode_flags::FS_Write) fmode |= FA_WRITE;
@@ -62,8 +63,8 @@ public:
 		if(mode & fs_mode_flags::FS_Truncate) fmode |= FA_CREATE_ALWAYS;
 
 		if(mode & fs_mode_flags::FS_AtEnd) fmode |= FA_OPEN_APPEND;
-		auto res = f_open(&fp, path.c_str(), fmode);
-		dbgpf("FATFS: Open: %s mode: %lu (%i) Result: %i\n", path.c_str(), mode, (int)fmode, res);
+		/* auto res = */ f_open(&fp, path.c_str(), fmode);
+		// dbgpf("FATFS: Open: %s mode: %lu (%i) Result: %i\n", path.c_str(), mode, (int)fmode, res);
 		if(mode & fs_mode_flags::FS_Delete) del = true;
 	}
 	size_t Read(size_t bytes, char *buffer) override{
@@ -74,8 +75,8 @@ public:
 	}
 	size_t Write(size_t bytes, const char *buffer) override{
 		unsigned int written = 0;
-		/*auto res =*/ f_write(&fp, buffer, bytes, &written);
-		//if(res != FR_OK) dbgpf("FATFS: Write failure (\"%s\", %i, %i)!\n", path.c_str(), bytes, res);
+		auto res = f_write(&fp, buffer, bytes, &written);
+		if(res != FR_OK) dbgpf("FATFS: Write failure (\"%s\", %i, %lu) %i!\n", path.c_str(), bytes, res, written);
 		return written;
 	}
 
@@ -104,6 +105,10 @@ public:
 
 	FilesystemNodePointer GetNode() override{
 		return node;
+	}
+
+	uint32_t GetMode() override{
+		return mode;
 	}
 
 	void Close() override{
@@ -303,7 +308,7 @@ public:
 		if(pStr == "" || pStr == "/") rootDir = true;
 		FILINFO fno;
 		auto res = rootDir ? FR_OK : f_stat(path, &fno);
-		dbgpf("FATFS: GetNodeLocal(%s) : %i\n", path, res);
+		//dbgpf("FATFS: GetNodeLocal(%s) : %i\n", path, res);
 		if(res == FR_OK && (rootDir || fno.fname[0] != 0)) return new FatFSFilesystemNode(this, path, rootDir);
 		else return nullptr;
 	}

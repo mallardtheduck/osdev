@@ -72,6 +72,10 @@ public:
 		return node;
 	}
 
+	uint32_t GetMode() override{
+		return FS_Read;
+	}
+
 	~InfoFSHandle(){
 		Close();
 	}

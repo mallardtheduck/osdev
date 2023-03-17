@@ -46,6 +46,10 @@ public:
 		return node;
 	}
 
+	uint32_t GetMode() override{
+		return FS_Read | FS_Write;
+	}
+
 	void Close() override{
 		inst->Close();
 		delete inst;

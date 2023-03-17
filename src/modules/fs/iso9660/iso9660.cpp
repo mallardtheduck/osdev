@@ -156,6 +156,9 @@ public:
 		return node;
 	}
 
+	uint32_t GetMode() override{
+		return FS_Read;
+	}
 
 	void Close() override{}
 	bool Wait() override{
