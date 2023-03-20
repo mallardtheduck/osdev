@@ -118,11 +118,11 @@ Partition::Partition(btos_api::hwpnp::IVolume *vol, size_t i) : volume(vol), ind
 	btos_api::hwpnp::IDeviceNode *node = nullptr;
 	while(cdev && !node){
 		node = cdev->GetDeviceNode();
-		cdev = pnp_get_parent(cdev);
+		cdev = API->GetHwPnPManager().GetParent(cdev);
 	}
 	if(node){
 		char tmpname[32] = {0};
-		strncpy(tmpname, pnp_get_node_name(node), 31);
+		strncpy(tmpname, API->GetHwPnPManager().GetNodeName(node), 31);
 		sprintf(basename, "%sP", tmpname);
 	}
 }

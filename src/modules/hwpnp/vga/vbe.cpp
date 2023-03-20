@@ -12,6 +12,8 @@ static map<uint32_t, void*> *mapping_cache;
 
 static const uint32_t Page_Address_Mask = 0xFFFFF000;
 
+static ILock *low_memory_lock;
+
 namespace VBE_Fn{
 	static const uint16_t GetInfo = 0x4F00;
 	static const uint16_t GetModeInfo = 0x4F01;
@@ -29,7 +31,7 @@ static void flush_log(x86emu_t *emu, char *buf, unsigned size){
 }
 
 static void call_int10h(uint16_t ax, uint16_t bx, uint16_t cx, uint16_t dx, uint16_t es, uint16_t di){
-	lock_low_memory();
+	auto hl = low_memory_lock->LockExclusive();
 	page_mappings = new map<uint32_t, void*>();
 	mapping_cache = new map<uint32_t, void*>();
 	x86emu_t* emu = x86emu_new(X86EMU_PERM_RWX, X86EMU_PERM_RWX);
@@ -55,11 +57,10 @@ static void call_int10h(uint16_t ax, uint16_t bx, uint16_t cx, uint16_t dx, uint
 	dbgpf("VGA: INT 10h return AX: %x\n", emu->x86.R_AX);
 	x86emu_done(emu);
 	for(auto m : *page_mappings){
-		free_pages(m.second, 1);
+		API->GetMemoryManager().FreePages(m.second, 1);
 	}
 	delete page_mappings;
 	delete mapping_cache;
-	unlock_low_memory();
 }
 
 void VBE_ResetToVGA(){
@@ -138,7 +139,7 @@ static void dbgoutmode(uint16_t id, const VBE_ModeInfo &modeinfo){
 	dbgpf("VGA: VBE Mode: %x\n", id);
 	dbgpf("  %i x %i %ibpp\n", modeinfo.XResolution, modeinfo.YResolution, modeinfo.BitsPerPixel);
 	dbgpf("  Attributes: %x\n", modeinfo.ModeAttributes);
-	char *memoryModelName = "Unknown";
+	const char *memoryModelName = "Unknown";
 	switch(modeinfo.MemoryModel){
 		case VBE_MemoryModel::Text:
 			memoryModelName = "Text";
@@ -199,6 +200,7 @@ static void vbe_configure(){
 }
 
 static void *map_address(uint32_t addr){
+	auto &mm = API->GetMemoryManager();
 	uint32_t page_addr = addr & Page_Address_Mask;
 	uint32_t page_offset = addr - page_addr;
 	//dbgpf("VGA: Mapping address %x (page %x offset %x).\n", addr, page_addr, page_offset);
@@ -210,7 +212,7 @@ static void *map_address(uint32_t addr){
 		return ret;
 	 }
 	
-	if(addr >= 4096 && physaddr((void*)page_addr) == page_addr){
+	if(addr >= 4096 && mm.GetPhysicalAddress((void*)page_addr) == page_addr){
 		(*mapping_cache)[page_addr] = (void*)page_addr;
 		//dbgpf("VGA: Identity mapping. Returning %x.\n", addr);
 		return (void*)addr;
@@ -222,7 +224,7 @@ static void *map_address(uint32_t addr){
 		vaddr = (*page_mappings)[page_addr];
 	}else{
 		//dbgpf("VGA: Creating mapping for physical page %x.\n", page_addr);
-		vaddr = map_physical_pages(page_addr, 1);
+		vaddr = mm.MapPhysicalMemory(page_addr, 1);
 		(*page_mappings)[page_addr] = vaddr;
 		(*mapping_cache)[page_addr] = vaddr;
 	}
@@ -235,10 +237,11 @@ static bool verify_vesa_signature(const char sig[4]){
 
 static bool is_vbe_usable(){
 	bool ret = false;
-	Real_Pointer *page_zero = (Real_Pointer*)map_physical_pages(0, 1);
+	auto &mm = API->GetMemoryManager();
+	Real_Pointer *page_zero = (Real_Pointer*)mm.MapPhysicalMemory(0, 1);
 	Real_Pointer &int10hvec = page_zero[0x10];
 	uint32_t int10hlin = (uint32_t)RealPtr<void>(int10hvec);
-	free_pages(page_zero, 1);
+	mm.FreePages(page_zero, 1);
 	dbgpf("VGA: Int 10h vector: %lx\n", int10hlin);
 	if(int10hlin > 0xC0000 && int10hlin < 0xD0000){
 		VBE_Info info = VBE_GetInfo();
@@ -263,6 +266,7 @@ static bool is_vbe_usable(){
 }
 
 bool vbe_init(){
+	low_memory_lock = API->GetMemoryManager().GetLowMemoryLock();
 	set_map_callback(&map_address);
 	bool vbeok = is_vbe_usable();
 	if(vbeok){

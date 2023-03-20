@@ -10,7 +10,7 @@
 #ifndef KERNEL
 inline static int strlen(const char *str){
 	int len;
-    for (len = 0; str[len]; (len)++) {}
+	for (len = 0; str[len]; (len)++) {}
 	return len;
 }
 #endif

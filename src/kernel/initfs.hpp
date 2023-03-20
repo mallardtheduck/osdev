@@ -3,6 +3,7 @@
 
 #include "kernel.hpp"
 
-fs_driver initfs_getdriver();
+IFilesystem *InitFSGet();
+void InitFS_Init();
 
 #endif

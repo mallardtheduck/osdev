@@ -1,3 +1,5 @@
+#if 0
+
 #include "kernel.hpp"
 #include "locks.hpp"
 
@@ -107,44 +109,44 @@ bool dirseek(dir_handle *handle, size_t pos, uint32_t flags){
 	return fs_seek_dir(*handle, pos, flags);
 }
 
-void setenv(const char *name, char *value, uint8_t flags, pid_t pid){
+void setenv(const char *name, char *value, uint8_t flags, bt_pid_t pid){
 	proc_setenv(name, value, flags, pid);
 }
 
-char *getenv(const char *name, pid_t pid){
+char *getenv(const char *name, bt_pid_t pid){
 	const string &ret=proc_getenv(name, pid);
 	if(ret=="") return NULL;
 	else return (char*)ret.c_str();
 }
 
 pid_t getpid(){
-	return proc_current_pid;
+	return CurrentProcess().ID();
 }
 
 pid_t mod_spawn(const char *exec, size_t argc, char **argv){
 	return proc_spawn(exec, argc, argv);
 }
 
-void mod_wait(pid_t pid){
+void mod_wait(bt_pid_t pid){
 	proc_wait(pid);
 }
 
-void mod_kill(pid_t pid){
+void mod_kill(bt_pid_t pid){
     proc_terminate(pid);
 }
 
 void mask_irq(size_t irqno){
-	IRQ_set_mask(irqno);
+	GetHAL().DisableIRQ(irqno);
 }
 
 void unmask_irq(size_t irqno){
-	IRQ_clear_mask(irqno);
+	GetHAL().EnableIRQ(irqno);
 }
 
-bool setpid(pid_t pid){
-	if(proc_get_status(pid) != proc_status::DoesNotExist){
+bool setpid(bt_pid_t pid){
+	if(proc_get_status(pid) != btos_api::bt_proc_status::DoesNotExist){
 		proc_switch(pid);
-		if(proc_current_pid != pid) return false;
+		if(CurrentProcess().ID() != pid) return false;
 		return true;
 	}else{
 		return false;
@@ -201,7 +203,7 @@ void mod_unlock_low_memory(){
 	MM2::unlock_low_memory();	
 }
 
-int mod_get_proc_status(pid_t pid){
+int mod_get_btos_api::bt_proc_status(bt_pid_t pid){
 	return (int)proc_get_status(pid);
 }
 
@@ -210,7 +212,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&malloc,
 	&free,
 	&realloc,
-	&memset,
+	&__builtin_memset,
 	&mod_memcpy,
 	&mod_memmove,
 	&mod_strcmp,
@@ -256,13 +258,13 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&drv_ioctl,
 	&drv_get_type,
 	&drv_get_desc,
-	&int_handle,
-	&irq_handle,
+	[](size_t intNo, ISR_Routine isr){GetHAL().HandleInterrupt(intNo, isr);},
+	[](size_t irqNo, ISR_Routine isr){GetHAL().HandleIRQ(irqNo, isr);},
 	&mask_irq,
 	&unmask_irq,
-	&irq_ack,
-	&int_handle_raw,
-	&irq_handle_raw,
+	[](size_t irqNo){GetHAL().AcknowlegdeIRQ(irqNo);},
+	[](size_t intNo, void *isr){GetHAL().RawHandleInterrupt(intNo, isr);},
+	[](size_t irqNo, void *isr){GetHAL().RawHandleIRQ(irqNo, isr);},
 
 	&add_filesystem,
 	&fs_mount,
@@ -294,7 +296,7 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&mod_spawn,
 	&mod_wait,
     &mod_kill,
-    &mod_get_proc_status,
+    &mod_get_btos_api::bt_proc_status,
 
 	&infofs_register,
     &add_extension,
@@ -322,4 +324,8 @@ module_api::syscall_table MODULE_SYSCALL_TABLE={
 	&pnp_set_root_device,
 	&pnp_get_parent,
 	&pnp_get_node_name,
+
+	&GetModuleAPI,
 };
+
+#endif

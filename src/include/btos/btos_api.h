@@ -25,9 +25,15 @@ typedef bt_handle bt_threadhandle;
 
 typedef uint32_t bt_priority;
 
-typedef uint64_t bt_pid;
 typedef uint64_t bt_thread_id_t;
-typedef bt_pid bt_pid_t;
+typedef uint64_t bt_pid_t;
+
+ENUM_START(thread_msg_status)
+	ENUM_SET(thread_msg_status, Normal, 0),
+	ENUM_SET(thread_msg_status, Waiting, 1),
+	ENUM_SET(thread_msg_status, Processing, 2),
+ENUM_END
+ENUM_TYPE(thread_msg_status);
 
 enum{
 	BT_ALLOC_PAGES		= 0x0101,
@@ -42,6 +48,7 @@ enum{
 
 	BT_GET_ARGC			= 0x0111,
 	BT_GET_ARG			= 0x0112,
+	BT_SET_PROCSTAGE	= 0x0113,
 
 	BT_CREATE_LOCK		= 0x0201,
 	BT_LOCK				= 0x0202,
@@ -64,6 +71,7 @@ enum{
 	BT_YIELD			= 0x0308,
 	BT_THREAD_PRIORITIZE= 0x0309,
     BT_THREAD_ABORT     = 0x030A,
+	BT_SET_THREAD_NAME	= 0x030B,
 
 	BT_MOUNT			= 0x0401,
 	BT_UNMOUNT			= 0x0402,
@@ -97,6 +105,7 @@ enum{
 	BT_EXIT				= 0x0805,
 	BT_GETPID			= 0x0806,
 	BT_PROCSTATUS		= 0x0807,
+	BT_GET_PROCSTAGE	= 0x0808,
 
 	BT_SEND				= 0x0901,
 	BT_RECV				= 0x0902,
@@ -118,6 +127,10 @@ enum{
 	BT_MAKE_WAITALL		= 0x0A10,
 	BT_MAKE_WAITANY		= 0x0A11,
 	BT_WAIT_INDEX		= 0x0A12,
+
+	BT_SET_UID			= 0x0B01,
+	BT_GET_UID			= 0x0B02,
+	BT_GETSET_PERMS		= 0x0B03,
 
 	BT_QUERY_EXT		= 0x0F01,
 	

@@ -1,11 +1,6 @@
-#include <btos_module.h>
+#include <module/module.inc>
 #include <dev/hwpnp/timerdevice.hpp>
 #include "rtc.hpp"
-
-USE_SYSCALL_TABLE;
-USE_DEBUG_PRINTF;
-USE_PURE_VIRTUAL;
-USE_STATIC_INIT;
 
 static bool inited = false;
 
@@ -107,8 +102,7 @@ uint32_t PCRTCDriver::GetPriority(){
 	return btos_api::hwpnp::DriverPriority::Generic;
 }
 
-extern "C" int module_main(syscall_table *systbl, char */*params*/){
-	SYSCALL_TABLE=systbl;
-	pnp_register_driver(&theDriver);
+int module_main(char */*params*/){
+	API->GetHwPnPManager().RegisterDriver(&theDriver);
 	return 0;
 }

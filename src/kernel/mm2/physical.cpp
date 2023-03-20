@@ -14,8 +14,8 @@ namespace MM2{
 	static size_t total_memory;
 	static size_t free_pages;
 	
-	static lock mm2_pmm_lock;
-	static lock mm2_low_memory_lock;
+	static StaticAllocLock mm2_pmm_lock;
+	static StaticAllocLock mm2_low_memory_lock;
 	
 	static char *totalmem_infofs(){
 		char *ret = nullptr;
@@ -98,12 +98,12 @@ namespace MM2{
 			mmap = (memory_map_t*) ( (unsigned int)mmap + mmap->size + sizeof(unsigned int) );
 		}
 		init_account();
-		init_lock(mm2_pmm_lock);
-		init_lock(mm2_low_memory_lock);
+		mm2_pmm_lock.Init();
+		mm2_low_memory_lock.Init();
 	}
 
 	physical_page *physical_alloc(size_t max_addr){
-		hold_lock hl(mm2_pmm_lock);
+		auto hl = mm2_pmm_lock->LockExclusive();
 		static size_t lastidx = 0;
 		size_t idx = lastidx - 1;
 		while(idx != lastidx){
@@ -122,7 +122,7 @@ namespace MM2{
 	}
 
 	void physical_free(physical_page *page){
-		hold_lock hl(mm2_pmm_lock, false);
+		auto hl = mm2_pmm_lock->LockRecursive();
 		if(page->status() == PageStatus::InUse) page->status(PageStatus::Free);
 		if(page->status() != PageStatus::MMIO) ++free_pages;
 	}
@@ -149,7 +149,7 @@ namespace MM2{
 	}
 
 	void physical_free(uint32_t addr){
-		hold_lock hl(mm2_pmm_lock);
+		auto hl = mm2_pmm_lock->LockExclusive();
 		addr = addr & MM2_Address_Mask;
 		physical_page *page = find_page(addr);
 		if(page) physical_free(page);
@@ -168,11 +168,11 @@ namespace MM2{
 	}
 
 	void physical_infofs_register(){
-		infofs_register("TOTALMEM", &totalmem_infofs);
-		infofs_register("FREEMEM", &freemem_infofs);
+		InfoRegister("TOTALMEM", &totalmem_infofs);
+		InfoRegister("FREEMEM", &freemem_infofs);
 	}
 	
-	physical_page *physical_get_io_page(intptr_t addr){
+	physical_page *physical_get_io_page(uintptr_t addr){
 		addr = addr & MM2_Address_Mask;
 		physical_page *page = find_page(addr);
 		if(!page){
@@ -184,10 +184,14 @@ namespace MM2{
 	}
 	
 	void lock_low_memory(){
-		take_lock_exclusive(mm2_low_memory_lock);
+		mm2_low_memory_lock->TakeExclusive();
 	}
 	
 	void unlock_low_memory(){
-		release_lock(mm2_low_memory_lock);
+		mm2_low_memory_lock->Release();
+	}
+
+	ILock *get_low_memory_lock(){
+		return mm2_low_memory_lock.get();
 	}
 }

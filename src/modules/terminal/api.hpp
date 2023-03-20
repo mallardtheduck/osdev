@@ -4,19 +4,19 @@
 #include <btos_module.h>
 #include "backend.hpp"
 
-void terminal_uapi_fn(uint16_t fn, isr_regs *regs);
+void terminal_uapi_fn(uint16_t fn, ICPUState &state);
 
 class user_backend : public i_backend{
-	pid_t pid;
+	bt_pid_t pid;
 	bt_handle_t handle_id;
 	uint64_t active_id;
 	
 public:
-	user_backend(pid_t p);
+	user_backend(bt_pid_t p);
 	void set_handlde_id(bt_handle_t h);
 
 	size_t display_read(size_t bytes, char *buf);
-    size_t display_write(size_t bytes, char *buf);
+    size_t display_write(size_t bytes, const char *buf);
     size_t display_seek(size_t pos, uint32_t flags);
 
     void show_pointer();
@@ -48,6 +48,8 @@ public:
 	void switch_terminal(uint64_t id);
 	bool can_create();
 	void refresh();
+
+	const char *desc();
 };
 
 #endif

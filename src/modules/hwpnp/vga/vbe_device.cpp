@@ -2,9 +2,8 @@
 #include "device.hpp"
 #include "modes.hpp"
 #include <util/ministl.hpp>
-#include <util/holdlock.hpp>
 
-lock vga_device_lock;
+ILock *vga_device_lock;
 
 static const size_t Page_Size = 4096;
 
@@ -59,7 +58,7 @@ void map_fb(){
 	fb_sz = (modeinfo.BytesPerScanLine * modeinfo.YResolution);
 	size_t pages = fb_sz / Page_Size;
 	if(pages * Page_Size < fb_sz) ++pages;
-	fb = (char*)map_physical_pages(modeinfo.PhysBasePtr, pages);
+	fb = (char*)API->GetMemoryManager().MapPhysicalMemory(modeinfo.PhysBasePtr, pages);
 	dbgpf("VGA: Mapped VBE LFB from %lx at %p. Size: %i (%i pages).\n", modeinfo.PhysBasePtr, fb, (int)fb_sz, (int)pages);
 }
 
@@ -67,7 +66,7 @@ void unmap_fb(){
 	if(!fb) return;
 	size_t pages = fb_sz / Page_Size;
 	if(pages * Page_Size < fb_sz) ++pages;
-	free_pages(fb, pages);
+	API->GetMemoryManager().FreePages(fb, pages);
 	fb = NULL;
 	fb_sz = 0;
 }
@@ -102,6 +101,6 @@ void vbe_clear_screen(){
 }
 
 void init_vbe_device(){
-	init_lock(&vga_device_lock);
+	vga_device_lock = API->NewLock();
 }
 

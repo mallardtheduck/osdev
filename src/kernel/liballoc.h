@@ -74,7 +74,7 @@ extern void    *PREFIX(calloc)(size_t, size_t);		///< The standard function.
 extern void     PREFIX(free)(void *);					///< The standard function.
 
 
-void panic(char *msg) __attribute__ ((noreturn));
+void panic(const char *msg) __attribute__ ((noreturn));
 void serial_writestring(const char *str);
 extern char dbgbuf[256];
 

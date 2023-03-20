@@ -8,6 +8,7 @@
 #endif
 
 #include <cstdint>
+#include <type_traits>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -18,153 +19,173 @@ typedef size_t size_type;
 template<typename T>
 void swap(T& lhs,T& rhs)
 {
-    T   tmp = lhs;
-    lhs = rhs;
-    rhs = tmp;
+	T   tmp = lhs;
+	lhs = rhs;
+	rhs = tmp;
 }
 
 
 template <typename T>
 class vector
 {
-    private:
-        unsigned int dataSize;
-        unsigned int reserved;
-        T*           data;
+	private:
+		size_t dataSize;
+		size_t reserved;
+		T*           data;
 
-    public:
+	public:
 		static const size_t npos=0xFFFFFFFF;
-        ~vector()
-        {
-            for(unsigned int loop = 0; loop < dataSize; ++loop)
-            {
-                // Because we use placement new we must explicitly destroy all members.
-                data[loop].~T();
-            }
-            free(data);
-        }
-        vector()
-            : dataSize(0)
-            , reserved(10)
-            , data(NULL)
-        {
-            reserve(reserved);
-        }
+		~vector()
+		{
+			for(size_t loop = 0; loop < dataSize; ++loop)
+			{
+				// Because we use placement new we must explicitly destroy all members.
+				data[loop].~T();
+			}
+			free(data);
+		}
+		vector()
+			: dataSize(0)
+			, reserved(10)
+			, data(NULL)
+		{
+			reserve(reserved);
+		}
 
-        vector(const vector<T> &other)
-            : dataSize(0)
-            , reserved(other.dataSize)
-            , data(NULL)
-        {
-            reserve(reserved);
-            dataSize = reserved;
-            for(unsigned int loop=0;loop < dataSize;++loop)
-            {
-                // Because we are using malloc/free
-                // We need to use placement new to add items to the data
-                // This way they are constructed in place
-                new (&data[loop]) T(other.data[loop]);
-            }
-        }
+		vector(const vector<T> &other)
+			: dataSize(0)
+			, reserved(other.dataSize)
+			, data(NULL)
+		{
+			reserve(reserved);
+			dataSize = reserved;
+			for(size_t loop = 0; loop < dataSize; ++loop)
+			{
+				// Because we are using malloc/free
+				// We need to use placement new to add items to the data
+				// This way they are constructed in place
+				new (&data[loop]) T(other.data[loop]);
+			}
+		}
 
-        vector(unsigned int init_num)
-            : dataSize(0)
-            , reserved(init_num)
-            , data(NULL)
-        {
-            reserve(reserved);
-            dataSize = reserved;
-            for(unsigned int loop;loop < dataSize;++loop)
-            {
-                // See above
-                new (&data[loop]) T();
-            }
-        }
+		vector(size_t init_num)
+			: dataSize(0)
+			, reserved(init_num)
+			, data(NULL)
+		{
+			reserve(reserved);
+			dataSize = reserved;
+			for(size_t loop = 0; loop < dataSize; ++loop)
+			{
+				// See above
+				new (&data[loop]) T();
+			}
+		}
 
-        const vector<T>& operator= (vector<T> x)
-        {
-            // use copy and swap idiom.
-            // Note the pass by value to initiate the copy
-            swap(dataSize, x.dataSize);
-            swap(reserved, x.reserved);
-            swap(data,     x.data);
+		void swap(vector<T> &other){
+			::swap(dataSize, other.dataSize);
+			::swap(reserved, other.reserved);
+			::swap(data, other.data);
+		}
 
-            return *this;
-        }
+		const vector<T>& operator= (vector<T> x)
+		{
+			// use copy and swap idiom.
+			// Note the pass by value to initiate the copy
+			swap(x);
+			return *this;
+		}
 
-        void reserve(unsigned int new_size)
-        {
-            if (new_size < reserved)
-            {    return;
-            }
+		void reserve(size_t new_size)
+		{
+			if (new_size < reserved)
+			{    return;
+			}
 
-            T*  newData = (T*)malloc(sizeof(T) * new_size);
-            if (!newData)
-            {    panic("STL: Error 2.\n");//throw int(2);
-            }
+			T*  newData = (T*)malloc(sizeof(T) * new_size);
+			if (!newData)
+			{    panic("STL: Error 2.\n");//throw int(2);
+			}
 
-            for(unsigned int loop = 0; loop < dataSize; ++loop)
-            {
-                // Use placement new to copy the data
-                new (&newData[loop]) T(data[loop]);
-            }
-            swap(data, newData);
-            reserved    = new_size;
+			for(size_t loop = 0; loop < dataSize; ++loop)
+			{
+				// Use placement new to copy the data
+				new (&newData[loop]) T(data[loop]);
+			}
+			::swap(data, newData);
+			reserved    = new_size;
 
-            for(unsigned int loop = 0; loop < dataSize; ++loop)
-            {
-                // Call the destructor on old data before freeing the container.
-                // Remember we just did a swap.
-                newData[loop].~T();
-            }
-            free(newData);
-        }
+			for(size_t loop = 0; loop < dataSize; ++loop)
+			{
+				// Call the destructor on old data before freeing the container.
+				// Remember we just did a swap.
+				newData[loop].~T();
+			}
+			if(newData) free(newData);
+		}
 
-        void push_back(const T &item)
-        {
-            if (dataSize == reserved)
-            {
-                reserve(reserved * 2);
-            }
-            // Place the item in the container
-            new (&data[dataSize++]) T(item);
-        }
+		void resize(size_t new_size){
+			while(dataSize > new_size) erase(dataSize - 1);
+			reserve(new_size);
+			while(dataSize < new_size) push_back({});
+		}
 
-        unsigned int  size() const  {return dataSize;}
-        bool          empty() const {return dataSize == 0;}
+		void push_back(const T &item)
+		{
+			if (dataSize == reserved)
+			{
+				reserve(reserved * 2);
+			}
+			// Place the item in the container
+			new (&data[dataSize++]) T(item);
+		}
 
-        // Operator[] should NOT check the value of i
-        // Add a method called at() that does check i
-        const T& operator[] (unsigned i) const      {return data[i];}
-        T&       operator[] (unsigned i)            {return data[i];}
+		size_t  		size() const  {return dataSize;}
+		size_t  capacity() const {return reserved;}
+		bool          empty() const {return dataSize == 0;}
 
-        void insert(unsigned int pos, const T& value)
-        {
-            if (pos >= dataSize)         { throw int(1);}
+		// Operator[] should NOT check the value of i
+		// Add a method called at() that does check i
+		const T& operator[] (unsigned i) const      {return data[i];}
+		T&       operator[] (unsigned i)            {return data[i];}
 
-            if (dataSize == reserved)
-            {
-                    reserve(reserved * 2);
-            }
-            // Move the last item (which needs to be constructed correctly)
-            if (dataSize != 0)
-            {
-                new (&data[dataSize])  T(data[dataSize-1]);
-            }
-            for(unsigned int loop = dataSize - 1; loop > pos; --loop)
-            {
-                data[loop]  = data[loop-1];
-            }
-            ++dataSize;
+		const T& at(size_t i) const{
+			if(i >= dataSize) panic("(VECTOR) Overrun!");
+			return data[i];
+		}
 
-            // All items have been moved up.
-            // Put value in its place
-            data[pos]   = value;
-        }
+		T& at(size_t i){
+			if(i >= dataSize) panic("(VECTOR) Overrun!");
+			return data[i];
+		}
 
-        void clear()                                        { erase(0, dataSize);}
-        void erase(unsigned int erase_index)                { erase(erase_index,erase_index+1);}
-        void erase(unsigned int start, unsigned int end)    /* end NOT inclusive so => [start, end) */
+		void insert(size_t pos, const T& value)
+		{
+			if (pos >= dataSize)         { throw int(1);}
+
+			if (dataSize == reserved)
+			{
+					reserve(reserved * 2);
+			}
+			// Move the last item (which needs to be constructed correctly)
+			if (dataSize != 0)
+			{
+				new (&data[dataSize])  T(data[dataSize-1]);
+			}
+			for(auto loop = dataSize - 1; loop > pos; --loop)
+			{
+				data[loop]  = data[loop-1];
+			}
+			++dataSize;
+
+			// All items have been moved up.
+			// Put value in its place
+			data[pos]   = value;
+		}
+
+		void clear()                                        { erase(0, dataSize);}
+		void erase(size_t erase_index)                { erase(erase_index,erase_index+1);}
+		void erase(size_t start, size_t end)    /* end NOT inclusive so => [start, end) */
 		{
 			if (end > dataSize) {
 				end = dataSize;
@@ -172,13 +193,13 @@ class vector
 			if (start > end) {
 				start = end;
 			}
-			unsigned int dst = start;
-			unsigned int src = end;
+			auto dst = start;
+			auto src = end;
 			for (; (src < dataSize) /*&& (dst < end)*/; ++dst, ++src) {
 				// Move Elements down;
 				data[dst] = data[src];
 			}
-			unsigned int count = end - start;
+			auto count = end - start;
 			for (; count != 0; --count) {
 				// Remove old Elements
 				--dataSize;
@@ -187,7 +208,7 @@ class vector
 			}
 		}
 
-		unsigned int find(const T &item){
+		size_t find(const T &item){
 			for(size_t i=0; i<dataSize; ++i){
 				if(data[i] == item) return i;
 			}
@@ -202,6 +223,22 @@ class vector
 			return data + dataSize;
 		}
 
+		T &front(){
+			return *data;
+		}
+
+		T &back(){
+			return data[dataSize - 1];
+		}
+
+		const T *begin() const{
+			return data;
+		}
+		
+		const T *end() const{
+			return data + dataSize;
+		}
+
 
 }; //class vector
 
@@ -213,14 +250,13 @@ template <class T1, class T2> struct pair{
 	second_type second;
 
 	pair() : first(), second() {};
-	pair(const pair<T1, T2> &other):
-		first(other.first),
-		second(other.second)
-	{}
+	pair(const pair<T1, T2> &other) = default;
 	pair(const first_type &a, const second_type &b):
 		first(a),
 		second(b)
 	{}
+
+	pair<T1, T2> &operator=(const pair<T1, T2> &other) = default;
 };
 
 template <class T1,class T2>pair<T1,T2> make_pair (T1 x, T2 y)
@@ -274,7 +310,7 @@ public:
 		return (pointer)malloc(n*sizeof(value_type));
 	}
 	void deallocate (pointer p, size_type n){
-		free(p);
+		if(p) free(p);
 	}
 
 	size_t max_size() const throw(){
@@ -331,7 +367,7 @@ public:
 		int count = 0;
 		for (iterator i = &_Rhs.data_[0]; i != &_Rhs.data_[_Rhs.size_]; ++i, ++count)
 		{
-		    _Alloc().construct(&data_[count], *i);
+			_Alloc().construct(&data_[count], *i);
 		}
 	}
 
@@ -339,10 +375,10 @@ public:
 	{
 		if (!empty())
 		{
-		    for (iterator i = begin(); i != end(); ++i)
-		    {
+			for (iterator i = begin(); i != end(); ++i)
+			{
 				_Alloc().destroy(i);
-		    }
+			}
 		}
 		_Alloc().deallocate(data_, capacity_);
 	}
@@ -351,16 +387,18 @@ public:
 	{
 		if (size_ + 1 >= capacity_)
 		{
-		    reserve(capacity_ + map_growth_factor);
+			reserve(capacity_ + map_growth_factor);
 		}
 		size_++;
 		_Alloc().construct(&data_[size_ - 1], _Value);
 		return *this;
 	}
 	
-	void erase(iterator i){
-		_Alloc().destroy(i);
-		memmove(i, i + 1, sizeof(value_type) * ( size_ - ( i - begin())));
+	void erase(iterator it){
+		for(size_t i = 0; i < size_ - (it - begin()); ++i){
+			_Alloc().destroy(it + i);
+			_Alloc().construct(it + i, it[i + 1]);
+		}
 		size_--;
 	}
 
@@ -381,7 +419,7 @@ public:
 		{
 			if (i->first == Key)
 			{
-			    return true;
+				return true;
 			}
 		}
 		return false;
@@ -389,15 +427,12 @@ public:
 
 	mapped_type &operator[](const key_type &Key)
 	{
-		if (has_key(Key))
+		for (iterator i = begin(); i != end(); ++i)
 		{
-		    for (iterator i = begin(); i != end(); ++i)
+			if (i->first == Key)
 			{
-				if (i->first == Key)
-				{
-					return i->second;
-				}
-		    }
+				return i->second;
+			}
 		}
 		size_type op = size_;
 		insert(value_type(Key, mapped_type()));
@@ -406,18 +441,32 @@ public:
 
 	value_type &get(const key_type &Key){
 		if (has_key(Key))
+		{
+			for (iterator i = begin(); i != end(); ++i)
 			{
-				for (iterator i = begin(); i != end(); ++i)
+				if (i->first == Key)
 				{
-					if (i->first == Key)
-					{
-						return *i;
-					}
+					return *i;
 				}
 			}
-			size_type op = size_;
-			insert(value_type(Key, mapped_type()));
-			return data_[op];
+		}
+		size_type op = size_;
+		insert(value_type(Key, mapped_type()));
+		return data_[op];
+	}
+
+	value_type get(const key_type &Key) const{
+		if (has_key(Key))
+		{
+			for (auto i = begin(); i != end(); ++i)
+			{
+				if (i->first == Key)
+				{
+					return *i;
+				}
+			}
+		}
+		return value_type();
 	}
 
 	_Myt &reserve(size_type _Capacity)
@@ -425,20 +474,20 @@ public:
 		int count = 0;
 		if (_Capacity < capacity_)
 		{
-		    return *this;
+			return *this;
 		}
 		pointer buf = _Alloc().allocate(_Capacity);
 		for (iterator i = begin(); i != end(); ++i, ++count)
 		{
-		    _Alloc().construct(&buf[count], *i);
+			_Alloc().construct(&buf[count], *i);
 		}
 		swap(data_, buf);
-        size_t oldcapacity = capacity_;
-        size_t oldsize=size_;
-        capacity_ = _Capacity;
+		size_t oldcapacity = capacity_;
+		size_t oldsize=size_;
+		capacity_ = _Capacity;
 		for (iterator i = &buf[0]; i != &buf[oldsize]; ++i)
 		{
-		    _Alloc().destroy(i);
+			_Alloc().destroy(i);
 		}
 		_Alloc().deallocate(buf, oldcapacity);
 		return *this;
@@ -468,6 +517,16 @@ public:
 		return &data_[size_];
 	}
 
+	const_iterator begin() const
+	{
+		return &data_[0];
+	}
+
+	const_iterator end() const
+	{
+		return &data_[size_];
+	}
+
 	const_iterator cbegin() const
 	{
 		return &data_[0];
@@ -483,12 +542,16 @@ public:
 	}
 
 	iterator rend(){
-		intptr_t data_addr = (intptr_t)data_;
+		uintptr_t data_addr = (uintptr_t)data_;
 		return (iterator)(data_addr - sizeof(value_type));
 	}
 private:
 	size_type size_, capacity_;
 	pointer data_;
 };
+
+template<typename T> typename std::underlying_type<T>::type to_underlying(T a){
+	return static_cast<typename std::underlying_type<T>::type>(a);
+}
 
 #endif

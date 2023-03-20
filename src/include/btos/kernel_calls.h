@@ -28,6 +28,7 @@ EXTERN_C bt_handle_t bt_shm_map(uint64_t id, void *addr, uint32_t offset, size_t
 
 EXTERN_C size_t bt_get_argc();
 EXTERN_C size_t bt_get_arg(size_t index, char *buf, size_t size);
+EXTERN_C void bt_set_procstage(size_t value);
 
 EXTERN_C bt_lockhandle bt_create_lock();
 EXTERN_C void bt_lock(bt_lockhandle lock);
@@ -49,6 +50,7 @@ EXTERN_C bt_threadhandle bt_get_thread();
 EXTERN_C void bt_end_thread();
 EXTERN_C void bt_yield();
 EXTERN_C void bt_thread_abort(bt_threadhandle thread);
+EXTERN_C void bt_set_thread_name(const char *name);
 
 EXTERN_C bool bt_mount(const char *name, const char *device, const char *filesystem);
 EXTERN_C bool bt_unmount(const char *name);
@@ -74,13 +76,14 @@ EXTERN_C bool bt_load_module(const char *path, const char *params);
 EXTERN_C size_t bt_getenv(const char *name, char *buffer, size_t size);
 EXTERN_C bool bt_setenv(const char *name, const char *value, uint32_t flags);
 
-EXTERN_C bt_pid bt_spawn(const char *path, size_t argc, char **argv);
-EXTERN_C int bt_wait(bt_pid pid);
-EXTERN_C bool bt_kill(bt_pid pid);
-EXTERN_C bt_priority bt_prioritize(bt_pid pid, bt_priority priority);
+EXTERN_C bt_pid_t bt_spawn(const char *path, size_t argc, char **argv);
+EXTERN_C int bt_wait(bt_pid_t pid);
+EXTERN_C bool bt_kill(bt_pid_t pid);
+EXTERN_C bt_priority bt_prioritize(bt_pid_t pid, bt_priority priority);
 EXTERN_C void bt_exit(int retval);
-EXTERN_C bt_pid bt_getpid();
-EXTERN_C ENUM_NAME(bt_proc_status) bt_get_proc_status(bt_pid pid);
+EXTERN_C bt_pid_t bt_getpid();
+EXTERN_C ENUM_NAME(bt_proc_status) bt_get_proc_status(bt_pid_t pid);
+EXTERN_C size_t bt_get_procstage(bt_pid_t pid);
 
 EXTERN_C uint64_t bt_send(bt_msg_header msg);
 EXTERN_C bt_msg_header bt_recv(bool block);
@@ -102,6 +105,10 @@ EXTERN_C void bt_waithandle(bt_handle_t h);
 EXTERN_C bt_handle_t bt_make_wait_any(bt_handle_t *h, size_t count);
 EXTERN_C bt_handle_t bt_make_wait_all(bt_handle_t *h, size_t count);
 EXTERN_C size_t bt_wait_index(bt_handle_t h);
+
+EXTERN_C bool bt_set_uid(uint64_t uid);
+EXTERN_C uint64_t bt_get_uid();
+EXTERN_C uint64_t bt_getset_perms(uint16_t ext, uint64_t pmask);
 
 EXTERN_C uint16_t bt_query_extension(const char *name);
 

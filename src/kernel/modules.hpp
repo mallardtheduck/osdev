@@ -3,7 +3,14 @@
 
 #include "kernel.hpp"
 
-void init_modules();
-void load_module(const char *path, char *params=NULL);
+class IModuleManager : private nonmovable{
+public:
+	virtual void LoadModule(const char *path, char *params = nullptr) = 0;
+
+	virtual ~IModuleManager() {}
+};
+
+void Modules_Init();
+IModuleManager &GetModuleManager();
 
 #endif

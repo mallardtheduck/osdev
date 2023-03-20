@@ -9,7 +9,7 @@ class vterm;
 class i_backend{
 public:
     virtual size_t display_read(size_t bytes, char *buf)=0;
-    virtual size_t display_write(size_t bytes, char *buf)=0;
+    virtual size_t display_write(size_t bytes, const char *buf)=0;
     virtual size_t display_seek(size_t pos, uint32_t flags)=0;
 
     virtual void show_pointer()=0;
@@ -41,6 +41,8 @@ public:
 	virtual void switch_terminal(uint64_t id) = 0;
 	virtual bool can_create() = 0;
 	virtual void refresh() = 0;
+
+	virtual const char *desc() = 0;
 
     virtual ~i_backend(){};
 };

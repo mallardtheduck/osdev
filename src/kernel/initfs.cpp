@@ -1,6 +1,6 @@
 #include "initfs.hpp"
-#include "ministl.hpp"
-#include "strutil.hpp"
+#include "kernel.hpp"
+#include "utils/fshelpers.hpp"
 
 #define isspace(c) ((c) == ' ')
 #define isodigit(c) ((c) >= '0' && (c) <= '7')
@@ -11,27 +11,210 @@ struct initfs_file{
 	size_t size;
 };
 
-struct tar_header{
-    char filename[100];
-    char mode[8];
-    char uid[8];
-    char gid[8];
-    char size[12];
-    char mtime[12];
-    char chksum[8];
-    char typeflag[1];
+ManualStaticAlloc<vector<initfs_file>> initfs_data;
+
+class InitFSNode : public IFilesystemNode{
+private:
+	initfs_file *file = nullptr;
+public:
+	InitFSNode(initfs_file *f) : file(f) {}
+
+	IFileHandle *OpenFile(uint32_t mode) override;
+
+	IDirectoryHandle *OpenDirectory(uint32_t mode) override;
+
+	IFileHandle *CreateFile(const char *, uint32_t) override{
+		return nullptr;
+	}
+
+	IDirectoryHandle *CreateDirectory(const char *, uint32_t) override{
+		return nullptr;
+	}
+
+	const char *GetName() override{
+		if(!file) return "";
+		return file->name.c_str();
+	}
+
+	void Rename(const char *) override{}
+
+	bt_filesize_t GetSize() override{
+		if(!file) return 0;
+		return file->size;
+	}
+
+	fs_item_types GetType() override{
+		if(!file) return FS_Directory;
+		return FS_File;
+	}
 };
 
-vector<initfs_file> *initfs_data;
-
-struct initfs_handle{
-	size_t fileindex;
+class InitFSFileHandle : public IFileHandle{
+private:
+	initfs_file *file;
 	size_t pos;
-	initfs_handle(size_t index, size_t p=0) : fileindex(index), pos(p) {}
+	FilesystemNodePointer node;
+public:
+	InitFSFileHandle(initfs_file *f, FilesystemNodePointer n) : file(f), pos(0), node(n) {}
+
+	size_t Read(size_t bytes, char *buffer) override{
+		if(pos > file->size) return 0;
+		if(pos + bytes > file->size) bytes = file->size - pos;
+		size_t j=0;
+		for(size_t i = pos; i < file->size && j < bytes; ++i, ++j){
+			buffer[j]=file->data[i];
+		}
+		pos += j;
+		return j;
+	}
+
+	size_t Write(size_t, const char *) override{
+		return 0;
+	}
+
+	bt_filesize_t Seek(bt_filesize_t p, uint32_t flags) override{
+		pos = FSHelpers::SeekPosition(p, flags, pos, file->size);
+		return pos;
+	}
+
+	bool Resize(bt_filesize_t) override{
+		return false;
+	}
+
+	int IOCtl(int, size_t, char *) override{
+		return 0;
+	}
+
+	void Flush() override {}
+
+	FilesystemNodePointer GetNode() override{
+		return node;
+	}
+
+	uint32_t GetMode() override{
+		return FS_Read;
+	}
+
+	void Close() override {}
+
+	bool Wait() override {
+		return false;
+	}
 };
 
-long from_oct(register int digs, register const char *where){
-	register long	value;
+class InitFSDirectoryHandle : public IDirectoryHandle{
+private:
+	size_t pos = 0;
+public:
+	fs_item_types ReadType() override{
+		if(pos >= initfs_data->size()){
+			dbgout("INITFS: No such directory entry.\n");
+			return FS_Invalid;
+		}
+		return FS_File;
+	}
+
+	FilesystemNodePointer Read() override{
+		if(pos >= initfs_data->size()){
+			dbgout("INITFS: No such directory entry.\n");
+			return nullptr;
+		}
+		initfs_file *file = &initfs_data->at(pos);
+		FilesystemNodePointer ret = new InitFSNode(file);
+		++pos;
+		return ret;
+	}
+
+	bool Write(IFilesystemNode &) override{
+		return false;
+	}
+
+	size_t Seek(size_t p, uint32_t flags) override{
+		pos = FSHelpers::SeekPosition(p, flags, pos, initfs_data->size());
+		return pos;
+	}
+
+	FilesystemNodePointer GetNode() override{
+		return new InitFSNode(nullptr);
+	}
+
+	void Close() override {}
+
+	bool Wait() override{
+		return false;
+	}
+};
+
+IFileHandle *InitFSNode::OpenFile(uint32_t mode){
+	if(file) return new InitFSFileHandle(file, this);
+	else return nullptr;
+}
+
+IDirectoryHandle *InitFSNode::OpenDirectory(uint32_t mode){
+	if(!file) return new InitFSDirectoryHandle();
+	else return nullptr;
+}
+
+static bool IsMatch(const string &a, const string &b){
+	size_t aPos = 0, bPos = 0;
+	while(a.size() > aPos && a[aPos] == '/') ++aPos;
+	while(b.size() > bPos && b[bPos] == '/') ++bPos;
+	while(a.size() > aPos && b.size() > bPos && to_upper(a[aPos]) == to_upper(b[bPos])){
+		++aPos;
+		++bPos;
+	}
+	return (a.size() == aPos && b.size() == bPos);
+}
+
+class MountedInitFS : public IMountedFilesystem{
+public:
+	FilesystemNodePointer GetNode(const char *path) override{
+		//dbgpf("INITFS: GetNode: %s\n", path);
+		string spath = path;
+		if(spath == "" || spath == "/") return new InitFSNode(nullptr);
+		for(auto &file : *initfs_data){
+			if(IsMatch(file.name, spath)) return new InitFSNode(&file);
+		}
+		return nullptr;
+	}
+
+	void Flush() override{}
+	bool Unmount() override{
+		return true;
+	}
+
+	IFilesystem *FileSystem(){
+		return nullptr;
+	}
+	const char *Device(){
+		return "(Boot module)";
+	}
+};
+
+class InitFS : public IFilesystem{
+public:
+	IMountedFilesystem *Mount(FilesystemNodePointer node) override{
+		return new MountedInitFS();
+	}
+
+	bool Format(const IFilesystemNode &node, void *options) override{
+		return false;
+	}
+};
+
+struct tar_header{
+	char filename[100];
+	char mode[8];
+	char uid[8];
+	char gid[8];
+	char size[12];
+	char mtime[12];
+	char chksum[8];
+	char typeflag[1];
+};
+
+long from_oct(int digs, const char *where){
+	long	value;
 
 	while (isspace((unsigned)*where)) {		/* Skip spaces */
 		where++;
@@ -54,164 +237,11 @@ size_t tar_size(const char *in){
 	return from_oct(12, in);
 }
 
-#define fdata ((initfs_handle*)filedata)
+static ManualStaticAlloc<InitFS> theInitFS;
 
-struct initfs_dirhandle{
-	size_t pos;
-	initfs_dirhandle(size_t p=0) : pos(p) {}
-};
-
-#define ddata ((initfs_dirhandle*)dirdata)
-
-size_t initfs_getfilecount(){
-	return initfs_data->size();
-}
-
-initfs_file initfs_getfile(int index){
-	return (*initfs_data)[index];
-}
-
-void *initfs_mount(char *){
-	dbgout("INITFS: Mounted.\n");
-	return (void*)1;
-}
-
-bool initfs_unmount(void *){
-	return true;
-}
-
-void *initfs_open(void *, fs_path *path, fs_mode_flags){
-	dbgpf("INITFS: Open %s.\n", path->str);
-	int files=initfs_getfilecount();
-	for(int i=0; i<files; ++i){
-		initfs_file file=initfs_getfile(i);
-		if(to_upper(file.name) == to_upper(path->str)){
-			return (void*)new initfs_handle(i);
-		}
-	}
-	return NULL;
-}
-
-bool initfs_close(void *filedata){
-	delete (initfs_handle*)fdata;
-	return true;
-}
-
-size_t initfs_read(void *filedata, size_t bytes, char *buf){
-	initfs_file file=initfs_getfile(fdata->fileindex);
-	if(fdata->pos > file.size) return 0;
-    if(fdata->pos + bytes > file.size) bytes=file.size - fdata->pos;
-	size_t j=0;
-	for(size_t i=fdata->pos; i<file.size && j<bytes; ++i, ++j){
-		buf[j]=file.data[i];
-	}
-	fdata->pos+=j;
-	return j;
-}
-
-size_t initfs_write(void *, size_t, char *){
-	return 0;
-}
-
-int initfs_ioctl(void *, int, size_t, char *){
-	return 0;
-}
-
-void initfs_flush(void *){
-}
-
-void *initfs_open_dir(void *, fs_path *path, fs_mode_flags){
-	if(path->next != NULL) return NULL;
-	return (void*)new initfs_dirhandle;
-}
-bool initfs_close_dir(void *dirdata){
-	delete (initfs_dirhandle*)ddata;
-	return true;
-}
-
-directory_entry initfs_read_dir(void *dirdata){
-	directory_entry ret;
-	if(ddata->pos>=initfs_getfilecount()){
-		ret.valid=false;
-		dbgout("INITFS: No such directory entry.\n");
-		return ret;
-	}
-	initfs_file file=initfs_getfile(ddata->pos);
-	strncpy(ret.filename, file.name.c_str(), 255);
-	ret.id = (uint64_t)file.data;
-	ret.size=file.size;
-	ret.type=FS_File;
-	ret.valid=true;
-	ddata->pos++;
-	return ret;
-}
-
-bool initfs_write_dir(void *, directory_entry){
-	return false;
-}
-
-directory_entry initfs_stat(void *, fs_path *path){
-	dbgpf("INITFS: Stat '%s'.\n",path->str);
-	if(*(path->str)=='\0'){
-		dbgout("INITFS: Stat root.\n");
-		directory_entry ret;
-		ret.filename[0]='\0';
-		ret.id = 0;
-		ret.size=initfs_getfilecount();
-		ret.type=FS_Directory;
-		ret.valid=true;
-		return ret;
-	}else{
-		int files=initfs_getfilecount();
-		for(int i=0; i<files; ++i){
-			initfs_file file=initfs_getfile(i);
-			if(to_upper(file.name) == to_upper(path->str)){
-				initfs_dirhandle dh(i);
-				return initfs_read_dir(&dh);
-			}
-		}
-		directory_entry ret;
-		ret.valid=false;
-		return ret;
-	}
-}
-
-bt_filesize_t initfs_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
-	if(flags & FS_Relative) fdata->pos+=pos;
-	else if(flags & FS_Backwards){
-		initfs_file file=initfs_getfile(fdata->fileindex);
-		fdata->pos = file.size - pos;
-	} else if(flags == (FS_Backwards | FS_Relative)) fdata->pos-=pos;
-	else fdata->pos=pos;
-	return fdata->pos;
-}
-
-bool initfs_seek(void *filedata, bt_filesize_t size){
-	return false;
-}
-
-size_t initfs_dirseek(void *dirdata, size_t pos, uint32_t flags){
-	if(flags & FS_Relative) ddata->pos+=pos;
-	else if(flags & FS_Backwards){
-		ddata->pos = initfs_getfilecount() - pos;
-	} else if(flags == (FS_Backwards | FS_Relative)) ddata->pos-=pos;
-	else ddata->pos=pos;
-	return ddata->pos;
-}
-
-bool initfs_format(char*, void*){
-	return false;
-}
-
-fs_driver initfs_driver = {true, "INITFS", false,
-	initfs_mount, initfs_unmount,
-	initfs_open, initfs_close, initfs_read, initfs_write, initfs_seek, initfs_seek, initfs_ioctl, initfs_flush,
-	initfs_open_dir, initfs_close_dir, initfs_read_dir, initfs_write_dir, initfs_dirseek,
-	initfs_stat, initfs_format};
-
-fs_driver initfs_getdriver(){
+IFilesystem *InitFSGet(){
 	if(!initfs_data){
-		initfs_data = new vector<initfs_file>();
+		initfs_data.Init();
 		multiboot_info_t *mbi = mbt;
 		if(mbi->mods_count > 0){
 			module_t *mod = (module_t *)mbi->mods_addr;
@@ -233,5 +263,11 @@ fs_driver initfs_getdriver(){
 			panic("(INITFS) No tar module loaded!");
 		}
 	}
-	return initfs_driver;
+	if(!theInitFS) theInitFS.Init();
+	return theInitFS;
+}
+
+void InitFS_Init(){
+	auto mount = InitFSGet()->Mount(nullptr);
+	GetVirtualFilesystem().Attach("INIT", mount);
 }

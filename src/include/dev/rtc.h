@@ -1,5 +1,5 @@
-#ifndef _RTC_H
-#define _RTC_H
+#ifndef DEV_RTC_HPP
+#define DEV_RTC_HPP
 
 #include <util/bt_enum.h>
 
@@ -14,7 +14,8 @@ ENUM_START(bt_rtc_api)
 ENUM_END;
 ENUM_TYPE(bt_rtc_api);
 
-#if defined(KERNEL) || defined(KERNEL_MODULE)
+#if defined(__cplusplus) && (defined(KERNEL) || defined(KERNEL_MODULE))
+#include <module/kernelsys/extension.hpp>
 
 #ifdef KERNEL_MODULE
 #include <btos_module.h>
@@ -27,26 +28,37 @@ struct rtc_calltable{
 	uint64_t (*rtc_millis)();
 };
 
+class RTCExtension : public IKernelExtension{
+public:
+	const char *GetName() override;
+	void UserAPIHandler(uint16_t fn, ICPUState &state) override;
+
+	void Sleep(uint32_t msec);
+	uint64_t Millis();
+};
+
 #ifndef RTC_NO_STUBS
 
-extern rtc_calltable *RTC_CALL_TABLE;
+extern RTCExtension *RTC_EXTENSION;
 
-#define USE_RTC rtc_calltable *RTC_CALL_TABLE
+#define USE_RTC RTCExtension *RTC_EXTENSION
 
-bool rtc_init(){
-	uint16_t extid = get_extension_id(RTC_EXTENSION_NAME);
-	if(!extid) return false;
-	RTC_CALL_TABLE = (rtc_calltable*) get_extension(extid)->calltable;
-	return true;
-}
+//TODO: Implement
 
-inline static void rtc_sleep(uint32_t msec){
-	RTC_CALL_TABLE->rtc_sleep(msec);
-}
+// bool RTCInit(){
+// 	uint16_t extid = get_extension_id(RTC_EXTENSION_NAME);
+// 	if(!extid) return false;
+// 	RTC_CALL_TABLE = (rtc_calltable*) get_extension(extid)->calltable;
+// 	return true;
+// }
 
-inline static uint64_t rtc_millis(){
-	return RTC_CALL_TABLE->rtc_millis();
-}
+// inline static void rtc_sleep(uint32_t msec){
+// 	RTC_CALL_TABLE->rtc_sleep(msec);
+// }
+
+// inline static uint64_t rtc_millis(){
+// 	return RTC_CALL_TABLE->rtc_millis();
+// }
 
 #endif
 

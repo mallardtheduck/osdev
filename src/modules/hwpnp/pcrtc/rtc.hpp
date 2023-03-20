@@ -17,8 +17,6 @@ datetime current_datetime();
 uint64_t datetime2epoch(const datetime &dt);
 
 void init_timer();
-void create_timer(isr_regs *regs);
-void reset_timer(isr_regs *regs);
 uint64_t get_msecs();
 uint64_t rtc_get_time();
 

@@ -4,7 +4,7 @@ init.tar: Makefile\
 	data/pcrtc.sys\
 	data/stdpc.sys\
 	data/ata.sys\
-	data/fat.sys\
+	data/fatfs.sys\
 	data/spawn.elx\
 	data/eloader.elx\
 	
@@ -22,7 +22,7 @@ data/pcrtc.sys: ../../modules/hwpnp/pcrtc/pcrtc.sys
 data/stdpc.sys: ../../modules/hwpnp/stdpc/stdpc.sys
 	cp $< $@
 
-data/fat.sys: ../../modules/fat/fat.sys
+data/fatfs.sys: ../../modules/fs/fatfs/fatfs.sys
 	cp $< $@
 
 data/ata.sys: ../../modules/hwpnp/ata/ata.sys

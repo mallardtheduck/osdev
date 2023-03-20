@@ -1,13 +1,14 @@
 #ifndef PAGEDIRECTORY_HPP
 #define PAGEDIRECTORY_HPP
-#include "../ministl.hpp"
+#include "../kernel.hpp"
+#include "../utils/ministl.hpp"
 
-struct lock;
+class ILock;
 
 namespace MM2{
 	struct physical_page;
 
-	class PageDirectory{
+	class PageDirectory : private nonmovable{
 	private:
 		struct region{
 			void *addr;
@@ -20,7 +21,8 @@ namespace MM2{
 	
 		uint32_t *directory;
 		uint32_t directory_physical = 0;
-		lock *directory_lock;
+		ILock *directory_lock;
+		char directory_lock_buffer[LockSize];
 		uint32_t current_table = 0;
 		
 		size_t klowfree = 0;

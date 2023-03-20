@@ -19,7 +19,7 @@ data/ata.sys: ../../modules/hwpnp/ata/ata.sys
 data/spawn.elx: ../../user/system/spawn/spawn.elx
 	cp $< $@
 
-data/iso9660.sys: ../../modules/iso9660/iso9660.sys
+data/iso9660.sys: ../../modules/fs/iso9660/iso9660.sys
 	cp $< $@
 
 data/eloader.elx: ../../user/system/eloader/eloader.elx

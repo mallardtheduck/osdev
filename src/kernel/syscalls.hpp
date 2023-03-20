@@ -1,3 +1,4 @@
+#if 0
 #ifndef _SYSCALLS_HPP
 #define _SYSCALLS_HPP
 
@@ -6,4 +7,5 @@
 
 extern module_api::syscall_table MODULE_SYSCALL_TABLE;
 
+#endif
 #endif

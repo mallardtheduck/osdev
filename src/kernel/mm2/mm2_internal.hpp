@@ -66,7 +66,7 @@ namespace MM2{
 		LargePages		= 1 << 6;
 	};
 
-	extern lock table_frame_lock;
+	extern StaticAllocLock table_frame_lock;
 
 	void *mm2_init_alloc(size_t size);
 	void *mm2_init_page_alloc();
@@ -76,7 +76,7 @@ namespace MM2{
 	void physical_free(uint32_t addr);
 	void physical_mark_used(uint32_t addr);
 	void physical_infofs_register();
-	physical_page *physical_get_io_page(intptr_t addr);
+	physical_page *physical_get_io_page(uintptr_t addr);
 	
 	void mm2_invlpg(void *pageaddr);
 	
@@ -84,10 +84,32 @@ namespace MM2{
 	void mm2_virtual_free(void *ptr, size_t pages);
 	
 	void *get_kernel_end();
-	void page_fault_handler(int, isr_regs *regs);
+	void page_fault_handler(ICPUState &state);
 	
 	void init_mmap();
 	void init_shm();
+
+	void init_class();
+
+	//Formerly public
+	void mm2_switch(PageDirectory *newdir);
+	
+	uint64_t mm2_mmap(char *ptr, IFileHandle *file, bt_filesize_t offset, size_t size);
+	void mm2_flush(IFileHandle *file);
+	void mm2_close(IFileHandle *file);
+	void mm2_closemap(uint64_t id);
+
+	uint64_t shm_create(uint32_t flags = btos_api::bt_shm_flags::Normal);
+	void shm_close(uint64_t id);
+	uint64_t shm_map(uint64_t id, void *addr, uint32_t offset, size_t pages, uint32_t flags = btos_api::bt_shm_flags::Normal);
+	void shm_close_map(uint64_t id);
+	
+	void *mm2_map_physical(uint32_t addr, size_t pages);
+	
+	void lock_low_memory();
+	void unlock_low_memory();
+
+	ILock *get_low_memory_lock();
 }
 
 #include "pagedirectory.hpp"

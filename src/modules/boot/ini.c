@@ -7,10 +7,6 @@ http://code.google.com/p/inih/
 
 */
 
-//#include <stdio.h>
-//#include <ctype.h>
-//#include <string.h>
-
 #include "ini.h"
 
 #if !INI_USE_STACK
@@ -25,21 +21,6 @@ size_t strlen(const char* str)
 	size_t ret = 0;
 	while ( str[ret] != 0 )
 		ret++;
-	return ret;
-}
-
-char *fgets(char *str, int num, FILE *stream){
-	char *ret=str; int i;
-	for(i=0; i<num; ++i){
-		if(fread(stream, 1, str)!=1){
-			return NULL;
-		}
-		if(*str=='\n'){
-			*str='\0';
-			break;
-		}
-		++str;
-	}
 	return ret;
 }
 

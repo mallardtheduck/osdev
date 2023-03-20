@@ -65,6 +65,10 @@ size_t bt_get_arg(size_t index, char *buf, size_t size){
 	return btos_call(BT_GET_ARG, index, (uint32_t)buf, size);
 }
 
+void bt_set_procstage(size_t value){
+	btos_call(BT_SET_PROCSTAGE, value, 0, 0);
+}
+
 bt_lockhandle bt_create_lock(){
 	return (bt_lockhandle)btos_call(BT_CREATE_LOCK, 0, 0, 0);
 }
@@ -140,6 +144,10 @@ void bt_yield(){
 
 void bt_thread_abort(bt_threadhandle thread){
     btos_call(BT_THREAD_ABORT, thread, 0, 0);
+}
+
+void bt_set_thread_name(const char *name){
+	btos_call(BT_SET_THREAD_NAME, (uint32_t)name, 0, 0);
 }
 
 bool bt_mount(const char *name, const char *device, const char *filesystem){
@@ -234,19 +242,19 @@ bool bt_setenv(const char *name, const char *value, uint32_t flags){
 	return btos_call(BT_SETENV, (uint32_t)name, (uint32_t)value, flags);
 }
 
-bt_pid bt_spawn(const char *path, size_t argc, char **argv){
+bt_pid_t bt_spawn(const char *path, size_t argc, char **argv){
 	return btos_call(BT_SPAWN, (uint32_t)path, argc, (uint32_t)argv);
 }
 
-int bt_wait(bt_pid pid){
+int bt_wait(bt_pid_t pid){
 	return btos_call(BT_WAIT, pid, 0, 0);
 }
 
-bool bt_kill(bt_pid pid){
+bool bt_kill(bt_pid_t pid){
 	return btos_call(BT_KILL, pid, 0, 0);
 }
 
-bt_priority bt_prioritize(bt_pid pid, bt_priority priority){
+bt_priority bt_prioritize(bt_pid_t pid, bt_priority priority){
 	return btos_call(BT_PRIORITIZE, pid, priority, 0);
 }
 
@@ -254,12 +262,16 @@ void bt_exit(int retval){
 	btos_call(BT_EXIT, (uint32_t)retval, 0, 0);
 }
 
-bt_pid bt_getpid(){
+bt_pid_t bt_getpid(){
 	return btos_call(BT_GETPID, 0, 0, 0);
 }
 
-bt_proc_status bt_get_proc_status(bt_pid pid){
+bt_proc_status bt_get_proc_status(bt_pid_t pid){
 	return (bt_proc_status)btos_call(BT_PROCSTATUS, (uint32_t)&pid, 0, 0);
+}
+
+size_t bt_get_procstage(bt_pid_t pid){
+	return btos_call(BT_GET_PROCSTAGE, pid, 0, 0);
 }
 
 uint64_t bt_send(bt_msg_header msg){
@@ -347,6 +359,22 @@ bt_handle_t bt_make_wait_all(bt_handle_t *h, size_t count){
 
 size_t bt_wait_index(bt_handle_t h){
 	return btos_call(BT_WAIT_INDEX, (uint32_t)h, 0, 0);
+}
+
+bool bt_set_uid(uint64_t uid){
+	return !!btos_call(BT_SET_UID, (uint32_t)&uid, 0, 0);
+}
+
+uint64_t bt_get_uid(){
+	uint64_t ret;
+	btos_call(BT_GET_UID, (uint32_t)&ret, 0, 0);
+	return ret;
+}
+
+uint64_t bt_getset_perms(uint16_t ext, uint64_t pmask){
+	uint64_t ret = pmask;
+	btos_call(BT_GETSET_PERMS, ext, (uint32_t)&ret, 0);
+	return ret;
 }
 
 uint16_t bt_query_extension(const char *name){

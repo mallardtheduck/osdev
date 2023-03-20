@@ -21,7 +21,7 @@ import-files:=\
  data/btos/cmd/sleep.elx \
  data/btos/cmd/tar.elx \
  data/btos/drivers/iso9660.sys \
- data/btos/drivers/fat.sys \
+ data/btos/drivers/fatfs.sys \
  data/btos/cmd/iconv.elx \
  data/btos/cmd/parted.elx \
  data/btos/cmd/format.elx \
@@ -145,10 +145,10 @@ data/btos/cmd/sleep.elx: ../../user/cmds/sleep/sleep.elx create.directories
 data/btos/cmd/tar.elx: ../../user/cmds/tar/tar.elx create.directories
 	cp $< $@
 
-data/btos/drivers/iso9660.sys: ../../modules/iso9660/iso9660.sys create.directories
+data/btos/drivers/iso9660.sys: ../../modules/fs/iso9660/iso9660.sys create.directories
 	cp $< $@
 
-data/btos/drivers/fat.sys: ../../modules/fat/fat.sys create.directories
+data/btos/drivers/fatfs.sys: ../../modules/fs/fatfs/fatfs.sys create.directories
 	cp $< $@
 
 data/btos/cmd/iconv.elx: ../../3rdparty/install/btos/bin/iconv.elx create.directories

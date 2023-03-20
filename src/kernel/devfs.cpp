@@ -1,140 +1,201 @@
-#include "devfs.hpp"
 #include "kernel.hpp"
 #include <btos/ioctl.h>
+#include "utils/fshelpers.hpp"
 
 void* const devfs_magic=(void*)0xDE7F5;
 void* const devfs_dirmagic=(void*)0xDE7D19;
 
-struct devfs_dirhandle{
-	size_t pos;
-	devfs_dirhandle(size_t p=0) : pos(p) {}
+class DevFSFileHandle : public IFileHandle{
+public:
+	FilesystemNodePointer node;
+	IVisibleDeviceInstance *inst;
+public:
+	DevFSFileHandle(FilesystemNodePointer n, IVisibleDeviceInstance *i) : node(n), inst(i) {}
+
+	size_t Read(size_t bytes, char *buffer) override{
+		return inst->Read(bytes, buffer);
+	}
+
+	size_t Write(size_t bytes, const char *buffer) override{
+		return inst->Write(bytes, buffer);
+	}
+
+	bt_filesize_t Seek(bt_filesize_t pos, uint32_t flags) override{
+		return inst->Seek(pos, flags);
+	}
+
+	bool Resize(bt_filesize_t) override{
+		return false;
+	}
+
+	int IOCtl(int fn, size_t bytes, char *buffer) override{
+		if(fn == bt_ioctl::DevType){
+			return inst->GetType();
+		}else if(fn==bt_ioctl::DevDesc){
+			memcpy(buffer, inst->GetDescription(), bytes-1);
+			buffer[bytes - 1] = '\0';
+			return strlen(inst->GetDescription());
+		}else{
+			return inst->IOCtl(fn, bytes, buffer);
+		}
+	}
+
+	void Flush() override {}
+
+	FilesystemNodePointer GetNode() override{
+		return node;
+	}
+
+	uint32_t GetMode() override{
+		return FS_Read | FS_Write;
+	}
+
+	void Close() override{
+		inst->Close();
+		delete inst;
+	}
+
+	bool Wait() override{
+		return false;
+	}
 };
 
-#define ddata ((devfs_dirhandle*)dirdata)
+class DevFSDirectoryHandle : public IDirectoryHandle{
+private:
+	VisibleDeviceIteratorWrapper it;
+	FilesystemNodePointer node;
+public:
+	DevFSDirectoryHandle(FilesystemNodePointer n) : it(GetVisibleDeviceManager().begin()), node(n) {}
 
-
-void *devfs_mount(char *){
-	return devfs_magic;
-}
-
-bool devfs_unmount(void *mountdata){
-	return (mountdata==devfs_magic);
-}
-
-void *devfs_open(void *, fs_path *path, fs_mode_flags){
-	return drv_open(path->str);
-}
-
-bool devfs_close(void *filedata){
-	return drv_close(filedata);
-}
-
-size_t devfs_read(void *filedata, size_t bytes, char *buf){
-	return drv_read(filedata, bytes, buf);
-}
-
-size_t devfs_write(void *filedata, size_t bytes, char *buf){
-	return drv_write(filedata, bytes, buf);
-}
-
-bt_filesize_t devfs_seek(void *filedata, bt_filesize_t pos, uint32_t flags){
-	return drv_seek(filedata, pos, flags);
-}
-
-bool devfs_setsize(void *filedata, bt_filesize_t size){
-	return false;
-}
-
-int devfs_ioctl(void *filedata, int fn, size_t bytes, char *buf){
-    if(fn < 256 && fn != bt_ioctl::BlockSize){
-        if(fn==bt_ioctl::DevType) return drv_get_type(filedata);
-        else if(fn==bt_ioctl::DevDesc){
-            memcpy(buf, drv_get_desc(filedata), bytes-1);
-            buf[bytes-1]='\0';
-            return strlen(drv_get_desc(filedata));
-        }else return 0;
-    }else return drv_ioctl(filedata, fn, bytes, buf);
-}
-
-void devfs_flush(void *){
-}
-
-void *devfs_open_dir(void *, fs_path *, fs_mode_flags){
-	return (void*)new devfs_dirhandle();
-}
-
-bool devfs_close_dir(void *dirdata){
-	delete ddata;
-	return true;
-}
-
-directory_entry devfs_read_dir(void *dirdata){
-	char *name;
-	void *drvi=drv_firstdevice(&name);
-	directory_entry ret;
-	ret.valid=false;
-	for(size_t i=0; i<ddata->pos; ++i){
-		drvi=drv_nextdevice(drvi, &name);
+	fs_item_types ReadType() override{
+		if(it != GetVisibleDeviceManager().end()) return FS_Device;
+		else return FS_Invalid;
 	}
-	if(drvi){
-		ret.valid=true;
-		strncpy(ret.filename, name, 255);
-		ret.id = (uint64_t)drv_get(name);
-		ret.size=0;
-		ret.type=FS_Device;
-		ddata->pos++;
+
+	FilesystemNodePointer Read() override;
+
+	bool Write(IFilesystemNode &) override{
+		return false;
 	}
-	return ret;
-}
 
-bool devfs_write_dir(void *, directory_entry){
-	return false;
-}
-
-size_t devfs_dirseek(void *dirdata, size_t pos, uint32_t flags){
-	if(flags & FS_Relative) ddata->pos+=pos;
-	else if(flags & FS_Backwards){
-		int count = 0;
-		char *name;
-		void *drvi=drv_firstdevice(&name);
-		while((drvi = drv_nextdevice(drvi, &name))) count++;
-		ddata->pos = count - pos;
-	} else if(flags == (FS_Backwards | FS_Relative)) ddata->pos-=pos;
-	else ddata->pos=pos;
-	return ddata->pos;
-}
-
-directory_entry devfs_stat(void *, fs_path *path){
-	if(!path->next && strcmp(path->str, "")==0){
-		directory_entry ret;
-		ret.valid=true;
-		strncpy(ret.filename, "/", 255);
-		ret.size=0;
-		ret.type=FS_Directory;
-		return ret;
+	size_t Seek(size_t pos, uint32_t flags) override{
+		return FSHelpers::SeekIterator(pos, flags, it, GetVisibleDeviceManager().begin(), GetVisibleDeviceManager().end());
 	}
-	directory_entry ret;
-	ret.valid=false;
-	drv_device *dev=drv_get(path->str);
-	if(dev){
-		ret.valid=true;
-		strncpy(ret.filename, path->str, 255);
-		ret.id = (uint64_t)dev;
-		ret.size=0;
-		ret.type=FS_Device;
+
+	FilesystemNodePointer GetNode() override{
+		return node;
 	}
-	return ret;
+
+	void Close() override{}
+
+	bool Wait() override{
+		return false;
+	}
+};
+
+class DevFSNode : public IFilesystemNode{
+private:
+	IVisibleDevice *device;
+public:
+	DevFSNode(IVisibleDevice *d) : device(d) {}
+
+	IFileHandle *OpenFile(uint32_t mode) override{
+		auto inst = device->Open();
+		if(inst) return new DevFSFileHandle(this, inst);
+		else return nullptr;
+	}
+
+	IDirectoryHandle *OpenDirectory(uint32_t mode) override{
+		if(!device) return new DevFSDirectoryHandle(this);
+		else return nullptr;
+	}
+
+	IFileHandle *CreateFile(const char *, uint32_t) override{
+		return nullptr;
+	}
+
+	IDirectoryHandle *CreateDirectory(const char *, uint32_t) override{
+		return nullptr;
+	}
+
+	const char *GetName() override{
+		if(!device) return "";
+		else return device->GetName();
+	}
+
+	void Rename(const char *) override{}
+
+	bt_filesize_t GetSize() override{
+		return 0;
+	}
+
+	fs_item_types GetType() override{
+		if(!device) return FS_Directory;
+		else return FS_Device;
+	}
+};
+
+FilesystemNodePointer DevFSDirectoryHandle::Read(){
+	if(it != GetVisibleDeviceManager().end()){
+		return new DevFSNode(it++);
+	}
+	else return nullptr;
 }
 
-bool devfs_format(char*, void*){
-	return false;
+static bool IsMatch(const string &a, const string &b){
+	size_t aPos = 0, bPos = 0;
+	while(a.size() > aPos && a[aPos] == '/') ++aPos;
+	while(b.size() > bPos && b[bPos] == '/') ++bPos;
+	while(a.size() > aPos && b.size() > bPos && to_upper(a[aPos]) == to_upper(b[bPos])){
+		++aPos;
+		++bPos;
+	}
+	return (a.size() == aPos && b.size() == bPos);
 }
 
-fs_driver devfs_driver = {true, "DEVFS", false, devfs_mount, devfs_unmount,
-							devfs_open, devfs_close, devfs_read, devfs_write, devfs_seek, devfs_setsize, devfs_ioctl, devfs_flush,
-							devfs_open_dir, devfs_close_dir, devfs_read_dir, devfs_write_dir, devfs_dirseek,
-							devfs_stat, devfs_format};
+class MountedDevFS : public IMountedFilesystem{
+public:
+	FilesystemNodePointer GetNode(const char *path) override{
+		string p = path;
+		if(p == "" || p == "/") return new DevFSNode(nullptr);
+		for(auto &device : GetVisibleDeviceManager()){
+			if(IsMatch(device.GetName(), path)) return new DevFSNode(&device);
+		}
+		return nullptr;
+	}
 
-fs_driver devfs_getdriver(){
-	return devfs_driver;
+	void Flush() override{}
+	bool Unmount() override{
+		return true;
+	}
+
+	IFilesystem *FileSystem(){
+		return nullptr;
+	}
+	const char *Device(){
+		return "N/A";
+	}
+};
+
+class DevFS : public IFilesystem{
+public:
+	IMountedFilesystem *Mount(FilesystemNodePointer node) override{
+		return new MountedDevFS();
+	}
+
+	bool Format(const IFilesystemNode &node, void *options) override{
+		return false;
+	}
+};
+
+static ManualStaticAlloc<DevFS> theDevFS;
+
+IFilesystem *DevFSGet(){
+	if(!theDevFS) theDevFS.Init();
+	return theDevFS;
+}
+
+void DevFS_Init(){
+	auto mount = DevFSGet()->Mount(nullptr);
+	GetVirtualFilesystem().Attach("DEV", mount);
 }

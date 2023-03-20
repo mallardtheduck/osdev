@@ -5,8 +5,6 @@
 #include <stdint.h>
 
 #include <btos/btos_api.h>
-
-#pragma GCC diagnostic ignored "-Wwrite-strings"
  
 /* Check if the compiler thinks if we are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -18,13 +16,7 @@
 #error "This OS needs to be compiled with a ix86-elf compiler"
 #endif
 
-#include "console.hpp"
-#include "io.hpp"
-#include "cpu.hpp"
 #include "serdbg.hpp"
-
-#include "filesystems.hpp"
-#include "initfs.hpp"
 
 extern "C"{
 
@@ -32,24 +24,27 @@ extern "C"{
 #define PRINTF_LONG_SUPPORT
 #include "printf.h"
 #include "liballoc.h"
-#include "memcpy.h"
 
 }
 
-#include "util.hpp"
+#include "utils/utils.hpp"
+#include "locks.hpp"
+
 #include "panic.hpp"
 #include "mm2.hpp"
-#include "idt.hpp"
-#include "pic.hpp"
+#include "hal/abstract.hpp"
+#include "scheduler/abstract.hpp"
 #include "handles.hpp"
 #include "kvars.hpp"
+#include "filesystems.hpp"
+#include "initfs.hpp"
+#include "processes/abstract.hpp"
 #include "messaging.hpp"
-#include "process.hpp"
-#include "scheduler.hpp"
-#include "drivermgr.hpp"
+#include "devices.hpp"
 #include "devfs.hpp"
 #include "load_elf.hpp"
 #include "extensions.hpp"
+#include "module.hpp"
 #include "syscalls.hpp"
 #include "modules.hpp"
 #include "user_api.hpp"
@@ -59,6 +54,7 @@ extern "C"{
 #include "hwpnp_kernel.hpp"
 #include "rtc/rtc.hpp"
 #include "waiting.hpp"
+#include "perms.hpp"
 
 void GDT_init();
 void IDT_init();
@@ -68,11 +64,11 @@ void gdt_set_kernel_stack(void* ptr);
 #define MACRO_STR(a) #a
 
 #define KERNEL_VERSION_MAJOR 0
-#define KERNEL_VERSION_MINOR 1
-#define KERNEL_REVISION "D"
+#define KERNEL_VERSION_MINOR 2
+#define KERNEL_REVISION "A"
 #define KERNEL_VERSION_STRING "v" MACRO_XSTR(KERNEL_VERSION_MAJOR) "." MACRO_XSTR(KERNEL_VERSION_MINOR) KERNEL_REVISION
 #define KERNEL_OS_NAME "BT/OS"
-#define KERNEL_COPYRIGHT "(c) 2014-2020 Stuart Brockman"
+#define KERNEL_COPYRIGHT "(c) 2014-2023 S. Brockman"
 extern char *kernel_buildid;
 
 extern multiboot_info_t *mbt;

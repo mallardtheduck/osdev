@@ -1,0 +1,49 @@
+{
+    "configurations": [
+        {
+            "name": "Userspace",
+            "includePath": [
+                "${workspaceFolder}/src/include",
+                "${workspaceFolder}/src/3rdparty/install/btos/include"
+            ],
+            "defines": [],
+            "compilerPath": "/home/mallard/Projects/os/cross/bin/i686-pc-btos-gcc",
+            "compilerArgs": ["-m32"],
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x86",
+            "forcedInclude": [ "${workspaceFolder}/.vscode/vscode-fix.h" ]
+        },
+        {
+            "name": "Kernel",
+            "includePath": [
+                "${workspaceFolder}/src/include"
+            ],
+            "defines": [
+                "KERNEL"
+            ],
+            "compilerPath": "/home/mallard/Projects/os/cross/bin/i686-pc-btos-gcc",
+            "compilerArgs": ["-m32"],
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x86",
+            "forcedInclude": [ "${workspaceFolder}/.vscode/vscode-fix.h" ]
+        },
+        {
+            "name": "Kernel Module",
+            "includePath": [
+                "${workspaceFolder}/src/include"
+            ],
+            "defines": [
+                "KERNEL_MODULE"
+            ],
+            "compilerPath": "/home/mallard/Projects/os/cross/bin/i686-pc-btos-gcc",
+            "compilerArgs": ["-m32"],
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x86",
+            "forcedInclude": [ "${workspaceFolder}/.vscode/vscode-fix.h" ]
+        }
+    ],
+    "version": 4
+}

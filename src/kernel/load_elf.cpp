@@ -1,5 +1,24 @@
 #include "kernel.hpp"
-#include "strutil.hpp"
+#include "elf_format.hpp"
+
+struct aligned_memory{
+	void *alloc;
+	void *aligned;
+};
+
+typedef int (*module_entry)(IModuleAPI*, char*);
+
+struct loaded_elf_module{
+	aligned_memory mem;
+	module_entry entry;
+};
+
+typedef void (*proc_entry)();
+
+struct loaded_elf_proc{
+	void *mem;
+	proc_entry entry;
+};
 
 #define hasflag(x, y) (((x) & (y)) == (y))
 
@@ -20,10 +39,10 @@ void al_free(aligned_memory al){
 	free(al.alloc);
 }
 
-Elf32_Ehdr elf_read_header(file_handle &file){
+Elf32_Ehdr elf_read_header(IFileHandle &file){
 	Elf32_Ehdr ret;
-	fs_seek(file, 0, FS_Set);
-	fs_read(file, sizeof(ret), (char*)&ret);
+	file.Seek(0, FS_Set);
+	file.Read(sizeof(ret), (char*)&ret);
 	return ret;
 }
 
@@ -57,47 +76,47 @@ bool elf_verify_header(const Elf32_Ehdr &header){
 	return true;
 }
 
-Elf32_Shdr elf_read_sectionheader(file_handle &file, const Elf32_Ehdr &header, size_t index){
+Elf32_Shdr elf_read_sectionheader(IFileHandle &file, const Elf32_Ehdr &header, size_t index){
 	size_t offset=header.shoff+(index*sizeof(Elf32_Shdr));
 	Elf32_Shdr ret;
-	fs_seek(file, offset, FS_Set);
-	fs_read(file, sizeof(ret), (char*)&ret);
+	file.Seek(offset, FS_Set);
+	file.Read(sizeof(ret), (char*)&ret);
 	return ret;
 }
 
-Elf32_Phdr elf_read_progheader(file_handle &file, const Elf32_Ehdr &header, size_t index){
+Elf32_Phdr elf_read_progheader(IFileHandle &file, const Elf32_Ehdr &header, size_t index){
 	size_t offset=header.phoff+(index*sizeof(Elf32_Phdr));
 	Elf32_Phdr ret;
-	fs_seek(file, offset, FS_Set);
-	fs_read(file, sizeof(ret), (char*)&ret);
+	file.Seek(offset, FS_Set);
+	file.Read(sizeof(ret), (char*)&ret);
 	return ret;
 }
 
-size_t elf_get_stringoffset(file_handle &file, const Elf32_Ehdr &header){
+size_t elf_get_stringoffset(IFileHandle &file, const Elf32_Ehdr &header){
 	if(header.shstrndx == SHN_UNDEF) return 0;
 	return elf_read_sectionheader(file, header, header.shstrndx).offset;
 }
 
-Elf32_Rel elf_read_rel(file_handle &file, const Elf32_Shdr &section, size_t index){
+Elf32_Rel elf_read_rel(IFileHandle &file, const Elf32_Shdr &section, size_t index){
 	Elf32_Rel ret;
-	fs_seek(file, section.offset+(sizeof(Elf32_Rel)*index), FS_Set);
-	fs_read(file, sizeof(ret), (char*)&ret);
+	file.Seek(section.offset+(sizeof(Elf32_Rel)*index), FS_Set);
+	file.Read(sizeof(ret), (char*)&ret);
 	return ret;
 }
 
-bool elf_getstring(file_handle &file, const Elf32_Ehdr &header, size_t offset, char *buf, size_t bufsize){
+bool elf_getstring(IFileHandle &file, const Elf32_Ehdr &header, size_t offset, char *buf, size_t bufsize){
 	size_t strpos=elf_get_stringoffset(file, header);
 	if(strpos){
 		size_t readpos=strpos + offset;
-		fs_seek(file, readpos, FS_Set);
-		fs_read(file, bufsize, buf);
+		file.Seek(readpos, FS_Set);
+		file.Read(bufsize, buf);
 		return true;
 	}else{
 		return false;
 	}
 }
 
-size_t elf_getsize(file_handle &file){
+size_t elf_getsize(IFileHandle &file){
 	size_t limit=0;
 	size_t base=0xFFFFFF;
 	Elf32_Ehdr header=elf_read_header(file);
@@ -109,7 +128,7 @@ size_t elf_getsize(file_handle &file){
 	return limit-base;
 }
 
-size_t elf_getbase(file_handle &file){
+size_t elf_getbase(IFileHandle &file){
 	size_t base=0xFFFFFF;
 	Elf32_Ehdr header=elf_read_header(file);
 	for(int i=0; i<header.phnum; ++i){
@@ -119,7 +138,7 @@ size_t elf_getbase(file_handle &file){
 	return base;
 }
 
-void elf_do_reloc_module(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr &section, void *base){
+void elf_do_reloc_module(IFileHandle &file, const Elf32_Ehdr &header, Elf32_Shdr &section, void *base){
 	size_t n_relocs=section.size/sizeof(Elf32_Rel);
 	for(size_t i=0; i<n_relocs; ++i){
 		Elf32_Rel rel=elf_read_rel(file, section, i);
@@ -131,7 +150,7 @@ void elf_do_reloc_module(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr
 			case R_386_32:
 				newval=*ref+(size_t)base;
 				//dbgpf("ELF: Value %x (originally %x) at %x\n", newval, *ref, ref);
-                *ref=newval;
+				*ref=newval;
 				break;
 			case R_386_PC32:
 				newval=*ref;
@@ -142,7 +161,7 @@ void elf_do_reloc_module(file_handle &file, const Elf32_Ehdr &header, Elf32_Shdr
 	}
 }
 
-loaded_elf_module elf_load_module(file_handle &file){
+loaded_elf_module elf_load_module(IFileHandle &file){
 	loaded_elf_module ret;
 	Elf32_Ehdr header=elf_read_header(file);
 	size_t ramsize=elf_getsize(file);
@@ -152,9 +171,9 @@ loaded_elf_module elf_load_module(file_handle &file){
 	for(int i=0; i<header.phnum; ++i){
 		Elf32_Phdr prog=elf_read_progheader(file, header, i);
 		if(prog.type==PT_LOAD){
-            //amm_mmap((char*)ret.mem.aligned+prog.vaddr, file, prog.offset, prog.filesz);
-			fs_seek(file, prog.offset, FS_Set);
-			fs_read(file, prog.filesz, (char*)ret.mem.aligned+prog.vaddr);
+			//amm_mmap((char*)ret.mem.aligned+prog.vaddr, file, prog.offset, prog.filesz);
+			file.Seek(prog.offset, FS_Set);
+			file.Read(prog.filesz, (char*)ret.mem.aligned+prog.vaddr);
 		}
 	}
 	for(int i=0; i<header.shnum; ++i){
@@ -171,19 +190,21 @@ loaded_elf_module elf_load_module(file_handle &file){
 	return ret;
 }
 
-loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
+loaded_elf_proc elf_load_proc(bt_pid_t pid, IFileHandle &file){
 	loaded_elf_proc ret;
-	pid_t oldpid=proc_current_pid;
-	if(!proc_switch(pid)){
-        panic("(ELF) Proccess not found during executable load!");
-    }
+	bt_pid_t oldpid=CurrentProcess().ID();
+	if(oldpid == pid) panic("(ELF) Load into current process!?");
+	if(!GetProcessManager().SwitchProcess(pid)){
+		panic("(ELF) Proccess not found during executable load!");
+	}
 	Elf32_Ehdr header=elf_read_header(file);
+	auto &memoryManager = GetMemoryManager();
 	//TODO: Better RAM allocation...
 	for(int i=0; i<header.phnum; ++i){
 		Elf32_Phdr prog=elf_read_progheader(file, header, i);
 		if(prog.type==PT_LOAD){
 			if(prog.vaddr < MM2::MM2_Kernel_Boundary) panic("ELF: Attempt to load process into kernel space!");
-			size_t p=fs_seek(file, prog.offset, FS_Set);
+			size_t p=file.Seek(prog.offset, FS_Set);
 			if(p!=prog.offset){
 				dbgpf("ELF: Seek failure - expected: %i, got %i.\n", (int)prog.offset, (int)p);
 				panic("(ELF) Seek failed during program load!");
@@ -192,8 +213,11 @@ loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
 			uint32_t pages=(prog.memsz/MM2::MM2_Page_Size)+1;
 			MM2::current_pagedir->alloc_pages_at(pages, (void*)base);
 			memset((void*)prog.vaddr, 0, prog.memsz);
-			//size_t b=fs_read(file, prog.filesz, (char*)prog.vaddr);
-            MM2::mm2_mmap((char*)prog.vaddr, file, p, prog.filesz);
+			//size_t b=file.Read(prog.filesz, (char*)prog.vaddr);
+			auto mapId = memoryManager.MemoryMapFile((char*)prog.vaddr, &file, p, prog.filesz);
+			CurrentProcess().AddHandle(MakeKernelGenericHandle<KernelHandles::MemoryMapping>(mapId, [](uint64_t f){
+				GetMemoryManager().UnMapFile(f);
+			}));
 			/*if(b!=prog.filesz){
 				dbgpf("ELF: Read failure - expected: %i, got %i.\n", (int)prog.filesz, (int)b);
 				panic("(ELF) Read failed during program load!");
@@ -202,6 +226,59 @@ loaded_elf_proc elf_load_proc(pid_t pid, file_handle &file){
 	}
 	ret.entry=(proc_entry)(header.entry);
 	dbgpf("ELF: Entry point: %lx\n", header.entry);
-	proc_switch(oldpid);
+	if(!GetProcessManager().SwitchProcess(oldpid)){
+		panic("(LOAD) Process swtich failed!");
+	}
 	return ret;
+}
+
+class ElfModule : public ILoadedElf{
+private:
+	loaded_elf_module mod;
+public:
+	ElfModule(IFileHandle &file) : mod(elf_load_module(file)) {}
+
+	void Execute(const char *mod_params = nullptr) override{
+		mod.entry(&GetModuleAPI(), (char*)mod_params);
+	};
+
+	ProcessEntryPoint GetEntryPoint() override{
+		return nullptr;
+	}
+
+	uintptr_t GetBaseAddress() override{
+		return (uintptr_t)mod.mem.aligned;
+	}
+
+	~ElfModule(){
+		al_free(mod.mem);
+	}
+};
+
+ILoadedElf *LoadElfModule(IFileHandle &file){
+	return new ElfModule(file);
+}
+
+class ElfProcess : public ILoadedElf{
+private:
+	loaded_elf_proc proc;
+public:
+	ElfProcess(bt_pid_t pid, IFileHandle &file) : proc(elf_load_proc(pid, file)) {}
+
+	void Execute(const char */*mod_params*/ = nullptr) override{
+		//Do nothing
+	};
+
+	ProcessEntryPoint GetEntryPoint() override{
+		return (ProcessEntryPoint)proc.entry;
+	}
+
+	uintptr_t GetBaseAddress() override{
+		return (uintptr_t)proc.mem;
+	}
+};
+
+
+ILoadedElf *LoadElfProcess(bt_pid_t pid, IFileHandle &file){
+	return new ElfProcess(pid, file);
 }

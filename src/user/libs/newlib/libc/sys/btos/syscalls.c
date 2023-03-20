@@ -21,7 +21,7 @@
 char *__env[1] = { 0 };
 //static char **environ = __env;
 
-static bt_pid lastchild=0;
+static bt_pid_t lastchild=0;
 
 void _exit(){
 	bt_exit(0);

@@ -8,12 +8,12 @@
 
 class console_backend : public i_backend{
 private:
-    file_handle *display, *input, *pointer;
+    IFileHandle *display, *input, *pointer;
     uint64_t input_thread_id;
     uint64_t pointer_thread_id;
 	uint64_t pointer_draw_thread_id;
 	bool pointer_draw_running;
-    lock backend_lock;
+    ILock *backend_lock;
     uint64_t active;
     bool pointer_visible, old_pointer_visible;
 	bool autohide, frozen;
@@ -35,11 +35,11 @@ public:
     console_backend();
 
     size_t display_read(size_t bytes, char *buf);
-    size_t display_write(size_t bytes, char *buf);
+    size_t display_write(size_t bytes, const char *buf);
     size_t display_seek(size_t pos, uint32_t flags);
 
     size_t input_read(size_t bytes, char *buf);
-    size_t input_write(size_t bytes, char *buf);
+    size_t input_write(size_t bytes, const char *buf);
     size_t input_seek(size_t pos, uint32_t flags);
 
     void show_pointer();
@@ -71,11 +71,13 @@ public:
 	void switch_terminal(uint64_t id);
 	bool can_create();
 	void refresh();
+
+    const char *desc();
 };
 
 extern console_backend *cons_backend;
 
-void draw_graphics_pointer(file_handle *file, uint32_t x, uint32_t y, bt_terminal_pointer_bitmap *bitmap, uint8_t *data=NULL);
-uint8_t *get_graphics_pointer_background(file_handle *file, uint32_t x, uint32_t y, bt_terminal_pointer_bitmap *bitmap);
+void draw_graphics_pointer(IFileHandle *file, uint32_t x, uint32_t y, bt_terminal_pointer_bitmap *bitmap, uint8_t *data = nullptr);
+uint8_t *get_graphics_pointer_background(IFileHandle *file, uint32_t x, uint32_t y, bt_terminal_pointer_bitmap *bitmap);
 
 #endif

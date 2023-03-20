@@ -1,101 +1,104 @@
 #include "kernel.hpp"
 #include "locks.hpp"
+#include <module/utils/unique_ptr.hpp>
 
-bt_atom *atom_create(uint64_t ini_val){
-	bt_atom *ret = new bt_atom();
-	init_lock(ret->lk);
-	ret->value = ini_val;
-	return ret;
-}
+class Atom;
 
-void atom_destroy(bt_atom *a){
-	take_lock_exclusive(a->lk);
-	delete a;
-	sch_abortable(true);
-}
-
-uint64_t atom_modify(bt_atom *a, bt_atom_modify::Enum mod, uint64_t value){
-	hold_lock hl(a->lk);
-	switch(mod){
-		case bt_atom_modify::Set:
-			a->value = value;
-			break;
-		case bt_atom_modify::Add:
-			a->value += value;
-			break;
-		case bt_atom_modify::Subtract:
-			a->value -= value;
-			break;
-		case bt_atom_modify::Or:
-			a->value |= value;
-			break;
-		case bt_atom_modify::And:
-			a->value &= value;
-			break;
-	}
-	return a->value;
-}
-
-struct atom_wait_options{
-	bt_atom *a;
+struct WaitOptions{
+	Atom *a;
 	bt_atom_compare::Enum cmp;
 	uint64_t value;
 };
 
-static bool atom_wait_lockcheck(void *vp){
-	atom_wait_options &p = *(atom_wait_options*)vp;
-	if(!try_take_lock_exclusive(p.a->lk)) return false;
-	bool ret = false;
-	switch(p.cmp){
-		case bt_atom_compare::Equal:
-			ret = (p.a->value == p.value);
-			break;
-		case bt_atom_compare::NotEqual:
-			ret = (p.a->value != p.value);
-			break;
-		case bt_atom_compare::LessThan:
-			ret = (p.a->value < p.value);
-			break;
-		case bt_atom_compare::GreaterThan:
-			ret = (p.a->value > p.value);
-			break;
+class Atom : public IAtom{
+private:
+	uint64_t value;
+	unique_ptr<ILock> lock {NewLock()};
+
+	static bool WaitBlockCheck(WaitOptions &p){
+		if(!p.a->lock->TryTakeExclusive()) return false;
+		bool ret = false;
+		switch(p.cmp){
+			case bt_atom_compare::Equal:
+				ret = (p.a->value == p.value);
+				break;
+			case bt_atom_compare::NotEqual:
+				ret = (p.a->value != p.value);
+				break;
+			case bt_atom_compare::LessThan:
+				ret = (p.a->value < p.value);
+				break;
+			case bt_atom_compare::GreaterThan:
+				ret = (p.a->value > p.value);
+				break;
+		}
+		p.a->lock->Release();
+		return ret;
 	}
-	release_lock(p.a->lk);
-	return ret;
-}
 
-uint64_t atom_wait(bt_atom *a, bt_atom_compare::Enum cmp, uint64_t value){
-	atom_wait_options p;
-	p.a = a;
-	p.cmp = cmp;
-	p.value = value;
-	sch_setblock(&atom_wait_lockcheck, (void*)&p);
-	return atom_read(a);
-}
+	static void WaitHandleClose(WaitOptions *ptr){
+		delete ptr;
+	}
 
-uint64_t atom_cmpxchg(bt_atom *a, uint64_t cmp, uint64_t xchg){
-	hold_lock hl(a->lk);
-	if(a->value == cmp) a->value = xchg;
-	return a->value;
-}
+	static bool WaitHandleWait(WaitOptions *ptr){
+		return WaitBlockCheck(*ptr);
+	}
+	
+public:
+	Atom(uint64_t v) : value(v) {}
 
-uint64_t atom_read(bt_atom *a){
-	hold_lock hl(a->lk);
-	return a->value;
-}
+	uint64_t Modify(bt_atom_modify::Enum mod, uint64_t v) override{
+		auto hl = lock->LockExclusive();
+		switch(mod){
+			case bt_atom_modify::Set:
+				value = v;
+				break;
+			case bt_atom_modify::Add:
+				value += v;
+				break;
+			case bt_atom_modify::Subtract:
+				value -= v;
+				break;
+			case bt_atom_modify::Or:
+				value |= v;
+				break;
+			case bt_atom_modify::And:
+				value &= v;
+				break;
+		}
+		return value;
+	}
 
-static void atom_wait_close(void *ptr){
-	delete (atom_wait_options*)ptr;
-}
+	uint64_t Read() override{
+		auto hl = lock->LockExclusive();
+		return value;
+	}
 
-static bool atom_wait_wait(void *ptr){
-	return atom_wait_lockcheck(ptr);
-}
+	uint64_t Wait(bt_atom_compare::Enum cmp, uint64_t value) override{
+		WaitOptions p;
+		p.a = this;
+		p.cmp = cmp;
+		p.value = value;
+		CurrentThread().SetBlock([&](){ return WaitBlockCheck(p); });
+		return Read();
+	}
+	uint64_t CompareExchange(uint64_t cmp, uint64_t xchg) override{
+		auto hl = lock->LockExclusive();
+		if(value == cmp) value = xchg;
+		return value;
+	}
 
-bt_handle_info atom_make_wait(bt_atom *a, bt_atom_compare::Enum cmp, uint64_t value){
-	atom_wait_options *p = new atom_wait_options();
-	p->a = a;
-	p->cmp = cmp;
-	p->value = value;
-	return create_handle(kernel_handle_types::atomwait, (void*)p, &atom_wait_close, &atom_wait_wait);
+	IHandle *MakeWaitHandle(bt_atom_compare::Enum cmp, uint64_t value) override{
+		WaitOptions *p = new WaitOptions();
+		p->a = this;
+		p->cmp = cmp;
+		p->value = value;
+		return MakeKernelGenericHandle<KernelHandles::AtomWait>(p, &WaitHandleClose, &WaitHandleWait);
+	}
+
+	~Atom() {}
+};
+
+IAtom *NewAtom(uint64_t value){
+	return new Atom(value);
 }

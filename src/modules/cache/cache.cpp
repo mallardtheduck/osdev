@@ -1,11 +1,7 @@
-#include <btos_module.h>
+#include <module/module.inc>
 #include <module/cache.hpp>
 #include <util/ministl.hpp>
 #include <util/asprintf.h>
-
-USE_SYSCALL_TABLE;
-USE_DEBUG_PRINTF;
-USE_PURE_VIRTUAL;
 
 static const size_t MaxCacheSize = 4 * 1024 * 1024; //Max cache: 4MB
 
@@ -79,7 +75,12 @@ void Cache::Store(uint64_t id, const char *buf){
 	for(auto &e : entries){
 		if(e.id == id){
 			memcpy(e.buf, buf, blockSize);
-			e.usage = 0;
+			if(e.usage < maxBlocks) ++e.usage;
+			else{
+				for(auto &f : entries){
+					if(&e != &f && f.usage > 0) --f.usage;
+				}
+			}
 			return;
 		}
 	}
@@ -88,26 +89,31 @@ void Cache::Store(uint64_t id, const char *buf){
 	e.id = id;
 	e.buf = (char*)malloc(blockSize);
 	memcpy(e.buf, buf, blockSize);
-	e.usage = 0;
+	e.usage = 1;
 	entries.push_back(e);
 	//dbgpf("CACHE: Stored entry %i for ID: %i\n", (int)entries.size() - 1, (int)id);
 }
 
 bool Cache::Retrieve(uint64_t id, char *buf){
-	bool ret = false;
+	CacheEntry *found = nullptr;
 	for(auto &e : entries){
-		if(!ret && e.id == id){
+		if(e.id == id){
+			found = &e;
 			memcpy(buf, e.buf, blockSize);
-			e.usage = maxBlocks;
+			if(e.usage < maxBlocks) ++e.usage;
+			else{
+				for(auto &f : entries){
+					if(&e != &f && f.usage > 0) --f.usage;
+				}
+			}
 			//dbgpf("CACHE: Retrieved entry for ID: %i\n", (int)id);
 			++hits;
-		}else{
-			if(e.usage > 0) --e.usage;
+			break;
 		}
 	}
-	if(ret) ++hits;
+	if(found) ++hits;
 	else ++misses;
-	return ret;
+	return (bool)found;
 }
 
 void Cache::Drop(uint64_t id){
@@ -121,26 +127,30 @@ void Cache::Drop(uint64_t id){
 	}
 }
 
-btos_api::ICache *CreateCache(size_t blockSize, size_t maxBlocks){
-	auto ret = new Cache(blockSize, maxBlocks);
-	caches->push_back(ret);
-	return ret;
-}
+class CacheExtension : public btos_api::ICacheExtension{
+public:
+	btos_api::ICache *CreateCache(size_t blockSize, size_t maxBlocks) override{
+		auto ret = new Cache(blockSize, maxBlocks);
+		caches->push_back(ret);
+		return ret;
+	}
+	
+	void DestroyCache(btos_api::ICache *cache) override{
+		delete (Cache*)cache;
+		auto i = caches->find((Cache*)cache);
+		if(i != caches->npos) caches->erase(i);
+	}
 
-void DestroyCache(btos_api::ICache *cache){
-	delete (Cache*)cache;
-	auto i = caches->find((Cache*)cache);
-	if(i != caches->npos) caches->erase(i);
-}
+	const char *GetName() override{
+		return "CACHE";
+	}
 
-btos_api::CacheCallTable calltable = {&CreateCache, &DestroyCache};
+	void UserAPIHandler(uint16_t, ICPUState &) override{}
+};
 
-kernel_extension cache_extension{"CACHE", (void*)&calltable, nullptr};
-
-extern "C" int module_main(syscall_table *systbl, char */*params*/){
-	SYSCALL_TABLE=systbl;
+int module_main(char *){
 	caches = new vector<Cache*>();
-	add_extension(&cache_extension);
-	infofs_register("CACHESTATS", &caches_infofs);
+	API->GetKernelExtensionManager().AddExtension(new CacheExtension());
+	API->InfoRegister("CACHESTATS", &caches_infofs);
 	return 0;
 }

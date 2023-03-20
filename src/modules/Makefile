@@ -1,4 +1,4 @@
-MODULES := boot test fat terminal iso9660 hwpnp cache
+MODULES := boot fs terminal hwpnp cache
 
 all: dummy.file
 	for dir in $(MODULES); do \

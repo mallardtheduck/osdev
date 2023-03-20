@@ -1,0 +1,22 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "gdb",
+			"request": "attach",
+			"name": "Attach to gdbserver",
+			"executable": "${workspaceFolder}/src/kernel/btos.bin",
+			"target": "localhost:1234",
+			"remote": true,
+			"cwd": "${workspaceRoot}/src", 
+			"gdbpath": "/usr/bin/gdb",
+			"autorun": [
+				"source kstat.py",
+        	],
+			"stopAtEntry": true
+		},
+	]
+}

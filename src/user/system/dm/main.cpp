@@ -14,6 +14,7 @@
 #include <btos/messageloop.hpp>
 #include <btos/imessagehandler.hpp>
 #include <btos/envvars.hpp>
+#include <btos/process.hpp>
 
 using std::string;
 using std::vector;
@@ -206,6 +207,7 @@ int main(int argc, char **argv){
 		btos_api::bt_setenv(args[1].c_str(), "READY", 1);
 	}
 	btos_api::bt_zero("DM: Entering on-demand mode...\n");
+	btos_api::Process::Current().SetProcStage(2);
 	Register();
 	auto handler = std::make_shared<btos_api::CustomHandler>([&](const btos_api::Message &msg) -> bool{
 		if(msg.From() == 0 && msg.Source() == dmi_ext){

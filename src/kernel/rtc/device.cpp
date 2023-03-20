@@ -2,12 +2,12 @@
 #include <dev/hwpnp/timerdevice.hpp>
 
 static btos_api::hwpnp::ITimerDevice *get_timer(){
-	auto rootDev = pnp_get_root_device();
+	auto rootDev = GetHwPnpManager().GetRootDevice();
 	if(!rootDev) return nullptr;
 	else return rootDev->GetSysTimer();
 }
 
-bool timer_ready_blockcheck(void*){
+bool is_timer_ready(){
 	return get_timer() != nullptr;
 }
 

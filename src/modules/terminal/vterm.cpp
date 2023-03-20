@@ -1,6 +1,6 @@
 #include <btos_module.h>
+#include <module/utils/string.hpp>
 #include <dev/keyboard.h>
-#include <util/holdlock.hpp>
 #include "vterm.hpp"
 #include "terminal.hpp"
 #include "device.hpp"
@@ -11,16 +11,7 @@
 //vterm *current_vterm=NULL;
 vterm_list *terminals=NULL;
 
-struct active_blockcheck_params{
-	vterm *term;
-	uint32_t lactive;
-};
-
-bool event_blockcheck(void *p);
-bool active_blockcheck(void *p);
-
-vterm::vterm(uint64_t nid, i_backend *back)
-{
+vterm::vterm(uint64_t nid, i_backend *back){
 	backend=back;
 	id=nid;
 	buffer=NULL;
@@ -30,8 +21,8 @@ vterm::vterm(uint64_t nid, i_backend *back)
 	infoline=true;
 	textcolour=0x07;
 	echo=true;
-	init_lock(&term_lock);
-	init_lock(&input_lock);
+	term_lock = API->NewLock();
+	input_lock = API->NewLock();
 	keyboard_buffer.clear();
 	pointer_buffer.clear();
 	refcount=0;
@@ -48,14 +39,12 @@ vterm::vterm(uint64_t nid, i_backend *back)
 	if(backend) backend->open(nid);
 }
 
-vterm::~vterm()
-{
+vterm::~vterm(){
 	if(backend) backend->close(id);
 	if(buffer) free(buffer);
 }
 
-void vterm::putchar(char c)
-{
+void vterm::putchar(char c){
 	if(!vidmode.textmode) return;
 	if(c == '\n') {
 		bufpos=(((bufpos/(vidmode.width*2))+1) * (vidmode.width*2));
@@ -90,25 +79,21 @@ void vterm::putchar(char c)
 	}
 }
 
-void vterm::putstring(char *s)
-{
-	for(int i=0; i<strlen(s); ++i) {
+void vterm::putstring(char *s){
+	for(int i = 0; i < strlen(s); ++i) {
 		putchar(s[i]);
 	}
 }
 
-void vterm::setcolours(uint8_t c)
-{
+void vterm::setcolours(uint8_t c){
 	textcolour=c;
 }
 
-uint8_t vterm::getcolours()
-{
+uint8_t vterm::getcolours(){
 	return textcolour;
 }
 
-void vterm::scroll()
-{
+void vterm::scroll(){
 	int factor=1;
 	if(vidmode.textmode) factor=2;
 	if(scrolling){
@@ -138,8 +123,7 @@ void vterm::scroll()
 	bufpos=((vidmode.height-1)*vidmode.width)*factor;
 }
 
-void vterm::do_infoline()
-{
+void vterm::do_infoline(){
 	vterm_options opts;
 	if(backend && backend->is_active(id) && infoline && vidmode.textmode) {
 		size_t pos=seek(opts, 0, true);
@@ -162,20 +146,17 @@ void vterm::do_infoline()
 	}
 }
 
-uint64_t vterm::get_id()
-{
+uint64_t vterm::get_id(){
 	return id;
 }
 
-const char *vterm::get_title()
-{
-	//hold_lock hl(&term_lock);
+const char *vterm::get_title(){
+	//auto hl = term_lock->LockExclusive();
 	return title;
 }
 
-void vterm::activate()
-{
-	hold_lock hl(&term_lock, false);
+void vterm::activate(){
+	auto hl = term_lock->LockRecursive();
 	if(backend) {
 		backend->set_screen_mode(vidmode);
 		backend->set_active(id);
@@ -198,8 +179,7 @@ void vterm::activate()
 	}
 }
 
-void vterm::deactivate()
-{
+void vterm::deactivate(){
 	if(!backend) return;
 	if(!backend->is_active(id)) return;
 	backend->set_pointer_autohide(true);
@@ -212,10 +192,9 @@ void vterm::deactivate()
 	}
 }
 
-size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf)
-{
-	hold_lock hl(&term_lock);
-	if(check_exclusive() && getpid() != exclusive_pid) return size;
+size_t vterm::write(vterm_options &/*opts*/, size_t size, const char *buf){
+	auto hl = term_lock->LockExclusive();
+	if(check_exclusive() && CurrentProcess().ID() != exclusive_pid) return size;
 	update_current_pid();
 	if(bufpos+size > bufsize) size = bufsize - bufpos;
 	if(vidmode.textmode) {
@@ -235,9 +214,8 @@ size_t vterm::write(vterm_options &/*opts*/, size_t size, char *buf)
 	return size;
 }
 
-size_t vterm::read(vterm_options &opts, size_t size, char *buf)
-{
-	hold_lock hl(&term_lock);
+size_t vterm::read(vterm_options &opts, size_t size, char *buf){
+	auto hl = term_lock->LockExclusive();
 	update_current_pid();
 	if(opts.mode == bt_terminal_mode::Terminal) {
 		int incr;
@@ -246,12 +224,14 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf)
 			uint32_t input = 0;
 			char c = 0;
 			while(!input || !c) {
-				release_lock(&term_lock);
-				input=get_input();
-				take_lock(&term_lock);
+				bool abort = false;
+				term_lock->Release();
+				input = get_input(abort);
+				term_lock->TakeExclusive();
+				if(abort) return 0;
 				if((input & KeyFlags::Control) && !(input & KeyFlags::KeyUp) && ((char) input == 'c' || (char) input == 'C')) {
-					release_lock(&term_lock);
-					kill(getpid());
+					term_lock->Release();
+					CurrentProcess().Terminate();
 				}
 				c = KB_char(input);
 			}
@@ -298,9 +278,8 @@ size_t vterm::read(vterm_options &opts, size_t size, char *buf)
 	return 0;
 }
 
-size_t vterm::seek(vterm_options &/*opts*/, size_t pos, uint32_t flags)
-{
-	hold_lock hl(&term_lock, false);
+size_t vterm::seek(vterm_options &/*opts*/, size_t pos, uint32_t flags){
+	auto hl = term_lock->LockRecursive();
 	update_current_pid();
 	int factor=1;
 	if(vidmode.textmode) factor=2;
@@ -317,9 +296,8 @@ size_t vterm::seek(vterm_options &/*opts*/, size_t pos, uint32_t flags)
 	return bufpos/factor;
 }
 
-int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
-{
-	hold_lock hl(&term_lock);
+int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf){
+	auto hl = term_lock->LockExclusive();
 	update_current_pid();
 	switch(fn) {
 		case bt_terminal_ioctl::SetTitle:{
@@ -468,7 +446,7 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 		}
 		case bt_terminal_ioctl::StartEventMode: {
 			if(!event_mode_enabled) {
-				events_pid = getpid();
+				events_pid = CurrentProcess().ID();
 				opts.event_mode_owner = true;
 				event_mode_enabled = true;
 			}
@@ -539,22 +517,22 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 			break;
 		}case bt_terminal_ioctl::WaitActive:{
 			if(!backend || !backend->is_active(id)){
-				active_blockcheck_params p;
-				p.term = this;
-				p.lactive = activecounter;
-				release_lock(&term_lock);
-				thread_setblock(&active_blockcheck, (void*)&p);
-				take_lock(&term_lock);
+				auto lactive = activecounter;
+				term_lock->Release();
+				API->CurrentThread().SetAbortableBlock([&]{
+					return activecounter != lactive;
+				});
+				term_lock->TakeExclusive();
 			}
 			break;
 		}case bt_terminal_ioctl::TakeExclusive:{
 			if(check_exclusive()) return 0;
-			exclusive_pid = getpid();
+			exclusive_pid = CurrentProcess().ID();
 			exclusive_mode_enabled = true;
 			return 1;
 			break;
 		}case bt_terminal_ioctl::ReleaseExclusive:{
-			if(check_exclusive() && exclusive_pid == getpid()){
+			if(check_exclusive() && exclusive_pid == CurrentProcess().ID()){
 				exclusive_mode_enabled = false;
 				exclusive_pid = 0;
 			}
@@ -566,69 +544,41 @@ int vterm::ioctl(vterm_options &opts, int fn, size_t size, char *buf)
 }
 
 struct cmdLine{
-	char *cmd;
-	size_t argc;
-	char **argv;
+	string cmd;
+	vector<string> args;
+	vector<const char*> pargs;
 };
 
 cmdLine parse_cmd(const char *c){
-	cmdLine cl = {nullptr, 0, nullptr};
-	char* buf = (char*)malloc(BT_MAX_PATH);
-	if(!buf) panic("(TERM) Allocation failed!");
-	memset(buf, 0, BT_MAX_PATH);
+	cmdLine cl;
+	string buf;
 	size_t i = 0;
 	bool escape = false;
 	bool quote = false;
 	while(c && *c){
-		if(escape) buf[i] = *c;
-		else if(quote && *c != '"') buf[i] = *c;
+		if(escape) buf += *c;
+		else if(quote && *c != '"') buf += *c;
 		else if(*c == '\\') escape = true;
 		else if(*c == '"') quote = !quote;
 		else if((*c == ' ' && i) || i == BT_MAX_PATH - 1){
-			if(!cl.cmd) cl.cmd = buf;
-			else{
-				char **nargv = (char**)malloc((cl.argc + 1) * sizeof(char*));
-				if(!nargv) panic("(TERM) Allocation failed!");
-				if(cl.argc) memcpy(nargv, cl.argv, sizeof(char*) * cl.argc);
-				nargv[cl.argc] = buf;
-				if(cl.argv) free(cl.argv);
-				cl.argv = nargv;
-				++cl.argc;
-			}
-			buf = (char*)malloc(BT_MAX_PATH);
-			if(!buf) panic("(TERM) Allocation failed!");
-			memset(buf, 0, BT_MAX_PATH);
+			if(cl.cmd.empty()) cl.cmd = buf;
+			else cl.args.push_back(buf);
+			buf.clear();
 			i = -1;
 			escape=quote=false;
 		}else{
-			buf[i] = *c;
+			buf += *c;
 		}
 		++i; ++c;
 	}
-	if(i){
-		char **nargv = (char**)malloc((cl.argc + 1) * sizeof(char*));
-		if(!nargv) panic("(TERM) Allocation failed!");
-		if(cl.argc) memcpy(nargv, cl.argv, sizeof(char*) * cl.argc);
-		nargv[cl.argc] = buf;
-		if(cl.argv) free(cl.argv);
-		cl.argv = nargv;
-		++cl.argc;
-	}else{
-		free(buf);
+	if(i) cl.args.push_back(buf);
+	for(auto &a : cl.args){
+		cl.pargs.push_back(a.c_str());
 	}
 	return cl;
 };
 
-void free_cmd(cmdLine c){
-	if(c.cmd) free(c.cmd);
-	for(size_t i = 0; i < c.argc; ++i){
-		free(c.argv[i]);
-	}
-	if(c.argv) free(c.argv);
-}
-
-void vterm::create_terminal(char *command)
-{
+void vterm::create_terminal(char *command){
 	uint64_t new_id=terminals->create_terminal(backend);
 	if(new_id){
 		dbgpf("TERM: Created new terminal %i.\n", (int) new_id);
@@ -636,15 +586,14 @@ void vterm::create_terminal(char *command)
 		if(backend && backend->is_active(id)) backend->switch_terminal(new_id);
 		if(command) {
 			char old_terminal_id[128]="0";
-			strncpy(old_terminal_id, getenv(terminal_var, getpid()), 128);
+			strncpy(old_terminal_id, CurrentProcess().GetEnvironmentVariable(terminal_var, CurrentProcess().ID()), 128);
 			char new_terminal_id[128]= {0};
 			i64toa(new_id, new_terminal_id, 10);
-			setenv(terminal_var, new_terminal_id, 0, getpid());
+			CurrentProcess().SetEnvironmentVariable(terminal_var, new_terminal_id);
 			cmdLine cmd = parse_cmd(command);
-			if(cmd.cmd){
-				pid_t pid=spawn(cmd.cmd, cmd.argc, cmd.argv);
-				free_cmd(cmd);
-				setenv(terminal_var, old_terminal_id, 0, getpid());
+			if(!cmd.cmd.empty()){
+				bt_pid_t pid = API->GetProcessManager().Spawn(cmd.cmd.c_str(), cmd.pargs);
+				CurrentProcess().SetEnvironmentVariable(terminal_var, old_terminal_id, 0, CurrentProcess().ID());
 				vterm_options opts;
 				if(!pid) terminals->get(new_id)->close(opts);
 			}else{
@@ -655,9 +604,8 @@ void vterm::create_terminal(char *command)
 	}
 }
 
-uint64_t vterm::send_event(const bt_terminal_event &e)
-{
-	if(!get_proc_status(events_pid)) return 0;
+uint64_t vterm::send_event(const bt_terminal_event &e){
+	if(API->GetProcessManager().GetProcessStatusByID(events_pid) == btos_api::bt_proc_status::DoesNotExist) return 0;
 	btos_api::bt_msg_header msg;
 	memset((void*)&msg, 0, sizeof(msg));
 	bt_terminal_event *content = new bt_terminal_event();
@@ -667,18 +615,16 @@ uint64_t vterm::send_event(const bt_terminal_event &e)
 	msg.type = bt_terminal_message_type::InputEvent;
 	msg.content = content;
 	msg.length = sizeof(*content);
-	return msg_send(&msg);
+	return API->GetMessageManager().SendMessage(msg);
 }
 
-void vterm::open()
-{
-	hold_lock hl(&term_lock);
+void vterm::open(){
+	auto hl = term_lock->LockExclusive();
 	refcount++;
 }
 
-void vterm::close(vterm_options &opts)
-{
-	take_lock(&term_lock);
+void vterm::close(vterm_options &opts){
+	term_lock->TakeExclusive();
 	if(event_mode_enabled && opts.event_mode_owner) {
 		event_mode_enabled = false;
 		events_pid = 0;
@@ -687,17 +633,16 @@ void vterm::close(vterm_options &opts)
 	if(refcount) refcount--;
 	if(!refcount) {
 		if(terminals->get_count() > 1) {
-			release_lock(&term_lock);
+			term_lock->Release();
 			terminals->delete_terminal(id);
 			return;
 		}
 	}
-	release_lock(&term_lock);
+	term_lock->Release();
 }
 
-void vterm::sync(bool content)
-{
-	hold_lock hl(&term_lock);
+void vterm::sync(bool content){
+	auto hl = term_lock->LockExclusive();
 	if(!backend) return;
 	vidmode = backend->get_current_screen_mode();
 	allocate_buffer();
@@ -715,8 +660,7 @@ void vterm::sync(bool content)
 	}
 }
 
-void vterm::clear_buffer()
-{
+void vterm::clear_buffer(){
 	memset(buffer, 0, bufsize);
 	if(vidmode.textmode) {
 		for(size_t i = 1; i < bufsize; i += 2) {
@@ -726,8 +670,7 @@ void vterm::clear_buffer()
 	bufpos = 0;
 }
 
-void vterm::allocate_buffer()
-{
+void vterm::allocate_buffer(){
 	size_t newbufsize=0;
 	if(vidmode.textmode) {
 		newbufsize =(vidmode.width * vidmode.height) * (((vidmode.bpp * 2) / 8) + 1);
@@ -747,12 +690,12 @@ void vterm::allocate_buffer()
 	bufsize=newbufsize;
 }
 
-void vterm::queue_input(uint32_t code)
-{
-	take_lock(&input_lock);
+void vterm::queue_input(uint32_t code){
+	input_lock->TakeExclusive();
 	if((code & KeyFlags::Control) && !(code & KeyFlags::KeyUp) && ((char) code == 'c' || (char) code == 'C')) {
-		release_lock(&input_lock);
-		kill(curpid);
+		input_lock->Release();
+		auto proc = API->GetProcess(curpid);
+		if(proc) proc->Terminate();
 		return;
 	}
 	if(event_mode_enabled && (event_mode & bt_terminal_event_mode::Keyboard)) {
@@ -763,14 +706,13 @@ void vterm::queue_input(uint32_t code)
 	} else {
 		keyboard_buffer.add_item(code);
 	}
-	release_lock(&input_lock);
+	input_lock->Release();
 }
 
-void vterm::queue_pointer(bt_terminal_pointer_event event)
-{
-	take_lock(&input_lock);
+void vterm::queue_pointer(bt_terminal_pointer_event event){
+	input_lock->TakeExclusive();
 	if(event_mode_enabled && (event_mode & bt_terminal_event_mode::Pointer)) {
-		if(event.type != bt_terminal_pointer_event_type::Move || !last_move_message || msg_query_recieved(last_move_message)) {
+		if(event.type != bt_terminal_pointer_event_type::Move || !last_move_message || API->GetMessageManager().HasMessageBeenProcessed(last_move_message)) {
 			bt_terminal_event e;
 			e.type = bt_terminal_event_type::Pointer;
 			e.pointer = event;
@@ -779,69 +721,48 @@ void vterm::queue_pointer(bt_terminal_pointer_event event)
 		}
 	}
 	pointer_buffer.add_item(event);
-	release_lock(&input_lock);
+	input_lock->Release();
 }
 
-bool input_blockcheck(void *p)
-{
-	vterm *v=(vterm*)p;
-	return (bool)v->keyboard_buffer.count();
-}
-
-uint32_t vterm::get_input()
-{
-	hold_lock hl(&input_lock);
+uint32_t vterm::get_input(bool &abort){
+	auto hl = input_lock->LockExclusive();
 	while(!keyboard_buffer.count()) {
-		release_lock(&input_lock);
-		thread_setblock(&input_blockcheck, (void *) this);
-		take_lock(&input_lock);
+		input_lock->Release();
+		abort = !API->CurrentThread().SetAbortableBlock([&]{
+			return keyboard_buffer.count() > 0;
+		});
+		input_lock->TakeExclusive();
+		if(abort) return 0;
 	}
-	uint32_t ret=keyboard_buffer.read_item();
+	uint32_t ret = keyboard_buffer.count() > 0 ? keyboard_buffer.read_item() : 0;
 	return ret;
 }
 
-bool pointer_blockcheck(void *p)
-{
-	vterm *v=(vterm*)p;
-	return (bool)v->pointer_buffer.count();
-}
-
-bool event_blockcheck(void *p)
-{
-	return input_blockcheck(p) || pointer_blockcheck(p);
-}
-
-bool active_blockcheck(void *p)
-{
-	auto *pa = (active_blockcheck_params*)p;
-	return pa->term->activecounter != pa->lactive;
-}
-
-bt_terminal_pointer_event vterm::get_pointer()
-{
-	hold_lock hl(&input_lock);
+bt_terminal_pointer_event vterm::get_pointer(){
+	auto hl = input_lock->LockExclusive();
 	while(!pointer_buffer.count()) {
-		release_lock(&input_lock);
-		thread_setblock(&pointer_blockcheck, (void *) this);
-		take_lock(&input_lock);
+		input_lock->Release();
+		API->CurrentThread().SetAbortableBlock([&]{
+			return pointer_buffer.count() > 0;
+		});
+		input_lock->TakeExclusive();
 	}
-	bt_terminal_pointer_event ret=pointer_buffer.read_item();
+	bt_terminal_pointer_event ret = pointer_buffer.count() > 0 ? pointer_buffer.read_item() : bt_terminal_pointer_event();
 	return ret;
 }
 
-char vterm::get_char()
-{
-	return KB_char(get_input());
+char vterm::get_char(){
+	bool _ = false;
+	return KB_char(get_input(_));
 }
 
-void vterm::update_current_pid()
-{
-	curpid = getpid();
-	/*pid_t pid = getpid();
+void vterm::update_current_pid(){
+	curpid = CurrentProcess().ID();
+	/*bt_pid_t pid = CurrentProcess().ID();
 	if(pid) {
 		uint64_t termid=0;
-		if(getenv(terminal_var, pid)) {
-			termid=atoi64(getenv(terminal_var, pid));
+		if(CurrentProcess().GetEnvironmentVariable(terminal_var, pid)) {
+			termid=atoi64(CurrentProcess().GetEnvironmentVariable(terminal_var, pid));
 		}
 		if(termid == id) {
 			//dbgpf("TERM: %i updating curpid from %i to %i\n", (int)id, (int)curpid, (int)id);
@@ -865,13 +786,13 @@ i_backend *vterm::get_backend(){
 }
 
 void vterm::read_buffer(size_t size, uint8_t *buf){
-	//hold_lock hl(&term_lock);
+	//auto hl = term_lock->LockExclusive();
 	if(size > bufsize) size = bufsize;
 	memcpy(buf, buffer, size);
 }
 
 void vterm::set_backend(i_backend *back){
-	hold_lock hl(&term_lock);
+	auto hl = term_lock->LockExclusive();
 	backend = back;
 }
 
@@ -879,15 +800,13 @@ size_t vterm::getpos(){
 	return bufpos;
 }
 
-vterm_list::vterm_list()
-{
+vterm_list::vterm_list(){
 	id = 0;
-	init_lock(&vtl_lock);
+	vtl_lock = API->NewLock();
 }
 
-uint64_t vterm_list::create_terminal(i_backend *back)
-{
-	hold_lock hl(&vtl_lock);
+uint64_t vterm_list::create_terminal(i_backend *back){
+	auto hl = vtl_lock->LockExclusive();
 	if(!back->can_create()) return 0;
 	uint64_t new_id=++id;
 	vterm *newterm=new vterm(new_id, back);
@@ -895,9 +814,8 @@ uint64_t vterm_list::create_terminal(i_backend *back)
 	return new_id;
 }
 
-void vterm_list::delete_terminal(uint64_t id)
-{
-	hold_lock hl(&vtl_lock);
+void vterm_list::delete_terminal(uint64_t id){
+	auto hl = vtl_lock->LockExclusive();
 	for(size_t i=0; i<terminals.size(); ++i) {
 		if(terminals[i]->get_id() == id) {
 			vterm *term=terminals[i];
@@ -910,7 +828,7 @@ void vterm_list::delete_terminal(uint64_t id)
 }
 
 void vterm_list::delete_backend(i_backend *back){
-	hold_lock hl(&vtl_lock);
+	auto hl = vtl_lock->LockExclusive();
 	for(size_t i=0; i<terminals.size(); ++i) {
 		if(terminals[i]->get_backend() == back){
 			terminals[i]->set_backend(NULL);
@@ -918,9 +836,8 @@ void vterm_list::delete_backend(i_backend *back){
 	}
 }
 
-vterm *vterm_list::get(uint64_t id)
-{
-	hold_lock hl(&vtl_lock, false);
+vterm *vterm_list::get(uint64_t id){
+	auto hl = vtl_lock->LockRecursive();
 	for(size_t i=0; i<terminals.size(); ++i) {
 		if(!id || terminals[i]->get_id() == id) {
 			return terminals[i];
@@ -929,18 +846,19 @@ vterm *vterm_list::get(uint64_t id)
 	return NULL;
 }
 
-size_t vterm_list::get_count()
-{
+size_t vterm_list::get_count(){
 	return terminals.size();
 }
 
-char *terms_infofs()
-{
+char *terms_infofs(){
 	char *buffer=nullptr;
 	vterm_list *t=terminals;
+	auto hl = t->vtl_lock->LockExclusive();
 	asprintf(&buffer, "# ID, title, backend\n");
 	for(size_t i=0; i<t->terminals.size(); ++i) {
-		reasprintf_append(&buffer, "%i, \"%s\", %p\n", (int)t->terminals[i]->get_id(), t->terminals[i]->get_title(), t->terminals[i]->get_backend());
+		const char *backendDesc = "NULL";
+		if(t->terminals[i]->get_backend()) backendDesc = t->terminals[i]->get_backend()->desc();
+		reasprintf_append(&buffer, "%i, \"%s\", %s\n", (int)t->terminals[i]->get_id(), t->terminals[i]->get_title(), backendDesc);
 	}
 	return buffer;
 }

@@ -1,5 +1,5 @@
 diff -rupN ncurses-6.0/c++/etip.h.in originals/ncurses-6.0/c++/etip.h.in
---- ncurses-6.0/c++/etip.h.in	2020-02-07 14:51:34.555389719 +0000
+--- ncurses-6.0/c++/etip.h.in	2022-09-08 14:58:25.304966790 +0000
 +++ originals/ncurses-6.0/c++/etip.h.in	2012-12-29 21:50:44.000000000 +0000
 @@ -372,13 +372,8 @@ inline void THROW(const NCursesException
    throw *e;
@@ -16,7 +16,7 @@ diff -rupN ncurses-6.0/c++/etip.h.in originals/ncurses-6.0/c++/etip.h.in
  }
  
 diff -rupN ncurses-6.0/config.sub originals/ncurses-6.0/config.sub
---- ncurses-6.0/config.sub	2020-02-07 14:37:14.353957860 +0000
+--- ncurses-6.0/config.sub	2022-09-08 14:58:25.304966790 +0000
 +++ originals/ncurses-6.0/config.sub	2015-05-02 11:52:04.000000000 +0000
 @@ -1396,8 +1396,7 @@ case $os in
  	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
@@ -29,7 +29,7 @@ diff -rupN ncurses-6.0/config.sub originals/ncurses-6.0/config.sub
  		;;
  	-qnx*)
 diff -rupN ncurses-6.0/configure originals/ncurses-6.0/configure
---- ncurses-6.0/configure	2020-02-07 14:37:14.381958089 +0000
+--- ncurses-6.0/configure	2022-09-08 14:58:25.308966813 +0000
 +++ originals/ncurses-6.0/configure	2015-08-05 09:20:32.000000000 +0000
 @@ -5117,7 +5117,7 @@ if test $with_lib_prefix = auto
  then
@@ -95,7 +95,7 @@ diff -rupN ncurses-6.0/configure originals/ncurses-6.0/configure
  			cf_suffix='.so'
  			cf_depsuf=$cf_suffix
 diff -rupN ncurses-6.0/include/MKterm.h.awk.in originals/ncurses-6.0/include/MKterm.h.awk.in
---- ncurses-6.0/include/MKterm.h.awk.in	2020-02-07 14:37:14.392958179 +0000
+--- ncurses-6.0/include/MKterm.h.awk.in	2022-09-08 14:58:25.308966813 +0000
 +++ originals/ncurses-6.0/include/MKterm.h.awk.in	2013-08-17 19:21:56.000000000 +0000
 @@ -104,9 +104,6 @@ BEGIN		{
  		    print  "#if __MINGW32__"
@@ -108,7 +108,7 @@ diff -rupN ncurses-6.0/include/MKterm.h.awk.in originals/ncurses-6.0/include/MKt
  		    print  "#undef TERMIOS"
  		    print  "#include <sgtty.h>"
 diff -rupN ncurses-6.0/include/ncurses_btos.h originals/ncurses-6.0/include/ncurses_btos.h
---- ncurses-6.0/include/ncurses_btos.h	2020-02-07 14:37:14.396958211 +0000
+--- ncurses-6.0/include/ncurses_btos.h	2022-09-08 14:58:25.308966813 +0000
 +++ originals/ncurses-6.0/include/ncurses_btos.h	1970-01-01 00:00:00.000000000 +0000
 @@ -1,152 +0,0 @@
 -
@@ -264,7 +264,7 @@ diff -rupN ncurses-6.0/include/ncurses_btos.h originals/ncurses-6.0/include/ncur
 -#endif /* _NC_BTOSH */
 -#endif /* __btos__ */
 diff -rupN ncurses-6.0/misc/terminfo.src originals/ncurses-6.0/misc/terminfo.src
---- ncurses-6.0/misc/terminfo.src	2020-02-07 14:37:14.440958571 +0000
+--- ncurses-6.0/misc/terminfo.src	2022-09-08 14:58:25.316966861 +0000
 +++ originals/ncurses-6.0/misc/terminfo.src	2015-07-25 19:27:20.000000000 +0000
 @@ -698,13 +698,6 @@ nansi.sysk|nansisysk|PC-DOS Public Domai
  	is2=U4 PC-DOS Public Domain NANSI.SYS with keypad redefined for vi 9-29-86\n\E[;75;8p,
@@ -281,7 +281,7 @@ diff -rupN ncurses-6.0/misc/terminfo.src originals/ncurses-6.0/misc/terminfo.src
  
  # From Guido Flohr <gufl0000@stud.uni-sb.de>.
 diff -rupN ncurses-6.0/ncurses/base/lib_endwin.c originals/ncurses-6.0/ncurses/base/lib_endwin.c
---- ncurses-6.0/ncurses/base/lib_endwin.c	2020-02-07 14:37:14.450958653 +0000
+--- ncurses-6.0/ncurses/base/lib_endwin.c	2022-09-08 14:58:25.320966885 +0000
 +++ originals/ncurses-6.0/ncurses/base/lib_endwin.c	2014-03-08 20:32:59.000000000 +0000
 @@ -66,9 +66,6 @@ NCURSES_SP_NAME(endwin) (NCURSES_SP_DCL0
  #endif
@@ -294,7 +294,7 @@ diff -rupN ncurses-6.0/ncurses/base/lib_endwin.c originals/ncurses-6.0/ncurses/b
      returnCode(code);
  }
 diff -rupN ncurses-6.0/ncurses/base/lib_initscr.c originals/ncurses-6.0/ncurses/base/lib_initscr.c
---- ncurses-6.0/ncurses/base/lib_initscr.c	2020-02-07 14:37:14.454958686 +0000
+--- ncurses-6.0/ncurses/base/lib_initscr.c	2022-09-08 14:58:25.320966885 +0000
 +++ originals/ncurses-6.0/ncurses/base/lib_initscr.c	2014-04-26 18:47:51.000000000 +0000
 @@ -63,16 +63,10 @@ initscr(void)
      /* Portable applications must not call initscr() more than once */
@@ -315,7 +315,7 @@ diff -rupN ncurses-6.0/ncurses/base/lib_initscr.c originals/ncurses-6.0/ncurses/
  	/*
  	 * 2002/9/21
 diff -rupN ncurses-6.0/ncurses/tty/lib_twait.c originals/ncurses-6.0/ncurses/tty/lib_twait.c
---- ncurses-6.0/ncurses/tty/lib_twait.c	2020-02-07 14:37:14.461958743 +0000
+--- ncurses-6.0/ncurses/tty/lib_twait.c	2022-09-08 14:58:25.320966885 +0000
 +++ originals/ncurses-6.0/ncurses/tty/lib_twait.c	2015-07-04 21:01:02.000000000 +0000
 @@ -53,11 +53,6 @@
  #include <OS.h>

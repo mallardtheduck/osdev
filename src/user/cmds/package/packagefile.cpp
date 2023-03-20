@@ -22,7 +22,7 @@ using namespace btos_api;
 namespace reg = btos_api::registry;
 
 const size_t MaxInfSize = 1 * 1024 * 1024;
-const size_t ReadBufferSize = 4096;
+const size_t ReadBufferSize = 65536;
 
 vector<int> parse_version(const string &str){
 	vector<int> ret;

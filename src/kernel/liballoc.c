@@ -2,10 +2,18 @@
 
 #define dbgout serial_writestring
 #define dbgpf(...) do{sprintf(dbgbuf, __VA_ARGS__); dbgout(dbgbuf);}while(0)
+#define INFO
+
+#undef printf
+#define printf(...) dbgpf(__VA_ARGS__)
+#pragma GCC diagnostic ignored "-Wformat"
+
+#define xstr(a) str(a)
+#define str(a) #a
 
 /**  Durand's Amazing Super Duper Memory functions.  */
 
-#define VERSION 	"1.1"
+#define VERSION 	"1.1-btos-kernel"
 #define ALIGNMENT	16ul//4ul				///< This is the byte alignment that memory must be allocated on. IMPORTANT for GTK and other stuff.
 
 #define ALIGN_TYPE		char ///unsigned char[16] /// unsigned short
@@ -55,7 +63,8 @@
 //#include <stdio.h>
 //#include <stdlib.h>
 
-#define FLUSH()		fflush( stdout )
+#define FLUSH()		//fflush( stdout )
+#define atexit(x)
 
 #endif
 
@@ -305,7 +314,7 @@ void *PREFIX(malloc)(size_t req_size)
 
 
 	#ifdef DEBUG
-	printf( "liballoc: %x PREFIX(malloc)( %i ): ", 
+	printf( "liballoc: %x "x str(PREFIX(malloc)) "( %i ): ", 
 					__builtin_return_address(0),
 					size );
 	FLUSH();
@@ -579,7 +588,7 @@ void *PREFIX(malloc)(size_t req_size)
 	FLUSH();
 	#endif
 	#if defined DEBUG || defined INFO
-	printf( "liballoc: WARNING: PREFIX(malloc)( %i ) returning NULL.\n", size);
+	printf( "liballoc: WARNING: malloc( %i ) returning NULL.\n", size);
 	liballoc_dump();
 	FLUSH();
 	#endif
@@ -603,7 +612,7 @@ void PREFIX(free)(void *ptr)
 	{
 		l_warningCount += 1;
 		#if defined DEBUG || defined INFO
-		printf( "liballoc: WARNING: PREFIX(free)( NULL ) called from %x\n",
+		printf( "liballoc: WARNING: free( NULL ) called from %x\n",
 							__builtin_return_address(0) );
 		FLUSH();
 		#endif
@@ -634,6 +643,7 @@ void PREFIX(free)(void *ptr)
 			printf( "liballoc: ERROR: Possible 1-3 byte overrun for magic %x != %x\n",
 								min->magic,
 								LIBALLOC_MAGIC );
+			panic("(LIBALLOC) Kernel memory error!");
 			FLUSH();
 			#endif
 		}
@@ -642,18 +652,20 @@ void PREFIX(free)(void *ptr)
 		if ( min->magic == LIBALLOC_DEAD )
 		{
 			#if defined DEBUG || defined INFO
-			printf( "liballoc: ERROR: multiple PREFIX(free)() attempt on %x from %x.\n", 
+			printf( "liballoc: ERROR: multiple " xstr(PREFIX(free)) "() attempt on %x from %x.\n", 
 									ptr,
 									__builtin_return_address(0) );
+			panic("(LIBALLOC) Kernel memory error!");
 			FLUSH();
 			#endif
 		}
 		else
 		{
 			#if defined DEBUG || defined INFO
-			printf( "liballoc: ERROR: Bad PREFIX(free)( %x ) called from %x\n",
+			printf( "liballoc: ERROR: Bad " xstr(PREFIX(free)) "( %x ) called from %x\n",
 								ptr,
 								__builtin_return_address(0) );
+			panic("(LIBALLOC) Kernel memory error!");
 			FLUSH();
 			#endif
 		}
@@ -664,7 +676,7 @@ void PREFIX(free)(void *ptr)
 	}
 
 	#ifdef DEBUG
-	printf( "liballoc: %x PREFIX(free)( %x ): ", 
+	printf( "liballoc: %x " xstr(PREFIX(free)) "( %x ): ", 
 				__builtin_return_address( 0 ),
 				ptr );
 	FLUSH();
@@ -780,6 +792,7 @@ void*   PREFIX(realloc)(void *p, size_t size)
 				printf( "liballoc: ERROR: Possible 1-3 byte overrun for magic %x != %x\n",
 									min->magic,
 									LIBALLOC_MAGIC );
+				panic("(LIBALLOC) Kernel memory error!");
 				FLUSH();
 				#endif
 			}
@@ -788,18 +801,20 @@ void*   PREFIX(realloc)(void *p, size_t size)
 			if ( min->magic == LIBALLOC_DEAD )
 			{
 				#if defined DEBUG || defined INFO
-				printf( "liballoc: ERROR: multiple PREFIX(free)() attempt on %x from %x.\n", 
+				printf( "liballoc: ERROR: multiple " xstr(PREFIX(free)) "() attempt on %x from %x.\n", 
 										ptr,
 										__builtin_return_address(0) );
+				panic("(LIBALLOC) Kernel memory error!");
 				FLUSH();
 				#endif
 			}
 			else
 			{
 				#if defined DEBUG || defined INFO
-				printf( "liballoc: ERROR: Bad PREFIX(free)( %x ) called from %x\n",
+				printf( "liballoc: ERROR: Bad " xstr(PREFIX(free)) "( %x ) called from %x\n",
 									ptr,
 									__builtin_return_address(0) );
+				panic("(LIBALLOC) Kernel memory error!");
 				FLUSH();
 				#endif
 			}

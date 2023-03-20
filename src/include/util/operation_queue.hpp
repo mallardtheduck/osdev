@@ -2,91 +2,79 @@
 #define _OPERATION_QUEUE_HPP
 
 #include <btos_module.h>
-#include <util/holdlock.hpp>
-
-#if __cplusplus <= 199711L
-inline void operation_queue_null_yield_fn(){}
-#endif
 
 template<
 	typename opT, 
 	bool(*proccessFn)(opT*), 
 	size_t queue_size, 
-	void(*yieldFn)() = 
-	#if __cplusplus <= 199711L
-		operation_queue_null_yield_fn
-	#else
-		nullptr
-	#endif
+	void(*yieldFn)() = nullptr
 > class operation_queue{
 private:
-    typedef operation_queue<opT, proccessFn, queue_size, yieldFn> this_type;
+	typedef operation_queue<opT, proccessFn, queue_size, yieldFn> this_type;
 
-    opT *queue[queue_size];
-    size_t queue_count, queue_top;
-    lock queue_lock;
-	thread_id_t thread;
+	opT *queue[queue_size];
+	size_t queue_count, queue_top;
+	ILock *queue_lock;
+	uint64_t thread;
 
-    static bool operation_queue_blockcheck(void *q){
-        return *(size_t*)q > 0;
-    }
+	opT *get(){
+		auto hl = queue_lock->LockExclusive();
+		while(!queue_count){
+			queue_lock->Release();
+			if(yieldFn) yieldFn();
+			API->CurrentThread().SetBlock([&]{
+				return queue_count > 0;
+			});
+			queue_lock->TakeExclusive();
+		}
+		if(queue_count){
+			int start=queue_top-queue_count;
+			if(start < 0) {
+				start+=queue_size;
+			}
+			queue_count--;
+			return queue[start];
+		}else return NULL;
+	}
 
-    opT *get(){
-        hold_lock hl(&queue_lock);
-        while(!queue_count){
-            release_lock(&queue_lock);
-            if(yieldFn) yieldFn();
-            thread_setblock(&operation_queue_blockcheck, (void*)&queue_count);
-            take_lock(&queue_lock);
-        }
-        if(queue_count){
-            int start=queue_top-queue_count;
-            if(start < 0) {
-                start+=queue_size;
-            }
-            queue_count--;
-            return queue[start];
-        }else return NULL;
-    }
-
-    static void operation_queue_process_thread(void *q) {
-        this_type *op_q=(this_type*)q;
-        while(true){
-            opT *operation=op_q->get();
-            if(!proccessFn(operation)) break;
-        }
-    }
-
-    static bool operation_queue_full_blockcheck(void *q){
-        return *(size_t*)q < queue_size;
-    }
+	void operation_queue_process_thread() {
+		API->CurrentThread().SetName("Operation Queue");
+		while(true){
+			opT *operation=get();
+			if(!proccessFn(operation)) break;
+		}
+	}
 
 public:
-    operation_queue(){
-        queue_count=0;
-        queue_top=0;
-        init_lock(&queue_lock);
-        thread = new_thread(&operation_queue_process_thread, (void*)this);
-    }
+	operation_queue(){
+		queue_count=0;
+		queue_top=0;
+		queue_lock = API->NewLock();
+		thread = API->GetScheduler().NewThread([&]{
+			operation_queue_process_thread();
+		})->ID();
+	}
 
-    void add(opT* op){
+	void add(opT* op){
 		if(thread == 0) return;
-        hold_lock hl(&queue_lock);
-        while(queue_count >= queue_size){
-            release_lock(&queue_lock);
-            thread_setblock(&operation_queue_full_blockcheck, (void*)&queue_count);
-            take_lock(&queue_lock);
-        }
-        if(queue_count < queue_size){
-            queue_count++;
-            queue[queue_top] = op;
-            queue_top++;
-            if(queue_top == queue_size) queue_top=0;
-        }
-    }
+		auto hl = queue_lock->LockExclusive();
+		while(queue_count >= queue_size){
+			queue_lock->Release();
+			API->CurrentThread().SetBlock([&]{
+				return queue_count < queue_size;
+			});
+			queue_lock->TakeExclusive();
+		}
+		if(queue_count < queue_size){
+			queue_count++;
+			queue[queue_top] = op;
+			queue_top++;
+			if(queue_top == queue_size) queue_top=0;
+		}
+	}
 	
 	void wait_for_end(){
-		thread_wait(thread);
+		API->GetScheduler().JoinThread(thread);
 		thread = 0;
 	}
 };

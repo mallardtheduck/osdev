@@ -1,138 +1,248 @@
-#if 0
-
 #include <btos_module.h>
-#include <util/holdlock.hpp>
-#include <util/operation_queue.hpp>
+#include <module/utils/operationqueue.hpp>
 #include "ata.hpp"
 
-namespace ata_operation_types{
-    enum Enum{
-        Read,
-        Write,
-        Sync,
-        Shutdown,
+enum class ATAOperationType{
+		Read,
+		Write,
+		Sync,
+		Shutdown,
 		ATAPIRead,
-    };
-}
-
-namespace ata_operation_status{
-    enum Enum{
-        Pending,
-        Error,
-        Complete,
-    };
-}
-
-struct ata_operation{
-    ata_operation_types::Enum type;
-    ata_operation_status::Enum status;
-    ata_device *device;
-    uint32_t lba;
-    uint8_t *buf;
-    pid_t pid;
-	size_t retval;
 };
 
-static pid_t last_pid = 0;
+enum class ATAOperationStatus{
+		Pending,
+		Error,
+		Complete,
+};
 
-bool ata_queue_proc(ata_operation *op){
-    pid_t pid=getpid();
-    if(setpid(op->pid)){
-    	last_pid = op->pid;
-		if(op->type==ata_operation_types::Read){
-		    ata_device_read_sector(op->device, op->lba, op->buf);
-		    op->status=ata_operation_status::Complete;
-		}else if(op->type==ata_operation_types::Write){
-		    ata_device_write_sector_retry(op->device, op->lba, op->buf);
-		    op->status=ata_operation_status::Complete;
-		}else if(op->type==ata_operation_types::Sync){
-		    op->status=ata_operation_status::Complete;
-		}else if(op->type==ata_operation_types::ATAPIRead){
-			op->retval = atapi_device_read(op->device, op->lba, op->buf);
-			op->status=ata_operation_status::Complete;
+struct ATAOperation{
+	ATAOperationType type = ATAOperationType::Sync;
+	ATAOperationStatus status = ATAOperationStatus::Pending;
+	btos_api::hwpnp::IATABus *bus = nullptr;
+	size_t busIndex = 0;
+	uint32_t lba = 0;
+	uint8_t *buf = nullptr;
+	bt_pid_t pid = 0;
+	uint64_t tid = 0;
+	size_t retval = 0;
+	size_t readSize = 0;
+};
+
+bool queueReady = false;
+
+class ATAOperationQueue : public OperationQueue<ATAOperation, 256>{
+private:
+	uint8_t cacheBuffer[4096];
+
+	ATAOperation lastOperation = {
+		ATAOperationType::Sync, ATAOperationStatus::Complete, nullptr, 0, 0, nullptr, 0, 0, 0, 0
+	};
+	ATAOperation idleOp;
+
+protected:
+	bool Process(ATAOperation *op) override{
+		if(!op) return true;
+		auto &processManager = API->GetProcessManager();
+		if(op != &idleOp){
+			API->CurrentThread().SetPriority(10);
+			lastOperation = *op;
+			if(
+				op->type == ATAOperationType::Read && idleOp.status == ATAOperationStatus::Complete
+				&& op->bus == idleOp.bus && op->busIndex == idleOp.busIndex && op->lba == idleOp.lba
+				&& processManager.SwitchProcess(op->pid)
+			){
+				memcpy(op->buf, cacheBuffer, op->readSize);
+				op->status = ATAOperationStatus::Complete;
+				processManager.SwitchProcess(0);
+				return true;
+			}
 		}else{
-			dbgpf("ATA: Invalid operation: %i\n", op->type);
-		    op->status=ata_operation_status::Error;
+			API->CurrentThread().SetPriority(100);
 		}
-		if(!setpid(pid)){
-			dbgpf("ATA: Failed to reset PID to %i\n", (int)pid);
-			panic("(ATA) Unable to reset PID after operation!");	
+
+		if(processManager.SwitchProcess(op->pid)){
+			switch(op->type){
+				case ATAOperationType::Read:{
+					auto hl = op->bus->GetLock();
+					ata_device_read_sector(op->bus, op->busIndex, op->lba, op->buf);
+					op->status = ATAOperationStatus::Complete;
+				}break;
+				case ATAOperationType::Write:{
+					auto hl = op->bus->GetLock();
+					ata_device_write_sector(op->bus, op->busIndex, op->lba, op->buf);
+					op->status = ATAOperationStatus::Complete;
+				}break;
+				case ATAOperationType::ATAPIRead:{
+					auto hl = op->bus->GetLock();
+					op->retval = atapi_device_read(op->bus, op->busIndex, op->lba, op->buf);
+					op->status=ATAOperationStatus::Complete;
+				}break;
+				case ATAOperationType::Sync:{
+					op->status = ATAOperationStatus::Complete;
+				}break;
+				case ATAOperationType::Shutdown:{
+					return false;
+				}break;
+			}
+		}else{
+			dbgpf("ATA: Could not set pid to: %i\n", (int)op->pid);
+			op->status = ATAOperationStatus::Error;
 		}
-	}else{
-		dbgpf("ATA: Could not set pid to: %i (current pid: %i)\n", (int)op->pid, (int)pid);
-		op->status=ata_operation_status::Error;
+		processManager.SwitchProcess(0);
+		auto curPid = API->CurrentProcess().ID();
+		if(curPid != 0){
+			dbgpf("ATA: PID %i != 0\n", curPid);
+			panic("(ATA) Incorrect PID after operation!");
+		}
+		return true;
 	}
-	if(getpid() != pid){
-		dbgpf("ATA: PID %i != %i\n", (int)pid, (int)getpid());
-		panic("(ATA) Incorrect PID after operation!");
+
+	void Idle() override{
+		if(lastOperation.type == ATAOperationType::Read){
+			idleOp = lastOperation;
+			idleOp.buf = cacheBuffer;
+			idleOp.pid = 0;
+			idleOp.tid = 0;
+			idleOp.lba++;
+			idleOp.status = ATAOperationStatus::Pending;
+			Add(&idleOp);
+			lastOperation.type = ATAOperationType::Sync;
+		}
+		API->CurrentThread().Yield();
 	}
-    return true;
-}
 
-void ata_yield_fn(){
-	if(last_pid) yield_to(last_pid);
-	last_pid = 0;
-}
+	bool Batch(ATAOperation **batch, size_t size) override{
+		size_t done = 0;
+		while(done < size){
+			API->CurrentThread().SetPriority(10);
+			ATAOperation *next = nullptr;
+			for(size_t i = 0; i < size; ++i){
+				if(batch[i]->status != ATAOperationStatus::Pending) continue;
+				if(!next || batch[i]->lba < next->lba) next = batch[i];
+			}
+			if(!Process(next)) return false;
+			++done;
+		}
+		return true;
+	}
+};
 
-typedef operation_queue<ata_operation, &ata_queue_proc, 128> ata_queue;
-ata_queue *queue;
+ATAOperationQueue *queue;
 
-bool operation_blockcheck(void *p){
-    return ((ata_operation*)p)->status!=ata_operation_status::Pending;
+bool operation_blockcheck(const ATAOperation &p){
+	return p.status != ATAOperationStatus::Pending;
 }
 
 void ata_sync(){
-    ata_operation op;
-    op.status=ata_operation_status::Pending;
-    op.type=ata_operation_types::Sync;
-    op.pid=getpid();
-    queue->add(&op);
-    thread_setblock(&operation_blockcheck, (void*)&op);
+	ATAOperation op;
+	op.bus = nullptr;
+	op.status = ATAOperationStatus::Pending;
+	op.type = ATAOperationType::Sync;
+	op.pid = API->CurrentProcess().ID();
+	op.tid = API->CurrentThread().ID();
+	queue->Add(&op);
+	API->CurrentThread().SetBlock([&]{
+		return operation_blockcheck(op);
+	});
 }
 
 void init_queue(){
-    dbgout("ATA: Initialising queue...\n");
-    queue=new ata_queue();
+	dbgout("ATA: Initialising queue...\n");
+	queue = new ATAOperationQueue();
+	queueReady = true;
 	dbgpf("ATA: queue at: %p\n", queue);
-    dbgout("ATA: Syncing...\n");
-    ata_sync();
+	dbgout("ATA: Syncing...\n");
+	ata_sync();
 }
 
-void ata_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf){
-    ata_operation op;
-    op.status=ata_operation_status::Pending;
-    op.device=dev;
-    op.lba=lba;
-    op.buf=buf;
-    op.pid=getpid();
-    op.type=ata_operation_types::Read;
-    queue->add(&op);
-    thread_setblock(&operation_blockcheck, (void*)&op);
+bool ata_queued_read(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t *buf){
+	ATAOperation op;
+	op.status = ATAOperationStatus::Pending;
+	op.bus = bus;
+	op.busIndex = index;
+	op.lba = lba;
+	op.buf = buf;
+	op.pid = API->CurrentProcess().ID();
+	op.tid = API->CurrentThread().ID();
+	op.readSize = ATA_SECTOR_SIZE;
+	op.type = ATAOperationType::Read;
+	queue->Add(&op);
+	API->CurrentThread().SetBlock([&]{
+		return operation_blockcheck(op);
+	});
+	return op.status == ATAOperationStatus::Complete;
 }
 
-void ata_queued_write(ata_device *dev, uint32_t lba, uint8_t *buf){
-    ata_operation op;
-    op.status=ata_operation_status::Pending;
-    op.device=dev;
-    op.lba=lba;
-    op.buf=buf;
-    op.pid=getpid();
-    op.type=ata_operation_types::Write;
-    queue->add(&op);
-    thread_setblock(&operation_blockcheck, (void*)&op);
+bool ata_queued_write(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t *buf){
+	ATAOperation op;
+	op.status = ATAOperationStatus::Pending;
+	op.bus = bus;
+	op.busIndex = index;
+	op.lba = lba;
+	op.buf = buf;
+	op.pid = API->CurrentProcess().ID();
+	op.tid = API->CurrentThread().ID();
+	op.type = ATAOperationType::Write;
+	queue->Add(&op);
+	API->CurrentThread().SetBlock([&]{
+		return operation_blockcheck(op);
+	});
+	return op.status == ATAOperationStatus::Complete;
 }
 
-size_t atapi_queued_read(ata_device *dev, uint32_t lba, uint8_t *buf){
-    ata_operation op;
-    op.status=ata_operation_status::Pending;
-    op.device=dev;
-    op.lba=lba;
-    op.buf=buf;
-    op.pid=getpid();
-    op.type=ata_operation_types::ATAPIRead;
-    queue->add(&op);
-    thread_setblock(&operation_blockcheck, (void*)&op);
+size_t atapi_queued_read(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t *buf){
+	ATAOperation op;
+	op.status = ATAOperationStatus::Pending;
+	op.bus = bus;
+	op.busIndex = index;
+	op.lba = lba;
+	op.buf = buf;
+	op.pid = API->CurrentProcess().ID();
+	op.tid = API->CurrentThread().ID();
+	op.type = ATAOperationType::ATAPIRead;
+	queue->Add(&op);
+	API->CurrentThread().SetBlock([&]{
+		return operation_blockcheck(op);
+	});
 	return op.retval;
 }
 
-#endif
+void *ata_enqueue_read(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t *buf){
+	auto *op = new ATAOperation();
+	op->status = ATAOperationStatus::Pending;
+	op->bus = bus;
+	op->busIndex = index;
+	op->lba = lba;
+	op->buf = buf;
+	op->pid = API->CurrentProcess().ID();
+	op->tid = API->CurrentThread().ID();
+	op->readSize = ATA_SECTOR_SIZE;
+	op->type = ATAOperationType::Read;
+	queue->Add(op);
+	return op;
+}
+
+void *ata_enqueue_write(btos_api::hwpnp::IATABus *bus, size_t index, uint32_t lba, uint8_t *buf){
+	auto *op = new ATAOperation();
+	op->status = ATAOperationStatus::Pending;
+	op->bus = bus;
+	op->busIndex = index;
+	op->lba = lba;
+	op->buf = buf;
+	op->pid = API->CurrentProcess().ID();
+	op->tid = API->CurrentThread().ID();
+	op->type = ATAOperationType::ATAPIRead;
+	queue->Add(op);
+	return op;
+}
+
+bool ata_await(void *o){
+	auto op = (ATAOperation*)o;
+	API->CurrentThread().SetBlock([&]{
+		return operation_blockcheck(*op);
+	});
+	auto ret = (op->status == ATAOperationStatus::Complete);
+	delete op;
+	return ret;
+}

@@ -4,11 +4,11 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
 static circular_buffer<uint32_t, 128> keyboard_buffer;
-static lock buf_lock;
+static ILock *buf_lock;
 static bool input_available;
 static uint16_t currentflags=0;
 static uint8_t irq;
-static thread_id_t keyboard_thread_id;
+static uint64_t keyboard_thread_id;
 
 static circular_buffer<uint8_t, 16> pre_buffer;
 
@@ -27,22 +27,22 @@ static uint32_t scancode2buffervalue(uint8_t c);
 static btos_api::hwpnp::IPS2Bus *theBus;
 static size_t theIndex;
 
-static void keyboard_handler(int irq, isr_regs *regs){
+static void keyboard_handler(ICPUState &){
 	uint8_t ps2_byte=theBus->ReadDataWithoutStatusCheck();
 	if(ps2_byte == 0xFA) return;
 	pre_buffer.add_item(ps2_byte);
 	input_available = true;
 }
 
-static bool input_blockcheck(void*){
-	return input_available;
-}
-
-static void keyboard_thread(void*){
-	thread_priority(1);
+static void keyboard_thread(){
+	auto &currentThread = API->CurrentThread();
+	currentThread.SetName("Keyboard");
+	currentThread.SetPriority(1);
 	while(true){
-		thread_setblock(input_blockcheck, NULL);
-		take_lock(&buf_lock);
+		currentThread.SetBlock([]{
+			return input_available;
+		});
+		auto hl = buf_lock->LockExclusive();
 		disable_interrupts();
 		while(uint8_t key=pre_buffer.read_item()) {
 			if (!keyboard_buffer.full()) {
@@ -57,7 +57,6 @@ static void keyboard_thread(void*){
 		}
 		input_available = false;
 		enable_interrupts();
-		release_lock(&buf_lock);
 	}
 }
 
@@ -151,23 +150,25 @@ size_t keyboard_read(btos_api::hwpnp::IPS2Bus *bus, size_t index, size_t bytes, 
 	if(values > keyboard_buffer.max_size()) values=keyboard_buffer.max_size();
 	while(true){
 		if(keyboard_buffer.count() < values){
-			thread_setblock(&keyread_lockcheck, (void*)&values);
+			API->CurrentThread().SetBlock([&]{
+				return keyboard_buffer.count() >= values;
+			});
 		}
-		take_lock(&buf_lock);
-		if(keyboard_buffer.count() >= values) break;
-		release_lock(&buf_lock);
+		{
+			auto hl = buf_lock->LockExclusive();
+			if(keyboard_buffer.count() >= values) break;
+		}
 	}
 	for(size_t i=0; i<values; ++i){
 		uint32_t buffervalue=keyboard_buffer.read_item();
 		buf[i]=buffervalue;
 	}
-	release_lock(&buf_lock);
 	return bytes;
 }
 
 void init_keyboard(btos_api::hwpnp::IPS2Bus *bus, size_t index){
 	auto busLock = bus->GetLock();
-	init_lock(&buf_lock);
+	buf_lock = API->NewLock();
 	layout=us_keyboard_layout;
 	capskeys=us_keyboard_capskeys;
 	numkeys=us_keyboard_numkeys;
@@ -200,9 +201,9 @@ void init_keyboard(btos_api::hwpnp::IPS2Bus *bus, size_t index){
 		}
 	}
 	bus->WritePort(index, Device_Command::EnableScanning);
-	handle_irq(irq, &keyboard_handler);
-	keyboard_thread_id=new_thread(&keyboard_thread, NULL);
-	unmask_irq(irq);
+	API->GetHAL().HandleIRQ(irq, &keyboard_handler);
+	keyboard_thread_id = API->GetScheduler().NewThread(&keyboard_thread)->ID();
+	API->GetHAL().EnableIRQ(irq);
 	bus->ClearData();
 }
 

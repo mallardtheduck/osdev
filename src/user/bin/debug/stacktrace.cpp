@@ -27,8 +27,8 @@ vector<symbol> stack_symbols(bt_pid_t pid, context ctx){
 		}else{
 			sym.size = ctx.ebp - ctx.useresp;
 		}
-		sym.name = stacksymname(ret.size());
-		sym.file = "(None)";
+		sym.name = make_shared<string>(stacksymname(ret.size()));
+		sym.file = make_shared<string>("(None)");
 		ret.push_back(sym);
 		if(stack[0] != bp){ 
 			bp = stack[0];
@@ -57,7 +57,7 @@ void do_stacktrace(bt_pid_t pid, context ctx, size_t limit){
 	for(size_t count = 0; count < limit; ++count){
 		if(stack[1] == 0) break;
 		symbol sym = get_symbol(symbols, stack[1]);
-		printf("%p : %s in %s\n", (void*)stack[1], sym.name.c_str(), sym.file.c_str());
+		printf("%p : %s in %s\n", (void*)stack[1], sym.name->c_str(), sym.file->c_str());
 		if(stack[0] != bp){ 
 			bp = stack[0];
 			debug_peek((void*)stack, pid, bp, sizeof(stack));

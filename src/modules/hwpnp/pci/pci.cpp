@@ -1,11 +1,6 @@
 #include "pci.hpp"
 
-syscall_table *SYSCALL_TABLE;
-char dbgbuf[256];
-USE_PURE_VIRTUAL;
-USE_STATIC_INIT;
-
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include <module/module.inc>
 
 static const uint32_t CONFIG_ADDRESS=0xCF8;
 static const uint32_t CONFIG_DATA=0xCFC;
@@ -37,9 +32,8 @@ void write_config32(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uin
     out32(CONFIG_DATA, value);
 }
 
-extern "C" int module_main(syscall_table *systbl, char *params){
-	SYSCALL_TABLE=systbl;
-	pnp_register_driver(GetPCIBusDriver());
+int module_main(char *){
+	API->GetHwPnPManager().RegisterDriver(GetPCIBusDriver());
     return 0;
 }
 
@@ -85,15 +79,15 @@ PCIBusDevice::PCIDevice PCIBusDevice::ScanDevice(uint8_t bus, uint8_t slot, uint
 }
 
 void PCIBusDevice::Lock(){
-	take_lock(&bus_lock);
+	bus_lock->TakeExclusive();
 }
 
 void PCIBusDevice::Unlock(){
-	release_lock(&bus_lock);
+	bus_lock->Release();
 }
 
 PCIBusDevice::PCIBusDevice(){
-	init_lock(&bus_lock);
+	bus_lock = API->NewLock();
 	ScanBus(0);
 }
 

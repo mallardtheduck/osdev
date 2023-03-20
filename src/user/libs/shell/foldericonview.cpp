@@ -47,6 +47,7 @@ void FolderIconView::SetSortOrder(std::function<bool(const bt_directory_entry &a
 }
 
 bt_directory_entry FolderIconView::GetSelectedEntry(){
+	static bt_directory_entry invalid_directory_entry = {false, 0, {'\0'}, 0, FS_Invalid};
 	auto index = GetValue();
 	if(index < entries.size()) return entries[index];
 	else return invalid_directory_entry;

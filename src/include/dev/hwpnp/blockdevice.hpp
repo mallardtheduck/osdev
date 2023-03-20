@@ -12,6 +12,15 @@ namespace hwpnp{
 	public:
 		virtual bool ReadSector(uint64_t lba, uint8_t *buf) = 0;
 		virtual bool WriteSector(uint64_t lba, const uint8_t *buf) = 0;
+		virtual uint64_t AsyncReadSector(uint64_t lba, uint8_t *buf){
+			return ReadSector(lba, buf);
+		}
+		virtual uint64_t AsyncWriteSector(uint64_t lba, const uint8_t *buf){
+			return WriteSector(lba, buf);
+		}
+		virtual bool Await(uint64_t id){
+			return (bool)id;
+		}
 		virtual size_t GetSectorSize() = 0;
 		virtual bt_filesize_t GetSize() = 0;
 	
@@ -46,13 +55,16 @@ namespace hwpnp{
 			bt_filesize_t lba = handle->pos / secSize;
 			size_t count = bytes / secSize;
 			size_t read = 0;
+			vector<uint64_t> opIds;
 			for(size_t i = 0; i < count; ++i){
-				if(device->ReadSector(lba + i, (uint8_t*)buf + (secSize * i))){
-					handle->pos += secSize;
-					read += secSize;
-				}else{
-					break;
-				}
+				auto id = device->AsyncReadSector(lba + i, (uint8_t*)buf + (secSize * i));
+				opIds.push_back(id);
+				handle->pos += secSize;
+			}
+			bool ok = true;
+			for(auto &id : opIds){
+				if(!device->Await(id)) ok = false;
+				if(ok) read += secSize;
 			}
 			return read;
 		}
@@ -64,13 +76,16 @@ namespace hwpnp{
 			bt_filesize_t lba = handle->pos / secSize;
 			size_t count = bytes / secSize;
 			size_t written = 0;
+			vector<uint64_t> opIds;
 			for(size_t i = 0; i < count; ++i){
-				if(device->WriteSector(lba + i, (uint8_t*)buf + (secSize * i))){
-					handle->pos += secSize;
-					written += secSize;
-				}else{
-					break;
-				}
+				auto id = device->AsyncWriteSector(lba + i, (uint8_t*)buf + (secSize * i));
+				opIds.push_back(id);
+				handle->pos += secSize;
+			}
+			bool ok = true;
+			for(auto &id : opIds){
+				if(!device->Await(id)) ok = false;
+				if(ok) written += secSize;
 			}
 			return written;
 		}

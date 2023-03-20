@@ -5,7 +5,7 @@
 extern void gdt_set_df_cr3(uint32_t cr3);
 
 namespace MM2{
-	static lock virtual_lock;
+	static StaticAllocLock virtual_lock;
 
 	static const uint32_t CR0_Paging_Enabled = 0x80000000;
 
@@ -14,7 +14,7 @@ namespace MM2{
 	PageDirectory *kernel_pagedir;
 	PageDirectory *current_pagedir;
 	
-	lock table_frame_lock;
+	StaticAllocLock table_frame_lock;
 
 	static void idmap_page(size_t pageno){
 		size_t tableno = pageno / MM2_Table_Entries;
@@ -32,9 +32,10 @@ namespace MM2{
 	}
 
 	void mm2_virtual_init(){
-		init_lock(virtual_lock);
+		virtual_lock.Init();
 		dbgout("MM2: Virtual memory manager init.\n");
 		memset(&init_kernel_pagedir, 0, sizeof(init_kernel_pagedir));
+		dbgpf("MM2: VMM: Kernel End: %p\n", get_kernel_end());
 		size_t pages_to_idmap = div_ceil((uint32_t)get_kernel_end(), MM2_Page_Size);
 		size_t tables_needed = div_ceil(pages_to_idmap, MM2_Table_Entries);
 		dbgpf("MM2: VMM: Pages to identity map: %i, tables needed: %i\n", (int)pages_to_idmap, (int)tables_needed);
@@ -63,10 +64,10 @@ namespace MM2{
 		asm volatile("mov %0, %%cr0":: "b"(cr0));
 		dbgout("Done.\n");
 		gdt_set_df_cr3((uint32_t)init_kernel_pagedir);
+		GetHAL().HandlePageFault(&page_fault_handler);
 		
-		int_handle(0x0e, &page_fault_handler);
 		current_pagedir = kernel_pagedir = new(&kpd_place) PageDirectory(init_kernel_pagedir);
-		init_lock(table_frame_lock);
+		table_frame_lock.Init();
 		current_pagedir->guard_page_at(NULL);
 		kernel_pagedir->kernel_pagedir_late_init();
 	}
@@ -96,21 +97,22 @@ namespace MM2{
 	}
 	
 	void mm2_switch(PageDirectory *newdir){
-		disable_interrupts();
+		if(newdir == current_pagedir) return;
+		//dbgpf("MM2: Switching pagedir from %p to %p\n", current_pagedir, newdir);
+		auto il = GetHAL().LockInterrupts();
 		kernel_pagedir->copy_kernelspace(*current_pagedir);
 		newdir->copy_kernelspace(*kernel_pagedir);
 		newdir->activate();
 		current_pagedir=newdir;
-		enable_interrupts();
 	}
 	
 	bool interrupts = false;
 	
 	void mm2_liballoc_lock(){
-		take_lock_exclusive(virtual_lock);
+		virtual_lock->TakeExclusive();
 	}
 	
 	void mm2_liballoc_unlock(){
-		release_lock(virtual_lock);
+		virtual_lock->Release();
 	}
 }

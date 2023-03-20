@@ -21,6 +21,10 @@ public:
 	T* get(){
 		return ptr;
 	}
+
+	operator bool(){
+		return ptr;
+	}
 };
 
 #endif

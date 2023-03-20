@@ -9,7 +9,14 @@
 #include <stdint.h>
 #endif
 #include "../util/bt_enum.h"
+#ifdef BTOS_NO_DEVICES
+#undef BTOS_NO_DEVICES
+#define REAL_BTOS_NO_DEVICES
+#endif
 #include <btos/devices.h>
+#ifdef REAL_BTOS_NO_DEVICES
+#define BTOS_NO_DEVICES
+#endif
 
 namespace btos_api{
 namespace hwpnp{

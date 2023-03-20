@@ -24,6 +24,8 @@ namespace btos_api{
 		bt_priority Prioritize(bt_priority priority);
 		bt_pid_t GetPID() const;
 		bt_proc_status::Enum GetStatus() const;
+		void SetProcStage(size_t v);
+		size_t GetProcStage() const;
 		
 		bool operator==(const Process &p) const { return pid == p.pid; }
 		bool operator!=(const Process &p) const { return !(*this == p); }

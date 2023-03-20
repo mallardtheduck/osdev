@@ -5,17 +5,15 @@
 #error This file is for kernel use only.
 #endif
 
-#include "module/module_api.h"
-#include "module/drivers.h"
-#include "module/extension.h"
-#include "module/handle.h"
 #ifndef BTOS_MODULE_NO_IO
 #include "module/io.h"
 #endif
-#include "module/locktype.h"
-#include "module/module_stubs.h"
+
+#include "module/module_c.h"
+#include "btos/fs_interface.h"
 
 #ifdef __cplusplus
+#include "module/module_api.hpp"
 #include "module/module_cpp.hpp"
 #endif
 

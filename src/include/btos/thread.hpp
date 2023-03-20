@@ -18,6 +18,8 @@ namespace btos_api{
 		void Wait() const;
 		void UnBlock();
 		void Abort();
+
+		void SetName(const char *name);
 	};
 
 }

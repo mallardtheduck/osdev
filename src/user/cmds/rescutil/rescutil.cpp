@@ -33,7 +33,7 @@ void extract(const std::string &input, const std::string &rescname, std::string 
 	if(resc){
 		auto in = r::Resc_OpenResc(resc, rescname);
 		if(in){
-			auto out = open(output.c_str(), O_WRONLY);
+			auto out = open(output.c_str(), O_WRONLY | O_CREAT);
 			if(out){
 				std::array<char, 1024> buf;
 				int count = 1;
