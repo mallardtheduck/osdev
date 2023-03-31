@@ -109,13 +109,13 @@ bool Client::HandleMessage(const Message &msg){
 			break;
 		}
 		case wm_RequestType::Update:{
-			if(currentWindow){
+			if(currentWindow && currentWindow->GetVisible()){
 				DrawAndRefreshWindows(currentWindow->GetBoundingRect(), currentWindow->id);
 			}
 			break;
 		}
 		case wm_RequestType::UpdateRect:{
-			if(currentWindow){
+			if(currentWindow && currentWindow->GetVisible()){
 				wm_Rect r = msg.Content<wm_Rect>();
 				Rect rect = {r.x, r.y, r.w, r.h};
 				Point p = currentWindow->GetContentPosition();
