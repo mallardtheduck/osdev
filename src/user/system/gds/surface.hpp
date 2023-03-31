@@ -4,11 +4,14 @@
 #include "gds.hpp"
 #include "drawingop.hpp"
 
+#include <vector>
+
 class Surface {
 public:
 	uint64_t id;
 
 	virtual size_t AddOperation(gds_DrawingOp op) = 0;
+	virtual std::vector<size_t> AddOperations(gds_MultiOps &mops) = 0;
 	virtual void RemoveOperation(size_t id) = 0;
 	virtual gds_DrawingOp GetOperation(size_t id) = 0;
 	virtual size_t GetWidth() = 0;

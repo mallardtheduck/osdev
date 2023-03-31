@@ -111,6 +111,21 @@ size_t VectorSurface::AddOperation(gds_DrawingOp op){
 	return id;
 }
 
+std::vector<size_t> VectorSurface::AddOperations(gds_MultiOps &mops){
+	std::vector<size_t> ret {mops.count};
+	auto zCounter = ops.empty() ? 1 : ops.rbegin()->second.zOrder;
+	for(size_t i = 0; i < mops.count; ++i){
+		uint32_t id = ++opCounter;
+		while(ops.find(id) != ops.end()) id = ++opCounter;
+		ops.insert({id, {++zCounter, mops.ops[i], NULL}});
+		ret.push_back(id);
+	}
+	update = true;
+	isCompressed = false;
+	OrderOps();
+	return ret;
+}
+
 void VectorSurface::RemoveOperation(size_t id){
 	if(ops.find(id) != ops.end()){
 		ops.erase(id);
@@ -246,24 +261,23 @@ std::shared_ptr<GD::Image> VectorSurface::Render(uint32_t /*scale*/){
 }
 
 void VectorSurface::RenderTo(std::shared_ptr<GD::Image> dst, int32_t srcX, int32_t srcY, int32_t dstX, int32_t dstY, uint32_t w, uint32_t h, uint32_t flags){
-	if(update){
-		if(srcX < 0){
-			if(w < (uint32_t)-srcX) return;
-			w += srcX;
-			dstX -= srcX;
-			srcX = 0;
-		}
-		if(srcY < 0){
-			if(h < (uint32_t)-srcY) return;
-			h += srcY;
-			dstY -= srcY;
-			srcY = 0;
-		}
-		if(srcX + w > (uint32_t)width) w = width - srcX;
-		if(srcY + h > (uint32_t)height) h = height - srcY;
-		renderRect = {srcX, srcY, w, h};
-	}else{
-		renderRect = {0, 0, width, height};
+	if(srcX < 0){
+		if(w < (uint32_t)-srcX) return;
+		w += srcX;
+		dstX -= srcX;
+		srcX = 0;
+	}
+	if(srcY < 0){
+		if(h < (uint32_t)-srcY) return;
+		h += srcY;
+		dstY -= srcY;
+		srcY = 0;
+	}
+	if(srcX + w > (uint32_t)width) w = width - srcX;
+	if(srcY + h > (uint32_t)height) h = height - srcY;
+	Rectangle newRect = {srcX, srcY, w, h};
+	if(update || !Contains(renderRect, newRect)){
+		renderRect = newRect;
 	}
 	auto src = RenderToCache();
 	renderRect = {0, 0, width, height};

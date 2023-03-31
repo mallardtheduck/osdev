@@ -205,6 +205,12 @@ size_t BitmapSurface::AddOperation(gds_DrawingOp op) {
 	return 0;
 }
 
+std::vector<size_t> BitmapSurface::AddOperations(gds_MultiOps &mops){
+	std::vector<size_t> ret {mops.count};
+	for(size_t i = 0; i < mops.count; ++i) ret.push_back(AddOperation(mops.ops[i]));
+	return ret;
+}
+
 void BitmapSurface::RemoveOperation(size_t /*id*/) {
 	//Does nothing on bitmap surface.
 }

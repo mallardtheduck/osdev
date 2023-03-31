@@ -77,8 +77,7 @@ namespace gds{
 		if(queued){
 			QueueOp(op);
 			return 0;
-		}
-		else return GDS_AddDrawingOp(op);
+		}else return GDS_AddDrawingOp(op);
 	}
 
 	vector<uint32_t> Surface::AddDrawingOps(const vector<gds_DrawingOp> &ops){
@@ -161,64 +160,90 @@ namespace gds{
 	}
 
 	uint32_t Surface::Dot(const Point &p, const Colour &c, uint8_t size){
-		Select();
-		if(queued) QueueOp(GDS_Dot_Op(p.x, p.y, c.id, size));
-		else return GDS_Dot(p.x, p.y, c.id, size);
-		return 0;
+		if(queued){
+			QueueOp(GDS_Dot_Op(p.x, p.y, c.id, size));
+			return 0;
+		} else {
+			Select();
+			return GDS_Dot(p.x, p.y, c.id, size);
+		}
 	}
 	uint32_t Surface::Line(const Point &p1, const Point &p2, const Colour &c, uint8_t width, uint32_t style){
-		Select();
-		if(queued) QueueOp(GDS_Line_Op(p1.x, p1.y, p2.x, p2.y, c.id, width, style));
-		else return GDS_Line(p1.x, p1.y, p2.x, p2.y, c.id, width, style);
+		if(queued){
+			 QueueOp(GDS_Line_Op(p1.x, p1.y, p2.x, p2.y, c.id, width, style));
+			 return 0;
+		}else{
+			Select();
+			return GDS_Line(p1.x, p1.y, p2.x, p2.y, c.id, width, style);
+		}
 		return 0;
 	}
 	uint32_t Surface::Box(const Rect &r, const Colour &lineColour, const Colour &fillColour, uint8_t lineWidth, uint32_t lineStyle, uint32_t fillStyle){
-		Select();
-		if(queued) QueueOp(GDS_Box_Op(r.x, r.y, r.w, r.h, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle));
-		else return GDS_Box(r.x, r.y, r.w, r.h, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle);
-		return 0;
+		if(queued){
+			QueueOp(GDS_Box_Op(r.x, r.y, r.w, r.h, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle));
+			return 0;
+		}else{
+			Select();
+			return GDS_Box(r.x, r.y, r.w, r.h, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle);
+		}
 	}
 	uint32_t Surface::Ellipse(const Rect &r, const Colour &lineColour, const Colour &fillColour, uint8_t lineWidth, uint32_t lineStyle, uint32_t fillStyle){
-		Select();
-		if(queued) QueueOp(GDS_Ellipse_Op(r.x, r.y, r.w, r.h, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle));
-		else return GDS_Ellipse(r.x, r.y, r.w, r.h, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle);
-		return 0;
+		if(queued){
+			QueueOp(GDS_Ellipse_Op(r.x, r.y, r.w, r.h, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle));
+			return 0;
+		}else{
+			Select();
+			return GDS_Ellipse(r.x, r.y, r.w, r.h, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle);
+		}
 	}
 	uint32_t Surface::Arc(const Rect &r, uint32_t a1, uint32_t a2, const Colour &lineColour, const Colour &fillColour, uint8_t lineWidth, uint32_t lineStyle, uint32_t fillStyle){
-		Select();
-		if(queued) QueueOp(GDS_Arc_Op(r.x, r.y, r.w, r.h, a1, a2, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle));
-		else return GDS_Arc(r.x, r.y, r.w, r.h, a1, a2, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle);
-		return 0;
+		if(queued){
+			QueueOp(GDS_Arc_Op(r.x, r.y, r.w, r.h, a1, a2, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle));
+			return 0;
+		}else{
+			Select();
+			return GDS_Arc(r.x, r.y, r.w, r.h, a1, a2, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle);
+		}
 	}
 	uint32_t Surface::Polygon(const std::vector<Point> &points, bool closed, const Colour &lineColour, const Colour &fillColour, uint8_t lineWidth, uint32_t lineStyle, uint32_t fillStyle){
-		Select();
 		if(queued){
 			auto op = GDS_Polygon_Op(closed, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle);
 			auto params = GDS_Polygon_Params(0, points.size(), const_cast<Point*>(points.data()));
 			QueueOp(op, params);
-		}else return GDS_Polygon(points.size(), const_cast<Point*>(points.data()), closed, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle);
-		return 0;
+			return 0;
+		}else{
+			Select();
+			return GDS_Polygon(points.size(), const_cast<Point*>(points.data()), closed, lineColour.id, fillColour.id, lineWidth, lineStyle, fillStyle);
+		}
 	}
 	uint32_t Surface::Text(const Point &p, const std::string &text, const Font &font, uint32_t size, const Colour &c, uint8_t style){
-		Select();
 		if(queued){
 			auto op = GDS_Text_Op(p.x, p.y, font.id, size, c.id, style);
 			auto params = GDS_Text_Params(0, text.c_str());
 			QueueOp(op, params);
-		}else return GDS_Text(p.x, p.y, text.c_str(), font.id, size, c.id, style);
-		return 0;
+			return 0;
+		}else{
+			Select();
+			return GDS_Text(p.x, p.y, text.c_str(), font.id, size, c.id, style);
+		}
 	}
 	uint32_t Surface::TextChar(const Point &p, char c, const Font &font, uint32_t size, const Colour &col, uint8_t style){
-		Select();
-		if(queued) QueueOp(GDS_TextChar_Op(p.x, p.y, c, font.id, size, col.id, style));
-		else return GDS_TextChar(p.x, p.y, c, font.id, size, col.id, style);
-		return 0;
+		if(queued){
+			QueueOp(GDS_TextChar_Op(p.x, p.y, c, font.id, size, col.id, style));
+			return 0;
+		}else{
+			Select();
+			return GDS_TextChar(p.x, p.y, c, font.id, size, col.id, style);
+		}
 	}
 	uint32_t Surface::Blit(const Surface &src, const Rect &srcRect, const Rect &dstRect, uint32_t scale, uint32_t flags){
-		Select();
-		if(queued) QueueOp(GDS_Blit_Op(src.gds_id, srcRect.x, srcRect.y, srcRect.w, srcRect.h, dstRect.x, dstRect.y, dstRect.w, dstRect.h, scale, flags));
-		else return GDS_Blit(src.gds_id, srcRect.x, srcRect.y, srcRect.w, srcRect.h, dstRect.x, dstRect.y, dstRect.w, dstRect.h, scale, flags);
-		return 0;
+		if(queued){
+			QueueOp(GDS_Blit_Op(src.gds_id, srcRect.x, srcRect.y, srcRect.w, srcRect.h, dstRect.x, dstRect.y, dstRect.w, dstRect.h, scale, flags));
+			return 0;
+		}else{
+			Select();
+			return GDS_Blit(src.gds_id, srcRect.x, srcRect.y, srcRect.w, srcRect.h, dstRect.x, dstRect.y, dstRect.w, dstRect.h, scale, flags);
+		}
 	}
 
 	void Surface::BeginQueue(){
