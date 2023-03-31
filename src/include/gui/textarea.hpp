@@ -12,6 +12,7 @@ private:
 	gds::Rect outerRect;
 	gds::Rect rect; 
 	std::unique_ptr<gds::Surface> bkSurf;
+	std::unique_ptr<gds::Surface> cachedSurf;
 	
 	std::function<bool(uint32_t)> onKeyPress;
 	
@@ -21,6 +22,7 @@ private:
 		gds::TextMeasurements textMeasures;
 		std::unique_ptr<gds::Surface> surf;
 		uint64_t selSerial = 0;
+		uint64_t updSerial = 0;
 		
 		Line(const std::string &t) : text(t) {};
 		Line() = default;
@@ -29,6 +31,7 @@ private:
 	uint32_t fontHeight;
 	
 	std::vector<Line> lines;
+	size_t lastLineCount = 0;
 	
 	bool inSelectMode = false;
 	bool haveSelection = false;
@@ -39,9 +42,13 @@ private:
 	size_t lastCursorPos = 0;
 	size_t cursorLine = 0;
 	size_t lastCursorLine = 0;
-	
+	size_t prevCursorPos = 0;
+	size_t prevCursorLine = 0;
+
 	size_t lineOffset = 0;
 	size_t textOffset = 0;
+	size_t lastLineOffset = 0;
+	size_t lastTextOffset = 0;
 	
 	uint32_t textOffsetPxls = 0;
 	uint32_t cursorPosPxls = 0;
@@ -52,6 +59,7 @@ private:
 	bool enabled = true;
 	
 	uint64_t selSerial = 0;
+	uint64_t updSerial = 0;
 	
 	std::unique_ptr<Scrollbar> hscroll;
 	std::unique_ptr<Scrollbar> vscroll;
