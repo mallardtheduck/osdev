@@ -96,7 +96,21 @@
         "memory": "cpp",
         "memory_resource": "cpp",
         "random": "cpp",
-        "dynamic_bitset": "cpp"
+        "dynamic_bitset": "cpp",
+        "buffer": "cpp",
+        "strstream": "cpp",
+        "cfenv": "cpp",
+        "csetjmp": "cpp",
+        "decimal": "cpp",
+        "iomanip": "cpp",
+        "scoped_allocator": "cpp",
+        "typeindex": "cpp",
+        "any": "cpp",
+        "codecvt": "cpp",
+        "cuchar": "cpp",
+        "executor": "cpp",
+        "netfwd": "cpp",
+        "shared_mutex": "cpp"
     },
     "editor.fontLigatures": true
 }
