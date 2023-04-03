@@ -5,56 +5,17 @@
 #include "scrollbar.hpp"
 #include "checkbox.hpp"
 
+#include <util/pimpl_ptr.hpp>
+
 namespace btos_api{
 namespace gui{
+
+class IconViewImpl;
+PIMPL_CLASS(IconViewImpl);
 	
 class IconView : public IValueControl<size_t>{
 private:
-	gds::Rect outerRect;
-	gds::Rect rect; 
-	std::unique_ptr<gds::Surface> bkSurf;
-	
-	std::vector<std::string> items;
-	std::vector<bool> multiSelection;
-	
-	struct DrawItem{
-		std::string text;
-		gds::TextMeasurements measures1;
-		gds::TextMeasurements measures2;
-		std::string fittedText1;
-		std::string fittedText2;
-		uint32_t fittedWidth;
-		std::unique_ptr<gds::Surface> surf;
-		bool selected;
-		bool focussed;
-	};
-	
-	std::vector<DrawItem> drawItems;
-	std::shared_ptr<gds::Surface> defaultIcon;
-	std::vector<std::shared_ptr<gds::Surface>> icons;
-	
-	size_t fontHeight;
-	size_t iconSize;
-	
-	size_t itemWidth, itemHeight;
-	size_t selectedItem = 0;
-	size_t vOffset = 0;
-	size_t visibleLines = 0;
-	size_t visibleCols = 0;
-	
-	bool hasFocus = false;
-	bool enabled = true;
-	bool fireCurrentSelection = true;
-	
-	std::unique_ptr<Scrollbar> vscroll;
-	
-	bool multiSelect;
-	
-	std::function<void()> onActivate;
-	std::function<void()> onInspect;
-	
-	void UpdateDisplayState(bool changePos = true);
-	void FitTextToWidth(DrawItem &item, size_t width);
+	btos::pimpl_ptr<IconViewImpl> im;
 public:
 	IconView(const gds::Rect &r, size_t iconSize = 32, bool multiSelect = false);
 	

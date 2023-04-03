@@ -2,15 +2,17 @@
 #define _TESTCONTROL_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
+struct TestControlImpl;
+PIMPL_CLASS(TestControlImpl);
+
 class TestControl : public IControl{
 private:
-	gds::Rect rect;
-	
-	std::function<bool(const wm_Event&)> onEvent;
+	btos::pimpl_ptr<TestControlImpl> im;
 public:
 	TestControl(const gds::Rect &r);
 	

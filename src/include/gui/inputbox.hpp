@@ -8,16 +8,17 @@
 #include <string>
 
 #include <gui/idialog.hpp>
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
+struct InputBoxImpl;
+PIMPL_CLASS(InputBoxImpl);
+
 class InputBox : public IDialog<std::string>{
 private:
-	std::string message;
-	std::string title;
-	std::string defvalue;
-	std::shared_ptr<gds::Surface> icon;
+	btos::pimpl_ptr<InputBoxImpl> im;
 public:
 	InputBox();
 	InputBox(const std::string &message, const std::string &title, const std::string &defvalue = "", std::shared_ptr<gds::Surface> icon = nullptr);

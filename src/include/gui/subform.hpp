@@ -7,23 +7,20 @@
 namespace btos_api{
 namespace gui{
 
+struct SubFormImpl;
+PIMPL_CLASS(SubFormImpl);
+
 class SubForm : public Container, public IControl{
 private:
-	gds::Rect rect;
-	std::unique_ptr<gds::Surface> surf;
+	btos::pimpl_ptr<SubFormImpl> im;
 	
-	uint32_t subs;
-	std::vector<gds::Rect> updateRects;
-	
-	gds::Surface &GetSurface();
-	gds::Rect GetBoundingRect();
-	
-	bool enabled = true;
-	
-	void Update(const gds::Rect &r);
-	void Update();
-	void SetSubscribed(uint32_t subs);
-	bool OnLastControlFocus(bool reverse);
+	gds::Surface &GetSurface() override;
+	gds::Rect GetBoundingRect() override;
+
+	void Update(const gds::Rect &r) override;
+	void Update() override;
+	void SetSubscribed(uint32_t subs) override;
+	bool OnLastControlFocus(bool reverse) override;
 public:
 	SubForm(const gds::Rect &r);
 

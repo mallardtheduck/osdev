@@ -2,24 +2,17 @@
 #define _SCROLLBAR_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
+struct ScrollbarImpl;
+PIMPL_CLASS(ScrollbarImpl);
+
 class Scrollbar : public IValueControl<uint32_t>{
 private:
-	gds::Rect rect;
-	
-	uint32_t lines, step, page, value;
-	bool horiz;
-	bool focus = false;
-	bool enabled = true;
-
-	bool topBtnDown = false;
-	bool btmBtnDown = false;
-	bool grabbed = false;
-	
-	std::shared_ptr<gds::Surface> bkSurf;
+	btos::pimpl_ptr<ScrollbarImpl> im;
 public:
 	Scrollbar(const gds::Rect &r, uint32_t lines, uint32_t step, uint32_t page, uint32_t value, bool horiz = false);
 	

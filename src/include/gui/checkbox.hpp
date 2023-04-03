@@ -2,20 +2,17 @@
 #define _CHECKBOX_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
+struct CheckboxImpl;
+PIMPL_CLASS(CheckboxImpl);
+
 class Checkbox : public IValueControl<bool> {
 private:
-	gds::Rect rect;
-	std::string text;
-	std::unique_ptr<gds::Surface> bkSurf;
-	
-	bool value;
-	gds::TextMeasurements textMeasures;
-	bool focus = false;
-	bool enabled = true;
+	btos::pimpl_ptr<CheckboxImpl> impl;
 public:
 	Checkbox(const gds::Rect &r, const std::string &t, bool v);
 	

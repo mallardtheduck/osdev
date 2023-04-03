@@ -2,6 +2,7 @@
 #define _TOOLBAR_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
@@ -34,17 +35,12 @@ public:
 	virtual ~IDecorativeToolbarControl() {}
 };
 
+class ToolbarImpl;
+PIMPL_CLASS(ToolbarImpl);
+
 class Toolbar : public IControl{
 private:
-	gds::Rect rect;
-	std::unique_ptr<gds::Surface> bkSurf;
-	bool enabled = true;
-	
-	uint32_t size;
-	uint32_t height;
-	
-	std::vector<std::shared_ptr<IToolbarControlBase>> controls;
-	std::shared_ptr<IToolbarControlBase> mouseOver;
+	btos::pimpl_ptr<ToolbarImpl> im;
 public:
 	Toolbar(uint32_t size = 24);
 	
@@ -67,17 +63,12 @@ public:
 	void OnBind();
 };
 
+struct ToolbarButtonImpl;
+PIMPL_CLASS(ToolbarButtonImpl);
+
 class ToolbarButton : public IActionControl<void>, public IToolbarControl{
 private:
-	bool down = false;
-	bool enabled = true;
-
-	std::shared_ptr<gds::Surface> icon;
-	std::string label;
-	
-	std::unique_ptr<gds::Surface> bkSurf;
-	gds::TextMeasurements labelMeasures;
-	gds_SurfaceInfo info;
+	btos::pimpl_ptr<ToolbarButtonImpl> im;
 public:
 	ToolbarButton(std::shared_ptr<gds::Surface> icon = nullptr, const std::string &label = "");
 	

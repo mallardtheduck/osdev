@@ -8,32 +8,80 @@
 
 namespace btos_api{
 namespace gui{
-	
+
 const auto scrollbarSize = 17;
 const auto checkSize = 17;
 
-IconView::IconView(const gds::Rect &r, size_t iS, bool mS) : 
-	outerRect(r), 
-	rect(r.x, r.y, r.w - scrollbarSize, r.h),
-	iconSize(iS),
-	multiSelect(mS)
-	{
+struct IconViewImpl{
+	gds::Rect outerRect;
+	gds::Rect rect; 
+	std::unique_ptr<gds::Surface> bkSurf;
+	
+	std::vector<std::string> items;
+	std::vector<bool> multiSelection;
+	
+	struct DrawItem{
+		std::string text;
+		gds::TextMeasurements measures1;
+		gds::TextMeasurements measures2;
+		std::string fittedText1;
+		std::string fittedText2;
+		uint32_t fittedWidth;
+		std::unique_ptr<gds::Surface> surf;
+		bool selected;
+		bool focussed;
+	};
+	
+	std::vector<DrawItem> drawItems;
+	std::shared_ptr<gds::Surface> defaultIcon;
+	std::vector<std::shared_ptr<gds::Surface>> icons;
+	
+	size_t fontHeight;
+	size_t iconSize;
+	
+	size_t itemWidth, itemHeight;
+	size_t selectedItem = 0;
+	size_t vOffset = 0;
+	size_t visibleLines = 0;
+	size_t visibleCols = 0;
+	
+	bool hasFocus = false;
+	bool enabled = true;
+	bool fireCurrentSelection = true;
+	
+	std::unique_ptr<Scrollbar> vscroll;
+	
+	bool multiSelect;
+	
+	std::function<void()> onActivate;
+	std::function<void()> onInspect;
+	
+	void UpdateDisplayState(bool changePos = true);
+	void FitTextToWidth(DrawItem &item, size_t width);
+};
+PIMPL_IMPL(IconViewImpl);
+
+IconView::IconView(const gds::Rect &r, size_t iS, bool mS) : im(new IconViewImpl()) {
+	im->outerRect = r;
+	im->rect = {r.x, r.y, r.w - scrollbarSize, r.h};
+	im->iconSize = iS;
+	im->multiSelect = mS;
 	auto info = fonts::GetIconViewFont().Info();
-	fontHeight = (info.maxH * fonts::GetIconViewTextSize()) / info.scale;
-	if(multiSelect && fontHeight < checkSize) fontHeight = checkSize;
-	itemWidth = iconSize * 2;
-	itemHeight = std::max<size_t>((iconSize * 2), (iconSize * 1.5) + (fontHeight * 2));
+	im->fontHeight = (info.maxH * fonts::GetIconViewTextSize()) / info.scale;
+	if(im->multiSelect && im->fontHeight < checkSize) im->fontHeight = checkSize;
+	im->itemWidth = im->iconSize * 2;
+	im->itemHeight = std::max<size_t>((im->iconSize * 2), (im->iconSize * 1.5) + (im->fontHeight * 2));
 	
-	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h}, 1, 1, 1, 1, false));
+	im->vscroll.reset(new Scrollbar({im->outerRect.x + (int32_t)im->outerRect.w - scrollbarSize, im->outerRect.y, scrollbarSize, im->outerRect.h}, 1, 1, 1, 1, false));
 	
-	vscroll->OnChange([this] (uint32_t v) {
-		vOffset = v;
+	im->vscroll->OnChange([this] (uint32_t v) {
+		im->vOffset = v;
 	});
 	
-	UpdateDisplayState();
+	im->UpdateDisplayState();
 }
 
-void IconView::UpdateDisplayState(bool changePos){
+void IconViewImpl::UpdateDisplayState(bool changePos){
 	visibleLines = (rect.h - 4) / itemHeight;
 	visibleCols = (rect.w - 4) / itemWidth;
 	if(changePos){
@@ -72,7 +120,7 @@ void IconView::UpdateDisplayState(bool changePos){
 	}
 }
 
-void IconView::FitTextToWidth(DrawItem &item, size_t width){
+void IconViewImpl::FitTextToWidth(DrawItem &item, size_t width){
 	auto surf = gds::Surface(gds_SurfaceType::Vector, 1, 1, 100, gds_ColourType::True);
 	if(item.fittedWidth == width) return;
 
@@ -113,251 +161,251 @@ EventResponse IconView::HandleEvent(const wm_Event &e){
 	bool update = false;
 	if(e.type == wm_EventType::Keyboard && !(e.Key.code & KeyFlags::KeyUp)){
 		uint16_t code = KB_code(e.Key.code);
-		if(code == (KeyFlags::NonASCII | KeyCodes::DownArrow) && selectedItem < items.size() - 1){
-			selectedItem += visibleCols;
-			if(selectedItem >= items.size()) selectedItem = items.size() - 1;
+		if(code == (KeyFlags::NonASCII | KeyCodes::DownArrow) && im->selectedItem < im->items.size() - 1){
+			im->selectedItem += im->visibleCols;
+			if(im->selectedItem >= im->items.size()) im->selectedItem = im->items.size() - 1;
 			update = true;
 			handled = true;
-			UpdateDisplayState();
+			im->UpdateDisplayState();
 			RaiseChangeEvent();
-		}else if(code == (KeyFlags::NonASCII | KeyCodes::UpArrow) && selectedItem > 0){
-			selectedItem -= std::min(selectedItem, visibleCols);
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::UpArrow) && im->selectedItem > 0){
+			im->selectedItem -= std::min(im->selectedItem, im->visibleCols);
 			update = true;
 			handled = true;
-			UpdateDisplayState();
+			im->UpdateDisplayState();
 			RaiseChangeEvent();
-		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && selectedItem < items.size() - 1){
-			++selectedItem;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && im->selectedItem < im->items.size() - 1){
+			++im->selectedItem;
 			update = true;
 			handled = true;
-			UpdateDisplayState();
+			im->UpdateDisplayState();
 			RaiseChangeEvent();
-		}else if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && selectedItem > 0){
-			--selectedItem;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && im->selectedItem > 0){
+			--im->selectedItem;
 			update = true;
 			handled = true;
-			UpdateDisplayState();
+			im->UpdateDisplayState();
 			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageUp)){
-			if(selectedItem != 0){
-				auto visibleItems = (visibleLines - 1) * visibleCols;
-				if(selectedItem > visibleItems) selectedItem -= visibleItems;
-				else selectedItem = 0;
+			if(im->selectedItem != 0){
+				auto visibleItems = (im->visibleLines - 1) * im->visibleCols;
+				if(im->selectedItem > visibleItems) im->selectedItem -= visibleItems;
+				else im->selectedItem = 0;
 				update = true;
-				UpdateDisplayState();
+				im->UpdateDisplayState();
 				RaiseChangeEvent();
 			}
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageDown)){
-			if(selectedItem < items.size() - 1){
-				auto visibleItems = (visibleLines - 1) * visibleCols;
-				if(selectedItem + visibleItems < items.size()) selectedItem += visibleItems;
-				else selectedItem = items.size() - 1;
+			if(im->selectedItem < im->items.size() - 1){
+				auto visibleItems = (im->visibleLines - 1) * im->visibleCols;
+				if(im->selectedItem + visibleItems < im->items.size()) im->selectedItem += visibleItems;
+				else im->selectedItem = im->items.size() - 1;
 				update = true;
-				UpdateDisplayState();
+				im->UpdateDisplayState();
 				RaiseChangeEvent();
 			}
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
-			if(selectedItem != 0){
-				selectedItem = 0;
+			if(im->selectedItem != 0){
+				im->selectedItem = 0;
 				update = true;
-				UpdateDisplayState();
+				im->UpdateDisplayState();
 				RaiseChangeEvent();
 			}
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
-			if(selectedItem < items.size() - 1){
-				selectedItem = items.size() - 1;
+			if(im->selectedItem < im->items.size() - 1){
+				im->selectedItem = im->items.size() - 1;
 				update = true;
-				UpdateDisplayState();
+				im->UpdateDisplayState();
 				RaiseChangeEvent();
 			}
 			handled = true;
 		}else if(!(code & KeyFlags::NonASCII)){
-			auto oldSelectedItem = selectedItem;
+			auto oldSelectedItem = im->selectedItem;
 			char c = KB_char(e.Key.code);
 			if(c == ' ' || c == '\n'){
-				if(multiSelect){
-					multiSelection[selectedItem] = !multiSelection[selectedItem];
+				if(im->multiSelect){
+					im->multiSelection[im->selectedItem] = !im->multiSelection[im->selectedItem];
 					update = true;
-				}else if(onActivate) onActivate();
+				}else if(im->onActivate) im->onActivate();
 			}else{
 				c = std::tolower(c);
 				auto finder = [&](const std::string &item){return !item.empty() && std::tolower(item.front()) == c;};
-				auto it = std::find_if(begin(items) + selectedItem + 1, end(items), finder);
-				if(it == end(items)) it = std::find_if(begin(items), end(items), finder);
-				if(it != end(items)) selectedItem = it - begin(items);
-				update = oldSelectedItem != selectedItem;
-				if(update || fireCurrentSelection){ 
+				auto it = std::find_if(begin(im->items) + im->selectedItem + 1, end(im->items), finder);
+				if(it == end(im->items)) it = std::find_if(begin(im->items), end(im->items), finder);
+				if(it != end(im->items)) im->selectedItem = it - begin(im->items);
+				update = oldSelectedItem != im->selectedItem;
+				if(update || im->fireCurrentSelection){ 
 					RaiseChangeEvent();
-					fireCurrentSelection = false;
+					im->fireCurrentSelection = false;
 				}
 			}
 			handled = true;
-			UpdateDisplayState();
+			im->UpdateDisplayState();
 		}
 	}else if(e.type & wm_PointerEvents){
-		if(InRect(e.Pointer.x, e.Pointer.y, rect)){
-			auto pX = e.Pointer.x - outerRect.x;
-			auto pY = e.Pointer.y - outerRect.y;
-			auto col = pX / itemWidth;
-			if(col >= visibleCols) col = visibleCols - 1;
-			auto line = (pY / itemHeight) + vOffset;
-			auto idx = (line * visibleCols) + col;
-			if(e.type == wm_EventType::PointerButtonUp && idx < items.size()){
-				auto oldSelectedItem = selectedItem;
-				selectedItem = idx;
-				if(selectedItem < items.size()) update = oldSelectedItem != selectedItem;
-				if(update || fireCurrentSelection){ 
+		if(InRect(e.Pointer.x, e.Pointer.y, im->rect)){
+			auto pX = e.Pointer.x - im->outerRect.x;
+			auto pY = e.Pointer.y - im->outerRect.y;
+			auto col = pX / im->itemWidth;
+			if(col >= im->visibleCols) col = im->visibleCols - 1;
+			auto line = (pY / im->itemHeight) + im->vOffset;
+			auto idx = (line * im->visibleCols) + col;
+			if(e.type == wm_EventType::PointerButtonUp && idx < im->items.size()){
+				auto oldSelectedItem = im->selectedItem;
+				im->selectedItem = idx;
+				if(im->selectedItem < im->items.size()) update = oldSelectedItem != im->selectedItem;
+				if(update || im->fireCurrentSelection){ 
 					RaiseChangeEvent();
-					fireCurrentSelection = false;
+					im->fireCurrentSelection = false;
 				}
-				if(multiSelect){
-					auto xPos = pX - (col * itemWidth);
-					auto yPos = pY - (line * itemHeight);
-					if(xPos < checkSize && yPos > (itemHeight - checkSize)){
-						multiSelection[selectedItem] = !multiSelection[selectedItem];
+				if(im->multiSelect){
+					auto xPos = pX - (col * im->itemWidth);
+					auto yPos = pY - (line * im->itemHeight);
+					if(xPos < checkSize && yPos > (im->itemHeight - checkSize)){
+						im->multiSelection[im->selectedItem] = !im->multiSelection[im->selectedItem];
 						update = true;
 					}
 				}
 				handled = true;
-				if(IsDoubleClick() && onActivate) onActivate();
-				UpdateDisplayState();
+				if(IsDoubleClick() && im->onActivate) im->onActivate();
+				im->UpdateDisplayState();
 			}
-		}else if(vscroll && vscroll->IsEnabled() && InRect(e.Pointer.x, e.Pointer.y, vscroll->GetInteractRect()) && (e.type & vscroll->GetSubscribed())){
-			auto ret = vscroll->HandleEvent(e);
+		}else if(im->vscroll && im->vscroll->IsEnabled() && InRect(e.Pointer.x, e.Pointer.y, im->vscroll->GetInteractRect()) && (e.type & im->vscroll->GetSubscribed())){
+			auto ret = im->vscroll->HandleEvent(e);
 			update = ret.IsFinishedProcessing();
 			handled = handled || update;
 		}
 	}
-	if(update) IControl::Paint(outerRect);
+	if(update) IControl::Paint(im->outerRect);
 	return {handled};
 }
 
 void IconView::Paint(gds::Surface &s){
-	uint32_t inW = rect.w - 1;
-	uint32_t inH = rect.h - 1;
+	uint32_t inW = im->rect.w - 1;
+	uint32_t inH = im->rect.h - 1;
 
-	if(!bkSurf){
-		bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		auto bkgCol = colours::GetBackground().Fix(*bkSurf);
-		auto border = colours::GetBorder().Fix(*bkSurf);
+	if(!im->bkSurf){
+		im->bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, im->rect.w, im->rect.h, 100, gds_ColourType::True));
+		auto bkgCol = colours::GetBackground().Fix(*im->bkSurf);
+		auto border = colours::GetBorder().Fix(*im->bkSurf);
 		
-		auto topLeft = colours::GetIconViewLowLight().Fix(*bkSurf);
-		auto bottomRight = colours::GetIconViewHiLight().Fix(*bkSurf);
+		auto topLeft = colours::GetIconViewLowLight().Fix(*im->bkSurf);
+		auto bottomRight = colours::GetIconViewHiLight().Fix(*im->bkSurf);
 
-		bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		drawing::Border(*bkSurf, {0, 0, inW, inH}, border);
-		drawing::BevelBox(*bkSurf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
+		im->bkSurf->Box(im->rect.AtZero(), bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		drawing::Border(*im->bkSurf, {0, 0, inW, inH}, border);
+		drawing::BevelBox(*im->bkSurf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
 	}
-	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
-	UpdateDisplayState(false);
+	s.Blit(*im->bkSurf, im->rect.AtZero(), im->rect);
+	im->UpdateDisplayState(false);
 	
-	for(size_t line = vOffset; line < vOffset + visibleLines + 1; ++line){
-		int32_t yPos = rect.y + (line - vOffset) * itemHeight;
-		for(size_t col = 0; col < visibleCols; ++col){
-			size_t idx = (line * visibleCols) + col;
-			if(idx >= drawItems.size()) break;
-			auto &item = drawItems[idx];
+	for(size_t line = im->vOffset; line < im->vOffset + im->visibleLines + 1; ++line){
+		int32_t yPos = im->rect.y + (line - im->vOffset) * im->itemHeight;
+		for(size_t col = 0; col < im->visibleCols; ++col){
+			size_t idx = (line * im->visibleCols) + col;
+			if(idx >= im->drawItems.size()) break;
+			auto &item = im->drawItems[idx];
 			
-			int32_t xPos = rect.x + (col * itemWidth) + 1;
+			int32_t xPos = im->rect.x + (col * im->itemWidth) + 1;
 			
-			if(!item.surf || item.selected != (idx == selectedItem) || (item.selected && item.focussed != hasFocus)){
-				item.surf.reset(new gds::Surface(gds_SurfaceType::Vector, itemWidth, itemHeight, 100, gds_ColourType::True));
+			if(!item.surf || item.selected != (idx == im->selectedItem) || (item.selected && item.focussed != im->hasFocus)){
+				item.surf.reset(new gds::Surface(gds_SurfaceType::Vector, im->itemWidth, im->itemHeight, 100, gds_ColourType::True));
 				auto txtCol = colours::GetIconViewText().Fix(*item.surf);
 				auto itemBkgCol = colours::GetBackground().Fix(*item.surf);
 				item.surf->BeginQueue();
 				
-				if(idx == selectedItem){
+				if(idx == im->selectedItem){
 					auto selCol = colours::GetSelection().Fix(*item.surf);
 					auto selFocus = colours::GetSelectionFocus().Fix(*item.surf);
-					if(hasFocus){
-						item.surf->Box({0, 0, itemWidth, itemHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+					if(im->hasFocus){
+						item.surf->Box({0, 0, im->itemWidth, im->itemHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 					}else{
-						item.surf->Box({0, 0, itemWidth, itemHeight}, itemBkgCol, itemBkgCol, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+						item.surf->Box({0, 0, im->itemWidth, im->itemHeight}, itemBkgCol, itemBkgCol, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 					}
-					item.surf->Box({0, 0, itemWidth, itemHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
+					item.surf->Box({0, 0, im->itemWidth, im->itemHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
 					item.selected = true;
-					item.focussed = hasFocus;
+					item.focussed = im->hasFocus;
 				}else{
-					item.surf->Box({0, 0, itemWidth, itemHeight}, itemBkgCol, itemBkgCol, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
+					item.surf->Box({0, 0, im->itemWidth, im->itemHeight}, itemBkgCol, itemBkgCol, 0, gds_LineStyle::Solid, gds_FillStyle::Filled);
 					item.selected = false;
 				}
 				
 				
-				if(icons[idx] || defaultIcon){
-					auto &icon = icons[idx] ? icons[idx] : defaultIcon;
-					int32_t iconX = (iconSize / 2);
-					int32_t iconY = (iconSize / 3);
-					if(iconY < (int32_t)rect.h) item.surf->Blit(*icon, {0, 0, iconSize, iconSize}, {iconX, iconY, iconSize, iconSize});
+				if(im->icons[idx] || im->defaultIcon){
+					auto &icon = im->icons[idx] ? im->icons[idx] : im->defaultIcon;
+					int32_t iconX = (im->iconSize / 2);
+					int32_t iconY = (im->iconSize / 3);
+					if(iconY < (int32_t)im->rect.h) item.surf->Blit(*icon, {0, 0, im->iconSize, im->iconSize}, {iconX, iconY, im->iconSize, im->iconSize});
 				}
 				
-				int32_t textX1 = ((itemWidth - item.measures1.w - (multiSelect ? checkSize : 0)) / 2) + (multiSelect ? checkSize : 0);
-				int32_t textX2 = ((itemWidth - item.measures2.w - (multiSelect ? checkSize : 0)) / 2) + (multiSelect ? checkSize : 0);
-				int32_t textY1 = (itemHeight - (fontHeight * 2)) + ((fontHeight + item.measures1.h) / 2);
-				int32_t textY2 = (itemHeight - (fontHeight * 2)) + item.measures1.h + ((fontHeight + item.measures2.h) / 2);
-				if(textY1 - fontHeight < rect.h) item.surf->Text({textX1, textY1}, item.fittedText1, fonts::GetIconViewFont(), fonts::GetIconViewTextSize(), txtCol);
-				if(textY2 - fontHeight < rect.h) item.surf->Text({textX2, textY2}, item.fittedText2, fonts::GetIconViewFont(), fonts::GetIconViewTextSize(), txtCol);
+				int32_t textX1 = ((im->itemWidth - item.measures1.w - (im->multiSelect ? checkSize : 0)) / 2) + (im->multiSelect ? checkSize : 0);
+				int32_t textX2 = ((im->itemWidth - item.measures2.w - (im->multiSelect ? checkSize : 0)) / 2) + (im->multiSelect ? checkSize : 0);
+				int32_t textY1 = (im->itemHeight - (im->fontHeight * 2)) + ((im->fontHeight + item.measures1.h) / 2);
+				int32_t textY2 = (im->itemHeight - (im->fontHeight * 2)) + item.measures1.h + ((im->fontHeight + item.measures2.h) / 2);
+				if(textY1 - im->fontHeight < im->rect.h) item.surf->Text({textX1, textY1}, item.fittedText1, fonts::GetIconViewFont(), fonts::GetIconViewTextSize(), txtCol);
+				if(textY2 - im->fontHeight < im->rect.h) item.surf->Text({textX2, textY2}, item.fittedText2, fonts::GetIconViewFont(), fonts::GetIconViewTextSize(), txtCol);
 				
-				if(multiSelect){
+				if(im->multiSelect){
 					auto itemTopLeft = colours::GetIconViewLowLight().Fix(*item.surf);
 					auto itemBottomRight = colours::GetIconViewHiLight().Fix(*item.surf);
 					
-					int32_t chkY = (itemHeight - checkSize);
-					if(chkY < (int32_t)rect.h){
+					int32_t chkY = (im->itemHeight - checkSize);
+					if(chkY < (int32_t)im->rect.h){
 						auto bkgCol = colours::GetBackground().Fix(*item.surf);
 						item.surf->Box({0, chkY + 1, checkSize - 2, checkSize - 2}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 						drawing::BevelBox(*item.surf, {0, chkY + 1, checkSize - 2, checkSize - 2}, itemTopLeft, itemBottomRight);
-						if(multiSelection[idx]){
+						if(im->multiSelection[idx]){
 							item.surf->Line({0 + 3, chkY + 5}, {0 + checkSize - 5, (chkY + checkSize) - 4}, txtCol, 2);
 							item.surf->Line({0 + 3,  (chkY + checkSize) - 4}, {0 + checkSize - 5, chkY + 5}, txtCol, 2);
 						}
 					}
 				}
 				item.surf->CommitQueue();
-				if(idx != selectedItem) item.surf->Compress();
+				if(idx != im->selectedItem) item.surf->Compress();
 			}
 			int32_t itemLTrim = (col == 0 ? 1 : 0);
-			int32_t itemTTrim = (line == vOffset ? 2 : 0);
-			uint32_t drawHeight = std::min<uint32_t>(itemHeight, ((rect.y + rect.h) - yPos) - 2);
-			s.Blit(*item.surf, {itemLTrim, itemTTrim, itemWidth, drawHeight}, {xPos + itemLTrim, yPos + itemTTrim, itemWidth, drawHeight});
+			int32_t itemTTrim = (line == im->vOffset ? 2 : 0);
+			uint32_t drawHeight = std::min<uint32_t>(im->itemHeight, ((im->rect.y + im->rect.h) - yPos) - 2);
+			s.Blit(*item.surf, {itemLTrim, itemTTrim, im->itemWidth, drawHeight}, {xPos + itemLTrim, yPos + itemTTrim, im->itemWidth, drawHeight});
 		}
 	}
 
-	if(vscroll) vscroll->Paint(s);
+	if(im->vscroll) im->vscroll->Paint(s);
 	
-	if(!enabled){
+	if(!im->enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
-		s.Box(outerRect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		s.Box(im->outerRect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	}
 }
 
 gds::Rect IconView::GetPaintRect(){
-	return outerRect;
+	return im->outerRect;
 }
 
 gds::Rect IconView::GetInteractRect(){
-	return outerRect;
+	return im->outerRect;
 }
 
 uint32_t IconView::GetSubscribed(){
 	auto ret = wm_KeyboardEvents | wm_EventType::PointerButtonUp | wm_EventType::PointerButtonDown;
-	if(vscroll) ret |= vscroll->GetSubscribed();
+	if(im->vscroll) ret |= im->vscroll->GetSubscribed();
 	return ret;
 }
 
 void IconView::Focus(){
-	if(!hasFocus){
-		hasFocus = true;
-		IControl::Paint(outerRect);
+	if(!im->hasFocus){
+		im->hasFocus = true;
+		IControl::Paint(im->outerRect);
 	}
 }
 
 void IconView::Blur(){
-	if(hasFocus){
-		hasFocus = false;
-		IControl::Paint(outerRect);
+	if(im->hasFocus){
+		im->hasFocus = false;
+		IControl::Paint(im->outerRect);
 	}
 }
 
@@ -366,77 +414,77 @@ uint32_t IconView::GetFlags(){
 }
 
 void IconView::Enable(){
-	if(!enabled){
-		enabled = true;
-		IControl::Paint(rect);
+	if(!im->enabled){
+		im->enabled = true;
+		IControl::Paint(im->rect);
 	}
 }
 
 void IconView::Disable(){
-	if(enabled){
-		enabled = false;
-		IControl::Paint(rect);
+	if(im->enabled){
+		im->enabled = false;
+		IControl::Paint(im->rect);
 	}
 }
 
 bool IconView::IsEnabled(){
-	return enabled;
+	return im->enabled;
 }
 
 void IconView::SetPosition(const gds::Rect &r){
-	outerRect = r;
-	rect = {r.x, r.y, r.w - scrollbarSize, r.h};
-	if(vscroll) vscroll->SetPosition({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h});
-	bkSurf.reset();
+	im->outerRect = r;
+	im->rect = {r.x, r.y, r.w - scrollbarSize, r.h};
+	if(im->vscroll) im->vscroll->SetPosition({im->outerRect.x + (int32_t)im->outerRect.w - scrollbarSize, im->outerRect.y, scrollbarSize, im->outerRect.h});
+	im->bkSurf.reset();
 }
 
 size_t IconView::GetValue(){
-	return selectedItem;
+	return im->selectedItem;
 }
 
 void IconView::SetValue(size_t idx){
-	if(selectedItem == idx) return;
-	selectedItem = idx;
-	UpdateDisplayState(true);
-	fireCurrentSelection = true;
+	if(im->selectedItem == idx) return;
+	im->selectedItem = idx;
+	im->UpdateDisplayState(true);
+	im->fireCurrentSelection = true;
 }
 
 std::vector<bool> &IconView::MulitSelections(){
-	return multiSelection;
+	return im->multiSelection;
 }
 
 std::vector<std::string> &IconView::Items(){
-	return items;
+	return im->items;
 }
 
 void IconView::Refresh(){
-	multiSelection.resize(items.size());
-	icons.resize(items.size());
-	drawItems.clear();
-	fireCurrentSelection = true;
-	IControl::Paint(outerRect);
+	im->multiSelection.resize(im->items.size());
+	im->icons.resize(im->items.size());
+	im->drawItems.clear();
+	im->fireCurrentSelection = true;
+	IControl::Paint(im->outerRect);
 }
 
 void IconView::SetDefaultIcon(std::shared_ptr<gds::Surface> img){
-	defaultIcon = img;
+	im->defaultIcon = img;
 }
 
 void IconView::SetItemIcon(size_t idx, std::shared_ptr<gds::Surface> img){
-	if(icons.size() < items.size()) icons.resize(items.size());
-	icons[idx] = img;
+	if(im->icons.size() < im->items.size()) im->icons.resize(im->items.size());
+	im->icons[idx] = img;
 }
 
 void IconView::ClearItemIcons(){
-	icons.clear();
-	icons.resize(items.size());
+	im->icons.clear();
+	im->icons.resize(im->items.size());
 }
 
 void IconView::OnActivate(std::function<void()> oA){
-	onActivate = oA;
+	im->onActivate = oA;
 }
 
 void IconView::OnInspect(std::function<void()> oI){
-	onInspect = oI;
+	im->onInspect = oI;
 }
 
 }

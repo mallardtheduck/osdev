@@ -12,29 +12,51 @@ namespace gui{
 const uint32_t TabHeight = 24;
 const uint32_t TabMargin = 2;
 
-Tabs::Tabs(const gds::Rect &r) :  rect(r){
+struct TabsImpl{
+	Tabs *that;
+
+	bool focus = false;
+	bool enabled = true;
+	bool update = false;
+
+	size_t currentTab = 0;
+
+	gds::Rect rect;
+	
+	std::vector<Tab> tabs;
+	std::shared_ptr<IControl> currentContent;
+	
+	std::unique_ptr<gds::Surface> surf;
+	
+	void SwitchTab();
+};
+PIMPL_IMPL(TabsImpl);
+
+Tabs::Tabs(const gds::Rect &r) : im(new TabsImpl()){
+	im->that = this;
+	im->rect = r;
 }
 
 
-void Tabs::SwitchTab(){
+void TabsImpl::SwitchTab(){
 	std::shared_ptr<IControl> newContent;
 	if(tabs.size() > currentTab && tabs[currentTab].content){
 		newContent = tabs[currentTab].content;
-		if(currentContent != newContent) RemoveFromParent(currentContent);
-		AddToParent(newContent);
+		if(currentContent != newContent) that->RemoveFromParent(currentContent);
+		that->AddToParent(newContent);
 	}
 	currentContent = newContent;
 }
 
 EventResponse Tabs::HandleEvent(const wm_Event &e){
-	auto oldCurrent = currentTab;
+	auto oldCurrent = im->currentTab;
 	if(e.type == wm_EventType::PointerButtonUp && e.Pointer.button == 1){
-		auto xpos = e.Pointer.x - rect.x;
+		auto xpos = e.Pointer.x - im->rect.x;
 		uint32_t curX = TabMargin;
-		for(size_t i = 0; i < tabs.size(); ++i){
-			auto width = (TabMargin * 4) + tabs[i].labelMeasures.w;
+		for(size_t i = 0; i < im->tabs.size(); ++i){
+			auto width = (TabMargin * 4) + im->tabs[i].labelMeasures.w;
 			if(xpos >= curX && xpos <= curX + width){
-				currentTab = i;
+				im->currentTab = i;
 				break;
 			}
 			curX += width + TabMargin;
@@ -48,89 +70,89 @@ EventResponse Tabs::HandleEvent(const wm_Event &e){
 				return {true};
 			}
 			return {false};
-		}else if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && currentTab > 0){
-			--currentTab;
-		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && currentTab < tabs.size() - 1){
-			++currentTab;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && im->currentTab > 0){
+			--im->currentTab;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && im->currentTab < im->tabs.size() - 1){
+			++im->currentTab;
 		}
 	}
-	if(oldCurrent != currentTab){
-		SwitchTab();
-		IControl::Paint(rect);
+	if(oldCurrent != im->currentTab){
+		im->SwitchTab();
+		IControl::Paint(im->rect);
 	}
 	return {true};
 }
 
 void Tabs::Paint(gds::Surface &s){
-	int32_t inW = rect.w - 1;
-	int32_t inH = rect.h - 1;
+	int32_t inW = im->rect.w - 1;
+	int32_t inH = im->rect.h - 1;
 		
-	if(!surf || update){
-		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		else surf->Clear();
+	if(!im->surf || im->update){
+		if(!im->surf) im->surf.reset(new gds::Surface(gds_SurfaceType::Vector, im->rect.w, im->rect.h, 100, gds_ColourType::True));
+		else im->surf->Clear();
 
-		surf->BeginQueue();
+		im->surf->BeginQueue();
 		
-		auto bkgCol = colours::GetBackground().Fix(*surf);
-		auto selected = colours::GetTabsSelectedBackground().Fix(*surf);
-		auto unselected = colours::GetTabsUnselectedBackground().Fix(*surf);
-		auto border = colours::GetBorder().Fix(*surf);
-		auto textColour = colours::GetTabsText().Fix(*surf);
+		auto bkgCol = colours::GetBackground().Fix(*im->surf);
+		auto selected = colours::GetTabsSelectedBackground().Fix(*im->surf);
+		auto unselected = colours::GetTabsUnselectedBackground().Fix(*im->surf);
+		auto border = colours::GetBorder().Fix(*im->surf);
+		auto textColour = colours::GetTabsText().Fix(*im->surf);
 		
-		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		drawing::Border(*surf, {0, TabHeight, (uint32_t)inW, (uint32_t)(inH - TabHeight)}, border);
+		im->surf->Box(im->rect.AtZero(), bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		drawing::Border(*im->surf, {0, TabHeight, (uint32_t)inW, (uint32_t)(inH - TabHeight)}, border);
 		
 		int32_t curX = TabMargin;
 		
-		for(size_t i = 0; i < tabs.size(); ++i){
-			auto &tab = tabs[i];
+		for(size_t i = 0; i < im->tabs.size(); ++i){
+			auto &tab = im->tabs[i];
 			
-			if(!tab.labelMeasures.w) tab.labelMeasures = surf->MeasureText(tab.label, fonts::GetTabsFont(), fonts::GetTabsTextSize());
+			if(!tab.labelMeasures.w) tab.labelMeasures = im->surf->MeasureText(tab.label, fonts::GetTabsFont(), fonts::GetTabsTextSize());
 			
 			auto width = (TabMargin * 4) + tab.labelMeasures.w;
 			
-			auto tabCol = (i == currentTab ? selected : unselected);
-			auto curTabHeight = (i == currentTab ? TabHeight : TabHeight - 1);
+			auto tabCol = (i == im->currentTab ? selected : unselected);
+			auto curTabHeight = (i == im->currentTab ? TabHeight : TabHeight - 1);
 			
-			drawing::Border(*surf, {curX, 0, width, TabHeight}, border);
-			surf->Box({curX + 1, 1, width - 1, curTabHeight}, tabCol, tabCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+			drawing::Border(*im->surf, {curX, 0, width, TabHeight}, border);
+			im->surf->Box({curX + 1, 1, width - 1, curTabHeight}, tabCol, tabCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 			
 			int32_t labelX = curX + std::max<int32_t>(((width - tab.labelMeasures.w) / 2), 0);
 			int32_t labelY = std::max<int32_t>(((TabHeight + tab.labelMeasures.h) / 2), 0);
 			
-			surf->Text({labelX, labelY}, tab.label, fonts::GetTabsFont(), fonts::GetTabsTextSize(), textColour);
+			im->surf->Text({labelX, labelY}, tab.label, fonts::GetTabsFont(), fonts::GetTabsTextSize(), textColour);
 			
-			if(focus && i == currentTab){
-				auto focusCol = colours::GetTabsFocus().Fix(*surf);
+			if(im->focus && i == im->currentTab){
+				auto focusCol = colours::GetTabsFocus().Fix(*im->surf);
 				
 				int32_t focusX = std::max<uint32_t>(labelX - TabMargin, 0);
 				int32_t focusY = std::max<uint32_t>(labelY - tab.labelMeasures.h - TabMargin, 0);
 				uint32_t focusW = tab.labelMeasures.w + (TabMargin * 2);
 				uint32_t focusH = tab.labelMeasures.h + (TabMargin * 2);
 				
-				surf->Box({focusX, focusY, focusW, focusH}, focusCol, focusCol);
+				im->surf->Box({focusX, focusY, focusW, focusH}, focusCol, focusCol);
 			}
 			
 			curX += width + TabMargin;
 		}
 		
-		surf->CommitQueue();
-		surf->Compress();
+		im->surf->CommitQueue();
+		im->surf->Compress();
 	}
 	
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
-	if(!enabled){
+	s.Blit(*im->surf, im->rect.AtZero(), im->rect);
+	if(!im->enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
-		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		s.Box(im->rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	}
 }
 
 gds::Rect Tabs::GetPaintRect(){
-	return rect;
+	return im->rect;
 }
 
 gds::Rect Tabs::GetInteractRect(){
-	return {rect.x, rect.y, rect.w, TabHeight};
+	return {im->rect.x, im->rect.y, im->rect.w, TabHeight};
 }
 
 uint32_t Tabs::GetSubscribed(){
@@ -138,18 +160,18 @@ uint32_t Tabs::GetSubscribed(){
 }
 
 void Tabs::Focus(){
-	if(!focus){
-		focus = true;
-		update = true;
-		IControl::Paint(rect);
+	if(!im->focus){
+		im->focus = true;
+		im->update = true;
+		IControl::Paint(im->rect);
 	}
 }
 
 void Tabs::Blur(){
-	if(focus){
-		focus = false;
-		update = true;
-		IControl::Paint(rect);
+	if(im->focus){
+		im->focus = false;
+		im->update = true;
+		IControl::Paint(im->rect);
 	}
 }
 
@@ -158,49 +180,49 @@ uint32_t Tabs::GetFlags(){
 }
 
 void Tabs::Enable(){
-	if(!enabled){
-		enabled = true;
-		IControl::Paint(rect);
+	if(!im->enabled){
+		im->enabled = true;
+		IControl::Paint(im->rect);
 	}
 }
 
 void Tabs::Disable(){
-	if(enabled){
-		enabled = false;
-		IControl::Paint(rect);
+	if(im->enabled){
+		im->enabled = false;
+		IControl::Paint(im->rect);
 	}
 }
 
 bool Tabs::IsEnabled(){
-	return enabled;
+	return im->enabled;
 }
 
 void Tabs::SetPosition(const gds::Rect &r){
-	rect = r;
-	update = true;
-	surf.reset();
+	im->rect = r;
+	im->update = true;
+	im->surf.reset();
 }
 
 void Tabs::OnBind(){
-	if(currentContent) AddToParent(currentContent);
+	if(im->currentContent) AddToParent(im->currentContent);
 }
 
 std::vector<Tab> &Tabs::TabItems(){
-	return tabs;
+	return im->tabs;
 }
 
 void Tabs::Refresh(){
-	SwitchTab();
-	update = true;
+	im->SwitchTab();
+	im->update = true;
 }
 
 gds::Rect Tabs::GetContentRect(){
-	int32_t x = rect.x + TabMargin;
-	int32_t y = rect.y + TabHeight + TabMargin;
-	uint32_t w = rect.w - (2 * TabMargin);
-	uint32_t h = rect.h - (2 * TabMargin) - TabHeight;
-	if(w > rect.w) w = 0;
-	if(h > rect.h) h = 0;
+	int32_t x = im->rect.x + TabMargin;
+	int32_t y = im->rect.y + TabHeight + TabMargin;
+	uint32_t w = im->rect.w - (2 * TabMargin);
+	uint32_t h = im->rect.h - (2 * TabMargin) - TabHeight;
+	if(w > im->rect.w) w = 0;
+	if(h > im->rect.h) h = 0;
 	return {x, y, w, h};
 }
 

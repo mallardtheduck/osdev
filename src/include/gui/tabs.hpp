@@ -2,6 +2,7 @@
 #define _TABS_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
@@ -21,22 +22,13 @@ public:
 	Tab(Tab&&) = default;
 };
 
+struct TabsImpl;
+PIMPL_CLASS(TabsImpl);
+
 class Tabs : public IActionControl<void>{
 private:
-	bool focus = false;
-	bool enabled = true;
-	bool update = false;
-
-	size_t currentTab = 0;
-
-	gds::Rect rect;
-	
-	std::vector<Tab> tabs;
-	std::shared_ptr<IControl> currentContent;
-	
-	std::unique_ptr<gds::Surface> surf;
-	
-	void SwitchTab();
+	friend struct TabsImpl;
+	btos::pimpl_ptr<TabsImpl> im;
 public:
 	Tabs(const gds::Rect &r);
 

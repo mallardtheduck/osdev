@@ -2,22 +2,17 @@
 #define _IMAGEBUTTON_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
+struct ImageButtonImpl;
+PIMPL_CLASS(ImageButtonImpl);
+
 class ImageButton : public IActionControl<void>{
 private:
-	bool down = false;
-	bool focus = false;
-	bool enabled = true;
-
-	gds::Rect rect;
-	
-	std::unique_ptr<gds::Surface> bkSurf;
-	std::shared_ptr<gds::Surface> img;
-	gds_SurfaceInfo info;
-	
+	btos::pimpl_ptr<ImageButtonImpl> im;	
 public:
 	ImageButton(const gds::Rect &r, std::shared_ptr<gds::Surface> img);
 

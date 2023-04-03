@@ -5,37 +5,48 @@
 namespace btos_api{
 namespace gui{
 
-GroupBox::GroupBox(const gds::Rect &r, const std::string &t) : rect(r), text(t) {}
+struct GroupBoxImpl{
+	gds::Rect rect;
+	std::string text;
+	std::unique_ptr<gds::Surface> surf;
+	gds::TextMeasurements textMeasures = {};
+	uint32_t textH;
+};
+PIMPL_IMPL(GroupBoxImpl);
+
+GroupBox::GroupBox(const gds::Rect &r, const std::string &t) : im(new GroupBoxImpl){
+	im->rect = r; im->text = t;
+}
 	
 EventResponse GroupBox::HandleEvent(const wm_Event&){
 	return {false};
 }
 
 void GroupBox::Paint(gds::Surface &s){
-	if(!surf){
-		if(!textMeasures.w){
-			surf.reset(new gds::Surface(gds_SurfaceType::Vector, 1, 1, 100, gds_ColourType::True));
-			textMeasures = surf->MeasureText(text, fonts::GetGroupBoxFont(), fonts::GetGroupBoxTextSize());
-			textH = (double)textMeasures.h * 1.5;
+	if(!im->surf){
+		if(!im->textMeasures.w){
+			im->surf.reset(new gds::Surface(gds_SurfaceType::Vector, 1, 1, 100, gds_ColourType::True));
+			im->textMeasures = im->surf->MeasureText(im->text, fonts::GetGroupBoxFont(), fonts::GetGroupBoxTextSize());
+			im->textH = (double)im->textMeasures.h * 1.5;
 		}
-		surf.reset(new gds::Surface(gds_SurfaceType::Vector, textMeasures.w, textH, 100, gds_ColourType::True));
+		im->surf.reset(new gds::Surface(gds_SurfaceType::Vector, im->textMeasures.w, im->textH, 100, gds_ColourType::True));
 		
-		auto bkgCol = colours::GetBackground().Fix(*surf);
-		auto txtCol = colours::GetGroupBoxText().Fix(*surf);
+		auto bkgCol = colours::GetBackground().Fix(*im->surf);
+		auto txtCol = colours::GetGroupBoxText().Fix(*im->surf);
 		
-		surf->Box({0, 0, textMeasures.w, textH}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		surf->Text({0, (int32_t)textMeasures.h}, text, fonts::GetGroupBoxFont(), fonts::GetGroupBoxTextSize(), txtCol);
+		im->surf->Box({0, 0, im->textMeasures.w, im->textH}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		im->surf->Text({0, (int32_t)im->textMeasures.h}, im->text, fonts::GetGroupBoxFont(), fonts::GetGroupBoxTextSize(), txtCol);
 	}
-	int32_t textX = std::max<int32_t>(((rect.w - textMeasures.w) / 2), 0);
-	
+	int32_t textX = std::max<int32_t>(((im->rect.w - im->textMeasures.w) / 2), 0);
+
 	auto bdrCol = colours::GetBorder().Fix(s);
-	drawing::Border(s, {rect.x, rect.y + (int32_t)(textMeasures.h / 2), rect.w - 1, rect.h - 1 - (textMeasures.h / 2)}, bdrCol);
-	s.Blit(*surf, {0, 0, textMeasures.w, textH}, {rect.x + textX, rect.y, textMeasures.w, textH});
-	surf->Compress();
+	drawing::Border(s, {im->rect.x, im->rect.y + (int32_t)(im->textMeasures.h / 2), im->rect.w - 1, im->rect.h - 1 - (im->textMeasures.h / 2)}, bdrCol);
+	s.Blit(*im->surf, {0, 0, im->textMeasures.w, im->textH}, {im->rect.x + textX, im->rect.y, im->textMeasures.w, im->textH});
+	im->surf->Compress();
 }
 
 gds::Rect GroupBox::GetPaintRect(){
-	return rect;
+	return im->rect;
 }
 
 gds::Rect GroupBox::GetInteractRect(){
@@ -47,14 +58,14 @@ uint32_t GroupBox::GetSubscribed(){
 }
 	
 void GroupBox::SetText(const std::string &t){
-	text = t;
-	surf.reset();
-	IControl::Paint(rect);
+	im->text = t;
+	im->surf.reset();
+	IControl::Paint(im->rect);
 }
 
 void GroupBox::SetPosition(const gds::Rect &r){
-	rect = r;
-	surf.reset();
+	im->rect = r;
+	im->surf.reset();
 }
 
 

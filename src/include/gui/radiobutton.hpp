@@ -2,24 +2,21 @@
 #define _RADIOBUTTON_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
-	
+
+struct RadioButtonImpl;
+PIMPL_CLASS(RadioButtonImpl);
+
 class RadioButton : public IValueControl<bool> {
 private:
-	gds::Rect rect;
-	std::string text;
-	std::unique_ptr<gds::Surface> bkSurf;
-	
-	bool value;
-	gds::TextMeasurements textMeasures;
-	bool focus = false;
-	bool enabled = true;
-	
+	btos::pimpl_ptr<RadioButtonImpl> im;
+
 	template<typename T> friend class RadioGroup;
-	std::function<std::vector<gds::Rect>()> getAllRects;
 	
+	std::function<std::vector<gds::Rect>()> getAllRects;
 	void SetValue(bool v);
 public:
 	RadioButton(const gds::Rect &r, const std::string &t, bool v);

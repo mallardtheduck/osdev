@@ -2,6 +2,7 @@
 #define _FORM_HPP
 
 #include <wm/window.hpp>
+#include <util/pimpl_ptr.hpp>
 
 #include "container.hpp"
 
@@ -15,37 +16,20 @@ namespace FormOptions{
 	static const uint32_t ClosedSizable = (wm_WindowOptions::Unlisted | wm_WindowOptions::Resizable);
 }
 
+struct FormImpl;
+PIMPL_CLASS(FormImpl);
+
 class Form : public wm::Window, public Container{
 private:
-	static const auto handleSize = 18;
-	bool expanded = false;
-	bool enableUpdate = true;
-	gds::Rect nonExpandRect;
+	btos::pimpl_ptr<FormImpl> im;
+	friend struct FormImpl;
 
-	gds::Rect rect;
-	std::unique_ptr<gds::Surface> surf;
-	
-	std::shared_ptr<IControl> resizeHandle;
-	
-	uint32_t curSubs;
-	
 	gds::Surface &GetSurface();
 	gds::Rect GetBoundingRect();
 
 	void Update(const gds::Rect &r);
 	void Update();
 	void SetSubscribed(uint32_t subs);
-	
-	std::function<bool()> onClose;
-	std::function<void(const gds::Rect&)> onResize;
-	std::function<void()> onExpand;
-	std::function<void(const gds::Rect&)> onMove;
-	std::function<void(const wm_Event &e)> onGlobal;
-	
-	bool HandleEvent(const wm_Event &e);
-	void CreateResizeHandle();
-	void PerformResize();
-	
 public:
 	Form(const gds::Rect &r, uint32_t options, const std::string &title);
 	

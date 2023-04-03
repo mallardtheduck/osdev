@@ -2,22 +2,17 @@
 #define _SLIDER_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
+
+struct SliderImpl;
+PIMPL_CLASS(SliderImpl);
 	
 class Slider : public IValueControl<int32_t>{
 private:
-	gds::Rect rect;
-	int32_t min;
-	int32_t max;
-	int32_t value;
-	int32_t snapTo;
-	
-	bool focus = false;
-	bool enabled = true;
-	
-	std::unique_ptr<gds::Surface> bkSurf;
+	btos::pimpl_ptr<SliderImpl> im;
 public:
 	Slider(const gds::Rect &r, int32_t min, int32_t max, int32_t def, int32_t snapTo = 1);
 	

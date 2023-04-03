@@ -2,17 +2,17 @@
 #define _GROUPBOX_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
+struct GroupBoxImpl;
+PIMPL_CLASS(GroupBoxImpl);
+
 class GroupBox : public IDecorativeControl{
 private:
-	gds::Rect rect;
-	std::string text;
-	std::unique_ptr<gds::Surface> surf;
-	gds::TextMeasurements textMeasures;
-	uint32_t textH;
+	btos::pimpl_ptr<GroupBoxImpl> im;
 public:
 	GroupBox(const gds::Rect &r, const std::string &t);
 	

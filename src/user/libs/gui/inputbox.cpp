@@ -17,18 +17,30 @@ static const uint32_t margin = 10;
 static const uint32_t buttonHeight = 30;
 static const uint32_t textHeight = 20;
 
-InputBox::InputBox() {}
-InputBox::InputBox(const std::string &m, const std::string &t, const std::string &d, std::shared_ptr<gds::Surface> i) :
-	message(m), title(t), defvalue(d), icon(i) {}
+struct InputBoxImpl{
+	std::string message;
+	std::string title;
+	std::string defvalue;
+	std::shared_ptr<gds::Surface> icon;
+};
+PIMPL_IMPL(InputBoxImpl);
+
+InputBox::InputBox() : im(new InputBoxImpl()) {}
+InputBox::InputBox(const std::string &m, const std::string &t, const std::string &d, std::shared_ptr<gds::Surface> i) : im(new InputBoxImpl()){
+	im->message = m; 
+	im->title = t;
+	im->defvalue = d;
+	im->icon = i; 
+}
 	
 std::string InputBox::Show(wm::Window *parent){
 	std::vector<std::string> buttons = {"OK", "Cancel"};
 	std::unique_ptr<gds::Surface> tmpSurf {new gds::Surface(gds_SurfaceType::Vector, 1, 1)};
 	
-	if(!icon) icon = icons::GetInputBoxDefault();
-	auto iconInfo = icon->Info();
+	if(!im->icon) im->icon = icons::GetInputBoxDefault();
+	auto iconInfo = im->icon->Info();
 	
-	auto messageMeasures = tmpSurf->MeasureText(message, fonts::GetLabelFont(), fonts::GetLabelTextSize());
+	auto messageMeasures = tmpSurf->MeasureText(im->message, fonts::GetLabelFont(), fonts::GetLabelTextSize());
 	
 	std::vector<gds::TextMeasurements> buttonLabelMeasures;
 	for(auto &b : buttons){
@@ -44,7 +56,7 @@ std::string InputBox::Show(wm::Window *parent){
 	auto formWidth = std::max(messageWidth, buttonWidth);
 	auto formHeight = std::max(messageMeasures.h, iconInfo.h) + (4 * margin) + buttonHeight + textHeight;
 	
-	auto form = std::make_shared<Form>(gds::Rect{0, 0, formWidth, formHeight}, FormOptions::ClosedFixed | wm_WindowOptions::NoHide, title);
+	auto form = std::make_shared<Form>(gds::Rect{0, 0, formWidth, formHeight}, FormOptions::ClosedFixed | wm_WindowOptions::NoHide, im->title);
 	
 	form->SetPosition(DialogPosition(parent, *form));
 	if(parent) parent->SetModal(*form);
@@ -58,9 +70,9 @@ std::string InputBox::Show(wm::Window *parent){
 	int32_t textX = labelX;
 	int32_t textY = ((contentHeight - textHeight - margin - messageMeasures.h) / 2) + labelHeight + margin;
 	
-	auto image = std::make_shared<Image>(gds::Rect{imageX, imageY, iconInfo.w, iconInfo.h}, icon);
-	auto label = std::make_shared<Label>(gds::Rect{labelX, labelY, messageMeasures.w, labelHeight}, message);
-	auto text = std::make_shared<TextBox>(gds::Rect{textX, textY, messageMeasures.w, textHeight}, defvalue);
+	auto image = std::make_shared<Image>(gds::Rect{imageX, imageY, iconInfo.w, iconInfo.h}, im->icon);
+	auto label = std::make_shared<Label>(gds::Rect{labelX, labelY, messageMeasures.w, labelHeight}, im->message);
+	auto text = std::make_shared<TextBox>(gds::Rect{textX, textY, messageMeasures.w, textHeight}, im->defvalue);
 	
 	form->AddControls({image, label, text});
 	
@@ -92,15 +104,15 @@ std::string InputBox::Show(wm::Window *parent){
 }
 	
 void InputBox::SetMessage(const std::string &m){
-	message = m;
+	im->message = m;
 }
 
 void InputBox::SetTitle(const std::string &t){
-	title = t;
+	im->title = t;
 }
 
 void InputBox::SetIcon(std::shared_ptr<gds::Surface> i){
-	icon = i;
+	im->icon = i;
 }
 
 }

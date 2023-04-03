@@ -13,39 +13,78 @@ namespace gui{
 	
 const auto scrollbarSize = 17;
 
+struct TreeViewImpl{
+	gds::Rect outerRect;
+	gds::Rect rect; 
+	std::unique_ptr<gds::Surface> surf;
+	
+	std::vector<TreeViewNode> items;
+	std::shared_ptr<gds::Surface> defaultIcon;
+	std::shared_ptr<gds::Surface> defaultOpenIcon;
+	
+	size_t fontHeight;
+	size_t iconSize;
+	
+	TreeViewNode *selectedItem = nullptr;
+	size_t vOffset = 0;
+	size_t hOffset = 0;
+	size_t visibleItems = 0;
+	
+	bool update = false;
+	bool hasFocus = false;
+	bool enabled = true;
+	
+	std::unique_ptr<Scrollbar> hscroll;
+	std::unique_ptr<Scrollbar> vscroll;
+	
+	bool scrollHoriz;
+	bool multiSelect;
+	
+	void UpdateDisplayState(bool changePos = true);
+	void ForEachShown(const std::function<void(TreeViewNode&)> &fn);
+	enum class MovePos{
+		Offset, First, Last
+	};
+	void SelectionMove(int offset, MovePos pos = MovePos::Offset);
+	void SelectByChar(char c);
+	TreeViewNode *GetNodeByPos(uint32_t yPos);
+	void ToggleNodeOpen(TreeViewNode &node);
+	std::shared_ptr<gds::Surface> GetNodeIcon(const TreeViewNode &node);
+};
+PIMPL_IMPL(TreeViewImpl);
+
 TreeViewNode::TreeViewNode(size_t i, const std::string &t, const std::vector<TreeViewNode> &c, std::shared_ptr<gds::Surface> ic, std::shared_ptr<gds::Surface> oI, bool o):
 measures(), id(i), text(t), children(c), icon(ic), openIcon(oI), open(o)
 {}
 
-TreeView::TreeView(const gds::Rect &r, bool sH, size_t iS) : 
-	outerRect(r), 
-	rect(sH ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h}),
-	iconSize(iS), scrollHoriz(sH)
-	{
+TreeView::TreeView(const gds::Rect &r, bool sH, size_t iS) : im(new TreeViewImpl()){
+	im->outerRect = r; 
+	im->rect = sH ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h};
+	im->iconSize = iS; im->scrollHoriz = sH;
 	auto info = fonts::GetTreeViewFont().Info();
-	fontHeight = (info.maxH * fonts::GetTreeViewTextSize()) / info.scale;
-	if(fontHeight < iconSize) fontHeight = iconSize;
+	im->fontHeight = (info.maxH * fonts::GetTreeViewTextSize()) / info.scale;
+	if(im->fontHeight < im->iconSize) im->fontHeight = im->iconSize;
 	
-	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
+	im->vscroll.reset(new Scrollbar({im->outerRect.x + (int32_t)im->outerRect.w - scrollbarSize, im->outerRect.y, scrollbarSize, im->outerRect.h - (im->scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
 	
-	vscroll->OnChange([this] (uint32_t v) {
-		if(v != vOffset) update = true;
-		vOffset = v;
+	im->vscroll->OnChange([this] (uint32_t v) {
+		if(v != im->vOffset) im->update = true;
+		im->vOffset = v;
 	});
 	
-	if(scrollHoriz){
-		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
+	if(im->scrollHoriz){
+		im->hscroll.reset(new Scrollbar({im->outerRect.x, im->outerRect.y + (int32_t)im->outerRect.h - scrollbarSize, im->outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
 		
-		hscroll->OnChange([this] (uint32_t v) {
-			if(v != hOffset) update = true;
-			hOffset = v;
+		im->hscroll->OnChange([this] (uint32_t v) {
+			if(v != im->hOffset) im->update = true;
+			im->hOffset = v;
 		});
 	}
 	
-	UpdateDisplayState();
+	im->UpdateDisplayState();
 }
 
-void TreeView::UpdateDisplayState(bool changePos){
+void TreeViewImpl::UpdateDisplayState(bool changePos){
 	visibleItems = rect.h / fontHeight;
 	
 	uint32_t maxTextW = 0;
@@ -108,7 +147,7 @@ void TreeView::UpdateDisplayState(bool changePos){
 	}
 }
 
-void TreeView::ForEachShown(const std::function<void(TreeViewNode&)> &fn){
+void TreeViewImpl::ForEachShown(const std::function<void(TreeViewNode&)> &fn){
 	std::stack<TreeViewNode *> nodes;
 	std::for_each(items.rbegin(), items.rend(), [&](TreeViewNode &n){
 		n.level = 0;
@@ -127,7 +166,7 @@ void TreeView::ForEachShown(const std::function<void(TreeViewNode&)> &fn){
 	}
 }
 
-void TreeView::SelectionMove(int offset, MovePos pos){
+void TreeViewImpl::SelectionMove(int offset, MovePos pos){
 	std::vector<TreeViewNode*> nodes;
 	size_t selectedIndex;
 	ForEachShown([&](TreeViewNode &n){
@@ -146,7 +185,7 @@ void TreeView::SelectionMove(int offset, MovePos pos){
 	}
 }
 
-std::shared_ptr<gds::Surface> TreeView::GetNodeIcon(const TreeViewNode &node){
+std::shared_ptr<gds::Surface> TreeViewImpl::GetNodeIcon(const TreeViewNode &node){
 	if(node.open){
 		if(node.openIcon) return node.openIcon;
 		else if(node.icon) return node.icon;
@@ -158,7 +197,7 @@ std::shared_ptr<gds::Surface> TreeView::GetNodeIcon(const TreeViewNode &node){
 	}
 }
 
-void TreeView::SelectByChar(char c){
+void TreeViewImpl::SelectByChar(char c){
 	TreeViewNode *first = nullptr;
 	TreeViewNode *newSel = nullptr;
 	bool foundSelection = false;
@@ -173,7 +212,7 @@ void TreeView::SelectByChar(char c){
 	else if(first) selectedItem = first;
 }
 
-TreeViewNode *TreeView::GetNodeByPos(uint32_t yPos){
+TreeViewNode *TreeViewImpl::GetNodeByPos(uint32_t yPos){
 	TreeViewNode *node = nullptr;
 	size_t i = 0;
 	ForEachShown([&](TreeViewNode &cItem){
@@ -186,7 +225,7 @@ TreeViewNode *TreeView::GetNodeByPos(uint32_t yPos){
 	return node;
 }
 
-void TreeView::ToggleNodeOpen(TreeViewNode &node){
+void TreeViewImpl::ToggleNodeOpen(TreeViewNode &node){
 	if(node.open) node.open = false;
 	else{
 		if(node.onOpen) node.onOpen(node);
@@ -199,170 +238,170 @@ EventResponse TreeView::HandleEvent(const wm_Event &e){
 	if(e.type == wm_EventType::Keyboard && !(e.Key.code & KeyFlags::KeyUp)){
 		uint16_t code = KB_code(e.Key.code);
 		if(code == (KeyFlags::NonASCII | KeyCodes::DownArrow)){
-			SelectionMove(1);
-			update = true;
+			im->SelectionMove(1);
+			im->update = true;
 			handled = true;
-			UpdateDisplayState();
+			im->UpdateDisplayState();
 			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::UpArrow)){
-			SelectionMove(-1);
-			update = true;
+			im->SelectionMove(-1);
+			im->update = true;
 			handled = true;
-			UpdateDisplayState();
+			im->UpdateDisplayState();
 			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageUp)){
-			SelectionMove(-visibleItems);
-			update = true;
-			UpdateDisplayState();
+			im->SelectionMove(-im->visibleItems);
+			im->update = true;
+			im->UpdateDisplayState();
 			handled = true;
 			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageDown)){
-			SelectionMove(visibleItems);
-			update = true;
-			UpdateDisplayState();
+			im->SelectionMove(im->visibleItems);
+			im->update = true;
+			im->UpdateDisplayState();
 			handled = true;
 			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
-			SelectionMove(0, MovePos::First);
-			update = true;
-			UpdateDisplayState();
+			im->SelectionMove(0, TreeViewImpl::MovePos::First);
+			im->update = true;
+			im->UpdateDisplayState();
 			handled = true;
 			RaiseChangeEvent();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
-			SelectionMove(0, MovePos::Last);
-			update = true;
-			UpdateDisplayState();
+			im->SelectionMove(0, TreeViewImpl::MovePos::Last);
+			im->update = true;
+			im->UpdateDisplayState();
 			handled = true;
 			RaiseChangeEvent();
 		}else if(!(code & KeyFlags::NonASCII)){
 			char c = KB_char(e.Key.code);
 			if(c == ' ' || c == '\n'){
-				ToggleNodeOpen(*selectedItem);
+				im->ToggleNodeOpen(*im->selectedItem);
 			}else{
 				c = std::tolower(c);
-				SelectByChar(c);
+				im->SelectByChar(c);
 				RaiseChangeEvent();
 			}
-			update = true;
+			im->update = true;
 			handled = true;
-			UpdateDisplayState();
+			im->UpdateDisplayState();
 		}
 	}else if(e.type & wm_PointerEvents){
-		if(InRect(e.Pointer.x, e.Pointer.y, rect)){
+		if(InRect(e.Pointer.x, e.Pointer.y, im->rect)){
 			if(e.type == wm_EventType::PointerButtonUp){
-				auto node = GetNodeByPos(e.Pointer.y - outerRect.y);
+				auto node = im->GetNodeByPos(e.Pointer.y - im->outerRect.y);
 				if(node){
-					selectedItem = node;
-					auto ptrX = (e.Pointer.x - outerRect.x) + hOffset;
-					if(ptrX > node->level * iconSize && ptrX < (node->level + 1) * iconSize){
-						ToggleNodeOpen(*node);
+					im->selectedItem = node;
+					auto ptrX = (e.Pointer.x - im->outerRect.x) + im->hOffset;
+					if(ptrX > node->level * im->iconSize && ptrX < (node->level + 1) * im->iconSize){
+						im->ToggleNodeOpen(*node);
 					}
-					update = true;
+					im->update = true;
 					RaiseChangeEvent();
 				}
 				handled = true;
-				UpdateDisplayState();
+				im->UpdateDisplayState();
 			}
-		}else if(hscroll && hscroll->IsEnabled() && InRect(e.Pointer.x, e.Pointer.y, hscroll->GetInteractRect()) && (e.type & hscroll->GetSubscribed())){
-			auto ret = hscroll->HandleEvent(e);
-			update = ret.IsFinishedProcessing();
-			handled = handled || update;
-		}else if(vscroll && vscroll->IsEnabled() && InRect(e.Pointer.x, e.Pointer.y, vscroll->GetInteractRect()) && (e.type & vscroll->GetSubscribed())){
-			auto ret = vscroll->HandleEvent(e);
-			update = ret.IsFinishedProcessing();
-			handled = handled || update;
+		}else if(im->hscroll && im->hscroll->IsEnabled() && InRect(e.Pointer.x, e.Pointer.y, im->hscroll->GetInteractRect()) && (e.type & im->hscroll->GetSubscribed())){
+			auto ret = im->hscroll->HandleEvent(e);
+			im->update = ret.IsFinishedProcessing();
+			handled = handled || im->update;
+		}else if(im->vscroll && im->vscroll->IsEnabled() && InRect(e.Pointer.x, e.Pointer.y, im->vscroll->GetInteractRect()) && (e.type & im->vscroll->GetSubscribed())){
+			auto ret = im->vscroll->HandleEvent(e);
+			im->update = ret.IsFinishedProcessing();
+			handled = handled || im->update;
 		}
 	}
-	if(update) IControl::Paint(outerRect);
+	if(im->update) IControl::Paint(im->outerRect);
 	return {handled};
 }
 
 void TreeView::Paint(gds::Surface &s){
-	if(update || !surf){
-		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		UpdateDisplayState(false);
+	if(im->update || !im->surf){
+		if(!im->surf) im->surf.reset(new gds::Surface(gds_SurfaceType::Vector, im->rect.w, im->rect.h, 100, gds_ColourType::True));
+		im->UpdateDisplayState(false);
 		
-		uint32_t inW = rect.w - 1;
-		uint32_t inH = rect.h - 1;
+		uint32_t inW = im->rect.w - 1;
+		uint32_t inH = im->rect.h - 1;
 		
-		auto bkgCol = colours::GetBackground().Fix(*surf);
-		auto txtCol = colours::GetTreeViewText().Fix(*surf);
-		auto border = colours::GetBorder().Fix(*surf);
-		auto selCol = colours::GetSelection().Fix(*surf);
+		auto bkgCol = colours::GetBackground().Fix(*im->surf);
+		auto txtCol = colours::GetTreeViewText().Fix(*im->surf);
+		auto border = colours::GetBorder().Fix(*im->surf);
+		auto selCol = colours::GetSelection().Fix(*im->surf);
 		
-		auto topLeft = colours::GetTreeViewLowLight().Fix(*surf);
-		auto bottomRight = colours::GetTreeViewHiLight().Fix(*surf);
-		surf->Clear();
-		surf->BeginQueue();
-		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		auto topLeft = colours::GetTreeViewLowLight().Fix(*im->surf);
+		auto bottomRight = colours::GetTreeViewHiLight().Fix(*im->surf);
+		im->surf->Clear();
+		im->surf->BeginQueue();
+		im->surf->Box(im->rect.AtZero(), bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 		size_t i = 0;
-		ForEachShown([&](TreeViewNode &cItem){
-			if(i >= vOffset && i < vOffset + visibleItems + 1){
-				int32_t iconX = ((cItem.level * iconSize) - hOffset) + 1;
-				int32_t iconY = ((i - vOffset) * fontHeight) + 1;
-				int32_t textX = iconX + iconSize;
-				int32_t textY = iconY + std::max<int32_t>(((fontHeight + cItem.measures.h) / 2), 0);
+		im->ForEachShown([&](TreeViewNode &cItem){
+			if(i >= im->vOffset && i < im->vOffset + im->visibleItems + 1){
+				int32_t iconX = ((cItem.level * im->iconSize) - im->hOffset) + 1;
+				int32_t iconY = ((i - im->vOffset) * im->fontHeight) + 1;
+				int32_t textX = iconX + im->iconSize;
+				int32_t textY = iconY + std::max<int32_t>(((im->fontHeight + cItem.measures.h) / 2), 0);
 				
-				if(&cItem == selectedItem){
-					auto selFocus = colours::GetSelectionFocus().Fix(*surf);
-					int32_t selY = (fontHeight * (i - vOffset)) + 1;
-					if(hasFocus){
-						surf->Box({1, selY, inW, fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+				if(&cItem == im->selectedItem){
+					auto selFocus = colours::GetSelectionFocus().Fix(*im->surf);
+					int32_t selY = (im->fontHeight * (i - im->vOffset)) + 1;
+					if(im->hasFocus){
+						im->surf->Box({1, selY, inW, im->fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 					}
-					surf->Box({1, selY, inW, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
+					im->surf->Box({1, selY, inW, im->fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
 				}
 				
-				auto icon = GetNodeIcon(cItem);
-				surf->Blit(*icon, {0, 0, iconSize, iconSize}, {iconX, iconY, iconSize, iconSize});
-				surf->Text({textX, textY}, cItem.text, fonts::GetTreeViewFont(), fonts::GetTreeViewTextSize(), txtCol);
+				auto icon = im->GetNodeIcon(cItem);
+				im->surf->Blit(*icon, {0, 0, im->iconSize, im->iconSize}, {iconX, iconY, im->iconSize, im->iconSize});
+				im->surf->Text({textX, textY}, cItem.text, fonts::GetTreeViewFont(), fonts::GetTreeViewTextSize(), txtCol);
 			}
 			++i;
 		});
-		drawing::Border(*surf, {0, 0, inW, inH}, border);
-		drawing::BevelBox(*surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
+		drawing::Border(*im->surf, {0, 0, inW, inH}, border);
+		drawing::BevelBox(*im->surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
 		
-		surf->CommitQueue();
-		update = false;
+		im->surf->CommitQueue();
+		im->update = false;
 	}
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	s.Blit(*im->surf, im->rect.AtZero(), im->rect);
 
-	if(hscroll) hscroll->Paint(s);
-	if(vscroll) vscroll->Paint(s);
+	if(im->hscroll) im->hscroll->Paint(s);
+	if(im->vscroll) im->vscroll->Paint(s);
 	
-	if(!enabled){
+	if(!im->enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
-		s.Box(outerRect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		s.Box(im->outerRect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	}
 }
 
 gds::Rect TreeView::GetPaintRect(){
-	return outerRect;
+	return im->outerRect;
 }
 
 gds::Rect TreeView::GetInteractRect(){
-	return outerRect;
+	return im->outerRect;
 }
 
 uint32_t TreeView::GetSubscribed(){
 	auto ret = wm_KeyboardEvents | wm_EventType::PointerButtonUp | wm_EventType::PointerButtonDown;
-	if(hscroll) ret |= hscroll->GetSubscribed();
-	if(vscroll) ret |= vscroll->GetSubscribed();
+	if(im->hscroll) ret |= im->hscroll->GetSubscribed();
+	if(im->vscroll) ret |= im->vscroll->GetSubscribed();
 	return ret;
 }
 
 void TreeView::Focus(){
-	if(!hasFocus){
-		update = true;
-		hasFocus = true;
-		IControl::Paint(outerRect);
+	if(!im->hasFocus){
+		im->update = true;
+		im->hasFocus = true;
+		IControl::Paint(im->outerRect);
 	}
 }
 
 void TreeView::Blur(){
-	if(hasFocus){
-		update = true;
-		hasFocus = false;
-		IControl::Paint(outerRect);
+	if(im->hasFocus){
+		im->update = true;
+		im->hasFocus = false;
+		IControl::Paint(im->outerRect);
 	}
 }
 
@@ -371,50 +410,50 @@ uint32_t TreeView::GetFlags(){
 }
 
 void TreeView::Enable(){
-	if(!enabled){
-		enabled = true;
-		IControl::Paint(rect);
+	if(!im->enabled){
+		im->enabled = true;
+		IControl::Paint(im->rect);
 	}
 }
 
 void TreeView::Disable(){
-	if(enabled){
-		enabled = false;
-		IControl::Paint(rect);
+	if(im->enabled){
+		im->enabled = false;
+		IControl::Paint(im->rect);
 	}
 }
 
 bool TreeView::IsEnabled(){
-	return enabled;
+	return im->enabled;
 }
 
 void TreeView::SetPosition(const gds::Rect &r){
-	outerRect = r;
-	rect = scrollHoriz ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h};
-	if(vscroll) vscroll->SetPosition({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)});
-	if(hscroll) hscroll->SetPosition({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize});
-	update = true;
-	surf.reset();
+	im->outerRect = r;
+	im->rect = im->scrollHoriz ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h};
+	if(im->vscroll) im->vscroll->SetPosition({im->outerRect.x + (int32_t)im->outerRect.w - scrollbarSize, im->outerRect.y, scrollbarSize, im->outerRect.h - (im->scrollHoriz ? scrollbarSize : 0)});
+	if(im->hscroll) im->hscroll->SetPosition({im->outerRect.x, im->outerRect.y + (int32_t)im->outerRect.h - scrollbarSize, im->outerRect.w - scrollbarSize, scrollbarSize});
+	im->update = true;
+	im->surf.reset();
 }
 
 TreeViewNode *TreeView::GetValue(){
-	return selectedItem;
+	return im->selectedItem;
 }
 
 void TreeView::SetValue(TreeViewNode *node){
-	if(selectedItem == node) return;
-	selectedItem = node;
-	update = true;
-	UpdateDisplayState(true);
+	if(im->selectedItem == node) return;
+	im->selectedItem = node;
+	im->update = true;
+	im->UpdateDisplayState(true);
 }
 
 std::vector<TreeViewNode> &TreeView::Items(){
-	return items;
+	return im->items;
 }
 
 void TreeView::Refresh(){
-	update = true;
-	IControl::Paint(outerRect);
+	im->update = true;
+	IControl::Paint(im->outerRect);
 }
 
 }

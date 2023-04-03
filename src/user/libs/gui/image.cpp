@@ -4,28 +4,38 @@
 namespace btos_api{
 namespace gui{
 
-Image::Image(const gds::Rect &r, std::shared_ptr<gds::Surface> i) : rect(r), img(i) {}
+struct ImageImpl{
+	gds::Rect rect;
+	std::unique_ptr<gds::Surface> surf;
+	std::shared_ptr<gds::Surface> img;
+};
+PIMPL_IMPL(ImageImpl);
+
+Image::Image(const gds::Rect &r, std::shared_ptr<gds::Surface> i) : im(new ImageImpl()){
+	im->rect = r;
+	im->img = i;
+}
 	
 EventResponse Image::HandleEvent(const wm_Event&){
 	return {false};
 }
 
 void Image::Paint(gds::Surface &s){
-	if(!surf){
-		surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		auto bkgCol = colours::GetBackground().Fix(*surf);
+	if(!im->surf){
+		im->surf.reset(new gds::Surface(gds_SurfaceType::Vector, im->rect.w, im->rect.h, 100, gds_ColourType::True));
+		auto bkgCol = colours::GetBackground().Fix(*im->surf);
 		
-		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		auto info = img->Info();
-		surf->Blit(*img, {0, 0, info.w, info.h}, {0, 0, info.w, info.h});
-		surf->Compress();
+		im->surf->Box(im->rect.AtZero(), bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		auto info = im->img->Info();
+		im->surf->Blit(*im->img, {0, 0, info.w, info.h}, {0, 0, info.w, info.h});
+		im->surf->Compress();
 	}
 	
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	s.Blit(*im->surf, im->rect.AtZero(), im->rect);
 }
 
 gds::Rect Image::GetPaintRect(){
-	return rect;
+	return im->rect;
 }
 
 gds::Rect Image::GetInteractRect(){
@@ -37,8 +47,8 @@ uint32_t Image::GetSubscribed(){
 }
 
 void Image::SetPosition(const gds::Rect &r){
-	rect = r;
-	surf.reset();
+	im->rect = r;
+	im->surf.reset();
 }
 
 }

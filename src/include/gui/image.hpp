@@ -2,15 +2,17 @@
 #define _IMAGE_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
+struct ImageImpl;
+PIMPL_CLASS(ImageImpl);
+
 class Image : public IDecorativeControl{
 private:
-	gds::Rect rect;
-	std::unique_ptr<gds::Surface> surf;
-	std::shared_ptr<gds::Surface> img;
+	btos::pimpl_ptr<ImageImpl> im;
 public:
 	Image(const gds::Rect &r, std::shared_ptr<gds::Surface> img);
 	

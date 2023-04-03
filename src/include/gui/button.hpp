@@ -2,22 +2,17 @@
 #define _BUTTON_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
+struct ButtonImpl;
+PIMPL_CLASS(ButtonImpl);
+
 class Button : public IActionControl<void>{
 private:
-	bool down = false;
-	bool focus = false;
-	bool enabled = true;
-
-	gds::Rect rect;
-	std::string label;
-	
-	std::unique_ptr<gds::Surface> bkSurf;
-	gds::TextMeasurements labelMeasures;
-	
+	btos::pimpl_ptr<ButtonImpl> impl;
 public:
 	Button(const gds::Rect &r, const std::string &l);
 

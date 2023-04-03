@@ -2,9 +2,13 @@
 #define _LABEL_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
+
+class LabelImpl;
+PIMPL_CLASS(LabelImpl);
 
 class Label : public IDecorativeControl{
 public:
@@ -13,11 +17,7 @@ public:
 	};
 
 private:
-	gds::Rect rect;
-	std::string text;
-	std::unique_ptr<gds::Surface> surf;
-	
-	Justification just;
+	btos::pimpl_ptr<LabelImpl> im;
 public:
 	Label(const gds::Rect &r, const std::string &t, Justification just = Justification::Center);
 	

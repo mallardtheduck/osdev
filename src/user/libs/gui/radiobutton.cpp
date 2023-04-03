@@ -8,20 +8,34 @@ namespace gui{
 	
 const auto checkSize = 15;
 
-RadioButton::RadioButton(const gds::Rect &r, const std::string &t, bool v) : rect(r), text(t), value(v) {}
+struct RadioButtonImpl{
+	gds::Rect rect;
+	std::string text;
+	std::unique_ptr<gds::Surface> bkSurf;
+	
+	bool value;
+	gds::TextMeasurements textMeasures;
+	bool focus = false;
+	bool enabled = true;
+};
+PIMPL_IMPL(RadioButtonImpl);
+
+RadioButton::RadioButton(const gds::Rect &r, const std::string &t, bool v) : im(new RadioButtonImpl){
+	im->rect = r; im->text = t; im->value = v;
+}
 	
 EventResponse RadioButton::HandleEvent(const wm_Event &e){
 	if(e.type == wm_EventType::PointerButtonUp){
-		auto oldValue = value;
-		value = true;
-		if(value != oldValue){
+		auto oldValue = im->value;
+		im->value = true;
+		if(im->value != oldValue){
 			RaiseChangeEvent();
 		}
 		if(getAllRects){ 
 			auto allRects = getAllRects();
 			for(auto &rect : allRects) IControl::Paint(rect);
 		}
-		else IControl::Paint(rect);
+		else IControl::Paint(im->rect);
 		return {true};
 	}
 	if(e.type == wm_EventType::Keyboard){
@@ -29,16 +43,16 @@ EventResponse RadioButton::HandleEvent(const wm_Event &e){
 		if(!(code & KeyFlags::NonASCII)){
 			char c = KB_char(e.Key.code);
 			if(c == ' ' || c == '\n'){
-				auto oldValue = value;
-				value = true;
-				if(value != oldValue){
+				auto oldValue = im->value;
+				im->value = true;
+				if(im->value != oldValue){
 					RaiseChangeEvent();
 				}
 				if(getAllRects){ 
 					auto allRects = getAllRects();
 					for(auto &rect : allRects) IControl::Paint(rect);
 				}
-				else IControl::Paint(rect);
+				else IControl::Paint(im->rect);
 				return {true};
 			}
 		}
@@ -48,85 +62,85 @@ EventResponse RadioButton::HandleEvent(const wm_Event &e){
 }
 
 void RadioButton::Paint(gds::Surface &s){
-	uint32_t inW = rect.w - 1;
-	uint32_t inH = rect.h - 1;
-	int32_t chkY = std::max<int32_t>((rect.h - checkSize) / 2, 0);
+	uint32_t inW = im->rect.w - 1;
+	uint32_t inH = im->rect.h - 1;
+	int32_t chkY = std::max<int32_t>((im->rect.h - checkSize) / 2, 0);
 	
-	if(!bkSurf){
-		bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		bkSurf->BeginQueue();
+	if(!im->bkSurf){
+		im->bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, im->rect.w, im->rect.h, 100, gds_ColourType::True));
+		im->bkSurf->BeginQueue();
 		
-		textMeasures = bkSurf->MeasureText(text, fonts::GetRadioButtonFont(), fonts::GetRadioButtonTextSize());
-		auto bkgCol = colours::GetBackground().Fix(*bkSurf);
-		auto txtCol = colours::GetRadioButtonText().Fix(*bkSurf);
+		im->textMeasures = im->bkSurf->MeasureText(im->text, fonts::GetRadioButtonFont(), fonts::GetRadioButtonTextSize());
+		auto bkgCol = colours::GetBackground().Fix(*im->bkSurf);
+		auto txtCol = colours::GetRadioButtonText().Fix(*im->bkSurf);
 			
 		int32_t textX = checkSize + 3;
-		int32_t textY = std::max<int32_t>(((rect.h + textMeasures.h) / 2), 0);
+		int32_t textY = std::max<int32_t>(((im->rect.h + im->textMeasures.h) / 2), 0);
 		
-		bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		bkSurf->Text({textX, textY}, text, fonts::GetRadioButtonFont(), fonts::GetRadioButtonTextSize(), txtCol);
+		im->bkSurf->Box(im->rect.AtZero(), bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		im->bkSurf->Text({textX, textY}, im->text, fonts::GetRadioButtonFont(), fonts::GetRadioButtonTextSize(), txtCol);
 		
 		auto cx = (checkSize / 2) + 1;
 		auto cy = chkY + (checkSize / 2);
 		
-		auto topLeft = colours::GetRadioButtonLowLight().Fix(*bkSurf);
-		auto bottomRight = colours::GetRadioButtonHiLight().Fix(*bkSurf);
-		bkSurf->Arc({cx, cy, checkSize - 1, checkSize - 1}, 135, 315, topLeft, topLeft, 1);
-		bkSurf->Arc({cx, cy, checkSize - 1, checkSize - 1}, 315, 135, bottomRight, topLeft, 1);
+		auto topLeft = colours::GetRadioButtonLowLight().Fix(*im->bkSurf);
+		auto bottomRight = colours::GetRadioButtonHiLight().Fix(*im->bkSurf);
+		im->bkSurf->Arc({cx, cy, checkSize - 1, checkSize - 1}, 135, 315, topLeft, topLeft, 1);
+		im->bkSurf->Arc({cx, cy, checkSize - 1, checkSize - 1}, 315, 135, bottomRight, topLeft, 1);
 		
-		auto border = colours::GetBorder().Fix(*bkSurf);
-		bkSurf->Ellipse({cx, cy, checkSize, checkSize}, border, border);
+		auto border = colours::GetBorder().Fix(*im->bkSurf);
+		im->bkSurf->Ellipse({cx, cy, checkSize, checkSize}, border, border);
 		
-		bkSurf->CommitQueue();
-		bkSurf->Compress();
+		im->bkSurf->CommitQueue();
+		im->bkSurf->Compress();
 	}
 	
-	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
+	s.Blit(*im->bkSurf, im->rect.AtZero(), im->rect);
 	
-	if(value){
+	if(im->value){
 		auto chkCol = colours::GetRadioButtonCheck().Fix(s);
-		auto cx = rect.x + (checkSize / 2) + 1;
-		auto cy = rect.y + chkY + (checkSize / 2);
+		auto cx = im->rect.x + (checkSize / 2) + 1;
+		auto cy = im->rect.y + chkY + (checkSize / 2);
 		
 		s.Ellipse({cx, cy, checkSize - 8, checkSize - 8}, chkCol, chkCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	}
 	
-	if(focus){
+	if(im->focus){
 		auto focusCol = colours::GetRadioButtonFocus().Fix(s);
 		
-		int32_t boxTop = std::max<int32_t>(std::min<int32_t>(chkY - 1, (rect.h - textMeasures.h) / 2), 0);
+		int32_t boxTop = std::max<int32_t>(std::min<int32_t>(chkY - 1, (im->rect.h - im->textMeasures.h) / 2), 0);
 		int32_t boxLeft = 0;
-		uint32_t boxWidth = textMeasures.w + checkSize + 3;
+		uint32_t boxWidth = im->textMeasures.w + checkSize + 3;
 		if(boxLeft + boxWidth > inW) boxWidth = inW - boxLeft;
-		uint32_t boxHeight = std::max<int32_t>(textMeasures.h, checkSize + 3);
+		uint32_t boxHeight = std::max<int32_t>(im->textMeasures.h, checkSize + 3);
 		if(boxTop + boxHeight > inH) boxHeight = inH - boxTop;
-		s.Box({rect.x + boxLeft, rect.y + boxTop, boxWidth, boxHeight}, focusCol, focusCol);
+		s.Box({im->rect.x + boxLeft, im->rect.y + boxTop, boxWidth, boxHeight}, focusCol, focusCol);
 	}
 	
-	if(!enabled){
+	if(!im->enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
-		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		s.Box(im->rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	}
 }
 
 gds::Rect RadioButton::GetPaintRect(){
-	return rect;
+	return im->rect;
 }
 
 gds::Rect RadioButton::GetInteractRect(){
-	if(textMeasures.w){
-		uint32_t inW = rect.w - 1;
-		uint32_t inH = rect.h - 1;
-		int32_t chkY = std::max<int32_t>((rect.h - checkSize) / 2, 0);
+	if(im->textMeasures.w){
+		uint32_t inW = im->rect.w - 1;
+		uint32_t inH = im->rect.h - 1;
+		int32_t chkY = std::max<int32_t>((im->rect.h - checkSize) / 2, 0);
 		
-		int32_t boxTop = std::max<int32_t>(std::min<int32_t>(chkY - 1, (rect.h - textMeasures.h) / 2), 0);
+		int32_t boxTop = std::max<int32_t>(std::min<int32_t>(chkY - 1, (im->rect.h - im->textMeasures.h) / 2), 0);
 		int32_t boxLeft = 0;
-		uint32_t boxWidth = textMeasures.w + checkSize + 3;
+		uint32_t boxWidth = im->textMeasures.w + checkSize + 3;
 		if(boxLeft + boxWidth > inW) boxWidth = inW - boxLeft;
-		uint32_t boxHeight = std::max<int32_t>(textMeasures.h, checkSize + 3);
+		uint32_t boxHeight = std::max<int32_t>(im->textMeasures.h, checkSize + 3);
 		if(boxTop + boxHeight > inH) boxHeight = inH - boxTop;
-		return {rect.x + boxLeft, rect.y + boxTop, boxWidth, boxHeight};
-	}else return rect;
+		return {im->rect.x + boxLeft, im->rect.y + boxTop, boxWidth, boxHeight};
+	}else return im->rect;
 }
 
 uint32_t RadioButton::GetSubscribed(){
@@ -134,27 +148,27 @@ uint32_t RadioButton::GetSubscribed(){
 }
 
 void RadioButton::Focus(){
-	focus = true;
-	IControl::Paint(rect);
+	im->focus = true;
+	IControl::Paint(im->rect);
 }
 void RadioButton::Blur(){
-	focus = false;
-	IControl::Paint(rect);
+	im->focus = false;
+	IControl::Paint(im->rect);
 }
 	
 void RadioButton::SetText(const std::string &t){
-	text = t;
-	bkSurf.reset();
-	IControl::Paint(rect);
+	im->text = t;
+	im->bkSurf.reset();
+	IControl::Paint(im->rect);
 }
 
 void RadioButton::SetValue(bool v){
-	value = v;
-	IControl::Paint(rect);
+	im->value = v;
+	IControl::Paint(im->rect);
 }
 
 bool RadioButton::GetValue(){
-	return value;
+	return im->value;
 }
 
 uint32_t RadioButton::GetFlags(){
@@ -162,26 +176,26 @@ uint32_t RadioButton::GetFlags(){
 }
 
 void RadioButton::Enable(){
-	if(!enabled){
-		enabled = true;
-		IControl::Paint(rect);
+	if(!im->enabled){
+		im->enabled = true;
+		IControl::Paint(im->rect);
 	}
 }
 
 void RadioButton::Disable(){
-	if(enabled){
-		enabled = false;
-		IControl::Paint(rect);
+	if(im->enabled){
+		im->enabled = false;
+		IControl::Paint(im->rect);
 	}
 }
 
 bool RadioButton::IsEnabled(){
-	return enabled;
+	return im->enabled;
 }
 
 void RadioButton::SetPosition(const gds::Rect &r){
-	rect = r;
-	bkSurf.reset();
+	im->rect = r;
+	im->bkSurf.reset();
 }
 
 }

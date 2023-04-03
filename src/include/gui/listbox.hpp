@@ -5,43 +5,17 @@
 #include "scrollbar.hpp"
 #include "checkbox.hpp"
 
+#include <util/pimpl_ptr.hpp>
+
 namespace btos_api{
 namespace gui{
 	
+struct ListBoxImpl;
+PIMPL_CLASS(ListBoxImpl);
+
 class ListBox : public IValueControl<size_t>{
 private:
-	gds::Rect outerRect;
-	gds::Rect rect; 
-	std::unique_ptr<gds::Surface> surf;
-	
-	std::vector<std::string> items;
-	std::vector<bool> multiSelection;
-	
-	struct DrawItem{
-		std::string text;
-		gds::TextMeasurements measures;
-	};
-	
-	std::vector<DrawItem> drawItems;
-	
-	size_t fontHeight;
-	
-	size_t selectedItem = 0;
-	size_t vOffset = 0;
-	size_t hOffset = 0;
-	size_t visibleItems = 0;
-	
-	bool update = false;
-	bool hasFocus = false;
-	bool enabled = true;
-	
-	std::unique_ptr<Scrollbar> hscroll;
-	std::unique_ptr<Scrollbar> vscroll;
-	
-	bool scrollHoriz;
-	bool multiSelect;
-	
-	void UpdateDisplayState(bool changePos = true);
+	btos::pimpl_ptr<ListBoxImpl> im;
 public:
 	ListBox(const gds::Rect &r, bool scrollHoriz = false, bool multiSelect = false);
 	

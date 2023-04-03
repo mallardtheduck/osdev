@@ -9,9 +9,31 @@
 namespace btos_api{
 namespace gui{
 
-TextBox::TextBox(const gds::Rect &r, const std::string &t) : rect(r), text(t) {}
+struct TextBoxImpl{
+	gds::Rect rect;
+	std::string text;
+	std::unique_ptr<gds::Surface> surf;
 	
-void TextBox::UpdateDisplayState(){
+	std::function<bool(uint32_t)> onKeyPress;
+	
+	gds::TextMeasurements textMeasures;
+	
+	bool update = false;
+	size_t textOffset = 0;
+	size_t cursorPos = 0;
+	bool hasFocus = false;
+	bool enabled = true;
+	int32_t textY = 0;
+	
+	void UpdateDisplayState();
+};
+PIMPL_IMPL(TextBoxImpl);
+
+TextBox::TextBox(const gds::Rect &r, const std::string &t) : im(new TextBoxImpl()){
+	im->rect = r; im->text = t;
+}
+	
+void TextBoxImpl::UpdateDisplayState(){
 	if(!surf){
 		surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
 		update = true;
@@ -62,58 +84,58 @@ EventResponse TextBox::HandleEvent(const wm_Event &e){
 	bool handled = false;
 	if(e.type == wm_EventType::Keyboard && !(e.Key.code & KeyFlags::KeyUp)){
 		uint16_t code = KB_code(e.Key.code);
-		if(onKeyPress){
-			if(onKeyPress(e.Key.code)) handled = true;
+		if(im->onKeyPress){
+			if(im->onKeyPress(e.Key.code)) handled = true;
 		}
 		if(!handled){
-			if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && cursorPos > 0){
-				--cursorPos;
+			if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && im->cursorPos > 0){
+				--im->cursorPos;
 				updateCursor = true;
 				handled = true;
-			}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && cursorPos < text.length()){
-				++cursorPos;
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && im->cursorPos < im->text.length()){
+				++im->cursorPos;
 				updateCursor = true;
 				handled = true;
-			}else if(code == (KeyFlags::NonASCII | KeyCodes::Delete) && cursorPos <= text.length()){
-				text.erase(cursorPos, 1);
+			}else if(code == (KeyFlags::NonASCII | KeyCodes::Delete) && im->cursorPos <= im->text.length()){
+				im->text.erase(im->cursorPos, 1);
 				RaiseChangeEvent();
-				if(cursorPos > text.length()) cursorPos = text.length();
-				update = true;
+				if(im->cursorPos > im->text.length()) im->cursorPos = im->text.length();
+				im->update = true;
 				handled = true;
 			}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
-				cursorPos = 0;
+				im->cursorPos = 0;
 				updateCursor = true;
 				handled = true;
 			}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
-				cursorPos = text.length();
+				im->cursorPos = im->text.length();
 				updateCursor = true;
 				handled = true;
 			}else if(!(code & KeyFlags::NonASCII)){
 				char c = KB_char(e.Key.code);
-				auto preText = text;
-				if(c == 0x08 && cursorPos > 0){
-					text.erase(cursorPos - 1, 1);
+				auto preText = im->text;
+				if(c == 0x08 && im->cursorPos > 0){
+					im->text.erase(im->cursorPos - 1, 1);
 					RaiseChangeEvent();
-					--cursorPos;
+					--im->cursorPos;
 					handled = true;
 				}else if(c == '\n'){
 					RaiseActionEvent();
 				}else if(c > 31){
-					text.insert(cursorPos, 1, c);
+					im->text.insert(im->cursorPos, 1, c);
 					RaiseChangeEvent();
-					++cursorPos;
+					++im->cursorPos;
 					handled = true;
 				}
-				update = (preText != text);
+				im->update = (preText != im->text);
 			}
 		}
 	}else if(e.type == wm_EventType::PointerButtonDown || e.type == wm_EventType::PointerButtonUp){
 		handled = true;
-		auto pointerX = e.Pointer.x - rect.x;
+		auto pointerX = e.Pointer.x - im->rect.x;
 		double xpos = 0.5;
-		auto newCursorPos = cursorPos;
-		for(size_t i = textOffset; i < textMeasures.charX.size(); ++i){
-			xpos += textMeasures.charX[i];
+		auto newCursorPos = im->cursorPos;
+		for(size_t i = im->textOffset; i < im->textMeasures.charX.size(); ++i){
+			xpos += im->textMeasures.charX[i];
 			if(xpos > pointerX){
 				newCursorPos = i;
 				break;
@@ -121,69 +143,69 @@ EventResponse TextBox::HandleEvent(const wm_Event &e){
 				newCursorPos = i + 1;
 			}
 		}
-		if(newCursorPos != cursorPos){
-			cursorPos = newCursorPos;
+		if(newCursorPos != im->cursorPos){
+			im->cursorPos = newCursorPos;
 			updateCursor = true;
 		}
 	}
 	
 	
-	if(update || updateCursor) IControl::Paint(rect);
+	if(im->update || updateCursor) IControl::Paint(im->rect);
 	return {handled};
 }
 
 void TextBox::Paint(gds::Surface &s){
-	UpdateDisplayState();
+	im->UpdateDisplayState();
 	
-	if(update){
-		uint32_t inW = rect.w - 1;
-		uint32_t inH = rect.h - 1;
+	if(im->update){
+		uint32_t inW = im->rect.w - 1;
+		uint32_t inH = im->rect.h - 1;
 		
-		auto bkgCol = colours::GetBackground().Fix(*surf);
-		auto txtCol = colours::GetTextBoxText().Fix(*surf);
-		auto border = colours::GetBorder().Fix(*surf);
+		auto bkgCol = colours::GetBackground().Fix(*im->surf);
+		auto txtCol = colours::GetTextBoxText().Fix(*im->surf);
+		auto border = colours::GetBorder().Fix(*im->surf);
 		
-		surf->Clear();
+		im->surf->Clear();
 		
-		surf->BeginQueue();
-		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		if(textOffset < text.length()) surf->Text({2, textY}, text.substr(textOffset), fonts::GetTextBoxFont(), fonts::GetTextBoxTextSize(), txtCol);
-		drawing::Border(*surf, {0, 0, inW, inH}, border);
+		im->surf->BeginQueue();
+		im->surf->Box(im->rect.AtZero(), bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		if(im->textOffset < im->text.length()) im->surf->Text({2, im->textY}, im->text.substr(im->textOffset), fonts::GetTextBoxFont(), fonts::GetTextBoxTextSize(), txtCol);
+		drawing::Border(*im->surf, {0, 0, inW, inH}, border);
 		
-		auto topLeft = colours::GetTextBoxLowLight().Fix(*surf);
-		auto bottomRight = colours::GetTextBoxHiLight().Fix(*surf);
-		drawing::BevelBox(*surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
+		auto topLeft = colours::GetTextBoxLowLight().Fix(*im->surf);
+		auto bottomRight = colours::GetTextBoxHiLight().Fix(*im->surf);
+		drawing::BevelBox(*im->surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
 
-		surf->CommitQueue();
-		update = false;
+		im->surf->CommitQueue();
+		im->update = false;
 	}
 	
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	s.Blit(*im->surf, im->rect.AtZero(), im->rect);
 	
-	if(hasFocus){
-		auto cursorCol = colours::GetTextCursor().Fix(*surf);
+	if(im->hasFocus){
+		auto cursorCol = colours::GetTextCursor().Fix(*im->surf);
 		
 		double cursorXd = 1.5;
-		for(size_t i = textOffset; i < cursorPos && i < textMeasures.charX.size(); ++i){
-			cursorXd += textMeasures.charX[i];
+		for(size_t i = im->textOffset; i < im->cursorPos && i <im-> textMeasures.charX.size(); ++i){
+			cursorXd += im->textMeasures.charX[i];
 		}
-		if(cursorXd == 1.5 && text.length() == 1 && cursorPos == 1) cursorXd = textMeasures.w;
+		if(cursorXd == 1.5 && im->text.length() == 1 && im->cursorPos == 1) cursorXd = im->textMeasures.w;
 		int32_t cursorX = round(cursorXd);
-		s.Line({(int32_t)cursorX + rect.x, (int32_t)2 + rect.y}, {(int32_t)cursorX + rect.x, (int32_t)(rect.h - 3) + rect.y}, cursorCol);
+		s.Line({(int32_t)cursorX + im->rect.x, (int32_t)2 + im->rect.y}, {(int32_t)cursorX + im->rect.x, (int32_t)(im->rect.h - 3) + im->rect.y}, cursorCol);
 	}
 	
-	if(!enabled){
+	if(!im->enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
-		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		s.Box(im->rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	}
 }
 
 gds::Rect TextBox::GetPaintRect(){
-	return rect;
+	return im->rect;
 }
 
 gds::Rect TextBox::GetInteractRect(){
-	return rect;
+	return im->rect;
 }
 
 uint32_t TextBox::GetSubscribed(){
@@ -191,28 +213,28 @@ uint32_t TextBox::GetSubscribed(){
 }
 
 void TextBox::Focus(){
-	hasFocus = true;
-	IControl::Paint(rect);
+	im->hasFocus = true;
+	IControl::Paint(im->rect);
 }
 
 void TextBox::Blur(){
-	hasFocus = false;
-	IControl::Paint(rect);
+	im->hasFocus = false;
+	IControl::Paint(im->rect);
 }
 	
 void TextBox::SetText(const std::string &t){
-	text = t;
-	cursorPos = 0;
-	update = true;
-	IControl::Paint(rect);
+	im->text = t;
+	im->cursorPos = 0;
+	im->update = true;
+	IControl::Paint(im->rect);
 }
 
 std::string TextBox::GetText(){
-	return text;
+	return im->text;
 }
 
 void TextBox::OnKeyPress(const std::function<bool(uint32_t)> &oKP){
-	onKeyPress = oKP;
+	im->onKeyPress = oKP;
 }
 
 uint32_t TextBox::GetFlags(){
@@ -220,27 +242,27 @@ uint32_t TextBox::GetFlags(){
 }
 
 void TextBox::Enable(){
-	if(!enabled){
-		enabled = true;
-		IControl::Paint(rect);
+	if(!im->enabled){
+		im->enabled = true;
+		IControl::Paint(im->rect);
 	}
 }
 
 void TextBox::Disable(){
-	if(enabled){
-		enabled = false;
-		IControl::Paint(rect);
+	if(im->enabled){
+		im->enabled = false;
+		IControl::Paint(im->rect);
 	}
 }
 
 bool TextBox::IsEnabled(){
-	return enabled;
+	return im->enabled;
 }
 
 void TextBox::SetPosition(const gds::Rect &r){
-	rect = r;
-	update = true;
-	surf.reset();
+	im->rect = r;
+	im->update = true;
+	im->surf.reset();
 }
 
 }

@@ -2,22 +2,17 @@
 #define _RESIZEHANDLE_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
+struct ResizeHandleImpl;
+PIMPL_CLASS(ResizeHandleImpl);
+
 class ResizeHandle : public IActionControl<void>{
 private:
-	bool down = false;
-	bool enabled = true;
-	bool paintDown;
-
-	gds::Rect rect;
-	
-	std::unique_ptr<gds::Surface> surf;
-	std::unique_ptr<gds::Surface> bkSurf;
-	gds_SurfaceInfo info;
-	
+	btos::pimpl_ptr<ResizeHandleImpl> im;	
 public:
 	ResizeHandle(const gds::Rect &r);
 

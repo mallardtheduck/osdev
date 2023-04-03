@@ -13,28 +13,98 @@ namespace gui{
 	
 const auto scrollbarSize = 17;
 
-TextArea::TextArea(const gds::Rect &r, const std::string &t, bool scrollbars) : 
-	outerRect(r),
-	rect(scrollbars ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : r)
-{
-	if(scrollbars){
-		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
-		vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - scrollbarSize}, 1, 1, 1, 1, false));
+struct TextAreaImpl{
+	TextArea *that;
+
+	gds::Rect outerRect;
+	gds::Rect rect; 
+	std::unique_ptr<gds::Surface> bkSurf;
+	std::unique_ptr<gds::Surface> cachedSurf;
+	
+	std::function<bool(uint32_t)> onKeyPress;
+	
+	struct Line{
+		std::string text;
+		std::string measuredText;
+		gds::TextMeasurements textMeasures;
+		std::unique_ptr<gds::Surface> surf;
+		uint64_t selSerial = 0;
+		uint64_t updSerial = 0;
 		
-		hscroll->OnChange([this] (uint32_t v) {
-			HandleScroll(true, v);
+		Line(const std::string &t) : text(t) {};
+		Line() = default;
+	};
+	
+	uint32_t fontHeight;
+	
+	std::vector<Line> lines;
+	size_t lastLineCount = 0;
+	
+	bool inSelectMode = false;
+	bool haveSelection = false;
+	size_t selPos = 0;
+	size_t selLine = 0;
+	
+	size_t cursorPos = 0;
+	size_t lastCursorPos = 0;
+	size_t cursorLine = 0;
+	size_t lastCursorLine = 0;
+	size_t prevCursorPos = 0;
+	size_t prevCursorLine = 0;
+
+	size_t lineOffset = 0;
+	size_t textOffset = 0;
+	size_t lastLineOffset = 0;
+	size_t lastTextOffset = 0;
+	
+	uint32_t textOffsetPxls = 0;
+	uint32_t cursorPosPxls = 0;
+	uint32_t perferredPosPxls = 0;
+	uint32_t selPosPxls = 0;
+	
+	bool hasFocus = false;
+	bool enabled = true;
+	
+	uint64_t selSerial = 0;
+	uint64_t updSerial = 0;
+	
+	std::unique_ptr<Scrollbar> hscroll;
+	std::unique_ptr<Scrollbar> vscroll;
+	
+	gds::Rect UpdateDisplayState();
+	size_t MapPosToLine(uint32_t pxlPos, const Line &line);
+	void MergeLines(size_t a, size_t b);
+	void SplitLine(size_t i, size_t pos);
+	
+	void HandleScroll(bool horiz, uint32_t v);
+
+	EventResponse HandleEvent(const wm_Event&);
+	void Paint(gds::Surface &surf);
+};
+PIMPL_IMPL(TextAreaImpl);
+
+TextArea::TextArea(const gds::Rect &r, const std::string &t, bool scrollbars) : im(new TextAreaImpl()){
+	im->that = this;
+	im->outerRect = r;
+	im->rect = scrollbars ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : r;
+	if(scrollbars){
+		im->hscroll.reset(new Scrollbar({im->outerRect.x, im->outerRect.y + (int32_t)im->outerRect.h - scrollbarSize, im->outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
+		im->vscroll.reset(new Scrollbar({im->outerRect.x + (int32_t)im->outerRect.w - scrollbarSize, im->outerRect.y, scrollbarSize, im->outerRect.h - scrollbarSize}, 1, 1, 1, 1, false));
+		
+		im->hscroll->OnChange([this] (uint32_t v) {
+			im->HandleScroll(true, v);
 		});
 		
-		vscroll->OnChange([this] (uint32_t v) {
-			HandleScroll(false, v);
+		im->vscroll->OnChange([this] (uint32_t v) {
+			im->HandleScroll(false, v);
 		});
 	}
 	SetText(t);
 	auto info = fonts::GetTextAreaFont().Info();
-	fontHeight = (info.maxH * fonts::GetTextAreaTextSize()) / info.scale;
+	im->fontHeight = (info.maxH * fonts::GetTextAreaTextSize()) / info.scale;
 }
 	
-gds::Rect TextArea::UpdateDisplayState(){
+gds::Rect TextAreaImpl::UpdateDisplayState(){
 	bool update = false;
 	std::unique_ptr<gds::Surface> measureSurf;
 	gds::Surface *surf;
@@ -189,7 +259,7 @@ gds::Rect TextArea::UpdateDisplayState(){
 	}
 }
 
-size_t TextArea::MapPosToLine(uint32_t pxlPos, const TextArea::Line &line){
+size_t TextAreaImpl::MapPosToLine(uint32_t pxlPos, const TextAreaImpl::Line &line){
 	size_t ret = line.text.length();
 	double pxlCount = 0;
 	for(size_t i = 0; i < line.textMeasures.charX.size(); ++i){
@@ -202,7 +272,7 @@ size_t TextArea::MapPosToLine(uint32_t pxlPos, const TextArea::Line &line){
 	return ret;
 }
 
-void TextArea::MergeLines(size_t a, size_t b){
+void TextAreaImpl::MergeLines(size_t a, size_t b){
 	auto &la = lines[a];
 	auto &lb = lines[b];
 	la.text += lb.text;
@@ -212,7 +282,7 @@ void TextArea::MergeLines(size_t a, size_t b){
 	lines.erase(it);
 }
 
-void TextArea::SplitLine(size_t i, size_t pos){
+void TextAreaImpl::SplitLine(size_t i, size_t pos){
 	auto &l = lines[i];
 	std::string ntext = pos < l.text.length() ? l.text.substr(pos) : "";
 	l.text = l.text.substr(0, pos);
@@ -222,7 +292,7 @@ void TextArea::SplitLine(size_t i, size_t pos){
 	lines.emplace(it, Line{ntext});
 }
 	
-EventResponse TextArea::HandleEvent(const wm_Event &e){
+EventResponse TextAreaImpl::HandleEvent(const wm_Event &e){
 	bool update = false;
 	bool updateCursor = false;
 	bool handled = false;
@@ -347,13 +417,13 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 				perferredPosPxls = 0;
 				text.erase(cursorPos, 1);
 				if(cursorPos > text.length()) cursorPos = text.length();
-				RaiseChangeEvent();
+				that->RaiseChangeEvent();
 				update = true;
 				handled = true;
 			}else if(code == (KeyFlags::NonASCII | KeyCodes::Delete) && cursorLine < lines.size() - 1){
 				perferredPosPxls = 0;
 				MergeLines(cursorLine, cursorLine + 1);
-				RaiseChangeEvent();
+				that->RaiseChangeEvent();
 				update = true;
 				handled = true;
 			}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
@@ -389,7 +459,7 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 				auto preText = text;
 				if(c == 0x08 && cursorPos > 0){
 					text.erase(cursorPos - 1, 1);
-					RaiseChangeEvent();
+					that->RaiseChangeEvent();
 					--cursorPos;
 					handled = true;
 					update = true;
@@ -397,19 +467,19 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 					--cursorLine;
 					cursorPos = lines[cursorLine].text.length();
 					MergeLines(cursorLine, cursorLine + 1);
-					RaiseChangeEvent();
+					that->RaiseChangeEvent();
 					update = true;
 					handled = true;
 				}else if(c == '\n'){
 					SplitLine(cursorLine, cursorPos);
-					RaiseChangeEvent();
+					that->RaiseChangeEvent();
 					++cursorLine;
 					cursorPos = 0;
 					update = true;
 					handled = true;
 				}else if(c > 31){
 					text.insert(cursorPos, 1, c);
-					RaiseChangeEvent();
+					that->RaiseChangeEvent();
 					++cursorPos;
 					update = true;
 					handled = true;
@@ -462,11 +532,11 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 			}
 		}else if(hscroll && InRect(e.Pointer.x, e.Pointer.y, hscroll->GetInteractRect()) && (e.type & hscroll->GetSubscribed())){
 			auto ret = hscroll->HandleEvent(e);
-			IControl::Paint(outerRect);
+			that->IControl::Paint(outerRect);
 			handled = handled || ret.IsFinishedProcessing();
 		}else if(vscroll && InRect(e.Pointer.x, e.Pointer.y, vscroll->GetInteractRect()) && (e.type & vscroll->GetSubscribed())){
 			auto ret = vscroll->HandleEvent(e);
-			IControl::Paint(outerRect);
+			that->IControl::Paint(outerRect);
 			handled = handled || ret.IsFinishedProcessing();
 		}
 	}
@@ -474,14 +544,18 @@ EventResponse TextArea::HandleEvent(const wm_Event &e){
 	
 	if(update || updateCursor){
 		auto updateRect = UpdateDisplayState();
-		if(updateRect) IControl::Paint(updateRect);
-		if(vscroll && (lastLineCount != lines.size() || lastLineOffset != lineOffset)) IControl::Paint(vscroll->GetPaintRect());
-		if(hscroll && (lastTextOffset != textOffset)) IControl::Paint(hscroll->GetPaintRect());
+		if(updateRect) that->IControl::Paint(updateRect);
+		if(vscroll && (lastLineCount != lines.size() || lastLineOffset != lineOffset)) that->IControl::Paint(vscroll->GetPaintRect());
+		if(hscroll && (lastTextOffset != textOffset)) that->IControl::Paint(hscroll->GetPaintRect());
 	}
 	return {handled};
 }
 
-void TextArea::Paint(gds::Surface &formSurf){
+EventResponse TextArea::HandleEvent(const wm_Event &e){
+	return im->HandleEvent(e);
+}
+
+void TextAreaImpl::Paint(gds::Surface &formSurf){
 	UpdateDisplayState();
 	
 	uint32_t inW = rect.w - 1;
@@ -619,79 +693,83 @@ void TextArea::Paint(gds::Surface &formSurf){
 	}
 }
 
+void TextArea::Paint(gds::Surface &formSurf){
+	im->Paint(formSurf);
+}
+
 gds::Rect TextArea::GetPaintRect(){
-	return outerRect;
+	return im->outerRect;
 }
 
 gds::Rect TextArea::GetInteractRect(){
-	return outerRect;
+	return im->outerRect;
 }
 
 uint32_t TextArea::GetSubscribed(){
 	auto ret = wm_KeyboardEvents | wm_EventType::PointerButtonUp | wm_EventType::PointerButtonDown | wm_EventType::PointerMove;
-	if(hscroll) ret |= hscroll->GetSubscribed();
-	if(vscroll) ret |= vscroll->GetSubscribed();
+	if(im->hscroll) ret |= im->hscroll->GetSubscribed();
+	if(im->vscroll) ret |= im->vscroll->GetSubscribed();
 	return ret;
 }
 
 void TextArea::Focus(){
-	if(!hasFocus){
-		hasFocus = true;
-		IControl::Paint(rect);
+	if(!im->hasFocus){
+		im->hasFocus = true;
+		IControl::Paint(im->rect);
 	}
 }
 
 void TextArea::Blur(){
-	if(hasFocus){
-		hasFocus = false;
-		IControl::Paint(rect);
+	if(im->hasFocus){
+		im->hasFocus = false;
+		IControl::Paint(im->rect);
 	}
 }
 	
 void TextArea::SetText(const std::string &t){
-	haveSelection = false;
-	++selSerial;
-	lines.clear();
+	im->haveSelection = false;
+	++im->selSerial;
+	im->lines.clear();
 	std::stringstream ss(t);
 	std::string l;
 	while(std::getline(ss, l)){
-		lines.emplace_back(Line{l});
+		im->lines.emplace_back(TextAreaImpl::Line{l});
 	}
-	cursorLine = 0;
-	cursorPos = 0;
-	IControl::Paint(outerRect);
+	im->cursorLine = 0;
+	im->cursorPos = 0;
+	IControl::Paint(im->outerRect);
 }
 
 void TextArea::InsertText(const std::string &text){
-	haveSelection = false;
-	++selSerial;
+	im->haveSelection = false;
+	++im->selSerial;
 	
-	size_t lineNo = cursorLine;
-	size_t insertPos = cursorPos;
-	auto *lineText = &lines[lineNo].text;
+	size_t lineNo = im->cursorLine;
+	size_t insertPos = im->cursorPos;
+	auto *lineText = &im->lines[lineNo].text;
 	for(auto c : text){
 		std::string cStr = {c, 0};
 		if(c != '\n') lineText->insert(insertPos++, cStr);
 		else{
-			SplitLine(lineNo, insertPos);
+			im->SplitLine(lineNo, insertPos);
 			++lineNo; insertPos = 0;
-			lineText = &lines[lineNo].text;
+			lineText = &im->lines[lineNo].text;
 		}
 	}
 	
-	IControl::Paint(outerRect);
+	IControl::Paint(im->outerRect);
 }
 
 std::string TextArea::GetText(){
 	std::stringstream ss;
-	for(const auto &l : lines){
+	for(const auto &l : im->lines){
 		ss << l.text << '\n';
 	}
 	return ss.str();
 }
 
 void TextArea::OnKeyPress(const std::function<bool(uint32_t)> &oKP){
-	onKeyPress = oKP;
+	im->onKeyPress = oKP;
 }
 
 uint32_t TextArea::GetFlags(){
@@ -699,56 +777,56 @@ uint32_t TextArea::GetFlags(){
 }
 
 void TextArea::Enable(){
-	if(!enabled){
-		enabled = true;
-		IControl::Paint(rect);
+	if(!im->enabled){
+		im->enabled = true;
+		IControl::Paint(im->rect);
 	}
 }
 
 void TextArea::Disable(){
-	if(enabled){
-		enabled = false;
-		IControl::Paint(rect);
+	if(im->enabled){
+		im->enabled = false;
+		IControl::Paint(im->rect);
 	}
 }
 
 bool TextArea::IsEnabled(){
-	return enabled;
+	return im->enabled;
 }
 
 void TextArea::SetPosition(const gds::Rect &r){
-	outerRect = r;
-	rect = (hscroll || vscroll) ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : r;
-	if(vscroll) vscroll->SetPosition({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - scrollbarSize});
-	if(hscroll) hscroll->SetPosition({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize});
-	bkSurf.reset();
-	cachedSurf.reset();
+	im->outerRect = r;
+	im->rect = (im->hscroll || im->vscroll) ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : r;
+	if(im->vscroll) im->vscroll->SetPosition({im->outerRect.x + (int32_t)im->outerRect.w - scrollbarSize, im->outerRect.y, scrollbarSize, im->outerRect.h - scrollbarSize});
+	if(im->hscroll) im->hscroll->SetPosition({im->outerRect.x, im->outerRect.y + (int32_t)im->outerRect.h - scrollbarSize, im->outerRect.w - scrollbarSize, scrollbarSize});
+	im->bkSurf.reset();
+	im->cachedSurf.reset();
 }
 
 std::string TextArea::GetSelection(){
-	if(!haveSelection) return "";
+	if(!im->haveSelection) return "";
 	
 	size_t selStartLine, selEndLine;
 	size_t selStartPos, selEndPos;
-	if(selLine < cursorLine){
-		selStartLine = selLine;
-		selEndLine = cursorLine;
-		selStartPos = selPos;
-		selEndPos = cursorPos;
-	}else if(selLine > cursorLine){
-		selStartLine = cursorLine;
-		selEndLine = selLine;
-		selStartPos = cursorPos;
-		selEndPos = selPos;
+	if(im->selLine < im->cursorLine){
+		selStartLine = im->selLine;
+		selEndLine = im->cursorLine;
+		selStartPos = im->selPos;
+		selEndPos = im->cursorPos;
+	}else if(im->selLine > im->cursorLine){
+		selStartLine = im->cursorLine;
+		selEndLine = im->selLine;
+		selStartPos = im->cursorPos;
+		selEndPos = im->selPos;
 	}else{
-		selStartLine = selEndLine = selLine;
-		selStartPos = std::min(selPos, cursorPos);
-		selEndPos = std::max(selPos, cursorPos);
+		selStartLine = selEndLine = im->selLine;
+		selStartPos = std::min(im->selPos, im->cursorPos);
+		selEndPos = std::max(im->selPos, im->cursorPos);
 	}
 	
 	std::stringstream ret;
 	for(auto i = selStartLine; i <= selEndLine; ++i){
-		const auto &text = lines[i].text;
+		const auto &text = im->lines[i].text;
 		size_t start = 0, len = std::string::npos;
 		if(i == selStartLine) start = selStartPos;
 		if(i == selEndLine) len = (selEndPos - start);
@@ -759,53 +837,53 @@ std::string TextArea::GetSelection(){
 }
 
 void TextArea::CutSelection(){
-	if(!haveSelection) return;
+	if(!im->haveSelection) return;
 	
 	size_t selStartLine, selEndLine;
 	size_t selStartPos, selEndPos;
-	if(selLine < cursorLine){
-		selStartLine = selLine;
-		selEndLine = cursorLine;
-		selStartPos = selPos;
-		selEndPos = cursorPos;
-	}else if(selLine > cursorLine){
-		selStartLine = cursorLine;
-		selEndLine = selLine;
-		selStartPos = cursorPos;
-		selEndPos = selPos;
+	if(im->selLine < im->cursorLine){
+		selStartLine = im->selLine;
+		selEndLine = im->cursorLine;
+		selStartPos = im->selPos;
+		selEndPos = im->cursorPos;
+	}else if(im->selLine > im->cursorLine){
+		selStartLine = im->cursorLine;
+		selEndLine = im->selLine;
+		selStartPos = im->cursorPos;
+		selEndPos = im->selPos;
 	}else{
-		selStartLine = selEndLine = selLine;
-		selStartPos = std::min(selPos, cursorPos);
-		selEndPos = std::max(selPos, cursorPos);
+		selStartLine = selEndLine = im->selLine;
+		selStartPos = std::min(im->selPos, im->cursorPos);
+		selEndPos = std::max(im->selPos, im->cursorPos);
 	}
 	
-	auto firstLine = lines[selStartLine].text;
-	auto lastLine = lines[selEndLine].text;
-	lines.erase(lines.begin() + selStartLine, lines.begin() + (selEndLine + 1));
+	auto firstLine = im->lines[selStartLine].text;
+	auto lastLine = im->lines[selEndLine].text;
+	im->lines.erase(im->lines.begin() + selStartLine, im->lines.begin() + (selEndLine + 1));
 	if(selEndPos < lastLine.length()){
 		lastLine = lastLine.substr(selEndPos);
-		lines.insert(lines.begin() + selStartLine, lastLine);
+		im->lines.insert(im->lines.begin() + selStartLine, lastLine);
 	}
 	if(selStartPos != 0){
 		firstLine = firstLine.substr(0, selStartPos);
-		lines.insert(lines.begin() + selStartLine, firstLine);
+		im->lines.insert(im->lines.begin() + selStartLine, firstLine);
 	}
 	
-	cursorLine = selStartLine;
-	cursorPos = selStartPos;
-	if(cursorLine > lines.size() - 1) cursorLine = lines.size() - 1;
-	IControl::Paint(outerRect);
+	im->cursorLine = selStartLine;
+	im->cursorPos = selStartPos;
+	if(im->cursorLine > im->lines.size() - 1) im->cursorLine = im->lines.size() - 1;
+	IControl::Paint(im->outerRect);
 }
 
-void TextArea::HandleScroll(bool horiz, uint32_t v){
+void TextAreaImpl::HandleScroll(bool horiz, uint32_t v){
 	if(horiz && v != textOffset){
 		textOffset = v;
-		IControl::Paint(rect);
+		that->IControl::Paint(rect);
 	}
 	
 	if(!horiz && v != lineOffset){
 		lineOffset = v;
-		IControl::Paint(rect);
+		that->IControl::Paint(rect);
 	}
 }
 

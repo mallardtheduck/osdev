@@ -2,17 +2,17 @@
 #define _STATUSBAR_HPP
 
 #include <gui/icontrol.hpp>
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
+class StatusBarImpl;
+PIMPL_CLASS(StatusBarImpl);
+
 class StatusBar : public IDecorativeControl{
 private:
-	gds::Rect rect;
-	std::string text;
-	std::unique_ptr<gds::Surface> surf;
-	
-	uint32_t height;
+	btos::pimpl_ptr<StatusBarImpl> im;
 public:
 	StatusBar(const std::string &t);
 	

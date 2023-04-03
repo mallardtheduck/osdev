@@ -4,25 +4,34 @@
 namespace btos_api{
 namespace gui{
 
-TestControl::TestControl(const gds::Rect &r) : rect(r) {}
+struct TestControlImpl{
+	gds::Rect rect;
+	
+	std::function<bool(const wm_Event&)> onEvent;
+};
+PIMPL_IMPL(TestControlImpl);
+
+TestControl::TestControl(const gds::Rect &r) : im(new TestControlImpl()){
+	im->rect = r;
+}
 	
 EventResponse TestControl::HandleEvent(const wm_Event &e){
-	if(onEvent) return {onEvent(e)};
+	if(im->onEvent) return {im->onEvent(e)};
 	else return {false};
 }
 
 void TestControl::Paint(gds::Surface &s){
 	auto colour = colours::constants::Magenta.Fix(s);
 	
-	s.Box(rect, colour, colour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+	s.Box(im->rect, colour, colour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 }
 
 gds::Rect TestControl::GetPaintRect(){
-	return rect;
+	return im->rect;
 }
 
 gds::Rect TestControl::GetInteractRect(){
-	return rect;
+	return im->rect;
 }
 
 uint32_t TestControl::GetSubscribed(){
@@ -37,7 +46,7 @@ uint32_t TestControl::GetFlags(){
 }
 
 void TestControl::OnEvent(const std::function<bool(const wm_Event&)> &oE){
-	onEvent = oE;
+	im->onEvent = oE;
 }
 
 void TestControl::Enable(){}
@@ -49,7 +58,7 @@ bool TestControl::IsEnabled(){
 }
 
 void TestControl::SetPosition(const gds::Rect &r){
-	rect = r;
+	im->rect = r;
 }
 
 }
