@@ -30,12 +30,16 @@ namespace gds{
 		Rect(Point p, uint32_t _w, uint32_t _h) : x(p.x), y(p.y), w(_w), h(_h) {}
 		Rect() : x(0), y(0), w(0), h(0) {}
 
-		Point TopLeft(){
+		Point TopLeft() const{
 			return {x, y};
 		}
 
-		Point BottomRight(){
+		Point BottomRight() const{
 			return {static_cast<int32_t>(x + w), static_cast<int32_t>(y + h)};
+		}
+
+		Rect AtZero() const{
+			return {0, 0, w, h};
 		}
 
 		operator bool() const{return x != 0 || y != 0 || w != 0 || h != 0;}
