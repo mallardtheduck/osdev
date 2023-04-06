@@ -21,12 +21,12 @@ private:
 public:
 	Label(const gds::Rect &r, const std::string &t, Justification just = Justification::Center);
 	
-	EventResponse HandleEvent(const wm_Event&);
-	void Paint(gds::Surface &surf);
-	gds::Rect GetPaintRect();
-	gds::Rect GetInteractRect();
-	uint32_t GetSubscribed();
-	void SetPosition(const gds::Rect&);
+	EventResponse HandleEvent(const wm_Event&) override;
+	void Paint(gds::Surface &surf) override;
+	gds::Rect GetPaintRect() override;
+	gds::Rect GetInteractRect() override;
+	uint32_t GetSubscribed() override;
+	void SetPosition(const gds::Rect&) override;
 	
 	void SetText(const std::string &t);
 };

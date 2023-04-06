@@ -16,16 +16,16 @@ protected:
 	friend class Toolbar;
 public:
 	virtual uint32_t GetWidth() = 0;
-	void SetPosition(const gds::Rect&){}
+	void SetPosition(const gds::Rect&) override {}
 	
 	virtual ~IToolbarControlBase() {}
 };
 
 class IToolbarControl : public IToolbarControlBase{
 public:
-	void Focus() {}
-	void Blur() {}
-	uint32_t GetFlags(){ return ControlFlags::NoFocus; }
+	void Focus() override {}
+	void Blur() override {}
+	uint32_t GetFlags() override { return ControlFlags::NoFocus; }
 	
 	virtual ~IToolbarControl() {}
 };
@@ -44,18 +44,18 @@ private:
 public:
 	Toolbar(uint32_t size = 24);
 	
-	EventResponse HandleEvent(const wm_Event&);
-	void Paint(gds::Surface &surf);
-	gds::Rect GetPaintRect();
-	gds::Rect GetInteractRect();
-	uint32_t GetSubscribed();
-	void Focus();
-	void Blur();
-	uint32_t GetFlags();
-	void Enable();
-	void Disable();
-	bool IsEnabled();
-	void SetPosition(const gds::Rect&) {}
+	EventResponse HandleEvent(const wm_Event&) override;
+	void Paint(gds::Surface &surf) override;
+	gds::Rect GetPaintRect() override;
+	gds::Rect GetInteractRect() override;
+	uint32_t GetSubscribed() override;
+	void Focus() override;
+	void Blur() override;
+	uint32_t GetFlags() override;
+	void Enable() override;
+	void Disable() override;
+	bool IsEnabled() override;
+	void SetPosition(const gds::Rect&) override {}
 	
 	std::vector<std::shared_ptr<IToolbarControlBase>> &Controls();
 	void Refresh();
@@ -72,16 +72,16 @@ private:
 public:
 	ToolbarButton(std::shared_ptr<gds::Surface> icon = nullptr, const std::string &label = "");
 	
-	EventResponse HandleEvent(const wm_Event&);
-	void Paint(gds::Surface &surf);
-	gds::Rect GetPaintRect();
-	gds::Rect GetInteractRect();
-	uint32_t GetSubscribed();
-	void Enable();
-	void Disable();
-	bool IsEnabled();
+	EventResponse HandleEvent(const wm_Event&) override;
+	void Paint(gds::Surface &surf) override;
+	gds::Rect GetPaintRect() override;
+	gds::Rect GetInteractRect() override;
+	uint32_t GetSubscribed() override;
+	void Enable() override;
+	void Disable() override;
+	bool IsEnabled() override;
 	
-	uint32_t GetWidth();
+	uint32_t GetWidth() override;
 };
 
 class ToolbarSpacer : public IDecorativeToolbarControl{
@@ -89,13 +89,13 @@ private:
 public:
 	ToolbarSpacer();
 	
-	EventResponse HandleEvent(const wm_Event&);
-	void Paint(gds::Surface &surf);
-	gds::Rect GetPaintRect();
-	gds::Rect GetInteractRect();
-	uint32_t GetSubscribed();
+	EventResponse HandleEvent(const wm_Event&) override;
+	void Paint(gds::Surface &surf) override;
+	gds::Rect GetPaintRect() override;
+	gds::Rect GetInteractRect() override;
+	uint32_t GetSubscribed() override;
 	
-	uint32_t GetWidth();
+	uint32_t GetWidth() override;
 };
 
 }

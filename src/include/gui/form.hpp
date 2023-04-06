@@ -24,12 +24,12 @@ private:
 	btos::pimpl_ptr<FormImpl> im;
 	friend struct FormImpl;
 
-	gds::Surface &GetSurface();
-	gds::Rect GetBoundingRect();
+	gds::Surface &GetSurface() override;
+	gds::Rect GetBoundingRect() override;
 
-	void Update(const gds::Rect &r);
-	void Update();
-	void SetSubscribed(uint32_t subs);
+	void Update(const gds::Rect &r) override;
+	void Update() override;
+	void SetSubscribed(uint32_t subs) override;
 public:
 	Form(const gds::Rect &r, uint32_t options, const std::string &title);
 	

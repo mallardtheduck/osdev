@@ -456,5 +456,11 @@ void TreeView::Refresh(){
 	IControl::Paint(im->outerRect);
 }
 
+void TreeView::SetDefaultIcon(std::shared_ptr<gds::Surface> icon){
+	im->defaultIcon = icon;
+}
+void gui::TreeView::SetDefaultOpenIcon(std::shared_ptr<gds::Surface> icon){
+	im->defaultOpenIcon = icon;
+}
 }
 }

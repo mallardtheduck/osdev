@@ -16,11 +16,11 @@ private:
 public:
 	StatusBar(const std::string &t);
 	
-	EventResponse HandleEvent(const wm_Event&);
-	void Paint(gds::Surface &surf);
-	gds::Rect GetPaintRect();
-	gds::Rect GetInteractRect();
-	uint32_t GetSubscribed();
+	EventResponse HandleEvent(const wm_Event&) override;
+	void Paint(gds::Surface &surf) override;
+	gds::Rect GetPaintRect() override;
+	gds::Rect GetInteractRect() override;
+	uint32_t GetSubscribed() override;
 	void SetPosition(const gds::Rect&) {}
 	
 	void SetText(const std::string &t);
