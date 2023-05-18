@@ -110,7 +110,8 @@
         "cuchar": "cpp",
         "executor": "cpp",
         "netfwd": "cpp",
-        "shared_mutex": "cpp"
+        "shared_mutex": "cpp",
+        "gd_intern.h": "c"
     },
     "editor.fontLigatures": true
 }

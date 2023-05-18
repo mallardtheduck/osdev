@@ -4,7 +4,8 @@
             "name": "Userspace",
             "includePath": [
                 "${workspaceFolder}/src/include",
-                "${workspaceFolder}/src/3rdparty/install/btos/include"
+                "${workspaceFolder}/src/3rdparty/install/btos/include",
+                "${workspaceFolder}/src/3rdparty/install/btos/include/freetype2"
             ],
             "defines": [],
             "compilerPath": "/home/mallard/Projects/os/cross/bin/i686-pc-btos-gcc",
