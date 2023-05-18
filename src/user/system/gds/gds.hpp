@@ -2,8 +2,6 @@
 #define _GDS_HPP
 
 #include <btos.h>
-#include <gd.h>
-#include <gdpp.h>
 #include <dev/video_dev.h>
 #include <crt_support.h>
 #include <dev/terminal.h>
@@ -14,6 +12,9 @@
 #include <gdfonts.h>
 #include <cstddef>
 #include <sstream>
+
+#include "gd/gd.h"
+#include "gd/gdpp.h"
 
 #include "drawingop.hpp"
 #include "client.hpp"
