@@ -28,37 +28,34 @@ struct rtc_calltable{
 	uint64_t (*rtc_millis)();
 };
 
-class RTCExtension : public IKernelExtension{
+class IRTCExtension : public IKernelExtension{
 public:
-	const char *GetName() override;
-	void UserAPIHandler(uint16_t fn, ICPUState &state) override;
+	virtual void Sleep(uint32_t msec) = 0;
+	virtual uint64_t Millis() = 0;
 
-	void Sleep(uint32_t msec);
-	uint64_t Millis();
+	virtual ~IRTCExtension() {}
 };
 
 #ifndef RTC_NO_STUBS
 
-extern RTCExtension *RTC_EXTENSION;
+extern IRTCExtension *RTC_EXTENSION;
 
-#define USE_RTC RTCExtension *RTC_EXTENSION
+#define USE_RTC IRTCExtension *RTC_EXTENSION
 
-//TODO: Implement
+bool RTCInit(){
+	uint16_t extid = API->GetKernelExtensionManager().GetExtensionID(RTC_EXTENSION_NAME);
+	if(!extid) return false;
+	RTC_EXTENSION = static_cast<IRTCExtension*>(API->GetKernelExtensionManager().GetExtension(extid));
+	return true;
+}
 
-// bool RTCInit(){
-// 	uint16_t extid = get_extension_id(RTC_EXTENSION_NAME);
-// 	if(!extid) return false;
-// 	RTC_CALL_TABLE = (rtc_calltable*) get_extension(extid)->calltable;
-// 	return true;
-// }
+inline static void rtc_sleep(uint32_t msec){
+	RTC_EXTENSION->Sleep(msec);
+}
 
-// inline static void rtc_sleep(uint32_t msec){
-// 	RTC_CALL_TABLE->rtc_sleep(msec);
-// }
-
-// inline static uint64_t rtc_millis(){
-// 	return RTC_CALL_TABLE->rtc_millis();
-// }
+inline static uint64_t rtc_millis(){
+	return RTC_EXTENSION->Millis();
+}
 
 #endif
 
