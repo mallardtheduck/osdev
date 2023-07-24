@@ -4,6 +4,9 @@
 #include "console_backend.hpp"
 #include "vterm.hpp"
 #include "device.hpp"
+#include <dev/rtc.h>
+
+USE_RTC;
 
 console_backend *cons_backend;
 const char* video_device_name="DISPLAY_DEVICE";
@@ -55,7 +58,8 @@ void console_backend_input_thread(void *p){
 void console_backend_pointer_thread(void *p){
 	console_backend *backend=(console_backend*)p;
 	API->CurrentThread().SetName("Console Pointer");
-	API->CurrentThread().SetPriority(2);
+	API->CurrentThread().SetPriority(20);
+	uint64_t lastMoveTime = 0;
 	while(true){
 		bt_mouse_packet packet;
 		size_t read = backend->pointer->Read(sizeof(packet), (char*)&packet);
@@ -74,22 +78,21 @@ void console_backend_pointer_thread(void *p){
 			if(packet.y_motion < 0 && backend->pointer_info.y > oldy) backend->pointer_info.y=0;
 			uint16_t oldflags=backend->pointer_info.flags;
 			backend->pointer_info.flags=packet.flags;
-			backend->update_pointer();
 			vterm *term=terminals->get(backend->active);
-			bt_vidmode mode;
-			backend->display->IOCtl(bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
+			bt_vidmode &mode = backend->current_mode;
 			uint32_t xscale=(0xFFFFFFFF/(mode.width-1));
 			uint32_t yscale=(0xFFFFFFFF/(mode.height-1));
 			uint32_t x=(backend->pointer_info.x/xscale);
 			uint32_t y=(backend->pointer_info.y/yscale);
-			if(packet.x_motion || packet.y_motion){
+			if((x != oldx/xscale || y != oldy/yscale) && (rtc_millis() - lastMoveTime) > 15){
+				backend->update_pointer();
 				bt_terminal_pointer_event event;
 				event.type=bt_terminal_pointer_event_type::Move;
 				event.x=x;
 				event.y=y;
 				event.button=0;
-				event.button=0;
 				if(term) term->queue_pointer(event);
+				lastMoveTime = rtc_millis();
 			}
 			if(packet.flags != oldflags){
 				bt_terminal_pointer_event event;
@@ -108,6 +111,7 @@ void console_backend_pointer_thread(void *p){
 				if(diff == MouseFlags::Button2) event.button=2;
 				if(diff == MouseFlags::Button3) event.button=3;
 				if(term && event.button) term->queue_pointer(event);
+				lastMoveTime = rtc_millis();
 			}
 		}
 	}
@@ -126,8 +130,7 @@ void console_backend_pointer_draw_thread(void *p){
 		{
 			auto hl = backend->backend_lock->LockExclusive();
 			if(backend->pointer_info.x != backend->old_pointer_info.x || backend->pointer_info.y != backend->old_pointer_info.y || backend->pointer_visible != backend->old_pointer_visible){
-				bt_vidmode mode;
-				backend->display->IOCtl(bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
+				bt_vidmode &mode = backend->current_mode;
 				uint32_t xscale=(0xFFFFFFFF/(mode.width-1));
 				uint32_t yscale=(0xFFFFFFFF/(mode.height-1));
 				uint32_t oldx=backend->old_pointer_info.x/xscale;
@@ -153,8 +156,7 @@ void console_backend::update_pointer(){
 
 void console_backend::draw_pointer(uint32_t x, uint32_t y, bool erase) {
 	auto hl = backend_lock->LockRecursive();
-	bt_vidmode mode;
-	display->IOCtl(bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
+	bt_vidmode &mode = current_mode;
 	if(mode.textmode){
 		size_t pos=(((y * mode.width) + x) * 2) + 1;
 		size_t cpos = display->Seek(0, fs_seek_flags::FS_Relative);
@@ -190,6 +192,7 @@ void console_backend::draw_pointer(uint32_t x, uint32_t y, bool erase) {
 }
 
 console_backend::console_backend() {
+	RTCInit();
 	backend_lock = API->NewLock();
 	pointer_visible=false;
 	pointer_bitmap=nullptr;
@@ -217,6 +220,8 @@ console_backend::console_backend() {
 	auto pointerNode = API->GetVirtualFilesystem().GetNode(pointer_device_path);
 	if(pointerNode) pointer = pointerNode->OpenFile(FS_Read);
 	if(!pointerNode || !pointer) panic("(TERMINAL) Could not open pointing device!");
+
+	display->IOCtl(bt_vid_ioctl::QueryMode, sizeof(current_mode), (char*)&current_mode);
 
 	input_thread_id = API->GetScheduler().NewThread(&console_backend_input_thread, (void*)this);
 	pointer_thread_id = API->GetScheduler().NewThread(&console_backend_pointer_thread, (void*)this);
@@ -292,10 +297,8 @@ void console_backend::set_pointer_bitmap(bt_terminal_pointer_bitmap *bmp) {
 }
 
 bt_terminal_pointer_info console_backend::get_pointer_info(){
-	bt_vidmode mode;
-	display->IOCtl(bt_vid_ioctl::QueryMode, sizeof(mode), (char*)&mode);
-	uint32_t xscale=(0xFFFFFFFF/(mode.width-1));
-	uint32_t yscale=(0xFFFFFFFF/(mode.height-1));
+	uint32_t xscale=(0xFFFFFFFF/(current_mode.width-1));
+	uint32_t yscale=(0xFFFFFFFF/(current_mode.height-1));
 	uint32_t x=(pointer_info.x/xscale);
 	uint32_t y=(pointer_info.y/yscale);
 	bt_terminal_pointer_info ret=pointer_info;
@@ -364,12 +367,11 @@ bt_vidmode console_backend::get_screen_mode(size_t index){
 
 void console_backend::set_screen_mode(const bt_vidmode &mode){
 	display->IOCtl(bt_vid_ioctl::SetMode, sizeof(mode), (char*)&mode);
+	display->IOCtl(bt_vid_ioctl::QueryMode, sizeof(current_mode), (char*)&current_mode);
 }
 
 bt_vidmode console_backend::get_current_screen_mode(){
-	bt_vidmode ret;
-	display->IOCtl(bt_vid_ioctl::QueryMode, sizeof(ret), (char*)&ret);
-	return ret;
+	return current_mode;
 }
 
 bt_video_palette_entry console_backend::get_palette_entry(uint8_t entry){
