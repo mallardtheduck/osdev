@@ -10,18 +10,49 @@ namespace bt_kernel_messages = btos_api::bt_kernel_messages;
 using bt_msg_header = btos_api::bt_msg_header;
 using bt_msg_filter = btos_api::bt_msg_filter;
 
+StaticAllocLock bufferPoolLock;
+
+constexpr size_t MaxContentBufferPoolSize = 32;
+ManualStaticAlloc<vector<vector<char>*>> ContentBufferPool;
+static vector<char> *NewContentBuffer(){
+	auto hl = bufferPoolLock->LockExclusive();
+	if(!ContentBufferPool->empty()){
+		auto ret = ContentBufferPool->back();
+		ContentBufferPool->pop_back();
+		return ret;
+	}else{
+		return new vector<char>();
+	}
+}
+
+static void ReleaseContentBuffer(vector<char> *buffer){
+	auto hl = bufferPoolLock->LockExclusive();
+	if(ContentBufferPool->size() < MaxContentBufferPoolSize){
+		ContentBufferPool->push_back(buffer);
+	}else{
+		delete buffer;
+	}
+}
+
+uint64_t reusedBufferCount = 0;
+uint64_t newBufferCount = 0;
+
 struct MessageContent : private nonmovable{
 private:
 	size_t refcount = 0;
-	vector<char> content;
+	vector<char> *content = nullptr;
 public:
 
 	MessageContent() = default;
 	MessageContent(const btos_api::bt_msg_header &header){
 		if(header.length){
-			content.resize(header.length);
-			memcpy(&content[0], header.content, header.length);
+			content = NewContentBuffer();
+			if(content->capacity() >= header.length) ++reusedBufferCount;
+			else ++newBufferCount;
+			content->resize(header.length);
+			memcpy(content->begin(), header.content, header.length);
 		}
+		if(reusedBufferCount % 100 == 0) dbgpf("MSG: reusedBufferCount: %llu newBufferCount: %llu\n", reusedBufferCount, newBufferCount);
 	}
 
 	void IncrementRefCount(){
@@ -33,15 +64,21 @@ public:
 	}
 
 	char *GetPtr(){
-		return &content[0];
+		if(content) return content->begin();
+		else return nullptr;
 	}
 
-	vector<char> &GetVector(){
+	vector<char> *GetVector(){
 		return content;
 	}
 
 	size_t GetSize(){
-		return content.size();
+		if(content) return content->size();
+		else return 0;
+	}
+
+	~MessageContent(){
+		if(content) ReleaseContentBuffer(content);
 	}
 };
 
@@ -307,7 +344,8 @@ public:
 	vector<char> MessageContent(bt_msg_header &msg) override{
 		Message message;
 		if(GetMessage(msg.id, message)){
-			return message.content->GetVector();
+			auto ret = message.content->GetVector();
+			if(ret) return *ret;
 		}
 		return {};
 	}
@@ -470,6 +508,8 @@ static ManualStaticAlloc<MessageManager> theMessageManager;
 
 void Messaging_Init(){
 	dbgout("MSG: Init messaging...\n");
+	bufferPoolLock.Init();
+	ContentBufferPool.Init();
 	theMessageManager.Init();
 }
 
