@@ -52,7 +52,7 @@ public:
 			content->resize(header.length);
 			memcpy(content->begin(), header.content, header.length);
 		}
-		if(reusedBufferCount % 100 == 0) dbgpf("MSG: reusedBufferCount: %llu newBufferCount: %llu\n", reusedBufferCount, newBufferCount);
+		//if(reusedBufferCount % 100 == 0) dbgpf("MSG: reusedBufferCount: %llu newBufferCount: %llu\n", reusedBufferCount, newBufferCount);
 	}
 
 	void IncrementRefCount(){
