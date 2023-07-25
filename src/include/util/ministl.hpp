@@ -125,7 +125,7 @@ class vector
 		}
 
 		void resize(size_t new_size){
-			while(dataSize > new_size) erase(dataSize - 1);
+			if(dataSize > new_size) erase(new_size, dataSize);
 			reserve(new_size);
 			while(dataSize < new_size) push_back({});
 		}
@@ -206,6 +206,10 @@ class vector
 				// Remember we need to manually call the destructor
 				data[dataSize].~T();
 			}
+		}
+
+		void pop_back(){
+			erase(dataSize - 1);
 		}
 
 		size_t find(const T &item){

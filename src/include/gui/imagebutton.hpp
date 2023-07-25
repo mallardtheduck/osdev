@@ -2,37 +2,32 @@
 #define _IMAGEBUTTON_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
+struct ImageButtonImpl;
+PIMPL_CLASS(ImageButtonImpl);
+
 class ImageButton : public IActionControl<void>{
 private:
-	bool down = false;
-	bool focus = false;
-	bool enabled = true;
-
-	gds::Rect rect;
-	
-	std::unique_ptr<gds::Surface> bkSurf;
-	std::shared_ptr<gds::Surface> img;
-	gds_SurfaceInfo info;
-	
+	btos::pimpl_ptr<ImageButtonImpl> im;	
 public:
 	ImageButton(const gds::Rect &r, std::shared_ptr<gds::Surface> img);
 
-	EventResponse HandleEvent(const wm_Event&);
-	void Paint(gds::Surface &s);
-	gds::Rect GetPaintRect();
-	gds::Rect GetInteractRect();
-	uint32_t GetSubscribed();
-	void Focus();
-	void Blur();
-	uint32_t GetFlags();
-	void Enable();
-	void Disable();
-	bool IsEnabled();
-	void SetPosition(const gds::Rect&);
+	EventResponse HandleEvent(const wm_Event&) override;
+	void Paint(gds::Surface &s) override;
+	gds::Rect GetPaintRect() override;
+	gds::Rect GetInteractRect() override;
+	uint32_t GetSubscribed() override;
+	void Focus() override;
+	void Blur() override;
+	uint32_t GetFlags() override;
+	void Enable() override;
+	void Disable() override;
+	bool IsEnabled() override;
+	void SetPosition(const gds::Rect&) override;
 	
 	bool GetValue();
 };

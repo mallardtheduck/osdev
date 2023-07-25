@@ -9,24 +9,38 @@
 namespace btos_api{
 namespace gui{
 	
-ImageButton::ImageButton(const gds::Rect &r, std::shared_ptr<gds::Surface> i) :  rect(r), img(i){
+struct ImageButtonImpl{
+	bool down = false;
+	bool focus = false;
+	bool enabled = true;
+
+	gds::Rect rect;
+	
+	std::unique_ptr<gds::Surface> bkSurf;
+	std::shared_ptr<gds::Surface> img;
+	gds_SurfaceInfo info;
+};
+PIMPL_IMPL(ImageButtonImpl);
+
+ImageButton::ImageButton(const gds::Rect &r, std::shared_ptr<gds::Surface> i) : im(new ImageButtonImpl()){
+	im->rect = r; im->img = i;
 }
 
 EventResponse ImageButton::HandleEvent(const wm_Event &e){
-	auto oldDown = down;
+	auto oldDown = im->down;
 	if(e.type == wm_EventType::PointerButtonDown && e.Pointer.button == 1){
-		down = true;
+		im->down = true;
 	}
 	if(e.type == wm_EventType::PointerButtonUp && e.Pointer.button == 1){
-		down = false;
+		im->down = false;
 		RaiseActionEvent();
 	}
 	if(e.type == wm_EventType::PointerLeave){
-		if(down) down = false;
+		if(im->down) im->down = false;
 	}
 	if(e.type == wm_EventType::PointerEnter){
 		auto pinfo = WM_GetPointerInfo();
-		if(pinfo.flags & MouseFlags::Button1) down = true;
+		if(pinfo.flags & MouseFlags::Button1) im->down = true;
 	}
 	if(e.type == wm_EventType::Keyboard){
 		uint16_t code = KB_code(e.Key.code);
@@ -39,69 +53,69 @@ EventResponse ImageButton::HandleEvent(const wm_Event &e){
 		}
 		return {false};
 	}
-	if(down != oldDown) IControl::Paint(rect);
+	if(im->down != oldDown) IControl::Paint(im->rect);
 	return {true};
 }
 
 void ImageButton::Paint(gds::Surface &s){
-	int32_t inW = rect.w - 1;
-	int32_t inH = rect.h - 1;
+	int32_t inW = im->rect.w - 1;
+	int32_t inH = im->rect.h - 1;
 	
-	if(!bkSurf){
-		bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		info = img->Info();
+	if(!im->bkSurf){
+		im->bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, im->rect.w, im->rect.h, 100, gds_ColourType::True));
+		im->info = im->img->Info();
 		
-		int32_t imgX = std::max<int32_t>(((rect.w - info.w) / 2), 0);
-		int32_t imgY = std::max<int32_t>(((rect.h - info.h) / 2), 0);
+		int32_t imgX = std::max<int32_t>(((im->rect.w - im->info.w) / 2), 0);
+		int32_t imgY = std::max<int32_t>(((im->rect.h - im->info.h) / 2), 0);
 		
-		bkSurf->BeginQueue();
+		im->bkSurf->BeginQueue();
 		
-		auto bkgCol = colours::GetBackground().Fix(*bkSurf);
-		auto buttonColour = colours::GetImageButtonColour().Fix(*bkSurf);
-		auto border = colours::GetBorder().Fix(*bkSurf);
+		auto bkgCol = colours::GetBackground().Fix(*im->bkSurf);
+		auto buttonColour = colours::GetImageButtonColour().Fix(*im->bkSurf);
+		auto border = colours::GetBorder().Fix(*im->bkSurf);
 		
-		bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		bkSurf->Box({1, 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, buttonColour, buttonColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		drawing::Border(*bkSurf, {0, 0, (uint32_t)inW, (uint32_t)inH}, border);
+		im->bkSurf->Box(im->rect.AtZero(), bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		im->bkSurf->Box({1, 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, buttonColour, buttonColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		drawing::Border(*im->bkSurf, {0, 0, (uint32_t)inW, (uint32_t)inH}, border);
 		
-		bkSurf->Blit(*img, {0, 0, info.w, info.h}, {imgX, imgY, info.w, info.h});
-		bkSurf->CommitQueue();
-		bkSurf->Compress();
+		im->bkSurf->Blit(*im->img, {0, 0, im->info.w, im->info.h}, {imgX, imgY, im->info.w, im->info.h});
+		im->bkSurf->CommitQueue();
+		im->bkSurf->Compress();
 	}
-	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
+	s.Blit(*im->bkSurf, im->rect.AtZero(), im->rect);
 	
 	auto topLeft = colours::GetImageButtonHiLight().Fix(s);
 	auto bottomRight = colours::GetImageButtonLowLight().Fix(s);
-	if(down) std::swap(topLeft, bottomRight);
+	if(im->down) std::swap(topLeft, bottomRight);
 	
-	drawing::BevelBox(s, {rect.x + 1, rect.y + 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, topLeft, bottomRight);
+	drawing::BevelBox(s, {im->rect.x + 1, im->rect.y + 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, topLeft, bottomRight);
 	
-	if(focus){
+	if(im->focus){
 		auto focusCol = colours::GetImageButtonFocus().Fix(s);
 			
-		int32_t labelX = std::max<int32_t>(((rect.w - info.w) / 2), 0);
-		int32_t labelY = std::max<int32_t>(((rect.h + info.h) / 2), 0);
+		int32_t labelX = std::max<int32_t>(((im->rect.w - im->info.w) / 2), 0);
+		int32_t labelY = std::max<int32_t>(((im->rect.h + im->info.h) / 2), 0);
 			
-		int32_t focusX = rect.x + std::max<uint32_t>(labelX - 3, 0);
-		int32_t focusY = rect.y + std::max<uint32_t>(labelY - info.h - 3, 0);
-		uint32_t focusW = info.w + 6;
-		uint32_t focusH = info.h + 6;
+		int32_t focusX = im->rect.x + std::max<uint32_t>(labelX - 3, 0);
+		int32_t focusY = im->rect.y + std::max<uint32_t>(labelY - im->info.h - 3, 0);
+		uint32_t focusW = im->info.w + 6;
+		uint32_t focusH = im->info.h + 6;
 		
 		s.Box({focusX, focusY, focusW, focusH}, focusCol, focusCol);
 	}
 	
-	if(!enabled){
+	if(!im->enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
-		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		s.Box(im->rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	}
 }
 
 gds::Rect ImageButton::GetPaintRect(){
-	return rect;
+	return im->rect;
 }
 
 gds::Rect ImageButton::GetInteractRect(){
-	return rect;
+	return im->rect;
 }
 
 uint32_t ImageButton::GetSubscribed(){
@@ -109,13 +123,13 @@ uint32_t ImageButton::GetSubscribed(){
 }
 
 void ImageButton::Focus(){
-	focus = true;
-	IControl::Paint(rect);
+	im->focus = true;
+	IControl::Paint(im->rect);
 }
 
 void ImageButton::Blur(){
-	focus = false;
-	IControl::Paint(rect);
+	im->focus = false;
+	IControl::Paint(im->rect);
 }
 
 uint32_t ImageButton::GetFlags(){
@@ -123,26 +137,26 @@ uint32_t ImageButton::GetFlags(){
 }
 
 void ImageButton::Enable(){
-	if(!enabled){
-		enabled = true;
-		IControl::Paint(rect);
+	if(!im->enabled){
+		im->enabled = true;
+		IControl::Paint(im->rect);
 	}
 }
 
 void ImageButton::Disable(){
-	if(enabled){
-		enabled = false;
-		IControl::Paint(rect);
+	if(im->enabled){
+		im->enabled = false;
+		IControl::Paint(im->rect);
 	}
 }
 
 bool ImageButton::IsEnabled(){
-	return enabled;
+	return im->enabled;
 }
 
 void ImageButton::SetPosition(const gds::Rect &r){
-	rect = r;
-	bkSurf.reset();
+	im->rect = r;
+	im->bkSurf.reset();
 }
 
 }

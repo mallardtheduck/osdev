@@ -7,40 +7,37 @@
 namespace btos_api{
 namespace gui{
 
+struct SubFormImpl;
+PIMPL_CLASS(SubFormImpl);
+
 class SubForm : public Container, public IControl{
 private:
-	gds::Rect rect;
-	std::unique_ptr<gds::Surface> surf;
+	btos::pimpl_ptr<SubFormImpl> im;
 	
-	uint32_t subs;
-	std::vector<gds::Rect> updateRects;
-	
-	gds::Surface &GetSurface();
-	gds::Rect GetBoundingRect();
-	
-	bool enabled = true;
-	
-	void Update(const gds::Rect &r);
-	void Update();
-	void SetSubscribed(uint32_t subs);
-	bool OnLastControlFocus(bool reverse);
+	gds::Surface &GetSurface() override;
+	gds::Rect GetBoundingRect() override;
+
+	void Update(const gds::Rect &r) override;
+	void Update() override;
+	void SetSubscribed(uint32_t subs) override;
+	bool OnLastControlFocus(bool reverse) override;
 public:
 	SubForm(const gds::Rect &r);
 
-	EventResponse HandleEvent(const wm_Event&);
-	void Paint(gds::Surface &surf);
-	gds::Rect GetPaintRect();
-	gds::Rect GetInteractRect();
-	uint32_t GetSubscribed();
-	void Focus();
-	void Blur();
-	uint32_t GetFlags();
-	void Enable();
-	void Disable();
-	bool IsEnabled();
-	void SetPosition(const gds::Rect&);
+	EventResponse HandleEvent(const wm_Event&) override;
+	void Paint(gds::Surface &surf) override;
+	gds::Rect GetPaintRect() override;
+	gds::Rect GetInteractRect() override;
+	uint32_t GetSubscribed() override;
+	void Focus() override;
+	void Blur() override;
+	uint32_t GetFlags() override;
+	void Enable() override;
+	void Disable() override;
+	bool IsEnabled() override;
+	void SetPosition(const gds::Rect&) override;
 	
-	void Paint(const std::vector<gds::Rect> &rects);
+	void Paint(const std::vector<gds::Rect> &rects) override;
 };
 	
 }

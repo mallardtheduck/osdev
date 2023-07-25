@@ -2,41 +2,38 @@
 #define _RADIOBUTTON_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
-	
+
+struct RadioButtonImpl;
+PIMPL_CLASS(RadioButtonImpl);
+
 class RadioButton : public IValueControl<bool> {
 private:
-	gds::Rect rect;
-	std::string text;
-	std::unique_ptr<gds::Surface> bkSurf;
-	
-	bool value;
-	gds::TextMeasurements textMeasures;
-	bool focus = false;
-	bool enabled = true;
-	
+	btos::pimpl_ptr<RadioButtonImpl> im;
+
 	template<typename T> friend class RadioGroup;
-	std::function<std::vector<gds::Rect>()> getAllRects;
 	
+	std::function<std::vector<gds::Rect>()> getAllRects;
 	void SetValue(bool v);
 public:
 	RadioButton(const gds::Rect &r, const std::string &t, bool v);
 	
-	EventResponse HandleEvent(const wm_Event&);
-	void Paint(gds::Surface &surf);
-	gds::Rect GetPaintRect();
-	gds::Rect GetInteractRect();
-	uint32_t GetSubscribed();
-	void Focus();
-	void Blur();
-	uint32_t GetFlags();
-	bool GetValue();
-	void Enable();
-	void Disable();
-	bool IsEnabled();
-	void SetPosition(const gds::Rect&);
+	EventResponse HandleEvent(const wm_Event&) override;
+	void Paint(gds::Surface &surf) override;
+	gds::Rect GetPaintRect() override;
+	gds::Rect GetInteractRect() override;
+	uint32_t GetSubscribed() override;
+	void Focus() override;
+	void Blur() override;
+	uint32_t GetFlags() override;
+	bool GetValue() override;
+	void Enable() override;
+	void Disable() override;
+	bool IsEnabled() override;
+	void SetPosition(const gds::Rect&) override;
 	
 	void SetText(const std::string &t);
 };

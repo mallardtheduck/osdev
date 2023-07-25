@@ -2,25 +2,25 @@
 #define _STATUSBAR_HPP
 
 #include <gui/icontrol.hpp>
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
+class StatusBarImpl;
+PIMPL_CLASS(StatusBarImpl);
+
 class StatusBar : public IDecorativeControl{
 private:
-	gds::Rect rect;
-	std::string text;
-	std::unique_ptr<gds::Surface> surf;
-	
-	uint32_t height;
+	btos::pimpl_ptr<StatusBarImpl> im;
 public:
 	StatusBar(const std::string &t);
 	
-	EventResponse HandleEvent(const wm_Event&);
-	void Paint(gds::Surface &surf);
-	gds::Rect GetPaintRect();
-	gds::Rect GetInteractRect();
-	uint32_t GetSubscribed();
+	EventResponse HandleEvent(const wm_Event&) override;
+	void Paint(gds::Surface &surf) override;
+	gds::Rect GetPaintRect() override;
+	gds::Rect GetInteractRect() override;
+	uint32_t GetSubscribed() override;
 	void SetPosition(const gds::Rect&) {}
 	
 	void SetText(const std::string &t);

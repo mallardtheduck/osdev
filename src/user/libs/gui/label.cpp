@@ -4,45 +4,56 @@
 namespace btos_api{
 namespace gui{
 
-Label::Label(const gds::Rect &r, const std::string &t, Label::Justification j) : rect(r), text(t), just(j) {}
+struct LabelImpl{
+	gds::Rect rect;
+	std::string text;
+	std::unique_ptr<gds::Surface> surf;
+	
+	Label::Justification just;
+};
+PIMPL_IMPL(LabelImpl);
+
+Label::Label(const gds::Rect &r, const std::string &t, Label::Justification j) : im(new LabelImpl()){
+	im->rect = r; im->text = t; im->just = j;
+}
 	
 EventResponse Label::HandleEvent(const wm_Event&){
 	return {false};
 }
 
 void Label::Paint(gds::Surface &s){
-	if(!surf){
-		surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+	if(!im->surf){
+		im->surf.reset(new gds::Surface(gds_SurfaceType::Vector, im->rect.w, im->rect.h, 100, gds_ColourType::True));
 		
-		auto textMeasures = surf->MeasureText(text, fonts::GetLabelFont(), fonts::GetLabelTextSize());
-		auto bkgCol = colours::GetBackground().Fix(*surf);
-		auto txtCol = colours::GetLabelText().Fix(*surf);
+		auto textMeasures = im->surf->MeasureText(im->text, fonts::GetLabelFont(), fonts::GetLabelTextSize());
+		auto bkgCol = colours::GetBackground().Fix(*im->surf);
+		auto txtCol = colours::GetLabelText().Fix(*im->surf);
 			
 		int32_t textX;
-		switch(just){
+		switch(im->just){
 			case Label::Justification::Left:
 				textX = 0;
 				break;
 			case Label::Justification::Right:
-				textX = rect.w - textMeasures.w;
+				textX = im->rect.w - textMeasures.w;
 				break;
 			case Label::Justification::Center:
-				textX = std::max<int32_t>(((rect.w - textMeasures.w) / 2), 0);
+				textX = std::max<int32_t>(((im->rect.w - textMeasures.w) / 2), 0);
 				break;
 		}
 		
-		int32_t textY = std::max<int32_t>(((rect.h + textMeasures.h) / 2), 0);
+		int32_t textY = std::max<int32_t>(((im->rect.h + textMeasures.h) / 2), 0);
 		
-		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		surf->Text({textX, textY}, text, fonts::GetLabelFont(), fonts::GetLabelTextSize(), txtCol);
-		surf->Compress();
+		im->surf->Box(im->rect.AtZero(), bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		im->surf->Text({textX, textY}, im->text, fonts::GetLabelFont(), fonts::GetLabelTextSize(), txtCol);
+		im->surf->Compress();
 	}
 	
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	s.Blit(*im->surf, im->rect.AtZero(), im->rect);
 }
 
 gds::Rect Label::GetPaintRect(){
-	return rect;
+	return im->rect;
 }
 
 gds::Rect Label::GetInteractRect(){
@@ -54,14 +65,14 @@ uint32_t Label::GetSubscribed(){
 }
 	
 void Label::SetText(const std::string &t){
-	text = t;
-	surf.reset();
-	IControl::Paint(rect);
+	im->text = t;
+	im->surf.reset();
+	IControl::Paint(im->rect);
 }
 
 void Label::SetPosition(const gds::Rect &r){
-	rect = r;
-	surf.reset();
+	im->rect = r;
+	im->surf.reset();
 }
 
 }

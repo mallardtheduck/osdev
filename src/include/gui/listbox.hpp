@@ -5,60 +5,34 @@
 #include "scrollbar.hpp"
 #include "checkbox.hpp"
 
+#include <util/pimpl_ptr.hpp>
+
 namespace btos_api{
 namespace gui{
 	
+struct ListBoxImpl;
+PIMPL_CLASS(ListBoxImpl);
+
 class ListBox : public IValueControl<size_t>{
 private:
-	gds::Rect outerRect;
-	gds::Rect rect; 
-	std::unique_ptr<gds::Surface> surf;
-	
-	std::vector<std::string> items;
-	std::vector<bool> multiSelection;
-	
-	struct DrawItem{
-		std::string text;
-		gds::TextMeasurements measures;
-	};
-	
-	std::vector<DrawItem> drawItems;
-	
-	size_t fontHeight;
-	
-	size_t selectedItem = 0;
-	size_t vOffset = 0;
-	size_t hOffset = 0;
-	size_t visibleItems = 0;
-	
-	bool update = false;
-	bool hasFocus = false;
-	bool enabled = true;
-	
-	std::unique_ptr<Scrollbar> hscroll;
-	std::unique_ptr<Scrollbar> vscroll;
-	
-	bool scrollHoriz;
-	bool multiSelect;
-	
-	void UpdateDisplayState(bool changePos = true);
+	btos::pimpl_ptr<ListBoxImpl> im;
 public:
 	ListBox(const gds::Rect &r, bool scrollHoriz = false, bool multiSelect = false);
 	
-	EventResponse HandleEvent(const wm_Event&);
-	void Paint(gds::Surface &surf);
-	gds::Rect GetPaintRect();
-	gds::Rect GetInteractRect();
-	uint32_t GetSubscribed();
-	void Focus();
-	void Blur();
-	uint32_t GetFlags();
-	void Enable();
-	void Disable();
-	bool IsEnabled();
-	void SetPosition(const gds::Rect&);
+	EventResponse HandleEvent(const wm_Event&) override;
+	void Paint(gds::Surface &surf) override;
+	gds::Rect GetPaintRect() override;
+	gds::Rect GetInteractRect() override;
+	uint32_t GetSubscribed() override;
+	void Focus() override;
+	void Blur() override;
+	uint32_t GetFlags() override;
+	void Enable() override;
+	void Disable() override;
+	bool IsEnabled() override;
+	void SetPosition(const gds::Rect&) override;
 	
-	size_t GetValue();
+	size_t GetValue() override;
 	void SetValue(size_t idx);
 	std::vector<bool> &MulitSelections();
 	

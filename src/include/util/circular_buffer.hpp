@@ -12,7 +12,7 @@ public:
 	constexpr circular_buffer() : zero_value(0) {}
 	constexpr circular_buffer(T zero) : zero_value(zero) {}
 
-	void add_item(T c){
+	void add_item(const T &c){
 		if(buffer_count < buffer_size){
 			buffer_count++;
 			buffer[buffer_top] = c;

@@ -47,6 +47,15 @@ void rtc_uapi(uint16_t id,ICPUState &state){
 	}
 }
 
+class RTCExtension : public IRTCExtension{
+public:
+	const char *GetName() override;
+	void UserAPIHandler(uint16_t fn, ICPUState &state) override;
+
+	void Sleep(uint32_t msec) override;
+	uint64_t Millis() override;
+};
+
 const char *RTCExtension::GetName(){
 	return RTC_EXTENSION_NAME;
 }

@@ -2,24 +2,26 @@
 #define _PROGRESSBAR_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
+struct ProgressBarImpl;
+PIMPL_CLASS(ProgressBarImpl);
+
 class ProgressBar : public IDecorativeControl{
 private:
-	gds::Rect rect;
-	int value;
-	std::unique_ptr<gds::Surface> surf;
+	btos::pimpl_ptr<ProgressBarImpl> im;
 public:
 	ProgressBar(const gds::Rect &r, int value);
 	
-	EventResponse HandleEvent(const wm_Event&);
-	void Paint(gds::Surface &surf);
-	gds::Rect GetPaintRect();
-	gds::Rect GetInteractRect();
-	uint32_t GetSubscribed();
-	void SetPosition(const gds::Rect&);
+	EventResponse HandleEvent(const wm_Event&) override;
+	void Paint(gds::Surface &surf) override;
+	gds::Rect GetPaintRect() override;
+	gds::Rect GetInteractRect() override;
+	uint32_t GetSubscribed() override;
+	void SetPosition(const gds::Rect&) override;
 	
 	void SetValue(int value);
 };

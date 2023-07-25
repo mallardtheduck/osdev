@@ -9,12 +9,28 @@
 
 namespace btos_api{
 namespace gui{  
+
+struct SliderImpl{
+	gds::Rect rect;
+	int32_t min;
+	int32_t max;
+	int32_t value;
+	int32_t snapTo;
 	
-Slider::Slider(const gds::Rect &r, int32_t mi, int32_t ma, int32_t def, int32_t sT) : rect(r), min(mi), max(ma), value(def), snapTo(sT) {}
+	bool focus = false;
+	bool enabled = true;
+	
+	std::unique_ptr<gds::Surface> bkSurf;
+};
+PIMPL_IMPL(SliderImpl);
+	
+Slider::Slider(const gds::Rect &r, int32_t mi, int32_t ma, int32_t def, int32_t sT) : im(new SliderImpl()){
+	im->rect = r; im->min = mi; im->max = ma; im->value = def; im->snapTo = sT;
+}
 
 EventResponse Slider::HandleEvent(const wm_Event &e){
 	bool handled = false;
-	int32_t cvalue = value;
+	int32_t cvalue = im->value;
 	if(e.type == wm_EventType::PointerMove || e.type == wm_EventType::PointerButtonUp){
 		handled = true;
 		if(e.type == wm_EventType::PointerMove){
@@ -22,108 +38,108 @@ EventResponse Slider::HandleEvent(const wm_Event &e){
 			if(!(pinfo.flags & MouseFlags::Button1)) return {true};
 		}
 		
-		int32_t xpos = e.Pointer.x - rect.x;
-		int32_t inW = rect.w - 1;
+		int32_t xpos = e.Pointer.x - im->rect.x;
+		int32_t inW = im->rect.w - 1;
 		int32_t lineLeft = 3;
 		int32_t lineRight = inW - 3;
 		
-		if(xpos < lineLeft) value = min;
-		else if(xpos > lineRight) value = max;
+		if(xpos < lineLeft) im->value = im->min;
+		else if(xpos > lineRight) im->value = im->max;
 		else{
 			xpos -= lineLeft;
 			if(xpos < 0) xpos = 0;
-			double scale = (((double)(lineRight - lineLeft) / (double)(max - min)));
-			value = (xpos / scale) + min;
-			if(value > max) value = max;
-			if(value < min) value = min;
+			double scale = (((double)(lineRight - lineLeft) / (double)(im->max - im->min)));
+			im->value = (xpos / scale) + im->min;
+			if(im->value > im->max) im->value = im->max;
+			if(im->value < im->min) im->value = im->min;
 		}
 	}else if(e.type == wm_EventType::Keyboard && !(e.Key.code & KeyFlags::KeyUp)){
 		uint16_t code = KB_code(e.Key.code);
-		if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && value > min){
-			value -= snapTo;
+		if(code == (KeyFlags::NonASCII | KeyCodes::LeftArrow) && im->value > im->min){
+			im->value -= im->snapTo;
 			handled = true;
-		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && value < max){
-			value += snapTo;
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::RightArrow) && im->value < im->max){
+			im->value += im->snapTo;
 			handled = true;
 		}
 	}
-	if(cvalue != value){
-		if((value - min) % snapTo){
-			value -= min;
-			value = round((double)value / (double)snapTo) * snapTo;
-			value += min;
+	if(cvalue != im->value){
+		if((im->value - im->min) % im->snapTo){
+			im->value -= im->min;
+			im->value = round((double)im->value / (double)im->snapTo) * im->snapTo;
+			im->value += im->min;
 		}
 		RaiseChangeEvent();
-		IControl::Paint(rect);
+		IControl::Paint(im->rect);
 	}
 	return {handled};
 }
 
 void Slider::Paint(gds::Surface &s){
-	int32_t inW = rect.w - 1;
+	int32_t inW = im->rect.w - 1;
 	auto lineTop = 5;
 	auto lineBottom = 9;
 	auto lineLeft = 4;
 	auto lineRight = inW - 4;
 	
-	if(!bkSurf){
-		bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+	if(!im->bkSurf){
+		im->bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, im->rect.w, im->rect.h, 100, gds_ColourType::True));
 	
-		auto bkgCol = colours::GetBackground().Fix(*bkSurf);
-		auto bkBorder = colours::GetBorder().Fix(*bkSurf);
+		auto bkgCol = colours::GetBackground().Fix(*im->bkSurf);
+		auto bkBorder = colours::GetBorder().Fix(*im->bkSurf);
 		
-		bkSurf->BeginQueue();
-		bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		drawing::Border(*bkSurf, {lineLeft, lineTop, (uint32_t)(lineRight - lineLeft), (uint32_t)(lineBottom - lineTop)}, bkBorder);
+		im->bkSurf->BeginQueue();
+		im->bkSurf->Box(im->rect.AtZero(), bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		drawing::Border(*im->bkSurf, {lineLeft, lineTop, (uint32_t)(lineRight - lineLeft), (uint32_t)(lineBottom - lineTop)}, bkBorder);
 		
-		auto topLeft = colours::GetSliderLineLowLight().Fix(*bkSurf);
-		auto bottomRight = colours::GetSliderLineHiLight().Fix(*bkSurf);
-		drawing::BevelBox(*bkSurf, {lineLeft + 1, lineTop + 1, (uint32_t)(lineRight - lineLeft - 2), (uint32_t)(lineBottom - lineTop - 2)}, topLeft, bottomRight);
+		auto topLeft = colours::GetSliderLineLowLight().Fix(*im->bkSurf);
+		auto bottomRight = colours::GetSliderLineHiLight().Fix(*im->bkSurf);
+		drawing::BevelBox(*im->bkSurf, {lineLeft + 1, lineTop + 1, (uint32_t)(lineRight - lineLeft - 2), (uint32_t)(lineBottom - lineTop - 2)}, topLeft, bottomRight);
 		
 		int tickTop = lineBottom + 2;
 		
-		auto tick = colours::GetSliderTick().Fix(*bkSurf);
-		bkSurf->Line({lineLeft, tickTop}, {lineLeft, (int32_t)rect.h}, tick);
-		bkSurf->Line({lineRight, tickTop}, {lineRight, (int32_t)rect.h}, tick);
+		auto tick = colours::GetSliderTick().Fix(*im->bkSurf);
+		im->bkSurf->Line({lineLeft, tickTop}, {lineLeft, (int32_t)im->rect.h}, tick);
+		im->bkSurf->Line({lineRight, tickTop}, {lineRight, (int32_t)im->rect.h}, tick);
 		auto mid = ((lineRight - lineLeft) / 2) + lineLeft;
-		bkSurf->Line({mid, tickTop}, {mid, (int32_t)rect.h}, tick);
+		im->bkSurf->Line({mid, tickTop}, {mid, (int32_t)im->rect.h}, tick);
 		
-		bkSurf->CommitQueue();
-		bkSurf->Compress();
+		im->bkSurf->CommitQueue();
+		im->bkSurf->Compress();
 	}
 	
 	auto border = colours::GetBorder().Fix(s);
 	auto slider = colours::GetSliderColour().Fix(s);
 	
-	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
+	s.Blit(*im->bkSurf, im->rect.AtZero(), im->rect);
 	
-	if(focus){
+	if(im->focus){
 		auto focusCol = colours::GetSliderFocus().Fix(s);
-		s.Box(rect, focusCol, focusCol);
+		s.Box(im->rect, focusCol, focusCol);
 	}
 	
-	int32_t pos = lineLeft + ((double)(value - min) * (((double)(lineRight - lineLeft) / (double)(max - min))));
+	int32_t pos = lineLeft + ((double)(im->value - im->min) * (((double)(lineRight - lineLeft) / (double)(im->max - im->min))));
 	std::vector<gds::Point> points = {{pos - 4, 1}, {pos - 4, 7}, {pos, 13}, {pos + 4, 7}, {pos + 4, 1}};
 	
 	for(auto &p : points){
-		p.x += rect.x;
-		p.y += rect.y;
+		p.x += im->rect.x;
+		p.y += im->rect.y;
 	}
 	
 	s.Polygon(points, false, border, slider, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	s.Line({rect.x + pos - 3, rect.y}, {rect.x + pos + 3, rect.y}, border);
+	s.Line({im->rect.x + pos - 3, im->rect.y}, {im->rect.x + pos + 3, im->rect.y}, border);
 	
-	if(!enabled){
+	if(!im->enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
-		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		s.Box(im->rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	}
 }
 
 gds::Rect Slider::GetPaintRect(){
-	return rect;
+	return im->rect;
 }
 gds::Rect Slider::GetInteractRect(){
-	return rect;
+	return im->rect;
 }
 
 uint32_t Slider::GetSubscribed(){
@@ -131,21 +147,21 @@ uint32_t Slider::GetSubscribed(){
 }
 
 void Slider::Focus(){
-	if(!focus){
-		focus = true;
-		IControl::Paint(rect);
+	if(!im->focus){
+		im->focus = true;
+		IControl::Paint(im->rect);
 	}
 }
 
 void Slider::Blur(){
-	if(focus){
-		focus = false;
-		IControl::Paint(rect);
+	if(im->focus){
+		im->focus = false;
+		IControl::Paint(im->rect);
 	}
 }
 
 int32_t Slider::GetValue(){
-	return value;
+	return im->value;
 }
 
 uint32_t Slider::GetFlags(){
@@ -153,26 +169,26 @@ uint32_t Slider::GetFlags(){
 }
 
 void Slider::Enable(){
-	if(!enabled){
-		enabled = true;
-		IControl::Paint(rect);
+	if(!im->enabled){
+		im->enabled = true;
+		IControl::Paint(im->rect);
 	}
 }
 
 void Slider::Disable(){
-	if(enabled){
-		enabled = false;
-		IControl::Paint(rect);
+	if(im->enabled){
+		im->enabled = false;
+		IControl::Paint(im->rect);
 	}
 }
 
 bool Slider::IsEnabled(){
-	return enabled;
+	return im->enabled;
 }
 
 void Slider::SetPosition(const gds::Rect &r){
-	rect = r;
-	bkSurf.reset();
+	im->rect = r;
+	im->bkSurf.reset();
 }
 
 }

@@ -8,6 +8,20 @@
 namespace btos_api{
 namespace gui{
 
+struct ContainerImpl{
+	std::vector<std::shared_ptr<IControl>> controls;
+	std::shared_ptr<IControl> focus;
+	std::shared_ptr<IControl> mouseOver;
+	std::vector<gds::Rect> paintQueue;
+	bool queuePaint = false;
+	
+	std::shared_ptr<IControl> FindNextFocus(bool reverse, Container *that);
+	
+	void ZSortControls();
+};
+
+PIMPL_IMPL(ContainerImpl);
+
 void IControl::Paint(const gds::Rect &rect){
 	if(paintFn) paintFn(rect);
 }
@@ -53,36 +67,38 @@ template<typename T> static std::shared_ptr<IControl> FNFSearch(std::shared_ptr<
 	}
 }
 
-std::shared_ptr<IControl> Container::FindNextFocus(bool reverse){
-	if(reverse) return FNFSearch(focus, controls.rbegin(), controls.rend(), [this, reverse]{return OnLastControlFocus(reverse);});
-	else return FNFSearch(focus, controls.begin(), controls.end(), [this, reverse]{return OnLastControlFocus(reverse);});
+std::shared_ptr<IControl> ContainerImpl::FindNextFocus(bool reverse, Container *that){
+	if(reverse) return FNFSearch(focus, controls.rbegin(), controls.rend(), [that, reverse]{return that->OnLastControlFocus(reverse);});
+	else return FNFSearch(focus, controls.begin(), controls.end(), [that, reverse]{return that->OnLastControlFocus(reverse);});
 }
 
-void Container::ZSortControls(){
+void ContainerImpl::ZSortControls(){
 	std::sort(controls.begin(), controls.end(), [](const std::shared_ptr<IControl> &a, const std::shared_ptr<IControl> &b){
 		return a->GetZOrder() < b->GetZOrder();
 	});
 }
 
+Container::Container() : impl(new ContainerImpl()) {}
+
 bool Container::HandleEvent(const wm_Event &evt){
-	queuePaint = true;
-	auto ctrlsCopy = controls;
+	impl->queuePaint = true;
+	auto ctrlsCopy = impl->controls;
 	EventResponse response;
-	if(focus && focus->IsEnabled() && (evt.type & wm_KeyboardEvents) && (focus->GetSubscribed() & evt.type)){
-		response = focus->HandleEvent(evt);
+	if(impl->focus && impl->focus->IsEnabled() && (evt.type & wm_KeyboardEvents) && (impl->focus->GetSubscribed() & evt.type)){
+		response = impl->focus->HandleEvent(evt);
 	}
 	
 	if(!ctrlsCopy.empty() && !response.IsFinishedProcessing() && evt.type == wm_EventType::Keyboard){
 		int16_t code = KB_code(evt.Key.code);
 		if(!(code & KeyFlags::NonASCII) && KB_char(evt.Key.code) == '\t'){
-			if(!focus){
-				focus = *ctrlsCopy.begin();
-				if(focus->GetFlags() & ControlFlags::NoFocus) focus = FindNextFocus(false);
-				if(focus) focus->Focus();
+			if(!impl->focus){
+				impl->focus = *ctrlsCopy.begin();
+				if(impl->focus->GetFlags() & ControlFlags::NoFocus) impl->focus = impl->FindNextFocus(false, this);
+				if(impl->focus) impl->focus->Focus();
 			}else{
-				focus->Blur();
-				focus = FindNextFocus(evt.Key.code & KeyFlags::Shift);
-				if(focus) focus->Focus();
+				impl->focus->Blur();
+				impl->focus = impl->FindNextFocus(evt.Key.code & KeyFlags::Shift, this);
+				if(impl->focus) impl->focus->Focus();
 			}
 		}
 	}
@@ -94,24 +110,24 @@ bool Container::HandleEvent(const wm_Event &evt){
 		e.Pointer.y -= br.y;
 		
 		if(e.type == wm_EventType::PointerMove){
-			if(mouseOver && !gds::InRect(e.Pointer.x, e.Pointer.y, mouseOver->GetInteractRect())){
+			if(impl->mouseOver && !gds::InRect(e.Pointer.x, e.Pointer.y, impl->mouseOver->GetInteractRect())){
 				auto leaveEvt = e;
 				leaveEvt.type = wm_EventType::PointerLeave;
 				HandleEvent(leaveEvt);
-				mouseOver.reset();
+				impl->mouseOver.reset();
 			}
 		}
 		
-		if(mouseOver && mouseOver->IsEnabled() && e.type == wm_EventType::PointerLeave){
-			response = mouseOver->HandleEvent(e);
+		if(impl->mouseOver && impl->mouseOver->IsEnabled() && e.type == wm_EventType::PointerLeave){
+			response = impl->mouseOver->HandleEvent(e);
 		}
 		
 		if(!response.IsFinishedProcessing()){
 			for(auto i = ctrlsCopy.rbegin(); i != ctrlsCopy.rend(); ++i){
 				auto &c = *i;
 				if(!c->IsEnabled()) continue;
-				if(e.type == wm_EventType::PointerMove && mouseOver != c && gds::InRect(e.Pointer.x, e.Pointer.y, c->GetInteractRect()) && (c->GetSubscribed() & wm_EventType::PointerEnter)){
-					mouseOver = c;
+				if(e.type == wm_EventType::PointerMove && impl->mouseOver != c && gds::InRect(e.Pointer.x, e.Pointer.y, c->GetInteractRect()) && (c->GetSubscribed() & wm_EventType::PointerEnter)){
+					impl->mouseOver = c;
 					auto enterEvt = evt;
 					enterEvt.type = wm_EventType::PointerEnter;
 					HandleEvent(enterEvt);
@@ -120,12 +136,12 @@ bool Container::HandleEvent(const wm_Event &evt){
 					response = c->HandleEvent(e);
 					if(response.IsFinishedProcessing()){
 						if(e.type != wm_EventType::PointerMove && e.type != wm_EventType::PointerEnter && e.type != wm_EventType::PointerLeave){
-							if(c != focus && !(c->GetFlags() & ControlFlags::NoFocus)){
-								if(focus){
-									focus->Blur();
+							if(c != impl->focus && !(c->GetFlags() & ControlFlags::NoFocus)){
+								if(impl->focus){
+									impl->focus->Blur();
 								}
-								focus = c;
-								focus->Focus();
+								impl->focus = c;
+								impl->focus->Focus();
 							}
 						}
 						break;
@@ -134,16 +150,16 @@ bool Container::HandleEvent(const wm_Event &evt){
 			}
 		}
 	}
-	queuePaint = false;
-	Paint(/*gds::TileRects(*/paintQueue/*)*/);
-	paintQueue.clear();
+	impl->queuePaint = false;
+	Paint(/*gds::TileRects(*/impl->paintQueue/*)*/);
+	impl->paintQueue.clear();
 	return true;
 }
 	
 void Container::Paint(const std::vector<gds::Rect> &rects){
 	if(rects.empty()) return;
-	if(queuePaint){ 
-		for(auto &r : rects) paintQueue.push_back(r);
+	if(impl->queuePaint){ 
+		for(auto &r : rects) impl->paintQueue.push_back(r);
 		return;
 	}
 	
@@ -153,7 +169,7 @@ void Container::Paint(const std::vector<gds::Rect> &rects){
 	surface.BeginQueue();
 	auto bkg = colours::GetBackground().Fix(surface);
 	surface.Box({0, 0, br.w, br.h}, bkg, bkg, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-	for(auto &c : controls){
+	for(auto &c : impl->controls){
 		c->Paint(surface);
 	}
 	surface.CommitQueue();
@@ -177,23 +193,23 @@ void Container::AddControl(std::shared_ptr<IControl> control){
 
 void Container::AddControls(std::vector<std::shared_ptr<IControl>> ncontrols){
 	for(auto &c : ncontrols){
-		if(std::find(controls.begin(), controls.end(), c) == controls.end()){
-			controls.push_back(c);
+		if(std::find(impl->controls.begin(), impl->controls.end(), c) == impl->controls.end()){
+			impl->controls.push_back(c);
 			BindControl(*c);
 		}
 	}
 	
 	uint32_t subs = wm_EventType::Keyboard;
-	for(auto &c : controls)	subs |= c->GetSubscribed();
+	for(auto &c : impl->controls)	subs |= c->GetSubscribed();
 	
 	if(subs & (wm_EventType::PointerEnter | wm_EventType::PointerLeave)) subs |= wm_EventType::PointerMove;
-	ZSortControls();
+	impl->ZSortControls();
 	SetSubscribed(subs);
 	Paint();
 }
 
 void Container::RemoveControl(std::shared_ptr<IControl> ctrl){
-	controls.erase(std::remove(controls.begin(), controls.end(), ctrl), controls.end());
+	impl->controls.erase(std::remove(impl->controls.begin(), impl->controls.end(), ctrl), impl->controls.end());
 	ctrl->paintFn = nullptr;
 	ctrl->bindFn = nullptr;
 	ctrl->isFocusFn = nullptr;
@@ -205,7 +221,7 @@ void Container::RemoveControl(std::shared_ptr<IControl> ctrl){
 }
 
 void Container::MoveControl(std::shared_ptr<IControl> control, gds::Rect newpos){
-	if(control && std::find(controls.begin(), controls.end(), control) != controls.end()){
+	if(control && std::find(impl->controls.begin(), impl->controls.end(), control) != impl->controls.end()){
 		auto oldpos = control->GetPaintRect();
 		control->SetPosition(newpos);
 		Paint({oldpos, newpos});
@@ -226,34 +242,34 @@ void Container::BindControl(IControl &control){
 }
 
 std::shared_ptr<IControl> &Container::GetFocus(){
-	return focus;
+	return impl->focus;
 }
 
 void Container::SetFocus(std::shared_ptr<IControl> ctrl){
-	if(focus == ctrl) return;
+	if(impl->focus == ctrl) return;
 	bool found = false;
-	for(auto &c : controls){
+	for(auto &c : impl->controls){
 		if(c == ctrl){
 			found = true;
 			break;
 		}
 	}
 	if(found){
-		if(focus) focus->Blur();
-		focus = ctrl;
-		focus->Focus();
+		if(impl->focus) impl->focus->Blur();
+		impl->focus = ctrl;
+		impl->focus->Focus();
 	}
 }
 
 void Container::FocusNext(bool reverse){
-	if(!focus){
-		focus = *controls.begin();
-		if(focus->GetFlags() & ControlFlags::NoFocus) focus = FindNextFocus(false);
-		if(focus) focus->Focus();
+	if(!impl->focus){
+		impl->focus = *impl->controls.begin();
+		if(impl->focus->GetFlags() & ControlFlags::NoFocus) impl->focus = impl->FindNextFocus(false, this);
+		if(impl->focus) impl->focus->Focus();
 	}else{
-		focus->Blur();
-		focus = FindNextFocus(reverse);
-		if(focus) focus->Focus();
+		impl->focus->Blur();
+		impl->focus = impl->FindNextFocus(reverse, this);
+		if(impl->focus) impl->focus->Focus();
 	}
 }
 

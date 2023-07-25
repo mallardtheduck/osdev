@@ -111,6 +111,7 @@ public:
 	BitmapSurface(size_t w, size_t h, uint32_t colourType, uint32_t scale = 100);
 
 	virtual size_t AddOperation(gds_DrawingOp op);
+	virtual std::vector<size_t> AddOperations(gds_MultiOps &mops);
 	virtual void RemoveOperation(size_t id);
 	virtual gds_DrawingOp GetOperation(size_t id);
 	virtual size_t GetWidth();

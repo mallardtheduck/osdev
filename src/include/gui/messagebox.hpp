@@ -8,16 +8,17 @@
 #include <string>
 
 #include <gui/idialog.hpp>
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
+struct MessageBoxImpl;
+PIMPL_CLASS(MessageBoxImpl);
+
 class MessageBox : public IDialog<size_t>{
 private:
-	std::string message;
-	std::string title;
-	std::shared_ptr<gds::Surface> icon;
-	std::vector<std::string> buttons;
+	btos::pimpl_ptr<MessageBoxImpl> im;
 public:
 	MessageBox();
 	MessageBox(const std::string &message, const std::string &title, std::shared_ptr<gds::Surface> icon = nullptr, std::vector<std::string> buttons = {"OK"});

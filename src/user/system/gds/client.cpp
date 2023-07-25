@@ -244,18 +244,14 @@ bool Client::HandleMessage(const Message &msg) {
 				bt_msg_header head = msg.Header();
 				bt_msg_content(&head, (void*)mops, msg.Length());
 				if(mops->count <= (BT_MSG_MAX - sizeof(gds_MultiOps)) / sizeof(gds_DrawingOp)){
-					uint32_t *ids = new uint32_t[mops->count];
-					for(size_t i = 0; i < mops->count; ++i){
-						ids[i] = currentSurface->AddOperation(mops->ops[i]);
-					}
+					auto ids = currentSurface->AddOperations(*mops);
 					bt_msg_header reply;
 					reply.to = msg.From();
 					reply.reply_id = msg.ID();
 					reply.flags = bt_msg_flags::Reply;
 					reply.length = mops->count * sizeof(uint32_t);
-					reply.content = (void*)ids;
+					reply.content = (void*)ids.data();
 					bt_send(reply);
-					delete[] ids;
 				}
 				free(mops);
 			}else{

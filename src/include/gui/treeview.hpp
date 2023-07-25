@@ -6,9 +6,13 @@
 #include "checkbox.hpp"
 
 #include <functional>
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
+
+struct TreeViewImpl;
+PIMPL_CLASS(TreeViewImpl);
 
 class TreeViewNode{
 private:
@@ -16,6 +20,7 @@ private:
 	size_t level = 0;
 	
 	friend class TreeView;
+	friend class TreeViewImpl;
 public:
 	size_t id;
 	std::string text;
@@ -37,59 +42,24 @@ public:
 
 class TreeView : public IValueControl<TreeViewNode*>{
 private:
-	gds::Rect outerRect;
-	gds::Rect rect; 
-	std::unique_ptr<gds::Surface> surf;
-	
-	std::vector<TreeViewNode> items;
-	std::shared_ptr<gds::Surface> defaultIcon;
-	std::shared_ptr<gds::Surface> defaultOpenIcon;
-	
-	size_t fontHeight;
-	size_t iconSize;
-	
-	TreeViewNode *selectedItem = nullptr;
-	size_t vOffset = 0;
-	size_t hOffset = 0;
-	size_t visibleItems = 0;
-	
-	bool update = false;
-	bool hasFocus = false;
-	bool enabled = true;
-	
-	std::unique_ptr<Scrollbar> hscroll;
-	std::unique_ptr<Scrollbar> vscroll;
-	
-	bool scrollHoriz;
-	bool multiSelect;
-	
-	void UpdateDisplayState(bool changePos = true);
-	void ForEachShown(const std::function<void(TreeViewNode&)> &fn);
-	enum class MovePos{
-		Offset, First, Last
-	};
-	void SelectionMove(int offset, MovePos pos = MovePos::Offset);
-	void SelectByChar(char c);
-	TreeViewNode *GetNodeByPos(uint32_t yPos);
-	void ToggleNodeOpen(TreeViewNode &node);
-	std::shared_ptr<gds::Surface> GetNodeIcon(const TreeViewNode &node);
+	btos::pimpl_ptr<TreeViewImpl> im;
 public:
 	TreeView(const gds::Rect &r, bool scrollHoriz = false, size_t iconSize = 16);
 	
-	EventResponse HandleEvent(const wm_Event&);
-	void Paint(gds::Surface &surf);
-	gds::Rect GetPaintRect();
-	gds::Rect GetInteractRect();
-	uint32_t GetSubscribed();
-	void Focus();
-	void Blur();
-	uint32_t GetFlags();
-	void Enable();
-	void Disable();
-	bool IsEnabled();
-	void SetPosition(const gds::Rect&);
+	EventResponse HandleEvent(const wm_Event&) override;
+	void Paint(gds::Surface &surf) override;
+	gds::Rect GetPaintRect() override;
+	gds::Rect GetInteractRect() override;
+	uint32_t GetSubscribed() override;
+	void Focus() override;
+	void Blur() override;
+	uint32_t GetFlags() override;
+	void Enable() override;
+	void Disable() override;
+	bool IsEnabled() override;
+	void SetPosition(const gds::Rect&) override;
 	
-	TreeViewNode *GetValue();
+	TreeViewNode *GetValue() override;
 	void SetValue(TreeViewNode *node);
 	
 	std::vector<TreeViewNode> &Items();

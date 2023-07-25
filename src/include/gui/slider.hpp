@@ -2,39 +2,34 @@
 #define _SLIDER_HPP
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
+
+struct SliderImpl;
+PIMPL_CLASS(SliderImpl);
 	
 class Slider : public IValueControl<int32_t>{
 private:
-	gds::Rect rect;
-	int32_t min;
-	int32_t max;
-	int32_t value;
-	int32_t snapTo;
-	
-	bool focus = false;
-	bool enabled = true;
-	
-	std::unique_ptr<gds::Surface> bkSurf;
+	btos::pimpl_ptr<SliderImpl> im;
 public:
 	Slider(const gds::Rect &r, int32_t min, int32_t max, int32_t def, int32_t snapTo = 1);
 	
-	EventResponse HandleEvent(const wm_Event&);
-	void Paint(gds::Surface &s);
-	gds::Rect GetPaintRect();
-	gds::Rect GetInteractRect();
-	uint32_t GetSubscribed();
-	void Focus();
-	void Blur();
-	uint32_t GetFlags();
-	void Enable();
-	void Disable();
-	bool IsEnabled();
-	void SetPosition(const gds::Rect&);
+	EventResponse HandleEvent(const wm_Event&) override;
+	void Paint(gds::Surface &s) override;
+	gds::Rect GetPaintRect() override;
+	gds::Rect GetInteractRect() override;
+	uint32_t GetSubscribed() override;
+	void Focus() override;
+	void Blur() override;
+	uint32_t GetFlags() override;
+	void Enable() override;
+	void Disable() override;
+	bool IsEnabled() override;
+	void SetPosition(const gds::Rect&) override;
 	
-	int32_t GetValue();
+	int32_t GetValue() override;
 };
 	
 }

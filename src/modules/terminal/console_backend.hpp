@@ -24,6 +24,7 @@ private:
 	uint32_t cur_pointer_x, cur_pointer_y;
 	map<uint16_t, uint64_t> global_shortcuts;
 	uint32_t pointer_speed=300000;
+    bt_vidmode current_mode;
 
     friend void console_backend_input_thread(void *p);
     friend void console_backend_pointer_thread(void *p);

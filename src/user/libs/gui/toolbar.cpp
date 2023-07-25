@@ -7,8 +7,22 @@
 namespace btos_api{
 namespace gui{
 
-Toolbar::Toolbar(uint32_t s) : size(s) {
-	height = (size / 3.0) * 4;
+struct ToolbarImpl{
+	gds::Rect rect;
+	std::unique_ptr<gds::Surface> bkSurf;
+	bool enabled = true;
+	
+	uint32_t size;
+	uint32_t height;
+	
+	std::vector<std::shared_ptr<IToolbarControlBase>> controls;
+	std::shared_ptr<IToolbarControlBase> mouseOver;
+};
+PIMPL_IMPL(ToolbarImpl);
+
+Toolbar::Toolbar(uint32_t s) : im(new ToolbarImpl()){
+	im->size = s;
+	im->height = (im->size / 3.0) * 4;
 }
 
 EventResponse Toolbar::HandleEvent(const wm_Event &evt){
@@ -20,23 +34,23 @@ EventResponse Toolbar::HandleEvent(const wm_Event &evt){
 		e.Pointer.y -= br.y;
 		
 		if(e.type == wm_EventType::PointerMove){
-			if(mouseOver && !gds::InRect(e.Pointer.x, e.Pointer.y, mouseOver->GetInteractRect())){
+			if(im->mouseOver && !gds::InRect(e.Pointer.x, e.Pointer.y, im->mouseOver->GetInteractRect())){
 				auto leaveEvt = e;
 				leaveEvt.type = wm_EventType::PointerLeave;
 				HandleEvent(leaveEvt);
-				mouseOver.reset();
+				im->mouseOver.reset();
 			}
 		}
 		
-		if(mouseOver && mouseOver->IsEnabled() && e.type == wm_EventType::PointerLeave){
-			response = mouseOver->HandleEvent(e);
+		if(im->mouseOver && im->mouseOver->IsEnabled() && e.type == wm_EventType::PointerLeave){
+			response = im->mouseOver->HandleEvent(e);
 		}
 		
 		if(!response.IsFinishedProcessing()){
-			for(auto &c : controls){
+			for(auto &c : im->controls){
 				if(!c->IsEnabled()) continue;
-				if(e.type == wm_EventType::PointerMove && mouseOver != c && gds::InRect(e.Pointer.x, e.Pointer.y, c->GetInteractRect()) && (c->GetSubscribed() & wm_EventType::PointerEnter)){
-					mouseOver = c;
+				if(e.type == wm_EventType::PointerMove && im->mouseOver != c && gds::InRect(e.Pointer.x, e.Pointer.y, c->GetInteractRect()) && (c->GetSubscribed() & wm_EventType::PointerEnter)){
+					im->mouseOver = c;
 					auto enterEvt = evt;
 					enterEvt.type = wm_EventType::PointerEnter;
 					HandleEvent(enterEvt);
@@ -54,60 +68,60 @@ void Toolbar::Paint(gds::Surface &s){
 	auto containerRect = GetContainerRect();
 	if(!containerRect.w) return;
 	
-	if(rect.w != containerRect.w){
-		bkSurf.reset();
-		rect = {0, 0, containerRect.w, height};
+	if(im->rect.w != containerRect.w){
+		im->bkSurf.reset();
+		im->rect = {0, 0, containerRect.w, im->height};
 	}
-	if(!bkSurf){
-		bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+	if(!im->bkSurf){
+		im->bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, im->rect.w, im->rect.h, 100, gds_ColourType::True));
 		
-		bkSurf->BeginQueue();
+		im->bkSurf->BeginQueue();
 		
-		uint32_t inW = rect.w - 1;
-		uint32_t inH = rect.h - 1;
+		uint32_t inW = im->rect.w - 1;
+		uint32_t inH = im->rect.h - 1;
 		
-		auto bkgCol = colours::GetToolbarBackground().Fix(*bkSurf);
-		auto bdrCol = colours::GetBorder().Fix(*bkSurf);
+		auto bkgCol = colours::GetToolbarBackground().Fix(*im->bkSurf);
+		auto bdrCol = colours::GetBorder().Fix(*im->bkSurf);
 		
-		bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		bkSurf->Line({0, (int32_t)inH}, {(int32_t)inW, (int32_t)inH}, bdrCol);
+		im->bkSurf->Box(im->rect.AtZero(), bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		im->bkSurf->Line({0, (int32_t)inH}, {(int32_t)inW, (int32_t)inH}, bdrCol);
 		
-		bkSurf->CommitQueue();
-		bkSurf->Compress();
+		im->bkSurf->CommitQueue();
+		im->bkSurf->Compress();
 	}
-	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
+	s.Blit(*im->bkSurf, im->rect.AtZero(), im->rect);
 	
-	int32_t margin = size / 6;
+	int32_t margin = im->size / 6;
 		
-	int32_t cXpos = rect.x + margin;
+	int32_t cXpos = im->rect.x + margin;
 	
-	for(auto &ctrl : controls){
-		ctrl->size = size;
+	for(auto &ctrl : im->controls){
+		ctrl->size = im->size;
 		ctrl->margin = margin;
 		auto width = ctrl->GetWidth();
 		
-		ctrl->rect = {cXpos, rect.y + margin, width, size};
+		ctrl->rect = {cXpos, im->rect.y + margin, width, im->size};
 		ctrl->Paint(s);
 		cXpos += width + (margin / 2);
 	}
 	
-	if(!enabled){
+	if(!im->enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
-		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		s.Box(im->rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	}
 }
 
 gds::Rect Toolbar::GetPaintRect(){
-	return rect;
+	return im->rect;
 }
 
 gds::Rect Toolbar::GetInteractRect(){
-	return rect;
+	return im->rect;
 }
 
 uint32_t Toolbar::GetSubscribed(){
 	uint32_t ret = 0;
-	for(auto &ctrl : controls) ret |= ctrl->GetSubscribed();
+	for(auto &ctrl : im->controls) ret |= ctrl->GetSubscribed();
 	return ret;
 }
 
@@ -119,50 +133,64 @@ uint32_t Toolbar::GetFlags(){
 }
 
 void Toolbar::Enable(){
-	enabled = true;
+	im->enabled = true;
 }
 
 void Toolbar::Disable(){
-	enabled = false;
+	im->enabled = false;
 }
 
 bool Toolbar::IsEnabled(){
-	return enabled;
+	return im->enabled;
 }
 
 std::vector<std::shared_ptr<IToolbarControlBase>> &Toolbar::Controls(){
-	return controls;
+	return im->controls;
 }
 
 void Toolbar::Refresh(){
-	for(auto &ctrl : controls) BindToParent(*ctrl);
-	IControl::Paint(rect);
+	for(auto &ctrl : im->controls) BindToParent(*ctrl);
+	IControl::Paint(im->rect);
 }
 
 void Toolbar::OnBind(){
-	for(auto &ctrl : controls) BindToParent(*ctrl);
+	for(auto &ctrl : im->controls) BindToParent(*ctrl);
 }
 
-ToolbarButton::ToolbarButton(std::shared_ptr<gds::Surface> i, const std::string &l) : icon(i), label(l){
-	if(!label.empty()) labelMeasures = gds::Surface(gds_SurfaceType::Vector, 1, 1, 100, gds_ColourType::True)
+struct ToolbarButtonImpl{
+	bool down = false;
+	bool enabled = true;
+
+	std::shared_ptr<gds::Surface> icon;
+	std::string label;
+	
+	std::unique_ptr<gds::Surface> bkSurf;
+	gds::TextMeasurements labelMeasures;
+	gds_SurfaceInfo info;
+};
+PIMPL_IMPL(ToolbarButtonImpl);
+
+ToolbarButton::ToolbarButton(std::shared_ptr<gds::Surface> i, const std::string &l) : im(new ToolbarButtonImpl()){
+	im->icon = i; im->label = l;
+	if(!im->label.empty()) im->labelMeasures = gds::Surface(gds_SurfaceType::Vector, 1, 1, 100, gds_ColourType::True)
 		.MeasureText(l, fonts::GetToolbarButtonFont(), fonts::GetToolbarButtonTextSize());
-	if(icon) info = icon->Info();
+	if(im->icon) im->info = im->icon->Info();
 }
 	
 EventResponse ToolbarButton::HandleEvent(const wm_Event &e){
-	auto oldDown = down;
+	auto oldDown = im->down;
 	if(e.type == wm_EventType::PointerButtonDown && e.Pointer.button == 1){
-		down = true;
+		im->down = true;
 	}else if(e.type == wm_EventType::PointerButtonUp && e.Pointer.button == 1){
-		down = false;
+		im->down = false;
 		RaiseActionEvent();
 	}else if(e.type == wm_EventType::PointerLeave){
-		if(down) down = false;
+		if(im->down) im->down = false;
 	}else if(e.type == wm_EventType::PointerEnter){
 		auto pinfo = WM_GetPointerInfo();
-		if(pinfo.flags & MouseFlags::Button1) down = true;
+		if(pinfo.flags & MouseFlags::Button1) im->down = true;
 	}
-	if(down != oldDown){
+	if(im->down != oldDown){
 		IControl::Paint(rect);	
 	}
 	return {true};
@@ -172,47 +200,47 @@ void ToolbarButton::Paint(gds::Surface &s){
 	int32_t inW = rect.w - 1;
 	int32_t inH = rect.h - 1;
 	
-	if(!bkSurf){
-		bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+	if(!im->bkSurf){
+		im->bkSurf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
 		
-		bkSurf->BeginQueue();
+		im->bkSurf->BeginQueue();
 		
-		auto bkgCol = colours::GetToolbarBackground().Fix(*bkSurf);
-		auto buttonColour = colours::GetToolbarButtonColour().Fix(*bkSurf);
-		auto border = colours::GetBorder().Fix(*bkSurf);
+		auto bkgCol = colours::GetToolbarBackground().Fix(*im->bkSurf);
+		auto buttonColour = colours::GetToolbarButtonColour().Fix(*im->bkSurf);
+		auto border = colours::GetBorder().Fix(*im->bkSurf);
 		
-		bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		bkSurf->Box({1, 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, buttonColour, buttonColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		drawing::Border(*bkSurf, {0, 0, (uint32_t)inW, (uint32_t)inH}, border);
+		im->bkSurf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		im->bkSurf->Box({1, 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, buttonColour, buttonColour, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		drawing::Border(*im->bkSurf, {0, 0, (uint32_t)inW, (uint32_t)inH}, border);
 		
-		if(icon){
+		if(im->icon){
 			int32_t imgX = margin;
-			int32_t imgY = std::max<int32_t>(((rect.h - info.h) / 2), 0);
-			bkSurf->Blit(*icon, {0, 0, info.w, info.h}, {imgX, imgY, info.w, info.h});
+			int32_t imgY = std::max<int32_t>(((rect.h - im->info.h) / 2), 0);
+			im->bkSurf->Blit(*im->icon, {0, 0, im->info.w, im->info.h}, {imgX, imgY, im->info.w, im->info.h});
 		}
 		
-		if(!label.empty()){
+		if(!im->label.empty()){
 			int32_t labelX = margin;
-			int32_t labelY = std::max<int32_t>(((rect.h + labelMeasures.h) / 2), 0);
+			int32_t labelY = std::max<int32_t>(((rect.h + im->labelMeasures.h) / 2), 0);
 		
-			if(icon) labelX += info.w + margin;
+			if(im->icon) labelX += im->info.w + margin;
 			
-			auto textColour = colours::GetToolbarButtonText().Fix(*bkSurf);
-			bkSurf->Text({labelX, labelY}, label, fonts::GetToolbarButtonFont(), fonts::GetToolbarButtonTextSize(), textColour);
+			auto textColour = colours::GetToolbarButtonText().Fix(*im->bkSurf);
+			im->bkSurf->Text({labelX, labelY}, im->label, fonts::GetToolbarButtonFont(), fonts::GetToolbarButtonTextSize(), textColour);
 		}
 		
-		bkSurf->CommitQueue();
-		bkSurf->Compress();
+		im->bkSurf->CommitQueue();
+		im->bkSurf->Compress();
 	}
-	s.Blit(*bkSurf, {0, 0, rect.w, rect.h}, rect);
+	s.Blit(*im->bkSurf, {0, 0, rect.w, rect.h}, rect);
 	
 	auto topLeft = colours::GetToolbarButtonHiLight().Fix(s);
 	auto bottomRight = colours::GetToolbarButtonLowLight().Fix(s);
-	if(down) std::swap(topLeft, bottomRight);
+	if(im->down) std::swap(topLeft, bottomRight);
 	
 	drawing::BevelBox(s, {rect.x + 1, rect.y + 1, (uint32_t)inW - 2, (uint32_t)inH - 2}, topLeft, bottomRight);
 		
-	if(!enabled){
+	if(!im->enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
 		s.Box(rect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	}
@@ -231,29 +259,29 @@ uint32_t ToolbarButton::GetSubscribed(){
 }
 
 void ToolbarButton::Enable(){
-	if(!enabled){
-		enabled = true;
+	if(!im->enabled){
+		im->enabled = true;
 		IControl::Paint(rect);
 	}
 }
 
 void ToolbarButton::Disable(){
-	if(enabled){
-		enabled = false;
+	if(im->enabled){
+		im->enabled = false;
 		IControl::Paint(rect);
 	}
 }
 
 bool ToolbarButton::IsEnabled(){
-	return enabled;
+	return im->enabled;
 }
 
 uint32_t ToolbarButton::GetWidth(){
 	uint32_t ret = margin * 2;
 	
-	if(icon) ret += info.w;
-	if(!label.empty()) ret += labelMeasures.w;
-	if(icon && !label.empty()) ret += margin;
+	if(im->icon) ret += im->info.w;
+	if(!im->label.empty()) ret += im->labelMeasures.w;
+	if(im->icon && !im->label.empty()) ret += margin;
 	
 	return ret;
 }

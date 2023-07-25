@@ -12,37 +12,72 @@ namespace gui{
 const auto scrollbarSize = 17;
 const auto checkSize = 17;
 
-ListBox::ListBox(const gds::Rect &r, bool sH, bool mS) : 
-	outerRect(r), 
-	rect(sH ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h}),
-	scrollHoriz(sH),
-	multiSelect(mS)
-	{
+struct ListBoxImpl{
+	gds::Rect outerRect;
+	gds::Rect rect; 
+	std::unique_ptr<gds::Surface> surf;
+	
+	std::vector<std::string> items;
+	std::vector<bool> multiSelection;
+	
+	struct DrawItem{
+		std::string text;
+		gds::TextMeasurements measures;
+	};
+	
+	std::vector<DrawItem> drawItems;
+	
+	size_t fontHeight;
+	
+	size_t selectedItem = 0;
+	size_t vOffset = 0;
+	size_t hOffset = 0;
+	size_t visibleItems = 0;
+	
+	bool update = false;
+	bool hasFocus = false;
+	bool enabled = true;
+	
+	std::unique_ptr<Scrollbar> hscroll;
+	std::unique_ptr<Scrollbar> vscroll;
+	
+	bool scrollHoriz;
+	bool multiSelect;
+	
+	void UpdateDisplayState(bool changePos = true);
+};
+PIMPL_IMPL(ListBoxImpl);
+
+ListBox::ListBox(const gds::Rect &r, bool sH, bool mS) : im(new ListBoxImpl()){
+	im->outerRect = r; 
+	im->rect = sH ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h};
+	im->scrollHoriz = sH;
+	im->multiSelect = mS;
 	auto info = fonts::GetListBoxFont().Info();
-	fontHeight = (info.maxH * fonts::GetListBoxTextSize()) / info.scale;
-	if(multiSelect && fontHeight < checkSize) fontHeight = checkSize;
+	im->fontHeight = (info.maxH * fonts::GetListBoxTextSize()) / info.scale;
+	if(im->multiSelect && im->fontHeight < checkSize) im->fontHeight = checkSize;
 	
-	vscroll.reset(new Scrollbar({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
+	im->vscroll.reset(new Scrollbar({im->outerRect.x + (int32_t)im->outerRect.w - scrollbarSize, im->outerRect.y, scrollbarSize, im->outerRect.h - (im->scrollHoriz ? scrollbarSize : 0)}, 1, 1, 1, 1, false));
 	
-	vscroll->OnChange([this] (uint32_t v) {
-		if(v != vOffset) update = true;
-		vOffset = v;
+	im->vscroll->OnChange([this] (uint32_t v) {
+		if(v != im->vOffset) im->update = true;
+		im->vOffset = v;
 	});
 	
-	if(scrollHoriz){
-		hscroll.reset(new Scrollbar({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
+	if(im->scrollHoriz){
+		im->hscroll.reset(new Scrollbar({im->outerRect.x, im->outerRect.y + (int32_t)im->outerRect.h - scrollbarSize, im->outerRect.w - scrollbarSize, scrollbarSize}, 1, 1, 1, 1, true));
 		
-		hscroll->OnChange([this] (uint32_t v) {
-			if(v != hOffset + (multiSelect ? checkSize : 0)) update = true;
-			hOffset = v - (multiSelect ? checkSize : 0);
+		im->hscroll->OnChange([this] (uint32_t v) {
+			if(v != im->hOffset + (im->multiSelect ? checkSize : 0)) im->update = true;
+			im->hOffset = v - (im->multiSelect ? checkSize : 0);
 		});
 	}
-	if(multiSelect) hOffset = -checkSize;
+	if(im->multiSelect) im->hOffset = -checkSize;
 	
-	UpdateDisplayState();
+	im->UpdateDisplayState();
 }
 
-void ListBox::UpdateDisplayState(bool changePos){
+void ListBoxImpl::UpdateDisplayState(bool changePos){
 	visibleItems = rect.h / fontHeight;
 	if(changePos){
 		if(selectedItem < vOffset) vOffset = selectedItem;
@@ -97,178 +132,178 @@ EventResponse ListBox::HandleEvent(const wm_Event &e){
 	bool handled = false;
 	if(e.type == wm_EventType::Keyboard && !(e.Key.code & KeyFlags::KeyUp)){
 		uint16_t code = KB_code(e.Key.code);
-		if(code == (KeyFlags::NonASCII | KeyCodes::DownArrow) && selectedItem < items.size() - 1){
-			++selectedItem;
-			update = true;
+		if(code == (KeyFlags::NonASCII | KeyCodes::DownArrow) && im->selectedItem < im->items.size() - 1){
+			++im->selectedItem;
+			im->update = true;
 			handled = true;
-			UpdateDisplayState();
-		}else if(code == (KeyFlags::NonASCII | KeyCodes::UpArrow) && selectedItem > 0){
-			--selectedItem;
-			update = true;
+			im->UpdateDisplayState();
+		}else if(code == (KeyFlags::NonASCII | KeyCodes::UpArrow) && im->selectedItem > 0){
+			--im->selectedItem;
+			im->update = true;
 			handled = true;
-			UpdateDisplayState();
+			im->UpdateDisplayState();
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageUp)){
-			if(selectedItem != 0){
-				if(selectedItem > visibleItems) selectedItem -= visibleItems;
-				else selectedItem = 0;
-				update = true;
-				UpdateDisplayState();
+			if(im->selectedItem != 0){
+				if(im->selectedItem > im->visibleItems) im->selectedItem -= im->visibleItems;
+				else im->selectedItem = 0;
+				im->update = true;
+				im->UpdateDisplayState();
 			}
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::PageDown)){
-			if(selectedItem < items.size() - 1){
-				if(selectedItem + visibleItems < items.size()) selectedItem += visibleItems;
-				else selectedItem = items.size() - 1;
-				update = true;
-				UpdateDisplayState();
+			if(im->selectedItem < im->items.size() - 1){
+				if(im->selectedItem + im->visibleItems < im->items.size()) im->selectedItem += im->visibleItems;
+				else im->selectedItem = im->items.size() - 1;
+				im->update = true;
+				im->UpdateDisplayState();
 			}
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::Home)){
-			if(selectedItem != 0){
-				selectedItem = 0;
-				update = true;
-				UpdateDisplayState();
+			if(im->selectedItem != 0){
+				im->selectedItem = 0;
+				im->update = true;
+				im->UpdateDisplayState();
 			}
 			handled = true;
 		}else if(code == (KeyFlags::NonASCII | KeyCodes::End)){
-			if(selectedItem < items.size() - 1){
-				selectedItem = items.size() - 1;
-				update = true;
-				UpdateDisplayState();
+			if(im->selectedItem < im->items.size() - 1){
+				im->selectedItem = im->items.size() - 1;
+				im->update = true;
+				im->UpdateDisplayState();
 			}
 			handled = true;
 		}else if(!(code & KeyFlags::NonASCII)){
-			auto oldSelectedItem = selectedItem;
+			auto oldSelectedItem = im->selectedItem;
 			char c = KB_char(e.Key.code);
-			if(multiSelect && (c == ' ' || c == '\n')){
-				multiSelection[selectedItem] = !multiSelection[selectedItem];
-				update = true;
+			if(im->multiSelect && (c == ' ' || c == '\n')){
+				im->multiSelection[im->selectedItem] = !im->multiSelection[im->selectedItem];
+				im->update = true;
 			}else{
 				c = std::tolower(c);
 				auto finder = [&](const std::string &item){return !item.empty() && std::tolower(item.front()) == c;};
-				auto it = std::find_if(begin(items) + selectedItem + 1, end(items), finder);
-				if(it == end(items)) it = std::find_if(begin(items), end(items), finder);
-				if(it != end(items)) selectedItem = it - begin(items);
-				update = oldSelectedItem != selectedItem;
+				auto it = std::find_if(begin(im->items) + im->selectedItem + 1, end(im->items), finder);
+				if(it == end(im->items)) it = std::find_if(begin(im->items), end(im->items), finder);
+				if(it != end(im->items)) im->selectedItem = it - begin(im->items);
+				im->update = oldSelectedItem != im->selectedItem;
 			}
 			handled = true;
-			UpdateDisplayState();
+			im->UpdateDisplayState();
 		}
 	}else if(e.type & wm_PointerEvents){
-		if(InRect(e.Pointer.x, e.Pointer.y, rect)){
+		if(InRect(e.Pointer.x, e.Pointer.y, im->rect)){
 			if(e.type == wm_EventType::PointerButtonUp){
-				auto oldSelectedItem = selectedItem;
-				selectedItem = ((e.Pointer.y - outerRect.y) / fontHeight) + vOffset;
-				if(selectedItem < items.size()) update = oldSelectedItem != selectedItem;
-				if(multiSelect && (e.Pointer.x - outerRect.x) < checkSize + 1){
-					multiSelection[selectedItem] = !multiSelection[selectedItem];
-					update = true;
+				auto oldSelectedItem = im->selectedItem;
+				im->selectedItem = ((e.Pointer.y - im->outerRect.y) / im->fontHeight) + im->vOffset;
+				if(im->selectedItem < im->items.size()) im->update = oldSelectedItem != im->selectedItem;
+				if(im->multiSelect && (e.Pointer.x - im->outerRect.x) < checkSize + 1){
+					im->multiSelection[im->selectedItem] = !im->multiSelection[im->selectedItem];
+					im->update = true;
 				}
 				handled = true;
-				UpdateDisplayState();
+				im->UpdateDisplayState();
 			}
-		}else if(hscroll && hscroll->IsEnabled() && InRect(e.Pointer.x, e.Pointer.y, hscroll->GetInteractRect()) && (e.type & hscroll->GetSubscribed())){
-			auto ret = hscroll->HandleEvent(e);
-			update = ret.IsFinishedProcessing();
-			handled = handled || update;
-		}else if(vscroll && vscroll->IsEnabled() && InRect(e.Pointer.x, e.Pointer.y, vscroll->GetInteractRect()) && (e.type & vscroll->GetSubscribed())){
-			auto ret = vscroll->HandleEvent(e);
-			update = ret.IsFinishedProcessing();
-			handled = handled || update;
+		}else if(im->hscroll && im->hscroll->IsEnabled() && InRect(e.Pointer.x, e.Pointer.y, im->hscroll->GetInteractRect()) && (e.type & im->hscroll->GetSubscribed())){
+			auto ret = im->hscroll->HandleEvent(e);
+			im->update = ret.IsFinishedProcessing();
+			handled = handled || im->update;
+		}else if(im->vscroll && im->vscroll->IsEnabled() && InRect(e.Pointer.x, e.Pointer.y, im->vscroll->GetInteractRect()) && (e.type & im->vscroll->GetSubscribed())){
+			auto ret = im->vscroll->HandleEvent(e);
+			im->update = ret.IsFinishedProcessing();
+			handled = handled || im->update;
 		}
 	}
-	if(update) IControl::Paint(outerRect);
+	if(im->update) IControl::Paint(im->outerRect);
 	return {handled};
 }
 
 void ListBox::Paint(gds::Surface &s){
-	if(update || !surf){
-		if(!surf) surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
-		UpdateDisplayState(false);
+	if(im->update || !im->surf){
+		if(!im->surf) im->surf.reset(new gds::Surface(gds_SurfaceType::Vector, im->rect.w, im->rect.h, 100, gds_ColourType::True));
+		im->UpdateDisplayState(false);
 		
-		uint32_t inW = rect.w - 1;
-		uint32_t inH = rect.h - 1;
+		uint32_t inW = im->rect.w - 1;
+		uint32_t inH = im->rect.h - 1;
 		
-		auto bkgCol = colours::GetBackground().Fix(*surf);
-		auto txtCol = colours::GetListBoxText().Fix(*surf);
-		auto border = colours::GetBorder().Fix(*surf);
-		auto selCol = colours::GetSelection().Fix(*surf);
+		auto bkgCol = colours::GetBackground().Fix(*im->surf);
+		auto txtCol = colours::GetListBoxText().Fix(*im->surf);
+		auto border = colours::GetBorder().Fix(*im->surf);
+		auto selCol = colours::GetSelection().Fix(*im->surf);
 		
-		auto topLeft = colours::GetListBoxLowLight().Fix(*surf);
-		auto bottomRight = colours::GetListBoxHiLight().Fix(*surf);
-		surf->Clear();
-		surf->BeginQueue();
-		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		for(auto i = vOffset; i < items.size() && i < vOffset + (inH / fontHeight) + 1; ++i){
-			auto &cItem = drawItems[i];
+		auto topLeft = colours::GetListBoxLowLight().Fix(*im->surf);
+		auto bottomRight = colours::GetListBoxHiLight().Fix(*im->surf);
+		im->surf->Clear();
+		im->surf->BeginQueue();
+		im->surf->Box(im->rect.AtZero(), bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		for(auto i = im->vOffset; i < im->items.size() && i < im->vOffset + (inH / im->fontHeight) + 1; ++i){
+			auto &cItem = im->drawItems[i];
 			
-			auto textY = std::max<int32_t>(((fontHeight + cItem.measures.h) / 2), 0);
-			textY += (i - vOffset) * fontHeight;
-			if(i == selectedItem){
-				auto selFocus = colours::GetSelectionFocus().Fix(*surf);
-				int32_t selY = fontHeight * (i - vOffset);
-				if(hasFocus){
-					surf->Box({1, selY, inW, fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+			auto textY = std::max<int32_t>(((im->fontHeight + cItem.measures.h) / 2), 0);
+			textY += (i - im->vOffset) * im->fontHeight;
+			if(i == im->selectedItem){
+				auto selFocus = colours::GetSelectionFocus().Fix(*im->surf);
+				int32_t selY = im->fontHeight * (i - im->vOffset);
+				if(im->hasFocus){
+					im->surf->Box({1, selY, inW, im->fontHeight}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 				}
-				surf->Box({1, selY, inW, fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
+				im->surf->Box({1, selY, inW, im->fontHeight}, selFocus, selFocus, 1, gds_LineStyle::Solid);
 			}
-			surf->Text({2 - (int32_t)hOffset, textY}, cItem.text, fonts::GetListBoxFont(), fonts::GetListBoxTextSize(), txtCol);
+			im->surf->Text({2 - (int32_t)im->hOffset, textY}, cItem.text, fonts::GetListBoxFont(), fonts::GetListBoxTextSize(), txtCol);
 			
-			if(multiSelect){
-				int32_t chkY = fontHeight * (i - vOffset);
-				surf->Box({1, chkY, checkSize, checkSize}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-				drawing::BevelBox(*surf, {2, chkY + 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
-				if(multiSelection[i]){
-					surf->Line({5, chkY + 5}, {checkSize - 3, (chkY + checkSize) - 4}, txtCol, 2);
-					surf->Line({5,  (chkY + checkSize) - 4}, {checkSize - 3, chkY + 5}, txtCol, 2);
+			if(im->multiSelect){
+				int32_t chkY = im->fontHeight * (i - im->vOffset);
+				im->surf->Box({1, chkY, checkSize, checkSize}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+				drawing::BevelBox(*im->surf, {2, chkY + 1, checkSize - 2, checkSize - 2}, topLeft, bottomRight);
+				if(im->multiSelection[i]){
+					im->surf->Line({5, chkY + 5}, {checkSize - 3, (chkY + checkSize) - 4}, txtCol, 2);
+					im->surf->Line({5,  (chkY + checkSize) - 4}, {checkSize - 3, chkY + 5}, txtCol, 2);
 				}
 			}
 		}
-		drawing::Border(*surf, {0, 0, inW, inH}, border);
-		drawing::BevelBox(*surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
+		drawing::Border(*im->surf, {0, 0, inW, inH}, border);
+		drawing::BevelBox(*im->surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
 		
-		surf->CommitQueue();
-		update = false;
+		im->surf->CommitQueue();
+		im->update = false;
 	}
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	s.Blit(*im->surf, im->rect.AtZero(), im->rect);
 
-	if(hscroll) hscroll->Paint(s);
-	if(vscroll) vscroll->Paint(s);
+	if(im->hscroll) im->hscroll->Paint(s);
+	if(im->vscroll) im->vscroll->Paint(s);
 	
-	if(!enabled){
+	if(!im->enabled){
 		auto cast = colours::GetDisabledCast().Fix(s);
-		s.Box(outerRect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		s.Box(im->outerRect, cast, cast, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
 	}
 }
 
 gds::Rect ListBox::GetPaintRect(){
-	return outerRect;
+	return im->outerRect;
 }
 
 gds::Rect ListBox::GetInteractRect(){
-	return outerRect;
+	return im->outerRect;
 }
 
 uint32_t ListBox::GetSubscribed(){
 	auto ret = wm_KeyboardEvents | wm_EventType::PointerButtonUp | wm_EventType::PointerButtonDown;
-	if(hscroll) ret |= hscroll->GetSubscribed();
-	if(vscroll) ret |= vscroll->GetSubscribed();
+	if(im->hscroll) ret |= im->hscroll->GetSubscribed();
+	if(im->vscroll) ret |= im->vscroll->GetSubscribed();
 	return ret;
 }
 
 void ListBox::Focus(){
-	if(!hasFocus){
-		update = true;
-		hasFocus = true;
-		IControl::Paint(outerRect);
+	if(!im->hasFocus){
+		im->update = true;
+		im->hasFocus = true;
+		IControl::Paint(im->outerRect);
 	}
 }
 
 void ListBox::Blur(){
-	if(hasFocus){
-		update = true;
-		hasFocus = false;
-		IControl::Paint(outerRect);
+	if(im->hasFocus){
+		im->update = true;
+		im->hasFocus = false;
+		IControl::Paint(im->outerRect);
 	}
 }
 
@@ -277,54 +312,54 @@ uint32_t ListBox::GetFlags(){
 }
 
 void ListBox::Enable(){
-	if(!enabled){
-		enabled = true;
-		IControl::Paint(rect);
+	if(!im->enabled){
+		im->enabled = true;
+		IControl::Paint(im->rect);
 	}
 }
 
 void ListBox::Disable(){
-	if(enabled){
-		enabled = false;
-		IControl::Paint(rect);
+	if(im->enabled){
+		im->enabled = false;
+		IControl::Paint(im->rect);
 	}
 }
 
 bool ListBox::IsEnabled(){
-	return enabled;
+	return im->enabled;
 }
 
 size_t ListBox::GetValue(){
-	return selectedItem;
+	return im->selectedItem;
 }
 
 void ListBox::SetValue(size_t idx){
-	if(selectedItem == idx) return;
-	selectedItem = idx;
-	update = true;
+	if(im->selectedItem == idx) return;
+	im->selectedItem = idx;
+	im->update = true;
 }
 
 std::vector<bool> &ListBox::MulitSelections(){
-	return multiSelection;
+	return im->multiSelection;
 }
 
 std::vector<std::string> &ListBox::Items(){
-	return items;
+	return im->items;
 }
 
 void ListBox::Refresh(){
-	update = true;
-	IControl::Paint(outerRect);
-	multiSelection.resize(items.size());
+	im->update = true;
+	IControl::Paint(im->outerRect);
+	im->multiSelection.resize(im->items.size());
 }
 
 void ListBox::SetPosition(const gds::Rect &r){
-	outerRect = r;
-	rect = scrollHoriz ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h};
-	if(vscroll) vscroll->SetPosition({outerRect.x + (int32_t)outerRect.w - scrollbarSize, outerRect.y, scrollbarSize, outerRect.h - (scrollHoriz ? scrollbarSize : 0)});
-	if(hscroll) hscroll->SetPosition({outerRect.x, outerRect.y + (int32_t)outerRect.h - scrollbarSize, outerRect.w - scrollbarSize, scrollbarSize});
-	update = true;
-	surf.reset();
+	im->outerRect = r;
+	im->rect = im->scrollHoriz ? gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h - scrollbarSize} : gds::Rect{r.x, r.y, r.w - scrollbarSize, r.h};
+	if(im->vscroll) im->vscroll->SetPosition({im->outerRect.x + (int32_t)im->outerRect.w - scrollbarSize, im->outerRect.y, scrollbarSize, im->outerRect.h - (im->scrollHoriz ? scrollbarSize : 0)});
+	if(im->hscroll) im->hscroll->SetPosition({im->outerRect.x, im->outerRect.y + (int32_t)im->outerRect.h - scrollbarSize, im->outerRect.w - scrollbarSize, scrollbarSize});
+	im->update = true;
+	im->surf.reset();
 }
 
 }

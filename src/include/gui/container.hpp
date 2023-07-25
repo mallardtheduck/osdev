@@ -8,35 +8,35 @@
 #include <wm/wm.h>
 
 #include "icontrol.hpp"
+#include <util/pimpl_ptr.hpp>
 
 namespace btos_api{
 namespace gui{
 
 class IControl;
 
+struct ContainerImpl;
+PIMPL_CLASS(ContainerImpl);
+
 class Container{
 private:
-	std::vector<std::shared_ptr<IControl>> controls;
-	std::shared_ptr<IControl> focus;
-	std::shared_ptr<IControl> mouseOver;
-	std::vector<gds::Rect> paintQueue;
-	bool queuePaint = false;
-	
+	btos::pimpl_ptr<ContainerImpl> impl;
+	friend struct ContainerImpl;
+
 	virtual gds::Surface &GetSurface() = 0;
 	virtual gds::Rect GetBoundingRect() = 0;
 	
 	virtual void Update(const gds::Rect &r) = 0;
 	virtual void Update() = 0;
 	virtual void SetSubscribed(uint32_t subs) = 0;
-	
-	std::shared_ptr<IControl> FindNextFocus(bool reverse);
+
 	virtual bool OnLastControlFocus(bool /*reverse*/) {return false;}
-	
-	void ZSortControls();
 protected:
 	bool HandleEvent(const wm_Event &e);
 
 public:
+	Container();
+
 	virtual void Paint(const std::vector<gds::Rect> &rects);
 	void Paint(const gds::Rect &r = gds::Rect());
 

@@ -5,43 +5,52 @@
 namespace btos_api{
 namespace gui{
 
-ProgressBar::ProgressBar(const gds::Rect &r, int v) : rect(r), value(v) {}
+struct ProgressBarImpl{
+	gds::Rect rect;
+	int value;
+	std::unique_ptr<gds::Surface> surf;
+};
+PIMPL_IMPL(ProgressBarImpl);
+
+ProgressBar::ProgressBar(const gds::Rect &r, int v) : im(new ProgressBarImpl()){
+	im->rect = r; im->value = v;
+}
 	
 EventResponse ProgressBar::HandleEvent(const wm_Event&){
 	return {false};
 }
 
 void ProgressBar::Paint(gds::Surface &s){
-	if(!surf){
-		surf.reset(new gds::Surface(gds_SurfaceType::Vector, rect.w, rect.h, 100, gds_ColourType::True));
+	if(!im->surf){
+		im->surf.reset(new gds::Surface(gds_SurfaceType::Vector, im->rect.w, im->rect.h, 100, gds_ColourType::True));
 		
-		surf->BeginQueue();
-		auto border = colours::GetBorder().Fix(*surf);
-		auto bkgCol = colours::GetBackground().Fix(*surf);
-		auto selCol = colours::GetSelection().Fix(*surf);
+		im->surf->BeginQueue();
+		auto border = colours::GetBorder().Fix(*im->surf);
+		auto bkgCol = colours::GetBackground().Fix(*im->surf);
+		auto selCol = colours::GetSelection().Fix(*im->surf);
 		
-		auto topLeft = colours::GetProgressBarLowLight().Fix(*surf);
-		auto bottomRight = colours::GetProgressBarHiLight().Fix(*surf);
+		auto topLeft = colours::GetProgressBarLowLight().Fix(*im->surf);
+		auto bottomRight = colours::GetProgressBarHiLight().Fix(*im->surf);
 		
-		auto inW = rect.w - 1;
-		auto inH = rect.h - 1;
+		auto inW = im->rect.w - 1;
+		auto inH = im->rect.h - 1;
 		
-		auto pval = (uint32_t)(((double)value / 100.0) * inW);
+		auto pval = (uint32_t)(((double)im->value / 100.0) * inW);
 		
-		surf->Box({0, 0, rect.w, rect.h}, bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		surf->Box({1, 1, pval, rect.h - 2}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
-		drawing::Border(*surf, {0, 0, inW, inH}, border);
-		drawing::BevelBox(*surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
+		im->surf->Box(im->rect.AtZero(), bkgCol, bkgCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		im->surf->Box({1, 1, pval, im->rect.h - 2}, selCol, selCol, 1, gds_LineStyle::Solid, gds_FillStyle::Filled);
+		drawing::Border(*im->surf, {0, 0, inW, inH}, border);
+		drawing::BevelBox(*im->surf, {1, 1, inW - 2, inH - 2}, topLeft, bottomRight);
 		
-		surf->CommitQueue();
-		surf->Compress();
+		im->surf->CommitQueue();
+		im->surf->Compress();
 	}
 	
-	s.Blit(*surf, {0, 0, rect.w, rect.h}, rect);
+	s.Blit(*im->surf, im->rect.AtZero(), im->rect);
 }
 
 gds::Rect ProgressBar::GetPaintRect(){
-	return rect;
+	return im->rect;
 }
 
 gds::Rect ProgressBar::GetInteractRect(){
@@ -53,15 +62,15 @@ uint32_t ProgressBar::GetSubscribed(){
 }
 	
 void ProgressBar::SetValue(int v){
-	if(value != v){
-		value = v;
-		surf.reset();
+	if(im->value != v){
+		im->value = v;
+		im->surf.reset();
 	}
 }
 
 void ProgressBar::SetPosition(const gds::Rect &r){
-	rect = r;
-	surf.reset();
+	im->rect = r;
+	im->surf.reset();
 }
 
 }

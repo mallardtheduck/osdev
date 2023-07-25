@@ -43,6 +43,11 @@ size_t SHMSurface::AddOperation(gds_DrawingOp /*op*/){
 	return 0;
 }
 
+std::vector<size_t> SHMSurface::AddOperations(gds_MultiOps &/*mops*/){
+	return {};
+}
+
+
 void SHMSurface::RemoveOperation(size_t /*id*/){
 }
 
